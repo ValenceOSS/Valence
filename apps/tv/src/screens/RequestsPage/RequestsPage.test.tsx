@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -88,14 +88,34 @@ describe('RequestsPage', () => {
     expect(onLight).toHaveBeenCalledWith('/posters/arrival.jpg');
   });
 
-  it('says whose a request is where somebody else asked for it', async () => {
+  it('writes large across the top whatever the remote rests on, with whose it is', async () => {
     const drawn = await drawRequests([
       aMediaRequest({ id: 'a', requestedBy: { id: 'me', name: 'Marques' } }),
       aMediaRequest({ id: 'b', title: 'Arrival', requestedBy: { id: 'sam', name: 'Sam' } }),
     ]);
 
-    expect(drawn.getByText('Missing   ·   Requested by Sam')).toBeTruthy();
-    expect(drawn.getByText('Missing')).toBeTruthy();
+    expect(drawn.getByText('2021   ·   Missing')).toBeTruthy();
+
+    await fireEvent(drawn.getByRole('button', { name: 'Arrival, Missing' }), 'focus');
+
+    expect(await drawn.findByText('2021   ·   Missing   ·   Requested by Sam')).toBeTruthy();
+  });
+
+  it('shelves requests by what each needs next', async () => {
+    const drawn = await drawRequests([
+      aMediaRequest({ id: 'a', title: 'Dune' }),
+      aMediaRequest({ id: 'b', title: 'Arrival', approval: 'awaiting', state: 'awaitingApproval' }),
+      aMediaRequest({ id: 'c', title: 'Heat', state: 'available' }),
+    ]);
+
+    const cards = drawn.getAllByRole('button');
+
+    expect(drawn.getAllByText('Waiting for approval')).toHaveLength(2);
+    expect(drawn.getAllByText('Missing')).toHaveLength(2);
+    expect(cards).toHaveLength(3);
+    expect(cards[0]).toHaveAccessibleName('Arrival, Waiting for approval');
+    expect(cards[1]).toHaveAccessibleName('Dune, Missing');
+    expect(cards[2]).toHaveAccessibleName(/^Heat, /);
   });
 
   it('opens the request chosen', async () => {

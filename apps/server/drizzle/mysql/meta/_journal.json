@@ -351,6 +351,13 @@
       "when": 1793114029888,
       "tag": "0049_lists_can_follow_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "5",
+      "when": 1793418005540,
+      "tag": "0050_phones_can_be_woken",
+      "breakpoints": true
     }
   ]
 }

@@ -79,6 +79,7 @@ const AdminSettingsSchema = z
     showsProfilesBeforeSignIn: z.boolean(),
     allowedApps: AllowedAppsSchema,
     fetchesCatalogueTrailers: z.boolean(),
+    playsCatalogueTrailers: z.boolean().default(false),
     usesShortSegments: z.boolean(),
     playsEpisodesGapless: z.boolean(),
     fetchesMusicDetails: z.boolean(),
@@ -89,6 +90,7 @@ const AdminSettingsSchema = z
     splashscreen: z.string().nullable(),
     wayInMessage: WayInMessageSchema.nullable().default(null),
     telemetryEnabled: z.boolean().default(false),
+    usesPushRelay: z.boolean().default(false),
     isTelemetryOffByEnvironment: z.boolean().default(false),
   })
   .openapi('AdminSettings');
@@ -179,6 +181,7 @@ const AdminSettingsRequestSchema = z
     showsProfilesBeforeSignIn: z.boolean().optional(),
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().optional(),
+    playsCatalogueTrailers: z.boolean().optional(),
     usesShortSegments: z.boolean().optional(),
     playsEpisodesGapless: z.boolean().optional(),
     fetchesMusicDetails: z.boolean().optional(),
@@ -188,6 +191,7 @@ const AdminSettingsRequestSchema = z
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
     wayInMessage: WayInMessageSchema.nullable().optional(),
     telemetryEnabled: z.boolean().optional(),
+    usesPushRelay: z.boolean().optional(),
   })
   .openapi('AdminSettingsRequest');
 

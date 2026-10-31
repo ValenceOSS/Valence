@@ -6,9 +6,14 @@ type PressedAt = {
   y: number;
 };
 
+type Dismissal = {
+  label: string;
+  onDismiss: () => void;
+};
+
 type ButtonProps = {
   children?: ReactNode;
-  onPress: (at: PressedAt) => void;
+  onPress?: (at: PressedAt) => void;
   onLongPress?: () => void;
   tone?: 'bold' | 'bright' | 'ghost' | 'quiet' | 'bare';
   icon?: AGlyph;
@@ -19,6 +24,8 @@ type ButtonProps = {
   isChosen?: boolean;
   isDestructive?: boolean;
   label?: string;
+  dismissal?: Dismissal;
+  isOnlyDrawn?: boolean;
 };
 
-export type { ButtonProps, PressedAt };
+export type { ButtonProps, Dismissal, PressedAt };

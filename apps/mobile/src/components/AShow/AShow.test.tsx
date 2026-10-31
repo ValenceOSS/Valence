@@ -1,3 +1,5 @@
+import { pickFromAMenu } from '@ValenceMobile/testing/pickFromAMenu';
+import { theAMenuItems } from '@ValenceMobile/testing/theAMenuItems';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchShow } from '@ValenceClient/library/fetchShows';
@@ -367,7 +369,7 @@ describe('AShow', () => {
     expect(drawn.getByLabelText('Mark Good News About Hell as unwatched')).toBeTruthy();
   });
 
-  it('offers to request more where an aired season is missing', async () => {
+  it('offers to request more from its menu where an aired season is missing', async () => {
     jest.mocked(fetchShow).mockResolvedValue({
       ...TWO_SEASONS,
       tmdbId: 95396,
@@ -393,7 +395,8 @@ describe('AShow', () => {
       ),
     );
 
-    await userEvent.press(await drawn.findByText('Request more…'));
+    await drawn.findByLabelText('More');
+    await pickFromAMenu('Request more…');
 
     expect(onRequestMore).toHaveBeenCalledWith(95396);
   });
@@ -422,9 +425,8 @@ describe('AShow', () => {
       ),
     );
 
-    await waitFor(() => {
-      expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
-    });
-    expect(drawn.queryByText('Request more…')).toBeNull();
+    await drawn.findByLabelText('More');
+
+    expect(theAMenuItems()).not.toContain('Request more…');
   });
 });

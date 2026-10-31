@@ -8,9 +8,9 @@ describe('AirPlayButton', () => {
     expect(drawn.getByLabelText('Play on another device')).toBeTruthy();
   });
 
-  it('is white over a film, whatever the theme', async () => {
+  it('draws its own mark over the system’s, leaving only the system’s press', async () => {
     const drawn = await render(<AirPlayButton isOverPicture />);
 
-    expect(drawn.getByLabelText('Play on another device').props.colour).toBe('#ffffff');
+    expect(drawn.getByLabelText('Play on another device').props.colour).toBe('transparent');
   });
 });

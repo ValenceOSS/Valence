@@ -113,7 +113,7 @@ describe('TheMusicPlayer', () => {
       { wrapper: CacheScope },
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Listening party' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Party' }));
     await userEvent.press(drawn.getByLabelText('Start a listening party'));
 
     expect(watchParty.open).toHaveBeenCalledWith(aTrack(1).id, 'listen');

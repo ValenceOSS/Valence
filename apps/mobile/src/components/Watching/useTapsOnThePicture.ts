@@ -20,15 +20,12 @@ const A_LEAP = 10;
  * @param wide - How wide the picture is, to tell which half was tapped.
  * @param onTap - Told of a tap that was only ever one, at either side.
  * @param onLeap - Told to move by so many seconds.
- * @param onMiddleTap - Told of a single tap in the middle third instead, where it plays and pauses
- *   while the controls are up. The same as `onTap` where it is not given.
  * @returns What to tell of each tap, and the leap being made while there is one.
  */
 const useTapsOnThePicture = (
   wide: number,
   onTap: () => void,
   onLeap: (by: number) => void,
-  onMiddleTap: () => void = onTap,
 ): { tapped: (at: PressedAt) => void; leap: ALeap | null } => {
   const [leap, setLeap] = useState<ALeap | null>(null);
   const leaping = useRef<{ leap: ALeap; at: number } | null>(null);
@@ -69,11 +66,7 @@ const useTapsOnThePicture = (
         waiting.current = setTimeout(() => {
           waiting.current = null;
 
-          if (x > wide / 3 && x < (wide * 2) / 3) {
-            onMiddleTap();
-          } else {
-            onTap();
-          }
+          onTap();
         }, TAP_AGAIN_WITHIN);
 
         return;
@@ -101,7 +94,7 @@ const useTapsOnThePicture = (
         setLeap(null);
       }, KEEP_LEAPING_WITHIN);
     },
-    [wide, onTap, onLeap, onMiddleTap],
+    [wide, onTap, onLeap],
   );
 
   return { tapped, leap };

@@ -71,6 +71,7 @@ const AdminOverviewSchema = z.object({
     showsProfilesBeforeSignIn: z.boolean().default(false),
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
+    playsCatalogueTrailers: z.boolean().default(false),
     usesShortSegments: z.boolean().default(true),
     playsEpisodesGapless: z.boolean().default(true),
     fetchesMusicDetails: z.boolean().default(false),
@@ -82,6 +83,7 @@ const AdminOverviewSchema = z.object({
     splashscreen: z.string().nullish(),
     wayInMessage: WayInMessageSchema.nullish(),
     telemetryEnabled: z.boolean().default(false),
+    usesPushRelay: z.boolean().default(false),
     isTelemetryOffByEnvironment: z.boolean().default(false),
   }),
   transcoder: z.object({
@@ -887,6 +889,27 @@ const saveFetchesCatalogueTrailers = async (
 };
 
 /**
+ * Sets whether a film or programme somebody may ask for plays its trailer silently behind the top
+ * of its page, streamed from YouTube through the server.
+ *
+ * Off by default: it has the server look the trailer up with yt-dlp, which YouTube's terms do not
+ * allow and which YouTube may refuse, so it is the administrator's to choose.
+ *
+ * @param playsCatalogueTrailers - Whether to play them.
+ * @returns Whether the setting was written.
+ */
+const savePlaysCatalogueTrailers = async (playsCatalogueTrailers: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ playsCatalogueTrailers }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether films are sent in short segments, which start and seek sooner over a slow
  * connection at the cost of more requests.
  *
@@ -934,6 +957,24 @@ const saveTelemetryEnabled = async (telemetryEnabled: boolean): Promise<boolean>
     credentials: 'same-origin',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ telemetryEnabled }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
+ * Sets whether this server wakes its people's phones through Valence's push relay, which is told
+ * where to send a push but never what a notification says.
+ *
+ * @param usesPushRelay - Whether to use it.
+ * @returns Whether the setting was written.
+ */
+const saveUsesPushRelay = async (usesPushRelay: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ usesPushRelay }),
   }).catch(() => null);
 
   return response !== null && response.ok;
@@ -1245,10 +1286,12 @@ export {
   saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  savePlaysCatalogueTrailers,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
   saveTelemetryEnabled,
+  saveUsesPushRelay,
   saveControlsConnectedApps,
   saveRequestReleaseTypes,
   saveAudioDbKey,

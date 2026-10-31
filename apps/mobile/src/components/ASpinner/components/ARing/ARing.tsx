@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ASegment } from '@ValenceMobile/components/ASpinner/components/ASegment/ASegment';
 import { segmentsLitAt } from '@ValenceCore/functions/segmentsLitAt';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
@@ -16,11 +16,18 @@ const GAP_SHARE = 0.38;
 
 const ICON_SHARE = 0.8;
 
+const styles = StyleSheet.create({
+  whole: { alignSelf: 'center' },
+});
+
 /**
  * The ring Valence's loading mark is drawn with, in whatever colour it is given, as the web draws it: eight short segments round a ring, lighting one
  * by one until it is full and then going dark from where they began. Held still, most of the way
  * lit, for somebody who asked for less movement. Told the wait is over, it fills the rest of the ring
  * quickly, as the web's does, and says so once it is whole, so whoever shows it can let it go then.
+ *
+ * It centres itself across whatever holds it, so a wait on an otherwise empty page sits in its
+ * middle rather than against one side.
  *
  * @param colour - The colour of the lit segments.
  * @param size - How wide it is drawn.
@@ -107,7 +114,7 @@ const ARing = ({
 
   return (
     <View
-      style={{ height: size, width: size }}
+      style={[styles.whole, { height: size, width: size }]}
       accessibilityRole="progressbar"
       accessibilityLabel={label}
     >

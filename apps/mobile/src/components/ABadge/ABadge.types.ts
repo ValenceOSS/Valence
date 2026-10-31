@@ -6,6 +6,7 @@ type ABadgeProps = {
   children: string;
   tone?: ABadgeTone;
   icon?: AGlyph;
+  isLarge?: boolean;
 };
 
 export type { ABadgeProps, ABadgeTone };

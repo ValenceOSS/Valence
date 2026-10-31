@@ -18,6 +18,7 @@ type TheMovingPartsProps = {
     runsFor: number;
     onPlay: () => void;
   } | null;
+  castAt?: number | null;
   controls: Omit<TheControlsProps, 'at' | 'runsFor' | 'buffered' | 'onSeek' | 'segments'>;
 };
 

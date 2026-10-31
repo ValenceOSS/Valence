@@ -17,6 +17,7 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'GET', path: /^\/api\/share\/[^/]+$/ },
   { method: 'GET', path: /^\/api\/calendar\/feed\/[A-Za-z0-9_-]{43}\.ics$/ },
   { method: 'GET', path: /^\/api\/playback\/cast\/[A-Za-z0-9_-]{43}\/[^/]+$/ },
+  { method: 'GET', path: /^\/api\/music\/cast\/[A-Za-z0-9_-]{43}$/ },
   { method: 'POST', path: /^\/api\/password-reset$/ },
   { method: 'GET', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
   { method: 'POST', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
@@ -65,7 +66,7 @@ const FACE_ROUTES: readonly PublicRoute[] = [
  *
  * So is what a device being cast to reads, such as a Chromecast, which has no session of anybody's:
  * the address answers only to the ticket a signed-in player was handed for its own session, and only
- * with that session's manifest and segments.
+ * with that session's manifest and segments, or with the one track it was handed for.
  *
  * So is asking for a password reset link, which is for somebody who cannot sign in: it answers the
  * same whether or not an account exists, and asks at most once a minute for any one.

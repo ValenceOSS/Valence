@@ -1,4 +1,5 @@
-import { BackHandler } from 'react-native';
+import { createElement as mockCreateElement } from 'react';
+import { BackHandler, Text as mockText } from 'react-native';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -24,11 +25,17 @@ import {
   MediaDetailSchema,
   MediaSummarySchema,
 } from '@ValenceContracts/schemas/Library';
+import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { SignedIn } from './SignedIn';
 import type { ReactNode } from 'react';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 jest.mock('@ValenceClient/session/auth');
+jest.mock('@ValenceMobile/platform/scanACode', () => ({ scanACode: jest.fn() }));
+jest.mock('@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn', () => ({
+  ATelevisionToSignIn: ({ code, askedFrom }: { code: string; askedFrom: string | null }) =>
+    mockCreateElement(mockText, null, `Signing in ${code} from ${askedFrom ?? 'nowhere'}`),
+}));
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchShows');
@@ -89,6 +96,15 @@ const ARRIVAL_IN_FULL = MediaDetailSchema.parse({
   },
 });
 
+const ONLY_ONE = ViewerProfileSchema.parse({
+  id: '3fa85f64-5717-4562-b3fc-2c963f66afb2',
+  name: 'Mark',
+  colour: PROFILE_COLOURS[0],
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
+
 const around = (children: ReactNode) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     {children}
@@ -102,6 +118,13 @@ beforeEach(() => {
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLibraryItems).mockReset().mockResolvedValue({ items: [], total: 0 });
   jest.mocked(fetchMediaDetail).mockReset();
+  jest
+    .mocked(fetchProfileList)
+    .mockReset()
+    .mockResolvedValue({
+      profiles: [ONLY_ONE],
+      chosenProfileId: ONLY_ONE.id,
+    });
   jest
     .mocked(startPlaybackSession)
     .mockReset()
@@ -208,6 +231,21 @@ describe('SignedIn', () => {
     expect((await drawn.findAllByText('Linguists meet a ship.')).length).toBeGreaterThan(0);
   });
 
+  it('scans a television’s code from the corner of the library, and signs it in', async () => {
+    jest.mocked(scanACode).mockResolvedValue({
+      kind: 'read',
+      text: 'http://192.168.1.20:8420/device?user_code=ABCD1234',
+    });
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByLabelText('Sign in to a TV'));
+
+    expect(
+      await drawn.findByText('Signing in ABCD1234 from http://192.168.1.20:8420'),
+    ).toBeTruthy();
+  });
+
   it('opens a title when somebody presses its poster', async () => {
     withOneTitle();
 
@@ -254,7 +292,7 @@ describe('SignedIn', () => {
     await userEvent.press(await drawn.findByText('Films'));
     await userEvent.press(await drawn.findByLabelText('Arrival'));
 
-    await userEvent.press(await drawn.findByLabelText('Back'));
+    await userEvent.press(await drawn.findByLabelText('Close'));
 
     expect(await drawn.findByLabelText('What to show')).toBeTruthy();
   });

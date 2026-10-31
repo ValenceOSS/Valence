@@ -1,3 +1,4 @@
+import { createPushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import { saying } from '@ValenceI18n/saying';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
 import { describeDevice } from '@ValenceCore/functions/describeDevice';
@@ -303,6 +304,7 @@ const createAppContext = (options: CreateAppOptions) => {
     searchMusicCatalogue = () => Promise.resolve([]),
     missingAlbums = null,
     discovery = NO_DISCOVERY,
+    trailers = null,
     permissions = createMemoryPermissionService(),
     history,
     likeness,
@@ -316,6 +318,8 @@ const createAppContext = (options: CreateAppOptions) => {
     linking: linkingOptions,
     notifications = createMemoryNotificationStore(),
     readPushPublicKey = () => Promise.resolve(''),
+    pushDeliveries = createPushDeliveries(),
+    readWakesPhones = () => Promise.resolve(false),
     queueWebhookDelivery = () => Promise.resolve(),
 
     banAccount,
@@ -2020,6 +2024,7 @@ const createAppContext = (options: CreateAppOptions) => {
     searchMusicCatalogue,
     missingAlbums,
     discovery,
+    trailers,
     permissions,
     history,
     likeness,
@@ -2034,6 +2039,8 @@ const createAppContext = (options: CreateAppOptions) => {
     webhooks,
     notifications,
     readPushPublicKey,
+    pushDeliveries,
+    readWakesPhones,
     queueWebhookDelivery,
     linking,
     linkSharing,

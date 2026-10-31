@@ -190,6 +190,8 @@ const ENGLISH = {
   'client.books.listenLabel.listenAgain': 'Listen again',
   'client.calendar.describeCalendarEntry.inCinemas': 'In cinemas',
   'client.calendar.describeCalendarEntry.onDisc': 'On disc',
+  'client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumber':
+    'S{seasonNumber} E{episodeNumber}',
   'client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle':
     'S{seasonNumber} E{episodeNumber} · {title}',
   'client.calendar.describeCalendarEntry.toBuyOrRent': 'To buy or rent',
@@ -1001,7 +1003,6 @@ const ENGLISH = {
   'common.install': 'Install',
   'common.inSync': 'In sync',
   'common.inTheLibrary': 'In the library',
-  'common.inYourLibrary': 'In your library',
   'common.itAnswered': 'Connection succeeded.',
   'common.itComesOffThisDevice':
     'It comes off this device. You can download it again whenever you’re online.',
@@ -1355,6 +1356,7 @@ const ENGLISH = {
   'common.preTranscoding': 'Pre-transcoding',
   'common.previewClips': 'Preview clips',
   'common.previous': 'Previous',
+  'common.previousEpisode': 'Previous Episode',
   'common.previousPage': 'Previous page',
   'common.priority': 'Priority',
   'common.priorityIsAWholeNumberFrom': 'Priority must be a whole number from 1 to 50.',
@@ -1528,6 +1530,7 @@ const ENGLISH = {
   'common.starringValue': 'Starring {value}',
   'common.startAgain': 'Start again',
   'common.starting': 'Starting…',
+  'common.startOver': 'Start Over',
   'common.startsInCountSeconds.one': 'Starts in {count} second',
   'common.startsInCountSeconds.other': 'Starts in {count} seconds',
   'common.state': 'State',
@@ -2310,6 +2313,7 @@ const ENGLISH = {
   'error.music.thatPlaylistIsNotYoursTo': 'You can’t edit that playlist because it isn’t yours.',
   'error.music.thatPlaylistIsNotYoursTo2': 'You can’t delete that playlist because it isn’t yours.',
   'error.music.thereIsNoSuchMixToday': 'There’s no such mix today.',
+  'error.notifications.noSuchDelivery': 'That notification is no longer here.',
   'error.person.theCatalogueKnowsNobodyByThat': 'The catalogue has no person with that ID.',
   'error.phone.aPhoneSignsInAtApi': 'Phones sign in at /api/phone.',
   'error.phone.thatSignInHasExpiredTry': 'That sign-in has expired. Try again.',
@@ -2492,6 +2496,7 @@ const ENGLISH = {
   'phone.aBook.pagePageOfPageCount': 'Page {page} of {pageCount}',
   'phone.aDevicesSheet.airPlayAndBluetooth': 'AirPlay & Bluetooth',
   'phone.aDevicesSheet.bluetooth': 'Bluetooth',
+  'phone.aDevicesSheet.chromecast': 'Chromecast',
   'phone.aDevicesSheet.noOtherValenceIsOpenOn':
     'Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.',
   'phone.aDevicesSheet.thisIPhone': 'This iPhone',
@@ -2577,6 +2582,9 @@ const ENGLISH = {
   'phone.aTitle.preparingPercent': 'Preparing {percent}%',
   'phone.aTitle.preparingPercentTimeLeft': 'Preparing {percent}%, {timeLeft}',
   'phone.aTitle.resumeFromCarryOnAt': 'Resume from {carryOnAt}',
+  'phone.aTitle.version': 'Version',
+  'phone.aTitleHead.findingTheTrailer': 'Finding the trailer',
+  'phone.aTitleHead.noTrailer': 'No trailer',
   'phone.carPlay.shelvesForTheCar.listenNow': 'Listen Now',
   'phone.carPlay.useCarPlay.openValenceOnYourIPhoneAnd':
     'Open Valence on your iPhone and sign in to play your music here.',
@@ -2601,6 +2609,7 @@ const ENGLISH = {
   'phone.theAccount.editProfile': 'Edit profile',
   'phone.theAccount.hiddenDetail': 'Titles you’ve hidden from your library',
   'phone.theAccount.historyDetail': 'Everything you’ve watched and read',
+  'phone.theAccount.inbox': 'Inbox',
   'phone.theAccount.securityDetail': 'Password, passkeys and two-factor authentication',
   'phone.theAccount.sharesDetail': 'Share links you’ve created',
   'phone.theAccount.signInAndDevices': 'Sign-in and devices',
@@ -2694,6 +2703,8 @@ const ENGLISH = {
   'phone.theListeningPlayer.speedSpeed': 'Speed, {speed}×',
   'phone.theListeningPlayer.stopsAtTheEndOfThis': 'Stops at the end of this chapter',
   'phone.theLyrics.theSungLines.playFromText': 'Play from “{text}”',
+  'phone.theMusicPlayer.airPlay': 'AirPlay',
+  'phone.theMusicPlayer.party': 'Party',
   'phone.theMusicPlayer.showTheCover': 'Show the cover',
   'phone.theMusicPlayer.soundsWhatItIs': '{sounds}, what it is',
   'phone.theMusicPlayer.theLyrics.thereAreNoWordsForThis': 'No lyrics for this song.',
@@ -2711,13 +2722,22 @@ const ENGLISH = {
   'phone.theSearch.everythingInEveryLibrary': 'Search all libraries.',
   'phone.theSearch.theResults.nothingCalledAskedInTheLibrary':
     'No results for “{asked}” in the library.',
+  'phone.theSeasons.fetchedAsEachOneAirs': 'Fetched as each one airs',
+  'phone.theSeasons.newSeasons': 'New seasons',
   'phone.theServerIsAway.tryingAgainEveryFewSeconds': 'Trying again every few seconds.',
   'phone.theServerIsAway.tryNow': 'Try now',
+  'phone.theStars.personalRating': 'Personal rating',
+  'phone.theVideoRemote.aRemoteChoice.labelValue': '{label}, {value}',
   'phone.theWayIn.aWallFace.signInAsName': 'Sign in as {name}',
   'phone.theWayIn.itMayBeRestartingValenceTries':
     'The server may be restarting. Valence retries every few seconds, or pull down to retry now.',
   'phone.theWayIn.signInWithAPasskey': 'Sign in with a passkey',
   'phone.theWayIn.watchYourDownloads': 'Watch downloads',
+  'phone.thisPhonesNotifications.notificationsOnThisPhone': 'Notifications on this phone',
+  'phone.thisPhonesNotifications.whenARequestIsReadySomethingArrives':
+    'When a request is ready, something new arrives or you’re invited to watch',
+  'phone.thisPhonesNotifications.yourServerHasNotTurnedThemOn':
+    'Your server’s administrator hasn’t turned on phone notifications',
   'phone.watching.audioAndSubtitles': 'Audio & Subtitles',
   'phone.watching.brightness': 'Brightness',
   'phone.watching.closeAudioAndSubtitles': 'Close audio and subtitles',
@@ -2729,8 +2749,6 @@ const ENGLISH = {
   'phone.watching.noSubtitlesForThis': 'There are no subtitles for this.',
   'phone.watching.playbackWasStopped': 'Playback was stopped',
   'phone.watching.playingNow': 'Playing now',
-  'phone.watching.qualityNow': 'Quality ({quality})',
-  'phone.watching.speedNow': 'Speed ({rate})',
   'phone.watching.subtitlesEarlier': 'Show the subtitles earlier',
   'phone.watching.subtitlesLater': 'Show the subtitles later',
   'phone.watching.theChoices.closeTheSettings': 'Close settings',
@@ -4992,6 +5010,13 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.whatIsOn': 'What',
   'screens.adminArea.overviewPanel.whoAndWhere': 'Who and where',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',
+  'screens.adminArea.phoneNotificationsRow.phoneNotifications': 'Phone notifications',
+  'screens.adminArea.phoneNotificationsRow.phoneNotificationsSettingSaved':
+    'Phone notifications setting saved',
+  'screens.adminArea.phoneNotificationsRow.thePhoneNotificationsSettingCouldNotBe':
+    'The phone notifications setting could not be saved',
+  'screens.adminArea.phoneNotificationsRow.wakesTheValenceAppOnPhones':
+    'Wakes the Valence app on people’s phones through Valence’s push relay. The relay is told which phone to wake, never what the notification says; the phone reads that from this server.',
   'screens.adminArea.playbackModeShare.everyPlayWentAsTheFileLies':
     'Every play went as the file lies.',
   'screens.adminArea.playbackModeShare.howPlaysReachedTheirDevices':
@@ -5483,6 +5508,10 @@ const ENGLISH = {
     'Origins allowed to sign in: {value}.',
   'screens.adminArea.settingsPanel.pasteAKey': 'Paste a key',
   'screens.adminArea.settingsPanel.pictureBehindTheWayIn': 'Sign-in background',
+  'screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop':
+    'Plays a film’s or programme’s trailer silently behind the top of its page in the phone app, so it starts as soon as the page opens. The server looks each trailer up on YouTube with yt-dlp and streams it through itself, which YouTube’s terms don’t allow, and YouTube may refuse a server it sees doing it. Needs Show trailers from the catalogue to be on.',
+  'screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest':
+    'Play trailers behind titles to request',
   'screens.adminArea.settingsPanel.preparedDownloads': 'Prepared downloads',
   'screens.adminArea.settingsPanel.previewQuality': 'Preview quality',
   'screens.adminArea.settingsPanel.previewQualityCouldNotBeSaved': 'Couldn’t save preview quality.',
@@ -5533,11 +5562,14 @@ const ENGLISH = {
     'Couldn’t remove the splashscreen.',
   'screens.adminArea.settingsPanel.theTelevisionApp': 'Television app',
   'screens.adminArea.settingsPanel.theTheAudioDBKeyCouldNotBe': 'Couldn’t save the TheAudioDB key.',
+  'screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe':
+    'Couldn’t save the trailer playing setting.',
   'screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe':
     'Couldn’t save the trailer setting.',
   'screens.adminArea.settingsPanel.theWeb': 'Web',
   'screens.adminArea.settingsPanel.theWebIsAlwaysOn':
     "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
+  'screens.adminArea.settingsPanel.trailerPlayingSettingSaved': 'Trailer playing setting saved.',
   'screens.adminArea.settingsPanel.trailerSettingSaved': 'Trailer setting saved.',
   'screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine':
     'Valence uses whichever backend passes its hardware check. Choose one to force it, even if its encoder failed the check — useful when the check is wrong and the GPU clearly works.',
@@ -8031,6 +8063,7 @@ const ENGLISH = {
   'screens.videoRemote.remoteForLabel': 'Remote for {label}',
   'screens.videoRemote.subtitleOnLabel': '{subtitle} · On {label}',
   'screens.videoRemote.whereTheFilmIsUpTo': 'Playback position',
+  'screens.videoRemoteBar.hideTheRemote': 'Hide the remote',
   'screens.videoRemoteBar.onLabel': 'On {label}',
   'screens.videoRemoteBar.openTheRemoteForLabel': 'Open the remote for {label}',
   'screens.webhookFields.webhookPanes.who': 'Who',
@@ -8911,14 +8944,8 @@ const ENGLISH = {
     'This theme is applied the next time you open Valence.',
   'tv.account.useTheDesktopLayout': 'Use the desktop layout',
   'tv.account.watchingOnThisValence': 'Watching on this server',
-  'tv.account.yourDevices.nameCouldNotBeSignedOut':
-    'Couldn’t sign out {name}. It’s still signed in.',
-  'tv.account.yourDevices.nameThisTelevision': '{name} · This television',
-  'tv.account.yourDevices.noOtherDevices': 'This account isn’t signed in on any other device.',
-  'tv.account.yourDevices.theOtherDevicesCouldNotBeSignedOut':
-    'Couldn’t sign out the other devices. They’re still signed in.',
-  'tv.account.yourNotifications.titleUnread': '{title} · New',
   'tv.account.yourRequests.yourRequests': 'Your requests',
+  'tv.arrivalBanner.pressPlayToJoin': 'Press {play} to join',
   'tv.arrivalBanner.pressPlayToWatch': 'Press {play} to watch',
   'tv.askPage.courEpisodes.one': '{name} · {count} episode',
   'tv.askPage.courEpisodes.other': '{name} · {count} episodes',
@@ -9003,6 +9030,7 @@ const ENGLISH = {
   'tv.player.playerControls.nextEpisode': 'Next episode',
   'tv.player.playerControls.sKIPSBYS': '{SKIPS_BY}s',
   'tv.player.scrubber.scrub': 'Seek',
+  'tv.player.startedFromLabel': 'Started from {label}',
   'tv.player.streamStats.bufferedAhead': 'Buffered ahead',
   'tv.player.streamStats.container': 'Container',
   'tv.player.streamStats.delivery': 'Delivery',

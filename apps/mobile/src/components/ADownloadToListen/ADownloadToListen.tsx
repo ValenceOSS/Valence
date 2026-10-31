@@ -9,6 +9,7 @@ import { waysToKeepMusic } from '@ValenceClient/downloads/waysToKeepMusic';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
 import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import type { AudioQuality } from '@ValenceContracts/schemas/Music';
 import type { ADownloadToListenProps } from './ADownloadToListen.types';
@@ -56,28 +57,37 @@ const askWhichQuality = (
  * @param title - What it is called.
  * @param tracks - Its songs, for how much room each quality takes; none for an audiobook.
  * @param toKeep - What to keep at the quality chosen.
+ * @param isRound - Whether it is drawn as a round button with its words beneath, among a page's
+ *   other round buttons.
  */
-const ADownloadToListen = ({ kind, id, title, tracks, toKeep }: ADownloadToListenProps) => {
+const ADownloadToListen = ({
+  kind,
+  id,
+  title,
+  tracks,
+  toKeep,
+  isRound = false,
+}: ADownloadToListenProps) => {
   const shelf = useKeptListening();
   const kept = shelf.here.find((one) => one.kind === kind && one.id === id);
 
   if (kept === undefined) {
-    return (
-      <Button
-        tone="quiet"
-        icon={Download}
-        onPress={() => {
-          void (
-            kind === 'audiobook'
-              ? Promise.resolve<AudioQuality>('lossless')
-              : askWhichQuality(title, tracks)
-          ).then(async (quality) => {
-            if (quality !== null) {
-              await theKeptListening().keep(keptListeningOf(toKeep(quality)));
-            }
-          });
-        }}
-      >
+    const download = () => {
+      void (
+        kind === 'audiobook'
+          ? Promise.resolve<AudioQuality>('lossless')
+          : askWhichQuality(title, tracks)
+      ).then(async (quality) => {
+        if (quality !== null) {
+          await theKeptListening().keep(keptListeningOf(toKeep(quality)));
+        }
+      });
+    };
+
+    return isRound ? (
+      <ARoundAction icon={Download} says={say('common.download')} onPress={download} />
+    ) : (
+      <Button tone="quiet" icon={Download} onPress={download}>
         {say('common.download')}
       </Button>
     );
@@ -87,41 +97,41 @@ const ADownloadToListen = ({ kind, id, title, tracks, toKeep }: ADownloadToListe
     standingOfKeptListening(shelf, kept, platformInUse().listeningFiles.canPlay),
   );
 
-  return (
-    <Button
-      tone="quiet"
-      icon={
-        description.next === 'remove' ? Check : description.next === 'pause' ? Pause : RotateCcw
-      }
-      onPress={() => {
-        if (description.next !== 'remove') {
-          void theKeptListening().pause(kind, id, description.next === 'pause');
+  const icon =
+    description.next === 'remove' ? Check : description.next === 'pause' ? Pause : RotateCcw;
+  const change = () => {
+    if (description.next !== 'remove') {
+      void theKeptListening().pause(kind, id, description.next === 'pause');
 
-          return;
-        }
+      return;
+    }
 
-        Alert.alert(
-          say('common.removeTheDownloadOfTitle', { title }),
-          say('common.itComesOffThisDevice'),
-          [
-            { text: say('common.keepIt'), style: 'cancel' },
-            {
-              text: say('common.downloadItAgain'),
-              onPress: () => {
-                void theKeptListening().keep(keptListeningOf(toKeep(kept.quality ?? 'lossless')));
-              },
-            },
-            {
-              text: say('common.removeTheDownload'),
-              style: 'destructive',
-              onPress: () => {
-                void theKeptListening().drop(kind, id);
-              },
-            },
-          ],
-        );
-      }}
-    >
+    Alert.alert(
+      say('common.removeTheDownloadOfTitle', { title }),
+      say('common.itComesOffThisDevice'),
+      [
+        { text: say('common.keepIt'), style: 'cancel' },
+        {
+          text: say('common.downloadItAgain'),
+          onPress: () => {
+            void theKeptListening().keep(keptListeningOf(toKeep(kept.quality ?? 'lossless')));
+          },
+        },
+        {
+          text: say('common.removeTheDownload'),
+          style: 'destructive',
+          onPress: () => {
+            void theKeptListening().drop(kind, id);
+          },
+        },
+      ],
+    );
+  };
+
+  return isRound ? (
+    <ARoundAction icon={icon} says={description.says} onPress={change} />
+  ) : (
+    <Button tone="quiet" icon={icon} onPress={change}>
       {description.says}
     </Button>
   );

@@ -7,7 +7,7 @@ import {
   Image as ImageIcon,
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react/fill';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
 import { SettingList } from '@ValenceUI/SettingList';
@@ -28,6 +28,7 @@ import {
   saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  savePlaysCatalogueTrailers,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
@@ -55,6 +56,7 @@ const PREVIEW_QUALITY_CHOICES = [
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
+import { PhoneNotificationsRow } from './components/PhoneNotificationsRow/PhoneNotificationsRow';
 import { UsageStatisticsRow } from './components/UsageStatisticsRow/UsageStatisticsRow';
 import { HardwareTest } from './components/HardwareTest/HardwareTest';
 import { DevicePlacement } from './components/DevicePlacement/DevicePlacement';
@@ -128,6 +130,23 @@ const SettingsPanel = ({
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
   );
+  const [playsTrailers, setPlaysTrailers] = useState(
+    overview?.settings.playsCatalogueTrailers ?? false,
+  );
+  const fetchesTrailersSaved = overview?.settings.fetchesCatalogueTrailers;
+  const playsTrailersSaved = overview?.settings.playsCatalogueTrailers;
+
+  useEffect(() => {
+    if (fetchesTrailersSaved !== undefined) {
+      setFetchesTrailers(fetchesTrailersSaved);
+    }
+  }, [fetchesTrailersSaved]);
+
+  useEffect(() => {
+    if (playsTrailersSaved !== undefined) {
+      setPlaysTrailers(playsTrailersSaved);
+    }
+  }, [playsTrailersSaved]);
   const [shortSegments, setShortSegments] = useState(overview?.settings.usesShortSegments ?? true);
   const [gaplessEpisodes, setGaplessEpisodes] = useState(
     overview?.settings.playsEpisodesGapless ?? true,
@@ -623,6 +642,41 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
+          title={say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest')}
+          description={say('screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest')}
+            isLabelHidden
+            isOn={playsTrailers}
+            disabled={!fetchesTrailers}
+            onToggle={() => {
+              const next = !playsTrailers;
+
+              setPlaysTrailers(next);
+
+              void savePlaysCatalogueTrailers(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.trailerPlayingSettingSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe'),
+                  ),
+                );
+
+                if (saved) {
+                  onCatalogueTrailersSaved();
+
+                  return;
+                }
+
+                setPlaysTrailers(!next);
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
           title={say('screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb')}
           description={say('screens.adminArea.settingsPanel.looksForWhatAMusicLibrarys')}
         >
@@ -850,6 +904,10 @@ const SettingsPanel = ({
           isOn={overview?.settings.telemetryEnabled ?? true}
           isOffByEnvironment={overview?.settings.isTelemetryOffByEnvironment ?? false}
         />
+
+        {overview === null ? null : (
+          <PhoneNotificationsRow isOn={overview.settings.usesPushRelay} />
+        )}
 
         <SettingRow
           title={say('screens.adminArea.settingsPanel.signingIn')}

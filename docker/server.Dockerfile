@@ -35,6 +35,23 @@ RUN curl -fsSL https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v${WHIS
   && cmake --build /tmp/whisper-build --target whisper-cli -j 4 \
   && install -m 0755 /tmp/whisper-build/bin/whisper-cli /usr/local/bin/whisper-cli
 
+# yt-dlp, for the trailer a title somebody may ask for plays behind its page, where an administrator
+# has turned that on. The standalone build carries its own Python, so the image needs none; it is
+# checked against the release's own list of SHA-256 sums before it is kept. YouTube changes often
+# enough that an old yt-dlp stops finding trailers, so this is bumped with each yt-dlp release.
+FROM debian:bookworm-slim AS yt-dlp
+ARG TARGETARCH
+ARG YT_DLP_VERSION=2026.10.26
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/*
+RUN name=$([ "$TARGETARCH" = "arm64" ] && echo yt-dlp_linux_aarch64 || echo yt-dlp_linux) \
+  && cd /tmp \
+  && curl -fsSLO https://github.com/yt-dlp/yt-dlp/releases/download/${YT_DLP_VERSION}/${name} \
+  && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/download/${YT_DLP_VERSION}/SHA2-256SUMS \
+    | grep " ${name}$" | sha256sum -c - \
+  && install -m 0755 /tmp/${name} /usr/local/bin/yt-dlp
+
 FROM node:24.21.0-bookworm-slim AS web-build
 WORKDIR /build
 RUN corepack enable
@@ -164,6 +181,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends libgomp1 \
   && rm -rf /var/lib/apt/lists/*
 COPY --from=whisper-build /usr/local/bin/whisper-cli /usr/local/bin/whisper-cli
+COPY --from=yt-dlp /usr/local/bin/yt-dlp /usr/local/bin/yt-dlp
 ENV VALENCE_WHISPER=/usr/local/bin/whisper-cli
 
 # Buckets in S3-compatible storage are mounted as folders with rclone, through FUSE, so a library

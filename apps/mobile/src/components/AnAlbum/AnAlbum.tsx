@@ -1,19 +1,18 @@
-import { ListPlus, Record } from '@keyline-icons/react-native';
+import { ListPlus, Record, User } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
+import { AMusicScreen } from '@ValenceMobile/components/AMusicScreen/AMusicScreen';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
-import { Button } from '@ValenceMobile/components/Button/Button';
 import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
-import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { askWhichPlaylist } from '@ValenceMobile/music/askWhichPlaylist';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
@@ -39,9 +38,6 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   const read = useQuery(musicQueries.album(albumId));
   const player = thePhonesMusicPlayer();
   const playlists = useMyPlaylists();
-  const lights = usePictureLights(
-    read.data?.album.hasArtwork === true ? onThisServer(albumArtworkUrl(read.data.album.id)) : null,
-  );
 
   if (read.isPending) {
     return (
@@ -68,13 +64,15 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   ].filter((part) => part !== null);
 
   return (
-    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
+    <AMusicScreen
+      title={album.title}
+      artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
+      standIn={Record}
+      onBack={onBack}
+    >
       <AMusicHead
         kind={album.isCompilation ? say('common.compilation') : say('common.album')}
-        title={album.title}
         detail={detail.join(' · ')}
-        artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
-        standIn={Record}
         canPlay={tracks.length > 0}
         onPlay={() => {
           player.play(tracks, 0, { source });
@@ -86,18 +84,17 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
           });
         }}
       >
-        <Button
-          tone="ghost"
+        <ARoundAction
+          icon={User}
+          says={say('common.artist')}
           onPress={() => {
             onArtist(album.artist.id);
           }}
-        >
-          {album.artist.name}
-        </Button>
+        />
         {tracks.length === 0 ? null : (
-          <Button
-            tone="quiet"
+          <ARoundAction
             icon={ListPlus}
+            says={say('common.addToPlaylist')}
             onPress={() => {
               askWhichPlaylist(
                 album.title,
@@ -107,12 +104,11 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
                 onPlaylist,
               );
             }}
-          >
-            {say('common.addToPlaylist')}
-          </Button>
+          />
         )}
         {tracks.length === 0 ? null : (
           <ADownloadToListen
+            isRound
             kind="album"
             id={album.id}
             title={album.title}
@@ -132,7 +128,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
       />
 
       <APluginPanels on="album" subjectId={albumId} />
-    </Screen>
+    </AMusicScreen>
   );
 };
 

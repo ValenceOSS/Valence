@@ -40,6 +40,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     previewQuality: 'high',
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     fetchesMusicDetails: false,
@@ -48,6 +49,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
     telemetryEnabled: true,
+    usesPushRelay: false,
     isTelemetryOffByEnvironment: false,
   },
   transcoder: {

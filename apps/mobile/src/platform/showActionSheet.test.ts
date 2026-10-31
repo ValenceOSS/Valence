@@ -1,57 +1,19 @@
-import { requireOptionalNativeModule } from 'expo';
-import { ActionSheetIOS, Platform } from 'react-native';
 import { showActionSheet } from './showActionSheet';
-
-jest.mock('expo', () => ({ requireOptionalNativeModule: jest.fn(() => null) }));
-
-const SHEET = {
-  title: 'Which version',
-  options: ['Theatrical', 'Extended', 'Cancel'],
-  cancelButtonIndex: 2,
-};
-
-afterEach(() => {
-  Platform.OS = 'ios';
-});
+import { theSheetsAsked } from './theSheetsAsked';
 
 describe('showActionSheet', () => {
-  it('asks in the system’s action sheet on an iPhone', () => {
-    const shown = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_, picked) => {
-        picked(1);
-      });
+  it('asks in Valence’s own sheet, and tells whoever asked what was picked', () => {
     const onPicked = jest.fn();
 
-    showActionSheet(SHEET, onPicked);
+    showActionSheet(
+      { title: 'Arrival', options: ['Hide', 'Cancel'], cancelButtonIndex: 1 },
+      onPicked,
+    );
 
-    expect(shown).toHaveBeenCalledWith(SHEET, onPicked);
-    expect(onPicked).toHaveBeenCalledWith(1);
-  });
+    expect(theSheetsAsked().read()?.sheet.title).toBe('Arrival');
 
-  it('asks in the system’s list dialog on Android, and says what was picked', async () => {
-    Platform.OS = 'android';
-    const ask = jest.fn(() => Promise.resolve(0));
-    jest.mocked(requireOptionalNativeModule).mockReturnValue({ ask });
-    const onPicked = jest.fn();
+    theSheetsAsked().answer(0);
 
-    showActionSheet(SHEET, onPicked);
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(ask).toHaveBeenCalledWith('Which version', null, SHEET.options, 2, null, []);
     expect(onPicked).toHaveBeenCalledWith(0);
-  });
-
-  it('says the cancel choice where the dialog was dismissed', async () => {
-    Platform.OS = 'android';
-    jest.mocked(requireOptionalNativeModule).mockReturnValue({ ask: () => Promise.resolve(null) });
-    const onPicked = jest.fn();
-
-    showActionSheet(SHEET, onPicked);
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(onPicked).toHaveBeenCalledWith(2);
   });
 });

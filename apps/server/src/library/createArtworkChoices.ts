@@ -29,11 +29,12 @@ type Title = {
  * and answers with them wherever that title's artwork is asked for.
  *
  * A choice belongs to the title, not the file: it is kept against the library and the catalogue's
- * id, so it reaches every episode of a programme, outlives the files being scanned again or replaced,
- * and is dropped with the library. A poster and a logo are the programme's own on every episode, so
- * they are written onto every file as well as kept, and a card that asks whether there is a poster at
- * all is answered yes. A backdrop is not: each episode's is a still from that episode, so a
- * programme's chosen backdrop is only given where the title itself is asked for, and the stills stay.
+ * id, so it reaches every episode of a programme, outlives the files being scanned again or
+ * replaced, and is dropped with the library. A poster and a logo are the programme's own on every
+ * episode, so they are written onto every file as well as kept, and a card that asks whether there
+ * is a poster at all is answered yes. A backdrop is not: each episode's is a still from that
+ * episode, so a programme's chosen backdrop is only given where the title itself is asked for, and
+ * the stills stay.
  *
  * Only a picture the catalogue itself offers can be chosen, so the server never fetches an address
  * somebody typed.
@@ -180,7 +181,8 @@ const createArtworkChoices = ({
 
   /**
    * Puts back the picture the catalogue itself picks for a title, straight away, where the
-   * catalogue can be asked; where it cannot, the title is read again and the pick comes back with it.
+   * catalogue can be asked; where it cannot, the title is read again and the pick comes back with
+   * it.
    *
    * @param title - The title.
    * @param kind - Which picture.
@@ -322,7 +324,8 @@ const createArtworkChoices = ({
    * @param mediaId - The file.
    * @param kind - Which picture.
    * @param isOfTitle - Whether what was asked for is the title's own picture rather than this
-   *   file's, which is what lets a programme's chosen backdrop be given in place of an episode still.
+   *   file's, which is what lets a programme's chosen backdrop be given in place of an episode
+   *   still.
    * @returns The chosen address, or null.
    */
   const urlFor = async (
@@ -349,7 +352,55 @@ const createArtworkChoices = ({
     return row?.url ?? null;
   };
 
-  return { read, choose, urlFor };
+  /**
+   * Lists the posters the catalogue holds of a title with no lettering on them, best first. The
+   * catalogue keeps its own answers for hours and shares one question between callers asking at
+   * once, so a remote opened on a film again and again asks it only the once.
+   *
+   * @param title - The title.
+   * @returns Their addresses, or null where the catalogue could not be asked.
+   */
+  const barePostersOf = async (title: Title): Promise<string[] | null> => {
+    const options = await readOptions?.({
+      externalId: title.externalId,
+      isSeries: title.externalKind === 'tv',
+    }).catch(() => null);
+
+    if (options === undefined || options === null) {
+      return null;
+    }
+
+    return options.poster.filter((option) => option.language === null).map(({ url }) => url);
+  };
+
+  /**
+   * Answers which poster of a file's title has no lettering on it, for a page that writes the title
+   * itself over the picture: the one chosen for the title where that one has none, and otherwise
+   * the catalogue's best. Only the library's own catalogue is asked, so it needs nothing more than
+   * the library does.
+   *
+   * @param mediaId - The file.
+   * @returns The poster's address, or null where the title has none, or is not matched.
+   */
+  const barePosterFor = async (mediaId: string): Promise<string | null> => {
+    const title = await titleOf(mediaId);
+
+    if (typeof title === 'string') {
+      return null;
+    }
+
+    const bare = await barePostersOf(title);
+
+    if (bare === null) {
+      return null;
+    }
+
+    const { poster } = await chosenFor(title);
+
+    return bare.find((url) => url === poster) ?? bare[0] ?? null;
+  };
+
+  return { read, choose, urlFor, barePosterFor };
 };
 
 export type { ArtworkRefusal };

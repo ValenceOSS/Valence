@@ -36,6 +36,12 @@ const watching = (overrides: Partial<VideoNowWatching> = {}): VideoNowWatching =
   positionSeconds: 60,
   durationSeconds: 6000,
   isPlaying: true,
+  hasNext: false,
+  settings: [],
+  skip: null,
+  stepsBy: null,
+  canStepOn: false,
+  canStepBack: false,
   reportedAtMs: NOW - 10_000,
   ...overrides,
 });
@@ -172,6 +178,29 @@ describe('useVideoRemote', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(readControlledDevice()).toEqual({ clientId: 'tv', label: 'Living room' });
+  });
+
+  it('keeps hold of another television it moves on to before that one has said anything', async () => {
+    devices.fetchVideoDevices.mockResolvedValue([theTv(watching())]);
+    controlDevice({ clientId: 'tv', label: 'Living room' });
+
+    const { result } = renderHookInACache(() => useVideoRemote());
+
+    await waitFor(() => {
+      expect(result.current.watching).not.toBeNull();
+    });
+
+    devices.fetchVideoDevices.mockResolvedValue([
+      theTv(watching()),
+      { clientId: 'bedroom', label: 'Bedroom', kind: 'tv', nowWatching: null },
+    ]);
+    act(() => {
+      controlDevice({ clientId: 'bedroom', label: 'Bedroom' });
+    });
+    hearAChange();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(readControlledDevice()).toEqual({ clientId: 'bedroom', label: 'Bedroom' });
   });
 
   it('lets go once the device it controls says it has stopped', async () => {

@@ -7,7 +7,7 @@ type FocusableProps = {
   onHold?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
-  shadow?: { height: number; cornerRadius: number } | null;
+  shadow?: { height: number; cornerRadius: number; reach?: number } | null;
   ref?: Ref<View> | undefined;
   label: string;
   hasPreferredFocus?: boolean;

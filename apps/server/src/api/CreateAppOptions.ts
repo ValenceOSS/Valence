@@ -73,6 +73,7 @@ import type { BookService } from '@ValenceServer/books/createDatabaseBookService
 import type { BookDevices } from '@ValenceServer/books/createBookDevices';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { NotificationStore } from '@ValenceServer/notifications/NotificationStore';
+import type { PushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import type { PermissionService } from '@ValenceServer/auth/PermissionService';
 import type { ApiKeyService } from '@ValenceServer/auth/ApiKeyService';
 import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
@@ -105,6 +106,7 @@ import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { EmailService } from '@ValenceServer/email/EmailService';
 import type { TelemetryService } from '@ValenceServer/telemetry/TelemetryService';
 import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
+import type { TrailerAddresses } from '@ValenceServer/requests/trailers/TrailerAddresses';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -144,6 +146,8 @@ type CreateAppOptions = {
   webhooks?: WebhookStore;
   notifications?: NotificationStore;
   readPushPublicKey?: () => Promise<string>;
+  pushDeliveries?: PushDeliveries;
+  readWakesPhones?: () => Promise<boolean>;
   queueWebhookDelivery?: (subscriptionId: string, payload: string) => Promise<void>;
   banAccount?: (userId: string, reason: string) => Promise<boolean>;
   unbanAccount?: (userId: string) => Promise<boolean>;
@@ -316,6 +320,7 @@ type CreateAppOptions = {
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;
+  trailers?: TrailerAddresses;
   realtime?: RealtimePublisher;
   logs?: LogStore;
   log?: Logger;

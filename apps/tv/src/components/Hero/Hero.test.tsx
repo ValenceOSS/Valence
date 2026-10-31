@@ -126,9 +126,9 @@ describe('Hero', () => {
     const drawn = await drawHero();
 
     expect(drawn.getByText('Arrival')).toBeTruthy();
-    expect(
-      drawn.getByText('★ 7.9   ·   2016   ·   2:00:00   ·   Drama, Science Fiction'),
-    ).toBeTruthy();
+    expect(drawn.getByText('★ 7.9   ·   2016   ·   2:00:00')).toBeTruthy();
+    expect(drawn.getByText('Science Fiction')).toBeTruthy();
+    expect(drawn.getByText('Mystery')).toBeTruthy();
     expect(drawn.getByText('4K')).toBeTruthy();
     expect(drawn.getByText('Dolby Vision')).toBeTruthy();
     expect(drawn.getByText('5.1')).toBeTruthy();

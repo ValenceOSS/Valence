@@ -8,7 +8,7 @@ import {
   SquarePlayOff,
   TriangleAlert,
   X,
-} from '@keyline-icons/react-native';
+} from '@keyline-icons/react-native/fill';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';

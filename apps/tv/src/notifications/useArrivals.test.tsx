@@ -32,6 +32,20 @@ const aNotice = (id: string, overrides: Partial<Notification> = {}): Notificatio
 
 const OLD = aNotice('00000000-0000-4000-8000-000000000001');
 
+/**
+ * An invitation into a watch party, sent so long ago.
+ *
+ * @param id - The notice.
+ * @param agoMs - How long ago it was sent.
+ * @returns The notice.
+ */
+const anInvitation = (id: string, agoMs: number): Notification =>
+  aNotice(id, {
+    event: 'party.invited',
+    link: '/watch/00000000-0000-4000-8000-000000000006?party=abc',
+    createdAt: new Date(Date.now() - agoMs).toISOString(),
+  });
+
 const NEW = aNotice('00000000-0000-4000-8000-000000000002');
 
 const settle = async (): Promise<void> => {
@@ -110,5 +124,34 @@ describe('useArrivals', () => {
 
     expect(result.current.arrival).toBeNull();
     expect(mockMarkRead).not.toHaveBeenCalled();
+  });
+
+  it('announces an invitation into a party, which is the only way a television hears of one', async () => {
+    const { result, arrives } = await withTheInbox();
+    const invitation = anInvitation('00000000-0000-4000-8000-000000000005', 0);
+
+    await arrives([invitation, OLD]);
+
+    expect(result.current.arrival).toEqual(invitation);
+  });
+
+  it('announces an unread invitation from the last few minutes that came before it opened', async () => {
+    const invitation = anInvitation('00000000-0000-4000-8000-000000000007', 2 * 60_000);
+
+    mockInbox.notifications = [invitation, OLD];
+
+    const { result } = await withTheInbox();
+
+    await waitFor(() => {
+      expect(result.current.arrival).toEqual(invitation);
+    });
+  });
+
+  it('leaves alone an invitation whose party has likely moved on', async () => {
+    const { result, arrives } = await withTheInbox();
+
+    await arrives([anInvitation('00000000-0000-4000-8000-000000000008', 60 * 60_000), OLD]);
+
+    expect(result.current.arrival).toBeNull();
   });
 });

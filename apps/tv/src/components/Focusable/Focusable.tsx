@@ -7,7 +7,8 @@ import type { FocusableProps } from './Focusable.types';
 
 /**
  * Something the remote can land on and press. Every control on the television is one of these, the
- * way every control on the web is a Button: it owns the pressable element, and nothing else draws one.
+ * way every control on the web is a Button: it owns the pressable element, and nothing else draws
+ * one.
  *
  * Landing on it lifts it, the way the rest of tvOS does, with a shadow beneath where it asks for
  * one. The lift is driven natively, in the same animation as the television's own move, so it never
@@ -17,15 +18,17 @@ import type { FocusableProps } from './Focusable.types';
  * unless what is inside is drawn differently for being landed on.
  *
  * It asks to start with the remote only until it has had it once, since tvOS hands focus back to a
- * view that wants it every time that view is laid out again, pulling the remote off wherever it went.
+ * view that wants it every time that view is laid out again, pulling the remote off wherever it
+ * went.
  *
  * @param children - What is drawn, or a function told whether this is focused.
  * @param onPress - Told when it is pressed.
  * @param onHold - Told when select is held down on it, for a second thing to do with it.
  * @param onFocus - Told when the remote lands on it.
  * @param onBlur - Told when the remote leaves it.
- * @param shadow - The picture that casts a shadow while lifted, as a card's does: how tall it is from
- *   the top, and how rounded.
+ * @param shadow - The picture that casts a shadow while lifted, as a card's does: how tall it is
+ *   from the top, how rounded, and how far its shadow spreads where shorter than the television's
+ *   own.
  * @param label - What it is called, for VoiceOver.
  * @param hasPreferredFocus - Whether the remote should start here when the screen appears.
  * @param isDisabled - Whether it can be landed on at all.
@@ -70,6 +73,7 @@ const Focusable = ({
       scale={scale}
       shadowHeight={shadow?.height ?? 0}
       cornerRadius={shadow?.cornerRadius ?? 0}
+      {...(shadow?.reach === undefined ? {} : { shadowReach: shadow.reach })}
       isAnchoredLeft={isAnchoredLeft}
       style={style}
     >

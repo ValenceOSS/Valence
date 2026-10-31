@@ -8,6 +8,7 @@ type ADownloadToListenProps = {
   title: string;
   tracks: readonly MusicTrack[];
   toKeep: (quality: AudioQuality) => ListeningToKeep;
+  isRound?: boolean;
 };
 
 export type { ADownloadToListenProps };

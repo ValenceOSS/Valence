@@ -18,13 +18,9 @@ const theControls = (overrides: Partial<TheControlsProps> = {}) => (
     onSeek={jest.fn()}
     onTouched={jest.fn()}
     onClose={jest.fn()}
-    rate={1}
-    qualityLabel="Auto"
     onLock={jest.fn()}
     onPictureInPicture={jest.fn()}
-    onSpeed={jest.fn()}
-    onAudioAndSubtitles={jest.fn()}
-    onQuality={jest.fn()}
+    onSettings={jest.fn()}
     onStats={jest.fn()}
     {...overrides}
   />
@@ -86,16 +82,21 @@ describe('TheControls', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('names each panel along the foot, saying the speed and quality playing', async () => {
-    const onAudioAndSubtitles = jest.fn();
-    const drawn = await render(theControls({ onAudioAndSubtitles }));
+  it('keeps the quality, speed and sound behind one settings button', async () => {
+    const onSettings = jest.fn();
+    const drawn = await render(theControls({ onSettings }));
 
-    expect(drawn.getByText('Speed (Normal)')).toBeTruthy();
-    expect(drawn.getByText('Quality (Auto)')).toBeTruthy();
+    expect(drawn.queryByText('Audio & Subtitles')).toBeNull();
 
-    await userEvent.press(drawn.getByLabelText('Audio & Subtitles'));
+    await userEvent.press(drawn.getByLabelText('Settings'));
 
-    expect(onAudioAndSubtitles).toHaveBeenCalled();
+    expect(onSettings).toHaveBeenCalled();
+  });
+
+  it('says how far in they are as well as how much is left', async () => {
+    const drawn = await render(theControls());
+
+    expect(drawn.getByText('4:11')).toBeTruthy();
   });
 
   it('opens stats for nerds and locks the controls from the top', async () => {
@@ -134,7 +135,7 @@ describe('TheControls', () => {
   it('shows nothing of a film whose length is not known yet, rather than a broken line', async () => {
     const drawn = await render(theControls({ at: 0, runsFor: 0, buffered: 0 }));
 
-    expect(drawn.getByText('0:00')).toBeTruthy();
+    expect(drawn.getAllByText('0:00').length).toBeGreaterThan(0);
   });
 
   it('says the whole of it is left at the very beginning', async () => {

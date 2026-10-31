@@ -7,6 +7,7 @@ const SERVER_FEATURES = [
   'streams.fromSources',
   'library.smartLists',
   'requests.searchPages',
+  'library.barePosters',
 ] as const;
 
 export { SERVER_FEATURES };

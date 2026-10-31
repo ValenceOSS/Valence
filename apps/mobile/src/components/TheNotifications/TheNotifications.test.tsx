@@ -35,7 +35,7 @@ describe('TheNotifications', () => {
     });
     const onOpen = jest.fn();
     const drawn = await render(
-      <TheNotifications isOpen onOpen={onOpen} onJoin={jest.fn()} onClose={jest.fn()} />,
+      <TheNotifications onOpen={onOpen} onJoin={jest.fn()} onBack={jest.fn()} />,
       {
         wrapper: CacheScope,
       },
@@ -64,7 +64,7 @@ describe('TheNotifications', () => {
     const onOpen = jest.fn();
     const onJoin = jest.fn();
     const drawn = await render(
-      <TheNotifications isOpen onOpen={onOpen} onJoin={onJoin} onClose={jest.fn()} />,
+      <TheNotifications onOpen={onOpen} onJoin={onJoin} onBack={jest.fn()} />,
       { wrapper: CacheScope },
     );
 

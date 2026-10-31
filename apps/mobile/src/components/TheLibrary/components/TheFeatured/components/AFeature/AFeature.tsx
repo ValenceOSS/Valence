@@ -1,5 +1,4 @@
-import { Info } from '@keyline-icons/react-native';
-import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
+import { Info, Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, StyleSheet, View } from 'react-native';
@@ -10,6 +9,8 @@ import { ASoundSwitch } from '@ValenceMobile/components/ASoundSwitch/ASoundSwitc
 import { AScrim } from '@ValenceMobile/components/AScrim/AScrim';
 import { ATitleLogo } from '@ValenceMobile/components/ATitleLogo/ATitleLogo';
 import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
+import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
+import { GROUND } from '@ValenceMobile/theme/GROUND';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -46,6 +47,8 @@ const PARTS = 4;
 
 const ROUNDED = 20;
 
+const OVER_THE_SCRIM = '#000000';
+
 const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, justifyContent: 'space-between', marginTop: 8 },
   half: { flex: 1 },
@@ -72,7 +75,7 @@ const styles = StyleSheet.create({
   },
   moreInfo: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: '#3a3a3c',
     borderRadius: 12,
     flexDirection: 'row',
     flexGrow: 1,
@@ -95,9 +98,9 @@ const styles = StyleSheet.create({
 /**
  * One title featured at the head of the library, as the web's hero draws it: its backdrop settling
  * into place as it arrives, and a few seconds later a clip of it fading in over that, darkened and
- * blurred towards the foot where its logo, its facts and a few lines about it rise into view one
- * after another, with a way to play it and a way to read more. The lines about it fold away once
- * they have been read, and what is below them slides up into their place.
+ * blurred towards the foot where its logo, its facts with its age rating and a few lines about it
+ * rise into view one after another, with a way to play it and a way to read more. The lines about
+ * it fold away once they have been read, and what is below them slides up into their place.
  *
  * The clip plays only while the title is the one showing, silent unless somebody turned the sound
  * on, which is remembered for the next.
@@ -141,6 +144,8 @@ const AFeature = ({
   const [toldHigh, setToldHigh] = useState<number | null>(null);
   const title = media.seriesTitle ?? media.title;
   const overview = detail.data?.metadata.overview ?? null;
+  const certification = detail.data?.metadata.certification;
+  const certificationRegion = detail.data?.metadata.certificationRegion;
 
   useEffect(() => {
     if (!isShowing) {
@@ -239,8 +244,10 @@ const AFeature = ({
     media.seriesTitle === null || media.seriesTitle === undefined
       ? howLongItRuns(media.durationSeconds)
       : say('common.series'),
-    (media.genres ?? []).length === 0 ? null : (media.genres ?? []).slice(0, 2).join(', '),
   ].filter((fact) => fact !== null);
+  const genres = (media.genres ?? [])
+    .slice(0, 2)
+    .map((genre) => ({ label: genre, tone: 'solid' as const }));
 
   return (
     <Button tone="bare" label={title} onPress={onMoreInfo}>
@@ -295,14 +302,30 @@ const AFeature = ({
               <TheBadges
                 isOnArtwork
                 isShort
+                isSolid
                 badges={qualityBadges({
                   width: media.width,
                   height: media.height,
                   videoRange: media.videoRange,
                   audioStreams: detail.data?.audioStreams,
                 })}
+                rating={
+                  typeof certification === 'string' &&
+                  certification !== '' &&
+                  typeof certificationRegion === 'string'
+                    ? { certification, region: certificationRegion }
+                    : null
+                }
               />
             </Animated.View>
+
+            {genres.length === 0 ? null : (
+              <GROUND.Provider value={OVER_THE_SCRIM}>
+                <Animated.View style={risings[1]}>
+                  <ABadgeRow badges={genres} />
+                </Animated.View>
+              </GROUND.Provider>
+            )}
 
             {overview === null || overview === '' || !isTelling ? null : (
               <Animated.View style={[styles.folds, folds]}>

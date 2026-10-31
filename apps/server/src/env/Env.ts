@@ -3,6 +3,7 @@ import { DATABASE_ENV } from '@ValenceDatabase/DATABASE_ENV';
 import { defaultMediaJobs } from '@ValenceServer/env/defaultMediaJobs';
 import { say } from '@ValenceI18n/say';
 import { TELEMETRY_ADDRESS } from '@ValenceServer/telemetry/TELEMETRY_ADDRESS';
+import { PUSH_RELAY_ADDRESS } from '@ValenceServer/notifications/PUSH_RELAY_ADDRESS';
 
 const DEVELOPMENT_SECRET = 'development-secret-change-me-in-production';
 
@@ -109,6 +110,10 @@ const EnvSchema = z.object({
   VALENCE_TELEMETRY: z.string().default(''),
   DO_NOT_TRACK: z.string().default(''),
   VALENCE_TELEMETRY_URL: z.string().url().default(TELEMETRY_ADDRESS),
+  VALENCE_PUSH_RELAY_URL: z.string().url().default(PUSH_RELAY_ADDRESS),
+  VALENCE_YT_DLP: z.string().min(1).default('yt-dlp'),
+  VALENCE_YT_DLP_COOKIES: z.string().default(''),
+  VALENCE_FFMPEG: z.string().min(1).default('ffmpeg'),
 });
 
 type Env = z.infer<typeof EnvSchema>;

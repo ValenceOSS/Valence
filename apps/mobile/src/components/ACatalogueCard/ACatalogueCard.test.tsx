@@ -41,7 +41,7 @@ describe('ACatalogueCard', () => {
       />,
     );
 
-    expect(drawn.getByText('In your library')).toBeTruthy();
+    expect(drawn.getByText('In the library')).toBeTruthy();
   });
 
   it('ticks a film in the library once it has been watched, and not before', async () => {
@@ -69,7 +69,7 @@ describe('ACatalogueCard', () => {
     const drawn = await render(<ACatalogueCard title={aCatalogueTitle()} onAsk={jest.fn()} />);
 
     expect(drawn.queryByText('Requested')).toBeNull();
-    expect(drawn.queryByText('In your library')).toBeNull();
+    expect(drawn.queryByText('In the library')).toBeNull();
   });
 
   it('offers an album to be asked for, as it does a film', async () => {

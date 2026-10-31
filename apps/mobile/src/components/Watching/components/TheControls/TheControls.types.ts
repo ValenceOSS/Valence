@@ -7,6 +7,7 @@ type TheControlsProps = {
   fade: Animated.Value;
   title: string;
   year: number | null;
+  rating?: { certification: string; region: string } | null;
   isPlaying: boolean;
   wait?: { isShown: boolean; isFinishing: boolean; onFilled: () => void } | undefined;
   at: number;
@@ -15,8 +16,6 @@ type TheControlsProps = {
   trickplay: Trickplay | null;
   segments?: readonly MediaSegment[];
   chapters?: readonly VideoChapter[];
-  rate: number;
-  qualityLabel: string;
   onPlayPause: () => void;
   onSkip: (by: number) => void;
   onSeek: (to: number) => void;
@@ -24,13 +23,13 @@ type TheControlsProps = {
   onClose: () => void;
   onLock: () => void;
   onPictureInPicture: () => void;
-  onSpeed: () => void;
-  onAudioAndSubtitles?: (() => void) | undefined;
-  onQuality?: (() => void) | undefined;
+  onSettings: () => void;
   onStats: () => void;
   onEpisodes?: (() => void) | undefined;
   onNext?: (() => void) | undefined;
   onParty?: (() => void) | undefined;
+  onCast?: (() => void) | undefined;
+  castingTo?: string | null;
 };
 
 export type { TheControlsProps };

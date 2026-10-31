@@ -15,11 +15,21 @@ const LOGO = { width: 640, height: 200 };
  *   have, which is named in words.
  * @param name - What it is called.
  * @param hasLogo - Whether the server holds a logo for it.
+ * @param logoPath - The catalogue's logo, for a title the library does not have.
+ * @param isSeated - Whether a logo shorter than its space sits on what follows it rather than
+ *   floating in the middle, so a thin wordmark leaves no gap beneath it.
  */
-const TitleLockup = ({ mediaId, name, hasLogo }: TitleLockupProps) => {
+const TitleLockup = ({
+  mediaId,
+  name,
+  hasLogo,
+  logoPath = null,
+  isSeated = false,
+}: TitleLockupProps) => {
   const [hasNoLogo, setHasNoLogo] = useState(false);
+  const path = mediaId === null ? logoPath : hasLogo ? titleLogoUrl(mediaId) : null;
 
-  if (mediaId === null || !hasLogo || hasNoLogo) {
+  if (path === null || hasNoLogo) {
     return (
       <Text numberOfLines={2} style={styles.name}>
         {name}
@@ -29,9 +39,9 @@ const TitleLockup = ({ mediaId, name, hasLogo }: TitleLockupProps) => {
 
   return (
     <Artwork
-      path={titleLogoUrl(mediaId)}
+      path={path}
       fit="contain"
-      anchor="left"
+      anchor={isSeated ? 'bottomLeft' : 'left'}
       style={[LOGO, styles.logo]}
       onMissing={() => {
         setHasNoLogo(true);

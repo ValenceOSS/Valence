@@ -21,7 +21,7 @@ import { ASwipedTitle } from './components/ASwipedTitle/ASwipedTitle';
 import { AFadingCover } from './components/AFadingCover/AFadingCover';
 import { currentOf, nextIn, previousIn } from '@ValenceClient/music/playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
-import { tintOf } from './tintOf';
+import { tintOf } from '@ValenceMobile/theme/tintOf';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { Button } from '@ValenceMobile/components/Button/Button';

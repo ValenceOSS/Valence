@@ -21,6 +21,10 @@ public class ValenceFocusLiftModule: Module {
       Prop("cornerRadius") { (view: ValenceFocusLiftView, cornerRadius: Double) in
         view.cornerRadius = CGFloat(cornerRadius)
       }
+
+      Prop("shadowReach") { (view: ValenceFocusLiftView, reach: Double) in
+        view.shadowReach = CGFloat(reach)
+      }
     }
   }
 }

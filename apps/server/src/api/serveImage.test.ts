@@ -134,6 +134,33 @@ describe('GET /api/media/{mediaId}/image/{kind}', () => {
     expect(small.headers.get('etag')).not.toBe(whole.headers.get('etag'));
   });
 
+  it('serves a poster with no lettering on it where one is asked for', async () => {
+    const { ask, readImage } = await build();
+    const response = await ask(`${POSTER}?lettering=none`);
+
+    expect(response.status).toBe(200);
+    expect(readImage).toHaveBeenCalledWith(
+      `https://images.test/bare-poster/${MEDIA_ID}.jpg`,
+      undefined,
+    );
+  });
+
+  it('tags a poster with no lettering apart from the poster', async () => {
+    const { ask } = await build();
+    const poster = await ask(POSTER);
+    const bare = await ask(`${POSTER}?lettering=none`);
+
+    expect(bare.headers.get('etag')).not.toBe(poster.headers.get('etag'));
+  });
+
+  it('has nothing with no lettering but a poster', async () => {
+    const { ask, readImage } = await build();
+    const response = await ask(`/api/media/${MEDIA_ID}/image/backdrop?lettering=none`);
+
+    expect(response.status).toBe(404);
+    expect(readImage).not.toHaveBeenCalled();
+  });
+
   it('refuses a size it does not make', async () => {
     const { ask } = await build();
 

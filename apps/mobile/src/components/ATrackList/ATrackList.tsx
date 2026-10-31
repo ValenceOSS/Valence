@@ -1,18 +1,23 @@
 import { Fragment, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { AMissingSong } from '@ValenceMobile/components/ATrackList/components/AMissingSong/AMissingSong';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
+import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ATrackRow } from '@ValenceMobile/components/ATrackRow/ATrackRow';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
-import { askAboutATrack } from '@ValenceMobile/music/askAboutATrack';
+import { trackMenuItems } from '@ValenceMobile/music/trackMenuItems';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ATrackListMissingSong, ATrackListProps } from './ATrackList.types';
 
+const styles = StyleSheet.create({
+  divided: { borderTopWidth: StyleSheet.hairlineWidth },
+});
 /**
  * A list of tracks, any of which plays the list from there, as the web's track lists do: an
  * album's by their numbers, anything else by their covers.
@@ -43,6 +48,7 @@ const ATrackList = ({
   missing = [],
 }: ATrackListProps) => {
   const { player, state } = useTheMusic();
+  const colours = useTheColours();
   const favourites = useFavourites(useWatchingProfile());
   const cache = useQueryClient();
   const playlists = useQuery(musicQueries.playlists()).data;
@@ -87,17 +93,17 @@ const ATrackList = ({
     [player],
   );
 
-  const askAbout = useCallback(
+  const menuOf = useCallback(
     (at: number) => {
       const now = latest.current;
       const track = now.tracks[at];
       const { editing: changing } = now;
 
       if (track === undefined) {
-        return;
+        return [];
       }
 
-      askAboutATrack({
+      return trackMenuItems({
         track,
         player,
         isLiked: now.favourites.isKept(track.id),
@@ -132,6 +138,15 @@ const ATrackList = ({
     [player, cache],
   );
 
+  const like = useCallback((at: number) => {
+    const now = latest.current;
+    const track = now.tracks[at];
+
+    if (track !== undefined) {
+      now.favourites.toggle(track.id);
+    }
+  }, []);
+
   const missingSong = (song: ATrackListMissingSong) => (
     <AMissingSong
       key={song.key}
@@ -149,21 +164,28 @@ const ATrackList = ({
       {tracks.map((track, at) => (
         <Fragment key={`${track.id}:${at.toString()}`}>
           {missing.filter((song) => song.before === at).map(missingSong)}
-          <ATrackRow
-            track={track}
-            at={at}
-            number={isAnAlbum ? (track.trackNumber ?? at + 1) : null}
-            artwork={
-              isAnAlbum || !track.album.hasArtwork
-                ? null
-                : onThisServer(albumArtworkUrl(track.album.id))
+          <View
+            style={
+              at === 0 ? null : [styles.divided, { borderTopColor: withAlpha(colours.text, 0.14) }]
             }
-            isCurrent={currentId === track.id}
-            isPlaying={currentId === track.id && isPlaying}
-            isLiked={favourites.isKept(track.id)}
-            onPlay={play}
-            onMenu={askAbout}
-          />
+          >
+            <ATrackRow
+              track={track}
+              at={at}
+              number={isAnAlbum ? (track.trackNumber ?? at + 1) : null}
+              artwork={
+                isAnAlbum || !track.album.hasArtwork
+                  ? null
+                  : onThisServer(albumArtworkUrl(track.album.id))
+              }
+              isCurrent={currentId === track.id}
+              isPlaying={currentId === track.id && isPlaying}
+              isLiked={favourites.isKept(track.id)}
+              onPlay={play}
+              menuOf={menuOf}
+              onLike={like}
+            />
+          </View>
         </Fragment>
       ))}
       {missing.filter((song) => song.before >= tracks.length).map(missingSong)}

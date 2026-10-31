@@ -288,6 +288,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           allowedApps: current.allowedApps,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
+          playsCatalogueTrailers: current.playsCatalogueTrailers,
           usesShortSegments: current.usesShortSegments,
           playsEpisodesGapless: current.playsEpisodesGapless,
           fetchesMusicDetails: current.fetchesMusicDetails,
@@ -298,6 +299,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           splashscreen: await splashscreen.address(),
           wayInMessage: current.wayInMessage,
           telemetryEnabled: current.telemetryEnabled,
+          usesPushRelay: current.usesPushRelay,
           isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -358,6 +360,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.fetchesCatalogueTrailers === undefined
         ? {}
         : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
+      ...(patch.playsCatalogueTrailers === undefined
+        ? {}
+        : { playsCatalogueTrailers: patch.playsCatalogueTrailers }),
       ...(patch.usesShortSegments === undefined
         ? {}
         : { usesShortSegments: patch.usesShortSegments }),
@@ -379,6 +384,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
       ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
       ...(patch.telemetryEnabled === undefined ? {} : { telemetryEnabled: patch.telemetryEnabled }),
+      ...(patch.usesPushRelay === undefined ? {} : { usesPushRelay: patch.usesPushRelay }),
     });
 
     await recordAudit(
@@ -427,6 +433,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         allowedApps: updated.allowedApps,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
+        playsCatalogueTrailers: updated.playsCatalogueTrailers,
         usesShortSegments: updated.usesShortSegments,
         playsEpisodesGapless: updated.playsEpisodesGapless,
         fetchesMusicDetails: updated.fetchesMusicDetails,
@@ -437,6 +444,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         splashscreen: await splashscreen.address(),
         wayInMessage: updated.wayInMessage,
         telemetryEnabled: updated.telemetryEnabled,
+        usesPushRelay: updated.usesPushRelay,
         isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
       },
       200,

@@ -39,6 +39,7 @@ import {
 } from '@ValenceClient/playback/qualityPreference';
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { Button } from '@ValenceTv/components/Button/Button';
@@ -50,6 +51,8 @@ import { useRemoteControlled } from '@ValenceTv/playback/useRemoteControlled';
 import { PlayerControls } from '@ValenceTv/screens/Player/components/PlayerControls/PlayerControls';
 import { SubtitleLine } from '@ValenceTv/screens/Player/components/SubtitleLine/SubtitleLine';
 import { SettingsMenu } from '@ValenceTv/screens/Player/components/SettingsMenu/SettingsMenu';
+import { ratingOf } from '@ValenceTv/library/ratingOf';
+import { StartedFrom } from '@ValenceTv/screens/Player/components/StartedFrom/StartedFrom';
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
 import { TrackMenu } from '@ValenceTv/screens/Player/components/TrackMenu/TrackMenu';
 import { UpNext } from '@ValenceTv/screens/Player/components/UpNext/UpNext';
@@ -130,6 +133,8 @@ const NO_SEGMENTS: MediaSegment[] = [];
 
 const NO_CHAPTERS: VideoChapter[] = [];
 
+const BACK_RESTARTS_AFTER = 5;
+
 /**
  * How a playing speed is said: normal at its own pace, and otherwise as a multiple.
  *
@@ -140,8 +145,8 @@ const speedLabelOf = (speed: number): string =>
   speed === 1 ? say('common.normal') : `${speed.toString()}×`;
 
 /**
- * The quality a television asks for first: the one somebody chose, or the whole film where they left
- * it to choose for itself, since a television has no player that switches between them.
+ * The quality a television asks for first: the one somebody chose, or the whole film where they
+ * left it to choose for itself, since a television has no player that switches between them.
  *
  * @returns The quality to ask for.
  */
@@ -171,8 +176,9 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * with the controls away, left and right go back and forward ten seconds and any other press brings
  * them up; they go away again after a few seconds of playing untouched, and Menu puts them away
  * before it leaves. The player holds Menu itself for as long as it is open, so leaving a film goes
- * back rather than out of the app, whatever is beneath it. As an episode's credits roll the next one is offered, and starts on its own after
- * a count unless enough have followed on untouched that it asks instead.
+ * back rather than out of the app, whatever is beneath it. As an episode's credits roll the next
+ * one is offered, and starts on its own after a count unless enough have followed on untouched that
+ * it asks instead.
  *
  * Where this viewer is gets reported as they go and once more on leaving, so every screen with this
  * title on it knows where they stopped. The position is kept from the player's own events rather
@@ -183,13 +189,15 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * @param mediaId - What to play.
  * @param startSeconds - Where to start.
  * @param carriedOn - How many episodes have followed on their own before this one.
+ * @param startedFrom - The device that started it here, such as a phone, said on a card in the top
+ *   right as it starts so the room knows where it came from.
  * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it.
  * @param onNext - Told to play the next episode, and how many will then have followed on untouched.
  * @param watchParty - The watch party this television holds. Where it is watching this, the film is
- * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than straight
- * to the player, and what the others did is said over the picture — and the party is reached from
- * the settings, to start one, see who is in it, or leave. A party wanting its password asks for it
- * over the film.
+ * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than
+ * straight to the player, and what the others did is said over the picture — and the party is
+ * reached from the settings, to start one, see who is in it, or leave. A party wanting its password
+ * asks for it over the film.
  */
 const Player = ({
   mediaId,
@@ -197,6 +205,7 @@ const Player = ({
   carriedOn,
   subtitleLanguage,
   audioLanguage,
+  startedFrom,
   onLeave,
   onNext,
   watchParty,
@@ -705,31 +714,6 @@ const Player = ({
     [moveTo],
   );
 
-  useRemoteControlled({
-    mediaId,
-    title,
-    subtitle: episodeLine,
-    hasBackdrop: summary?.hasBackdrop ?? false,
-    isPlaying,
-    read: () => ({ position: at.current.position, duration: at.current.duration }),
-    onPause: () => {
-      if (party === undefined) {
-        player.pause();
-      } else {
-        party.onCommand({ kind: 'pause', atSeconds: at.current.position });
-      }
-    },
-    onResume: () => {
-      if (party === undefined) {
-        player.play();
-      } else {
-        party.onCommand({ kind: 'play', atSeconds: at.current.position });
-      }
-    },
-    onSeek: moveTo,
-    onStop: onLeave,
-  });
-
   useEffect(() => {
     if (!isShowing || !isPlaying || menu !== null) {
       return;
@@ -969,6 +953,189 @@ const Player = ({
     [following, onNext, carriedOn],
   );
 
+  const subtitleChoices = [
+    { id: SUBTITLES_OFF, label: say('common.off') },
+    ...textTracks.map((track) => ({ id: track.id, label: track.label })),
+  ];
+  const audioChoices = (detail.data?.audioStreams ?? []).map((stream, place) => ({
+    id: String(stream.index),
+    label: describeAudioTrack(stream, place + 1),
+  }));
+  const sharpest =
+    detail.data === undefined || detail.data === null ? null : sharpestStepOf(detail.data);
+  const qualityChoices = [
+    {
+      id: 'original',
+      label:
+        detail.data === undefined || detail.data === null
+          ? say('common.original')
+          : originalLabel(detail.data),
+      ...(sharpest === null ? {} : { short: sharpest.label }),
+    },
+    ...QUALITY_STEPS.filter(
+      (step) => step.maxHeight <= (detail.data?.height ?? Number.MAX_SAFE_INTEGER),
+    ).map((step) => {
+      const isNoSmaller = stepsSavingNothing.includes(step.id);
+      const said = qualityStepDetail({ cost: stepCosts[step.id], isNoSmaller });
+
+      return {
+        id: step.id,
+        label: step.label,
+        ...(said === undefined ? {} : { detail: said }),
+        ...(isNoSmaller ? { isDisabled: true } : {}),
+      };
+    }),
+  ];
+  const speedChoices = SPEEDS.map((one) => ({ id: one.toString(), label: speedLabelOf(one) }));
+
+  const chooseQuality = (id: string) => {
+    const chosen = QualityPreferenceSchema.safeParse(id);
+
+    if (chosen.success && chosen.data !== quality) {
+      saveQualityPreference(chosen.data);
+      setStartFrom(at.current.position);
+      setQuality(chosen.data);
+    }
+  };
+
+  const chooseAudio = (id: string) => {
+    const index = Number(id);
+
+    if (audioChoices.some((choice) => choice.id === id) && index !== chosenAudio?.index) {
+      setStartFrom(at.current.position);
+      setAudio(index);
+    }
+  };
+
+  const chooseSpeed = (id: string) => {
+    const chosen = SPEEDS.find((one) => one.toString() === id);
+
+    if (chosen !== undefined) {
+      setSpeed(chosen);
+    }
+  };
+
+  const chooseSubtitles = (id: string) => {
+    if (subtitleChoices.some((choice) => choice.id === id)) {
+      setChosenSubtitles(id);
+    }
+  };
+
+  const chapterList = chapters.data ?? NO_CHAPTERS;
+  const stepsBy =
+    programme !== null && episodes.some((episode) => episode.id === mediaId)
+      ? ('episode' as const)
+      : chapterList.length > 1
+        ? ('chapter' as const)
+        : null;
+  const canStepOn =
+    stepsBy === 'episode'
+      ? following !== null
+      : stepsBy === 'chapter' && chapterList.some((chapter) => chapter.startSeconds > position + 1);
+  const before = episodes[episodes.findIndex((episode) => episode.id === mediaId) - 1];
+  const canStepBack = stepsBy === 'chapter' || (stepsBy === 'episode' && before !== undefined);
+
+  const step = (toward: 'back' | 'on') => {
+    const now = at.current.position;
+
+    if (toward === 'on') {
+      if (stepsBy === 'episode') {
+        goNext(false);
+
+        return;
+      }
+
+      const ahead = chapterList.find((chapter) => chapter.startSeconds > now + 1);
+
+      if (stepsBy === 'chapter' && ahead !== undefined) {
+        moveTo(ahead.startSeconds);
+      }
+
+      return;
+    }
+
+    if (stepsBy === 'chapter') {
+      const begun = chapterList.filter((chapter) => chapter.startSeconds <= now);
+      const current = begun.at(-1);
+
+      moveTo(
+        current !== undefined && now - current.startSeconds > BACK_RESTARTS_AFTER
+          ? current.startSeconds
+          : (begun.at(-2)?.startSeconds ?? 0),
+      );
+
+      return;
+    }
+
+    if (stepsBy === 'episode') {
+      if (before !== undefined) {
+        onNext(before, 0);
+      }
+
+      return;
+    }
+
+    moveTo(0);
+  };
+
+  useRemoteControlled({
+    mediaId,
+    title,
+    subtitle: episodeLine,
+    hasBackdrop: summary?.hasBackdrop ?? false,
+    isPlaying,
+    hasNext: following !== null,
+    stepsBy,
+    canStepOn,
+    canStepBack,
+    settings: [
+      { setting: 'subtitles', chosen: subtitles, choices: subtitleChoices },
+      ...(chosenAudio === undefined
+        ? []
+        : [
+            { setting: 'audio' as const, chosen: String(chosenAudio.index), choices: audioChoices },
+          ]),
+      { setting: 'quality', chosen: quality, choices: qualityChoices },
+      { setting: 'speed', chosen: speed.toString(), choices: speedChoices },
+    ],
+    skip:
+      skippable === null
+        ? null
+        : { label: describeSkip(skippable), toSeconds: skippable.endSeconds },
+    read: () => ({ position: at.current.position, duration: at.current.duration }),
+    onPause: () => {
+      if (party === undefined) {
+        player.pause();
+      } else {
+        party.onCommand({ kind: 'pause', atSeconds: at.current.position });
+      }
+    },
+    onResume: () => {
+      if (party === undefined) {
+        player.play();
+      } else {
+        party.onCommand({ kind: 'play', atSeconds: at.current.position });
+      }
+    },
+    onSeek: moveTo,
+    onNext: () => {
+      goNext(false);
+    },
+    onStep: step,
+    onChoose: (setting, choiceId) => {
+      if (setting === 'subtitles') {
+        chooseSubtitles(choiceId);
+      } else if (setting === 'audio') {
+        chooseAudio(choiceId);
+      } else if (setting === 'quality') {
+        chooseQuality(choiceId);
+      } else {
+        chooseSpeed(choiceId);
+      }
+    },
+    onStop: onLeave,
+  });
+
   const followsGapless =
     session.kind === 'ready' &&
     session.started.playsEpisodesGapless === true &&
@@ -1108,7 +1275,11 @@ const Player = ({
         <PlayerControls
           title={title}
           year={detail.data?.year ?? null}
-          certification={detail.data?.metadata.certification ?? null}
+          rating={
+            detail.data === undefined || detail.data === null
+              ? null
+              : ratingOf(detail.data.metadata)
+          }
           subtitle={episodeLine}
           scrubAt={scrubAt}
           trickplay={trickplay.data ?? null}
@@ -1295,6 +1466,8 @@ const Player = ({
         />
       ) : null}
 
+      {startedFrom === undefined ? null : <StartedFrom label={startedFrom} />}
+
       {heard === null && (watchParty?.notice ?? null) === null ? null : (
         <View style={styles.said} pointerEvents="none">
           <Text style={styles.saying}>{heard ?? watchParty?.notice}</Text>
@@ -1379,9 +1552,9 @@ const Player = ({
         <TrackMenu
           title={say('common.speed')}
           chosen={speed.toString()}
-          choices={SPEEDS.map((one) => ({ id: one.toString(), label: speedLabelOf(one) }))}
+          choices={speedChoices}
           onChoose={(id) => {
-            setSpeed(Number(id));
+            chooseSpeed(id);
             closeMenu();
           }}
         />
@@ -1391,12 +1564,9 @@ const Player = ({
         <TrackMenu
           title={say('common.subtitles')}
           chosen={subtitles}
-          choices={[
-            { id: SUBTITLES_OFF, label: say('common.off') },
-            ...textTracks.map((track) => ({ id: track.id, label: track.label })),
-          ]}
+          choices={subtitleChoices}
           onChoose={(id) => {
-            setChosenSubtitles(id);
+            chooseSubtitles(id);
             closeMenu();
           }}
         />
@@ -1406,37 +1576,9 @@ const Player = ({
         <TrackMenu
           title={say('common.quality')}
           chosen={quality}
-          choices={[
-            {
-              id: 'original',
-              label:
-                detail.data === undefined || detail.data === null
-                  ? say('common.original')
-                  : originalLabel(detail.data),
-            },
-            ...QUALITY_STEPS.filter(
-              (step) => step.maxHeight <= (detail.data?.height ?? Number.MAX_SAFE_INTEGER),
-            ).map((step) => {
-              const isNoSmaller = stepsSavingNothing.includes(step.id);
-              const said = qualityStepDetail({ cost: stepCosts[step.id], isNoSmaller });
-
-              return {
-                id: step.id,
-                label: step.label,
-                ...(said === undefined ? {} : { detail: said }),
-                ...(isNoSmaller ? { isDisabled: true } : {}),
-              };
-            }),
-          ]}
+          choices={qualityChoices}
           onChoose={(id) => {
-            const chosen = QualityPreferenceSchema.safeParse(id);
-
-            if (chosen.success && chosen.data !== quality) {
-              saveQualityPreference(chosen.data);
-              setStartFrom(at.current.position);
-              setQuality(chosen.data);
-            }
-
+            chooseQuality(id);
             closeMenu();
           }}
         />
@@ -1446,18 +1588,9 @@ const Player = ({
         <TrackMenu
           title={say('common.audio')}
           chosen={String(chosenAudio?.index ?? '')}
-          choices={detail.data.audioStreams.map((stream, place) => ({
-            id: String(stream.index),
-            label: describeAudioTrack(stream, place + 1),
-          }))}
+          choices={audioChoices}
           onChoose={(id) => {
-            const index = Number(id);
-
-            if (index !== chosenAudio?.index) {
-              setStartFrom(at.current.position);
-              setAudio(index);
-            }
-
+            chooseAudio(id);
             closeMenu();
           }}
         />

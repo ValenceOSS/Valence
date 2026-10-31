@@ -43,6 +43,7 @@ const OVERVIEW: AdminOverview = {
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     fetchesMusicDetails: false,
@@ -51,6 +52,7 @@ const OVERVIEW: AdminOverview = {
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
     telemetryEnabled: true,
+    usesPushRelay: false,
     isTelemetryOffByEnvironment: false,
   },
   transcoder: {

@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
 import { chooseADownloadQuality } from './chooseADownloadQuality';
 
 const ORIGINAL = {
@@ -30,11 +30,9 @@ const OFFER = {
 
 describe('chooseADownloadQuality', () => {
   it('offers each quality with its size, and hands back the one picked', async () => {
-    const asking = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_, picked) => {
-        picked(1);
-      });
+    const asking = jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
+      picked(1);
+    });
 
     await expect(chooseADownloadQuality(OFFER, 'Download Arrival')).resolves.toBe('720p');
     expect(asking.mock.calls[0]?.[0].options).toEqual([
@@ -45,11 +43,9 @@ describe('chooseADownloadQuality', () => {
   });
 
   it('says a quality would be no smaller than the original, and greys it out', async () => {
-    const asking = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_, picked) => {
-        picked(2);
-      });
+    const asking = jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
+      picked(2);
+    });
     const bigger = {
       ...OFFER,
       options: [
@@ -70,7 +66,7 @@ describe('chooseADownloadQuality', () => {
   });
 
   it('hands back nothing when somebody cancels', async () => {
-    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_, picked) => {
+    jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
       picked(2);
     });
 

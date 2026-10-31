@@ -14,6 +14,7 @@ const InboxSchema = z.object({
 const PreferencesSchema = z.object({
   preferences: z.array(NotificationPreferenceSchema),
   pushPublicKey: z.string(),
+  wakesPhones: z.boolean().default(false),
 });
 
 type Inbox = z.infer<typeof InboxSchema>;

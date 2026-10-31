@@ -1,11 +1,12 @@
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { Check, CircleCheck, Info } from '@keyline-icons/react-native';
-import { CircleCheck as CircleCheckFilled } from '@keyline-icons/react-native/fill';
-import { useState } from 'react';
+import { Check, CircleCheck } from '@keyline-icons/react-native';
+import { CircleCheck as CircleCheckFilled, Info } from '@keyline-icons/react-native/fill';
+import { memo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ASplitButton } from '@ValenceMobile/components/ASplitButton/ASplitButton';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -18,7 +19,6 @@ import { say } from '@ValenceI18n/say';
 import { numberedEpisodeTitle } from '@ValenceCore/functions/numberedEpisodeTitle';
 
 const styles = StyleSheet.create({
-  about: { padding: 10 },
   facts: { flex: 1, gap: 4 },
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   picture: { height: '100%', width: '100%' },
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     right: 6,
     width: 20,
   },
-  whole: { alignItems: 'center', flexDirection: 'row' },
+  whole: { alignItems: 'center', flexDirection: 'row', gap: 10 },
 });
 
 /**
@@ -42,17 +42,19 @@ const styles = StyleSheet.create({
  * before it,
  * how long it runs, when it aired and how far in somebody is — a line across the still while they
  * are part way, a tick once they are through. Pressing it plays it, from where they left it; the
- * button beside it opens its own page.
+ * button beside it opens its own page. It is drawn again only when its own episode or how far
+ * somebody is through it changes, so a programme's list is not drawn whole each time progress is
+ * read.
  *
  * @param episode - The episode.
  * @param watched - How much of it has been seen, as a fraction.
  * @param resumeSeconds - Where they left it, or null where there is nowhere to carry on from.
  * @param airs - When it aired, where the catalogue says.
- * @param onWatch - Told to play it.
+ * @param onWatch - Told to play it, and from where.
  * @param onLookAt - Told to open its page.
  * @param onMarkWatched - Told to mark it watched, or unwatched again where it already is.
  */
-const AnEpisode = ({
+const OneEpisode = ({
   episode,
   watched,
   resumeSeconds,
@@ -78,7 +80,9 @@ const AnEpisode = ({
                   resumeSeconds: formatDuration(resumeSeconds),
                 })
           }
-          onPress={onWatch}
+          onPress={() => {
+            onWatch(episode.id, resumeSeconds ?? 0);
+          }}
         >
           <View style={styles.row}>
             <View
@@ -142,38 +146,36 @@ const AnEpisode = ({
         </Button>
       </View>
 
-      {onMarkWatched === undefined ? null : (
-        <Button
-          tone="bare"
-          label={
-            isThrough
-              ? say('common.markTitleAsUnwatched', { title: episode.title })
-              : say('common.markTitleAsWatched', { title: episode.title })
-          }
-          onPress={onMarkWatched}
-        >
-          <View style={styles.about}>
-            <Icon
-              of={isThrough ? CircleCheckFilled : CircleCheck}
-              size={20}
-              colour={isThrough ? colours.text : colours.textMuted}
-            />
-          </View>
-        </Button>
-      )}
-
-      <Button
-        tone="bare"
-        label={say('common.aboutTitle', { title: episode.title })}
-        onPress={onLookAt}
-      >
-        <View style={styles.about}>
-          <Icon of={Info} size={20} colour={colours.textMuted} />
-        </View>
-      </Button>
+      <ASplitButton
+        parts={[
+          ...(onMarkWatched === undefined
+            ? []
+            : [
+                {
+                  icon: isThrough ? CircleCheckFilled : CircleCheck,
+                  label: isThrough
+                    ? say('common.markTitleAsUnwatched', { title: episode.title })
+                    : say('common.markTitleAsWatched', { title: episode.title }),
+                  isChosen: isThrough,
+                  onPress: () => {
+                    onMarkWatched(episode, !isThrough);
+                  },
+                },
+              ]),
+          {
+            icon: Info,
+            label: say('common.aboutTitle', { title: episode.title }),
+            onPress: () => {
+              onLookAt(episode.id);
+            },
+          },
+        ]}
+      />
     </View>
   );
 };
+
+const AnEpisode = memo(OneEpisode);
 
 AnEpisode.displayName = 'AnEpisode';
 

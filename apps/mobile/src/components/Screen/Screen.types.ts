@@ -6,6 +6,7 @@ type ScreenProps = {
   title?: string;
   behind?: ReactNode;
   foot?: ReactNode;
+  corner?: ReactNode;
   isSeeThrough?: boolean;
   scrolls?: boolean;
   centres?: boolean;

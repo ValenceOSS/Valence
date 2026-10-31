@@ -170,7 +170,8 @@ describe('ShowPage', () => {
     expect(drawn.getByText(/★ 8\.7/)).toBeTruthy();
     expect(drawn.getByText('S1: E1 · Good News About Hell')).toBeTruthy();
     expect(drawn.getAllByText('Mark is promoted.').length).toBeGreaterThan(0);
-    expect(drawn.getByText('Drama, Mystery')).toBeTruthy();
+    expect(drawn.getByText('Drama')).toBeTruthy();
+    expect(drawn.getByText('Mystery')).toBeTruthy();
   });
 
   it('starts somebody new from the first episode', async () => {

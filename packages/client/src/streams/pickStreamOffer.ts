@@ -88,7 +88,7 @@ const pickStreamOffer = (offers: readonly StreamOffer[], screen: Screen): Stream
   const ranked = offers
     .filter((offer) => offer.isReady && !isLowerQuality(offer))
     .map((offer) => ({ offer, place: rank(offer) }))
-    .toSorted((one, other) =>
+    .sort((one, other) =>
       one.place.reduce((order, part, at) => order || part - (other.place[at] ?? 0), 0),
     );
 

@@ -1,4 +1,5 @@
-import { ActionSheetIOS, Alert } from 'react-native';
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
+import { Alert } from 'react-native';
 import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import { aPlaylist } from '@ValenceMobile/testing/aPlaylist';
 import { askWhichPlaylist } from './askWhichPlaylist';
@@ -8,7 +9,7 @@ jest.mock('@ValenceClient/music/fetchPlaylists');
 const ROAD_TRIP = aPlaylist();
 
 const pick = (at: number) => {
-  jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_, picked) => {
+  jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
     picked(at);
   });
 };

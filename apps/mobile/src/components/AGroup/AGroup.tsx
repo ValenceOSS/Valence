@@ -1,54 +1,61 @@
-import { Children, Fragment } from 'react';
+import { Children, Fragment, useContext } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { GROUND } from '@ValenceMobile/theme/GROUND';
+import { fillOn } from '@ValenceMobile/theme/fillOn';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AGroupProps } from './AGroup.types';
 
 const styles = StyleSheet.create({
-  face: { borderRadius: 12, overflow: 'hidden' },
+  card: { borderRadius: 16, overflow: 'hidden' },
+  group: { gap: 8 },
   line: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
-  shell: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 4 },
   title: {
     fontFamily: FONTS.sans.medium,
     fontSize: 12,
-    letterSpacing: 1.9,
-    paddingBottom: 10,
-    paddingHorizontal: 12,
-    paddingTop: 10,
+    letterSpacing: 0.8,
+    paddingHorizontal: 16,
     textTransform: 'uppercase',
   },
 });
 
 /**
- * Settings that belong together, drawn as the web draws its panels: a faint shell with the group's
- * name in small capitals across its top, holding one raised face with a line between each setting.
+ * Settings that belong together, drawn as the phone's own settings draw them: the group's name in
+ * small capitals above, and its rows on one solid rounded card with a hairline between each. On a
+ * card that says what colour it is, the group's card takes the same fill a badge there does, so it
+ * answers the colour beneath it.
  *
- * @param title - What the group is, said at the top of it.
+ * @param title - What the group is, said above it.
  */
 const AGroup = ({ children, title }: AGroupProps) => {
   const colours = useTheColours();
   const isDark = colours.surface === theColours.dark.surface;
   const rows = Children.toArray(children);
+  const ground = useContext(GROUND);
 
   return (
-    <View
-      style={[
-        styles.shell,
-        {
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(48, 60, 81, 0.05)',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : colours.border,
-        },
-      ]}
-    >
+    <View style={styles.group}>
       {title === undefined ? null : (
         <Text style={[styles.title, { color: colours.textMuted }]}>{title}</Text>
       )}
 
-      <View style={[styles.face, { backgroundColor: isDark ? '#272727' : colours.surface }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: ground === null ? (isDark ? '#1c1c1e' : '#ffffff') : fillOn(ground) },
+        ]}
+      >
         {rows.map((row, at) => (
           <Fragment key={at}>
-            {at === 0 ? null : <View style={[styles.line, { backgroundColor: colours.border }]} />}
+            {at === 0 ? null : (
+              <View
+                style={[
+                  styles.line,
+                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : colours.border },
+                ]}
+              />
+            )}
             {row}
           </Fragment>
         ))}

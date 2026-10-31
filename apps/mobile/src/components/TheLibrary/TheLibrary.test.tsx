@@ -119,8 +119,6 @@ const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
       onWatch={jest.fn()}
       onLookAt={jest.fn()}
       onLookAtShow={jest.fn()}
-      onScan={jest.fn()}
-      onNotifications={jest.fn()}
       onAlbum={jest.fn()}
       onArtist={jest.fn()}
       onPlaylist={jest.fn()}
@@ -171,40 +169,6 @@ afterEach(() => {
 });
 
 describe('TheLibrary', () => {
-  it('asks to scan a television in from the bar', async () => {
-    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
-    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
-    const onScan = jest.fn();
-
-    const drawn = await theLibrary({ onScan });
-
-    await userEvent.press(drawn.getByRole('button', { name: 'Sign in to a TV' }));
-
-    expect(onScan).toHaveBeenCalled();
-  });
-
-  it('opens the release calendar from the bar where it is offered', async () => {
-    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
-    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
-    const onCalendar = jest.fn();
-
-    const drawn = await theLibrary({ onCalendar });
-
-    await userEvent.press(drawn.getByRole('button', { name: 'Calendar' }));
-
-    expect(onCalendar).toHaveBeenCalledTimes(1);
-  });
-
-  it('leaves the release calendar out of the bar where it is not offered', async () => {
-    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
-    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
-
-    const drawn = await theLibrary();
-
-    expect(drawn.getByRole('button', { name: 'Sign in to a TV' })).toBeTruthy();
-    expect(drawn.queryByRole('button', { name: 'Calendar' })).toBeNull();
-  });
-
   it('opens on home, drawing what the libraries hold without asking which', async () => {
     jest
       .mocked(fetchLibraries)
@@ -510,9 +474,22 @@ describe('TheLibrary', () => {
     const drawn = await theLibrary();
 
     await drawn.findByText('Nothing to watch yet');
-    const bar = drawn.getByRole('button', { name: 'Sign in to a TV' }).parent?.parent?.parent
-      ?.parent;
+    const above = [];
 
-    expect(bar).toHaveStyle({ paddingLeft: 0, paddingRight: 84 });
+    for (let place = drawn.getByLabelText('Valence').parent; place !== null; place = place.parent) {
+      above.push(place);
+    }
+
+    expect(
+      above.some((place) => {
+        try {
+          expect(place).toHaveStyle({ paddingLeft: 0, paddingRight: 84 });
+
+          return true;
+        } catch {
+          return false;
+        }
+      }),
+    ).toBe(true);
   });
 });

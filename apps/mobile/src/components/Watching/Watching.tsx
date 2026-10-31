@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useBackCloses } from '@ValenceMobile/hooks/useBackCloses';
 import { useEvent, useEventListener } from 'expo';
@@ -57,6 +57,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TheLeap } from '@ValenceMobile/components/Watching/components/TheLeap/TheLeap';
 import { useTapsOnThePicture } from '@ValenceMobile/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices';
+import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { useChromecast } from '@ValenceMobile/components/Watching/useChromecast';
+import { CARD_RUN } from '@ValenceMobile/components/Watching/components/APlayerPanel/CARD_RUN';
+import { TheSettings } from '@ValenceMobile/components/Watching/components/TheSettings/TheSettings';
+import {
+  AudioLines,
+  Captions,
+  Gauge,
+  MessageSquareLines,
+  SlidersHorizontal,
+} from '@keyline-icons/react-native/fill';
 import { TheNotice } from '@ValenceMobile/components/TheNotice/TheNotice';
 import { TheMovingParts } from '@ValenceMobile/components/Watching/components/TheMovingParts/TheMovingParts';
 import { useTheSubtitles } from '@ValenceMobile/components/Watching/useTheSubtitles';
@@ -153,7 +164,33 @@ const NOTHING_READ: StreamReading = {
   range: null,
 };
 
-type APanel = 'audio' | 'speed' | 'quality' | 'style' | 'episodes' | 'stats' | 'party';
+type APanel =
+  | 'settings'
+  | 'audio'
+  | 'subtitles'
+  | 'speed'
+  | 'quality'
+  | 'style'
+  | 'episodes'
+  | 'stats'
+  | 'party';
+
+const CARD_PANELS: ReadonlySet<APanel | null> = new Set([
+  'settings',
+  'quality',
+  'speed',
+  'audio',
+  'subtitles',
+  'style',
+]);
+
+const SETTINGS_WITHIN: ReadonlySet<APanel | null> = new Set([
+  'quality',
+  'speed',
+  'audio',
+  'subtitles',
+  'style',
+]);
 
 /**
  * Nothing, for a player that cannot refuse to start the way a browser can.
@@ -955,12 +992,35 @@ const Watching = ({
     }
   }, [keepThemUp, party, player, moving.isPlaying]);
 
-  const { tapped, leap } = useTapsOnThePicture(
-    screen.width,
-    toggleTheControls,
-    leapBy,
-    areControlsUp ? playOrPause : toggleTheControls,
-  );
+  const chromecast = useChromecast({
+    mediaId,
+    title: called?.name ?? '',
+    artwork: isKept ? null : onThisServer(artworkUrl(mediaId, 'poster', { size: 'medium' })),
+    clientId,
+    audioStreamIndex: asking.audioStreamIndex,
+    quality: asking.requestedQuality,
+    burnInSubtitleId: beingRead?.delivery === 'text' ? beingRead.id : undefined,
+    isKept,
+    startsAt: () => player.currentTime,
+    onTaken: () => {
+      player.pause();
+    },
+    onGivenBack: (atSeconds) => {
+      moveTo(atSeconds);
+      player.play();
+    },
+    onRefused: () => {
+      Alert.alert(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'));
+    },
+  });
+
+  const castAt = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    castAt.current = chromecast.isCasting ? chromecast.at : null;
+  });
+
+  const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
 
   const readInstead = useCallback(
     (trackId: string) => {
@@ -1135,7 +1195,7 @@ const Watching = ({
     const look = () => {
       if (player.duration > 0) {
         whereTheyGotTo.current = {
-          positionSeconds: player.currentTime,
+          positionSeconds: castAt.current ?? player.currentTime,
           durationSeconds: lengthOf(knownLength.current, player.duration),
         };
       }
@@ -1293,7 +1353,20 @@ const Watching = ({
     keepThemUp();
   }, [keepThemUp]);
 
-  useBackCloses(panel !== null, stopChoosing);
+  const [panelsSeen, setPanelsSeen] = useState<{ now: APanel | null; before: APanel | null }>({
+    now: panel,
+    before: null,
+  });
+
+  if (panelsSeen.now !== panel) {
+    setPanelsSeen({ now: panel, before: panelsSeen.now });
+  }
+
+  const backToSettings = useCallback(() => {
+    setPanel('settings');
+  }, []);
+
+  useBackCloses(panel !== null, SETTINGS_WITHIN.has(panel) ? backToSettings : stopChoosing);
 
   const chosenQuality = asking.requestedQuality ?? 'auto';
   const qualityLabel =
@@ -1305,293 +1378,391 @@ const Watching = ({
           : originalLabel(title.data)
         : (QUALITY_STEPS.find((step) => step.id === chosenQuality)?.label ?? chosenQuality);
 
+  const cardRun = {
+    isAlreadyUp: CARD_PANELS.has(panelsSeen.before) && CARD_PANELS.has(panel),
+    goesBackToACard: SETTINGS_WITHIN.has(panel),
+  };
+
   return (
-    <View
-      style={[styles.picture, styles.cropped]}
-      onLayout={({ nativeEvent }) => {
-        setScreen(nativeEvent.layout);
-      }}
-      {...pinching.panHandlers}
-    >
-      <Animated.View style={[styles.picture, { transform: [{ scale: howBig }] }]}>
-        <VideoView
-          ref={picture}
-          style={fitted === null ? styles.picture : [styles.placed, fitted]}
-          player={player}
-          allowsPictureInPicture
-          startsPictureInPictureAutomatically
-          nativeControls={false}
-          contentFit={fitted === null ? 'contain' : 'cover'}
-        />
-      </Animated.View>
-
-      <Button
-        tone="bare"
-        fills
-        label={areControlsUp ? say('common.hideTheControls') : say('common.showTheControls')}
-        onPress={isLocked ? toggleTheControls : tapped}
-      />
-
-      {notice === null ? null : (
-        <TheNotice
-          says={notice}
-          onDismiss={() => {
-            setNotice(null);
-          }}
-        />
-      )}
-
-      {notice !== null || (heard ?? watchParty?.notice ?? null) === null ? null : (
-        <TheNotice
-          says={heard ?? watchParty?.notice ?? ''}
-          onDismiss={() => {
-            setHeard(null);
-            watchParty?.forgetNotice();
-          }}
-        />
-      )}
-
-      <TheMovingParts
-        player={player}
-        segments={marked.data ?? NO_SEGMENTS}
-        cues={cues}
-        subtitleOffset={subtitleOffset}
-        captionStyle={captions.style}
-        areControlsDrawn={areControlsDrawn && !isLocked && panel === null}
-        onMoveTo={(seconds) => {
-          keepThemUp();
-          moveTo(seconds);
+    <CARD_RUN.Provider value={cardRun}>
+      <View
+        style={[styles.picture, styles.cropped]}
+        onLayout={({ nativeEvent }) => {
+          setScreen(nativeEvent.layout);
         }}
-        next={
-          following === null || onChooseEpisode === undefined || panel !== null
-            ? null
-            : {
-                isCounting: willCarryOn && !isHeldAtTheEnd,
-                isHeldAtTheEnd,
-                runsFor: lengthOf(title.data?.durationSeconds ?? 0, player.duration),
-                onPlay: () => {
-                  if (player.duration > 0) {
-                    whereTheyGotTo.current = {
-                      positionSeconds: lengthOf(knownLength.current, player.duration),
-                      durationSeconds: lengthOf(knownLength.current, player.duration),
-                    };
-                  }
-
-                  onChooseEpisode(following.id);
-                },
-              }
-        }
-        controls={{
-          fade,
-          title: called?.name ?? '',
-          year: called?.year ?? null,
-          isPlaying: moving.isPlaying,
-          wait,
-          trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
-          chapters: chaptered.data ?? NO_CHAPTERS,
-          onPlayPause: playOrPause,
-          onSkip: (by) => {
-            keepThemUp();
-            moveTo(player.currentTime + by);
-          },
-          onTouched: keepThemUp,
-          onClose: onDone,
-          rate,
-          qualityLabel,
-          onLock: () => {
-            setIsLocked(true);
-            setAreControlsUp(false);
-          },
-          onPictureInPicture: () => {
-            void picture.current?.startPictureInPicture().catch(() => undefined);
-          },
-          onSpeed: () => {
-            setPanel('speed');
-          },
-          onAudioAndSubtitles:
-            settings.audio === null && settings.subtitles === null
-              ? undefined
-              : () => {
-                  setPanel('audio');
-                },
-          onQuality:
-            settings.quality === null
-              ? undefined
-              : () => {
-                  setPanel('quality');
-                },
-          onStats: () => {
-            setPanel('stats');
-          },
-          onEpisodes:
-            onChooseEpisode === undefined || seasons.length === 0
-              ? undefined
-              : () => {
-                  setPanel('episodes');
-                },
-          onNext:
-            following === null || onChooseEpisode === undefined
-              ? undefined
-              : () => {
-                  if (player.duration > 0) {
-                    whereTheyGotTo.current = {
-                      positionSeconds: player.currentTime,
-                      durationSeconds: lengthOf(knownLength.current, player.duration),
-                    };
-                  }
-
-                  onChooseEpisode(following.id);
-                },
-          onParty:
-            isKept || watchParty === undefined
-              ? undefined
-              : () => {
-                  setPanel('party');
-                },
-        }}
-      />
-
-      {wait.isShown && !areControlsDrawn && panel === null ? (
-        <View style={styles.waiting} pointerEvents="none">
-          <ASpinner
-            colour="#ffffff"
-            size={PLAYER_LOOK.middle}
-            isFinishing={wait.isFinishing}
-            onFilled={wait.onFilled}
+        {...pinching.panHandlers}
+      >
+        <Animated.View style={[styles.picture, { transform: [{ scale: howBig }] }]}>
+          <VideoView
+            allowsVideoFrameAnalysis={false}
+            ref={picture}
+            style={fitted === null ? styles.picture : [styles.placed, fitted]}
+            player={player}
+            allowsPictureInPicture
+            startsPictureInPictureAutomatically
+            nativeControls={false}
+            contentFit={fitted === null ? 'contain' : 'cover'}
           />
-        </View>
-      ) : null}
+        </Animated.View>
 
-      {isLocked && areControlsDrawn ? (
-        <TheUnlock
-          onUnlock={() => {
-            setIsLocked(false);
+        <Button
+          tone="bare"
+          fills
+          label={areControlsUp ? say('common.hideTheControls') : say('common.showTheControls')}
+          onPress={isLocked ? toggleTheControls : tapped}
+        />
+
+        {notice === null ? null : (
+          <TheNotice
+            says={notice}
+            onDismiss={() => {
+              setNotice(null);
+            }}
+          />
+        )}
+
+        {notice !== null || (heard ?? watchParty?.notice ?? null) === null ? null : (
+          <TheNotice
+            says={heard ?? watchParty?.notice ?? ''}
+            onDismiss={() => {
+              setHeard(null);
+              watchParty?.forgetNotice();
+            }}
+          />
+        )}
+
+        <TheMovingParts
+          player={player}
+          segments={marked.data ?? NO_SEGMENTS}
+          cues={cues}
+          subtitleOffset={subtitleOffset}
+          captionStyle={captions.style}
+          areControlsDrawn={areControlsDrawn && !isLocked && panel === null}
+          castAt={chromecast.at}
+          onMoveTo={(seconds) => {
             keepThemUp();
-          }}
-        />
-      ) : null}
 
-      {leap === null ? null : <TheLeap leap={leap} />}
+            if (chromecast.isCasting) {
+              chromecast.seekTo(seconds);
 
-      {panel === 'episodes' && onChooseEpisode !== undefined ? (
-        <TheEpisodes
-          seasons={seasons}
-          playing={mediaId}
-          onChoose={(id) => {
-            setPanel(null);
-
-            if (id !== mediaId) {
-              onChooseEpisode(id);
+              return;
             }
-          }}
-          onClose={stopChoosing}
-        />
-      ) : null}
 
-      {panel === 'audio' ? (
-        <TheAudioAndSubtitles
-          audio={settings.audio}
-          subtitles={settings.subtitles}
-          timing={
-            reading === SUBTITLES_OFF
+            moveTo(seconds);
+          }}
+          next={
+            following === null || onChooseEpisode === undefined || panel !== null
               ? null
-              : { offset: subtitleOffset, onChange: setSubtitleOffset }
-          }
-          onStyle={
-            settings.captions.length === 0
-              ? undefined
-              : () => {
-                  setPanel('style');
+              : {
+                  isCounting: willCarryOn && !isHeldAtTheEnd,
+                  isHeldAtTheEnd,
+                  runsFor: lengthOf(title.data?.durationSeconds ?? 0, player.duration),
+                  onPlay: () => {
+                    if (player.duration > 0) {
+                      whereTheyGotTo.current = {
+                        positionSeconds: lengthOf(knownLength.current, player.duration),
+                        durationSeconds: lengthOf(knownLength.current, player.duration),
+                      };
+                    }
+
+                    onChooseEpisode(following.id);
+                  },
                 }
           }
-          onClose={stopChoosing}
-        />
-      ) : null}
-
-      {panel === 'style' ? <TheChoices sets={settings.captions} onClose={stopChoosing} /> : null}
-
-      {panel === 'speed' ? <TheSpeed rate={rate} onRate={setRate} onClose={stopChoosing} /> : null}
-
-      {panel === 'quality' && settings.quality !== null ? (
-        <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing}>
-          <APlayerList set={settings.quality} />
-        </APlayerPanel>
-      ) : null}
-
-      {panel === 'stats' ? (
-        <TheStats
-          groups={describeStreamStats({
+          controls={{
+            fade,
             title: called?.name ?? '',
-            mediaId,
-            detail: isKept ? null : (title.data ?? null),
-            session,
-            sessionStartSeconds: asking.from,
-            quality: chosenQuality,
-            reading: streamReading,
-          })}
-          onClose={stopChoosing}
-        />
-      ) : null}
+            year: called?.year ?? null,
+            rating:
+              typeof title.data?.metadata.certification === 'string' &&
+              title.data.metadata.certification !== '' &&
+              typeof title.data.metadata.certificationRegion === 'string'
+                ? {
+                    certification: title.data.metadata.certification,
+                    region: title.data.metadata.certificationRegion,
+                  }
+                : null,
+            isPlaying: chromecast.isCasting ? chromecast.isPlaying : moving.isPlaying,
+            wait,
+            trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
+            chapters: chaptered.data ?? NO_CHAPTERS,
+            onPlayPause: chromecast.isCasting
+              ? () => {
+                  keepThemUp();
+                  chromecast.playOrPause();
+                }
+              : playOrPause,
+            onSkip: (by) => {
+              keepThemUp();
 
-      {watchParty !== undefined && !isKept && (isPartying || watchParty.passwordWanted !== null) ? (
-        <APartyPanel
-          kind="watch"
-          watchParty={watchParty}
-          mediaId={mediaId}
-          people={household}
-          onClose={() => {
-            if (watchParty.passwordWanted !== null) {
-              watchParty.stopAsking();
-            }
+              if (chromecast.isCasting) {
+                chromecast.seekTo((chromecast.at ?? 0) + by);
 
-            setPanel(null);
-            keepThemUp();
+                return;
+              }
+
+              moveTo(player.currentTime + by);
+            },
+            ...(chromecast.isOffered ? { onCast: chromecast.choose } : {}),
+            castingTo: chromecast.deviceName,
+            onTouched: keepThemUp,
+            onClose: onDone,
+            onLock: () => {
+              setIsLocked(true);
+              setAreControlsUp(false);
+            },
+            onPictureInPicture: () => {
+              void picture.current?.startPictureInPicture().catch(() => undefined);
+            },
+            onSettings: () => {
+              setPanel('settings');
+            },
+            onStats: () => {
+              setPanel('stats');
+            },
+            onEpisodes:
+              onChooseEpisode === undefined || seasons.length === 0
+                ? undefined
+                : () => {
+                    setPanel('episodes');
+                  },
+            onNext:
+              following === null || onChooseEpisode === undefined
+                ? undefined
+                : () => {
+                    if (player.duration > 0) {
+                      whereTheyGotTo.current = {
+                        positionSeconds: player.currentTime,
+                        durationSeconds: lengthOf(knownLength.current, player.duration),
+                      };
+                    }
+
+                    onChooseEpisode(following.id);
+                  },
+            onParty:
+              isKept || watchParty === undefined
+                ? undefined
+                : () => {
+                    setPanel('party');
+                  },
           }}
         />
-      ) : null}
 
-      {isReconnecting && stoppedBy === null ? (
-        <View
-          style={[styles.reconnecting, { top: Math.max(room.top, 16) + 8 }]}
-          pointerEvents="none"
-          accessibilityLiveRegion="polite"
-        >
-          <View style={styles.reconnectingPill}>
-            <Words size="small" colour="#ffffff" isStrong>
-              {say('client.playback.playbackProblems.reconnecting')}
-            </Words>
+        {wait.isShown && !areControlsDrawn && panel === null ? (
+          <View style={styles.waiting} pointerEvents="none">
+            <ASpinner
+              colour="#ffffff"
+              size={PLAYER_LOOK.middle}
+              isFinishing={wait.isFinishing}
+              onFilled={wait.onFilled}
+            />
           </View>
-        </View>
-      ) : null}
+        ) : null}
 
-      {stoppedBy === null ? null : (
-        <ThePlaybackProblem
-          problem={describePlaybackProblem(stoppedBy.problem)}
-          details={describeProblemDetails({
-            problem: stoppedBy.problem,
-            cause: stoppedBy.cause,
-            title: called?.name ?? mediaId,
-            positionSeconds: player.currentTime,
-            how: session?.mode ?? null,
-            sessionId: session?.sessionId ?? null,
-            build: theBuildInfo(),
-          })}
-          onClose={onDone}
-          onRetry={() => {
-            refusedSession.current = null;
-            setStoppedBy(null);
-            setAsking((asked) => ({
-              ...asked,
-              from: Math.max(Math.floor(player.currentTime), asked.from),
-            }));
-          }}
-          onSignIn={() => {
-            onDone();
-            void cache.invalidateQueries({ queryKey: sessionQueries.who().queryKey });
-          }}
-        />
-      )}
-    </View>
+        {isLocked && areControlsDrawn ? (
+          <TheUnlock
+            onUnlock={() => {
+              setIsLocked(false);
+              keepThemUp();
+            }}
+          />
+        ) : null}
+
+        {leap === null ? null : <TheLeap leap={leap} />}
+
+        {panel === 'episodes' && onChooseEpisode !== undefined ? (
+          <TheEpisodes
+            seasons={seasons}
+            playing={mediaId}
+            onChoose={(id) => {
+              setPanel(null);
+
+              if (id !== mediaId) {
+                onChooseEpisode(id);
+              }
+            }}
+            onClose={stopChoosing}
+          />
+        ) : null}
+
+        {panel === 'audio' || panel === 'subtitles' ? (
+          <TheAudioAndSubtitles
+            only={panel}
+            audio={settings.audio}
+            subtitles={settings.subtitles}
+            timing={
+              reading === SUBTITLES_OFF
+                ? null
+                : { offset: subtitleOffset, onChange: setSubtitleOffset }
+            }
+            onClose={backToSettings}
+          />
+        ) : null}
+
+        {panel === 'style' ? (
+          <TheChoices sets={settings.captions} onClose={backToSettings} isACard />
+        ) : null}
+
+        {panel === 'settings' ? (
+          <TheSettings
+            settings={[
+              ...(settings.quality === null
+                ? []
+                : [
+                    {
+                      icon: SlidersHorizontal,
+                      label: say('common.quality'),
+                      value: qualityLabel,
+                      onPress: () => {
+                        setPanel('quality');
+                      },
+                    },
+                  ]),
+              {
+                icon: Gauge,
+                label: say('screens.videoPlayer.playerControls.playbackSpeed'),
+                value: describePlaybackRate(rate),
+                onPress: () => {
+                  setPanel('speed');
+                },
+              },
+              ...(settings.audio === null
+                ? []
+                : [
+                    {
+                      icon: AudioLines,
+                      label: say('common.audio'),
+                      value:
+                        settings.audio.choices.find(
+                          (choice) => choice.id === settings.audio?.chosen,
+                        )?.label ?? '',
+                      onPress: () => {
+                        setPanel('audio');
+                      },
+                    },
+                  ]),
+              ...(settings.subtitles === null
+                ? []
+                : [
+                    {
+                      icon: MessageSquareLines,
+                      label: say('common.subtitles'),
+                      value:
+                        settings.subtitles.choices.find(
+                          (choice) => choice.id === settings.subtitles?.chosen,
+                        )?.label ?? say('common.off'),
+                      onPress: () => {
+                        setPanel('subtitles');
+                      },
+                    },
+                  ]),
+              ...(settings.captions.length === 0
+                ? []
+                : [
+                    {
+                      icon: Captions,
+                      label: say('common.captionSettings'),
+                      onPress: () => {
+                        setPanel('style');
+                      },
+                    },
+                  ]),
+            ]}
+            onClose={stopChoosing}
+          />
+        ) : null}
+
+        {panel === 'speed' ? (
+          <TheSpeed rate={rate} onRate={setRate} onClose={backToSettings} />
+        ) : null}
+
+        {panel === 'quality' && settings.quality !== null ? (
+          <APlayerPanel
+            label={say('phone.watching.closeTheQuality')}
+            onClose={backToSettings}
+            isACard
+          >
+            <APlayerList set={settings.quality} />
+          </APlayerPanel>
+        ) : null}
+
+        {panel === 'stats' ? (
+          <TheStats
+            groups={describeStreamStats({
+              title: called?.name ?? '',
+              mediaId,
+              detail: isKept ? null : (title.data ?? null),
+              session,
+              sessionStartSeconds: asking.from,
+              quality: chosenQuality,
+              reading: streamReading,
+            })}
+            onClose={stopChoosing}
+          />
+        ) : null}
+
+        {watchParty !== undefined &&
+        !isKept &&
+        (isPartying || watchParty.passwordWanted !== null) ? (
+          <APartyPanel
+            kind="watch"
+            watchParty={watchParty}
+            mediaId={mediaId}
+            people={household}
+            onClose={() => {
+              if (watchParty.passwordWanted !== null) {
+                watchParty.stopAsking();
+              }
+
+              setPanel(null);
+              keepThemUp();
+            }}
+          />
+        ) : null}
+
+        {isReconnecting && stoppedBy === null ? (
+          <View
+            style={[styles.reconnecting, { top: Math.max(room.top, 16) + 8 }]}
+            pointerEvents="none"
+            accessibilityLiveRegion="polite"
+          >
+            <View style={styles.reconnectingPill}>
+              <Words size="small" colour="#ffffff" isStrong>
+                {say('client.playback.playbackProblems.reconnecting')}
+              </Words>
+            </View>
+          </View>
+        ) : null}
+
+        {stoppedBy === null ? null : (
+          <ThePlaybackProblem
+            problem={describePlaybackProblem(stoppedBy.problem)}
+            details={describeProblemDetails({
+              problem: stoppedBy.problem,
+              cause: stoppedBy.cause,
+              title: called?.name ?? mediaId,
+              positionSeconds: player.currentTime,
+              how: session?.mode ?? null,
+              sessionId: session?.sessionId ?? null,
+              build: theBuildInfo(),
+            })}
+            onClose={onDone}
+            onRetry={() => {
+              refusedSession.current = null;
+              setStoppedBy(null);
+              setAsking((asked) => ({
+                ...asked,
+                from: Math.max(Math.floor(player.currentTime), asked.from),
+              }));
+            }}
+            onSignIn={() => {
+              onDone();
+              void cache.invalidateQueries({ queryKey: sessionQueries.who().queryKey });
+            }}
+          />
+        )}
+      </View>
+    </CARD_RUN.Provider>
   );
 };
 

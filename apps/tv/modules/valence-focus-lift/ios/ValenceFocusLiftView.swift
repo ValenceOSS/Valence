@@ -8,8 +8,10 @@ import UIKit
 /// sets, is never changed beneath it. A shadow, where asked for, is a layer of its own, kept beneath
 /// whatever React Native puts in the view however it inserts it, drawn from a fixed outline — the
 /// top of what it holds, down to the given height, so a card's picture casts it and not the words
-/// beneath — which costs nothing to draw each frame. A row in a list grows from its
-/// left edge rather than its middle, so its words stay in line with the rows around it.
+/// beneath — which costs nothing to draw each frame. How far it spreads can be made shorter, for a
+/// card in a column narrower than the screen, and it drops in step with how far it spreads. A row
+/// in a list grows from its left edge rather than its middle, so its words stay in line with the
+/// rows around it.
 final class ValenceFocusLiftView: ExpoView {
   var scale: CGFloat = 1.1
   var isAnchoredLeft = false
@@ -18,6 +20,12 @@ final class ValenceFocusLiftView: ExpoView {
   }
   var cornerRadius: CGFloat = 0 {
     didSet { setNeedsLayout() }
+  }
+  var shadowReach: CGFloat = 28 {
+    didSet {
+      shade.shadowRadius = shadowReach
+      shade.shadowOffset = CGSize(width: 0, height: shadowReach * 18 / 28)
+    }
   }
 
   private let shade = CALayer()

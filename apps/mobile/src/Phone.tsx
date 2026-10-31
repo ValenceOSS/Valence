@@ -1,3 +1,4 @@
+import { TheAskingSheet } from '@ValenceMobile/components/TheAskingSheet/TheAskingSheet';
 import { useCallback, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -109,6 +110,7 @@ const Phone = () => {
               </IfThisAppIsOn>
             )}
             <TheChosenAppearance />
+            <TheAskingSheet />
             <StatusBar style="auto" />
             <TheFirstScreenWatch
               hasServer={address !== null && !isAsking}

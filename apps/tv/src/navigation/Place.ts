@@ -20,6 +20,7 @@ type Place =
       invitedTo?: string;
       subtitleLanguage?: string;
       audioLanguage?: string;
+      startedFrom?: string;
     };
 
 export type { Place };

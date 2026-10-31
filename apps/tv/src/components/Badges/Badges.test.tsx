@@ -15,4 +15,13 @@ describe('Badges', () => {
 
     expect(drawn.toJSON()).toBeNull();
   });
+
+  it('sets the certificate first, as its board publishes it', async () => {
+    const drawn = await render(
+      <Badges badges={['4K']} rating={{ certification: 'K-16', region: 'FI' }} isSolid />,
+    );
+
+    expect(drawn.getByText('K-16')).toBeTruthy();
+    expect(drawn.getByText('4K')).toBeTruthy();
+  });
 });

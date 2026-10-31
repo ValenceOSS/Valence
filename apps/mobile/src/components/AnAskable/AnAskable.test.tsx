@@ -26,6 +26,7 @@ import type {
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
 import { theAddressOf } from '@ValenceMobile/testing/theAddressOf';
+import { pickFromAMenu } from '@ValenceMobile/testing/pickFromAMenu';
 
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
@@ -135,12 +136,39 @@ beforeEach(() => {
 });
 
 describe('AnAskable', () => {
+  it('opens the page of somebody in its cast, by their TMDB id', async () => {
+    const onLookAtPerson = jest.fn();
+
+    answering({
+      detail: aCatalogueTitleDetail({
+        cast: [{ personId: 1190668, name: 'Timothée Chalamet', role: 'Paul', photoUrl: null }],
+      }),
+    });
+
+    const drawn = await render(
+      around(
+        <AnAskable
+          kind="film"
+          id="438631"
+          onOpen={jest.fn()}
+          onLookAtPerson={onLookAtPerson}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Timothée Chalamet' }));
+
+    expect(onLookAtPerson).toHaveBeenCalledWith(1190668);
+  });
+
   it('says what it is', async () => {
     answering({});
 
     const drawn = await drawIt();
 
-    expect(await drawn.findByText('2021 · 2 h 35 min · Science Fiction')).toBeTruthy();
+    expect(await drawn.findByText('2021 · 2 h 35 min')).toBeTruthy();
+    expect(drawn.getByText('Science Fiction')).toBeTruthy();
   });
 
   it('asks for a film by its catalogue id', async () => {
@@ -153,7 +181,7 @@ describe('AnAskable', () => {
     expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
   });
 
-  it('asks which quality where the server offers a choice', async () => {
+  it('asks in the quality chosen from the menu Request drops, where the server offers a choice', async () => {
     answering({
       offered: {
         choices: [
@@ -167,12 +195,11 @@ describe('AnAskable', () => {
     const drawn = await drawIt();
 
     await waitFor(() => {
-      expect(drawn.getByRole('button', { name: '4K' })).toBeTruthy();
+      expect(drawn.getByText('Request')).toBeTruthy();
     });
-    expect(drawn.getByRole('button', { name: 'Request', disabled: true })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: '4K' })).toBeNull();
 
-    await userEvent.press(drawn.getByRole('button', { name: '4K' }));
-    await userEvent.press(drawn.getByRole('button', { name: 'Request' }));
+    await pickFromAMenu('4K');
 
     expect(askForMedia).toHaveBeenCalledWith({
       kind: 'film',
@@ -399,10 +426,10 @@ describe('AnAskable', () => {
     );
 
     await waitFor(async () => {
-      expect(await drawn.findByRole('switch', { name: 'Season 1' })).toBeDisabled();
+      expect(await drawn.findByRole('button', { name: 'Season 1' })).toBeDisabled();
     });
 
-    await fireEvent(drawn.getByRole('switch', { name: 'Season 2' }), 'valueChange', true);
+    await fireEvent.press(drawn.getByRole('button', { name: 'Season 2' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Add seasons' }));
 
     expect(askForMedia).toHaveBeenCalledWith({

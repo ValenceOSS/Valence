@@ -11,18 +11,22 @@ const styles = StyleSheet.create({
   body: { fontFamily: FONTS.sans.semibold, fontSize: 15 },
   centred: { textAlign: 'center' },
   heading: { fontFamily: FONTS.sans.semibold, fontSize: 19, letterSpacing: -0.2 },
+  lead: { fontFamily: FONTS.sans.semibold, fontSize: 17 },
+  leadLeading: { lineHeight: 25 },
   prose: { fontFamily: FONTS.sans.semibold, letterSpacing: 0.08 },
+  proseLeading: { lineHeight: 21 },
   small: { fontFamily: FONTS.sans.semibold, fontSize: 12 },
   strong: { fontFamily: FONTS.sans.bold },
   title: { fontFamily: FONTS.sans.bold, fontSize: 30, letterSpacing: -0.9 },
 });
 
 /**
- * Anything written on a phone, at one of the four sizes there turned out to be.
+ * Anything written on a phone, at one of the five sizes there turned out to be.
  *
- * Four rather than a scale, because a scale invites a fifth and then the screens stop agreeing. The
+ * Five rather than a scale, because a scale invites a sixth and then the screens stop agreeing. The
  * fourth arrived with rows: a row needs a name that is clearly not the page's own, and neither the
- * page's title nor the words under it would do.
+ * page's title nor the words under it would do. The fifth arrived with cards: what a card is about
+ * and what it is said to be read at a size between a heading and the words around it.
  *
  * Set in the web's face, Plus Jakarta Sans, for titles, names, prose and the quieter words around
  * them alike — at the weights the television app sets them, so the two read as one: titles bold,
@@ -39,6 +43,8 @@ const styles = StyleSheet.create({
  * @param isStrong - Whether it is set bold, as a badge is, whatever else it is.
  * @param colour - A colour of its own, where it sits on a page that is not the theme's — a book's
  *   sepia or light page — and takes that page's ink rather than any tone.
+ * @param onLines - Told how many lines it took once it is laid out, for a passage that offers to
+ *   show the rest of itself.
  */
 const Words = ({
   children,
@@ -50,6 +56,7 @@ const Words = ({
   isProse = false,
   isStrong = false,
   colour: asked,
+  onLines,
 }: WordsProps) => {
   const colours = useTheColours();
   const colour =
@@ -75,16 +82,27 @@ const Words = ({
           ? styles.title
           : size === 'heading'
             ? styles.heading
-            : size === 'small'
-              ? styles.small
-              : styles.body,
+            : size === 'lead'
+              ? styles.lead
+              : size === 'small'
+                ? styles.small
+                : styles.body,
         { color: colour },
         (isProse || tone === 'muted') && size !== 'title' && size !== 'heading' && styles.prose,
+        (isProse || tone === 'muted') && size === 'body' && styles.proseLeading,
+        (isProse || tone === 'muted') && size === 'lead' && styles.leadLeading,
         isStrong && styles.strong,
         isCentred && styles.centred,
       ]}
       {...(lines === undefined ? {} : { numberOfLines: lines })}
       selectable={isSelectable}
+      {...(onLines === undefined
+        ? {}
+        : {
+            onTextLayout: ({ nativeEvent }) => {
+              onLines(nativeEvent.lines.length);
+            },
+          })}
     >
       {children}
     </Text>

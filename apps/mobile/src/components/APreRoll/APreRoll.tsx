@@ -79,6 +79,7 @@ const APreRoll = ({ address, onDone }: APreRollProps) => {
   return (
     <View style={styles.whole}>
       <VideoView
+        allowsVideoFrameAnalysis={false}
         style={styles.picture}
         player={player}
         nativeControls={false}

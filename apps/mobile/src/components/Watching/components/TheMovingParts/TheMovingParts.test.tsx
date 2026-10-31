@@ -31,12 +31,9 @@ const controls = (): TheMovingPartsProps['controls'] => ({
   onSkip: jest.fn(),
   onTouched: jest.fn(),
   onClose: jest.fn(),
-  rate: 1,
-  qualityLabel: 'Auto',
   onLock: jest.fn(),
   onPictureInPicture: jest.fn(),
-  onSpeed: jest.fn(),
-  onAudioAndSubtitles: jest.fn(),
+  onSettings: jest.fn(),
   onStats: jest.fn(),
 });
 

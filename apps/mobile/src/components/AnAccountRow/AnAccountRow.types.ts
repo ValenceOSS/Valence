@@ -4,6 +4,9 @@ type AnAccountRowProps = {
   icon: AGlyph;
   says: string;
   detail?: string;
+  tint?: string;
+  count?: number;
+  isDestructive?: boolean;
   onPress: () => void;
 };
 

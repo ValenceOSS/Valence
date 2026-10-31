@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { Button } from './Button';
 
@@ -93,5 +93,37 @@ describe('a bare one', () => {
     );
 
     expect(drawn.getByRole('button', { name: 'Arrival', selected: true })).toBeTruthy();
+  });
+
+  it('offers a screen reader a way to put away what it opens', async () => {
+    const onDismiss = jest.fn();
+    const drawn = await render(
+      <Button
+        tone="bare"
+        label="Arrival"
+        dismissal={{ label: 'Hide it', onDismiss }}
+        onPress={jest.fn()}
+      >
+        <Text>Arrival</Text>
+      </Button>,
+    );
+    const button = drawn.getByLabelText('Arrival');
+
+    expect(button.props.accessibilityActions).toEqual([{ name: 'dismiss', label: 'Hide it' }]);
+
+    await fireEvent(button, 'accessibilityAction', { nativeEvent: { actionName: 'dismiss' } });
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws itself without taking a press where a menu holding it takes the press', async () => {
+    const drawn = await render(
+      <Button tone="ghost" isOnlyDrawn>
+        More
+      </Button>,
+    );
+
+    expect(drawn.getByText('More')).toBeTruthy();
+    expect(drawn.queryByRole('button')).toBeNull();
   });
 });

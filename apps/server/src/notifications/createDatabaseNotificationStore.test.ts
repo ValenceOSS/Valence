@@ -2,7 +2,7 @@ import type { NotificationStore } from './NotificationStore';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { pushSubscription, user, viewerProfile } from '#dialect/Schema';
+import { phonePush, pushSubscription, user, viewerProfile } from '#dialect/Schema';
 import { createDatabaseNotificationStore } from './createDatabaseNotificationStore';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -114,6 +114,35 @@ describe('createDatabaseNotificationStore', () => {
         { endpoint, p256dh: 'b', auth: 'b' },
       ]);
       expect(await db.select().from(pushSubscription)).toHaveLength(1);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'moves a phone to whoever signed in on it last, keeping the profile it is signed in as',
+    async () => {
+      const db = await aDatabaseWithTwoAccounts();
+      const store = createDatabaseNotificationStore(db);
+      const phone = {
+        platform: 'apple' as const,
+        token: 'a'.repeat(64),
+        environment: 'sandbox' as const,
+      };
+
+      await store.addPhone({ userId: 'ann', profileId: null }, phone);
+      await store.addPhone({ userId: 'bob', profileId: null }, phone);
+
+      expect(await store.listPhones('ann')).toStrictEqual([]);
+      expect(await store.listPhones('bob')).toStrictEqual([{ ...phone, profileId: null }]);
+      expect(await db.select().from(phonePush)).toHaveLength(1);
+
+      await store.removePhone('ann', phone.token);
+
+      expect(await store.listPhones('bob')).toHaveLength(1);
+
+      await store.removePhone('bob', phone.token);
+
+      expect(await store.listPhones('bob')).toStrictEqual([]);
     },
     STARTING_POSTGRES_MS,
   );

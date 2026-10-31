@@ -1,4 +1,7 @@
 import { z } from '@hono/zod-openapi';
+import { measurePictureFraming } from '@ValenceServer/requests/trailers/measurePictureFraming';
+import { createTrailerAddresses } from '@ValenceServer/requests/trailers/createTrailerAddresses';
+import { askYtDlp } from '@ValenceServer/requests/trailers/askYtDlp';
 import { withJoinedInputs } from '@ValenceServer/transcoder/withJoinedInputs';
 import { createPartsOf } from '@ValenceServer/library/createPartsOf';
 import { createPartsOfMany } from '@ValenceServer/library/createPartsOfMany';
@@ -421,6 +424,8 @@ import { sealingKeyFrom } from '@ValenceServer/plugins/sealingKeyFrom';
 import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
 import type { EventBus } from '@ValenceServer/events/EventBus';
 import { createDatabaseWebhookStore } from '@ValenceServer/webhooks/createDatabaseWebhookStore';
+import { createPushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
+import { createPushRelay } from '@ValenceServer/notifications/createPushRelay';
 import { createDatabaseNotificationStore } from '@ValenceServer/notifications/createDatabaseNotificationStore';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
 import { noticesOfNewMedia } from '@ValenceServer/notifications/noticesOfNewMedia';
@@ -594,10 +599,15 @@ const settings = createDatabaseSettingsStore({
     seededRoleNames: [],
     pushPublicKey: '',
     pushPrivateKey: '',
+    usesPushRelay: false,
+    pushRelayServerId: '',
+    pushRelayCredential: '',
+    pushRelayCredentialExpiresAt: null,
     mediaDigestReadTo: null,
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
@@ -1865,6 +1875,11 @@ const events: EventBus = {
 };
 
 const notifications = createDatabaseNotificationStore(db);
+
+const phones = {
+  relay: createPushRelay({ settings, address: env.VALENCE_PUSH_RELAY_URL }),
+  deliveries: createPushDeliveries(),
+};
 
 /**
  * The identity push services check this server by, made on first need and then kept. Generated here
@@ -3218,6 +3233,7 @@ const jobs = createJobQueue({
               body: notice.body,
               link: notice.link,
               vapid,
+              phones,
               ...(part.only === undefined ? {} : { only: part.only }),
               ...(part.except === undefined ? {} : { except: part.except }),
               onProblem: (reason) => {
@@ -3987,6 +4003,7 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
       }),
       link: LINKS_TO_ARRIVALS[request.kind](found.mediaId),
       vapid: await readPushKeys(),
+      phones,
       only: untold,
       profilesOf: askingProfilesOf(askersOf(request)),
       onProblem: (reason) => {
@@ -4052,6 +4069,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       body,
       link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
       vapid,
+      phones,
       only,
       profilesOf: askingProfilesOf(askers),
       onProblem: (reason) => {
@@ -4114,6 +4132,7 @@ const tellOfVersion = async (
     body: saying('server.main.titleIsNowAlsoInProfile', { title: filed.title, profile }),
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
+    phones,
     only: askers.map((asker) => asker.id),
     profilesOf: askingProfilesOf(askers),
     onProblem: (reason) => {
@@ -4488,6 +4507,7 @@ followTheDownloads({
         body: saying('server.main.titleHasBeenPreparedAndThe', { title: download.title }),
         link: null,
         vapid: await readPushKeys(),
+        phones,
         only: [accountId],
         onProblem: (reason) => {
           log.error('playback', `saying ${download.title} is ready: ${reason}`);
@@ -4653,6 +4673,7 @@ const startPlugins = (
       body: note.body,
       link: note.link,
       vapid: await readPushKeys(),
+      phones,
       only: [to.accountId],
       profilesOf: new Map([[to.accountId, [to.profileId]]]),
       onProblem: (reason) => {
@@ -5030,6 +5051,8 @@ const app = createApp({
   notifications,
   events,
   readPushPublicKey: async () => (await readPushKeys()).publicKey,
+  pushDeliveries: phones.deliveries,
+  readWakesPhones: async () => (await settings.read()).usesPushRelay,
   downloads: createLinkedDownloads(
     downloadService,
     linkedTitleOf,
@@ -5074,6 +5097,7 @@ const app = createApp({
       body: saying('server.main.byNameWithdrewYourLinkToTitle', { byName, title }),
       link: null,
       vapid: await readPushKeys(),
+      phones,
       only: [accountId],
       onProblem: (reason) => {
         log.error('server', `withdrawn link: ${reason}`);
@@ -5459,6 +5483,7 @@ const app = createApp({
           }),
           link: `/music?listen=playlist:${playlist.id}:request`,
           vapid: await readPushKeys(),
+          phones,
           only: [viewer.accountId],
           ...(viewer.profileId === null
             ? {}
@@ -5478,6 +5503,18 @@ const app = createApp({
     },
   }),
   discovery,
+  trailers: createTrailerAddresses({
+    ask: (youTubeId) =>
+      askYtDlp(youTubeId, {
+        binary: env.VALENCE_YT_DLP,
+        cookies: env.VALENCE_YT_DLP_COOKIES === '' ? null : env.VALENCE_YT_DLP_COOKIES,
+        runtime: process.execPath,
+      }),
+    measure: (url) => measurePictureFraming(url, env.VALENCE_FFMPEG),
+    onProblem: (youTubeId, why) => {
+      log.warn('requests', `the trailer ${youTubeId} could not be found: ${why}`);
+    },
+  }),
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
   seriesOfTvdbId: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),
   importedAccounts: () => readImportedAccounts(db),
@@ -5654,6 +5691,7 @@ const tellOfBeingAskedAlong = async (serverId: string, ask: AskedAlong): Promise
           : saying('server.parties.invite.watchingTitle', { title: found.title }),
       link: `/watch/${mediaId}?party=${encodeURIComponent(`${LINKED_PARTY}${serverId}~${ask.partyId}`)}`,
       vapid: await readPushKeys(),
+      phones,
       only: [accountId],
       profilesOf: new Map([[accountId, [profile.id]]]),
       onProblem: (reason) => {
@@ -5715,6 +5753,7 @@ const askSomebodyToTheParty = async (
           ),
     link: isListening ? `/music?party=${party.id}` : `/watch/${party.mediaId}?party=${party.id}`,
     vapid: await readPushKeys(),
+    phones,
     only: [accountId],
     profilesOf: new Map([[accountId, [profileId]]]),
     onProblem: (reason) => {

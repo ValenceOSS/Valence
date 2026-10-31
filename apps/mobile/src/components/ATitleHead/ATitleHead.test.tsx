@@ -14,4 +14,20 @@ describe('ATitleHead', () => {
 
     expect(drawn.getByLabelText('Arrival')).toBeTruthy();
   });
+
+  it('draws something the library does not hold from where its pictures are', async () => {
+    installPlatform(aFakePlatform());
+    const drawn = await render(
+      <ATitleHead
+        backdrop="http://one.local/backdrop.jpg"
+        lettering="http://one.local/logo.png"
+        title="Arrival"
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByLabelText('Arrival').props.source).toEqual({
+      uri: 'http://one.local/logo.png',
+    });
+  });
 });

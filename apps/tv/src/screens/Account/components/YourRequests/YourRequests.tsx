@@ -2,11 +2,12 @@ import { useMe } from '@ValenceClient/requests/useMe';
 import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { useMemo } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { useQuery } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { RequestCard } from '@ValenceTv/screens/Account/components/RequestCard/RequestCard';
+import { RequestCard } from '@ValenceTv/components/RequestCard/RequestCard';
 import type { YourRequestsProps } from './YourRequests.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
@@ -16,14 +17,16 @@ const WATCHABLE_KINDS = new Set(['film', 'series']);
 const AT_MOST = 12;
 
 /**
- * This viewer's own most recent requests, as a row of posters on their profile, each saying where it
- * stands and, while it downloads, how far through it is. Nothing is drawn where they have asked for
- * nothing. The row catches the remote across the whole width of the page.
+ * This viewer's own most recent requests, as a row of posters on their profile, each saying where
+ * it stands and, while it downloads, how far through it is. Nothing is drawn where they have asked
+ * for nothing. The row catches the remote across the whole width of the page.
  *
  * @param onOpen - Told which request was chosen.
  * @param onFocus - Told when the remote comes onto the row.
+ * @param onLight - Told the picture of the request the remote rests on — its backdrop where the
+ *   library holds it, otherwise its poster — to light the page.
  */
-const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
+const YourRequests = ({ onOpen, onFocus, onLight }: YourRequestsProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const asMe = useMe();
 
@@ -61,7 +64,15 @@ const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
               request={item}
               going={progressOfRequest(item, progress.data ?? [])}
               onPress={onOpen}
-              onFocus={onFocus}
+              onFocus={() => {
+                onFocus();
+
+                onLight(
+                  item.mediaId === null
+                    ? item.posterUrl
+                    : artworkUrl(item.mediaId, 'backdrop', { isOfTitle: true, size: 'medium' }),
+                );
+              }}
             />
           )}
         />
@@ -78,14 +89,10 @@ const styles = StyleSheet.create({
     color: tokens.colours.text,
     fontSize: tokens.type.body,
     fontWeight: '600',
-    paddingHorizontal: tokens.space.edge,
+    paddingLeft: tokens.space.md,
   },
-  row: { overflow: 'visible' },
-  inside: {
-    paddingHorizontal: tokens.space.edge,
-    paddingVertical: tokens.space.md,
-    gap: tokens.space.md,
-  },
+  row: { overflow: 'hidden' },
+  inside: { gap: tokens.space.md, padding: tokens.space.md },
 });
 
 export { YourRequests };
