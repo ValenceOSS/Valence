@@ -17,9 +17,8 @@ name: Client apps to the stores
 #   EXPO_TOKEN         an Expo robot access token for the valence-oss organisation (every family)
 #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_API_KEY_P8
 #                      the App Store Connect API key (iOS; see phone-testflight.yml)
-# Google Play's service account key is not a secret here: it is uploaded to EAS once with
-# `eas credentials`, and `eas submit` reads it from there. The docs page "Releasing" covers every
-# one of these and how to rotate it.
+#   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
+#                      the Google Play service account key (Android; see phone-google-play.yml)
 
 on:
   workflow_call:
@@ -66,67 +65,23 @@ jobs:
       ref: ${{ inputs.tag }}
       profile: production
 
-  # Android builds on Linux, which is a tenth of a macOS runner's price, with the SDK the runner image
-  # already carries. EAS is asked only for the upload keystore it keeps and the next version code, so
-  # nothing waits in Expo's queue.
-  android:
-    name: ${{ matrix.name }} to Google Play
+  phone-android:
+    name: Phone app to Google Play
     if: vars.PUBLISH_ANDROID == 'true' && (inputs.family == null || inputs.family == 'all' || inputs.family == 'android')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Phone app
-            app: mobile
-            tv: ''
-          - name: Android TV app
-            app: tv
-            tv: '1'
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.tag }}
+    uses: ./.github/workflows/phone-google-play.yml
+    secrets: inherit
+    with:
+      ref: ${{ inputs.tag }}
+      profile: production
 
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Build
-        working-directory: apps/${{ matrix.app }}
-        run: >
-          npx eas-cli@24.10.0 build --local --platform android --profile production --non-interactive
-          --output "$RUNNER_TEMP/valence.aab"
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EXPO_TV: ${{ matrix.tv }}
-          EAS_BUILD_DISABLE_EXPO_DOCTOR_STEP: '1'
-
-      - name: Send to Google Play's internal testing
-        working-directory: apps/${{ matrix.app }}
-        run: >
-          npx eas-cli@24.10.0 submit --platform android --profile production --non-interactive
-          --path "$RUNNER_TEMP/valence.aab"
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: valence-android-${{ matrix.app }}
-          path: ${{ runner.temp }}/valence.aab
-          if-no-files-found: error
-          retention-days: 7
+  tv-android:
+    name: Android TV app to Google Play
+    if: vars.PUBLISH_ANDROID == 'true' && (inputs.family == null || inputs.family == 'all' || inputs.family == 'android')
+    uses: ./.github/workflows/tv-google-play.yml
+    secrets: inherit
+    with:
+      ref: ${{ inputs.tag }}
+      profile: production
 
   # Fire TV is the Android TV build as an APK. The Amazon Appstore has no submission EAS can reach,
   # so the APK is attached to the release for uploading in the Amazon Developer Console.
