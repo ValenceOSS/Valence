@@ -6,6 +6,7 @@ import {
 } from '@ValenceClient/notifications/fetchNotifications';
 import {
   canReceivePush,
+  isThisBrowserSubscribed,
   subscribeToPush,
   unsubscribeFromPush,
 } from '@ValenceScreens/notifications/subscribeToPush';
@@ -30,7 +31,12 @@ const useTheInbox = (isOn = true): NotificationBellProps & { isKnown: boolean } 
   const inbox = held.data ?? NOTHING_WAITING;
   const howToPush = useQuery({ ...notificationQueries.settings(), enabled: isOn });
   const pushKey = howToPush.data?.pushPublicKey ?? '';
-  const isPushOn = pushChoice ?? howToPush.data?.preferences.some((one) => one.push) ?? false;
+  const isSubscribed = useQuery({
+    queryKey: [...notificationQueries.key, 'thisBrowser'],
+    queryFn: isThisBrowserSubscribed,
+    enabled: isOn && canReceivePush(),
+  });
+  const isPushOn = pushChoice ?? isSubscribed.data ?? false;
 
   return {
     isKnown: held.data !== undefined,

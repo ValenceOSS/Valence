@@ -187,14 +187,14 @@ describe('the notification routes', () => {
     );
 
     expect(read.preferences).toStrictEqual([
-      { event: 'media.added', inApp: true, push: false },
-      { event: 'party.invited', inApp: true, push: false },
-      { event: 'sharing.withdrawn', inApp: true, push: false },
-      { event: 'requests.available', inApp: true, push: false },
-      { event: 'downloads.ready', inApp: true, push: false },
-      { event: 'requests.albumsFound', inApp: true, push: false },
-      { event: 'plugins.message', inApp: true, push: false },
-      { event: 'profiles.pinLocked', inApp: true, push: false },
+      { event: 'media.added', inApp: true, push: true },
+      { event: 'party.invited', inApp: true, push: true },
+      { event: 'sharing.withdrawn', inApp: true, push: true },
+      { event: 'requests.available', inApp: true, push: true },
+      { event: 'downloads.ready', inApp: true, push: true },
+      { event: 'requests.albumsFound', inApp: true, push: true },
+      { event: 'plugins.message', inApp: true, push: true },
+      { event: 'profiles.pinLocked', inApp: true, push: true },
     ]);
   });
 

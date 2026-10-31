@@ -34,9 +34,10 @@ describe('notifyHousehold', () => {
     expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
   });
 
-  it('does not push at somebody who never asked to be interrupted', async () => {
+  it('does not push at somebody who turned it off', async () => {
     const send = landing();
 
+    await store.writePreference('alice', { event: 'media.added', inApp: true, push: false });
     await store.addPushEndpoint('alice', { endpoint: 'https://push/1', p256dh: 'k', auth: 'a' });
 
     await notifyHousehold({ store, ...news, vapid: keys, send });

@@ -23,8 +23,8 @@ describe('createMemoryNotificationStore', () => {
     expect(await store.listWanting('media.added', 'inApp')).toStrictEqual(['alice', 'bob']);
   });
 
-  it('does not push at anybody who has not asked for it', async () => {
-    expect(await store.listWanting('media.added', 'push')).toStrictEqual([]);
+  it('pushes to everybody before anybody has chosen, since only a device somebody allowed is woken', async () => {
+    expect(await store.listWanting('media.added', 'push')).toStrictEqual(['alice', 'bob']);
   });
 
   it('honours somebody turning in-app off', async () => {
@@ -33,10 +33,10 @@ describe('createMemoryNotificationStore', () => {
     expect(await store.listWanting('media.added', 'inApp')).toStrictEqual(['bob']);
   });
 
-  it('honours somebody turning push on', async () => {
-    await store.writePreference('alice', { event: 'media.added', inApp: true, push: true });
+  it('honours somebody turning push off', async () => {
+    await store.writePreference('alice', { event: 'media.added', inApp: true, push: false });
 
-    expect(await store.listWanting('media.added', 'push')).toStrictEqual(['alice']);
+    expect(await store.listWanting('media.added', 'push')).toStrictEqual(['bob']);
   });
 
   it('gives each account its own copy, because read state is personal', async () => {

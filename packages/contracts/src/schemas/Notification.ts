@@ -36,7 +36,7 @@ const NotificationPreferenceSchema = z.object({
 
 type NotificationPreference = z.infer<typeof NotificationPreferenceSchema>;
 
-const DEFAULT_NOTIFICATION_PREFERENCE = { inApp: true, push: false } as const;
+const DEFAULT_NOTIFICATION_PREFERENCE = { inApp: true, push: true } as const;
 
 const PhonePushSchema = z.object({
   platform: z.enum(['apple', 'android']),
