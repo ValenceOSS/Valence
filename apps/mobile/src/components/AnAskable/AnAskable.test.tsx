@@ -429,7 +429,7 @@ describe('AnAskable', () => {
       expect(await drawn.findByRole('button', { name: 'Season 1' })).toBeDisabled();
     });
 
-    await fireEvent(drawn.getByRole('switch', { name: 'Season 2' }), 'valueChange', true);
+    await fireEvent.press(drawn.getByRole('button', { name: 'Season 2' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Add seasons' }));
 
     expect(askForMedia).toHaveBeenCalledWith({
