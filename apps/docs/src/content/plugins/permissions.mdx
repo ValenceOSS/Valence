@@ -132,6 +132,14 @@ No fields. Opens `valence.notifications.send`, which puts a notification in one 
 
 No fields. Lets outside services send your plugin messages at private addresses of its own, one for each webhook under `contributes.webhooks`. See [webhooks](/plugins/webhooks).
 
+## routes
+
+```json
+{ "kind": "routes", "public": false }
+```
+
+Lets the plugin answer apps outside Valence at addresses of its own, one for each route under `contributes.routes`, signed in with app passwords people make. `public` is `false` unless you set it; with `true`, a route may also take requests from anybody, without signing in, and the install screen says so. See [answering apps](/plugins/routes).
+
 ## emits
 
 ```json

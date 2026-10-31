@@ -27,6 +27,7 @@ describe('pluginAccountPages', () => {
         themes: [],
         downloadClients: [],
         sources: [],
+        apps: [],
         nodes: [],
       }),
     ).toEqual([

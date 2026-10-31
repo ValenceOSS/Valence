@@ -270,6 +270,12 @@ const createPluginBroker = ({
       return running;
     }
 
+    if (running.kind === 'nobody') {
+      throw new PluginRefusalError(
+        `${name} may not act for anybody for a request nobody signed in to.`,
+      );
+    }
+
     if (!(await store.profilesOf(installation.id)).includes(profileId)) {
       throw new PluginRefusalError(`${name} may only act for people who have used it.`);
     }
@@ -280,7 +286,7 @@ const createPluginBroker = ({
   const asThePerson = async (profileId: string, scope: BrokerScope | null): Promise<Viewer> => {
     const checked = await actsFor(profileId, scope);
 
-    if (checked.kind === 'background') {
+    if (checked.kind !== 'viewer') {
       return host.viewerOf(profileId);
     }
 
@@ -293,6 +299,12 @@ const createPluginBroker = ({
   ): Promise<Viewer> => {
     const running = stillRunning(scope);
     const named = reading?.profileId ?? null;
+
+    if (running.kind === 'nobody') {
+      throw new PluginRefusalError(
+        `${name} may not read the library for a request nobody signed in to.`,
+      );
+    }
 
     if (running.kind === 'viewer') {
       if (named !== null) {
@@ -527,6 +539,12 @@ const createPluginBroker = ({
         return null;
       }
       case 'profiles.list': {
+        if (stillRunning(scope).kind === 'nobody') {
+          throw new PluginRefusalError(
+            `${name} may not list people for a request nobody signed in to.`,
+          );
+        }
+
         const ids = await store.profilesOf(installation.id);
         const found = await Promise.all(ids.map((id) => host.profiles.read(id)));
 
@@ -626,6 +644,12 @@ const createPluginBroker = ({
       }
       case 'requests.searchCatalogue': {
         needs('requests');
+
+        if (stillRunning(scope).kind === 'nobody') {
+          throw new PluginRefusalError(
+            `${name} may not search the catalogue for a request nobody signed in to.`,
+          );
+        }
 
         const [query, kind] = ARGS[method].parse(args);
 

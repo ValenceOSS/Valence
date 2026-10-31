@@ -10,6 +10,12 @@ describe('describePermission', () => {
       'Fetches files from *.files.example.test',
     );
     expect(describePermission({ kind: 'library', access: 'read' })).toBe('Reads your library');
+    expect(describePermission({ kind: 'routes', public: false })).toBe(
+      'Answers apps you sign in with an app password',
+    );
+    expect(describePermission({ kind: 'routes', public: true })).toBe(
+      'Answers anybody outside Valence',
+    );
     expect(describePermission({ kind: 'library', access: 'everything' })).toBe(
       'Reads every library, locked ones included',
     );

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { actOnPluginSurface } from './actOnPluginSurface';
 import { changePlugin } from './changePlugin';
 import { installPlugin } from './installPlugin';
+import { makeAppPassword } from './makeAppPassword';
+import { removeAppPassword } from './removeAppPassword';
 import { previewCataloguePlugin } from './previewCataloguePlugin';
 import { removePlugin } from './removePlugin';
 import { rollbackPlugin } from './rollbackPlugin';
@@ -31,6 +33,41 @@ afterEach(() => {
 });
 
 describe('plugin changes', () => {
+  it('makes an app password with what it is for, and reads its secret back once', async () => {
+    const made = {
+      address: 'https://valence.test/api/plugins/music/routes',
+      password: {
+        id: '00000000-0000-4000-8000-000000000001',
+        login: 'sam',
+        label: 'Phone',
+        createdAt: '2026-10-31T10:00:00.000Z',
+        lastUsedAt: null,
+      },
+      secret: 'q8Zr1VbW3nK0yTf6LmP2sXhD',
+    };
+
+    answer(made, 201);
+
+    await expect(makeAppPassword('music', 'Phone')).resolves.toEqual(made);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/music/app-passwords');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('POST');
+    expect(JSON.parse(z.string().parse(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      label: 'Phone',
+    });
+  });
+
+  it('removes an app password, and says why where the server refused', async () => {
+    answer(null);
+
+    await removeAppPassword('music', 'p/1');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/music/app-passwords/p%2F1');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
+
+    answer({ error: 'There is no such plugin.' }, 404);
+
+    await expect(removeAppPassword('music', 'p1')).rejects.toThrow('There is no such plugin.');
+  });
+
   it('sends an action with only its id, payload and the fields', async () => {
     answer({ surface: { blocks: [{ type: 'divider' }] }, navigate: null });
 

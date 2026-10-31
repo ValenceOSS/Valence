@@ -522,6 +522,7 @@ describe('a plugin from upload to use, through its own process', () => {
       themes: 0,
       nodes: 1,
       webhooks: 0,
+      appPasswords: 0,
       keepsEarlierVersion: false,
     });
     expect(await service.uninstall('counter')).toBe(true);
@@ -1015,6 +1016,97 @@ describe('telling plugins what happened', () => {
       },
       { timeout: 20_000 },
     );
+
+    service.stop();
+  }, 60_000);
+
+  it('answers an app signed in with an app password, as that person, never handing over the secret', async () => {
+    const store = createMemoryPluginStore();
+    const host = aPluginHostForTest();
+    const service = build(vi.fn(), { store, host, apiVersion: '1.4.0' });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: {
+          ...TRACKER,
+          apiVersion: '^1.4',
+          permissions: [
+            ...TRACKER.permissions,
+            { kind: 'library', access: 'read' },
+            { kind: 'routes', public: false },
+          ],
+          contributes: {
+            ...TRACKER.contributes,
+            routes: [
+              {
+                id: 'rest',
+                title: 'Music apps',
+                methods: ['GET'],
+                signIn: [{ kind: 'query', login: 'u', secret: 'p' }],
+              },
+            ],
+          },
+        },
+        code: `globalThis.valencePlugin = {
+  routes: {
+    rest: async ({ valence, person }, request) => {
+      const media = await valence.library.get('item-1');
+      return {
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ person, path: request.path, query: request.query, title: media.title }),
+      };
+    },
+  },
+};`,
+        assets: {},
+      }),
+    );
+
+    const made = await service.makeAppPassword('tracker', 'profile-1', 'Phone');
+
+    if (typeof made === 'string') {
+      throw new Error(made);
+    }
+
+    expect(made.address).toBe('https://valence.home/api/plugins/tracker/routes');
+
+    const answered = await service.answerRoute('tracker', 'rest', {
+      method: 'GET',
+      path: 'ping.view',
+      query: { u: [made.password.login], p: [made.secret], f: ['json'] },
+      headers: { 'user-agent': 'An app', cookie: 'session=x' },
+      body: '',
+      address: '203.0.113.7',
+    });
+
+    expect(answered).toMatchObject({ kind: 'answered', status: 200 });
+    expect(answered.kind === 'answered' ? JSON.parse(answered.body) : null).toEqual({
+      person: { profileId: 'profile-1', name: 'Profile profile-1' },
+      path: 'ping.view',
+      query: { u: [made.password.login], f: ['json'] },
+      title: A_PLUGIN_MEDIA_FOR_TEST.title,
+    });
+    expect(host.library.get).toHaveBeenCalledWith(
+      'item-1',
+      expect.objectContaining({ profileId: 'profile-1' }),
+    );
+    await expect(
+      service.answerRoute('tracker', 'rest', {
+        method: 'GET',
+        path: '',
+        query: { u: [made.password.login], p: ['wrong'] },
+        headers: {},
+        body: '',
+        address: '203.0.113.7',
+      }),
+    ).resolves.toEqual({ kind: 'signInNeeded', realm: null });
+    await expect(service.appPasswords('tracker', 'profile-1')).resolves.toMatchObject({
+      routes: [{ id: 'rest', title: 'Music apps' }],
+      passwords: [{ label: 'Phone' }],
+    });
 
     service.stop();
   }, 60_000);
