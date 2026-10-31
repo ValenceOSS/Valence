@@ -4,40 +4,42 @@ import { streamTrailer } from './streamTrailer';
 const PIECE = 10 * 1024 * 1024;
 
 /**
- * A YouTube that serves a picture of the given size in whatever range it is asked for, and counts
- * what it was asked.
+ * A YouTube that serves a picture of the given size in whatever range its address asks for, and
+ * counts what it was asked.
  *
  * @param size - How large the picture is.
- * @returns The fetch it answers, and the ranges it was asked for.
+ * @returns Where it is, the fetch it answers, and the ranges it was asked for.
  */
 const aYouTube = (size: number) => {
   const asked: string[] = [];
-  const fetchPiece = vi.fn<typeof fetch>((_url, init) => {
-    const range = new Headers(init?.headers).get('range') ?? '';
-    const [, from = '0', to = '0'] = /bytes=(\d+)-(\d+)/u.exec(range) ?? [];
-    const end = Math.min(Number(to), size - 1);
+  const fetchPiece = vi.fn<typeof fetch>((input) => {
+    const address = input instanceof Request ? input.url : input.toString();
+    const range = new URL(address).searchParams.get('range') ?? '';
+    const [from = 0, to = 0] = range.split('-').map(Number);
 
     asked.push(range);
 
     return Promise.resolve(
-      new Response(new Uint8Array(end - Number(from) + 1), {
-        status: 206,
-        headers: {
-          'content-type': 'video/mp4',
-          'content-range': `bytes ${from}-${end.toString()}/${size.toString()}`,
-        },
+      new Response(new Uint8Array(Math.min(to, size - 1) - from + 1), {
+        status: 200,
+        headers: { 'content-type': 'video/mp4' },
       }),
     );
   });
 
-  return { asked, fetchPiece };
+  return {
+    url: `https://rr1.googlevideo.com/videoplayback?id=1&clen=${size.toString()}`,
+    asked,
+    fetchPiece,
+  };
 };
 
 describe('streamTrailer', () => {
-  it('answers a range as asked, with what it is a part of', async () => {
-    const { fetchPiece } = aYouTube(5000);
-    const file = await streamTrailer('https://yt/v', 'bytes=0-1', fetchPiece);
+  it('answers a range as asked, with how large the whole picture is', async () => {
+    const { url, asked, fetchPiece } = aYouTube(5000);
+    const file = await streamTrailer(url, 'bytes=0-1', fetchPiece);
 
+    expect(asked).toEqual(['0-1']);
     expect(file?.status).toBe(206);
     expect(file?.contentRange).toBe('bytes 0-1/5000');
     expect(file?.contentLength).toBe('2');
@@ -45,8 +47,8 @@ describe('streamTrailer', () => {
 
   it('fetches a long range ten megabytes at a time, and sends it on whole', async () => {
     const size = PIECE * 2 + 100;
-    const { asked, fetchPiece } = aYouTube(size);
-    const file = await streamTrailer('https://yt/v', 'bytes=0-', fetchPiece);
+    const { url, asked, fetchPiece } = aYouTube(size);
+    const file = await streamTrailer(url, 'bytes=0-', fetchPiece);
     const sent = await new Response(file?.body).arrayBuffer();
 
     expect(sent.byteLength).toBe(size);
@@ -55,8 +57,8 @@ describe('streamTrailer', () => {
   });
 
   it('sends the whole picture to somebody who asked for no range', async () => {
-    const { fetchPiece } = aYouTube(5000);
-    const file = await streamTrailer('https://yt/v', null, fetchPiece);
+    const { url, fetchPiece } = aYouTube(5000);
+    const file = await streamTrailer(url, null, fetchPiece);
 
     expect(file?.status).toBe(200);
     expect(file?.contentRange).toBeNull();
@@ -68,6 +70,13 @@ describe('streamTrailer', () => {
       Promise.resolve(new Response('', { status: 403 })),
     );
 
-    expect(await streamTrailer('https://yt/v', 'bytes=0-1', fetchPiece)).toBeNull();
+    expect(await streamTrailer('https://yt/v?clen=5000', 'bytes=0-1', fetchPiece)).toBeNull();
+  });
+
+  it('answers nothing where the address does not say how large the picture is', async () => {
+    const fetchPiece = vi.fn<typeof fetch>();
+
+    expect(await streamTrailer('https://yt/v?id=1', 'bytes=0-1', fetchPiece)).toBeNull();
+    expect(fetchPiece).not.toHaveBeenCalled();
   });
 });
