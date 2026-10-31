@@ -396,8 +396,17 @@ const createPresenceService = (
         return false;
       }
 
-      connection.entry.playback.isPlaying = false;
-      connection.entry.playback.pausedByAdmin = true;
+      const { playback } = connection.entry;
+      const wasPlaying = playback.isPlaying;
+
+      playback.isPlaying = false;
+      playback.pausedByAdmin = true;
+
+      if (wasPlaying) {
+        progressedAt.set(clientId, now());
+        watchers.onPlaybackPaused?.(viewing(connection.entry, playback));
+      }
+
       connection.send({ kind: 'paused', reason });
       announce();
 
@@ -411,9 +420,18 @@ const createPresenceService = (
         return false;
       }
 
-      if (connection.entry.playback !== null) {
-        connection.entry.playback.pausedByAdmin = false;
-        connection.entry.playback.isPlaying = true;
+      const { playback } = connection.entry;
+
+      if (playback !== null) {
+        const wasPlaying = playback.isPlaying;
+
+        playback.pausedByAdmin = false;
+        playback.isPlaying = true;
+
+        if (!wasPlaying) {
+          progressedAt.set(clientId, now());
+          watchers.onPlaybackResumed?.(viewing(connection.entry, playback));
+        }
       }
 
       connection.send({ kind: 'resumed' });
