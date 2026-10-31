@@ -1,4 +1,5 @@
-import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
+import { CircleX } from '@keyline-icons/react-native';
+import { Plus } from '@keyline-icons/react-native/fill';
 import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -25,7 +26,7 @@ import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLi
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
-import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
+import { AMenu } from '@ValenceMobile/components/AMenu/AMenu';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { TheSeasons } from '@ValenceMobile/components/AnAskable/components/TheSeasons/TheSeasons';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -45,8 +46,21 @@ import { TheTracks } from '@ValenceMobile/components/AnAskable/components/TheTra
 import type { BookFormat, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { AnAskableProps } from './AnAskable.types';
+import { symbolOfQuality } from './symbolOfQuality';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
+import { ACardPart } from '@ValenceMobile/components/ACardPart/ACardPart';
+import { AHairline } from '@ValenceMobile/components/AHairline/AHairline';
+import { AnOverview } from '@ValenceMobile/components/AnOverview/AnOverview';
+import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
+import { ARising } from '@ValenceMobile/components/ARising/ARising';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
+import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
+import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
+import { TheCast } from '@ValenceMobile/components/TheCast/TheCast';
+import { usePictureTint } from '@ValenceMobile/hooks/usePictureTint';
+import { GROUND } from '@ValenceMobile/theme/GROUND';
 import { AChooseSourceSheet } from '@ValenceMobile/components/AChooseSourceSheet/AChooseSourceSheet';
 import { screenOfProfile } from '@ValenceClient/streams/screenOfProfile';
 import { useMayStream } from '@ValenceClient/streams/useMayStream';
@@ -63,8 +77,11 @@ const BOOK_FORMAT_NAMES: Record<BookFormat, string> = {
 };
 
 const styles = StyleSheet.create({
-  backdrop: { aspectRatio: 16 / 9, borderRadius: 14, width: '100%' },
+  about: { gap: 12 },
+  actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   cover: { alignSelf: 'center', aspectRatio: 1, borderRadius: 14, width: '62%' },
+  doing: { gap: 10 },
+  headline: { alignItems: 'center', gap: 8 },
   release: { gap: 2, paddingVertical: 8 },
   releases: { gap: 4 },
 });
@@ -81,12 +98,18 @@ const isWatched = (kind: string): kind is 'film' | 'series' => kind === 'film' |
  * Something from the catalogue — a film, a programme, an artist, an album or a book: what it is,
  * whether it is here or asked for, and the way to ask for it.
  *
+ * It is drawn as a title the library holds is: its backdrop edge to edge with its lettering over
+ * it, the page tinted with the backdrop's colour, its facts centred under that, then one wide
+ * button for the main thing to do with it — asking for it, playing it from a source, watching a
+ * linked server's copy or wanting it too — with a round button beneath for taking back a request,
+ * then what it is about, its genres and who is in it.
+ *
  * A programme is asked for a season at a time, or every season, and whether new seasons come too;
- * one already asked for can have more seasons added. Where the server offers more than
- * one quality somebody picks one before asking; where it offers one, or insists on one, there is
- * nothing to pick. An artist is asked for with the kinds of release to follow, and lists its albums
- * to ask for one alone; an album lists its songs; a book is asked for as an ebook, an audiobook or
- * both.
+ * one already asked for can have more seasons added. Where the server offers more than one
+ * quality, asking drops a menu of them, each with its symbol, and choosing one asks for it in that
+ * quality; where it offers one, or insists on one, asking asks at once. An artist is asked for
+ * with the kinds of release to follow, and lists its albums to ask for one alone; an album lists
+ * its songs; a book is asked for as an ebook, an audiobook or both.
  *
  * A film a source can play, for somebody who may play from sources, has Play first: it plays the
  * stream Valence would choose for this phone straight away, without downloading it, and Sources
@@ -130,15 +153,18 @@ const AnAskable = ({
   const [followsNew, setFollowsNew] = useState(true);
   const [adding, setAdding] = useState<number[] | null>([]);
   const [addsFollowing, setAddsFollowing] = useState(false);
-  const [quality, setQuality] = useState<string | null>(null);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [bookFormats, setBookFormats] = useState<BookFormat[]>(['ebook']);
   const [isWholeSeries, setIsWholeSeries] = useState(false);
-  const [isOverviewWhole, setIsOverviewWhole] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const faces = useQuery(linkingQueries.faces());
   const title = asking.data;
+  const tint = usePictureTint(
+    title === undefined || title.backdropUrl === null
+      ? null
+      : pictureOnThisServer(title.backdropUrl),
+  );
   const heldAs =
     !isMore && title !== undefined && title.standing.status === 'library'
       ? title.standing.mediaId
@@ -172,7 +198,6 @@ const AnAskable = ({
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
   const saidOfGoing = going === null ? null : describeDownloadLine(going);
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
-  const needsQuality = choices.length > 1 && quality === null;
   const needsMore =
     (kind === 'artist' && releaseTypes.length === 0) ||
     (kind === 'book' && bookFormats.length === 0);
@@ -191,7 +216,7 @@ const AnAskable = ({
   const hasMoreToAdd =
     adding === null || adding.length > 0 || (addsFollowing && !isFollowedAlready);
 
-  const send = async () => {
+  const send = async (profileId: string | null) => {
     setIsSending(true);
     setRefusal(null);
 
@@ -203,7 +228,7 @@ const AnAskable = ({
 
     const sent = await askForMedia({
       ...askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
-      ...(quality === null ? {} : { profileId: quality }),
+      ...(profileId === null ? {} : { profileId }),
     });
 
     setIsSending(false);
@@ -297,284 +322,395 @@ const AnAskable = ({
   const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me);
   const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, me);
 
+  const backdrop = title.backdropUrl === null ? null : pictureOnThisServer(title.backdropUrl);
+  const facts = describeAskableFacts({ ...title, genres: [] });
+  const genres = title.genres
+    .slice(0, 3)
+    .map((genre) => ({ label: genre, tone: 'solid' as const }));
+  const isRequestable =
+    !isUnrequestable &&
+    (title.standing.status === 'askable' ||
+      (isMore && title.standing.status === 'library') ||
+      (title.standing.status === 'linked' && title.standing.requestId === null));
+  const isRequestMain = !isStreamable && title.standing.status !== 'linked';
+  const linkedCopy =
+    title.standing.status === 'linked' && title.standing.mediaId !== null && isWatched(kind)
+      ? { kind, mediaId: title.standing.mediaId }
+      : null;
+  const cast = title.cast.map((member) => ({
+    personId: null,
+    name: member.name,
+    role: member.role ?? '',
+    imageUrl: member.photoUrl === null ? null : pictureOnThisServer(member.photoUrl),
+  }));
+  const isRequestDisabled = needsMore || (seasons !== null && seasons.length === 0);
+  const hasQualities = choices.length > 1;
+  const requestSays =
+    title.standing.status === 'linked' ? say('common.requestHere') : say('common.request');
+  const sendIt = () => {
+    void send(null);
+  };
+  const requestButton = isRequestMain ? (
+    <APlayButton
+      icon={Plus}
+      says={requestSays}
+      isBusy={isSending}
+      isDisabled={isRequestDisabled}
+      {...(hasQualities ? {} : { onPress: sendIt })}
+    />
+  ) : (
+    <Button
+      tone="quiet"
+      isBusy={isSending}
+      isDisabled={isRequestDisabled}
+      {...(hasQualities ? { isOnlyDrawn: true } : { onPress: sendIt })}
+    >
+      {requestSays}
+    </Button>
+  );
+
   return (
-    <Screen scrolls onBack={onBack}>
-      {title.backdropUrl !== null ? (
-        <ARemotePicture
-          style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
-          uri={pictureOnThisServer(title.backdropUrl)}
-        />
-      ) : title.posterUrl !== null && !isWatched(kind) ? (
-        <ARemotePicture
-          style={[styles.cover, { backgroundColor: colours.surfaceRaised }]}
-          uri={pictureOnThisServer(title.posterUrl)}
-        />
-      ) : null}
+    <GROUND.Provider value={tint}>
+      <Screen
+        scrolls
+        title={title.title}
+        onBack={onBack}
+        {...(backdrop === null
+          ? {}
+          : {
+              head: (
+                <ATitleHead
+                  backdrop={backdrop}
+                  lettering={title.logoUrl === null ? null : pictureOnThisServer(title.logoUrl)}
+                  title={title.title}
+                  {...(tint === null ? {} : { ground: tint })}
+                />
+              ),
+            })}
+        {...(tint === null ? {} : { behind: <ATintedGround tint={tint} /> })}
+      >
+        {backdrop === null && title.posterUrl !== null && !isWatched(kind) ? (
+          <ARemotePicture
+            style={[styles.cover, { backgroundColor: colours.surfaceRaised }]}
+            uri={pictureOnThisServer(title.posterUrl)}
+          />
+        ) : null}
 
-      <Words size="title">{title.title}</Words>
+        <ARising>
+          <View style={styles.headline}>
+            {backdrop === null ? (
+              <Words size="title" isCentred>
+                {title.title}
+              </Words>
+            ) : null}
 
-      <Words tone="muted">{describeAskableFacts(title)}</Words>
+            {facts === '' ? null : (
+              <Words size="lead" tone="muted" isCentred>
+                {facts}
+              </Words>
+            )}
 
-      {standing === null ? null : (
-        <Words tone={standing.tone === 'danger' ? 'danger' : 'accent'}>{standing.label}</Words>
-      )}
+            {standing === null ? null : (
+              <Words tone={standing.tone === 'danger' ? 'danger' : 'accent'} isCentred>
+                {standing.label}
+              </Words>
+            )}
 
-      {whoElse === null ? null : <Words tone="muted">{whoElse}</Words>}
+            {whoElse === null ? null : (
+              <Words tone="muted" isCentred>
+                {whoElse}
+              </Words>
+            )}
 
-      {myProfileAsk === null ? null : <Words tone="muted">{myProfileAsk}</Words>}
+            {myProfileAsk === null ? null : (
+              <Words tone="muted" isCentred>
+                {myProfileAsk}
+              </Words>
+            )}
+          </View>
+        </ARising>
 
-      {isStreamable ? (
-        <>
-          <Button
-            icon={PlayFilled}
-            isBusy={streaming.isFinding || streaming.isStarting}
-            onPress={streaming.start}
-          >
-            {say('common.play')}
-          </Button>
+        <ARising turn={1}>
+          <View style={styles.doing}>
+            {isStreamable ? (
+              <>
+                <APlayButton
+                  says={say('common.play')}
+                  isBusy={streaming.isFinding || streaming.isStarting}
+                  onPress={streaming.start}
+                />
 
-          <Button tone="quiet" onPress={streaming.openPicker}>
-            {say('common.sources')}
-          </Button>
+                <Button tone="quiet" onPress={streaming.openPicker}>
+                  {say('common.sources')}
+                </Button>
 
-          {streaming.problem === null ? null : <Words tone="danger">{streaming.problem}</Words>}
-        </>
-      ) : null}
+                {streaming.problem === null ? null : (
+                  <Words tone="danger">{streaming.problem}</Words>
+                )}
+              </>
+            ) : null}
 
-      {isJoinable ? (
-        <Button
-          isBusy={isSending}
-          onPress={() => {
-            void join();
-          }}
-        >
-          {say('common.iWantThisToo')}
-        </Button>
-      ) : null}
-
-      {going === null ? null : (
-        <HowFar
-          fraction={going.progress}
-          label={say('common.howFarTitleHasDownloaded', { title: title.title })}
-        />
-      )}
-
-      {saidOfGoing === null ? null : (
-        <Words size="small" tone="muted">
-          {saidOfGoing}
-        </Words>
-      )}
-
-      {title.standing.status === 'linked' && title.standing.mediaId !== null && isWatched(kind) ? (
-        <Button
-          {...(isStreamable ? { tone: 'quiet' as const } : {})}
-          onPress={() => {
-            if (title.standing.mediaId !== null) {
-              onOpen(kind, title.standing.mediaId);
-            }
-          }}
-        >
-          {say('common.watchOnName', {
-            name: title.standing.fromServer ?? say('common.linkedServers'),
-          })}
-        </Button>
-      ) : null}
-
-      {isUnrequestable && title.standing.status === 'askable' ? (
-        <Words tone="muted">{say('common.noLibraryTakesRequestsForThis')}</Words>
-      ) : null}
-
-      {!isUnrequestable &&
-      (title.standing.status === 'askable' ||
-        (isMore && title.standing.status === 'library') ||
-        (title.standing.status === 'linked' && title.standing.requestId === null)) ? (
-        <>
-          {kind === 'series' ? (
-            <TheSeasons
-              tmdbId={Number(id)}
-              seasons={seasons}
-              onChange={setSeasons}
-              followsNew={followsNew}
-              onFollowsNew={setFollowsNew}
-            />
-          ) : kind === 'artist' ? (
-            <AManyChoices
-              label={say('screens.releaseTypeChooser.whichReleases')}
-              choices={RELEASE_TYPES.map((type) => ({
-                id: type,
-                label: RELEASE_TYPE_NAMES[type].label,
-              }))}
-              chosen={releaseTypes}
-              onChange={(chosen) => {
-                setReleaseTypes(RELEASE_TYPES.filter((type) => chosen.includes(type)));
-              }}
-            />
-          ) : kind === 'book' ? (
-            <AManyChoices
-              label={say('screens.bookFormatChooser.whichFormats')}
-              choices={BOOK_FORMATS.map((format) => ({
-                id: format,
-                label: BOOK_FORMAT_NAMES[format],
-              }))}
-              chosen={bookFormats}
-              onChange={(chosen) => {
-                setBookFormats(BOOK_FORMATS.filter((format) => chosen.includes(format)));
-              }}
-            />
-          ) : null}
-
-          {kind === 'book' && title.series !== null && title.series !== undefined ? (
-            <Toggle
-              label={say('screens.askableDialog.everyBookInSeries', { series: title.series.name })}
-              isOn={isWholeSeries}
-              onToggle={setIsWholeSeries}
-            />
-          ) : null}
-
-          {choices.length > 1 ? (
-            <SegmentedRow
-              label={say('common.quality')}
-              items={choices.map((choice) => ({ id: choice.id, label: choice.name }))}
-              value={quality}
-              onSelect={setQuality}
-            />
-          ) : null}
-
-          <Button
-            isBusy={isSending}
-            isDisabled={needsQuality || needsMore || (seasons !== null && seasons.length === 0)}
-            {...(title.standing.status === 'linked' || isStreamable
-              ? { tone: 'quiet' as const }
-              : {})}
-            onPress={() => {
-              void send();
-            }}
-          >
-            {title.standing.status === 'linked' ? say('common.requestHere') : say('common.request')}
-          </Button>
-
-          {(faces.data ?? [])
-            .filter((server) => server.takesRequests && server.isReachable)
-            .map((server) => (
+            {linkedCopy === null ? null : isStreamable ? (
               <Button
-                key={server.id}
                 tone="quiet"
-                isBusy={isSending}
                 onPress={() => {
-                  setIsSending(true);
-                  void askLinkedServer(
-                    server.id,
-                    askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
-                  )
-                    .then((sent) => {
-                      setRefusal(sent.refusal?.message ?? null);
-                    })
-                    .finally(() => {
-                      setIsSending(false);
-                    });
+                  onOpen(linkedCopy.kind, linkedCopy.mediaId);
                 }}
               >
-                {say('common.askName', { name: server.name })}
+                {say('common.watchOnName', {
+                  name: title.standing.fromServer ?? say('common.linkedServers'),
+                })}
+              </Button>
+            ) : (
+              <APlayButton
+                says={say('common.watchOnName', {
+                  name: title.standing.fromServer ?? say('common.linkedServers'),
+                })}
+                onPress={() => {
+                  onOpen(linkedCopy.kind, linkedCopy.mediaId);
+                }}
+              />
+            )}
+
+            {isJoinable ? (
+              <APlayButton
+                icon={Plus}
+                says={say('common.iWantThisToo')}
+                isBusy={isSending}
+                onPress={() => {
+                  void join();
+                }}
+              />
+            ) : null}
+
+            {going === null ? null : (
+              <HowFar
+                fraction={going.progress}
+                label={say('common.howFarTitleHasDownloaded', { title: title.title })}
+              />
+            )}
+
+            {saidOfGoing === null ? null : (
+              <Words size="small" tone="muted" isCentred>
+                {saidOfGoing}
+              </Words>
+            )}
+
+            {isUnrequestable && title.standing.status === 'askable' ? (
+              <Words tone="muted" isCentred>
+                {say('common.noLibraryTakesRequestsForThis')}
+              </Words>
+            ) : null}
+
+            {isRequestable ? (
+              <>
+                {kind === 'series' ? (
+                  <TheSeasons
+                    tmdbId={Number(id)}
+                    seasons={seasons}
+                    onChange={setSeasons}
+                    followsNew={followsNew}
+                    onFollowsNew={setFollowsNew}
+                  />
+                ) : kind === 'artist' ? (
+                  <AManyChoices
+                    label={say('screens.releaseTypeChooser.whichReleases')}
+                    choices={RELEASE_TYPES.map((type) => ({
+                      id: type,
+                      label: RELEASE_TYPE_NAMES[type].label,
+                    }))}
+                    chosen={releaseTypes}
+                    onChange={(chosen) => {
+                      setReleaseTypes(RELEASE_TYPES.filter((type) => chosen.includes(type)));
+                    }}
+                  />
+                ) : kind === 'book' ? (
+                  <AManyChoices
+                    label={say('screens.bookFormatChooser.whichFormats')}
+                    choices={BOOK_FORMATS.map((format) => ({
+                      id: format,
+                      label: BOOK_FORMAT_NAMES[format],
+                    }))}
+                    chosen={bookFormats}
+                    onChange={(chosen) => {
+                      setBookFormats(BOOK_FORMATS.filter((format) => chosen.includes(format)));
+                    }}
+                  />
+                ) : null}
+
+                {kind === 'book' && title.series !== null && title.series !== undefined ? (
+                  <Toggle
+                    label={say('screens.askableDialog.everyBookInSeries', {
+                      series: title.series.name,
+                    })}
+                    isOn={isWholeSeries}
+                    onToggle={setIsWholeSeries}
+                  />
+                ) : null}
+
+                {hasQualities && !isRequestDisabled && !isSending ? (
+                  <AMenu
+                    label={requestSays}
+                    title={say('common.quality')}
+                    items={choices.map((choice) => ({
+                      id: choice.id,
+                      label: choice.name,
+                      symbol: symbolOfQuality(choice.name),
+                      onChoose: () => {
+                        void send(choice.id);
+                      },
+                    }))}
+                  >
+                    {requestButton}
+                  </AMenu>
+                ) : (
+                  requestButton
+                )}
+
+                {(faces.data ?? [])
+                  .filter((server) => server.takesRequests && server.isReachable)
+                  .map((server) => (
+                    <Button
+                      key={server.id}
+                      tone="quiet"
+                      isBusy={isSending}
+                      onPress={() => {
+                        setIsSending(true);
+                        void askLinkedServer(
+                          server.id,
+                          askingFor(
+                            title,
+                            seasons,
+                            releaseTypes,
+                            followsNew,
+                            bookFormats,
+                            isWholeSeries,
+                          ),
+                        )
+                          .then((sent) => {
+                            setRefusal(sent.refusal?.message ?? null);
+                          })
+                          .finally(() => {
+                            setIsSending(false);
+                          });
+                      }}
+                    >
+                      {say('common.askName', { name: server.name })}
+                    </Button>
+                  ))}
+              </>
+            ) : null}
+
+            {isAddingSeasons ? (
+              <>
+                <TheSeasons
+                  tmdbId={Number(id)}
+                  seasons={adding}
+                  onChange={setAdding}
+                  followsNew={addsFollowing}
+                  onFollowsNew={setAddsFollowing}
+                  alreadyAsked={askedSeasons}
+                  isFollowedAlready={isFollowedAlready}
+                />
+
+                <APlayButton
+                  icon={Plus}
+                  says={say('common.addSeasons')}
+                  isBusy={isSending}
+                  isDisabled={!hasMoreToAdd}
+                  onPress={() => {
+                    void addSeasons();
+                  }}
+                />
+              </>
+            ) : null}
+
+            {refusal === null ? null : (
+              <Words tone="danger" isCentred>
+                {refusal}
+              </Words>
+            )}
+          </View>
+        </ARising>
+
+        {mayTakeBack ? (
+          <ARising turn={2}>
+            <View style={styles.actions}>
+              <ARoundAction
+                icon={CircleX}
+                says={say('common.cancelRequest')}
+                onPress={() => {
+                  takeBack(request.id);
+                }}
+              />
+            </View>
+          </ARising>
+        ) : null}
+
+        {title.overview === null && genres.length === 0 ? null : (
+          <>
+            <AHairline />
+
+            <ARising turn={3}>
+              <View style={styles.about}>
+                {title.overview === null ? null : <AnOverview>{title.overview}</AnOverview>}
+                <ABadgeRow badges={genres} isLarge />
+              </View>
+            </ARising>
+          </>
+        )}
+
+        {cast.length === 0 ? null : (
+          <ACardPart>
+            <TheCast cast={cast} onLookAtPerson={() => undefined} />
+          </ACardPart>
+        )}
+
+        {title.tracks.length === 0 ? null : <TheTracks tracks={title.tracks} label={title.label} />}
+
+        {groupReleases(title.albums).map((group) => (
+          <View key={group.id} style={styles.releases}>
+            <Words size="heading">{group.title}</Words>
+
+            {group.albums.map((album) => (
+              <Button
+                key={album.id}
+                tone="bare"
+                label={album.title}
+                onPress={() => {
+                  onAskAbout?.('album', album.id);
+                }}
+              >
+                <View style={styles.release}>
+                  <Words>{album.title}</Words>
+                  {album.firstReleased === null ? null : (
+                    <Words size="small" tone="muted">
+                      {album.firstReleased.slice(0, 4)}
+                    </Words>
+                  )}
+                </View>
               </Button>
             ))}
-        </>
-      ) : null}
+          </View>
+        ))}
 
-      {isAddingSeasons ? (
-        <>
-          <TheSeasons
-            tmdbId={Number(id)}
-            seasons={adding}
-            onChange={setAdding}
-            followsNew={addsFollowing}
-            onFollowsNew={setAddsFollowing}
-            alreadyAsked={askedSeasons}
-            isFollowedAlready={isFollowedAlready}
+        {isStreamable ? (
+          <AChooseSourceSheet
+            title={title.title}
+            isOpen={streaming.isPickerOpen}
+            offers={streaming.offers.data}
+            isLooking={streaming.isLooking}
+            isFailed={streaming.isFailed}
+            bestId={streaming.bestId}
+            isPlaying={streaming.isStarting}
+            problem={streaming.problem}
+            onTryAgain={streaming.lookAgain}
+            onChoose={streaming.choose}
+            onClose={streaming.closePicker}
           />
-
-          <Button
-            isBusy={isSending}
-            isDisabled={!hasMoreToAdd}
-            onPress={() => {
-              void addSeasons();
-            }}
-          >
-            {say('common.addSeasons')}
-          </Button>
-        </>
-      ) : null}
-
-      {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
-
-      {mayTakeBack ? (
-        <Button
-          tone="quiet"
-          onPress={() => {
-            takeBack(request.id);
-          }}
-        >
-          {say('common.cancelRequest')}
-        </Button>
-      ) : null}
-
-      {title.overview === null ? null : (
-        <Button
-          tone="bare"
-          label={say('common.readMore')}
-          onPress={() => {
-            setIsOverviewWhole((was) => !was);
-          }}
-        >
-          <Words tone="muted" {...(isOverviewWhole ? {} : { lines: 6 })}>
-            {title.overview}
-          </Words>
-        </Button>
-      )}
-
-      {title.tracks.length === 0 ? null : <TheTracks tracks={title.tracks} label={title.label} />}
-
-      {groupReleases(title.albums).map((group) => (
-        <View key={group.id} style={styles.releases}>
-          <Words size="heading">{group.title}</Words>
-
-          {group.albums.map((album) => (
-            <Button
-              key={album.id}
-              tone="bare"
-              label={album.title}
-              onPress={() => {
-                onAskAbout?.('album', album.id);
-              }}
-            >
-              <View style={styles.release}>
-                <Words>{album.title}</Words>
-                {album.firstReleased === null ? null : (
-                  <Words size="small" tone="muted">
-                    {album.firstReleased.slice(0, 4)}
-                  </Words>
-                )}
-              </View>
-            </Button>
-          ))}
-        </View>
-      ))}
-
-      {isStreamable ? (
-        <AChooseSourceSheet
-          title={title.title}
-          isOpen={streaming.isPickerOpen}
-          offers={streaming.offers.data}
-          isLooking={streaming.isLooking}
-          isFailed={streaming.isFailed}
-          bestId={streaming.bestId}
-          isPlaying={streaming.isStarting}
-          problem={streaming.problem}
-          onTryAgain={streaming.lookAgain}
-          onChoose={streaming.choose}
-          onClose={streaming.closePicker}
-        />
-      ) : null}
-    </Screen>
+        ) : null}
+      </Screen>
+    </GROUND.Provider>
   );
 };
 

@@ -26,6 +26,7 @@ import type {
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
 import { theAddressOf } from '@ValenceMobile/testing/theAddressOf';
+import { pickFromAMenu } from '@ValenceMobile/testing/pickFromAMenu';
 
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
@@ -140,7 +141,8 @@ describe('AnAskable', () => {
 
     const drawn = await drawIt();
 
-    expect(await drawn.findByText('2021 · 2 h 35 min · Science Fiction')).toBeTruthy();
+    expect(await drawn.findByText('2021 · 2 h 35 min')).toBeTruthy();
+    expect(drawn.getByText('Science Fiction')).toBeTruthy();
   });
 
   it('asks for a film by its catalogue id', async () => {
@@ -153,7 +155,7 @@ describe('AnAskable', () => {
     expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
   });
 
-  it('asks which quality where the server offers a choice', async () => {
+  it('asks in the quality chosen from the menu Request drops, where the server offers a choice', async () => {
     answering({
       offered: {
         choices: [
@@ -167,12 +169,11 @@ describe('AnAskable', () => {
     const drawn = await drawIt();
 
     await waitFor(() => {
-      expect(drawn.getByRole('button', { name: '4K' })).toBeTruthy();
+      expect(drawn.getByText('Request')).toBeTruthy();
     });
-    expect(drawn.getByRole('button', { name: 'Request', disabled: true })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: '4K' })).toBeNull();
 
-    await userEvent.press(drawn.getByRole('button', { name: '4K' }));
-    await userEvent.press(drawn.getByRole('button', { name: 'Request' }));
+    await pickFromAMenu('4K');
 
     expect(askForMedia).toHaveBeenCalledWith({
       kind: 'film',

@@ -18,6 +18,22 @@ describe('ATitleLogo', () => {
     });
   });
 
+  it('draws lettering from where it is given, for something the library does not hold', async () => {
+    const drawn = await render(
+      <ATitleLogo
+        mediaId={null}
+        uri="http://one.local:8420/api/requests/picture/logo.png"
+        title="Arrival"
+        high={60}
+        widest={300}
+      />,
+    );
+
+    expect(drawn.getByLabelText('Arrival').props.source).toEqual({
+      uri: 'http://one.local:8420/api/requests/picture/logo.png',
+    });
+  });
+
   it('writes the title out where there is no logo', async () => {
     const drawn = await render(
       <ATitleLogo mediaId={null} title="Arrival" high={60} widest={300} />,

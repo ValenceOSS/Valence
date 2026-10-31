@@ -11,6 +11,26 @@ describe('APlayButton', () => {
     expect(onPress).toHaveBeenCalled();
   });
 
+  it('cannot be pressed while it is disabled or busy', async () => {
+    const onPress = jest.fn();
+    const drawn = await render(
+      <>
+        <APlayButton says="Request" isDisabled onPress={onPress} />
+        <APlayButton says="Sending" isBusy onPress={onPress} />
+      </>,
+    );
+
+    expect(drawn.getByRole('button', { name: 'Request', disabled: true })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Sending', disabled: true })).toBeTruthy();
+  });
+
+  it('is only drawn, for a menu around it to open, where it is given nothing to do', async () => {
+    const drawn = await render(<APlayButton says="Request" />);
+
+    expect(drawn.getByText('Request')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
+  });
+
   it('offers no way to start again where there is nothing to carry on from', async () => {
     const drawn = await render(<APlayButton says="Play" onPress={jest.fn()} />);
 

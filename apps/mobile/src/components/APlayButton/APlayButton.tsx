@@ -1,8 +1,9 @@
-import { RotateCcw } from '@keyline-icons/react-native';
+import { ChevronDown, RotateCcw } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
@@ -53,15 +54,36 @@ const styles = StyleSheet.create({
  * segment joined to its end, lit faintly as the round buttons beneath are, starts it again from the
  * beginning, as a split button does.
  *
+ * The same button does a card's main thing where that is not watching, such as asking for a film,
+ * with its own mark in place of the play mark; while what it started is going it holds a spinner
+ * and cannot be pressed again.
+ *
  * @param says - What pressing it does.
- * @param onPress - Told it was pressed.
+ * @param onPress - Told it was pressed, or nothing where a menu around it opens instead, when it
+ *   is only drawn, with a chevron saying a menu drops from it.
+ * @param icon - The mark beside what it says, where it is not the play mark.
+ * @param isBusy - Whether what it started is still going.
+ * @param isDisabled - Whether it can be pressed at all.
  * @param watched - How much of it has been watched, from nothing to all of it, where any has.
  * @param onStartAgain - Told to play it from the beginning, where it would otherwise carry on.
  */
-const APlayButton = ({ says, onPress, watched = null, onStartAgain }: APlayButtonProps) => {
+const APlayButton = ({
+  says,
+  onPress,
+  icon = Play,
+  isBusy = false,
+  isDisabled = false,
+  watched = null,
+  onStartAgain,
+}: APlayButtonProps) => {
   const colours = useTheColours();
   const play = (
-    <Button tone="bare" label={says} onPress={onPress}>
+    <Button
+      tone="bare"
+      label={says}
+      isDisabled={isDisabled || isBusy}
+      {...(onPress === undefined ? { isOnlyDrawn: true } : { onPress })}
+    >
       <View
         style={[
           styles.button,
@@ -69,10 +91,19 @@ const APlayButton = ({ says, onPress, watched = null, onStartAgain }: APlayButto
           { backgroundColor: colours.text },
         ]}
       >
-        <Icon of={Play} size={18} colour={colours.surface} />
-        <Text numberOfLines={1} style={[styles.said, { color: colours.surface }]}>
-          {says}
-        </Text>
+        {isBusy ? (
+          <ASpinner colour={colours.surface} />
+        ) : (
+          <>
+            <Icon of={icon} size={18} colour={colours.surface} />
+            <Text numberOfLines={1} style={[styles.said, { color: colours.surface }]}>
+              {says}
+            </Text>
+            {onPress === undefined ? (
+              <Icon of={ChevronDown} size={16} colour={colours.surface} />
+            ) : null}
+          </>
+        )}
         {watched === null ? null : (
           <View style={[styles.track, { backgroundColor: withAlpha(colours.surface, 0.2) }]}>
             <View
