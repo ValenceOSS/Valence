@@ -5,6 +5,7 @@ import { Form } from '@ValenceUI/Form';
 import { Link } from '@ValenceUI/Link';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { SelectField } from '@ValenceUI/SelectField';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { changePlugin } from '@ValenceClient/plugins/changePlugin';
@@ -43,8 +44,8 @@ const PluginSettingsDialog = ({
             ? setting.value === true
             : setting.kind === 'secret'
               ? ''
-              : typeof setting.value === 'string'
-                ? setting.value
+              : typeof setting.value === 'string' || typeof setting.value === 'number'
+                ? String(setting.value)
                 : '',
         ]),
       ),
@@ -69,7 +70,18 @@ const PluginSettingsDialog = ({
               const settings = Object.fromEntries(
                 plugin.settings
                   .filter((setting) => setting.kind !== 'secret' || values[setting.id] !== '')
-                  .map((setting) => [setting.id, values[setting.id] ?? '']),
+                  .map((setting) => {
+                    const value = values[setting.id] ?? '';
+
+                    return [
+                      setting.id,
+                      (setting.kind === 'number' || setting.kind === 'select') && value === ''
+                        ? null
+                        : setting.kind === 'number'
+                          ? Number(value)
+                          : value,
+                    ];
+                  }),
               );
 
               setIsSaving(true);
@@ -125,6 +137,55 @@ const PluginSettingsDialog = ({
                     </Link>
                   );
 
+                if (setting.kind === 'select') {
+                  return (
+                    <div key={setting.id} className="flex flex-col gap-1">
+                      <SelectField
+                        label={setting.label}
+                        options={[
+                          {
+                            id: '',
+                            label: say('screens.pluginsPanel.pluginSettingsDialog.notChosen'),
+                          },
+                          ...setting.options.map((option) => ({
+                            id: option.value,
+                            label: option.label,
+                          })),
+                        ]}
+                        value={typeof value === 'string' ? value : ''}
+                        placeholder={say('screens.pluginsPanel.pluginSettingsDialog.notChosen')}
+                        {...(setting.help === null ? {} : { description: setting.help })}
+                        onSelect={(next) => {
+                          setValues((was) => ({ ...was, [setting.id]: next }));
+                        }}
+                      />
+
+                      {link}
+                    </div>
+                  );
+                }
+
+                const limits =
+                  setting.kind !== 'number'
+                    ? null
+                    : setting.min !== null && setting.max !== null
+                      ? say('screens.pluginsPanel.pluginSettingsDialog.fromMinToMax', {
+                          min: String(setting.min),
+                          max: String(setting.max),
+                        })
+                      : setting.min !== null
+                        ? say('screens.pluginsPanel.pluginSettingsDialog.minOrMore', {
+                            min: String(setting.min),
+                          })
+                        : setting.max !== null
+                          ? say('screens.pluginsPanel.pluginSettingsDialog.maxOrLess', {
+                              max: String(setting.max),
+                            })
+                          : null;
+                const description = [setting.help, limits]
+                  .filter((part) => part !== null)
+                  .join(' ');
+
                 return setting.kind === 'toggle' ? (
                   <div key={setting.id} className="flex flex-col gap-1">
                     <Switch
@@ -145,7 +206,14 @@ const PluginSettingsDialog = ({
                   <div key={setting.id} className="flex flex-col gap-1">
                     <TextField
                       label={setting.label}
-                      type={setting.kind === 'secret' ? 'password' : 'text'}
+                      type={
+                        setting.kind === 'secret'
+                          ? 'password'
+                          : setting.kind === 'number'
+                            ? 'number'
+                            : 'text'
+                      }
+                      {...(setting.kind === 'number' ? { inputMode: 'decimal' as const } : {})}
                       autoComplete={setting.kind === 'secret' ? 'new-password' : 'off'}
                       value={typeof value === 'string' ? value : ''}
                       {...(setting.kind === 'secret' && setting.isSet
@@ -155,7 +223,7 @@ const PluginSettingsDialog = ({
                             ),
                           }
                         : {})}
-                      {...(setting.help === null ? {} : { description: setting.help })}
+                      {...(description === '' ? {} : { description })}
                       {...(link === null ? {} : { descriptionPlacement: 'below' as const })}
                       onValueChange={(next) => {
                         setValues((was) => ({ ...was, [setting.id]: next }));

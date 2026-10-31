@@ -1,6 +1,7 @@
 import { getQuickJS } from 'quickjs-emscripten';
 import type { QuickJSContext, QuickJSDeferredPromise, QuickJSHandle } from 'quickjs-emscripten';
 import { ToSandboxSchema } from './SandboxProtocol.ts';
+import { SANDBOX_HELPERS } from './SANDBOX_HELPERS.ts';
 import type { FromSandbox, SandboxWords, ToSandbox } from './SandboxProtocol.ts';
 
 type SandboxChannel = {
@@ -69,6 +70,8 @@ const PRELUDE = `
         events: typeof definition.events === 'function',
         accountConnected: typeof definition.onAccountConnected === 'function',
         upgraded: typeof definition.onUpgraded === 'function',
+        settingsChanged: typeof definition.onSettingsChanged === 'function',
+        uninstalling: typeof definition.onUninstall === 'function',
         webhooks: Object.keys(definition.webhooks || {}),
         downloadClients: Object.keys(definition.downloadClients || {}),
         sources: Object.keys(definition.sources || {}),
@@ -97,6 +100,10 @@ const PRELUDE = `
       result = await within(definition.routes, args.id)({ valence, person: args.person === undefined ? null : args.person }, args.request);
     } else if (handler === 'job') {
       await within(definition.jobs, args.job.kind)({ valence, job: args.job }, args.payload);
+    } else if (handler === 'settingsChanged') {
+      if (typeof definition.onSettingsChanged === 'function') await definition.onSettingsChanged({ valence }, args.change);
+    } else if (handler === 'uninstalling') {
+      if (typeof definition.onUninstall === 'function') await definition.onUninstall({ valence });
     } else if (handler === 'upgraded') {
       if (typeof definition.onUpgraded === 'function') await definition.onUpgraded({ valence }, args.versions);
     } else if (handler.startsWith('downloadClient.') || handler.startsWith('source.')) {
@@ -112,6 +119,11 @@ const PRELUDE = `
 `;
 
 const MOST_ERROR_CHARACTERS = 500;
+
+const MOST_HOST_CALLS_AT_ONCE = 128;
+
+// oxlint-disable-next-line valence/no-hard-coded-strings -- thrown into the plugin's own code, for its author to read
+const TOO_MANY_WAITING = 'This plugin is already waiting on too many answers from Valence.';
 
 /**
  * Reads what went wrong inside the sandbox, from the error's own name and message, without trusting
@@ -230,6 +242,18 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
       const id = nextHostCall;
       const deferred = vm.newPromise();
 
+      if (waitingForHost.size >= MOST_HOST_CALLS_AT_ONCE) {
+        const error = vm.newError(TOO_MANY_WAITING);
+
+        deferred.reject(error);
+        error.dispose();
+        void deferred.settled.then(() => {
+          runJobs(vm);
+        });
+
+        return deferred.handle;
+      }
+
       nextHostCall += 1;
       waitingForHost.set(id, deferred);
       void deferred.settled.then(() => {
@@ -260,6 +284,7 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
     }
 
     for (const [source, filename] of [
+      [SANDBOX_HELPERS, 'valence-helpers.js'],
       [PRELUDE, 'valence-prelude.js'],
       [message.code, 'plugin.js'],
     ] as const) {

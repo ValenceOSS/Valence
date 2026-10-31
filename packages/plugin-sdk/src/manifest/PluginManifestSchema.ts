@@ -62,9 +62,16 @@ const PluginManifestSchema = z
         z.object({
           id: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/),
           label: z.string().min(1).max(60),
-          kind: z.enum(['text', 'secret', 'toggle']),
+          kind: z.enum(['text', 'secret', 'toggle', 'select', 'number']),
           help: z.string().max(200).optional(),
           link: z.object({ label: z.string().min(1).max(60), url: HttpsUrlSchema }).optional(),
+          options: z
+            .array(z.object({ value: z.string().min(1).max(60), label: z.string().min(1).max(60) }))
+            .min(1)
+            .max(50)
+            .optional(),
+          min: z.number().finite().optional(),
+          max: z.number().finite().optional(),
         }),
       )
       .max(16)
@@ -294,6 +301,51 @@ const PluginManifestSchema = z
         path: ['apiVersion'],
         message: 'Queued jobs need apiVersion ^1.4, since older servers ignore them',
       });
+    }
+
+    for (const setting of manifest.settings) {
+      const values = (setting.options ?? []).map((option) => option.value);
+
+      if ((setting.kind === 'select') !== (setting.options !== undefined)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['settings'],
+          message: `${setting.label} lists options only if it is a select`,
+        });
+      }
+
+      if (new Set(values).size !== values.length) {
+        context.addIssue({
+          code: 'custom',
+          path: ['settings'],
+          message: `${setting.label} lists each option once`,
+        });
+      }
+
+      if (setting.kind !== 'number' && (setting.min !== undefined || setting.max !== undefined)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['settings'],
+          message: `${setting.label} has a least or most only if it is a number`,
+        });
+      }
+
+      if (setting.min !== undefined && setting.max !== undefined && setting.min > setting.max) {
+        context.addIssue({
+          code: 'custom',
+          path: ['settings'],
+          message: `${setting.label} has a least larger than its most`,
+        });
+      }
+
+      if ((setting.kind === 'select' || setting.kind === 'number') && before14) {
+        context.addIssue({
+          code: 'custom',
+          path: ['apiVersion'],
+          message:
+            'A select or number setting needs apiVersion ^1.4, since older servers refuse it',
+        });
+      }
     }
 
     const hooks = manifest.contributes.webhooks.map((hook) => hook.id);

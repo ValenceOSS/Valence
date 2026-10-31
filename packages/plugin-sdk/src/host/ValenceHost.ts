@@ -74,13 +74,22 @@ type CatalogueHit = {
 
 type Reading = { profileId: string };
 
+type FetchInit = {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  headers?: Record<string, string>;
+  body?: string;
+  form?: Record<string, FormPart>;
+};
+
+type Fetched = { status: number; headers: Record<string, string> };
+
 type JobOptions = { afterSeconds?: number; key?: string; profileId?: string };
 
 type FormPart = string | { base64: string; fileName: string; contentType: string };
 
 type ValenceHost = {
   plugin: { id: string; version: string };
-  settings: { read: () => Promise<Record<string, string | boolean>> };
+  settings: { read: () => Promise<Record<string, string | boolean | number>> };
   log: {
     info: (message: string, detail?: Record<string, Scalar>) => void;
     warn: (message: string, detail?: Record<string, Scalar>) => void;
@@ -117,17 +126,24 @@ type ValenceHost = {
       encoding?: 'hex' | 'base64',
     ) => Promise<string>;
     equal: (left: string, right: string) => Promise<boolean>;
+    digest: (
+      algorithm: 'md5' | 'sha1' | 'sha256' | 'sha512',
+      message: string,
+      encoding?: 'hex' | 'base64',
+      messageEncoding?: 'utf8' | 'base64',
+    ) => Promise<string>;
+    random: (bytes: number, encoding?: 'hex' | 'base64') => Promise<string>;
+    verify: (
+      algorithm: 'ed25519' | 'rsa-sha256' | 'ecdsa-sha256',
+      publicKey: string,
+      message: string,
+      signature: string,
+      signatureEncoding?: 'hex' | 'base64',
+    ) => Promise<boolean>;
   };
   http: {
-    fetch: (
-      url: string,
-      init?: {
-        method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-        headers?: Record<string, string>;
-        body?: string;
-        form?: Record<string, FormPart>;
-      },
-    ) => Promise<{ status: number; headers: Record<string, string>; text: string }>;
+    fetch: (url: string, init?: FetchInit) => Promise<Fetched & { text: string }>;
+    fetchBytes: (url: string, init?: FetchInit) => Promise<Fetched & { base64: string }>;
   };
   accounts: {
     connection: (
@@ -198,6 +214,8 @@ type ValenceHost = {
 
 export type {
   CatalogueHit,
+  FetchInit,
+  Fetched,
   FormPart,
   JobOptions,
   LibraryPage,

@@ -73,6 +73,18 @@ describe('how a plugin reaches the internet', () => {
     expect(heard['x-forwarded-for']).toBeUndefined();
   });
 
+  it('hands bytes back as base64 when asked, unharmed by reading them as text', async () => {
+    const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0xff, 0x00, 0xc3]);
+
+    handle = (_asked, answer) => {
+      answer.end(bytes);
+    };
+
+    const answer = await fetchFor()('https://api.example.com/cover.png', { as: 'base64' });
+
+    expect(Buffer.from(answer.text, 'base64')).toEqual(bytes);
+  });
+
   it('posts a body', async () => {
     handle = (asked, answer) => {
       let body = '';

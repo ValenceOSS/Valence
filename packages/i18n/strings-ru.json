@@ -29101,6 +29101,11 @@
     "context": "Shown in the plugin page dialog in the plugins panel."
   },
   {
+    "handler": "screens.pluginsPanel.pluginSettingsDialog.fromMinToMax",
+    "text": "From {min} to {max}.",
+    "context": "Under a plugin's number setting: the least and most it takes (from `PluginSettingsDialog`)."
+  },
+  {
     "handler": "screens.pluginsPanel.pluginSettingsDialog.giveThisToEachServiceWhen",
     "text": "Enter this redirect URL in each service when you create its API client, so it can send people back here after they connect.",
     "context": "The detail of a copyable address in the plugin settings dialog in the plugins panel."
@@ -29109,6 +29114,21 @@
     "handler": "screens.pluginsPanel.pluginSettingsDialog.giveThisWebhookAddressToThe",
     "text": "Enter this webhook URL in the service that sends these messages. Keep it secret: anyone with it can send messages to this plugin.",
     "context": "The detail of a copyable address in the plugin settings dialog in the plugins panel."
+  },
+  {
+    "handler": "screens.pluginsPanel.pluginSettingsDialog.maxOrLess",
+    "text": "{max} or less.",
+    "context": "Under a plugin's number setting: the most it takes (from `PluginSettingsDialog`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.pluginSettingsDialog.minOrMore",
+    "text": "{min} or more.",
+    "context": "Under a plugin's number setting: the least it takes (from `PluginSettingsDialog`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.pluginSettingsDialog.notChosen",
+    "text": "Not chosen",
+    "context": "What a plugin's choice setting shows while nothing is chosen (from `PluginSettingsDialog`)."
   },
   {
     "handler": "screens.pluginsPanel.pluginSettingsDialog.pluginSettings",
@@ -34564,6 +34584,16 @@
     "handler": "server.service.pluginService.versionIsOlderThanTheInstalled",
     "text": "This is version {version}, older than the {installed} installed. What the newer version kept may not convert back.",
     "context": "A warning before installing a plugin (from `createPluginService`). {version} is the version about to be installed, and {installed} the newer one installed now."
+  },
+  {
+    "handler": "server.service.problemWith.labelIsNotOneOfItsChoices",
+    "text": "{label} isn't one of its choices.",
+    "context": "The problem in the service on the server (from `problemWith`): a choice setting was given something not in its list. {label} is the setting's name."
+  },
+  {
+    "handler": "server.service.problemWith.labelIsOutsideItsLimits",
+    "text": "{label} is outside the numbers it allows.",
+    "context": "The problem in the service on the server (from `problemWith`): a number setting is below its least or above its most. {label} is the setting's name."
   },
   {
     "handler": "server.sharing.databaseShareService.somethingNoLongerHere",

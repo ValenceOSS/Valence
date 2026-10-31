@@ -29,6 +29,13 @@ describe('carrySettings', () => {
     });
   });
 
+  it('keeps a long secret, whose sealed form is longer than any typed value may be', () => {
+    const both = manifestWith([{ id: 'token', kind: 'secret' }]);
+    const sealed = `v1.${'a'.repeat(6000)}`;
+
+    expect(carrySettings(both, both, { token: sealed })).toEqual({ token: sealed });
+  });
+
   it('starts a setting empty where its kind changed, and drops one no longer declared', () => {
     const before = manifestWith([
       { id: 'user', kind: 'text' },

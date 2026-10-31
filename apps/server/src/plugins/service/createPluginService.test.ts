@@ -1351,6 +1351,93 @@ const catalogueOf = (versions: { version: string; apiVersion: string }[]) => {
   return { catalogue, fetched };
 };
 
+describe('telling a plugin of its own changes', () => {
+  const TIDY = PluginManifestSchema.parse({
+    manifestVersion: 2,
+    id: 'tidy',
+    name: 'Tidy',
+    version: '1.0.0',
+    apiVersion: '^1.4',
+    author: { name: 'Tester' },
+    description: 'Hears about its settings and its removal.',
+    entry: 'dist/plugin.js',
+    permissions: [{ kind: 'storage', quotaBytes: 4096 }],
+    settings: [
+      {
+        id: 'region',
+        label: 'Region',
+        kind: 'select',
+        options: [{ value: 'eu', label: 'Europe' }],
+      },
+      { id: 'token', label: 'Token', kind: 'secret' },
+    ],
+  });
+
+  const HOOKS = `globalThis.valencePlugin = {
+  onSettingsChanged: async ({ valence }, change) => {
+    await valence.storage.set('told', ((await valence.storage.get('told')) ?? 0) + 1);
+    await valence.storage.set('changed', { ids: change.changed, settings: await valence.settings.read() });
+  },
+  onUninstall: async ({ valence }) => {
+    valence.log.info('saying goodbye with ' + JSON.stringify(await valence.storage.get('changed')));
+  },
+};`;
+
+  it('names the settings that changed, and lets it tidy up before it is removed', async () => {
+    const store = createMemoryPluginStore();
+    const log = vi.fn();
+    const service = createPluginService({
+      store,
+      host: aPluginHostForTest(),
+      catalogue: {
+        read: () =>
+          Promise.resolve({ catalogue: null, problem: sayVerbatim('offline'), signedBy: null }),
+        fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
+      },
+      keys: {},
+      sealingKey: Buffer.alloc(32, 7),
+      redirectUri: 'https://valence.home/api/plugins/oauth/callback',
+      apiVersion: '1.4.0',
+      enqueueSchedule: vi.fn(() => Promise.resolve()),
+      log,
+    });
+
+    await installOver(service, packPlugin({ format: 1, manifest: TIDY, code: HOOKS, assets: {} }));
+    await service.change('tidy', { settings: { region: 'eu', token: 's3cret' } });
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tidy', 'changed')).toEqual({
+          ids: ['region', 'token'],
+          settings: { region: 'eu', token: 's3cret' },
+        });
+      },
+      { timeout: 20_000 },
+    );
+
+    await service.change('tidy', { settings: { region: 'eu' } });
+    await service.change('tidy', { settings: { region: null } });
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tidy', 'told')).toBe(2);
+      },
+      { timeout: 20_000 },
+    );
+    expect(await store.readValue('tidy', 'changed')).toMatchObject({ ids: ['region'] });
+
+    await service.uninstall('tidy');
+
+    expect(log).toHaveBeenCalledWith(
+      'info',
+      expect.stringContaining('plugin tidy: saying goodbye with {"ids"'),
+    );
+    expect(await store.read('tidy')).toBeNull();
+
+    service.stop();
+  }, 60_000);
+});
+
 describe('queued jobs', () => {
   const WORKER = PluginManifestSchema.parse({
     manifestVersion: 2,
