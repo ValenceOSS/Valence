@@ -58,6 +58,7 @@ import { TheLeap } from '@ValenceMobile/components/Watching/components/TheLeap/T
 import { useTapsOnThePicture } from '@ValenceMobile/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices';
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { useChromecast } from '@ValenceMobile/components/Watching/useChromecast';
 import { CARD_RUN } from '@ValenceMobile/components/Watching/components/APlayerPanel/CARD_RUN';
 import { TheSettings } from '@ValenceMobile/components/Watching/components/TheSettings/TheSettings';
 import {
@@ -991,6 +992,28 @@ const Watching = ({
     }
   }, [keepThemUp, party, player, moving.isPlaying]);
 
+  const chromecast = useChromecast({
+    mediaId,
+    title: called?.name ?? '',
+    artwork: isKept ? null : onThisServer(artworkUrl(mediaId, 'poster', { size: 'medium' })),
+    clientId,
+    audioStreamIndex: asking.audioStreamIndex,
+    quality: asking.requestedQuality,
+    burnInSubtitleId: beingRead?.delivery === 'text' ? beingRead.id : undefined,
+    isKept,
+    startsAt: () => player.currentTime,
+    onTaken: () => {
+      player.pause();
+    },
+    onGivenBack: (atSeconds) => {
+      moveTo(atSeconds);
+      player.play();
+    },
+    onRefused: () => {
+      Alert.alert(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'));
+    },
+  });
+
   const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
 
   const readInstead = useCallback(
@@ -1409,8 +1432,16 @@ const Watching = ({
           subtitleOffset={subtitleOffset}
           captionStyle={captions.style}
           areControlsDrawn={areControlsDrawn && !isLocked && panel === null}
+          castAt={chromecast.at}
           onMoveTo={(seconds) => {
             keepThemUp();
+
+            if (chromecast.isCasting) {
+              chromecast.seekTo(seconds);
+
+              return;
+            }
+
             moveTo(seconds);
           }}
           next={
@@ -1445,15 +1476,29 @@ const Watching = ({
                     region: title.data.metadata.certificationRegion,
                   }
                 : null,
-            isPlaying: moving.isPlaying,
+            isPlaying: chromecast.isCasting ? chromecast.isPlaying : moving.isPlaying,
             wait,
             trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
             chapters: chaptered.data ?? NO_CHAPTERS,
-            onPlayPause: playOrPause,
+            onPlayPause: chromecast.isCasting
+              ? () => {
+                  keepThemUp();
+                  chromecast.playOrPause();
+                }
+              : playOrPause,
             onSkip: (by) => {
               keepThemUp();
+
+              if (chromecast.isCasting) {
+                chromecast.seekTo((chromecast.at ?? 0) + by);
+
+                return;
+              }
+
               moveTo(player.currentTime + by);
             },
+            ...(chromecast.isOffered ? { onCast: chromecast.choose } : {}),
+            castingTo: chromecast.deviceName,
             onTouched: keepThemUp,
             onClose: onDone,
             onLock: () => {

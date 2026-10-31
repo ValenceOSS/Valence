@@ -27,6 +27,7 @@ import type { TheMovingPartsProps } from './TheMovingParts.types';
  *   comes at its real end rather than the end of a stream still being made, and how to start the
  *   next now; or null where there is no next episode,
  *   or nothing is to be offered just now.
+ * @param castAt - How far in a Chromecast has got, while it is cast, in place of the phone's own.
  * @param controls - What the controls are told, apart from where the film is.
  */
 const TheMovingParts = ({
@@ -39,6 +40,7 @@ const TheMovingParts = ({
   onMoveTo,
   next,
   controls,
+  castAt = null,
 }: TheMovingPartsProps) => {
   const [isNextAway, setIsNextAway] = useState(false);
   const ticking = useEvent(player, 'timeUpdate', {
@@ -98,7 +100,13 @@ const TheMovingParts = ({
         <TheControls
           {...controls}
           segments={segments}
-          at={Number.isFinite(ticking.currentTime) ? ticking.currentTime : 0}
+          at={
+            castAt !== null
+              ? castAt
+              : Number.isFinite(ticking.currentTime)
+                ? ticking.currentTime
+                : 0
+          }
           runsFor={Number.isFinite(player.duration) ? player.duration : 0}
           buffered={Number.isFinite(ticking.bufferedPosition) ? ticking.bufferedPosition : 0}
           onSeek={(to) => {

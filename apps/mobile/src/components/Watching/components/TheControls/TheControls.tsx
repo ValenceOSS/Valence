@@ -8,6 +8,7 @@ import {
   Settings,
   SkipForward,
   Users,
+  Cast,
   X,
 } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
@@ -173,6 +174,8 @@ const styles = StyleSheet.create({
  * @param onEpisodes - Told they want another episode, where this is one.
  * @param onNext - Told they want the next episode now, where there is one.
  * @param onParty - Told they want the watch party, where one can be had.
+ * @param onCast - Told they want to choose a Chromecast to play it on, where one can be.
+ * @param castingTo - The device it is playing on, while it is cast, said beneath the title.
  */
 const TheControls = ({
   fade,
@@ -199,6 +202,8 @@ const TheControls = ({
   onEpisodes,
   onNext,
   onParty,
+  onCast,
+  castingTo = null,
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
@@ -233,6 +238,12 @@ const TheControls = ({
           {year === null ? null : <Text style={styles.year}>{year}</Text>}
 
           {rating === null ? null : <TheBadges badges={NO_BADGES} rating={rating} isOnArtwork />}
+
+          {castingTo === null ? null : (
+            <Text style={styles.year} numberOfLines={1}>
+              {say('common.playingOnLabel', { label: castingTo })}
+            </Text>
+          )}
         </View>
 
         <View style={styles.headEnd} pointerEvents="box-none">
@@ -248,6 +259,18 @@ const TheControls = ({
             <View style={styles.icon}>
               <AirPlayButton isOverPicture />
             </View>
+
+            {onCast === undefined ? null : (
+              <Button tone="bare" label={say('common.cast')} onPress={onCast}>
+                <View style={styles.icon}>
+                  <Icon
+                    of={Cast}
+                    size={ICON}
+                    colour={castingTo === null ? colours.text : colours.played}
+                  />
+                </View>
+              </Button>
+            )}
 
             <Button
               tone="bare"
