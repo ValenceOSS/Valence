@@ -4,6 +4,8 @@ import { fetchAppPasswords } from './fetchAppPasswords';
 import { fetchInstalledPlugins } from './fetchInstalledPlugins';
 import { fetchPluginCatalogue } from './fetchPluginCatalogue';
 import { fetchPluginContributions } from './fetchPluginContributions';
+import { fetchPluginHomeRowChoices } from './fetchPluginHomeRowChoices';
+import { fetchPluginHomeRows } from './fetchPluginHomeRows';
 import { fetchPluginRemoval } from './fetchPluginRemoval';
 import { fetchPluginSurface } from './fetchPluginSurface';
 import { aPlugin } from '@ValenceClient/testing/aPlugin';
@@ -35,6 +37,49 @@ describe('plugin reads', () => {
 
     await expect(fetchAppPasswords('music')).resolves.toEqual(kept);
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/music/app-passwords');
+  });
+
+  it('reads the home rows plugins add, and the rows on offer, refusing what is not either', async () => {
+    const rows = {
+      rows: [
+        {
+          pluginId: 'trending',
+          pluginName: 'Trending',
+          rowId: 'hot',
+          title: 'Hot right now',
+          items: [],
+        },
+      ],
+    };
+    const offered = {
+      rows: [
+        {
+          pluginId: 'trending',
+          pluginName: 'Trending',
+          rowId: 'hot',
+          title: 'Hot right now',
+          isChosen: true,
+        },
+      ],
+    };
+
+    answer(rows);
+
+    await expect(fetchPluginHomeRows()).resolves.toEqual(rows);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/home-rows');
+
+    answer(offered);
+
+    await expect(fetchPluginHomeRowChoices()).resolves.toEqual(offered);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/plugins/home-row-choices');
+
+    answer({ rows: [{ pluginId: 'trending' }] });
+
+    await expect(fetchPluginHomeRows()).rejects.toThrow();
+
+    answer({ rows: [{ pluginId: 'trending' }] });
+
+    await expect(fetchPluginHomeRowChoices()).rejects.toThrow();
   });
 
   it('reads the installed plugins, and the keys trusted beside Valence’s, none from an older server', async () => {
