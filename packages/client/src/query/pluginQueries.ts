@@ -3,6 +3,8 @@ import { fetchAppPasswords } from '@ValenceClient/plugins/fetchAppPasswords';
 import { fetchInstalledPlugins } from '@ValenceClient/plugins/fetchInstalledPlugins';
 import { fetchPluginCatalogue } from '@ValenceClient/plugins/fetchPluginCatalogue';
 import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginContributions';
+import { fetchPluginHomeRowChoices } from '@ValenceClient/plugins/fetchPluginHomeRowChoices';
+import { fetchPluginHomeRows } from '@ValenceClient/plugins/fetchPluginHomeRows';
 import { fetchPluginRemoval } from '@ValenceClient/plugins/fetchPluginRemoval';
 import { fetchPluginSurface } from '@ValenceClient/plugins/fetchPluginSurface';
 import type { PluginPlace } from '@ValenceClient/plugins/PluginPlace';
@@ -40,6 +42,33 @@ const contributions = () =>
     queryFn: () => fetchPluginContributions(),
     retry: false,
     staleTime: 60_000,
+  });
+
+/**
+ * The rows plugins add to this profile's home page. Valence answers from what each plugin last
+ * said, so this never waits on a plugin, and asks again now and then for what has changed.
+ *
+ * @returns The query.
+ */
+const homeRows = () =>
+  queryOptions({
+    queryKey: [...PLUGINS, 'homeRows'],
+    queryFn: () => fetchPluginHomeRows(),
+    retry: false,
+    staleTime: 60_000,
+  });
+
+/**
+ * Every row the plugins that are turned on offer for the home page, and whether this profile
+ * chose it.
+ *
+ * @returns The query.
+ */
+const homeRowChoices = () =>
+  queryOptions({
+    queryKey: [...PLUGINS, 'homeRowChoices'],
+    queryFn: () => fetchPluginHomeRowChoices(),
+    retry: false,
   });
 
 /**
@@ -86,6 +115,8 @@ const pluginQueries = {
   installed,
   catalogue,
   contributions,
+  homeRows,
+  homeRowChoices,
   surface,
   removal,
   appPasswords,

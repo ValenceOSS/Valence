@@ -3,6 +3,9 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   AppPasswordsSchema,
+  ChooseHomeRowSchema,
+  PluginHomeRowChoicesSchema,
+  PluginHomeRowsSchema,
   MadeAppPasswordSchema,
   MakeAppPasswordSchema,
   CatalogueListingSchema,
@@ -475,6 +478,59 @@ const disconnectAccountRoute = createRoute({
   responses: { 204: { description: 'Disconnected' }, 401: refusals[401], ...notFound },
 });
 
+const homeRowsRoute = createRoute({
+  method: 'get',
+  path: '/api/plugins/home-rows',
+  tags: ['Plugins'],
+  summary: 'The rows plugins add to the signed-in profile’s home page, from what they last said',
+  responses: {
+    200: {
+      description: 'Each row the profile chose, with the titles in it they may see',
+      content: { 'application/json': { schema: PluginHomeRowsSchema.openapi('PluginHomeRows') } },
+    },
+    401: refusals[401],
+  },
+});
+
+const homeRowChoicesRoute = createRoute({
+  method: 'get',
+  path: '/api/plugins/home-row-choices',
+  tags: ['Plugins'],
+  summary:
+    'Every row the plugins that are turned on offer for the home page, and whether this profile chose it',
+  responses: {
+    200: {
+      description: 'The rows on offer',
+      content: {
+        'application/json': {
+          schema: PluginHomeRowChoicesSchema.openapi('PluginHomeRowChoices'),
+        },
+      },
+    },
+    401: refusals[401],
+  },
+});
+
+const chooseHomeRowRoute = createRoute({
+  method: 'put',
+  path: '/api/plugins/{id}/home-rows/{row}',
+  tags: ['Plugins'],
+  summary: 'Show one of a plugin’s rows on the signed-in profile’s home page, or stop',
+  request: {
+    params: z.object({ id: PluginId, row: LocalId }),
+    body: {
+      content: {
+        'application/json': { schema: ChooseHomeRowSchema.openapi('ChooseHomeRowRequest') },
+      },
+    },
+  },
+  responses: {
+    204: { description: 'Chosen, or no longer chosen' },
+    401: refusals[401],
+    ...notFound,
+  },
+});
+
 const listAppPasswordsRoute = createRoute({
   method: 'get',
   path: '/api/plugins/{id}/app-passwords',
@@ -530,6 +586,9 @@ const removeAppPasswordRoute = createRoute({
 export {
   actPageRoute,
   listAppPasswordsRoute,
+  homeRowsRoute,
+  homeRowChoicesRoute,
+  chooseHomeRowRoute,
   makeAppPasswordRoute,
   removeAppPasswordRoute,
   actPanelRoute,

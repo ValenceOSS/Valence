@@ -469,6 +469,23 @@ describe('the plugin broker', () => {
     );
   });
 
+  it('reads the library for a home row as its person, and does nothing else for them', async () => {
+    const { ask, host } = build([
+      { kind: 'library', access: 'read' },
+      { kind: 'viewing', access: 'write' },
+    ]);
+    const ROW_FOR_P2: BrokerScope = { kind: 'background', profileId: 'p2', isHomeRow: true };
+
+    expect(await ask('library.get', ['m1'], ROW_FOR_P2)).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.library.get).toHaveBeenLastCalledWith('m1', AS_P2_IN_THE_BACKGROUND);
+    await expect(ask('library.get', ['m1', { profileId: 'p3' }], ROW_FOR_P2)).rejects.toThrow(
+      'people who have used it',
+    );
+    await expect(ask('viewing.markWatched', ['p2', 'm1'], ROW_FOR_P2)).rejects.toThrow(
+      'people who have used it',
+    );
+  });
+
   it('queues only declared jobs, for the person it runs for, within the limits', async () => {
     const { ask, host, store } = build([], { jobs: [{ id: 'import', title: 'Import' }] });
 

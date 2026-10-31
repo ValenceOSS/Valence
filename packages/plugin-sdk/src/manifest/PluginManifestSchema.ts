@@ -16,6 +16,8 @@ const TOPICS_FROM_1_4 = new Set([
   'requests.refused',
 ]);
 
+const HIDDEN_CHARACTERS = /[\p{Cc}\p{Cf}]/u;
+
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/;
 
 const SEMVER_RANGE = /^[\^~]?\d+(\.\d+){0,2}$/;
@@ -51,6 +53,7 @@ const PluginManifestSchema = z
       sources: [],
       routes: [],
       jobs: [],
+      rows: [],
       nodes: [],
     }),
     entry: z
@@ -93,6 +96,7 @@ const PluginManifestSchema = z
       manifest.contributes.sources.length > 0 ||
       manifest.contributes.routes.length > 0 ||
       manifest.contributes.jobs.length > 0 ||
+      manifest.contributes.rows.length > 0 ||
       manifest.permissions.length > 0;
 
     if (new Set(kinds).size !== kinds.length) {
@@ -104,7 +108,7 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['entry'],
         message:
-          'A plugin with pages, panels, schedules, events, webhooks, download clients, sources, routes, jobs or permissions names its entry',
+          'A plugin with pages, panels, schedules, events, webhooks, download clients, sources, routes, jobs, rows or permissions names its entry',
       });
     }
 
@@ -148,6 +152,7 @@ const PluginManifestSchema = z
       ...manifest.contributes.downloadClients.map((client) => `downloadClient:${client.id}`),
       ...manifest.contributes.sources.map((source) => `source:${source.id}`),
       ...manifest.contributes.jobs.map((job) => `job:${job.id}`),
+      ...manifest.contributes.rows.map((row) => `row:${row.id}`),
     ];
 
     if (new Set(ids).size !== ids.length) {
@@ -300,6 +305,44 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['apiVersion'],
         message: 'A panel on a book needs apiVersion ^1.4, since older servers refuse it',
+      });
+    }
+
+    const hasRows = manifest.contributes.rows.length > 0;
+
+    if (hasRows && manifest.name.trim().toLowerCase() === 'valence') {
+      context.addIssue({
+        code: 'custom',
+        path: ['name'],
+        message: 'A plugin with rows on the home page may not call itself Valence',
+      });
+    }
+
+    for (const shown of hasRows
+      ? [manifest.name, ...manifest.contributes.rows.map((row) => row.title)]
+      : []) {
+      if (HIDDEN_CHARACTERS.test(shown)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['name'],
+          message: `${shown} holds characters that are never seen, which a name or a row may not`,
+        });
+      }
+    }
+
+    if (manifest.contributes.rows.length > 0 && !kinds.includes('library')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['contributes', 'rows'],
+        message: 'A row on the home page needs the library permission',
+      });
+    }
+
+    if (manifest.contributes.rows.length > 0 && before14) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: 'A row on the home page needs apiVersion ^1.4, since older servers ignore it',
       });
     }
 

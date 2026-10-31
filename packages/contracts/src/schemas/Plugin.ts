@@ -6,6 +6,7 @@ import { ReleaseProtocolSchema } from './Indexer';
 import { IconNameSchema } from '@ValenceSDK/surface/IconNameSchema';
 import { PluginThemeSchema } from '@ValenceSDK/theme/PluginThemeSchema';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
+import { MediaSummarySchema } from './Library';
 
 const PluginTrustSchema = z.enum(['official', 'trusted', 'unsigned']);
 
@@ -166,6 +167,32 @@ const AppPasswordSchema = z.object({
   lastUsedAt: z.string().datetime().nullable(),
 });
 
+const PluginHomeRowsSchema = z.object({
+  rows: z.array(
+    z.object({
+      pluginId: z.string(),
+      pluginName: z.string(),
+      rowId: z.string(),
+      title: z.string(),
+      items: z.array(MediaSummarySchema),
+    }),
+  ),
+});
+
+const PluginHomeRowChoicesSchema = z.object({
+  rows: z.array(
+    z.object({
+      pluginId: z.string(),
+      pluginName: z.string(),
+      rowId: z.string(),
+      title: z.string(),
+      isChosen: z.boolean(),
+    }),
+  ),
+});
+
+const ChooseHomeRowSchema = z.object({ isChosen: z.boolean() });
+
 const AppPasswordsSchema = z.object({
   address: z.string().url(),
   routes: z.array(z.object({ id: z.string(), title: z.string() })),
@@ -223,6 +250,10 @@ type PluginActAnswer = z.infer<typeof PluginActAnswerSchema>;
 
 type AppPassword = z.infer<typeof AppPasswordSchema>;
 
+type PluginHomeRows = z.infer<typeof PluginHomeRowsSchema>;
+
+type PluginHomeRowChoices = z.infer<typeof PluginHomeRowChoicesSchema>;
+
 type AppPasswords = z.infer<typeof AppPasswordsSchema>;
 
 type MadeAppPassword = z.infer<typeof MadeAppPasswordSchema>;
@@ -231,13 +262,15 @@ export type {
   AppPassword,
   AppPasswords,
   CatalogueListing,
+  InstallPreview,
+  InstalledPlugin,
+  InstalledPlugins,
   MadeAppPassword,
   PluginActAnswer,
   PluginChange,
-  InstalledPlugin,
-  InstalledPlugins,
-  InstallPreview,
   PluginContributions,
+  PluginHomeRowChoices,
+  PluginHomeRows,
   PluginRemoval,
   PluginSetting,
   PluginSummary,
@@ -249,14 +282,17 @@ export {
   AppPasswordSchema,
   AppPasswordsSchema,
   CatalogueListingSchema,
+  ChooseHomeRowSchema,
+  InstallPreviewSchema,
+  InstalledPluginSchema,
+  InstalledPluginsSchema,
   MadeAppPasswordSchema,
   MakeAppPasswordSchema,
   PluginActAnswerSchema,
   PluginChangeSchema,
-  InstalledPluginSchema,
-  InstalledPluginsSchema,
-  InstallPreviewSchema,
   PluginContributionsSchema,
+  PluginHomeRowChoicesSchema,
+  PluginHomeRowsSchema,
   PluginRemovalSchema,
   PluginSettingSchema,
   PluginSummarySchema,

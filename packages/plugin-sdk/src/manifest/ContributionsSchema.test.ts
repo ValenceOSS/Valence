@@ -15,6 +15,7 @@ describe('ContributionsSchema', () => {
       sources: [],
       routes: [],
       jobs: [],
+      rows: [],
       nodes: [],
     });
   });

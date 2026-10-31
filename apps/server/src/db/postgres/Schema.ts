@@ -1949,6 +1949,21 @@ const pluginProfile = pgTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
 );
 
+const pluginHomeRow = pgTable(
+  'plugin_home_row',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    rowId: text('rowId').notNull(),
+    chosenAt: timestamp('chosenAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.rowId] })],
+);
+
 const collection = pgTable(
   'collection',
   {
@@ -2197,6 +2212,7 @@ export {
   pluginConnection,
   pluginCredential,
   pluginProfile,
+  pluginHomeRow,
   pluginSecret,
   accountActivity,
   watchHistory,

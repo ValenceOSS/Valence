@@ -1941,6 +1941,21 @@ const pluginProfile = mysqlTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
 );
 
+const pluginHomeRow = mysqlTable(
+  'plugin_home_row',
+  {
+    pluginId: identifier('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    rowId: varchar('rowId', { length: 40 }).notNull(),
+    chosenAt: momentNow('chosenAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.rowId] })],
+);
+
 const collection = mysqlTable(
   'collection',
   {
@@ -2188,6 +2203,7 @@ export {
   pluginConnection,
   pluginCredential,
   pluginProfile,
+  pluginHomeRow,
   pluginSecret,
   accountActivity,
   watchHistory,

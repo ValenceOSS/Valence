@@ -200,6 +200,28 @@ describe('the plugin routes', () => {
     );
   });
 
+  it('answers home rows only to someone signed in, and changes nothing without a profile or a row', async () => {
+    const { request } = await signedInWith([]);
+    const choose = (path: string, isChosen: boolean, signedIn = true) =>
+      request(
+        path,
+        {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ isChosen }),
+        },
+        signedIn,
+      );
+
+    expect((await request('/api/plugins/home-rows', {}, false)).status).toBe(401);
+    expect((await request('/api/plugins/home-row-choices', {}, false)).status).toBe(401);
+    expect(await (await request('/api/plugins/home-rows')).json()).toEqual({ rows: [] });
+    expect(await (await request('/api/plugins/home-row-choices')).json()).toEqual({ rows: [] });
+    expect((await choose('/api/plugins/nothing-here/home-rows/hot', true, false)).status).toBe(401);
+    expect((await choose('/api/plugins/nothing-here/home-rows/hot', true)).status).toBe(404);
+    expect((await choose('/api/plugins/nothing-here/home-rows/hot', false)).status).toBe(404);
+  });
+
   it('uploads marked unsigned, installs, and lists the plugin with the redirect address', async () => {
     const { request, install, service } = await signedInWith(['server.plugins']);
     const preview = PreviewAnswer.parse(

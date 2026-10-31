@@ -8,6 +8,7 @@ const SERVER_FEATURES = [
   'library.smartLists',
   'requests.searchPages',
   'library.barePosters',
+  'plugins.homeRows',
 ] as const;
 
 export { SERVER_FEATURES };

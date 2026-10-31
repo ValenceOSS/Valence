@@ -198,6 +198,33 @@ describe('createDatabasePluginStore', () => {
   );
 
   it(
+    'keeps the home rows a profile chose, once each, until it stops choosing them or the plugin goes',
+    async () => {
+      const db = await aDatabaseWithAProfile();
+      const store = createDatabasePluginStore(db);
+
+      await store.save(A_RECORD);
+      await store.chooseHomeRow('store-test', 'p1', 'hot', true);
+      await store.chooseHomeRow('store-test', 'p1', 'hot', true);
+      await store.chooseHomeRow('store-test', 'p1', 'new', true);
+
+      expect(await store.homeRowsOf('p1')).toEqual([
+        { pluginId: 'store-test', rowId: 'hot' },
+        { pluginId: 'store-test', rowId: 'new' },
+      ]);
+
+      await store.chooseHomeRow('store-test', 'p1', 'hot', false);
+
+      expect(await store.homeRowsOf('p1')).toEqual([{ pluginId: 'store-test', rowId: 'new' }]);
+
+      await store.remove('store-test');
+
+      expect(await store.homeRowsOf('p1')).toEqual([]);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'remembers a profile once however often it is seen',
     async () => {
       const db = await aDatabaseWithAProfile();

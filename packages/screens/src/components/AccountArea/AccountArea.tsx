@@ -23,6 +23,7 @@ import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/
 import type { AccountAreaProps, PluginAccountPage } from './AccountArea.types';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { PluginHomeRowsPanel } from '@ValenceScreens/components/AccountArea/components/PluginHomeRowsPanel/PluginHomeRowsPanel';
 
 const PANEL_ORDER: readonly string[] = ACCOUNT_PANELS.map((one) => one.id);
 
@@ -71,6 +72,8 @@ const AccountArea = ({
             <ProfileSettings profile={profile} draft={draft} onDraft={onDraft} />
           </SettingList>
         </PanelCard>
+
+        <PluginHomeRowsPanel />
       </TabPanel>
 
       {canShowOnDiscord() ? (
