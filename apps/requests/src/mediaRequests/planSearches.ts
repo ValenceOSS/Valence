@@ -1,5 +1,6 @@
 import { BOOK_CATEGORIES } from '@ValenceCore/releases/BOOK_CATEGORIES';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
+import { searchTitleOf } from '@ValenceRequests/mediaRequests/searchTitleOf';
 import { planAnimeSearches } from '@ValenceRequests/mediaRequests/planAnimeSearches';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -20,7 +21,7 @@ type Plannable = Pick<
 /**
  * What to ask the indexers for a request's films or episodes that are wanted, by a title safe to
  * search with and the catalogue ids it has, which an indexer that takes them is asked by first: a
- * film by its title and ids; a book once for each format, an ebook among the indexers' books and
+ * film by its title, its year and ids; a book once for each format, an ebook among the indexers' books and
  * an audiobook among their audiobooks; a season that has finished airing, with more
  * than one episode of it wanted, as a whole, since a season is usually released as one; and any
  * other episode on its own. An album is searched among the indexers' music, by its artist and title.
@@ -45,7 +46,7 @@ const planSearches = (
     MediaRequestRecord,
     'kind' | 'title' | 'tmdbId' | 'tvdbId' | 'imdbId' | 'artistName' | 'anime'
   > &
-    Partial<Pick<MediaRequestRecord, 'aliases'>>,
+    Partial<Pick<MediaRequestRecord, 'aliases' | 'year'>>,
   items: readonly Plannable[],
   wanted: readonly Plannable[],
   today: string,
@@ -76,7 +77,11 @@ const planSearches = (
   if (request.kind === 'film') {
     return [
       {
-        search: { query, mode: 'movie', ...ids },
+        search: {
+          query: searchTitleOf({ ...request, year: request.year ?? null }),
+          mode: 'movie',
+          ...ids,
+        },
         itemIds: wanted.map((item) => item.id),
       },
     ];

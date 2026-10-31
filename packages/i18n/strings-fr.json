@@ -29966,6 +29966,11 @@
     "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer, a site searched for releases."
   },
   {
+    "handler": "screens.requestDetailDialog.requestReleasesTab.backToItsOwnSearch",
+    "text": "Back to its own search",
+    "context": "A button beside the search box in a request’s interactive search, shown after somebody searched by words of their own, that goes back to the releases the request’s own search found."
+  },
+  {
     "handler": "screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease",
     "text": "Downloading that release.",
     "context": "A short message shown once something is done in the request releases tab in the request detail dialog."
@@ -29999,6 +30004,11 @@
     "handler": "screens.requestDetailDialog.requestReleasesTab.theReleasesCouldNotBeRead",
     "text": "Couldn’t load the releases.",
     "context": "Shown where the releases could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestReleasesTab.typeYourOwnSearch",
+    "text": "Type your own search, such as a title and its year",
+    "context": "The hint in the search box above the releases found for a request, in its interactive search, where somebody can search by words of their own when the request’s own search does not find what they want."
   },
   {
     "handler": "screens.requests.describeBrowsing.studio",

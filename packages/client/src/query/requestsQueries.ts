@@ -263,12 +263,14 @@ const titleFiles = (kind: MediaRequestKind, catalogueId: string | null) =>
  * @param id - Which request, or nothing before one is chosen.
  * @param scope - The season or episode the search is narrowed to, or nothing for all of it.
  * @param indexers - The indexers it is narrowed to, or nothing for every one the request may use.
+ * @param typed - What was typed to search for, or nothing for the request's own searches.
  * @returns The query.
  */
 const mediaRequestReleases = (
   id: string | null,
   scope: SearchScope | null = null,
   indexers: readonly string[] | null = null,
+  typed: string | null = null,
 ) =>
   queryOptions({
     queryKey: [
@@ -279,8 +281,9 @@ const mediaRequestReleases = (
       scope?.season ?? null,
       scope?.episode ?? null,
       indexers?.join(',') ?? null,
+      typed,
     ],
-    queryFn: () => fetchMediaRequestReleases(id ?? '', scope, indexers),
+    queryFn: () => fetchMediaRequestReleases(id ?? '', scope, indexers, typed),
     enabled: id !== null,
     staleTime: Infinity,
     retry: false,

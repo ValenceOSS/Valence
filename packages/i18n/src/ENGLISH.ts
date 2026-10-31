@@ -7558,6 +7558,7 @@ const ENGLISH = {
   'screens.requestDetailDialog.requestHistoryTab.nothingToTakeYet': 'Nothing yet',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
   'screens.requestDetailDialog.requestHistoryTab.searchingName': 'Searching {name}',
+  'screens.requestDetailDialog.requestReleasesTab.backToItsOwnSearch': 'Back to its own search',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
   'screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed':
     'Hide the releases that aren’t this title',
@@ -7571,6 +7572,8 @@ const ENGLISH = {
     'Couldn’t download that release. Try again.',
   'screens.requestDetailDialog.requestReleasesTab.theReleasesCouldNotBeRead':
     'Couldn’t load the releases.',
+  'screens.requestDetailDialog.requestReleasesTab.typeYourOwnSearch':
+    'Type your own search, such as a title and its year',
   'screens.requests.describeBrowsing.studio': 'Studio',
   'screens.requests.describeBrowsing.trending': 'Trending',
   'screens.requests.describeDownloadCost.downloadedInSeconds': 'Downloaded in {seconds}',

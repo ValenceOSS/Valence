@@ -319,6 +319,17 @@ describe('createRequestRoutes', () => {
     expect((await ask(`/requests/${id}/catalogue`, 'PUT', {})).status).toBe(400);
   });
 
+  it('searches for a request by what was typed, where something was', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/releases?query=Dune%20%20Part%20One`)).status).toBe(200);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith(id, null, null, 'Dune Part One');
+
+    expect((await ask(`/requests/${id}/releases?query=%20`)).status).toBe(200);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith(id, null, null, null);
+  });
+
   it('searches by hand for a request not yet made, making nothing', async () => {
     const { ask, worker } = theRoutes();
 

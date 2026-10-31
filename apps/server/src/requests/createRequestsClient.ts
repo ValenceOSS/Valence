@@ -758,6 +758,7 @@ const createRequestsClient = ({
         season?: string | undefined;
         episode?: string | undefined;
         indexers?: string | undefined;
+        query?: string | undefined;
       } = {},
     ): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
       call(
