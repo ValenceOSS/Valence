@@ -113,6 +113,7 @@ const EnvSchema = z.object({
   VALENCE_PUSH_RELAY_URL: z.string().url().default(PUSH_RELAY_ADDRESS),
   VALENCE_YT_DLP: z.string().min(1).default('yt-dlp'),
   VALENCE_YT_DLP_COOKIES: z.string().default(''),
+  VALENCE_FFMPEG: z.string().min(1).default('ffmpeg'),
 });
 
 type Env = z.infer<typeof EnvSchema>;

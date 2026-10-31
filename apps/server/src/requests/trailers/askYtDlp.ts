@@ -13,21 +13,21 @@ const A_YOUTUBE_ID = /^[\w-]{11}$/u;
 
 const GIVES_UP_AFTER = 30_000;
 
-const PICTURE_ONLY =
-  'bv*[ext=mp4][vcodec^=avc1][height<=1080]/bv*[ext=mp4][height<=1080]/best[ext=mp4][height<=720]';
+const STREAMED = 'bv*[protocol^=m3u8][vcodec^=avc1]';
+
+const A_PLAYLIST = 'https://manifest.googlevideo.com/';
 
 /**
- * Asks yt-dlp where a YouTube video's picture can be streamed from, without downloading any of it:
- * an H.264 MP4 no taller than 1080 lines where there is one, since every phone, television and
- * browser plays it, and the video alone, since a trailer behind a title plays silent. It runs the
- * YouTube player's challenges in the server's own Node, and reads the server's YouTube cookies
- * where an administrator has given some, which is how a server YouTube has begun refusing gets
- * through.
+ * Asks yt-dlp where a YouTube video is streamed from, without downloading any of it: the address of
+ * YouTube's HLS playlist for it, which lists the picture in H.264 at every size up to 1080 lines
+ * and the sound beside it, for a phone's own player to stream and put together. It runs the YouTube
+ * player's challenges in the server's own Node, and reads the server's YouTube cookies where an
+ * administrator has given some, which is how a server YouTube has begun refusing gets through.
  *
  * @param youTubeId - Which video, as TMDB gives it.
  * @param setup - Where yt-dlp is, the cookies file it may read, and the Node it may run.
  * @param run - How to run it, for tests.
- * @returns Where the picture is, or why it could not be found.
+ * @returns Where the playlist is, or why it could not be found.
  */
 const askYtDlp = async (
   youTubeId: string,
@@ -55,9 +55,9 @@ const askYtDlp = async (
 
   const args = [
     '--print',
-    'urls',
+    '%(manifest_url)s',
     '--format',
-    PICTURE_ONLY,
+    STREAMED,
     '--no-playlist',
     '--no-warnings',
     '--no-js-runtimes',
@@ -80,10 +80,10 @@ const askYtDlp = async (
   const url = output
     .split('\n')
     .map((line) => line.trim())
-    .find((line) => line.startsWith('https://'));
+    .find((line) => line.startsWith(A_PLAYLIST));
 
   return url === undefined
-    ? { kind: 'failed', why: 'yt-dlp found no picture' }
+    ? { kind: 'failed', why: 'yt-dlp found no stream' }
     : { kind: 'found', url };
 };
 

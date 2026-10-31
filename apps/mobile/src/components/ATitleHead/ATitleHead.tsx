@@ -56,13 +56,13 @@ const styles = StyleSheet.create({
  *
  * Something the library does not hold, such as a film somebody may ask for, is drawn the same way
  * from where its backdrop and lettering are, with its trailer fading in over the backdrop in place
- * of the library's clip where the server streams one. A trailer plays silent, so it offers no way
- * to hear it.
+ * of the library's clip where the server streams one, heard or not as the library's clips are.
  *
  * @param props - The title's name, the colour its artwork fades into where that is not the page's
  *   own, and either which title it is — whose backdrop and clip to draw, whether it has a
  *   backdrop, and whose lettering to draw, which for a programme is one of its episodes — or where
- *   its backdrop, lettering and trailer are.
+ *   its backdrop, lettering and trailer are, and who to tell whether the trailer is being found,
+ *   has been found, or is not coming.
  */
 const ATitleHead = (props: ATitleHeadProps) => {
   const { title, ground } = props;
@@ -94,7 +94,13 @@ const ATitleHead = (props: ATitleHeadProps) => {
           )}
 
           {props.clip === null || props.clip === undefined ? null : (
-            <APreview clip={props.clip} isShowing isMuted onPlaying={setIsPlaying} />
+            <APreview
+              clip={props.clip}
+              isShowing
+              isMuted={isMuted}
+              onPlaying={setIsPlaying}
+              {...(props.onFinding === undefined ? {} : { onFinding: props.onFinding })}
+            />
           )}
         </>
       )}
@@ -131,7 +137,7 @@ const ATitleHead = (props: ATitleHeadProps) => {
         />
       )}
 
-      {isPlaying && 'mediaId' in props ? (
+      {isPlaying ? (
         <View style={[styles.sound, { bottom: high * (1 - INTO_THE_PAGE_FROM) - INTO_THE_FADE }]}>
           <ASoundSwitch isMuted={isMuted} onToggle={toggle} />
         </View>

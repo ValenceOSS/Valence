@@ -6,6 +6,7 @@ type APreviewProps = ({ mediaId: string; hasBackdrop: boolean } | { clip: string
   onEnded?: () => void;
   onPlaying?: (isPlaying: boolean) => void;
   onClip?: (player: VideoPlayer | null) => void;
+  onFinding?: (finding: 'finding' | 'found' | 'none') => void;
 };
 
 export type { APreviewProps };

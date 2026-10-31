@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createTrailerAddresses } from './createTrailerAddresses';
 import type { TrailerAnswer } from './TrailerAnswer';
 
-const FOUND = 'https://rr1.googlevideo.com/videoplayback?expire=2000&id=1';
+const FOUND = 'https://manifest.googlevideo.com/api/manifest/hls_variant/expire/2000/id/1';
 
 /**
  * Addresses for a test: a clock that starts at nothing, no pause between prepared titles, and an
@@ -93,6 +93,25 @@ describe('createTrailerAddresses', () => {
     await addresses.find('film:329865', ARRIVAL);
 
     expect(ask).toHaveBeenCalledTimes(2);
+  });
+
+  it('measures how the picture sits in its frame once, and keeps it', async () => {
+    const framing = { wide: 640, high: 360, top: 44, right: 0, bottom: 44, left: 0 };
+    const measure = vi.fn(() => Promise.resolve(framing));
+    const addresses = createTrailerAddresses({
+      ask: () => Promise.resolve({ kind: 'found', url: FOUND }),
+      measure,
+      now: () => 0,
+    });
+
+    await addresses.find('film:329865', ARRIVAL);
+    addresses.forget('film:329865');
+    await addresses.find('film:329865', ARRIVAL);
+
+    await vi.waitFor(() => {
+      expect(addresses.framingOf('film:329865')).toEqual(framing);
+    });
+    expect(measure).toHaveBeenCalledTimes(1);
   });
 
   it('prepares titles ahead, one at a time, skipping those already known', async () => {

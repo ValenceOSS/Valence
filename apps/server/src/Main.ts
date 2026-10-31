@@ -1,3 +1,4 @@
+import { measurePictureFraming } from '@ValenceServer/requests/trailers/measurePictureFraming';
 import { createTrailerAddresses } from '@ValenceServer/requests/trailers/createTrailerAddresses';
 import { askYtDlp } from '@ValenceServer/requests/trailers/askYtDlp';
 import { z } from '@hono/zod-openapi';
@@ -5509,6 +5510,7 @@ const app = createApp({
         cookies: env.VALENCE_YT_DLP_COOKIES === '' ? null : env.VALENCE_YT_DLP_COOKIES,
         runtime: process.execPath,
       }),
+    measure: (url) => measurePictureFraming(url, env.VALENCE_FFMPEG),
     onProblem: (youTubeId, why) => {
       log.warn('requests', `the trailer ${youTubeId} could not be found: ${why}`);
     },

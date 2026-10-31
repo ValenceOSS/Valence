@@ -1,4 +1,4 @@
-import { Download, Hourglass, X } from '@keyline-icons/react-native';
+import { CircleSlash, Download, Hourglass, X } from '@keyline-icons/react-native';
 import { Plus } from '@keyline-icons/react-native/fill';
 import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
@@ -54,6 +54,7 @@ import { AHairline } from '@ValenceMobile/components/AHairline/AHairline';
 import { AnOverview } from '@ValenceMobile/components/AnOverview/AnOverview';
 import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
+import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { TheCast } from '@ValenceMobile/components/TheCast/TheCast';
@@ -158,6 +159,7 @@ const AnAskable = ({
   const [isWholeSeries, setIsWholeSeries] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [finding, setFinding] = useState<'finding' | 'found' | 'none'>('finding');
   const faces = useQuery(linkingQueries.faces());
   const title = asking.data;
   const tint = usePictureTint(
@@ -325,6 +327,10 @@ const AnAskable = ({
     standing !== null && standing.tone !== 'danger' && (going !== null || mayTakeBack);
 
   const backdrop = title.backdropUrl === null ? null : pictureOnThisServer(title.backdropUrl);
+  const trailer =
+    backdrop === null || title.trailerKey === null || !isWatched(kind)
+      ? null
+      : `/api/requests/catalogue/title/${kind}/${encodeURIComponent(id)}/trailer.m3u8`;
   const facts = describeAskableFacts({ ...title, genres: [] });
   const genres = title.genres
     .slice(0, 3)
@@ -385,17 +391,29 @@ const AnAskable = ({
                 <ATitleHead
                   backdrop={backdrop}
                   lettering={title.logoUrl === null ? null : pictureOnThisServer(title.logoUrl)}
-                  clip={
-                    title.trailerKey === null || !isWatched(kind)
-                      ? null
-                      : `/api/requests/catalogue/title/${kind}/${encodeURIComponent(id)}/trailer`
-                  }
+                  clip={trailer}
+                  onFinding={setFinding}
                   title={title.title}
                   {...(tint === null ? {} : { ground: tint })}
                 />
               ),
             })}
         {...(tint === null ? {} : { behind: <ATintedGround tint={tint} /> })}
+        {...(trailer === null || finding === 'found'
+          ? {}
+          : {
+              corner: (
+                <AGlassCircle
+                  of={CircleSlash}
+                  label={
+                    finding === 'none'
+                      ? say('phone.aTitleHead.noTrailer')
+                      : say('phone.aTitleHead.findingTheTrailer')
+                  }
+                  isBusy={finding !== 'none'}
+                />
+              ),
+            })}
       >
         {backdrop === null && title.posterUrl !== null && !isWatched(kind) ? (
           <ARemotePicture

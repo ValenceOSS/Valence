@@ -19,17 +19,19 @@ const aYtDlp = (
   vi.fn((_binary: string, _args: readonly string[]) => Promise.resolve({ failure, output, said }));
 
 describe('askYtDlp', () => {
-  it('reads the address yt-dlp found', async () => {
-    const run = aYtDlp('https://rr1.googlevideo.com/videoplayback?id=1\n');
+  it('reads the address of the playlist yt-dlp found', async () => {
+    const run = aYtDlp(
+      'https://manifest.googlevideo.com/api/manifest/hls_variant/expire/2000/id/1\n',
+    );
 
     expect(await askYtDlp('dQw4w9WgXcQ', SETUP, run)).toEqual({
       kind: 'found',
-      url: 'https://rr1.googlevideo.com/videoplayback?id=1',
+      url: 'https://manifest.googlevideo.com/api/manifest/hls_variant/expire/2000/id/1',
     });
   });
 
   it('runs the challenges in the server’s own Node, with the cookies it was given', async () => {
-    const run = aYtDlp('https://x\n');
+    const run = aYtDlp('https://manifest.googlevideo.com/x\n');
 
     await askYtDlp('dQw4w9WgXcQ', { ...SETUP, cookies: '/config/youtube.txt' }, run);
 

@@ -10870,6 +10870,16 @@
     "context": "Shown on the title card of the phone app, beside which copy of a film will play."
   },
   {
+    "handler": "phone.aTitleHead.findingTheTrailer",
+    "text": "Finding the trailer",
+    "context": "Read out for the spinner at the top of a title's page while its trailer is being found."
+  },
+  {
+    "handler": "phone.aTitleHead.noTrailer",
+    "text": "No trailer",
+    "context": "Read out for the mark at the top of a title's page when it has no trailer that can be played."
+  },
+  {
     "handler": "phone.carPlay.shelvesForTheCar.listenNow",
     "text": "Listen Now",
     "context": "The title in the car play of the phone app (from `shelvesForTheCar`)."

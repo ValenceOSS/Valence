@@ -4,7 +4,8 @@ import { useEvent, useEventListener } from 'expo';
 import { Animated, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
+import { readClipFraming } from '@ValenceClient/playback/readClipFraming';
+import type { ClipFraming } from '@ValenceClient/playback/ClipFraming';
 import { hushThePlayer } from '@ValenceMobile/playback/hushThePlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
@@ -17,6 +18,8 @@ import type { APreviewProps } from './APreview.types';
 const SETTLE_FOR = 2500;
 
 const FADES_IN_OVER = 700;
+
+const NOT_WORTH_ZOOMING = 1.01;
 
 const LETS_GO_AFTER = 1000;
 
@@ -43,15 +46,23 @@ const styles = StyleSheet.create({
  *   not while another page covers the one it is on, whatever this says; whether the clip is
  *   silent; and who to tell when the clip has played through, when it starts or stops playing, and
  *   of the clip's player while it plays and nothing once it stops, so the page can draw the same
- *   clip behind itself without playing it twice.
+ *   clip behind itself without playing it twice; and who to tell whether its clip is being found,
+ *   has been found, or is not coming.
+ *
+ * Where the server has measured the black bars a clip is letterboxed or pillarboxed with, the clip
+ * is zoomed and centred so that its picture, not the bars, fills whatever holds it.
  */
 const APreview = (props: APreviewProps) => {
-  const { isShowing: isAskedToShow, isMuted, onEnded, onPlaying, onClip } = props;
+  const { isShowing: isAskedToShow, isMuted, onEnded, onPlaying, onClip, onFinding } = props;
   const clipAt = 'clip' in props ? props.clip : `/api/media/${props.mediaId}/preview`;
   const isOnTop = useIsOnTop();
   const isOnMobileData = useIsOnMobileData();
   const isShowing = isAskedToShow && isOnTop && !isOnMobileData;
   const [clip, setClip] = useState<VideoSource | null>(null);
+  const [framing, setFraming] = useState<ClipFraming | null>(null);
+  const [isNotComing, setIsNotComing] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
+  const [held, setHeld] = useState<{ wide: number; high: number } | null>(null);
   const [showing] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -68,11 +79,22 @@ const APreview = (props: APreviewProps) => {
     const moved = new AbortController();
     const hasMoved = () => moved.signal.aborted;
     const uri = onThisServer(clipAt);
+
+    setIsNotComing(false);
+
     const settling = setTimeout(() => {
-      void readPreviewState(uri).then(async (state) => {
-        if (state !== 'ready' || hasMoved()) {
+      void readClipFraming(uri).then(async ({ state, framing: measured }) => {
+        if (hasMoved()) {
           return;
         }
+
+        if (state !== 'ready') {
+          setIsNotComing(true);
+
+          return;
+        }
+
+        setFraming(measured);
 
         const cookie = await theCookiesThisPhoneHolds(uri);
 
@@ -137,6 +159,37 @@ const APreview = (props: APreviewProps) => {
   }, [isPlaying, isShowing, showing, onPlaying, player]);
 
   useEffect(() => {
+    if (isPlaying) {
+      setHasPlayed(true);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (onFinding !== undefined && isShowing) {
+      onFinding(isNotComing ? 'none' : hasPlayed ? 'found' : 'finding');
+    }
+  }, [onFinding, isShowing, isNotComing, hasPlayed]);
+
+  const zoom = (() => {
+    if (framing === null || held === null) {
+      return null;
+    }
+
+    const covers = Math.max(held.wide / framing.wide, held.high / framing.high);
+    const litWide = (framing.wide - framing.left - framing.right) * covers;
+    const litHigh = (framing.high - framing.top - framing.bottom) * covers;
+    const by = Math.max(held.wide / litWide, held.high / litHigh, 1);
+
+    return litWide <= 0 || litHigh <= 0 || by < NOT_WORTH_ZOOMING
+      ? null
+      : [
+          { translateX: (-(framing.left - framing.right) / 2) * covers * by },
+          { translateY: (-(framing.top - framing.bottom) / 2) * covers * by },
+          { scale: by },
+        ];
+  })();
+
+  useEffect(() => {
     if (onClip === undefined || !isPlaying) {
       return undefined;
     }
@@ -149,7 +202,13 @@ const APreview = (props: APreviewProps) => {
   }, [isPlaying, onClip, player]);
 
   return (
-    <View style={styles.fills} pointerEvents="none">
+    <View
+      style={styles.fills}
+      pointerEvents="none"
+      onLayout={({ nativeEvent }) => {
+        setHeld({ wide: nativeEvent.layout.width, high: nativeEvent.layout.height });
+      }}
+    >
       {'mediaId' in props && props.hasBackdrop ? (
         <ARemotePicture
           style={styles.fills}
@@ -158,7 +217,9 @@ const APreview = (props: APreviewProps) => {
       ) : null}
 
       {clip === null ? null : (
-        <Animated.View style={[styles.fills, { opacity: showing }]}>
+        <Animated.View
+          style={[styles.fills, { opacity: showing }, zoom === null ? null : { transform: zoom }]}
+        >
           <VideoView
             allowsVideoFrameAnalysis={false}
             style={styles.fills}

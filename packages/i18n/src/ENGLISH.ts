@@ -2583,6 +2583,8 @@ const ENGLISH = {
   'phone.aTitle.preparingPercentTimeLeft': 'Preparing {percent}%, {timeLeft}',
   'phone.aTitle.resumeFromCarryOnAt': 'Resume from {carryOnAt}',
   'phone.aTitle.version': 'Version',
+  'phone.aTitleHead.findingTheTrailer': 'Finding the trailer',
+  'phone.aTitleHead.noTrailer': 'No trailer',
   'phone.carPlay.shelvesForTheCar.listenNow': 'Listen Now',
   'phone.carPlay.useCarPlay.openValenceOnYourIPhoneAnd':
     'Open Valence on your iPhone and sign in to play your music here.',

@@ -111,7 +111,8 @@ import { withOfferedProtocol } from '@ValenceServer/plugins/downloadClients/with
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
-import { streamTrailer } from '@ValenceServer/requests/trailers/streamTrailer';
+import { createTrailerParts } from '@ValenceServer/requests/trailers/createTrailerParts';
+import { rewritePlaylist } from '@ValenceServer/requests/trailers/rewritePlaylist';
 import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
 import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
@@ -120,6 +121,10 @@ const NO_SUCH_PLUGIN_CLIENT = refuse('error.downloads.noPluginOffersThatDownload
 const TRAILERS_PREPARED_PER_SHELF = 6;
 
 const A_CATALOGUE_ID = /^\d{1,12}$/u;
+
+const HLS_PLAYLIST = 'application/vnd.apple.mpegurl';
+
+const PICTURE_FRAMING_HEADER = 'x-valence-picture-framing';
 
 /**
  * Registers the requests endpoints.
@@ -140,7 +145,6 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     viewerOf,
     discovery,
     trailers,
-    forwardedFileHeaders,
     NOT_STOOD,
     requires,
     requestsOverview,
@@ -177,6 +181,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
     new Set(requestableKindsOf(await library.list(asTheServer)));
+
+  const trailerParts = createTrailerParts();
 
   const playsTrailers = async (): Promise<boolean> => {
     const current = await settings.read();
@@ -704,7 +710,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
   });
 
-  app.get('/api/requests/catalogue/title/:kind/:id/trailer', async (context) => {
+  app.get('/api/requests/catalogue/title/:kind/:id/trailer.m3u8', async (context) => {
     const kind = context.req.param('kind');
     const id = context.req.param('id');
 
@@ -726,28 +732,81 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { title, readYouTubeId } = trailerOf(kind, id);
-    const range = context.req.header('range') ?? null;
-    const streamed = async () => {
+    const readMaster = async () => {
       const url = await trailers.find(title, readYouTubeId);
+      const answer = url === null ? null : await fetch(url).catch(() => null);
 
-      return url === null ? null : streamTrailer(url, range);
+      return url === null || answer === null || !answer.ok
+        ? null
+        : { url, text: await answer.text() };
     };
-    let file = await streamed();
+    let master = await readMaster();
 
-    if (file === null) {
+    if (master === null) {
       trailers.forget(title);
-      file = await streamed();
+      master = await readMaster();
     }
 
-    if (file === null) {
+    if (master === null) {
       return context.json(refuse('error.playback.noPreviewYet'), 404);
     }
 
+    const token = trailerParts.open();
+    const framing = trailers.framingOf(title);
+
     return context.body(
-      file.body,
-      file.status === 206 ? 206 : 200,
-      forwardedFileHeaders(file, { 'cache-control': 'private, max-age=3600' }),
+      rewritePlaylist(master.text, master.url, (url, isPlaylist) =>
+        trailerParts.addressOf(token, url, isPlaylist),
+      ),
+      200,
+      {
+        'content-type': HLS_PLAYLIST,
+        'cache-control': 'no-store',
+        ...(framing === null
+          ? {}
+          : {
+              [PICTURE_FRAMING_HEADER]: [
+                framing.wide,
+                framing.high,
+                framing.top,
+                framing.right,
+                framing.bottom,
+                framing.left,
+              ].join(','),
+            }),
+      },
     );
+  });
+
+  app.get('/api/requests/trailers/:token/:part', async (context) => {
+    const token = context.req.param('token');
+    const part = context.req.param('part');
+    const url = trailerParts.urlOf(token, part);
+    const answer = url === null ? null : await fetch(url).catch(() => null);
+
+    if (url === null || answer === null || !answer.ok || answer.body === null) {
+      await answer?.body?.cancel();
+
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    if (part.endsWith('.m3u8')) {
+      return context.body(
+        rewritePlaylist(await answer.text(), url, (inside, isPlaylist) =>
+          trailerParts.addressOf(token, inside, isPlaylist),
+        ),
+        200,
+        { 'content-type': HLS_PLAYLIST, 'cache-control': 'no-store' },
+      );
+    }
+
+    return context.body(answer.body, 200, {
+      'content-type': answer.headers.get('content-type') ?? 'video/mp2t',
+      'cache-control': 'private, max-age=3600',
+      ...(answer.headers.get('content-length') === null
+        ? {}
+        : { 'content-length': answer.headers.get('content-length') ?? '' }),
+    });
   });
 
   app.openapi(catalogueTitleRoute, async (context) => {
