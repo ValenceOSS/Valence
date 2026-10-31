@@ -774,7 +774,10 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
               }}
             />
 
-            <ARoundAction drawn={<AirPlayButton />} says={say('phone.theMusicPlayer.airPlay')} />
+            <ARoundAction
+              drawn={<AirPlayButton isBare />}
+              says={say('phone.theMusicPlayer.airPlay')}
+            />
 
             <ARoundAction
               icon={LaptopSmartphone}
