@@ -56,16 +56,21 @@ const styles = StyleSheet.create({
  *
  * The same button does a card's main thing where that is not watching, such as asking for a film,
  * with its own mark in place of the play mark; while what it started is going it holds a spinner
- * and cannot be pressed again.
+ * and cannot be pressed again. It can also only say how something is going, such as a requested
+ * film downloading, with the bar showing how far it has got and the segment beside it doing
+ * whatever else there is to do, such as cancelling it.
  *
  * @param says - What pressing it does.
- * @param onPress - Told it was pressed, or nothing where a menu around it opens instead, when it
- *   is only drawn, with a chevron saying a menu drops from it.
+ * @param onPress - Told it was pressed, or nothing where it only says something, or where a menu
+ *   around it opens instead, when it is only drawn.
  * @param icon - The mark beside what it says, where it is not the play mark.
  * @param isBusy - Whether what it started is still going.
  * @param isDisabled - Whether it can be pressed at all.
- * @param watched - How much of it has been watched, from nothing to all of it, where any has.
+ * @param dropsAMenu - Whether a menu around it drops from it, which a chevron says.
+ * @param watched - How much of it has been watched, or of whatever it says is going, from nothing
+ *   to all of it, where any has.
  * @param onStartAgain - Told to play it from the beginning, where it would otherwise carry on.
+ * @param aside - What the segment joined to its end does, where it is not starting again.
  */
 const APlayButton = ({
   says,
@@ -73,10 +78,17 @@ const APlayButton = ({
   icon = Play,
   isBusy = false,
   isDisabled = false,
+  dropsAMenu = false,
   watched = null,
   onStartAgain,
+  aside: given,
 }: APlayButtonProps) => {
   const colours = useTheColours();
+  const aside =
+    given ??
+    (onStartAgain === undefined
+      ? undefined
+      : { icon: RotateCcw, label: say('common.startAgain'), onPress: onStartAgain });
   const play = (
     <Button
       tone="bare"
@@ -87,7 +99,7 @@ const APlayButton = ({
       <View
         style={[
           styles.button,
-          onStartAgain !== undefined && styles.joined,
+          aside !== undefined && styles.joined,
           { backgroundColor: colours.text },
         ]}
       >
@@ -99,9 +111,7 @@ const APlayButton = ({
             <Text numberOfLines={1} style={[styles.said, { color: colours.surface }]}>
               {says}
             </Text>
-            {onPress === undefined ? (
-              <Icon of={ChevronDown} size={16} colour={colours.surface} />
-            ) : null}
+            {dropsAMenu ? <Icon of={ChevronDown} size={16} colour={colours.surface} /> : null}
           </>
         )}
         {watched === null ? null : (
@@ -121,14 +131,14 @@ const APlayButton = ({
     </Button>
   );
 
-  return onStartAgain === undefined ? (
+  return aside === undefined ? (
     play
   ) : (
     <View style={styles.split}>
       <View style={styles.main}>{play}</View>
-      <Button tone="bare" label={say('common.startAgain')} onPress={onStartAgain}>
+      <Button tone="bare" label={aside.label} onPress={aside.onPress}>
         <View style={[styles.again, { backgroundColor: withAlpha(colours.text, 0.12) }]}>
-          <Icon of={RotateCcw} size={20} colour={colours.text} />
+          <Icon of={aside.icon} size={20} colour={colours.text} />
         </View>
       </Button>
     </View>

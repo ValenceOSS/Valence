@@ -1,4 +1,4 @@
-import { CircleX } from '@keyline-icons/react-native';
+import { Download, Hourglass, X } from '@keyline-icons/react-native';
 import { Plus } from '@keyline-icons/react-native/fill';
 import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
@@ -24,7 +24,6 @@ import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLine';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { AMenu } from '@ValenceMobile/components/AMenu/AMenu';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -55,7 +54,6 @@ import { AHairline } from '@ValenceMobile/components/AHairline/AHairline';
 import { AnOverview } from '@ValenceMobile/components/AnOverview/AnOverview';
 import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
-import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
 import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { TheCast } from '@ValenceMobile/components/TheCast/TheCast';
@@ -78,7 +76,6 @@ const BOOK_FORMAT_NAMES: Record<BookFormat, string> = {
 
 const styles = StyleSheet.create({
   about: { gap: 12 },
-  actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   cover: { alignSelf: 'center', aspectRatio: 1, borderRadius: 14, width: '62%' },
   doing: { gap: 10 },
   headline: { alignItems: 'center', gap: 8 },
@@ -101,8 +98,9 @@ const isWatched = (kind: string): kind is 'film' | 'series' => kind === 'film' |
  * It is drawn as a title the library holds is: its backdrop edge to edge with its lettering over
  * it, the page tinted with the backdrop's colour, its facts centred under that, then one wide
  * button for the main thing to do with it — asking for it, playing it from a source, watching a
- * linked server's copy or wanting it too — with a round button beneath for taking back a request,
- * then what it is about, its genres and who is in it.
+ * linked server's copy or wanting it too. A request under way is that button saying how it is
+ * going, its bar showing how far it has downloaded, split with a way to take it back; then what it
+ * is about, its genres and who is in it.
  *
  * A programme is asked for a season at a time, or every season, and whether new seasons come too;
  * one already asked for can have more seasons added. Where the server offers more than one
@@ -323,6 +321,8 @@ const AnAskable = ({
   const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], me);
   const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me);
   const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, me);
+  const isUnderway =
+    standing !== null && standing.tone !== 'danger' && (going !== null || mayTakeBack);
 
   const backdrop = title.backdropUrl === null ? null : pictureOnThisServer(title.backdropUrl);
   const facts = describeAskableFacts({ ...title, genres: [] });
@@ -358,6 +358,7 @@ const AnAskable = ({
       says={requestSays}
       isBusy={isSending}
       isDisabled={isRequestDisabled}
+      dropsAMenu={hasQualities}
       {...(hasQualities ? {} : { onPress: sendIt })}
     />
   ) : (
@@ -412,7 +413,7 @@ const AnAskable = ({
               </Words>
             )}
 
-            {standing === null ? null : (
+            {standing === null || isUnderway ? null : (
               <Words tone={standing.tone === 'danger' ? 'danger' : 'accent'} isCentred>
                 {standing.label}
               </Words>
@@ -434,6 +435,25 @@ const AnAskable = ({
 
         <ARising turn={1}>
           <View style={styles.doing}>
+            {standing === null || !isUnderway ? null : (
+              <APlayButton
+                icon={going === null ? Hourglass : Download}
+                says={standing.label}
+                watched={going?.progress ?? null}
+                {...(mayTakeBack
+                  ? {
+                      aside: {
+                        icon: X,
+                        label: say('common.cancelRequest'),
+                        onPress: () => {
+                          takeBack(request.id);
+                        },
+                      },
+                    }
+                  : {})}
+              />
+            )}
+
             {isStreamable ? (
               <>
                 <APlayButton
@@ -484,13 +504,6 @@ const AnAskable = ({
                 }}
               />
             ) : null}
-
-            {going === null ? null : (
-              <HowFar
-                fraction={going.progress}
-                label={say('common.howFarTitleHasDownloaded', { title: title.title })}
-              />
-            )}
 
             {saidOfGoing === null ? null : (
               <Words size="small" tone="muted" isCentred>
@@ -634,20 +647,6 @@ const AnAskable = ({
             )}
           </View>
         </ARising>
-
-        {mayTakeBack ? (
-          <ARising turn={2}>
-            <View style={styles.actions}>
-              <ARoundAction
-                icon={CircleX}
-                says={say('common.cancelRequest')}
-                onPress={() => {
-                  takeBack(request.id);
-                }}
-              />
-            </View>
-          </ARising>
-        ) : null}
 
         {title.overview === null && genres.length === 0 ? null : (
           <>
