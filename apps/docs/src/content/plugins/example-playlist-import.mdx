@@ -80,7 +80,7 @@ The official **Playlist import** plugin brings playlists across from Spotify and
 }
 ```
 
-Apple Music has no OAuth for servers, so it is not an account provider. Public playlists can be read with an Apple Music developer token, which the administrator puts in a secret setting. It asks for `^1.2` because it adds missing songs to playlists, which API 1.2 brought.
+Apple Music has no OAuth for servers, so it is not an account provider. Public playlists can be read with an Apple Music developer token, which the administrator puts in a secret setting. It adds missing songs to playlists, which API 1.2 brought, and names the person it finds songs for, which 1.4 brought, so it asks for `^1.4` and installs on Valence 1.8.0 and later.
 
 ## One shape for both services
 
