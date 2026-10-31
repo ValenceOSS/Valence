@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactElement } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import type { Button } from '@expo/ui/swift-ui';
 
 type ASymbol = NonNullable<ComponentProps<typeof Button>['systemImage']>;
@@ -20,4 +21,12 @@ type AMenuProps = {
   children: ReactElement;
 };
 
-export type { AMenuItem, AMenuProps, ASymbol };
+type NativeMenuProps = {
+  items: readonly Omit<AMenuItem, 'onChoose'>[];
+  onChoose: (event: { nativeEvent: { id: string } }) => void;
+  onOpen: () => void;
+  onClose: () => void;
+  style: StyleProp<ViewStyle>;
+};
+
+export type { AMenuItem, AMenuProps, ASymbol, NativeMenuProps };

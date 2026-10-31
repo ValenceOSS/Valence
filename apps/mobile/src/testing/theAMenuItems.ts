@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react-native';
+import type { NativeMenuProps } from '@ValenceMobile/components/AMenu/AMenu.types';
 
 /**
  * The items of every menu that drops from what opens it, in the order they are drawn.
@@ -7,7 +8,11 @@ import { screen } from '@testing-library/react-native';
  */
 const theAMenuItems = (): string[] =>
   screen.container
-    .queryAll((one) => 'onButtonPress' in one.props)
-    .flatMap((one) => (typeof one.props.label === 'string' ? [one.props.label] : []));
+    .queryAll((one) => 'onChoose' in one.props)
+    .flatMap((one) => {
+      const { items = [] }: Partial<Pick<NativeMenuProps, 'items'>> = one.props;
+
+      return items.map((item) => item.label);
+    });
 
 export { theAMenuItems };

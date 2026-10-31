@@ -52,10 +52,10 @@ describe('AMenu', () => {
       </AMenu>,
     );
 
-    const [hide] = drawn.container.queryAll(
-      (one) => 'onButtonPress' in one.props && one.props.label === 'Hide',
-    );
+    const [menu] = drawn.container.queryAll((one) => 'onChoose' in one.props);
 
-    expect(hide?.props.role).toBe('destructive');
+    expect(menu?.props.items).toContainEqual(
+      expect.objectContaining({ label: 'Hide', isDestructive: true }),
+    );
   });
 });
