@@ -1,122 +1,72 @@
 import { Shuffle } from '@keyline-icons/react-native';
-import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
-import { useState } from 'react';
+import { Children } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
-import { Button } from '@ValenceMobile/components/Button/Button';
-import { ACoverGrid } from '@ValenceMobile/components/ACoverGrid/ACoverGrid';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
+import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMusicHeadProps } from './AMusicHead.types';
 import { say } from '@ValenceI18n/say';
 
-const SIDE = 220;
-
 const styles = StyleSheet.create({
-  art: {
-    alignItems: 'center',
-    height: SIDE,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: SIDE,
-  },
-  buttons: { alignSelf: 'stretch', flexDirection: 'row', gap: 10 },
-  fills: { height: '100%', width: '100%' },
-  half: { flex: 1 },
-  said: { alignItems: 'center', gap: 4 },
-  whole: { alignItems: 'center', gap: 16 },
+  actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
+  said: { alignItems: 'center', gap: 6 },
+  whole: { gap: 18 },
 });
 
 /**
- * The head of an album's, an artist's, a playlist's or liked songs' page, as the web draws it: the
- * cover, what kind of thing it is, what it is called and a line about it, and a way to play it in
- * order or shuffled.
+ * What sits beneath the cover of an album's, an artist's, a playlist's, a mix's or liked songs'
+ * page, as a title's page has it: what kind of thing it is and a line about it, one wide button
+ * to play it with shuffling it joined to its end as a split button does, and round buttons
+ * beneath for whatever else there is to do with it.
  *
- * @param kind - What kind of thing it is, said small above its name.
- * @param title - What it is called.
+ * @param kind - What kind of thing it is.
  * @param detail - A line about it, where there is one.
- * @param artwork - Its cover, or nothing where it has none.
- * @param albumIds - The albums whose covers make up its cover instead, four in a grid, for a list of
- *   songs from many albums.
- * @param standIn - What is drawn where there is no cover.
- * @param isRound - Whether the cover is round, as an artist's is.
+ * @param about - What its owner wrote about it, where they did.
  * @param canPlay - Whether there is anything to play.
  * @param onPlay - Told to play it from the start.
  * @param onShuffle - Told to play it shuffled.
- * @param children - Anything more said beneath it, before the buttons.
+ * @param children - The round buttons beneath, each an `ARoundAction` or one drawn as one.
  */
 const AMusicHead = ({
   kind,
-  title,
   detail,
-  artwork,
-  albumIds,
-  standIn,
-  isRound = false,
+  about = null,
   canPlay,
   onPlay,
   onShuffle,
   children,
-}: AMusicHeadProps) => {
-  const colours = useTheColours();
-  const [isMissing, setIsMissing] = useState(false);
-
-  return (
-    <View style={styles.whole}>
-      <View
-        style={[
-          styles.art,
-          { backgroundColor: colours.surfaceRaised, borderRadius: isRound ? SIDE / 2 : 16 },
-        ]}
-      >
-        {albumIds !== undefined ? (
-          <ACoverGrid albumIds={albumIds} standIn={standIn} iconSize={64} />
-        ) : artwork === null || isMissing ? (
-          <Icon of={standIn} size={64} colour={colours.textMuted} />
-        ) : (
-          <ARemotePicture
-            style={styles.fills}
-            uri={artwork}
-            onMissing={() => {
-              setIsMissing(true);
-            }}
-          />
-        )}
-      </View>
-
+}: AMusicHeadProps) => (
+  <View style={styles.whole}>
+    <ARising>
       <View style={styles.said}>
-        <Words size="small" tone="muted">
-          {kind}
+        <Words size="lead" tone="muted" isCentred>
+          {[kind, detail].filter((part) => part !== null && part !== '').join(' · ')}
         </Words>
-        <Words size="title" isCentred>
-          {title}
-        </Words>
-        {detail === null ? null : (
-          <Words tone="muted" isCentred>
-            {detail}
+        {about === null ? null : (
+          <Words tone="muted" isCentred lines={3}>
+            {about}
           </Words>
         )}
-        {children}
       </View>
+    </ARising>
 
-      {canPlay ? (
-        <View style={styles.buttons}>
-          <View style={styles.half}>
-            <Button tone="bold" icon={PlayFilled} onPress={onPlay}>
-              {say('common.play')}
-            </Button>
-          </View>
-          <View style={styles.half}>
-            <Button tone="ghost" icon={Shuffle} isWide onPress={onShuffle}>
-              {say('common.shuffle')}
-            </Button>
-          </View>
-        </View>
-      ) : null}
-    </View>
-  );
-};
+    {canPlay ? (
+      <ARising turn={1}>
+        <APlayButton
+          says={say('common.play')}
+          onPress={onPlay}
+          aside={{ icon: Shuffle, label: say('common.shuffle'), onPress: onShuffle }}
+        />
+      </ARising>
+    ) : null}
+
+    {Children.count(children) === 0 ? null : (
+      <ARising turn={2}>
+        <View style={styles.actions}>{children}</View>
+      </ARising>
+    )}
+  </View>
+);
 
 AMusicHead.displayName = 'AMusicHead';
 
