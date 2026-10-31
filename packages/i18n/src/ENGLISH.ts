@@ -5502,6 +5502,10 @@ const ENGLISH = {
     'Origins allowed to sign in: {value}.',
   'screens.adminArea.settingsPanel.pasteAKey': 'Paste a key',
   'screens.adminArea.settingsPanel.pictureBehindTheWayIn': 'Sign-in background',
+  'screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop':
+    'Plays a film’s or programme’s trailer silently behind the top of its page in the phone app, so it starts as soon as the page opens. The server looks each trailer up on YouTube with yt-dlp and streams it through itself, which YouTube’s terms don’t allow, and YouTube may refuse a server it sees doing it. Needs Show trailers from the catalogue to be on.',
+  'screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest':
+    'Play trailers behind titles to request',
   'screens.adminArea.settingsPanel.preparedDownloads': 'Prepared downloads',
   'screens.adminArea.settingsPanel.previewQuality': 'Preview quality',
   'screens.adminArea.settingsPanel.previewQualityCouldNotBeSaved': 'Couldn’t save preview quality.',
@@ -5552,11 +5556,14 @@ const ENGLISH = {
     'Couldn’t remove the splashscreen.',
   'screens.adminArea.settingsPanel.theTelevisionApp': 'Television app',
   'screens.adminArea.settingsPanel.theTheAudioDBKeyCouldNotBe': 'Couldn’t save the TheAudioDB key.',
+  'screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe':
+    'Couldn’t save the trailer playing setting.',
   'screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe':
     'Couldn’t save the trailer setting.',
   'screens.adminArea.settingsPanel.theWeb': 'Web',
   'screens.adminArea.settingsPanel.theWebIsAlwaysOn':
     "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
+  'screens.adminArea.settingsPanel.trailerPlayingSettingSaved': 'Trailer playing setting saved.',
   'screens.adminArea.settingsPanel.trailerSettingSaved': 'Trailer setting saved.',
   'screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine':
     'Valence uses whichever backend passes its hardware check. Choose one to force it, even if its encoder failed the check — useful when the check is wrong and the GPU clearly works.',

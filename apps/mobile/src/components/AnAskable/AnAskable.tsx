@@ -384,6 +384,11 @@ const AnAskable = ({
                 <ATitleHead
                   backdrop={backdrop}
                   lettering={title.logoUrl === null ? null : pictureOnThisServer(title.logoUrl)}
+                  clip={
+                    title.trailerKey === null || !isWatched(kind)
+                      ? null
+                      : `/api/requests/catalogue/title/${kind}/${encodeURIComponent(id)}/trailer`
+                  }
                   title={title.title}
                   {...(tint === null ? {} : { ground: tint })}
                 />

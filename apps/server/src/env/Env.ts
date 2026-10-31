@@ -111,6 +111,8 @@ const EnvSchema = z.object({
   DO_NOT_TRACK: z.string().default(''),
   VALENCE_TELEMETRY_URL: z.string().url().default(TELEMETRY_ADDRESS),
   VALENCE_PUSH_RELAY_URL: z.string().url().default(PUSH_RELAY_ADDRESS),
+  VALENCE_YT_DLP: z.string().min(1).default('yt-dlp'),
+  VALENCE_YT_DLP_COOKIES: z.string().default(''),
 });
 
 type Env = z.infer<typeof EnvSchema>;

@@ -1,3 +1,5 @@
+import { createTrailerAddresses } from '@ValenceServer/requests/trailers/createTrailerAddresses';
+import { askYtDlp } from '@ValenceServer/requests/trailers/askYtDlp';
 import { z } from '@hono/zod-openapi';
 import { withJoinedInputs } from '@ValenceServer/transcoder/withJoinedInputs';
 import { createPartsOf } from '@ValenceServer/library/createPartsOf';
@@ -604,6 +606,7 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
@@ -5499,6 +5502,17 @@ const app = createApp({
     },
   }),
   discovery,
+  trailers: createTrailerAddresses({
+    ask: (youTubeId) =>
+      askYtDlp(youTubeId, {
+        binary: env.VALENCE_YT_DLP,
+        cookies: env.VALENCE_YT_DLP_COOKIES === '' ? null : env.VALENCE_YT_DLP_COOKIES,
+        runtime: process.execPath,
+      }),
+    onProblem: (youTubeId, why) => {
+      log.warn('requests', `the trailer ${youTubeId} could not be found: ${why}`);
+    },
+  }),
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
   seriesOfTvdbId: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),
   importedAccounts: () => readImportedAccounts(db),
