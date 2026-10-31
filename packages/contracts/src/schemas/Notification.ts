@@ -40,7 +40,11 @@ const DEFAULT_NOTIFICATION_PREFERENCE = { inApp: true, push: true } as const;
 
 const PhonePushSchema = z.object({
   platform: z.enum(['apple', 'android']),
-  token: z.string().min(16).max(512).regex(/^[A-Za-z0-9_:.-]+$/),
+  token: z
+    .string()
+    .min(16)
+    .max(512)
+    .regex(/^[A-Za-z0-9_:.-]+$/),
   environment: z.enum(['production', 'sandbox']).default('production'),
 });
 
@@ -65,10 +69,4 @@ export {
   PushDeliverySchema,
 };
 
-export type {
-  Notification,
-  NotificationEvent,
-  NotificationPreference,
-  PhonePush,
-  PushDelivery,
-};
+export type { Notification, NotificationEvent, NotificationPreference, PhonePush, PushDelivery };
