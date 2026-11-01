@@ -23,9 +23,9 @@ const InSite = ({ to, className, children, onClick, onPointerEnter }: InSiteLink
 
 const LOCAL: NavItem = {
   site: 'landing',
-  path: '/tour',
-  label: 'ui.siteNav.productTour',
-  detail: 'ui.siteNav.productTourDetail',
+  path: '/brand',
+  label: 'ui.siteNav.brand',
+  detail: 'ui.siteNav.brandDetail',
   icon: PackageIcon,
 };
 
@@ -43,12 +43,14 @@ describe('NavEntry', () => {
       <NavEntry item={LOCAL} here="landing" InSiteLink={InSite} size="panel" onChoose={vi.fn()} />,
     );
 
-    const link = screen.getByRole('link', { name: /Product tour/ });
+    const link = screen.getByRole('link', { name: /Branding/ });
 
-    expect(link).toHaveAttribute('href', '/tour');
+    expect(link).toHaveAttribute('href', '/brand');
     expect(link).toHaveAttribute('data-in-site');
     expect(
-      screen.getByText('Watching, listening, reading, requests, household and admin surfaces.'),
+      screen.getByText(
+        'The logo, the fonts and the colours, how to use them, and wallpapers to download.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -68,9 +70,9 @@ describe('NavEntry', () => {
       <NavEntry item={LOCAL} here="metrics" InSiteLink={InSite} size="panel" onChoose={vi.fn()} />,
     );
 
-    expect(screen.getByRole('link', { name: /Product tour/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Branding/ })).toHaveAttribute(
       'href',
-      'https://getvalence.app/tour',
+      'https://getvalence.app/brand',
     );
   });
 
@@ -90,7 +92,7 @@ describe('NavEntry', () => {
       />,
     );
 
-    const link = screen.getByRole('link', { name: /Product tour/ });
+    const link = screen.getByRole('link', { name: /Branding/ });
 
     link.addEventListener('click', (event) => {
       event.preventDefault();

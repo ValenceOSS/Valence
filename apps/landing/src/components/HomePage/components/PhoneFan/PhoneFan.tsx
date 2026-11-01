@@ -6,24 +6,24 @@ import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWa
 
 const PHONES = [
   {
-    label: 'Your books',
+    label: 'Music home',
     turn: -16,
     lift: 70,
     spread: -2,
     finish: 'blue',
-    src: '/phones/books.jpg',
+    src: '/phones/music.jpg',
   },
   {
-    label: 'Music home',
+    label: 'A film to request',
     turn: -8,
     lift: 26,
     spread: -1,
     finish: 'silver',
-    src: '/phones/music.jpg',
+    src: '/phones/discover.jpg',
   },
   { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'blue', src: '/phones/playing.jpg' },
-  { label: 'Home', turn: 8, lift: 26, spread: 1, finish: 'silver', src: '/phones/home.jpg' },
-  { label: 'Your films', turn: 16, lift: 70, spread: 2, finish: 'blue', src: '/phones/films.jpg' },
+  { label: 'A film', turn: 8, lift: 26, spread: 1, finish: 'silver', src: '/phones/title.jpg' },
+  { label: 'Your books', turn: 16, lift: 70, spread: 2, finish: 'blue', src: '/phones/books.jpg' },
 ] as const;
 
 /**

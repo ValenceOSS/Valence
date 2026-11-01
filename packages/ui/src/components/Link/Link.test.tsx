@@ -14,6 +14,19 @@ describe('Link', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('saves a file on this site under the name it is given, rather than opening it', () => {
+    render(
+      <Link href="/brand/valence-brand-kit.zip" downloadAs="Valence Brand Kit.zip">
+        Download the brand kit
+      </Link>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Download the brand kit' });
+
+    expect(link).toHaveAttribute('download', 'Valence Brand Kit.zip');
+    expect(link).not.toHaveAttribute('target');
+  });
+
   it('opens an address on this site where it is', () => {
     render(<Link href="/admin/requests">Requests</Link>);
 

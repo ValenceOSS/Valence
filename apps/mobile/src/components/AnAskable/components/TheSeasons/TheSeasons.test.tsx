@@ -34,14 +34,14 @@ describe('TheSeasons', () => {
       around(<TheSeasons {...SHOW} seasons={null} onChange={jest.fn()} />),
     );
 
-    expect(await drawn.findByRole('switch', { name: 'Season 2', checked: true })).toBeTruthy();
+    expect(await drawn.findByRole('button', { name: 'Season 2', selected: true })).toBeTruthy();
   });
 
   it('unticks one out of every season', async () => {
     const onChange = jest.fn();
     const drawn = await render(around(<TheSeasons {...SHOW} seasons={null} onChange={onChange} />));
 
-    await fireEvent(await drawn.findByRole('switch', { name: 'Season 2' }), 'valueChange', false);
+    await fireEvent.press(await drawn.findByRole('button', { name: 'Season 2' }));
 
     expect(onChange).toHaveBeenCalledWith([]);
   });
@@ -51,10 +51,10 @@ describe('TheSeasons', () => {
       around(<TheSeasons {...SHOW} seasons={null} onChange={jest.fn()} />),
     );
 
-    const held = await drawn.findByRole('switch', { name: 'Season 1' });
+    const held = await drawn.findByRole('button', { name: 'Season 1' });
 
     expect(held).toBeDisabled();
-    expect(held).not.toBeChecked();
+    expect(held).not.toBeSelected();
   });
 
   it('gets new seasons as they come as a choice of its own', async () => {
@@ -65,10 +65,8 @@ describe('TheSeasons', () => {
       ),
     );
 
-    await fireEvent(
-      await drawn.findByRole('switch', { name: 'Get new seasons as they come' }),
-      'valueChange',
-      false,
+    await fireEvent.press(
+      await drawn.findByRole('button', { name: 'Get new seasons as they come' }),
     );
 
     expect(onFollowsNew).toHaveBeenCalledWith(false);
@@ -88,22 +86,18 @@ describe('TheSeasons', () => {
       ),
     );
 
-    const asked = await drawn.findByRole('switch', { name: 'Season 2' });
+    const asked = await drawn.findByRole('button', { name: 'Season 2' });
 
-    expect(asked).toBeChecked();
+    expect(asked).toBeSelected();
     expect(asked).toBeDisabled();
-    expect(drawn.getByRole('switch', { name: 'Get new seasons as they come' })).toBeDisabled();
+    expect(drawn.getByRole('button', { name: 'Get new seasons as they come' })).toBeDisabled();
   });
 
-  it('takes none where every season is turned off', async () => {
+  it('takes none where every season is unticked', async () => {
     const onChange = jest.fn();
     const drawn = await render(around(<TheSeasons {...SHOW} seasons={null} onChange={onChange} />));
 
-    await fireEvent(
-      await drawn.findByRole('switch', { name: 'Every season' }),
-      'valueChange',
-      false,
-    );
+    await fireEvent.press(await drawn.findByRole('button', { name: 'Every season' }));
 
     expect(onChange).toHaveBeenCalledWith([]);
   });

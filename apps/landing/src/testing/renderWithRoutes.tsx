@@ -28,15 +28,8 @@ const renderWithRoutes = async (
   const home = createRoute({ getParentRoute: () => root, path: '/' });
   const changelog = createRoute({ getParentRoute: () => root, path: '/changelog' });
   const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug' });
-  const about = createRoute({ getParentRoute: () => root, path: '/about' });
-  const architecture = createRoute({ getParentRoute: () => root, path: '/architecture' });
-  const compare = createRoute({ getParentRoute: () => root, path: '/compare' });
   const features = createRoute({ getParentRoute: () => root, path: '/features' });
-  const developers = createRoute({ getParentRoute: () => root, path: '/developers' });
-  const requirements = createRoute({ getParentRoute: () => root, path: '/requirements' });
-  const transcoding = createRoute({ getParentRoute: () => root, path: '/transcoding' });
-  const tour = createRoute({ getParentRoute: () => root, path: '/tour' });
-  const principles = createRoute({ getParentRoute: () => root, path: '/principles' });
+  const brand = createRoute({ getParentRoute: () => root, path: '/brand' });
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
@@ -48,15 +41,8 @@ const renderWithRoutes = async (
       home,
       changelog,
       release,
-      about,
-      architecture,
-      compare,
       features,
-      developers,
-      requirements,
-      transcoding,
-      tour,
-      principles,
+      brand,
       plugins,
       privacy,
       terms,

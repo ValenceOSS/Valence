@@ -93,6 +93,14 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('POST', '/api/playback/session/abc/cast')).toBe(false);
   });
 
+  it('lets a device being cast to read a song by its ticket, but not ask for one', () => {
+    const ticket = 'a'.repeat(43);
+
+    expect(isPublicRoute('GET', `/api/music/cast/${ticket}`)).toBe(true);
+    expect(isPublicRoute('GET', '/api/music/cast/short')).toBe(false);
+    expect(isPublicRoute('POST', '/api/music/tracks/abc/cast')).toBe(false);
+  });
+
   it('publishes the specification and the reference', () => {
     expect(isPublicRoute('GET', '/api/openapi.json')).toBe(true);
     expect(isPublicRoute('GET', '/api/reference')).toBe(true);

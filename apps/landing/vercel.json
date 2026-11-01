@@ -14,8 +14,48 @@
   ],
   "redirects": [
     {
+      "source": "/tour",
+      "destination": "/features",
+      "permanent": true
+    },
+    {
+      "source": "/compare",
+      "destination": "/features",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/principles",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/roadmap",
-      "destination": "/principles",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/architecture",
+      "destination": "https://docs.getvalence.app/develop/architecture",
+      "permanent": true
+    },
+    {
+      "source": "/developers",
+      "destination": "https://docs.getvalence.app/develop/contributing",
+      "permanent": true
+    },
+    {
+      "source": "/requirements",
+      "destination": "https://docs.getvalence.app/start/system-requirements",
+      "permanent": true
+    },
+    {
+      "source": "/transcoding",
+      "destination": "https://docs.getvalence.app/install/hardware-transcoding",
       "permanent": true
     }
   ],

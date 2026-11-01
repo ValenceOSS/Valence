@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -301,6 +302,36 @@ describe('the music routes', () => {
       { kind: 'original' },
       null,
     );
+  });
+
+  it('hand a device being cast to an address for one track that needs nobody signed in', async () => {
+    const me = await listening(context);
+
+    const asked = await me.ask(`/api/music/tracks/${TRACK_ID}/cast?quality=normal`, {
+      method: 'POST',
+    });
+    const { address } = z.object({ address: z.string() }).parse(await asked.json());
+    const read = await context.app.request(`${BASE}${address}`, {
+      headers: { range: 'bytes=0-99' },
+    });
+    const forged = await context.app.request(`${BASE}/api/music/cast/${'a'.repeat(43)}`);
+
+    expect(read.status).toBe(206);
+    expect(context.music.stream).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/music/caramel.flac' }),
+      { kind: 'encoded', kbps: 160 },
+      'bytes=0-99',
+    );
+    expect(forged.status).toBe(404);
+  });
+
+  it('refuse a cast address to somebody not signed in', async () => {
+    const response = await context.app.request(`${BASE}/api/music/tracks/${TRACK_ID}/cast`, {
+      method: 'POST',
+      headers: { origin: BASE },
+    });
+
+    expect(response.status).toBe(401);
   });
 
   it('read a track’s lyrics', async () => {

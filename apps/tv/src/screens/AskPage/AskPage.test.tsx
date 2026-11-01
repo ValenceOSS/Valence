@@ -64,7 +64,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   logoUrl: null,
   genres: ['Science Fiction', 'Adventure'],
   runtimeMinutes: 155,
-  cast: [{ name: 'Timothée Chalamet', role: 'Paul', photoUrl: null }],
+  cast: [{ personId: 1190668, name: 'Timothée Chalamet', role: 'Paul', photoUrl: null }],
   albums: [],
   authors: [],
   trailerKey: null,

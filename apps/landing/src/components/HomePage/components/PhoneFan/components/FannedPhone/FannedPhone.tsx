@@ -31,7 +31,7 @@ const FannedPhone = ({ phone, opened }: FannedPhoneProps) => {
       {phone.src === undefined ? null : (
         <img
           src={phone.src}
-          srcSet={webpSourcesOf(phone.src, [276])}
+          srcSet={webpSourcesOf(phone.src, [276, 552, 1206])}
           sizes="18rem"
           loading="lazy"
           alt=""

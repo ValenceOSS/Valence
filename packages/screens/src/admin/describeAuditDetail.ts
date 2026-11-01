@@ -19,6 +19,7 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   showsProfilesBeforeSignIn: say('screens.adminArea.settingsPanel.showWhoLivesHere'),
   allowedApps: say('screens.adminArea.settingsPanel.appsThatCanSignIn'),
   fetchesCatalogueTrailers: say('screens.adminArea.settingsPanel.fetchTrailersFromTheCatalogue'),
+  playsCatalogueTrailers: say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest'),
   usesShortSegments: say('screens.adminArea.settingsPanel.shortSegments'),
   playsEpisodesGapless: say('screens.adminArea.settingsPanel.gaplessEpisodes'),
   fetchesMusicDetails: say('screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb'),

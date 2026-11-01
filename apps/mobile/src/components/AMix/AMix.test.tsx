@@ -33,7 +33,7 @@ describe('AMix', () => {
     );
 
     expect(await drawn.findByText('2020s Mix')).toBeTruthy();
-    expect(drawn.getByText('Made by Valence')).toBeTruthy();
+    expect(drawn.getByText(/^Made by Valence · /u)).toBeTruthy();
     expect(drawn.getByText('Track 1')).toBeTruthy();
     expect(drawn.getByText('Track 2')).toBeTruthy();
   });

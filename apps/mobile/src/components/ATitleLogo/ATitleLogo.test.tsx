@@ -18,12 +18,41 @@ describe('ATitleLogo', () => {
     });
   });
 
+  it('draws lettering from where it is given, for something the library does not hold', async () => {
+    const drawn = await render(
+      <ATitleLogo
+        mediaId={null}
+        uri="http://one.local:8420/api/requests/picture/logo.png"
+        title="Arrival"
+        high={60}
+        widest={300}
+      />,
+    );
+
+    expect(drawn.getByLabelText('Arrival').props.source).toEqual({
+      uri: 'http://one.local:8420/api/requests/picture/logo.png',
+    });
+  });
+
   it('writes the title out where there is no logo', async () => {
     const drawn = await render(
       <ATitleLogo mediaId={null} title="Arrival" high={60} widest={300} />,
     );
 
     expect(drawn.getByText('Arrival')).toBeTruthy();
+  });
+
+  it('tries the lettering of the next title, after one that would not load', async () => {
+    const drawn = await render(
+      <ATitleLogo mediaId="arrival" title="Arrival" high={60} widest={300} />,
+    );
+
+    await fireEvent(drawn.getByLabelText('Arrival'), 'error');
+    await drawn.rerender(<ATitleLogo mediaId="dune" title="Dune" high={60} widest={300} />);
+
+    expect(drawn.getByLabelText('Dune').props.source).toEqual({
+      uri: 'http://one.local:8420/api/media/dune/image/logo',
+    });
   });
 
   it('writes the title out where the logo will not load', async () => {

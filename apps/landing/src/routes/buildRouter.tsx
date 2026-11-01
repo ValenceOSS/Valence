@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import type { RouterHistory } from '@tanstack/react-router';
 import { LandingShell } from '@ValenceLanding/components/LandingShell/LandingShell';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
@@ -27,34 +27,11 @@ const buildRouter = (history?: RouterHistory) => {
 
   const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug', loader });
 
-  const about = createRoute({ getParentRoute: () => root, path: '/about', loader });
-
-  const architecture = createRoute({ getParentRoute: () => root, path: '/architecture', loader });
-
-  const compare = createRoute({ getParentRoute: () => root, path: '/compare', loader });
-
   const features = createRoute({ getParentRoute: () => root, path: '/features', loader });
 
   const downloads = createRoute({ getParentRoute: () => root, path: '/downloads', loader });
 
-  const developers = createRoute({ getParentRoute: () => root, path: '/developers', loader });
-
-  const requirements = createRoute({ getParentRoute: () => root, path: '/requirements', loader });
-
-  const transcoding = createRoute({ getParentRoute: () => root, path: '/transcoding', loader });
-
-  const tour = createRoute({ getParentRoute: () => root, path: '/tour', loader });
-
-  const principles = createRoute({ getParentRoute: () => root, path: '/principles', loader });
-
-  const roadmap = createRoute({
-    getParentRoute: () => root,
-    path: '/roadmap',
-    beforeLoad: () => {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router moves on by throwing its redirect.
-      throw redirect({ to: '/principles', replace: true });
-    },
-  });
+  const brand = createRoute({ getParentRoute: () => root, path: '/brand', loader });
 
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins', loader });
 
@@ -71,17 +48,9 @@ const buildRouter = (history?: RouterHistory) => {
       home,
       changelog,
       release,
-      about,
-      architecture,
-      compare,
       features,
       downloads,
-      developers,
-      requirements,
-      transcoding,
-      tour,
-      principles,
-      roadmap,
+      brand,
       plugins,
       privacy,
       terms,

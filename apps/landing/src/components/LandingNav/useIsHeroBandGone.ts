@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMotionValueEvent, useScroll } from 'motion/react';
-import { VALENCE_BAND_ID } from '@ValenceLanding/components/HomePage/components/Hero/components/ValenceBand/VALENCE_BAND_ID';
+import { VALENCE_BAND_ID } from '@ValenceLanding/components/HomePage/components/ValenceBand/VALENCE_BAND_ID';
 
 /**
  * Follows whether the hero's band has scrolled up out of sight, so the bar can carry it instead.

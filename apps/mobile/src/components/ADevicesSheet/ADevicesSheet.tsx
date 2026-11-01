@@ -1,12 +1,14 @@
 import {
   Airplay,
   Bluetooth,
+  Cast,
   ChevronRight,
   Laptop,
   Smartphone,
   Tv,
 } from '@keyline-icons/react-native';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
+import { CastState, useCastState } from 'react-native-google-cast';
 import { useQuery } from '@tanstack/react-query';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -18,6 +20,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
+import { theCastableMusic } from '@ValenceMobile/music/theCastableMusic';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
@@ -40,6 +43,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   said: { flex: 1, gap: 2 },
+  half: { flex: 1 },
+  tiles: { flexDirection: 'row', gap: 12 },
   tile: {
     alignItems: 'center',
     borderRadius: 18,
@@ -66,11 +71,13 @@ const glyphOf = (kind: ClientKind | null): AGlyph =>
  * sheet is: wherever it is playing now at the top, large, with what it is playing; every other
  * Valence this profile has open beneath it — a browser, the desktop app, a television, another
  * phone — each with what it is playing; and at the foot, the system's own way to a speaker, which
- * is AirPlay on an iPhone and Bluetooth on Android.
+ * is AirPlay on an iPhone and Bluetooth on Android, beside a Chromecast's where there is one on the
+ * network to cast to.
  *
  * Picking another device hands the music over, carrying on from the same moment in the same song
  * with the rest of the queue, and this phone becomes its remote; picking this phone brings the
- * music back here from where it had got to.
+ * music back here from where it had got to. Picking a Chromecast sends the music to it from the
+ * same moment, and picking this phone again ends the cast and brings it back here, paused.
  *
  * @param isOpen - Whether it is out.
  * @param onClose - Told to put it away.
@@ -81,6 +88,11 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
   const { player, state } = useTheMusic();
   const shown = useWhatIsPlaying(state);
   const devices = useQuery({ ...musicQueries.devices(), enabled: isOpen });
+  const castable = theCastableMusic();
+  const castingTo = useSyncExternalStore(castable.subscribe, castable.castingTo);
+  const castState = useCastState();
+  const isACastAround =
+    castState !== null && castState !== undefined && castState !== CastState.NO_DEVICES_AVAILABLE;
   const here = platformInUse().thisClientId();
   const everyOther = (devices.data ?? []).filter((device) => device.clientId !== here);
   const playingOn = state.remote?.clientId ?? null;
@@ -109,7 +121,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
           <View style={styles.currentSaid}>
             <View style={styles.currentHeading}>
               <Words size="heading" isStrong lines={1}>
-                {remote?.label ?? state.remote?.label ?? thisPhone}
+                {remote?.label ?? state.remote?.label ?? castingTo ?? thisPhone}
               </Words>
               <Icon of={ChevronRight} size={18} colour={colours.textMuted} />
             </View>
@@ -120,18 +132,29 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
             )}
           </View>
           <Icon
-            of={playingOn === null ? Smartphone : glyphOf(remote?.clientKind ?? null)}
+            of={
+              playingOn !== null
+                ? glyphOf(remote?.clientKind ?? null)
+                : castingTo === null
+                  ? Smartphone
+                  : Cast
+            }
             size={40}
             colour={colours.accent}
           />
         </View>
 
-        {playingOn === null ? null : (
+        {playingOn === null && castingTo === null ? null : (
           <Button
             tone="bare"
             label={say('common.playOnLabel', { label: thisPhone })}
             onPress={() => {
-              bringItHere();
+              if (castingTo === null) {
+                bringItHere();
+              } else {
+                castable.stopCasting();
+              }
+
               onClose();
             }}
           >
@@ -174,37 +197,61 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
           <Words tone="muted">{say('phone.aDevicesSheet.noOtherValenceIsOpenOn')}</Words>
         ) : null}
 
-        {Platform.OS === 'ios' ? (
-          <View
-            style={[styles.tile, { backgroundColor: withAlpha(colours.text, 0.08) }]}
-            onLayout={({ nativeEvent }) => {
-              setTileWidth(nativeEvent.layout.width);
-            }}
-          >
-            <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.tileWords]}>
-              <Icon of={Airplay} size={22} colour={colours.text} />
-              <Words size="small">{say('phone.aDevicesSheet.airPlayAndBluetooth')}</Words>
+        <View style={styles.tiles}>
+          {Platform.OS === 'ios' ? (
+            <View
+              style={[styles.tile, styles.half, { backgroundColor: withAlpha(colours.text, 0.08) }]}
+              onLayout={({ nativeEvent }) => {
+                setTileWidth(nativeEvent.layout.width);
+              }}
+            >
+              <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.tileWords]}>
+                <Icon of={Airplay} size={22} colour={colours.text} />
+                <Words size="small">{say('phone.aDevicesSheet.airPlayAndBluetooth')}</Words>
+              </View>
+              <View style={[StyleSheet.absoluteFill, { opacity: 0.02 }]}>
+                {tileWidth > 0 ? (
+                  <AirPlayButton fills={{ height: TILE_HIGH, width: tileWidth }} />
+                ) : null}
+              </View>
             </View>
-            <View style={[StyleSheet.absoluteFill, { opacity: 0.02 }]}>
-              {tileWidth > 0 ? (
-                <AirPlayButton fills={{ height: TILE_HIGH, width: tileWidth }} />
-              ) : null}
+          ) : (
+            <View style={styles.half}>
+              <Button
+                tone="bare"
+                label={say('phone.aDevicesSheet.bluetooth')}
+                onPress={() => {
+                  void Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS').catch(
+                    () => undefined,
+                  );
+                }}
+              >
+                <View style={[styles.tile, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
+                  <Icon of={Bluetooth} size={22} colour={colours.text} />
+                  <Words size="small">{say('phone.aDevicesSheet.bluetooth')}</Words>
+                </View>
+              </Button>
             </View>
-          </View>
-        ) : (
-          <Button
-            tone="bare"
-            label={say('phone.aDevicesSheet.bluetooth')}
-            onPress={() => {
-              void Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS').catch(() => undefined);
-            }}
-          >
-            <View style={[styles.tile, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
-              <Icon of={Bluetooth} size={22} colour={colours.text} />
-              <Words size="small">{say('phone.aDevicesSheet.bluetooth')}</Words>
+          )}
+
+          {isACastAround && castingTo === null ? (
+            <View style={styles.half}>
+              <Button
+                tone="bare"
+                label={say('phone.aDevicesSheet.chromecast')}
+                onPress={() => {
+                  castable.castTheMusic();
+                  onClose();
+                }}
+              >
+                <View style={[styles.tile, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
+                  <Icon of={Cast} size={22} colour={colours.text} />
+                  <Words size="small">{say('phone.aDevicesSheet.chromecast')}</Words>
+                </View>
+              </Button>
             </View>
-          </Button>
-        )}
+          ) : null}
+        </View>
       </View>
     </ABottomSheet>
   );

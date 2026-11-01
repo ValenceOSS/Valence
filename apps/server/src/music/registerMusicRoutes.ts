@@ -5,6 +5,7 @@ import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import {
   addPlaylistEntriesRoute,
+  castTrackRoute,
   commandDeviceRoute,
   createPlaylistRoute,
   dropPlaylistEntryRoute,
@@ -29,6 +30,7 @@ import {
   removePlaylistRoute,
   reportNowPlayingRoute,
   searchMusicRoute,
+  streamCastTrackRoute,
   streamTrackRoute,
   unfollowArtistRoute,
   updatePlaylistRoute,
@@ -39,6 +41,8 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
 import { refuse } from '@ValenceI18n/refuse';
+import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
+import type { AudioQuality } from '@ValenceContracts/schemas/Music';
 
 type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
@@ -500,27 +504,37 @@ const registerMusicRoutes = (
       : context.json(lyrics, 200);
   });
 
-  app.openapi(streamTrackRoute, async (context) => {
-    const viewer = await viewerOf(context.req.raw.headers);
+  const castTickets = createDirectTickets<{
+    viewer: Viewer;
+    trackId: string;
+    quality: AudioQuality;
+  }>();
 
-    if (viewer === null) {
-      return context.json(NOBODY, 401);
-    }
-
-    const file = await music.library.readTrackFile(viewer, context.req.valid('param').trackId);
+  /**
+   * Streams a track as a viewer may hear it, at a quality, answering a range where one was asked.
+   *
+   * @param viewer - Who is listening.
+   * @param trackId - The track.
+   * @param quality - How much of it to send.
+   * @param range - The range asked for, or nothing for the whole file.
+   * @returns The track, or a refusal where there is no such track or it could not be read.
+   */
+  const streamTrack = async (
+    viewer: Viewer,
+    trackId: string,
+    quality: AudioQuality,
+    range: string | null,
+  ): Promise<Response> => {
+    const file = await music.library.readTrackFile(viewer, trackId);
 
     if (file === null) {
-      return context.json(refuse('error.common.noSuchTrack'), 404);
+      return Response.json(refuse('error.common.noSuchTrack'), { status: 404 });
     }
 
-    const streamed = await music.stream(
-      file,
-      renditionFor(file, context.req.valid('query').quality),
-      context.req.header('range') ?? null,
-    );
+    const streamed = await music.stream(file, renditionFor(file, quality), range);
 
     if (streamed === null) {
-      return context.json(refuse('error.common.thatTrackCouldNotBeRead'), 404);
+      return Response.json(refuse('error.common.thatTrackCouldNotBeRead'), { status: 404 });
     }
 
     const headers: Record<string, string> = {
@@ -537,7 +551,62 @@ const registerMusicRoutes = (
       headers['content-length'] = streamed.contentLength;
     }
 
-    return context.body(streamed.body, streamed.status === 206 ? 206 : 200, headers);
+    return new Response(streamed.body, {
+      status: streamed.status === 206 ? 206 : 200,
+      headers,
+    });
+  };
+
+  app.openapi(streamTrackRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    return streamTrack(
+      viewer,
+      context.req.valid('param').trackId,
+      context.req.valid('query').quality,
+      context.req.header('range') ?? null,
+    );
+  });
+
+  app.openapi(castTrackRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const { trackId } = context.req.valid('param');
+
+    if ((await music.library.readTrackFile(viewer, trackId)) === null) {
+      return context.json(refuse('error.common.noSuchTrack'), 404);
+    }
+
+    const ticket = castTickets.issue({
+      viewer,
+      trackId,
+      quality: context.req.valid('query').quality,
+    });
+
+    return context.json({ address: `/api/music/cast/${ticket}` }, 200);
+  });
+
+  app.openapi(streamCastTrackRoute, async (context) => {
+    const ticketed = castTickets.read(context.req.valid('param').ticket);
+
+    if (ticketed === null) {
+      return context.json(refuse('error.common.noSuchTrack'), 404);
+    }
+
+    return streamTrack(
+      ticketed.viewer,
+      ticketed.trackId,
+      ticketed.quality,
+      context.req.header('range') ?? null,
+    );
   });
 
   app.openapi(listDevicesRoute, async (context) => {

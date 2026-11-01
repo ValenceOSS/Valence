@@ -98,7 +98,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   logoUrl: null,
   genres: ['Science Fiction'],
   runtimeMinutes: 155,
-  cast: [{ name: 'Zendaya', role: 'Chani', photoUrl: null }],
+  cast: [{ personId: 505710, name: 'Zendaya', role: 'Chani', photoUrl: null }],
   albums: [],
   authors: [],
   tracks: [],
