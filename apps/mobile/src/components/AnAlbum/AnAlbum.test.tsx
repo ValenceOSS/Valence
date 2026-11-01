@@ -29,7 +29,7 @@ describe('AnAlbum', () => {
     expect(drawn.getByText('Track 2')).toBeTruthy();
     expect(drawn.getByRole('button', { name: 'Download' })).toBeTruthy();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Sleep Token' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Artist' }));
 
     expect(onArtist).toHaveBeenCalledWith(anAlbum().artist.id);
   });

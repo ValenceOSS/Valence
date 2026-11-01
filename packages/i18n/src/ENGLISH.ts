@@ -2499,6 +2499,7 @@ const ENGLISH = {
   'phone.aBook.pagePageOfPageCount': 'Page {page} of {pageCount}',
   'phone.aDevicesSheet.airPlayAndBluetooth': 'AirPlay & Bluetooth',
   'phone.aDevicesSheet.bluetooth': 'Bluetooth',
+  'phone.aDevicesSheet.chromecast': 'Chromecast',
   'phone.aDevicesSheet.noOtherValenceIsOpenOn':
     'Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.',
   'phone.aDevicesSheet.thisIPhone': 'This iPhone',
@@ -2585,6 +2586,8 @@ const ENGLISH = {
   'phone.aTitle.preparingPercentTimeLeft': 'Preparing {percent}%, {timeLeft}',
   'phone.aTitle.resumeFromCarryOnAt': 'Resume from {carryOnAt}',
   'phone.aTitle.version': 'Version',
+  'phone.aTitleHead.findingTheTrailer': 'Finding the trailer',
+  'phone.aTitleHead.noTrailer': 'No trailer',
   'phone.carPlay.shelvesForTheCar.listenNow': 'Listen Now',
   'phone.carPlay.useCarPlay.openValenceOnYourIPhoneAnd':
     'Open Valence on your iPhone and sign in to play your music here.',
@@ -2703,6 +2706,8 @@ const ENGLISH = {
   'phone.theListeningPlayer.speedSpeed': 'Speed, {speed}×',
   'phone.theListeningPlayer.stopsAtTheEndOfThis': 'Stops at the end of this chapter',
   'phone.theLyrics.theSungLines.playFromText': 'Play from “{text}”',
+  'phone.theMusicPlayer.airPlay': 'AirPlay',
+  'phone.theMusicPlayer.party': 'Party',
   'phone.theMusicPlayer.showTheCover': 'Show the cover',
   'phone.theMusicPlayer.soundsWhatItIs': '{sounds}, what it is',
   'phone.theMusicPlayer.theLyrics.thereAreNoWordsForThis': 'No lyrics for this song.',
@@ -2720,6 +2725,8 @@ const ENGLISH = {
   'phone.theSearch.everythingInEveryLibrary': 'Search all libraries.',
   'phone.theSearch.theResults.nothingCalledAskedInTheLibrary':
     'No results for “{asked}” in the library.',
+  'phone.theSeasons.fetchedAsEachOneAirs': 'Fetched as each one airs',
+  'phone.theSeasons.newSeasons': 'New seasons',
   'phone.theServerIsAway.tryingAgainEveryFewSeconds': 'Trying again every few seconds.',
   'phone.theServerIsAway.tryNow': 'Try now',
   'phone.theStars.personalRating': 'Personal rating',
@@ -5504,6 +5511,10 @@ const ENGLISH = {
     'Origins allowed to sign in: {value}.',
   'screens.adminArea.settingsPanel.pasteAKey': 'Paste a key',
   'screens.adminArea.settingsPanel.pictureBehindTheWayIn': 'Sign-in background',
+  'screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop':
+    'Plays a film’s or programme’s trailer silently behind the top of its page in the phone app, so it starts as soon as the page opens. The server looks each trailer up on YouTube with yt-dlp and streams it through itself, which YouTube’s terms don’t allow, and YouTube may refuse a server it sees doing it. Needs Show trailers from the catalogue to be on.',
+  'screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest':
+    'Play trailers behind titles to request',
   'screens.adminArea.settingsPanel.preparedDownloads': 'Prepared downloads',
   'screens.adminArea.settingsPanel.previewQuality': 'Preview quality',
   'screens.adminArea.settingsPanel.previewQualityCouldNotBeSaved': 'Couldn’t save preview quality.',
@@ -5554,11 +5565,14 @@ const ENGLISH = {
     'Couldn’t remove the splashscreen.',
   'screens.adminArea.settingsPanel.theTelevisionApp': 'Television app',
   'screens.adminArea.settingsPanel.theTheAudioDBKeyCouldNotBe': 'Couldn’t save the TheAudioDB key.',
+  'screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe':
+    'Couldn’t save the trailer playing setting.',
   'screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe':
     'Couldn’t save the trailer setting.',
   'screens.adminArea.settingsPanel.theWeb': 'Web',
   'screens.adminArea.settingsPanel.theWebIsAlwaysOn':
     "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
+  'screens.adminArea.settingsPanel.trailerPlayingSettingSaved': 'Trailer playing setting saved.',
   'screens.adminArea.settingsPanel.trailerSettingSaved': 'Trailer setting saved.',
   'screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine':
     'Valence uses whichever backend passes its hardware check. Choose one to force it, even if its encoder failed the check — useful when the check is wrong and the GPU clearly works.',
@@ -9115,17 +9129,14 @@ const ENGLISH = {
   'ui.siteFooter.viewTheSourceOnGitHub': 'View the source on GitHub',
   'ui.siteFooter.whatValenceIs':
     'A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.',
-  'ui.siteNav.aboutValence': 'About Valence',
-  'ui.siteNav.aboutValenceDetail': 'Why it exists, what it owns, and what stays on your server.',
   'ui.siteNav.apiReference': 'API reference',
   'ui.siteNav.apiReferenceDetail': 'The OpenAPI-backed server reference.',
+  'ui.siteNav.brand': 'Branding',
+  'ui.siteNav.brandDetail':
+    'The logo, the fonts and the colours, how to use them, and wallpapers to download.',
   'ui.siteNav.changelogDetail': 'What changed in each release.',
   'ui.siteNav.communityBlurb':
     'Where the project lives, who it is for, and what it promises the people running it.',
-  'ui.siteNav.compare': 'Compare',
-  'ui.siteNav.compareDetail': 'How Valence differs from a pile of separate media tools.',
-  'ui.siteNav.developers': 'Developers',
-  'ui.siteNav.developersDetail': 'API contracts, plugin SDK, webhooks and component system.',
   'ui.siteNav.discordDetail': 'Ask questions and talk through a setup.',
   'ui.siteNav.dockerCompose': 'Docker compose',
   'ui.siteNav.dockerComposeDetail': 'The complete compose file and the settings it expects.',
@@ -9137,38 +9148,24 @@ const ENGLISH = {
   'ui.siteNav.features': 'Features',
   'ui.siteNav.featuresDetail': 'Everything Valence does, and what is on from the start.',
   'ui.siteNav.gitHubDetail': 'Read the source, open an issue, or follow development.',
-  'ui.siteNav.howItRuns': 'How it runs',
-  'ui.siteNav.howItRunsDetail': 'Server, clients, transcoder, plugins, auth and trust boundaries.',
-  'ui.siteNav.installAndOperate': 'Install and operate',
   'ui.siteNav.mobileNavigation': 'Mobile navigation',
   'ui.siteNav.navigation': 'Navigation',
   'ui.siteNav.peopleAndProject': 'People and project',
   'ui.siteNav.pluginsDetail': 'Signed server-side extensions that ask before they reach anything.',
-  'ui.siteNav.principles': 'Principles',
-  'ui.siteNav.principlesDetail': 'What the project holds to, and what it refuses.',
   'ui.siteNav.privacyDetail':
     'What this site sees, and what the self-hosted app keeps away from us.',
   'ui.siteNav.product': 'Product',
   'ui.siteNav.productBlurb':
     'One server for films, shows, music and books, with requests built in rather than bolted on.',
-  'ui.siteNav.productTour': 'Product tour',
-  'ui.siteNav.productTourDetail':
-    'Watching, listening, reading, requests, household and admin surfaces.',
-  'ui.siteNav.requirements': 'Requirements',
-  'ui.siteNav.requirementsDetail': 'What kind of machine, storage and GPU support make sense.',
   'ui.siteNav.resources': 'Resources',
   'ui.siteNav.resourcesBlurb':
     'Guides for setting it up, and the contracts for building on top of it.',
-  'ui.siteNav.runIt': 'Run it',
-  'ui.siteNav.runItBlurb':
-    'What to run it on, how to install it, and what happens when a file will not play as it is.',
   'ui.siteNav.setUpWithAiDetail': 'A guided prompt for configuring Valence on your machine.',
   'ui.siteNav.statisticsDetail':
     'Anonymous totals from the Valence servers that report once a day.',
   'ui.siteNav.switchToDarkMode': 'Switch to dark mode',
   'ui.siteNav.switchToLightMode': 'Switch to light mode',
   'ui.siteNav.termsDetail': 'The short version of using the site and the MIT-licensed software.',
-  'ui.siteNav.transcodingDetail': 'Direct play, remuxing, HDR, keyframes and fast startup.',
   'ui.siteNav.valenceUi': 'ValenceUI',
   'ui.siteNav.valenceUiDetail':
     'The component system the web and desktop apps and this site draw from.',

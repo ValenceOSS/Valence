@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
+import { AMusicScreen } from '@ValenceMobile/components/AMusicScreen/AMusicScreen';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
@@ -10,10 +11,6 @@ import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer'
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
-import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
-import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
-import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -36,9 +33,6 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   const player = thePhonesMusicPlayer();
   const tracks = read.data ?? [];
   const covers = coverAlbumsOf(tracks);
-  const lights = usePictureLights(
-    covers[0] === undefined ? null : onThisServer(albumArtworkUrl(covers[0])),
-  );
 
   if (read.isPending) {
     return (
@@ -49,14 +43,16 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   }
 
   return (
-    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
+    <AMusicScreen
+      title={say('common.likedSongs')}
+      artwork={null}
+      albumIds={covers}
+      standIn={Heart}
+      onBack={onBack}
+    >
       <AMusicHead
         kind={say('common.playlist')}
-        title={say('common.likedSongs')}
         detail={sayCount('common.count.songs', tracks.length)}
-        artwork={null}
-        albumIds={covers}
-        standIn={Heart}
         canPlay={tracks.length > 0}
         onPlay={() => {
           player.play(tracks, 0, { source: SOURCE });
@@ -70,6 +66,7 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
       >
         {tracks.length === 0 ? null : (
           <ADownloadToListen
+            isRound
             kind="liked"
             id="liked"
             title={say('common.likedSongs')}
@@ -94,7 +91,7 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
           {...(onPlaylist === undefined ? {} : { onPlaylist })}
         />
       )}
-    </Screen>
+    </AMusicScreen>
   );
 };
 

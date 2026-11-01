@@ -40,6 +40,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     previewQuality: 'high',
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     fetchesMusicDetails: false,

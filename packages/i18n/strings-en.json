@@ -10505,6 +10505,11 @@
     "context": "A tile at the foot of the sheet that picks where music plays, on Android; pressing it opens the phone Bluetooth settings."
   },
   {
+    "handler": "phone.aDevicesSheet.chromecast",
+    "text": "Chromecast",
+    "context": "A tile at the foot of the sheet that picks where music plays, beside AirPlay or Bluetooth; pressing it opens the list of Chromecasts and Google TVs on the network and sends the music to the one chosen. Also names a Chromecast that has not said its own name. A product name, usually left as it is."
+  },
+  {
     "handler": "phone.aDevicesSheet.noOtherValenceIsOpenOn",
     "text": "Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.",
     "context": "Text shown in the devices sheet of the phone app."
@@ -10873,6 +10878,16 @@
     "handler": "phone.aTitle.version",
     "text": "Version",
     "context": "Shown on the title card of the phone app, beside which copy of a film will play."
+  },
+  {
+    "handler": "phone.aTitleHead.findingTheTrailer",
+    "text": "Finding the trailer",
+    "context": "Read out for the spinner at the top of a title's page while its trailer is being found."
+  },
+  {
+    "handler": "phone.aTitleHead.noTrailer",
+    "text": "No trailer",
+    "context": "Read out for the mark at the top of a title's page when it has no trailer that can be played."
   },
   {
     "handler": "phone.carPlay.shelvesForTheCar.listenNow",
@@ -11325,6 +11340,16 @@
     "context": "The label of a button in the sung lines in the lyrics of the phone app. {text} is filled in by the app."
   },
   {
+    "handler": "phone.theMusicPlayer.airPlay",
+    "text": "AirPlay",
+    "context": "Under the AirPlay button in the phone's music player. AirPlay is Apple's name and is not translated."
+  },
+  {
+    "handler": "phone.theMusicPlayer.party",
+    "text": "Party",
+    "context": "Under the button in the phone's music player that starts or opens a listening party, where everybody in it hears the same music at the same moment."
+  },
+  {
     "handler": "phone.theMusicPlayer.showTheCover",
     "text": "Show the cover",
     "context": "The label of a button in the music player of the phone app."
@@ -11398,6 +11423,16 @@
     "handler": "phone.theSearch.theResults.nothingCalledAskedInTheLibrary",
     "text": "No results for “{asked}” in the library.",
     "context": "Text shown in the results in the search of the phone app. {asked} is filled in by the app."
+  },
+  {
+    "handler": "phone.theSeasons.fetchedAsEachOneAirs",
+    "text": "Fetched as each one airs",
+    "context": "Shown under New seasons in a programme's seasons to request."
+  },
+  {
+    "handler": "phone.theSeasons.newSeasons",
+    "text": "New seasons",
+    "context": "The name of the last row of a programme's seasons to request, ticked to fetch each new season as it airs."
   },
   {
     "handler": "phone.theServerIsAway.tryingAgainEveryFewSeconds",
@@ -21760,6 +21795,16 @@
     "context": "The title of a setting row in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop",
+    "text": "Plays a film’s or programme’s trailer silently behind the top of its page in the phone app, so it starts as soon as the page opens. The server looks each trailer up on YouTube with yt-dlp and streams it through itself, which YouTube’s terms don’t allow, and YouTube may refuse a server it sees doing it. Needs Show trailers from the catalogue to be on.",
+    "context": "The description of a setting row in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest",
+    "text": "Play trailers behind titles to request",
+    "context": "The label of a switch in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.preparedDownloads",
     "text": "Prepared downloads",
     "context": "The label of a option menu in the settings panel in the admin area."
@@ -21965,6 +22010,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe",
+    "text": "Couldn’t save the trailer playing setting.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe",
     "text": "Couldn’t save the trailer setting.",
     "context": "Shown in the settings panel in the admin area."
@@ -21978,6 +22028,11 @@
     "handler": "screens.adminArea.settingsPanel.theWebIsAlwaysOn",
     "text": "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
     "context": "Beneath the setting for which apps may sign in, in the admin settings."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.trailerPlayingSettingSaved",
+    "text": "Trailer playing setting saved.",
+    "context": "Shown in the settings panel in the admin area."
   },
   {
     "handler": "screens.adminArea.settingsPanel.trailerSettingSaved",
@@ -35932,16 +35987,6 @@
     "context": "The short description of Valence under its name in the website footer."
   },
   {
-    "handler": "ui.siteNav.aboutValence",
-    "text": "About Valence",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on why Valence exists."
-  },
-  {
-    "handler": "ui.siteNav.aboutValenceDetail",
-    "text": "Why it exists, what it owns, and what stays on your server.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"About Valence\"."
-  },
-  {
     "handler": "ui.siteNav.apiReference",
     "text": "API reference",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the reference for the server's API."
@@ -35952,6 +35997,16 @@
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"API reference\"."
   },
   {
+    "handler": "ui.siteNav.brand",
+    "text": "Branding",
+    "context": "The name of the page about the Valence logo, fonts, colours and wallpapers, in the menu across the top of the Valence websites and in their footer."
+  },
+  {
+    "handler": "ui.siteNav.brandDetail",
+    "text": "The logo, the fonts and the colours, how to use them, and wallpapers to download.",
+    "context": "The line under \"Branding\" in the menu across the top of the Valence websites, saying what the page holds."
+  },
+  {
     "handler": "ui.siteNav.changelogDetail",
     "text": "What changed in each release.",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Changelog\"."
@@ -35960,26 +36015,6 @@
     "handler": "ui.siteNav.communityBlurb",
     "text": "Where the project lives, who it is for, and what it promises the people running it.",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Community section is for."
-  },
-  {
-    "handler": "ui.siteNav.compare",
-    "text": "Compare",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page comparing Valence with other media tools."
-  },
-  {
-    "handler": "ui.siteNav.compareDetail",
-    "text": "How Valence differs from a pile of separate media tools.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Compare\"."
-  },
-  {
-    "handler": "ui.siteNav.developers",
-    "text": "Developers",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page for people building on Valence."
-  },
-  {
-    "handler": "ui.siteNav.developersDetail",
-    "text": "API contracts, plugin SDK, webhooks and component system.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Developers\"."
   },
   {
     "handler": "ui.siteNav.discordDetail",
@@ -36032,21 +36067,6 @@
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"GitHub\"."
   },
   {
-    "handler": "ui.siteNav.howItRuns",
-    "text": "How it runs",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on how Valence is put together."
-  },
-  {
-    "handler": "ui.siteNav.howItRunsDetail",
-    "text": "Server, clients, transcoder, plugins, auth and trust boundaries.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"How it runs\"."
-  },
-  {
-    "handler": "ui.siteNav.installAndOperate",
-    "text": "Install and operate",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Run it section."
-  },
-  {
     "handler": "ui.siteNav.mobileNavigation",
     "text": "Mobile navigation",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): what the menu that folds out on a narrow screen is called, read out by a screen reader."
@@ -36067,16 +36087,6 @@
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Plugins\"."
   },
   {
-    "handler": "ui.siteNav.principles",
-    "text": "Principles",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on what the project holds to."
-  },
-  {
-    "handler": "ui.siteNav.principlesDetail",
-    "text": "What the project holds to, and what it refuses.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Principles\"."
-  },
-  {
     "handler": "ui.siteNav.privacyDetail",
     "text": "What this site sees, and what the self-hosted app keeps away from us.",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Privacy\"."
@@ -36092,26 +36102,6 @@
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Product section is for."
   },
   {
-    "handler": "ui.siteNav.productTour",
-    "text": "Product tour",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page that walks through every part of the app."
-  },
-  {
-    "handler": "ui.siteNav.productTourDetail",
-    "text": "Watching, listening, reading, requests, household and admin surfaces.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Product tour\"."
-  },
-  {
-    "handler": "ui.siteNav.requirements",
-    "text": "Requirements",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on what hardware Valence needs."
-  },
-  {
-    "handler": "ui.siteNav.requirementsDetail",
-    "text": "What kind of machine, storage and GPU support make sense.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Requirements\"."
-  },
-  {
     "handler": "ui.siteNav.resources",
     "text": "Resources",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, holding the documentation and other references."
@@ -36120,16 +36110,6 @@
     "handler": "ui.siteNav.resourcesBlurb",
     "text": "Guides for setting it up, and the contracts for building on top of it.",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Resources section is for."
-  },
-  {
-    "handler": "ui.siteNav.runIt",
-    "text": "Run it",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, about installing and running Valence."
-  },
-  {
-    "handler": "ui.siteNav.runItBlurb",
-    "text": "What to run it on, how to install it, and what happens when a file will not play as it is.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Run it section is for."
   },
   {
     "handler": "ui.siteNav.setUpWithAiDetail",
@@ -36155,11 +36135,6 @@
     "handler": "ui.siteNav.termsDetail",
     "text": "The short version of using the site and the MIT-licensed software.",
     "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Terms\"."
-  },
-  {
-    "handler": "ui.siteNav.transcodingDetail",
-    "text": "Direct play, remuxing, HDR, keyframes and fast startup.",
-    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Transcoding\"."
   },
   {
     "handler": "ui.siteNav.valenceUi",

@@ -19,14 +19,11 @@ describe('LandingNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Product' }));
 
-    expect(await screen.findByRole('link', { name: /Product tour/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Features/ })).toHaveAttribute(
       'href',
-      '/tour',
+      '/features',
     );
-    expect(screen.getByRole('link', { name: /How it runs/ })).toHaveAttribute(
-      'href',
-      '/architecture',
-    );
+    expect(screen.getByRole('link', { name: /Download/ })).toHaveAttribute('href', '/downloads');
   });
 
   it('sends the documentation to the docs site', async () => {

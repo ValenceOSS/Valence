@@ -7,10 +7,10 @@ describe('landingSitemap', () => {
     const sitemap = landingSitemap();
 
     expect(sitemap).toContain('<loc>https://www.getvalence.app/</loc>');
-    expect(sitemap).toContain('<loc>https://www.getvalence.app/principles</loc>');
+    expect(sitemap).toContain('<loc>https://www.getvalence.app/brand</loc>');
     expect(sitemap).toContain(
       `<loc>https://www.getvalence.app/changelog/${CHANGELOG[0]?.slug ?? ''}</loc>`,
     );
-    expect(sitemap).not.toContain('/roadmap');
+    expect(sitemap).not.toContain('/principles');
   });
 });

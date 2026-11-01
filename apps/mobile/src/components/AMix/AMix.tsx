@@ -1,16 +1,13 @@
 import { Sparkles } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 
-import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
+import { AMusicScreen } from '@ValenceMobile/components/AMusicScreen/AMusicScreen';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
-import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
-import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMixProps } from './AMix.types';
 import { say } from '@ValenceI18n/say';
@@ -34,9 +31,6 @@ const AMix = ({ mixId, onAlbum, onArtist, onPlaylist, onBack }: AMixProps) => {
   const mix = read.data;
   const tracks = mix?.tracks ?? [];
   const covers = mix?.coverAlbumIds ?? [];
-  const lights = usePictureLights(
-    covers[0] === undefined ? null : onThisServer(albumArtworkUrl(covers[0])),
-  );
 
   if (read.isPending) {
     return (
@@ -57,14 +51,16 @@ const AMix = ({ mixId, onAlbum, onArtist, onPlaylist, onBack }: AMixProps) => {
   const source = { kind: 'tracks' as const, id: mix.id, name: mix.title };
 
   return (
-    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
+    <AMusicScreen
+      title={mix.title}
+      artwork={null}
+      albumIds={covers}
+      standIn={Sparkles}
+      onBack={onBack}
+    >
       <AMusicHead
         kind={say('common.mixByValence')}
-        title={mix.title}
         detail={`${mix.detail} · ${sayCount('common.count.songs', tracks.length)}`}
-        artwork={null}
-        albumIds={covers}
-        standIn={Sparkles}
         canPlay={tracks.length > 0}
         onPlay={() => {
           player.play(tracks, 0, { source });
@@ -84,7 +80,7 @@ const AMix = ({ mixId, onAlbum, onArtist, onPlaylist, onBack }: AMixProps) => {
         onArtist={onArtist}
         {...(onPlaylist === undefined ? {} : { onPlaylist })}
       />
-    </Screen>
+    </AMusicScreen>
   );
 };
 

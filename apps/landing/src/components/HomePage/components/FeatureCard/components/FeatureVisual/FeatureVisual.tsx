@@ -18,12 +18,6 @@ const HdrVignette = lazyNamed(
   'HdrVignette',
 );
 
-const SkipsVignette = lazyNamed(
-  () =>
-    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SkipsVignette/SkipsVignette'),
-  'SkipsVignette',
-);
-
 const ReaderVignette = lazyNamed(
   () =>
     import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette'),
@@ -34,12 +28,6 @@ const PartyVignette = lazyNamed(
   () =>
     import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/PartyVignette/PartyVignette'),
   'PartyVignette',
-);
-
-const ShareLinkVignette = lazyNamed(
-  () =>
-    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShareLinkVignette/ShareLinkVignette'),
-  'ShareLinkVignette',
 );
 
 const OfflineVignette = lazyNamed(
@@ -111,10 +99,8 @@ const AuthVignette = lazyNamed(
 const VIGNETTES: Record<FeatureVisualKind, Preloadable> = {
   devices: DevicesVignette,
   hdr: HdrVignette,
-  skips: SkipsVignette,
   reader: ReaderVignette,
   party: PartyVignette,
-  shareLink: ShareLinkVignette,
   offline: OfflineVignette,
   notifications: NotificationsVignette,
   sessions: SessionsVignette,

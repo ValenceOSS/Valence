@@ -16,18 +16,6 @@ const ChangelogEntryPage = lazyNamed(
   () => import('@ValenceLanding/components/ChangelogEntryPage/ChangelogEntryPage'),
   'ChangelogEntryPage',
 );
-const AboutPage = lazyNamed(
-  () => import('@ValenceLanding/components/AboutPage/AboutPage'),
-  'AboutPage',
-);
-const ArchitecturePage = lazyNamed(
-  () => import('@ValenceLanding/components/ArchitecturePage/ArchitecturePage'),
-  'ArchitecturePage',
-);
-const ComparePage = lazyNamed(
-  () => import('@ValenceLanding/components/ComparePage/ComparePage'),
-  'ComparePage',
-);
 const FeaturesPage = lazyNamed(
   () => import('@ValenceLanding/components/FeaturesPage/FeaturesPage'),
   'FeaturesPage',
@@ -36,33 +24,17 @@ const DownloadsPage = lazyNamed(
   () => import('@ValenceLanding/components/DownloadsPage/DownloadsPage'),
   'DownloadsPage',
 );
-const DevelopersPage = lazyNamed(
-  () => import('@ValenceLanding/components/DevelopersPage/DevelopersPage'),
-  'DevelopersPage',
-);
-const ProductTourPage = lazyNamed(
-  () => import('@ValenceLanding/components/ProductTourPage/ProductTourPage'),
-  'ProductTourPage',
+const BrandPage = lazyNamed(
+  () => import('@ValenceLanding/components/BrandPage/BrandPage'),
+  'BrandPage',
 );
 const PrivacyPage = lazyNamed(
   () => import('@ValenceLanding/components/PrivacyPage/PrivacyPage'),
   'PrivacyPage',
 );
-const RequirementsPage = lazyNamed(
-  () => import('@ValenceLanding/components/RequirementsPage/RequirementsPage'),
-  'RequirementsPage',
-);
-const PrinciplesPage = lazyNamed(
-  () => import('@ValenceLanding/components/PrinciplesPage/PrinciplesPage'),
-  'PrinciplesPage',
-);
 const TermsPage = lazyNamed(
   () => import('@ValenceLanding/components/TermsPage/TermsPage'),
   'TermsPage',
-);
-const TranscodingPage = lazyNamed(
-  () => import('@ValenceLanding/components/TranscodingPage/TranscodingPage'),
-  'TranscodingPage',
 );
 const UiLibraryPage = lazyNamed(
   () => import('@ValenceLanding/components/UiLibraryPage/UiLibraryPage'),
@@ -72,17 +44,10 @@ const UiLibraryPage = lazyNamed(
 const PAGES: Record<string, ComponentType | Preloadable> = {
   '/': HomePage,
   '/changelog': ChangelogPage,
-  '/about': AboutPage,
-  '/architecture': ArchitecturePage,
-  '/compare': ComparePage,
   '/features': FeaturesPage,
-  '/developers': DevelopersPage,
   '/downloads': DownloadsPage,
-  '/requirements': RequirementsPage,
-  '/principles': PrinciplesPage,
-  '/tour': ProductTourPage,
-  '/transcoding': TranscodingPage,
   '/plugins': PluginsPage,
+  '/brand': BrandPage,
   '/privacy': PrivacyPage,
   '/terms': TermsPage,
   '/ui': UiLibraryPage,

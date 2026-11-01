@@ -7,7 +7,7 @@ import {
   Image as ImageIcon,
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react/fill';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
 import { SettingList } from '@ValenceUI/SettingList';
@@ -28,6 +28,7 @@ import {
   saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  savePlaysCatalogueTrailers,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
@@ -129,6 +130,23 @@ const SettingsPanel = ({
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
   );
+  const [playsTrailers, setPlaysTrailers] = useState(
+    overview?.settings.playsCatalogueTrailers ?? false,
+  );
+  const fetchesTrailersSaved = overview?.settings.fetchesCatalogueTrailers;
+  const playsTrailersSaved = overview?.settings.playsCatalogueTrailers;
+
+  useEffect(() => {
+    if (fetchesTrailersSaved !== undefined) {
+      setFetchesTrailers(fetchesTrailersSaved);
+    }
+  }, [fetchesTrailersSaved]);
+
+  useEffect(() => {
+    if (playsTrailersSaved !== undefined) {
+      setPlaysTrailers(playsTrailersSaved);
+    }
+  }, [playsTrailersSaved]);
   const [shortSegments, setShortSegments] = useState(overview?.settings.usesShortSegments ?? true);
   const [gaplessEpisodes, setGaplessEpisodes] = useState(
     overview?.settings.playsEpisodesGapless ?? true,
@@ -618,6 +636,41 @@ const SettingsPanel = ({
                 }
 
                 setFetchesTrailers(!next);
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest')}
+          description={say('screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest')}
+            isLabelHidden
+            isOn={playsTrailers}
+            disabled={!fetchesTrailers}
+            onToggle={() => {
+              const next = !playsTrailers;
+
+              setPlaysTrailers(next);
+
+              void savePlaysCatalogueTrailers(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.trailerPlayingSettingSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe'),
+                  ),
+                );
+
+                if (saved) {
+                  onCatalogueTrailersSaved();
+
+                  return;
+                }
+
+                setPlaysTrailers(!next);
               });
             }}
           />

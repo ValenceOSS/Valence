@@ -37,6 +37,7 @@ const emptySettings = () =>
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     requestReleaseTypes: ['album'],

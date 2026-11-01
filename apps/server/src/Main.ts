@@ -1,6 +1,9 @@
 import { z } from '@hono/zod-openapi';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { createDatabaseViewingState } from '@ValenceServer/plugins/host/createDatabaseViewingState';
+import { measurePictureFraming } from '@ValenceServer/requests/trailers/measurePictureFraming';
+import { createTrailerAddresses } from '@ValenceServer/requests/trailers/createTrailerAddresses';
+import { askYtDlp } from '@ValenceServer/requests/trailers/askYtDlp';
 import { withJoinedInputs } from '@ValenceServer/transcoder/withJoinedInputs';
 import { createPartsOf } from '@ValenceServer/library/createPartsOf';
 import { createPartsOfMany } from '@ValenceServer/library/createPartsOfMany';
@@ -606,6 +609,7 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
@@ -5503,6 +5507,18 @@ const app = createApp({
     },
   }),
   discovery,
+  trailers: createTrailerAddresses({
+    ask: (youTubeId) =>
+      askYtDlp(youTubeId, {
+        binary: env.VALENCE_YT_DLP,
+        cookies: env.VALENCE_YT_DLP_COOKIES === '' ? null : env.VALENCE_YT_DLP_COOKIES,
+        runtime: process.execPath,
+      }),
+    measure: (url) => measurePictureFraming(url, env.VALENCE_FFMPEG),
+    onProblem: (youTubeId, why) => {
+      log.warn('requests', `the trailer ${youTubeId} could not be found: ${why}`);
+    },
+  }),
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
   seriesOfTvdbId: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),
   importedAccounts: () => readImportedAccounts(db),

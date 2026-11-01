@@ -728,6 +728,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onPlay={(mediaId) => {
               choose(mediaId, resumeFor(byMediaId(watched.data ?? []), mediaId) ?? 0);
             }}
+            onLookAtPerson={(personId) => {
+              open({ kind: 'person', personId });
+            }}
             onBack={back}
           />
         );

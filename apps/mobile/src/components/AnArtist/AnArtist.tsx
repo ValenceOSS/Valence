@@ -1,4 +1,4 @@
-import { User } from '@keyline-icons/react-native';
+import { User, UserCheck, UserPlus } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -8,8 +8,9 @@ import {
   setArtistFollowed,
 } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
+import { AMusicScreen } from '@ValenceMobile/components/AMusicScreen/AMusicScreen';
 import { AMusicTile } from '@ValenceMobile/components/AMusicTile/AMusicTile';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
@@ -17,7 +18,6 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -49,9 +49,6 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   const cache = useQueryClient();
   const read = useQuery(musicQueries.artist(artistId));
   const player = thePhonesMusicPlayer();
-  const lights = usePictureLights(
-    read.data?.artist.hasImage === true ? onThisServer(artistImageUrl(read.data.artist.id)) : null,
-  );
   const [isAllOfIt, setIsAllOfIt] = useState(false);
 
   if (read.isPending) {
@@ -102,14 +99,15 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
     );
 
   return (
-    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
+    <AMusicScreen
+      title={artist.name}
+      artwork={artist.hasImage ? onThisServer(artistImageUrl(artist.id)) : null}
+      standIn={User}
+      onBack={onBack}
+    >
       <AMusicHead
         kind={say('common.artist')}
-        title={artist.name}
         detail={sayCount('common.count.albums', artist.albumCount)}
-        artwork={artist.hasImage ? onThisServer(artistImageUrl(artist.id)) : null}
-        standIn={User}
-        isRound
         canPlay={popular.length > 0}
         onPlay={() => {
           player.play(popular, 0, { source });
@@ -121,16 +119,16 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
           });
         }}
       >
-        <Button
-          tone="ghost"
+        <ARoundAction
+          icon={artist.isFavourite ? UserCheck : UserPlus}
+          says={artist.isFavourite ? say('common.following') : say('common.follow')}
+          isChosen={artist.isFavourite}
           onPress={() => {
             void setArtistFollowed(artist.id, !artist.isFavourite).then(async () =>
               cache.invalidateQueries({ queryKey: musicQueries.key }),
             );
           }}
-        >
-          {artist.isFavourite ? say('common.following') : say('common.follow')}
-        </Button>
+        />
       </AMusicHead>
 
       {popular.length === 0 ? null : (
@@ -162,7 +160,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
       <AnArtistStory artistId={artist.id} name={artist.name} />
 
       <APluginPanels on="artist" subjectId={artistId} />
-    </Screen>
+    </AMusicScreen>
   );
 };
 

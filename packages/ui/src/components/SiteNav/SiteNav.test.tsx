@@ -84,10 +84,10 @@ describe('SiteNav', () => {
 
     await user.click(screen.getByRole('button', { name: 'Product' }));
 
-    const tour = await screen.findByRole('link', { name: /Product tour/ });
+    const features = await screen.findByRole('link', { name: /Features/ });
 
-    expect(tour).toHaveAttribute('href', 'https://getvalence.app/tour');
-    expect(tour).not.toHaveAttribute('target');
+    expect(features).toHaveAttribute('href', 'https://getvalence.app/features');
+    expect(features).not.toHaveAttribute('target');
   });
 
   it('reaches its own site’s pages through the site’s own links', async () => {
@@ -110,16 +110,12 @@ describe('SiteNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Product' }));
 
-    expect(await screen.findByRole('link', { name: /Product tour/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Features/ })).toHaveAttribute(
       'href',
-      '/tour',
-    );
-    expect(screen.getByRole('link', { name: /How it runs/ })).toHaveAttribute(
-      'href',
-      '/architecture',
+      '/features',
     );
     expect(screen.getByRole('link', { name: /Plugins/ })).toHaveAttribute('href', '/plugins');
-    expect(screen.getByRole('link', { name: /Compare/ })).toHaveAttribute('href', '/compare');
+    expect(screen.getByRole('link', { name: /Download/ })).toHaveAttribute('href', '/downloads');
   });
 
   it('opens grouped resource links from the desktop navigation', async () => {
@@ -152,10 +148,13 @@ describe('SiteNav', () => {
     await user.hover(screen.getByRole('button', { name: 'Product' }));
     expect(await screen.findByRole('region', { name: 'Product' })).toBeInTheDocument();
 
-    await user.hover(screen.getByRole('button', { name: 'Run it' }));
+    await user.hover(screen.getByRole('button', { name: 'Resources' }));
 
-    expect(await screen.findByRole('region', { name: 'Run it' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Run it' })).toHaveAttribute('aria-expanded', 'true');
+    expect(await screen.findByRole('region', { name: 'Resources' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resources' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -169,10 +168,10 @@ describe('SiteNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Product' }));
     await screen.findByRole('region', { name: 'Product' });
-    await user.hover(screen.getByRole('button', { name: 'Run it' }));
+    await user.hover(screen.getByRole('button', { name: 'Resources' }));
     await user.hover(screen.getByRole('button', { name: 'Product' }));
 
-    expect(await screen.findByRole('link', { name: /Product tour/ })).toBeVisible();
+    expect(await screen.findByRole('link', { name: /Features/ })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
       'aria-expanded',
       'true',
@@ -334,9 +333,9 @@ describe('SiteNav', () => {
     const mobileNav = screen.getByRole('navigation', { name: 'Mobile navigation' });
 
     expect(within(mobileNav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
-    expect(within(mobileNav).getByRole('link', { name: /How it runs/ })).toHaveAttribute(
+    expect(within(mobileNav).getByRole('link', { name: /Branding/ })).toHaveAttribute(
       'href',
-      '/architecture',
+      '/brand',
     );
     expect(within(mobileNav).getByRole('link', { name: /Changelog/ })).toHaveAttribute(
       'href',

@@ -1465,6 +1465,7 @@ const createCatalogueMetadataProvider = ({
         genres: found.genres.map((genre) => genre.name),
         runtimeMinutes: runtime > 0 ? runtime : null,
         cast: (found.credits?.cast ?? []).slice(0, CAST_DESCRIBED).map((member) => ({
+          personId: member.id ?? null,
           name: member.name,
           role: member.character === undefined || member.character === '' ? null : member.character,
           photoUrl: imageUrl(imageBaseUrl, member.profile_path, 'w185'),

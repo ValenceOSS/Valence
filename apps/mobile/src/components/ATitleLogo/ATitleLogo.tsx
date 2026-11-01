@@ -14,16 +14,26 @@ import type { ATitleLogoProps } from './ATitleLogo.types';
  * is, it takes the widest it may.
  *
  * @param mediaId - Whose lettering to draw, or nothing where there is none.
+ * @param uri - Where the lettering is, for something the library does not hold, in place of
+ *   whose it is.
  * @param title - The name, for anybody who cannot see it and for when there is no lettering.
  * @param high - How tall to draw it.
  * @param widest - The widest it may be.
  * @param isOnArtwork - Whether it is drawn over a picture rather than the page.
  */
-const ATitleLogo = ({ mediaId, title, high, widest, isOnArtwork = false }: ATitleLogoProps) => {
+const ATitleLogo = ({
+  mediaId,
+  uri,
+  title,
+  high,
+  widest,
+  isOnArtwork = false,
+}: ATitleLogoProps) => {
   const [wide, setWide] = useState<number | null>(null);
-  const [isUnlettered, setIsUnlettered] = useState(false);
+  const [missing, setMissing] = useState<string | null>(null);
+  const lettering = uri ?? (mediaId === null ? null : onThisServer(artworkUrl(mediaId, 'logo')));
 
-  if (mediaId === null || isUnlettered) {
+  if (lettering === null || missing === lettering) {
     return (
       <Words size="title" lines={2} {...(isOnArtwork ? { tone: 'onArtwork' } : {})}>
         {title}
@@ -35,7 +45,7 @@ const ATitleLogo = ({ mediaId, title, high, widest, isOnArtwork = false }: ATitl
     <ARemotePicture
       style={{ height: high, width: Math.min(wide ?? widest, widest) }}
       fit="contain"
-      uri={onThisServer(artworkUrl(mediaId, 'logo'))}
+      uri={lettering}
       label={title}
       onLoad={({ width, height }) => {
         if (height > 0) {
@@ -43,7 +53,7 @@ const ATitleLogo = ({ mediaId, title, high, widest, isOnArtwork = false }: ATitl
         }
       }}
       onMissing={() => {
-        setIsUnlettered(true);
+        setMissing(lettering);
       }}
     />
   );
