@@ -3,7 +3,7 @@ type PluginPanelProps = {
   pluginName: string;
   panelId: string;
   title: string;
-  on: 'title' | 'series';
+  on: 'title' | 'series' | 'book';
   subjectId: string;
 };
 

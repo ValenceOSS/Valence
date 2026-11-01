@@ -242,6 +242,8 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
     await expect(refs.get('arrival', locked)).resolves.toBeNull();
     await expect(refs.get('piranesi', locked)).resolves.toBeNull();
     await expect(refs.search('dune', ['book'], locked)).resolves.toEqual([]);
+    await expect(refs.sees({ kind: 'book', id: 'piranesi' }, locked)).resolves.toBe(false);
+    await expect(refs.sees({ kind: 'book', id: 'piranesi' }, KID)).resolves.toBe(true);
     await expect(refs.get('song', locked)).resolves.toMatchObject({ kind: 'track' });
   });
 

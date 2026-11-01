@@ -5,12 +5,13 @@ import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/
 import type { PluginPanelsProps } from './PluginPanels.types';
 
 /**
- * What the plugins that are on add beside a title, a programme, an album, an artist or a playlist,
+ * What the plugins that are on add beside a title, a programme, an album, an artist, a playlist or a
+ * book,
  * each under its own heading and the name of the plugin that drew it. Nothing at all where no plugin
  * adds anything, which is the usual case.
  *
  * @param on - What kind of page this is.
- * @param subjectId - Which title, programme, album, artist or playlist it is.
+ * @param subjectId - Which title, programme, album, artist, playlist or book it is.
  * @param className - Extra classes for the caller's own layout.
  */
 const PluginPanels = ({ on, subjectId, className }: PluginPanelsProps) => {

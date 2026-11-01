@@ -1,5 +1,5 @@
 type PluginPanelsProps = {
-  on: 'title' | 'series';
+  on: 'title' | 'series' | 'book';
   subjectId: string;
 };
 

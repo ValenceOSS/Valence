@@ -21,6 +21,7 @@ beforeEach(() => {
         on: 'series',
       },
       { pluginId: 'lyrics', pluginName: 'Lyrics', panelId: 'words', title: 'Words', on: 'album' },
+      { pluginId: 'shelf', pluginName: 'Shelf', panelId: 'notes', title: 'Notes', on: 'book' },
     ],
     themes: [],
   });
@@ -43,6 +44,20 @@ describe('PluginPanels', () => {
       panelId: 'score',
       on: 'series',
       subjectId: 's1',
+    });
+  });
+
+  it('draws a panel on a book', async () => {
+    renderInAnAddress(<PluginPanels on="book" subjectId="b1" />);
+
+    expect(await screen.findByRole('region', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'On AniList' })).not.toBeInTheDocument();
+    expect(fetchPluginSurface).toHaveBeenCalledWith({
+      kind: 'panel',
+      pluginId: 'shelf',
+      panelId: 'notes',
+      on: 'book',
+      subjectId: 'b1',
     });
   });
 

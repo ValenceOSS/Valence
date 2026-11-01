@@ -36,6 +36,7 @@ import type { ActionBarAction } from '@ValenceUI/ActionBar.types';
 import type { BookDialogProps } from './BookDialog.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 
 /**
  * What kind of book something is, for the line above its title.
@@ -263,6 +264,8 @@ const BookDialog = ({
                 </div>
               )}
             </DialogSection>
+
+            <PluginPanels on="book" subjectId={book.id} />
 
             {readable.length < 2 || onReadChapter === undefined ? null : (
               <DialogSection heading={say('common.chapters')}>

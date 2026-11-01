@@ -44,6 +44,7 @@ import { renditionFor } from '@ValenceServer/music/renditionFor';
 import type { Context } from 'hono';
 import type { RouteOutcome } from '@ValenceServer/plugins/routes/createPluginRoutes';
 import { gatherParameters } from '@ValenceServer/plugins/routes/gatherParameters';
+import { placesAsked } from '@ValenceServer/plugins/service/placesAsked';
 
 const NOT_SET_UP = refuse('error.plugins.pluginsAreNotSetUpOn');
 
@@ -114,18 +115,18 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const profileId = (await readProfileId(headers)) ?? session.user.id;
+    const reads = await libraryViewerOf(headers);
+
+    if (reads === null) {
+      return null;
+    }
 
     return {
       accountId: session.user.id,
       profileId,
       isAdmin: await requires(headers, 'server.plugins'),
       grants: await grantsOf(headers),
-      reads: (await libraryViewerOf(headers)) ?? {
-        kind: 'account',
-        accountId: session.user.id,
-        profileId,
-        isAdministrator: false,
-      },
+      reads,
     };
   };
 
@@ -422,10 +423,21 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_SIGNED_IN, 401);
     }
 
+    const draws = placesAsked(context.req.valid('query').places);
+
+    if (plugins === undefined) {
+      return context.json({ pages: [], panels: [], themes: [], nodes: [] }, 200);
+    }
+
+    const contributed = await plugins.contributions(viewer);
+
     return context.json(
-      plugins === undefined
-        ? { pages: [], panels: [], themes: [], nodes: [] }
-        : await plugins.contributions(viewer),
+      {
+        ...contributed,
+        panels: contributed.panels.filter((panel) =>
+          [...draws].some((place) => place === panel.on),
+        ),
+      },
       200,
     );
   });

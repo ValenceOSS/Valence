@@ -386,6 +386,43 @@ describe('a plugin from upload to use, through its own process', () => {
     });
   });
 
+  it('draws a panel on a book only where the viewer may see the book', async () => {
+    const host = aPluginHostForTest();
+    const service = build(vi.fn(), { host, apiVersion: '1.4.0' });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: PluginManifestSchema.parse({
+          ...MANIFEST,
+          id: 'shelved',
+          apiVersion: '^1.4',
+          permissions: [],
+          settings: [],
+          contributes: { panels: [{ id: 'notes', title: 'Notes', on: 'book' }] },
+        }),
+        code: `globalThis.valencePlugin = {
+          panels: { notes: { render: async ({ subject }) => ({ blocks: [{ type: 'text', text: subject.kind }] }) } },
+        };`,
+        assets: {},
+      }),
+    );
+
+    const notes = { kind: 'panel', id: 'notes', subject: { kind: 'book', id: 'b1' } } as const;
+
+    expect(await service.render('shelved', notes, VIEWER)).toMatchObject({
+      surface: { blocks: [{ type: 'text', text: 'book' }] },
+    });
+    expect(host.library.sees).toHaveBeenLastCalledWith({ kind: 'book', id: 'b1' }, VIEWER.reads);
+
+    vi.mocked(host.library.sees).mockResolvedValueOnce(false);
+
+    expect(await service.render('shelved', notes, VIEWER)).toBeNull();
+
+    service.stop();
+  }, 60_000);
+
   it('draws a panel only about what the viewer may see, and does not sign them up for it', async () => {
     const store = createMemoryPluginStore();
     const host = aPluginHostForTest();

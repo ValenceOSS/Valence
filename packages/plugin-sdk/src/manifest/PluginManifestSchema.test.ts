@@ -505,6 +505,19 @@ describe('PluginManifestSchema', () => {
     ]);
   });
 
+  it('puts a panel on a book only on 1.4', () => {
+    const onABook = (apiVersion: string) =>
+      aManifest({
+        apiVersion,
+        contributes: { panels: [{ id: 'notes', title: 'Notes', on: 'book' }] },
+      });
+
+    expect(problemsOf(onABook('^1.4'))).toEqual([]);
+    expect(problemsOf(onABook('^1.3'))).toEqual([
+      'A panel on a book needs apiVersion ^1.4, since older servers refuse it',
+    ]);
+  });
+
   it('refuses a schedule more often than every fifteen minutes', () => {
     expect(
       PluginManifestSchema.safeParse(

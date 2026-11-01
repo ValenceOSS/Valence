@@ -38,6 +38,7 @@ import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 
 const COVER = 128;
 
@@ -305,6 +306,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
           ))}
         </View>
       ) : null}
+      <APluginPanels on="book" subjectId={bookId} />
       <AShareSheet
         subject={sharing}
         onClose={() => {

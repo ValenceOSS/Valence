@@ -119,7 +119,7 @@ const PluginContributionsSchema = z.object({
       pluginName: z.string(),
       panelId: z.string(),
       title: z.string(),
-      on: z.enum(['title', 'series', 'album', 'artist', 'playlist']),
+      on: z.string(),
     }),
   ),
   themes: z.array(

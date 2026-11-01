@@ -4,6 +4,7 @@ import { PluginThemeSchema } from '@ValenceSDK/theme/PluginThemeSchema';
 import { EVENT_TOPICS } from './EVENT_TOPICS';
 import { LocalIdSchema } from './LocalIdSchema';
 import { RouteSignInSchema } from './RouteSignInSchema';
+import { PANEL_PLACES } from './PANEL_PLACES';
 
 const ContributionsSchema = z.object({
   pages: z
@@ -23,7 +24,7 @@ const ContributionsSchema = z.object({
       z.object({
         id: LocalIdSchema,
         title: z.string().min(1).max(40),
-        on: z.enum(['title', 'series', 'album', 'artist', 'playlist']),
+        on: z.enum(PANEL_PLACES),
         requires: LocalIdSchema.optional(),
       }),
     )

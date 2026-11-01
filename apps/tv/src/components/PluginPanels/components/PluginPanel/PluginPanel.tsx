@@ -22,14 +22,14 @@ const styles = StyleSheet.create({
 });
 
 /**
- * One plugin's panel about the film or programme on the television, boxed and named for the plugin
+ * One plugin's panel about the film, programme or book on the television, boxed and named for the plugin
  * that drew it, so nobody mistakes it for Valence's own. A panel that cannot be read is left out.
  *
  * @param pluginId - The plugin.
  * @param pluginName - What the plugin is called.
  * @param panelId - Which of its panels.
  * @param title - What the panel is called.
- * @param on - Whether it is about a film or a programme.
+ * @param on - Whether it is about a film, a programme or a book.
  * @param subjectId - Which one.
  */
 const PluginPanel = ({ pluginId, pluginName, panelId, title, on, subjectId }: PluginPanelProps) => {
