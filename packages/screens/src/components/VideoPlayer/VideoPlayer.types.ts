@@ -11,6 +11,7 @@ type VideoPlayerProps = {
         | 'seasonNumber'
         | 'episodeNumber'
         | 'hasPoster'
+        | 'hasLogo'
         | 'year'
         | 'releaseDate'
         | 'extraKind'
