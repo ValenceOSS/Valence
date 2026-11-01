@@ -6541,8 +6541,6 @@ const ENGLISH = {
   'screens.gridSizeChooser.smallCardsMoreOfThem': 'Small cards, more per row',
   'screens.hero.featured': 'Featured',
   'screens.hero.featuredItems': 'Featured items',
-  'screens.hero.pauseTheSlideshow': 'Pause the slideshow',
-  'screens.hero.playTheSlideshow': 'Play the slideshow',
   'screens.historyKeysFor.alt': 'Alt',
   'screens.historyPanel.nothingYetWhatYouWatchAnd':
     'Nothing yet. What you watch and read appears here, and only you can see it.',

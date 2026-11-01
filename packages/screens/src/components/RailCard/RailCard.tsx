@@ -14,7 +14,6 @@ import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
-import { cn } from '@ValenceUI/cn';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { ArtCard } from '@ValenceUI/ArtCard';
 import { Badge } from '@ValenceUI/Badge';
@@ -91,9 +90,9 @@ const fitInside = (top: number, height: number): number => {
  * A card in a row that grows when a pointer rests on it, playing a preview and showing what it is
  * with the controls for starting or keeping it. Rests before opening, since a pointer crossing a
  * row should not open every card it passes. Where the opened card is too narrow to hold every control
- * beside the one that plays it, the rest fold into a menu rather than running off its edge. The same
- * extras sit in a menu on the resting card too, for a keyboard, a finger or somebody who asked for
- * less motion, none of whom ever see it grow.
+ * beside the one that plays it, the rest fold into a menu rather than running off its edge. A
+ * keyboard, a finger or somebody who asked for less motion, none of whom see it grow, find the same
+ * controls on the title's own page.
  *
  * @param media - The item to draw.
  * @param watchedFraction - How far through it this viewer is. A card for a whole programme leaves
@@ -376,35 +375,6 @@ const RailCard = ({
           {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           className="w-full"
-        />
-      )}
-
-      {extras.length === 0 ? null : (
-        <ActionMenu
-          label={say('common.moreForTitle', { title: media.title })}
-          align="end"
-          look="overlay"
-          className={cn(
-            'absolute right-2 top-2 z-10 transition-opacity duration-[var(--duration-fast)] motion-reduce:transition-none',
-            'hover-hover:opacity-0 hover-hover:group-hover/rail:opacity-100 hover-hover:group-focus-within/rail:opacity-100 hover-hover:data-[state=open]:opacity-100',
-          )}
-          trigger={<Icon of={MoreHorizontalIcon} size={16} />}
-          onOpenChange={(isOpen) => {
-            if (isOpen) {
-              cancel();
-              close();
-            }
-          }}
-          groups={[
-            {
-              items: extras.map((extra) => ({
-                id: extra.id,
-                label: extra.label,
-                icon: extra.icon,
-                onChoose: extra.onChoose,
-              })),
-            },
-          ]}
         />
       )}
 

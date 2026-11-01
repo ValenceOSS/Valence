@@ -183,7 +183,9 @@ describe('HomeHero', () => {
       /^Everything on one shelf\./u,
     );
     for (const step of HERO_STEPS) {
-      expect(screen.getByText(step.title)).toBeVisible();
+      expect(
+        screen.getByRole('button', { name: new RegExp(`^${step.title.replace('.', '\\.')}`, 'u') }),
+      ).toBeEnabled();
     }
   });
 

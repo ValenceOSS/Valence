@@ -25840,16 +25840,6 @@
     "context": "The label of a page dots in the hero."
   },
   {
-    "handler": "screens.hero.pauseTheSlideshow",
-    "text": "Pause the slideshow",
-    "context": "The label of a button beside the page dots on the home screen’s featured titles. It stops the featured title changing by itself, and holds its clip."
-  },
-  {
-    "handler": "screens.hero.playTheSlideshow",
-    "text": "Play the slideshow",
-    "context": "The label of a button beside the page dots on the home screen’s featured titles. It lets the featured title change by itself again."
-  },
-  {
     "handler": "screens.historyKeysFor.alt",
     "text": "Alt",
     "context": "The name of the Alt key on a Windows or Linux keyboard, shown on a key cap in the tooltip of the desktop app's back and forward arrows. Keep it as the key is labelled on keyboards in the language."
