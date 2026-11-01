@@ -3,20 +3,25 @@ import { gotifyMessageFor } from './gotifyMessageFor';
 import type { WebhookNotice } from './webhookNoticeFor';
 
 const aNotice: WebhookNotice = {
-  title: 'Dune (2021)',
-  description: 'Added to Films',
+  title: 'The Long Night (2021)',
+  lead: ['Added to ', { strong: 'Films' }],
+  context: ['Drama', 'Mystery'],
+  body: '',
+  tags: ['Film', '★ 7.4'],
+  details: [],
+  sections: [],
+  link: null,
+  footer: 'Films',
   tone: 'arrival',
   isUrgent: false,
-  fields: [{ name: 'Library', value: 'Films', inline: true }],
-  sections: [],
   posterUrl: null,
 };
 
 describe('gotifyMessageFor', () => {
-  it('sends the title, and the details as Markdown', () => {
+  it('sends the title, and the body as Markdown', () => {
     expect(gotifyMessageFor(aNotice)).toStrictEqual({
-      title: 'Dune (2021)',
-      message: 'Added to Films\n\n**Library:** Films',
+      title: 'The Long Night (2021)',
+      message: 'Added to **Films**\nDrama · Mystery\n\n`Film` | `★ 7.4`',
       priority: 5,
       extras: { 'client::display': { contentType: 'text/markdown' } },
     });
@@ -26,29 +31,30 @@ describe('gotifyMessageFor', () => {
     expect(gotifyMessageFor({ ...aNotice, tone: 'failure', isUrgent: true }).priority).toBe(8);
   });
 
-  it('shows the poster beneath the details and as the notification’s picture', () => {
+  it('shows the poster beneath the body and as the notification’s picture', () => {
     const message = gotifyMessageFor({
       ...aNotice,
-      posterUrl: 'https://image.tmdb.org/t/p/w500/dune (1).jpg',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/poster (1).jpg',
     });
 
     expect(
-      message.message.endsWith('![](https://image.tmdb.org/t/p/w500/dune%20%281%29.jpg)'),
+      message.message.endsWith('\n\n![](https://image.tmdb.org/t/p/w500/poster%20%281%29.jpg)'),
     ).toBe(true);
     expect(message.extras['client::notification']).toStrictEqual({
-      bigImageUrl: 'https://image.tmdb.org/t/p/w500/dune (1).jpg',
+      bigImageUrl: 'https://image.tmdb.org/t/p/w500/poster (1).jpg',
     });
   });
 
   it('sends a notice with nothing beyond its title as the message alone', () => {
     const message = gotifyMessageFor({
       ...aNotice,
-      title: 'The catalogue can be reached again.',
-      description: '',
-      fields: [],
+      title: 'Job *failed*',
+      lead: [],
+      context: [],
+      tags: [],
     });
 
     expect(message.title).toBeUndefined();
-    expect(message.message).toBe('The catalogue can be reached again.');
+    expect(message.message).toBe('Job \\*failed\\*');
   });
 });

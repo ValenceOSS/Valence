@@ -34856,14 +34856,14 @@
     "context": "Why the admin area could not say whether a newer release is out (from `createUpdateChecker`)."
   },
   {
-    "handler": "server.webhooks.closedValence",
-    "text": "{viewer} closed Valence on {device}.",
-    "context": "A webhook message sent when somebody closes Valence. {viewer} is who; {device} is the device, such as Firefox on Windows."
+    "handler": "server.webhooks.closedServerOn",
+    "text": "{viewer} closed {server} on {device}.",
+    "context": "A one-line notification that somebody closed the app. {viewer} is who; {device} is the device. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
   },
   {
-    "handler": "server.webhooks.closedValenceAfter",
-    "text": "{viewer} closed Valence on {device} after {span}.",
-    "context": "A webhook message sent when somebody closes Valence. {viewer} is who; {device} is the device, such as Firefox on Windows; {span} is how long they had it open, such as 1h 20m."
+    "handler": "server.webhooks.closedServerOnAfter",
+    "text": "{viewer} closed {server} on {device} after {span}.",
+    "context": "A one-line notification that somebody closed the app. {viewer} is who; {device} is the device; {span} is how long it was open. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
   },
   {
     "handler": "server.webhooks.deliverWebhook.theDeliveryCouldNotBeMade",
@@ -34886,11 +34886,6 @@
     "context": "The last line of a Discord message listing what arrived in a library, when it is too long to name everything. {count} is how many more arrived."
   },
   {
-    "handler": "server.webhooks.discordEmbedFor.approvedBy",
-    "text": "Approved by",
-    "context": "The label of a field in a Discord webhook about an approved request, naming who approved it (from `discordEmbedFor`)."
-  },
-  {
     "handler": "server.webhooks.discordEmbedFor.arrivedInLibraryName",
     "text": "Added to {libraryName}",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). {libraryName} is filled in by the app."
@@ -34899,11 +34894,6 @@
     "handler": "server.webhooks.discordEmbedFor.aSignInWasRefused",
     "text": "A sign-in was blocked",
     "context": "The title in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.attempts",
-    "text": "Attempts",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.directPlay",
@@ -34916,114 +34906,14 @@
     "context": "How a session is played, in a Discord webhook's field about something starting: the original picture with its sound converted (from `discordEmbedFor`)."
   },
   {
-    "handler": "server.webhooks.discordEmbedFor.free",
-    "text": "Free",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.freeOfTotal",
-    "text": "{free} of {total}",
-    "context": "A Discord webhook's field about a disk running out of room, saying how much is left of all of it (from `discordEmbedFor`). {free} and {total} are sizes, such as 37 GB and 7.3 TB."
-  },
-  {
     "handler": "server.webhooks.discordEmbedFor.from",
     "text": "From",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
-    "handler": "server.webhooks.discordEmbedFor.genres",
-    "text": "Genres",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.given",
-    "text": "Given",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.guestOf",
-    "text": "Guest of",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
     "handler": "server.webhooks.discordEmbedFor.howToFixIt",
     "text": "How to fix it",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestApprovedTitle",
-    "text": "{kind} request approved: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle",
-    "text": "{kind} request automatically approved: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestDeclinedTitle",
-    "text": "{kind} request declined: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestDownloadingTitle",
-    "text": "{kind} request downloading: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestImportedTitle",
-    "text": "{kind} request imported: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestMadeTitle",
-    "text": "{kind} request made: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle",
-    "text": "{kind} request now available: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle",
-    "text": "{kind} request pending approval: {title}",
-    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.labelFailed",
-    "text": "{label} failed",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {label} is filled in by the app."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.labelFinished",
-    "text": "{label} finished",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {label} is filled in by the app."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.labelKeepsFailing",
-    "text": "{label} keeps failing",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {label} is filled in by the app."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.librariesFinishedScanning.one",
-    "text": "{count} library finished scanning",
-    "context": "The title of a Discord message when libraries finish scanning."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.librariesFinishedScanning.other",
-    "text": "{count} libraries finished scanning",
-    "context": "The title of a Discord message when libraries finish scanning."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.mountPointHasRoomAgain",
-    "text": "{mountPoint} has free space again",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {mountPoint} is filled in by the app."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.mountPointIsRunningOutOfRoom",
-    "text": "{mountPoint} is running out of space",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {mountPoint} is filled in by the app."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.nameIsWatching",
@@ -35046,11 +34936,6 @@
     "context": "The title in the webhooks on the server (from `discordEmbedFor`). {name} is filled in by the app."
   },
   {
-    "handler": "server.webhooks.discordEmbedFor.nameSRolesChanged",
-    "text": "{name}’s roles changed",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {name} is filled in by the app."
-  },
-  {
     "handler": "server.webhooks.discordEmbedFor.noLongerInLibraryName",
     "text": "Removed from {libraryName}",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). {libraryName} is filled in by the app."
@@ -35061,54 +34946,9 @@
     "context": "The label of a field in a Discord webhook about a declined request, saying why (from `discordEmbedFor`)."
   },
   {
-    "handler": "server.webhooks.discordEmbedFor.removed",
-    "text": "Removed",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
     "handler": "server.webhooks.discordEmbedFor.runtime",
     "text": "Runtime",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). Also used in the rule editor of smart playlists and smart collections, on the web."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.stayed",
-    "text": "Stayed",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.stoppedAt",
-    "text": "Stopped at",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.takenAway",
-    "text": "Taken away",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.tried",
-    "text": "Tried",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.unreadable",
-    "text": "Unreadable",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.updated",
-    "text": "Updated",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.viewerClosedValence",
-    "text": "{viewer} closed Valence",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {viewer} is filled in by the app."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.viewerOpenedValence",
-    "text": "{viewer} opened Valence",
-    "context": "The title in the webhooks on the server (from `discordEmbedFor`). {viewer} is filled in by the app."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.viewerStartedListening",
@@ -35346,11 +35186,6 @@
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`). {title} is filled in by the app; {client} is filled in by the app."
   },
   {
-    "handler": "server.webhooks.formatWebhookBody.valenceCanReachThisSubscriptionNothing",
-    "text": "This is a test message. Valence can reach this webhook.",
-    "context": "Shown in the webhooks on the server (from `formatWebhookBody`)."
-  },
-  {
     "handler": "server.webhooks.formatWebhookBody.vpnDown",
     "text": "The requests service’s download VPN is down — {reason}",
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`). {reason} is filled in by the app."
@@ -35386,14 +35221,409 @@
     "context": "Shown in the webhooks on the server (from `nameOfViewer`)."
   },
   {
-    "handler": "server.webhooks.openedValence",
-    "text": "{viewer} opened Valence on {device}.",
-    "context": "A webhook message sent when somebody opens Valence. {viewer} is who; {device} is the device, such as Firefox on Windows."
+    "handler": "server.webhooks.notice.approvedAutomatically",
+    "text": "{asker}’s request was approved automatically",
+    "context": "In a notification about a request. {asker} is who asked."
   },
   {
-    "handler": "server.webhooks.openedValenceFrom",
-    "text": "{viewer} opened Valence on {device} from {address}.",
-    "context": "A webhook message sent when somebody opens Valence. {viewer} is who; {device} is the device, such as Firefox on Windows; {address} is the network address they came from."
+    "handler": "server.webhooks.notice.approvedItAutomatically",
+    "text": "The request was approved automatically",
+    "context": "In a notification about a request, sent where the requests service didn't say who asked: it was approved without anybody approving it."
+  },
+  {
+    "handler": "server.webhooks.notice.approvedRequest",
+    "text": "{approver} approved {asker}’s request",
+    "context": "In a notification about a request. {approver} is who approved it; {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.approverApprovedIt",
+    "text": "{approver} approved the request",
+    "context": "In a notification about a request, sent where the requests service didn't say who asked: who approved it. {approver} is their name."
+  },
+  {
+    "handler": "server.webhooks.notice.byArtist",
+    "text": "By {artist}",
+    "context": "In a notification about an album request: who made it. {artist} is the artist."
+  },
+  {
+    "handler": "server.webhooks.notice.catalogueBack",
+    "text": "Metadata catalogue is back",
+    "context": "The title of a notification that the metadata catalogue answers again."
+  },
+  {
+    "handler": "server.webhooks.notice.catalogueDown",
+    "text": "Couldn’t reach the metadata catalogue",
+    "context": "The title of a notification that the catalogue Valence matches files against isn't answering."
+  },
+  {
+    "handler": "server.webhooks.notice.catalogueDownLead",
+    "text": "Scans will import files without matching them",
+    "context": "In a notification that the metadata catalogue isn't answering: what that means."
+  },
+  {
+    "handler": "server.webhooks.notice.foundARelease",
+    "text": "Found a release for {asker}’s request",
+    "context": "In a notification about a request: a release was chosen and sent to the download client. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.foundAReleaseForIt",
+    "text": "Found a release",
+    "context": "In a notification about a request, sent where the requests service didn't say who asked: a release was chosen and sent to the download client."
+  },
+  {
+    "handler": "server.webhooks.notice.freeOfTotal",
+    "text": "{mount} has {free} free of {total}",
+    "context": "In a notification about disk space. {mount} is the folder the disk is mounted at; {free} and {total} are sizes such as \"112 GB\"."
+  },
+  {
+    "handler": "server.webhooks.notice.fromAddress",
+    "text": "from {address}",
+    "context": "In a notification about a device: the network address it came from, after the device and what it runs. {address} is an IP address."
+  },
+  {
+    "handler": "server.webhooks.notice.guestOf",
+    "text": "Guest of {host}",
+    "context": "In a notification about somebody opening Valence through a share. {host} is who shared it."
+  },
+  {
+    "handler": "server.webhooks.notice.indexerBack",
+    "text": "Indexer is back",
+    "context": "The title of a notification that a site the requests service searches answers again."
+  },
+  {
+    "handler": "server.webhooks.notice.indexerFailing",
+    "text": "Indexer keeps failing",
+    "context": "The title of a notification that a site the requests service searches keeps failing."
+  },
+  {
+    "handler": "server.webhooks.notice.indexerKeepsFailing",
+    "text": "{indexer} keeps failing",
+    "context": "In a notification that a site the requests service searches keeps failing. {indexer} is its name."
+  },
+  {
+    "handler": "server.webhooks.notice.indexerRespondsAgain",
+    "text": "{indexer} is responding again",
+    "context": "In a notification that a site the requests service searches answers again. {indexer} is its name."
+  },
+  {
+    "handler": "server.webhooks.notice.inTheLibrary",
+    "text": "{asker}’s request is in the library",
+    "context": "In a notification about a request: its files were moved into the library. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.itWasDeclined",
+    "text": "The request was declined",
+    "context": "In a notification about a request, sent where the requests service didn't say who asked: it was declined."
+  },
+  {
+    "handler": "server.webhooks.notice.jobFailsSinceItWorked",
+    "text": "{job} has failed every run since it last worked",
+    "context": "In a notification about a background job. {job} is the job's name."
+  },
+  {
+    "handler": "server.webhooks.notice.jobHasFailed",
+    "text": "{job} failed",
+    "context": "In a notification about a background job. {job} is the job's name."
+  },
+  {
+    "handler": "server.webhooks.notice.jobHasFinished",
+    "text": "{job} finished",
+    "context": "In a notification about a background job. {job} is the job's name, such as \"Scan the libraries\"."
+  },
+  {
+    "handler": "server.webhooks.notice.jobHasNeverWorked",
+    "text": "{job} has failed every run so far",
+    "context": "In a notification about a background job that has never worked. {job} is the job's name."
+  },
+  {
+    "handler": "server.webhooks.notice.jobKeepsFailing",
+    "text": "Job keeps failing",
+    "context": "In a notification about a background job: the title, when one has failed several times running."
+  },
+  {
+    "handler": "server.webhooks.notice.jobRunsAgain",
+    "text": "{job} is running normally again",
+    "context": "In a notification about a background job. {job} is the job's name."
+  },
+  {
+    "handler": "server.webhooks.notice.jobWorksAgain",
+    "text": "Job working again",
+    "context": "In a notification about a background job: the title, when one that kept failing worked."
+  },
+  {
+    "handler": "server.webhooks.notice.latestError",
+    "text": "Latest error",
+    "context": "The heading over the most recent error in a notification about a job that keeps failing."
+  },
+  {
+    "handler": "server.webhooks.notice.librariesScanned.one",
+    "text": "{count} library scanned",
+    "context": "In a notification about a library scan: the title. {count} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.librariesScanned.other",
+    "text": "{count} libraries scanned",
+    "context": "In a notification about a library scan: the title. {count} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.libraryAdded.one",
+    "text": "{library} · {count} added",
+    "context": "In a notification about a library scan: the heading over the titles that arrived in one library. {library} is its name; {count} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.libraryAdded.other",
+    "text": "{library} · {count} added",
+    "context": "In a notification about a library scan: the heading over the titles that arrived in one library. {library} is its name; {count} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.libraryScanned",
+    "text": "{library} scanned",
+    "context": "In a notification about a library scan: the title. {library} is the library's name."
+  },
+  {
+    "handler": "server.webhooks.notice.newAccount",
+    "text": "New account",
+    "context": "The title of a notification that an account was made."
+  },
+  {
+    "handler": "server.webhooks.notice.noActionNeeded",
+    "text": "No action needed",
+    "context": "Under a notification that something has recovered."
+  },
+  {
+    "handler": "server.webhooks.notice.noLongerHasRole",
+    "text": "{name} no longer has the {role} role",
+    "context": "In a notification about roles. {name} is the account; {role} is the role's name."
+  },
+  {
+    "handler": "server.webhooks.notice.nowInTheLibrary",
+    "text": "Now in the library",
+    "context": "In a notification about a request, sent where the requests service didn't say who asked: its files were moved into the library."
+  },
+  {
+    "handler": "server.webhooks.notice.onAccount",
+    "text": "On {account}’s account",
+    "context": "In a notification about somebody opening Valence, when their profile is on someone else's account. {account} is the account's name."
+  },
+  {
+    "handler": "server.webhooks.notice.percentFree",
+    "text": "{percent}% free",
+    "context": "In a notification about disk space. {percent} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.percentListened",
+    "text": "{percent}% listened",
+    "context": "In a notification about somebody stopping music or an audiobook. {percent} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.percentWatched",
+    "text": "{percent}% watched",
+    "context": "In a notification about somebody stopping a film or episode. {percent} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.pluginCount",
+    "text": "{count} {name}",
+    "context": "In a notification a plugin sent: a number it reported and what it counts. {count} is the number; {name} is what the plugin called it, such as \"films\"."
+  },
+  {
+    "handler": "server.webhooks.notice.pluginDetail",
+    "text": "{name}: {value}",
+    "context": "In a notification a plugin sent: something it reported, after its name. {name} is what the plugin called it; {value} is what it said."
+  },
+  {
+    "handler": "server.webhooks.notice.publicAddress",
+    "text": "Public IP {address}",
+    "context": "In a notification that the download VPN is connected: the address it is seen from. {address} is an IP address."
+  },
+  {
+    "handler": "server.webhooks.notice.rating",
+    "text": "★ {rating}",
+    "context": "In a notification about a title added to the library: its rating out of ten. {rating} is a number such as 7.4."
+  },
+  {
+    "handler": "server.webhooks.notice.reachableAgain",
+    "text": "Reachable again",
+    "context": "In a notification that a service answers again."
+  },
+  {
+    "handler": "server.webhooks.notice.readyToListen",
+    "text": "{asker}’s request is ready to listen to",
+    "context": "In a notification about a music request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.readyToRead",
+    "text": "{asker}’s request is ready to read",
+    "context": "In a notification about a book request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.readyToWatch",
+    "text": "{asker}’s request is ready to watch",
+    "context": "In a notification about a film or series request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestDeclined",
+    "text": "{asker}’s request was declined",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestedAlbum",
+    "text": "{asker} requested this album",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestedArtist",
+    "text": "{asker} requested this artist",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestedBook",
+    "text": "{asker} requested this book",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestedBookSeries",
+    "text": "{asker} requested this book series",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestedFilm",
+    "text": "{asker} requested this film",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestedSeries",
+    "text": "{asker} requested this series",
+    "context": "In a notification about a request. {asker} is who asked."
+  },
+  {
+    "handler": "server.webhooks.notice.requestsBack",
+    "text": "Requests service is back",
+    "context": "The title of a notification that Valence's requests service answers again."
+  },
+  {
+    "handler": "server.webhooks.notice.requestsDown",
+    "text": "Couldn’t reach the requests service",
+    "context": "The title of a notification that Valence's requests service isn't answering."
+  },
+  {
+    "handler": "server.webhooks.notice.respondingAgain",
+    "text": "Responding again",
+    "context": "In a notification that a service answers again."
+  },
+  {
+    "handler": "server.webhooks.notice.roleGiven",
+    "text": "Role given",
+    "context": "The title of a notification that somebody was given a role."
+  },
+  {
+    "handler": "server.webhooks.notice.roleTakenAway",
+    "text": "Role taken away",
+    "context": "The title of a notification that somebody lost a role."
+  },
+  {
+    "handler": "server.webhooks.notice.runningOutOfSpace",
+    "text": "Running out of space",
+    "context": "The title of a notification that a disk is nearly full."
+  },
+  {
+    "handler": "server.webhooks.notice.seasons",
+    "text": "Seasons {seasons}",
+    "context": "In a notification about a series request: the seasons asked for. {seasons} is a list such as \"1–4, 6 and 7\"."
+  },
+  {
+    "handler": "server.webhooks.notice.sentToClient",
+    "text": "Sent to {client}",
+    "context": "In a notification that a download started. {client} is the download client, such as qBittorrent."
+  },
+  {
+    "handler": "server.webhooks.notice.serverCanReachThisWebhook",
+    "text": "{server} can reach this webhook",
+    "context": "The title of the test message sent to check a webhook works. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
+  },
+  {
+    "handler": "server.webhooks.notice.spaceFreedUp",
+    "text": "Space freed up",
+    "context": "The title of a notification that a disk that was nearly full has room again."
+  },
+  {
+    "handler": "server.webhooks.notice.specialsAndSeason",
+    "text": "Specials and season {season}",
+    "context": "In a notification about a series request. {season} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.specialsAndSeasons",
+    "text": "Specials and seasons {seasons}",
+    "context": "In a notification about a series request. {seasons} is a list such as \"1–3\"."
+  },
+  {
+    "handler": "server.webhooks.notice.stayed",
+    "text": "Stayed {span}",
+    "context": "In a notification about somebody closing Valence: how long they had it open. {span} is a length of time such as 2h 3m."
+  },
+  {
+    "handler": "server.webhooks.notice.stoppedAtPosition",
+    "text": "Stopped at {position}",
+    "context": "In a notification about somebody stopping: where they stopped. {position} is a time such as 22:30."
+  },
+  {
+    "handler": "server.webhooks.notice.stoppedAtPositionOf",
+    "text": "Stopped at {position} of {duration}",
+    "context": "In a notification about somebody stopping: where they stopped, out of how long it runs. {position} and {duration} are times such as 22:30 and 45:00."
+  },
+  {
+    "handler": "server.webhooks.notice.testLead",
+    "text": "This is a test message. Nothing needs doing.",
+    "context": "The test message sent to check a webhook works."
+  },
+  {
+    "handler": "server.webhooks.notice.titleEpisodes.one",
+    "text": "{title} · {count} episode",
+    "context": "In a notification about a library scan: a show that arrived and how many of its episodes. {title} is the show; {count} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.titleEpisodes.other",
+    "text": "{title} · {count} episodes",
+    "context": "In a notification about a library scan: a show that arrived and how many of its episodes. {title} is the show; {count} is a number."
+  },
+  {
+    "handler": "server.webhooks.notice.transcoderBack",
+    "text": "Transcoder is back",
+    "context": "The title of a notification that Valence's media service answers again."
+  },
+  {
+    "handler": "server.webhooks.notice.transcoderDown",
+    "text": "Couldn’t reach the transcoder",
+    "context": "The title of a notification that Valence's media service isn't answering."
+  },
+  {
+    "handler": "server.webhooks.notice.triedIdentifier",
+    "text": "Tried {identifier}",
+    "context": "In a notification that a sign-in was refused: the email address or username somebody tried. {identifier} is what they typed."
+  },
+  {
+    "handler": "server.webhooks.notice.vpnDown",
+    "text": "Download VPN is down",
+    "context": "The title of a notification that the VPN the requests service downloads through has dropped."
+  },
+  {
+    "handler": "server.webhooks.notice.vpnUp",
+    "text": "Download VPN is up",
+    "context": "The title of a notification that the VPN the requests service downloads through is connected."
+  },
+  {
+    "handler": "server.webhooks.notice.wasGivenRole",
+    "text": "{name} was given the {role} role",
+    "context": "In a notification about roles. {name} is the account; {role} is the role's name, such as Administrator."
+  },
+  {
+    "handler": "server.webhooks.openedServerOn",
+    "text": "{viewer} opened {server} on {device}.",
+    "context": "A one-line notification that somebody opened the app. {viewer} is who; {device} is the device. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
+  },
+  {
+    "handler": "server.webhooks.openedServerOnFrom",
+    "text": "{viewer} opened {server} on {device} from {address}.",
+    "context": "A one-line notification that somebody opened the app. {viewer} is who; {device} is the device; {address} is the network address. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
   },
   {
     "handler": "server.webhooks.stoppedListening",
@@ -35416,9 +35646,24 @@
     "context": "A webhook message sent when somebody stops watching something part of the way through. {viewer} is who; {item} is what they watched; {percent} is how far through they got."
   },
   {
+    "handler": "server.webhooks.testSentence",
+    "text": "This is a test message. {server} can reach this webhook.",
+    "context": "The one-line test message sent to check a webhook works. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
+  },
+  {
     "handler": "server.webhooks.theQueuedEventCouldNotBe",
     "text": "Couldn’t read the queued event.",
     "context": "Why a webhook delivery failed, shown in the webhooks panel (from `runWebhookDelivery`)."
+  },
+  {
+    "handler": "server.webhooks.viewerClosedServer",
+    "text": "{viewer} closed {server}",
+    "context": "The title of a notification that somebody closed the app. {viewer} is who. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
+  },
+  {
+    "handler": "server.webhooks.viewerOpenedServer",
+    "text": "{viewer} opened {server}",
+    "context": "The title of a notification that somebody opened the app. {viewer} is who. {server} is the server's name: Valence, or the name its administrator gave it under Branding."
   },
   {
     "handler": "server.webhooks.withHowToFix",

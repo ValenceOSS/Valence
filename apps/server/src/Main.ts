@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { createDatabaseViewingState } from '@ValenceServer/plugins/host/createDatabaseViewingState';
 import { measurePictureFraming } from '@ValenceServer/requests/trailers/measurePictureFraming';
@@ -308,7 +309,7 @@ import type { MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
 import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
 import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
-import { webhookIconOf } from '@ValenceServer/webhooks/webhookIconOf';
+import { webhookBrandOf } from '@ValenceServer/webhooks/webhookBrandOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'];
@@ -3417,7 +3418,11 @@ const jobs = createJobQueue({
           subscriptions: webhookSubscriptions,
           subscriptionId: parsed.data.subscriptionId,
           payload: parsed.data.payload,
-          iconUrl: webhookIconOf(env.BETTER_AUTH_URL),
+          brand: webhookBrandOf(
+            env.BETTER_AUTH_URL,
+            BrandSettingsSchema.catch(NO_BRAND).parse((await settings.read()).brand),
+            await brandLogo.address(),
+          ),
         });
 
         if (!delivered) {

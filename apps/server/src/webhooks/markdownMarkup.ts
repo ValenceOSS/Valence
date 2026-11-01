@@ -19,6 +19,15 @@ const escapeMarkdown = (text: string): string =>
 const markdownMarkup: NoticeMarkup = {
   escape: escapeMarkdown,
   bold: (escaped) => `**${escaped}**`,
+  code: (text) => `\`${text.replaceAll('`', 'ˋ')}\``,
+  quote: (escaped) =>
+    escaped
+      .split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n'),
+  link: (escapedLabel, url) => `[${escapedLabel}](${url.replaceAll(')', '%29')})`,
+  bullet: (escaped) => `- ${escaped}`,
+  small: (escaped) => escaped,
 };
 
 export { markdownMarkup };

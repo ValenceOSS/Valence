@@ -9,6 +9,8 @@ import { pushoverMessageFor } from './pushoverMessageFor';
 import { slackMessageFor } from './slackMessageFor';
 import { telegramMessageFor } from './telegramMessageFor';
 import { webhookNoticeFor } from './webhookNoticeFor';
+import { VALENCE_BRAND } from './VALENCE_BRAND';
+import type { WebhookBrand } from './WebhookBrand';
 import type { PosterAttachment } from './fetchPosterAttachment';
 import { settingsInAddress } from '@ValenceContracts/functions/settingsInAddress';
 import { WEBHOOK_ADDRESS_SETTINGS } from '@ValenceContracts/schemas/Webhook';
@@ -35,7 +37,7 @@ type WebhookRequestBody = {
 };
 
 type WebhookReceiver = {
-  iconUrl?: string | null;
+  brand?: WebhookBrand;
   address?: string;
   poster?: PosterAttachment | null;
 };
@@ -47,10 +49,10 @@ type WebhookReceiver = {
  * @param payload - What happened.
  * @returns The sentence to send.
  */
-const sentenceFor = (payload: WebhookPayload): string => {
+const sentenceFor = (payload: WebhookPayload, serverName: string): string => {
   switch (payload.event) {
     case 'webhook.test': {
-      return say('server.webhooks.formatWebhookBody.valenceCanReachThisSubscriptionNothing');
+      return say('server.webhooks.testSentence', { server: serverName });
     }
 
     case 'job.completed': {
@@ -391,24 +393,26 @@ const sentenceFor = (payload: WebhookPayload): string => {
     case 'session.started': {
       const opened = {
         viewer: nameOfViewer(payload.data),
+        server: serverName,
         device: deviceInASentence(payload.data),
       };
 
       return payload.data.address === null
-        ? say('server.webhooks.openedValence', opened)
-        : say('server.webhooks.openedValenceFrom', { ...opened, address: payload.data.address });
+        ? say('server.webhooks.openedServerOn', opened)
+        : say('server.webhooks.openedServerOnFrom', { ...opened, address: payload.data.address });
     }
 
     case 'session.ended': {
       const span = describeSpan(payload.data.lastedSeconds);
       const closed = {
         viewer: nameOfViewer(payload.data),
+        server: serverName,
         device: deviceInASentence(payload.data),
       };
 
       return span === null
-        ? say('server.webhooks.closedValence', closed)
-        : say('server.webhooks.closedValenceAfter', { ...closed, span });
+        ? say('server.webhooks.closedServerOn', closed)
+        : say('server.webhooks.closedServerOnAfter', { ...closed, span });
     }
 
     case 'plugin.event': {
@@ -448,7 +452,7 @@ const withHowToFix = (sentence: string, docs: string | null): string =>
 const formatWebhookBody = (
   preset: WebhookPreset,
   payload: WebhookPayload,
-  { iconUrl = null, address = '', poster = null }: WebhookReceiver = {},
+  { brand = VALENCE_BRAND, address = '', poster = null }: WebhookReceiver = {},
 ): WebhookRequestBody => {
   const settings = settingsInAddress(address, [
     ...WEBHOOK_ADDRESS_SETTINGS[preset].required,
@@ -462,7 +466,7 @@ const formatWebhookBody = (
 
     case 'discord': {
       const mentions = discordMentionsOf(payload);
-      const embeds = [discordEmbedFor(payload, sentenceFor(payload), iconUrl)];
+      const embeds = [discordEmbedFor(payload, brand)];
 
       return {
         body: JSON.stringify(
@@ -479,33 +483,34 @@ const formatWebhookBody = (
     }
 
     case 'slack': {
-      const sentence = sentenceFor(payload);
+      const sentence = sentenceFor(payload, brand.name);
 
       return {
-        body: JSON.stringify(slackMessageFor(webhookNoticeFor(payload, sentence), sentence)),
+        body: JSON.stringify(slackMessageFor(webhookNoticeFor(payload, brand.name), sentence)),
         contentType: 'application/json',
       };
     }
 
     case 'telegram': {
       return {
-        body: JSON.stringify(
-          telegramMessageFor(webhookNoticeFor(payload, sentenceFor(payload)), settings),
-        ),
+        body: JSON.stringify(telegramMessageFor(webhookNoticeFor(payload, brand.name), settings)),
         contentType: 'application/json',
       };
     }
 
     case 'ntfy': {
       return {
-        body: withHowToFix(sentenceFor(payload), 'docs' in payload.data ? payload.data.docs : null),
+        body: withHowToFix(
+          sentenceFor(payload, brand.name),
+          'docs' in payload.data ? payload.data.docs : null,
+        ),
         contentType: 'text/plain',
       };
     }
 
     case 'gotify': {
       return {
-        body: JSON.stringify(gotifyMessageFor(webhookNoticeFor(payload, sentenceFor(payload)))),
+        body: JSON.stringify(gotifyMessageFor(webhookNoticeFor(payload, brand.name))),
         contentType: 'application/json',
       };
     }
@@ -514,7 +519,7 @@ const formatWebhookBody = (
       return {
         body: JSON.stringify(
           pushoverMessageFor(
-            webhookNoticeFor(payload, sentenceFor(payload)),
+            webhookNoticeFor(payload, brand.name),
             settings,
             payload.occurredAt,
             poster,
@@ -526,7 +531,7 @@ const formatWebhookBody = (
 
     case 'apprise': {
       return {
-        body: JSON.stringify(appriseMessageFor(webhookNoticeFor(payload, sentenceFor(payload)))),
+        body: JSON.stringify(appriseMessageFor(webhookNoticeFor(payload, brand.name))),
         contentType: 'application/json',
       };
     }

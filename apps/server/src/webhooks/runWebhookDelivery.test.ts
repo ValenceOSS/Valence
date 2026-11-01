@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { VALENCE_BRAND } from './VALENCE_BRAND';
 import { WEBHOOK_PAYLOAD_VERSION } from '@ValenceContracts/schemas/Webhook';
 import { createMemoryWebhookStore } from './createMemoryWebhookStore';
 import { runWebhookDelivery } from './runWebhookDelivery';
@@ -57,7 +58,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl,
     });
 
@@ -72,7 +73,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: answering(503),
     });
 
@@ -86,7 +87,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: answering(503),
     });
 
@@ -106,7 +107,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl,
     });
 
@@ -124,7 +125,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl,
     });
 
@@ -139,7 +140,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: answering(200),
     });
 
@@ -155,7 +156,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: answering(503),
     });
 
@@ -163,7 +164,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: answering(200),
     });
 
@@ -181,7 +182,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: JSON.stringify({ version: 99, event: 'nothing.happened' }),
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl,
     });
 
@@ -231,7 +232,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl,
     });
 
@@ -248,7 +249,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: answering(204),
     });
 
@@ -269,7 +270,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: first,
     });
 
@@ -277,7 +278,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
-      iconUrl: null,
+      brand: VALENCE_BRAND,
       fetchImpl: second,
     });
 

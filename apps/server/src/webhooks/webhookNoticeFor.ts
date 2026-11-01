@@ -1,5 +1,6 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
-import { describeArrival } from './describeArrival';
+import { clipText } from './clipText';
+import { describeSeasons } from './describeSeasons';
 import { describeSpan } from './describeSpan';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
@@ -9,61 +10,112 @@ import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type {
+  ArrivedTitle,
   WebhookEvent,
   WebhookPayload,
   WebhookRequest,
 } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
-import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { sayParts } from '@ValenceI18n/sayParts';
+import type { StringKey } from '@ValenceI18n/StringKey';
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 
 type WebhookTone = 'failure' | 'attention' | 'arrival' | 'viewing' | 'quiet';
 
-type NoticeField = {
-  name: string;
-  value: string;
-  inline: boolean;
+type NoticeWords = readonly (string | { strong: string })[];
+
+type NoticeDetail = { label: string | null; text: string; look: 'quote' | 'code' };
+
+type NoticeLink = { label: string; url: string };
+
+type NoticeSection = { heading: string; lines: string[] };
+
+type WebhookNotice = {
+  title: string;
+  lead: NoticeWords;
+  context: string[];
+  body: string;
+  tags: string[];
+  details: NoticeDetail[];
+  sections: NoticeSection[];
+  link: NoticeLink | null;
+  footer: string | null;
+  tone: WebhookTone;
+  isUrgent: boolean;
+  posterUrl: string | null;
 };
 
-/**
- * Says how far through something somebody got.
- *
- * @param positionSeconds - Where they stopped.
- * @param durationSeconds - How long it runs.
- * @returns The position, or null where nothing said.
- */
-const progressOf = (
-  positionSeconds: number | null,
-  durationSeconds: number | null,
-): string | null => {
-  if (positionSeconds === null) {
-    return null;
+type NoticeParts = Pick<WebhookNotice, 'title' | 'tone'> &
+  Partial<Omit<WebhookNotice, 'title' | 'tone' | 'isUrgent'>>;
+
+type RequestEvent = Extract<
+  WebhookPayload,
+  {
+    event:
+      | 'requests.made'
+      | 'requests.approved'
+      | 'requests.refused'
+      | 'requests.chosen'
+      | 'requests.filed'
+      | 'requests.available';
   }
+>;
 
-  const minutes = Math.floor(positionSeconds / 60);
-  const seconds = Math.floor(positionSeconds % 60)
-    .toString()
-    .padStart(2, '0');
-
-  if (durationSeconds === null || durationSeconds === 0) {
-    return `${minutes.toString()}:${seconds}`;
+type ServerEvent = Extract<
+  WebhookPayload,
+  {
+    event:
+      | 'webhook.test'
+      | 'job.completed'
+      | 'job.failed'
+      | 'job.stalled'
+      | 'job.working'
+      | 'library.scanned'
+      | 'catalogue.unreachable'
+      | 'catalogue.reachable'
+      | 'transcoder.unreachable'
+      | 'transcoder.reachable'
+      | 'disk.low'
+      | 'disk.recovered';
   }
+>;
 
-  const through = Math.round((positionSeconds / durationSeconds) * 100);
+type RequestsServiceEvent = Extract<
+  WebhookPayload,
+  {
+    event:
+      | 'requests.unreachable'
+      | 'requests.reachable'
+      | 'requests.vpnDown'
+      | 'requests.vpnUp'
+      | 'requests.indexerFailing'
+      | 'requests.indexerWorking'
+      | 'requests.downloadStarted'
+      | 'requests.downloadFailed';
+  }
+>;
 
-  return `${minutes.toString()}:${seconds} (${through.toString()}%)`;
-};
+type PeopleEvent = Extract<
+  WebhookPayload,
+  {
+    event:
+      | 'auth.succeeded'
+      | 'auth.failed'
+      | 'profile.chosen'
+      | 'account.created'
+      | 'account.deleted'
+      | 'account.roleChanged'
+      | 'session.started'
+      | 'session.ended';
+  }
+>;
 
 const GENRES_SHOWN = 4;
 
-/**
- * Says what a catalogue thought of something, out of ten.
- *
- * @param rating - What it scored.
- * @returns The rating, or null where nothing scored it.
- */
-const ratingOf = (rating: number | null): string | null =>
-  rating === null || rating <= 0 ? null : `${rating.toFixed(1)}/10`;
+const PLUGIN_DETAILS_SHOWN = 10;
+
+const TAG_LIMIT = 80;
 
 const PLAYED: Record<PlaybackMode, () => string> = {
   DirectPlay: () => say('server.webhooks.discordEmbedFor.directPlay'),
@@ -72,311 +124,823 @@ const PLAYED: Record<PlaybackMode, () => string> = {
   Transcode: () => say('common.transcode'),
 };
 
-const REQUEST_KINDS: Record<MediaRequestKind, () => string> = {
-  film: () => say('common.film'),
-  series: () => say('common.series'),
-  artist: () => say('common.artist'),
-  album: () => say('common.album'),
-  book: () => say('common.book'),
-  bookSeries: () => say('common.bookSeries'),
+const REQUESTED: Record<MediaRequestKind, StringKey> = {
+  film: 'server.webhooks.notice.requestedFilm',
+  series: 'server.webhooks.notice.requestedSeries',
+  artist: 'server.webhooks.notice.requestedArtist',
+  album: 'server.webhooks.notice.requestedAlbum',
+  book: 'server.webhooks.notice.requestedBook',
+  bookSeries: 'server.webhooks.notice.requestedBookSeries',
 };
 
-type NoticeSection = {
-  heading: string;
-  body: string;
-};
-
-type NoticeParts = {
-  title: string;
-  description: string;
-  tone: WebhookTone;
-  fields: (NoticeField | null)[];
-  sections?: NoticeSection[];
-  posterUrl?: string | null;
-};
-
-type WebhookNotice = {
-  title: string;
-  description: string;
-  tone: WebhookTone;
-  isUrgent: boolean;
-  fields: NoticeField[];
-  sections: NoticeSection[];
-  posterUrl: string | null;
+const READY: Record<MediaRequestKind, StringKey> = {
+  film: 'server.webhooks.notice.readyToWatch',
+  series: 'server.webhooks.notice.readyToWatch',
+  artist: 'server.webhooks.notice.readyToListen',
+  album: 'server.webhooks.notice.readyToListen',
+  book: 'server.webhooks.notice.readyToRead',
+  bookSeries: 'server.webhooks.notice.readyToRead',
 };
 
 /**
- * A labelled detail, or nothing where there is nothing to say under the label.
+ * A name or a thing a notice's sentence is about, set apart from the words around it.
  *
- * @param name - The label.
- * @param value - What it says, if anything.
- * @param inline - Whether it can sit beside others rather than taking a line of its own.
- * @returns The detail, or null.
+ * @param text - The name.
+ * @returns It, marked to be set apart.
  */
-const field = (name: string, value: string | null, inline = true): NoticeField | null =>
-  value === null || value === '' ? null : { name, value, inline };
+const strong = (text: string): { strong: string } => ({ strong: text });
 
-type RequestNotice = {
-  headline:
-    | 'server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestMadeTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestApprovedTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestDeclinedTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestDownloadingTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestImportedTitle'
-    | 'server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle';
-  tone: WebhookTone;
-  fields: (NoticeField | null)[];
+/**
+ * One of the strings file's sentences with its gaps filled, some of them set apart.
+ *
+ * @param key - The sentence.
+ * @param fillings - What goes in each gap.
+ * @returns The sentence, in parts.
+ */
+const words = (
+  key: StringKey,
+  fillings: Readonly<Record<string, string | { strong: string }>>,
+): NoticeWords => sayParts(key, fillings);
+
+/**
+ * Where a device was, on the small line under a notice: the device, what it reaches Valence
+ * through, and the address it came from.
+ *
+ * @param where - The device, its client, and its address where each is known.
+ * @returns The parts of the line.
+ */
+const placesOf = (where: {
+  deviceLabel: string;
+  clientLabel: string | null;
+  address?: string | null;
+}): string[] => [
+  where.deviceLabel,
+  ...(where.clientLabel === null ? [] : [where.clientLabel]),
+  ...(where.address === null || where.address === undefined
+    ? []
+    : [say('server.webhooks.notice.fromAddress', { address: where.address })]),
+];
+
+/**
+ * Says where somebody stopped, as a time.
+ *
+ * @param positionSeconds - Where they stopped.
+ * @returns The position.
+ */
+const positionOf = (positionSeconds: number): string => {
+  const hours = Math.floor(positionSeconds / 3600);
+  const minutes = Math.floor((positionSeconds % 3600) / 60);
+  const seconds = Math.floor(positionSeconds % 60)
+    .toString()
+    .padStart(2, '0');
+
+  return hours === 0
+    ? `${minutes.toString()}:${seconds}`
+    : `${hours.toString()}:${minutes.toString().padStart(2, '0')}:${seconds}`;
 };
 
 /**
- * A request's event drawn as Seerr draws one: what happened to which request in the title, the
- * title's summary beneath, its poster beside, and who asked and where it has got to as fields.
+ * A title with its year, the way a request names it.
  *
  * @param request - The request.
- * @param notice - What happened, its tone, and anything the event adds.
- * @returns The notice's parts.
+ * @returns The title.
  */
-const requestPartsFor = (request: WebhookRequest, notice: RequestNotice): NoticeParts => {
-  const title =
-    request.year === null
-      ? request.title
-      : say('screens.importWizard.importReportView.titleYear', {
-          title: request.title,
-          year: request.year.toString(),
-        });
+const titleOfRequest = (request: WebhookRequest): string =>
+  request.year === null
+    ? request.title
+    : say('screens.importWizard.importReportView.titleYear', {
+        title: request.title,
+        year: request.year.toString(),
+      });
 
-  return {
-    title: say(notice.headline, { kind: REQUEST_KINDS[request.kind](), title }),
-    description: request.overview ?? '',
-    tone: notice.tone,
-    posterUrl: request.posterUrl,
-    fields: [
-      field(
-        say('screens.requests.describeRequestFilters.askedBy'),
-        nameOfAsker({ profileName: request.requestedByProfile, household: request.requestedBy }),
-      ),
-      field(say('common.status'), REQUEST_STATE_NAMES[request.state]),
-      field(
-        say('screens.seasonChooser.seasons'),
-        request.kind === 'series' && request.seasons !== null ? request.seasons.join(', ') : null,
-      ),
-      field(say('common.artist'), request.artistName),
-      ...notice.fields,
-    ],
-  };
+/**
+ * Who asked for a request, as a notice names them.
+ *
+ * @param request - The request.
+ * @returns Who asked.
+ */
+const askerOf = (request: WebhookRequest): { strong: string } =>
+  strong(nameOfAsker({ profileName: request.requestedByProfile, household: request.requestedBy }));
+
+/**
+ * What a request is for, on the small line: which seasons of a series, or whose album.
+ *
+ * @param request - The request.
+ * @returns The line's parts.
+ */
+const requestContextOf = (request: WebhookRequest): string[] => {
+  const seasons =
+    request.kind === 'series' && request.seasons !== null ? describeSeasons(request.seasons) : null;
+
+  return [
+    ...(seasons === null ? [] : [seasons]),
+    ...(request.artistName === null
+      ? []
+      : [say('server.webhooks.notice.byArtist', { artist: request.artistName })]),
+  ];
 };
 
 /**
- * How a request's event is drawn, where it carries the request.
+ * A request's event: the title it is for and its poster, who did what to it, which seasons or whose
+ * album, and what the event adds. The title's summary is told when it is asked for and when it
+ * arrives, and not at every step between.
+ *
+ * @param request - The request.
+ * @param event - What happened, its tone, and anything the event adds.
+ * @returns The notice's parts.
+ */
+const requestParts = (
+  request: WebhookRequest,
+  event: Pick<NoticeParts, 'lead' | 'tone' | 'details' | 'tags'> & { tellsTheStory?: boolean },
+): NoticeParts => ({
+  title: titleOfRequest(request),
+  lead: event.lead ?? [],
+  context: requestContextOf(request),
+  body: event.tellsTheStory === true ? (request.overview ?? '') : '',
+  tags: event.tags ?? [],
+  details: event.details ?? [],
+  tone: event.tone,
+  posterUrl: request.posterUrl,
+  footer: say('common.requests'),
+});
+
+/**
+ * A request's event where it carries its request.
  *
  * @param payload - The event.
  * @returns The notice's parts, or nothing for an event about no request.
  */
-const requestEventPartsFor = (payload: WebhookPayload): NoticeParts | null => {
+const requestEventParts = (payload: RequestEvent): NoticeParts | null => {
   if (payload.event === 'requests.made' && payload.data.request !== null) {
     const { request } = payload.data;
     const isWaiting = request.state === 'awaitingApproval';
 
-    return requestPartsFor(request, {
-      headline: isWaiting
-        ? 'server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle'
-        : 'server.webhooks.discordEmbedFor.kindRequestMadeTitle',
+    return requestParts(request, {
+      lead: words(REQUESTED[request.kind], { asker: askerOf(request) }),
+      tags: isWaiting ? [REQUEST_STATE_NAMES.awaitingApproval] : [],
       tone: isWaiting ? 'attention' : 'quiet',
-      fields: [],
+      tellsTheStory: true,
     });
   }
 
   if (payload.event === 'requests.approved' && payload.data.request !== null) {
     const { request, approvedBy } = payload.data;
+    const asker = askerOf(request);
 
-    return requestPartsFor(request, {
-      headline:
+    return requestParts(request, {
+      lead:
         approvedBy === null
-          ? 'server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle'
-          : 'server.webhooks.discordEmbedFor.kindRequestApprovedTitle',
+          ? words('server.webhooks.notice.approvedAutomatically', { asker })
+          : words('server.webhooks.notice.approvedRequest', {
+              approver: strong(approvedBy),
+              asker,
+            }),
       tone: 'quiet',
-      fields: [field(say('server.webhooks.discordEmbedFor.approvedBy'), approvedBy)],
     });
   }
 
   if (payload.event === 'requests.refused' && payload.data.request !== null) {
-    return requestPartsFor(payload.data.request, {
-      headline: 'server.webhooks.discordEmbedFor.kindRequestDeclinedTitle',
+    const { request, reason } = payload.data;
+
+    return requestParts(request, {
+      lead: words('server.webhooks.notice.requestDeclined', { asker: askerOf(request) }),
+      details:
+        reason === null
+          ? []
+          : [{ label: say('server.webhooks.discordEmbedFor.reason'), text: reason, look: 'quote' }],
       tone: 'failure',
-      fields: [field(say('server.webhooks.discordEmbedFor.reason'), payload.data.reason, false)],
     });
   }
 
   if (payload.event === 'requests.chosen' && payload.data.request !== null) {
-    return requestPartsFor(payload.data.request, {
-      headline: 'server.webhooks.discordEmbedFor.kindRequestDownloadingTitle',
+    const { request, release } = payload.data;
+
+    return requestParts(request, {
+      lead: words('server.webhooks.notice.foundARelease', { asker: askerOf(request) }),
+      details: [{ label: say('common.release'), text: release, look: 'code' }],
       tone: 'viewing',
-      fields: [field(say('common.release'), payload.data.release, false)],
     });
   }
 
   if (payload.event === 'requests.filed' && payload.data.request !== null) {
-    return requestPartsFor(payload.data.request, {
-      headline: 'server.webhooks.discordEmbedFor.kindRequestImportedTitle',
+    const { request } = payload.data;
+
+    return requestParts(request, {
+      lead: words('server.webhooks.notice.inTheLibrary', { asker: askerOf(request) }),
       tone: 'viewing',
-      fields: [],
     });
   }
 
   if (payload.event === 'requests.available' && payload.data.request !== null) {
-    return requestPartsFor(payload.data.request, {
-      headline: 'server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle',
+    const { request } = payload.data;
+
+    return requestParts(request, {
+      lead: words(READY[request.kind], { asker: askerOf(request) }),
       tone: 'arrival',
-      fields: [],
+      tellsTheStory: true,
     });
   }
 
   return null;
 };
 
-const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
+/**
+ * A title that arrived in a library scan, and how many of its episodes where there were several.
+ *
+ * @param arrival - The title.
+ * @returns How it is listed.
+ */
+const arrivalOf = (arrival: ArrivedTitle): string =>
+  arrival.episodes <= 1
+    ? arrival.title
+    : sayCount('server.webhooks.notice.titleEpisodes', arrival.episodes, {
+        title: arrival.title,
+      });
+
+/**
+ * A detail a plugin sent with its event, as a tag: a number before what it counts, anything else
+ * after its name.
+ *
+ * @param name - What the plugin called the detail.
+ * @param value - Its value.
+ * @returns The tag, or nothing for a detail with no value.
+ */
+const pluginTagOf = (name: string, value: string | number | boolean | null): string | null => {
+  if (value === null) {
+    return null;
+  }
+
+  return typeof value === 'number'
+    ? say('server.webhooks.notice.pluginCount', { count: value.toString(), name })
+    : say('server.webhooks.notice.pluginDetail', { name, value: String(value) });
+};
+
+/**
+ * A service or job coming back: the title, what it does again, and that nobody need do anything.
+ *
+ * @param title - What came back.
+ * @param lead - What it does again.
+ * @param footer - Which part of Valence it belongs to.
+ * @returns The notice's parts.
+ */
+const backAgain = (title: string, lead: NoticeWords, footer: string): NoticeParts => ({
+  title,
+  lead,
+  context: [say('server.webhooks.notice.noActionNeeded')],
+  tone: 'arrival',
+  footer,
+});
+
+/**
+ * A problem, quoted, with how to put it right where Valence's documentation says.
+ *
+ * @param problem - What went wrong.
+ * @param docs - Where the documentation explains it, where it does.
+ * @returns The details and the link.
+ */
+const problemOf = (
+  problem: string,
+  docs: string | null = null,
+): Pick<NoticeParts, 'details' | 'link'> => ({
+  details: [{ label: null, text: problem, look: 'quote' }],
+  link:
+    docs === null ? null : { label: say('server.webhooks.discordEmbedFor.howToFixIt'), url: docs },
+});
+
+/**
+ * A request's event from a requests service too old to send the request with it: only what the
+ * event itself carries.
+ *
+ * @param payload - The event.
+ * @returns The notice's parts.
+ */
+const bareRequestParts = (payload: RequestEvent): NoticeParts => {
+  const footer = say('common.requests');
+
   switch (payload.event) {
-    case 'media.added':
-    case 'media.removed': {
-      const arriving = payload.event === 'media.added';
-
-      const where = arriving
-        ? say('server.webhooks.discordEmbedFor.arrivedInLibraryName', {
-            libraryName: payload.data.libraryName,
-          })
-        : say('server.webhooks.discordEmbedFor.noLongerInLibraryName', {
-            libraryName: payload.data.libraryName,
-          });
-
-      return {
-        title: nameOfItem(payload.data),
-        description: payload.data.overview ?? where,
-        tone: arriving ? 'arrival' : 'quiet',
-        posterUrl: payload.data.posterUrl,
-        fields: [
-          field(say('common.kind'), MEDIA_KIND_LABELS[payload.data.kind]),
-          field(say('common.library'), payload.data.libraryName),
-          field(
-            say('server.webhooks.discordEmbedFor.runtime'),
-            describeSpan(payload.data.durationSeconds),
-          ),
-          field(say('common.quality'), payload.data.quality),
-          field(say('common.rating'), ratingOf(payload.data.rating)),
-          field(
-            say('server.webhooks.discordEmbedFor.genres'),
-            payload.data.genres.slice(0, GENRES_SHOWN).join(', '),
-          ),
-        ],
-      };
-    }
-
-    case 'playback.started': {
-      return {
-        title: nameOfItem(payload.data.item),
-        description: say(
-          isListenedTo(payload.data.item.kind)
-            ? 'server.webhooks.discordEmbedFor.viewerStartedListening'
-            : 'server.webhooks.discordEmbedFor.viewerStartedWatching',
-          { viewer: nameOfViewer(payload.data) },
-        ),
-        tone: 'viewing',
-        posterUrl: payload.data.item.posterUrl,
-        fields: [
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(say('common.playing'), PLAYED[payload.data.mode]()),
-          field(say('common.quality'), payload.data.item.quality),
-          field(
-            say('server.webhooks.discordEmbedFor.runtime'),
-            describeSpan(payload.data.item.durationSeconds),
-          ),
-        ],
-      };
-    }
-
-    case 'playback.stopped': {
-      return {
-        title: nameOfItem(payload.data.item),
-        description: say(
-          isListenedTo(payload.data.item.kind)
-            ? 'server.webhooks.discordEmbedFor.viewerStoppedListening'
-            : 'server.webhooks.discordEmbedFor.viewerStoppedWatching',
-          { viewer: nameOfViewer(payload.data) },
-        ),
-        tone: 'viewing',
-        posterUrl: payload.data.item.posterUrl,
-        fields: [
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(
-            say('server.webhooks.discordEmbedFor.stoppedAt'),
-            progressOf(payload.data.positionSeconds, payload.data.durationSeconds),
-          ),
-        ],
-      };
-    }
-
-    case 'session.started': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.viewerOpenedValence', {
-          viewer: nameOfViewer(payload.data),
-        }),
-        description: '',
-        tone: 'viewing',
-        fields: [
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
-          field(
-            say('common.account'),
-            payload.data.profileName === null ? null : payload.data.accountName,
-          ),
-          field(say('server.webhooks.discordEmbedFor.guestOf'), payload.data.guestOf),
-        ],
-      };
-    }
-
-    case 'session.ended': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.viewerClosedValence', {
-          viewer: nameOfViewer(payload.data),
-        }),
-        description: '',
-        tone: 'quiet',
-        fields: [
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(
-            say('server.webhooks.discordEmbedFor.stayed'),
-            describeSpan(payload.data.lastedSeconds),
-          ),
-        ],
-      };
-    }
-
-    case 'plugin.event': {
+    case 'requests.made': {
       return {
         title: payload.data.title,
-        description: say('common.fromPluginName', { pluginName: payload.data.pluginName }),
+        lead: words(REQUESTED[payload.data.kind], {
+          asker: strong(
+            nameOfAsker({
+              profileName: payload.data.profileName,
+              household: payload.data.requestedBy,
+            }),
+          ),
+        }),
         tone: 'quiet',
-        fields: Object.entries(payload.data.detail)
-          .slice(0, 10)
-          .map(([name, value]) => field(name, value === null ? null : String(value))),
+        footer,
       };
     }
 
+    case 'requests.approved': {
+      const { approvedBy } = payload.data;
+
+      return {
+        title: payload.data.title,
+        lead:
+          approvedBy === null
+            ? [say('server.webhooks.notice.approvedItAutomatically')]
+            : words('server.webhooks.notice.approverApprovedIt', { approver: strong(approvedBy) }),
+        tone: 'quiet',
+        footer,
+      };
+    }
+
+    case 'requests.refused': {
+      return {
+        title: payload.data.title,
+        lead: [say('server.webhooks.notice.itWasDeclined')],
+        details:
+          payload.data.reason === null
+            ? []
+            : [
+                {
+                  label: say('server.webhooks.discordEmbedFor.reason'),
+                  text: payload.data.reason,
+                  look: 'quote',
+                },
+              ],
+        tone: 'failure',
+        footer,
+      };
+    }
+
+    case 'requests.chosen': {
+      return {
+        title: payload.data.title,
+        lead: [say('server.webhooks.notice.foundAReleaseForIt')],
+        details: [{ label: say('common.release'), text: payload.data.release, look: 'code' }],
+        tone: 'viewing',
+        footer,
+      };
+    }
+
+    case 'requests.filed': {
+      return {
+        title: payload.data.title,
+        lead: [say('server.webhooks.notice.nowInTheLibrary')],
+        tone: 'viewing',
+        footer,
+      };
+    }
+
+    case 'requests.available': {
+      return {
+        title: payload.data.title,
+        lead: words('server.webhooks.notice.readyToWatch', {
+          asker: strong(
+            nameOfAsker({
+              profileName: payload.data.profileName,
+              household: payload.data.requestedBy,
+            }),
+          ),
+        }),
+        tone: 'arrival',
+        footer,
+      };
+    }
+  }
+};
+
+/**
+ * What a library scan found: how many titles arrived, changed and went, and what arrived in each
+ * library.
+ *
+ * @param data - The scan.
+ * @returns The notice's parts.
+ */
+const scanParts = (
+  data: Extract<WebhookPayload, { event: 'library.scanned' }>['data'],
+): NoticeParts => {
+  const { libraries, added, updated, removed, failed } = data;
+  const [only] = libraries;
+
+  return {
+    title:
+      libraries.length === 1 && only !== undefined
+        ? say('server.webhooks.notice.libraryScanned', { library: only.libraryName })
+        : sayCount('server.webhooks.notice.librariesScanned', libraries.length),
+    context: libraries.length === 1 ? [] : libraries.map((one) => one.libraryName),
+    tags: [
+      sayCount('server.jobs.phase.arrived', added),
+      sayCount('common.count.updated', updated),
+      sayCount('common.count.removed', removed),
+      ...(failed === 0 ? [] : [sayCount('common.count.unreadable', failed)]),
+    ],
+    sections: libraries.flatMap((one) =>
+      one.arrived.length === 0
+        ? []
+        : [
+            {
+              heading: sayCount('server.webhooks.notice.libraryAdded', one.added, {
+                library: one.libraryName,
+              }),
+              lines: [
+                ...one.arrived.map(arrivalOf),
+                ...(one.arrivedNotListed === 0
+                  ? []
+                  : [
+                      say('server.webhooks.discordEmbedFor.andMore', {
+                        count: one.arrivedNotListed.toString(),
+                      }),
+                    ]),
+              ],
+            },
+          ],
+    ),
+    tone: added > 0 ? 'arrival' : 'quiet',
+    footer: say('common.libraries'),
+  };
+};
+
+/**
+ * What somebody watching or listening is doing, for a playback event.
+ *
+ * @param payload - The event.
+ * @returns The notice's parts.
+ */
+const playbackParts = (
+  payload: Extract<WebhookPayload, { event: 'playback.started' | 'playback.stopped' }>,
+): NoticeParts => {
+  const { item } = payload.data;
+  const isListening = isListenedTo(item.kind);
+  const viewer = strong(nameOfViewer(payload.data));
+  const shared = {
+    title: nameOfItem(item),
+    context: placesOf(payload.data),
+    tone: 'viewing' as const,
+    posterUrl: item.posterUrl,
+    footer: item.libraryName,
+  };
+
+  if (payload.event === 'playback.started') {
+    const runtime = describeSpan(item.durationSeconds);
+
+    return {
+      ...shared,
+      lead: words(
+        isListening
+          ? 'server.webhooks.discordEmbedFor.viewerStartedListening'
+          : 'server.webhooks.discordEmbedFor.viewerStartedWatching',
+        { viewer },
+      ),
+      tags: [
+        PLAYED[payload.data.mode](),
+        ...(item.quality === null ? [] : [item.quality]),
+        ...(runtime === null ? [] : [runtime]),
+      ],
+    };
+  }
+
+  const { positionSeconds, durationSeconds } = payload.data;
+  const percent =
+    positionSeconds === null || durationSeconds === null || durationSeconds === 0
+      ? null
+      : Math.round((positionSeconds / durationSeconds) * 100).toString();
+
+  return {
+    ...shared,
+    lead: words(
+      isListening
+        ? 'server.webhooks.discordEmbedFor.viewerStoppedListening'
+        : 'server.webhooks.discordEmbedFor.viewerStoppedWatching',
+      { viewer },
+    ),
+    tags: [
+      ...(positionSeconds === null
+        ? []
+        : [
+            durationSeconds === null || durationSeconds === 0
+              ? say('server.webhooks.notice.stoppedAtPosition', {
+                  position: positionOf(positionSeconds),
+                })
+              : say('server.webhooks.notice.stoppedAtPositionOf', {
+                  position: positionOf(positionSeconds),
+                  duration: positionOf(durationSeconds),
+                }),
+          ]),
+      ...(percent === null
+        ? []
+        : [
+            isListening
+              ? say('server.webhooks.notice.percentListened', { percent })
+              : say('server.webhooks.notice.percentWatched', { percent }),
+          ]),
+    ],
+  };
+};
+
+/**
+ * A title arriving in a library or leaving it.
+ *
+ * @param payload - The event.
+ * @returns The notice's parts.
+ */
+const mediaParts = (
+  payload: Extract<WebhookPayload, { event: 'media.added' | 'media.removed' }>,
+): NoticeParts => {
+  const item = payload.data;
+  const isAdded = payload.event === 'media.added';
+  const runtime = describeSpan(item.durationSeconds);
+  const shared = {
+    title: nameOfItem(item),
+    posterUrl: item.posterUrl,
+    footer: item.libraryName,
+  };
+
+  if (!isAdded) {
+    return {
+      ...shared,
+      lead: words('server.webhooks.discordEmbedFor.noLongerInLibraryName', {
+        libraryName: strong(item.libraryName),
+      }),
+      tone: 'quiet',
+    };
+  }
+
+  return {
+    ...shared,
+    lead: words('server.webhooks.discordEmbedFor.arrivedInLibraryName', {
+      libraryName: strong(item.libraryName),
+    }),
+    body: item.overview ?? '',
+    tags: [
+      MEDIA_KIND_LABELS[item.kind],
+      ...(runtime === null ? [] : [runtime]),
+      ...(item.quality === null ? [] : [item.quality]),
+      ...(item.rating === null || item.rating <= 0
+        ? []
+        : [say('server.webhooks.notice.rating', { rating: item.rating.toFixed(1) })]),
+    ],
+    context: item.genres.slice(0, GENRES_SHOWN),
+    tone: 'arrival',
+  };
+};
+
+/**
+ * The notice's parts for an event about the server, its services and its jobs.
+ *
+ * @param payload - The event.
+ * @param serverName - What the server is called.
+ * @returns The notice's parts.
+ */
+const serverParts = (payload: ServerEvent, serverName: string): NoticeParts => {
+  switch (payload.event) {
+    case 'webhook.test': {
+      return {
+        title: say('server.webhooks.notice.serverCanReachThisWebhook', { server: serverName }),
+        lead: [say('server.webhooks.notice.testLead')],
+        tone: 'quiet',
+        footer: say('common.webhooks'),
+      };
+    }
+
+    case 'job.completed': {
+      return {
+        title: say('contracts.schemas.webhook.jobFinished'),
+        lead: words('server.webhooks.notice.jobHasFinished', { job: strong(payload.data.label) }),
+        context: payload.data.subjectName === null ? [] : [payload.data.subjectName],
+        tone: 'quiet',
+        footer: say('common.jobs'),
+      };
+    }
+
+    case 'job.failed': {
+      return {
+        title: say('contracts.schemas.webhook.jobFailed'),
+        lead: words('server.webhooks.notice.jobHasFailed', { job: strong(payload.data.label) }),
+        context: payload.data.subjectName === null ? [] : [payload.data.subjectName],
+        ...problemOf(payload.data.reason),
+        tone: 'failure',
+        footer: say('common.jobs'),
+      };
+    }
+
+    case 'job.stalled': {
+      return {
+        title: say('server.webhooks.notice.jobKeepsFailing'),
+        lead: words(
+          payload.data.everSucceeded
+            ? 'server.webhooks.notice.jobFailsSinceItWorked'
+            : 'server.webhooks.notice.jobHasNeverWorked',
+          { job: strong(payload.data.label) },
+        ),
+        tags: [sayCount('screens.admin.describeAuditDetail.attempts', payload.data.failures)],
+        details: [
+          {
+            label: say('server.webhooks.notice.latestError'),
+            text: payload.data.reason,
+            look: 'quote',
+          },
+        ],
+        tone: 'failure',
+        footer: say('common.jobs'),
+      };
+    }
+
+    case 'job.working': {
+      return backAgain(
+        say('server.webhooks.notice.jobWorksAgain'),
+        words('server.webhooks.notice.jobRunsAgain', { job: strong(payload.data.label) }),
+        say('common.jobs'),
+      );
+    }
+
+    case 'library.scanned': {
+      return scanParts(payload.data);
+    }
+
+    case 'catalogue.unreachable': {
+      return {
+        title: say('server.webhooks.notice.catalogueDown'),
+        lead: [say('server.webhooks.notice.catalogueDownLead')],
+        tone: 'failure',
+        footer: say('common.server'),
+      };
+    }
+
+    case 'catalogue.reachable': {
+      return backAgain(
+        say('server.webhooks.notice.catalogueBack'),
+        [say('server.webhooks.notice.reachableAgain')],
+        say('common.server'),
+      );
+    }
+
+    case 'transcoder.unreachable': {
+      return {
+        title: say('server.webhooks.notice.transcoderDown'),
+        ...problemOf(payload.data.reason),
+        tone: 'failure',
+        footer: say('common.server'),
+      };
+    }
+
+    case 'transcoder.reachable': {
+      return backAgain(
+        say('server.webhooks.notice.transcoderBack'),
+        [say('server.webhooks.notice.respondingAgain')],
+        say('common.server'),
+      );
+    }
+
+    case 'disk.low':
+    case 'disk.recovered': {
+      const { mountPoint, availableBytes, totalBytes } = payload.data;
+      const isLow = payload.event === 'disk.low';
+      const percent = totalBytes === 0 ? 0 : (availableBytes / totalBytes) * 100;
+
+      return {
+        title: isLow
+          ? say('server.webhooks.notice.runningOutOfSpace')
+          : say('server.webhooks.notice.spaceFreedUp'),
+        lead: words('server.webhooks.notice.freeOfTotal', {
+          mount: strong(mountPoint),
+          free: strong(formatBytes(availableBytes)),
+          total: formatBytes(totalBytes),
+        }),
+        context:
+          totalBytes === 0
+            ? []
+            : [
+                say('server.webhooks.notice.percentFree', {
+                  percent: percent < 10 ? percent.toFixed(1) : Math.round(percent).toString(),
+                }),
+              ],
+        tone: isLow ? 'failure' : 'arrival',
+        footer: say('common.server'),
+      };
+    }
+  }
+};
+
+/**
+ * The notice's parts for an event about the requests service itself rather than one request.
+ *
+ * @param payload - The event.
+ * @returns The notice's parts.
+ */
+const requestsServiceParts = (payload: RequestsServiceEvent): NoticeParts => {
+  const footer = say('common.requests');
+
+  switch (payload.event) {
+    case 'requests.unreachable': {
+      return {
+        title: say('server.webhooks.notice.requestsDown'),
+        ...problemOf(payload.data.reason, payload.data.docs),
+        tone: 'failure',
+        footer,
+      };
+    }
+
+    case 'requests.reachable': {
+      return backAgain(
+        say('server.webhooks.notice.requestsBack'),
+        [say('server.webhooks.notice.respondingAgain')],
+        footer,
+      );
+    }
+
+    case 'requests.vpnDown': {
+      return {
+        title: say('server.webhooks.notice.vpnDown'),
+        ...problemOf(payload.data.reason, payload.data.docs),
+        tone: 'failure',
+        footer,
+      };
+    }
+
+    case 'requests.vpnUp': {
+      const { publicAddress, country } = payload.data;
+
+      return {
+        title: say('server.webhooks.notice.vpnUp'),
+        context: [
+          ...(publicAddress === null
+            ? []
+            : [say('server.webhooks.notice.publicAddress', { address: publicAddress })]),
+          ...(country === null ? [] : [country]),
+        ],
+        tone: 'arrival',
+        footer,
+      };
+    }
+
+    case 'requests.indexerFailing': {
+      return {
+        title: say('server.webhooks.notice.indexerFailing'),
+        lead: words('server.webhooks.notice.indexerKeepsFailing', {
+          indexer: strong(payload.data.name),
+        }),
+        ...problemOf(payload.data.problem, payload.data.docs),
+        tone: 'failure',
+        footer,
+      };
+    }
+
+    case 'requests.indexerWorking': {
+      return backAgain(
+        say('server.webhooks.notice.indexerBack'),
+        words('server.webhooks.notice.indexerRespondsAgain', {
+          indexer: strong(payload.data.name),
+        }),
+        footer,
+      );
+    }
+
+    case 'requests.downloadStarted': {
+      return {
+        title: say('contracts.schemas.webhook.downloadStarted'),
+        lead: [strong(payload.data.title)],
+        context: [say('server.webhooks.notice.sentToClient', { client: payload.data.client })],
+        tone: 'arrival',
+        footer,
+      };
+    }
+
+    case 'requests.downloadFailed': {
+      return {
+        title: say('common.downloadFailed'),
+        lead: [strong(payload.data.title)],
+        context: [payload.data.client],
+        ...problemOf(payload.data.problem),
+        tone: 'failure',
+        footer,
+      };
+    }
+  }
+};
+
+/**
+ * The notice's parts for an event about people: signing in, accounts, roles and sessions.
+ *
+ * @param payload - The event.
+ * @param serverName - What the server is called.
+ * @returns The notice's parts.
+ */
+const peopleParts = (payload: PeopleEvent, serverName: string): NoticeParts => {
+  switch (payload.event) {
     case 'auth.succeeded': {
       return {
         title: say('server.webhooks.discordEmbedFor.nameSignedIn', { name: payload.data.name }),
-        description: '',
+        context: placesOf(payload.data),
         tone: 'attention',
-        fields: [
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
-        ],
+        footer: say('common.accounts'),
+      };
+    }
+
+    case 'auth.failed': {
+      return {
+        title: say('server.webhooks.discordEmbedFor.aSignInWasRefused'),
+        lead: words('server.webhooks.notice.triedIdentifier', {
+          identifier: strong(payload.data.identifier),
+        }),
+        context: placesOf(payload.data),
+        details: [{ label: null, text: payload.data.reason, look: 'quote' }],
+        tone: 'failure',
+        footer: say('common.accounts'),
       };
     }
 
@@ -388,224 +952,169 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
             household: payload.data.accountName,
           }),
         }),
-        description: '',
+        context: placesOf(payload.data),
         tone: 'attention',
-        fields: [
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
-        ],
-      };
-    }
-
-    case 'auth.failed': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.aSignInWasRefused'),
-        description: payload.data.reason,
-        tone: 'failure',
-        fields: [
-          field(say('server.webhooks.discordEmbedFor.tried'), payload.data.identifier),
-          field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.browserOrApp'), payload.data.clientLabel),
-          field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
-        ],
+        footer: say('common.accounts'),
       };
     }
 
     case 'account.created': {
       return {
-        title: say('server.webhooks.discordEmbedFor.nameNowHasAnAccount', {
-          name: payload.data.name,
+        title: say('server.webhooks.notice.newAccount'),
+        lead: words('server.webhooks.discordEmbedFor.nameNowHasAnAccount', {
+          name: strong(payload.data.name),
         }),
-        description: '',
         tone: 'arrival',
-        fields: [],
+        footer: say('common.accounts'),
       };
     }
 
     case 'account.deleted': {
       return {
-        title: say('server.webhooks.discordEmbedFor.nameSAccountWasDeleted', {
-          name: payload.data.name,
+        title: say('contracts.schemas.webhook.accountDeleted'),
+        lead: words('server.webhooks.discordEmbedFor.nameSAccountWasDeleted', {
+          name: strong(payload.data.name),
         }),
-        description: '',
         tone: 'failure',
-        fields: [],
+        footer: say('common.accounts'),
       };
     }
 
     case 'account.roleChanged': {
+      const isGiven = payload.data.change === 'given';
+
       return {
-        title: say('server.webhooks.discordEmbedFor.nameSRolesChanged', {
-          name: payload.data.name,
-        }),
-        description: sentence,
+        title: isGiven
+          ? say('server.webhooks.notice.roleGiven')
+          : say('server.webhooks.notice.roleTakenAway'),
+        lead: words(
+          isGiven
+            ? 'server.webhooks.notice.wasGivenRole'
+            : 'server.webhooks.notice.noLongerHasRole',
+          { name: strong(payload.data.name), role: strong(payload.data.role) },
+        ),
         tone: 'attention',
-        fields: [
-          field(say('common.role'), payload.data.role),
-          field(
-            say('common.change'),
-            payload.data.change === 'given'
-              ? say('server.webhooks.discordEmbedFor.given')
-              : say('server.webhooks.discordEmbedFor.takenAway'),
-          ),
-        ],
+        footer: say('common.accounts'),
       };
     }
 
-    case 'library.scanned': {
-      const { libraries, added, updated, removed, failed } = payload.data;
-      const named = libraries.map((one) => one.libraryName);
+    case 'session.started': {
+      const { accountName, profileName, guestOf } = payload.data;
 
-      const sections = libraries.flatMap((one) => {
-        const andMore =
-          one.arrivedNotListed === 0
+      return {
+        title: say('server.webhooks.viewerOpenedServer', {
+          viewer: nameOfViewer(payload.data),
+          server: serverName,
+        }),
+        context: [
+          ...placesOf(payload.data),
+          ...(guestOf === null || (accountName === null && profileName === null)
             ? []
-            : [
-                say('server.webhooks.discordEmbedFor.andMore', {
-                  count: one.arrivedNotListed.toString(),
-                }),
-              ];
-
-        return one.arrived.length === 0
-          ? []
-          : [
-              {
-                heading: one.libraryName,
-                body: [...one.arrived.map(describeArrival), ...andMore].join('\n'),
-              },
-            ];
-      });
-
-      return {
-        title:
-          libraries.length === 1
-            ? say('server.webhooks.libraryFinishedScanning', {
-                library: named[0] ?? say('common.aLibrary'),
-              })
-            : sayCount(
-                'server.webhooks.discordEmbedFor.librariesFinishedScanning',
-                libraries.length,
-              ),
-        description: '',
-        sections,
-        tone: added > 0 ? 'arrival' : 'quiet',
-        fields: [
-          field(say('common.libraries'), libraries.length === 1 ? null : named.join(', '), false),
-          field(say('common.added'), added.toString()),
-          field(say('server.webhooks.discordEmbedFor.updated'), updated.toString()),
-          field(say('server.webhooks.discordEmbedFor.removed'), removed.toString()),
-          field(
-            say('server.webhooks.discordEmbedFor.unreadable'),
-            failed === 0 ? null : failed.toString(),
-          ),
+            : [say('server.webhooks.notice.guestOf', { host: guestOf })]),
+          ...(accountName === null || profileName === null || accountName === profileName
+            ? []
+            : [say('server.webhooks.notice.onAccount', { account: accountName })]),
         ],
+        tone: 'viewing',
+        footer: say('common.sessions'),
       };
     }
 
-    case 'disk.low': {
+    case 'session.ended': {
+      const stayed = describeSpan(payload.data.lastedSeconds);
+
       return {
-        title: say('server.webhooks.discordEmbedFor.mountPointIsRunningOutOfRoom', {
-          mountPoint: payload.data.mountPoint,
+        title: say('server.webhooks.viewerClosedServer', {
+          viewer: nameOfViewer(payload.data),
+          server: serverName,
         }),
-        description: '',
-        tone: 'failure',
-        fields: [
-          field(
-            say('server.webhooks.discordEmbedFor.free'),
-            say('server.webhooks.discordEmbedFor.freeOfTotal', {
-              free: formatBytes(payload.data.availableBytes),
-              total: formatBytes(payload.data.totalBytes),
-            }),
-          ),
-        ],
-      };
-    }
-
-    case 'disk.recovered': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.mountPointHasRoomAgain', {
-          mountPoint: payload.data.mountPoint,
-        }),
-        description: '',
-        tone: 'arrival',
-        fields: [
-          field(
-            say('server.webhooks.discordEmbedFor.free'),
-            formatBytes(payload.data.availableBytes),
-          ),
-        ],
-      };
-    }
-
-    case 'job.failed': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.labelFailed', { label: payload.data.label }),
-        description: payload.data.reason,
-        tone: 'failure',
-        fields: [field(say('common.library'), payload.data.subjectName)],
-      };
-    }
-
-    case 'job.completed': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.labelFinished', { label: payload.data.label }),
-        description: '',
+        context: placesOf({ ...payload.data, address: null }),
+        tags: stayed === null ? [] : [say('server.webhooks.notice.stayed', { span: stayed })],
         tone: 'quiet',
-        fields: [field(say('common.library'), payload.data.subjectName)],
+        footer: say('common.sessions'),
+      };
+    }
+  }
+};
+
+/**
+ * The notice's parts for any event, by which kind of thing it is about.
+ *
+ * @param payload - The event.
+ * @param serverName - What the server is called.
+ * @returns The notice's parts.
+ */
+const partsFor = (payload: WebhookPayload, serverName: string): NoticeParts => {
+  switch (payload.event) {
+    case 'media.added':
+    case 'media.removed': {
+      return mediaParts(payload);
+    }
+
+    case 'playback.started':
+    case 'playback.stopped': {
+      return playbackParts(payload);
+    }
+
+    case 'plugin.event': {
+      return {
+        title: payload.data.title,
+        tags: Object.entries(payload.data.detail)
+          .slice(0, PLUGIN_DETAILS_SHOWN)
+          .flatMap(([name, value]) => {
+            const tag = pluginTagOf(name, value);
+
+            return tag === null ? [] : [tag];
+          }),
+        tone: 'quiet',
+        footer: payload.data.pluginName,
       };
     }
 
-    case 'job.stalled': {
-      return {
-        title: say('server.webhooks.discordEmbedFor.labelKeepsFailing', {
-          label: payload.data.label,
-        }),
-        description: sentence,
-        tone: 'failure',
-        fields: [
-          field(say('server.webhooks.discordEmbedFor.attempts'), payload.data.failures.toString()),
-        ],
-      };
+    case 'requests.made':
+    case 'requests.approved':
+    case 'requests.refused':
+    case 'requests.chosen':
+    case 'requests.filed':
+    case 'requests.available': {
+      return requestEventParts(payload) ?? bareRequestParts(payload);
+    }
+
+    case 'webhook.test':
+    case 'job.completed':
+    case 'job.failed':
+    case 'job.stalled':
+    case 'job.working':
+    case 'library.scanned':
+    case 'catalogue.unreachable':
+    case 'catalogue.reachable':
+    case 'transcoder.unreachable':
+    case 'transcoder.reachable':
+    case 'disk.low':
+    case 'disk.recovered': {
+      return serverParts(payload, serverName);
     }
 
     case 'requests.unreachable':
-    case 'requests.vpnDown':
-    case 'requests.indexerFailing': {
-      return {
-        title: sentence,
-        description: '',
-        tone: 'failure',
-        fields: [
-          field(say('server.webhooks.discordEmbedFor.howToFixIt'), payload.data.docs, false),
-        ],
-      };
-    }
-
-    case 'transcoder.unreachable':
-    case 'requests.downloadFailed':
-    case 'catalogue.unreachable': {
-      return { title: sentence, description: '', tone: 'failure', fields: [] };
-    }
-
-    case 'job.working':
-    case 'transcoder.reachable':
     case 'requests.reachable':
+    case 'requests.vpnDown':
     case 'requests.vpnUp':
+    case 'requests.indexerFailing':
     case 'requests.indexerWorking':
     case 'requests.downloadStarted':
-    case 'requests.made':
-    case 'requests.approved':
-    case 'requests.chosen':
-    case 'requests.filed':
-    case 'requests.available':
-    case 'catalogue.reachable': {
-      return { title: sentence, description: '', tone: 'arrival', fields: [] };
+    case 'requests.downloadFailed': {
+      return requestsServiceParts(payload);
     }
 
-    case 'requests.refused':
-    case 'webhook.test': {
-      return { title: sentence, description: '', tone: 'quiet', fields: [] };
+    case 'auth.succeeded':
+    case 'auth.failed':
+    case 'profile.chosen':
+    case 'account.created':
+    case 'account.deleted':
+    case 'account.roleChanged':
+    case 'session.started':
+    case 'session.ended': {
+      return peopleParts(payload, serverName);
     }
   }
 };
@@ -623,29 +1132,40 @@ const URGENT_EVENTS: ReadonlySet<WebhookEvent> = new Set([
 ]);
 
 /**
- * Decides what any receiver is told about one event — a title, a summary, labelled details, the
- * poster where there is one, and whether it is news or a problem somebody has to put right — before
- * any receiver's own shape or limits are applied.
+ * Decides what any receiver is told about one event, before any receiver's own shape or limits
+ * are applied.
  *
  * @param payload - What happened.
- * @param sentence - The plain rendering, used where an event has nothing richer to say.
+ * @param serverName - What the server is called: Valence, or the name it was given under Branding.
  * @returns The notice.
  */
-const webhookNoticeFor = (payload: WebhookPayload, sentence: string): WebhookNotice => {
-  const parts = requestEventPartsFor(payload) ?? partsFor(payload, sentence);
+const webhookNoticeFor = (
+  payload: WebhookPayload,
+  serverName: string = say('common.valence'),
+): WebhookNotice => {
+  const parts = partsFor(payload, serverName);
   const posterUrl = parts.posterUrl ?? null;
 
   return {
     title: parts.title,
-    description: parts.description,
+    lead: parts.lead ?? [],
+    context: (parts.context ?? [])
+      .map((one) => one.replace(/\s+/gu, ' ').trim())
+      .filter((one) => one !== ''),
+    body: parts.body ?? '',
+    tags: (parts.tags ?? [])
+      .map((one) => clipText(one.replace(/\s+/gu, ' ').trim(), TAG_LIMIT))
+      .filter((one) => one !== ''),
+    details: parts.details ?? [],
+    sections: parts.sections ?? [],
+    link: parts.link ?? null,
+    footer: parts.footer ?? null,
     tone: parts.tone,
     isUrgent: URGENT_EVENTS.has(payload.event),
-    fields: parts.fields.filter((one): one is NoticeField => one !== null),
-    sections: parts.sections ?? [],
     posterUrl: posterUrl !== null && /^https?:\/\//.test(posterUrl) ? posterUrl : null,
   };
 };
 
 export { webhookNoticeFor };
 
-export type { NoticeField, NoticeSection, WebhookNotice, WebhookTone };
+export type { NoticeDetail, NoticeLink, NoticeSection, NoticeWords, WebhookNotice, WebhookTone };

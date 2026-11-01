@@ -1,28 +1,32 @@
 import { clipText } from './clipText';
 import { fitEscaped } from './fitEscaped';
-import type { WebhookNotice } from './webhookNoticeFor';
+import type { NoticeDetail, NoticeSection, NoticeWords, WebhookNotice } from './webhookNoticeFor';
 
 const HEADER_LIMIT = 150;
 
 const SECTION_TEXT_LIMIT = 3000;
 
-const FIELD_TEXT_LIMIT = 2000;
-
-const FIELDS_PER_SECTION = 10;
+const CONTEXT_TEXT_LIMIT = 2000;
 
 const ALT_TEXT_LIMIT = 2000;
 
 const FALLBACK_LIMIT = 3000;
 
+const DETAIL_LIMIT = 500;
+
+const LIST_LINE_LIMIT = 200;
+
+const BLOCK_LIMIT = 50;
+
 type SlackText = { type: 'plain_text' | 'mrkdwn'; text: string };
 
 type SlackImage = { type: 'image'; image_url: string; alt_text: string };
 
-type SlackSection =
-  | { type: 'section'; text: SlackText; accessory?: SlackImage }
-  | { type: 'section'; fields: SlackText[]; accessory?: SlackImage };
+type SlackSection = { type: 'section'; text: SlackText; accessory?: SlackImage };
 
-type SlackBlock = { type: 'header'; text: SlackText } | SlackSection;
+type SlackContext = { type: 'context'; elements: SlackText[] };
+
+type SlackBlock = { type: 'header'; text: SlackText } | SlackSection | SlackContext;
 
 type SlackMessage = {
   text: string;
@@ -30,51 +34,103 @@ type SlackMessage = {
 };
 
 /**
- * Escapes the three characters Slack's mrkdwn reads as markup, which is all Slack asks for.
+ * Text from elsewhere, kept from being read as Slack's markup.
  *
  * @param text - The text.
- * @returns The text, safe to put in mrkdwn.
+ * @returns It, escaped.
  */
 const escapeSlack = (text: string): string =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 /**
- * Writes text as mrkdwn, cut to what Slack accepts.
+ * A block of Slack's markup, cut to fit.
  *
- * @param text - The text, unescaped.
- * @param limit - The most Slack takes.
- * @returns The mrkdwn.
+ * @param text - The markup, already escaped.
+ * @param limit - The most characters Slack takes.
+ * @returns The text.
  */
 const mrkdwn = (text: string, limit: number): SlackText => ({
   type: 'mrkdwn',
-  text: fitEscaped(text, limit, escapeSlack),
+  text: clipText(text, limit),
 });
 
 /**
- * Writes a bold label above some text as one piece of mrkdwn, cut to what Slack accepts.
+ * A notice's sentence with the names it is about in bold.
  *
- * @param label - The label.
- * @param text - What sits beneath it.
- * @param limit - The most Slack takes for the whole piece.
- * @returns The mrkdwn.
+ * @param words - The sentence, in parts.
+ * @returns The sentence.
  */
-const labelled = (label: string, text: string, limit: number): SlackText => {
-  const heading = `*${escapeSlack(label)}*\n`;
+const sentenceOf = (words: NoticeWords): string =>
+  words
+    .map((part) => (typeof part === 'string' ? escapeSlack(part) : `*${escapeSlack(part.strong)}*`))
+    .join('');
 
-  return {
-    type: 'mrkdwn',
-    text: `${heading}${fitEscaped(text, limit - heading.length, escapeSlack)}`,
-  };
+/**
+ * A detail under its label, quoted or set as code.
+ *
+ * @param detail - The detail.
+ * @returns How it is written.
+ */
+const detailOf = (detail: NoticeDetail): string => {
+  const text = clipText(detail.text, DETAIL_LIMIT);
+  const written =
+    detail.look === 'code'
+      ? `\`${escapeSlack(text.replaceAll('`', 'ˋ'))}\``
+      : text
+          .split('\n')
+          .map((line) => `>${escapeSlack(line)}`)
+          .join('\n');
+
+  return detail.label === null ? written : `*${escapeSlack(detail.label)}*\n${written}`;
 };
 
 /**
- * Writes one event as a Slack message from Block Kit, as Seerr does: the title as a header, its
- * summary beside the poster, then any sections and the labelled details as fields — each cut to
- * Slack's limits, since Slack refuses the whole message when one block is over. The plain sentence
- * goes alongside, for the notification and for any receiver that reads only Slack's `text`.
+ * One of a notice's lists under its heading, with as many of its lines as fit and an ellipsis where
+ * the rest do not, cut between lines so an escape is never split.
+ *
+ * @param section - The list.
+ * @returns How it is written.
+ */
+const listOf = (section: NoticeSection): string => {
+  const heading = `*${escapeSlack(section.heading)}*`;
+  const kept: string[] = [];
+  let used = heading.length;
+
+  for (const line of section.lines) {
+    const written = `• ${escapeSlack(clipText(line, LIST_LINE_LIMIT))}`;
+
+    if (used + 1 + written.length + 2 > SECTION_TEXT_LIMIT) {
+      return [heading, ...kept, '…'].join('\n');
+    }
+
+    kept.push(written);
+    used += 1 + written.length;
+  }
+
+  return [heading, ...kept].join('\n');
+};
+
+/**
+ * A small line of Slack's context, or nothing where there is nothing on it.
+ *
+ * @param parts - What goes on the line.
+ * @returns The block, or nothing.
+ */
+const contextOf = (parts: string[]): SlackContext[] =>
+  parts.length === 0
+    ? []
+    : [
+        {
+          type: 'context',
+          elements: [mrkdwn(escapeSlack(parts.join(' · ')), CONTEXT_TEXT_LIMIT)],
+        },
+      ];
+
+/**
+ * Draws an event as Slack blocks, with the plain sentence beside them for notifications.
  *
  * @param notice - What to say.
- * @param sentence - The plain rendering, shown in the notification.
+ * @param sentence - The event in one plain sentence.
  * @returns The message.
  */
 const slackMessageFor = (notice: WebhookNotice, sentence: string): SlackMessage => {
@@ -86,38 +142,41 @@ const slackMessageFor = (notice: WebhookNotice, sentence: string): SlackMessage 
           image_url: notice.posterUrl,
           alt_text: clipText(notice.title, ALT_TEXT_LIMIT),
         };
-
-  const fieldSections = Array.from(
-    { length: Math.ceil(notice.fields.length / FIELDS_PER_SECTION) },
-    (_, index) =>
-      notice.fields
-        .slice(index * FIELDS_PER_SECTION, (index + 1) * FIELDS_PER_SECTION)
-        .map((one) => labelled(one.name, one.value, FIELD_TEXT_LIMIT)),
-  );
-
-  const content: SlackSection[] = [
-    ...(notice.description === ''
-      ? []
-      : [{ type: 'section' as const, text: mrkdwn(notice.description, SECTION_TEXT_LIMIT) }]),
-    ...notice.sections.map((one) => ({
-      type: 'section' as const,
-      text: labelled(one.heading, one.body, SECTION_TEXT_LIMIT),
-    })),
-    ...fieldSections.map((fields) => ({ type: 'section' as const, fields })),
-  ];
-
-  const [first, ...rest] = content;
+  const lead = sentenceOf(notice.lead);
+  const context = contextOf(notice.context);
+  const footer = contextOf(notice.footer === null ? [] : [notice.footer]);
+  const fixed = [
+    lead,
+    fitEscaped(notice.body, SECTION_TEXT_LIMIT, escapeSlack),
+    notice.tags.map((one) => `\`${escapeSlack(one.replaceAll('`', 'ˋ'))}\``).join(' | '),
+    ...notice.details.map(detailOf),
+  ].filter((one) => one !== '');
+  const link =
+    notice.link === null ? [] : [`<${notice.link.url}|${escapeSlack(notice.link.label)}>`];
+  const roomForLists =
+    BLOCK_LIMIT - 1 - context.length - footer.length - fixed.length - link.length;
+  const lists = notice.sections.map(listOf);
+  const listsThatFit =
+    lists.length <= roomForLists ? lists : [...lists.slice(0, Math.max(roomForLists - 1, 0)), '…'];
+  const sections: SlackSection[] = [...fixed, ...listsThatFit, ...link].map((text) => ({
+    type: 'section' as const,
+    text: mrkdwn(text, SECTION_TEXT_LIMIT),
+  }));
+  const [first, ...rest] = sections;
+  const withPoster =
+    first === undefined || poster === null ? sections : [{ ...first, accessory: poster }, ...rest];
+  const [leading, ...following] = withPoster;
+  const isLeadFirst = lead !== '' && leading !== undefined;
 
   return {
-    text: mrkdwn(sentence, FALLBACK_LIMIT).text,
+    text: fitEscaped(sentence, FALLBACK_LIMIT, escapeSlack),
     blocks: [
       {
         type: 'header',
         text: { type: 'plain_text', text: clipText(notice.title, HEADER_LIMIT) },
       },
-      ...(first === undefined || poster === null
-        ? content
-        : [{ ...first, accessory: poster }, ...rest]),
+      ...(isLeadFirst ? [leading, ...context, ...following] : [...context, ...withPoster]),
+      ...footer,
     ],
   };
 };

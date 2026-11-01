@@ -1,107 +1,180 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml } from '@ValenceServer/text/escapeHtml';
+import { htmlMarkup } from './htmlMarkup';
 import { noticeBodyOf } from './noticeBodyOf';
-import type { NoticeMarkup } from './noticeBodyOf';
 import type { WebhookNotice } from './webhookNoticeFor';
 
-const html: NoticeMarkup = { escape: escapeHtml, bold: (escaped) => `<b>${escaped}</b>` };
-
 const aNotice: WebhookNotice = {
-  title: 'Film request made: Dune (2021)',
-  description: 'A mythic & emotionally charged hero’s journey.',
-  tone: 'quiet',
-  isUrgent: false,
-  fields: [
-    { name: 'Asked by', value: 'Ada', inline: true },
-    { name: 'Status', value: 'Waiting <for> approval', inline: true },
+  title: 'The Long Night (2021)',
+  lead: [{ strong: 'Dan' }, ' requested this film'],
+  context: ['Seasons 1–3', 'By <The Band>'],
+  body: 'A town & its sun.',
+  tags: ['Waiting for approval', '★ 7.4'],
+  details: [
+    { label: 'Reason', text: 'Not <here>', look: 'quote' },
+    { label: null, text: 'A.Release', look: 'code' },
   ],
-  sections: [],
+  sections: [{ heading: 'Films · 2 added', lines: ['One & two', 'Three'] }],
+  link: { label: 'How to fix it', url: 'https://docs.getvalence.app/a?b=1&c=2' },
+  footer: 'Requests',
+  tone: 'attention',
+  isUrgent: false,
   posterUrl: null,
 };
 
+const anEmptyNotice: WebhookNotice = {
+  ...aNotice,
+  lead: [],
+  context: [],
+  body: '',
+  tags: [],
+  details: [],
+  sections: [],
+  link: null,
+};
+
 describe('noticeBodyOf', () => {
-  it('writes the summary, then each detail on a line of its own, in the receiver’s markup', () => {
-    expect(noticeBodyOf(aNotice, html)).toBe(
-      'A mythic &amp; emotionally charged hero’s journey.\n\n<b>Asked by:</b> Ada\n<b>Status:</b> Waiting &lt;for&gt; approval',
+  it('writes the sentence, the small line, the summary, tags, details, lists and link in order', () => {
+    expect(noticeBodyOf(aNotice, htmlMarkup)).toBe(
+      [
+        '<b>Dan</b> requested this film\nSeasons 1–3 · By &lt;The Band&gt;',
+        'A town &amp; its sun.',
+        '<code>Waiting for approval</code> | <code>★ 7.4</code>',
+        '<b>Reason</b>\n<blockquote>Not &lt;here&gt;</blockquote>',
+        '<code>A.Release</code>',
+        '<b>Films · 2 added</b>\n• One &amp; two\n• Three',
+        '<a href="https://docs.getvalence.app/a?b=1&amp;c=2">How to fix it</a>',
+      ].join('\n\n'),
     );
   });
 
-  it('writes each section under its heading', () => {
+  it('sets a blank line between one list and the next', () => {
     expect(
       noticeBodyOf(
         {
-          ...aNotice,
-          description: '',
-          fields: [],
-          sections: [{ heading: 'Films', body: 'Dune\nArrival' }],
+          ...anEmptyNotice,
+          sections: [
+            { heading: 'Films', lines: ['One'] },
+            { heading: 'Music', lines: ['Two'] },
+          ],
         },
-        html,
+        htmlMarkup,
       ),
-    ).toBe('<b>Films</b>\nDune\nArrival');
+    ).toBe('<b>Films</b>\n• One\n\n<b>Music</b>\n• Two');
+  });
+
+  it('writes the small line alone where there is no sentence', () => {
+    expect(noticeBodyOf({ ...anEmptyNotice, context: ['No action needed'] }, htmlMarkup)).toBe(
+      'No action needed',
+    );
   });
 
   it('says nothing for a notice with nothing beyond its title', () => {
-    expect(noticeBodyOf({ ...aNotice, description: '', fields: [] }, html)).toBe('');
+    expect(noticeBodyOf(anEmptyNotice, htmlMarkup)).toBe('');
   });
 
-  it('cuts the summary before any detail, to stay inside the limit', () => {
-    const body = noticeBodyOf({ ...aNotice, description: 'x'.repeat(500) }, html, 120);
+  it('cuts a detail too long to read in a notification', () => {
+    const body = noticeBodyOf(
+      { ...anEmptyNotice, details: [{ label: null, text: 'x'.repeat(2000), look: 'quote' }] },
+      htmlMarkup,
+    );
 
-    expect(body.length).toBeLessThanOrEqual(120);
+    expect(body).toBe(`<blockquote>${'x'.repeat(499)}…</blockquote>`);
+  });
+
+  it('cuts the summary first, to stay inside the limit', () => {
+    const body = noticeBodyOf(
+      { ...aNotice, body: 'A long summary. '.repeat(40), link: null },
+      htmlMarkup,
+      400,
+    );
+
+    expect(body.length).toBeLessThanOrEqual(400);
+    expect(body).toContain('A long summary.');
     expect(body).toContain('…');
-    expect(body).toContain('<b>Status:</b> Waiting &lt;for&gt; approval');
+    expect(body).toContain('<b>Films · 2 added</b>\n• One &amp; two\n• Three');
+    expect(body).toContain('<blockquote>Not &lt;here&gt;</blockquote>');
   });
 
   it('measures the summary as it is sent, escapes and all', () => {
-    const body = noticeBodyOf({ ...aNotice, description: '&'.repeat(100), fields: [] }, html, 50);
+    const body = noticeBodyOf(
+      { ...anEmptyNotice, lead: ['Hi'], body: '&'.repeat(100) },
+      htmlMarkup,
+      50,
+    );
 
     expect(body.length).toBeLessThanOrEqual(50);
-    expect(body).toMatch(/^(&amp;)+…$/);
+    expect(body).toMatch(/^Hi\n\n(&amp;)+…$/);
   });
 
-  it('cuts the value of a detail too long to fit, rather than leaving it out', () => {
+  it('drops the summary before cutting a list, then cuts the list by whole lines', () => {
     const body = noticeBodyOf(
       {
         ...aNotice,
-        description: '',
-        fields: [{ name: 'Reason', value: '<'.repeat(2000), inline: false }],
+        link: null,
+        sections: [
+          { heading: 'Films', lines: Array.from({ length: 50 }, () => 'A long film title') },
+        ],
       },
-      html,
+      htmlMarkup,
+      500,
+    );
+
+    expect(body.length).toBeLessThanOrEqual(500);
+    expect(body).not.toContain('A town');
+    expect(body).toContain('<b>Films</b>\n• A long film title');
+    expect(body.endsWith('• A long film title\n…')).toBe(true);
+    expect(body).toContain('<code>Waiting for approval</code> | <code>★ 7.4</code>');
+    expect(body).toContain('<code>A.Release</code>');
+  });
+
+  it('shortens every detail, halving it, before leaving any out', () => {
+    const body = noticeBodyOf(
+      {
+        ...anEmptyNotice,
+        details: Array.from({ length: 10 }, () => ({
+          label: null,
+          text: 'x'.repeat(600),
+          look: 'quote' as const,
+        })),
+      },
+      htmlMarkup,
+      1024,
+    );
+
+    expect(body.split('\n\n')).toStrictEqual(
+      Array.from({ length: 10 }, () => `<blockquote>${'x'.repeat(61)}…</blockquote>`),
+    );
+  });
+
+  it('writes the small line in the receiver’s small print', () => {
+    expect(
+      noticeBodyOf(
+        { ...anEmptyNotice, lead: ['Hi'], context: ['a', 'b'] },
+        { ...htmlMarkup, small: (escaped) => `<small>${escaped}</small>` },
+      ),
+    ).toBe('Hi\n<small>a · b</small>');
+  });
+
+  it('falls back to the plain sentence and small line where even the details do not fit', () => {
+    const body = noticeBodyOf(
+      {
+        ...aNotice,
+        details: [{ label: null, text: '<'.repeat(400), look: 'quote' }],
+      },
+      htmlMarkup,
       100,
     );
 
-    expect(body.length).toBeLessThanOrEqual(100);
-    expect(body).toMatch(/^<b>Reason:<\/b> (&lt;)+…$/);
+    expect(body).toBe('Dan requested this film\nSeasons 1–3\nBy &lt;The Band&gt;');
   });
 
-  it('keeps a label in bold on one line, so no cut can split it', () => {
+  it('cuts the plain sentence too, where nothing else fits', () => {
     const body = noticeBodyOf(
-      { ...aNotice, description: '', fields: [{ name: 'a\nb', value: 'c', inline: true }] },
-      html,
+      { ...anEmptyNotice, lead: ['x'.repeat(200)], tags: ['y'.repeat(200)] },
+      htmlMarkup,
+      100,
     );
 
-    expect(body).toBe('<b>a b:</b> c');
-  });
-
-  it('keeps every detail before the sections, and cuts the sections by whole lines', () => {
-    const body = noticeBodyOf(
-      {
-        ...aNotice,
-        description: 'A summary',
-        sections: [
-          {
-            heading: 'Films',
-            body: Array.from({ length: 50 }, () => 'A long film title').join('\n'),
-          },
-        ],
-      },
-      html,
-      300,
-    );
-
-    expect(body.length).toBeLessThanOrEqual(300);
-    expect(body.startsWith('<b>Films</b>\nA long film title')).toBe(true);
-    expect(body).toContain('A long film title\n…\n\n<b>Asked by:</b> Ada');
-    expect(body.endsWith('<b>Status:</b> Waiting &lt;for&gt; approval')).toBe(true);
+    expect(body).toBe(`${'x'.repeat(99)}…`);
   });
 });

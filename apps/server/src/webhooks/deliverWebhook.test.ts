@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { VALENCE_BRAND } from './VALENCE_BRAND';
 import { WEBHOOK_PAYLOAD_VERSION } from '@ValenceContracts/schemas/Webhook';
 import { deliverWebhook } from './deliverWebhook';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
@@ -44,7 +45,7 @@ const anArrival: WebhookPayload = {
 };
 
 const aTarget: WebhookDestination = {
-  iconUrl: null,
+  brand: VALENCE_BRAND,
   url: 'https://example.com/hook',
   preset: 'generic',
   secret: 'whsec_1',

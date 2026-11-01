@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { discordEmbedFor } from './discordEmbedFor';
-import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
+import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
 
 const anEnvelope = {
   version: 1,
@@ -8,15 +8,19 @@ const anEnvelope = {
   occurredAt: '2026-08-14T20:00:00.000Z',
 } as const;
 
+const POSTER = 'https://image.tmdb.org/t/p/w500/poster.jpg';
+
+const ICON = 'https://valence.example.com/icon.png';
+
 const anItem = {
   itemId: 'item-1',
   kind: 'movie' as const,
-  title: 'Dune',
+  title: 'The Long Night',
   seriesTitle: null,
   seasonNumber: null,
   episodeNumber: null,
   year: 2021,
-  posterUrl: 'https://image.tmdb.org/t/p/w500/dune.jpg',
+  posterUrl: POSTER,
   libraryId: 'library-1',
   libraryName: 'Films',
   overview: null,
@@ -26,876 +30,331 @@ const anItem = {
   quality: null,
 };
 
-const anArrival: WebhookPayload = { ...anEnvelope, event: 'media.added', data: anItem };
+const aRequest: WebhookRequest = {
+  id: 'request-1',
+  kind: 'series',
+  title: 'A Quiet Town',
+  artistName: null,
+  year: 2019,
+  overview: 'A town waits for the sun to come back.',
+  posterUrl: POSTER,
+  requestedBy: 'Dan',
+  requestedByAccountId: 'account-1',
+  requestedByProfile: null,
+  requestedByProfileId: null,
+  askers: [],
+  seasons: [1, 2, 3],
+  state: 'awaitingApproval',
+};
 
-const embed = (payload: WebhookPayload, sentence = 'a sentence') =>
-  discordEmbedFor(payload, sentence);
+const aRequestMade: WebhookPayload = {
+  ...anEnvelope,
+  event: 'requests.made',
+  data: {
+    title: 'A Quiet Town',
+    kind: 'series',
+    requestedBy: 'Dan',
+    accountId: null,
+    profileId: null,
+    profileName: null,
+    request: aRequest,
+  },
+};
+
+const anAccount = (name: string): WebhookPayload => ({
+  ...anEnvelope,
+  event: 'account.created',
+  data: { accountId: 'account-2', name },
+});
+
+const aVpnDrop = (reason: string): WebhookPayload => ({
+  ...anEnvelope,
+  event: 'requests.vpnDown',
+  data: { reason, docs: 'https://docs.getvalence.app/requests#vpn' },
+});
 
 describe('discordEmbedFor', () => {
-  it('names what arrived and where it landed', () => {
-    const drawn = embed(anArrival);
-
-    expect(drawn.title).toBe('Dune (2021)');
-    expect(drawn.description).toBe('Added to Films');
-  });
-
-  it('hangs the poster on it, straight from the catalogue', () => {
-    expect(embed(anArrival).thumbnail).toStrictEqual({
-      url: 'https://image.tmdb.org/t/p/w500/dune.jpg',
+  it('draws Valence at the head, the title, the sentence over a small line, the summary and tags, the poster and the foot', () => {
+    expect(
+      discordEmbedFor(aRequestMade, { name: 'Valence', iconUrl: ICON, accent: null }),
+    ).toStrictEqual({
+      title: 'A Quiet Town (2019)',
+      description:
+        '**Dan** requested this series\n-# Seasons 1–3\n\nA town waits for the sun to come back.\n\n`Waiting for approval`',
+      color: 0xe8a33a,
+      author: { name: 'Valence', icon_url: ICON },
+      timestamp: '2026-08-14T20:00:00.000Z',
+      footer: { text: 'Requests' },
+      thumbnail: { url: POSTER },
     });
   });
 
-  it('still renders something the catalogue never matched, which has no poster', () => {
-    const drawn = embed({ ...anArrival, data: { ...anItem, posterUrl: null } });
-
-    expect(drawn.thumbnail).toBeUndefined();
-    expect(drawn.title).toBe('Dune (2021)');
-  });
-
-  it('names an episode by its place in its series', () => {
-    const drawn = embed({
-      ...anArrival,
-      data: {
-        ...anItem,
-        kind: 'episode',
-        title: 'System',
-        seriesTitle: 'The Bear',
-        seasonNumber: 2,
-        episodeNumber: 3,
-      },
-    });
-
-    expect(drawn.title).toBe('The Bear S02E03 — System');
+  it('leaves Valence’s icon out where the server cannot say where it is', () => {
+    expect(discordEmbedFor(aRequestMade).author).toStrictEqual({ name: 'Valence' });
   });
 
   it('carries the moment it happened rather than the moment it was delivered', () => {
-    expect(embed(anArrival).timestamp).toBe('2026-08-14T20:00:00.000Z');
+    expect(discordEmbedFor(aRequestMade).timestamp).toBe('2026-08-14T20:00:00.000Z');
   });
 
-  it('colours an arrival differently from a refusal, which is the point of the colour', () => {
-    const arrival = embed(anArrival).color;
-    const refusal = embed({
-      ...anEnvelope,
-      event: 'auth.failed',
-      data: {
-        identifier: 'ada@example.com',
-        deviceLabel: 'Chrome on macOS',
-        clientLabel: null,
-        address: null,
-        reason: 'those details weren’t accepted.',
-      },
-    }).color;
-
-    expect(arrival).not.toBe(refusal);
-  });
-
-  it('colours the VPN dropping as bad news and it coming back as good', () => {
-    const down = embed({
-      ...anEnvelope,
-      event: 'requests.vpnDown',
-      data: {
-        reason: 'The tunnel is stopped',
-        docs: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
-      },
-    });
-    const up = embed({
-      ...anEnvelope,
-      event: 'requests.vpnUp',
-      data: { publicAddress: null, country: null },
-    });
-
-    expect(down.title).toBe('a sentence');
-    expect(down.fields).toEqual([
-      {
-        name: 'How to fix it',
-        value: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
-        inline: false,
-      },
-    ]);
-    expect(down.color).not.toBe(up.color);
-    expect(up.color).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
-  });
-
-  it('colours an indexer failing as bad news, and one working again as good', () => {
-    const failing = embed({
-      ...anEnvelope,
-      event: 'requests.indexerFailing',
-      data: { name: 'Jackett', problem: 'Timed out', docs: null },
-    });
-    const working = embed({
-      ...anEnvelope,
-      event: 'requests.indexerWorking',
-      data: { name: 'Jackett' },
-    });
-
-    expect(failing.color).toBe(
-      embed({ ...anEnvelope, event: 'transcoder.unreachable', data: { reason: 'x' } }).color,
-    );
-    expect(working.color).toBe(
-      embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color,
-    );
-  });
-
-  it('colours a request arriving as good news, and a refusal as quiet', () => {
+  it('sets the tags in code between bars, and a detail under its label as a quote', () => {
     expect(
-      embed({
+      discordEmbedFor({
         ...anEnvelope,
-        event: 'requests.available',
+        event: 'job.stalled',
         data: {
-          title: 'Dune',
-          requestedBy: 'Sam',
-          mediaId: 'media-1',
-          accountId: null,
-          profileId: null,
-          profileName: null,
-          request: null,
+          kind: 'library.scan',
+          label: 'Scan for changes',
+          failures: 3,
+          everSucceeded: true,
+          reason: 'disk full\n# at line 2',
         },
-      }).color,
-    ).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
+      }).description,
+    ).toBe(
+      '**Scan for changes** has failed every run since it last worked\n\n`3 attempts`\n\n**Latest error**\n> disk full\n> \\# at line 2',
+    );
+  });
+
+  it('quotes a problem with no label, and links to how to fix it', () => {
+    expect(discordEmbedFor(aVpnDrop('the tunnel closed')).description).toBe(
+      '> the tunnel closed\n\n[How to fix it](https://docs.getvalence.app/requests#vpn)',
+    );
+  });
+
+  it('sets an exact detail in a code span, which cannot hold a backtick of its own', () => {
     expect(
-      embed({
+      discordEmbedFor({
         ...anEnvelope,
-        event: 'requests.refused',
-        data: { title: 'Dune', reason: null, request: null },
-      }).color,
-    ).toBe(embed({ ...anEnvelope, event: 'webhook.test', data: {} }).color);
+        event: 'requests.chosen',
+        data: { title: 'A Quiet Town', release: 'A.Quiet`Town.S01', request: null },
+      }).description,
+    ).toBe('Found a release\n\n**Release**\n`A.QuietˋTown.S01`');
   });
 
-  it('colours a failed download as bad news, and a started one as good', () => {
-    const failed = embed({
-      ...anEnvelope,
-      event: 'requests.downloadFailed',
-      data: { title: 'Dune', client: 'SABnzbd', problem: 'Out of retention' },
-    });
-    const started = embed({
-      ...anEnvelope,
-      event: 'requests.downloadStarted',
-      data: { title: 'Dune', client: 'qBittorrent' },
-    });
-
-    expect(failed.color).toBe(
-      embed({ ...anEnvelope, event: 'transcoder.unreachable', data: { reason: 'x' } }).color,
+  it('writes each list under its heading in bold, a line to an entry', () => {
+    expect(
+      discordEmbedFor({
+        ...anEnvelope,
+        event: 'library.scanned',
+        data: {
+          libraries: [
+            {
+              libraryId: 'library-1',
+              libraryName: 'Films',
+              added: 3,
+              updated: 0,
+              removed: 0,
+              failed: 0,
+              arrived: [
+                { title: 'The Long Night (2021)', episodes: 1 },
+                { title: 'A Quiet Town', episodes: 2 },
+              ],
+              arrivedNotListed: 1,
+            },
+          ],
+          added: 3,
+          updated: 0,
+          removed: 0,
+          failed: 0,
+        },
+      }).description,
+    ).toBe(
+      '`3 added` | `0 updated` | `0 removed`\n\n**Films · 3 added**\n- The Long Night (2021)\n- A Quiet Town · 2 episodes\n- …and 1 more',
     );
-    expect(started.color).toBe(
-      embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color,
-    );
   });
 
-  it('colours the requests service going quiet like the transcoder going quiet', () => {
-    const quiet = embed({
-      ...anEnvelope,
-      event: 'requests.unreachable',
-      data: { reason: 'no answer', docs: null },
-    });
-    const back = embed({ ...anEnvelope, event: 'requests.reachable', data: {} });
-    const transcoder = embed({
-      ...anEnvelope,
-      event: 'transcoder.unreachable',
-      data: { reason: 'no answer' },
-    });
-
-    expect(quiet.color).toBe(transcoder.color);
-    expect(back.color).not.toBe(quiet.color);
-  });
-
-  it('says who was watching and on what', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'playback.started',
-      data: {
-        accountId: 'account-1',
-        accountName: 'Ada',
-        profileId: 'profile-1',
-        profileName: 'Ada',
-        item: anItem,
-        deviceLabel: 'Chrome on macOS',
-        clientLabel: null,
-        mode: 'Transcode',
-      },
-    });
-
-    expect(drawn.description).toBe('Ada started watching');
-    expect(drawn.fields).toContainEqual({ name: 'Device', value: 'Chrome on macOS', inline: true });
-    expect(drawn.fields).toContainEqual({ name: 'Playing', value: 'Transcode', inline: true });
-  });
-
-  it('says what the device reached Valence through beside the device', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'playback.started',
-      data: {
-        accountId: 'account-1',
-        accountName: 'Ada',
-        profileId: 'profile-1',
-        profileName: 'Ada',
-        item: anItem,
-        deviceLabel: 'iPhone 17 Pro Max',
-        clientLabel: 'Valence for iOS',
-        mode: 'DirectPlay',
-      },
-    });
-
-    expect(drawn.fields).toContainEqual({
-      name: 'Device',
-      value: 'iPhone 17 Pro Max',
-      inline: true,
-    });
-    expect(drawn.fields).toContainEqual({
-      name: 'Browser or app',
-      value: 'Valence for iOS',
-      inline: true,
-    });
-  });
-
-  it('says what a sign-in reached Valence through, and leaves it out where nothing said', () => {
-    const signedIn = (clientLabel: string | null) =>
-      embed({
+  it('sets the small line under the sentence, its parts between dots', () => {
+    expect(
+      discordEmbedFor({
         ...anEnvelope,
         event: 'auth.succeeded',
         data: {
           accountId: 'account-1',
-          name: 'Ada',
-          deviceLabel: 'Mac',
-          clientLabel,
-          address: null,
-        },
-      }).fields.map((one) => one.name);
-
-    expect(signedIn('Chrome on macOS')).toContain('Browser or app');
-    expect(signedIn(null)).not.toContain('Browser or app');
-  });
-
-  it('says somebody was listening, not watching, to a song or an audiobook', () => {
-    const listening = {
-      accountId: 'account-1',
-      accountName: 'Ada',
-      profileId: 'profile-1',
-      profileName: 'Ada',
-      item: { ...anItem, kind: 'song' as const },
-      deviceLabel: 'iPhone',
-      clientLabel: null,
-      mode: 'DirectPlay' as const,
-    };
-
-    expect(embed({ ...anEnvelope, event: 'playback.started', data: listening }).description).toBe(
-      'Ada started listening',
-    );
-    expect(
-      embed({ ...anEnvelope, event: 'playback.started', data: listening }).fields,
-    ).toContainEqual({ name: 'Playing', value: 'Direct play', inline: true });
-    expect(
-      embed({
-        ...anEnvelope,
-        event: 'playback.stopped',
-        data: {
-          ...listening,
-          item: { ...anItem, kind: 'book' as const },
-          positionSeconds: null,
-          durationSeconds: null,
+          name: 'Dan',
+          deviceLabel: 'iPhone 17 Pro Max',
+          clientLabel: 'Valence for iOS',
+          address: '192.168.1.20',
         },
       }).description,
-    ).toBe('Ada stopped listening');
+    ).toBe('-# iPhone 17 Pro Max · Valence for iOS · from 192.168.1.20');
   });
 
-  it('names nobody for a share link rather than leaving the sentence broken', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'playback.started',
-      data: {
-        accountId: null,
-        accountName: null,
-        profileId: null,
-        profileName: null,
-        item: anItem,
-        deviceLabel: 'Chrome on macOS',
-        clientLabel: null,
-        mode: 'DirectPlay',
-      },
-    });
-
-    expect(drawn.description).toBe('Someone with a share link started watching');
+  it('keeps a name from being read as Discord’s formatting', () => {
+    expect(discordEmbedFor(anAccount('*NSYNC_fan `~|[x]\\')).description).toBe(
+      '**\\*NSYNC\\_fan \\`\\~\\|\\[x\\]\\\\** created an account',
+    );
   });
 
-  it('says how far through somebody got', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'playback.stopped',
-      data: {
-        accountId: 'account-1',
-        accountName: 'Ada',
-        profileId: 'profile-1',
-        profileName: 'Ada',
-        item: anItem,
-        deviceLabel: 'Chrome on macOS',
-        clientLabel: null,
-        mode: 'DirectPlay',
-        positionSeconds: 610,
-        durationSeconds: 7200,
-      },
-    });
-
-    expect(drawn.fields).toContainEqual({ name: 'Stopped at', value: '10:10 (8%)', inline: true });
+  it('keeps a name from pinging anybody', () => {
+    expect(discordEmbedFor(anAccount('<@123> <@&456>')).description).toBe(
+      '**\\<@123> \\<@&456>** created an account',
+    );
   });
 
-  it('leaves out how far through where nothing ever said', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'playback.stopped',
-      data: {
-        accountId: null,
-        accountName: null,
-        profileId: null,
-        profileName: null,
-        item: anItem,
-        deviceLabel: 'Chrome on macOS',
-        clientLabel: null,
-        mode: 'DirectPlay',
-        positionSeconds: null,
-        durationSeconds: null,
-      },
-    });
-
-    expect(drawn.fields.map((one) => one.name)).not.toContain('Stopped at');
+  it('keeps a line of a summary from starting a numbered list', () => {
+    expect(
+      discordEmbedFor({
+        ...anEnvelope,
+        event: 'media.added',
+        data: { ...anItem, overview: 'One\n1. Two\n12. Three' },
+      }).description,
+    ).toContain('One\n1\\. Two\n12\\. Three');
   });
 
-  it('never tells Discord which of a wrong password or a wrong address it was', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'auth.failed',
-      data: {
-        identifier: 'ada@example.com',
-        deviceLabel: 'Chrome on macOS',
-        clientLabel: null,
-        address: null,
-        reason: 'those details weren’t accepted.',
-      },
-    });
-
-    expect(drawn.title).toBe('A sign-in was blocked');
-    expect(drawn.fields.map((one) => one.name)).not.toContain('Address');
+  it('keeps a line of a summary from starting a heading, a quote or a list', () => {
+    expect(
+      discordEmbedFor({
+        ...anEnvelope,
+        event: 'media.added',
+        data: { ...anItem, overview: 'One\n# Two\n> Three\n- Four' },
+      }).description,
+    ).toContain('One\n\\# Two\n\\> Three\n\\- Four');
   });
 
-  it('lists what a scan brought in', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'library.scanned',
-      data: {
-        libraries: [
-          {
-            libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-            libraryName: 'Films',
-            added: 2,
-            updated: 0,
-            removed: 0,
-            failed: 0,
-            arrived: [
-              { title: 'Dune', episodes: 1 },
-              { title: 'Arrival', episodes: 1 },
-            ],
-            arrivedNotListed: 0,
-          },
-        ],
-        added: 2,
-        updated: 0,
-        removed: 0,
-        failed: 0,
-      },
-    });
-
-    expect(drawn.description).toBe('**Films**\nDune\nArrival');
-    expect(drawn.fields).toContainEqual({ name: 'Added', value: '2', inline: true });
+  it('sends no description where there is nothing beyond the title', () => {
+    expect(
+      discordEmbedFor({
+        ...anEnvelope,
+        event: 'plugin.event',
+        data: {
+          pluginId: 'a-plugin',
+          pluginName: 'A plugin',
+          name: 'reported',
+          title: 'Something happened',
+          detail: {},
+        },
+      }),
+    ).not.toHaveProperty('description');
   });
 
-  it('says how many it did not list rather than listing them all', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'library.scanned',
-      data: {
-        libraries: [
-          {
-            libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-            libraryName: 'Films',
-            added: 30,
-            updated: 0,
-            removed: 0,
-            failed: 0,
-            arrived: [{ title: 'Dune', episodes: 1 }],
-            arrivedNotListed: 29,
-          },
-        ],
-        added: 30,
-        updated: 0,
-        removed: 0,
-        failed: 0,
-      },
-    });
+  it('hangs no poster on a notice that has none', () => {
+    expect(discordEmbedFor(anAccount('Ada')).thumbnail).toBeUndefined();
+  });
 
-    expect(drawn.description).toContain('and 29 more');
+  it('colours each kind of news its own way', () => {
+    expect(
+      [
+        aVpnDrop('the tunnel closed'),
+        aRequestMade,
+        anAccount('Ada'),
+        { ...anEnvelope, event: 'media.removed', data: anItem } satisfies WebhookPayload,
+        {
+          ...anEnvelope,
+          event: 'requests.filed',
+          data: { title: 'A Quiet Town', folder: '/tv', request: aRequest },
+        } satisfies WebhookPayload,
+      ].map((payload) => discordEmbedFor(payload).color),
+    ).toStrictEqual([0xe8503a, 0xe8a33a, 0x3ac47d, 0x8b5ce8, 0x3a8ee8]);
   });
 });
 
 describe('discordEmbedFor, staying inside what Discord accepts', () => {
   it('cuts a title too long for Discord rather than letting the message be refused', () => {
-    const drawn = embed({ ...anArrival, data: { ...anItem, title: 'x'.repeat(400), year: null } });
+    expect(
+      discordEmbedFor({
+        ...anEnvelope,
+        event: 'media.added',
+        data: { ...anItem, title: 'T'.repeat(400), year: null },
+      }).title,
+    ).toHaveLength(256);
+  });
 
-    expect(drawn.title).toHaveLength(256);
-    expect(drawn.title.endsWith('…')).toBe(true);
+  it('cuts a long problem short and keeps the way to put it right', () => {
+    const { description } = discordEmbedFor(aVpnDrop('x'.repeat(5000)));
+
+    expect(description?.length).toBeLessThanOrEqual(4096);
+    expect(description).toContain('…');
+    expect(description?.endsWith('[How to fix it](https://docs.getvalence.app/requests#vpn)')).toBe(
+      true,
+    );
+  });
+
+  it('gives up the summary before anything else where the rest would not fit', () => {
+    const { description } = discordEmbedFor({
+      ...anEnvelope,
+      event: 'media.added',
+      data: {
+        itemId: 'item-1',
+        kind: 'movie',
+        title: 'A Long Story',
+        seriesTitle: null,
+        seasonNumber: null,
+        episodeNumber: null,
+        year: 2021,
+        posterUrl: null,
+        libraryId: 'films',
+        libraryName: 'Films',
+        overview: 'Once upon a time. '.repeat(400),
+        durationSeconds: 6300,
+        genres: [],
+        rating: null,
+        quality: '4K HDR',
+      },
+    });
+
+    expect(description?.length).toBeLessThanOrEqual(4096);
+    expect(description).toContain('Added to **Films**');
+    expect(description?.endsWith('`Film` | `1h 45m` | `4K HDR`')).toBe(true);
   });
 
   it('keeps the whole embed inside the six thousand characters Discord counts', () => {
-    const drawn = embed({
+    const drawn = discordEmbedFor({
       ...anEnvelope,
-      event: 'library.scanned',
+      event: 'plugin.event',
       data: {
-        libraries: [
-          {
-            libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-            libraryName: 'Films',
-            added: 25,
-            updated: 0,
-            removed: 0,
-            failed: 0,
-            arrived: Array.from({ length: 25 }, () => ({
-              title: 'y'.repeat(400),
-              episodes: 1,
-            })),
-            arrivedNotListed: 0,
+        pluginId: 'a-plugin',
+        pluginName: 'P'.repeat(2000),
+        name: 'reported',
+        title: 'T'.repeat(256),
+        detail: Object.fromEntries(
+          Array.from({ length: 10 }, (_, index) => [`d${index.toString()}`, 'x'.repeat(1000)]),
+        ),
+      },
+    });
+
+    expect(drawn.footer?.text).toHaveLength(2000);
+    expect(
+      drawn.title.length + (drawn.description?.length ?? 0) + (drawn.footer?.text.length ?? 0),
+    ).toBeLessThanOrEqual(6000);
+  });
+
+  it('signs with the name and logo the server was given, in its accent where nothing is wrong', () => {
+    const brand = {
+      name: 'Flux',
+      iconUrl: 'https://flux.example.com/api/brand/logo',
+      accent: 0x123456,
+    };
+
+    expect(discordEmbedFor(aRequestMade, brand).author).toStrictEqual({
+      name: 'Flux',
+      icon_url: 'https://flux.example.com/api/brand/logo',
+    });
+    expect(discordEmbedFor(aVpnDrop('It dropped.'), brand).color).toBe(0xe8503a);
+    expect(
+      discordEmbedFor(
+        {
+          ...anEnvelope,
+          event: 'job.working',
+          data: { kind: 'scan', label: 'Scan the libraries' },
+        },
+        brand,
+      ).color,
+    ).toBe(0x3ac47d);
+    expect(
+      discordEmbedFor(
+        {
+          ...anEnvelope,
+          event: 'job.completed',
+          data: {
+            kind: 'scan',
+            label: 'Scan the libraries',
+            jobId: 'job-1',
+            subject: null,
+            subjectName: null,
           },
-        ],
-        added: 25,
-        updated: 0,
-        removed: 0,
-        failed: 0,
-      },
-    });
-
-    const spent =
-      drawn.title.length +
-      drawn.description.length +
-      drawn.author.name.length +
-      drawn.fields.reduce((total, one) => total + one.name.length + one.value.length, 0);
-
-    expect(spent).toBeLessThanOrEqual(6000);
-  });
-
-  it('never sends more fields than Discord will render', () => {
-    expect(embed(anArrival).fields.length).toBeLessThanOrEqual(25);
-  });
-
-  it('leaves out a field with nothing in it rather than sending an empty one', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'job.failed',
-      data: {
-        kind: 'library.scan',
-        label: 'Scan for changes',
-        jobId: 'job-1',
-        subject: null,
-        subjectName: null,
-        reason: 'no space left',
-      },
-    });
-
-    expect(drawn.fields.map((one) => one.name)).not.toContain('About');
-  });
-});
-
-describe('discordEmbedFor, saying how long something runs', () => {
-  const arrivalOf = (durationSeconds: number | null): WebhookPayload => ({
-    ...anArrival,
-    data: { ...anItem, durationSeconds },
-  });
-
-  const runtimeIn = (payload: WebhookPayload) =>
-    discordEmbedFor(payload, 'a sentence').fields.find((one) => one.name === 'Runtime')?.value;
-
-  it('says a feature length in hours and minutes', () => {
-    expect(runtimeIn(arrivalOf(9780))).toBe('2h 43m');
-  });
-
-  it('says a short thing in minutes', () => {
-    expect(runtimeIn(arrivalOf(1500))).toBe('25m');
-  });
-
-  it('says seconds for a clip, rather than rounding it to nothing', () => {
-    expect(runtimeIn(arrivalOf(2))).toBe('2s');
-  });
-
-  it('says nothing at all where the runtime is not known', () => {
-    expect(runtimeIn(arrivalOf(null))).toBeUndefined();
-  });
-});
-
-describe('discordEmbedFor, a scan of several libraries at once', () => {
-  const twoLibraries: WebhookPayload = {
-    ...anEnvelope,
-    event: 'library.scanned',
-    data: {
-      libraries: [
-        {
-          libraryId: 'library-1',
-          libraryName: 'Movies',
-          added: 2,
-          updated: 0,
-          removed: 0,
-          failed: 0,
-          arrived: [
-            { title: 'Dune', episodes: 1 },
-            { title: 'Sicario', episodes: 1 },
-          ],
-          arrivedNotListed: 0,
         },
-        {
-          libraryId: 'library-2',
-          libraryName: 'Shows',
-          added: 1,
-          updated: 3,
-          removed: 0,
-          failed: 0,
-          arrived: [{ title: 'The Bear', episodes: 8 }],
-          arrivedNotListed: 0,
-        },
-      ],
-      added: 3,
-      updated: 3,
-      removed: 0,
-      failed: 0,
-    },
-  };
-
-  it('says how many libraries finished rather than naming only the first', () => {
-    expect(discordEmbedFor(twoLibraries, 'a sentence').title).toBe('2 libraries finished scanning');
-  });
-
-  it('names them all in a field', () => {
-    expect(discordEmbedFor(twoLibraries, 'a sentence').fields).toContainEqual({
-      name: 'Libraries',
-      value: 'Movies, Shows',
-      inline: false,
-    });
-  });
-
-  it('adds the counts up across the whole scan', () => {
-    const drawn = discordEmbedFor(twoLibraries, 'a sentence');
-
-    expect(drawn.fields).toContainEqual({ name: 'Added', value: '3', inline: true });
-    expect(drawn.fields).toContainEqual({ name: 'Updated', value: '3', inline: true });
-  });
-
-  it('keeps what arrived under the library it arrived in', () => {
-    const drawn = discordEmbedFor(twoLibraries, 'a sentence');
-
-    expect(drawn.description).toContain('**Movies**');
-    expect(drawn.description).toContain('**Shows**');
-    expect(drawn.description).toContain('The Bear — 8 episodes');
-  });
-
-  it('counts a programme rather than reciting its episodes', () => {
-    const drawn = discordEmbedFor(
-      {
-        ...twoLibraries,
-        data: {
-          ...twoLibraries.data,
-          libraries: [
-            {
-              libraryId: 'library-2',
-              libraryName: 'Shows',
-              added: 2103,
-              updated: 0,
-              removed: 0,
-              failed: 0,
-              arrived: [
-                { title: '24', episodes: 192 },
-                { title: 'The Thick Of It', episodes: 22 },
-              ],
-              arrivedNotListed: 40,
-            },
-          ],
-        },
-      },
-      'a sentence',
-    );
-
-    expect(drawn.description).toContain('24 — 192 episodes');
-    expect(drawn.description).toContain('The Thick Of It — 22 episodes');
-    expect(drawn.description).toContain('…and 40 more');
-    expect(drawn.description).not.toContain('S01E');
-  });
-
-  it('names the one library where only one was scanned', () => {
-    const drawn = discordEmbedFor(
-      {
-        ...twoLibraries,
-        data: {
-          ...twoLibraries.data,
-          libraries: [twoLibraries.data.libraries[0]!],
-        },
-      },
-      'a sentence',
-    );
-
-    expect(drawn.title).toBe('Movies finished scanning');
-    expect(drawn.fields.map((one) => one.name)).not.toContain('Libraries');
-  });
-});
-
-describe('discordEmbedFor, somebody opening and closing Valence', () => {
-  const aSession = {
-    accountId: 'account-1',
-    accountName: 'Dan',
-    profileId: 'profile-1',
-    profileName: 'Connie',
-    clientId: 'tab-1',
-    deviceLabel: "Connie's iPhone",
-    clientLabel: null,
-    address: '192.168.1.40',
-    guestOf: null,
-    viaShare: null,
-  };
-
-  const fieldsOf = (payload: WebhookPayload) =>
-    Object.fromEntries(embed(payload).fields.map((one) => [one.name, one.value]));
-
-  it('puts whoever arrived in the title rather than burying them in a field', () => {
-    expect(embed({ ...anEnvelope, event: 'session.started', data: aSession }).title).toBe(
-      'Connie from Dan opened Valence',
-    );
-  });
-
-  it('names the device, and whose account the profile sits on', () => {
-    expect(fieldsOf({ ...anEnvelope, event: 'session.started', data: aSession })).toStrictEqual({
-      Device: "Connie's iPhone",
-      From: '192.168.1.40',
-      Account: 'Dan',
-    });
-  });
-
-  it('names what the device reached Valence through, where that is known', () => {
-    expect(
-      fieldsOf({
-        ...anEnvelope,
-        event: 'session.started',
-        data: { ...aSession, deviceLabel: 'iPhone 17 Pro Max', clientLabel: 'Valence for iOS' },
-      }),
-    ).toStrictEqual({
-      Device: 'iPhone 17 Pro Max',
-      'Browser or app': 'Valence for iOS',
-      From: '192.168.1.40',
-      Account: 'Dan',
-    });
-  });
-
-  it('leaves the account out where it would only repeat the title', () => {
-    expect(
-      fieldsOf({
-        ...anEnvelope,
-        event: 'session.started',
-        data: { ...aSession, profileId: null, profileName: null },
-      }),
-    ).toStrictEqual({ Device: "Connie's iPhone", From: '192.168.1.40' });
-  });
-
-  it('names whoever let a guest in', () => {
-    expect(
-      fieldsOf({
-        ...anEnvelope,
-        event: 'session.started',
-        data: {
-          ...aSession,
-          accountId: null,
-          accountName: null,
-          profileId: null,
-          profileName: null,
-          guestOf: 'Dan',
-          viaShare: 'share-1',
-        },
-      })['Guest of'],
-    ).toBe('Dan');
-  });
-
-  it('says how long somebody stayed when they go', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'session.ended',
-      data: { ...aSession, lastedSeconds: 4_980 },
-    });
-
-    expect(drawn.title).toBe('Connie from Dan closed Valence');
-    expect(
-      fieldsOf({
-        ...anEnvelope,
-        event: 'session.ended',
-        data: { ...aSession, lastedSeconds: 4_980 },
-      }),
-    ).toStrictEqual({
-      Device: "Connie's iPhone",
-      Stayed: '1h 23m',
-    });
-  });
-
-  it('hangs no poster on a session, which is about a person rather than a film', () => {
-    expect(
-      embed({ ...anEnvelope, event: 'session.started', data: aSession }).thumbnail,
-    ).toBeUndefined();
-  });
-});
-
-describe('discordEmbedFor, a request as Seerr draws one', () => {
-  const aRequest = {
-    id: 'request-1',
-    kind: 'film' as const,
-    title: 'Dune',
-    artistName: null,
-    year: 2021,
-    overview: 'A noble family becomes embroiled in a war for control over a desert planet.',
-    posterUrl: 'https://image.tmdb.org/t/p/w500/dune.jpg',
-    requestedBy: 'Jess',
-    requestedByAccountId: null,
-    requestedByProfile: null,
-    requestedByProfileId: null,
-    askers: [],
-    seasons: null,
-    state: 'available' as const,
-  };
-
-  const valueOf = (drawn: ReturnType<typeof embed>, name: string) =>
-    drawn.fields.find((one) => one.name === name)?.value;
-
-  it('says what became of which request, with its summary, poster, asker and status', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'requests.available',
-      data: {
-        title: 'Dune',
-        requestedBy: 'Jess',
-        mediaId: 'media-1',
-        accountId: null,
-        profileId: null,
-        profileName: null,
-        request: aRequest,
-      },
-    });
-
-    expect(drawn.title).toBe('Film request now available: Dune (2021)');
-    expect(drawn.description).toBe(aRequest.overview);
-    expect(drawn.thumbnail).toEqual({ url: aRequest.posterUrl });
-    expect(valueOf(drawn, 'Requested by')).toBe('Jess');
-    expect(valueOf(drawn, 'Status')).toBe('In the library');
-  });
-
-  it('names the seasons of a series, and the artist of an album', () => {
-    const series = embed({
-      ...anEnvelope,
-      event: 'requests.available',
-      data: {
-        title: 'Carrie',
-        requestedBy: 'Jess',
-        mediaId: 'media-2',
-        accountId: null,
-        profileId: null,
-        profileName: null,
-        request: { ...aRequest, kind: 'series', title: 'Carrie', seasons: [1, 2] },
-      },
-    });
-    const album = embed({
-      ...anEnvelope,
-      event: 'requests.available',
-      data: {
-        title: 'An Album',
-        requestedBy: 'Dan',
-        mediaId: 'media-3',
-        accountId: null,
-        profileId: null,
-        profileName: null,
-        request: { ...aRequest, kind: 'album', title: 'An Album', artistName: 'An Artist' },
-      },
-    });
-
-    expect(series.title).toBe('Series request now available: Carrie (2021)');
-    expect(valueOf(series, 'Seasons')).toBe('1, 2');
-    expect(album.title).toBe('Album request now available: An Album (2021)');
-    expect(valueOf(album, 'Artist')).toBe('An Artist');
-    expect(valueOf(album, 'Seasons')).toBeUndefined();
-  });
-
-  it('tells a request waiting for approval from one approved as it was made', () => {
-    const waiting = embed({
-      ...anEnvelope,
-      event: 'requests.made',
-      data: {
-        title: 'Dune',
-        kind: 'film',
-        requestedBy: 'Jess',
-        accountId: null,
-        profileId: null,
-        profileName: null,
-        request: { ...aRequest, state: 'awaitingApproval' },
-      },
-    });
-    const automatic = embed({
-      ...anEnvelope,
-      event: 'requests.approved',
-      data: { title: 'Dune', approvedBy: null, request: { ...aRequest, state: 'wanted' } },
-    });
-    const byHand = embed({
-      ...anEnvelope,
-      event: 'requests.approved',
-      data: { title: 'Dune', approvedBy: 'Dan', request: { ...aRequest, state: 'wanted' } },
-    });
-
-    expect(waiting.title).toBe('Film request pending approval: Dune (2021)');
-    expect(valueOf(waiting, 'Status')).toBe('Waiting for approval');
-    expect(automatic.title).toBe('Film request automatically approved: Dune (2021)');
-    expect(byHand.title).toBe('Film request approved: Dune (2021)');
-    expect(valueOf(byHand, 'Approved by')).toBe('Dan');
-  });
-
-  it('gives a declined request its reason, in the colour of bad news', () => {
-    const declined = embed({
-      ...anEnvelope,
-      event: 'requests.refused',
-      data: { title: 'Dune', reason: 'No room', request: { ...aRequest, state: 'refused' } },
-    });
-
-    expect(declined.title).toBe('Film request declined: Dune (2021)');
-    expect(valueOf(declined, 'Reason')).toBe('No room');
-    expect(declined.color).toBe(
-      embed({ ...anEnvelope, event: 'transcoder.unreachable', data: { reason: 'x' } }).color,
-    );
-  });
-
-  it('leaves out the year of a title that has none', () => {
-    expect(
-      embed({
-        ...anEnvelope,
-        event: 'requests.filed',
-        data: {
-          title: 'Dune',
-          folder: '/media/Films/Dune',
-          request: { ...aRequest, year: null, state: 'filed' },
-        },
-      }).title,
-    ).toBe('Film request imported: Dune');
-  });
-});
-
-describe('discordEmbedFor, with Valence’s mark', () => {
-  it('shows the mark beside Valence’s name where there is somewhere to fetch it from', () => {
-    expect(
-      discordEmbedFor(anArrival, 'a sentence', 'https://valence.example.com/icon.png').author,
-    ).toEqual({ name: 'Valence', icon_url: 'https://valence.example.com/icon.png' });
-    expect(discordEmbedFor(anArrival, 'a sentence').author).toEqual({ name: 'Valence' });
-  });
-});
-
-describe('discordEmbedFor, a disk running out of room', () => {
-  it('says how much is free of all of it, in one field', () => {
-    const drawn = embed({
-      ...anEnvelope,
-      event: 'disk.low',
-      data: { mountPoint: '/media', availableBytes: 40_000_000_000, totalBytes: 8_000_000_000_000 },
-    });
-
-    expect(drawn.fields).toEqual([{ name: 'Free', value: '37 GB of 7.3 TB', inline: true }]);
+        brand,
+      ).color,
+    ).toBe(0x123456);
   });
 });
