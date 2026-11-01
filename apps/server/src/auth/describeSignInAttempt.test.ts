@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
 import { describeSignInAttempt } from './describeSignInAttempt';
 import type { SignInAttempt } from './describeSignInAttempt';
 
@@ -11,7 +12,10 @@ const attempted = (attempt: Partial<SignInAttempt>): SignInAttempt => ({
   signedInAs: null,
   identifier: 'ada@example.com',
   userAgent: CHROME,
-  brands: ['Google Chrome', 'Chromium'],
+  device: {
+    deviceId: null,
+    identity: identifyDevice({ userAgent: CHROME, brands: ['Google Chrome', 'Chromium'] }),
+  },
   address: '203.0.113.7',
   ...attempt,
 });
@@ -27,10 +31,61 @@ describe('describeSignInAttempt', () => {
       data: {
         accountId: 'account-1',
         name: 'Ada',
-        deviceLabel: 'Chrome on macOS',
+        deviceLabel: 'Mac',
+        clientLabel: 'Chrome on macOS',
         address: '203.0.113.7',
       },
     });
+  });
+
+  it('names the device and what it reached Valence through apart', () => {
+    const occurrence = describeSignInAttempt(
+      attempted({
+        account: { id: 'account-1', name: 'Ada' },
+        device: {
+          deviceId: 'phone-device',
+          identity: identifyDevice({
+            userAgent: 'Valence/1 CFNetwork/3826 Darwin/25.0.0',
+            kind: 'phone',
+            hints: { system: 'ios', model: 'iPhone 17 Pro Max' },
+          }),
+        },
+      }),
+    );
+
+    expect(occurrence?.data).toMatchObject({
+      deviceLabel: 'iPhone 17 Pro Max',
+      clientLabel: 'Valence for iOS',
+    });
+  });
+
+  it('names a device what its owner renamed it to', () => {
+    const occurrence = describeSignInAttempt(
+      attempted({ account: { id: 'account-1', name: 'Ada' } }),
+      'Office Mac',
+    );
+
+    expect(occurrence?.data).toMatchObject({
+      deviceLabel: 'Office Mac',
+      clientLabel: 'Chrome on macOS',
+    });
+  });
+
+  it('reports a television signing in with a code once its code is approved', () => {
+    const occurrence = describeSignInAttempt(
+      attempted({
+        path: '/device/token',
+        statusCode: 200,
+        account: { id: 'account-1', name: 'Ada' },
+      }),
+    );
+
+    expect(occurrence?.event).toBe('auth.succeeded');
+  });
+
+  it('says nothing about a television turned away while its code waits to be approved', () => {
+    expect(describeSignInAttempt(attempted({ path: '/device/token', statusCode: 400 }))).toBeNull();
+    expect(describeSignInAttempt(attempted({ path: '/device/token', statusCode: 401 }))).toBeNull();
   });
 
   it('reports a refusal against the identifier that was tried', () => {
@@ -68,7 +123,11 @@ describe('describeSignInAttempt', () => {
 
   it('names an unknown device rather than printing nothing', () => {
     const occurrence = describeSignInAttempt(
-      attempted({ statusCode: 401, userAgent: null, brands: [] }),
+      attempted({
+        statusCode: 401,
+        userAgent: null,
+        device: { deviceId: null, identity: identifyDevice({ userAgent: null }) },
+      }),
     );
 
     expect(occurrence?.data).toMatchObject({ deviceLabel: 'Unknown device' });

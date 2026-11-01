@@ -4,6 +4,7 @@ import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
+import type { DeviceHints } from '@ValenceContracts/schemas/DeviceHints';
 import type { PasskeyAssertion } from '@ValenceContracts/schemas/PasskeyAssertion';
 import type { PasskeyAttestation } from '@ValenceContracts/schemas/PasskeyAttestation';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
@@ -100,6 +101,7 @@ type Platform = {
   kept?: KeptAnswers;
   serverAddress: () => string | null;
   describeThisClient: () => string;
+  describeThisDevice: () => DeviceHints;
   thisClientId: () => string;
   thisClientKind: () => ClientKind;
   canKeepFiles: () => boolean;

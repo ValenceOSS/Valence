@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryAuth } from './createMemoryAuth';
 import { ownAddresses } from '@ValenceServer/env/ownOrigins';
@@ -114,6 +115,33 @@ describe('createAuth', () => {
     );
 
     expect(response.status).toBe(200);
+  });
+
+  it('notes which device each sign-in began on, from the request that signed it in', async () => {
+    const { auth, sessionsStarted } = createMemoryAuth();
+    await auth.handler(post('/api/auth/sign-up/email', credentials));
+
+    await auth.handler(
+      post(
+        '/api/auth/sign-in/email',
+        { email: credentials.email, password: credentials.password },
+        { 'user-agent': 'Valence (Living Room)' },
+      ),
+    );
+
+    expect(sessionsStarted.at(-1)?.userAgent).toBe('Valence (Living Room)');
+    expect(sessionsStarted.at(-1)?.sessionId).toEqual(expect.any(String));
+  });
+
+  it('says which device asked for each code a television shows', async () => {
+    const { auth, codesIssued } = createMemoryAuth();
+
+    const response = await auth.handler(
+      post('/api/auth/device/code', { client_id: 'valence-tv' }, { 'user-agent': 'okhttp/4.12.0' }),
+    );
+    const issued = z.object({ user_code: z.string() }).parse(await response.json());
+
+    expect(codesIssued).toStrictEqual([{ userCode: issued.user_code, userAgent: 'okhttp/4.12.0' }]);
   });
 
   it('signs an existing user in by username, whatever case it is typed in', async () => {

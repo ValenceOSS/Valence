@@ -2,6 +2,9 @@ import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThis
 import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
 import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
 import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
+import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
+import { writeDeviceHints } from '@ValenceContracts/functions/writeDeviceHints';
+import { theDeviceHints } from '@ValenceClient/platform/theDeviceHints';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -45,6 +48,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
         input.headers.set('origin', address);
         input.headers.set('user-agent', appUserAgent(describeThisPhone()));
         input.headers.set(CLIENT_KIND_HEADER, 'phone');
+        input.headers.set(DEVICE_HEADER, writeDeviceHints(theDeviceHints()));
       }
 
       return asked(input, init);
@@ -62,6 +66,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
     headers.set('origin', address);
     headers.set('user-agent', appUserAgent(describeThisPhone()));
     headers.set(CLIENT_KIND_HEADER, 'phone');
+    headers.set(DEVICE_HEADER, writeDeviceHints(theDeviceHints()));
 
     return asked(whole, { ...init, headers });
   };

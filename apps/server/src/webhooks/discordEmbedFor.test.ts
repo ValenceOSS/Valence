@@ -80,6 +80,7 @@ describe('discordEmbedFor', () => {
       data: {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         address: null,
         reason: 'those details weren’t accepted.',
       },
@@ -208,6 +209,7 @@ describe('discordEmbedFor', () => {
         profileName: 'Ada',
         item: anItem,
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         mode: 'Transcode',
       },
     });
@@ -215,6 +217,52 @@ describe('discordEmbedFor', () => {
     expect(drawn.description).toBe('Ada started watching');
     expect(drawn.fields).toContainEqual({ name: 'Device', value: 'Chrome on macOS', inline: true });
     expect(drawn.fields).toContainEqual({ name: 'Playing', value: 'Transcode', inline: true });
+  });
+
+  it('says what the device reached Valence through beside the device', () => {
+    const drawn = embed({
+      ...anEnvelope,
+      event: 'playback.started',
+      data: {
+        accountId: 'account-1',
+        accountName: 'Ada',
+        profileId: 'profile-1',
+        profileName: 'Ada',
+        item: anItem,
+        deviceLabel: 'iPhone 17 Pro Max',
+        clientLabel: 'Valence for iOS',
+        mode: 'DirectPlay',
+      },
+    });
+
+    expect(drawn.fields).toContainEqual({
+      name: 'Device',
+      value: 'iPhone 17 Pro Max',
+      inline: true,
+    });
+    expect(drawn.fields).toContainEqual({
+      name: 'Browser or app',
+      value: 'Valence for iOS',
+      inline: true,
+    });
+  });
+
+  it('says what a sign-in reached Valence through, and leaves it out where nothing said', () => {
+    const signedIn = (clientLabel: string | null) =>
+      embed({
+        ...anEnvelope,
+        event: 'auth.succeeded',
+        data: {
+          accountId: 'account-1',
+          name: 'Ada',
+          deviceLabel: 'Mac',
+          clientLabel,
+          address: null,
+        },
+      }).fields.map((one) => one.name);
+
+    expect(signedIn('Chrome on macOS')).toContain('Browser or app');
+    expect(signedIn(null)).not.toContain('Browser or app');
   });
 
   it('says somebody was listening, not watching, to a song or an audiobook', () => {
@@ -225,6 +273,7 @@ describe('discordEmbedFor', () => {
       profileName: 'Ada',
       item: { ...anItem, kind: 'song' as const },
       deviceLabel: 'iPhone',
+      clientLabel: null,
       mode: 'DirectPlay' as const,
     };
 
@@ -259,6 +308,7 @@ describe('discordEmbedFor', () => {
         profileName: null,
         item: anItem,
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         mode: 'DirectPlay',
       },
     });
@@ -277,6 +327,7 @@ describe('discordEmbedFor', () => {
         profileName: 'Ada',
         item: anItem,
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         mode: 'DirectPlay',
         positionSeconds: 610,
         durationSeconds: 7200,
@@ -297,6 +348,7 @@ describe('discordEmbedFor', () => {
         profileName: null,
         item: anItem,
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         mode: 'DirectPlay',
         positionSeconds: null,
         durationSeconds: null,
@@ -313,6 +365,7 @@ describe('discordEmbedFor', () => {
       data: {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         address: null,
         reason: 'those details weren’t accepted.',
       },
@@ -594,6 +647,7 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
     profileName: 'Connie',
     clientId: 'tab-1',
     deviceLabel: "Connie's iPhone",
+    clientLabel: null,
     address: '192.168.1.40',
     guestOf: null,
     viaShare: null,
@@ -611,6 +665,21 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
   it('names the device, and whose account the profile sits on', () => {
     expect(fieldsOf({ ...anEnvelope, event: 'session.started', data: aSession })).toStrictEqual({
       Device: "Connie's iPhone",
+      From: '192.168.1.40',
+      Account: 'Dan',
+    });
+  });
+
+  it('names what the device reached Valence through, where that is known', () => {
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, deviceLabel: 'iPhone 17 Pro Max', clientLabel: 'Valence for iOS' },
+      }),
+    ).toStrictEqual({
+      Device: 'iPhone 17 Pro Max',
+      'Browser or app': 'Valence for iOS',
       From: '192.168.1.40',
       Account: 'Dan',
     });

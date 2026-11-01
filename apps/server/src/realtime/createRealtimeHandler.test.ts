@@ -10,8 +10,12 @@ import type { FromServer } from '@ValenceContracts/schemas/Realtime';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
+import type { SeenDevice } from '@ValenceServer/devices/DeviceNotes';
 
-const createWorld = (granted: Permission[] = []) => {
+const createWorld = (
+  granted: Permission[] = [],
+  renames: ReadonlyMap<string, string> = new Map(),
+) => {
   const due: (() => void)[] = [];
 
   const schedule: Schedule = (run) => {
@@ -41,22 +45,32 @@ const createWorld = (granted: Permission[] = []) => {
     connected: string[];
     disconnected: string[];
     labels: string[];
+    clientLabels: string[];
     addresses: (string | null)[];
     kinds: (ClientKind | null)[];
+    renamed: (string | null)[];
+    noted: { sessionId: string; seen: SeenDevice }[];
+    active: { sessionId: string; at: Date }[];
   } = {
     connected: [],
     disconnected: [],
     labels: [],
+    clientLabels: [],
     addresses: [],
     kinds: [],
+    renamed: [],
+    noted: [],
+    active: [],
   };
 
   let announce: ((event: PresenceControl) => void) | null = null;
 
   const presence: PresenceBinding = {
-    connect: ({ clientId, deviceLabel, clientKind, address, send }) => {
+    connect: ({ clientId, deviceLabel, clientLabel, clientKind, address, renamed, send }) => {
       presenceCalls.connected.push(clientId);
       presenceCalls.labels.push(deviceLabel);
+      presenceCalls.clientLabels.push(clientLabel);
+      presenceCalls.renamed.push(renamed);
       presenceCalls.addresses.push(address);
       presenceCalls.kinds.push(clientKind);
       announce = send;
@@ -67,6 +81,14 @@ const createWorld = (granted: Permission[] = []) => {
       presenceCalls.disconnected.push(clientId);
     },
     nameOf: () => Promise.resolve('Sam'),
+    renamedDevice: (accountId, deviceId) =>
+      Promise.resolve(renames.get(`${accountId}/${deviceId}`) ?? null),
+    noteDevice: (sessionId, seen) => {
+      presenceCalls.noted.push({ sessionId, seen });
+    },
+    noteActive: (sessionId, at) => {
+      presenceCalls.active.push({ sessionId, at });
+    },
   };
 
   let count = 0;
@@ -521,6 +543,242 @@ describe('createRealtimeHandler', () => {
     await session.receive(JSON.stringify({ kind: 'subscribe', topics: ['logs'] }));
 
     expect(world.registry.topicsOf(session.id)).toStrictEqual(['logs']);
+  });
+});
+
+describe('createRealtimeHandler, what a device says it is', () => {
+  const AN_IPHONE = {
+    id: 'phone-device-1',
+    app: 'phone',
+    system: 'ios',
+    model: 'iPhone 17 Pro Max',
+  } as const;
+
+  const identifying = () =>
+    JSON.stringify({
+      kind: 'identify',
+      profileId: null,
+      clientId: 'phone-one',
+      deviceLabel: 'iPhone',
+      clientKind: 'phone',
+      device: AN_IPHONE,
+    });
+
+  it('names the device from what it said about itself, and what it reached Valence through', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(identifying());
+
+    expect(world.presenceCalls.labels).toStrictEqual(['iPhone 17 Pro Max']);
+    expect(world.presenceCalls.clientLabels).toStrictEqual(['Valence for iOS']);
+  });
+
+  it('notes the device against the sign-in the connection was opened with', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, sessionId: 'sign-in-1' },
+      world.socket,
+    );
+
+    await session.receive(identifying());
+
+    expect(world.presenceCalls.noted).toHaveLength(1);
+    expect(world.presenceCalls.noted).toMatchObject([
+      {
+        sessionId: 'sign-in-1',
+        seen: {
+          deviceId: 'phone-device-1',
+          identity: { app: 'phone', system: 'ios', model: 'iPhone 17 Pro Max' },
+          at: new Date(1000),
+        },
+      },
+    ]);
+  });
+
+  it('notes nothing for a connection opened without a sign-in', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(identifying());
+
+    expect(world.presenceCalls.noted).toStrictEqual([]);
+  });
+
+  it('calls a device what its owner renamed it to', async () => {
+    const world = createWorld([], new Map([['me/phone-device-1', 'Kitchen phone']]));
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(identifying());
+
+    expect(world.presenceCalls.labels).toStrictEqual(['Kitchen phone']);
+    expect(world.presenceCalls.renamed).toStrictEqual(['Kitchen phone']);
+  });
+
+  it('looks for a new name only on the account it was given on', async () => {
+    const world = createWorld([], new Map([['somebody-else/phone-device-1', 'Their phone']]));
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(identifying());
+
+    expect(world.presenceCalls.labels).toStrictEqual(['iPhone 17 Pro Max']);
+    expect(world.presenceCalls.renamed).toStrictEqual([null]);
+  });
+
+  it('reads a browser from the user agent and brands the connection was opened with', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      {
+        accountId: 'me',
+        profileId: null,
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        brands: ['Microsoft Edge', 'Chromium'],
+      },
+      world.socket,
+    );
+
+    await session.receive(
+      JSON.stringify({
+        kind: 'identify',
+        profileId: null,
+        clientId: 'tab-one',
+        deviceLabel: 'Edge on Windows',
+        clientKind: 'browser',
+        device: { id: 'browser-device-1' },
+      }),
+    );
+
+    expect(world.presenceCalls.labels).toStrictEqual(['Windows PC']);
+    expect(world.presenceCalls.clientLabels).toStrictEqual(['Edge on Windows']);
+  });
+
+  it('reads a tab from an older build by its user agent, not by the label it gave itself', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      {
+        accountId: 'me',
+        profileId: null,
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        brands: ['Google Chrome', 'Chromium'],
+      },
+      world.socket,
+    );
+
+    await session.receive(
+      JSON.stringify({
+        kind: 'identify',
+        profileId: null,
+        clientId: 'tab-one',
+        deviceLabel: 'Chrome on macOS',
+      }),
+    );
+
+    expect(world.presenceCalls.labels).toStrictEqual(['Mac']);
+    expect(world.presenceCalls.clientLabels).toStrictEqual(['Chrome on macOS']);
+  });
+
+  it('names an older television app by the name it gives itself, on the television it is', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, sessionId: 'sign-in-1', userAgent: 'okhttp/4.12.0' },
+      world.socket,
+    );
+
+    await session.receive(
+      JSON.stringify({
+        kind: 'identify',
+        profileId: null,
+        clientId: 'tv-one',
+        deviceLabel: 'Living Room',
+        clientKind: 'tv',
+      }),
+    );
+
+    expect(world.presenceCalls.labels).toStrictEqual(['Living Room']);
+    expect(world.presenceCalls.clientLabels).toStrictEqual(['Valence for Android TV']);
+  });
+
+  it('leaves what an older app’s sign-in said about it alone, and only notes it was here', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, sessionId: 'sign-in-1', userAgent: 'okhttp/4.12.0' },
+      world.socket,
+    );
+
+    await session.receive(
+      JSON.stringify({
+        kind: 'identify',
+        profileId: null,
+        clientId: 'tv-one',
+        deviceLabel: 'Living Room',
+        clientKind: 'tv',
+      }),
+    );
+
+    expect(world.presenceCalls.noted).toStrictEqual([]);
+    expect(world.presenceCalls.active.map((one) => one.sessionId)).toStrictEqual(['sign-in-1']);
+  });
+
+  it('applies a name given to a sign-in whose client never said which device it is', async () => {
+    const world = createWorld([], new Map([['me/sign-in-1', 'Den TV']]));
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, sessionId: 'sign-in-1' },
+      world.socket,
+    );
+
+    await session.receive(
+      JSON.stringify({
+        kind: 'identify',
+        profileId: null,
+        clientId: 'tv-one',
+        clientKind: 'tv',
+        device: { app: 'tv', system: 'tvos' },
+      }),
+    );
+
+    expect(world.presenceCalls.labels).toStrictEqual(['Den TV']);
+  });
+
+  it('registers nothing for a connection that closed while it was still saying who it is', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+    const identifying = session.receive(
+      JSON.stringify({ kind: 'identify', profileId: null, clientId: 'tab-one' }),
+    );
+
+    session.close();
+    await identifying;
+
+    expect(world.presenceCalls.connected).toStrictEqual([]);
+  });
+
+  it('notes when the sign-in was last in use once its connection closes', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, sessionId: 'sign-in-1' },
+      world.socket,
+    );
+
+    await session.receive(identifying());
+    session.close();
+
+    expect(world.presenceCalls.active).toStrictEqual([
+      { sessionId: 'sign-in-1', at: new Date(1000) },
+    ]);
+  });
+
+  it('notes nothing on close for a connection that never said which client it is', () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, sessionId: 'sign-in-1' },
+      world.socket,
+    );
+
+    session.close();
+
+    expect(world.presenceCalls.active).toStrictEqual([]);
   });
 });
 

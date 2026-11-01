@@ -4,6 +4,7 @@ import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
+import { DeviceIdentityWireSchema } from '@ValenceContracts/schemas/DeviceIdentity';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -258,6 +259,9 @@ const AdminSessionSchema = z
     guestOf: z.string().nullable(),
     fromServer: z.string().nullable(),
     deviceLabel: z.string(),
+    device: SaidSchema,
+    client: SaidSchema.nullable(),
+    identity: DeviceIdentityWireSchema.nullable(),
     connectedAt: z.number(),
     playback: z
       .object({

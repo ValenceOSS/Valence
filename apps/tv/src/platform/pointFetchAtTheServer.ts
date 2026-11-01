@@ -5,6 +5,9 @@ import { describeThisTv } from '@ValenceTv/platform/describeThisTv';
 import { theTvsOwnName } from '@ValenceTv/platform/theTvsOwnName';
 import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
 import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
+import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
+import { writeDeviceHints } from '@ValenceContracts/functions/writeDeviceHints';
+import { theDeviceHints } from '@ValenceClient/platform/theDeviceHints';
 
 const OURS = '/api/';
 
@@ -71,6 +74,7 @@ const withTheSession = (given: HeadersInit | undefined): Headers => {
 
   headers.set('user-agent', appUserAgent(describeThisTv(theTvsOwnName())));
   headers.set(CLIENT_KIND_HEADER, 'tv');
+  headers.set(DEVICE_HEADER, writeDeviceHints(theDeviceHints()));
 
   return headers;
 };

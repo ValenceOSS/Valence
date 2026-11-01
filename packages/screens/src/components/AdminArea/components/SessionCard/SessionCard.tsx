@@ -20,8 +20,8 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import { deviceIconFor } from './deviceIcon';
-import { brandMarksOf } from './brandMarksOf';
+import { marksOfDevice } from '@ValenceScreens/devices/marksOfDevice';
+import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
@@ -59,10 +59,14 @@ const SessionCard = ({
 }: SessionCardProps) => {
   const { playback, listening, bookListening, reading } = session;
   const book = bookListening ?? reading;
-  const deviceGlyph = deviceIconFor(session.deviceLabel, session.clientKind);
-  const marks = brandMarksOf(session.deviceLabel);
+  const { deviceGlyph, systemMark, clientGlyph, clientMark } = marksOfDevice(
+    session.identity,
+    session.clientKind,
+  );
+  const { device, client } = namesOfSession(session);
+  const deviceAndClient =
+    client === null ? device : say('common.deviceThroughClient', { device, client });
   const limited = describeStreamLimit(session.streams);
-  const isBrowser = session.clientKind === 'browser';
   const [isShowingStats, setIsShowingStats] = useState(false);
 
   const heard = listening ?? bookListening;
@@ -107,10 +111,10 @@ const SessionCard = ({
           />
         ) : book !== null && book.hasCover ? (
           <img src={bookCoverUrl(book.bookId)} alt="" className="h-full w-full object-cover" />
-        ) : fallbackGlyph === deviceGlyph && marks.system !== null ? (
+        ) : fallbackGlyph === deviceGlyph && systemMark !== null ? (
           <BrandGlyph
-            of={marks.system}
-            size={WORDMARK_SIZES[marks.system] ?? 22}
+            of={systemMark}
+            size={WORDMARK_SIZES[systemMark] ?? 22}
             className="text-text-muted"
           />
         ) : (
@@ -157,13 +161,13 @@ const SessionCard = ({
         )}
 
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
-          {isBrowser && marks.browser !== null ? (
-            <BrandGlyph of={marks.browser} size={13} />
+          {clientMark === null ? (
+            <Icon of={clientGlyph} size={14} className="shrink-0" />
           ) : (
-            <Icon of={deviceGlyph} size={14} className="shrink-0" />
+            <BrandGlyph of={clientMark} size={13} />
           )}
-          <span className="truncate" title={session.deviceLabel}>
-            {session.deviceLabel}
+          <span className="truncate" title={deviceAndClient}>
+            {deviceAndClient}
           </span>
 
           {!isActive ? null : (

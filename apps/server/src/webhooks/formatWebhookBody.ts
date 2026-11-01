@@ -15,6 +15,7 @@ import { WEBHOOK_ADDRESS_SETTINGS } from '@ValenceContracts/schemas/Webhook';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
+import { deviceInASentence } from './deviceInASentence';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
@@ -268,7 +269,8 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'auth.succeeded': {
-      const { name, deviceLabel, address } = payload.data;
+      const { name, address } = payload.data;
+      const deviceLabel = deviceInASentence(payload.data);
 
       return address === null
         ? say('server.webhooks.formatWebhookBody.nameSignedInOnDevice', { name, deviceLabel })
@@ -280,7 +282,8 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'profile.chosen': {
-      const { deviceLabel, address } = payload.data;
+      const { address } = payload.data;
+      const deviceLabel = deviceInASentence(payload.data);
       const name = nameOfAsker({
         profileName: payload.data.profileName,
         household: payload.data.accountName,
@@ -296,7 +299,8 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'auth.failed': {
-      const { identifier, deviceLabel, address, reason } = payload.data;
+      const { identifier, address, reason } = payload.data;
+      const deviceLabel = deviceInASentence(payload.data);
 
       return address === null
         ? say('server.webhooks.formatWebhookBody.signInRefusedOnDevice', {
@@ -358,7 +362,7 @@ const sentenceFor = (payload: WebhookPayload): string => {
         {
           viewer: nameOfViewer(payload.data),
           item: nameOfItem(payload.data.item),
-          device: payload.data.deviceLabel,
+          device: deviceInASentence(payload.data),
           how: HOW_PLAYED[payload.data.mode],
         },
       );
@@ -385,7 +389,10 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'session.started': {
-      const opened = { viewer: nameOfViewer(payload.data), device: payload.data.deviceLabel };
+      const opened = {
+        viewer: nameOfViewer(payload.data),
+        device: deviceInASentence(payload.data),
+      };
 
       return payload.data.address === null
         ? say('server.webhooks.openedValence', opened)
@@ -394,7 +401,10 @@ const sentenceFor = (payload: WebhookPayload): string => {
 
     case 'session.ended': {
       const span = describeSpan(payload.data.lastedSeconds);
-      const closed = { viewer: nameOfViewer(payload.data), device: payload.data.deviceLabel };
+      const closed = {
+        viewer: nameOfViewer(payload.data),
+        device: deviceInASentence(payload.data),
+      };
 
       return span === null
         ? say('server.webhooks.closedValence', closed)

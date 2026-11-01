@@ -1,4 +1,5 @@
 import { refuse } from '@ValenceI18n/refuse';
+import type { RequestDevice } from '@ValenceServer/devices/deviceOfRequest';
 import { hashSecret } from '@ValenceServer/locks/hashSecret';
 import { secretMatches } from '@ValenceServer/locks/secretMatches';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
@@ -29,8 +30,7 @@ type ProfileManagementNeeds = {
 };
 
 type ChoosingDevice = {
-  userAgent: string | null;
-  brands: readonly string[];
+  device: RequestDevice;
   address: string | null;
 };
 

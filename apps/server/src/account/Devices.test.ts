@@ -2,6 +2,8 @@ import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { createAskingDevices } from '@ValenceServer/devices/createAskingDevices';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -50,17 +52,23 @@ const DeviceListSchema = z.object({
     z.object({
       id: z.string(),
       name: SaidSchema,
+      device: SaidSchema.nullable(),
+      client: SaidSchema.nullable(),
+      renamed: z.string().nullable(),
       address: z.string().nullable(),
       isCurrent: z.boolean(),
+      isActiveNow: z.boolean(),
     }),
   ),
 });
 
 const build = () => {
   const { auth, settings, store } = createMemoryAuth();
+  const askingDevices = createAskingDevices();
   const app = createApp({
     auth,
     settings,
+    askingDevices,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService({
@@ -92,7 +100,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, auth, store };
+  return { app, auth, store, askingDevices };
 };
 
 const listed = async (app: ReturnType<typeof build>['app'], cookie: string) =>
@@ -101,6 +109,20 @@ const listed = async (app: ReturnType<typeof build>['app'], cookie: string) =>
       await app.request(`${BASE}/api/account/devices`, { headers: { cookie, origin: BASE } })
     ).json(),
   ).devices;
+
+const FIREFOX_ON_A_MAC =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:131.0) Gecko/20100101 Firefox/131.0';
+
+const signInAgain = async (app: ReturnType<typeof build>['app'], userAgent: string) =>
+  (
+    await app.request(`${BASE}/api/auth/sign-in/email`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: BASE, 'user-agent': userAgent },
+      body: JSON.stringify({ email: CREDENTIALS.email, password: CREDENTIALS.password }),
+    })
+  ).headers
+    .getSetCookie()[0]
+    ?.split(';')[0] ?? '';
 
 describe('devices over HTTP', () => {
   it('tells somebody who is not signed in nothing about anybody', async () => {
@@ -170,6 +192,70 @@ describe('devices over HTTP', () => {
     await expect(listed(app, cookie)).resolves.toMatchObject([{ isCurrent: true }]);
   });
 
+  it('signs every other device out and keeps the one asking', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const elsewhere = await signInAgain(app, FIREFOX_ON_A_MAC);
+
+    await expect(listed(app, cookie)).resolves.toHaveLength(2);
+
+    const response = await app.request(`${BASE}/api/account/devices/end-others`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(204);
+    await expect(listed(app, cookie)).resolves.toMatchObject([{ isCurrent: true }]);
+    expect(
+      (
+        await app.request(`${BASE}/api/account/devices`, {
+          headers: { cookie: elsewhere, origin: BASE },
+        })
+      ).status,
+    ).toBe(401);
+  });
+
+  it('names each device by what it is and what it reaches Valence through', async () => {
+    const { app, auth } = build();
+
+    await signUpForTest(app, auth, CREDENTIALS);
+
+    const cookie = await signInAgain(app, FIREFOX_ON_A_MAC);
+    const devices = await listed(app, cookie);
+    const mine = devices.find((device) => device.isCurrent);
+
+    expect(mine?.device?.message).toBe('Mac');
+    expect(mine?.client?.message).toBe('Firefox on macOS');
+    expect(mine?.name.message).toBe('Mac · Firefox on macOS');
+    expect(mine?.renamed).toBeNull();
+  });
+
+  it('will not rename anything for nobody', async () => {
+    const { app } = build();
+
+    const response = await app.request(`${BASE}/api/account/devices/whatever/name`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', origin: BASE },
+      body: JSON.stringify({ name: 'Kitchen phone' }),
+    });
+
+    expect(response.status).toBe(401);
+  });
+
+  it('has no device to rename where the server keeps no notes on its devices', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const [mine] = await listed(app, cookie);
+
+    const response = await app.request(`${BASE}/api/account/devices/${mine?.id ?? ''}/name`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Kitchen phone' }),
+    });
+
+    expect(response.status).toBe(404);
+  });
+
   it('reports the address a session was opened from when one was recorded', async () => {
     const { app, auth, store } = build();
     const cookie = await signUpForTest(app, auth, CREDENTIALS);
@@ -192,5 +278,49 @@ describe('devices over HTTP', () => {
     }
 
     await expect(listed(app, cookie)).resolves.toMatchObject([{ address: null }]);
+  });
+
+  it('says which television asked for a code, and from where', async () => {
+    const { app, auth, askingDevices } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    askingDevices.note('ABCD-EFGH', {
+      deviceId: 'living-room-tv',
+      identity: identifyDevice({
+        userAgent: 'Valence (Living Room)',
+        kind: 'tv',
+        hints: { app: 'tv', system: 'androidTv', name: 'Living Room' },
+      }),
+      address: '192.168.1.30',
+    });
+
+    const answer = await app.request(`${BASE}/api/account/devices/asking/abcdefgh`, {
+      headers: { cookie, origin: BASE },
+    });
+    const asking = z
+      .object({ device: SaidSchema, client: SaidSchema, address: z.string().nullable() })
+      .parse(await answer.json());
+
+    expect(answer.status).toBe(200);
+    expect(asking.device.message).toBe('Living Room');
+    expect(asking.client.message).toBe('Valence for Android TV');
+    expect(asking.address).toBe('192.168.1.30');
+  });
+
+  it('says nothing of a code no television asked for', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    const answer = await app.request(`${BASE}/api/account/devices/asking/NOTACODE`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(answer.status).toBe(404);
+  });
+
+  it('tells somebody who is not signed in nothing about a waiting television', async () => {
+    const { app } = build();
+
+    expect((await app.request(`${BASE}/api/account/devices/asking/ABCDEFGH`)).status).toBe(401);
   });
 });

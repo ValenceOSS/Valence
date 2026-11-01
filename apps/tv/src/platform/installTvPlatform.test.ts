@@ -1,6 +1,7 @@
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { theTvsMusicAudio } from '@ValenceTv/music/theTvsMusicAudio';
 import { installTvPlatform } from '@ValenceTv/platform/installTvPlatform';
+import { hintsAboutThisTv } from '@ValenceTv/platform/hintsAboutThisTv';
 
 const realFetch = globalThis.fetch;
 
@@ -26,5 +27,11 @@ describe('installTvPlatform', () => {
     installTvPlatform();
 
     expect(globalThis.fetch).not.toBe(realFetch);
+  });
+
+  it('describes the television it runs on', () => {
+    installTvPlatform();
+
+    expect(platformInUse().describeThisDevice()).toEqual(hintsAboutThisTv());
   });
 });

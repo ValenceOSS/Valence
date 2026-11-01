@@ -11,7 +11,8 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { DeviceLabel } from '@ValenceScreens/components/AdminArea/components/DeviceLabel/DeviceLabel';
+import { DeviceLabel } from '@ValenceScreens/components/DeviceLabel/DeviceLabel';
+import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountFace/AccountFace';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
@@ -141,11 +142,12 @@ const SessionTable = ({
       id: 'device',
       meta: { hidesOnPhones: true },
       header: say('common.device'),
-      accessorFn: (shown) => shown.session.deviceLabel,
+      accessorFn: (shown) => namesOfSession(shown.session).device,
       cell: ({ row }) =>
         row.original.group !== null ? null : (
           <DeviceLabel
-            deviceLabel={row.original.session.deviceLabel}
+            {...namesOfSession(row.original.session)}
+            identity={row.original.session.identity}
             clientKind={row.original.session.clientKind}
           />
         ),

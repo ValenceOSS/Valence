@@ -6,6 +6,8 @@ import { theBrowsersListeningAudio } from '@ValenceScreens/listening/theBrowsers
 import { theBrowsersStore } from '@ValenceClient/platform/theBrowsersStore';
 import { sessionCookies } from '@ValenceClient/platform/sessionCookies';
 import { describeThisBrowser } from '@ValenceWeb/platform/describeThisBrowser';
+import { hintsAboutThisBrowser } from '@ValenceWeb/platform/hintsAboutThisBrowser';
+import { carryTheDevice } from '@ValenceClient/platform/carryTheDevice';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 import { noListeningFilesAreKept } from '@ValenceClient/platform/noListeningFilesAreKept';
 import { thisTabsId } from '@ValenceWeb/platform/thisTabsId';
@@ -28,6 +30,7 @@ const installBrowserPlatform = (): void => {
     kept: theBrowsersKeptAnswers(() => window.indexedDB),
     serverAddress: () => null,
     describeThisClient: describeThisBrowser,
+    describeThisDevice: hintsAboutThisBrowser,
     thisClientId: thisTabsId,
     thisClientKind: () => detectClientKind(navigator.userAgent),
     canKeepFiles: () => false,
@@ -42,6 +45,7 @@ const installBrowserPlatform = (): void => {
     listeningAudio: theBrowsersListeningAudio,
     passkeys: () => ({ kind: 'in-the-page' }),
   });
+  carryTheDevice();
 };
 
 export { installBrowserPlatform };

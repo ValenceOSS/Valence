@@ -1,7 +1,10 @@
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
+import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 
 type DeviceLabelProps = {
-  deviceLabel: string;
+  device: string;
+  client?: string | null;
+  identity?: DeviceIdentity | null;
   clientKind?: ClientKind;
 };
 

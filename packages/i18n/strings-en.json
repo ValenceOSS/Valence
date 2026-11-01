@@ -1070,16 +1070,6 @@
     "context": "What the original video costs, beside its name in the quality menu. {value} is the bitrate in megabits a second, such as 8.0."
   },
   {
-    "handler": "client.playback.detectClientLabel.android",
-    "text": "Android",
-    "context": "The name in the playback (from `detectClientLabel`)."
-  },
-  {
-    "handler": "client.playback.detectClientLabel.browserOnOs",
-    "text": "{browser} on {os}",
-    "context": "What somebody is watching on, as in Firefox on Windows. {browser} is the browser's name; {os} is the operating system's."
-  },
-  {
     "handler": "client.playback.fetchSegments.skipCredits",
     "text": "Skip Credits",
     "context": "Shown in the playback (from `fetchSegments`)."
@@ -2415,6 +2405,21 @@
     "context": "The label, used in several places, among them the share lasts in the sharing and the give up rules list (from `slowWaitChoices`)."
   },
   {
+    "handler": "common.android",
+    "text": "Android",
+    "context": "The Android operating system, as a product name. Shown when naming the system a device or browser runs on."
+  },
+  {
+    "handler": "common.androidPhone",
+    "text": "Android phone",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: a phone running Android."
+  },
+  {
+    "handler": "common.androidTablet",
+    "text": "Android tablet",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: a tablet running Android."
+  },
+  {
     "handler": "common.androidTV",
     "text": "Android TV",
     "context": "The name of the kind of television, shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
@@ -2548,6 +2553,11 @@
     "handler": "common.askedByYouAndNames",
     "text": "Requested by you and {names}",
     "context": "Who asked for a title, on web, phone and TV, where the viewer and others asked. {names} is the others' names listed, such as \"Priya and Sam\"."
+  },
+  {
+    "handler": "common.askedFromAddress",
+    "text": "Asked from {address}",
+    "context": "Under the television asking to be signed in with a code, on the screen where somebody approves it: the network address the code was asked for from, so a code sent by somebody elsewhere can be told from one on the television in front of them. {address} is an IP address."
   },
   {
     "handler": "common.askIfYouAreStillWatching",
@@ -2731,6 +2741,11 @@
     "context": "Shown, used in the playback (from `detectClientLabel`) and in the playback (from `detectFromBrowser`)."
   },
   {
+    "handler": "common.browserOrApp",
+    "text": "Browser or app",
+    "context": "A label in a notification about somebody's device, beside what the device reached Valence through, such as \"Safari on iOS\" or \"Valence for Android\"."
+  },
+  {
     "handler": "common.byAuthor",
     "text": "By {author}",
     "context": "Text shown, used in the catalogue entry row in the plugins panel and in the installed plugin card in the plugins panel. {author} is filled in by the app."
@@ -2889,6 +2904,11 @@
     "handler": "common.chrome",
     "text": "Chrome",
     "context": "The name of the Google Chrome browser, as a device is labelled with it."
+  },
+  {
+    "handler": "common.chromebook",
+    "text": "Chromebook",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: a computer running ChromeOS. Google's product name."
   },
   {
     "handler": "common.chromium",
@@ -3636,6 +3656,11 @@
     "context": "The label, used in several places, among them the account panels in the account of the phone app and the devices in the account of the phone app."
   },
   {
+    "handler": "common.deviceThroughClient",
+    "text": "{device} · {client}",
+    "context": "A device and what it reaches Valence through, on one line where there is room for only one. {device} is the device, such as \"iPhone 17 Pro Max\"; {client} is what it reaches Valence through, such as \"Valence for iOS\"."
+  },
+  {
     "handler": "common.direct",
     "text": "Direct",
     "context": "Shown, used in several places, among them the stream stats in the player of the television app and the overview panel in the admin area."
@@ -3709,6 +3734,11 @@
     "handler": "common.dragToChangeTheOrder",
     "text": "Drag to change the order",
     "context": "The label of the handle a table row is dragged by to change the order."
+  },
+  {
+    "handler": "common.duckDuckGo",
+    "text": "DuckDuckGo",
+    "context": "The DuckDuckGo web browser, as a product name."
   },
   {
     "handler": "common.durationIn",
@@ -4247,6 +4277,16 @@
     "context": "Where a title stands, on the web, the phone and the television: it is already in the server's library, for anybody in the household. Shown on request cards, search results and the discover page, in the season standing names in the requests, and in the ask page of the television app."
   },
   {
+    "handler": "common.iPad",
+    "text": "iPad",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: an iPad. Apple's product name."
+  },
+  {
+    "handler": "common.iPhone",
+    "text": "iPhone",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: an iPhone. Apple's product name."
+  },
+  {
     "handler": "common.itAnswered",
     "text": "Connection succeeded.",
     "context": "After testing one indexer whose name is not known, when it answered."
@@ -4360,6 +4400,16 @@
     "handler": "common.larger",
     "text": "Larger",
     "context": "Shown, used in the text reader in the reader of the phone app and in the text reader."
+  },
+  {
+    "handler": "common.lastActive",
+    "text": "Last active",
+    "context": "A column heading in the lists of devices signed in to an account: when each device was last used."
+  },
+  {
+    "handler": "common.lastActiveWhen",
+    "text": "Last active {lastActiveAt}",
+    "context": "Under a device in the list of devices signed in to an account: when it was last used. {lastActiveAt} is a date and time."
   },
   {
     "handler": "common.lastReadLastReadAt",
@@ -4480,6 +4530,11 @@
     "handler": "common.linux",
     "text": "Linux",
     "context": "The name, used in the platform of the desktop app (from `describeThisDesktop`) and in the playback (from `detectClientLabel`)."
+  },
+  {
+    "handler": "common.linuxComputer",
+    "text": "Linux computer",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: a computer running Linux."
   },
   {
     "handler": "common.list.andAlso",
@@ -7485,6 +7540,11 @@
     "context": "The reason, used in several places, among them the profiles (from `fetchEveryone`) and the session (from `auth`)."
   },
   {
+    "handler": "common.valenceForSystem",
+    "text": "Valence for {system}",
+    "context": "One of Valence's own apps, named by what it is made for: the heading of the note offering the desktop app, and what a device in the sessions and devices lists reaches Valence through. {system} is a system or device, such as Mac, Windows, iOS, Android or Apple TV."
+  },
+  {
     "handler": "common.valenceIsNotReachable",
     "text": "Can’t connect to Valence",
     "context": "A heading, used in the app and in the signed in."
@@ -7723,6 +7783,11 @@
     "handler": "common.windows",
     "text": "Windows",
     "context": "The name, used in the platform of the desktop app (from `describeThisDesktop`) and in the playback (from `detectClientLabel`)."
+  },
+  {
+    "handler": "common.windowsPC",
+    "text": "Windows PC",
+    "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: a computer running Windows."
   },
   {
     "handler": "common.withdraw",
@@ -8498,6 +8563,61 @@
     "handler": "core.describeTranscodeReuse.yesTheWholeTranscodeWasAlready",
     "text": "Yes — the whole transcode was already done",
     "context": "Shown in the app (from `describeTranscodeReuse`)."
+  },
+  {
+    "handler": "core.nameTheClient.appsInAppBrowser",
+    "text": "{app} in-app browser",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: the browser built into another app, opened by following a link in it. {app} is that app, such as Instagram or WhatsApp."
+  },
+  {
+    "handler": "core.nameTheClient.appsInAppBrowserOn",
+    "text": "{app} in-app browser on {system}",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: the browser built into another app, opened by following a link in it. {app} is that app, such as Instagram or WhatsApp; {system} is the system, such as iOS."
+  },
+  {
+    "handler": "core.nameTheClient.browserOn",
+    "text": "{browser} on {system}",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: a web browser. {browser} is the browser, such as Firefox; {system} is the system it runs on, such as Windows."
+  },
+  {
+    "handler": "core.nameTheClient.inAppBrowser",
+    "text": "In-app browser",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: the browser built into another app, such as a messaging app, where it does not say which app."
+  },
+  {
+    "handler": "core.nameTheClient.inAppBrowserOn",
+    "text": "In-app browser on {system}",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: the browser built into another app, such as a messaging app, where it does not say which app. {system} is the system, such as iOS."
+  },
+  {
+    "handler": "core.nameTheClient.theValenceApp",
+    "text": "The Valence app",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: one of Valence's own apps, where it is too old to say which."
+  },
+  {
+    "handler": "core.nameTheClient.tvBrowser",
+    "text": "TV browser",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: a television's own web browser."
+  },
+  {
+    "handler": "core.nameTheClient.unknownBrowser",
+    "text": "Unknown browser",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: a web browser Valence does not recognise."
+  },
+  {
+    "handler": "core.nameTheClient.unknownBrowserOn",
+    "text": "Unknown browser on {system}",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: a web browser Valence does not recognise. {system} is the system it runs on, such as Android."
+  },
+  {
+    "handler": "core.nameTheClient.valenceWebApp",
+    "text": "Valence web app",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: Valence added to a home screen from a browser and opened from there."
+  },
+  {
+    "handler": "core.nameTheClient.valenceWebAppOn",
+    "text": "Valence web app on {system}",
+    "context": "Names what a device is reaching Valence through, shown under the device's name in the sessions and devices lists and in notifications: Valence added to a home screen from a browser and opened from there. {system} is the system, such as iOS."
   },
   {
     "handler": "core.negotiatePlayback.anamorphicSource",
@@ -9328,6 +9448,11 @@
     "handler": "error.corrections.thatBookOrThatWorkOn",
     "text": "That book, or that work on Open Library, was not found.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveCorrections`)."
+  },
+  {
+    "handler": "error.device.noSuchDevice",
+    "text": "No such device.",
+    "context": "An error the server answers with (HTTP 404) when somebody renames a device that isn't signed in to their account, or asks which television showed a code that no television asked for (from `serveDevice`)."
   },
   {
     "handler": "error.device.theMediaServiceDidNotAnswer",
@@ -13175,6 +13300,11 @@
     "context": "The detail of a confirm dialog in the device list in the account area. {count} is a number."
   },
   {
+    "handler": "screens.accountArea.deviceList.leaveItEmptyToGoBack",
+    "text": "Leave it empty to go back to {name}.",
+    "context": "A note under the name field when renaming a device. {name} is the name Valence gives the device itself, such as \"iPhone 17 Pro Max\"."
+  },
+  {
     "handler": "screens.accountArea.deviceList.nothingIsSignedInWhichCannot",
     "text": "No signed-in devices were found, which can’t be right. Try again in a moment.",
     "context": "Shown in the device list in the account area."
@@ -13183,6 +13313,16 @@
     "handler": "screens.accountArea.deviceList.readingYourDevices",
     "text": "Loading your devices",
     "context": "The label of a spinner in the device list in the account area."
+  },
+  {
+    "handler": "screens.accountArea.deviceList.renameThisDevice",
+    "text": "Rename this device",
+    "context": "The title of the dialog for giving one of your signed-in devices a name of your own, opened from the devices list on your account."
+  },
+  {
+    "handler": "screens.accountArea.deviceList.thatDeviceCouldNotBeRenamed",
+    "text": "That device couldn’t be renamed.",
+    "context": "Shown when renaming one of your signed-in devices fails."
   },
   {
     "handler": "screens.accountArea.deviceList.whereYouAreSignedIn",
@@ -25785,11 +25925,6 @@
     "context": "What the desktop app adds over the browser, in the note offering it (from `GetTheDesktopApp`)."
   },
   {
-    "handler": "screens.getTheDesktopApp.valenceForSystem",
-    "text": "Valence for {system}",
-    "context": "The heading of the note offering the desktop app, in a browser on a computer (from `GetTheDesktopApp`). {system} is Mac, Windows or Linux."
-  },
-  {
     "handler": "screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes",
     "text": "Fifteen minutes",
     "context": "The label in the give up rules list (from `metadataWaitChoices`)."
@@ -32456,36 +32591,6 @@
     "context": "Text shown in the window bar. {percent} is filled in by the app."
   },
   {
-    "handler": "server.account.device.android",
-    "text": "Valence on Android",
-    "context": "Names a device signed in to an account, in the list of sessions on the account and devices pages: the Android app."
-  },
-  {
-    "handler": "server.account.device.appleDevice",
-    "text": "Valence on an Apple device",
-    "context": "Names a device signed in to an account, in the list of sessions on the account and devices pages: the phone or television app on an Apple device it could not tell apart."
-  },
-  {
-    "handler": "server.account.device.browserOn",
-    "text": "{browser} on {system}",
-    "context": "Names a device signed in to an account, in the list of sessions on the account and devices pages: a web browser on a system. {browser} is the browser, such as Firefox; {system} is the system, such as Windows."
-  },
-  {
-    "handler": "server.account.device.desktopApp",
-    "text": "Valence desktop app",
-    "context": "Names a device signed in to an account, in the list of sessions on the account and devices pages: the desktop app, on a computer it could not tell."
-  },
-  {
-    "handler": "server.account.device.desktopAppOn",
-    "text": "Valence desktop app on {system}",
-    "context": "Names a device signed in to an account, in the list of sessions on the account and devices pages: the desktop app. {system} is the computer's system, such as macOS."
-  },
-  {
-    "handler": "server.account.device.valenceOn",
-    "text": "Valence on {device}",
-    "context": "Names a device signed in to an account, in the list of sessions on the account and devices pages: one of Valence's own apps. {device} is the device the app says it runs on, such as iPhone 16."
-  },
-  {
     "handler": "server.accounts.pluginOAuth.nameDidNotAcceptTheConnection",
     "text": "{name} didn’t accept the connection. Try again.",
     "context": "The problem in the accounts on the server (from `createPluginOAuth`). {name} is filled in by the app."
@@ -34769,6 +34874,11 @@
     "handler": "server.webhooks.deliverWebhook.theReceiverAnsweredStatus",
     "text": "The receiving server returned {status}.",
     "context": "Shown in the webhooks on the server (from `deliverWebhook`). {status} is filled in by the app."
+  },
+  {
+    "handler": "server.webhooks.deviceWithClient",
+    "text": "{device} ({client})",
+    "context": "A device named inside a notification's sentence, such as \"Dan signed in on {device}\". {device} is the device, such as \"iPhone 17 Pro Max\"; {client} is what it reached Valence through, such as \"Valence for iOS\"."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.andMore",

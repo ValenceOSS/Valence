@@ -9,6 +9,11 @@ import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { PresenceControlEvent } from '@ValenceServer/presence/PresenceService';
 import type { LinkPerson } from '@ValenceServer/linking/LinkPerson';
 import { say } from '@ValenceI18n/say';
+import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
+import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
+import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
+import type { SeenDevice } from '@ValenceServer/devices/DeviceNotes';
 
 type RealtimeSocket = {
   send: (raw: string) => void;
@@ -20,6 +25,9 @@ type Who = {
   guestOf?: string | null;
   viaShare?: string | null;
   address?: string | null;
+  sessionId?: string | null;
+  userAgent?: string | null;
+  brands?: readonly string[];
 };
 
 const SILENT_FOR_MS = 50_000;
@@ -41,12 +49,20 @@ type PresenceBinding = {
     guestOf: string | null;
     viaShare: string | null;
     deviceLabel: string;
+    clientLabel: string;
     clientKind: ClientKind | null;
     address: string | null;
+    sessionId: string | null;
+    deviceId: string | null;
+    identity: DeviceIdentity;
+    renamed: string | null;
     send: (event: PresenceControl) => void;
   }) => void;
   disconnect: (clientId: string, socketId: string) => void;
   nameOf: (accountId: string, profileId: string | null) => Promise<string | null>;
+  renamedDevice?: (accountId: string, deviceId: string) => Promise<string | null>;
+  noteDevice?: (sessionId: string, seen: SeenDevice) => void;
+  noteActive?: (sessionId: string, at: Date) => void;
 };
 
 type HandlerOptions = {
@@ -144,6 +160,7 @@ const createRealtimeHandler = ({
   open: (who, socket) => {
     const id = newId();
     let claimed: string | null = null;
+    let isClosed = false;
     let myName: string | null = null;
     let chosenProfileId = who.profileId;
 
@@ -241,7 +258,7 @@ const createRealtimeHandler = ({
           return;
         }
 
-        const { clientId, deviceLabel, clientKind } = read.data;
+        const { clientId, clientKind, deviceLabel, device: hints = {} } = read.data;
 
         const profileId = who.profileId;
 
@@ -261,6 +278,40 @@ const createRealtimeHandler = ({
 
         myName = named ?? myName;
 
+        const asked = {
+          userAgent: who.userAgent,
+          brands: who.brands ?? [],
+          kind: clientKind ?? null,
+        };
+        const saidNothing = Object.keys(hints).length === 0;
+        const described = identifyDevice({ ...asked, hints });
+        const isAnOlderApp = clientKind === 'phone' || clientKind === 'tv';
+        const isOlderAndUnnamed =
+          saidNothing &&
+          deviceLabel !== undefined &&
+          (isAnOlderApp ||
+            (described.system === null && described.form === null && described.maker === null));
+        const identity = isOlderAndUnnamed
+          ? identifyDevice({ ...asked, hints: { name: deviceLabel } })
+          : described;
+        const sessionId = who.sessionId ?? null;
+        const deviceId = hints.id ?? null;
+        const deviceKey = deviceId ?? sessionId;
+        const renamed =
+          who.accountId === null || deviceKey === null
+            ? null
+            : ((await presence.renamedDevice?.(who.accountId, deviceKey)) ?? null);
+
+        if (sessionId !== null && saidNothing) {
+          presence.noteActive?.(sessionId, new Date(now()));
+        } else if (sessionId !== null) {
+          presence.noteDevice?.(sessionId, { deviceId, identity, at: new Date(now()) });
+        }
+
+        if (isClosed) {
+          return;
+        }
+
         presence.connect({
           clientId,
           socketId: id,
@@ -269,9 +320,14 @@ const createRealtimeHandler = ({
           profileName: named,
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
-          deviceLabel: deviceLabel ?? say('server.realtime.realtimeHandler.unknownDevice'),
+          deviceLabel: nameTheDevice(identity, renamed).message,
+          clientLabel: nameTheClient(identity).message,
           clientKind: clientKind ?? null,
           address: who.address ?? null,
+          sessionId,
+          deviceId: deviceKey,
+          identity,
+          renamed,
           send: (event) => {
             write({
               kind: 'event',
@@ -297,8 +353,14 @@ const createRealtimeHandler = ({
       },
 
       close: () => {
+        isClosed = true;
+
         if (claimed !== null) {
           presence?.disconnect(claimed, id);
+        }
+
+        if (claimed !== null && who.sessionId !== undefined && who.sessionId !== null) {
+          presence?.noteActive?.(who.sessionId, new Date(now()));
         }
 
         if (party !== undefined) {

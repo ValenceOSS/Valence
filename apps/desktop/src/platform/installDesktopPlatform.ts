@@ -1,3 +1,4 @@
+import { carryTheDevice } from '@ValenceClient/platform/carryTheDevice';
 import { theBrowsersKeptAnswers } from '@ValenceScreens/admin/theBrowsersKeptAnswers';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
@@ -31,6 +32,11 @@ const installDesktopPlatform = (): void => {
     kept: theBrowsersKeptAnswers(() => window.indexedDB),
     serverAddress: () => null,
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
+    describeThisDevice: () => {
+      const name = window.valence.about.computerName;
+
+      return { app: 'desktop', ...(name === null ? {} : { name }) };
+    },
     thisClientId: thisWindowsId,
     thisClientKind: () => 'desktop',
     canKeepFiles: () => true,
@@ -57,6 +63,7 @@ const installDesktopPlatform = (): void => {
     listeningAudio: theBrowsersListeningAudio,
     passkeys: theDesktopsPasskeys,
   });
+  carryTheDevice();
   setTimeout(theKeptListening, PICK_UP_DOWNLOADS_AFTER);
 };
 

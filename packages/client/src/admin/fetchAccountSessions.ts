@@ -1,21 +1,14 @@
-import { SaidSchema } from '@ValenceI18n/SaidSchema';
+import { ReadDeviceSchema } from '@ValenceContracts/schemas/SignedInDevice';
+import type { ReadDevice } from '@ValenceContracts/schemas/SignedInDevice';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
 import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
 
-const AccountSessionSchema = z.object({
-  id: z.string(),
-  name: SaidSchema,
-  address: z.string().nullable(),
-  signedInAt: z.string(),
-  expiresAt: z.string(),
-});
+const AccountSessionListSchema = z.object({ sessions: z.array(ReadDeviceSchema) });
 
-const AccountSessionListSchema = z.object({ sessions: z.array(AccountSessionSchema) });
-
-type AccountSession = z.infer<typeof AccountSessionSchema>;
+type AccountSession = ReadDevice;
 
 /**
  * Everywhere an account is signed in, for an administrator reviewing it rather than the account

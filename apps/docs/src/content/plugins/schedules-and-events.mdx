@@ -97,7 +97,7 @@ type PluginEvent = {
 
 On a playback event, `durationSeconds` is how long the thing is, and on every playback event but `playback.started`, `positionSeconds` is where it had got to. On `session.ended`, `durationSeconds` is how long the session lasted. Every other event gives `null` for both.
 
-Playback and session events name the device in `client`: its `label`, such as `Chrome on macOS`, and its `kind`, such as `browser` or `tv`, where Valence knows it. A plugin is never told a device's network address. Request events carry the request's id in `requestId`.
+Playback and session events name the device in `client`: its `label`, the device's name such as `iPhone 17 Pro Max`, and its `kind`, such as `browser` or `tv`, where Valence knows it. A plugin is never told a device's network address. Request events carry the request's id in `requestId`.
 
 `playback.finished` comes by the same rule that marks something watched in Valence: stopping past nine tenths of it, or inside its end credits where they are marked and start in its second half. It is judged against how long the library knows the thing runs. A plugin with its own rule for what counts, such as a scrobbler's, applies it to `playback.stopped` instead.
 

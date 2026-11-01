@@ -1,6 +1,7 @@
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
-import { describeDevice } from '@ValenceCore/functions/describeDevice';
+import { readDevicesOf } from '@ValenceServer/devices/readDevicesOf';
+import { shownDevice } from '@ValenceServer/devices/shownDevice';
 import { checkAccountAction } from '@ValenceServer/auth/checkAccountAction';
 import {
   listAccountsRoute,
@@ -47,7 +48,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     settings,
     trustedOrigins,
     resetAccountPassword,
-    listAccountSessions,
+    deviceNotes,
+    presence,
     endAccountSessions,
     endAccountSession,
     tooBigToRead,
@@ -412,20 +414,16 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { userId } = context.req.valid('param');
-    const held = (await listAccountSessions?.(userId)) ?? [];
+    const devices = await readDevicesOf({
+      userId,
+      currentSessionId: null,
+      notes: deviceNotes,
+      heldWithoutNotes: () => Promise.resolve([]),
+      presence,
+      now: new Date(),
+    });
 
-    return context.json(
-      {
-        sessions: held.map((one) => ({
-          id: one.id,
-          name: describeDevice(one.userAgent),
-          address: one.ipAddress,
-          signedInAt: one.createdAt,
-          expiresAt: one.expiresAt,
-        })),
-      },
-      200,
-    );
+    return context.json({ sessions: devices.map(shownDevice) }, 200);
   });
 
   app.openapi(endAccountSessionsRoute, async (context) => {
@@ -487,7 +485,21 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       }
     }
 
-    await endAccountSession?.(userId, sessionId);
+    const devices = await readDevicesOf({
+      userId,
+      currentSessionId: null,
+      notes: deviceNotes,
+      heldWithoutNotes: () => Promise.resolve([]),
+      presence,
+      now: new Date(),
+    });
+    const device = devices.find((one) => one.sessionIds.includes(sessionId));
+
+    await Promise.all(
+      (device?.sessionIds ?? [sessionId]).map(
+        (one) => endAccountSession?.(userId, one) ?? Promise.resolve(),
+      ),
+    );
 
     await recordAudit(context, 'account.sessionEnded', await nameOfAccount(userId));
 

@@ -3,7 +3,7 @@ import { createAuthMiddleware, APIError } from 'better-auth/api';
 import { z } from 'zod';
 import type { DBAdapter, DBAdapterInstance } from 'better-auth';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
-import { brandsOf } from '@ValenceServer/web/brandsOf';
+import { deviceOfRequest } from '@ValenceServer/devices/deviceOfRequest';
 import { CALLER_HEADER } from '@ValenceServer/web/CALLER_HEADER';
 import { setSessionCookie } from 'better-auth/cookies';
 import { bearerWithoutACookie } from '@ValenceServer/auth/bearerWithoutACookie';
@@ -42,6 +42,8 @@ type CreateAuthOptions = {
   onUserCreated?: (userId: string) => Promise<void>;
   onUserChanged?: (userId: string) => Promise<void>;
   onSignedIn?: (userId: string, at: Date) => Promise<void>;
+  onSessionStarted?: (sessionId: string, headers: Headers | null) => Promise<void>;
+  onDeviceCodeIssued?: (userCode: string, headers: Headers | null) => void;
   onPasswordResetRequested?: (email: string, url: string, name: string) => Promise<void>;
   onSignInSettled?: (attempt: SignInAttempt) => void;
   onSignedOut?: (signedOut: {
@@ -62,6 +64,10 @@ const RefusalSchema = z.instanceof(APIError);
 const VALENCE_APP_NAME = 'Valence';
 
 const DEVICE_TOKEN_PATH = '/device/token';
+
+const DEVICE_CODE_PATH = '/device/code';
+
+const IssuedCodeSchema = z.object({ user_code: z.string().min(1).max(64) });
 
 const SIGN_OUT_PATH = '/sign-out';
 
@@ -90,6 +96,8 @@ const createAuth = ({
   onPasswordResetRequested,
   onSignInSettled,
   onSignedOut,
+  onSessionStarted,
+  onDeviceCodeIssued,
 }: CreateAuthOptions) => {
   return betterAuth({
     appName: VALENCE_APP_NAME,
@@ -137,8 +145,9 @@ const createAuth = ({
       },
       session: {
         create: {
-          after: async (created) => {
+          after: async (created, context) => {
             await onSignedIn?.(created.userId, new Date());
+            await onSessionStarted?.(created.id, context?.headers ?? null);
           },
         },
         delete: {
@@ -162,6 +171,12 @@ const createAuth = ({
           await setSessionCookie(context, session);
         }
 
+        const issued = IssuedCodeSchema.safeParse(context.context.returned);
+
+        if (context.path === DEVICE_CODE_PATH && issued.success) {
+          onDeviceCodeIssued?.(issued.data.user_code, context.headers ?? null);
+        }
+
         if (onSignInSettled === undefined) {
           return;
         }
@@ -181,7 +196,7 @@ const createAuth = ({
             ? (identifier.data.email ?? identifier.data.username ?? null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
-          brands: brandsOf(context.headers?.get('sec-ch-ua')),
+          device: deviceOfRequest(context.headers),
           address: context.headers?.get(CALLER_HEADER) ?? null,
         });
 

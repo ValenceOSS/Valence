@@ -11,6 +11,7 @@ import type { Platform } from '@ValenceClient/platform/Platform.types';
 const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => ({
   ...aStillPlatform(),
   describeThisClient: () => 'A test',
+  describeThisDevice: () => ({}),
   ...overrides,
 });
 

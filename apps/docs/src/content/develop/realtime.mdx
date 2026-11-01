@@ -30,14 +30,14 @@ All messages are JSON text frames. Each has a `kind` field, and the shapes are d
 
 ### From the client
 
-| `kind`                                                                                                                                                              | Fields                                                                    | Purpose                                                                              |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `subscribe`                                                                                                                                                         | `topics`: 1 or more topic names                                           | Ask to hear topics                                                                   |
-| `unsubscribe`                                                                                                                                                       | `topics`                                                                  | Stop hearing topics                                                                  |
-| `identify`                                                                                                                                                          | `profileId` (uuid or `null`), optional `clientId`, optional `deviceLabel` | Say which household profile this tab is acting as, and register the tab for presence |
-| `pong`                                                                                                                                                              | none                                                                      | Answer the server's `ping`                                                           |
-| `clockAsk`                                                                                                                                                          | `sentAtMs`                                                                | Ask for the server clock, for synchronised playback                                  |
-| `partyOpen`, `partyJoin`, `partyLeave`, `partyCommand`, `partyReport`, `partySetRole`, `partyInvite`, `partyRemove`, `partySetPassword`, `partyLoosen`, `partyChat` | Party specific                                                            | Everything a watch or listening party needs                                          |
+| `kind`                                                                                                                                                              | Fields                                                                                      | Purpose                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `subscribe`                                                                                                                                                         | `topics`: 1 or more topic names                                                             | Ask to hear topics                                                                   |
+| `unsubscribe`                                                                                                                                                       | `topics`                                                                                    | Stop hearing topics                                                                  |
+| `identify`                                                                                                                                                          | `profileId` (uuid or `null`), optional `clientId`, `deviceLabel`, `clientKind` and `device` | Say which household profile this tab is acting as, and register the tab for presence |
+| `pong`                                                                                                                                                              | none                                                                                        | Answer the server's `ping`                                                           |
+| `clockAsk`                                                                                                                                                          | `sentAtMs`                                                                                  | Ask for the server clock, for synchronised playback                                  |
+| `partyOpen`, `partyJoin`, `partyLeave`, `partyCommand`, `partyReport`, `partySetRole`, `partyInvite`, `partyRemove`, `partySetPassword`, `partyLoosen`, `partyChat` | Party specific                                                                              | Everything a watch or listening party needs                                          |
 
 ### From the server
 
@@ -56,7 +56,7 @@ A short exchange looks like this.
 
 ```json
 {"kind":"welcome","connectionId":"5c1d8e1e-0a4c-4d0b-9f61-3f4a4d0c7c11","topics":[]}
-{"kind":"identify","profileId":null,"clientId":"tab-1","deviceLabel":"Firefox on Linux"}
+{"kind":"identify","profileId":null,"clientId":"tab-1","clientKind":"browser","device":{"id":"5c5df191-339c-498a-8201-1cd8723890dd","browser":"firefox"}}
 {"kind":"subscribe","topics":["media","notifications","jobs"]}
 {"kind":"subscribed","topics":["media","notifications"],"refused":["jobs"]}
 {"kind":"event","topic":"media","atMs":1789000000000,"folded":3,"payload":{"added":4}}
@@ -167,7 +167,9 @@ In practice you rarely subscribe by hand. `useFreshFromTheSocket` in `packages/c
 
 ### Identity
 
-`identify({ profileId, clientId, deviceLabel })` says which household profile the tab is acting as. The server checks the tab actually owns that profile (`ownsProfile`) and quietly falls back to `null` if not. A `clientId` and `deviceLabel` also register the tab for presence, which is how the admin screens list who is watching on what.
+`identify({ profileId, clientId, deviceLabel, clientKind, device })` says which household profile the tab is acting as. The server checks the tab actually owns that profile (`ownsProfile`) and quietly falls back to `null` if not. A `clientId` also registers the tab for presence, which is how the admin screens list who is watching on what.
+
+`device` says what the client knows about its device that a user agent can't: an `id` the client keeps for as long as it is installed, so a device that signs in again is still the same device, and where it knows them its `app` (`browser`, `webApp`, `desktop`, `phone` or `tv`), `system`, `form`, `browser`, `model` and `name`. The server names the device from that and the socket's user agent, and the same description travels on every request as the `x-valence-device` header, URI-encoded JSON. `deviceLabel` is what an older client sends in its place; the server uses it only where it can tell nothing else about the device.
 
 ### Reconnecting
 

@@ -1,3 +1,4 @@
+import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
@@ -50,6 +51,8 @@ Row.displayName = 'Row';
 const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProps) => {
   const { playback } = session;
 
+  const names = namesOfSession(session);
+
   return (
     <DialogCompanion label={say('common.streamStats')} isOpen={isOpen} onClose={onClose}>
       <DialogTitle size="compact" title={say('common.streamStats')}>
@@ -61,7 +64,10 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
       <DialogContent>
         <dl className="flex flex-col divide-y divide-[var(--surface-line)]">
           <Row name="Viewer">{nameOfSession(session)}</Row>
-          <Row name="Device">{session.deviceLabel}</Row>
+          <Row name={say('common.device')}>{names.device}</Row>
+          {names.client === null ? null : (
+            <Row name={say('common.browserOrApp')}>{names.client}</Row>
+          )}
 
           {playback === null ? (
             <Row name="Watching">{say('screens.adminArea.sessionStatsDialog.nothingRightNow')}</Row>

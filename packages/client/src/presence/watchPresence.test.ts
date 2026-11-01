@@ -81,6 +81,26 @@ describe('watchPresence', () => {
     expect(fake.identities[0]?.clientKind).toBe('tv');
   });
 
+  it('describes the device it runs on, with which device this is', () => {
+    const platform = aFakePlatform({
+      describeThisDevice: () => ({ app: 'phone', system: 'ios', model: 'iPhone 17 Pro Max' }),
+    });
+
+    platform.store.write('valence.deviceId', 'kept-device-id');
+    installPlatform(platform);
+
+    const fake = createFakeClient();
+
+    watchPresence(fake.client);
+
+    expect(fake.identities[0]?.device).toEqual({
+      app: 'phone',
+      system: 'ios',
+      model: 'iPhone 17 Pro Max',
+      id: 'kept-device-id',
+    });
+  });
+
   it('passes on a film command sent from another of the same person’s devices', () => {
     const fake = createFakeClient();
     const listener = vi.fn();

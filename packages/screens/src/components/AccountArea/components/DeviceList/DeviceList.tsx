@@ -7,22 +7,32 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { deviceColumns } from '@ValenceScreens/session/deviceColumns';
 import { Spinner } from '@ValenceUI/Spinner';
-import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
+import {
+  endDevice,
+  endOtherDevices,
+  fetchDevices,
+  renameDevice,
+} from '@ValenceClient/account/fetchDevices';
+import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
+import { notify } from '@ValenceUI/notify';
+import { namesOfSignedInDevice } from '@ValenceClient/account/namesOfSignedInDevice';
+import { RenameDeviceDialog } from './components/RenameDeviceDialog/RenameDeviceDialog';
 import type { Device } from '@ValenceClient/account/fetchDevices';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
- * Everywhere this account is signed in — each device, when it was last used, and a way to end it.
- * This session is marked as this one so nobody ends it by accident, and there is one gesture for
- * ending every other at once. A shared demo account sees where it is signed in but ends nothing, since
- * the devices it would end are other visitors'.
+ * Everywhere this account is signed in — each device, when it was last used, a way to rename it
+ * and a way to end it. This session is marked as this one so nobody ends it by accident, and there
+ * is one gesture for ending every other at once. A shared demo account sees where it is signed in
+ * but ends nothing, since the devices it would end are other visitors'.
  */
 const DeviceList = () => {
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [ending, setEnding] = useState<Device | null>(null);
+  const [renaming, setRenaming] = useState<Device | null>(null);
   const [isEndingRest, setIsEndingRest] = useState(false);
   const { isDemo } = useWhatIMayDo();
 
@@ -34,7 +44,18 @@ const DeviceList = () => {
 
   const elsewhere = (devices ?? []).filter((device) => !device.isCurrent);
 
-  const columns = useMemo(() => deviceColumns<Device>(isDemo ? null : setEnding), [isDemo]);
+  const columns = useMemo(
+    () =>
+      deviceColumns<Device>({
+        onEnd: isDemo ? null : setEnding,
+        onRename: isDemo ? null : setRenaming,
+      }),
+    [isDemo],
+  );
+  const ownNameOf = (device: Device): string =>
+    device.identity === null
+      ? namesOfSignedInDevice(device).device
+      : sayAgain(nameTheDevice(device.identity));
 
   return (
     <PanelCard
@@ -58,7 +79,9 @@ const DeviceList = () => {
         detail={
           ending === null
             ? ''
-            : say('common.nameWillBeSignedOutAnd', { name: sayAgain(ending.name) })
+            : say('common.nameWillBeSignedOutAnd', {
+                name: namesOfSignedInDevice(ending).device,
+              })
         }
         confirmLabel={say('common.signItOut')}
         isDestructive
@@ -74,6 +97,26 @@ const DeviceList = () => {
           if (device !== null) {
             void endDevice(device.id).then(read);
           }
+        }}
+      />
+
+      <RenameDeviceDialog
+        ownName={renaming === null ? '' : ownNameOf(renaming)}
+        renamed={renaming?.renamed ?? null}
+        isOpen={renaming !== null}
+        onClose={() => {
+          setRenaming(null);
+        }}
+        onRename={async (name) => {
+          if (renaming === null) {
+            return;
+          }
+
+          if (!(await renameDevice(renaming.id, name))) {
+            notify.failed(say('screens.accountArea.deviceList.thatDeviceCouldNotBeRenamed'));
+          }
+
+          read();
         }}
       />
 

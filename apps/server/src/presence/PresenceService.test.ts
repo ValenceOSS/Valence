@@ -1,5 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
 import { createPresenceService } from './PresenceService';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 
@@ -900,8 +901,13 @@ describe('createPresenceService, telling somebody who is here', () => {
       viaShare: null,
       fromServer: null,
       deviceLabel: 'Chrome on Mac',
+      clientLabel: null,
       clientKind: null,
       address: '203.0.113.7',
+      sessionId: null,
+      deviceId: null,
+      identity: null,
+      renamed: null,
     });
   });
 
@@ -993,5 +999,111 @@ describe('createPresenceService, telling somebody who is here', () => {
     presence.disconnect('tab-1', 'socket-1');
 
     expect(order).toEqual(['playback', 'session']);
+  });
+});
+
+describe('createPresenceService, renaming a device', () => {
+  const AN_IPHONE = identifyDevice({
+    userAgent: null,
+    kind: 'phone',
+    hints: { system: 'ios', model: 'iPhone 17 Pro Max' },
+  });
+
+  const arriving = (clientId: string, accountId: string, deviceId: string | null) => ({
+    clientId,
+    socketId: `${clientId}-socket`,
+    accountId,
+    profileId: null,
+    profileName: 'Dan',
+    deviceLabel: 'iPhone 17 Pro Max',
+    clientLabel: 'Valence for iOS',
+    deviceId,
+    identity: AN_IPHONE,
+    send: vi.fn(),
+  });
+
+  const labelOf = (presence: ReturnType<typeof createPresenceService>, clientId: string) =>
+    presence.list().find((entry) => entry.clientId === clientId)?.deviceLabel;
+
+  it('calls every connection from the renamed device by its new name', () => {
+    const presence = createPresenceService();
+
+    presence.connect(arriving('phone-app', 'account-1', 'phone-device'));
+    presence.connect(arriving('phone-tab', 'account-1', 'phone-device'));
+    presence.renameDevice('account-1', 'phone-device', 'Kitchen phone');
+
+    expect(labelOf(presence, 'phone-app')).toBe('Kitchen phone');
+    expect(labelOf(presence, 'phone-tab')).toBe('Kitchen phone');
+    expect(presence.list()[0]?.renamed).toBe('Kitchen phone');
+  });
+
+  it('leaves alone the account’s other devices and anybody else’s device of the same name', () => {
+    const presence = createPresenceService();
+
+    presence.connect(arriving('mine', 'account-1', 'phone-device'));
+    presence.connect(arriving('my-other', 'account-1', 'other-device'));
+    presence.connect(arriving('theirs', 'account-2', 'phone-device'));
+    presence.renameDevice('account-1', 'phone-device', 'Kitchen phone');
+
+    expect(labelOf(presence, 'mine')).toBe('Kitchen phone');
+    expect(labelOf(presence, 'my-other')).toBe('iPhone 17 Pro Max');
+    expect(labelOf(presence, 'theirs')).toBe('iPhone 17 Pro Max');
+  });
+
+  it('gives a device back the name it has of its own when its new name is taken away', () => {
+    const presence = createPresenceService();
+
+    presence.connect(arriving('phone-app', 'account-1', 'phone-device'));
+    presence.renameDevice('account-1', 'phone-device', 'Kitchen phone');
+    presence.renameDevice('account-1', 'phone-device', null);
+
+    expect(labelOf(presence, 'phone-app')).toBe('iPhone 17 Pro Max');
+    expect(presence.list()[0]?.renamed).toBeNull();
+  });
+
+  it('keeps the name a connection gave where it never said what it is', () => {
+    const presence = createPresenceService();
+
+    presence.connect({ ...arriving('old-app', 'account-1', 'phone-device'), identity: null });
+    presence.renameDevice('account-1', 'phone-device', 'Kitchen phone');
+
+    expect(labelOf(presence, 'old-app')).toBe('iPhone 17 Pro Max');
+    expect(presence.list()[0]?.renamed).toBe('Kitchen phone');
+  });
+
+  it('tells whoever watches the list, and only where something was renamed', () => {
+    const presence = createPresenceService();
+    const listener = vi.fn();
+
+    presence.connect(arriving('phone-app', 'account-1', 'phone-device'));
+    presence.watch(listener);
+    presence.renameDevice('account-1', 'another-device', 'Kitchen phone');
+
+    expect(listener).not.toHaveBeenCalled();
+
+    presence.renameDevice('account-1', 'phone-device', 'Kitchen phone');
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells whoever follows the sessions again, under the new name', () => {
+    const opened = vi.fn();
+    const presence = createPresenceService({ onSessionOpened: opened });
+
+    presence.connect(arriving('phone-app', 'account-1', 'phone-device'));
+    opened.mockClear();
+    presence.renameDevice('account-1', 'phone-device', 'Kitchen phone');
+
+    expect(opened).toHaveBeenCalledTimes(1);
+    expect(opened).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: 'phone-app',
+        deviceLabel: 'Kitchen phone',
+        clientLabel: 'Valence for iOS',
+        renamed: 'Kitchen phone',
+      }),
+    );
+    expect(opened.mock.calls[0]?.[0]).not.toHaveProperty('playback');
+    expect(opened.mock.calls[0]?.[0]).not.toHaveProperty('connectedAt');
   });
 });

@@ -372,6 +372,13 @@
       "when": 1793464375494,
       "tag": "0052_people_choose_plugin_rows",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "5",
+      "when": 1793561209708,
+      "tag": "0053_devices_know_what_they_are",
+      "breakpoints": true
     }
   ]
 }

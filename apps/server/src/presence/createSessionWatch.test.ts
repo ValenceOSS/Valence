@@ -15,6 +15,11 @@ const aSession: PresenceSession = {
   viaShare: null,
   clientKind: null,
   deviceLabel: 'A phone',
+  clientLabel: null,
+  sessionId: null,
+  deviceId: null,
+  identity: null,
+  renamed: null,
   address: '192.168.1.40',
 };
 

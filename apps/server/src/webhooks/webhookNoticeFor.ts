@@ -285,6 +285,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         posterUrl: payload.data.item.posterUrl,
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(say('common.playing'), PLAYED[payload.data.mode]()),
           field(say('common.quality'), payload.data.item.quality),
           field(
@@ -308,6 +309,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         posterUrl: payload.data.item.posterUrl,
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(
             say('server.webhooks.discordEmbedFor.stoppedAt'),
             progressOf(payload.data.positionSeconds, payload.data.durationSeconds),
@@ -325,6 +327,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         tone: 'viewing',
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
           field(
             say('common.account'),
@@ -344,6 +347,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         tone: 'quiet',
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(
             say('server.webhooks.discordEmbedFor.stayed'),
             describeSpan(payload.data.lastedSeconds),
@@ -370,6 +374,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         tone: 'attention',
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
         ],
       };
@@ -387,6 +392,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         tone: 'attention',
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
         ],
       };
@@ -400,6 +406,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): NoticeParts => {
         fields: [
           field(say('server.webhooks.discordEmbedFor.tried'), payload.data.identifier),
           field(say('common.device'), payload.data.deviceLabel),
+          field(say('common.browserOrApp'), payload.data.clientLabel),
           field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
         ],
       };

@@ -3,6 +3,9 @@ import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
+import type { DeviceRequest } from '@ValenceClient/session/auth';
+import { DeviceLabel } from '@ValenceScreens/components/DeviceLabel/DeviceLabel';
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 import type { DeviceApprovalProps } from './DeviceApproval.types';
 import { say } from '@ValenceI18n/say';
@@ -27,6 +30,7 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
   const [typed, setTyped] = useState('');
   const [standing, setStanding] = useState<Standing>('asking');
   const [isAnswering, setIsAnswering] = useState(false);
+  const [asking, setAsking] = useState<DeviceRequest['asking']>(null);
 
   useEffect(() => {
     if (standing !== 'reading') {
@@ -40,6 +44,7 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
         return;
       }
 
+      setAsking(found?.asking ?? null);
       setStanding(found === null ? 'wrong' : found.status === 'pending' ? 'unknown' : 'wrong');
     });
 
@@ -80,6 +85,21 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
       ) : standing === 'unknown' ? (
         <div className="flex flex-col gap-4">
           <p className="text-base text-text">{say('common.aTelevisionIsAskingToSign')}</p>
+
+          {asking === null ? null : (
+            <span className="flex flex-col gap-1 text-sm">
+              <DeviceLabel
+                device={sayAgain(asking.device)}
+                client={sayAgain(asking.client)}
+                clientKind="tv"
+              />
+              {asking.address === null ? null : (
+                <span className="text-xs text-text-muted">
+                  {say('common.askedFromAddress', { address: asking.address })}
+                </span>
+              )}
+            </span>
+          )}
 
           <Button
             variant="glossy"

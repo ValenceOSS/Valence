@@ -17,7 +17,15 @@ const fetchedToListen = vi.fn((_from: string, _name: string) =>
 
 const KEPT = aKeptListening({ quality: 'high', artworkFrom: null });
 
-const aBridge = (isReachable = true) => ({
+const aBridge = (isReachable = true, computerName: string | null = 'Studio Mac') => ({
+  about: {
+    version: '1.2.0',
+    computerName,
+    commit: '2ae1bc1',
+    arch: 'arm64',
+    electron: '33.0.0',
+    chrome: '130.0.0.0',
+  },
   preferences: {
     held: Object.freeze(Object.fromEntries(onDisk)),
     write: (key: string, value: string) => {
@@ -158,7 +166,7 @@ describe('installDesktopPlatform', () => {
 
     const kept = await platformInUse().held.trickplayFor('a-download');
 
-    expect(fetching).toHaveBeenCalledWith('/held/a-download/trickplay/thumbnails.vtt');
+    expect(fetching.mock.calls[0]?.[0]).toBe('/held/a-download/trickplay/thumbnails.vtt');
     expect(kept?.thumbnails[0]?.sheetUrl).toBe('/held/a-download/trickplay/sheet-001.jpg');
   });
 
@@ -231,5 +239,19 @@ describe('installDesktopPlatform', () => {
     expect(platformInUse().listeningFiles.addressOf('track-a-high.m4a')).toBe(
       '/held/listening/track-a-high.m4a',
     );
+  });
+
+  it('says this is the desktop app, on a computer called what its owner named it', () => {
+    installDesktopPlatform();
+
+    expect(platformInUse().describeThisDevice()).toEqual({ app: 'desktop', name: 'Studio Mac' });
+  });
+
+  it('says only that this is the desktop app where the computer gives no name', () => {
+    vi.stubGlobal('valence', aBridge(true, null));
+
+    installDesktopPlatform();
+
+    expect(platformInUse().describeThisDevice()).toEqual({ app: 'desktop' });
   });
 });

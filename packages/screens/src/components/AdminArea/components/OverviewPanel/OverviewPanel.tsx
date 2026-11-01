@@ -1,3 +1,4 @@
+import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { Spinner } from '@ValenceUI/Spinner';
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
 import { NeedsYouCard } from '@ValenceScreens/components/AdminArea/components/NeedsYouCard/NeedsYouCard';
@@ -156,7 +157,7 @@ const OverviewPanel = ({
     {
       id: 'who',
       header: say('screens.adminArea.overviewPanel.whoAndWhere'),
-      accessorFn: (session) => `${nameOfSession(session)} · ${session.deviceLabel}`,
+      accessorFn: (session) => `${nameOfSession(session)} · ${namesOfSession(session).device}`,
       cell: ({ getValue }) => (
         <span className="truncate text-text-muted">{String(getValue())}</span>
       ),

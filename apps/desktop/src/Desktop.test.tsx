@@ -82,6 +82,7 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
     },
     about: {
       version: '1.2.0',
+      computerName: 'Studio Mac',
       commit: '2ae1bc1',
       arch: 'arm64',
       electron: '33.0.0',

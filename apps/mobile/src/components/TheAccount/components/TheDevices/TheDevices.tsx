@@ -1,9 +1,9 @@
-import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { Alert, StyleSheet, View } from 'react-native';
 import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
+import { namesOfSignedInDevice } from '@ValenceClient/account/namesOfSignedInDevice';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { ThisPhonesNotifications } from '@ValenceMobile/components/TheAccount/components/TheDevices/components/ThisPhonesNotifications/ThisPhonesNotifications';
@@ -92,26 +92,30 @@ const TheDevices = () => {
 
       <AGroup title={say('common.devices')}>
         {devices.data.map((device) => {
-          const signedIn = saidWhen(device.signedInAt);
+          const { device: named, client } = namesOfSignedInDevice(device);
+          const lastActive = saidWhen(device.lastActiveAt ?? device.signedInAt);
 
           return (
             <View key={device.id} style={styles.device}>
               <View style={styles.words}>
                 <Words>
                   {device.isCurrent
-                    ? say('phone.theAccount.theDevices.nameThisPhone', {
-                        name: sayAgain(device.name),
-                      })
-                    : sayAgain(device.name)}
+                    ? say('phone.theAccount.theDevices.nameThisPhone', { name: named })
+                    : named}
                 </Words>
+                {client === null ? null : (
+                  <Words size="small" tone="muted">
+                    {client}
+                  </Words>
+                )}
                 <Words size="small" tone="muted">
                   {[
+                    device.isActiveNow
+                      ? say('screens.adminArea.overviewPanel.activeNow')
+                      : lastActive === null
+                        ? null
+                        : say('common.lastActiveWhen', { lastActiveAt: lastActive }),
                     device.address,
-                    signedIn === null
-                      ? null
-                      : say('common.signedInWhen', {
-                          signedInAt: signedIn,
-                        }),
                   ]
                     .filter((part) => part !== null)
                     .join(' · ')}
@@ -122,10 +126,10 @@ const TheDevices = () => {
                 <Button
                   tone="quiet"
                   label={say('common.signOutNamed', {
-                    name: sayAgain(device.name),
+                    name: namesOfSignedInDevice(device).device,
                   })}
                   onPress={() => {
-                    end(device.id, sayAgain(device.name));
+                    end(device.id, namesOfSignedInDevice(device).device);
                   }}
                 >
                   {say('common.signOut')}

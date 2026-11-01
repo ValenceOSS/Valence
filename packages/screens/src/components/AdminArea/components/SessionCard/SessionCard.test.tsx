@@ -1,4 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { DeviceIdentitySchema } from '@ValenceContracts/schemas/DeviceIdentity';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -28,6 +29,9 @@ const IDLE_SESSION: ActiveSession = {
   guestOf: null,
   fromServer: null,
   deviceLabel: 'Living room TV',
+  device: null,
+  client: null,
+  identity: null,
   clientKind: 'browser' as const,
   connectedAt: 1000,
   streams: null,
@@ -637,10 +641,14 @@ describe('SessionCard', () => {
   });
 
   it('draws a maker’s wordmark wider than a square mark, so it can be read', () => {
-    const drawn = (deviceLabel: string) => {
+    const drawn = (system: string) => {
       const { container, unmount } = render(
         <SessionCard
-          session={{ ...IDLE_SESSION, deviceLabel, clientKind: 'tv' }}
+          session={{
+            ...IDLE_SESSION,
+            clientKind: 'tv',
+            identity: DeviceIdentitySchema.parse({ app: 'tv', system, form: 'tv' }),
+          }}
           isBusy={false}
           onStop={vi.fn()}
           onPause={vi.fn()}
@@ -655,9 +663,47 @@ describe('SessionCard', () => {
       return width;
     };
 
-    expect(drawn('Samsung TV')).toBe('4.5rem');
-    expect(drawn('LG TV')).toBe('2.75rem');
-    expect(drawn('Apple TV')).toBe('1.375rem');
+    expect(drawn('tizen')).toBe('4.5rem');
+    expect(drawn('webos')).toBe('2.75rem');
+    expect(drawn('tvos')).toBe('1.375rem');
+  });
+
+  it('names the device and what it reaches Valence through, where the server says', () => {
+    render(
+      <SessionCard
+        session={{
+          ...IDLE_SESSION,
+          deviceLabel: 'Valence (iPhone)',
+          device: sayVerbatim('iPhone 17 Pro Max'),
+          client: sayVerbatim('Valence for iOS'),
+          identity: DeviceIdentitySchema.parse({ app: 'phone', system: 'ios', form: 'phone' }),
+          clientKind: 'phone',
+        }}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('iPhone 17 Pro Max · Valence for iOS')).toBeInTheDocument();
+    expect(screen.queryByText('Valence (iPhone)')).not.toBeInTheDocument();
+  });
+
+  it('names the device by what it called itself where the server says no more', () => {
+    render(
+      <SessionCard
+        session={IDLE_SESSION}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Living room TV')).toHaveAttribute('title', 'Living room TV');
   });
 
   it('says what its account is limited to while it streams', () => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DeviceHintsSchema } from './DeviceHints';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ClientKindSchema } from './ClientKind';
 import { JsonValueSchema } from './JsonValue';
@@ -61,6 +62,7 @@ const IdentifySchema = z.object({
   clientId: z.string().min(1).max(120).optional(),
   deviceLabel: z.string().min(1).max(120).optional(),
   clientKind: ClientKindSchema.optional(),
+  device: DeviceHintsSchema.optional().catch(undefined),
 });
 
 const PongSchema = z.object({ kind: z.literal('pong') });

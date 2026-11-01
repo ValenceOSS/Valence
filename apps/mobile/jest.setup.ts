@@ -28,6 +28,8 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 jest.mock('expo-device', () => ({
+  DeviceType: { UNKNOWN: 0, PHONE: 1, TABLET: 2, DESKTOP: 3, TV: 4 },
+  deviceType: 1,
   deviceName: "Dan's iPhone",
   modelName: 'iPhone',
   isDevice: true,

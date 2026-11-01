@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -22,7 +23,10 @@ const NOW = Date.parse('2026-10-15T12:00:00.000Z');
 
 const COLOUR = '#3ac47d';
 
-const DEVICE: ChoosingDevice = { userAgent: 'Valence TV', brands: [], address: '192.0.2.1' };
+const DEVICE: ChoosingDevice = {
+  device: { deviceId: null, identity: identifyDevice({ userAgent: 'Valence TV' }) },
+  address: '192.0.2.1',
+};
 
 const shelf = (id: string, name: string): Library => ({
   id,

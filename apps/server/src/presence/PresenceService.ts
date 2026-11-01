@@ -1,4 +1,6 @@
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
+import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
+import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -44,8 +46,13 @@ type PresenceSession = {
   viaShare: string | null;
   fromServer: string | null;
   deviceLabel: string;
+  clientLabel: string | null;
   clientKind: ClientKind | null;
   address: string | null;
+  sessionId: string | null;
+  deviceId: string | null;
+  identity: DeviceIdentity | null;
+  renamed: string | null;
 };
 
 type PresenceEntry = PresenceSession & {
@@ -58,6 +65,7 @@ type PresenceViewing = {
   profileId: string | null;
   profileName: string | null;
   deviceLabel: string;
+  clientLabel: string | null;
   clientKind: ClientKind;
   mediaId: string;
   mode: PlaybackMode;
@@ -99,8 +107,13 @@ type PresenceArrival = {
   viaShare?: string | null;
   fromServer?: string | null;
   deviceLabel: string;
+  clientLabel?: string | null;
   clientKind?: ClientKind | null;
   address?: string | null;
+  sessionId?: string | null;
+  deviceId?: string | null;
+  identity?: DeviceIdentity | null;
+  renamed?: string | null;
   send: (event: PresenceControlEvent) => void;
 };
 
@@ -118,6 +131,7 @@ type PresenceService = {
     health?: PresencePlaybackHealth,
   ) => void;
   list: () => PresenceEntry[];
+  renameDevice: (accountId: string, deviceId: string, renamed: string | null) => void;
   watch: (listener: () => void) => () => void;
   pause: (clientId: string, reason: string) => boolean;
   message: (clientId: string, text: string) => boolean;
@@ -172,6 +186,7 @@ const createPresenceService = (
     profileId: entry.profileId,
     profileName: entry.profileName,
     deviceLabel: entry.deviceLabel,
+    clientLabel: entry.clientLabel,
     clientKind: entry.clientKind ?? 'browser',
     mediaId: playback.mediaId,
     mode: describePlaybackMode(playback.plan),
@@ -211,8 +226,13 @@ const createPresenceService = (
       viaShare = null,
       fromServer = null,
       deviceLabel,
+      clientLabel = null,
       clientKind = null,
       address = null,
+      sessionId = null,
+      deviceId = null,
+      identity = null,
+      renamed = null,
       send,
     }) => {
       const already = connections.get(clientId);
@@ -235,8 +255,13 @@ const createPresenceService = (
         viaShare,
         fromServer,
         deviceLabel,
+        clientLabel,
         clientKind,
         address,
+        sessionId,
+        deviceId,
+        identity,
+        renamed,
       };
 
       connections.set(clientId, {
@@ -356,6 +381,33 @@ const createPresenceService = (
     },
 
     list: () => Array.from(connections.values(), (connection) => connection.entry),
+
+    renameDevice: (accountId, deviceId, renamed) => {
+      const named = [...connections.values()].filter(
+        ({ entry }) => entry.accountId === accountId && entry.deviceId === deviceId,
+      );
+
+      for (const connection of named) {
+        const { identity } = connection.entry;
+
+        connection.entry = {
+          ...connection.entry,
+          renamed,
+          deviceLabel:
+            identity === null
+              ? connection.entry.deviceLabel
+              : nameTheDevice(identity, renamed).message,
+        };
+
+        const { connectedAt: _connectedAt, playback: _playback, ...session } = connection.entry;
+
+        watchers.onSessionOpened?.(session);
+      }
+
+      if (named.length > 0) {
+        announce();
+      }
+    },
 
     watch: (listener) => {
       listeners.add(listener);

@@ -1,4 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -17,7 +18,11 @@ jest.mock('@ValenceClient/session/auth', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   installPlatform(aFakePlatform());
-  jest.mocked(readDeviceRequest).mockResolvedValue({ userCode: 'ABCD1234', status: 'pending' });
+  jest.mocked(readDeviceRequest).mockResolvedValue({
+    userCode: 'ABCD1234',
+    status: 'pending',
+    asking: null,
+  });
 });
 
 describe('SignInATelevision', () => {
@@ -37,6 +42,33 @@ describe('SignInATelevision', () => {
 
     expect(answerDeviceRequest).toHaveBeenCalledWith('ABCD1234', true);
     expect(await drawn.findByText(/Done\. The TV will be signed in shortly/u)).toBeTruthy();
+  });
+
+  it('says which television is asking and what it runs, where the server remembers', async () => {
+    jest.mocked(readDeviceRequest).mockResolvedValue({
+      userCode: 'ABCD1234',
+      status: 'pending',
+      asking: {
+        device: sayVerbatim('Living Room'),
+        client: sayVerbatim('Valence for Android TV'),
+        address: '192.168.1.30',
+      },
+    });
+    const drawn = await render(<SignInATelevision startsWith="ABCD1234" />, {
+      wrapper: CacheScope,
+    });
+
+    expect(await drawn.findByText('Living Room · Valence for Android TV')).toBeTruthy();
+    expect(drawn.getByText('Asked from 192.168.1.30')).toBeTruthy();
+  });
+
+  it('says only that a television is asking where the server cannot say which', async () => {
+    const drawn = await render(<SignInATelevision startsWith="ABCD1234" />, {
+      wrapper: CacheScope,
+    });
+
+    expect(await drawn.findByText('Yes, this was me')).toBeTruthy();
+    expect(drawn.queryByText(/ · /u)).toBeNull();
   });
 
   it('turns a television down where somebody did not ask for it', async () => {

@@ -1,4 +1,7 @@
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
+import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
+import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
 import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
@@ -556,6 +559,12 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           guestOf: entry.guestOf,
           fromServer: entry.fromServer,
           deviceLabel: entry.deviceLabel,
+          device:
+            entry.identity === null
+              ? sayVerbatim(entry.deviceLabel)
+              : nameTheDevice(entry.identity, entry.renamed),
+          client: entry.identity === null ? null : nameTheClient(entry.identity),
+          identity: entry.identity,
           clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,
           playback: entry.playback,

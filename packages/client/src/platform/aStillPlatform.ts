@@ -25,6 +25,7 @@ const aStillPlatform = (): Platform => {
     },
     serverAddress: () => null,
     describeThisClient: () => say('common.valence'),
+    describeThisDevice: () => ({}),
     openSocket: () => ({ send: () => {}, close: () => {} }),
     thisClientId: () => 'client-1',
     thisClientKind: () => 'browser',

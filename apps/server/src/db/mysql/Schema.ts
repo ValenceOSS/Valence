@@ -20,6 +20,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
 import { identifier } from '@ValenceDatabase/mysql/columns/identifier';
@@ -65,7 +66,23 @@ const session = mysqlTable('session', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   impersonatedBy: mediumtext('impersonatedBy'),
+  deviceId: identifier('deviceId'),
+  device: jsonColumn('device').$type<DeviceIdentity>(),
+  lastActiveAt: moment('lastActiveAt'),
 });
+
+const deviceName = mysqlTable(
+  'device_name',
+  {
+    userId: identifier('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    deviceId: identifier('deviceId').notNull(),
+    name: varchar('name', { length: 80 }).notNull(),
+    renamedAt: momentNow('renamedAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.deviceId] })],
+);
 
 const account = mysqlTable('account', {
   id: identifier('id').primaryKey(),
@@ -2262,6 +2279,7 @@ export {
   ageException,
   user,
   session,
+  deviceName,
   account,
   verification,
   twoFactor,

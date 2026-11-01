@@ -7,6 +7,7 @@ import { stitchTheRest } from '@ValenceDesktop/main/stitchTheRest';
 import { VIDEO_HOSTS } from '@ValenceDesktop/main/nameValenceToTheVideoHost';
 import type { ServerReach } from '@ValenceDesktop/main/theServerReach';
 import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
+import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
 import { say } from '@ValenceI18n/say';
 
 const SCHEME = 'valence';
@@ -21,7 +22,7 @@ const SLOW_ANSWER_MS = 10_000;
 
 const OPEN_ENDED = /^bytes=(\d+)-$/;
 
-const CARRIED = ['accept', 'content-type', 'range', 'authorization'];
+const CARRIED = ['accept', 'content-type', 'range', 'authorization', DEVICE_HEADER];
 
 /**
  * Writes the policy a page of this client is held to, allowing these sources of script beyond its own.

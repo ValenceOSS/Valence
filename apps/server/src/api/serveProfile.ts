@@ -9,7 +9,7 @@ import type { Acting } from '@ValenceServer/profiles/acting/Acting';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
-import { brandsOf } from '@ValenceServer/web/brandsOf';
+import { deviceOfRequest } from '@ValenceServer/devices/deviceOfRequest';
 
 /**
  * Who is managing the profiles on their own account: its owner, or a profile acting for itself.
@@ -88,8 +88,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
       context.req.valid('param').profileId,
       context.req.valid('json'),
       {
-        userAgent: context.req.header('user-agent') ?? null,
-        brands: brandsOf(context.req.header('sec-ch-ua')),
+        device: deviceOfRequest(context.req.raw.headers),
         address: callerOf?.(context) ?? null,
       },
     );

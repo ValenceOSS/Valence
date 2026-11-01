@@ -77,7 +77,7 @@ const GetTheDesktopApp = ({ waitsMs = WAITS_MS }: GetTheDesktopAppProps) => {
       {isShown ? (
         <motion.aside
           key="get-the-desktop-app"
-          aria-label={say('screens.getTheDesktopApp.valenceForSystem', { system })}
+          aria-label={say('common.valenceForSystem', { system })}
           variants={prefersReducedMotion === true ? fadeVariants : ARRIVING}
           initial="hidden"
           animate="shown"
@@ -93,7 +93,7 @@ const GetTheDesktopApp = ({ waitsMs = WAITS_MS }: GetTheDesktopAppProps) => {
 
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <p className="text-sm font-semibold text-text">
-                  {say('screens.getTheDesktopApp.valenceForSystem', { system })}
+                  {say('common.valenceForSystem', { system })}
                 </p>
                 <p className="text-xs text-text-muted">
                   {say('screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch')}

@@ -1,4 +1,4 @@
-import { sayAgain } from '@ValenceI18n/sayAgain';
+import { namesOfSignedInDevice } from '@ValenceClient/account/namesOfSignedInDevice';
 import { useCallback, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -32,7 +32,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
     [cache, accountId],
   );
 
-  const columns = useMemo(() => deviceColumns<AccountSession>(setEnding), []);
+  const columns = useMemo(() => deviceColumns<AccountSession>({ onEnd: setEnding }), []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,7 +41,9 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         detail={
           ending === null
             ? ''
-            : say('common.nameWillBeSignedOutAnd', { name: sayAgain(ending.name) })
+            : say('common.nameWillBeSignedOutAnd', {
+                name: namesOfSignedInDevice(ending).device,
+              })
         }
         confirmLabel={say('common.signItOut')}
         isDestructive
@@ -58,7 +60,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
             void endAccountSession(accountId, device.id).then(async (refusal) => {
               const isEnded = tellOutcome(
                 say('screens.accountsPanel.accountDevices.nameIsSignedOut', {
-                  name: sayAgain(device.name),
+                  name: namesOfSignedInDevice(device).device,
                 }),
                 failureOfRefusal(refusal),
               );

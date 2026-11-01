@@ -1,4 +1,4 @@
-import type { Browser } from '@ValenceCore/functions/Browser';
+import type { Browser } from '@ValenceContracts/schemas/Browser';
 import { say } from '@ValenceI18n/say';
 
 const BROWSER_NAMES: Readonly<Record<Browser, string>> = {
@@ -10,6 +10,7 @@ const BROWSER_NAMES: Readonly<Record<Browser, string>> = {
   vivaldi: say('common.vivaldi'),
   samsungInternet: say('common.samsungInternet'),
   yandex: say('common.yandexBrowser'),
+  duckDuckGo: say('common.duckDuckGo'),
   firefox: say('common.firefox'),
   safari: say('common.safari'),
 };
