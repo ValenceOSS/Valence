@@ -1,4 +1,5 @@
 import { addressToSend } from './addressToSend';
+import type { WebhookBrand } from './WebhookBrand';
 import { fetchPosterAttachment } from './fetchPosterAttachment';
 import { formatWebhookBody } from './formatWebhookBody';
 import { isSafeWebhookUrl } from './isSafeWebhookUrl';
@@ -27,7 +28,7 @@ type WebhookTarget = {
   secret: string;
 };
 
-type WebhookDestination = WebhookTarget & { iconUrl: string | null };
+type WebhookDestination = WebhookTarget & { brand: WebhookBrand };
 
 type WebhookAttempt = {
   ok: boolean;
@@ -74,11 +75,11 @@ const deliverWebhook = async (
 
   const poster =
     target.preset === 'pushover'
-      ? await fetchPoster(webhookNoticeFor(payload, '').posterUrl)
+      ? await fetchPoster(webhookNoticeFor(payload, target.brand.name).posterUrl)
       : null;
 
   const { body, contentType } = formatWebhookBody(target.preset, payload, {
-    iconUrl: target.iconUrl,
+    brand: target.brand,
     address: target.url,
     poster,
   });

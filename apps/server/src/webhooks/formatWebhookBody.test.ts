@@ -8,10 +8,9 @@ const DiscordMessageSchema = z.object({
   embeds: z.array(
     z.object({
       title: z.string(),
-      description: z.string(),
+      description: z.string().optional(),
       color: z.number(),
-      author: z.object({ name: z.string() }),
-      fields: z.array(z.object({ name: z.string(), value: z.string() })),
+      footer: z.object({ text: z.string() }).optional(),
     }),
   ),
 });
@@ -117,7 +116,8 @@ describe('formatWebhookBody', () => {
 
     expect(written.contentType).toBe('application/json');
     expect(sent.embeds).toHaveLength(1);
-    expect(sent.embeds[0]?.title).toContain('Scan for changes');
+    expect(sent.embeds[0]?.title).toBe('Job failed');
+    expect(sent.embeds[0]?.description).toContain('Scan for changes');
     expect(sent.embeds[0]?.description).toContain('ffmpeg exited with 1');
   });
 
@@ -960,11 +960,8 @@ describe('formatWebhookBody, a sign-in', () => {
       'Playlist import: A playlist was imported',
     );
     expect(discord?.title).toBe('A playlist was imported');
-    expect(discord?.description).toBe('From Playlist import');
-    expect(discord?.fields.map((field) => `${field.name}=${field.value}`)).toEqual([
-      'playlist=Road trip',
-      'songs=12',
-    ]);
+    expect(discord?.description).toBe('`playlist: Road trip` | `12 songs`');
+    expect(discord?.footer?.text).toBe('Playlist import');
     expect(JSON.parse(formatWebhookBody('generic', reported).body)).toStrictEqual(reported);
   });
 });

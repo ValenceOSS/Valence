@@ -1,75 +1,69 @@
+import { clipText } from './clipText';
 import { fitEscaped } from './fitEscaped';
-import type { NoticeField, NoticeSection, WebhookNotice } from './webhookNoticeFor';
+import type { NoticeDetail, NoticeSection, NoticeWords, WebhookNotice } from './webhookNoticeFor';
 
 type NoticeMarkup = {
   escape: (text: string) => string;
   bold: (escaped: string) => string;
+  code: (text: string) => string;
+  quote: (escaped: string) => string;
+  link: (escapedLabel: string, url: string) => string;
+  bullet: (escaped: string) => string;
+  small: (escaped: string) => string;
 };
 
 const PARAGRAPH_BREAK = '\n\n';
 
 const CUT_SHORT = '…';
 
-/**
- * Writes a label in bold on one line, since a cut made between lines must never fall inside markup.
- *
- * @param label - The label.
- * @param markup - How the receiver escapes text and marks it bold.
- * @returns The bold label.
- */
-const boldLine = (label: string, markup: NoticeMarkup): string =>
-  markup.bold(markup.escape(label.replace(/\s+/g, ' ').trim()));
+const DETAIL_LIMIT = 500;
+
+const SHORTEST_DETAIL = 20;
 
 /**
- * Writes as many labelled details as fit, one to a line, cutting the value of the first that does not
- * fit whole and leaving out the rest.
+ * A notice's sentence with the names it is about in bold.
  *
- * @param fields - The details.
- * @param markup - How the receiver escapes text and marks it bold.
- * @param room - The most they may take.
- * @returns The details that fit.
+ * @param words - The sentence, in parts.
+ * @param markup - How the receiver writes bold and escapes text.
+ * @returns The sentence.
  */
-const fitFields = (fields: NoticeField[], markup: NoticeMarkup, room: number): string => {
-  const kept: string[] = [];
-  let used = 0;
+const sentenceOf = (words: NoticeWords, markup: NoticeMarkup): string =>
+  words
+    .map((part) =>
+      typeof part === 'string' ? markup.escape(part) : markup.bold(markup.escape(part.strong)),
+    )
+    .join('');
 
-  for (const one of fields) {
-    const label = `${boldLine(`${one.name}:`, markup)} `;
-    const gap = kept.length === 0 ? 0 : 1;
-    const line = `${label}${markup.escape(one.value)}`;
+/**
+ * A detail under its label, quoted or set as code.
+ *
+ * @param detail - The detail.
+ * @param markup - How the receiver writes it.
+ * @param room - The most characters of the detail's own text to keep.
+ * @returns How it is written.
+ */
+const detailOf = (detail: NoticeDetail, markup: NoticeMarkup, room: number): string => {
+  const text = clipText(detail.text, room);
+  const written = detail.look === 'code' ? markup.code(text) : markup.quote(markup.escape(text));
 
-    if (used + gap + line.length <= room) {
-      kept.push(line);
-      used += gap + line.length;
-      continue;
-    }
-
-    const left = room - used - gap - label.length;
-
-    if (left > CUT_SHORT.length) {
-      kept.push(`${label}${fitEscaped(one.value, left, markup.escape)}`);
-    }
-
-    break;
-  }
-
-  return kept.join('\n');
+  return detail.label === null
+    ? written
+    : `${markup.bold(markup.escape(detail.label))}\n${written}`;
 };
 
 /**
- * Writes as many lines of the sections as fit, each under its heading, ending with an ellipsis where
- * any were left out.
+ * As many of a notice's lists as fit, cut short with an ellipsis where the rest does not.
  *
- * @param sections - The sections.
- * @param markup - How the receiver escapes text and marks it bold.
- * @param room - The most they may take.
- * @returns The lines that fit.
+ * @param sections - The lists.
+ * @param markup - How the receiver writes them.
+ * @param room - How many characters are left.
+ * @returns The lists, as they fit.
  */
 const fitSections = (sections: NoticeSection[], markup: NoticeMarkup, room: number): string => {
   const lines = sections.flatMap((one, index) => [
     ...(index === 0 ? [] : ['']),
-    boldLine(one.heading, markup),
-    ...one.body.split('\n').map(markup.escape),
+    markup.bold(markup.escape(one.heading)),
+    ...one.lines.map((line) => markup.bullet(markup.escape(line))),
   ]);
   const kept: string[] = [];
   let used = 0;
@@ -89,42 +83,72 @@ const fitSections = (sections: NoticeSection[], markup: NoticeMarkup, room: numb
 };
 
 /**
- * How much room is left once something has been written, with the break that follows it.
- *
- * @param room - The room there was.
- * @param written - What was written in it.
- * @returns The room left.
- */
-const roomAfter = (room: number, written: string): number =>
-  written === '' ? room : room - written.length - PARAGRAPH_BREAK.length;
-
-/**
- * Writes a notice's summary, sections and labelled details as one message body in a receiver's own
- * markup, inside the most it will accept. The details are kept before the sections, and the sections
- * before the summary, which is left out once anything else has had to be cut, since the details are
- * what somebody acts on.
+ * Writes a notice's body as one block of text for Telegram, Gotify, Pushover or Apprise, keeping
+ * the sentence, the details and the link whole within the receiver's limit.
  *
  * @param notice - What to say.
- * @param markup - How the receiver escapes text and marks it bold.
- * @param limit - The most the receiver accepts in one body.
- * @returns The body.
+ * @param markup - How the receiver writes it.
+ * @param limit - The most characters the receiver takes.
+ * @returns The body, or nothing where the notice has nothing beyond its title.
  */
 const noticeBodyOf = (
   notice: WebhookNotice,
   markup: NoticeMarkup,
   limit: number = Number.POSITIVE_INFINITY,
 ): string => {
-  const fields = fitFields(notice.fields, markup, limit);
-  const sections = fitSections(notice.sections, markup, roomAfter(limit, fields));
+  const head = [
+    sentenceOf(notice.lead, markup),
+    notice.context.length === 0 ? '' : markup.small(markup.escape(notice.context.join(' · '))),
+  ]
+    .filter((one) => one !== '')
+    .join('\n');
+  const tags = notice.tags.map(markup.code).join(' | ');
+  const link =
+    notice.link === null ? '' : markup.link(markup.escape(notice.link.label), notice.link.url);
+  const fixedAt = (room: number) => {
+    const written = notice.details.map((one) => detailOf(one, markup, room));
+
+    return {
+      details: written,
+      length: [head, tags, ...written, link].filter((one) => one !== '').join(PARAGRAPH_BREAK)
+        .length,
+    };
+  };
+  let detailRoom = DETAIL_LIMIT;
+  let { details, length: fixedLength } = fixedAt(detailRoom);
+
+  while (fixedLength > limit && detailRoom > SHORTEST_DETAIL) {
+    detailRoom = Math.floor(detailRoom / 2);
+    ({ details, length: fixedLength } = fixedAt(detailRoom));
+  }
+
+  if (fixedLength > limit) {
+    return fitEscaped(
+      [
+        notice.lead.map((part) => (typeof part === 'string' ? part : part.strong)).join(''),
+        ...notice.context,
+      ]
+        .filter((one) => one !== '')
+        .join('\n'),
+      limit,
+      markup.escape,
+    );
+  }
+
+  const roomForSections = limit - fixedLength - PARAGRAPH_BREAK.length;
+  const sections = fitSections(notice.sections, markup, roomForSections);
   const isEverySectionWhole =
     sections === fitSections(notice.sections, markup, Number.POSITIVE_INFINITY);
-  const room = roomAfter(roomAfter(limit, fields), sections);
-  const description =
-    notice.description === '' || !isEverySectionWhole || room <= CUT_SHORT.length
+  const roomForBody =
+    roomForSections - (sections === '' ? 0 : sections.length + PARAGRAPH_BREAK.length);
+  const body =
+    notice.body === '' || !isEverySectionWhole || roomForBody <= CUT_SHORT.length
       ? ''
-      : fitEscaped(notice.description, room, markup.escape);
+      : fitEscaped(notice.body, roomForBody, markup.escape);
 
-  return [description, sections, fields].filter((one) => one !== '').join(PARAGRAPH_BREAK);
+  return [head, body, tags, ...details, sections, link]
+    .filter((one) => one !== '')
+    .join(PARAGRAPH_BREAK);
 };
 
 export { noticeBodyOf };

@@ -3,19 +3,49 @@ import { telegramMessageFor } from './telegramMessageFor';
 import type { WebhookNotice } from './webhookNoticeFor';
 
 const aNotice: WebhookNotice = {
-  title: 'Film request made: Tom & Jerry (1992)',
-  description: 'A cat <chases> a mouse.',
-  tone: 'quiet',
-  isUrgent: false,
-  fields: [{ name: 'Asked by', value: 'Ada', inline: true }],
+  title: 'Tom & Jerry (1992)',
+  lead: [{ strong: 'Dan' }, ' requested this film'],
+  context: [],
+  body: 'A cat <chases> a mouse.',
+  tags: ['Waiting for approval'],
+  details: [],
   sections: [],
+  link: null,
+  footer: 'Requests',
+  tone: 'attention',
+  isUrgent: false,
   posterUrl: null,
 };
 
 describe('telegramMessageFor', () => {
-  it('writes the title in bold above the details, in Telegram’s HTML', () => {
+  it('writes the title in bold above the body, in Telegram’s HTML', () => {
     expect(telegramMessageFor(aNotice, {}).text).toBe(
-      '<b>Film request made: Tom &amp; Jerry (1992)</b>\n\nA cat &lt;chases&gt; a mouse.\n\n<b>Asked by:</b> Ada',
+      '<b>Tom &amp; Jerry (1992)</b>\n\n<b>Dan</b> requested this film\n\nA cat &lt;chases&gt; a mouse.\n\n<code>Waiting for approval</code>',
+    );
+  });
+
+  it('quotes a detail and links to how to fix it', () => {
+    expect(
+      telegramMessageFor(
+        {
+          ...aNotice,
+          title: 'Download VPN is down',
+          lead: [],
+          body: '',
+          tags: [],
+          details: [{ label: null, text: 'the tunnel closed', look: 'quote' }],
+          link: { label: 'How to fix it', url: 'https://docs.getvalence.app/requests#vpn' },
+        },
+        {},
+      ).text,
+    ).toBe(
+      '<b>Download VPN is down</b>\n\n<blockquote>the tunnel closed</blockquote>\n\n<a href="https://docs.getvalence.app/requests#vpn">How to fix it</a>',
+    );
+  });
+
+  it('sends the title alone where there is nothing more to say', () => {
+    expect(telegramMessageFor({ ...aNotice, lead: [], body: '', tags: [] }, {}).text).toBe(
+      '<b>Tom &amp; Jerry (1992)</b>',
     );
   });
 
@@ -53,10 +83,14 @@ describe('telegramMessageFor', () => {
     });
   });
 
-  it('stays inside the 4096 characters Telegram accepts', () => {
-    const message = telegramMessageFor({ ...aNotice, description: 'x'.repeat(10_000) }, {});
+  it('stays inside the 4096 characters Telegram accepts, keeping the sentence and tags', () => {
+    const message = telegramMessageFor(
+      { ...aNotice, title: '&'.repeat(1000), body: 'x'.repeat(10_000) },
+      {},
+    );
 
     expect(message.text.length).toBeLessThanOrEqual(4096);
-    expect(message.text).toContain('<b>Asked by:</b> Ada');
+    expect(message.text).toContain('<b>Dan</b> requested this film');
+    expect(message.text).toContain('<code>Waiting for approval</code>');
   });
 });

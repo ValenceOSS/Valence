@@ -1,4 +1,4 @@
-import { htmlMarkup } from './htmlMarkup';
+import { pushoverMarkup } from './pushoverMarkup';
 import { noticeBodyOf } from './noticeBodyOf';
 import { escapeHtml } from '@ValenceServer/text/escapeHtml';
 import { clipText } from './clipText';
@@ -48,7 +48,7 @@ const pushoverMessageFor = (
   occurredAt: string,
   poster: PosterAttachment | null = null,
 ): PushoverMessage => {
-  const body = noticeBodyOf(notice, htmlMarkup, MESSAGE_LIMIT);
+  const body = noticeBodyOf(notice, pushoverMarkup, MESSAGE_LIMIT);
 
   return {
     ...(settings.token === undefined ? {} : { token: settings.token }),
