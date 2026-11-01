@@ -130,6 +130,8 @@ const MOST_WEBHOOKS_PER_WINDOW = 60;
 
 const MOST_WAITING_EVENTS = 200;
 
+const GOODBYE_MILLISECONDS = 10_000;
+
 const EVENT_RETRY_AFTER_MS = [10_000, 60_000];
 
 const ASSET_TYPES: Readonly<Record<string, string>> = {
@@ -555,6 +557,82 @@ const createPluginService = ({
     };
 
     await Promise.all((await store.list()).map(tellOne));
+  };
+
+  /**
+   * Tells a plugin which of its settings an administrator just changed, by id, so it can act on
+   * them. Whatever it does happens after the save, so a slow plugin never holds up the person
+   * saving, and in the plugin's line with its events, so two saves in quick succession reach it
+   * one after the other and in the order they were made.
+   *
+   * @param pluginId - The plugin.
+   * @param changed - The ids of the settings that changed.
+   * @returns When the plugin has been told, or has failed to hear it.
+   */
+  const tellSettingsChanged = (pluginId: string, changed: string[]): Promise<void> => {
+    const turn = (lines.get(pluginId) ?? Promise.resolve())
+      .then(async () => {
+        const found = await runnable(pluginId);
+
+        if (found === null) {
+          return;
+        }
+
+        await runtime.invoke(
+          { record: found.record, code: found.code },
+          'settingsChanged',
+          { change: { changed } },
+          { kind: 'background', profileId: null },
+        );
+      })
+      .catch((error) => {
+        log(
+          'warn',
+          `plugin ${pluginId}: telling it its settings changed failed: ${error instanceof Error ? error.message : 'failed'}`,
+        );
+      });
+
+    lines.set(pluginId, turn);
+
+    return turn;
+  };
+
+  /**
+   * Gives a plugin that is about to be removed ten seconds to tidy up after itself elsewhere, such
+   * as signing out of a service, while it still has everything it kept. Removing it goes ahead
+   * however that goes.
+   *
+   * @param pluginId - The plugin.
+   */
+  const sayGoodbye = async (pluginId: string): Promise<void> => {
+    const found = await runnable(pluginId);
+
+    if (found === null) {
+      return;
+    }
+
+    const said = runtime
+      .invoke(
+        { record: found.record, code: found.code },
+        'uninstalling',
+        {},
+        { kind: 'background', profileId: null },
+      )
+      .catch((error) => {
+        log(
+          'warn',
+          `plugin ${pluginId}: tidying up before removal failed: ${error instanceof Error ? error.message : 'failed'}`,
+        );
+      });
+    let timer: NodeJS.Timeout | undefined;
+
+    await Promise.race([
+      said,
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, GOODBYE_MILLISECONDS);
+      }),
+    ]);
+    clearTimeout(timer);
   };
 
   const bringDataUpToDate = async (
@@ -1194,7 +1272,7 @@ const createPluginService = ({
       id: string,
       changes: {
         isEnabled?: boolean | undefined;
-        settings?: Record<string, string | boolean | null> | undefined;
+        settings?: Record<string, string | boolean | number | null> | undefined;
       },
     ): Promise<InstalledPlugin | { refused: Said } | null> => {
       const done = await exclusively(
@@ -1234,6 +1312,20 @@ const createPluginService = ({
 
           if (changes.isEnabled === false && record.isEnabled) {
             await cancelJobs(id).catch(() => undefined);
+          }
+
+          const changed = saved.manifest.settings.flatMap((setting) =>
+            setting.kind === 'secret'
+              ? typeof changes.settings?.[setting.id] === 'string'
+                ? [setting.id]
+                : []
+              : saved.settings[setting.id] === record.settings[setting.id]
+                ? []
+                : [setting.id],
+          );
+
+          if (changed.length > 0 && saved.isEnabled) {
+            void tellSettingsChanged(id, changed);
           }
 
           announce({
@@ -1322,8 +1414,10 @@ const createPluginService = ({
         keepsEarlierVersion: record.previousVersion !== null,
       };
     },
-    uninstall: (id: string): Promise<boolean> =>
-      exclusively(id, async () => {
+    uninstall: async (id: string): Promise<boolean> => {
+      await sayGoodbye(id);
+
+      return exclusively(id, async () => {
         runtime.stop(id);
 
         const record = await store.read(id);
@@ -1364,7 +1458,8 @@ const createPluginService = ({
         }
 
         return removed;
-      }),
+      });
+    },
     contributions: async (
       viewer: Pick<PluginViewer, 'isAdmin' | 'grants'>,
     ): Promise<PluginContributions> => {

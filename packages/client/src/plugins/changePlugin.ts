@@ -12,7 +12,7 @@ import { say } from '@ValenceI18n/say';
  */
 const changePlugin = async (
   pluginId: string,
-  change: { isEnabled?: boolean; settings?: Record<string, string | boolean> },
+  change: { isEnabled?: boolean; settings?: Record<string, string | boolean | number | null> },
 ): Promise<void> => {
   await changeOnServer(
     pluginPath(pluginId),

@@ -20,21 +20,25 @@ definePlugin({
   events: async (event, { valence }) => {},
   webhooks: { 'on-scrobble': async ({ valence }, request) => {} },
   onUpgraded: async ({ valence }, { from, to }) => {},
+  onSettingsChanged: async ({ valence }, { changed }) => {},
+  onUninstall: async ({ valence }) => {},
   onAccountConnected: async ({ valence }, { profileId, provider }) => {},
 });
 ```
 
 Call it once, at the top level of your bundle. Every key is optional, and each id must match one in the manifest's `contributes`.
 
-| Key                  | Called when                                                                                     |
-| -------------------- | ----------------------------------------------------------------------------------------------- |
-| `pages`              | Someone opens one of your pages, or presses something on it                                     |
-| `panels`             | Someone opens something your panel sits on, or presses something in it                          |
-| `schedules`          | A schedule comes round, every `everyMinutes`                                                    |
-| `events`             | Something you listed under `events` happens                                                     |
-| `webhooks`           | Another service posts to one of your [webhook](/plugins/webhooks) addresses                     |
-| `onUpgraded`         | A version is installed over another, to [convert what you kept](/plugins/upgrades-and-rollback) |
-| `onAccountConnected` | Someone finishes connecting an account on one of your [providers](/plugins/accounts-and-oauth)  |
+| Key                  | Called when                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages`              | Someone opens one of your pages, or presses something on it                                                                                                           |
+| `panels`             | Someone opens something your panel sits on, or presses something in it                                                                                                |
+| `schedules`          | A schedule comes round, every `everyMinutes`                                                                                                                          |
+| `events`             | Something you listed under `events` happens                                                                                                                           |
+| `webhooks`           | Another service posts to one of your [webhook](/plugins/webhooks) addresses                                                                                           |
+| `onUpgraded`         | A version is installed over another, to [convert what you kept](/plugins/upgrades-and-rollback)                                                                       |
+| `onSettingsChanged`  | An administrator saves your settings; `changed` lists the ids of those that changed                                                                                   |
+| `onUninstall`        | Just before your plugin is removed while it is turned on, with ten seconds to tidy up elsewhere, such as signing out of a service; removal goes ahead however it goes |
+| `onAccountConnected` | Someone finishes connecting an account on one of your [providers](/plugins/accounts-and-oauth)                                                                        |
 
 ### Pages and panels
 
@@ -91,9 +95,9 @@ Each webhook handler gets `{ valence }` and the request: its `headers`, its `bod
 
 ### settings
 
-| Method            | Returns                                      | Permission |
-| ----------------- | -------------------------------------------- | ---------- |
-| `settings.read()` | `Promise<Record<string, string \| boolean>>` | None       |
+| Method            | Returns                                                | Permission |
+| ----------------- | ------------------------------------------------------ | ---------- |
+| `settings.read()` | `Promise<Record<string, string \| boolean \| number>>` | None       |
 
 The administrator's values for the manifest's `settings`, by id. A setting nobody has filled in is left out.
 
@@ -142,11 +146,12 @@ Sealed secrets kept for one person at a time, such as a token for a service that
 
 ### http
 
-| Method                   | Returns                                                                      | Permission |
-| ------------------------ | ---------------------------------------------------------------------------- | ---------- |
-| `http.fetch(url, init?)` | `Promise<{ status: number; headers: Record<string, string>; text: string }>` | `network`  |
+| Method                        | Returns                                                                        | Permission |
+| ----------------------------- | ------------------------------------------------------------------------------ | ---------- |
+| `http.fetch(url, init?)`      | `Promise<{ status: number; headers: Record<string, string>; text: string }>`   | `network`  |
+| `http.fetchBytes(url, init?)` | `Promise<{ status: number; headers: Record<string, string>; base64: string }>` | `network`  |
 
-`init` may hold `method` (`GET`, `POST`, `PUT`, `PATCH` or `DELETE`), `headers` and a string `body`. The whole response body arrives as text; call `JSON.parse` on it yourself. A request to a host not in your `network` list, or one that breaks the [network rules](/develop/plugins#network-rules), fails before anything is sent. A non-2xx status is not an error: check `status`.
+`init` may hold `method` (`GET`, `POST`, `PUT`, `PATCH` or `DELETE`), `headers` and a string `body`. With `fetch` the whole response body arrives as text; call `JSON.parse` on it yourself. With `fetchBytes` it arrives as base64, untouched, for a picture, a file or anything else that isn't text; `fetchBytes` needs `apiVersion` `^1.4`. Either way an answer is at most 5 MB. A request to a host not in your `network` list, or one that breaks the [network rules](/develop/plugins#network-rules), fails before anything is sent. A non-2xx status is not an error: check `status`.
 
 ### events
 
@@ -167,12 +172,30 @@ Sealed secrets kept for one person at a time, such as a token for a service that
 
 ### crypto
 
-| Method                                            | Returns            | Permission |
-| ------------------------------------------------- | ------------------ | ---------- |
-| `crypto.hmac(algorithm, key, message, encoding?)` | `Promise<string>`  | None       |
-| `crypto.equal(left, right)`                       | `Promise<boolean>` | None       |
+| Method                                                                        | Returns            | Permission |
+| ----------------------------------------------------------------------------- | ------------------ | ---------- |
+| `crypto.hmac(algorithm, key, message, encoding?)`                             | `Promise<string>`  | None       |
+| `crypto.equal(left, right)`                                                   | `Promise<boolean>` | None       |
+| `crypto.digest(algorithm, message, encoding?, messageEncoding?)`              | `Promise<string>`  | None       |
+| `crypto.random(bytes, encoding?)`                                             | `Promise<string>`  | None       |
+| `crypto.verify(algorithm, publicKey, message, signature, signatureEncoding?)` | `Promise<boolean>` | None       |
 
-`algorithm` is `sha1`, `sha256` or `sha512`, and `encoding` is `hex` (the default) or `base64`. `equal` compares two strings in constant time, which is how to check a signature without giving its value away.
+For `hmac`, `algorithm` is `sha1`, `sha256` or `sha512`, and `encoding` is `hex` (the default) or `base64`. `equal` compares two strings in constant time, which is how to check a signature without giving its value away.
+
+`digest` hashes `message` with `md5`, `sha1`, `sha256` or `sha512`. `messageEncoding` is `utf8` (the default), or `base64` to hash bytes, such as those from `http.fetchBytes`. An `md5` digest takes at most 1 MB. `random` gives up to 1,024 bytes from the server's secure random source, as hex (the default) or base64; the sandbox's own `Math.random` is not fit for tokens or nonces.
+
+`verify` checks a signature with `ed25519`, `rsa-sha256` or `ecdsa-sha256`. `publicKey` is PEM, or for Ed25519 also the key's 32 bytes in hex, as Discord publishes an application's key. `signature` is hex (the default) or base64, and `message` is the exact text that was signed. A key it can't read, or one of another kind than `algorithm`, fails rather than answering `false`. To check an interaction from Discord:
+
+```ts
+const isFromDiscord = await valence.crypto.verify(
+  'ed25519',
+  String(settings.publicKey),
+  request.headers['x-signature-timestamp'] + request.body,
+  request.headers['x-signature-ed25519'],
+);
+```
+
+`digest`, `random` and `verify` need `apiVersion` `^1.4`.
 
 ### accounts
 
@@ -392,8 +415,12 @@ In the app the notification shows only for that profile, never for everyone on t
 
 ## Errors
 
+A plugin may wait on at most 128 answers from Valence at once; a call past that fails straight away, so fire calls in batches rather than all together.
+
 A method that fails rejects its promise with an `Error` whose message says why, for example that a permission is missing or a quota is full. An error your handler does not catch is logged, and the person sees a short notice from Valence rather than your error's text. Catch errors you can do something about, and let the rest go.
 
 ## What is not there
 
-The sandbox has no timers, no `fetch`, no `require`, no `URL`, no `TextEncoder` and no file system. Use `valence.http.fetch` for the network, `encodeURIComponent` to build addresses, and schedules for anything that repeats. `Date`, `JSON`, `Math`, `RegExp`, `Promise`, `Map`, `Set`, `async` functions and the rest of standard JavaScript are all there.
+The sandbox has no timers, no `fetch`, no `require` and no file system. Use `valence.http.fetch` for the network, and schedules or [jobs](/plugins/schedules-and-events#jobs) for anything that waits or repeats. `Date`, `JSON`, `Math`, `RegExp`, `Promise`, `Map`, `Set`, `async` functions and the rest of standard JavaScript are all there.
+
+From Valence 1.8.0 the sandbox also has the browser's `URL` and `URLSearchParams`, `TextEncoder` and `TextDecoder` (UTF-8 only), and `atob` and `btoa`. They follow the browser's rules for the usual cases, such as reading and resolving `http` and `https` addresses and building query strings; give `encodeURIComponent` anything unusual.

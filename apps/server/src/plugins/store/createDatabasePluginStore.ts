@@ -27,7 +27,7 @@ import type {
   PluginStore,
 } from './PluginStore';
 
-const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
+const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]));
 
 const KeptStorageSchema = z.array(
   z.object({ key: z.string(), value: JsonValueSchema, bytes: z.number().int().nonnegative() }),

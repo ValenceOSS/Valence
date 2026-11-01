@@ -1,3 +1,4 @@
+import { generateKeyPairSync, sign } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginFetchInit } from '@ValenceServer/plugins/network/createPluginFetch';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
@@ -155,7 +156,51 @@ describe('the plugin broker', () => {
       headers: {},
       text: 'ok',
     });
-    expect(withNetwork.fetch).toHaveBeenCalledWith('https://api.example.com/', { method: 'GET' });
+    expect(withNetwork.fetch).toHaveBeenCalledWith('https://api.example.com/', {
+      method: 'GET',
+      as: 'text',
+    });
+  });
+
+  it('fetches bytes as base64, with the same permission', async () => {
+    const without = build([]);
+
+    await expect(without.ask('http.fetchBytes', ['https://api.example.com/'])).rejects.toThrow(
+      'network',
+    );
+
+    const { ask, fetch } = build([{ kind: 'network', hosts: ['api.example.com'] }]);
+
+    fetch.mockResolvedValueOnce({ status: 200, headers: {}, text: 'iVBORw0K' });
+
+    expect(await ask('http.fetchBytes', ['https://api.example.com/cover.png'])).toEqual({
+      status: 200,
+      headers: {},
+      base64: 'iVBORw0K',
+    });
+    expect(fetch).toHaveBeenLastCalledWith('https://api.example.com/cover.png', { as: 'base64' });
+  });
+
+  it('hashes, makes random bytes and checks signatures without any permission', async () => {
+    const { ask } = build([]);
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const pem = publicKey.export({ format: 'pem', type: 'spki' }).toString();
+
+    expect(await ask('crypto.digest', ['md5', 'hello'])).toBe('5d41402abc4b2a76b9719d911017c592');
+    expect(await ask('crypto.digest', ['sha256', 'aGVsbG8=', 'base64', 'base64'])).toBe(
+      'LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=',
+    );
+
+    const random = await ask('crypto.random', [16]);
+
+    expect(random).toMatch(/^[0-9a-f]{32}$/u);
+    expect(await ask('crypto.random', [16])).not.toBe(random);
+    await expect(ask('crypto.random', [4096])).rejects.toThrow();
+
+    const signature = sign(null, Buffer.from('signed'), privateKey).toString('hex');
+
+    expect(await ask('crypto.verify', ['ed25519', pem, 'signed', signature])).toBe(true);
+    expect(await ask('crypto.verify', ['ed25519', pem, 'changed', signature])).toBe(false);
   });
 
   it('sends a form as multipart, and refuses a body and a form together', async () => {

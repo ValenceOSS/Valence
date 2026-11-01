@@ -20,8 +20,8 @@ const aValenceHost = (parts: Partial<ValenceHost> = {}): ValenceHost => {
     secrets: { get: refuse, set: refuse, delete: refuse, keys: refuse },
     events: { emit: refuse },
     jobs: { enqueue: refuse, progress: refuse },
-    crypto: { hmac: refuse, equal: refuse },
-    http: { fetch: refuse },
+    crypto: { hmac: refuse, equal: refuse, digest: refuse, random: refuse, verify: refuse },
+    http: { fetch: refuse, fetchBytes: refuse },
     accounts: { connection: refuse, disconnect: refuse },
     profiles: { list: refuse },
     library: {

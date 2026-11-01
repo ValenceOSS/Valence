@@ -9,6 +9,7 @@ type PluginFetchInit = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | undefined;
   headers?: Record<string, string> | undefined;
   body?: string | Buffer | undefined;
+  as?: 'text' | 'base64' | undefined;
 };
 
 type PluginFetchResponse = {
@@ -148,7 +149,11 @@ const createPluginFetch = ({
     fetch: async (address, init = {}) => {
       const answer = await follow(address, init);
 
-      return { status: answer.status, headers: answer.headers, text: answer.body.toString('utf8') };
+      return {
+        status: answer.status,
+        headers: answer.headers,
+        text: answer.body.toString(init.as === 'base64' ? 'base64' : 'utf8'),
+      };
     },
     fetchBytes: (address) => follow(address, {}),
   };

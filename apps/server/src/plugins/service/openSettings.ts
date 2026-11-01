@@ -17,7 +17,7 @@ const openSettings = (
   key: Buffer,
 ): PluginSettingValues =>
   Object.fromEntries(
-    manifest.settings.flatMap((setting): [string, string | boolean][] => {
+    manifest.settings.flatMap((setting): [string, string | boolean | number][] => {
       const value = kept[setting.id];
 
       if (value === undefined) {

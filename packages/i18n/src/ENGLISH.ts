@@ -7348,10 +7348,14 @@ const ENGLISH = {
   'screens.pluginsPanel.installReviewDialog.versionVersionByAuthor':
     'Version {version} by {author}',
   'screens.pluginsPanel.pluginPageDialog.pluginPage': 'Plugin page',
+  'screens.pluginsPanel.pluginSettingsDialog.fromMinToMax': 'From {min} to {max}.',
   'screens.pluginsPanel.pluginSettingsDialog.giveThisToEachServiceWhen':
     'Enter this redirect URL in each service when you create its API client, so it can send people back here after they connect.',
   'screens.pluginsPanel.pluginSettingsDialog.giveThisWebhookAddressToThe':
     'Enter this webhook URL in the service that sends these messages. Keep it secret: anyone with it can send messages to this plugin.',
+  'screens.pluginsPanel.pluginSettingsDialog.maxOrLess': '{max} or less.',
+  'screens.pluginsPanel.pluginSettingsDialog.minOrMore': '{min} or more.',
+  'screens.pluginsPanel.pluginSettingsDialog.notChosen': 'Not chosen',
   'screens.pluginsPanel.pluginSettingsDialog.pluginSettings': 'Plugin settings',
   'screens.pluginsPanel.pluginSettingsDialog.redirectAddress': 'Redirect URL',
   'screens.pluginsPanel.pluginSettingsDialog.savedNameSSettings': 'Saved {name}’s settings.',
@@ -8789,6 +8793,8 @@ const ENGLISH = {
   'server.service.pluginService.tryAgainInAMoment': 'Try again in a moment.',
   'server.service.pluginService.versionIsOlderThanTheInstalled':
     'This is version {version}, older than version {installed}, which is installed. What the newer version kept may not convert back.',
+  'server.service.problemWith.labelIsNotOneOfItsChoices': '{label} isn’t one of its choices.',
+  'server.service.problemWith.labelIsOutsideItsLimits': '{label} is outside the numbers it allows.',
   'server.sharing.databaseShareService.somethingNoLongerHere': 'A deleted item',
   'server.streamSources.createDatabaseStreamedFilms.filmsPlayedFromSources':
     'Films played from sources',

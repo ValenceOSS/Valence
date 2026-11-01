@@ -459,6 +459,52 @@ describe('PluginManifestSchema', () => {
     ).toContain('Each contribution id is used once');
   });
 
+  it('takes a choice with its options and a number with its limits, on 1.4', () => {
+    const settings = [
+      {
+        id: 'quality',
+        label: 'Quality',
+        kind: 'select' as const,
+        options: [
+          { value: 'high', label: 'High' },
+          { value: 'low', label: 'Low' },
+        ],
+      },
+      { id: 'pages', label: 'Pages', kind: 'number' as const, min: 1, max: 100 },
+    ];
+
+    expect(problemsOf(aManifest({ apiVersion: '^1.4', settings }))).toEqual([]);
+    expect(problemsOf(aManifest({ apiVersion: '^1.3', settings }))).toContain(
+      'A select or number setting needs apiVersion ^1.4, since older servers refuse it',
+    );
+    expect(
+      problemsOf(
+        aManifest({
+          apiVersion: '^1.4',
+          settings: [
+            { id: 'quality', label: 'Quality', kind: 'select' },
+            { id: 'name', label: 'Name', kind: 'text', min: 1 },
+            { id: 'pages', label: 'Pages', kind: 'number', min: 5, max: 1 },
+            {
+              id: 'twice',
+              label: 'Twice',
+              kind: 'select',
+              options: [
+                { value: 'a', label: 'A' },
+                { value: 'a', label: 'Also A' },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toEqual([
+      'Quality lists options only if it is a select',
+      'Name has a least or most only if it is a number',
+      'Pages has a least larger than its most',
+      'Twice lists each option once',
+    ]);
+  });
+
   it('refuses a schedule more often than every fifteen minutes', () => {
     expect(
       PluginManifestSchema.safeParse(
