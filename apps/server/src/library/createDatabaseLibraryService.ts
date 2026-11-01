@@ -2289,6 +2289,7 @@ const createDatabaseLibraryService = ({
           cast: row.castMembers,
           rating: row.rating,
           hasPoster: row.posterUrl !== null,
+          posterUrl: row.posterUrl,
           externalId: row.externalId,
           hasBackdrop: row.backdropUrl !== null,
           hasLogo: row.logoUrl !== null,

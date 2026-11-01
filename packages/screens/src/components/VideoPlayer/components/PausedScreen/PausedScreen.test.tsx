@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
@@ -69,5 +69,24 @@ describe('PausedScreen', () => {
 
     expect(screen.queryByText('Paused')).not.toBeInTheDocument();
     expect(requests).not.toHaveBeenCalled();
+  });
+
+  it('names the programme by its logo where it has one', () => {
+    renderInAnAddress(<PausedScreen media={{ ...EPISODE, hasLogo: true }} isShown />);
+
+    expect(screen.getByRole('img', { name: 'The Dangers in My Heart' })).toHaveAttribute(
+      'src',
+      expect.stringContaining(`/api/media/${EPISODE.id}/image/logo`),
+    );
+    expect(screen.getByText('Season 2')).toBeInTheDocument();
+  });
+
+  it('names the programme in type where its logo will not load', () => {
+    renderInAnAddress(<PausedScreen media={{ ...EPISODE, hasLogo: true }} isShown />);
+
+    fireEvent.error(screen.getByRole('img', { name: 'The Dangers in My Heart' }));
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.getByText('The Dangers in My Heart')).toBeInTheDocument();
   });
 });

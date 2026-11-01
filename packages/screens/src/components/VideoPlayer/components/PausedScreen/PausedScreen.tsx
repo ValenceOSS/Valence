@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
+import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import type { PausedScreenProps } from './PausedScreen.types';
 import { say } from '@ValenceI18n/say';
+
+const LOGO_BOX =
+  'my-2 max-h-[clamp(4rem,18svh,10rem)] w-auto max-w-[min(70vw,32rem)] object-contain object-left';
 
 /**
  * What is on screen once something has been left paused and nobody has touched anything for a
@@ -12,6 +18,9 @@ import { say } from '@ValenceI18n/say';
  * from. Any movement or key brings the player back, so it never stands between somebody and the
  * controls they reached for.
  *
+ * The programme is named by its logo where it has one, as its hero does, and in type where it has
+ * none or the logo will not load.
+ *
  * @param media - What is playing.
  * @param isShown - Whether it has been left long enough to show.
  */
@@ -19,6 +28,9 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const asked = useQuery({ ...libraryQueries.detail(media.id), enabled: isShown });
   const overview = asked.data?.metadata.overview ?? null;
+  const [unlettered, setUnlettered] = useState<string | null>(null);
+  const isLettered =
+    (media.hasLogo === true || asked.data?.metadata.hasLogo === true) && unlettered !== media.id;
   const isAnEpisode = typeof media.seriesTitle === 'string' && media.seriesTitle !== '';
   const episode =
     isAnEpisode && typeof media.episodeNumber === 'number'
@@ -53,9 +65,20 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
               {say('screens.videoPlayer.pausedScreen.youReWatching')}
             </span>
 
-            <span className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
-              {isAnEpisode ? media.seriesTitle : media.title}
-            </span>
+            {isLettered ? (
+              <TitleLogo
+                src={titleLogoUrl(media.id)}
+                alt={(isAnEpisode ? media.seriesTitle : null) ?? media.title}
+                className={LOGO_BOX}
+                onError={() => {
+                  setUnlettered(media.id);
+                }}
+              />
+            ) : (
+              <span className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+                {isAnEpisode ? media.seriesTitle : media.title}
+              </span>
+            )}
 
             {isAnEpisode && typeof media.seasonNumber === 'number' ? (
               <span className="text-xl font-semibold sm:text-2xl">

@@ -23,6 +23,7 @@ const summariseDetail = (detail: MediaDetail): MediaSummary => ({
   hasPoster: detail.metadata.hasPoster,
   hasBackdrop: detail.metadata.hasBackdrop,
   hasLogo: detail.metadata.hasLogo,
+  posterUrl: detail.metadata.posterUrl ?? null,
   seriesId: null,
   rating: detail.metadata.rating ?? null,
   seriesTitle: detail.metadata.seriesTitle ?? null,
@@ -30,6 +31,7 @@ const summariseDetail = (detail: MediaDetail): MediaSummary => ({
   episodeNumber: detail.metadata.episodeNumber ?? null,
   episodeNumberEnd: detail.metadata.episodeNumberEnd ?? null,
   genres: detail.metadata.genres ?? null,
+  externalId: detail.metadata.externalId ?? null,
 });
 
 export { summariseDetail };

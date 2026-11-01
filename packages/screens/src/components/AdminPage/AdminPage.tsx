@@ -64,6 +64,12 @@ const ROOM_FOR_THE_SIDEBAR = '(min-width: 48rem)';
  * tapped or Escape is pressed. Whether it is open there is never remembered, so the page always
  * opens at its full width.
  *
+ * The sidebar is where its own sliding highlight and the brand's mark measure from. It stands still
+ * while the page scrolls past it, and a notice turning up or going away above the panel makes the
+ * browser scroll the page by its height to hold what is being read in place. Measured against the
+ * page, that read as the sidebar having moved, and the highlight and the mark slid back to where
+ * they already were.
+ *
  * Gated on being told no, not on not yet being told: while the permission answer is still on its
  * way every question reads as "no", and leaving on that basis would throw an administrator back out
  * on every page load.
@@ -221,7 +227,9 @@ const AdminPage = () => {
           )}
         </AnimatePresence>
 
-        <div
+        <motion.div
+          layout
+          layoutRoot
           inert={!hasRoomForTheSidebar && !isDrawerOpen}
           className={
             hasRoomForTheSidebar
@@ -319,7 +327,7 @@ const AdminPage = () => {
               }
             />
           </ResizablePanel>
-        </div>
+        </motion.div>
 
         <div
           inert={!hasRoomForTheSidebar && isDrawerOpen}
