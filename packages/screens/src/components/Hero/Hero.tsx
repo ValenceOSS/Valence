@@ -3,7 +3,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { Info as InfoIcon } from '@keyline-icons/react';
-import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AnimatePresence,
@@ -98,8 +98,7 @@ const Hero = ({
 
   const isCovered = useIsPageCovered();
   const prefersReducedMotion = useReducedMotionConfig();
-  const [stopped, setStopped] = useState<boolean | null>(null);
-  const isStopped = stopped ?? prefersReducedMotion === true;
+  const isStopped = prefersReducedMotion === true;
   const isHeld = isPointedAt || isFocused || isCovered || isStopped;
 
   const featured = items[index % Math.max(items.length, 1)];
@@ -363,25 +362,6 @@ const Hero = ({
         </motion.div>
 
         <div className="mb-8 mr-6 flex items-center gap-3 self-end sm:absolute sm:bottom-14 sm:right-12 sm:mb-0 sm:mr-0">
-          {!isRotating ? null : (
-            <Button
-              isIconOnly
-              variant="overlay"
-              size="sm"
-              isPill
-              label={
-                isStopped
-                  ? say('screens.hero.playTheSlideshow')
-                  : say('screens.hero.pauseTheSlideshow')
-              }
-              onClick={() => {
-                setStopped(!isStopped);
-              }}
-            >
-              <Icon of={isStopped ? PlayFilledIcon : PauseFilledIcon} size={14} />
-            </Button>
-          )}
-
           <PageDots
             count={items.length}
             selectedIndex={index}
