@@ -189,6 +189,20 @@ describe('groupIntoDevices', () => {
     expect(device?.name.message).toBe('Mac · Firefox on macOS');
   });
 
+  it('carries the user agent its newest sign-in sent, for anybody who wants the raw string', () => {
+    const [device] = grouped([
+      held({
+        id: 'older',
+        deviceId: 'mac',
+        userAgent: 'Firefox/130.0',
+        createdAt: minutesAgo(900),
+      }),
+      held({ id: 'newer', deviceId: 'mac' }),
+    ]);
+
+    expect(device?.userAgent).toBe(FIREFOX_ON_A_MAC);
+  });
+
   it('names a device what its owner renamed it to', () => {
     const [device] = grouped([held({ id: 'phone', deviceId: 'phone-device', device: AN_IPHONE })], {
       renamed: new Map([['phone-device', 'Kitchen phone']]),

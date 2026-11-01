@@ -265,6 +265,33 @@ const endAccountSessionRoute = createRoute({
       description: 'Not permitted',
       content: { 'application/json': { schema: AccountError } },
     },
+    409: {
+      description: 'That is not a sign-in that can be ended, such as an API key',
+      content: { 'application/json': { schema: AccountError } },
+    },
+  },
+});
+
+const signOutSessionRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/sessions/{clientId}/sign-out',
+  tags: ['Accounts'],
+  summary: 'Sign out the device an open session is on',
+  request: { params: z.object({ clientId: z.string().min(1) }) },
+  responses: {
+    204: { description: 'The device was signed out' },
+    403: {
+      description: 'Not permitted',
+      content: { 'application/json': { schema: AccountError } },
+    },
+    404: {
+      description: 'That session is not open',
+      content: { 'application/json': { schema: AccountError } },
+    },
+    409: {
+      description: 'A guest, or a device on an API key, has no sign-in to end',
+      content: { 'application/json': { schema: AccountError } },
+    },
   },
 });
 
@@ -310,5 +337,6 @@ export {
   listAccountSessionsRoute,
   endAccountSessionsRoute,
   endAccountSessionRoute,
+  signOutSessionRoute,
   setAccountAvatarRoute,
 };

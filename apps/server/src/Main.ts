@@ -84,6 +84,7 @@ import { createApp } from './App';
 import { announceOnTheNetwork } from '@ValenceServer/discovery/announceOnTheNetwork';
 import { stopAnnouncingOnExit } from '@ValenceServer/discovery/stopAnnouncingOnExit';
 import { createRealtimeRegistry } from '@ValenceServer/realtime/createRealtimeRegistry';
+import { createSignedInSockets } from '@ValenceServer/realtime/createSignedInSockets';
 import { createRealtimeHandler } from '@ValenceServer/realtime/createRealtimeHandler';
 import { createRealtimeClock } from '@ValenceServer/realtime/createRealtimeClock';
 import { createProgressThrottle } from '@ValenceServer/jobs/createProgressThrottle';
@@ -5072,6 +5073,8 @@ const streamService = createStreamService({
       ),
 });
 
+const signedInSockets = createSignedInSockets();
+
 const app = createApp({
   callerOf,
   imports: importService,
@@ -5545,6 +5548,7 @@ const app = createApp({
   endAccountSession: async (userId, sessionId) => {
     await db.delete(session).where(and(eq(session.id, sessionId), eq(session.userId, userId)));
   },
+  closeSignedInSockets: signedInSockets.close,
   capabilities: () => transcoder.capabilities(),
   hardware: async () => (await transcoder.hardware?.()) ?? null,
   folderReach: async (folders) => (await transcoder.reachFolders?.(folders)) ?? null,
@@ -6221,6 +6225,7 @@ app.get(
     }
     let session: RealtimeSession | null = null;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
+    let letGo: (() => void) | null = null;
 
     return {
       onOpen: (_event, socket) => {
@@ -6247,6 +6252,12 @@ app.get(
             socket.close();
           }
         }, REALTIME_HEARTBEAT_MS);
+
+        if (signedIn !== null && accountId !== null) {
+          letGo = signedInSockets.hold({ sessionId: signedIn.session.id, accountId }, () => {
+            socket.close();
+          });
+        }
       },
 
       onMessage: (event: { data: string | ArrayBuffer | Uint8Array }) => {
@@ -6262,6 +6273,7 @@ app.get(
           clearInterval(heartbeat);
         }
 
+        letGo?.();
         session?.close();
       },
     };

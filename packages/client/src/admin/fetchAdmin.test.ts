@@ -358,6 +358,7 @@ describe('fetchActiveSessions', () => {
         device: null,
         client: null,
         identity: null,
+        userAgent: null,
         streams: null,
       },
     ]);

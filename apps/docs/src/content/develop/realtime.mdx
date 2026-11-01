@@ -19,6 +19,7 @@ The socket lives at `/api/realtime`, registered in `apps/server/src/Main.ts` wit
 - If there is no session, the server checks for a share guest through the share cookie (`guestAtTheDoor`). A share guest can hold a socket, but every topic subscription it asks for is refused.
 - If there is neither, the upgrade is answered with no handlers, so the connection never registers and never receives anything.
 - The server also records the address a session was last seen at when a socket opens, since better-auth writes it once at sign-in only.
+- Ending a sign-in, from the devices list, a new password, **Sign out everywhere** or a ban, closes every socket opened with it. The client reconnects without the sign-in and re-reads who is signed in.
 
 Anything a client sends is parsed with Zod (`FromClientSchema`) before it is believed. An unreadable message is dropped rather than closing the connection, so a tab on an older build sending a message this server does not know loses that one message, not its whole feed.
 
@@ -163,7 +164,7 @@ export { useWhenMediaChanges };
 
 The client counts listeners per topic. The first listener sends `subscribe`, and removing the last one sends `unsubscribe`, so a feed nobody is watching costs nothing on the server.
 
-In practice you rarely subscribe by hand. `useFreshFromTheSocket` in `packages/client/src/query` turns socket events into TanStack Query invalidations: `media` invalidates library and music queries, `notifications` the notification queries, `profile` the session queries, `requests` the request queries and `sessions` the admin queries. The socket replaces polling intervals. Being told beats guessing.
+In practice you rarely subscribe by hand. `useFreshFromTheSocket` in `packages/client/src/query` turns socket events into TanStack Query invalidations: `media` invalidates library and music queries, `notifications` the notification queries, `profile` the session queries, `requests` the request queries, `sessions` the admin queries, and a `presence` event that stops the tab re-reads who is signed in. The socket replaces polling intervals. Being told beats guessing.
 
 ### Identity
 

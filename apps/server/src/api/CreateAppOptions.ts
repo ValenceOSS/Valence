@@ -101,6 +101,7 @@ import type { LibraryHealthReader } from '@ValenceServer/health/LibraryHealthRea
 import type { UpdateChecker } from '@ValenceServer/updates/UpdateChecker';
 import type { VideoDevices } from '@ValenceServer/video/createVideoDevices';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
+import type { EndedSignIns } from '@ValenceServer/realtime/createSignedInSockets';
 import type { CollectionService } from '@ValenceServer/collections/CollectionService';
 import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
 import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
@@ -196,6 +197,7 @@ type CreateAppOptions = {
   askingDevices?: AskingDevices;
   endAccountSessions?: (userId: string) => Promise<void>;
   endAccountSession?: (userId: string, sessionId: string) => Promise<void>;
+  closeSignedInSockets?: (ended: EndedSignIns) => void;
   maintenance?: MaintenanceService;
   schedules?: JobScheduleService;
   presence?: PresenceService;

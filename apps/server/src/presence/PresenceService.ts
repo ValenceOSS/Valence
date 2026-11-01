@@ -53,6 +53,7 @@ type PresenceSession = {
   deviceId: string | null;
   identity: DeviceIdentity | null;
   renamed: string | null;
+  userAgent: string | null;
 };
 
 type PresenceEntry = PresenceSession & {
@@ -114,6 +115,7 @@ type PresenceArrival = {
   deviceId?: string | null;
   identity?: DeviceIdentity | null;
   renamed?: string | null;
+  userAgent?: string | null;
   send: (event: PresenceControlEvent) => void;
 };
 
@@ -233,6 +235,7 @@ const createPresenceService = (
       deviceId = null,
       identity = null,
       renamed = null,
+      userAgent = null,
       send,
     }) => {
       const already = connections.get(clientId);
@@ -262,6 +265,7 @@ const createPresenceService = (
         deviceId,
         identity,
         renamed,
+        userAgent,
       };
 
       connections.set(clientId, {

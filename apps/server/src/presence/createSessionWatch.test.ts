@@ -20,6 +20,7 @@ const aSession: PresenceSession = {
   deviceId: null,
   identity: null,
   renamed: null,
+  userAgent: null,
   address: '192.168.1.40',
 };
 

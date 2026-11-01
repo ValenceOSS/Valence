@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listDevicesRoute,
   endDeviceRoute,
@@ -21,7 +22,16 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
-  const { auth, monitor, requires, isOnTheDemo, deviceNotes, askingDevices, presence } = context;
+  const {
+    auth,
+    monitor,
+    requires,
+    isOnTheDemo,
+    deviceNotes,
+    askingDevices,
+    presence,
+    endWhatSignInsHeld,
+  } = context;
 
   /**
    * The devices the account asking is signed in on, and the session it is asking from.
@@ -59,28 +69,28 @@ const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
   };
 
   /**
-   * Signs out every sign-in a device holds.
+   * Signs out every sign-in a device holds, and ends what they still have open.
    *
    * @param headers - The request's headers, whose session is used where the server keeps no notes.
    * @param userId - Whose device it is.
    * @param sessionIds - The device's sign-ins.
    */
   const signOut = async (headers: Headers, userId: string, sessionIds: readonly string[]) => {
-    if (deviceNotes !== undefined) {
-      await deviceNotes.end(userId, sessionIds);
+    if (deviceNotes === undefined) {
+      const held = await auth.api.listSessions({ headers }).catch(() => []);
 
-      return;
+      await Promise.all(
+        held
+          .filter((one) => sessionIds.includes(one.id))
+          .map((one) =>
+            auth.api.revokeSession({ headers, body: { token: one.token } }).catch(() => undefined),
+          ),
+      );
+    } else {
+      await deviceNotes.end(userId, sessionIds);
     }
 
-    const held = await auth.api.listSessions({ headers }).catch(() => []);
-
-    await Promise.all(
-      held
-        .filter((one) => sessionIds.includes(one.id))
-        .map((one) =>
-          auth.api.revokeSession({ headers, body: { token: one.token } }).catch(() => undefined),
-        ),
-    );
+    await endWhatSignInsHeld({ sessionIds }, say('server.account.thisDeviceWasSignedOutElsewhere'));
   };
 
   app.openapi(listDevicesRoute, async (context) => {

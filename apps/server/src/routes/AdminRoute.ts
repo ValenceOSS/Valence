@@ -262,6 +262,7 @@ const AdminSessionSchema = z
     device: SaidSchema,
     client: SaidSchema.nullable(),
     identity: DeviceIdentityWireSchema.nullable(),
+    userAgent: z.string().nullable(),
     connectedAt: z.number(),
     playback: z
       .object({

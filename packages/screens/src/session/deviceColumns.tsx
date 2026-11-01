@@ -52,7 +52,12 @@ const deviceColumns = <Row extends ReadDevice>({
 
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="min-w-0 truncate font-medium text-text">{device}</span>
+              <span
+                className="min-w-0 truncate font-medium text-text"
+                title={row.original.userAgent ?? undefined}
+              >
+                {device}
+              </span>
 
               {row.original.isCurrent ? (
                 <Badge size="sm" tone="accent">

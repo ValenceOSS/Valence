@@ -14,6 +14,7 @@ type SessionTableProps = {
   onPause: (clientId: string) => void;
   onResume: (clientId: string) => void;
   onMessage: (session: ActiveSession) => void;
+  onSignOut?: (session: ActiveSession) => void;
 };
 
 export type { SessionRow, SessionTableProps };

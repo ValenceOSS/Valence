@@ -92,6 +92,7 @@ const groupIntoDevices = ({
       client,
       identity,
       renamed: ownName,
+      userAgent: shown.userAgent,
       address: shown.ipAddress,
       signedInAt: new Date(signedInAt).toISOString(),
       lastActiveAt: new Date(isActiveNow ? now.getTime() : lastSeen).toISOString(),

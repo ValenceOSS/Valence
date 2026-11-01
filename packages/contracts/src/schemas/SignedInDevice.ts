@@ -13,6 +13,7 @@ const SignedInDeviceSchema = z.object({
   client: SaidSchema.nullable().default(null),
   identity: DeviceIdentityWireSchema.nullable().default(null),
   renamed: z.string().nullable().default(null),
+  userAgent: z.string().nullable().default(null),
   address: z.string().nullable(),
   signedInAt: z.string(),
   lastActiveAt: z.string().nullable().default(null),

@@ -7,6 +7,7 @@ type SessionCardProps = {
   onPause: () => void;
   onResume: () => void;
   onMessage: () => void;
+  onSignOut?: () => void;
 };
 
 export type { SessionCardProps };

@@ -175,6 +175,7 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   device: null,
   client: null,
   identity: null,
+  userAgent: null,
   clientKind: 'browser' as const,
   connectedAt: 0,
   streams: null,

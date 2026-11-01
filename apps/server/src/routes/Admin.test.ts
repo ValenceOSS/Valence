@@ -13,6 +13,7 @@ import { createMemoryProfileService } from '@ValenceServer/profiles/createMemory
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import { createMemoryBookService } from '@ValenceServer/books/createMemoryBookService';
 import { createBookDevices } from '@ValenceServer/books/createBookDevices';
+import type { DeviceNotes, HeldSession } from '@ValenceServer/devices/DeviceNotes';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
@@ -54,6 +55,9 @@ const build = (
     testHardware?: Parameters<typeof createApp>[0]['testHardware'];
     transcodeDevices?: Parameters<typeof createApp>[0]['transcodeDevices'];
     placeDevices?: Parameters<typeof createApp>[0]['placeDevices'];
+    endAccountSession?: Parameters<typeof createApp>[0]['endAccountSession'];
+    deviceNotes?: Parameters<typeof createApp>[0]['deviceNotes'];
+    closeSignedInSockets?: Parameters<typeof createApp>[0]['closeSignedInSockets'];
     folderReach?: Parameters<typeof createApp>[0]['folderReach'];
   } = {},
 ) => {
@@ -78,6 +82,13 @@ const build = (
       ? {}
       : { transcodeDevices: waiting.transcodeDevices }),
     ...(waiting.placeDevices === undefined ? {} : { placeDevices: waiting.placeDevices }),
+    ...(waiting.endAccountSession === undefined
+      ? {}
+      : { endAccountSession: waiting.endAccountSession }),
+    ...(waiting.deviceNotes === undefined ? {} : { deviceNotes: waiting.deviceNotes }),
+    ...(waiting.closeSignedInSockets === undefined
+      ? {}
+      : { closeSignedInSockets: waiting.closeSignedInSockets }),
     auth,
     settings,
     permissions,
@@ -132,6 +143,40 @@ const signedInAsAdmin = async (
 
   return cookie;
 };
+
+const heldOn = (id: string, deviceId: string): HeldSession => ({
+  id,
+  deviceId,
+  device: null,
+  userAgent: null,
+  ipAddress: null,
+  createdAt: new Date(Date.UTC(2026, 10, 1)),
+  lastActiveAt: null,
+  expiresAt: new Date(Date.UTC(2026, 11, 1)),
+});
+
+/**
+ * The server's notes on an account's sign-ins, holding the ones given.
+ */
+const notesHolding = (held: HeldSession[]): DeviceNotes => ({
+  heldBy: () => Promise.resolve(held),
+  note: () => Promise.resolve(),
+  noteActive: () => Promise.resolve(),
+  renamedBy: () => Promise.resolve(new Map()),
+  rename: () => Promise.resolve(),
+  end: () => Promise.resolve(),
+});
+
+const openOn = (clientId: string, sessionId: string, send: () => void) => ({
+  clientId,
+  socketId: `socket-${clientId}`,
+  accountId: 'account-2',
+  profileId: null,
+  profileName: 'Lucy',
+  deviceLabel: 'Pixel 9',
+  sessionId,
+  send,
+});
 
 describe('administration over HTTP', () => {
   it('tells somebody who is not signed in nothing about the server', async () => {
@@ -381,6 +426,50 @@ describe('administration over HTTP', () => {
     ]);
   });
 
+  it('sends the user agent an open tab arrived with, and nothing where it sent none', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
+
+    context.presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: 'account-1',
+      profileId: null,
+      profileName: 'Dan',
+      deviceLabel: 'Firefox on macOS',
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:131.0) Gecko/20100101 Firefox/131.0',
+      send: vi.fn(),
+    });
+    context.presence.connect({
+      clientId: 'tab-2',
+      socketId: 'socket-2',
+      accountId: 'account-2',
+      profileId: null,
+      profileName: 'Marques',
+      deviceLabel: 'Pixel 9',
+      send: vi.fn(),
+    });
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(await response.json()).toStrictEqual([
+      expect.objectContaining({
+        clientId: 'tab-1',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:131.0) Gecko/20100101 Firefox/131.0',
+      }),
+      expect.objectContaining({ clientId: 'tab-2', userAgent: null }),
+    ]);
+  });
+
   it('delivers a message to a tab that is open', async () => {
     const context = build();
     const cookie = await signedInAsAdmin(
@@ -409,6 +498,156 @@ describe('administration over HTTP', () => {
 
     expect(response.status).toBe(204);
     expect(send).toHaveBeenCalledWith({ kind: 'message', text: 'Restarting in five minutes' });
+  });
+
+  it('signs out every sign-in of the device behind an open tab, and ends what each had open', async () => {
+    const endAccountSession = vi.fn(() => Promise.resolve());
+    const closeSignedInSockets = vi.fn();
+    const context = build({
+      endAccountSession,
+      deviceNotes: notesHolding([
+        heldOn('session-2', 'pixel'),
+        heldOn('session-3', 'pixel'),
+        heldOn('session-4', 'laptop'),
+      ]),
+      closeSignedInSockets,
+    });
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
+    const clicked = vi.fn();
+    const otherTabOnTheDevice = vi.fn();
+    const laptop = vi.fn();
+
+    context.presence.connect(openOn('tab-1', 'session-2', clicked));
+    context.presence.connect(openOn('tab-2', 'session-3', otherTabOnTheDevice));
+    context.presence.connect(openOn('tab-3', 'session-4', laptop));
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions/tab-1/sign-out`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(204);
+    expect(endAccountSession.mock.calls).toStrictEqual([
+      ['account-2', 'session-2'],
+      ['account-2', 'session-3'],
+    ]);
+    expect(clicked).toHaveBeenCalledWith(expect.objectContaining({ kind: 'stopped' }));
+    expect(otherTabOnTheDevice).toHaveBeenCalledWith(expect.objectContaining({ kind: 'stopped' }));
+    expect(laptop).not.toHaveBeenCalled();
+    expect(closeSignedInSockets).toHaveBeenCalledWith({ sessionIds: ['session-2', 'session-3'] });
+  });
+
+  it('refuses a device that holds no sign-in it could end, such as one on an API key', async () => {
+    const endAccountSession = vi.fn(() => Promise.resolve());
+    const context = build({ endAccountSession, deviceNotes: notesHolding([]) });
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
+
+    context.presence.connect(openOn('tab-1', 'api-key-1', vi.fn()));
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions/tab-1/sign-out`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(409);
+    expect(endAccountSession).not.toHaveBeenCalled();
+  });
+
+  it('refuses to sign out the owner’s device for anybody but the owner', async () => {
+    const endAccountSession = vi.fn(() => Promise.resolve());
+    const context = build({
+      endAccountSession,
+      deviceNotes: notesHolding([heldOn('session-2', 'pixel')]),
+    });
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
+
+    await context.settings.write({ ownerAccountId: 'account-2' });
+    context.presence.connect(openOn('tab-1', 'session-2', vi.fn()));
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions/tab-1/sign-out`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(403);
+    expect(endAccountSession).not.toHaveBeenCalled();
+  });
+
+  it('says a tab that is not open cannot be signed out', async () => {
+    const endAccountSession = vi.fn(() => Promise.resolve());
+    const context = build({ endAccountSession });
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions/tab-9/sign-out`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(404);
+    expect(endAccountSession).not.toHaveBeenCalled();
+  });
+
+  it('refuses to sign out a guest, who holds no sign-in to end', async () => {
+    const endAccountSession = vi.fn(() => Promise.resolve());
+    const context = build({ endAccountSession });
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
+
+    context.presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: null,
+      profileId: null,
+      profileName: null,
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions/tab-1/sign-out`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(409);
+    expect(endAccountSession).not.toHaveBeenCalled();
+  });
+
+  it('tells somebody without the right to sign devices out nothing about which tabs are open', async () => {
+    const endAccountSession = vi.fn(() => Promise.resolve());
+    const context = build({ endAccountSession });
+    const cookie = await signedIn(context.app, context.auth);
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions/tab-9/sign-out`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(403);
+    expect(endAccountSession).not.toHaveBeenCalled();
   });
 
   it('names the device an admin stopped, so it stops counting as a viewer', async () => {

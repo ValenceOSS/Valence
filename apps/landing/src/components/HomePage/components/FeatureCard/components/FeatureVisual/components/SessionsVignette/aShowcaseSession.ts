@@ -62,6 +62,7 @@ const aShowcaseSession = (of: ShowcaseSessionOf): ActiveSession => ({
   device: null,
   client: null,
   identity: null,
+  userAgent: null,
   clientKind: of.kind,
   connectedAt: 0,
   streams: null,

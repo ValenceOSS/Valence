@@ -23,6 +23,7 @@ const entry = (
   deviceId: null,
   identity: null,
   renamed: null,
+  userAgent: null,
   clientKind,
   connectedAt: 0,
   playback: null,

@@ -1,10 +1,12 @@
 import {
+  LogOut as LogOutFilledIcon,
   MessageSquare as MessageSquareIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
   Stop as StopIcon,
 } from '@keyline-icons/react/fill';
 import { useQuery } from '@tanstack/react-query';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -38,6 +40,7 @@ import type { SessionRow, SessionTableProps } from './SessionTable.types';
  * @param onPause - Called with the session to pause.
  * @param onResume - Called with the session to let carry on.
  * @param onMessage - Called with the session to tell something.
+ * @param onSignOut - Called with the session whose device to sign out, where that is allowed.
  */
 const SessionTable = ({
   sessions,
@@ -46,6 +49,7 @@ const SessionTable = ({
   onPause,
   onResume,
   onMessage,
+  onSignOut,
 }: SessionTableProps) => {
   const known = useQuery(adminQueries.accounts());
   const accounts = new Map((known.data ?? []).map((account) => [account.id, account]));
@@ -149,6 +153,7 @@ const SessionTable = ({
             {...namesOfSession(row.original.session)}
             identity={row.original.session.identity}
             clientKind={row.original.session.clientKind}
+            userAgent={row.original.session.userAgent}
           />
         ),
     },
@@ -293,6 +298,22 @@ const SessionTable = ({
                         onStop(session.clientId);
                       },
                     },
+                    ...(onSignOut === undefined ||
+                    session.accountId === null ||
+                    session.clientId === platformInUse().thisClientId()
+                      ? []
+                      : [
+                          {
+                            id: 'signOut',
+                            label: say('common.signThisOut'),
+                            icon: <Icon of={LogOutFilledIcon} size={15} />,
+                            isDestructive: true,
+                            isDisabled: isBusy,
+                            onChoose: () => {
+                              onSignOut(session);
+                            },
+                          },
+                        ]),
                   ],
                 },
               ]}

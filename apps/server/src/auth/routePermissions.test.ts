@@ -286,6 +286,7 @@ describe('every gated route, asked by somebody with no permissions', () => {
     ['DELETE', '/api/admin/sessions/tab-1', 'streaming.stop'],
     ['POST', '/api/admin/sessions/tab-1/pause', 'streaming.pause'],
     ['POST', '/api/admin/sessions/tab-1/resume', 'streaming.pause'],
+    ['POST', '/api/admin/sessions/tab-1/sign-out', 'account.security'],
     ['GET', '/api/admin/jobs/definitions', 'jobs.run'],
     ['POST', '/api/admin/jobs/library.scan/run', 'jobs.run'],
     ['POST', '/api/admin/jobs/library.reset/run', 'jobs.runDestructive'],

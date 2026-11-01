@@ -56,6 +56,7 @@ type PresenceBinding = {
     deviceId: string | null;
     identity: DeviceIdentity;
     renamed: string | null;
+    userAgent: string | null;
     send: (event: PresenceControl) => void;
   }) => void;
   disconnect: (clientId: string, socketId: string) => void;
@@ -328,6 +329,7 @@ const createRealtimeHandler = ({
           deviceId: deviceKey,
           identity,
           renamed,
+          userAgent: who.userAgent ?? null,
           send: (event) => {
             write({
               kind: 'event',

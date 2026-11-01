@@ -256,6 +256,7 @@ const ActiveSessionSchema = z.object({
   device: SaidSchema.nullable().default(null),
   client: SaidSchema.nullable().default(null),
   identity: DeviceIdentitySchema.nullable().catch(null).default(null),
+  userAgent: z.string().nullable().default(null),
   clientKind: ClientKindSchema.default('browser'),
   connectedAt: z.number(),
   playback: z

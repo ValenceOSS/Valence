@@ -6,6 +6,7 @@ type DeviceLabelProps = {
   client?: string | null;
   identity?: DeviceIdentity | null;
   clientKind?: ClientKind;
+  userAgent?: string | null;
 };
 
 export type { DeviceLabelProps };

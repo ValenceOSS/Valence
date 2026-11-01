@@ -42,6 +42,24 @@ const endAccountSession = async (userId: string, sessionId: string): Promise<Ref
 };
 
 /**
+ * Signs out the device somebody's open session is on, ending every sign-in it holds, for an
+ * administrator who does not recognise it.
+ *
+ * @param clientId - The open session.
+ * @returns Any refusal from the server.
+ */
+const signOutSession = async (clientId: string): Promise<Refusal> => {
+  const response = await fetch(`/api/admin/sessions/${clientId}/sign-out`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  return response === null
+    ? { message: say('common.theServerCouldNotBeReached') }
+    : readRefusal(response);
+};
+
+/**
  * Ends every session an account holds, signing it out everywhere at once.
  *
  * @param userId - The account to sign out.
@@ -59,4 +77,4 @@ const endAccountSessions = async (userId: string): Promise<Refusal> => {
 };
 
 export type { AccountSession };
-export { fetchAccountSessions, endAccountSession, endAccountSessions };
+export { fetchAccountSessions, endAccountSession, endAccountSessions, signOutSession };

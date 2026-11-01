@@ -1,4 +1,7 @@
 import { Spinner } from '@ValenceUI/Spinner';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
+import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { useState } from 'react';
 import { SessionCards } from '@ValenceScreens/components/AdminArea/components/SessionCards/SessionCards';
@@ -35,6 +38,8 @@ const LAYOUTS = [
  * @param onPause - Called with the session to pause.
  * @param onResume - Called with the session to let carry on.
  * @param onMessage - Called with the session to tell something, and what to tell it.
+ * @param onSignOut - Called with the session whose device to sign out once that is confirmed, where
+ *   the person looking may.
  * @returns The panel.
  */
 const ActivityPanel = ({
@@ -45,10 +50,13 @@ const ActivityPanel = ({
   onPause,
   onResume,
   onMessage,
+  onSignOut,
 }: ActivityPanelProps) => {
   const [messaging, setMessaging] = useState<string | null>(null);
   const [layout, setLayout] = useState(readSessionLayout);
   const [lastMessaged, setLastMessaged] = useState('');
+  const [signingOut, setSigningOut] = useState<ActiveSession | null>(null);
+  const askToSignOut = onSignOut === undefined ? {} : { onSignOut: setSigningOut };
 
   const watcher = sessions.find((session) => session.clientId === messaging);
 
@@ -98,6 +106,7 @@ const ActivityPanel = ({
             setMessaging(session.clientId);
             setLastMessaged(nameOfSession(session));
           }}
+          {...askToSignOut}
         />
       ) : (
         <SessionCards
@@ -110,6 +119,7 @@ const ActivityPanel = ({
             setMessaging(session.clientId);
             setLastMessaged(nameOfSession(session));
           }}
+          {...askToSignOut}
         />
       )}
       <SessionMessageDialog
@@ -122,6 +132,29 @@ const ActivityPanel = ({
         }}
         onClose={() => {
           setMessaging(null);
+        }}
+      />
+      <ConfirmDialog
+        title={say('common.signThisDeviceOut')}
+        detail={
+          signingOut === null
+            ? ''
+            : say('common.nameWillBeSignedOutAnd', { name: namesOfSession(signingOut).device })
+        }
+        confirmLabel={say('common.signItOut')}
+        isDestructive
+        isOpen={signingOut !== null}
+        onClose={() => {
+          setSigningOut(null);
+        }}
+        onConfirm={() => {
+          const session = signingOut;
+
+          setSigningOut(null);
+
+          if (session !== null && onSignOut !== undefined) {
+            onSignOut(session.clientId);
+          }
         }}
       />
     </PanelCard>

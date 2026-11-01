@@ -80,7 +80,7 @@ describe('AuditPanel', () => {
 
     expect(await screen.findByText('Amara')).toBeInTheDocument();
     expect(screen.getAllByText('Kids').length).toBeGreaterThan(0);
-    expect(screen.getByText('Mac · Chromium on macOS')).toBeInTheDocument();
+    expect(screen.getByText('Mac · Chromium on macOS')).toHaveAttribute('title', CHROME);
     expect(screen.getByText('203.0.113.7')).toBeInTheDocument();
   });
 

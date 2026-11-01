@@ -23,6 +23,7 @@ const entry = (clientId: string, profileId: string | null): PresenceEntry => ({
   deviceId: null,
   identity: null,
   renamed: null,
+  userAgent: null,
   clientKind: clientId === 'tv' ? 'tv' : 'browser',
   connectedAt: 0,
   playback: null,

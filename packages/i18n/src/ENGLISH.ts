@@ -2135,6 +2135,7 @@ const ENGLISH = {
   'error.account.thatAddressIsAlreadyInUse': 'That email address is already in use.',
   'error.account.thatUsernameIsAlreadyInUse': 'That username is already in use.',
   'error.account.theDemoAccountCannotDoThat': 'The shared demo account can’t do that.',
+  'error.admin.aGuestHasNoSignIn': 'A guest has no sign-in to end.',
   'error.admin.noSuchJobIsWaiting': 'No such queued job.',
   'error.admin.noSuchJobKind': 'No such job type.',
   'error.admin.noSuchJobKindOrOne': 'No such job type, or it can’t be scheduled.',
@@ -2142,6 +2143,8 @@ const ENGLISH = {
   'error.admin.nothingIsRunningThatUnderAny': 'Nothing with that ID is running.',
   'error.admin.nothingIsRunningUnderThatId': 'Nothing is running with that ID.',
   'error.admin.sayWhichPartsOfTheLibrary': 'Choose which parts of the library to clear.',
+  'error.admin.thatDeviceHasNoSignInToEnd':
+    'That device has no sign-in to end. It may be using an API key, or already be signed out.',
   'error.admin.thatJobNeedsALibrary': 'That job needs a library.',
   'error.admin.thatJobStartsItselfWhenThere':
     'That job starts automatically when there’s work for it.',
@@ -5656,6 +5659,7 @@ const ENGLISH = {
   'screens.adminArea.sharesPanel.readingTheLinks': 'Loading share links',
   'screens.adminArea.sharesPanel.theLinksCouldNotBeRead': 'Couldn’t load share links.',
   'screens.adminArea.sharesPanel.withdrewTheLink': 'Revoked the share link.',
+  'screens.adminArea.signedThatDeviceOut': 'Signed that device out.',
   'screens.adminArea.sizeFree': '{size} free',
   'screens.adminArea.someCouldNotBeConfirmed':
     'Some could not be confirmed, and are still waiting.',
@@ -8212,6 +8216,9 @@ const ENGLISH = {
   'screens.windowBar.restoreDown': 'Restore down',
   'screens.windowBar.retryUpdate': 'Retry update',
   'screens.windowBar.updatingPercent': 'Updating {percent}%',
+  'server.account.signedOutByAnAdministrator': 'An administrator signed this device out.',
+  'server.account.thisDeviceWasSignedOutElsewhere':
+    'This device was signed out from another device.',
   'server.accounts.pluginOAuth.nameDidNotAcceptTheConnection':
     '{name} didn’t accept the connection. Try again.',
   'server.accounts.pluginOAuth.thatConnectionHadExpiredTryAgain':

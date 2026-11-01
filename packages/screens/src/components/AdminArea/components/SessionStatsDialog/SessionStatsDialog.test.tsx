@@ -43,6 +43,7 @@ const WATCHING_SESSION: ActiveSession = {
   device: null,
   client: null,
   identity: null,
+  userAgent: null,
   clientKind: 'browser' as const,
   connectedAt: 1000,
   streams: null,
