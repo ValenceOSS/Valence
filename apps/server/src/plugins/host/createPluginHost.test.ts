@@ -107,6 +107,7 @@ const build = (locked: readonly string[] = []) => {
     media: { ...fake.library, findTrack: fake.music.findTrack },
     durationOf: (mediaId) => Promise.resolve(mediaId === 'm1' ? 1440 : null),
     progress,
+    viewingState: fake.viewing.state,
     history,
     playlists,
     notify,

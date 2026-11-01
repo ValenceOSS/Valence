@@ -1,4 +1,5 @@
 import type { RefusalBody } from '@ValenceI18n/RefusalBody';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 
 /**
  * Why no request can be made just now, where a refusal means the requests service wasn't heard or
@@ -11,7 +12,9 @@ import type { RefusalBody } from '@ValenceI18n/RefusalBody';
  */
 const whyRequestsCannotBeMadeNow = (refusal: { status: number } & RefusalBody): Error | null =>
   refusal.status === 502
-    ? new Error('The requests service couldn’t take the request just now. Ask again later.')
+    ? new PluginRefusalError(
+        'The requests service couldn’t take the request just now. Ask again later.',
+      )
     : null;
 
 export { whyRequestsCannotBeMadeNow };

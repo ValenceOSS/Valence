@@ -413,12 +413,12 @@ const ENGLISH = {
   'client.plugins.describePermission.onlyValueOverHTTPSThisServerDownloads':
     'Only {value}, over HTTPS. This server fetches files from there to play or import them.',
   'client.plugins.describePermission.readAndChangeWhatSomebodyHas':
-    'Read and change watch history and playback progress for people who use the plugin.',
+    'Read watch history, favourites and ratings, and change watch history and playback progress, for people who use the plugin.',
   'client.plugins.describePermission.readEveryLibrary': 'Read every library',
   'client.plugins.describePermission.readThePlaylistsOfPeopleWho':
     'Read the playlists of people who use the plugin.',
   'client.plugins.describePermission.readWhatSomebodyHasWatchedFor':
-    'Read watch history for people who use the plugin.',
+    'Read watch history, favourites and ratings for people who use the plugin.',
   'client.plugins.describePermission.readYourLibrary': 'Read your library',
   'client.plugins.describePermission.receiveWebhooks': 'Receive webhooks',
   'client.plugins.describePermission.seeEverythingInEveryLibraryIncluding':

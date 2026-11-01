@@ -1,5 +1,6 @@
 import { z } from '@hono/zod-openapi';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
+import { createDatabaseViewingState } from '@ValenceServer/plugins/host/createDatabaseViewingState';
 import { measurePictureFraming } from '@ValenceServer/requests/trailers/measurePictureFraming';
 import { createTrailerAddresses } from '@ValenceServer/requests/trailers/createTrailerAddresses';
 import { askYtDlp } from '@ValenceServer/requests/trailers/askYtDlp';
@@ -4705,6 +4706,7 @@ const startPlugins = (
         return found?.durationSeconds ?? null;
       },
       progress: createDatabaseWatchProgressService(db),
+      viewingState: createDatabaseViewingState(db),
       history: historyService,
       playlists: musicServices.playlists,
       notify: (to, note) =>

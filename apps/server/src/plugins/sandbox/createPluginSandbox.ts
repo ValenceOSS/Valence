@@ -1,4 +1,5 @@
 import { saidBySandbox } from '@ValenceServer/plugins/sandbox/saidBySandbox';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 import { saying } from '@ValenceI18n/saying';
 import { SaidError } from '@ValenceI18n/SaidError';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -84,6 +85,7 @@ const createPluginSandbox = <TScope>(
   options: CreatePluginSandboxOptions<TScope>,
 ): Promise<PluginSandbox<TScope>> => {
   const limits = { ...DEFAULT_LIMITS, ...options.limits };
+  const log = options.onLog ?? (() => undefined);
   const child = (options.spawn ?? spawnSandbox)();
   const waiting = new Map<
     number,
@@ -201,12 +203,16 @@ const createPluginSandbox = <TScope>(
               ),
             });
           } catch (error) {
+            if (!(error instanceof PluginRefusalError) && error instanceof Error) {
+              log('error', `Valence could not answer ${message.method}: ${error.message}`);
+            }
+
             tell({
               type: 'hostAnswer',
               id: message.id,
               ok: false,
               error:
-                error instanceof Error
+                error instanceof PluginRefusalError
                   ? error.message
                   : say('server.sandbox.pluginSandbox.valenceRefusedThat'),
             });

@@ -87,6 +87,7 @@ const aLibrary = async () => {
       episodeNumber: 1,
     },
     anItem('song', 'music', 'Running Up That Hill'),
+    anItem('mother', 'music', 'Mother Stands for Comfort'),
   ]);
   await db.insert(musicArtist).values([
     {
@@ -95,6 +96,7 @@ const aLibrary = async () => {
       name: 'Kate Bush',
       nameKey: 'kate bush',
       sortName: 'Bush, Kate',
+      musicbrainzId: '4b585938-f271-45e2-b19a-91c634b5e396',
     },
     {
       id: 'peter',
@@ -112,7 +114,10 @@ const aLibrary = async () => {
     titleKey: 'hounds of love',
     musicbrainzId: 'f8a5a8f2-1b57-4bb0-a4f1-6f6d8d3b0c6b',
   });
-  await db.insert(musicTrack).values({ mediaItemId: 'song', albumId: 'hounds', codec: 'flac' });
+  await db.insert(musicTrack).values([
+    { mediaItemId: 'mother', albumId: 'hounds', codec: 'flac', discNumber: 1, trackNumber: 2 },
+    { mediaItemId: 'song', albumId: 'hounds', codec: 'flac', discNumber: 1, trackNumber: 1 },
+  ]);
   await db.insert(book).values([
     {
       id: 'piranesi',
@@ -169,6 +174,7 @@ const aLibrary = async () => {
   await db.insert(musicTrackArtist).values([
     { mediaItemId: 'song', artistId: 'peter', position: 1 },
     { mediaItemId: 'song', artistId: 'kate', position: 0 },
+    { mediaItemId: 'mother', artistId: 'kate', position: 0 },
   ]);
   await db.insert(user).values({ id: 'kid', name: 'Kid', email: 'kid@example.com' });
   await db.insert(libraryBlock).values([
@@ -237,6 +243,167 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
     await expect(refs.get('piranesi', locked)).resolves.toBeNull();
     await expect(refs.search('dune', ['book'], locked)).resolves.toEqual([]);
     await expect(refs.get('song', locked)).resolves.toMatchObject({ kind: 'track' });
+  });
+
+  it('lists each kind a page at a time, in title order, and only what the viewer may reach', async () => {
+    const refs = await aLibrary();
+    const ids: string[] = [];
+    let after: string | null = null;
+
+    do {
+      const page = await refs.list({ kind: 'film', after, limit: 1 }, asTheServer);
+
+      ids.push(...page.items.map((ref) => ref.id));
+      after = page.next;
+    } while (after !== null);
+
+    expect(ids).toEqual(['percent', 'arrival']);
+    await expect(
+      refs.list({ kind: 'artist', after: null, limit: 10 }, asTheServer),
+    ).resolves.toMatchObject({ items: [{ id: 'kate' }, { id: 'peter' }], next: null });
+    await expect(refs.list({ kind: 'track', after: null, limit: 10 }, KID)).resolves.toEqual({
+      items: [],
+      next: null,
+    });
+    await expect(refs.list({ kind: 'book', after: null, limit: 10 }, KID)).resolves.toMatchObject({
+      items: [{ id: 'dune' }, { id: 'piranesi' }],
+    });
+  });
+
+  it('refuses a page mark Valence did not give for that list', async () => {
+    const refs = await aLibrary();
+    const { next } = await refs.list({ kind: 'film', after: null, limit: 1 }, asTheServer);
+
+    expect(next).not.toBeNull();
+    await expect(
+      refs.list({ kind: 'series', after: next ?? '', limit: 1 }, asTheServer),
+    ).rejects.toThrow('page mark');
+    await expect(
+      refs.list({ kind: 'film', after: 'not-a-mark', limit: 1 }, asTheServer),
+    ).rejects.toThrow('page mark');
+  });
+
+  it('reads what is in an album, an artist and a series, in their own order', async () => {
+    const refs = await aLibrary();
+
+    expect((await refs.children('hounds', asTheServer)).map((ref) => ref.id)).toEqual([
+      'song',
+      'mother',
+    ]);
+    await expect(refs.children('kate', asTheServer)).resolves.toMatchObject([
+      { id: 'hounds', kind: 'album' },
+    ]);
+    await expect(refs.children('frieren', asTheServer)).resolves.toMatchObject([{ id: 'first' }]);
+    await expect(refs.children('arrival', asTheServer)).resolves.toEqual([]);
+    await expect(refs.children('hounds', KID)).resolves.toEqual([]);
+    await expect(refs.children('kate', KID)).resolves.toEqual([]);
+    await expect(refs.children('frieren', KID)).resolves.toEqual([]);
+  });
+
+  it('reads an artist by id, by name and by MusicBrainz id', async () => {
+    const refs = await aLibrary();
+
+    await expect(refs.get('kate', asTheServer)).resolves.toMatchObject({
+      kind: 'artist',
+      title: 'Kate Bush',
+      externalIds: { musicbrainz: '4b585938-f271-45e2-b19a-91c634b5e396' },
+    });
+    await expect(refs.search('kate', ['artist'], asTheServer)).resolves.toMatchObject([
+      { id: 'kate' },
+    ]);
+    await expect(
+      refs.findByExternalId('musicbrainz', '4b585938-f271-45e2-b19a-91c634b5e396', asTheServer),
+    ).resolves.toMatchObject([{ id: 'kate' }]);
+    await expect(refs.get('kate', KID)).resolves.toBeNull();
+  });
+
+  it('reads the details of several things at once, in the order asked, leaving out what it cannot', async () => {
+    const refs = await aLibrary();
+    const found = await refs.details(['song', 'hounds', 'nothing', 'dune', 'arrival'], asTheServer);
+
+    expect(found.map((each) => each.id)).toEqual(['song', 'hounds', 'dune', 'arrival']);
+    expect(found[0]).toMatchObject({
+      kind: 'track',
+      albumId: 'hounds',
+      artistId: 'kate',
+      discNumber: 1,
+      trackNumber: 1,
+      file: { container: 'mkv', sizeBytes: 1 },
+    });
+    expect(found[1]).toMatchObject({ kind: 'album', artistId: 'kate', genres: [], file: null });
+    expect(found[2]).toMatchObject({ kind: 'book', durationSeconds: 5400, file: null });
+    expect(found[3]).toMatchObject({
+      kind: 'film',
+      albumId: null,
+      externalIds: { tmdb: '329865' },
+    });
+    await expect(refs.details(['song', 'arrival', 'dune'], KID)).resolves.toMatchObject([
+      { id: 'dune' },
+    ]);
+    await expect(refs.details([], asTheServer)).resolves.toEqual([]);
+  });
+
+  it('pages past things of the same name without skipping or repeating any', async () => {
+    const db = await aMigratedDatabase();
+
+    await db.insert(library).values({ id: 'films', name: 'Films', kind: 'movies', path: '/films' });
+    await db
+      .insert(mediaItem)
+      .values([
+        anItem('c', 'films', 'Same'),
+        anItem('a', 'films', 'Same'),
+        anItem('b', 'films', 'Same'),
+      ]);
+
+    const refs = createDatabaseMediaRefs(db);
+    const ids: string[] = [];
+    let after: string | null = null;
+
+    do {
+      const page = await refs.list({ kind: 'film', after, limit: 1 }, asTheServer);
+
+      ids.push(...page.items.map((ref) => ref.id));
+      after = page.next;
+    } while (after !== null);
+
+    expect(ids).toEqual(['a', 'b', 'c']);
+  });
+
+  it('lists, browses and details nothing from a library still locked to the viewer', async () => {
+    const refs = await aLibrary();
+    const locked: Viewer = {
+      kind: 'account',
+      accountId: 'adult',
+      profileId: 'grown',
+      isAdministrator: false,
+      lockedLibraries: ['music', 'books'],
+    };
+
+    await expect(refs.list({ kind: 'artist', after: null, limit: 10 }, locked)).resolves.toEqual({
+      items: [],
+      next: null,
+    });
+    await expect(refs.list({ kind: 'book', after: null, limit: 10 }, locked)).resolves.toEqual({
+      items: [],
+      next: null,
+    });
+    await expect(refs.children('hounds', locked)).resolves.toEqual([]);
+    await expect(refs.children('kate', locked)).resolves.toEqual([]);
+    await expect(
+      refs.details(['song', 'hounds', 'dune', 'arrival'], locked),
+    ).resolves.toMatchObject([{ id: 'arrival' }]);
+  });
+
+  it('reads when a series or an artist was added, and an artist credited on a track holds its album', async () => {
+    const refs = await aLibrary();
+
+    const [show, singer] = await refs.details(['frieren', 'kate'], asTheServer);
+
+    expect(show).toMatchObject({ kind: 'series', overview: null, file: null });
+    expect(Date.parse(show?.addedAt ?? '')).not.toBeNaN();
+    expect(singer).toMatchObject({ kind: 'artist', genres: [] });
+    expect(Date.parse(singer?.addedAt ?? '')).not.toBeNaN();
+    await expect(refs.children('peter', asTheServer)).resolves.toMatchObject([{ id: 'hounds' }]);
   });
 
   it('reads a film by its id, with the outside ids Valence knows it by', async () => {

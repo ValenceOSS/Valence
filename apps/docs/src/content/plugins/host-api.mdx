@@ -190,11 +190,14 @@ The profiles the plugin may act for: those that connected an account to it or op
 | `library.search(query, kinds?, reading?)`        | `Promise<MediaRef[]>`       | `library`  |
 | `library.findByExternalId(source, id, reading?)` | `Promise<MediaRef[]>`       | `library`  |
 | `library.episodes(seriesId, reading?)`           | `Promise<MediaRef[]>`       | `library`  |
+| `library.list(ask, reading?)`                    | `Promise<LibraryPage>`      | `library`  |
+| `library.children(id, reading?)`                 | `Promise<MediaRef[]>`       | `library`  |
+| `library.details(ids, reading?)`                 | `Promise<MediaDetails[]>`   | `library`  |
 
 ```ts
 type MediaRef = {
   id: string;
-  kind: 'film' | 'series' | 'episode' | 'album' | 'track' | 'book';
+  kind: 'film' | 'series' | 'episode' | 'artist' | 'album' | 'track' | 'book';
   title: string;
   year: number | null;
   seriesId: string | null;
@@ -221,9 +224,48 @@ The library is always read as somebody, and reads only what that person may see:
 
 A plugin whose manifest asks for `{ "kind": "library", "access": "everything" }` may also read with no one named. That reads every library, locked ones and titles past anybody's limit included, so check before showing what it finds to anyone. The install screen says so.
 
-`search` gives at most 25 results: titles containing the words, in alphabetical order, films, episodes and tracks before series, albums and books. Pass `kinds` to narrow it.
+`search` gives at most 25 results: titles containing the words, in alphabetical order, films, episodes and tracks before series, artists, albums and books. Pass `kinds` to narrow it.
 
 `durationSeconds` is how long a film, episode, track or audiobook runs, and `null` for anything without a running time: a series, an album or an ebook. `artist` and `album` are filled for music: a track gives the artist credited first and the album it is on, and an album gives its artist. Everything else gives `null` for both.
+
+`list` reads every one of a kind a page at a time, in title order: `{ kind, after?, limit? }`, where `limit` is up to 200 (the default) and `after` is the `next` mark the last page gave. `next` is `null` on the last page. A mark is only good for the list it came from.
+
+```ts
+type LibraryPage = { items: MediaRef[]; next: string | null };
+
+let after: string | undefined;
+
+do {
+  const page = await valence.library.list({ kind: 'album', after }, { profileId });
+
+  for (const album of page.items) {
+    await remember(album);
+  }
+
+  after = page.next ?? undefined;
+} while (after !== undefined);
+```
+
+`children` reads what something holds: an artist's albums, their own and ones they are credited on, in title order; an album's tracks by disc and number; and a series' episodes by season and number. Anything else holds nothing. It gives at most 2,000; `episodes` reads every episode of a series.
+
+`details` reads up to 200 things at once, one for each different id, in the order asked, leaving out any the person may not see and any id that isn't a film, series, episode, artist, album, track or book itself (another version of a film reads nothing here; `get` reads it as the film):
+
+```ts
+type MediaDetails = MediaRef & {
+  overview: string | null;
+  genres: string[];
+  communityRating: number | null;
+  certificationAge: number | null;
+  addedAt: string | null;
+  albumId: string | null;
+  artistId: string | null;
+  discNumber: number | null;
+  trackNumber: number | null;
+  file: { container: string; sizeBytes: number; bitrateKbps: number | null } | null;
+};
+```
+
+What is filled depends on the kind. Films, episodes and tracks have `overview`, `genres`, `communityRating`, `certificationAge`, `addedAt` and `file`, and a track also its `albumId`, `artistId`, `discNumber` and `trackNumber`; `artistId` is the artist credited first, or the album's artist. Books have `overview`, `genres`, `communityRating` and `addedAt`. Albums have `genres`, `artistId` and `addedAt`. Series and artists have only `addedAt`. Everything else is `null` or empty. An artist reads with its name as `title`, and `findByExternalId('musicbrainz', id)` finds artists as well as albums. `list`, `children`, `details` and artists are new in plugin API 1.4.
 
 `kinds` narrows a search to some kinds. `source` is one of the `externalIds` keys, and `findByExternalId` matches:
 
@@ -231,7 +273,7 @@ A plugin whose manifest asks for `{ "kind": "library", "access": "everything" }`
 | ------------- | ----------------------------------------------------------------------------------------------------- |
 | `tmdb`        | Films and series                                                                                      |
 | `imdb`        | Films and episodes                                                                                    |
-| `musicbrainz` | Albums, by their release or release group                                                             |
+| `musicbrainz` | Artists by their own id, and albums by their release or release group                                 |
 | `anilist`     | Series, once the **Find anime on AniList** job has found their ids. A whole number, or nothing found. |
 | `mal`         | The same, by MyAnimeList id                                                                           |
 | `tvdb`        | Nothing yet                                                                                           |
@@ -244,6 +286,7 @@ A plugin whose manifest asks for `{ "kind": "library", "access": "everything" }`
 | `viewing.progress(profileId, since?)`                 | `Promise<ProgressEntry[]>` | `viewing`        |
 | `viewing.markWatched(profileId, mediaId, watchedAt?)` | `Promise<void>`            | `viewing: write` |
 | `viewing.markUnwatched(profileId, mediaId)`           | `Promise<void>`            | `viewing: write` |
+| `viewing.state(profileId, mediaIds)`                  | `Promise<ViewingState[]>`  | `viewing`        |
 
 ```ts
 type ProgressEntry = {
@@ -256,6 +299,18 @@ type ProgressEntry = {
 ```
 
 `since` is an ISO date and time; only entries updated after it are returned. `watchedAt` defaults to now.
+
+`state` reads where a person stands with up to 200 things at once, one answer for each different id asked about, in order: whether they kept it as a favourite (a film, episode, song, book or artist), the stars they gave it (a film, episode, song, series or book), and how many times and how lately they played a song or finished a film or an episode. Books always read as never played. It reads the person's own record whatever is in their reach now, so an id they can no longer see still answers. New in plugin API 1.4.
+
+```ts
+type ViewingState = {
+  mediaId: string;
+  isFavourite: boolean;
+  stars: number | null;
+  plays: number;
+  lastPlayedAt: string | null;
+};
+```
 
 ### requests
 
