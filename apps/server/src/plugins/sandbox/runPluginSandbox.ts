@@ -77,6 +77,7 @@ const PRELUDE = `
         sources: Object.keys(definition.sources || {}),
         routes: Object.keys(definition.routes || {}),
         jobs: Object.keys(definition.jobs || {}),
+        rows: Object.keys(definition.rows || {}),
       };
     } else if (handler === 'page.render') {
       result = await within(definition.pages, args.id).render(context);
@@ -98,6 +99,8 @@ const PRELUDE = `
       await within(definition.webhooks, args.id)({ valence }, args.request);
     } else if (handler === 'route') {
       result = await within(definition.routes, args.id)({ valence, person: args.person === undefined ? null : args.person }, args.request);
+    } else if (handler === 'row') {
+      result = await within(definition.rows, args.id)({ valence, profileId: args.profileId });
     } else if (handler === 'job') {
       await within(definition.jobs, args.job.kind)({ valence, job: args.job }, args.payload);
     } else if (handler === 'settingsChanged') {

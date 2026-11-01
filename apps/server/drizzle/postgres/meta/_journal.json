@@ -1016,6 +1016,13 @@
       "when": 1793455310295,
       "tag": "0144_apps_sign_in_to_plugins",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1793464374705,
+      "tag": "0145_people_choose_plugin_rows",
+      "breakpoints": true
     }
   ]
 }

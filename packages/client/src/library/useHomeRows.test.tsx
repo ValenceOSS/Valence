@@ -15,7 +15,9 @@ const {
   becauseMock,
   serverHasMock,
   streamedLibraryMock,
+  pluginRowsMock,
 } = vi.hoisted(() => ({
+  pluginRowsMock: vi.fn(),
   streamedLibraryMock: vi.fn<() => Promise<string>>(),
   serverHasMock: vi.fn<(feature: string) => boolean | null>(),
   upNextMock: vi.fn(),
@@ -33,6 +35,9 @@ vi.mock('@ValenceClient/streams/fetchStreamedLibrary', () => ({
   fetchStreamedLibrary: streamedLibraryMock,
 }));
 vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext: upNextMock }));
+vi.mock('@ValenceClient/plugins/fetchPluginHomeRows', () => ({
+  fetchPluginHomeRows: pluginRowsMock,
+}));
 vi.mock('@ValenceClient/library/fetchBecauseYouWatched', () => ({
   fetchBecauseYouWatched: becauseMock,
 }));
@@ -135,6 +140,8 @@ beforeEach(() => {
   serverHasMock.mockReturnValue(true);
   streamedLibraryMock.mockReset();
   streamedLibraryMock.mockResolvedValue('streamed-library');
+  pluginRowsMock.mockReset();
+  pluginRowsMock.mockResolvedValue({ rows: [] });
 
   facetsMock.mockResolvedValue({ genres: [], decades: [], maxRating: 10 });
   favouritesMock.mockResolvedValue([]);
@@ -274,6 +281,46 @@ describe('useHomeRows', () => {
     expect(result.current.rails.find((rail) => rail.id === 'because:watched')?.title).toBe(
       'Because you watched A Film',
     );
+  });
+
+  it('draws the rows plugins add, headed with the plugin’s name, from the libraries being shown', async () => {
+    const elsewhere = { ...film('elsewhere'), libraryId: 'another-library' };
+
+    pluginRowsMock.mockResolvedValue({
+      rows: [
+        {
+          pluginId: 'trending',
+          pluginName: 'Trending',
+          rowId: 'hot',
+          title: 'Hot right now',
+          items: [film('hot-0'), elsewhere],
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.find((rail) => rail.id === 'plugin:trending:hot')).toMatchObject({
+        title: 'Hot right now, from Trending',
+        items: [{ id: 'hot-0' }],
+      });
+    });
+  });
+
+  it('never asks a server too old to have rows from plugins', async () => {
+    serverHasMock.mockImplementation((feature) => feature !== 'plugins.homeRows');
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isReading).toBe(false);
+    });
+    expect(pluginRowsMock).not.toHaveBeenCalled();
   });
 
   it('never asks a server too old to find titles like others', async () => {

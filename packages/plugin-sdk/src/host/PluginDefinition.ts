@@ -15,6 +15,7 @@ import type { StreamsAsk } from '@ValenceSDK/sources/StreamsAskSchema';
 import type { RouteAnswerSchema } from '@ValenceSDK/routes/RouteAnswerSchema';
 import type { Stored, ValenceHost } from './ValenceHost';
 import type { PanelPlace } from '@ValenceSDK/manifest/PanelPlace';
+import type { HomeRowAnswerSchema } from '@ValenceSDK/rows/HomeRowAnswerSchema';
 
 type Viewer = { profileId: string; isAdmin: boolean; nodes: string[] };
 
@@ -50,6 +51,11 @@ type JobContext = {
 };
 
 type JobHandler = (context: JobContext, payload: Stored) => Promise<void>;
+
+type HomeRowHandler = (context: {
+  valence: ValenceHost;
+  profileId: string;
+}) => Promise<z.input<typeof HomeRowAnswerSchema>>;
 
 type WebhookRequest = {
   headers: Record<string, string>;
@@ -110,6 +116,7 @@ type PluginDefinition = {
   sources?: Record<string, SourceHandler>;
   routes?: Record<string, RouteHandler>;
   jobs?: Record<string, JobHandler>;
+  rows?: Record<string, HomeRowHandler>;
   onUpgraded?: (
     context: { valence: ValenceHost },
     versions: { from: string; to: string },
@@ -128,6 +135,7 @@ type PluginDefinition = {
 export type {
   DownloadClientHandler,
   HandlerContext,
+  HomeRowHandler,
   JobContext,
   JobHandler,
   PluginDefinition,

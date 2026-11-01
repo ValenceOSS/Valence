@@ -73,6 +73,10 @@ const ContributionsSchema = z.object({
     )
     .max(4)
     .default([]),
+  rows: z
+    .array(z.object({ id: LocalIdSchema, title: z.string().min(1).max(40) }))
+    .max(4)
+    .default([]),
   jobs: z
     .array(z.object({ id: LocalIdSchema, title: z.string().min(1).max(60) }))
     .max(8)

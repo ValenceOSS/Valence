@@ -139,6 +139,7 @@ describe('the plugin sandbox', () => {
       sources: [],
       routes: [],
       jobs: [],
+      rows: [],
     });
   });
 

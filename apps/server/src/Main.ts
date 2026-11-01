@@ -302,6 +302,7 @@ import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
 import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { Play, PlayWatchers, Reached } from '@ValenceServer/devices/createPlayTracker';
 import { playbackEventOf } from '@ValenceServer/plugins/service/playbackEventOf';
+import { readSummaries } from '@ValenceServer/library/readSummaries';
 import type { PlaybackMoment } from '@ValenceServer/plugins/service/playbackEventOf';
 import type { MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
@@ -4839,6 +4840,7 @@ const startPlugins = (
       await jobs.cancelFor(`plugin:${pluginId}`);
     },
     isJobCancelled: (jobId) => jobs.isCancelled(jobId),
+    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids),
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,

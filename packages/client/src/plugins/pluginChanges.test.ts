@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { actOnPluginSurface } from './actOnPluginSurface';
 import { changePlugin } from './changePlugin';
+import { chooseHomeRow } from './chooseHomeRow';
 import { installPlugin } from './installPlugin';
 import { makeAppPassword } from './makeAppPassword';
 import { removeAppPassword } from './removeAppPassword';
@@ -66,6 +67,21 @@ describe('plugin changes', () => {
     answer({ error: 'There is no such plugin.' }, 404);
 
     await expect(removeAppPassword('music', 'p1')).rejects.toThrow('There is no such plugin.');
+  });
+
+  it('turns a home row on or off, and says why where the server refused', async () => {
+    answer(null);
+
+    await chooseHomeRow('trending', 'hot', true);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/trending/home-rows/hot');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('PUT');
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ isChosen: true }));
+
+    answer({ error: 'There is no such plugin.' }, 404);
+
+    await expect(chooseHomeRow('trending', 'hot', false)).rejects.toThrow(
+      'There is no such plugin.',
+    );
   });
 
   it('sends an action with only its id, payload and the fields', async () => {
