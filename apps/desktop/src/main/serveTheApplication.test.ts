@@ -50,6 +50,14 @@ describe('worthCarrying', () => {
     expect(sent).toEqual({ accept: 'application/json', 'content-type': 'application/json' });
   });
 
+  it('carries the device the page says it runs on onward to the server', () => {
+    const sent = worthCarrying(
+      new Headers({ 'x-valence-device': '%7B%22app%22%3A%22desktop%22%7D' }),
+    );
+
+    expect(sent).toEqual({ 'x-valence-device': '%7B%22app%22%3A%22desktop%22%7D' });
+  });
+
   it('leaves behind what the page did not write', () => {
     expect(worthCarrying(new Headers({ 'sec-fetch-mode': 'cors' }))).toEqual({});
   });

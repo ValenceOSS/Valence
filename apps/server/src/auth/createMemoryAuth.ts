@@ -65,8 +65,12 @@ const createMemoryAuth = (
   profiles: string[];
   changed: string[];
   resetLinks: { email: string; url: string }[];
+  sessionsStarted: { sessionId: string; userAgent: string | null }[];
+  codesIssued: { userCode: string; userAgent: string | null }[];
   store: ReturnType<typeof emptyStore>;
 } => {
+  const sessionsStarted: { sessionId: string; userAgent: string | null }[] = [];
+  const codesIssued: { userCode: string; userAgent: string | null }[] = [];
   const profiles: string[] = [];
   const changed: string[] = [];
   const resetLinks: { email: string; url: string }[] = [];
@@ -156,9 +160,17 @@ const createMemoryAuth = (
 
       return Promise.resolve();
     },
+    onSessionStarted: (sessionId, headers) => {
+      sessionsStarted.push({ sessionId, userAgent: headers?.get('user-agent') ?? null });
+
+      return Promise.resolve();
+    },
+    onDeviceCodeIssued: (userCode, headers) => {
+      codesIssued.push({ userCode, userAgent: headers?.get('user-agent') ?? null });
+    },
   });
 
-  return { auth, settings, profiles, changed, resetLinks, store };
+  return { auth, settings, profiles, changed, resetLinks, sessionsStarted, codesIssued, store };
 };
 
 export { createMemoryAuth };

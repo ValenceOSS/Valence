@@ -1,3 +1,4 @@
+import { pickerLabelOf } from '@ValenceServer/devices/pickerLabelOf';
 import { createDeviceRegistry } from '@ValenceServer/devices/createDeviceRegistry';
 import { createPlayTracker } from '@ValenceServer/devices/createPlayTracker';
 import type {
@@ -63,7 +64,7 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
     list: (listener) =>
       devices.owned(listener).map((entry) => ({
         clientId: entry.clientId,
-        label: entry.deviceLabel,
+        label: pickerLabelOf(entry),
         clientKind: entry.clientKind ?? null,
         nowPlaying: devices.reportOf(entry.clientId),
         ageMs: devices.ageOf(entry.clientId),

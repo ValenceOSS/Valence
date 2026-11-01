@@ -21,10 +21,10 @@ const TELEVISIONS: RegExp[] = [
  * Says whether a user agent belongs to a television, so a screen that asks somebody to type can
  * offer them their phone instead.
  *
- * Kept beside detectClientLabel rather than inside it, because the two answer different questions:
- * that one names a device for somebody reading a list of sessions, and this one decides what a
- * screen does. A television that is named wrongly is a cosmetic fault; one that is treated as a
- * keyboard is a dead end.
+ * Kept apart from the server's naming of devices, because the two answer different questions: that
+ * names a device for somebody reading a list of sessions, and this decides what a screen does. A
+ * television that is named wrongly is a cosmetic fault; one that is treated as a keyboard is a dead
+ * end.
  *
  * @param userAgent - What the client says about itself.
  * @returns Which kind of client this is.

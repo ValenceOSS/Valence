@@ -401,6 +401,37 @@ describe('createRealtimeClient', () => {
     );
   });
 
+  it('describes the device it runs on when it says so', () => {
+    const world = createWorld();
+
+    world.client.start();
+    world.openIt();
+    world.client.identify({
+      profileId: null,
+      clientId: 'phone-1',
+      device: { id: 'kept-device-id', app: 'phone', system: 'ios', name: 'Dan’s iPhone' },
+    });
+
+    expect(world.sent()).toContainEqual({
+      kind: 'identify',
+      profileId: null,
+      clientId: 'phone-1',
+      device: { id: 'kept-device-id', app: 'phone', system: 'ios', name: 'Dan’s iPhone' },
+    });
+  });
+
+  it('leaves the device out where it was not given one', () => {
+    const world = createWorld();
+
+    world.client.start();
+    world.openIt();
+    world.client.identify({ profileId: null, clientId: 'tab-1' });
+
+    expect(world.sent().find((message) => message.kind === 'identify')).not.toHaveProperty(
+      'device',
+    );
+  });
+
   it('says who it is acting as again after reconnecting, not who it opened as', () => {
     const world = createWorld();
 

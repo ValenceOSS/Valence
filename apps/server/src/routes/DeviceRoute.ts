@@ -1,21 +1,14 @@
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import {
+  DeviceRenameSchema,
+  SignedInDeviceListSchema,
+} from '@ValenceContracts/schemas/SignedInDevice';
 
 const DeviceError = RefusalSchema.openapi('DeviceError');
 
-const DeviceSchema = z
-  .object({
-    id: z.string(),
-    name: SaidSchema,
-    address: z.string().nullable(),
-    signedInAt: z.string(),
-    expiresAt: z.string(),
-    isCurrent: z.boolean(),
-  })
-  .openapi('Device');
-
-const DeviceListSchema = z.object({ devices: z.array(DeviceSchema) }).openapi('DeviceList');
+const DeviceListSchema = SignedInDeviceListSchema.openapi('DeviceList');
 
 const listDevicesRoute = createRoute({
   method: 'get',
@@ -49,6 +42,54 @@ const endDeviceRoute = createRoute({
   },
 });
 
+const renameDeviceRoute = createRoute({
+  method: 'put',
+  path: '/api/account/devices/{id}/name',
+  tags: ['Account'],
+  summary: 'Rename a device, or give it back the name it has of its own',
+  request: {
+    params: z.object({ id: z.string() }),
+    body: { content: { 'application/json': { schema: DeviceRenameSchema } } },
+  },
+  responses: {
+    204: { description: 'Renamed' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: DeviceError } },
+    },
+    404: {
+      description: 'No such device',
+      content: { 'application/json': { schema: DeviceError } },
+    },
+  },
+});
+
+const AskingDeviceSchema = z
+  .object({ device: SaidSchema, client: SaidSchema, address: z.string().nullable() })
+  .openapi('AskingDevice');
+
+const askingDeviceRoute = createRoute({
+  method: 'get',
+  path: '/api/account/devices/asking/{userCode}',
+  tags: ['Account'],
+  summary: 'Say which device is asking to be signed in with a code',
+  request: { params: z.object({ userCode: z.string().min(1).max(64) }) },
+  responses: {
+    200: {
+      description: 'The device that asked for the code',
+      content: { 'application/json': { schema: AskingDeviceSchema } },
+    },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: DeviceError } },
+    },
+    404: {
+      description: 'No device asked for that code, or it has run out',
+      content: { 'application/json': { schema: DeviceError } },
+    },
+  },
+});
+
 const endOtherDevicesRoute = createRoute({
   method: 'post',
   path: '/api/account/devices/end-others',
@@ -63,4 +104,10 @@ const endOtherDevicesRoute = createRoute({
   },
 });
 
-export { listDevicesRoute, endDeviceRoute, endOtherDevicesRoute };
+export {
+  askingDeviceRoute,
+  listDevicesRoute,
+  endDeviceRoute,
+  endOtherDevicesRoute,
+  renameDeviceRoute,
+};

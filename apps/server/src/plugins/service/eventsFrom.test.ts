@@ -29,6 +29,7 @@ const PLAYING = {
   profileName: 'Ada',
   item: AN_ITEM,
   deviceLabel: 'Chrome on macOS',
+  clientLabel: null,
   mode: 'DirectPlay' as const,
 };
 
@@ -148,6 +149,7 @@ describe('eventsFrom', () => {
       profileName: 'Ada',
       clientId: 'client-1',
       deviceLabel: 'Safari on iPhone',
+      clientLabel: null,
       address: '203.0.113.9',
       guestOf: null,
       viaShare: null,

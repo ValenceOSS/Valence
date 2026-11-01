@@ -67,7 +67,11 @@ import {
   WHAT_UPDATE_IS_KNOWN,
 } from '@ValenceDesktop/main/updateChannels';
 import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
-import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
+import {
+  WHAT_THIS_COMPUTER_IS_CALLED,
+  WHAT_VERSION_THIS_IS,
+} from '@ValenceDesktop/main/aboutChannels';
+import { theComputersName } from '@ValenceDesktop/main/theComputersName';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
 import { showTheWindowControls } from '@ValenceDesktop/main/showTheWindowControls';
@@ -399,6 +403,12 @@ const start = async (): Promise<void> => {
 
   ipcMain.on(WHAT_VERSION_THIS_IS, (event) => {
     event.returnValue = app.getVersion();
+  });
+
+  const computersName = theComputersName();
+
+  ipcMain.on(WHAT_THIS_COMPUTER_IS_CALLED, (event) => {
+    event.returnValue = computersName;
   });
 
   ipcMain.on(DOWNLOAD_THE_UPDATE, () => {

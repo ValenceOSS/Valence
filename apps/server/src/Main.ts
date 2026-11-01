@@ -518,6 +518,11 @@ import { takeSnapshot } from '#dialect/takeSnapshot';
 import { SNAPSHOT_TOOL } from '#dialect/SNAPSHOT_TOOL';
 import { probeSnapshotTool } from '#dialect/probeSnapshotTool';
 import { createDatabaseHistoryService } from '@ValenceServer/history/createDatabaseHistoryService';
+import { createDatabaseDeviceNotes } from '@ValenceServer/devices/createDatabaseDeviceNotes';
+import { createAskingDevices } from '@ValenceServer/devices/createAskingDevices';
+import { brandsOf } from '@ValenceServer/web/brandsOf';
+import { deviceOfRequest } from '@ValenceServer/devices/deviceOfRequest';
+import { CALLER_HEADER } from '@ValenceServer/web/CALLER_HEADER';
 import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabaseSignInStore';
 import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
 import { createDatabasePermissionService } from '@ValenceServer/auth/createDatabasePermissionService';
@@ -693,6 +698,8 @@ const WEBHOOK_DELIVERIES_KEPT_FOR_DAYS = 7;
 
 const signInStore = createDatabaseSignInStore(db);
 const historyService = createDatabaseHistoryService(db);
+const deviceNotes = createDatabaseDeviceNotes(db);
+const askingDevices = createAskingDevices();
 const statisticsService = createDatabaseStatisticsService(db);
 const auditService = createDatabaseAuditService(db);
 const backupService = createBackupService({
@@ -764,12 +771,22 @@ const auth = createAuth({
     return Promise.resolve();
   },
   onSignInSettled: (attempt) => {
-    const occurrence = describeSignInAttempt(attempt);
     const audited = auditOfAuthRequest(attempt);
+    const { deviceId } = attempt.device;
 
-    if (occurrence !== null) {
-      void events.publish(occurrence);
-    }
+    void (async () => {
+      const renamed =
+        attempt.account === null || deviceId === null
+          ? null
+          : ((await deviceNotes.renamedBy(attempt.account.id)).get(deviceId) ?? null);
+      const occurrence = describeSignInAttempt(attempt, renamed);
+
+      if (occurrence !== null) {
+        await events.publish(occurrence);
+      }
+    })().catch((error: Error) => {
+      log.warn('auth', `a sign-in was not announced: ${error.message}`);
+    });
 
     if (audited !== null) {
       const recording =
@@ -781,6 +798,21 @@ const auth = createAuth({
         log.warn('auth', `a sign-in was not written to the audit log: ${String(error)}`);
       });
     }
+  },
+  onDeviceCodeIssued: (userCode, headers) => {
+    askingDevices.note(userCode, {
+      ...deviceOfRequest(headers),
+      address: headers?.get(CALLER_HEADER) ?? null,
+    });
+  },
+  onSessionStarted: async (sessionId, headers) => {
+    const { deviceId, identity } = deviceOfRequest(headers);
+
+    await deviceNotes
+      .note(sessionId, { deviceId, identity, at: new Date() })
+      .catch((error: Error) => {
+        log.warn('auth', `could not note which device signed in: ${error.message}`);
+      });
   },
   onSignedOut: async ({ userId, address, userAgent }) => {
     const [account] = await db
@@ -1031,6 +1063,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
       quality: kind === 'song' ? null : describeQuality(item.width, item.height, item.videoRange),
     },
     deviceLabel: viewing.deviceLabel,
+    clientLabel: viewing.clientLabel,
     mode: viewing.mode,
   };
 };
@@ -1081,6 +1114,7 @@ const describeListening = async ({
       quality: null,
     },
     deviceLabel: device.deviceLabel,
+    clientLabel: device.clientLabel,
     // oxlint-disable-next-line valence/no-hard-coded-strings -- a playback mode a subscriber matches on, not words a person reads
     mode: listening.delivery === 'encoded' ? 'Transcode' : 'DirectPlay',
   };
@@ -1099,6 +1133,7 @@ const describeSession = async (session: PresenceSession): Promise<SessionData> =
   profileName: session.profileName,
   clientId: session.clientId,
   deviceLabel: session.deviceLabel,
+  clientLabel: session.clientLabel,
   address: session.address,
   guestOf: session.guestOf,
   viaShare: session.viaShare,
@@ -1555,6 +1590,7 @@ const describeBookListening = async ({
       quality: null,
     },
     deviceLabel: device.deviceLabel,
+    clientLabel: device.clientLabel,
     mode: 'DirectPlay',
   };
 };
@@ -5496,24 +5532,8 @@ const app = createApp({
 
     return true;
   },
-  listAccountSessions: async (userId) => {
-    const rows = await db
-      .select({
-        id: session.id,
-        userAgent: session.userAgent,
-        ipAddress: session.ipAddress,
-        createdAt: session.createdAt,
-        expiresAt: session.expiresAt,
-      })
-      .from(session)
-      .where(eq(session.userId, userId));
-
-    return rows.map((row) => ({
-      ...row,
-      createdAt: row.createdAt.toISOString(),
-      expiresAt: row.expiresAt.toISOString(),
-    }));
-  },
+  deviceNotes,
+  askingDevices,
   endAccountSessions: async (userId) => {
     await db.delete(session).where(eq(session.userId, userId));
   },
@@ -5710,6 +5730,18 @@ const realtimeHandler = createRealtimeHandler({
         .limit(1);
 
       return account?.name ?? null;
+    },
+    renamedDevice: async (accountId, deviceId) =>
+      (await deviceNotes.renamedBy(accountId)).get(deviceId) ?? null,
+    noteDevice: (sessionId, seen) => {
+      void deviceNotes.note(sessionId, seen).catch((error: Error) => {
+        log.warn('server', `could not note which device a session is on: ${error.message}`);
+      });
+    },
+    noteActive: (sessionId, at) => {
+      void deviceNotes.noteActive(sessionId, at).catch((error: Error) => {
+        log.warn('server', `could not note when a device was last active: ${error.message}`);
+      });
     },
   },
 });
@@ -6194,6 +6226,9 @@ app.get(
             guestOf: who?.guestOf ?? null,
             viaShare: who?.shareId ?? null,
             address,
+            sessionId: signedIn?.session.id ?? null,
+            userAgent: context.req.header('user-agent') ?? null,
+            brands: brandsOf(context.req.header('sec-ch-ua')),
           },
           {
             send: (raw) => {

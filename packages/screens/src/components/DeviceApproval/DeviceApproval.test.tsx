@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { DeviceApproval } from './DeviceApproval';
 
 const readDeviceRequest = vi.hoisted(() => vi.fn());
@@ -9,7 +10,9 @@ const answerDeviceRequest = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/session/auth', () => ({ readDeviceRequest, answerDeviceRequest }));
 
 beforeEach(() => {
-  readDeviceRequest.mockReset().mockResolvedValue({ userCode: 'ABCD1234', status: 'pending' });
+  readDeviceRequest
+    .mockReset()
+    .mockResolvedValue({ userCode: 'ABCD1234', status: 'pending', asking: null });
   answerDeviceRequest.mockReset().mockResolvedValue(true);
 });
 
@@ -54,7 +57,7 @@ describe('saying yes to a television from a phone', () => {
   });
 
   it('will not offer to approve a code that has already been answered', async () => {
-    readDeviceRequest.mockResolvedValue({ userCode: 'ABCD1234', status: 'approved' });
+    readDeviceRequest.mockResolvedValue({ userCode: 'ABCD1234', status: 'approved', asking: null });
 
     render(<DeviceApproval name="Valence" />);
 
@@ -63,6 +66,35 @@ describe('saying yes to a television from a phone', () => {
     expect(
       await screen.findByText('That code has expired, or no TV is waiting for it.'),
     ).toBeInTheDocument();
+  });
+
+  it('says which television is asking and what it runs, where the server remembers', async () => {
+    readDeviceRequest.mockResolvedValue({
+      userCode: 'ABCD1234',
+      status: 'pending',
+      asking: {
+        device: sayVerbatim('Living Room'),
+        client: sayVerbatim('Valence for Android TV'),
+        address: '192.168.1.30',
+      },
+    });
+
+    render(<DeviceApproval name="Valence" />);
+
+    await typeTheCode();
+
+    expect(await screen.findByText('Living Room')).toBeInTheDocument();
+    expect(screen.getByText('Valence for Android TV')).toBeInTheDocument();
+    expect(screen.getByText('Asked from 192.168.1.30')).toBeInTheDocument();
+  });
+
+  it('says only that a television is asking where the server cannot say which', async () => {
+    render(<DeviceApproval name="Valence" />);
+
+    await typeTheCode();
+
+    expect(await screen.findByRole('button', { name: 'Yes, this was me' })).toBeInTheDocument();
+    expect(screen.queryByText('Living Room')).not.toBeInTheDocument();
   });
 
   it('lets the television in when somebody says it is theirs', async () => {

@@ -78,6 +78,7 @@ const aSongStopped: WebhookPayload = {
       quality: null,
     },
     deviceLabel: 'iPhone',
+    clientLabel: null,
     mode: 'DirectPlay',
     positionSeconds: 150,
     durationSeconds: 300,
@@ -85,6 +86,24 @@ const aSongStopped: WebhookPayload = {
 };
 
 describe('formatWebhookBody', () => {
+  it('says what somebody is playing on and what it reached Valence through', () => {
+    const {
+      positionSeconds: _position,
+      durationSeconds: _duration,
+      ...playing
+    } = aSongStopped.data;
+
+    expect(
+      formatWebhookBody('ntfy', {
+        ...anEnvelope,
+        event: 'playback.started',
+        data: { ...playing, deviceLabel: 'iPhone 17 Pro Max', clientLabel: 'Valence for iOS' },
+      }).body,
+    ).toBe(
+      'Ada started listening to Running Up That Hill (1985) on iPhone 17 Pro Max (Valence for iOS), played directly.',
+    );
+  });
+
   it('sends the whole envelope to a generic receiver', () => {
     const written = formatWebhookBody('generic', aFailure);
 
@@ -737,6 +756,7 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
     profileName: 'Connie',
     clientId: 'tab-1',
     deviceLabel: "Connie's iPhone",
+    clientLabel: null,
     address: null,
     guestOf: null,
     viaShare: null,
@@ -748,6 +768,28 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
     expect(said({ ...anEnvelope, event: 'session.started', data: aSession })).toBe(
       "Connie from Dan opened Valence on Connie's iPhone.",
     );
+  });
+
+  it('says what the device reached Valence through, where that is known', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, deviceLabel: 'iPhone 17 Pro Max', clientLabel: 'Valence for iOS' },
+      }),
+    ).toBe('Connie from Dan opened Valence on iPhone 17 Pro Max (Valence for iOS).');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: {
+          ...aSession,
+          deviceLabel: 'iPhone 17 Pro Max',
+          clientLabel: 'Valence for iOS',
+          lastedSeconds: 0,
+        },
+      }),
+    ).toBe('Connie from Dan closed Valence on iPhone 17 Pro Max (Valence for iOS).');
   });
 
   it('falls back to the account where nobody picked a profile', () => {
@@ -823,6 +865,7 @@ describe('formatWebhookBody, a sign-in', () => {
           accountId: 'account-1',
           name: 'Ada',
           deviceLabel: 'Chrome on macOS',
+          clientLabel: null,
           address: '203.0.113.7',
         },
       }),
@@ -837,12 +880,47 @@ describe('formatWebhookBody, a sign-in', () => {
         data: {
           identifier: 'ada@example.com',
           deviceLabel: 'Chrome on macOS',
+          clientLabel: null,
           address: '203.0.113.7',
           reason: 'those details were not accepted.',
         },
       }),
     ).toBe(
       'A sign-in as ada@example.com was blocked on Chrome on macOS from 203.0.113.7 — those details were not accepted.',
+    );
+  });
+
+  it('says what the device reached Valence through, where that is known', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.succeeded',
+        data: {
+          accountId: 'account-1',
+          name: 'Ada',
+          deviceLabel: 'iPhone 17 Pro Max',
+          clientLabel: 'Valence for iOS',
+          address: null,
+        },
+      }),
+    ).toBe('Ada signed in on iPhone 17 Pro Max (Valence for iOS).');
+  });
+
+  it('says what a refused sign-in reached Valence through, where that is known', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.failed',
+        data: {
+          identifier: 'ada@example.com',
+          deviceLabel: 'Mac',
+          clientLabel: 'Chrome on macOS',
+          address: '203.0.113.7',
+          reason: 'those details were not accepted.',
+        },
+      }),
+    ).toBe(
+      'A sign-in as ada@example.com was blocked on Mac (Chrome on macOS) from 203.0.113.7 — those details were not accepted.',
     );
   });
 
@@ -855,6 +933,7 @@ describe('formatWebhookBody, a sign-in', () => {
           accountId: 'account-1',
           name: 'Ada',
           deviceLabel: 'Chrome on macOS',
+          clientLabel: null,
           address: null,
         },
       }),

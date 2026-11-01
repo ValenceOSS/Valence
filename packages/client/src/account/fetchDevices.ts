@@ -1,19 +1,8 @@
-import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { z } from 'zod';
+import { ReadDeviceListSchema } from '@ValenceContracts/schemas/SignedInDevice';
+import type { ReadDevice } from '@ValenceContracts/schemas/SignedInDevice';
 
-const DeviceSchema = z.object({
-  id: z.string(),
-  name: SaidSchema,
-  address: z.string().nullable(),
-  signedInAt: z.string(),
-  expiresAt: z.string(),
-  isCurrent: z.boolean(),
-});
-
-const DeviceListSchema = z.object({ devices: z.array(DeviceSchema) });
-
-type Device = z.infer<typeof DeviceSchema>;
+type Device = ReadDevice;
 
 /**
  * Everywhere this account is signed in, so somebody can see a session they do not recognise and end
@@ -21,7 +10,7 @@ type Device = z.infer<typeof DeviceSchema>;
  * to anybody counting.
  */
 const fetchDevices = async (): Promise<Device[]> => {
-  return (await readFromServer('/api/account/devices', DeviceListSchema)).devices;
+  return (await readFromServer('/api/account/devices', ReadDeviceListSchema)).devices;
 };
 
 /**
@@ -53,6 +42,25 @@ const endOtherDevices = async (): Promise<boolean> => {
   return response !== null && response.ok;
 };
 
+/**
+ * Gives one of this account's devices a name of its owner's choosing, or gives it back the name it
+ * has of its own.
+ *
+ * @param deviceId - The device, by the id the list gave it.
+ * @param name - What to call it, or nothing to go back to its own name.
+ * @returns Whether it was renamed.
+ */
+const renameDevice = async (deviceId: string, name: string | null): Promise<boolean> => {
+  const response = await fetch(`/api/account/devices/${deviceId}/name`, {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 export type { Device };
 
-export { fetchDevices, endDevice, endOtherDevices };
+export { fetchDevices, endDevice, endOtherDevices, renameDevice };

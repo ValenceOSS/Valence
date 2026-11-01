@@ -1,6 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchDevices, endDevice, endOtherDevices } from './fetchDevices';
+import { fetchDevices, endDevice, endOtherDevices, renameDevice } from './fetchDevices';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type FetchLike = (
@@ -83,5 +83,39 @@ describe('endOtherDevices', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(endOtherDevices()).resolves.toBe(false);
+  });
+});
+
+describe('renameDevice', () => {
+  it('asks for the device to be called what its owner chose', async () => {
+    fetchMock.mockResolvedValue(ok(null));
+
+    await expect(renameDevice('device-2', 'Living room')).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/account/devices/device-2/name',
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ name: 'Living room' }) }),
+    );
+  });
+
+  it('asks for the device’s own name back with nothing', async () => {
+    fetchMock.mockResolvedValue(ok(null));
+
+    await expect(renameDevice('device-2', null)).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/account/devices/device-2/name',
+      expect.objectContaining({ body: JSON.stringify({ name: null }) }),
+    );
+  });
+
+  it('says so when the server did not agree', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 400, json: () => Promise.resolve(null) });
+
+    await expect(renameDevice('device-2', 'Living room')).resolves.toBe(false);
+  });
+
+  it('says so when the request never arrived', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(renameDevice('device-2', 'Living room')).resolves.toBe(false);
   });
 });

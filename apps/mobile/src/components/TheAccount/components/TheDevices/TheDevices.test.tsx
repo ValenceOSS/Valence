@@ -1,4 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { ReadDeviceSchema } from '@ValenceContracts/schemas/SignedInDevice';
 import { act, render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -11,14 +12,16 @@ import { TheDevices } from './TheDevices';
 jest.mock('@ValenceClient/account/fetchDevices');
 jest.mock('@ValenceClient/session/fetchMyPermissions');
 
-const aDevice = (id: string, name: string, isCurrent: boolean) => ({
-  id,
-  name: sayVerbatim(name),
-  address: null,
-  signedInAt: '2026-09-20T10:00:00.000Z',
-  expiresAt: '2026-10-20T10:00:00.000Z',
-  isCurrent,
-});
+const aDevice = (id: string, name: string, isCurrent: boolean, more: object = {}) =>
+  ReadDeviceSchema.parse({
+    id,
+    name: sayVerbatim(name),
+    address: null,
+    signedInAt: '2026-09-20T10:00:00.000Z',
+    expiresAt: '2026-10-20T10:00:00.000Z',
+    isCurrent,
+    ...more,
+  });
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
@@ -67,5 +70,22 @@ describe('TheDevices', () => {
 
     expect(drawn.queryByRole('button', { name: 'Sign out Living room' })).toBeNull();
     expect(drawn.queryByText('Sign out everywhere else')).toBeNull();
+  });
+
+  it('names each device apart from what it reaches Valence through', async () => {
+    jest.mocked(fetchDevices).mockResolvedValue([
+      aDevice('here', 'This iPhone', true),
+      aDevice('mac', 'Chrome on macOS', false, {
+        device: sayVerbatim('Dan’s MacBook Pro'),
+        client: sayVerbatim('Chrome on macOS'),
+        isActiveNow: true,
+      }),
+    ]);
+    const drawn = await render(<TheDevices />, { wrapper: CacheScope });
+
+    expect(await drawn.findByText('Dan’s MacBook Pro')).toBeTruthy();
+    expect(drawn.getByText('Chrome on macOS')).toBeTruthy();
+    expect(drawn.getByText('Active now')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Sign out Dan’s MacBook Pro' })).toBeTruthy();
   });
 });

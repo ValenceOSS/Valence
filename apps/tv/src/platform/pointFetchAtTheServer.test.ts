@@ -1,3 +1,7 @@
+import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
+import { readDeviceHints } from '@ValenceContracts/functions/readDeviceHints';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { PLACEHOLDER } from '@ValenceClient/session/askTheServer';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import {
@@ -57,6 +61,22 @@ describe('withTheSession', () => {
     expect(withTheSession({}).get('user-agent')).toMatch(/^Valence \(.+\)$/u);
   });
 
+  it('says which television the request comes from', () => {
+    installPlatform(
+      aFakePlatform({
+        thisClientKind: () => 'tv',
+        describeThisDevice: () => ({ app: 'tv', system: 'androidTv', name: 'Living Room' }),
+      }),
+    );
+    rememberServerAddress('http://valence.local:3000');
+
+    expect(readDeviceHints(withTheSession({}).get(DEVICE_HEADER))).toMatchObject({
+      app: 'tv',
+      system: 'androidTv',
+      name: 'Living Room',
+    });
+  });
+
   it('keeps who a request already says it is', () => {
     rememberServerAddress('http://valence.local:3000');
     keepTheSessionToken('secret');
@@ -93,6 +113,7 @@ describe('pointFetchAtTheServer', () => {
     expect(input).toBe('http://valence.local:3000/api/profiles');
     expect(init?.method).toBe('POST');
     expect(new Headers(init?.headers).get('authorization')).toBe('Bearer secret');
+    expect(new Headers(init?.headers).get(DEVICE_HEADER)).not.toBeNull();
   });
 
   it('rebuilds a request that arrives already made on the server', async () => {
@@ -144,6 +165,7 @@ describe('pointFetchAtTheServer', () => {
     for (const call of [0, 1, 2]) {
       expect(headersOf(call).get('authorization')).toBeNull();
       expect(headersOf(call).get('x-valence-client-kind')).toBeNull();
+      expect(headersOf(call).get(DEVICE_HEADER)).toBeNull();
     }
   });
 });

@@ -80,6 +80,7 @@ beforeEach(() => {
         },
       },
       describeThisClient: () => 'Valence',
+      describeThisDevice: () => ({}),
       thisClientKind: () => 'browser',
       canKeepFiles: () => true,
       held: noFilesAreKept(),

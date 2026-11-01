@@ -48,4 +48,13 @@ describe('browserOf', () => {
   it('names nothing it does not know', () => {
     expect(browserOf('curl/8.7.1')).toBeNull();
   });
+
+  it('tells the browsers on an iPhone apart from Safari by the marks they add', () => {
+    const iphone =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
+
+    expect(browserOf(iphone)).toBe('safari');
+    expect(browserOf(iphone.replace('Mobile/', 'OPT/5.3.0 Mobile/'))).toBe('opera');
+    expect(browserOf(`${iphone} Ddg/18.5`)).toBe('duckDuckGo');
+  });
 });

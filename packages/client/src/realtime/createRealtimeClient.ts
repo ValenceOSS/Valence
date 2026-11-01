@@ -1,4 +1,5 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
+import type { DeviceHints } from '@ValenceContracts/schemas/DeviceHints';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromServerSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -30,6 +31,7 @@ type Identity = {
   clientId?: string;
   clientKind?: ClientKind;
   deviceLabel?: string;
+  device?: DeviceHints;
 };
 
 type PartyMessage = Extract<FromClient, { kind: `party${string}` }>;
@@ -106,6 +108,7 @@ const createRealtimeClient = ({
     ...(who.clientId === undefined ? {} : { clientId: who.clientId }),
     ...(who.deviceLabel === undefined ? {} : { deviceLabel: who.deviceLabel }),
     ...(who.clientKind === undefined ? {} : { clientKind: who.clientKind }),
+    ...(who.device === undefined ? {} : { device: who.device }),
   });
 
   const send = (message: FromClient) => {

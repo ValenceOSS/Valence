@@ -355,9 +355,39 @@ describe('fetchActiveSessions', () => {
         fromServer: null,
         accountId: null,
         clientKind: 'browser',
+        device: null,
+        client: null,
+        identity: null,
         streams: null,
       },
     ]);
+  });
+
+  it('reads the device a tab runs on apart from what it reaches Valence through', async () => {
+    answerWith([
+      {
+        ...SESSION,
+        device: sayVerbatim('iPhone 17 Pro Max'),
+        client: sayVerbatim('Valence for iOS'),
+        identity: { app: 'phone', system: 'ios', form: 'phone', model: 'iPhone 17 Pro Max' },
+      },
+    ]);
+
+    const [read] = await fetchActiveSessions();
+
+    expect(read).toMatchObject({
+      device: sayVerbatim('iPhone 17 Pro Max'),
+      client: sayVerbatim('Valence for iOS'),
+      identity: { app: 'phone', system: 'ios', form: 'phone', model: 'iPhone 17 Pro Max' },
+    });
+  });
+
+  it('reads a tab whose device a newer server describes in words this one does not know', async () => {
+    answerWith([{ ...SESSION, identity: { app: 'hologram', system: 'marsOs' } }]);
+
+    const [read] = await fetchActiveSessions();
+
+    expect(read?.identity).toMatchObject({ app: 'browser', system: null });
   });
 
   it('takes a session from a server that says nothing of its kind for a browser', async () => {

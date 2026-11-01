@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createAuthClient } from 'better-auth/client';
 import { AUTH_BASE, askTheServer } from '@ValenceClient/session/askTheServer';
 import {
@@ -52,7 +53,19 @@ type DeviceGrantOutcome =
   | { kind: 'expired' }
   | { kind: 'failed'; reason: string };
 
-type DeviceRequest = { userCode: string; status: 'pending' | 'approved' | 'denied' };
+type DeviceRequest = {
+  userCode: string;
+  status: 'pending' | 'approved' | 'denied';
+  asking: AskingDevice | null;
+};
+
+const AskingDeviceSchema = z.object({
+  device: SaidSchema,
+  client: SaidSchema,
+  address: z.string().nullable().default(null),
+});
+
+type AskingDevice = z.infer<typeof AskingDeviceSchema>;
 
 const CANCELLED = new Set(['AUTH_CANCELLED', 'ERROR_CEREMONY_ABORTED']);
 
@@ -733,8 +746,29 @@ const askWhetherTheDeviceMayIn = async (deviceCode: string): Promise<DeviceGrant
 };
 
 /**
+ * Which television asked for a code, where the server still remembers.
+ *
+ * @param userCode - The code somebody read off the television.
+ * @returns The television and what it is running, or nothing where the server cannot say.
+ */
+const readAskingDevice = async (userCode: string): Promise<AskingDevice | null> => {
+  const answer = await askTheServer(`/api/account/devices/asking/${encodeURIComponent(userCode)}`, {
+    credentials: 'include',
+  }).catch(() => null);
+
+  if (answer === null || !answer.ok) {
+    return null;
+  }
+
+  const read = AskingDeviceSchema.safeParse(await answer.json().catch(() => null));
+
+  return read.success ? read.data : null;
+};
+
+/**
  * Reads what a typed code is asking for, so the person holding the phone sees what they are about
- * to let in rather than approving a string of letters.
+ * to let in rather than approving a string of letters: the code, and which television asked for it
+ * — "Living Room", running Valence for Android TV — where the server remembers.
  *
  * @param userCode - The code somebody read off the television.
  * @returns What is being asked, or null where the code means nothing or has run out.
@@ -748,7 +782,13 @@ const readDeviceRequest = async (userCode: string): Promise<DeviceRequest | null
 
   const read = DeviceRequestSchema.safeParse(answer.data);
 
-  return read.success ? { userCode: read.data.user_code, status: read.data.status } : null;
+  return read.success
+    ? {
+        userCode: read.data.user_code,
+        status: read.data.status,
+        asking: await readAskingDevice(userCode),
+      }
+    : null;
 };
 
 /**

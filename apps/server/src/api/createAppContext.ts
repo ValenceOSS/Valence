@@ -2,7 +2,8 @@ import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { createPushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import { saying } from '@ValenceI18n/saying';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
-import { describeDevice } from '@ValenceCore/functions/describeDevice';
+import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
+import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
 import { askerFieldsOf } from '@ValenceServer/webhooks/askerFieldsOf';
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
 import { createInertBucketMounts } from '@ValenceServer/buckets/createInertBucketMounts';
@@ -331,7 +332,8 @@ const createAppContext = (options: CreateAppOptions) => {
     setupLinks,
     createAccountWithoutPassword,
     resetAccountPassword,
-    listAccountSessions,
+    deviceNotes,
+    askingDevices,
     endAccountSessions,
     endAccountSession,
     realtime,
@@ -885,8 +887,14 @@ const createAppContext = (options: CreateAppOptions) => {
           onRemoved: (profileId) => {
             plugins?.profilesRemoved([profileId]);
           },
-          onChosen: (acting, profile, device) => {
+          onChosen: (acting, profile, { device, address }) => {
             void (async () => {
+              const renamed =
+                device.deviceId === null
+                  ? null
+                  : ((await deviceNotes?.renamedBy(acting.account.id))?.get(device.deviceId) ??
+                    null);
+
               await events?.publish({
                 event: 'profile.chosen',
                 data: {
@@ -894,8 +902,9 @@ const createAppContext = (options: CreateAppOptions) => {
                   accountName: await householdNameFor(acting.account),
                   profileId: profile.id,
                   profileName: profile.name,
-                  deviceLabel: describeDevice(device.userAgent, device.brands).message,
-                  address: device.address,
+                  deviceLabel: nameTheDevice(device.identity, renamed).message,
+                  clientLabel: nameTheClient(device.identity).message,
+                  address,
                 },
               });
             })();
@@ -2066,7 +2075,8 @@ const createAppContext = (options: CreateAppOptions) => {
     setupLinks,
     createAccountWithoutPassword,
     resetAccountPassword,
-    listAccountSessions,
+    deviceNotes,
+    askingDevices,
     endAccountSessions,
     endAccountSession,
     realtime,

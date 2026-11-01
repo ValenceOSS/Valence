@@ -1,5 +1,5 @@
-import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { SignedInDeviceSchema } from '@ValenceContracts/schemas/SignedInDevice';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { AvatarSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { AccountSchema, DiscordIdSchema } from '@ValenceContracts/schemas/Account';
@@ -218,15 +218,7 @@ const resetAccountPasswordRoute = createRoute({
   },
 });
 
-const AccountSession = z
-  .object({
-    id: z.string(),
-    name: SaidSchema,
-    address: z.string().nullable(),
-    signedInAt: z.string(),
-    expiresAt: z.string(),
-  })
-  .openapi('AccountSession');
+const AccountSession = SignedInDeviceSchema.openapi('AccountSession');
 
 const listAccountSessionsRoute = createRoute({
   method: 'get',

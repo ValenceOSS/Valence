@@ -1,4 +1,6 @@
 import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
+import type { DeviceNotes } from '@ValenceServer/devices/DeviceNotes';
+import type { AskingDevices } from '@ValenceServer/devices/createAskingDevices';
 import type { ProfileLimits } from '@ValenceServer/profiles/limits/ProfileLimits';
 import type { ChosenProfiles } from '@ValenceServer/profiles/ChosenProfiles';
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
@@ -190,15 +192,8 @@ type CreateAppOptions = {
   ) => Promise<AccountWithoutPasswordOutcome>;
   readBanReason?: (userId: string) => Promise<string | null>;
   resetAccountPassword?: (userId: string, password: string) => Promise<boolean>;
-  listAccountSessions?: (userId: string) => Promise<
-    {
-      id: string;
-      userAgent: string | null;
-      ipAddress: string | null;
-      createdAt: string;
-      expiresAt: string;
-    }[]
-  >;
+  deviceNotes?: DeviceNotes;
+  askingDevices?: AskingDevices;
   endAccountSessions?: (userId: string) => Promise<void>;
   endAccountSession?: (userId: string, sessionId: string) => Promise<void>;
   maintenance?: MaintenanceService;

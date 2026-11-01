@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { ReadDeviceSchema } from '@ValenceContracts/schemas/SignedInDevice';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { AccountDevices } from './AccountDevices';
 import type * as Notify from '@ValenceUI/notify';
@@ -24,13 +25,13 @@ vi.mock('@ValenceUI/notify', async (importOriginal) => {
   return { ...actual, notify: { ...actual.notify, worked: workedMock, failed: failedMock } };
 });
 
-const A_SESSION = {
+const A_SESSION = ReadDeviceSchema.parse({
   id: 'session-1',
   name: sayVerbatim('Living room television'),
   address: null,
   signedInAt: '2026-10-01T00:00:00.000Z',
   expiresAt: '2026-11-01T00:00:00.000Z',
-};
+});
 
 /**
  * Signs the one device out, through its menu and the question that follows.
@@ -70,6 +71,27 @@ describe('AccountDevices', () => {
 
     await waitFor(() => {
       expect(failedMock).toHaveBeenCalledWith('You may not do that.');
+    });
+  });
+
+  it('names a device apart from what it reaches Valence through, and signs it out by that name', async () => {
+    fetchMock.mockResolvedValue([
+      ReadDeviceSchema.parse({
+        ...A_SESSION,
+        name: sayVerbatim('Living room television · Valence for Android TV'),
+        device: sayVerbatim('Living room television'),
+        client: sayVerbatim('Valence for Android TV'),
+      }),
+    ]);
+    endMock.mockResolvedValue(null);
+    renderInAnAddress(<AccountDevices accountId="account-1" />);
+
+    expect(await screen.findByText('Valence for Android TV')).toBeInTheDocument();
+
+    await signItOut();
+
+    await waitFor(() => {
+      expect(workedMock).toHaveBeenCalledWith('Living room television is signed out.');
     });
   });
 

@@ -1,3 +1,5 @@
+import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
+import { readDeviceHints } from '@ValenceContracts/functions/readDeviceHints';
 import { forgetPlatform, platformInUse } from '@ValenceClient/platform/installPlatform';
 import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { installPhonePlatform } from './installPhonePlatform';
@@ -80,5 +82,33 @@ describe('installPhonePlatform', () => {
     await globalThis.fetch('/api/health');
 
     expect(asked[0]).toBe('http://192.168.1.36:8420/api/health');
+  });
+
+  it('describes the phone it runs on, as its system describes it', () => {
+    installPhonePlatform(new Map());
+
+    expect(platformInUse().describeThisDevice()).toMatchObject({
+      app: 'phone',
+      system: 'ios',
+      form: 'phone',
+      name: "Dan's iPhone",
+    });
+  });
+
+  it('tells the server which device each request comes from', async () => {
+    const sent: (string | null)[] = [];
+
+    globalThis.fetch = (_input: string | Request | URL, init?: RequestInit): Promise<Response> => {
+      sent.push(new Headers(init?.headers).get(DEVICE_HEADER));
+
+      return Promise.resolve(new Response('{}'));
+    };
+
+    installPhonePlatform(new Map([[THE_SERVER_ADDRESS, 'http://192.168.1.36:8420']]));
+
+    await globalThis.fetch('/api/health');
+
+    expect(readDeviceHints(sent[0])).toMatchObject({ app: 'phone', name: "Dan's iPhone" });
+    expect(readDeviceHints(sent[0]).id).toBeDefined();
   });
 });

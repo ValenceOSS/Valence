@@ -951,6 +951,7 @@ describe('telling plugins what happened', () => {
             quality: null,
           },
           deviceLabel: 'Chrome on macOS',
+          clientLabel: null,
           mode: 'DirectPlay',
           positionSeconds: 850,
           durationSeconds: 1000,
@@ -1188,6 +1189,7 @@ describe('telling plugins what happened', () => {
           quality: null,
         },
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         mode: 'DirectPlay',
       },
     });

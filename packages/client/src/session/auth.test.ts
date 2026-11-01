@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakeKeptAnswers } from '@ValenceClient/testing/aFakeKeptAnswers';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import {
   answerDeviceRequest,
   askWhetherTheDeviceMayIn,
@@ -695,16 +696,63 @@ describe('the television’s other half', () => {
 
   it('reads what a typed code is asking for, and nothing for a code that means nothing', async () => {
     fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'pending' }));
+    fetchMock.mockResolvedValueOnce(said({ error: 'not_found' }, 404));
     fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'lost' }));
     fetchMock.mockResolvedValueOnce(said({ error: 'invalid_request' }, 400));
 
     await expect(readDeviceRequest('ABCD-EFGH')).resolves.toEqual({
       userCode: 'ABCD-EFGH',
       status: 'pending',
+      asking: null,
     });
     expect(asked()).toBe('/api/auth/device');
     await expect(readDeviceRequest('ABCD-EFGH')).resolves.toBeNull();
     await expect(readDeviceRequest('ABCD-EFGH')).resolves.toBeNull();
+  });
+
+  it('says which television asked for a code, where the server remembers', async () => {
+    fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'pending' }));
+    fetchMock.mockResolvedValueOnce(
+      said({
+        device: sayVerbatim('Living Room'),
+        client: sayVerbatim('Valence for Android TV'),
+        address: '192.168.1.30',
+      }),
+    );
+
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toEqual({
+      userCode: 'ABCD-EFGH',
+      status: 'pending',
+      asking: {
+        device: sayVerbatim('Living Room'),
+        client: sayVerbatim('Valence for Android TV'),
+        address: '192.168.1.30',
+      },
+    });
+    expect(asked(1)).toBe('/api/account/devices/asking/ABCD-EFGH');
+  });
+
+  it('asks about the code as it was typed, escaped for the address', async () => {
+    fetchMock.mockResolvedValueOnce(said({ user_code: 'AB/CD', status: 'pending' }));
+    fetchMock.mockResolvedValueOnce(said(null));
+
+    await readDeviceRequest('AB/CD');
+
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('/api/account/devices/asking/AB%2FCD');
+  });
+
+  it('still reads the code where the television cannot be said', async () => {
+    fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'pending' }));
+    fetchMock.mockResolvedValueOnce(said({ device: 'Living Room' }));
+    fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'approved' }));
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toMatchObject({ asking: null });
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toEqual({
+      userCode: 'ABCD-EFGH',
+      status: 'approved',
+      asking: null,
+    });
   });
 
   it('lets a television in or turns it away, and says when that was not recorded', async () => {

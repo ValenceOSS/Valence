@@ -302,12 +302,14 @@ const WebhookViewerSchema = z.object({
 const WebhookPlaybackSchema = WebhookViewerSchema.extend({
   item: WebhookMediaSchema,
   deviceLabel: z.string(),
+  clientLabel: z.string().nullable().default(null),
   mode: z.enum(PLAYBACK_MODES),
 });
 
 const WebhookSessionSchema = WebhookViewerSchema.extend({
   clientId: z.string(),
   deviceLabel: z.string(),
+  clientLabel: z.string().nullable().default(null),
   address: z.string().nullable().default(null),
   guestOf: z.string().nullable().default(null),
   viaShare: z.string().nullable().default(null),
@@ -501,6 +503,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       accountId: z.string(),
       name: z.string(),
       deviceLabel: z.string(),
+      clientLabel: z.string().nullable().default(null),
       address: z.string().nullable(),
     }),
   }),
@@ -510,6 +513,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     data: z.object({
       identifier: z.string(),
       deviceLabel: z.string(),
+      clientLabel: z.string().nullable().default(null),
       address: z.string().nullable(),
       reason: z.string(),
     }),
@@ -523,6 +527,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       profileId: z.string(),
       profileName: z.string(),
       deviceLabel: z.string(),
+      clientLabel: z.string().nullable().default(null),
       address: z.string().nullable(),
     }),
   }),

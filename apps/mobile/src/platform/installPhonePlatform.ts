@@ -3,6 +3,7 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { thePhonesMusicOut } from '@ValenceMobile/music/thePhonesMusicOut';
 import { thePhonesListeningAudio } from '@ValenceMobile/books/thePhonesListeningAudio';
+import { hintsAboutThisPhone } from '@ValenceMobile/platform/hintsAboutThisPhone';
 import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
 import { giveThisPhoneAnOrigin } from '@ValenceMobile/platform/giveThisPhoneAnOrigin';
 import { giveThisPhoneCrypto } from '@ValenceMobile/platform/giveThisPhoneCrypto';
@@ -41,6 +42,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     store,
     serverAddress: () => theServerThisPhoneWatches(store),
     describeThisClient: describeThisPhone,
+    describeThisDevice: () => hintsAboutThisPhone(),
     thisClientId: () => thisPhonesId(store),
     thisClientKind: () => 'phone',
     canKeepFiles: () => true,

@@ -1,4 +1,5 @@
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { theDeviceHints } from '@ValenceClient/platform/theDeviceHints';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import { emitPresenceEvent } from './presenceEvents';
@@ -33,6 +34,7 @@ const watchPresence = (client: RealtimeClient = getRealtimeClient()): (() => voi
     clientId: platformInUse().thisClientId(),
     deviceLabel: platformInUse().describeThisClient(),
     clientKind: platformInUse().thisClientKind(),
+    device: theDeviceHints(),
   });
 
   return release;

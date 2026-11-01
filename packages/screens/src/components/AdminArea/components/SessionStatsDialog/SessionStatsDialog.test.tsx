@@ -40,6 +40,9 @@ const WATCHING_SESSION: ActiveSession = {
   guestOf: null,
   fromServer: null,
   deviceLabel: 'Chrome on macOS',
+  device: null,
+  client: null,
+  identity: null,
   clientKind: 'browser' as const,
   connectedAt: 1000,
   streams: null,
@@ -81,6 +84,31 @@ describe('SessionStatsDialog', () => {
 
     expect(screen.getByText('Chrome on macOS')).toBeInTheDocument();
     expect(screen.getByText('Dan')).toBeInTheDocument();
+  });
+
+  it('names the device and what it reaches Valence through on rows of their own', () => {
+    render(
+      <SessionStatsDialog
+        session={{
+          ...WATCHING_SESSION,
+          device: sayVerbatim('Dan’s MacBook Pro'),
+          client: sayVerbatim('Chrome on macOS'),
+        }}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Device')).toBeInTheDocument();
+    expect(screen.getByText('Dan’s MacBook Pro')).toBeInTheDocument();
+    expect(screen.getByText('Browser or app')).toBeInTheDocument();
+    expect(screen.getByText('Chrome on macOS')).toBeInTheDocument();
+  });
+
+  it('leaves out what a device reaches Valence through where the server does not say', () => {
+    render(<SessionStatsDialog session={WATCHING_SESSION} isOpen onClose={vi.fn()} />);
+
+    expect(screen.queryByText('Browser or app')).not.toBeInTheDocument();
   });
 
   it('names the graphics device a stream is encoded on', () => {

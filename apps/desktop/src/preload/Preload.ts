@@ -50,7 +50,10 @@ import {
 } from '@ValenceDesktop/main/updateChannels';
 import { DesktopUpdateSchema } from '@ValenceContracts/schemas/DesktopUpdate';
 import { keepTheLatest } from '@ValenceDesktop/preload/keepTheLatest';
-import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
+import {
+  WHAT_THIS_COMPUTER_IS_CALLED,
+  WHAT_VERSION_THIS_IS,
+} from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import {
   CLOSE_THE_WINDOW,
@@ -122,6 +125,12 @@ const canReachNow = (): boolean =>
   z.boolean().catch(true).parse(ipcRenderer.sendSync(CAN_REACH_NOW));
 
 const thisVersion = z.string().catch('').parse(ipcRenderer.sendSync(WHAT_VERSION_THIS_IS));
+
+const computerName = z
+  .string()
+  .nullable()
+  .catch(null)
+  .parse(ipcRenderer.sendSync(WHAT_THIS_COMPUTER_IS_CALLED));
 
 markTheDocument(document, process.platform);
 
@@ -239,6 +248,7 @@ contextBridge.exposeInMainWorld('valence', {
   },
   about: {
     version: thisVersion,
+    computerName,
     commit: __VALENCE_COMMIT__,
     arch: process.arch,
     electron: process.versions.electron,

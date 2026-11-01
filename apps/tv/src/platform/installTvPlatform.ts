@@ -1,3 +1,4 @@
+import { hintsAboutThisTv } from '@ValenceTv/platform/hintsAboutThisTv';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 import { noListeningFilesAreKept } from '@ValenceClient/platform/noListeningFilesAreKept';
@@ -29,6 +30,7 @@ const installTvPlatform = (): void => {
     store: theTvsStore(),
     serverAddress: theServersOrigin,
     describeThisClient: () => describeThisTv(theTvsOwnName()),
+    describeThisDevice: () => hintsAboutThisTv(),
     thisClientId: thisTvsId,
     thisClientKind: () => 'tv',
     canKeepFiles: () => false,

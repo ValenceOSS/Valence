@@ -1,26 +1,20 @@
-import { z } from 'zod';
-import { detectClientLabel } from '@ValenceClient/playback/detectClientLabel';
-
-const ClientHintsSchema = z.object({
-  userAgentData: z.object({ brands: z.array(z.object({ brand: z.string() })).max(20) }),
-});
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
+import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { hintsAboutThisBrowser } from '@ValenceWeb/platform/hintsAboutThisBrowser';
 
 /**
- * What to call this client, asked of the browser: its user agent, and the brands its client hints
- * name where it has them, which are all that tell Chrome from the browsers built on it.
+ * What to call this browser where one line is all there is room for, such as the name a television
+ * shows for the browser casting to it: the browser and the system it runs on, the way the server
+ * names it in the sessions list.
  *
- * Reading a user agent is the same wherever it is read, so that part belongs to the application; a
- * user agent to read is a thing only a browser has, so getting hold of one belongs here.
- *
- * @returns The device as a person would describe it.
+ * @returns The browser as a person would describe it.
  */
-const describeThisBrowser = (): string => {
-  const hints = ClientHintsSchema.safeParse(navigator);
-
-  return detectClientLabel(
-    navigator.userAgent,
-    hints.success ? hints.data.userAgentData.brands.map((one) => one.brand) : [],
+const describeThisBrowser = (): string =>
+  sayAgain(
+    nameTheClient(
+      identifyDevice({ userAgent: navigator.userAgent, hints: hintsAboutThisBrowser() }),
+    ),
   );
-};
 
 export { describeThisBrowser };

@@ -39,7 +39,13 @@ const aFailure: WebhookOccurrence = {
 
 const aSignIn: WebhookOccurrence = {
   event: 'auth.succeeded',
-  data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS', address: null },
+  data: {
+    accountId: 'account-1',
+    name: 'Ada',
+    deviceLabel: 'Mac',
+    clientLabel: 'Chrome on macOS',
+    address: null,
+  },
 };
 
 const aRefusal: WebhookOccurrence = {
@@ -47,6 +53,7 @@ const aRefusal: WebhookOccurrence = {
   data: {
     identifier: 'ada@example.com',
     deviceLabel: 'Chrome on macOS',
+    clientLabel: null,
     address: null,
     reason: 'those details weren’t accepted.',
   },
@@ -63,6 +70,7 @@ const aViewing = (
     profileName: 'Ada',
     item: anItem,
     deviceLabel: 'Chrome on macOS',
+    clientLabel: null,
     mode: 'DirectPlay',
     ...overrides,
   },
@@ -229,6 +237,7 @@ describe('subscriptionWants, filtering by what kind of thing it is', () => {
         profileName: 'Ada',
         item: { ...anItem, kind: 'song' },
         deviceLabel: 'Chrome on macOS',
+        clientLabel: null,
         mode: 'DirectPlay',
         positionSeconds: 200,
         durationSeconds: 200,
@@ -252,6 +261,7 @@ describe('subscriptionWants, filtering by what kind of thing it is', () => {
           profileName: 'Ada',
           item: { ...anItem, kind: 'book' },
           deviceLabel: 'iPhone',
+          clientLabel: null,
           mode: 'DirectPlay',
         },
       }),
@@ -322,6 +332,7 @@ describe('subscriptionWants, somebody opening Valence', () => {
       profileName: 'Connie',
       clientId: 'tab-1',
       deviceLabel: 'A phone',
+      clientLabel: null,
       address: null,
       guestOf: null,
       viaShare: null,

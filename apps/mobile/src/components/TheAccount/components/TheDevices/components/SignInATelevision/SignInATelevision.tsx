@@ -3,6 +3,8 @@ import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useEffect, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
+import type { DeviceRequest } from '@ValenceClient/session/auth';
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -61,6 +63,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
   const [standing, setStanding] = useState<Standing>('asking');
   const [isAnswering, setIsAnswering] = useState(false);
   const [trouble, setTrouble] = useState<Trouble | null>(null);
+  const [asking, setAsking] = useState<DeviceRequest['asking']>(null);
 
   const check = async (code: string) => {
     setTrouble(null);
@@ -68,6 +71,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
 
     const found = await readDeviceRequest(code);
 
+    setAsking(found?.asking ?? null);
     setStanding(found?.status === 'pending' ? 'waiting' : 'wrong');
   };
 
@@ -141,6 +145,19 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
         ) : standing === 'waiting' ? (
           <>
             <Words>{say('common.aTelevisionIsAskingToSign')}</Words>
+            {asking === null ? null : (
+              <Words tone="muted">
+                {say('common.deviceThroughClient', {
+                  device: sayAgain(asking.device),
+                  client: sayAgain(asking.client),
+                })}
+              </Words>
+            )}
+            {asking?.address === null || asking?.address === undefined ? null : (
+              <Words size="small" tone="muted">
+                {say('common.askedFromAddress', { address: asking.address })}
+              </Words>
+            )}
             <Button
               icon={Check}
               isBusy={isAnswering}

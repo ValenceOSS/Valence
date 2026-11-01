@@ -1,3 +1,4 @@
+import { DeviceIdentitySchema } from '@ValenceContracts/schemas/DeviceIdentity';
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
 import { searchSayingWhy } from '@ValenceClient/admin/searchSayingWhy';
 import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
@@ -252,6 +253,9 @@ const ActiveSessionSchema = z.object({
   guestOf: z.string().nullable().default(null),
   fromServer: z.string().nullable().default(null),
   deviceLabel: z.string(),
+  device: SaidSchema.nullable().default(null),
+  client: SaidSchema.nullable().default(null),
+  identity: DeviceIdentitySchema.nullable().catch(null).default(null),
   clientKind: ClientKindSchema.default('browser'),
   connectedAt: z.number(),
   playback: z

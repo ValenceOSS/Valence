@@ -24,8 +24,8 @@ import { getCookie } from 'hono/cookie';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import { reasonsOfPlan } from '@ValenceServer/statistics/reasonsOfPlan';
-import { describeDevice } from '@ValenceCore/functions/describeDevice';
-import { brandsOf } from '@ValenceServer/web/brandsOf';
+import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
+import { deviceOfRequest } from '@ValenceServer/devices/deviceOfRequest';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { ClientKindSchema } from '@ValenceContracts/schemas/ClientKind';
@@ -148,10 +148,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
         mediaItemId: mediaId,
         mode: describePlaybackMode(session.plan),
         reasons: reasonsOfPlan(session.plan),
-        client: describeDevice(
-          headers.get('user-agent') ?? null,
-          brandsOf(headers.get('sec-ch-ua')),
-        ).message,
+        client: nameTheClient(deviceOfRequest(headers).identity).message,
       })
       .catch(() => null);
 

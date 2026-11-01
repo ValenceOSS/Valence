@@ -6,7 +6,7 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountFace/AccountFace';
-import { DeviceLabel } from '@ValenceScreens/components/AdminArea/components/DeviceLabel/DeviceLabel';
+import { DeviceLabel } from '@ValenceScreens/components/DeviceLabel/DeviceLabel';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
 import { say } from '@ValenceI18n/say';
@@ -120,7 +120,7 @@ const WatchHistoryCard = () => {
         row.original.count > 0 ? null : row.original.viewing.deviceLabel === null ? (
           <span className="text-text-muted">—</span>
         ) : (
-          <DeviceLabel deviceLabel={row.original.viewing.deviceLabel} />
+          <DeviceLabel device={row.original.viewing.deviceLabel} />
         ),
     },
     {

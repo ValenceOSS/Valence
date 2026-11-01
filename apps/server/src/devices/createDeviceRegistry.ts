@@ -1,3 +1,4 @@
+import { pickerLabelOf } from '@ValenceServer/devices/pickerLabelOf';
 import type {
   PresenceControlEvent,
   PresenceEntry,
@@ -147,7 +148,11 @@ const createDeviceRegistry = <Report>({
 
       return presence.tell(
         toClientId,
-        event(from?.deviceLabel ?? say('server.devices.deviceRegistry.anotherDevice')),
+        event(
+          from === undefined
+            ? say('server.devices.deviceRegistry.anotherDevice')
+            : pickerLabelOf(from),
+        ),
       );
     },
   };

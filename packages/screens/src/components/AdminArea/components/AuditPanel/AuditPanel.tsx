@@ -15,7 +15,9 @@ import { LOG_RANGES, logRangeStart } from '@ValenceClient/admin/logRanges';
 import type { LogRangeId } from '@ValenceClient/admin/logRanges';
 import { AUDIT_CATEGORIES } from '@ValenceContracts/schemas/Audit';
 import type { AuditCategory, AuditEntry, AuditOrder } from '@ValenceContracts/schemas/Audit';
-import { describeDevice } from '@ValenceCore/functions/describeDevice';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
+import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
+import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { AUDIT_ACTION_NAMES } from '@ValenceScreens/admin/AUDIT_ACTION_NAMES';
@@ -64,10 +66,21 @@ const whoDid = (entry: AuditEntry): string => {
  * @param entry - The entry.
  * @returns What to show, or nothing where neither was kept.
  */
-const whereFrom = (entry: AuditEntry): { device: string | null; address: string | null } => ({
-  device: entry.userAgent === null ? null : sayAgain(describeDevice(entry.userAgent)),
-  address: entry.address,
-});
+const whereFrom = (entry: AuditEntry): { device: string | null; address: string | null } => {
+  if (entry.userAgent === null) {
+    return { device: null, address: entry.address };
+  }
+
+  const identity = identifyDevice({ userAgent: entry.userAgent });
+
+  return {
+    device: say('common.deviceThroughClient', {
+      device: sayAgain(nameTheDevice(identity)),
+      client: sayAgain(nameTheClient(identity)),
+    }),
+    address: entry.address,
+  };
+};
 
 /**
  * Every sign-in and every change made on this server, newest first unless asked otherwise: who did

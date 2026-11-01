@@ -1,3 +1,4 @@
+import { pickerLabelOf } from '@ValenceServer/devices/pickerLabelOf';
 import { createDeviceRegistry } from '@ValenceServer/devices/createDeviceRegistry';
 import type {
   VideoCommand,
@@ -42,7 +43,7 @@ const createVideoDevices = ({ presence, onChanged }: VideoDevicesOptions): Video
     list: (owner) =>
       devices.owned(owner).map((entry) => ({
         clientId: entry.clientId,
-        label: entry.deviceLabel,
+        label: pickerLabelOf(entry),
         kind: entry.clientKind,
         nowWatching: devices.reportOf(entry.clientId),
       })),

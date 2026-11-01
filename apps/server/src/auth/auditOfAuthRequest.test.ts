@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { identifyDevice } from '@ValenceCore/functions/identifyDevice';
 import type { SignInAttempt } from './describeSignInAttempt';
 import { auditOfAuthRequest } from './auditOfAuthRequest';
 
@@ -11,7 +12,7 @@ const attempted = (attempt: Partial<SignInAttempt>): SignInAttempt => ({
   signedInAs: null,
   identifier: 'ada@example.com',
   userAgent: CHROME,
-  brands: [],
+  device: { deviceId: null, identity: identifyDevice({ userAgent: CHROME }) },
   address: '203.0.113.7',
   ...attempt,
 });

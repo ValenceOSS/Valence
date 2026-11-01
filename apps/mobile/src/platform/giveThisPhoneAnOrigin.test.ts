@@ -1,3 +1,7 @@
+import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
+import { readDeviceHints } from '@ValenceContracts/functions/readDeviceHints';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { giveThisPhoneAnOrigin } from './giveThisPhoneAnOrigin';
 import { THE_SERVER_ADDRESS } from './THE_SERVER_ADDRESS';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
@@ -54,6 +58,42 @@ describe('giveThisPhoneAnOrigin', () => {
     await globalThis.fetch('/api/profiles');
 
     expect(new Headers(asked[0]?.init?.headers).get('user-agent')).toMatch(/^Valence \(.+\)$/u);
+  });
+
+  it('says which device the request comes from', async () => {
+    installPlatform(
+      aFakePlatform({
+        describeThisDevice: () => ({ app: 'phone', system: 'ios', name: 'Dan’s iPhone' }),
+      }),
+    );
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    await globalThis.fetch('/api/profiles');
+
+    expect(readDeviceHints(new Headers(asked[0]?.init?.headers).get(DEVICE_HEADER))).toMatchObject({
+      app: 'phone',
+      system: 'ios',
+      name: 'Dan’s iPhone',
+    });
+  });
+
+  it('says which device a request already built comes from', async () => {
+    installPlatform(aFakePlatform({ describeThisDevice: () => ({ app: 'phone' }) }));
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    const built = new Request('http://192.168.1.36:8420/api/auth/sign-out', { method: 'POST' });
+
+    await globalThis.fetch(built);
+
+    expect(readDeviceHints(built.headers.get(DEVICE_HEADER))).toMatchObject({ app: 'phone' });
+  });
+
+  it('says nothing about the device to anywhere else', async () => {
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    await globalThis.fetch('https://images.example/poster.jpg');
+
+    expect(new Headers(asked[0]?.init?.headers).get(DEVICE_HEADER)).toBeNull();
   });
 
   it('carries what the caller asked with', async () => {

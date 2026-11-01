@@ -20,6 +20,7 @@ import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 const user = pgTable('user', {
@@ -60,7 +61,23 @@ const session = pgTable('session', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   impersonatedBy: text('impersonatedBy'),
+  deviceId: text('deviceId'),
+  device: jsonb('device').$type<DeviceIdentity>(),
+  lastActiveAt: timestamp('lastActiveAt'),
 });
+
+const deviceName = pgTable(
+  'device_name',
+  {
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    deviceId: text('deviceId').notNull(),
+    name: text('name').notNull(),
+    renamedAt: timestamp('renamedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.deviceId] })],
+);
 
 const account = pgTable('account', {
   id: text('id').primaryKey(),
@@ -2271,6 +2288,7 @@ export {
   ageException,
   user,
   session,
+  deviceName,
   account,
   verification,
   twoFactor,
