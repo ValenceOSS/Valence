@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { describePermission } from './describePermission';
 
 describe('describePermission', () => {
+  it('tells reading every library apart from reading what each person may see', () => {
+    expect(describePermission({ kind: 'library', access: 'everything' })).toEqual({
+      title: 'Read every library',
+      detail:
+        'See everything in every library, including locked libraries and titles past a person’s age limit. It can’t change or delete them.',
+    });
+  });
+
   it('says what each permission lets a plugin do', () => {
     const said = [
       describePermission({ kind: 'network', hosts: ['graphql.anilist.co', 'anilist.co'] }),

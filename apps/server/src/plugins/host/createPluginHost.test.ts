@@ -26,6 +26,13 @@ const PLAYLIST: PlaylistSummary = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+const SAM: Viewer = {
+  kind: 'account',
+  accountId: 'account-1',
+  profileId: 'p1',
+  isAdministrator: false,
+};
+
 const A_SONG: NonNullable<PlaylistEntry['item']> = {
   id: 'm1',
   kind: 'song',
@@ -37,7 +44,7 @@ const A_SONG: NonNullable<PlaylistEntry['item']> = {
 
 const unused = () => Promise.reject(new Error('not used here'));
 
-const build = () => {
+const build = (locked: readonly string[] = []) => {
   const progress = createMemoryWatchProgressService();
   const history = createMemoryHistoryService();
   const seen: Viewer[] = [];
@@ -96,6 +103,7 @@ const build = () => {
       Promise.resolve(
         profileId === 'p1' ? { id: 'p1', name: 'Sam', accountId: 'account-1' } : null,
       ),
+    lockedLibraries: () => Promise.resolve(locked),
     media: { ...fake.library, findTrack: fake.music.findTrack },
     durationOf: (mediaId) => Promise.resolve(mediaId === 'm1' ? 1440 : null),
     progress,
@@ -135,27 +143,41 @@ describe('what Valence does when a plugin asks', () => {
     );
   });
 
-  it('reaches playlists as the person, never as an administrator', async () => {
+  it('reaches playlists as the person it is given', async () => {
     const { host, seen } = build();
 
-    expect(await host.playlists.list('p1')).toEqual([{ id: PLAYLIST.id, name: 'Imported' }]);
+    expect(await host.playlists.list(SAM)).toEqual([{ id: PLAYLIST.id, name: 'Imported' }]);
     expect(seen).toEqual([
       { kind: 'account', accountId: 'account-1', profileId: 'p1', isAdministrator: false },
     ]);
-    expect(await host.playlists.create('p1', { name: 'Imported', description: null })).toEqual({
+    expect(await host.playlists.create(SAM, { name: 'Imported', description: null })).toEqual({
       id: PLAYLIST.id,
     });
-    await expect(host.playlists.add('p1', PLAYLIST.id, ['m1'])).resolves.toBeUndefined();
-    await expect(host.playlists.add('p1', 'not-theirs', ['m1'])).rejects.toThrow(
-      'no such playlist',
-    );
-    await expect(host.playlists.list('gone')).rejects.toThrow('no such profile');
+    await expect(host.playlists.add(SAM, PLAYLIST.id, ['m1'])).resolves.toBeUndefined();
+    await expect(host.playlists.add(SAM, 'not-theirs', ['m1'])).rejects.toThrow('no such playlist');
+  });
+
+  it('reads as a person in the background with every locked library still locked', async () => {
+    expect(await build().host.viewerOf('p1')).toEqual({
+      kind: 'account',
+      accountId: 'account-1',
+      profileId: 'p1',
+      isAdministrator: false,
+    });
+    expect(await build(['l1', 'l2']).host.viewerOf('p1')).toEqual({
+      kind: 'account',
+      accountId: 'account-1',
+      profileId: 'p1',
+      isAdministrator: false,
+      lockedLibraries: ['l1', 'l2'],
+    });
+    await expect(build().host.viewerOf('gone')).rejects.toThrow('no such profile');
   });
 
   it('adds songs the library does not have yet beside ones it does, in order', async () => {
     const { host, playlists } = build();
 
-    await host.playlists.add('p1', PLAYLIST.id, [
+    await host.playlists.add(SAM, PLAYLIST.id, [
       'm1',
       { title: 'Low Tide', artist: 'Mara Quill' },
       { title: 'Paper Kites', artist: 'Odell Finch', album: 'Paper Kites', releaseId: null },
@@ -171,7 +193,7 @@ describe('what Valence does when a plugin asks', () => {
   it('reads what a playlist holds, and drops one entry from it', async () => {
     const { host } = build();
 
-    await expect(host.playlists.read('p1', PLAYLIST.id)).resolves.toEqual({
+    await expect(host.playlists.read(SAM, PLAYLIST.id)).resolves.toEqual({
       id: PLAYLIST.id,
       name: 'Imported',
       entries: [
@@ -184,9 +206,9 @@ describe('what Valence does when a plugin asks', () => {
         },
       ],
     });
-    await expect(host.playlists.read('p1', 'not-theirs')).resolves.toBeNull();
-    await expect(host.playlists.drop('p1', PLAYLIST.id, 'e1')).resolves.toBeUndefined();
-    await expect(host.playlists.drop('p1', PLAYLIST.id, 'e9')).rejects.toThrow('no such entry');
+    await expect(host.playlists.read(SAM, 'not-theirs')).resolves.toBeNull();
+    await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e1')).resolves.toBeUndefined();
+    await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e9')).rejects.toThrow('no such entry');
   });
 
   it('tells the one profile it is for, saying which plugin it is from', async () => {

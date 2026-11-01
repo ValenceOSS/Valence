@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { measurePictureFraming } from '@ValenceServer/requests/trailers/measurePictureFraming';
 import { createTrailerAddresses } from '@ValenceServer/requests/trailers/createTrailerAddresses';
 import { askYtDlp } from '@ValenceServer/requests/trailers/askYtDlp';
@@ -4692,6 +4693,7 @@ const startPlugins = (
     store: createDatabasePluginStore(db),
     host: createPluginHost({
       readProfile,
+      lockedLibraries: async () => Object.keys(await readLibraryLocks(settings)),
       media,
       durationOf: async (mediaId) => {
         const [found] = await db

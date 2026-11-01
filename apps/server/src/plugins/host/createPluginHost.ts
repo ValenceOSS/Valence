@@ -9,6 +9,7 @@ type Profile = { id: string; name: string; accountId: string };
 
 type CreatePluginHostOptions = {
   readProfile: (profileId: string) => Promise<Profile | null>;
+  lockedLibraries: () => Promise<readonly string[]>;
   media: PluginHost['library'] & { findTrack: PluginHost['music']['findTrack'] };
   durationOf: (mediaId: string) => Promise<number | null>;
   progress: WatchProgressService;
@@ -27,11 +28,13 @@ type CreatePluginHostOptions = {
  * by the same services a person's own client reaches, as that person, so a plugin marking an
  * episode watched or adding to a playlist leaves exactly what the person doing it would.
  *
- * @param options - The services to act through, and how to find a profile's account.
+ * @param options - The services to act through, how to find a profile's account, and which
+ *   libraries are locked.
  * @returns The host the broker calls.
  */
 const createPluginHost = ({
   readProfile,
+  lockedLibraries,
   media,
   durationOf,
   progress,
@@ -48,15 +51,19 @@ const createPluginHost = ({
       throw new Error('There is no such profile.');
     }
 
+    const locked = await lockedLibraries();
+
     return {
       kind: 'account',
       accountId: profile.accountId,
       profileId: profile.id,
       isAdministrator: false,
+      ...(locked.length === 0 ? {} : { lockedLibraries: locked }),
     };
   };
 
   return {
+    viewerOf: viewerFor,
     profiles: { read: readProfile },
     library: {
       get: media.get,
@@ -102,13 +109,13 @@ const createPluginHost = ({
     },
     requests,
     playlists: {
-      list: async (profileId) =>
-        (await playlists.list(await viewerFor(profileId))).map((playlist) => ({
+      list: async (viewer) =>
+        (await playlists.list(viewer)).map((playlist) => ({
           id: playlist.id,
           name: playlist.name,
         })),
-      create: async (profileId, playlist) => {
-        const made = await playlists.create(await viewerFor(profileId), {
+      create: async (viewer, playlist) => {
+        const made = await playlists.create(viewer, {
           name: playlist.name,
           description: playlist.description,
         });
@@ -119,9 +126,9 @@ const createPluginHost = ({
 
         return { id: made.id };
       },
-      add: async (profileId, playlistId, items) => {
+      add: async (viewer, playlistId, items) => {
         const added = await playlists.add(
-          await viewerFor(profileId),
+          viewer,
           playlistId,
           items.map((item) =>
             typeof item === 'string'
@@ -139,8 +146,8 @@ const createPluginHost = ({
           throw new Error('There is no such playlist of theirs.');
         }
       },
-      read: async (profileId, playlistId) => {
-        const found = await playlists.read(await viewerFor(profileId), playlistId);
+      read: async (viewer, playlistId) => {
+        const found = await playlists.read(viewer, playlistId);
 
         return found === null
           ? null
@@ -162,8 +169,8 @@ const createPluginHost = ({
               })),
             };
       },
-      drop: async (profileId, playlistId, entryId) => {
-        const dropped = await playlists.drop(await viewerFor(profileId), playlistId, entryId);
+      drop: async (viewer, playlistId, entryId) => {
+        const dropped = await playlists.drop(viewer, playlistId, entryId);
 
         if (!dropped) {
           throw new Error('There is no such entry in a playlist of theirs.');

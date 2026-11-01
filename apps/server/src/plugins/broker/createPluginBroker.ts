@@ -9,6 +9,7 @@ import type { BrokerScope } from './BrokerScope';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import type { PluginHost } from './PluginHost';
+import { asPersonLooking } from './asPersonLooking';
 import { multipartOf } from './multipartOf';
 
 type AccountTokens = { accessToken: string; expiresAt: string | null; account: string | null };
@@ -42,6 +43,8 @@ const CatalogueKind = z.enum(['film', 'series', 'album', 'track']);
 const ExternalSource = z.enum(['tmdb', 'tvdb', 'imdb', 'anilist', 'mal', 'musicbrainz', 'isrc']);
 
 const Moment = z.iso.datetime({ offset: true });
+
+const Reading = z.object({ profileId: Id }).strict().nullish();
 
 const Detail = z.record(
   z.string().max(60),
@@ -95,10 +98,18 @@ const ARGS = {
   'accounts.connection': z.tuple([Id, Id]),
   'accounts.disconnect': z.tuple([Id, Id]),
   'profiles.list': z.tuple([]),
-  'library.get': z.tuple([Id]),
-  'library.search': z.tuple([z.string().min(1).max(200), z.array(MediaKind).max(6).optional()]),
-  'library.findByExternalId': z.tuple([ExternalSource, z.string().min(1).max(100)]),
-  'library.episodes': z.tuple([Id]),
+  'library.get': z.tuple([Id, Reading.optional()]),
+  'library.search': z.tuple([
+    z.string().min(1).max(200),
+    z.array(MediaKind).max(6).nullish(),
+    Reading.optional(),
+  ]),
+  'library.findByExternalId': z.tuple([
+    ExternalSource,
+    z.string().min(1).max(100),
+    Reading.optional(),
+  ]),
+  'library.episodes': z.tuple([Id, Reading.optional()]),
   'viewing.progress': z.tuple([Id, Moment.optional()]),
   'viewing.markWatched': z.tuple([Id, Id, Moment.optional()]),
   'viewing.markUnwatched': z.tuple([Id, Id]),
@@ -136,6 +147,7 @@ const ARGS = {
       album: z.string().max(300).optional(),
       isrc: z.string().max(20).optional(),
     }),
+    Reading.optional(),
   ]),
   'notifications.send': z.tuple([
     Id,
@@ -202,26 +214,71 @@ const createPluginBroker = ({
     }
   };
 
-  const actsFor = async (profileId: string, scope: BrokerScope | null): Promise<void> => {
+  const stillRunning = (scope: BrokerScope | null): BrokerScope => {
     if (scope === null) {
       throw new Error('That was asked after the work it belonged to had finished.');
     }
 
-    if (scope.kind === 'viewer') {
-      if (scope.profileId !== profileId) {
+    return scope;
+  };
+
+  const actsFor = async (profileId: string, scope: BrokerScope | null): Promise<BrokerScope> => {
+    const running = stillRunning(scope);
+
+    if (running.kind === 'viewer') {
+      if (running.profileId !== profileId) {
         throw new Error(`${name} may only act for the person using it.`);
       }
 
-      return;
+      return running;
     }
 
     if (!(await store.profilesOf(installation.id)).includes(profileId)) {
       throw new Error(`${name} may only act for people who have used it.`);
     }
+
+    return running;
   };
 
-  const readingAs = (scope: BrokerScope | null): Viewer =>
-    scope?.kind === 'viewer' ? scope.reads : asTheServer;
+  const asThePerson = async (profileId: string, scope: BrokerScope | null): Promise<Viewer> => {
+    const checked = await actsFor(profileId, scope);
+
+    if (checked.kind === 'background') {
+      return host.viewerOf(profileId);
+    }
+
+    return asPersonLooking({ accountId: checked.accountId, profileId }, checked.reads);
+  };
+
+  const readingAs = async (
+    scope: BrokerScope | null,
+    reading: { profileId: string } | null | undefined,
+  ): Promise<Viewer> => {
+    const running = stillRunning(scope);
+    const named = reading?.profileId ?? null;
+
+    if (running.kind === 'viewer') {
+      if (named !== null) {
+        await actsFor(named, running);
+      }
+
+      return running.reads;
+    }
+
+    const profileId = named ?? running.profileId;
+
+    if (profileId !== null) {
+      await actsFor(profileId, running);
+
+      return host.viewerOf(profileId);
+    }
+
+    if (find('library')?.access !== 'everything') {
+      throw new Error(`${name} must say which person it is reading the library for.`);
+    }
+
+    return asTheServer;
+  };
 
   const hasProvider = (provider: string): void => {
     const accounts = find('accounts');
@@ -443,30 +500,30 @@ const createPluginBroker = ({
       case 'library.get': {
         needs('library');
 
-        const [mediaId] = ARGS[method].parse(args);
+        const [mediaId, reading] = ARGS[method].parse(args);
 
-        return host.library.get(mediaId, readingAs(scope));
+        return host.library.get(mediaId, await readingAs(scope, reading));
       }
       case 'library.search': {
         needs('library');
 
-        const [query, kinds] = ARGS[method].parse(args);
+        const [query, kinds, reading] = ARGS[method].parse(args);
 
-        return host.library.search(query, kinds ?? [], readingAs(scope));
+        return host.library.search(query, kinds ?? [], await readingAs(scope, reading));
       }
       case 'library.findByExternalId': {
         needs('library');
 
-        const [source, id] = ARGS[method].parse(args);
+        const [source, id, reading] = ARGS[method].parse(args);
 
-        return host.library.findByExternalId(source, id, readingAs(scope));
+        return host.library.findByExternalId(source, id, await readingAs(scope, reading));
       }
       case 'library.episodes': {
         needs('library');
 
-        const [seriesId] = ARGS[method].parse(args);
+        const [seriesId, reading] = ARGS[method].parse(args);
 
-        return host.library.episodes(seriesId, readingAs(scope));
+        return host.library.episodes(seriesId, await readingAs(scope, reading));
       }
       case 'viewing.progress': {
         needs('viewing');
@@ -528,18 +585,14 @@ const createPluginBroker = ({
 
         const [profileId] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
-
-        return host.playlists.list(profileId);
+        return host.playlists.list(await asThePerson(profileId, scope));
       }
       case 'playlists.create': {
         needs('playlists', 'write');
 
         const [profileId, playlist] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
-
-        return host.playlists.create(profileId, {
+        return host.playlists.create(await asThePerson(profileId, scope), {
           name: playlist.name,
           description: playlist.description ?? null,
         });
@@ -549,9 +602,8 @@ const createPluginBroker = ({
 
         const [profileId, playlistId, items] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
         await host.playlists.add(
-          profileId,
+          await asThePerson(profileId, scope),
           playlistId,
           items.map((item) =>
             typeof item === 'string'
@@ -572,24 +624,21 @@ const createPluginBroker = ({
 
         const [profileId, playlistId] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
-
-        return host.playlists.read(profileId, playlistId);
+        return host.playlists.read(await asThePerson(profileId, scope), playlistId);
       }
       case 'playlists.drop': {
         needs('playlists', 'write');
 
         const [profileId, playlistId, entryId] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
-        await host.playlists.drop(profileId, playlistId, entryId);
+        await host.playlists.drop(await asThePerson(profileId, scope), playlistId, entryId);
 
         return null;
       }
       case 'music.findTrack': {
         needs('library');
 
-        const [track] = ARGS[method].parse(args);
+        const [track, reading] = ARGS[method].parse(args);
 
         return host.music.findTrack(
           {
@@ -598,7 +647,7 @@ const createPluginBroker = ({
             album: track.album ?? null,
             isrc: track.isrc ?? null,
           },
-          readingAs(scope),
+          await readingAs(scope, reading),
         );
       }
       case 'notifications.send': {

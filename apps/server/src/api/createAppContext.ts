@@ -1,3 +1,4 @@
+import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { createPushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import { saying } from '@ValenceI18n/saying';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
@@ -6,7 +7,6 @@ import { askerFieldsOf } from '@ValenceServer/webhooks/askerFieldsOf';
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
 import { createInertBucketMounts } from '@ValenceServer/buckets/createInertBucketMounts';
 import { randomBytes } from 'node:crypto';
-import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { unlockedLibraries } from '@ValenceServer/locks/unlockedLibraries';
 import { cookieOf } from '@ValenceServer/locks/cookieOf';
 import { UNLOCKED_COOKIE } from '@ValenceServer/locks/UNLOCKED_COOKIE';
@@ -552,7 +552,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * @returns Who it is for, or nothing where nobody is signed in.
    */
   const lockedLibraries = async (headers: Headers, holder: string): Promise<string[]> => {
-    const locks = LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
+    const locks = await readLibraryLocks(settings);
     const lockedIds = Object.keys(locks);
 
     if (lockedIds.length === 0) {

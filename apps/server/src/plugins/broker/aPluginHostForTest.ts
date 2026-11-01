@@ -2,6 +2,7 @@
 import { vi } from 'vitest';
 import { A_PLUGIN_MEDIA_FOR_TEST } from './A_PLUGIN_MEDIA_FOR_TEST';
 import type { PluginHost } from './PluginHost';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
  * A host whose every call answers plainly and can be inspected, for tests of what calls it.
@@ -9,6 +10,15 @@ import type { PluginHost } from './PluginHost';
  * @returns The host.
  */
 const aPluginHostForTest = (): PluginHost => ({
+  viewerOf: vi.fn((profileId: string) =>
+    Promise.resolve({
+      kind: 'account' as const,
+      accountId: 'a1',
+      profileId,
+      isAdministrator: false,
+      lockedLibraries: ['locked'],
+    }),
+  ),
   profiles: {
     read: vi.fn((id: string) =>
       Promise.resolve(id === 'gone' ? null : { id, name: `Profile ${id}`, accountId: 'a1' }),
@@ -35,7 +45,7 @@ const aPluginHostForTest = (): PluginHost => ({
     list: vi.fn(() => Promise.resolve([{ id: 'pl1', name: 'Mine' }])),
     create: vi.fn(() => Promise.resolve({ id: 'pl2' })),
     add: vi.fn(() => Promise.resolve()),
-    read: vi.fn((_profileId: string, playlistId: string) =>
+    read: vi.fn((_viewer: Viewer, playlistId: string) =>
       Promise.resolve({
         id: playlistId,
         name: 'Mine',

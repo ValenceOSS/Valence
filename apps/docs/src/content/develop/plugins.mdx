@@ -37,7 +37,7 @@ Plugin code runs only on the server, and even there it is kept apart.
 - **One process per plugin.** Each enabled plugin gets a child process of its own. A plugin that crashes or hangs takes nothing else with it, and the server restarts it with a growing delay.
 - **Node's permission model.** That process is started with `--permission`. It may read only the files it needs to start, and it cannot write files, start other programs, open worker threads or load native add-ons.
 - **QuickJS inside WebAssembly.** The plugin's JavaScript does not run in Node at all. It runs in QuickJS, a separate JavaScript engine compiled to WebAssembly, inside that process. From inside, there is no `require`, no `process`, no `fetch`, no `XMLHttpRequest` and no `WebAssembly`. The only way out is the `valence` object Valence hands to each handler.
-- **Limits on every call.** QuickJS is capped at 64 MB of memory and 5 seconds of processor time per call, and a call that has not finished after 30 seconds is abandoned. The process itself is capped at 160 MB.
+- **Limits on every call.** QuickJS is capped at 64 MB of memory and 5 seconds of processor time between one question to Valence and the next, and a call that has not finished after 30 seconds is abandoned. The process itself is capped at 160 MB.
 
 Every method on the `valence` object is a message to the server, which checks it against the permissions the administrator granted before doing anything. See the [host API](/plugins/host-api).
 
@@ -62,7 +62,7 @@ There is deliberately no permission for the file system, for sessions, for other
 
 ### Who a plugin acts for
 
-A plugin never acts for anyone at random. When someone uses a plugin's page or panel, the plugin acts only for that person's profile, and reads only the titles that profile may see, its locked libraries and limits included. Scheduled work and events act only for profiles that connected an account to the plugin or opened one of its pages, and an event about a profile reaches the plugin only if that profile is one of them; seeing a panel doesn't count. Requests are made as that person and are bound by the request rights their account already has. A notification a plugin sends reaches the one profile it is for.
+A plugin never acts for anyone at random. When someone uses a plugin's page or panel, the plugin acts only for that person's profile, and reads only the titles that profile may see, its locked libraries and limits included. Scheduled work and events act only for profiles that connected an account to the plugin or opened one of its pages, and read the library as one of them, with every locked library still locked. A read that names nobody is refused unless the plugin asks to read every library. An event about a profile reaches the plugin only if that profile is one of them; seeing a panel doesn't count. Requests are made as that person and are bound by the request rights their account already has. A notification a plugin sends reaches the one profile it is for.
 
 ## Network rules
 

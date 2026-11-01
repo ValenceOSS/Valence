@@ -21,7 +21,13 @@ const summarisePermissions = (permissions: readonly Permission[]): PermissionSum
           label: `Your ${provider.name} account`,
         }));
       case 'library':
-        return [{ id: 'library', kind: 'library', label: 'Your library' }];
+        return [
+          {
+            id: 'library',
+            kind: 'library',
+            label: permission.access === 'everything' ? 'Every library' : 'Your library',
+          },
+        ];
       case 'viewing':
         return [
           {
