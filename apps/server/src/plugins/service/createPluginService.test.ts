@@ -1375,8 +1375,8 @@ describe('telling a plugin of its own changes', () => {
 
   const HOOKS = `globalThis.valencePlugin = {
   onSettingsChanged: async ({ valence }, change) => {
-    await valence.storage.set('told', ((await valence.storage.get('told')) ?? 0) + 1);
     await valence.storage.set('changed', { ids: change.changed, settings: await valence.settings.read() });
+    await valence.storage.set('told', ((await valence.storage.get('told')) ?? 0) + 1);
   },
   onUninstall: async ({ valence }) => {
     valence.log.info('saying goodbye with ' + JSON.stringify(await valence.storage.get('changed')));
