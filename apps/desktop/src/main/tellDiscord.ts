@@ -14,6 +14,8 @@ const CLIENT_ID = '1539800715281563738';
 
 const VERSION = 1;
 
+const SPACED_BY = 4000;
+
 type Presence = {
   about: (playing: WhatIsPlaying | null) => void;
   close: () => void;
@@ -36,6 +38,16 @@ type Presence = {
  * times over as a setting changes, and Discord allows only a handful of changes a minute: spent on
  * repeats, they left a status Discord was still catching up on after the last real change.
  *
+ * Changes are spaced four seconds apart, five to Discord's twenty-second allowance, and whatever is
+ * true at the end of the wait is what goes. One episode carrying on into the next changes the status
+ * several times in a second — the title, the clock, the pause and the play — and Discord quietly
+ * drops what goes over its allowance, which once left the last episode on somebody's status, or the
+ * new one without its poster, until the next change came along.
+ *
+ * Only one connection is tried at a time, and only the one in use is forgotten when one closes. A
+ * burst of changes while nothing was connected opened a connection for each, and the first of those
+ * to close took the working one down with it.
+ *
  * @param temporary - Where this machine keeps this user's temporary files, which is where Discord
  *   listens on a Mac. Passed in rather than read from the environment, which does not always carry
  *   it.
@@ -48,12 +60,15 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
   let waiting: WhatIsPlaying | null = null;
   let arrived: Buffer = Buffer.alloc(0);
   let lastSent: string | null = null;
+  let lastSentAt = 0;
+  let held: ReturnType<typeof setTimeout> | null = null;
+  let isConnecting = false;
 
   const send = (opcode: number, payload: object): void => {
     socket?.write(aDiscordFrame(opcode, JSON.stringify(payload)));
   };
 
-  const setActivity = (playing: WhatIsPlaying | null): void => {
+  const setActivity = (playing: WhatIsPlaying | null, isUrgent = false): void => {
     const activity = aDiscordActivity(playing, openedAt);
     const said = JSON.stringify(activity);
 
@@ -61,7 +76,22 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
       return;
     }
 
+    const wait = lastSentAt + SPACED_BY - Date.now();
+
+    if (wait > 0 && !isUrgent) {
+      held ??= setTimeout(() => {
+        held = null;
+
+        if (ready) {
+          setActivity(waiting);
+        }
+      }, wait);
+
+      return;
+    }
+
     lastSent = said;
+    lastSentAt = Date.now();
 
     send(FRAME, {
       cmd: 'SET_ACTIVITY',
@@ -71,11 +101,14 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
   };
 
   const forget = (): void => {
+    clearTimeout(held ?? undefined);
+    held = null;
     socket?.destroy();
     socket = null;
     ready = false;
     arrived = Buffer.alloc(0);
     lastSent = null;
+    lastSentAt = 0;
   };
 
   const heard = (chunk: Buffer): void => {
@@ -101,6 +134,8 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
     const [first, ...rest] = paths;
 
     if (first === undefined) {
+      isConnecting = false;
+
       return;
     }
 
@@ -119,12 +154,21 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
     });
 
     trying.on('connect', () => {
+      isConnecting = false;
       socket = trying;
       send(HANDSHAKE, { v: VERSION, client_id: CLIENT_ID });
     });
 
-    trying.on('data', heard);
-    trying.on('close', forget);
+    trying.on('data', (chunk: Buffer) => {
+      if (socket === trying) {
+        heard(chunk);
+      }
+    });
+    trying.on('close', () => {
+      if (socket === trying) {
+        forget();
+      }
+    });
   };
 
   return {
@@ -132,7 +176,8 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
       waiting = playing;
 
       if (socket === null) {
-        if (playing !== null) {
+        if (playing !== null && !isConnecting) {
+          isConnecting = true;
           connect(whereDiscordListens(process.platform, process.env, temporary));
         }
 
@@ -145,7 +190,7 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
     },
     close: () => {
       if (ready) {
-        setActivity(null);
+        setActivity(null, true);
       }
 
       forget();

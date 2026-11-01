@@ -40,6 +40,25 @@ describe('summariseDetail', () => {
     });
   });
 
+  it('keeps the poster and catalogue id, which Discord draws the status from', () => {
+    const summary = summariseDetail(
+      detail({
+        metadata: {
+          hasPoster: true,
+          hasBackdrop: false,
+          hasLogo: false,
+          posterUrl: 'https://image.tmdb.org/t/p/w500/south-park.jpg',
+          externalId: '2190',
+        },
+      }),
+    );
+
+    expect(summary).toMatchObject({
+      posterUrl: 'https://image.tmdb.org/t/p/w500/south-park.jpg',
+      externalId: '2190',
+    });
+  });
+
   it('carries the programme an episode belongs to', () => {
     const summary = summariseDetail(
       detail({

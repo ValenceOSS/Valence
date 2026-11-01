@@ -136,6 +136,7 @@ const MediaMetadataSchema = z.object({
   hasPoster: z.boolean(),
   hasBackdrop: z.boolean(),
   hasLogo: z.boolean(),
+  posterUrl: z.string().url().nullish(),
   seriesTitle: z.string().nullish(),
   seasonNumber: z.number().int().nullish(),
   episodeNumber: z.number().int().nullish(),
