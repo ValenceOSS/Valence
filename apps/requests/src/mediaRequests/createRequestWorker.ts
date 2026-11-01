@@ -41,6 +41,7 @@ import { planAnimeSearches } from '@ValenceRequests/mediaRequests/planAnimeSearc
 import { isItemInScope } from '@ValenceRequests/mediaRequests/isItemInScope';
 import type { PlannedSearch } from '@ValenceRequests/mediaRequests/planSearches';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
+import { searchTitleOf } from '@ValenceRequests/mediaRequests/searchTitleOf';
 import { indexersFor } from '@ValenceRequests/mediaRequests/indexersFor';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
@@ -882,11 +883,10 @@ const createRequestWorker = ({
     const isPending = (item: RequestItemRecord) =>
       pending.has(item.id) && begunAs.get(item.id) === item.state;
     const queries = [
-      ...new Set(
-        [found.request.title, ...found.request.aliases.slice(0, MOST_ALIASES_SEARCHED)].map(
-          queryTitleOf,
-        ),
-      ),
+      ...new Set([
+        searchTitleOf(found.request),
+        ...found.request.aliases.slice(0, MOST_ALIASES_SEARCHED).map(queryTitleOf),
+      ]),
     ];
     const plans = planSearches(found.request, found.items, fetching, today());
     const among = indexersFor(found.request, await indexers.list());
@@ -1997,7 +1997,7 @@ const createRequestWorker = ({
       case 'film':
         return [
           {
-            query,
+            query: searchTitleOf(request),
             mode: 'movie',
             ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
             ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
@@ -2084,6 +2084,7 @@ const createRequestWorker = ({
     blockedList: readonly BlockedReleaseRecord[],
     scope: SearchScope | null = null,
     chosen: readonly string[] | null = null,
+    typed: string | null = null,
   ): Promise<ReleaseSearchOutcome> => {
     const { request } = found;
     const among = indexersFor(request, await indexers.list(), chosen);
@@ -2091,10 +2092,12 @@ const createRequestWorker = ({
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
     const anime = request.kind === 'series' ? (request.anime ?? null) : null;
-    const searches =
-      anime === null
-        ? searchesByHand(request, seasons, scope)
-        : animeSearchesByHand(request, anime, found.items);
+    const searches: ReleaseSearch[] =
+      typed !== null
+        ? [{ query: typed, mode: 'search' }]
+        : anime === null
+          ? searchesByHand(request, seasons, scope)
+          : animeSearchesByHand(request, anime, found.items);
     const outcomes = await Promise.all(
       searches.map((search) => indexers.search(search, null, { among, isUrgent: true })),
     );
@@ -2693,6 +2696,7 @@ const createRequestWorker = ({
       id: string,
       scope: SearchScope | null = null,
       chosen: readonly string[] | null = null,
+      typed: string | null = null,
     ): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 
@@ -2701,7 +2705,7 @@ const createRequestWorker = ({
       }
 
       if (scope === null) {
-        return releasesOf(found, await blockedFor(id), null, chosen);
+        return releasesOf(found, await blockedFor(id), null, chosen, typed);
       }
 
       const isAnime = (found.request.anime ?? null) !== null;
@@ -2711,6 +2715,7 @@ const createRequestWorker = ({
         await blockedFor(id),
         scope,
         chosen,
+        typed,
       );
 
       if (scope.episode !== null) {

@@ -12,6 +12,11 @@ describe('queryOfScope', () => {
     expect(queryOfScope({ season: '1', indexers: 'a' })).toBe('?season=1&indexers=a');
   });
 
+  it('says what was typed to search by, leaving out nothing typed', () => {
+    expect(queryOfScope({ query: 'Star Trek 2009' })).toBe('?query=Star+Trek+2009');
+    expect(queryOfScope({ indexers: 'a', query: '' })).toBe('?indexers=a');
+  });
+
   it('says nothing for the whole request, or an episode with no season', () => {
     expect(queryOfScope({})).toBe('');
     expect(queryOfScope({ episode: '3' })).toBe('');

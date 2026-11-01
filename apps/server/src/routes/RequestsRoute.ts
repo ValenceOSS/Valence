@@ -1338,6 +1338,10 @@ const SearchScopeQuery = z.object({
     .optional(),
 });
 
+const ReleasesQuery = SearchScopeQuery.extend({
+  query: z.string().trim().max(200).optional(),
+});
+
 const retryMediaRequestRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/retry',
@@ -1362,8 +1366,8 @@ const mediaRequestReleasesRoute = createRoute({
   path: '/api/requests/media/{id}/releases',
   tags: ['Requests'],
   summary:
-    'Search for a request by hand, judging every release found — for the whole request, one season of it in packs, or one episode',
-  request: { params: RecordIdParameter, query: SearchScopeQuery },
+    'Search for a request by hand, judging every release found — for the whole request, one season of it in packs, or one episode — by what it would be searched for itself, or by what was typed',
+  request: { params: RecordIdParameter, query: ReleasesQuery },
   responses: requestFailures({
     200: {
       description: 'The releases for it, best first',

@@ -20,6 +20,7 @@ import { readBody } from '@ValenceRequests/readBody';
 import type { RequestNow } from '@ValenceContracts/schemas/RequestNow';
 import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
 import { readSearchScope } from '@ValenceRequests/mediaRequests/readSearchScope';
+import { readTypedQuery } from '@ValenceRequests/mediaRequests/readTypedQuery';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
@@ -387,6 +388,7 @@ const createRequestRoutes = ({
           .query('indexers')
           ?.split(',')
           .filter((one) => one !== '') ?? null,
+        readTypedQuery(context.req.query('query')),
       ),
     ),
   );

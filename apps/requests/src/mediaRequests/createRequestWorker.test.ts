@@ -248,7 +248,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect(searched).toEqual([{ query: 'Dune', mode: 'movie', tmdbId: 438631 }]);
+      expect(searched).toEqual([{ query: 'Dune 2021', mode: 'movie', tmdbId: 438631 }]);
       expect(send).toHaveBeenCalledWith(
         expect.objectContaining({ title: BLURAY, libraryKind: 'movies' }),
       );
@@ -294,7 +294,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect(searched[0]?.query).toBe('Re:ZERO Starting Life in Another World');
+      expect(searched[0]?.query).toBe('Re:ZERO Starting Life in Another World 2021');
     });
 
     it('judges by the profile chosen for the request before the library’s own', async () => {
@@ -852,7 +852,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect(searched.map((search) => search.query)).toEqual(['Dune', 'Dune Part One']);
+      expect(searched.map((search) => search.query)).toEqual(['Dune 2021', 'Dune Part One']);
       expect(send).toHaveBeenCalledTimes(1);
     });
 
@@ -2413,7 +2413,7 @@ describe('createRequestWorker', () => {
       const { worker, said } = aWorker({
         requests: [aMediaRequest({ aliases: ['Dune Part One'] })],
         found: (search) =>
-          search.query === 'Dune'
+          search.query === 'Dune 2021'
             ? [aRelease('Heat.1995.1080p.BluRay.x264-GRP')]
             : [aRelease(BLURAY, { seeders: 0 })],
         reports: [
@@ -2614,6 +2614,23 @@ describe('createRequestWorker', () => {
         { query: 'The Second Step An Author', mode: 'search', categories: [3030] },
         { query: 'A Long Road', mode: 'book' },
         { query: 'A Long Road', mode: 'search', categories: [3030] },
+      ]);
+    });
+
+    it('searches a film by its title and year, or by what was typed in place of that', async () => {
+      const film = aMediaRequest();
+      const { worker, searched } = aWorker({
+        requests: [film],
+        items: [aRequestItem({ requestId: film.id })],
+        found: () => [],
+      });
+
+      await worker.releasesFor(film.id);
+      await worker.releasesFor(film.id, null, null, 'Dune Part One 2160p');
+
+      expect(searched).toEqual([
+        { query: 'Dune 2021', mode: 'movie', tmdbId: 438631 },
+        { query: 'Dune Part One 2160p', mode: 'search' },
       ]);
     });
 
@@ -3144,7 +3161,11 @@ describe('createRequestWorker', () => {
       held.answer();
       await Promise.all([sweep, searchedNew]);
 
-      expect(harness.searched.map((search) => search.query)).toEqual(['Dune', 'Heat', 'Arrival']);
+      expect(harness.searched.map((search) => search.query)).toEqual([
+        'Dune 2021',
+        'Heat 2021',
+        'Arrival 2021',
+      ]);
     });
   });
 

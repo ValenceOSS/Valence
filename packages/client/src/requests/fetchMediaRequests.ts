@@ -267,25 +267,32 @@ const fulfilMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
 
 /**
  * Searches for a request by hand, every release judged: for all of it, for one season in packs, or
- * for one episode, on every indexer it may use or only some of them.
+ * for one episode, on every indexer it may use or only some of them, by what it would be searched
+ * for itself or by what was typed.
  *
  * @param id - Which.
  * @param scope - The season or episode to narrow it to, or nothing for the whole request.
  * @param indexers - The indexers to search, or nothing for every one the request may use.
+ * @param typed - What was typed to search for, or nothing for the request's own searches.
  * @returns What was found, best first.
  */
 const fetchMediaRequestReleases = (
   id: string,
   scope: SearchScope | null = null,
   indexers: readonly string[] | null = null,
+  typed: string | null = null,
 ): Promise<ReleaseSearchOutcome> => {
   const scoped = queryOfSearchScope(scope);
   const narrowed =
     indexers === null
       ? scoped
       : `${scoped}${scoped === '' ? '?' : '&'}indexers=${indexers.join(',')}`;
+  const asked =
+    typed === null
+      ? narrowed
+      : `${narrowed}${narrowed === '' ? '?' : '&'}query=${encodeURIComponent(typed)}`;
 
-  return readFromServer(`${REQUESTS}/${id}/releases${narrowed}`, ReleaseSearchOutcomeSchema);
+  return readFromServer(`${REQUESTS}/${id}/releases${asked}`, ReleaseSearchOutcomeSchema);
 };
 
 /**

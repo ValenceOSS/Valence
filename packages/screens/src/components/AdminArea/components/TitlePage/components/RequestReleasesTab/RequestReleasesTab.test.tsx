@@ -103,9 +103,36 @@ describe('RequestReleasesTab', () => {
     await user.click(screen.getByRole('button', { name: /Indexers/ }));
     await user.click(screen.getByRole('menuitemcheckbox', { name: 'GeneralTracker' }));
 
-    expect(fetchMediaRequestReleases).toHaveBeenLastCalledWith(request.id, null, [
-      ANIME_REPORT.indexerId,
-    ]);
+    expect(fetchMediaRequestReleases).toHaveBeenLastCalledWith(
+      request.id,
+      null,
+      [ANIME_REPORT.indexerId],
+      null,
+    );
+  });
+
+  it('searches by what is typed, and goes back to its own search', async () => {
+    const user = userEvent.setup();
+    const request = aMediaRequest({ kind: 'film', title: 'Star Trek' });
+
+    answering();
+    renderInAnAddress(<RequestReleasesTab request={request} onPicked={vi.fn()} />);
+
+    await screen.findByText(HARUHI.title);
+    await user.type(screen.getByRole('searchbox', { name: 'Search for' }), '  Star   Trek 2009 ');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(fetchMediaRequestReleases).toHaveBeenLastCalledWith(
+      request.id,
+      null,
+      null,
+      'Star Trek 2009',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Back to its own search' }));
+
+    expect(screen.getByRole('searchbox', { name: 'Search for' })).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Back to its own search' })).toBeNull();
   });
 
   it('sets a display name so devtools can identify it', () => {

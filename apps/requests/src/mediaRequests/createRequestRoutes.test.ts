@@ -319,6 +319,17 @@ describe('createRequestRoutes', () => {
     expect((await ask(`/requests/${id}/catalogue`, 'PUT', {})).status).toBe(400);
   });
 
+  it('searches for a request by what was typed, where something was', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/releases?query=Dune%20%20Part%20One`)).status).toBe(200);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith(id, null, null, 'Dune Part One');
+
+    expect((await ask(`/requests/${id}/releases?query=%20`)).status).toBe(200);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith(id, null, null, null);
+  });
+
   it('searches by hand for a request not yet made, making nothing', async () => {
     const { ask, worker } = theRoutes();
 
@@ -472,10 +483,12 @@ describe('createRequestRoutes', () => {
     expect((await ask('/requests/some/releases')).status).toBe(200);
     expect((await ask('/requests/missing/releases')).status).toBe(404);
     expect((await ask('/requests/some/releases?season=1&indexers=a,b')).status).toBe(200);
-    expect(worker.releasesFor).toHaveBeenLastCalledWith('some', { season: 1, episode: null }, [
-      'a',
-      'b',
-    ]);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith(
+      'some',
+      { season: 1, episode: null },
+      ['a', 'b'],
+      null,
+    );
     expect(
       await (await ask('/requests/some/pick', 'POST', { release: aRelease('Dune') })).json(),
     ).toEqual({ error: 'No torrent client is set up', code: null, values: {} });

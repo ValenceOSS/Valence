@@ -22,6 +22,32 @@ const anEpisode = (season: number, episode: number, airDate: string | null = '20
 });
 
 describe('planSearches', () => {
+  it('asks for a film by its title and the year it came out, where the year is known', () => {
+    const film = { id: 'film', season: null, episode: null, airDate: null, title: 'Star Trek' };
+
+    expect(
+      planSearches(
+        {
+          kind: 'film',
+          title: 'Star Trek',
+          year: 2009,
+          tmdbId: 13475,
+          tvdbId: null,
+          imdbId: 'tt0796366',
+          artistName: null,
+        },
+        [film],
+        [film],
+        '2026-09-19',
+      ),
+    ).toEqual([
+      {
+        search: { query: 'Star Trek 2009', mode: 'movie', tmdbId: 13475, imdbId: 'tt0796366' },
+        itemIds: ['film'],
+      },
+    ]);
+  });
+
   it('asks for a film by its title and catalogue ids', () => {
     const film = { id: 'film', season: null, episode: null, airDate: null, title: 'Dune' };
 
