@@ -157,6 +157,47 @@ describe('createDatabasePluginStore', () => {
   );
 
   it(
+    'keeps app passwords by login and by hash, and drops them with the person or the plugin',
+    async () => {
+      const db = await aDatabaseWithAProfile();
+      const store = createDatabasePluginStore(db);
+      const credential = {
+        id: '00000000-0000-4000-8000-000000000001',
+        pluginId: 'store-test',
+        profileId: 'p1',
+        login: 'ann',
+        label: 'Phone',
+        secretHash: 'a'.repeat(64),
+        sealedSecret: 'v1.sealed',
+        createdAt: '2026-10-31T10:00:00.000Z',
+        lastUsedAt: null,
+      };
+
+      await store.save(A_RECORD);
+      await store.saveCredential(credential);
+
+      expect(await store.credentialByLogin('store-test', 'ann')).toStrictEqual(credential);
+      expect(await store.credentialBySecret('store-test', 'a'.repeat(64))).toStrictEqual(
+        credential,
+      );
+      expect(await store.credentialBySecret('store-test', 'b'.repeat(64))).toBeNull();
+      await expect(store.saveCredential({ ...credential, id: 'other' })).rejects.toThrow();
+
+      await store.touchCredential(credential.id, '2026-10-31T11:00:00.000Z');
+      expect(await store.credentialsOf('store-test', 'p1')).toStrictEqual([
+        { ...credential, lastUsedAt: '2026-10-31T11:00:00.000Z' },
+      ]);
+      expect(await store.forgetCredential('store-test', 'someone-else', credential.id)).toBe(false);
+      expect(await store.forgetCredential('store-test', 'p1', credential.id)).toBe(true);
+
+      await store.saveCredential(credential);
+      await db.delete(viewerProfile).where(eq(viewerProfile.id, 'p1'));
+      expect(await store.credentialByLogin('store-test', 'ann')).toBeNull();
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'remembers a profile once however often it is seen',
     async () => {
       const db = await aDatabaseWithAProfile();

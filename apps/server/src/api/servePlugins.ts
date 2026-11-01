@@ -9,6 +9,9 @@ import { isSecureRequest } from '@ValenceServer/plugins/accounts/isSecureRequest
 import { whereToReturn } from '@ValenceServer/plugins/accounts/whereToReturn';
 import {
   actPageRoute,
+  listAppPasswordsRoute,
+  makeAppPasswordRoute,
+  removeAppPasswordRoute,
   actPanelRoute,
   changePluginRoute,
   connectAccountRoute,
@@ -36,6 +39,11 @@ import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
+import { ROUTE_LIMITS } from '@ValenceSDK/routes/ROUTE_LIMITS';
+import { renditionFor } from '@ValenceServer/music/renditionFor';
+import type { Context } from 'hono';
+import type { RouteOutcome } from '@ValenceServer/plugins/routes/createPluginRoutes';
+import { gatherParameters } from '@ValenceServer/plugins/routes/gatherParameters';
 
 const NOT_SET_UP = refuse('error.plugins.pluginsAreNotSetUpOn');
 
@@ -65,6 +73,12 @@ const PAGE_HEADERS = {
   'referrer-policy': 'no-referrer',
 } as const;
 
+const ROUTE_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'content-security-policy': "sandbox; default-src 'none'; frame-ancestors 'none'",
+  'referrer-policy': 'no-referrer',
+} as const;
+
 const PICTURE_HEADERS = {
   'x-content-type-options': 'nosniff',
   'content-security-policy': "default-src 'none'",
@@ -78,7 +92,8 @@ const PICTURE_HEADERS = {
  * @param context - What they are answered with.
  */
 const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
-  const { plugins, auth, requires, grantsOf, readProfileId, recordAudit } = context;
+  const { plugins, auth, requires, grantsOf, readProfileId, recordAudit, music, callerOf } =
+    context;
   const libraryViewerOf = context.viewerOf;
 
   const administrator = async (headers: Headers): Promise<'allowed' | 401 | 403> => {
@@ -637,6 +652,219 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.body(null, 204);
   });
+
+  app.openapi(listAppPasswordsRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOT_SIGNED_IN, 401);
+    }
+
+    const kept = await plugins?.appPasswords(context.req.valid('param').id, viewer.profileId);
+
+    return kept === undefined || kept === null
+      ? context.json(NO_SUCH, 404)
+      : context.json(kept, 200);
+  });
+
+  app.openapi(makeAppPasswordRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOT_SIGNED_IN, 401);
+    }
+
+    const { id } = context.req.valid('param');
+    const made = await plugins?.makeAppPassword(
+      id,
+      viewer.profileId,
+      context.req.valid('json').label,
+    );
+
+    if (made === undefined || made === 'unknown') {
+      return context.json(NO_SUCH, 404);
+    }
+
+    if (made === 'tooMany') {
+      return context.json(refuse('error.plugins.youHaveAsManyAppPasswordsAsYouCan'), 409);
+    }
+
+    await recordAudit(context, 'plugin.appPasswordMade', id, { login: made.password.login });
+
+    return context.json(made, 201);
+  });
+
+  app.openapi(removeAppPasswordRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOT_SIGNED_IN, 401);
+    }
+
+    const { id, passwordId } = context.req.valid('param');
+
+    if (
+      plugins === undefined ||
+      !(await plugins.forgetAppPassword(id, viewer.profileId, passwordId))
+    ) {
+      return context.json(NO_SUCH, 404);
+    }
+
+    await recordAudit(context, 'plugin.appPasswordRemoved', id);
+
+    return context.body(null, 204);
+  });
+
+  const answerOutcome = async (asked: Context, outcome: RouteOutcome): Promise<Response> => {
+    switch (outcome.kind) {
+      case 'answered':
+        return new Response(outcome.body, {
+          status: outcome.status,
+          headers: {
+            ...ROUTE_HEADERS,
+            'content-type': `${outcome.contentType}; charset=utf-8`,
+            'cache-control':
+              outcome.cacheSeconds === null || outcome.cacheSeconds === 0
+                ? 'no-store'
+                : `private, max-age=${outcome.cacheSeconds.toString()}`,
+          },
+        });
+      case 'serve':
+        return serveFor(asked, outcome);
+      case 'unknown':
+        return asked.json(NO_SUCH, 404, ROUTE_HEADERS);
+      case 'wrongMethod':
+        return asked.json(refuse('error.plugins.thatAddressTakesNoSuchRequest'), 405, {
+          ...ROUTE_HEADERS,
+          allow: outcome.allowed.join(', '),
+        });
+      case 'signInNeeded':
+        return asked.json(refuse('error.plugins.signInWithAnAppPassword'), 401, {
+          ...ROUTE_HEADERS,
+          ...(outcome.realm === null
+            ? {}
+            : {
+                // oxlint-disable-next-line valence/no-hard-coded-strings -- an HTTP challenge, read by apps rather than by people
+                'www-authenticate': `Basic realm="${outcome.realm.replace(/["\\]/gu, '')}", charset="UTF-8"`,
+              }),
+        });
+      case 'limited':
+        return asked.json(refuse('error.plugins.tooManyRequestsTryAgainSoon'), 429, {
+          ...ROUTE_HEADERS,
+          'retry-after': outcome.retryAfterSeconds.toString(),
+        });
+      case 'failed':
+        return asked.json(refuse('error.plugins.thePluginCouldNotHandleThat'), 502, ROUTE_HEADERS);
+    }
+  };
+
+  const serveFor = async (
+    asked: Context,
+    outcome: Extract<RouteOutcome, { kind: 'serve' }>,
+  ): Promise<Response> => {
+    const { serve, viewer } = outcome;
+
+    if (music === undefined) {
+      return asked.json(NO_SUCH, 404, ROUTE_HEADERS);
+    }
+
+    if (serve.kind === 'track') {
+      const file = await music.library.readTrackFile(viewer, serve.mediaId);
+      const streamed =
+        file === null
+          ? null
+          : await music.stream(
+              file,
+              renditionFor(file, serve.quality),
+              asked.req.header('range') ?? null,
+            );
+
+      if (streamed === null) {
+        return asked.json(refuse('error.common.noSuchTrack'), 404, ROUTE_HEADERS);
+      }
+
+      const headers: Record<string, string> = {
+        ...ROUTE_HEADERS,
+        'content-type': streamed.contentType,
+        'accept-ranges': 'bytes',
+        'cache-control': 'private, max-age=3600',
+      };
+
+      if (streamed.contentRange !== null) {
+        headers['content-range'] = streamed.contentRange;
+      }
+
+      if (streamed.contentLength !== null) {
+        headers['content-length'] = streamed.contentLength;
+      }
+
+      return asked.body(streamed.body, streamed.status === 206 ? 206 : 200, headers);
+    }
+
+    const path =
+      serve.kind === 'albumArtwork'
+        ? await music.library.readAlbumArtwork(viewer, serve.albumId)
+        : await music.library.readArtistImage(viewer, serve.artistId);
+    const bytes = path === null ? null : await music.readImage(path);
+
+    if (bytes === null) {
+      return asked.json(
+        refuse(
+          serve.kind === 'albumArtwork'
+            ? 'error.music.noCoverForThatAlbum'
+            : 'error.music.noPictureOfThatArtist',
+        ),
+        404,
+        ROUTE_HEADERS,
+      );
+    }
+
+    return asked.body(bytes.slice().buffer, 200, {
+      ...ROUTE_HEADERS,
+      'content-type': 'image/webp',
+      'cache-control': 'private, max-age=86400',
+    });
+  };
+
+  app.use(
+    '/api/plugins/:id/routes/*',
+    bodyLimit({
+      maxSize: ROUTE_LIMITS.requestBytes,
+      onError: (context) =>
+        context.json(refuse('error.plugins.thatMessageIsTooLarge'), 413, ROUTE_HEADERS),
+    }),
+  );
+
+  const answerRoute = async (asked: Context): Promise<Response> => {
+    const pluginId = asked.req.param('id') ?? '';
+    const routeId = asked.req.param('route') ?? '';
+    const url = new URL(asked.req.url);
+    const prefix = `/api/plugins/${pluginId}/routes/${routeId}`;
+    const path = url.pathname.startsWith(prefix)
+      ? url.pathname.slice(prefix.length).replace(/^\//u, '')
+      : '';
+    const query = gatherParameters(url.searchParams);
+
+    if (plugins === undefined) {
+      return asked.json(NO_SUCH, 404, ROUTE_HEADERS);
+    }
+
+    const outcome = await plugins.answerRoute(pluginId, routeId, {
+      method: asked.req.method,
+      path,
+      query,
+      headers: Object.fromEntries(
+        [...asked.req.raw.headers.entries()].map(([name, value]) => [name.toLowerCase(), value]),
+      ),
+      body: ['GET', 'HEAD'].includes(asked.req.method) ? '' : await asked.req.text(),
+      address: callerOf?.(asked) ?? null,
+    });
+
+    return answerOutcome(asked, outcome);
+  };
+
+  app.all('/api/plugins/:id/routes/:route', answerRoute);
+  app.all('/api/plugins/:id/routes/:route/*', answerRoute);
 };
 
 export { servePlugins };

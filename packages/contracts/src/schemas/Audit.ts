@@ -81,6 +81,8 @@ const AUDIT_ACTIONS = [
   'plugin.removed',
   'plugin.rolledBack',
   'plugin.keysChanged',
+  'plugin.appPasswordMade',
+  'plugin.appPasswordRemoved',
   'webhook.added',
   'webhook.changed',
   'webhook.removed',

@@ -52,6 +52,7 @@ const summarisePermissions = (permissions: readonly Permission[]): PermissionSum
       case 'storage':
       case 'webhooks':
       case 'emits':
+      case 'routes':
         return [];
     }
   });

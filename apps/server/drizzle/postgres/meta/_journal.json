@@ -1009,6 +1009,13 @@
       "when": 1793418004847,
       "tag": "0143_phones_can_be_woken",
       "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1793455310295,
+      "tag": "0144_apps_sign_in_to_plugins",
+      "breakpoints": true
     }
   ]
 }

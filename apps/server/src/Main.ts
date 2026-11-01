@@ -74,6 +74,7 @@ import {
   isNull,
   lt,
   lte,
+  or,
   sql,
 } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -164,6 +165,7 @@ import {
   account,
   accountActivity,
   calendarFeed,
+  pluginCredential,
   passkey,
   library,
   mediaItem,
@@ -4659,7 +4661,8 @@ const startPlugins = (
         accountId: viewerProfile.userId,
       })
       .from(viewerProfile)
-      .where(eq(viewerProfile.id, profileId))
+      .innerJoin(user, eq(user.id, viewerProfile.userId))
+      .where(and(eq(viewerProfile.id, profileId), or(isNull(user.banned), eq(user.banned, false))))
       .limit(1);
 
     return found ?? null;
@@ -5237,6 +5240,17 @@ const app = createApp({
     await db.delete(session).where(eq(session.userId, userId));
     await db.update(apikey).set({ enabled: false }).where(eq(apikey.referenceId, userId));
     await db.delete(calendarFeed).where(eq(calendarFeed.accountId, userId));
+    await db
+      .delete(pluginCredential)
+      .where(
+        inArray(
+          pluginCredential.profileId,
+          db
+            .select({ id: viewerProfile.id })
+            .from(viewerProfile)
+            .where(eq(viewerProfile.userId, userId)),
+        ),
+      );
 
     return true;
   },

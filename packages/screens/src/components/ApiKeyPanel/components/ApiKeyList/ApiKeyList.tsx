@@ -1,9 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import {
-  Bin as BinIcon,
-  Copy as CopyIcon,
-  TriangleAlert as TriangleAlertIcon,
-} from '@keyline-icons/react';
+import { Bin as BinIcon } from '@keyline-icons/react';
+import { SecretShownOnce } from '@ValenceScreens/components/SecretShownOnce/SecretShownOnce';
 import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { Switch } from '@ValenceUI/Switch';
@@ -46,23 +43,12 @@ const ApiKeyList = ({
     </p>
 
     {made === null ? null : (
-      <div className="flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent/10 p-3">
-        <span className="flex items-center gap-2 text-sm font-medium text-text">
-          <Icon of={TriangleAlertIcon} size={16} />
-          {say('screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain', { name: made.name })}
-        </span>
-
-        <span className="flex items-center gap-2">
-          <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-surface px-3 py-2 font-mono text-xs text-text">
-            {made.key}
-          </code>
-
-          <Button size="sm" variant="secondary" onClick={onCopy}>
-            <Icon of={CopyIcon} size={15} />
-            {hasCopied ? say('common.copied') : say('common.copy')}
-          </Button>
-        </span>
-      </div>
+      <SecretShownOnce
+        warning={say('screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain', { name: made.name })}
+        details={[{ id: 'key', name: null, value: made.key }]}
+        copied={hasCopied ? 'key' : null}
+        onCopy={onCopy}
+      />
     )}
 
     <form

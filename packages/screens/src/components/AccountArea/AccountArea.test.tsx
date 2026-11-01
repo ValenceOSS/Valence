@@ -49,11 +49,13 @@ const drawOn = (
   panel: string,
   handlers: { onChanged?: () => void } = {},
   pluginPages: PluginAccountPage[] = [],
+  appPlugins: { pluginId: string; pluginName: string }[] = [],
 ) =>
   renderInAnAddress(
     <Tabs value={panel} onValueChange={() => {}}>
       <AccountArea
         user={USER}
+        appPlugins={appPlugins}
         panel={panel}
         profile={PROFILE}
         draft={{
@@ -157,6 +159,20 @@ describe('AccountArea', () => {
     drawOn('history');
 
     expect(screen.getByRole('heading', { name: 'Watch history', level: 3 })).toBeInTheDocument();
+  });
+
+  it('gives app passwords a card of their own only where a plugin takes them', () => {
+    const without = drawOn('security');
+
+    expect(
+      screen.queryByRole('heading', { name: 'App passwords', level: 3 }),
+    ).not.toBeInTheDocument();
+
+    without.unmount();
+
+    drawOn('security', {}, [], [{ pluginId: 'music', pluginName: 'Music apps' }]);
+
+    expect(screen.getByRole('heading', { name: 'App passwords', level: 3 })).toBeInTheDocument();
   });
 
   it('lists the account’s profiles, for its owner to change, on the panel about profiles', async () => {

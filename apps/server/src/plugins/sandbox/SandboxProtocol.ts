@@ -11,6 +11,7 @@ const HANDLERS = [
   'accountConnected',
   'upgraded',
   'webhook',
+  'route',
   'downloadClient.test',
   'downloadClient.add',
   'downloadClient.status',

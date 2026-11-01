@@ -26,6 +26,8 @@ import {
   PluginActAnswerSchema,
   PluginContributionsSchema,
   PluginRemovalSchema,
+  AppPasswordsSchema,
+  MadeAppPasswordSchema,
 } from '@ValenceContracts/schemas/Plugin';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 
@@ -71,7 +73,44 @@ const PACKAGE = packPlugin({ format: 1, manifest: MANIFEST, code: CODE, assets: 
 
 const PreviewAnswer = InstallPreviewSchema;
 
-const signedInWith = async (granted: readonly Permission[]) => {
+const ROUTES_PACKAGE = packPlugin({
+  format: 1,
+  manifest: PluginManifestSchema.parse({
+    manifestVersion: 2,
+    id: 'music-apps',
+    name: 'Music apps',
+    version: '1.0.0',
+    apiVersion: '^1.4',
+    author: { name: 'Tester' },
+    description: 'Answers music apps.',
+    entry: 'dist/plugin.js',
+    permissions: [{ kind: 'routes' }],
+    contributes: {
+      routes: [
+        {
+          id: 'rest',
+          title: 'Music apps',
+          methods: ['GET', 'POST'],
+          signIn: [{ kind: 'basic' }, { kind: 'query', login: 'u', secret: 'p' }],
+        },
+      ],
+    },
+  }),
+  code: `globalThis.valencePlugin = {
+  routes: {
+    rest: async (context, request) =>
+      request.path === 'page'
+        ? { status: 200, contentType: 'text/html', body: '<p>' }
+        : { status: 200, contentType: 'application/json', body: JSON.stringify({ path: request.path, query: request.query }) },
+  },
+};`,
+  assets: {},
+});
+
+const signedInWith = async (
+  granted: readonly Permission[],
+  { plugin = PACKAGE, apiVersion = '1.0.0' }: { plugin?: Uint8Array; apiVersion?: string } = {},
+) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const service = createPluginService({
@@ -86,7 +125,7 @@ const signedInWith = async (granted: readonly Permission[]) => {
     trustedKeys: createTrustedKeys({ official: {}, variable: '', settings, log: vi.fn() }),
     sealingKey: Buffer.alloc(32, 3),
     redirectUri: `${TEST_ORIGIN}/api/plugins/oauth/callback`,
-    apiVersion: '1.0.0',
+    apiVersion,
     enqueueSchedule: vi.fn(() => Promise.resolve()),
     log: vi.fn(),
   });
@@ -133,7 +172,7 @@ const signedInWith = async (granted: readonly Permission[]) => {
 
   const install = async () => {
     const preview = PreviewAnswer.parse(
-      await (await request('/api/plugins/upload', { method: 'POST', body: PACKAGE })).json(),
+      await (await request('/api/plugins/upload', { method: 'POST', body: plugin })).json(),
     );
 
     return request('/api/plugins/install', {
@@ -386,6 +425,82 @@ describe('the plugin routes', () => {
     expect((await post(`${path.slice(0, -4)}abcd`, '{}')).status).toBe(404);
     expect((await post(path.replace('/ping/', '/pong/'), '{}')).status).toBe(404);
     expect((await post(path, 'x'.repeat(300 * 1024))).status).toBe(413);
+
+    service.stop();
+  }, 30_000);
+
+  it('makes app passwords for the person asking, and answers an app signed in with one', async () => {
+    const { request, install, service } = await signedInWith(['server.plugins'], {
+      plugin: ROUTES_PACKAGE,
+      apiVersion: '1.4.0',
+    });
+
+    expect((await install()).status).toBe(201);
+    expect(
+      PluginContributionsSchema.parse(await (await request('/api/plugins/contributions')).json())
+        .apps,
+    ).toEqual([{ pluginId: 'music-apps', pluginName: 'Music apps' }]);
+    expect((await request('/api/plugins/music-apps/app-passwords', {}, false)).status).toBe(401);
+    expect((await request('/api/plugins/nothing-here/app-passwords')).status).toBe(404);
+
+    const made = MadeAppPasswordSchema.parse(
+      await (
+        await request('/api/plugins/music-apps/app-passwords', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'Phone' }),
+        })
+      ).json(),
+    );
+    const base = new URL(made.address).pathname;
+    const asApp = (path: string, init: RequestInit = {}) => request(`${base}${path}`, init, false);
+    const answered = await asApp(
+      `/rest/ping.view?u=${made.password.login}&p=${made.secret}&f=json`,
+    );
+
+    expect(answered.status).toBe(200);
+    expect(answered.headers.get('content-type')).toBe('application/json; charset=utf-8');
+    expect(answered.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(answered.headers.get('content-security-policy')).toContain('sandbox');
+    expect(answered.headers.get('access-control-allow-origin')).toBe('*');
+    expect(await answered.json()).toEqual({
+      path: 'ping.view',
+      query: { u: [made.password.login], f: ['json'] },
+    });
+
+    const refused = await asApp(`/rest/ping.view?u=${made.password.login}&p=wrong`);
+
+    expect(refused.status).toBe(401);
+    expect(refused.headers.get('www-authenticate')).toBe(
+      'Basic realm="Music apps", charset="UTF-8"',
+    );
+    expect((await asApp(`/rest/ping.view`, { method: 'DELETE' })).status).toBe(405);
+    expect((await asApp(`/rest/page?u=${made.password.login}&p=${made.secret}`)).status).toBe(502);
+    expect(
+      (
+        await asApp(`/rest/ping.view?u=${made.password.login}&p=${made.secret}`, {
+          method: 'POST',
+          body: 'x'.repeat(300 * 1024),
+        })
+      ).status,
+    ).toBe(413);
+
+    const listed = AppPasswordsSchema.parse(
+      await (await request('/api/plugins/music-apps/app-passwords')).json(),
+    );
+
+    expect(listed.passwords.map((password) => password.label)).toEqual(['Phone']);
+    expect(listed.routes).toEqual([{ id: 'rest', title: 'Music apps' }]);
+    expect(
+      (
+        await request(`/api/plugins/music-apps/app-passwords/${made.password.id}`, {
+          method: 'DELETE',
+        })
+      ).status,
+    ).toBe(204);
+    expect((await asApp(`/rest/ping.view?u=${made.password.login}&p=${made.secret}`)).status).toBe(
+      401,
+    );
 
     service.stop();
   }, 30_000);

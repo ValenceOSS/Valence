@@ -135,6 +135,7 @@ describe('the plugin sandbox', () => {
       webhooks: [],
       downloadClients: [],
       sources: [],
+      routes: [],
     });
   });
 

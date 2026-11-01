@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { RouteSignIn } from './RouteSignInSchema';
 import { aManifest } from '@ValenceSDK/testing/aManifest';
 import { PluginManifestSchema } from './PluginManifestSchema';
 import type { PluginManifestInput } from './PluginManifestSchema';
@@ -37,6 +38,7 @@ describe('PluginManifestSchema', () => {
       emits: [],
       downloadClients: [],
       sources: [],
+      routes: [],
       nodes: [],
     });
   });
@@ -130,6 +132,45 @@ describe('PluginManifestSchema', () => {
         }),
       ),
     ).toEqual([]);
+  });
+
+  it('lets a plugin answer apps only with the routes permission, public where a route is, on 1.4', () => {
+    const route = (signIn: RouteSignIn[]) => ({
+      routes: [{ id: 'rest', title: 'Music apps', methods: ['GET' as const], signIn }],
+    });
+    const answering = (
+      apiVersion: string,
+      permissions: PluginManifestInput['permissions'],
+      signIn: RouteSignIn[] = [{ kind: 'bearer' }],
+    ) => aManifest({ apiVersion, permissions, contributes: route(signIn) });
+
+    expect(problemsOf(answering('^1.4', [{ kind: 'routes' }]))).toEqual([]);
+    expect(problemsOf(answering('^1.4', []))).toEqual([
+      'Answering requests from outside Valence needs the routes permission',
+    ]);
+    expect(problemsOf(answering('^1.4', [{ kind: 'routes' }], [{ kind: 'public' }]))).toEqual([
+      'A route anybody may call without signing in needs the routes permission public',
+    ]);
+    expect(
+      problemsOf(answering('^1.4', [{ kind: 'routes', public: true }], [{ kind: 'public' }])),
+    ).toEqual([]);
+    expect(problemsOf(answering('^1.3', [{ kind: 'routes' }]))).toEqual([
+      'Answering requests needs apiVersion ^1.4, since older servers ignore it',
+    ]);
+    expect(
+      problemsOf(
+        aManifest({
+          apiVersion: '^1.4',
+          permissions: [{ kind: 'routes' }],
+          contributes: {
+            routes: [
+              { id: 'rest', title: 'A', methods: ['GET'], signIn: [{ kind: 'bearer' }] },
+              { id: 'rest', title: 'B', methods: ['GET'], signIn: [{ kind: 'bearer' }] },
+            ],
+          },
+        }),
+      ),
+    ).toEqual(['Each route id is used once']);
   });
 
   it('refuses a permission declared twice', () => {

@@ -143,6 +143,7 @@ const PluginContributionsSchema = z.object({
       }),
     )
     .default([]),
+  apps: z.array(z.object({ pluginId: z.string(), pluginName: z.string() })).default([]),
   nodes: z.array(
     z.object({
       node: PluginNodeSchema,
@@ -153,6 +154,28 @@ const PluginContributionsSchema = z.object({
     }),
   ),
 });
+
+const AppPasswordSchema = z.object({
+  id: z.string(),
+  login: z.string(),
+  label: z.string(),
+  createdAt: z.string().datetime(),
+  lastUsedAt: z.string().datetime().nullable(),
+});
+
+const AppPasswordsSchema = z.object({
+  address: z.string().url(),
+  routes: z.array(z.object({ id: z.string(), title: z.string() })),
+  passwords: z.array(AppPasswordSchema),
+});
+
+const MadeAppPasswordSchema = z.object({
+  address: z.string().url(),
+  password: AppPasswordSchema,
+  secret: z.string(),
+});
+
+const MakeAppPasswordSchema = z.object({ label: z.string().trim().min(1).max(60) });
 
 const PluginRemovalSchema = z.object({
   bytesKept: z.number().int().nonnegative(),
@@ -167,6 +190,7 @@ const PluginRemovalSchema = z.object({
   themes: z.number().int().nonnegative(),
   nodes: z.number().int().nonnegative(),
   webhooks: z.number().int().nonnegative(),
+  appPasswords: z.number().int().nonnegative().default(0),
   keepsEarlierVersion: z.boolean(),
 });
 
@@ -194,8 +218,17 @@ type PluginContributions = z.infer<typeof PluginContributionsSchema>;
 type PluginRemoval = z.infer<typeof PluginRemovalSchema>;
 type PluginActAnswer = z.infer<typeof PluginActAnswerSchema>;
 
+type AppPassword = z.infer<typeof AppPasswordSchema>;
+
+type AppPasswords = z.infer<typeof AppPasswordsSchema>;
+
+type MadeAppPassword = z.infer<typeof MadeAppPasswordSchema>;
+
 export type {
+  AppPassword,
+  AppPasswords,
   CatalogueListing,
+  MadeAppPassword,
   PluginActAnswer,
   PluginChange,
   InstalledPlugin,
@@ -210,7 +243,11 @@ export type {
 };
 
 export {
+  AppPasswordSchema,
+  AppPasswordsSchema,
   CatalogueListingSchema,
+  MadeAppPasswordSchema,
+  MakeAppPasswordSchema,
   PluginActAnswerSchema,
   PluginChangeSchema,
   InstalledPluginSchema,

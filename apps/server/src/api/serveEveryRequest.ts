@@ -1,4 +1,5 @@
 import { shieldTheAnswer } from '@ValenceServer/api/shieldTheAnswer';
+import { PLUGIN_ROUTE_PATH } from '@ValenceServer/plugins/routes/PLUGIN_ROUTE_PATH';
 import { createBodyLimit } from '@ValenceServer/api/createBodyLimit';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
@@ -50,7 +51,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     '/api/*',
     allowCrossOriginClients({
       trustedOrigins: trustedOrigins ?? (async () => (await settings.read()).trustedOrigins),
-      opensToEveryOrigin: (path) => path.startsWith(`${FEDERATION_PATH}/direct/`),
+      opensToEveryOrigin: (path) =>
+        path.startsWith(`${FEDERATION_PATH}/direct/`) || PLUGIN_ROUTE_PATH.test(path),
     }),
   );
 

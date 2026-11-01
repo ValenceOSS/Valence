@@ -1,0 +1,151 @@
+---
+title: Answering apps
+description: Give apps outside Valence, such as music players and e-book readers, an address on the server that your plugin answers, signed in with app passwords people make.
+order: 10
+---
+
+Plenty of good apps already speak a protocol of their own: music players that speak Subsonic, e-book readers that read OPDS feeds, calendar apps that subscribe to iCal. A route is an address on the server that your plugin answers, so those apps can use a Valence server without Valence learning every protocol itself.
+
+Valence does the part that has to be trusted. It works out who each request is from before your plugin hears of it, refuses one whose password is wrong without asking you, keeps every secret out of what you are handed, and serves media and pictures itself. Your plugin decides what to answer.
+
+## Declare it
+
+Ask for the `routes` permission and name each route under `contributes.routes`. Routes need plugin API `^1.4`.
+
+```json
+{
+  "apiVersion": "^1.4",
+  "permissions": [{ "kind": "routes" }, { "kind": "library", "access": "read" }],
+  "contributes": {
+    "routes": [
+      {
+        "id": "rest",
+        "title": "Music apps",
+        "methods": ["GET", "POST"],
+        "signIn": [
+          { "kind": "query", "secret": "apiKey" },
+          { "kind": "query", "login": "u", "secret": "p", "hexPrefix": "enc:" },
+          { "kind": "saltedMd5", "login": "u", "token": "t", "salt": "s" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+| Field     | What it is                                                                   |
+| --------- | ---------------------------------------------------------------------------- |
+| `id`      | The route's name, and the part of its address after `routes/`                |
+| `title`   | What people see beside their app passwords (1 to 60 characters)              |
+| `methods` | The HTTP methods it takes: any of `GET`, `POST`, `PUT`, `PATCH` and `DELETE` |
+| `signIn`  | How a request says who it is from, tried in order (one to four ways, below)  |
+
+A plugin has at most four routes. Each is answered at `/api/plugins/<plugin id>/routes/<route id>`, and at anything under it, so the route above answers `/api/plugins/music/routes/rest/ping.view`. An app is given the address up to `routes`, which people see when they make an app password, and adds the rest itself.
+
+## Signing in
+
+People sign an app in with an **app password** they make in their account, never with their own password. Each app password belongs to one person and one plugin, has a login of its own, and stops working the moment it is removed. A request signed in with one acts as that person: it reads only what they may see, with every library they would have to unlock still locked.
+
+Valence checks the password before your plugin runs. The ways a route can accept one:
+
+| `kind`      | The request carries                                                                                                                                                                                             |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bearer`    | `Authorization: Bearer <password>`                                                                                                                                                                              |
+| `basic`     | `Authorization: Basic`, with the app password's login and password                                                                                                                                              |
+| `query`     | The password in the query parameter `secret` names, and the login in `login` where it names one. With `hexPrefix`, a password sent as hex after that prefix, as Subsonic's `enc:` does, is read as the password |
+| `saltedMd5` | The login in `login`, a salt of at least six characters in `salt`, and `md5(password + salt)` in `token`, as Subsonic's token sign-in does                                                                      |
+| `public`    | Nothing: anybody may call the route without signing in                                                                                                                                                          |
+
+Valence reads these from the query string, and from the body of a request posted as a form (`application/x-www-form-urlencoded`), as some Subsonic apps send them. The first way whose parts the request carries decides. A password that matches signs the request in. One that doesn't is refused with `401`, and your plugin never hears of it, even on a route that also takes `public`. A request that carries none of the parts is refused, unless the route takes `public`, when it reaches your plugin from nobody. Where the route takes `basic`, the `401` asks for it with `WWW-Authenticate`, which some apps wait for before they send a password.
+
+A password in a query string, and a salted token, can be seen by anything that logs addresses, such as a reverse proxy, and Subsonic's salted token can be sent again for as long as the password works. Removing an app password stops all of it at once.
+
+A `public` route needs the permission to say so, `{ "kind": "routes", "public": true }`, and the install screen tells the administrator that anybody can reach it. A request from nobody can't act for anybody: it can't read the library at all, even with [`everything`](/plugins/permissions#library), list the plugin's people or search the catalogue.
+
+## Answering
+
+Add a handler under `routes` with the route's id:
+
+```ts
+import { definePlugin } from '@ValenceSDK/host/definePlugin';
+
+definePlugin({
+  routes: {
+    rest: async ({ valence, person }, request) => {
+      if (request.path === 'ping.view') {
+        return { status: 200, contentType: 'application/json', body: '{"status":"ok"}' };
+      }
+
+      const album = await valence.library.get(request.query.id?.[0] ?? '');
+
+      return {
+        status: album === null ? 404 : 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ album, for: person?.name ?? null }),
+      };
+    },
+  },
+});
+```
+
+`person` is who the app password belongs to, `{ profileId, name }`, or `null` on a public route. Every library read, playlist and viewing call acts as that person, as from one of their pages.
+
+```ts
+type RouteRequest = {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  path: string;
+  query: Record<string, string[]>;
+  headers: Record<string, string>;
+  body: string;
+  receivedAt: string;
+};
+```
+
+`path` is what came after the route's id, as it was sent, still percent-encoded. `query` holds each parameter's values in order, without the parameters the route's sign-in uses for a password, token or salt; a login stays. `headers` are lower-case and only these, where the request sent them: `accept`, `accept-language`, `content-type`, `if-modified-since`, `if-none-match`, `range` and `user-agent`. A form's body comes without the password, token or salt either. A `HEAD` request reaches your handler as `GET`. `body` is the request's body as text, up to 256 KB.
+
+### What you may answer
+
+Answer with a status, a content type and a body:
+
+| Field          | What it is                                                                                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`       | 200 to 299 except 204 and 205, or 400 to 599                                                                                                                           |
+| `contentType`  | `application/json`, `application/xml`, `text/xml`, `text/plain`, `text/csv`, `text/calendar`, `application/atom+xml`, `application/rss+xml` or `application/opds+json` |
+| `body`         | Text, up to 8 million characters                                                                                                                                       |
+| `cacheSeconds` | How long the app may keep it, up to a day. Left out, it may keep nothing                                                                                               |
+
+You can't answer with HTML, script or a picture of your own, set a header, set a cookie or redirect. Valence sends every answer with `X-Content-Type-Options: nosniff` and a `Content-Security-Policy` that lets nothing in it run, so nothing a plugin answers can act as Valence in a browser. Routes answer any web page that asks (`Access-Control-Allow-Origin: *`), since they never use cookies and an app has to send its password itself.
+
+### Asking Valence to serve something
+
+Media and pictures are never sent through your plugin. Answer with `serve` instead, and Valence serves it as the person, with the same checks, range requests and qualities as its own apps:
+
+| `serve`                                | What Valence sends                                             |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `{ kind: 'track', mediaId, quality? }` | A song, at `lossless` (the default), `high`, `normal` or `low` |
+| `{ kind: 'albumArtwork', albumId }`    | An album's cover                                               |
+| `{ kind: 'artistImage', artistId }`    | An artist's picture                                            |
+
+```ts
+return { serve: { kind: 'track', mediaId: request.query.id?.[0] ?? '', quality: 'high' } };
+```
+
+Something the person may not see, or that isn't there, is answered `404`. A public route can't serve anything, since there is nobody to serve it as.
+
+## Limits
+
+- Each app password may make 1,200 requests a minute, and each caller on a public route 120 a minute to one plugin.
+- A caller whose password is wrong or missing more than 20 times in ten minutes gets `429` instead of `401` for the rest of them. A right password still works. Callers on IPv6 are counted by their /64 network.
+- Each request is one call into your plugin, with the usual [processor time and 30 seconds](/plugins/schedules-and-events#keep-it-quick).
+- Somebody can make at most 20 app passwords for one plugin.
+
+| Status | When                                                                      |
+| ------ | ------------------------------------------------------------------------- |
+| `401`  | The app password is wrong or missing                                      |
+| `404`  | No such plugin or route, or the plugin is off                             |
+| `405`  | The route doesn't take that method; `Allow` lists the ones it does        |
+| `413`  | The request's body is over 256 KB                                         |
+| `429`  | Too many requests or failed sign-ins; `Retry-After` says how many seconds |
+| `502`  | Your plugin threw, or answered with something Valence can't send          |
+
+Anything your plugin throws, or an answer Valence can't send, is also written to the server log.

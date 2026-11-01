@@ -12,6 +12,7 @@ import type { ResolveAnswerSchema } from '@ValenceSDK/sources/ResolveAnswerSchem
 import type { ResolveAsk } from '@ValenceSDK/sources/ResolveAskSchema';
 import type { StreamsAnswerSchema } from '@ValenceSDK/sources/StreamsAnswerSchema';
 import type { StreamsAsk } from '@ValenceSDK/sources/StreamsAskSchema';
+import type { RouteAnswerSchema } from '@ValenceSDK/routes/RouteAnswerSchema';
 import type { ValenceHost } from './ValenceHost';
 
 type Viewer = { profileId: string; isAdmin: boolean; nodes: string[] };
@@ -48,6 +49,25 @@ type WebhookRequest = {
 
 type HandlerContext = { valence: ValenceHost };
 
+type RouteRequest = {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  path: string;
+  query: Record<string, string[]>;
+  headers: Record<string, string>;
+  body: string;
+  receivedAt: string;
+};
+
+type RouteContext = {
+  valence: ValenceHost;
+  person: { profileId: string; name: string } | null;
+};
+
+type RouteHandler = (
+  context: RouteContext,
+  request: RouteRequest,
+) => Promise<z.input<typeof RouteAnswerSchema>>;
+
 type DownloadClientHandler = {
   test: (context: HandlerContext) => Promise<z.input<typeof TestAnswerSchema>>;
   add: (context: HandlerContext, release: ReleaseIn) => Promise<z.input<typeof AddAnswerSchema>>;
@@ -78,6 +98,7 @@ type PluginDefinition = {
   >;
   downloadClients?: Record<string, DownloadClientHandler>;
   sources?: Record<string, SourceHandler>;
+  routes?: Record<string, RouteHandler>;
   onUpgraded?: (
     context: { valence: ValenceHost },
     versions: { from: string; to: string },
@@ -94,6 +115,9 @@ export type {
   PluginDefinition,
   SourceHandler,
   PluginEvent,
+  RouteContext,
+  RouteHandler,
+  RouteRequest,
   SurfaceContext,
   SurfaceHandler,
   Viewer,

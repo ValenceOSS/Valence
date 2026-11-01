@@ -1,5 +1,10 @@
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
-import type { ConnectionRecord, InstalledRecord, PluginStore } from './PluginStore';
+import type {
+  ConnectionRecord,
+  CredentialRecord,
+  InstalledRecord,
+  PluginStore,
+} from './PluginStore';
 
 /**
  * Plugins held in memory, for tests and for a server built without a database: the same rules as
@@ -14,6 +19,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
   const connections = new Map<string, ConnectionRecord>();
   const secrets = new Map<string, Map<string, string>>();
   const profiles = new Map<string, Set<string>>();
+  const credentials = new Map<string, CredentialRecord>();
   const hooks = new Map<string, Map<string, string>>();
   const previous = new Map<
     string,
@@ -133,6 +139,12 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
       hooks.delete(id);
       profiles.delete(id);
 
+      for (const [key, credential] of credentials) {
+        if (credential.pluginId === id) {
+          credentials.delete(key);
+        }
+      }
+
       for (const [key, connection] of connections) {
         if (connection.pluginId === id) {
           connections.delete(key);
@@ -208,6 +220,65 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
 
       known.add(profileId);
       profiles.set(pluginId, known);
+
+      return Promise.resolve();
+    },
+    saveCredential: (credential) => {
+      const taken = [...credentials.values()].some(
+        (each) =>
+          (each.pluginId === credential.pluginId && each.login === credential.login) ||
+          each.secretHash === credential.secretHash,
+      );
+
+      if (taken) {
+        return Promise.reject(new Error('That credential is already kept.'));
+      }
+
+      credentials.set(credential.id, { ...credential });
+
+      return Promise.resolve();
+    },
+    credentialsOf: (pluginId, profileId) =>
+      Promise.resolve(
+        [...credentials.values()]
+          .filter((each) => each.pluginId === pluginId && each.profileId === profileId)
+          .map((each) => ({ ...each })),
+      ),
+    credentialCountOf: (pluginId) =>
+      Promise.resolve(
+        [...credentials.values()].filter((each) => each.pluginId === pluginId).length,
+      ),
+    credentialByLogin: (pluginId, login) => {
+      const found = [...credentials.values()].find(
+        (each) => each.pluginId === pluginId && each.login === login,
+      );
+
+      return Promise.resolve(found === undefined ? null : { ...found });
+    },
+    credentialBySecret: (pluginId, secretHash) => {
+      const found = [...credentials.values()].find(
+        (each) => each.pluginId === pluginId && each.secretHash === secretHash,
+      );
+
+      return Promise.resolve(found === undefined ? null : { ...found });
+    },
+    forgetCredential: (pluginId, profileId, id) => {
+      const found = credentials.get(id);
+
+      if (found === undefined || found.pluginId !== pluginId || found.profileId !== profileId) {
+        return Promise.resolve(false);
+      }
+
+      credentials.delete(id);
+
+      return Promise.resolve(true);
+    },
+    touchCredential: (id, at) => {
+      const found = credentials.get(id);
+
+      if (found !== undefined) {
+        credentials.set(id, { ...found, lastUsedAt: at });
+      }
 
       return Promise.resolve();
     },

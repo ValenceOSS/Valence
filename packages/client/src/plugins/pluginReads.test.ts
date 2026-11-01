@@ -1,5 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fetchAppPasswords } from './fetchAppPasswords';
 import { fetchInstalledPlugins } from './fetchInstalledPlugins';
 import { fetchPluginCatalogue } from './fetchPluginCatalogue';
 import { fetchPluginContributions } from './fetchPluginContributions';
@@ -23,6 +24,19 @@ afterEach(() => {
 });
 
 describe('plugin reads', () => {
+  it('reads the app passwords made for a plugin, never their secrets', async () => {
+    const kept = {
+      address: 'https://valence.test/api/plugins/music/routes',
+      routes: [{ id: 'rest', title: 'Music apps' }],
+      passwords: [],
+    };
+
+    answer(kept);
+
+    await expect(fetchAppPasswords('music')).resolves.toEqual(kept);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/music/app-passwords');
+  });
+
   it('reads the installed plugins, and the keys trusted beside Valence’s, none from an older server', async () => {
     answer({
       plugins: [aPlugin()],
@@ -48,7 +62,7 @@ describe('plugin reads', () => {
     });
   });
 
-  it('reads what plugins add, with no download clients or sources from a server too old to say', async () => {
+  it('reads what plugins add, with no download clients, sources or apps from a server too old to say', async () => {
     answer({ pages: [], panels: [], themes: [], nodes: [] });
 
     await expect(fetchPluginContributions()).resolves.toEqual({
@@ -57,6 +71,7 @@ describe('plugin reads', () => {
       themes: [],
       downloadClients: [],
       sources: [],
+      apps: [],
       nodes: [],
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/contributions');
@@ -70,6 +85,7 @@ describe('plugin reads', () => {
       themes: 0,
       nodes: 0,
       webhooks: 0,
+      appPasswords: 0,
       keepsEarlierVersion: false,
     };
 
