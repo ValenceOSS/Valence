@@ -60,6 +60,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'grantsAccess',
   },
   {
+    table: 'device_name',
+    column: 'userId',
+    owner: 'account',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'account',
     column: 'userId',
     owner: 'account',
