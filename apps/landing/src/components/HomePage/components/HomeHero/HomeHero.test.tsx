@@ -182,11 +182,11 @@ describe('HomeHero', () => {
     expect(screen.getByRole('button', { pressed: true })).toHaveAccessibleName(
       /^Everything on one shelf\./u,
     );
-    await waitFor(() => {
-      for (const step of HERO_STEPS) {
-        expect(screen.getByText(step.title)).toBeVisible();
-      }
-    });
+    for (const step of HERO_STEPS) {
+      expect(
+        screen.getByRole('button', { name: new RegExp(`^${step.title.replace('.', '\\.')}`, 'u') }),
+      ).toBeEnabled();
+    }
   });
 
   it('sets a display name so devtools can identify it', () => {
