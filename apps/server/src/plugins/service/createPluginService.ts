@@ -562,31 +562,39 @@ const createPluginService = ({
   /**
    * Tells a plugin which of its settings an administrator just changed, by id, so it can act on
    * them. Whatever it does happens after the save, so a slow plugin never holds up the person
-   * saving.
+   * saving, and in the plugin's line with its events, so two saves in quick succession reach it
+   * one after the other and in the order they were made.
    *
    * @param pluginId - The plugin.
    * @param changed - The ids of the settings that changed.
+   * @returns When the plugin has been told, or has failed to hear it.
    */
-  const tellSettingsChanged = async (pluginId: string, changed: string[]): Promise<void> => {
-    const found = await runnable(pluginId);
+  const tellSettingsChanged = (pluginId: string, changed: string[]): Promise<void> => {
+    const turn = (lines.get(pluginId) ?? Promise.resolve())
+      .then(async () => {
+        const found = await runnable(pluginId);
 
-    if (found === null) {
-      return;
-    }
+        if (found === null) {
+          return;
+        }
 
-    await runtime
-      .invoke(
-        { record: found.record, code: found.code },
-        'settingsChanged',
-        { change: { changed } },
-        { kind: 'background', profileId: null },
-      )
+        await runtime.invoke(
+          { record: found.record, code: found.code },
+          'settingsChanged',
+          { change: { changed } },
+          { kind: 'background', profileId: null },
+        );
+      })
       .catch((error) => {
         log(
           'warn',
           `plugin ${pluginId}: telling it its settings changed failed: ${error instanceof Error ? error.message : 'failed'}`,
         );
       });
+
+    lines.set(pluginId, turn);
+
+    return turn;
   };
 
   /**
