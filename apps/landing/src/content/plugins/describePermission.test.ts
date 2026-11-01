@@ -25,6 +25,9 @@ describe('describePermission', () => {
     expect(describePermission({ kind: 'viewing', access: 'write' })).toBe(
       'Reads what you have watched, kept and rated, and updates what you have watched',
     );
+    expect(describePermission({ kind: 'viewing', access: 'read', household: true })).toBe(
+      'Hears whenever anybody on the server watches or listens, and reads what they have watched',
+    );
     expect(describePermission({ kind: 'requests', access: 'create' })).toBe(
       'Asks for titles you do not have yet',
     );

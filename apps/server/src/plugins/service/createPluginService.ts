@@ -31,6 +31,7 @@ import { newestRunnable } from '@ValenceServer/plugins/catalogue/newestRunnable'
 import { describeManifest } from './describeManifest';
 import { summaryOf } from './summaryOf';
 import { eventsFrom } from './eventsFrom';
+import { isAboutViewing } from './isAboutViewing';
 import { openSettings } from './openSettings';
 import { permissionsHashOf } from './permissionsHashOf';
 import { nodesHeldBy } from './nodesHeldBy';
@@ -51,6 +52,7 @@ import type { PluginPackage } from '@ValenceSDK/package/PluginPackageSchema';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { PluginEvent } from '@ValenceSDK/host/PluginDefinition';
+import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { CatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { BrokerScope } from '@ValenceServer/plugins/broker/BrokerScope';
@@ -80,6 +82,9 @@ type CreatePluginServiceOptions = {
   redirectUri: string;
   apiVersion: string;
   enqueueSchedule: (pluginId: string, scheduleId: string, afterSeconds: number) => Promise<void>;
+  cancelJobs?: (pluginId: string) => Promise<void>;
+  isJobCancelled?: (jobId: string) => boolean;
+  eventRetryAfterMs?: readonly number[];
   log: (level: 'info' | 'warn' | 'error', message: string) => void;
   announce?: (change: PluginChange) => void;
   fetchFor?: FetchFor;
@@ -123,6 +128,10 @@ const WEBHOOK_WINDOW_MILLISECONDS = 60_000;
 
 const MOST_WEBHOOKS_PER_WINDOW = 60;
 
+const MOST_WAITING_EVENTS = 200;
+
+const EVENT_RETRY_AFTER_MS = [10_000, 60_000];
+
 const ASSET_TYPES: Readonly<Record<string, string>> = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -150,6 +159,9 @@ const createPluginService = ({
   redirectUri,
   apiVersion,
   enqueueSchedule,
+  cancelJobs = () => Promise.resolve(),
+  isJobCancelled = () => false,
+  eventRetryAfterMs = EVENT_RETRY_AFTER_MS,
   log,
   announce = () => undefined,
   fetchFor = (pluginId, hosts) => createPluginFetch({ pluginId, hosts }),
@@ -397,7 +409,114 @@ const createPluginService = ({
     now,
   });
 
-  const tell = async (events: readonly PluginEvent[]): Promise<void> => {
+  const lines = new Map<string, Promise<void>>();
+
+  const retries = new Set<NodeJS.Timeout>();
+
+  let isStopped = false;
+
+  const waitingEvents = new Map<string, number>();
+
+  /**
+   * Tells one plugin of one event in its turn, after everything it was told before, holding at most
+   * two hundred waiting for any one plugin so a slow one falls behind on its own. An event its
+   * handler fails on is told again after ten seconds and then a minute, except progress, which the
+   * next one replaces.
+   *
+   * @param pluginId - The plugin.
+   * @param event - What happened.
+   * @param attempt - How many times it was told already.
+   */
+  const deliver = (pluginId: string, event: PluginEvent, attempt: number): void => {
+    const waiting = waitingEvents.get(pluginId) ?? 0;
+
+    if (waiting >= MOST_WAITING_EVENTS) {
+      log('warn', `plugin ${pluginId}: ${event.topic} not told, too many events already waiting`);
+
+      return;
+    }
+
+    waitingEvents.set(pluginId, waiting + 1);
+
+    const turn = (lines.get(pluginId) ?? Promise.resolve())
+      .then(async () => {
+        const found = await runnable(pluginId);
+        const { manifest } = found?.record ?? { manifest: null };
+        const topic = manifest?.contributes.events.find((each) => each === event.topic);
+
+        if (
+          found === null ||
+          topic === undefined ||
+          !mayHearEvent(manifest?.permissions ?? [], topic)
+        ) {
+          return;
+        }
+
+        const hearsEverybody = found.record.manifest.permissions.some(
+          (permission) => permission.kind === 'viewing' && permission.household === true,
+        );
+
+        await runtime.invoke(
+          { record: found.record, code: found.code },
+          'event',
+          { event },
+          {
+            kind: 'background',
+            profileId: event.topic === 'profile.removed' ? null : event.profileId,
+            isHousehold: hearsEverybody && isAboutViewing(event.topic),
+          },
+        );
+      })
+      .catch((error) => {
+        const wait = event.topic === 'playback.progress' ? undefined : eventRetryAfterMs[attempt];
+
+        log(
+          'warn',
+          `plugin ${pluginId}: ${event.topic} failed${wait === undefined ? '' : ', telling it again shortly'}: ${error instanceof Error ? error.message : 'failed'}`,
+        );
+
+        if (wait !== undefined && !isStopped) {
+          const timer = setTimeout(() => {
+            retries.delete(timer);
+            deliver(pluginId, event, attempt + 1);
+          }, wait);
+
+          timer.unref();
+          retries.add(timer);
+        }
+      })
+      .finally(() => {
+        waitingEvents.set(pluginId, (waitingEvents.get(pluginId) ?? 1) - 1);
+      });
+
+    lines.set(pluginId, turn);
+  };
+
+  const inTurnPerPlugin = new Map<string, Promise<void>>();
+
+  let telling: Promise<void> = Promise.resolve();
+
+  /**
+   * Hands events to each plugin's line in the order Valence learned of them, one batch after
+   * another, so a batch that takes longer to sort out is never overtaken by the next.
+   *
+   * @param events - What happened.
+   * @returns When they are all in their plugins' lines.
+   */
+  const tell = (events: readonly PluginEvent[]): Promise<void> => {
+    const next = telling.then(() => sortOut(events));
+
+    telling = next.catch(() => undefined);
+
+    return next;
+  };
+
+  /**
+   * Puts each event in the line of every plugin that may hear it.
+   *
+   * @param events - What happened.
+   */
+  const sortOut = async (events: readonly PluginEvent[]): Promise<void> => {
     if (events.length === 0) {
       return;
     }
@@ -424,33 +543,14 @@ const createPluginService = ({
         ),
       );
 
+      const hearsEverybody = record.manifest.permissions.some(
+        (permission) => permission.kind === 'viewing' && permission.household === true,
+      );
+
       for (const event of heard) {
-        if (!isForThem(event, new Set(usedBy), accountsUsing)) {
-          continue;
+        if (isForThem(event, new Set(usedBy), accountsUsing, hearsEverybody)) {
+          deliver(record.id, event, 0);
         }
-
-        const found = await runnable(record.id);
-
-        if (found === null) {
-          continue;
-        }
-
-        await runtime
-          .invoke(
-            { record: found.record, code: found.code },
-            'event',
-            { event },
-            {
-              kind: 'background',
-              profileId: event.topic === 'profile.removed' ? null : event.profileId,
-            },
-          )
-          .catch((error) => {
-            log(
-              'warn',
-              `plugin ${record.id}: ${event.topic} failed: ${error instanceof Error ? error.message : 'failed'}`,
-            );
-          });
       }
     };
 
@@ -1132,6 +1232,10 @@ const createPluginService = ({
             await scheduleAll(saved);
           }
 
+          if (changes.isEnabled === false && record.isEnabled) {
+            await cancelJobs(id).catch(() => undefined);
+          }
+
           announce({
             pluginId: id,
             change:
@@ -1250,6 +1354,9 @@ const createPluginService = ({
 
         runtime.stop(id);
         pictures.forget(id);
+        lines.delete(id);
+        waitingEvents.delete(id);
+        await cancelJobs(id).catch(() => undefined);
 
         if (removed) {
           log('info', `plugin ${id}: uninstalled`);
@@ -1562,6 +1669,51 @@ const createPluginService = ({
         await enqueueSchedule(pluginId, scheduleId, schedule.everyMinutes * 60);
       }
     },
+    runJob: async (
+      jobId: string,
+      job: { pluginId: string; kind: string; payload: JsonValue; profileId: string | null },
+      attempt: number,
+    ): Promise<void> => {
+      const ahead = inTurnPerPlugin.get(job.pluginId) ?? Promise.resolve();
+      const run = ahead.then(async () => {
+        const found = await runnable(job.pluginId);
+
+        if (
+          found === null ||
+          isJobCancelled(jobId) ||
+          !found.record.manifest.contributes.jobs.some((each) => each.id === job.kind)
+        ) {
+          return;
+        }
+
+        await runtime.invoke(
+          { record: found.record, code: found.code },
+          'job',
+          {
+            job: { id: jobId, kind: job.kind, attempt, profileId: job.profileId },
+            payload: job.payload,
+          },
+          { kind: 'background', profileId: job.profileId, jobId },
+        );
+      });
+      const settled = run.then(
+        () => undefined,
+        () => undefined,
+      );
+
+      inTurnPerPlugin.set(job.pluginId, settled);
+
+      try {
+        await run;
+      } finally {
+        if (inTurnPerPlugin.get(job.pluginId) === settled) {
+          inTurnPerPlugin.delete(job.pluginId);
+        }
+      }
+    },
+    tellOf: (events: readonly PluginEvent[]): void => {
+      void tell(events).catch(couldNotTell);
+    },
     dispatch: (occurrence: WebhookOccurrence): void => {
       const at = new Date(now()).toISOString();
 
@@ -1639,6 +1791,13 @@ const createPluginService = ({
       }
     },
     stop: (): void => {
+      isStopped = true;
+
+      for (const timer of retries) {
+        clearTimeout(timer);
+      }
+
+      retries.clear();
       runtime.stopAll();
     },
   };

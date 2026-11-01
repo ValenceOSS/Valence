@@ -4,6 +4,8 @@ const REWOUND_BELOW_SECONDS = 2;
 
 const REPLAYED_AFTER_SECONDS = 10;
 
+const PROGRESS_EVERY_MS = 60_000;
+
 type PlayReport = {
   itemId: string;
   positionSeconds: number;
@@ -17,12 +19,14 @@ type Play<Report> = {
   startedAtMs: number;
 };
 
+type Reached = { positionSeconds: number; durationSeconds: number };
+
 type PlayWatchers<Report> = {
   onStarted: (play: Play<Report>) => void;
-  onStopped: (
-    play: Play<Report>,
-    reached: { positionSeconds: number; durationSeconds: number },
-  ) => void;
+  onStopped: (play: Play<Report>, reached: Reached) => void;
+  onPaused?: (play: Play<Report>, reached: Reached) => void;
+  onResumed?: (play: Play<Report>, reached: Reached) => void;
+  onProgress?: (play: Play<Report>, reached: Reached) => void;
 };
 
 type PlayTrackerOptions<Report> = PlayWatchers<Report> & {
@@ -41,6 +45,7 @@ type Playing<Report> = Play<Report> & {
   heardAtMs: number;
   isPlaying: boolean;
   positionSeconds: number;
+  progressAtMs: number;
 };
 
 /**
@@ -52,6 +57,8 @@ type Playing<Report> = Play<Report> & {
  * something else, says it is playing nothing, goes away, or goes back to the start of the same
  * thing, which is how a queue that has run out, a song on repeat and a restart all look. A play
  * starts only once something is playing, so a queue left paused at its first song starts nothing.
+ * In between, a play that pauses or carries on says so, and one playing says how far it has got at
+ * most once a minute.
  *
  * @param options - How to read a report, the clock, and who to tell of each start and stop.
  * @returns The tracker, told of every report and of every device that goes away (as `null`).
@@ -61,6 +68,9 @@ const createPlayTracker = <Report>({
   now,
   onStarted,
   onStopped,
+  onPaused,
+  onResumed,
+  onProgress,
 }: PlayTrackerOptions<Report>): PlayTracker<Report> => {
   const playing = new Map<string, Playing<Report>>();
 
@@ -103,7 +113,9 @@ const createPlayTracker = <Report>({
         if (isElsewhere || isBackAtTheStart) {
           stop(device.clientId, atMs);
         } else if (report !== null) {
-          playing.set(device.clientId, {
+          const isDue = said.isPlaying && atMs - play.progressAtMs >= PROGRESS_EVERY_MS;
+          const isResumed = !play.isPlaying && said.isPlaying;
+          const updated: Playing<Report> = {
             ...play,
             device,
             report,
@@ -112,7 +124,23 @@ const createPlayTracker = <Report>({
             heardAtMs: atMs,
             isPlaying: said.isPlaying,
             positionSeconds: said.positionSeconds,
-          });
+            progressAtMs: isDue || isResumed ? atMs : play.progressAtMs,
+          };
+          const told = { device, report, startedAtMs: play.startedAtMs };
+          const at = {
+            positionSeconds: said.positionSeconds,
+            durationSeconds: updated.durationSeconds,
+          };
+
+          playing.set(device.clientId, updated);
+
+          if (play.isPlaying && !said.isPlaying) {
+            onPaused?.(told, at);
+          } else if (isResumed) {
+            onResumed?.(told, at);
+          } else if (isDue) {
+            onProgress?.(told, at);
+          }
 
           return;
         }
@@ -132,6 +160,7 @@ const createPlayTracker = <Report>({
         heardAtMs: atMs,
         isPlaying: true,
         positionSeconds: said.positionSeconds,
+        progressAtMs: atMs,
       };
 
       playing.set(device.clientId, started);
@@ -140,6 +169,6 @@ const createPlayTracker = <Report>({
   };
 };
 
-export type { Play, PlayReport, PlayTracker, PlayWatchers };
+export type { Play, PlayReport, PlayTracker, PlayWatchers, Reached };
 
 export { createPlayTracker };

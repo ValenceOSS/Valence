@@ -393,6 +393,93 @@ describe('the plugin broker', () => {
     expect(await ask('viewing.markWatched', ['p2', 'm1'], BACKGROUND)).toBeNull();
   });
 
+  it('acts for the person a household event is about only in their viewing, and while they are here', async () => {
+    const { ask, host } = build([
+      { kind: 'viewing', access: 'write', household: true },
+      { kind: 'notifications' },
+    ]);
+    const HEARD_P2: BrokerScope = { kind: 'background', profileId: 'p2', isHousehold: true };
+
+    expect(await ask('viewing.markWatched', ['p2', 'm1'], HEARD_P2)).toBeNull();
+    await expect(ask('viewing.markWatched', ['p2', 'm1'], ABOUT_P2)).rejects.toThrow(
+      'people who have used it',
+    );
+    await expect(ask('viewing.markWatched', ['p3', 'm1'], HEARD_P2)).rejects.toThrow(
+      'people who have used it',
+    );
+    await expect(
+      ask('notifications.send', ['p2', { title: 'Hi', body: 'There' }], HEARD_P2),
+    ).rejects.toThrow('people who have used it');
+
+    vi.mocked(host.profiles.read).mockResolvedValueOnce(null);
+
+    await expect(ask('viewing.markWatched', ['p2', 'm1'], HEARD_P2)).rejects.toThrow(
+      'no longer here',
+    );
+
+    const narrowed = build([{ kind: 'viewing', access: 'write' }]);
+
+    await expect(narrowed.ask('viewing.markWatched', ['p2', 'm1'], HEARD_P2)).rejects.toThrow(
+      'people who have used it',
+    );
+  });
+
+  it('queues only declared jobs, for the person it runs for, within the limits', async () => {
+    const { ask, host, store } = build([], { jobs: [{ id: 'import', title: 'Import' }] });
+
+    await expect(ask('jobs.enqueue', ['import', { page: 1 }])).rejects.toThrow(
+      'only queue work for people who have used it',
+    );
+    await store.rememberProfile('broker-test', 'p1');
+
+    expect(await ask('jobs.enqueue', ['import', { page: 1 }])).toEqual({ id: 'job-1' });
+    expect(host.jobs.enqueue).toHaveBeenLastCalledWith(
+      { pluginId: 'broker-test', kind: 'import', payload: { page: 1 }, profileId: 'p1' },
+      0,
+      null,
+    );
+
+    await ask('jobs.enqueue', ['import', null, { afterSeconds: 60, key: 'nightly' }], BACKGROUND);
+    expect(host.jobs.enqueue).toHaveBeenLastCalledWith(
+      { pluginId: 'broker-test', kind: 'import', payload: null, profileId: null },
+      60,
+      'nightly',
+    );
+
+    await expect(ask('jobs.enqueue', ['export'])).rejects.toThrow('did not declare a job');
+    await expect(ask('jobs.enqueue', ['import', 'x'.repeat(16_001)])).rejects.toThrow(
+      'at most 16000 characters',
+    );
+    await expect(ask('jobs.enqueue', ['import', null, { profileId: 'p2' }])).rejects.toThrow(
+      'only act for the person using it',
+    );
+    await expect(ask('jobs.enqueue', ['import'], { kind: 'nobody' })).rejects.toThrow(
+      'nobody signed in to',
+    );
+    await expect(ask('jobs.enqueue', ['import'], ABOUT_P2)).rejects.toThrow(
+      'only queue work for people who have used it',
+    );
+    await expect(
+      ask('jobs.enqueue', ['import', null, { afterSeconds: 8 * 86_400 }]),
+    ).rejects.toThrow();
+
+    vi.mocked(host.jobs.waiting).mockResolvedValueOnce(500);
+
+    await expect(ask('jobs.enqueue', ['import'])).rejects.toThrow('500 jobs waiting');
+  });
+
+  it('takes how far a job has got only from that job', async () => {
+    const { ask, host } = build([]);
+
+    await expect(ask('jobs.progress', [1, 10])).rejects.toThrow('Only a job');
+    await expect(ask('jobs.progress', [1, 10], BACKGROUND)).rejects.toThrow('Only a job');
+
+    expect(
+      await ask('jobs.progress', [12, 10], { kind: 'background', profileId: null, jobId: 'j1' }),
+    ).toBeNull();
+    expect(host.jobs.progress).toHaveBeenLastCalledWith('j1', 'Broker Test', 10, 10);
+  });
+
   it('acts for nobody once the work a question belonged to has finished', async () => {
     const { ask } = build([{ kind: 'viewing', access: 'write' }]);
 

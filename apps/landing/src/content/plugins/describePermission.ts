@@ -21,6 +21,12 @@ const describePermission = (permission: Permission): string => {
         ? 'Reads every library, locked ones included'
         : 'Reads your library';
     case 'viewing':
+      if (permission.household === true) {
+        return permission.access === 'write'
+          ? 'Hears whenever anybody on the server watches or listens, and reads and updates what they have watched'
+          : 'Hears whenever anybody on the server watches or listens, and reads what they have watched';
+      }
+
       return permission.access === 'write'
         ? 'Reads what you have watched, kept and rated, and updates what you have watched'
         : 'Reads what you have watched, kept and rated';

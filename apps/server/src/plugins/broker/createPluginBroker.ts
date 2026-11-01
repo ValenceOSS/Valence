@@ -12,6 +12,8 @@ import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import type { PluginHost } from './PluginHost';
 import { asPersonLooking } from './asPersonLooking';
 import { multipartOf } from './multipartOf';
+import { LocalIdSchema } from '@ValenceSDK/manifest/LocalIdSchema';
+import { JOB_LIMITS } from '@ValenceSDK/jobs/JOB_LIMITS';
 
 type AccountTokens = { accessToken: string; expiresAt: string | null; account: string | null };
 
@@ -42,6 +44,8 @@ const MediaKind = z.enum(['film', 'series', 'episode', 'artist', 'album', 'track
 const MOST_LISTED = 200;
 
 const MOST_AT_ONCE = 200;
+
+const MOST_PROGRESS = 1_000_000_000;
 
 const CatalogueKind = z.enum(['film', 'series', 'album', 'track']);
 
@@ -92,6 +96,22 @@ const ARGS = {
   'secrets.delete': z.tuple([Id, Key]),
   'secrets.keys': z.tuple([Id]),
   'events.emit': z.tuple([z.string().regex(/^[a-z][a-z0-9-]{0,39}$/), Detail.optional()]),
+  'jobs.enqueue': z.tuple([
+    LocalIdSchema,
+    JsonValueSchema.optional(),
+    z
+      .object({
+        afterSeconds: z.number().int().min(0).max(JOB_LIMITS.afterSeconds).optional(),
+        key: z.string().min(1).max(JOB_LIMITS.keyCharacters).optional(),
+        profileId: Id.optional(),
+      })
+      .strict()
+      .optional(),
+  ]),
+  'jobs.progress': z.tuple([
+    z.number().int().min(0).max(MOST_PROGRESS),
+    z.number().int().min(0).max(MOST_PROGRESS),
+  ]),
   'crypto.hmac': z.tuple([
     z.enum(['sha1', 'sha256', 'sha512']),
     z.string().max(4096),
@@ -208,8 +228,10 @@ const asRefusal = (error: Error | string): never => {
  * The broker: the one place a plugin's questions of Valence are answered. Each question is read
  * with its own schema, checked against the permissions the plugin was installed with, and — where
  * it names a person — checked against who the plugin is running for. A page or panel acts only for
- * the viewer looking at it; scheduled and event-driven work acts only for people who have used or
- * connected the plugin; a question asked once its invocation has finished acts for nobody.
+ * the viewer looking at it; scheduled, queued and event-driven work acts only for people who have
+ * used or connected the plugin, except that a plugin hearing everybody's viewing may read and change
+ * the viewing of the person an event it is handling is about; a question asked once its invocation
+ * has finished acts for nobody.
  *
  * Refusals are thrown as sentences the plugin sees as ordinary errors.
  *
@@ -231,6 +253,7 @@ const createPluginBroker = ({
   const granted = installation.manifest.permissions;
   const name = installation.manifest.name;
   let secretWrites: Promise<void> = Promise.resolve();
+  let jobWrites: Promise<void> = Promise.resolve();
 
   const find = <K extends Permission['kind']>(kind: K): Extract<Permission, { kind: K }> | null =>
     granted.find(
@@ -259,7 +282,11 @@ const createPluginBroker = ({
     return scope;
   };
 
-  const actsFor = async (profileId: string, scope: BrokerScope | null): Promise<BrokerScope> => {
+  const actsFor = async (
+    profileId: string,
+    scope: BrokerScope | null,
+    isAboutViewing = false,
+  ): Promise<BrokerScope> => {
     const running = stillRunning(scope);
 
     if (running.kind === 'viewer') {
@@ -274,6 +301,21 @@ const createPluginBroker = ({
       throw new PluginRefusalError(
         `${name} may not act for anybody for a request nobody signed in to.`,
       );
+    }
+
+    const hearsEverybody = find('viewing')?.household === true;
+
+    if (
+      isAboutViewing &&
+      hearsEverybody &&
+      running.isHousehold === true &&
+      running.profileId === profileId
+    ) {
+      if ((await host.profiles.read(profileId)) === null) {
+        throw new PluginRefusalError(`${name} may not act for somebody who is no longer here.`);
+      }
+
+      return running;
     }
 
     if (!(await store.profilesOf(installation.id)).includes(profileId)) {
@@ -384,6 +426,71 @@ const createPluginBroker = ({
           title: declared.title,
           detail: Object.fromEntries(Object.entries(detail ?? {}).slice(0, 20)),
         });
+
+        return null;
+      }
+      case 'jobs.enqueue': {
+        const [kind, payload = null, options = {}] = ARGS[method].parse(args);
+        const running = stillRunning(scope);
+
+        if (running.kind === 'nobody') {
+          throw new PluginRefusalError(
+            `${name} may not queue work for a request nobody signed in to.`,
+          );
+        }
+
+        if (!installation.manifest.contributes.jobs.some((job) => job.id === kind)) {
+          throw new PluginRefusalError(`${name} did not declare a job called ${kind}.`);
+        }
+
+        if (JSON.stringify(payload).length > JOB_LIMITS.payloadCharacters) {
+          throw new PluginRefusalError(
+            `A job's payload may be at most ${JOB_LIMITS.payloadCharacters.toString()} characters.`,
+          );
+        }
+
+        if (options.profileId !== undefined) {
+          await actsFor(options.profileId, running);
+        }
+
+        const profileId = options.profileId ?? running.profileId;
+
+        if (profileId !== null && !(await store.profilesOf(installation.id)).includes(profileId)) {
+          throw new PluginRefusalError(`${name} may only queue work for people who have used it.`);
+        }
+
+        const queued = jobWrites.then(async () => {
+          if ((await host.jobs.waiting(installation.id)) >= JOB_LIMITS.waiting) {
+            throw new PluginRefusalError(
+              `${name} already has ${JOB_LIMITS.waiting.toString()} jobs waiting.`,
+            );
+          }
+
+          return host.jobs.enqueue(
+            { pluginId: installation.id, kind, payload, profileId },
+            options.afterSeconds ?? 0,
+            options.key ?? null,
+          );
+        });
+
+        jobWrites = queued.then(
+          () => undefined,
+          () => undefined,
+        );
+
+        const id = await queued;
+
+        return id === null ? null : { id };
+      }
+      case 'jobs.progress': {
+        const [processed, total] = ARGS[method].parse(args);
+        const running = stillRunning(scope);
+
+        if (running.kind !== 'background' || running.jobId === undefined) {
+          throw new PluginRefusalError('Only a job can say how far it has got.');
+        }
+
+        host.jobs.progress(running.jobId, name, Math.min(processed, total), total);
 
         return null;
       }
@@ -609,7 +716,7 @@ const createPluginBroker = ({
 
         const [profileId, since] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
+        await actsFor(profileId, scope, true);
 
         return host.viewing.progress(profileId, since ?? null);
       }
@@ -618,7 +725,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaId, watchedAt] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
+        await actsFor(profileId, scope, true);
         await host.viewing.markWatched(profileId, mediaId, watchedAt ?? null);
 
         return null;
@@ -628,7 +735,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaId] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
+        await actsFor(profileId, scope, true);
         await host.viewing.markUnwatched(profileId, mediaId);
 
         return null;
@@ -638,7 +745,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaIds] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope);
+        await actsFor(profileId, scope, true);
 
         return host.viewing.state(profileId, mediaIds);
       }

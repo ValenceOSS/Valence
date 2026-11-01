@@ -156,6 +156,15 @@ Sealed secrets kept for one person at a time, such as a token for a service that
 
 `id` is one of your `contributes.emits`. `detail` is names of up to 60 characters, each with a string of up to 500 characters, a number, a boolean or `null`. Only the first 20 names are sent; the rest are dropped without an error. At most 30 events a minute; more fail, and the count carries on across a restart of the plugin.
 
+### jobs
+
+| Method                                   | Returns                           | Permission |
+| ---------------------------------------- | --------------------------------- | ---------- |
+| `jobs.enqueue(kind, payload?, options?)` | `Promise<{ id: string } \| null>` | None       |
+| `jobs.progress(processed, total)`        | `Promise<void>`                   | None       |
+
+`kind` is one of your `contributes.jobs`. `options` may hold `afterSeconds`, a `key` and a `profileId`. `jobs.progress` works only inside a job. See [jobs](/plugins/schedules-and-events#jobs) for the limits and how a job runs. Needs `apiVersion` `^1.4`.
+
 ### crypto
 
 | Method                                            | Returns            | Permission |

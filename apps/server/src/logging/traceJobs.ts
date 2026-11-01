@@ -20,14 +20,14 @@ const traceJobs = (
   Object.fromEntries(
     Object.entries(handlers).map(([kind, run]) => [
       kind,
-      (jobId, payload) =>
+      (jobId, payload, attempt) =>
         scope.during(
           {
             jobId,
             jobKind: kind,
             ...(typeof payload.libraryId === 'string' ? { libraryId: payload.libraryId } : {}),
           },
-          () => run(jobId, payload),
+          () => run(jobId, payload, attempt),
         ),
     ]),
   );

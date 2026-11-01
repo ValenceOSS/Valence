@@ -23,6 +23,7 @@ type CreatePluginHostOptions = {
   ) => Promise<void>;
   requests: PluginHost['requests'];
   publish: (occurrence: WebhookOccurrence) => Promise<void>;
+  jobs: PluginHost['jobs'];
 };
 
 /**
@@ -46,6 +47,7 @@ const createPluginHost = ({
   notify,
   requests,
   publish,
+  jobs,
 }: CreatePluginHostOptions): PluginHost => {
   const viewerFor = async (profileId: string): Promise<Viewer> => {
     const profile = await readProfile(profileId);
@@ -203,6 +205,7 @@ const createPluginHost = ({
     events: {
       emit: (event) => publish({ event: 'plugin.event', data: event }),
     },
+    jobs,
   };
 };
 
