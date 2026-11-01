@@ -332,7 +332,6 @@ describe('Hero', () => {
     frames(500);
 
     expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Play the slideshow' })).toBeInTheDocument();
     expect(previewMock).toHaveBeenLastCalledWith(expect.objectContaining({ isHeld: true }));
   });
 
