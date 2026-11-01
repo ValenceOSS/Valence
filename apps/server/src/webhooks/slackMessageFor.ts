@@ -16,6 +16,8 @@ const DETAIL_LIMIT = 500;
 
 const LIST_LINE_LIMIT = 200;
 
+const BLOCK_LIMIT = 50;
+
 type SlackText = { type: 'plain_text' | 'mrkdwn'; text: string };
 
 type SlackImage = { type: 'image'; image_url: string; alt_text: string };
@@ -141,16 +143,25 @@ const slackMessageFor = (notice: WebhookNotice, sentence: string): SlackMessage 
           alt_text: clipText(notice.title, ALT_TEXT_LIMIT),
         };
   const lead = sentenceOf(notice.lead);
-  const sections: SlackSection[] = [
+  const context = contextOf(notice.context);
+  const footer = contextOf(notice.footer === null ? [] : [notice.footer]);
+  const fixed = [
     lead,
     fitEscaped(notice.body, SECTION_TEXT_LIMIT, escapeSlack),
     notice.tags.map((one) => `\`${escapeSlack(one.replaceAll('`', 'ˋ'))}\``).join(' | '),
     ...notice.details.map(detailOf),
-    ...notice.sections.map(listOf),
-    notice.link === null ? '' : `<${notice.link.url}|${escapeSlack(notice.link.label)}>`,
-  ]
-    .filter((one) => one !== '')
-    .map((text) => ({ type: 'section' as const, text: mrkdwn(text, SECTION_TEXT_LIMIT) }));
+  ].filter((one) => one !== '');
+  const link =
+    notice.link === null ? [] : [`<${notice.link.url}|${escapeSlack(notice.link.label)}>`];
+  const roomForLists =
+    BLOCK_LIMIT - 1 - context.length - footer.length - fixed.length - link.length;
+  const lists = notice.sections.map(listOf);
+  const listsThatFit =
+    lists.length <= roomForLists ? lists : [...lists.slice(0, Math.max(roomForLists - 1, 0)), '…'];
+  const sections: SlackSection[] = [...fixed, ...listsThatFit, ...link].map((text) => ({
+    type: 'section' as const,
+    text: mrkdwn(text, SECTION_TEXT_LIMIT),
+  }));
   const [first, ...rest] = sections;
   const withPoster =
     first === undefined || poster === null ? sections : [{ ...first, accessory: poster }, ...rest];
@@ -164,10 +175,8 @@ const slackMessageFor = (notice: WebhookNotice, sentence: string): SlackMessage 
         type: 'header',
         text: { type: 'plain_text', text: clipText(notice.title, HEADER_LIMIT) },
       },
-      ...(isLeadFirst
-        ? [leading, ...contextOf(notice.context), ...following]
-        : [...contextOf(notice.context), ...withPoster]),
-      ...contextOf(notice.footer === null ? [] : [notice.footer]),
+      ...(isLeadFirst ? [leading, ...context, ...following] : [...context, ...withPoster]),
+      ...footer,
     ],
   };
 };

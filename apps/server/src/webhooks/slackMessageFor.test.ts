@@ -106,6 +106,26 @@ describe('slackMessageFor', () => {
     expect(lengths[3]).toBeLessThanOrEqual(3000);
   });
 
+  it('keeps to Slack’s fifty blocks however many lists there are, saying where it stopped', () => {
+    const { blocks } = slackMessageFor(
+      {
+        ...aNotice,
+        sections: Array.from({ length: 80 }, (_, index) => ({
+          heading: `Library ${index.toString()}`,
+          lines: ['A film'],
+        })),
+      },
+      'Scanned 80 libraries',
+    );
+
+    expect(blocks).toHaveLength(50);
+    expect(blocks.at(-1)).toStrictEqual(context('Requests'));
+    expect(blocks.at(-2)).toStrictEqual(
+      section('<https://docs.getvalence.app/requests|How to fix it>'),
+    );
+    expect(blocks.at(-3)).toStrictEqual(section('…'));
+  });
+
   it('cuts a long summary before escaping it, so it never ends inside an escape', () => {
     const { blocks } = slackMessageFor(
       {
