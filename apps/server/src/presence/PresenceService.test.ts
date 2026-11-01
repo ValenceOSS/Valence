@@ -908,6 +908,7 @@ describe('createPresenceService, telling somebody who is here', () => {
       deviceId: null,
       identity: null,
       renamed: null,
+      userAgent: null,
     });
   });
 

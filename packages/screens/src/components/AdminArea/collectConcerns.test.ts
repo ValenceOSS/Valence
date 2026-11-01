@@ -157,6 +157,7 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
   device: null,
   client: null,
   identity: null,
+  userAgent: null,
   clientKind: 'browser' as const,
   connectedAt: 0,
   streams: null,

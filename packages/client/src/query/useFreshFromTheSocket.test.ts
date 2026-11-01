@@ -6,6 +6,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { aFakeSocket as aSocket } from '@ValenceClient/testing/aFakeSocket';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { useFreshFromTheSocket } from './useFreshFromTheSocket';
 import type { RealtimeEvent } from '@ValenceContracts/schemas/Realtime';
 import type { ReactNode } from 'react';
@@ -109,6 +110,28 @@ describe('useFreshFromTheSocket', () => {
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['admin'] });
   });
 
+  it('asks again who is signed in when an administrator stops this tab, and not for anything else', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('presence', {
+      ...ANYTHING,
+      topic: 'presence',
+      payload: { kind: 'message', text: 'Hi' },
+    });
+
+    expect(invalidate).not.toHaveBeenCalled();
+
+    socket.say('presence', {
+      ...ANYTHING,
+      topic: 'presence',
+      payload: { kind: 'stopped', reason: 'An administrator signed this device out.' },
+    });
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: sessionQueries.who().queryKey });
+  });
+
   it('throws away the downloads when one of them moves on, in place of asking every few seconds', () => {
     const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
     const socket = aSocket();
@@ -147,6 +170,7 @@ describe('useFreshFromTheSocket', () => {
     expect(socket.stopped).toEqual([
       'media',
       'notifications',
+      'presence',
       'profile',
       'requests',
       'keeping',

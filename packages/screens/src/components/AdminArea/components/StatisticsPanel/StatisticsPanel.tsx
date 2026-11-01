@@ -52,7 +52,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
     () => [
       {
         id: 'client',
-        header: say('common.device'),
+        header: say('common.browserOrApp'),
         accessorFn: (row) => row.client,
         cell: ({ row }) => (
           <Tooltip label={row.original.client}>

@@ -1,3 +1,5 @@
+import { endWhatSignInsHeld } from '@ValenceServer/presence/endWhatSignInsHeld';
+import type { EndedSignIns } from '@ValenceServer/realtime/createSignedInSockets';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { createPushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import { saying } from '@ValenceI18n/saying';
@@ -336,6 +338,7 @@ const createAppContext = (options: CreateAppOptions) => {
     askingDevices,
     endAccountSessions,
     endAccountSession,
+    closeSignedInSockets,
     realtime,
     logs,
     log,
@@ -2079,6 +2082,12 @@ const createAppContext = (options: CreateAppOptions) => {
     askingDevices,
     endAccountSessions,
     endAccountSession,
+    endWhatSignInsHeld: async (ended: EndedSignIns, reason: string) =>
+      endWhatSignInsHeld(
+        { playback, music, bookDevices, presence, closeSockets: closeSignedInSockets },
+        ended,
+        reason,
+      ),
     realtime,
     logs,
     log,

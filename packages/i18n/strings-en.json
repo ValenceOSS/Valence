@@ -9085,6 +9085,11 @@
     "context": "An error the server answers with (HTTP 403) when somebody signed in to the public demo account tries something switched off there: signing devices out, adding or removing profiles, renaming the household or handing out share links."
   },
   {
+    "handler": "error.admin.aGuestHasNoSignIn",
+    "text": "A guest has no sign-in to end.",
+    "context": "An error the server answers with (HTTP 409) when an administrator tries to sign out a session with no account behind it: one opened through a share link, or by a viewer on a linked server (from `serveAccount`)."
+  },
+  {
     "handler": "error.admin.noSuchJobIsWaiting",
     "text": "No such queued job.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveAdmin`)."
@@ -9118,6 +9123,11 @@
     "handler": "error.admin.sayWhichPartsOfTheLibrary",
     "text": "Choose which parts of the library to clear.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveAdmin`)."
+  },
+  {
+    "handler": "error.admin.thatDeviceHasNoSignInToEnd",
+    "text": "That device has no sign-in to end. It may be using an API key, or already be signed out.",
+    "context": "An error the server answers with (HTTP 409) when an administrator tries to sign out a device whose connection is not a sign-in that can be ended, such as one made with an API key, which has to be revoked instead (from `serveAccount`)."
   },
   {
     "handler": "error.admin.thatJobNeedsALibrary",
@@ -22360,6 +22370,11 @@
     "context": "Shown in the shares panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.signedThatDeviceOut",
+    "text": "Signed that device out.",
+    "context": "Shown when an administrator has signed out the device an open session is on, from the sessions page."
+  },
+  {
     "handler": "screens.adminArea.sizeFree",
     "text": "{size} free",
     "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
@@ -32589,6 +32604,16 @@
     "handler": "screens.windowBar.updatingPercent",
     "text": "Updating {percent}%",
     "context": "Text shown in the window bar. {percent} is filled in by the app."
+  },
+  {
+    "handler": "server.account.signedOutByAnAdministrator",
+    "text": "An administrator signed this device out.",
+    "context": "Shown to somebody whose device an administrator signed out from the sessions page, as the reason their playback stopped."
+  },
+  {
+    "handler": "server.account.thisDeviceWasSignedOutElsewhere",
+    "text": "This device was signed out from another device.",
+    "context": "Shown to somebody whose device was signed out from their own devices list on another device, as the reason their playback stopped."
   },
   {
     "handler": "server.accounts.pluginOAuth.nameDidNotAcceptTheConnection",

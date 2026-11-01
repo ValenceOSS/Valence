@@ -245,7 +245,11 @@ const AuditPanel = () => {
             <span className="text-text-muted">—</span>
           ) : (
             <span className="flex max-w-[16rem] min-w-0 flex-col gap-0.5">
-              {device === null ? null : <span className="truncate text-text">{device}</span>}
+              {device === null ? null : (
+                <span className="truncate text-text" title={row.original.userAgent ?? undefined}>
+                  {device}
+                </span>
+              )}
               {address === null ? null : (
                 <span className="truncate text-xs tabular-nums text-text-muted">{address}</span>
               )}

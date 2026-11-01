@@ -16,6 +16,7 @@ const LISTENING: ActiveSession = {
   device: null,
   client: null,
   identity: null,
+  userAgent: null,
   clientKind: 'browser',
   connectedAt: 1000,
   streams: null,

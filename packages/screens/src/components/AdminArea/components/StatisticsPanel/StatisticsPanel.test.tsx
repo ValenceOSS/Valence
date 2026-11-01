@@ -50,5 +50,6 @@ describe('StatisticsPanel', () => {
     expect(await screen.findByText('Severance')).toBeInTheDocument();
     expect(screen.getByText('Priya')).toBeInTheDocument();
     expect(screen.getByText('Living room TV')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /Browser or app/ })).toBeInTheDocument();
   });
 });

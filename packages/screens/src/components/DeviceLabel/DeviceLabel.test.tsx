@@ -27,6 +27,21 @@ describe('DeviceLabel', () => {
     expect(container).toHaveTextContent('iPhone 17 Pro Max · Valence for iOS');
   });
 
+  it('shows the user agent the device sent on hover, and nothing where it sent none', () => {
+    const { container, rerender } = render(
+      <DeviceLabel device="iPhone 17 Pro Max" userAgent="Valence/1 CFNetwork/3826 Darwin/25.0.0" />,
+    );
+
+    expect(container.firstElementChild).toHaveAttribute(
+      'title',
+      'Valence/1 CFNetwork/3826 Darwin/25.0.0',
+    );
+
+    rerender(<DeviceLabel device="iPhone 17 Pro Max" />);
+
+    expect(container.firstElementChild).not.toHaveAttribute('title');
+  });
+
   it('names only the device where its client is not known', () => {
     const { container } = render(<DeviceLabel device="Living room TV" />);
 

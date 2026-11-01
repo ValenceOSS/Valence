@@ -148,6 +148,7 @@ import {
   failureOfRefusal,
 } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { signOutSession } from '@ValenceClient/admin/fetchAccountSessions';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
   Reencode,
@@ -298,6 +299,9 @@ const AdminArea = ({
   const mayDeleteMedia =
     askedPermissions.data?.isAdministrator === true ||
     (askedPermissions.data?.permissions.includes('media.delete') ?? false);
+  const maySignDevicesOut =
+    askedPermissions.data?.isAdministrator === true ||
+    (askedPermissions.data?.permissions.includes('account.security') ?? false);
 
   const everyFile = askedEveryFile.data ?? [];
   const reencodes = askedReencodes.data ?? [];
@@ -665,6 +669,20 @@ const AdminArea = ({
           say('screens.adminArea.theMessageCouldNotBeSent'),
         ),
       );
+    } finally {
+      setBusyClientId(null);
+    }
+  };
+
+  const signDeviceOut = async (clientId: string) => {
+    setBusyClientId(clientId);
+
+    try {
+      tellOutcome(
+        say('screens.adminArea.signedThatDeviceOut'),
+        failureOfRefusal(await signOutSession(clientId)),
+      );
+      await reloadSessions();
     } finally {
       setBusyClientId(null);
     }
@@ -1084,6 +1102,13 @@ const AdminArea = ({
               onResume={(clientId) => {
                 void resumeStream(clientId);
               }}
+              {...(maySignDevicesOut
+                ? {
+                    onSignOut: (clientId: string) => {
+                      void signDeviceOut(clientId);
+                    },
+                  }
+                : {})}
               onMessage={tellViewer}
             />
 

@@ -1,5 +1,6 @@
 import { Tv as EmptyTvIcon } from '@keyline-icons/react/fill';
 import { NothingHere } from '@ValenceUI/NothingHere';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { SessionCard } from '@ValenceScreens/components/AdminArea/components/SessionCard/SessionCard';
 import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
 import type { SessionCardsProps } from './SessionCards.types';
@@ -14,6 +15,7 @@ import { say } from '@ValenceI18n/say';
  * @param onPause - Called with the session to pause.
  * @param onResume - Called with the session to let carry on.
  * @param onMessage - Called with the session somebody wants to tell something.
+ * @param onSignOut - Called with the session whose device to sign out, where that is allowed.
  */
 const SessionCards = ({
   sessions,
@@ -22,6 +24,7 @@ const SessionCards = ({
   onPause,
   onResume,
   onMessage,
+  onSignOut,
 }: SessionCardsProps) => (
   <div className="flex flex-col gap-4">
     {sessions.length === 0 ? (
@@ -53,6 +56,13 @@ const SessionCards = ({
                 onMessage={() => {
                   onMessage(session);
                 }}
+                {...(onSignOut === undefined || session.clientId === platformInUse().thisClientId()
+                  ? {}
+                  : {
+                      onSignOut: () => {
+                        onSignOut(session);
+                      },
+                    })}
               />
             ))}
           </div>

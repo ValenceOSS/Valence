@@ -13,12 +13,14 @@ import type { DeviceLabelProps } from './DeviceLabel.types';
  * @param client - What it reaches Valence through, such as "Valence for iOS", where it is known.
  * @param identity - What the device is, which picks its marks, where it is known.
  * @param clientKind - What kind of app it said it was, for a device that never said more.
+ * @param userAgent - What the device sent as its user agent, shown on hover, where it is known.
  */
 const DeviceLabel = ({
   device,
   client = null,
   identity = null,
   clientKind = 'browser',
+  userAgent = null,
 }: DeviceLabelProps) => {
   const { deviceGlyph, systemMark, clientGlyph, clientMark } = marksOfDevice(identity, clientKind);
   const system = systemMark === null || WORDMARKS.has(systemMark) ? null : systemMark;
@@ -34,7 +36,10 @@ const DeviceLabel = ({
   );
 
   return (
-    <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-text-muted">
+    <span
+      className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-text-muted"
+      title={userAgent ?? undefined}
+    >
       {client === null ? (
         deviceNamed
       ) : (

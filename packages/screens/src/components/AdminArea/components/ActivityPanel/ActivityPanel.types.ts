@@ -8,6 +8,7 @@ type ActivityPanelProps = {
   onPause: (clientId: string) => void;
   onResume: (clientId: string) => void;
   onMessage: (clientId: string, text: string) => Promise<void>;
+  onSignOut?: (clientId: string) => void;
 };
 
 export type { ActivityPanelProps };

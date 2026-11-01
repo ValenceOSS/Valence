@@ -13,6 +13,7 @@ import { announcementQueries } from '@ValenceClient/query/announcementQueries';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
+import { PresenceEventSchema } from '@ValenceClient/presence/PresenceEventSchema';
 
 type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
 
@@ -63,6 +64,12 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
 
       client.subscribe('notifications', () => {
         void cache.invalidateQueries({ queryKey: notificationQueries.key });
+      }),
+
+      client.subscribe('presence', (event) => {
+        if (PresenceEventSchema.safeParse(event.payload).data?.kind === 'stopped') {
+          void cache.invalidateQueries({ queryKey: sessionQueries.who().queryKey });
+        }
       }),
 
       client.subscribe('profile', () => {

@@ -24,6 +24,7 @@ const LAPTOP: PresenceEntry = {
   deviceId: null,
   identity: null,
   renamed: null,
+  userAgent: null,
   clientKind: null,
   connectedAt: 0,
   playback: null,

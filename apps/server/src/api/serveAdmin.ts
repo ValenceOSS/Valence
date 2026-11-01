@@ -1,3 +1,4 @@
+import { stopPlayingOn } from '@ValenceServer/presence/stopPlayingOn';
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
 import { nameTheDevice } from '@ValenceCore/functions/nameTheDevice';
@@ -565,6 +566,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
               : nameTheDevice(entry.identity, entry.renamed),
           client: entry.identity === null ? null : nameTheClient(entry.identity),
           identity: entry.identity,
+          userAgent: entry.userAgent,
           clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,
           playback: entry.playback,
@@ -605,18 +607,15 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       );
 
     if (
-      music?.devices.order(clientId, { kind: 'stop' }) === true ||
-      bookDevices?.order(clientId, 'stop') === true
+      await stopPlayingOn(
+        { playback, music, bookDevices },
+        clientId,
+        stopping?.playback?.transcoderSessionId ?? null,
+      )
     ) {
       await auditStop();
 
       return context.body(null, 204);
-    }
-
-    const transcoderSessionId = stopping?.playback?.transcoderSessionId;
-
-    if (transcoderSessionId !== null && transcoderSessionId !== undefined) {
-      await playback.stop(transcoderSessionId, clientId);
     }
 
     if (!presence.stop(clientId, say('server.admin.thisStreamWasStoppedByAn'))) {

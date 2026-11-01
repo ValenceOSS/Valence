@@ -9,6 +9,7 @@ import {
   BookOpen as BookOpenIcon,
   Headphones as HeadphonesIcon,
   Info as InfoIcon,
+  LogOut as LogOutFilledIcon,
   MessageSquare as MessageSquareIcon,
   MusicNote as MusicNoteIcon,
   Pause as PauseFilledIcon,
@@ -48,6 +49,7 @@ const WORDMARK_SIZES: Partial<Record<BrandMarkName, number>> = {
  * @param onPause - Called to pause it.
  * @param onResume - Called to let it carry on.
  * @param onMessage - Called to tell the viewer something, without touching their playback.
+ * @param onSignOut - Called to sign the device out, where that is allowed.
  */
 const SessionCard = ({
   session,
@@ -56,6 +58,7 @@ const SessionCard = ({
   onPause,
   onResume,
   onMessage,
+  onSignOut,
 }: SessionCardProps) => {
   const { playback, listening, bookListening, reading } = session;
   const book = bookListening ?? reading;
@@ -166,7 +169,14 @@ const SessionCard = ({
           ) : (
             <BrandGlyph of={clientMark} size={13} />
           )}
-          <span className="truncate" title={deviceAndClient}>
+          <span
+            className="truncate"
+            title={
+              session.userAgent === null
+                ? deviceAndClient
+                : `${deviceAndClient}\n${session.userAgent}`
+            }
+          >
             {deviceAndClient}
           </span>
 
@@ -296,6 +306,19 @@ const SessionCard = ({
             }}
           >
             <Icon of={InfoIcon} size={15} className="opacity-80" />
+          </Button>
+        )}
+
+        {onSignOut === undefined || session.accountId === null ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={say('common.signThisOut')}
+            size="sm"
+            disabled={isBusy}
+            onClick={onSignOut}
+          >
+            <Icon of={LogOutFilledIcon} size={15} />
           </Button>
         )}
       </div>

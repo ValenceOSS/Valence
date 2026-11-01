@@ -17,6 +17,7 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   device: null,
   client: null,
   identity: null,
+  userAgent: null,
   clientKind: 'browser' as const,
   connectedAt: 0,
   streams: null,
@@ -64,6 +65,82 @@ describe('ActivityPanel', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Show as cards' }));
 
     expect(screen.getAllByRole('heading', { name: 'Dan' })).toHaveLength(1);
+  });
+
+  it('signs a device out from the table once that is confirmed', async () => {
+    const onSignOut = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ActivityPanel {...props} sessions={[session()]} onSignOut={onSignOut} />, {
+      wrapper: CacheScope,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Show as a table' }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Sign out this device' }));
+
+    expect(onSignOut).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole('button', { name: 'Sign out device' }));
+
+    expect(onSignOut).toHaveBeenCalledWith('cli_1');
+  });
+
+  it('signs a device out from its card once that is confirmed', async () => {
+    const onSignOut = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ActivityPanel {...props} sessions={[session()]} onSignOut={onSignOut} />, {
+      wrapper: CacheScope,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Show as cards' }));
+    await user.click(screen.getByRole('button', { name: 'Sign out this device' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign out device' }));
+
+    expect(onSignOut).toHaveBeenCalledWith('cli_1');
+  });
+
+  it('leaves a device signed in when the question is turned down', async () => {
+    const onSignOut = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ActivityPanel {...props} sessions={[session()]} onSignOut={onSignOut} />, {
+      wrapper: CacheScope,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Show as cards' }));
+    await user.click(screen.getByRole('button', { name: 'Sign out this device' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(onSignOut).not.toHaveBeenCalled();
+  });
+
+  it('offers no sign-out to somebody who may not, for a guest, who holds no sign-in, or for this tab', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<ActivityPanel {...props} sessions={[session()]} />, {
+      wrapper: CacheScope,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Show as cards' }));
+
+    expect(screen.queryByRole('button', { name: 'Sign out this device' })).not.toBeInTheDocument();
+
+    rerender(
+      <ActivityPanel {...props} sessions={[session({ accountId: null })]} onSignOut={vi.fn()} />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Sign out this device' })).not.toBeInTheDocument();
+
+    rerender(
+      <ActivityPanel
+        {...props}
+        sessions={[session({ clientId: 'client-1' })]}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Sign out this device' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

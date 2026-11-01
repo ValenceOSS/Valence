@@ -12,6 +12,7 @@ const A_DEVICE: HeldDevice = {
   client: sayVerbatim('Valence for iOS'),
   identity: null,
   renamed: 'Kitchen phone',
+  userAgent: 'Valence/1 CFNetwork/3826 Darwin/25.0.0',
   address: '192.168.1.40',
   signedInAt: '2026-10-01T00:00:00.000Z',
   lastActiveAt: '2026-11-01T12:00:00.000Z',

@@ -49,6 +49,21 @@ describe('deviceColumns', () => {
     expect(screen.getByText('192.168.1.4')).toBeInTheDocument();
   });
 
+  it('shows the user agent the device sent when its name is hovered', () => {
+    render(
+      <DataTable
+        label="Devices"
+        columns={deviceColumns({ onEnd: null })}
+        rows={[{ ...DEVICE, userAgent: 'Mozilla/5.0 (Macintosh) Chrome/138.0' }]}
+      />,
+    );
+
+    expect(screen.getByText('Mac')).toHaveAttribute(
+      'title',
+      'Mozilla/5.0 (Macintosh) Chrome/138.0',
+    );
+  });
+
   it('marks the device the list is open on', () => {
     render(
       <DataTable

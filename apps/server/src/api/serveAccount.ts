@@ -14,11 +14,15 @@ import {
   listAccountSessionsRoute,
   endAccountSessionsRoute,
   endAccountSessionRoute,
+  signOutSessionRoute,
   setAccountAvatarRoute,
 } from '@ValenceServer/routes/AccountRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { say } from '@ValenceI18n/say';
+import type { Context } from 'hono';
+import type { RefusalBody } from '@ValenceI18n/RefusalBody';
 import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
 import { DEFAULT_SETUP_LINK_LIFETIME } from '@ValenceContracts/schemas/SetupLink';
 import { linkOriginOf } from '@ValenceServer/accounts/setupLinks/linkOriginOf';
@@ -52,6 +56,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     presence,
     endAccountSessions,
     endAccountSession,
+    endWhatSignInsHeld,
     tooBigToRead,
     describeAccountRefusal,
     requires,
@@ -153,6 +158,11 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
+    await endWhatSignInsHeld(
+      { accountId: userId },
+      say('server.account.signedOutByAnAdministrator'),
+    );
+
     await recordAudit(
       context,
       'account.banned',
@@ -231,6 +241,11 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     if (!(await removeAccount?.(userId))) {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
+
+    await endWhatSignInsHeld(
+      { accountId: userId },
+      say('server.account.signedOutByAnAdministrator'),
+    );
 
     await recordAudit(context, 'account.removed', removedName);
 
@@ -403,6 +418,11 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
+    await endWhatSignInsHeld(
+      { accountId: userId },
+      say('server.account.signedOutByAnAdministrator'),
+    );
+
     await recordAudit(context, 'account.passwordReset', await nameOfAccount(userId));
 
     return context.body(null, 204);
@@ -453,20 +473,35 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await endAccountSessions?.(userId);
+    await endWhatSignInsHeld(
+      { accountId: userId },
+      say('server.account.signedOutByAnAdministrator'),
+    );
 
     await recordAudit(context, 'account.signedOutEverywhere', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });
 
-  app.openapi(endAccountSessionRoute, async (context) => {
+  /**
+   * Signs out every sign-in of the device one of an account's sign-ins is on, where the
+   * administrator asking may act on that account.
+   *
+   * @param context - The request.
+   * @param userId - Whose device it is.
+   * @param sessionId - One of the device's sign-ins.
+   * @returns Why it was refused, or nothing where it was signed out.
+   */
+  const signOutDevice = async (
+    context: Context,
+    userId: string,
+    sessionId: string,
+  ): Promise<{ status: 403 | 409; body: RefusalBody } | null> => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.security')) {
-      return context.json(refuse('common.thatIsForAdministrators'), 403);
+      return { status: 403, body: refuse('common.thatIsForAdministrators') };
     }
-
-    const { userId, sessionId } = context.req.valid('param');
 
     if (actor.id !== userId) {
       const target = await permissions.rolesFor(userId);
@@ -481,7 +516,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       });
 
       if (refusal !== null) {
-        return context.json(describeAccountRefusal(refusal), 403);
+        return { status: 403, body: describeAccountRefusal(refusal) };
       }
     }
 
@@ -495,15 +530,51 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     });
     const device = devices.find((one) => one.sessionIds.includes(sessionId));
 
+    if (device === undefined) {
+      return { status: 409, body: refuse('error.admin.thatDeviceHasNoSignInToEnd') };
+    }
+
     await Promise.all(
-      (device?.sessionIds ?? [sessionId]).map(
-        (one) => endAccountSession?.(userId, one) ?? Promise.resolve(),
-      ),
+      device.sessionIds.map((one) => endAccountSession?.(userId, one) ?? Promise.resolve()),
+    );
+    await endWhatSignInsHeld(
+      { sessionIds: device.sessionIds },
+      say('server.account.signedOutByAnAdministrator'),
     );
 
     await recordAudit(context, 'account.sessionEnded', await nameOfAccount(userId));
 
-    return context.body(null, 204);
+    return null;
+  };
+
+  app.openapi(endAccountSessionRoute, async (context) => {
+    const { userId, sessionId } = context.req.valid('param');
+    const refused = await signOutDevice(context, userId, sessionId);
+
+    return refused === null ? context.body(null, 204) : context.json(refused.body, refused.status);
+  });
+
+  app.openapi(signOutSessionRoute, async (context) => {
+    const { clientId } = context.req.valid('param');
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const open = presence.list().find((entry) => entry.clientId === clientId);
+
+    if (open === undefined) {
+      return context.json(refuse('error.admin.thatTabIsNotOpen'), 404);
+    }
+
+    if (open.accountId === null || open.sessionId === null) {
+      return context.json(refuse('error.admin.aGuestHasNoSignIn'), 409);
+    }
+
+    const refused = await signOutDevice(context, open.accountId, open.sessionId);
+
+    return refused === null ? context.body(null, 204) : context.json(refused.body, refused.status);
   });
 
   app.openapi(setAccountAvatarRoute, async (context) => {
