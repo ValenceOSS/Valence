@@ -912,6 +912,13 @@ const createAppContext = (options: CreateAppOptions) => {
               });
             })();
           },
+          onChoiceChanged: (accountId) => {
+            realtime?.publish(
+              'profile',
+              { changed: true },
+              { kind: 'accounts', accountIds: [accountId] },
+            );
+          },
           onPinLocked: (accountId, profileName) => {
             void (async () => {
               const owner = (await profiles.list(accountId)).find((one) => one.isOwner);

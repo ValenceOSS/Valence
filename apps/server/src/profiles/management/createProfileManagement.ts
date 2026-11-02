@@ -24,6 +24,7 @@ type ProfileManagementNeeds = {
   announce: (accountId: string) => Promise<void>;
   onSecondProfile?: (accountId: string) => Promise<void>;
   onChosen?: (acting: Acting, profile: ViewerProfile, device: ChoosingDevice) => void;
+  onChoiceChanged?: (accountId: string) => void;
   onPinLocked?: (accountId: string, profileName: string, failures: number) => void;
   onRemoved?: (profileId: string) => void;
   now?: () => number;
@@ -228,12 +229,14 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
       }
 
       needs.onChosen?.(acting, profile, device);
+      needs.onChoiceChanged?.(acting.account.id);
 
       return { kind: 'done', body: profile };
     },
 
     forget: async (acting: Acting): Promise<void> => {
       await chosen.forget(acting.sessionId);
+      needs.onChoiceChanged?.(acting.account.id);
     },
 
     create: async (

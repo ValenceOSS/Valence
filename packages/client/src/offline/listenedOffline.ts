@@ -12,6 +12,7 @@ const ListenedOfflineSchema = z.object({
   isFinished: z.boolean(),
   server: z.string().nullable(),
   atMs: z.number().int().nonnegative().default(0),
+  profileId: z.string().nullable().default(null),
 });
 
 const ListenedOfflineListSchema = z.array(ListenedOfflineSchema).catch([]);
@@ -34,6 +35,19 @@ const everythingListenedOffline = (): ListenedOffline[] => {
 };
 
 /**
+ * Whether a place was kept on this server as this profile. One kept before places said whose they
+ * were, or where nobody could say who was listening, belongs to whoever is listening now, which is
+ * all that could be told of it then.
+ *
+ * @param entry - The place kept.
+ * @param profileId - Who is listening now.
+ * @returns Whether it is theirs, here.
+ */
+const isTheirsHere = (entry: ListenedOffline, profileId: string | null): boolean =>
+  entry.server === platformInUse().serverAddress() &&
+  (entry.profileId === null || entry.profileId === profileId);
+
+/**
  * Writes down what is still to be told, or forgets the lot where nothing is.
  *
  * @param left - What is still to be told.
@@ -52,19 +66,25 @@ const keep = (left: ListenedOffline[]): void => {
  *
  * @param bookId - The book.
  * @param place - Where they got to.
+ * @param atMs - When they got there.
+ * @param profileId - Who was listening, where that is known.
  */
 const rememberListenedOffline = (
   bookId: string,
   place: ListeningPlace,
   atMs: number = Date.now(),
+  profileId: string | null = null,
 ): void => {
   const server = platformInUse().serverAddress();
 
   keep([
     ...everythingListenedOffline().filter(
-      (entry) => entry.bookId !== bookId || entry.server !== server,
+      (entry) =>
+        entry.bookId !== bookId ||
+        entry.server !== server ||
+        (entry.profileId !== null && entry.profileId !== profileId),
     ),
-    { bookId, ...place, server, atMs },
+    { bookId, ...place, server, atMs, profileId },
   ]);
 };
 
@@ -73,13 +93,12 @@ const rememberListenedOffline = (
  * newer.
  *
  * @param bookId - The book.
+ * @param profileId - Who the server was told about.
  */
-const forgetListenedOffline = (bookId: string): void => {
-  const server = platformInUse().serverAddress();
-
+const forgetListenedOffline = (bookId: string, profileId: string | null = null): void => {
   keep(
     everythingListenedOffline().filter(
-      (entry) => entry.bookId !== bookId || entry.server !== server,
+      (entry) => entry.bookId !== bookId || !isTheirsHere(entry, profileId),
     ),
   );
 };
@@ -88,12 +107,15 @@ const forgetListenedOffline = (bookId: string): void => {
  * Where somebody got to in an audiobook on this device and this server while it was offline.
  *
  * @param bookId - The book.
+ * @param profileId - Who is listening.
  * @returns Where they got to, or nothing.
  */
-const listenedOffline = (bookId: string): ListeningPlace | null => {
-  const server = platformInUse().serverAddress();
+const listenedOffline = (
+  bookId: string,
+  profileId: string | null = null,
+): ListeningPlace | null => {
   const found = everythingListenedOffline().find(
-    (entry) => entry.bookId === bookId && entry.server === server,
+    (entry) => entry.bookId === bookId && isTheirsHere(entry, profileId),
   );
 
   return found === undefined
@@ -106,14 +128,18 @@ const listenedOffline = (bookId: string): ListeningPlace | null => {
 };
 
 /**
- * Tells the server in use where every audiobook listened to offline got to, unless it has heard of
- * somewhere newer since, and forgets each one that is settled.
+ * Tells the server in use where every audiobook this profile listened to offline got to, unless it
+ * has heard of somewhere newer since, and forgets each one that is settled. What another profile
+ * listened to is kept for when they are back.
  *
+ * @param profileId - Who is listening now, or null where that is not yet known, which sends nothing.
  * @returns How many it told.
  */
-const sendListenedOffline = async (): Promise<number> => {
-  const server = platformInUse().serverAddress();
-  const here = everythingListenedOffline().filter((entry) => entry.server === server);
+const sendListenedOffline = async (profileId: string | null): Promise<number> => {
+  const here =
+    profileId === null
+      ? []
+      : everythingListenedOffline().filter((entry) => isTheirsHere(entry, profileId));
   const outcomes = await Promise.all(
     here.map(async (entry) => {
       const known = await fetchListeningProgress(entry.bookId).catch(() => undefined);
@@ -144,6 +170,7 @@ const sendListenedOffline = async (): Promise<number> => {
           (done) =>
             done.bookId === entry.bookId &&
             done.server === entry.server &&
+            done.profileId === entry.profileId &&
             done.atMs === entry.atMs,
         ),
     ),

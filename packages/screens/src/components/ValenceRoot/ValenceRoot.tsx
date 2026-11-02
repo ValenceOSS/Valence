@@ -54,8 +54,10 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
     if (wasOffline.current && !isOffline) {
       void cache
         .fetchQuery(profileQueries.watching())
-        .then(async (watching) => sendWatchedOffline(watching?.id ?? null))
-        .then(async () => sendListenedOffline())
+        .then(async (watching) => {
+          await sendWatchedOffline(watching?.id ?? null);
+          await sendListenedOffline(watching?.id ?? null);
+        })
         .catch(() => undefined);
     }
 

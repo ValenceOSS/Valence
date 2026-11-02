@@ -19,6 +19,10 @@ let stopTakingTurns: (() => void) | null = null;
 let stopReporting: (() => void) | null = null;
 let releaseTheAudio: (() => void) | null = null;
 
+const saving = new Set<Promise<void>>();
+
+let listener: string | null = null;
+
 /**
  * The client's audiobook player, made the first time anything asks for it.
  *
@@ -43,13 +47,19 @@ const theAudiobookPlayer = (): AudiobookPlayer => {
     addressOf: (bookId, chapterId) =>
       theKeptListening().chapterAddress(chapterId) ?? bookAudioUrl(bookId, chapterId),
     save: (bookId, place) => {
-      void saveListeningProgress(bookId, place).then((isKept) => {
+      const as = listener;
+      const saved = saveListeningProgress(bookId, place).then((isKept) => {
         if (isKept) {
-          forgetListenedOffline(bookId);
+          forgetListenedOffline(bookId, as);
           listeningKept.tell(bookId);
         } else {
-          rememberListenedOffline(bookId, place);
+          rememberListenedOffline(bookId, place, Date.now(), as);
         }
+      });
+
+      saving.add(saved);
+      void saved.finally(() => {
+        saving.delete(saved);
       });
     },
     now: () => Date.now(),
@@ -84,4 +94,38 @@ const forgetTheAudiobookPlayer = (): void => {
   heardLast.forget();
 };
 
-export { forgetTheAudiobookPlayer, theAudiobookPlayer };
+/**
+ * Closes whatever book is playing, keeping the place it got to, without making a player where there
+ * is none.
+ *
+ * @returns Once every place the player was keeping has been saved, or could not be.
+ */
+const closeTheAudiobook = async (): Promise<void> => {
+  made?.close();
+  await Promise.allSettled(saving);
+};
+
+/**
+ * Says which profile is listening on this device, so a place the server could not be told is kept
+ * as theirs, and only ever told to the server as theirs.
+ *
+ * @param profileId - The profile, or nobody.
+ */
+const listenAs = (profileId: string | null): void => {
+  listener = profileId;
+};
+
+/**
+ * Which profile is listening on this device, as last said.
+ *
+ * @returns The profile, or nobody.
+ */
+const whoIsListening = (): string | null => listener;
+
+export {
+  closeTheAudiobook,
+  forgetTheAudiobookPlayer,
+  listenAs,
+  theAudiobookPlayer,
+  whoIsListening,
+};

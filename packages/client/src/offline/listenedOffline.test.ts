@@ -20,6 +20,10 @@ const ELSEWHERE = 'https://elsewhere.example';
 
 const HEARD_AT = Date.parse('2026-10-21T00:00:00.000Z');
 
+const DAN = 'profile-dan';
+
+const KID = 'profile-kid';
+
 const STORAGE_KEY = 'valence.offline.listened';
 
 const saveListeningProgress = vi.fn<(bookId: string, place: ListeningPlace) => Promise<boolean>>();
@@ -86,7 +90,7 @@ describe('rememberListenedOffline', () => {
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
 
     expect(JSON.parse(platformInUse().store.read(STORAGE_KEY) ?? '[]')).toEqual([
-      { bookId: RED_RISING, ...aPlace(120), server: HERE, atMs: HEARD_AT },
+      { bookId: RED_RISING, ...aPlace(120), server: HERE, atMs: HEARD_AT, profileId: null },
     ]);
   });
 
@@ -180,9 +184,58 @@ describe('listenedOffline', () => {
   });
 });
 
+describe('places kept for one profile', () => {
+  it('keeps each profile its own place in the same book', () => {
+    rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT, DAN);
+    rememberListenedOffline(RED_RISING, aPlace(30), HEARD_AT, KID);
+
+    expect(listenedOffline(RED_RISING, DAN)).toEqual(aPlace(120));
+    expect(listenedOffline(RED_RISING, KID)).toEqual(aPlace(30));
+  });
+
+  it('never offers one profile where another got to', () => {
+    rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT, DAN);
+
+    expect(listenedOffline(RED_RISING, KID)).toBeNull();
+  });
+
+  it('tells the server only what this profile heard, keeping the rest for when they are back', async () => {
+    saveListeningProgress.mockResolvedValue(true);
+    fetchListeningProgress.mockResolvedValue(null);
+    rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT, DAN);
+    rememberListenedOffline(GOLDEN_SON, aPlace(30), HEARD_AT, KID);
+
+    expect(await sendListenedOffline(KID)).toBe(1);
+    expect(saveListeningProgress).toHaveBeenCalledExactlyOnceWith(GOLDEN_SON, aPlace(30));
+    expect(listenedOffline(RED_RISING, DAN)).toEqual(aPlace(120));
+  });
+
+  it('tells nothing while it is not known who is listening', async () => {
+    rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT, DAN);
+
+    expect(await sendListenedOffline(null)).toBe(0);
+    expect(saveListeningProgress).not.toHaveBeenCalled();
+  });
+
+  it('forgets only the place of the profile the server was told about', () => {
+    rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT, DAN);
+    rememberListenedOffline(RED_RISING, aPlace(30), HEARD_AT, KID);
+    forgetListenedOffline(RED_RISING, KID);
+
+    expect(listenedOffline(RED_RISING, DAN)).toEqual(aPlace(120));
+    expect(listenedOffline(RED_RISING, KID)).toBeNull();
+  });
+
+  it('counts a place kept before places said whose they were as whoever is listening now', () => {
+    rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
+
+    expect(listenedOffline(RED_RISING, KID)).toEqual(aPlace(120));
+  });
+});
+
 describe('sendListenedOffline', () => {
   it('tells the server nothing where nothing was heard offline', async () => {
-    expect(await sendListenedOffline()).toBe(0);
+    expect(await sendListenedOffline(DAN)).toBe(0);
     expect(fetchListeningProgress).not.toHaveBeenCalled();
     expect(saveListeningProgress).not.toHaveBeenCalled();
   });
@@ -191,7 +244,7 @@ describe('sendListenedOffline', () => {
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
     rememberListenedOffline(GOLDEN_SON, { ...aPlace(30), isFinished: true }, HEARD_AT);
 
-    expect(await sendListenedOffline()).toBe(2);
+    expect(await sendListenedOffline(DAN)).toBe(2);
     expect(saveListeningProgress).toHaveBeenCalledWith(RED_RISING, aPlace(120));
     expect(saveListeningProgress).toHaveBeenCalledWith(GOLDEN_SON, {
       ...aPlace(30),
@@ -207,7 +260,7 @@ describe('sendListenedOffline', () => {
     );
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
 
-    expect(await sendListenedOffline()).toBe(1);
+    expect(await sendListenedOffline(DAN)).toBe(1);
     expect(saveListeningProgress).toHaveBeenCalledWith(RED_RISING, aPlace(120));
   });
 
@@ -217,7 +270,7 @@ describe('sendListenedOffline', () => {
     );
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
 
-    expect(await sendListenedOffline()).toBe(0);
+    expect(await sendListenedOffline(DAN)).toBe(0);
     expect(saveListeningProgress).not.toHaveBeenCalled();
     expect(listenedOffline(RED_RISING)).toBeNull();
   });
@@ -228,7 +281,7 @@ describe('sendListenedOffline', () => {
     );
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
 
-    expect(await sendListenedOffline()).toBe(0);
+    expect(await sendListenedOffline(DAN)).toBe(0);
     expect(saveListeningProgress).not.toHaveBeenCalled();
   });
 
@@ -236,7 +289,7 @@ describe('sendListenedOffline', () => {
     fetchListeningProgress.mockRejectedValue(new Error('offline'));
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
 
-    expect(await sendListenedOffline()).toBe(0);
+    expect(await sendListenedOffline(DAN)).toBe(0);
     expect(saveListeningProgress).not.toHaveBeenCalled();
     expect(listenedOffline(RED_RISING)).toEqual(aPlace(120));
   });
@@ -246,7 +299,7 @@ describe('sendListenedOffline', () => {
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
     rememberListenedOffline(GOLDEN_SON, aPlace(30), HEARD_AT);
 
-    expect(await sendListenedOffline()).toBe(1);
+    expect(await sendListenedOffline(DAN)).toBe(1);
     expect(listenedOffline(RED_RISING)).toEqual(aPlace(120));
     expect(listenedOffline(GOLDEN_SON)).toBeNull();
   });
@@ -255,7 +308,7 @@ describe('sendListenedOffline', () => {
     rememberListenedOffline(RED_RISING, aPlace(120), HEARD_AT);
     talkTo(ELSEWHERE);
 
-    expect(await sendListenedOffline()).toBe(0);
+    expect(await sendListenedOffline(DAN)).toBe(0);
     expect(fetchListeningProgress).not.toHaveBeenCalled();
 
     talkTo(HERE);
@@ -271,7 +324,7 @@ describe('sendListenedOffline', () => {
       return Promise.resolve(true);
     });
 
-    expect(await sendListenedOffline()).toBe(1);
+    expect(await sendListenedOffline(DAN)).toBe(1);
     expect(listenedOffline(RED_RISING)).toEqual(aPlace(180));
   });
 });

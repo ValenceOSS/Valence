@@ -3,12 +3,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Query, QueryClient } from '@tanstack/react-query';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { reconnectRealtimeClient } from '@ValenceClient/realtime/reconnectRealtimeClient';
+import { forgetTheControlledDevice } from '@ValenceClient/video/controlledDevice';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { ASKING_FOR } from './ASKING_FOR';
 import { forgetChosenProfile } from './forgetChosenProfile';
 import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { launchStore } from './launchStore';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
+import { profileLetGo } from './profileLetGo';
 
 const KEPT_ACROSS_PROFILES = new Set(['session/who', 'session/setup', 'session/version']);
 
@@ -51,7 +53,9 @@ type ProfileChoiceState =
  * that cannot be read lets the app through to say what is wrong, rather than holding it on the splash.
  * A server from before devices chose profiles is never asked about. Every tab and window of one
  * sitting shares the choice, so a profile chosen in one is taken up by
- * the rest, and nothing read as the profile before shows to the next.
+ * the rest, and nothing read as the profile before shows to the next — and the party and remote of
+ * the profile before are let go of there, since only the tab that moved on could let go of them
+ * first. The picker passing through on the way is not a change of profile.
  *
  * @param accountId - Who is signed in, or nobody, where there is nobody to ask about or the server
  *   does not choose profiles per device.
@@ -75,11 +79,18 @@ const useProfileChoice = (accountId: string | null) => {
 
   useEffect(() => {
     const now = data?.chosenProfileId ?? null;
+
+    if (now === null) {
+      return;
+    }
+
     const was = seen.current;
 
     seen.current = now;
 
-    if (accountId !== null && isChosenThisLaunch && was !== null && now !== null && was !== now) {
+    if (accountId !== null && isChosenThisLaunch && was !== null && was !== now) {
+      forgetTheControlledDevice();
+      profileLetGo.tell();
       startAsAnotherProfile(cache);
     }
   }, [accountId, data, isChosenThisLaunch, cache]);
@@ -108,6 +119,7 @@ const useProfileChoice = (accountId: string | null) => {
       return;
     }
 
+    seen.current = null;
     noteChosenThisLaunch(accountId);
     launchStore().forget(ASKING_FOR);
     startAsAnotherProfile(cache);

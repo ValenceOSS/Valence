@@ -40,6 +40,7 @@ import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { useHomeForAnotherProfile } from '@ValenceScreens/profiles/useHomeForAnotherProfile';
 import { useBrowsingPresence } from '@ValenceScreens/playback/useBrowsingPresence';
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
 import { useFetchWhatThisDeviceAsked } from '@ValenceClient/downloads/useFetchWhatThisDeviceAsked';
@@ -227,6 +228,8 @@ const SignedIn = ({ title }: SignedInProps) => {
   useEffect(() => {
     setReported(new Map());
   }, [watcher?.id]);
+
+  useHomeForAnotherProfile(choice.state.kind === 'chosen' ? (watcher?.id ?? null) : null, replace);
 
   useEndListeningWithTheProfile(user?.id ?? null, watcher?.id ?? null);
 

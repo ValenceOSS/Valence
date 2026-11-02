@@ -6,6 +6,7 @@ import { ASKING_FOR } from './ASKING_FOR';
 import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { launchStore } from './launchStore';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
+import { profileLetGo } from './profileLetGo';
 import { switchProfile } from './switchProfile';
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -71,5 +72,17 @@ describe('switchProfile', () => {
 
     expect(hasChosenThisLaunch('acc-1')).toBe(false);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['profiles'] });
+  });
+
+  it('lets go of what the profile was doing before the server lets go of them', async () => {
+    let askedFirst = -1;
+    const stop = profileLetGo.subscribe(() => {
+      askedFirst = fetchMock.mock.calls.length;
+    });
+
+    await switchProfile(new QueryClient());
+    stop();
+
+    expect(askedFirst).toBe(0);
   });
 });

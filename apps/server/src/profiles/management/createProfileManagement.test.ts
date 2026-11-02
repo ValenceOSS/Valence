@@ -74,6 +74,7 @@ const aHousehold = async (
   const announced: string[] = [];
   const secondProfiles: string[] = [];
   const chosenFor: { acting: Acting; profile: ViewerProfile; device: ChoosingDevice }[] = [];
+  const choicesChanged: string[] = [];
   const locked: { accountId: string; profileName: string; failures: number }[] = [];
   const removed: string[] = [];
   const checkPassword = vi
@@ -100,6 +101,9 @@ const aHousehold = async (
     },
     onChosen: (acting, profile, device) => {
       chosenFor.push({ acting, profile, device });
+    },
+    onChoiceChanged: (accountId) => {
+      choicesChanged.push(accountId);
     },
     onPinLocked: (accountId, profileName, failures) => {
       locked.push({ accountId, profileName, failures });
@@ -135,6 +139,7 @@ const aHousehold = async (
     announced,
     secondProfiles,
     chosenFor,
+    choicesChanged,
     locked,
     removed,
     checkPassword,
@@ -528,6 +533,29 @@ describe('choosing who is watching', () => {
     await household.management.forget(household.unchosen);
 
     await expect(household.chosen.chosenFor('session-1')).resolves.toBeNull();
+  });
+
+  it('tells the account each time who is watching changes, so its other tabs follow', async () => {
+    const household = await aHousehold();
+
+    await household.management.choose(household.unchosen, household.kid.id, {}, DEVICE);
+    await household.management.forget(household.unchosen);
+
+    expect(household.choicesChanged).toEqual([ACCOUNT, ACCOUNT]);
+  });
+
+  it('tells nobody where the choice was refused', async () => {
+    const household = await aHousehold();
+
+    const answer = await household.management.choose(
+      household.unchosen,
+      '00000000-0000-4000-8000-00000000dead',
+      {},
+      DEVICE,
+    );
+
+    expect(answer).toMatchObject({ kind: 'refused' });
+    expect(household.choicesChanged).toEqual([]);
   });
 });
 

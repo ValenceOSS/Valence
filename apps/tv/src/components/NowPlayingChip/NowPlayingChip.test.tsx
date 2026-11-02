@@ -24,6 +24,8 @@ let mockBook = aFakeAudiobookPlayer();
 
 jest.mock('@ValenceClient/books/theAudiobookPlayer', () => ({
   theAudiobookPlayer: () => mockBook.player,
+  listenAs: () => undefined,
+  whoIsListening: () => null,
 }));
 
 beforeEach(() => {

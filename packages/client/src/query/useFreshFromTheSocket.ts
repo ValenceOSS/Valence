@@ -4,6 +4,7 @@ import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -74,6 +75,7 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
 
       client.subscribe('profile', () => {
         void cache.invalidateQueries({ queryKey: sessionQueries.key });
+        void cache.invalidateQueries({ queryKey: profileQueries.key });
       }),
 
       client.subscribe('requests', () => {

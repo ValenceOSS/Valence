@@ -14,8 +14,10 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
+const mockFetchSession = jest.fn(() => new Promise<null>(() => undefined));
+
 jest.mock('@ValenceClient/session/auth', () => ({
-  fetchSession: () => new Promise(() => undefined),
+  fetchSession: () => mockFetchSession(),
 }));
 
 const mockToTheDesktop = jest.fn();
@@ -105,6 +107,7 @@ const drawAccount = (
 
 beforeEach(() => {
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
+  mockFetchSession.mockImplementation(() => new Promise<null>(() => undefined));
 });
 
 afterEach(() => {
@@ -243,11 +246,13 @@ describe('Account', () => {
     expect(drawn.queryByRole('button', { name: 'Anime tracking, AniList' })).toBeNull();
   });
 
-  it('signs this television out and forgets what it knew', async () => {
+  it('signs this television out and forgets what it knew, so the next account never sees it', async () => {
     const cache = aCache({ mayRequest: false });
-    const forgetting = jest.spyOn(cache, 'invalidateQueries');
+    const forgetting = jest.spyOn(cache, 'removeQueries');
     const drawn = await drawAccount(cache);
 
+    mockFetchSession.mockResolvedValue(null);
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 401 }));
     await userEvent.press(drawn.getByRole('button', { name: 'Sign out' }));
 
     expect(signOutHere).toHaveBeenCalledTimes(1);

@@ -73,6 +73,7 @@ import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
 import { isTheServerUp } from '@ValenceClient/session/isTheServerUp';
 import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
+import { forgetWhatWasRead } from '@ValenceClient/session/forgetWhatWasRead';
 import type { PlaybackProblem as APlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
@@ -574,8 +575,10 @@ const Player = ({
   }, []);
 
   const signInAgain = useCallback(() => {
-    void signOutHere().then(onLeave);
-  }, [onLeave]);
+    void signOutHere()
+      .then(async () => forgetWhatWasRead(cache))
+      .then(onLeave);
+  }, [cache, onLeave]);
 
   const loading = useRef({ startFrom, title, episodeLine, rememberWhere, isInAParty });
 

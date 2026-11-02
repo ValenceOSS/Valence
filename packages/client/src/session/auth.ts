@@ -10,6 +10,7 @@ import {
 } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { letGoOfTheProfile } from '@ValenceClient/profiles/letGoOfTheProfile';
 import { PasskeyCreationOptionsSchema } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import { PasskeyRequestOptionsSchema } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import type { PasskeyAssertion } from '@ValenceContracts/schemas/PasskeyAssertion';
@@ -222,6 +223,9 @@ const signInWithUsernameOrEmail = async (
  * was once taken from the library's success hook instead, which is a second way of asking the same
  * question and the only one here that could answer no while the server had said yes.
  *
+ * What the profile watching was doing here is let go of first, while the session still speaks for
+ * them, so nothing of theirs is saved as whoever signs in next.
+ *
  * The face is forgotten either way, and so is any token this client was holding and every admin
  * answer it kept. A sign-out that did not reach the server still means somebody walked away from
  * this device, and leaving their face — or a credential that still works — on it is the failure that
@@ -230,6 +234,8 @@ const signInWithUsernameOrEmail = async (
  * @returns Whether the session was ended.
  */
 const signOut = async (): Promise<boolean> => {
+  await letGoOfTheProfile().catch(() => undefined);
+
   try {
     const { error } = await client.signOut();
 

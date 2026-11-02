@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useWatchParty } from './useWatchParty';
+import { profileLetGo } from '@ValenceClient/profiles/profileLetGo';
 import type {
   PartyMember,
   SequencedCommand,
@@ -228,6 +229,39 @@ describe('useWatchParty', () => {
     });
 
     expect(world.sent.filter((message) => message.kind === 'partyJoin')).toEqual([]);
+  });
+
+  it('leaves its party as the profile is let go of, so whoever is next is not rejoined to it', () => {
+    const world = createWorld();
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    act(() => {
+      world.tell(party());
+    });
+
+    act(() => {
+      profileLetGo.tell();
+    });
+
+    act(() => {
+      world.resume();
+    });
+
+    expect(result.current.party).toBeNull();
+    expect(world.sent).toContainEqual({ kind: 'partyLeave' });
+    expect(world.sent.filter((message) => message.kind === 'partyJoin')).toEqual([]);
+  });
+
+  it('says nothing to the server as a profile is let go of outside any party', () => {
+    const world = createWorld();
+
+    renderHook(() => useWatchParty(world.client));
+
+    act(() => {
+      profileLetGo.tell();
+    });
+
+    expect(world.sent).toEqual([]);
   });
 
   it('forgets the party on leaving rather than showing one nobody is in', () => {

@@ -105,11 +105,25 @@ const onControlledDevice = (listener: () => void): (() => void) => {
   };
 };
 
+/**
+ * Stops being the remote for anything and forgets which remotes were put away, as somebody else
+ * takes over this device — so their remote bar never shows the last person's television.
+ */
+const forgetTheControlledDevice = (): void => {
+  dismissed.clear();
+
+  if (controlled !== null) {
+    controlled = null;
+    tellListeners();
+  }
+};
+
 export type { ControlledDevice };
 
 export {
   controlDevice,
   dismissDevice,
+  forgetTheControlledDevice,
   isDismissed,
   noteWhoIsWatching,
   onControlledDevice,

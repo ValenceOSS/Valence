@@ -60,7 +60,7 @@ import { AReader } from '@ValenceMobile/components/AReader/AReader';
 import { TheNowPlayingBar } from '@ValenceMobile/components/TheNowPlayingBar/TheNowPlayingBar';
 import { ACatalogueList } from '@ValenceMobile/components/ACatalogueList/ACatalogueList';
 import { forgetTheMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
-import { forgetTheAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
+import { forgetTheAudiobookPlayer, listenAs } from '@ValenceClient/books/theAudiobookPlayer';
 import { startListening } from '@ValenceClient/books/startListening';
 import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFresh';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
@@ -248,8 +248,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   useWakingThisPhone({ keepsUp: true, asProfile: watchingProfile });
 
   useEffect(() => {
+    listenAs(watchingProfile);
     void sendWatchedOffline(watchingProfile);
-    void sendListenedOffline();
+    void sendListenedOffline(watchingProfile);
   }, [watchingProfile]);
   useTellTheServerWhatIsHeld();
   useFetchWhatThisDeviceAsked();

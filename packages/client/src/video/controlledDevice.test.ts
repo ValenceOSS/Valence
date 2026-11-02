@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   controlDevice,
   dismissDevice,
+  forgetTheControlledDevice,
   isDismissed,
   noteWhoIsWatching,
   onControlledDevice,
@@ -105,5 +106,28 @@ describe('controlledDevice', () => {
 
     expect(isDismissed('tv')).toBe(false);
     expect(readControlledDevice()).toEqual(TV);
+  });
+
+  it('forgets the device and the put-away remotes as somebody else takes over', () => {
+    controlDevice(TV);
+    dismissDevice('bedroom');
+
+    const listener = vi.fn();
+
+    onControlledDevice(listener);
+    forgetTheControlledDevice();
+
+    expect(readControlledDevice()).toBeNull();
+    expect(isDismissed('bedroom')).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('says nothing when forgetting while it controls nothing', () => {
+    const listener = vi.fn();
+
+    onControlledDevice(listener);
+    forgetTheControlledDevice();
+
+    expect(listener).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import { fetchListeningProgress } from '@ValenceClient/books/fetchListening';
 import { tracksOf } from '@ValenceClient/books/tracksOf';
 import { listenedOffline } from '@ValenceClient/offline/listenedOffline';
+import { whoIsListening } from '@ValenceClient/books/theAudiobookPlayer';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 import type { BookDetail } from '@ValenceContracts/schemas/Book';
 
@@ -31,7 +32,8 @@ const startListening = async (
     return;
   }
 
-  const place = listenedOffline(book.id) ?? (await readPlace(book.id).catch(() => null));
+  const place =
+    listenedOffline(book.id, whoIsListening()) ?? (await readPlace(book.id).catch(() => null));
 
   player.open(book, tracks, place === null || place.isFinished ? null : place);
 };

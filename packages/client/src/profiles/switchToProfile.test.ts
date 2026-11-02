@@ -8,6 +8,7 @@ import { ASKING_FOR } from './ASKING_FOR';
 import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { launchStore } from './launchStore';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
+import { profileLetGo } from './profileLetGo';
 import { switchToProfile } from './switchToProfile';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
@@ -79,5 +80,18 @@ describe('switchToProfile', () => {
 
     expect(hasChosenThisLaunch('acc-1')).toBe(false);
     expect(launchStore().read(ASKING_FOR)).toBe(OPEN.id);
+  });
+
+  it('lets go of what the profile was doing before choosing the next', async () => {
+    let askedFirst = -1;
+    const stop = profileLetGo.subscribe(() => {
+      askedFirst = fetchMock.mock.calls.length;
+    });
+
+    await switchToProfile(new QueryClient(), OPEN);
+    stop();
+
+    expect(askedFirst).toBe(0);
+    expect(fetchMock).toHaveBeenCalledWith(`/api/profiles/${OPEN.id}/choose`, expect.anything());
   });
 });

@@ -45,7 +45,7 @@ const useTheServer = (
   useEffect(() => {
     if (pickingUp !== 'elsewhere' && wasAway.current && !isAway && answers.data === true) {
       void sendWatchedOffline(watcher);
-      void sendListenedOffline();
+      void sendListenedOffline(watcher);
 
       if (pickingUp === 'here' || !getRealtimeClient().isLive()) {
         void cache.invalidateQueries({ predicate: (query) => query.queryKey[0] !== ANSWERS[0] });

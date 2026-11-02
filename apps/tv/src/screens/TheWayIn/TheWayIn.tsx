@@ -12,6 +12,7 @@ import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { theSessionToken } from '@ValenceTv/platform/theSessionToken';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
+import { forgetWhatWasRead } from '@ValenceClient/session/forgetWhatWasRead';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { Flight } from '@ValenceTv/components/Flight/Flight';
@@ -206,7 +207,7 @@ const TheWayIn = () => {
           onChosen={choice.chose}
           onSignOut={() => {
             void signOutHere().finally(() => {
-              void cache.invalidateQueries();
+              void forgetWhatWasRead(cache);
             });
           }}
           isArriving={flights !== null}
