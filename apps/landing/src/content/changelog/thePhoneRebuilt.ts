@@ -7,6 +7,10 @@ const thePhoneRebuilt: ChangelogEntry = {
   title: 'The phone rebuilt, a remote for the television, and gapless music',
   summary:
     'Valence 1.8 rebuilds the phone app with native cards, a new music player and Chromecast, turns the phone into a remote for the television, brings live TV to the TV app, and gives music gapless playback, crossfade and smart playlists. Films that need the server’s help start playing sooner.',
+  picture: {
+    src: '/changelog/the-phone-rebuilt.webp',
+    alt: 'The phone as a remote for an Apple TV playing Severance: the poster, the logo, the episode, the scrubber, play and pause with ten seconds either way, and speed, subtitles, quality and Play here along the foot',
+  },
   sections: [
     {
       title: 'The phone, rebuilt',
