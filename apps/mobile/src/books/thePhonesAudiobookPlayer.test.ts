@@ -15,6 +15,8 @@ jest.mock('expo', () => ({
 
 jest.mock('@ValenceClient/books/theAudiobookPlayer', () => ({
   theAudiobookPlayer: () => mockFake.player,
+  listenAs: () => undefined,
+  whoIsListening: () => null,
 }));
 
 const openTheBook = (): void => {

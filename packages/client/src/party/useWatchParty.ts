@@ -3,6 +3,7 @@ import { createPartyClient } from './createPartyClient';
 import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
 import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
+import { profileLetGo } from '@ValenceClient/profiles/profileLetGo';
 import type { PartyClient } from './createPartyClient';
 import type {
   PartyChatLine,
@@ -110,7 +111,8 @@ const readRoom = (
  * a client that applied its own commands optimistically would drift out of agreement with everybody
  * else the moment one was refused. A party this tab is not a member of is no party of its own, so
  * an answer to a join that arrives after it has left does not put it back in, and leaving also
- * drops a join still waiting for the socket.
+ * drops a join still waiting for the socket. A profile let go of leaves its party, so the socket
+ * opened for whoever is next does not join them to it.
  *
  * @param client - The shared socket, injectable for tests.
  * @returns The party and the ways of acting on it.
@@ -256,6 +258,16 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     setCommand(null);
     setChat(NO_CHAT);
   }, []);
+
+  useEffect(
+    () =>
+      profileLetGo.subscribe(() => {
+        if (inPartyRef.current !== null || waitingToJoinRef.current !== null) {
+          leave();
+        }
+      }),
+    [leave],
+  );
 
   const send = useCallback<PartyClient['send']>((next) => {
     partyRef.current?.send(next);

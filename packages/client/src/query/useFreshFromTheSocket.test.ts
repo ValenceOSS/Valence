@@ -110,6 +110,16 @@ describe('useFreshFromTheSocket', () => {
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['admin'] });
   });
 
+  it('reads the profiles again when who is watching changes in another tab', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('profile', ANYTHING);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['profiles'] });
+  });
+
   it('asks again who is signed in when an administrator stops this tab, and not for anything else', () => {
     const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
     const socket = aSocket();

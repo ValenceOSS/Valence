@@ -73,7 +73,7 @@ type AudiobookPlayer = {
   goToChapter: (at: number) => void;
   setSpeed: (speed: number) => void;
   setSleep: (choice: 'off' | 'endOfChapter' | number) => void;
-  close: () => void;
+  close: (keepsThePlace?: boolean) => void;
 };
 
 const SAVES_EVERY_MS = 15_000;
@@ -463,8 +463,11 @@ const createAudiobookPlayer = ({
       change({ sleep: { kind: 'after', endsAtMs: now() + choice * 60_000 } });
     },
 
-    close: () => {
-      keep();
+    close: (keepsThePlace = true) => {
+      if (keepsThePlace) {
+        keep();
+      }
+
       audio.pause();
       linedUp = '';
       audio.src = '';

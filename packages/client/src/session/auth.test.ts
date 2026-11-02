@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakeKeptAnswers } from '@ValenceClient/testing/aFakeKeptAnswers';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { profileLetGo } from '@ValenceClient/profiles/profileLetGo';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import {
   answerDeviceRequest,
@@ -237,6 +238,19 @@ describe('signOut', () => {
     fetchMock.mockResolvedValue(said({ success: true }));
 
     await expect(signOut()).resolves.toBe(true);
+  });
+
+  it('lets go of the profile watching while the session still speaks for them', async () => {
+    let askedFirst = -1;
+    const stop = profileLetGo.subscribe(() => {
+      askedFirst = fetchMock.mock.calls.length;
+    });
+
+    fetchMock.mockResolvedValue(said({ success: true }));
+    await signOut();
+    stop();
+
+    expect(askedFirst).toBe(0);
   });
 });
 

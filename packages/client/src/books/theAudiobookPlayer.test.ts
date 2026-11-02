@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  closeTheAudiobook,
   forgetTheAudiobookPlayer,
+  listenAs,
   theAudiobookPlayer,
 } from '@ValenceClient/books/theAudiobookPlayer';
 import { tracksOf } from '@ValenceClient/books/tracksOf';
@@ -16,6 +18,7 @@ import type { ListeningAudio } from '@ValenceClient/books/createAudiobookPlayer'
 import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
 
 afterEach(() => {
+  listenAs(null);
   forgetTheAudiobookPlayer();
   forgetTheMusicPlayer();
   forgetTheKeptListening();
@@ -194,5 +197,84 @@ describe('theAudiobookPlayer', () => {
     await vi.waitFor(() => {
       expect(listenedOffline(book.id)).toBeNull();
     });
+  });
+
+  it('keeps a place the server could not be told as the profile listening when it was saved', async () => {
+    const { book, chapters } = anAudiobook();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+    installPlatform(aFakePlatform({ listeningAudio: () => anAudio() }));
+    listenAs('dan');
+    theAudiobookPlayer().open(book, tracksOf(chapters), null);
+    forgetTheAudiobookPlayer();
+    listenAs('kid');
+
+    await vi.waitFor(() => {
+      expect(listenedOffline(book.id, 'dan')).not.toBeNull();
+    });
+    expect(listenedOffline(book.id, 'kid')).toBeNull();
+  });
+
+  it('closes without keeping the place where told not to', () => {
+    const fetchMock = vi.fn((_path: string) => Promise.resolve({ ok: true }));
+    const { book, chapters } = anAudiobook();
+
+    vi.stubGlobal('fetch', fetchMock);
+    installPlatform(aFakePlatform({ listeningAudio: () => anAudio() }));
+    theAudiobookPlayer().open(book, tracksOf(chapters), null);
+    fetchMock.mockClear();
+    theAudiobookPlayer().close(false);
+
+    expect(fetchMock.mock.calls.filter(([path]) => path.endsWith('/listening'))).toEqual([]);
+    expect(theAudiobookPlayer().read().book).toBeNull();
+  });
+
+  it('closes the book and waits for its place to be saved', async () => {
+    const { book, chapters } = anAudiobook();
+    const waiting: ((response: { ok: boolean }) => void)[] = [];
+    const audio = anAudio();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            waiting.push(resolve);
+          }),
+      ),
+    );
+    installPlatform(aFakePlatform({ listeningAudio: () => audio }));
+    theAudiobookPlayer().open(book, tracksOf(chapters), null);
+
+    let isClosed = false;
+    const closing = closeTheAudiobook().then(() => {
+      isClosed = true;
+    });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
+    expect(audio.src).toBe('');
+    expect(isClosed).toBe(false);
+
+    waiting.forEach((answer) => {
+      answer({ ok: true });
+    });
+    await closing;
+
+    expect(theAudiobookPlayer().read().book).toBeNull();
+  });
+
+  it('makes no player to close where there is none', async () => {
+    const listeningAudio = vi.fn(() => anAudio());
+
+    installPlatform(aFakePlatform({ listeningAudio }));
+    await closeTheAudiobook();
+
+    expect(listeningAudio).not.toHaveBeenCalled();
   });
 });

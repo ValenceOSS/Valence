@@ -136,6 +136,8 @@ jest.mock('@ValenceTv/music/useSystemNowPlaying', () => ({
 
 jest.mock('@ValenceClient/books/theAudiobookPlayer', () => ({
   theAudiobookPlayer: () => mockBook,
+  listenAs: () => undefined,
+  whoIsListening: () => null,
 }));
 
 jest.mock('@ValenceClient/books/useWhatIsHeard', () => ({

@@ -4,16 +4,19 @@ import { ASKING_FOR } from './ASKING_FOR';
 import { forgetChosenProfile } from './forgetChosenProfile';
 import { forgetChosenThisLaunch } from './forgetChosenThisLaunch';
 import { launchStore } from './launchStore';
+import { letGoOfTheProfile } from './letGoOfTheProfile';
 
 /**
  * Lets go of who is watching on this device, so the app asks again — with a PIN, for a profile that
- * has one — as it does when it starts.
+ * has one — as it does when it starts. What they were doing here is let go of first, while the
+ * server still speaks for them.
  *
  * @param cache - The queries to tell.
  * @param askingFor - The profile somebody already picked, so the app asks straight away for its
  *   PIN rather than for who is watching.
  */
 const switchProfile = async (cache: QueryClient, askingFor?: string): Promise<void> => {
+  await letGoOfTheProfile();
   forgetChosenThisLaunch();
 
   if (askingFor === undefined) {

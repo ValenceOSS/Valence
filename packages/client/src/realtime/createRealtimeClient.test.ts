@@ -562,6 +562,17 @@ describe('opening the connection afresh', () => {
     expect(world.links).toHaveLength(0);
   });
 
+  it('never sends what waited for the old link on the new one, which speaks for somebody else', () => {
+    const world = createWorld();
+
+    world.client.start();
+    world.client.sendParty({ kind: 'partyJoin', partyId: 'party-1' });
+    world.client.restart();
+    world.openIt();
+
+    expect(world.sent()).not.toContainEqual({ kind: 'partyJoin', partyId: 'party-1' });
+  });
+
   it('hears nothing more from the link it let go of', () => {
     const world = createWorld();
     const heard = vi.fn();

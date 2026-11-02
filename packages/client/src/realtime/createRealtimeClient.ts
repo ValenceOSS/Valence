@@ -289,6 +289,7 @@ const createRealtimeClient = ({
       }
 
       live = false;
+      waiting.length = 0;
       cancelRetry?.();
       cancelRetry = null;
       link?.close();

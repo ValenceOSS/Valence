@@ -25,6 +25,8 @@ vi.mock('@ValenceClient/books/startListening', () => ({ startListening }));
 
 vi.mock('@ValenceClient/books/theAudiobookPlayer', () => ({
   theAudiobookPlayer: () => audiobooks.player,
+  listenAs: () => undefined,
+  whoIsListening: () => null,
 }));
 
 vi.mock('@ValenceClient/music/theMusicPlayer', () => ({

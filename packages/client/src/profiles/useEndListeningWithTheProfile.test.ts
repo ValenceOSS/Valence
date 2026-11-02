@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useEndListeningWithTheProfile } from './useEndListeningWithTheProfile';
 
 const leave = vi.hoisted(() => vi.fn<() => void>());
-const close = vi.hoisted(() => vi.fn<() => void>());
+const close = vi.hoisted(() => vi.fn<(keepsThePlace?: boolean) => void>());
+const listenAs = vi.hoisted(() => vi.fn<(profileId: string | null) => void>());
 const playing = vi.hoisted((): { queue: string | null; remote: string | null } => ({
   queue: null,
   remote: null,
@@ -14,6 +15,7 @@ vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
 }));
 vi.mock('@ValenceClient/books/theAudiobookPlayer', () => ({
   theAudiobookPlayer: () => ({ close }),
+  listenAs,
 }));
 
 beforeEach(() => {
@@ -49,7 +51,20 @@ describe('useEndListeningWithTheProfile', () => {
     rerender({ profileId: 'kid' });
 
     expect(leave).toHaveBeenCalledTimes(1);
-    expect(close).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
+  it('keeps the places in a book for whoever is watching now', () => {
+    const { rerender } = renderHook(
+      ({ profileId }) => {
+        useEndListeningWithTheProfile('acc-1', profileId);
+      },
+      { initialProps: { profileId: 'dan' } },
+    );
+
+    rerender({ profileId: 'kid' });
+
+    expect(listenAs).toHaveBeenLastCalledWith('kid');
   });
 
   it('stops them once nobody is signed in any more', () => {

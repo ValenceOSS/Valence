@@ -19,6 +19,7 @@ import {
 import { Button } from '@ValenceTv/components/Button/Button';
 import { useMayRequest } from '@ValenceTv/requests/useMayRequest';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
+import { forgetWhatWasRead } from '@ValenceClient/session/forgetWhatWasRead';
 import { YourRequests } from '@ValenceTv/screens/Account/components/YourRequests/YourRequests';
 import { ThemeChoice } from '@ValenceTv/screens/Account/components/ThemeChoice/ThemeChoice';
 import { YourHistory } from '@ValenceTv/screens/Account/components/YourHistory/YourHistory';
@@ -164,7 +165,7 @@ const AccountPage = ({
               onFocus={canSwitch || mayRequest ? upToBar.leave : upToBar.arrive}
               onPress={() => {
                 void signOutHere().finally(() => {
-                  void cache.invalidateQueries();
+                  void forgetWhatWasRead(cache);
                 });
               }}
             />

@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { controlDevice, readControlledDevice } from '@ValenceClient/video/controlledDevice';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
+import { profileLetGo } from './profileLetGo';
 import { useProfileChoice } from './useProfileChoice';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
@@ -280,6 +282,88 @@ describe('useProfileChoice', () => {
       expect(reconnectRealtimeClient).toHaveBeenCalledTimes(1);
     });
     expect(result.current.state).toEqual({ kind: 'chosen' });
+  });
+
+  it('lets go of the party and remote of the profile before as another tab moves on', async () => {
+    noteChosenThisLaunch('acc-1');
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: DAN.id });
+
+    const letGo = vi.fn();
+    const stop = profileLetGo.subscribe(letGo);
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: cache }, children);
+    const { result } = renderHook(() => useProfileChoice('acc-1'), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ kind: 'chosen' });
+    });
+
+    controlDevice({ clientId: 'tv', label: 'Living room' });
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: KID.id });
+
+    await act(async () => {
+      await cache.invalidateQueries({ queryKey: ['profiles'] });
+    });
+
+    await waitFor(() => {
+      expect(letGo).toHaveBeenCalledTimes(1);
+    });
+    stop();
+    expect(readControlledDevice()).toBeNull();
+  });
+
+  it('lets go of the profile before where another tab passed through the picker to the next', async () => {
+    noteChosenThisLaunch('acc-1');
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: DAN.id });
+
+    const letGo = vi.fn();
+    const stop = profileLetGo.subscribe(letGo);
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: cache }, children);
+    const { result } = renderHook(() => useProfileChoice('acc-1'), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ kind: 'chosen' });
+    });
+
+    for (const chosenProfileId of [null, KID.id]) {
+      fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId });
+
+      await act(async () => {
+        await cache.invalidateQueries({ queryKey: ['profiles'] });
+      });
+    }
+
+    await waitFor(() => {
+      expect(reconnectRealtimeClient).toHaveBeenCalledTimes(1);
+    });
+    stop();
+    expect(letGo).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts again only once in the tab where somebody chose, and lets go of nothing there', async () => {
+    const letGo = vi.fn();
+    const stop = profileLetGo.subscribe(letGo);
+    const { result } = renderHookInACache(() => useProfileChoice('acc-1'));
+
+    await waitFor(() => {
+      expect(result.current.state.kind).toBe('choosing');
+    });
+
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: KID.id });
+
+    act(() => {
+      result.current.chose();
+    });
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ kind: 'chosen' });
+    });
+    stop();
+    expect(reconnectRealtimeClient).toHaveBeenCalledTimes(1);
+    expect(letGo).not.toHaveBeenCalled();
   });
 
   it('is chosen where there is nobody signed in to ask about, and reads nothing', () => {

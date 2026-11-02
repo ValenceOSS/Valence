@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { chooseProfile } from './chooseProfile';
+import { letGoOfTheProfile } from './letGoOfTheProfile';
 import { switchProfile } from './switchProfile';
 
 /**
@@ -17,6 +18,8 @@ const switchToProfile = async (cache: QueryClient, profile: ViewerProfile): Prom
 
     return;
   }
+
+  await letGoOfTheProfile();
 
   const choice = await chooseProfile(profile.id);
 
