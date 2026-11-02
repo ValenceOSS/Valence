@@ -11,9 +11,11 @@ import { subtitlesAndTheSite } from './subtitlesAndTheSite';
 import { televisionEverywhere } from './televisionEverywhere';
 import { theAppStoreAndHdr } from './theAppStoreAndHdr';
 import { theFirstRelease } from './theFirstRelease';
+import { thePhoneRebuilt } from './thePhoneRebuilt';
 import type { ChangelogEntry } from './ChangelogEntry';
 
 const CHANGELOG: readonly ChangelogEntry[] = [
+  thePhoneRebuilt,
   profilesCreditsAndTheRedesign,
   theAppStoreAndHdr,
   liveTvAndTheBrowser,
