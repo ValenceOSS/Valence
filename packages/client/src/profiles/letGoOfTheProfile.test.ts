@@ -55,19 +55,9 @@ describe('letGoOfTheProfile', () => {
     expect(theAudiobookPlayer().read().book).toBeNull();
   });
 
-  it('sends the places kept while offline while they are still theirs', async () => {
+  it('sends nothing kept offline, which waits for the profile to be back', async () => {
     const { book, chapters } = anAudiobook();
 
-    fetchMock.mockImplementation((_input, init) =>
-      Promise.resolve(
-        init?.method === 'PUT'
-          ? new Response(null, { status: 204 })
-          : new Response(JSON.stringify({ progress: null }), {
-              status: 200,
-              headers: { 'content-type': 'application/json' },
-            }),
-      ),
-    );
     listenAs('dan');
     rememberListenedOffline(
       book.id,
@@ -77,7 +67,8 @@ describe('letGoOfTheProfile', () => {
     );
     await letGoOfTheProfile();
 
-    expect(listenedOffline(book.id, 'dan')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(listenedOffline(book.id, 'dan')).not.toBeNull();
   });
 
   it('leaves nobody listening once let go of, so nothing more is sent as them', async () => {
