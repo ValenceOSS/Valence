@@ -8,16 +8,47 @@ import { CataloguePanel } from './CataloguePanel';
 import type { CatalogueEntry } from '@ValenceContracts/schemas/AdminCatalogue';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
+import type * as FetchRequests from '@ValenceClient/requests/fetchRequests';
 
-const catalogue = vi.hoisted((): { entries: CatalogueEntry[] } => ({ entries: [] }));
+const catalogue = vi.hoisted((): { entries: CatalogueEntry[]; reads: number } => ({
+  entries: [],
+  reads: 0,
+}));
+const failing = vi.hoisted(() => ({ count: 0 }));
 const requested = vi.hoisted((): { requests: MediaRequest[] } => ({ requests: [] }));
 const held = vi.hoisted((): { kinds: string[] } => ({ kinds: ['movies', 'shows'] }));
 const decideMediaRequests = vi.fn<typeof Requests.decideMediaRequests>();
 const searchMissing = vi.fn<typeof Requests.searchMissing>();
 
 vi.mock('@ValenceClient/requests/fetchTitleCatalogue', () => ({
-  fetchTitleCatalogue: () => Promise.resolve(catalogue.entries),
+  fetchTitleCatalogue: () => {
+    catalogue.reads += 1;
+
+    return Promise.resolve(catalogue.entries);
+  },
   fetchTitleFiles: () => Promise.resolve({ folder: null, files: [] }),
+}));
+
+vi.mock('@ValenceClient/requests/fetchRequests', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchRequests>()),
+  fetchRequestsOverview: () =>
+    Promise.resolve({
+      address: 'http://requests:8421',
+      isReachable: true,
+      problem: null,
+      problemCode: null,
+      checkedAt: '2026-11-03T00:00:00.000Z',
+      status: null,
+      work: {
+        awaitingApproval: 0,
+        searching: 0,
+        downloading: 0,
+        failed: failing.count,
+        arrivedToday: 0,
+        downloadBytesPerSecond: 0,
+        clients: { total: 0, reachable: 0, failing: [] },
+      },
+    }),
 }));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
@@ -38,6 +69,8 @@ const ASKED = aMediaRequest({ id: '6ba7b810-9dad-11d1-80b4-00c04fd43001', approv
 
 beforeEach(() => {
   held.kinds = ['movies', 'shows'];
+  catalogue.reads = 0;
+  failing.count = 0;
   requested.requests = [ASKED];
   catalogue.entries = [
     aCatalogueEntry({ key: 'film:1', title: 'Held Film', addedAt: '2026-01-01T00:00:00.000Z' }),
@@ -159,6 +192,28 @@ describe('CataloguePanel', () => {
       await screen.findByRole('menuitemradio', { name: 'Shows (2 failed)' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('menuitemradio', { name: 'Films' })).toBeInTheDocument();
+  });
+
+  it('reads the titles again once the server reports a new failure, so the counts keep up', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      aPanel();
+
+      expect(await screen.findByText('Held Film')).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(1000);
+
+      const before = catalogue.reads;
+
+      failing.count = 1;
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      await waitFor(() => {
+        expect(catalogue.reads).toBeGreaterThan(before);
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('approves several titles waiting on approval at once', async () => {

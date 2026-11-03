@@ -1,6 +1,6 @@
 /**
- * Takes the first duplicated items up to a limit without splitting a group, so a copy is never
- * listed without the other copies it is duplicated with.
+ * Takes the first duplicated items up to a limit without splitting a group, taking the first group
+ * whole even where it alone is over the limit.
  *
  * @param duplicated - Each duplicated item's id, with the group it belongs to.
  * @param limit - How many items to take at most.
@@ -16,7 +16,7 @@ const firstWholeGroups = (duplicated: ReadonlyMap<string, string>, limit: number
   const taken: string[] = [];
 
   for (const ids of groups.values()) {
-    if (taken.length + ids.length > limit) {
+    if (taken.length > 0 && taken.length + ids.length > limit) {
       break;
     }
 

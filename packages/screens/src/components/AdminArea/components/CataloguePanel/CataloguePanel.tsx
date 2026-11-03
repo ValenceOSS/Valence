@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { menuGroupsOf } from '@ValenceUI/menuGroupsOf';
 import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
@@ -158,6 +158,24 @@ const CataloguePanel = ({
       cache.invalidateQueries({ queryKey: requestsQueries.mediaRequests().queryKey }),
     ]);
   };
+
+  const failedNow = useQuery(requestsQueries.overview()).data?.work.failed ?? null;
+  const failedSeen = useRef(failedNow);
+
+  useEffect(() => {
+    if (failedNow === null || failedNow === failedSeen.current) {
+      return;
+    }
+
+    const isFirst = failedSeen.current === null;
+
+    failedSeen.current = failedNow;
+
+    if (!isFirst) {
+      void cache.invalidateQueries({ queryKey: requestsQueries.titleCatalogue().queryKey });
+      void cache.invalidateQueries({ queryKey: requestsQueries.mediaRequests().queryKey });
+    }
+  }, [cache, failedNow]);
 
   const tabLibraries = (libraries.data ?? []).filter(
     (library) => library.kind === LIBRARY_KIND_OF_TAB[tab],
