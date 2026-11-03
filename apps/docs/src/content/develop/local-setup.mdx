@@ -11,7 +11,7 @@ This page takes you from a fresh clone to a running Valence development environm
 | Tool    | Version                                            | Why                                                                                                                  |
 | ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer.                         |
-| pnpm    | 10.34.5, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                                             |
+| pnpm    | 12.16.1, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                                             |
 | Docker  | Any recent Docker with Compose                     | Runs Postgres for development, and MySQL and MariaDB for the engine tests.                                           |
 | Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service, and the desktop app's native module on Windows. Optional if you only touch the web client. |
 | FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                                                      |
