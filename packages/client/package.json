@@ -17,7 +17,7 @@
     "@valence/i18n": "workspace:*",
     "@valence/plugin-sdk": "workspace:*",
     "better-auth": "1.7.4",
-    "zod": "4.6.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "7.0.1",

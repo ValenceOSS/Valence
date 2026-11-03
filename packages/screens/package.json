@@ -30,7 +30,7 @@
     "react-dom": "19.3.0",
     "shaka-player": "5.2.10",
     "sonner": "2.0.8",
-    "zod": "4.6.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
