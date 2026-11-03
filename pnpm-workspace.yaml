@@ -11,10 +11,21 @@ packages:
   - 'apps/tv'
   - 'packages/*'
 
-onlyBuiltDependencies:
-  - electron
-  - electron-winstaller
-  - esbuild
+autoInstallPeers: true
+saveExact: true
+strictPeerDependencies: false
+
+allowBuilds:
+  '@parcel/watcher': false
+  '@prisma/client': false
+  better-sqlite3: false
+  core-js: false
+  electron: true
+  electron-winstaller: true
+  esbuild: true
+  lfa-ponyfill: false
+  unrs-resolver: false
+  vue-demi: false
 
 # drizzle-orm is resolved once per set of optional peers it finds, and better-auth, the database
 # package and the requests service would otherwise bring different versions of better-sqlite3, which
