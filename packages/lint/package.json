@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@oxlint/plugins": "1.86.0",
-    "zod": "4.6.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

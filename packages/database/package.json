@@ -18,7 +18,7 @@
     "@valence/i18n": "workspace:*",
     "drizzle-orm": "0.45.2",
     "mysql2": "3.24.5",
-    "zod": "4.6.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

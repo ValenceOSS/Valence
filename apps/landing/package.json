@@ -31,7 +31,7 @@
     "remark-gfm": "4.0.1",
     "remotion": "4.0.533",
     "serve": "14.2.6",
-    "zod": "4.6.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
