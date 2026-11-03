@@ -246,7 +246,9 @@ pub struct ResourceUse {
     /// without the other, and during a conversion almost all of it is theirs.
     pub service_cpu_percent: f32,
     pub service_memory_bytes: u64,
-    /// Every ffmpeg the service has running, and what each costs.
+    /// Every ffmpeg the service has running, and what each costs. The service's
+    /// own threads are not among them, though Linux lists each one as a process
+    /// whose parent is the service and whose memory is all of the service's.
     pub children: Vec<ProcessUse>,
     /// What everything in the deployment is using, where the cgroup will say.
     pub deployment_memory: Option<DeploymentMemory>,
@@ -524,7 +526,7 @@ impl Monitor {
         let children: Vec<ProcessUse> = system
             .processes()
             .values()
-            .filter(|process| process.parent() == Some(own))
+            .filter(|process| process.parent() == Some(own) && process.thread_kind().is_none())
             .map(|process| ProcessUse {
                 pid: process.pid().as_u32(),
                 cpu_percent: process.cpu_usage(),
@@ -667,6 +669,45 @@ mod tests {
 
         assert!(first.cpu_count > 0, "a machine has at least one core");
         assert!(first.system_memory_total_bytes > 0);
+    }
+
+    /// Linux lists each of the service's threads as a process whose parent is the service, each
+    /// carrying the whole service's memory. Counted as children, forty threads made a 2 GB service
+    /// read as 90 GB wherever no cgroup said otherwise.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn counts_none_of_its_own_threads_among_its_children() {
+        let monitor = Monitor::new(Journal::new());
+        let mut child = tokio::process::Command::new("sleep")
+            .arg("30")
+            .spawn()
+            .expect("sleep should run");
+        let child_pid = child.id().expect("a running child has an identifier");
+
+        monitor.measure().await;
+        let reading = monitor.measure().await;
+
+        child
+            .kill()
+            .await
+            .expect("the child should stop when asked");
+
+        let threads: Vec<u32> = std::fs::read_dir("/proc/self/task")
+            .map(|entries| {
+                entries
+                    .filter_map(|entry| entry.ok()?.file_name().to_str()?.parse().ok())
+                    .collect()
+            })
+            .unwrap_or_default();
+        let pids: Vec<u32> = reading.children.iter().map(|one| one.pid).collect();
+
+        assert!(
+            pids.contains(&child_pid),
+            "the child it started is its child"
+        );
+        assert!(
+            pids.iter().all(|pid| !threads.contains(pid)),
+            "none of its own threads is counted as a child: {pids:?} against {threads:?}"
+        );
     }
 
     #[tokio::test]
