@@ -25,7 +25,7 @@ import type {
   IndexerCatalogue,
   IndexerDefinitionDetail,
 } from '@ValenceContracts/schemas/IndexerDefinition';
-import { RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
+import { RequestsMemorySchema, RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
 import {
   DownloadClientSchema,
   DownloadClientTestSchema,
@@ -167,6 +167,8 @@ const MagnetSchema = z.object({ magnet: z.string() });
 
 const CLIENT_TIMEOUT_MS = 30_000;
 
+const MEMORY_WAIT_MS = 2000;
+
 /**
  * Speaks to the requests service on the server's behalf, presenting the secret the two share.
  *
@@ -286,6 +288,14 @@ const createRequestsClient = ({
                 : saying('server.requests.requestsClient.addressRefusedToSayHowIt', { address }),
             problemCode: answer.kind === 'silent' ? answer.problemCode : 'RequestsUnreachable',
           };
+    },
+
+    readMemory: async (): Promise<number | null> => {
+      const answer = await call('/api/memory', (body) => RequestsMemorySchema.parse(body), {
+        waitMs: MEMORY_WAIT_MS,
+      });
+
+      return answer.kind === 'answered' ? answer.value.bytes : null;
     },
 
     readConsole: (): Promise<RequestsAnswer<ServiceConsole>> =>

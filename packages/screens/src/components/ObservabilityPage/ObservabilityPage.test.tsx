@@ -101,6 +101,7 @@ const reading = (jobs: Job[], queue: Partial<Monitor['queue']> = {}): Monitor =>
     children: [],
     deploymentMemory: null,
     apiMemoryBytes: null,
+    requestsMemoryBytes: null,
     loadAverage: 0,
     disks: [],
     graphics: null,

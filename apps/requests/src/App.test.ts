@@ -6,7 +6,11 @@ import {
   IndexerTestSchema,
   ReleaseSearchOutcomeSchema,
 } from '@ValenceContracts/schemas/Indexer';
-import { RequestsStatusSchema, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
+import {
+  RequestsMemorySchema,
+  RequestsStatusSchema,
+  SOLVER_NOT_USED,
+} from '@ValenceContracts/schemas/Requests';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type { IndexerCapabilities } from '@ValenceContracts/schemas/Indexer';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
@@ -166,6 +170,20 @@ describe('createApp', () => {
       indexers: { total: 0, enabled: 0, failing: [] },
       solver: SOLVER_NOT_USED,
     });
+  });
+
+  it('says what it is costing in memory, browser included, for the server to count as Valence', async () => {
+    const app = createApp({ ...THE_REST, readMemory: () => Promise.resolve(3_200_000_000) });
+    const response = await app.request('/api/memory', {
+      headers: { authorization: `Bearer ${A_SECRET}` },
+    });
+
+    expect(response.status).toBe(200);
+    expect(RequestsMemorySchema.parse(await response.json())).toEqual({ bytes: 3_200_000_000 });
+  });
+
+  it('keeps what it costs behind the secret', async () => {
+    expect((await aService().app.request('/api/memory')).status).toBe(401);
   });
 
   it('turns away anybody without the secret', async () => {

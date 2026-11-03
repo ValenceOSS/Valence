@@ -15,6 +15,7 @@ const resources = (overrides: Partial<Monitor['resources']> = {}): Monitor['reso
   children: [],
   deploymentMemory: null,
   apiMemoryBytes: null,
+  requestsMemoryBytes: null,
   loadAverage: 0,
   disks: [],
   graphics: null,
@@ -60,6 +61,51 @@ describe('valenceMemoryUse', () => {
         }),
       ),
     ).toBe(900 * 1024 ** 2);
+  });
+
+  it('adds the requests service, which is a container of its own with a browser in it', () => {
+    expect(
+      valenceMemoryUse(
+        resources({
+          deploymentMemory: { usedBytes: 2800 * 1024 ** 2, limitBytes: null },
+          requestsMemoryBytes: 3200 * 1024 ** 2,
+        }),
+      ),
+    ).toBe(6000 * 1024 ** 2);
+  });
+
+  it('adds the requests service to the processes it can see where the deployment cannot be read', () => {
+    expect(
+      valenceMemoryUse(
+        resources({
+          serviceMemoryBytes: 16 * 1024 ** 2,
+          apiMemoryBytes: 300 * 1024 ** 2,
+          requestsMemoryBytes: 700 * 1024 ** 2,
+        }),
+      ),
+    ).toBe(1016 * 1024 ** 2);
+  });
+
+  it('leaves the requests service out where the card weighs one limited container against its limit', () => {
+    expect(
+      valenceMemoryUse(
+        resources({
+          deploymentMemory: { usedBytes: 2800 * 1024 ** 2, limitBytes: 4096 * 1024 ** 2 },
+          requestsMemoryBytes: 3200 * 1024 ** 2,
+        }),
+      ),
+    ).toBe(2800 * 1024 ** 2);
+  });
+
+  it('counts Valence without the requests service where that service has said nothing', () => {
+    expect(
+      valenceMemoryUse(
+        resources({
+          deploymentMemory: { usedBytes: 2800 * 1024 ** 2, limitBytes: null },
+          requestsMemoryBytes: Number.NaN,
+        }),
+      ),
+    ).toBe(2800 * 1024 ** 2);
   });
 
   it('reports an idle Valence as idle rather than as unmeasured', () => {

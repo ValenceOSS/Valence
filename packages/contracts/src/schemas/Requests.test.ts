@@ -4,6 +4,7 @@ import {
   NO_WORK,
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
+  RequestsMemorySchema,
   RequestsStatusSchema,
 } from './Requests';
 
@@ -67,6 +68,11 @@ describe('Requests', () => {
       indexers: { total: 0, enabled: 0, failing: [] },
       solver: null,
     });
+  });
+
+  it('reads what the requests service costs in memory, and nothing below zero', () => {
+    expect(RequestsMemorySchema.parse({ bytes: 3_200_000_000 })).toEqual({ bytes: 3_200_000_000 });
+    expect(RequestsMemorySchema.safeParse({ bytes: -1 }).success).toBe(false);
   });
 
   it('reads whether requesting is on at all', () => {

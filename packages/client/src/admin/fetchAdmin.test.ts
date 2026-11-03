@@ -126,6 +126,7 @@ const MONITOR: Monitor = {
     children: [{ pid: 42, cpuPercent: 90, memoryBytes: 100 }],
     deploymentMemory: null,
     apiMemoryBytes: null,
+    requestsMemoryBytes: null,
     loadAverage: 1.5,
     disks: [],
     graphics: null,

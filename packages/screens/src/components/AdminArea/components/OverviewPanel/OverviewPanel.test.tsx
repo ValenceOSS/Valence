@@ -120,6 +120,7 @@ const monitor = (jobs: Job[] = [], queued = 0): Monitor => ({
     children: [],
     deploymentMemory: null,
     apiMemoryBytes: null,
+    requestsMemoryBytes: null,
     loadAverage: 0,
     disks: [],
     graphics: null,

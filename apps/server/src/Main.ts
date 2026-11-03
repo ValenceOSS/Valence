@@ -115,7 +115,8 @@ import { captureConsole } from '@ValenceServer/logging/captureConsole';
 import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
 import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
-import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
+import { withValenceMemory } from '@ValenceServer/monitor/withValenceMemory';
+import { createRequestsMemoryWatch } from '@ValenceServer/monitor/createRequestsMemoryWatch';
 import { watchForStalls } from '@ValenceServer/monitor/watchForStalls';
 import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
@@ -2118,6 +2119,11 @@ const tellRequestsWhoIsWhoLater = () => {
     );
   });
 };
+
+const requestsMemory =
+  requestsSetup.kind === 'on' && requestsClient !== null
+    ? createRequestsMemoryWatch({ read: () => requestsClient.readMemory() })
+    : null;
 
 const requests =
   requestsSetup.kind === 'on' && requestsClient !== null
@@ -5576,7 +5582,8 @@ const app = createApp({
 
     return { cache, artwork, bookPages, libraryBytes: bytes };
   },
-  monitor: async () => withApiMemory(await transcoder.readMonitor()),
+  monitor: async () =>
+    withValenceMemory(await transcoder.readMonitor(), requestsMemory?.current() ?? null),
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
   readImage: (url, width) => images.read(url, width),
@@ -5963,7 +5970,7 @@ const sampleResourcesThrottled = (reading: JsonValue): void => {
 void relayMonitor({
   open: () => transcoder.openMonitorSocket(),
   publish: (report) => {
-    const reading = withApiMemory(report);
+    const reading = withValenceMemory(report, requestsMemory?.current() ?? null);
 
     realtime.publish('monitor', reading, { kind: 'everyone' });
     transcoderIntake.take(reading);
