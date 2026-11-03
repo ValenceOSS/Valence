@@ -20,7 +20,7 @@
     "@valence/i18n": "workspace:*",
     "@valence/ui": "workspace:*",
     "drizzle-orm": "0.45.2",
-    "motion": "13.2.0",
+    "motion": "13.5.1",
     "next": "16.4.3",
     "postgres": "3.4.9",
     "react": "19.3.0",
