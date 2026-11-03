@@ -57,6 +57,7 @@ import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
+import { catalogueTrailerStreamUrl } from '@ValenceClient/requests/catalogueTrailerStreamUrl';
 import { TheCast } from '@ValenceMobile/components/TheCast/TheCast';
 import { usePictureTint } from '@ValenceMobile/hooks/usePictureTint';
 import { GROUND } from '@ValenceMobile/theme/GROUND';
@@ -330,7 +331,7 @@ const AnAskable = ({
   const trailer =
     backdrop === null || title.trailerKey === null || !isWatched(kind)
       ? null
-      : `/api/requests/catalogue/title/${kind}/${encodeURIComponent(id)}/trailer.m3u8`;
+      : catalogueTrailerStreamUrl(kind, id);
   const facts = describeAskableFacts({ ...title, genres: [] });
   const genres = title.genres
     .slice(0, 3)

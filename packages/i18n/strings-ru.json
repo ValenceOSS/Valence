@@ -2685,6 +2685,11 @@
     "context": "Button above what Discover found for a search, on the phone and the television, returning to what the libraries found for the same words."
   },
   {
+    "handler": "common.backToName",
+    "text": "Back to {name}",
+    "context": "The button that leaves a dialog for the one it was opened from, such as a person opened from a film's cast. {name} is what that dialog is about."
+  },
+  {
     "handler": "common.backupCode",
     "text": "Backup code",
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
@@ -3916,6 +3921,11 @@
     "context": "Shown, used in several places, among them the admin (from `describeReencodeState`) and the requests (from `describeItemBadge`)."
   },
   {
+    "handler": "common.favourite",
+    "text": "Favourite",
+    "context": "The round button under a title's play button that adds the title to the favourites or takes it out, in the web app's dialog about a film, episode or programme."
+  },
+  {
     "handler": "common.favourites",
     "text": "Favourites",
     "context": "The label, used in several places, among them the app shell and the browse area."
@@ -4124,6 +4134,11 @@
     "handler": "common.genre",
     "text": "Genre",
     "context": "The name, used in the use library filters in the library and in the use catalogue filters in the requests."
+  },
+  {
+    "handler": "common.genres",
+    "text": "Genres",
+    "context": "The heading over the genres of a film, episode or programme, beside its synopsis in the web app's dialog about it."
   },
   {
     "handler": "common.georgiaTimesNewRomanSerif",
@@ -24375,6 +24390,11 @@
     "context": "Shown large in the askable dialog while what a film, series, artist or album is, and its artwork, are still being read from the catalogue."
   },
   {
+    "handler": "screens.askableDialog.moreToDoWithThis",
+    "text": "More to do with this",
+    "context": "Read out for the menu of further actions beside the play or request button on a title that can be asked for."
+  },
+  {
     "handler": "screens.askableDialog.noYearGiven",
     "text": "No year given",
     "context": "Shown in the askable dialog."
@@ -29796,6 +29816,11 @@
     "context": "Text shown in the rating panel."
   },
   {
+    "handler": "screens.ratingPanel.personalRating",
+    "text": "Personal rating",
+    "context": "The label over the stars this viewer gives a film, episode or programme, in the rating panel."
+  },
+  {
     "handler": "screens.ratingPanel.ratings",
     "text": "Ratings",
     "context": "The heading of a dialog section in the rating panel."
@@ -30846,9 +30871,19 @@
     "context": "How many of a series' seasons are chosen. {length} is how many are chosen; {count} is how many there are."
   },
   {
+    "handler": "screens.seasonChooser.fetchedAsEachOneAirs",
+    "text": "Fetched as each one airs",
+    "context": "Under New seasons in the seasons to ask for, saying what ticking it does."
+  },
+  {
     "handler": "screens.seasonChooser.firstAired",
     "text": "First aired",
     "context": "Shown in the season chooser."
+  },
+  {
+    "handler": "screens.seasonChooser.newSeasons",
+    "text": "New seasons",
+    "context": "The last row of the seasons to ask for, which gets seasons that air later as they come."
   },
   {
     "handler": "screens.seasonChooser.noSeasonIsTakenYet",

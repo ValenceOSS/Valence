@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import type { Variants } from 'motion/react';
 import { IsInDialogSections } from './IsInDialogSections';
+import { AreSectionsOpen } from './AreSectionsOpen';
 import type { DialogSectionsProps } from './DialogSections.types';
 
 const SECTIONS_ARRIVE: Variants = {
@@ -14,13 +15,17 @@ const SECTIONS_ARRIVE: Variants = {
  * what rises; anything else in the stack simply appears.
  *
  * @param children - The sections, in reading order.
+ * @param isOpen - Whether each section stands open on the dialog under a heading of its own, as a
+ *   title's dialog lays them out, rather than in a panel.
  * @param className - Extra classes for the caller's own layout.
  */
-const DialogSections = ({ children, className }: DialogSectionsProps) => (
+const DialogSections = ({ children, isOpen = false, className }: DialogSectionsProps) => (
   <IsInDialogSections.Provider value>
-    <motion.div variants={SECTIONS_ARRIVE} initial="hidden" animate="shown" className={className}>
-      {children}
-    </motion.div>
+    <AreSectionsOpen.Provider value={isOpen}>
+      <motion.div variants={SECTIONS_ARRIVE} initial="hidden" animate="shown" className={className}>
+        {children}
+      </motion.div>
+    </AreSectionsOpen.Provider>
   </IsInDialogSections.Provider>
 );
 

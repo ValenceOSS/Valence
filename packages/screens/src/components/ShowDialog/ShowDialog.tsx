@@ -29,11 +29,8 @@ import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectio
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { DialogContent } from '@ValenceUI/DialogContent';
-import { ActionBar } from '@ValenceUI/ActionBar';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { useHasScrolledPast } from '@ValenceUI/useHasScrolledPast';
 import { ScrolledTitle } from '@ValenceScreens/components/ScrolledTitle/ScrolledTitle';
-import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { Badge } from '@ValenceUI/Badge';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
@@ -42,6 +39,15 @@ import { DownloadDialog } from '@ValenceScreens/components/DownloadDialog/Downlo
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { Spinner } from '@ValenceUI/Spinner';
+import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
+import { PLAY_FACE } from '@ValenceUI/tokens/PLAY_FACE';
+import { WatchedBar } from '@ValenceUI/WatchedBar';
+import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButton/ArtworkCloseButton';
+import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
+import { useArtworkTint } from '@ValenceScreens/library/useArtworkTint';
+import { TitleHero } from '@ValenceScreens/components/TitleHero/TitleHero';
+import { RoundActions } from '@ValenceScreens/components/RoundActions/RoundActions';
+import type { RoundAction } from '@ValenceScreens/components/RoundActions/RoundActions.types';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -57,6 +63,7 @@ import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
 import { RAIL } from '@ValenceUI/tokens/rail';
+import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
 import { ChooseEpisodes } from './components/ChooseEpisodes/ChooseEpisodes';
@@ -118,6 +125,11 @@ const ShowDialog = ({
   const topRef = useRef<HTMLDivElement>(null);
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const prefersReducedMotion = useReducedMotionConfig();
+  const tint = useArtworkTint(
+    show === null
+      ? null
+      : artworkUrl(show.coverMediaId, 'backdrop', { isOfTitle: true, size: 'small' }),
+  );
 
   const asked = useQuery(libraryQueries.show(show?.libraryId ?? null, show?.id ?? null));
   const detail = useHeldWhileLeaving(asked.data ?? null, show !== null);
@@ -201,6 +213,159 @@ const ShowDialog = ({
     detail !== null &&
     isWatchedThrough(detail, (mediaId) => (watchedFractionFor(mediaId) ?? 0) >= 1, today);
 
+  const showWatched =
+    carryingOn === null || !carryingOn.isResuming || carryingOn.episode.durationSeconds <= 0
+      ? null
+      : carryingOn.startSeconds / carryingOn.episode.durationSeconds;
+
+  const play =
+    carryingOn === null ? (
+      <PlayWithRestart>
+        <Button variant="confirm" size="none" className={PLAY_FACE} isLoading disabled>
+          {say('screens.showDialog.readingTheEpisodes')}
+        </Button>
+      </PlayWithRestart>
+    ) : (
+      <PlayWithRestart
+        {...(carryingOn.isResuming
+          ? {
+              onStartAgain: () => {
+                onPlay(carryingOn.episode, 0);
+              },
+            }
+          : {})}
+      >
+        <Button
+          variant="confirm"
+          size="none"
+          className={PLAY_FACE}
+          onClick={() => {
+            onPlay(carryingOn.episode, carryingOn.startSeconds);
+          }}
+        >
+          <Icon of={PlayFilledIcon} size={18} />
+          {carryingOn.isResuming
+            ? say('screens.showDialog.resumeStartSeconds', {
+                startSeconds: formatDuration(carryingOn.startSeconds),
+              })
+            : say('screens.showDialog.playValueEpisodeValue2', {
+                value: nameSeason(carryingOn.episode.seasonNumber ?? null),
+                value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
+              })}
+          {showWatched === null ? null : (
+            <WatchedBar
+              watched={showWatched}
+              className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+            />
+          )}
+        </Button>
+      </PlayWithRestart>
+    );
+
+  const actions: RoundAction[] = [
+    ...(!hasTrailer
+      ? []
+      : [
+          {
+            id: 'trailer',
+            isPinned: true,
+            label: say('common.watchTheTrailer'),
+            icon: <Icon of={SquarePlayIcon} size={18} />,
+            onChoose: () => {
+              if (trailer === null) {
+                setIsWatchingTrailer(true);
+
+                return;
+              }
+
+              onPlay(trailer, 0);
+            },
+          },
+        ]),
+    ...(carryingOn === null || onInspect === undefined
+      ? []
+      : [
+          {
+            id: 'episode',
+            label: say('screens.showDialog.aboutThisEpisode'),
+            icon: <Icon of={InfoIcon} size={18} />,
+            onChoose: () => {
+              onInspect(carryingOn.episode);
+            },
+          },
+        ]),
+    ...(!canKeepFiles() || (shown.seriesId ?? null) === null || detail === null
+      ? []
+      : [
+          {
+            id: 'download',
+            isPinned: true,
+            label: say('common.download'),
+            icon: <Icon of={DownloadIcon} size={18} />,
+            onChoose: () => {
+              setIsChoosing(true);
+            },
+            choices: waysToDownloadAProgramme(detail, showing).map((way) => ({
+              id: way.label,
+              label: way.label,
+              onChoose: () => {
+                if (way.kind === 'choose') {
+                  setIsChoosing(true);
+
+                  return;
+                }
+
+                download(
+                  way.mediaIds ??
+                    detail.seasons.flatMap((one) => one.episodes.map((episode) => episode.id)),
+                );
+              },
+            })),
+          },
+        ]),
+    ...(!may('library.edit') || (shown.seriesId ?? null) === null
+      ? []
+      : [
+          {
+            id: 'collection',
+            label: say('common.addToACollection'),
+            icon: <Icon of={LayersIcon} size={18} />,
+            onChoose: () => {
+              setIsCollecting(true);
+            },
+          },
+        ]),
+    ...(onRequestMore === undefined ||
+    detail === null ||
+    (detail.tmdbId ?? null) === null ||
+    !isShowMissingEpisodes(detail, new Date().toISOString().slice(0, 10))
+      ? []
+      : [
+          {
+            id: 'request-more',
+            isPinned: true,
+            label: say('common.requestMore'),
+            icon: <Icon of={PlusIcon} size={18} />,
+            onChoose: () => {
+              onRequestMore(detail.tmdbId ?? 0);
+            },
+          },
+        ]),
+    ...(onShare === undefined || (shown.seriesId ?? null) === null
+      ? []
+      : [
+          {
+            id: 'share',
+            isPinned: true,
+            label: say('common.share'),
+            icon: <Icon of={ShareIcon} size={18} />,
+            onChoose: () => {
+              onShare(shown);
+            },
+          },
+        ]),
+  ];
+
   return (
     <Dialog label={shown.title} isOpen={show !== null} onClose={onClose} size="stage">
       <DialogContent className="p-3 sm:p-4">
@@ -220,356 +385,249 @@ const ShowDialog = ({
           </Button>
         </ScrolledTitle>
 
-        <div ref={topRef} className="relative overflow-hidden rounded-2xl">
-          <div className="relative h-[42vh] min-h-[16rem] sm:h-[26rem]">
-            <MediaPreview
-              mediaId={shown.coverMediaId}
-              backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
-              durationSeconds={0}
-              fills
-            />
+        <TintedGround tint={tint}>
+          <TitleHero
+            ref={topRef}
+            preview={
+              <MediaPreview
+                mediaId={shown.coverMediaId}
+                backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
+                durationSeconds={0}
+                controlsAtTop
+                closing={<ArtworkCloseButton onClose={onClose} />}
+                isRoomy
+                fills
+              />
+            }
+          >
+            <DialogHeadline className="flex flex-col items-start gap-8">
+              <DialogHeadlinePart
+                as="h2"
+                isTitle
+                className={
+                  lettered === null || unlettered === lettered.id
+                    ? 'max-w-[18ch] text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
+                    : 'flex'
+                }
+              >
+                {lettered === null || unlettered === lettered.id ? (
+                  shown.title
+                ) : (
+                  <TitleLogo
+                    src={titleLogoUrl(lettered.id)}
+                    alt={shown.title}
+                    className="max-h-[20svh] w-auto max-w-[min(70vw,30rem)] object-contain object-left"
+                    onError={() => {
+                      setUnlettered(lettered.id);
+                    }}
+                  />
+                )}
+              </DialogHeadlinePart>
 
-            <BackdropScrim />
-          </div>
+              <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
+                <div className="w-full sm:w-[21rem]">{play}</div>
 
-          <div className="absolute right-4 top-4">
-            <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
-              <Icon of={XIcon} size={20} />
-            </Button>
-          </div>
+                <RoundActions
+                  label={say('screens.bookDialog.moreToDoWithThisBook')}
+                  actions={actions}
+                  isCompact
+                  className="sm:ml-auto"
+                />
+              </DialogHeadlinePart>
+            </DialogHeadline>
+          </TitleHero>
 
-          <DialogHeadline className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-5 sm:p-8">
-            <DialogHeadlinePart className="flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium text-on-scrim/75">
-                {shown.seasonCount === 1
-                  ? sayCount('common.count.episodes', shown.episodeCount)
-                  : [
-                      sayCount('common.count.seasons', shown.seasonCount),
-                      sayCount('common.count.episodes', shown.episodeCount),
-                    ].join(' · ')}
-              </span>
+          <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+            <div className="flex min-w-0 flex-col gap-4">
+              <DialogHeadlinePart className="flex flex-wrap items-center gap-3">
+                <span className="text-base text-text-muted">
+                  {shown.seasonCount === 1
+                    ? sayCount('common.count.episodes', shown.episodeCount)
+                    : [
+                        sayCount('common.count.seasons', shown.seasonCount),
+                        sayCount('common.count.episodes', shown.episodeCount),
+                      ].join(' · ')}
+                </span>
 
-              {isSeenThrough ? (
-                <Badge tone="success" size="sm">
-                  {say('common.watched')}
-                </Badge>
-              ) : null}
+                {isSeenThrough ? (
+                  <Badge tone="success" size="sm">
+                    {say('common.watched')}
+                  </Badge>
+                ) : null}
 
-              {detail?.status === undefined ||
-              detail.status === null ||
-              detail.status === '' ? null : (
-                <ShowStatusBadge status={detail.status} />
-              )}
+                {detail?.status === undefined ||
+                detail.status === null ||
+                detail.status === '' ? null : (
+                  <ShowStatusBadge status={detail.status} />
+                )}
+              </DialogHeadlinePart>
 
               {detail?.nextEpisode === undefined || detail.nextEpisode === null ? null : (
-                <span className="text-sm text-on-scrim/85">
+                <DialogHeadlinePart className="text-sm text-text-muted">
                   {say('common.nextSSeasonNumberEEpisodeNumberAirDate', {
                     seasonNumber: detail.nextEpisode.seasonNumber.toString(),
                     episodeNumber: detail.nextEpisode.episodeNumber.toString(),
                     airDate: describeAirDate(detail.nextEpisode.airDate, today),
                   })}
-                </span>
+                </DialogHeadlinePart>
               )}
-            </DialogHeadlinePart>
 
-            <DialogHeadlinePart
-              as="h2"
-              isTitle
-              className={
-                lettered === null || unlettered === lettered.id
-                  ? 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
-                  : 'flex'
-              }
-            >
-              {lettered === null || unlettered === lettered.id ? (
-                shown.title
-              ) : (
-                <TitleLogo
-                  src={titleLogoUrl(lettered.id)}
-                  alt={shown.title}
-                  className="max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain object-left"
-                  onError={() => {
-                    setUnlettered(lettered.id);
+              {(detail?.overview ?? '') === '' ? null : (
+                <DialogHeadlinePart>
+                  <p className="max-w-[65ch] text-base leading-relaxed text-text">
+                    {detail?.overview}
+                  </p>
+                </DialogHeadlinePart>
+              )}
+            </div>
+
+            <DialogHeadlinePart className="flex flex-col gap-4 text-sm leading-relaxed">
+              {(shown.genres ?? []).length === 0 ? null : (
+                <p>
+                  <span className="text-text-muted">{say('common.genres')}: </span>
+                  <span className="text-text">{(shown.genres ?? []).join(', ')}</span>
+                </p>
+              )}
+
+              {onRate === undefined || (shown.seriesId ?? null) === null ? null : (
+                <RatingPanel
+                  subject={{ seriesId: shown.seriesId ?? '' }}
+                  title={shown.title}
+                  isBare
+                  onRate={(given) => {
+                    onRate(shown, given);
                   }}
                 />
               )}
             </DialogHeadlinePart>
-
-            {(shown.genres ?? []).length === 0 ? null : (
-              <DialogHeadlinePart as="span" className="flex flex-wrap gap-1.5">
-                {(shown.genres ?? []).slice(0, 3).map((genre) => (
-                  <Badge key={genre} size="sm" tone="solid">
-                    {genre}
-                  </Badge>
-                ))}
-              </DialogHeadlinePart>
-            )}
           </DialogHeadline>
-        </div>
 
-        <span ref={pastTheArtwork} aria-hidden className="block h-px" />
+          <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
-        <div className="flex flex-col gap-3 px-0 pb-4 pt-4">
-          {onRate === undefined || (shown.seriesId ?? null) === null ? null : (
-            <RatingPanel
-              subject={{ seriesId: shown.seriesId ?? '' }}
-              title={shown.title}
-              onRate={(given) => {
-                onRate(shown, given);
-              }}
-            />
-          )}
+          <DialogSections isOpen className="flex flex-col gap-10 px-1 pb-8 pt-10 sm:px-2">
+            <DialogSection>
+              <header className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className={RAIL.title}>{say('common.episodes')}</h3>
 
-          <DialogSection>
-            <header className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className={RAIL.sectionTitle}>{say('common.episodes')}</h3>
+                {(onMarkWatched === undefined || shownEpisodes.length === 0) &&
+                chooseFrom.length < 2 ? null : (
+                  <span className={JOINED_LOOKS.track}>
+                    {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
+                      <Button
+                        variant="bare"
+                        size="none"
+                        className={cn(JOINED_LOOKS.segment, 'inline-flex items-center')}
+                        onClick={() => {
+                          onMarkWatched(shownEpisodes, !isSeasonWatched);
+                        }}
+                      >
+                        <Icon
+                          of={isSeasonWatched ? CircleCheckFilledIcon : CircleCheckIcon}
+                          size={15}
+                        />
+                        {isSeasonWatched
+                          ? chooseFrom.length < 2
+                            ? say('screens.showDialog.markAllUnwatched')
+                            : say('common.markSeasonUnwatched')
+                          : chooseFrom.length < 2
+                            ? say('screens.showDialog.markAllWatched')
+                            : say('common.markSeasonWatched')}
+                      </Button>
+                    )}
 
-              {(onMarkWatched === undefined || shownEpisodes.length === 0) &&
-              chooseFrom.length < 2 ? null : (
-                <span className={JOINED_LOOKS.track}>
-                  {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
-                    <Button
-                      variant="bare"
-                      size="none"
-                      className={cn(JOINED_LOOKS.segment, 'inline-flex items-center')}
-                      onClick={() => {
-                        onMarkWatched(shownEpisodes, !isSeasonWatched);
-                      }}
-                    >
-                      <Icon
-                        of={isSeasonWatched ? CircleCheckFilledIcon : CircleCheckIcon}
-                        size={15}
+                    {chooseFrom.length < 2 ? null : (
+                      <SeasonPicker
+                        seasons={chooseFrom}
+                        value={showing}
+                        onChange={setChosenSeason}
                       />
-                      {isSeasonWatched
-                        ? chooseFrom.length < 2
-                          ? say('screens.showDialog.markAllUnwatched')
-                          : say('common.markSeasonUnwatched')
-                        : chooseFrom.length < 2
-                          ? say('screens.showDialog.markAllWatched')
-                          : say('common.markSeasonWatched')}
-                    </Button>
-                  )}
+                    )}
+                  </span>
+                )}
+              </header>
 
-                  {chooseFrom.length < 2 ? null : (
-                    <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
-                  )}
-                </span>
+              {show !== null && asked.isError ? (
+                <CouldNotRead
+                  said={say('screens.showDialog.theEpisodesCouldNotBeRead')}
+                  isTryingAgain={asked.isFetching}
+                  onTryAgain={() => {
+                    void asked.refetch();
+                  }}
+                />
+              ) : isLoading ? (
+                <Spinner
+                  isCentered
+                  label={say('screens.showDialog.readingTheEpisodes')}
+                  size="sm"
+                />
+              ) : inOrder.length === 0 ? (
+                <p className="text-sm text-text-muted">
+                  {say('screens.showDialog.nothingHereYetEpisodesAppearAs')}
+                </p>
+              ) : (
+                <SlidingList
+                  label={say('common.episodes')}
+                  items={inOrder}
+                  keyOf={(row) => row.key}
+                  renderItem={({ at, episode, listed, airs }) =>
+                    episode === null ? (
+                      <MissingRow
+                        episodeNumber={at}
+                        {...(airs === '' ? {} : { airs })}
+                        {...(listed === null ? {} : { title: listed.title })}
+                        {...(listed?.stillUrl === null || listed?.stillUrl === undefined
+                          ? {}
+                          : { stillUrl: listed.stillUrl })}
+                      />
+                    ) : (
+                      <EpisodeRow
+                        episode={episode}
+                        onPlay={onPlay}
+                        {...(airs === '' ? {} : { airs })}
+                        {...(onInspect === undefined ? {} : { onInspect })}
+                        {...(onMarkWatched === undefined
+                          ? {}
+                          : {
+                              onMarkWatched: (one: MediaSummary, isWatched: boolean) => {
+                                onMarkWatched([one], isWatched);
+                              },
+                            })}
+                        {...(watchedFractionFor?.(episode.id) === undefined
+                          ? {}
+                          : { watchedFraction: watchedFractionFor(episode.id) ?? 0 })}
+                        {...(resumeFor === undefined || resumeFor(episode.id) === null
+                          ? {}
+                          : { resumeSeconds: Math.floor(resumeFor(episode.id) ?? 0) })}
+                      />
+                    )
+                  }
+                />
               )}
-            </header>
+            </DialogSection>
 
-            {show !== null && asked.isError ? (
-              <CouldNotRead
-                said={say('screens.showDialog.theEpisodesCouldNotBeRead')}
-                isTryingAgain={asked.isFetching}
-                onTryAgain={() => {
-                  void asked.refetch();
-                }}
-              />
-            ) : isLoading ? (
-              <Spinner isCentered label={say('screens.showDialog.readingTheEpisodes')} size="sm" />
-            ) : inOrder.length === 0 ? (
-              <p className="text-sm text-text-muted">
-                {say('screens.showDialog.nothingHereYetEpisodesAppearAs')}
-              </p>
-            ) : (
-              <SlidingList
-                label={say('common.episodes')}
-                items={inOrder}
-                keyOf={(row) => row.key}
-                renderItem={({ at, episode, listed, airs }) =>
-                  episode === null ? (
-                    <MissingRow
-                      episodeNumber={at}
-                      {...(airs === '' ? {} : { airs })}
-                      {...(listed === null ? {} : { title: listed.title })}
-                      {...(listed?.stillUrl === null || listed?.stillUrl === undefined
-                        ? {}
-                        : { stillUrl: listed.stillUrl })}
-                    />
-                  ) : (
-                    <EpisodeRow
-                      episode={episode}
-                      onPlay={onPlay}
-                      {...(airs === '' ? {} : { airs })}
-                      {...(onInspect === undefined ? {} : { onInspect })}
-                      {...(onMarkWatched === undefined
-                        ? {}
-                        : {
-                            onMarkWatched: (one: MediaSummary, isWatched: boolean) => {
-                              onMarkWatched([one], isWatched);
-                            },
-                          })}
-                      {...(watchedFractionFor?.(episode.id) === undefined
-                        ? {}
-                        : { watchedFraction: watchedFractionFor(episode.id) ?? 0 })}
-                      {...(resumeFor === undefined || resumeFor(episode.id) === null
-                        ? {}
-                        : { resumeSeconds: Math.floor(resumeFor(episode.id) ?? 0) })}
-                    />
-                  )
-                }
+            <PartOfCollections
+              subject={
+                show === null || (shown.seriesId ?? null) === null
+                  ? null
+                  : { seriesId: shown.seriesId ?? '' }
+              }
+            />
+
+            {onInspect === undefined || onOpenShow === undefined ? null : (
+              <LikeThisShelf
+                mediaId={show === null ? null : shown.coverMediaId}
+                onPlay={onPlay}
+                onInspect={onInspect}
+                onOpenShow={onOpenShow}
               />
             )}
-          </DialogSection>
 
-          <PartOfCollections
-            subject={
-              show === null || (shown.seriesId ?? null) === null
-                ? null
-                : { seriesId: shown.seriesId ?? '' }
-            }
-          />
-
-          {onInspect === undefined || onOpenShow === undefined ? null : (
-            <LikeThisShelf
-              mediaId={show === null ? null : shown.coverMediaId}
-              onPlay={onPlay}
-              onInspect={onInspect}
-              onOpenShow={onOpenShow}
-            />
-          )}
-
-          {(shown.seriesId ?? null) === null ? null : (
-            <PluginPanels on="series" subjectId={shown.seriesId ?? ''} />
-          )}
-        </div>
+            {(shown.seriesId ?? null) === null ? null : (
+              <PluginPanels on="series" subjectId={shown.seriesId ?? ''} />
+            )}
+          </DialogSections>
+        </TintedGround>
       </DialogContent>
-
-      <DialogFooter>
-        <ActionBar
-          label={say('screens.bookDialog.moreToDoWithThisBook')}
-          primary={
-            carryingOn === null ? (
-              <Button variant="confirm" size="lg" isLoading disabled>
-                {say('screens.showDialog.readingTheEpisodes')}
-              </Button>
-            ) : (
-              <Button
-                variant="confirm"
-                size="lg"
-                onClick={() => {
-                  onPlay(carryingOn.episode, carryingOn.startSeconds);
-                }}
-              >
-                <Icon of={PlayFilledIcon} size={18} />
-                {carryingOn.isResuming
-                  ? say('screens.showDialog.resumeStartSeconds', {
-                      startSeconds: formatDuration(carryingOn.startSeconds),
-                    })
-                  : say('screens.showDialog.playValueEpisodeValue2', {
-                      value: nameSeason(carryingOn.episode.seasonNumber ?? null),
-                      value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
-                    })}
-              </Button>
-            )
-          }
-          actions={[
-            ...(!hasTrailer
-              ? []
-              : [
-                  {
-                    id: 'trailer',
-                    isPinned: true,
-                    label: say('common.watchTheTrailer'),
-                    icon: <Icon of={SquarePlayIcon} size={18} />,
-                    onChoose: () => {
-                      if (trailer === null) {
-                        setIsWatchingTrailer(true);
-
-                        return;
-                      }
-
-                      onPlay(trailer, 0);
-                    },
-                  },
-                ]),
-            ...(carryingOn === null || onInspect === undefined
-              ? []
-              : [
-                  {
-                    id: 'episode',
-                    label: say('screens.showDialog.aboutThisEpisode'),
-                    icon: <Icon of={InfoIcon} size={18} />,
-                    onChoose: () => {
-                      onInspect(carryingOn.episode);
-                    },
-                  },
-                ]),
-            ...(!canKeepFiles() || (shown.seriesId ?? null) === null || detail === null
-              ? []
-              : [
-                  {
-                    id: 'download',
-                    isPinned: true,
-                    label: say('common.download'),
-                    icon: <Icon of={DownloadIcon} size={18} />,
-                    onChoose: () => {
-                      setIsChoosing(true);
-                    },
-                    choices: waysToDownloadAProgramme(detail, showing).map((way) => ({
-                      id: way.label,
-                      label: way.label,
-                      onChoose: () => {
-                        if (way.kind === 'choose') {
-                          setIsChoosing(true);
-
-                          return;
-                        }
-
-                        download(
-                          way.mediaIds ??
-                            detail.seasons.flatMap((one) =>
-                              one.episodes.map((episode) => episode.id),
-                            ),
-                        );
-                      },
-                    })),
-                  },
-                ]),
-            ...(!may('library.edit') || (shown.seriesId ?? null) === null
-              ? []
-              : [
-                  {
-                    id: 'collection',
-                    label: say('common.addToACollection'),
-                    icon: <Icon of={LayersIcon} size={18} />,
-                    onChoose: () => {
-                      setIsCollecting(true);
-                    },
-                  },
-                ]),
-            ...(onRequestMore === undefined ||
-            detail === null ||
-            (detail.tmdbId ?? null) === null ||
-            !isShowMissingEpisodes(detail, new Date().toISOString().slice(0, 10))
-              ? []
-              : [
-                  {
-                    id: 'request-more',
-                    isPinned: true,
-                    label: say('common.requestMore'),
-                    icon: <Icon of={PlusIcon} size={18} />,
-                    onChoose: () => {
-                      onRequestMore(detail.tmdbId ?? 0);
-                    },
-                  },
-                ]),
-            ...(onShare === undefined || (shown.seriesId ?? null) === null
-              ? []
-              : [
-                  {
-                    id: 'share',
-                    isPinned: true,
-                    label: say('common.share'),
-                    icon: <Icon of={ShareIcon} size={18} />,
-                    onChoose: () => {
-                      onShare(shown);
-                    },
-                  },
-                ]),
-          ]}
-        />
-      </DialogFooter>
 
       <DownloadDialog
         series={

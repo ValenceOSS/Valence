@@ -1,6 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
 import { Volume as VolumeIcon, VolumeOff as VolumeOffIcon } from '@keyline-icons/react';
-import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import {
+  CameraOff as CameraOffIcon,
+  Hourglass as HourglassIcon,
+  Pause as PauseFilledIcon,
+  Play as PlayFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -15,6 +20,8 @@ import { claimSound } from '@ValenceScreens/playback/soundOwner';
 import { useIsMusicOn } from '@ValenceScreens/music/useIsMusicOn';
 import type { MediaPreviewProps, PreviewAbsence } from './MediaPreview.types';
 import { say } from '@ValenceI18n/say';
+import { glassOnArtwork } from '@ValenceScreens/components/PlayWithRestart/glassOnArtwork';
+import { glassSquare } from '@ValenceScreens/components/PlayWithRestart/glassSquare';
 
 const SETTLE_MILLISECONDS = 2600;
 
@@ -65,6 +72,14 @@ const RESTS_AFTER_MILLISECONDS = 2000;
  * @param onEnded - Told when the clip finishes.
  * @param onPlayingChange - Told when it starts or stops.
  * @param onPalette - Told the colours on screen, so the page can be lit by them.
+ * @param actions - What sits before its own controls, such as keeping it.
+ * @param closing - What sits after its own controls, such as closing the dialog it heads, so the
+ *   row of them is there from the start.
+ * @param leavesTheTopLeft - Whether to say there is no clip lower down, leaving the top left
+ *   corner to something the caller puts there.
+ * @param isRoomy - Whether its corners keep the wider margin of a title's dialog, so what sits in
+ *   them lines up with what the dialog lays over the foot of the picture, and whether to say there
+ *   is no clip as the dialog's own buttons are drawn, with a solid mark after the words.
  */
 const MediaPreview = ({
   mediaId,
@@ -83,7 +98,17 @@ const MediaPreview = ({
   onPlayingChange,
   onPalette,
   actions,
+  closing,
+  leavesTheTopLeft = false,
+  isRoomy = false,
 }: MediaPreviewProps) => {
+  const controlLook = isRoomy
+    ? ({
+        variant: 'ghost',
+        size: 'none',
+        className: glassSquare,
+      } as const)
+    : ({ variant: 'overlay', isIconOnly: true } as const);
   const videoRef = useRef<HTMLVideoElement>(null);
   const startRef = useRef<(() => void) | null>(null);
   const isStill = useReducedMotionConfig() === true;
@@ -300,10 +325,23 @@ const MediaPreview = ({
       />
 
       {absence === null ? null : (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-start p-4">
-          <p className="rounded-md bg-shade/65 px-2.5 py-1.5 text-xs font-medium text-on-scrim/85 backdrop-blur-sm">
-            {absence === 'pending' ? PREVIEW_PENDING : PREVIEW_ABSENT}
-          </p>
+        <div
+          className={`pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-start ${
+            isRoomy ? 'p-4 sm:p-6' : 'p-4'
+          } ${leavesTheTopLeft ? (isRoomy ? 'pt-16 sm:pt-20' : 'pt-16') : ''}`}
+        >
+          {isRoomy ? (
+            <p
+              className={`flex h-12 items-center gap-2 rounded-[0.875rem] px-4 text-sm font-medium ${glassOnArtwork}`}
+            >
+              {absence === 'pending' ? PREVIEW_PENDING : PREVIEW_ABSENT}
+              <Icon of={absence === 'pending' ? HourglassIcon : CameraOffIcon} size={18} />
+            </p>
+          ) : (
+            <p className="rounded-md bg-shade/65 px-2.5 py-1.5 text-xs font-medium text-on-scrim/85 backdrop-blur-sm">
+              {absence === 'pending' ? PREVIEW_PENDING : PREVIEW_ABSENT}
+            </p>
+          )}
         </div>
       )}
 
@@ -362,18 +400,25 @@ const MediaPreview = ({
         }}
       />
 
-      {actions === undefined && !hasStarted && !offersAStart ? null : (
+      {actions === undefined && closing === undefined && !hasStarted && !offersAStart ? null : (
         <div
-          className={`absolute right-4 z-10 flex items-center gap-2 ${
-            controlsAtTop ? 'top-4' : 'bottom-4'
+          className={`absolute z-10 flex items-center gap-2 ${
+            isRoomy ? 'right-4 sm:right-6' : 'right-4'
+          } ${
+            controlsAtTop
+              ? isRoomy
+                ? 'top-4 sm:top-6'
+                : 'top-4'
+              : isRoomy
+                ? 'bottom-4 sm:bottom-6'
+                : 'bottom-4'
           }`}
         >
           {actions}
 
           {!offersAStart ? null : (
             <Button
-              isIconOnly
-              variant="overlay"
+              {...controlLook}
               label={say('screens.mediaPreview.playThePreview')}
               onClick={() => {
                 startRef.current?.();
@@ -385,8 +430,7 @@ const MediaPreview = ({
 
           {!hasStarted ? null : (
             <Button
-              isIconOnly
-              variant="overlay"
+              {...controlLook}
               label={
                 isPaused
                   ? say('screens.mediaPreview.playThePreview')
@@ -417,8 +461,7 @@ const MediaPreview = ({
           {!hasSound || !hasStarted ? null : (
             <>
               <Button
-                isIconOnly
-                variant="overlay"
+                {...controlLook}
                 label={
                   isMuted
                     ? say('screens.mediaPreview.turnSoundOn')
@@ -446,6 +489,8 @@ const MediaPreview = ({
               </Button>
             </>
           )}
+
+          {closing}
         </div>
       )}
 

@@ -1,6 +1,5 @@
 import { channelsOf } from '@ValenceCore/functions/channelsOf';
 import { deepTintOf } from '@ValenceCore/functions/deepTintOf';
-import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
 
 const AT = /^\s*[\d.]+%\s+([\d.]+)%/u;
 
@@ -12,7 +11,7 @@ const AT = /^\s*[\d.]+%\s+([\d.]+)%/u;
  * @param lights - The lights read off the picture.
  * @returns The tint as `rgb(…)`, or nothing where there are no lights to take it from.
  */
-const cardTintOf = (lights: readonly ALight[]): string | null => {
+const cardTintOf = (lights: readonly { colour: string; at: string }[]): string | null => {
   const placed = lights.flatMap((light) => {
     const down = AT.exec(light.at)?.[1];
     const channels = channelsOf(light.colour);

@@ -1,10 +1,11 @@
-import { useCallback, useId, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@ValenceUI/Badge';
-import { DataTable } from '@ValenceUI/DataTable';
-import { FormField } from '@ValenceUI/FormField';
+import { CircleCheck as CircleCheckIcon, Plus as PlusIcon } from '@keyline-icons/react';
+import { CircleCheck as CircleCheckFilledIcon } from '@keyline-icons/react/fill';
+import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
-import { Switch } from '@ValenceUI/Switch';
+import { RAIL } from '@ValenceUI/tokens/rail';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { SEASON_STANDING_NAMES } from '@ValenceClient/requests/SEASON_STANDING_NAMES';
@@ -12,24 +13,63 @@ import { isSeasonHeld } from '@ValenceClient/requests/isSeasonHeld';
 import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
 import { tickASeason } from '@ValenceClient/requests/tickASeason';
 import { tickEverySeason } from '@ValenceClient/requests/tickEverySeason';
-import type { CatalogueSeason, SeasonStanding } from '@ValenceContracts/schemas/MediaRequest';
-import type { BadgeTone } from '@ValenceUI/Badge.types';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import type { ReactNode } from 'react';
 import type { SeasonChooserProps } from './SeasonChooser.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
-const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
-  askable: 'quiet',
-  requested: 'waiting',
-  partly: 'busy',
-  library: 'success',
-};
+const COVER =
+  'flex aspect-[2/3] w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line';
 
 /**
- * Which of a series' seasons to ask for, as a row each: how many episodes it holds and the year it
- * began, with a switch to take it, one in the header to take every regular season, and one beneath
- * to get new seasons as they come.
+ * One row of the seasons to ask for: a cover, what it is and what it holds, and a tick.
+ *
+ * @param cover - The season's poster, or what stands in for one.
+ * @param name - What the row is.
+ * @param label - What its tick is called, read out.
+ * @param says - What it holds and where it stands.
+ * @param isOn - Whether it is ticked.
+ * @param isLocked - Whether the tick cannot be changed.
+ * @param onToggle - Told to tick it or untick it.
+ * @returns The row.
+ */
+const rowOf = (
+  cover: ReactNode,
+  name: string,
+  label: string,
+  says: string,
+  isOn: boolean,
+  isLocked: boolean,
+  onToggle: () => void,
+) => (
+  <li className="flex items-center gap-4 border-t border-[var(--surface-line)] py-3 first:border-t-0">
+    <span className={COVER}>{cover}</span>
+
+    <span className="flex min-w-0 flex-1 flex-col gap-1">
+      <span className="truncate text-sm font-medium text-text">{name}</span>
+      <span className="text-xs text-text-muted">{says}</span>
+    </span>
+
+    <Button
+      variant={isOn ? 'confirm' : 'secondary'}
+      size="md"
+      isIconOnly
+      label={label}
+      role="switch"
+      aria-checked={isOn}
+      disabled={isLocked}
+      onClick={onToggle}
+    >
+      <Icon of={isOn ? CircleCheckFilledIcon : CircleCheckIcon} size={16} />
+    </Button>
+  </li>
+);
+
+/**
+ * Which of a series' seasons to ask for, drawn as a programme's episodes are: a heading with a way
+ * to tick every regular season beside it, and a row for each season — its poster, or its number
+ * where it has none, its name and what it holds, and a tick to ask for it — ending with a row to
+ * get new seasons as they air.
  *
  * Specials are a row like any other: ticking them fetches them, and they are never part of every
  * season. Following new seasons is a choice of its own rather than something read from which rows
@@ -58,7 +98,6 @@ const SeasonChooser = ({
   alreadyAsked = [],
   isFollowedAlready = false,
 }: SeasonChooserProps) => {
-  const followId = useId();
   const listed = useQuery(requestsQueries.seriesSeasons(tmdbId));
   const rows = useMemo(() => listed.data ?? [], [listed.data]);
   const ticked = useMemo(() => theSeasonsTicked(seasons, rows), [seasons, rows]);
@@ -67,8 +106,9 @@ const SeasonChooser = ({
     seasons === null ||
     (open.length > 0 &&
       open.every((one) => ticked.includes(one.season) || alreadyAsked.includes(one.season)));
+  const isFollowing = isFollowedAlready || followsNew;
 
-  const wasFollowing = useRef(false);
+  const [wasFollowing, setWasFollowing] = useState(false);
 
   const choose = useCallback(
     (next: number[] | null) => {
@@ -77,136 +117,105 @@ const SeasonChooser = ({
       const isAnyRegular = next === null || [...next, ...alreadyAsked].some((season) => season > 0);
 
       if (followsNew && !isAnyRegular) {
-        wasFollowing.current = true;
+        setWasFollowing(true);
         onFollowsNew(false);
-      } else if (wasFollowing.current && isAnyRegular) {
-        wasFollowing.current = false;
+      } else if (wasFollowing && isAnyRegular) {
+        setWasFollowing(false);
         onFollowsNew(true);
       }
     },
-    [alreadyAsked, followsNew, onChange, onFollowsNew],
+    [alreadyAsked, followsNew, onChange, onFollowsNew, wasFollowing],
   );
 
-  const columns = useMemo<DataTableColumn<CatalogueSeason>[]>(
-    () => [
-      {
-        id: 'take',
-        enableSorting: false,
-        header: () => (
-          <Switch
-            label={say('common.everySeason')}
-            isLabelHidden
-            isOn={isEveryOne}
-            onToggle={() => {
-              choose(tickEverySeason(seasons, rows, !isEveryOne));
-            }}
-          />
-        ),
-        cell: ({ row }) => {
-          const isAsked = alreadyAsked.includes(row.original.season);
-
-          return (
-            <Switch
-              label={row.original.name ?? nameSeason(row.original.season)}
-              isLabelHidden
-              isOn={isAsked || ticked.includes(row.original.season)}
-              disabled={isAsked || isSeasonHeld(row.original)}
-              onToggle={() => {
-                choose(tickASeason(seasons, rows, row.original.season));
-              }}
-            />
-          );
-        },
-      },
-      {
-        id: 'season',
-        header: say('common.season'),
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm text-text">
-            {row.original.name ?? nameSeason(row.original.season)}
-          </span>
-        ),
-      },
-      {
-        id: 'episodes',
-        header: say('common.episodes'),
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="text-sm text-text-muted">{row.original.episodeCount.toString()}</span>
-        ),
-      },
-      {
-        id: 'aired',
-        header: say('screens.seasonChooser.firstAired'),
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm text-text-muted">
-            {row.original.firstAired === null ? '—' : row.original.firstAired.slice(0, 4)}
-          </span>
-        ),
-      },
-      {
-        id: 'standing',
-        header: say('common.status'),
-        enableSorting: false,
-        cell: ({ row }) => (
-          <Badge size="sm" tone={STANDING_TONES[row.original.standing]}>
-            {SEASON_STANDING_NAMES[row.original.standing]}
-          </Badge>
-        ),
-      },
-    ],
-    [alreadyAsked, choose, isEveryOne, rows, seasons, ticked],
-  );
+  const followNewOnes = useCallback(() => {
+    setWasFollowing(false);
+    onFollowsNew(!followsNew);
+  }, [followsNew, onFollowsNew]);
 
   return (
-    <FormField label={say('screens.seasonChooser.seasons')}>
+    <div className="flex flex-col gap-3">
+      <header className="flex items-center justify-between gap-3">
+        <h3 className={RAIL.title}>{say('screens.seasonChooser.seasons')}</h3>
+
+        {rows.length === 0 ? null : (
+          <Button
+            variant="soft"
+            size="md"
+            isPill
+            role="switch"
+            aria-checked={isEveryOne}
+            onClick={() => {
+              choose(tickEverySeason(seasons, rows, !isEveryOne));
+            }}
+          >
+            <Icon of={isEveryOne ? CircleCheckFilledIcon : CircleCheckIcon} size={16} />
+            {say('common.everySeason')}
+          </Button>
+        )}
+      </header>
+
       {listed.data === undefined ? (
         <Spinner
           isCentered
           label={say('screens.seasonChooser.askingTheCatalogueForItsSeasons')}
           size="sm"
         />
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-text-muted">
+          {say('screens.seasonChooser.theCatalogueListsNoSeasonsFor')}
+        </p>
       ) : (
-        <div className="flex flex-col gap-2">
-          <DataTable
-            label={say('screens.seasonChooser.whichSeasons')}
-            columns={columns}
-            rows={rows}
-            getRowId={(one) => one.season.toString()}
-            height="compact"
-            emptyMessage={say('screens.seasonChooser.theCatalogueListsNoSeasonsFor')}
-          />
+        <ul aria-label={say('screens.seasonChooser.whichSeasons')} className="flex flex-col">
+          {rows.map((row) => {
+            const name = row.name ?? nameSeason(row.season);
+            const isAsked = alreadyAsked.includes(row.season);
 
-          <p className="text-xs text-text-muted">
-            {isEveryOne
-              ? say('common.everySeason')
-              : ticked.length === 0
-                ? say('screens.seasonChooser.noSeasonIsTakenYet')
-                : sayCount('screens.seasonChooser.chosenOfSeasons', open.length, {
-                    length: ticked.filter((season) => season > 0).length.toString(),
-                  })}
-          </p>
+            return (
+              <span key={row.season} className="contents">
+                {rowOf(
+                  row.posterUrl === null || row.posterUrl === undefined ? (
+                    <span className="text-lg font-semibold text-text-muted">
+                      {row.season.toString()}
+                    </span>
+                  ) : (
+                    <img
+                      src={row.posterUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  ),
+                  name,
+                  name,
+                  [
+                    sayCount('common.count.episodes', row.episodeCount),
+                    row.firstAired?.slice(0, 4) ?? null,
+                    SEASON_STANDING_NAMES[row.standing],
+                  ]
+                    .filter((part) => part !== null)
+                    .join(' · '),
+                  isAsked || ticked.includes(row.season),
+                  isAsked || isSeasonHeld(row),
+                  () => {
+                    choose(tickASeason(seasons, rows, row.season));
+                  },
+                )}
+              </span>
+            );
+          })}
 
-          <div className="flex flex-col gap-1 pt-2">
-            <Switch
-              label={say('common.getNewSeasonsAsTheyCome')}
-              isOn={isFollowedAlready || followsNew}
-              disabled={isFollowedAlready}
-              onToggle={() => {
-                wasFollowing.current = false;
-                onFollowsNew(!followsNew);
-              }}
-              describedBy={followId}
-            />
-            <p id={followId} className="text-xs text-text-muted">
-              {say('common.fetchesEachNewSeasonAsIt')}
-            </p>
-          </div>
-        </div>
+          {rowOf(
+            <Icon of={PlusIcon} size={22} tone="muted" />,
+            say('screens.seasonChooser.newSeasons'),
+            say('common.getNewSeasonsAsTheyCome'),
+            say('screens.seasonChooser.fetchedAsEachOneAirs'),
+            isFollowing,
+            isFollowedAlready,
+            followNewOnes,
+          )}
+        </ul>
       )}
-    </FormField>
+    </div>
   );
 };
 

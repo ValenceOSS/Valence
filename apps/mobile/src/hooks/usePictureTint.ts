@@ -1,6 +1,6 @@
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { theColours } from '@ValenceMobile/theme/theColours';
-import { cardTintOf } from '@ValenceMobile/theme/cardTintOf';
+import { cardTintOf } from '@ValenceCore/functions/cardTintOf';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 
 /**

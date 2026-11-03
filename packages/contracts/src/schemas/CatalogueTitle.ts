@@ -103,6 +103,9 @@ const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   tracks: z.array(CatalogueTrackSchema).default([]),
   label: z.string().nullable().default(null),
   trailerKey: z.string().nullable(),
+  rating: z.number().nullish(),
+  certification: z.string().nullish(),
+  certificationRegion: z.string().nullish(),
   series: z
     .object({ asin: z.string().min(1), name: z.string().min(1), position: z.string().nullable() })
     .nullish(),

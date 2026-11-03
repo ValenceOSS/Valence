@@ -28,6 +28,10 @@ import { PageDots } from '@ValenceUI/PageDots';
 import { useIsPageCovered } from '@ValenceUI/useIsPageCovered';
 import type { HeroProps } from './Hero.types';
 import { say } from '@ValenceI18n/say';
+import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
+import { glassOnArtwork } from '@ValenceScreens/components/PlayWithRestart/glassOnArtwork';
+import { PLAY_FACE } from '@ValenceUI/tokens/PLAY_FACE';
+import { WatchedBar } from '@ValenceUI/WatchedBar';
 
 const ROTATE_AFTER_MILLISECONDS = 28_000;
 
@@ -333,23 +337,43 @@ const Hero = ({
             transition={revealTransition(prefersReducedMotion)}
             className="flex flex-wrap items-center gap-3 pt-3"
           >
-            <Button
-              variant="confirm"
-              size="xl"
-              onClick={() => {
-                onPlay(featured, resume ?? 0);
-              }}
-            >
-              <Icon of={PlayFilledIcon} size={18} />
-              {resume === null
-                ? say('common.play')
-                : say('common.resumeFromResume', { resume: formatDuration(resume) })}
-            </Button>
+            <div className="w-full sm:w-[21rem]">
+              <PlayWithRestart
+                {...(resume === null
+                  ? {}
+                  : {
+                      onStartAgain: () => {
+                        onPlay(featured, 0);
+                      },
+                    })}
+              >
+                <Button
+                  variant="confirm"
+                  size="none"
+                  className={PLAY_FACE}
+                  onClick={() => {
+                    onPlay(featured, resume ?? 0);
+                  }}
+                >
+                  <Icon of={PlayFilledIcon} size={18} />
+                  {resume === null
+                    ? say('common.play')
+                    : say('common.resumeFromResume', { resume: formatDuration(resume) })}
+                  {resume === null || featured.durationSeconds <= 0 ? null : (
+                    <WatchedBar
+                      watched={resume / featured.durationSeconds}
+                      className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+                    />
+                  )}
+                </Button>
+              </PlayWithRestart>
+            </div>
 
             {onInspect === undefined ? null : (
               <Button
-                variant="overlay"
-                size="xl"
+                variant="ghost"
+                size="none"
+                className={cn(PLAY_FACE, 'shadow-none', glassOnArtwork)}
                 onClick={() => {
                   onInspect(featured);
                 }}

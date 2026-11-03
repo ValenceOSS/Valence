@@ -19,6 +19,9 @@ type MediaPreviewProps = {
   onPlayingChange?: (isPlaying: boolean) => void;
   onPalette?: (lights: MoodLight[]) => void;
   actions?: ReactNode;
+  closing?: ReactNode;
+  leavesTheTopLeft?: boolean;
+  isRoomy?: boolean;
 };
 
 export type { MediaPreviewProps, PreviewAbsence };

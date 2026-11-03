@@ -589,6 +589,10 @@ const ValenceShell = () => {
         {mayRequest ? (
           <AskableDialog
             asking={place.asking}
+            onOpenPerson={(personId, role) => {
+              setOpenRole(role);
+              go({ person: personId });
+            }}
             onClose={() => {
               go({ asking: null });
             }}
@@ -633,6 +637,16 @@ const ValenceShell = () => {
         <PersonDialog
           personId={place.person}
           role={openRole}
+          {...(inspecting === null && openShow === null && place.asking === null
+            ? {}
+            : {
+                onBack: () => {
+                  go({ person: null });
+                },
+                ...(inspecting === null && openShow === null
+                  ? {}
+                  : { backLabel: inspecting?.title ?? openShow?.title ?? '' }),
+              })}
           onClose={() => {
             go({ person: null });
           }}

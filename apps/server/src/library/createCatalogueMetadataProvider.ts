@@ -1444,7 +1444,9 @@ const createCatalogueMetadataProvider = ({
 
       const wantsTrailers = await readWantsTrailers();
       const answer = await request(`/${kind}/${externalId}`, key, {
-        append_to_response: wantsTrailers ? 'credits,videos' : 'credits',
+        append_to_response: `credits,${kind === 'movie' ? 'release_dates' : 'content_ratings'}${
+          wantsTrailers ? ',videos' : ''
+        }`,
       });
       const detail = TitleResponseSchema.safeParse(answer);
 
@@ -1472,6 +1474,9 @@ const createCatalogueMetadataProvider = ({
         })),
         trailerKey:
           wantsTrailers && filmed.success ? youTubeTrailerIn({ videos: filmed.data.videos }) : null,
+        rating:
+          found.vote_average === undefined || found.vote_average <= 0 ? null : found.vote_average,
+        certifications: readCertifications(found),
       };
     },
 

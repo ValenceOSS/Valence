@@ -113,6 +113,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { createTrailerParts } from '@ValenceServer/requests/trailers/createTrailerParts';
 import { rewritePlaylist } from '@ValenceServer/requests/trailers/rewritePlaylist';
+import { typedSegment } from '@ValenceServer/requests/trailers/typedSegment';
 import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
 import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
@@ -801,13 +802,22 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
-    return context.body(answer.body, 200, {
-      'content-type': answer.headers.get('content-type') ?? 'video/mp2t',
+    const typed = await typedSegment(answer.body, answer.headers.get('content-type'));
+    const headers = {
+      'content-type': typed.contentType,
       'cache-control': 'private, max-age=3600',
       ...(answer.headers.get('content-length') === null
         ? {}
         : { 'content-length': answer.headers.get('content-length') ?? '' }),
-    });
+    };
+
+    if (context.req.method === 'HEAD') {
+      await typed.body.cancel();
+
+      return context.body(null, 200, headers);
+    }
+
+    return context.body(typed.body, 200, headers);
   });
 
   app.openapi(catalogueTitleRoute, async (context) => {
@@ -823,7 +833,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_YOURS, 403);
     }
 
-    const described = await describeCatalogueTitle(discovery, kind, id);
+    const described = await describeCatalogueTitle(
+      discovery,
+      kind,
+      id,
+      (await settings.read()).certificationRegion,
+    );
 
     if (described === null) {
       return context.json(refuse('error.common.theCatalogueDoesNotKnowThat'), 404);
