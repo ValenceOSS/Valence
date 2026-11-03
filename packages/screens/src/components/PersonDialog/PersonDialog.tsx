@@ -215,6 +215,7 @@ const PersonDialog = ({
                     {credits.films.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
+                          growsOnHover={false}
                           shape="poster"
                           media={media}
                           onPlay={onPlay}
@@ -239,6 +240,7 @@ const PersonDialog = ({
                     {credits.shows.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
+                          growsOnHover={false}
                           shape="poster"
                           media={media}
                           onPlay={onPlay}
@@ -264,6 +266,7 @@ const PersonDialog = ({
                     {credits.episodes.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
+                          growsOnHover={false}
                           shape="poster"
                           media={media}
                           onPlay={onPlay}

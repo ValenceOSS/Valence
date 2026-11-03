@@ -92,7 +92,7 @@ const fitInside = (top: number, height: number): number => {
  * row should not open every card it passes. Where the opened card is too narrow to hold every control
  * beside the one that plays it, the rest fold into a menu rather than running off its edge. A
  * keyboard, a finger or somebody who asked for less motion, none of whom see it grow, find the same
- * controls on the title's own page.
+ * controls on the title's own page, as does anybody looking at one inside a dialog.
  *
  * @param media - The item to draw.
  * @param watchedFraction - How far through it this viewer is. A card for a whole programme leaves
@@ -122,6 +122,8 @@ const fitInside = (top: number, height: number): number => {
  * @param drawsLarge - Whether the card is drawn wider than a rail draws one, as a grid that
  *   stretches its cards to fill the row does, so its picture, upright or lying flat, is asked for
  *   whole rather than at the size a rail's card needs.
+ * @param growsOnHover - Whether it grows when a pointer rests on it, which a card inside a dialog does
+ *   not.
  */
 const RailCard = ({
   media,
@@ -141,6 +143,7 @@ const RailCard = ({
   look = 'card',
   flag,
   drawsLarge = false,
+  growsOnHover = true,
 }: RailCardProps) => {
   const shape = isSeries ? 'poster' : askedShape;
 
@@ -294,7 +297,7 @@ const RailCard = ({
   const open = useCallback(() => {
     const holder = holderRef.current;
 
-    if (holder === null || prefersReducedMotion === true || !hasFinePointer()) {
+    if (holder === null || !growsOnHover || prefersReducedMotion === true || !hasFinePointer()) {
       return;
     }
 
@@ -303,7 +306,7 @@ const RailCard = ({
     setAnchor(
       placeOver(holder.getBoundingClientRect(), shape === 'poster' ? POSTER_POPOUT_REM * rem : 0),
     );
-  }, [prefersReducedMotion, shape]);
+  }, [growsOnHover, prefersReducedMotion, shape]);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

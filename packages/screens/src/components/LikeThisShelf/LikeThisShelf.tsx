@@ -38,6 +38,7 @@ const LikeThisShelf = ({ mediaId, onPlay, onInspect, onOpenShow }: LikeThisShelf
         {alike.map((media, at) => (
           <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
             <RailCard
+              growsOnHover={false}
               media={media}
               shape="poster"
               isSeries={media.seriesId !== null}

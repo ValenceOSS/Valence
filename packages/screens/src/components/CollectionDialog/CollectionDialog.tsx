@@ -335,6 +335,7 @@ const CollectionDialog = ({
               {entries.map((entry, at) => (
                 <li key={entry.id} className="flex min-w-0 flex-col gap-1">
                   <RailCard
+                    growsOnHover={false}
                     media={entry.media}
                     shape="poster"
                     isSeries={entry.kind === 'series'}
