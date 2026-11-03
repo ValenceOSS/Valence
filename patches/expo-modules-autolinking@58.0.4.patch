@@ -1,0 +1,29 @@
+diff --git a/build/platforms/android/android.js b/build/platforms/android/android.js
+index d887a496ab788ebbe0f7ae1c36006f53ff30c6d6..d58b2d01193fadeb41bf2fd60f86421f3f186464 100644
+--- a/build/platforms/android/android.js
++++ b/build/platforms/android/android.js
+@@ -156,7 +156,10 @@ async function resolveModuleAsync(packageName, revision) {
+                 shouldUsePublicationScriptPath
+             } : {},
+             ...publication ? {
+-                publication
++                publication: {
++                    version: revision.version,
++                    ...publication
++                }
+             } : {},
+             ...aarProjects?.length > 0 ? {
+                 aarProjects
+diff --git a/src/platforms/android/android.ts b/src/platforms/android/android.ts
+index 07c5c049ce3775aa5ca032fc4bc3926e2c929b88..21503d50daf3c74910ec7b44016221af69d6a10f 100644
+--- a/src/platforms/android/android.ts
++++ b/src/platforms/android/android.ts
+@@ -123,7 +123,7 @@ export async function resolveModuleAsync(
+       services: project.services ?? [],
+       packages: [...packages].sort((a, b) => a.localeCompare(b)),
+       ...(shouldUsePublicationScriptPath ? { shouldUsePublicationScriptPath } : {}),
+-      ...(publication ? { publication } : {}),
++      ...(publication ? { publication: { version: revision.version, ...publication } } : {}),
+       ...(aarProjects?.length > 0 ? { aarProjects } : {}),
+     };
+   });
