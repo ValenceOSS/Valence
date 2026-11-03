@@ -57,6 +57,7 @@ const SETTINGS: ServerSettings = {
   reencodesAwaitingReviewCap: 5,
   roundness: 'default',
   keepsDownloadsForDays: 14,
+  hiddenAlerts: [],
   preTranscoding: PRE_TRANSCODING_DEFAULTS,
   seerr: SEERR_DEFAULTS,
   email: EMAIL_DEFAULTS,

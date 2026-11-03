@@ -3,24 +3,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
-import {
-  ChevronRight as ChevronRightIcon,
-  Info as InfoIcon,
-  TriangleAlert as TriangleAlertIcon,
-  X as XIcon,
-} from '@keyline-icons/react/fill';
+import { ChevronRight as ChevronRightIcon, X as XIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
-import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
+import { ConcernMark } from '@ValenceScreens/components/AdminArea/components/ConcernMark/ConcernMark';
 import type { ConcernsBannerProps } from './ConcernsBanner.types';
 import { say } from '@ValenceI18n/say';
 import { PanelCard } from '@ValenceUI/PanelCard';
-
-const TONE_CLASSES: Record<ConcernTone, string> = {
-  broken: 'text-danger',
-  attention: 'text-busy',
-  setup: 'text-text-muted',
-};
 
 /**
  * What needs a person, above everything else on the admin page. Each concern is pressable and opens
@@ -82,13 +71,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
                     setOpened((was) => (was === concern.id ? null : concern.id));
                   }}
                 >
-                  <span className={`mt-0.5 shrink-0 ${TONE_CLASSES[concern.tone]}`}>
-                    {concern.tone === 'setup' ? (
-                      <Icon of={InfoIcon} size={16} />
-                    ) : (
-                      <Icon of={TriangleAlertIcon} size={16} />
-                    )}
-                  </span>
+                  <ConcernMark tone={concern.tone} className="mt-0.5" />
 
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-sm text-text">{concern.title}</span>

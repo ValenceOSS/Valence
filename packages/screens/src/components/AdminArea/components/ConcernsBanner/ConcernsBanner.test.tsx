@@ -6,7 +6,7 @@ import type { Concern } from '@ValenceScreens/components/AdminArea/collectConcer
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 
 const concern = (over: Partial<Concern> = {}): Concern => ({
-  id: 'transcoder-unreachable',
+  id: 'transcoder',
   tone: 'broken',
   title: 'The media service is unreachable',
   detail: 'Anything that needs transcoding won’t play until it’s reachable again.',
@@ -56,7 +56,7 @@ describe('ConcernsBanner', () => {
       <ConcernsBanner
         concerns={[
           concern({
-            id: 'library-never-scanned',
+            id: 'unscanned',
             tone: 'setup',
             title: 'Films has never been scanned',
             detail: 'It holds nothing until it is.',

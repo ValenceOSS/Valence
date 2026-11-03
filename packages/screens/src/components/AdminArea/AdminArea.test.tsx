@@ -51,6 +51,7 @@ const OVERVIEW: AdminOverview = {
     controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    hiddenAlerts: [],
     telemetryEnabled: true,
     usesPushRelay: false,
     isTelemetryOffByEnvironment: false,
@@ -752,6 +753,55 @@ describe('AdminArea', () => {
       renderInAnAddress(<TheAdmin />);
 
       expect(await screen.findByText('The VPN is down')).toBeInTheDocument();
+    });
+
+    it('leaves out an alert an administrator turned off, and still shows the rest', async () => {
+      const otherwise = respondWith({
+        ...OVERVIEW,
+        settings: { ...OVERVIEW.settings, hiddenAlerts: ['requests-vpn'] },
+      });
+
+      fetchMock.mockImplementation((input: string, init?: RequestInit) => {
+        if (input.includes('/api/requests/availability')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ isEnabled: true }) });
+        }
+
+        if (input.includes('/api/admin/requests/indexers')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+        }
+
+        if (input.includes('/api/admin/requests')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                ...REQUESTS_OVERVIEW,
+                status: {
+                  ...REQUESTS_OVERVIEW.status,
+                  indexers: {
+                    total: 1,
+                    enabled: 1,
+                    failing: [
+                      {
+                        id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+                        name: 'Jackett',
+                        problem: sayVerbatim('Timed out'),
+                        problemCode: null,
+                      },
+                    ],
+                  },
+                },
+              }),
+          });
+        }
+
+        return otherwise(input, init);
+      });
+
+      renderInAnAddress(<TheAdmin />);
+
+      expect(await screen.findByText('The indexer Jackett keeps failing')).toBeInTheDocument();
+      expect(screen.queryByText('The VPN is down')).not.toBeInTheDocument();
     });
   });
 

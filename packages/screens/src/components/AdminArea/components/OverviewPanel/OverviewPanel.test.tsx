@@ -80,6 +80,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    hiddenAlerts: [],
     telemetryEnabled: true,
     usesPushRelay: false,
     isTelemetryOffByEnvironment: false,

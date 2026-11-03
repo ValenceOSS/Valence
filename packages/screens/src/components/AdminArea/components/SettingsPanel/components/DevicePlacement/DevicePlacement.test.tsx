@@ -48,6 +48,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    hiddenAlerts: [],
     telemetryEnabled: true,
     usesPushRelay: false,
     isTelemetryOffByEnvironment: false,

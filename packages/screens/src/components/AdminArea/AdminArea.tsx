@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
+import { AlertsPanel } from './components/AlertsPanel/AlertsPanel';
 import { AnnouncementCard } from './components/AnnouncementCard/AnnouncementCard';
 import { BrandCard } from '@ValenceScreens/components/AdminArea/components/BrandCard/BrandCard';
 import { EmailCard } from './components/EmailCard/EmailCard';
@@ -915,6 +916,7 @@ const AdminArea = ({
         <ConcernsBanner
           concerns={concerns.filter(
             (concern) =>
+              !(overview?.settings.hiddenAlerts ?? []).includes(concern.id) &&
               !dismissedConcerns.includes(concernKey(concern)) &&
               !(
                 (isGuideOnOverview || (panel === 'libraries' && isGuideOffered)) &&
@@ -1332,6 +1334,10 @@ const AdminArea = ({
 
               <PreRollCard />
             </div>
+          </TabPanel>
+
+          <TabPanel value="alerts">
+            <AlertsPanel />
           </TabPanel>
 
           <TabPanel value="email">
