@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SplashScreen } from './SplashScreen';
+import { splashIntro } from './splashIntro';
 import type * as MotionReact from 'motion/react';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
@@ -13,6 +14,7 @@ vi.mock('motion/react', async () => ({
 
 afterEach(() => {
   motion.isReduced = false;
+  splashIntro.startedAt = null;
 });
 
 describe('SplashScreen', () => {
