@@ -10,7 +10,7 @@ import { say } from '@ValenceI18n/say';
  */
 const idleWhatIsPlaying = (volume: number): WhatIsPlaying => ({
   trackId: '',
-  title: say('common.nothingIsPlaying2'),
+  title: say('common.nothingIsPlaying'),
   artists: [],
   albumId: '',
   albumTitle: null,

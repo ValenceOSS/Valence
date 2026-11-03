@@ -120,7 +120,7 @@ describe('Music', () => {
   it('says so when there is no music yet', async () => {
     const { drawn } = await draw({ albums: [], playlists: [] });
 
-    expect(drawn.getByText('No music yet.')).toBeTruthy();
+    expect(drawn.getByText('No music yet')).toBeTruthy();
   });
 
   it('names the newest album large, lit by its picture, before the remote rests anywhere', async () => {

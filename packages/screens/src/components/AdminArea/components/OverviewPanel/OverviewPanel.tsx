@@ -287,7 +287,7 @@ const OverviewPanel = ({
                 />
               }
               totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
-              emptyMessage={say('screens.adminArea.overviewPanel.noLibrariesYet')}
+              emptyMessage={say('common.noLibrariesYet')}
             />
           )}
         </DashboardRegion>
@@ -365,11 +365,7 @@ const OverviewPanel = ({
           {stillReading.libraries ? (
             <Spinner isCentered size="sm" label={say('common.readingTheLibraries')} />
           ) : own.length === 0 ? (
-            <NothingHere
-              isCompact
-              of={FolderIcon}
-              title={say('screens.adminArea.overviewPanel.noLibrariesYet')}
-            />
+            <NothingHere isCompact of={FolderIcon} title={say('common.noLibrariesYet')} />
           ) : (
             <DataTable
               label={say('common.libraries')}

@@ -261,7 +261,7 @@ describe('OverviewPanel', () => {
       />,
     );
 
-    expect(screen.queryByText('No libraries yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No libraries yet')).not.toBeInTheDocument();
     expect(screen.queryByText('No one is watching, listening or reading.')).not.toBeInTheDocument();
     expect(screen.queryByText('Nothing is running.')).not.toBeInTheDocument();
     expect(screen.queryByText('Nothing was watched in this range.')).not.toBeInTheDocument();
@@ -387,7 +387,7 @@ describe('OverviewPanel', () => {
     it('says when there are none', () => {
       renderPanel(<OverviewPanel {...props} libraries={[]} />);
 
-      expect(within(card('Libraries')).getByText('No libraries yet.')).toBeInTheDocument();
+      expect(within(card('Libraries')).getByText('No libraries yet')).toBeInTheDocument();
     });
   });
 

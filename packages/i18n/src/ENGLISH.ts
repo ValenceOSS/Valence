@@ -971,8 +971,6 @@ const ENGLISH = {
   'common.federationOutcome.aboveTheAge': 'Above the age limit',
   'common.federationOutcome.notShared': 'Not shared',
   'common.federationOutcome.tooMany': 'Rate limited',
-  'common.fetchesEachNewSeasonAsIt':
-    'Fetches each new season as it airs. Specials are only fetched when ticked.',
   'common.files': 'Files',
   'common.filing': 'Importing',
   'common.fillsItselfFromItsRules': 'Fills itself from its rules',
@@ -1224,8 +1222,7 @@ const ENGLISH = {
     'No content found for this book. Rescanning the library may find it.',
   'common.nothingInThisCollectionYet': 'Nothing in this collection yet',
   'common.nothingInThisPlaylistYet': 'Nothing in this playlist yet',
-  'common.nothingIsPlaying': 'Nothing is playing.',
-  'common.nothingIsPlaying2': 'Nothing is playing',
+  'common.nothingIsPlaying': 'Nothing is playing',
   'common.nothingMatchesAsked': 'Nothing matches “{asked}”',
   'common.nothingMatchesThat': 'Nothing matches that.',
   'common.nothingMatchesThose': 'Nothing matches those',
@@ -1236,7 +1233,6 @@ const ENGLISH = {
   'common.notInThisLibrary': 'Not in this library',
   'common.notInThisLibraryAirs': 'Not in this library · {airs}',
   'common.notInYourLibrary': 'Not in your library',
-  'common.notInYourLibraryYet': 'Not in your library yet',
   'common.noTitleKeepsItsRulesYet':
     'No film or show keeps its rules yet. Change them to let more in.',
   'common.notMeasured': 'not measured',
@@ -1529,7 +1525,6 @@ const ENGLISH = {
   'common.showTheControls': 'Show controls',
   'common.shuffle': 'Shuffle',
   'common.signedIn': 'Signed in',
-  'common.signedInWhen': 'Signed in {signedInAt}',
   'common.signInATelevision': 'Sign in to a TV',
   'common.signInWithYourPhone': 'Sign in with your phone',
   'common.signItOut': 'Sign out device',
@@ -1595,7 +1590,6 @@ const ENGLISH = {
   'common.suitableForAll': 'Suitable for all',
   'common.switchOff': 'Disable',
   'common.switchOn': 'Enable',
-  'common.synopsis': 'Synopsis',
   'common.system': 'System',
   'common.test': 'Test',
   'common.testingName': 'Testing {name}',
@@ -1694,7 +1688,6 @@ const ENGLISH = {
   'common.transmission': 'Transmission',
   'common.tryAgain': 'Try again',
   'common.tryFewerWords': 'Try fewer words.',
-  'common.turn': 'Turn',
   'common.turnedOffName': 'Disabled {name}.',
   'common.turnedOnName': 'Enabled {name}.',
   'common.turnNameOff': 'Disable {name}',
@@ -2406,7 +2399,6 @@ const ENGLISH = {
   'error.profile.sayWhichOrderToPut': 'Say which order to put the profiles in.',
   'error.profile.thatAddressAlreadyHasAnAccount': 'That email address already has an account.',
   'error.profile.thatIsNotAChangeTo': 'That isn’t a valid change to a profile.',
-  'error.profile.thatIsNotAnOrderOf': 'That isn’t a valid order of profiles.',
   'error.profile.thatIsNotAProfile': 'That isn’t a valid profile.',
   'error.profiles.aKeyActsForOneProfile': 'An API key always acts for the profile that made it.',
   'error.profiles.chooseANewPin': 'Choose a new PIN of 4 to 8 digits.',
@@ -2642,7 +2634,6 @@ const ENGLISH = {
   'phone.aTitle.allEpisodesOfTitle': 'All episodes of {title}',
   'phone.aTitle.favourite': 'Favourite',
   'phone.aTitle.preparingPercent': 'Preparing {percent}%',
-  'phone.aTitle.preparingPercentTimeLeft': 'Preparing {percent}%, {timeLeft}',
   'phone.aTitle.resumeFromCarryOnAt': 'Resume from {carryOnAt}',
   'phone.aTitle.version': 'Version',
   'phone.aTitleHead.findingTheTrailer': 'Finding the trailer',
@@ -2748,7 +2739,6 @@ const ENGLISH = {
   'phone.theDownloads.tryTitleAgain': 'Try downloading {title} again',
   'phone.theDownloads.watchTitle': 'Watch {title}',
   'phone.theFeatured.aFeature.resumeResumeAt': 'Resume {resumeAt}',
-  'phone.theLibrary.findADownload': 'Search downloads',
   'phone.theLibrary.theBooks.carryOnListeningToTitle': 'Continue listening to {title}',
   'phone.theLibrary.theBooks.carryOnReadingTitle': 'Continue reading {title}',
   'phone.theLibrary.theBooks.everyBook': 'All books',
@@ -2768,7 +2758,6 @@ const ENGLISH = {
   'phone.theMusicPlayer.airPlay': 'AirPlay',
   'phone.theMusicPlayer.party': 'Party',
   'phone.theMusicPlayer.showTheCover': 'Show the cover',
-  'phone.theMusicPlayer.soundsWhatItIs': '{sounds}, what it is',
   'phone.theMusicPlayer.theLyrics.thereAreNoWordsForThis': 'No lyrics for this song.',
   'phone.theMusicPlayer.theUpNext.clearUpNext': 'Clear Up Next',
   'phone.theMusicPlayer.theUpNext.clearUpNext2': 'Clear Up Next?',
@@ -2819,7 +2808,6 @@ const ENGLISH = {
   'phone.watching.theControls.backASTEPSeconds': 'Back {A_STEP} seconds',
   'phone.watching.theControls.forwardASTEPSeconds': 'Forward {A_STEP} seconds',
   'phone.watching.theControls.stopWatching': 'Stop watching',
-  'phone.watching.theControls.subtitlesAudioAndQuality': 'Subtitles, audio and quality',
   'phone.watching.theOneSoundtrack': 'This has one soundtrack.',
   'phone.watching.unlockTheControls': 'Unlock the controls',
   'phone.whereIsYourValence.aServerChoice.useName': 'Use {name}',
@@ -2960,7 +2948,6 @@ const ENGLISH = {
     'That download client isn’t set up, or is turned off',
   'requests.downloads.downloadQueue.theIndexerThatFoundItIs':
     'The indexer that found it has been removed',
-  'requests.downloads.downloadQueue.theReleaseCouldNotBeFetched': 'Couldn’t download the release',
   'requests.downloads.judgeDownload.atTheRateItIsGoing':
     'At the current speed it would take another {wouldTake}',
   'requests.downloads.judgeDownload.itNeverGotItsFileList':
@@ -3928,7 +3915,6 @@ const ENGLISH = {
   'screens.adminArea.askForMediaDialog.youPickFromWhatTheIndexers':
     'You choose a release from your indexers before anything is downloaded.{LATER_PICKS}',
   'screens.adminArea.auditPanel.aboutTheAuditLog': 'About the audit log',
-  'screens.adminArea.auditPanel.everyChange': 'Every change',
   'screens.adminArea.auditPanel.everySignInAndChange':
     'Every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, with who did it, when and where from.',
   'screens.adminArea.auditPanel.filterTheAuditLog': 'Filter the audit log',
@@ -3943,7 +3929,6 @@ const ENGLISH = {
   'screens.adminArea.auditPanel.searchTheAuditLog': 'Search the audit log',
   'screens.adminArea.auditPanel.somebodySinceRemoved': 'Somebody since removed',
   'screens.adminArea.auditPanel.theAuditLogCouldNotBeRead': 'The audit log could not be read.',
-  'screens.adminArea.auditPanel.whichChanges': 'Which changes',
   'screens.adminArea.authorUnknown': 'Author unknown',
   'screens.adminArea.backgroundJobs.backgroundJobs': 'Background jobs',
   'screens.adminArea.backgroundJobs.nothingQueued': 'No jobs queued.',
@@ -5100,7 +5085,6 @@ const ENGLISH = {
   'screens.adminArea.needsYouCard.aNewerDevBuildIsOut': 'A newer dev build is out',
   'screens.adminArea.needsYouCard.aNewReleaseIsOut': 'A new release is out',
   'screens.adminArea.needsYouCard.failedRequests': 'Failed requests',
-  'screens.adminArea.needsYouCard.jobsThatFailedToday': 'Jobs that failed today',
   'screens.adminArea.needsYouCard.libraryProblems': 'Library problems',
   'screens.adminArea.needsYouCard.requestsToApprove': 'Requests to approve',
   'screens.adminArea.needsYouCard.valenceIsUpToDate': 'Valence is up to date',
@@ -5120,7 +5104,6 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
-  'screens.adminArea.overviewPanel.allWork': 'All work',
   'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
@@ -5135,16 +5118,13 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',
-  'screens.adminArea.overviewPanel.noLibrariesYet': 'No libraries yet.',
   'screens.adminArea.overviewPanel.nothingIsRunning': 'Nothing is running.',
   'screens.adminArea.overviewPanel.nothingRunningWaiting': 'Nothing running, {waiting} waiting.',
   'screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange':
     'CPU usage over the last {loadRange}',
   'screens.adminArea.overviewPanel.processorUseOverTheLastMinute': 'CPU usage over the last minute',
-  'screens.adminArea.overviewPanel.recentJobs': 'Recent jobs',
   'screens.adminArea.overviewPanel.recentLogs': 'Recent logs',
   'screens.adminArea.overviewPanel.runningNow': 'Running now',
-  'screens.adminArea.overviewPanel.scannedLastScannedAt': 'Scanned {lastScannedAt}',
   'screens.adminArea.overviewPanel.serverLoad': 'Server load',
   'screens.adminArea.overviewPanel.storageInfo.aboutTheStorage':
     'About the storage Valence is using',
@@ -6051,7 +6031,6 @@ const ENGLISH = {
   'screens.adminArea.updatesPanel.useTheDevTag':
     'Use the dev tag in your compose file, such as ghcr.io/valenceoss/valence:dev, which always points at the newest dev build. A tag like 1.9.0-dev stops moving once that release is out.',
   'screens.adminArea.updatesPanel.whatsNew': 'What’s new',
-  'screens.adminArea.updatesPanel.whatsNewInVersion': 'What’s new in {version}',
   'screens.adminArea.updatesPanel.whetherAnUpdateIsOutCouldNotBeRead':
     'Whether an update is out could not be read.',
   'screens.adminArea.uploadMediaDialog.chooseAFolder': 'Choose a folder',
@@ -6226,7 +6205,6 @@ const ENGLISH = {
   'screens.apiKeyPanel.usedYesterday': 'Used yesterday',
   'screens.apiKeyPanel.whatIsThisKeyFor': 'What is this key for?',
   'screens.apiKeyPanel.yourKeysCouldNotBeRead': 'Couldn’t load your keys.',
-  'screens.app.loadingInitialTitle': 'Loading {initialTitle}',
   'screens.appPasswordsPanel.address': 'Address for apps',
   'screens.appPasswordsPanel.appPasswords': 'App passwords',
   'screens.appPasswordsPanel.appsSignInToPluginName':
@@ -6426,8 +6404,6 @@ const ENGLISH = {
   'screens.discordSettings.whilePaused': 'While paused',
   'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces':
     'A category can only contain letters, numbers, spaces, dots, dashes and underscores.',
-  'screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf':
-    'Each media type needs its own category.',
   'screens.downloadClientDialog.readDownloadClientForm.giveTheClientAName':
     'Give the client a name.',
   'screens.downloadClientDialog.readDownloadClientForm.nZBGet': 'NZBGet',
@@ -7148,7 +7124,6 @@ const ENGLISH = {
   'screens.musicPage.musicLibrary.albumName': 'Album · {name}',
   'screens.musicPage.musicLibrary.playlistOfARemovedProfile': 'Playlist · a deleted profile',
   'screens.musicPage.musicLibrary.playlistOwner': 'Playlist · {owner}',
-  'screens.musicPage.musicLibrary.yourLibrary': 'Your Library',
   'screens.musicPage.musicSearchView.everyAlbum': 'All albums',
   'screens.musicPage.musicSearchView.nothingMatchesQuery': 'Nothing matches “{query}”',
   'screens.musicPage.musicSearchView.readingEveryAlbum': 'Loading all albums',
@@ -7202,7 +7177,6 @@ const ENGLISH = {
   'screens.observabilityPage.jobHealth.finishedWell': 'Succeeded',
   'screens.observabilityPage.jobHealth.hasFailed': 'Has failed',
   'screens.observabilityPage.jobHealth.howEachKindOfJobHas': 'Results by job type',
-  'screens.observabilityPage.jobHealth.howTheJobsAreDoing': 'Job health',
   'screens.observabilityPage.jobHealth.lastRun': 'Last run',
   'screens.observabilityPage.jobHealth.neverFailed': 'Never failed',
   'screens.observabilityPage.jobHealth.noJobHasRunInThis': 'No jobs ran in this time range.',
@@ -7886,7 +7860,6 @@ const ENGLISH = {
   'screens.seasonChooser.askingTheCatalogueForItsSeasons': 'Loading seasons from the catalogue',
   'screens.seasonChooser.chosenOfSeasons.one': '{length} of {count} season.',
   'screens.seasonChooser.chosenOfSeasons.other': '{length} of {count} seasons.',
-  'screens.seasonChooser.firstAired': 'First aired',
   'screens.seasonChooser.noSeasonIsTakenYet': 'No seasons selected yet.',
   'screens.seasonChooser.seasons': 'Seasons',
   'screens.seasonChooser.theCatalogueListsNoSeasonsFor':
@@ -8129,23 +8102,6 @@ const ENGLISH = {
   'screens.textReader.itsFileMayBeDamagedOr': 'The file may be damaged, or may not be an ebook.',
   'screens.textReader.spacing': 'Spacing',
   'screens.textReader.theBeginning': 'The beginning',
-  'screens.textReader.thisBookCouldNotBeOpened': 'Couldn’t open this book',
-  'screens.tour.tourStops.askForSomethingThatIsNot':
-    'Request something that isn’t here yet and track it until it arrives.',
-  'screens.tour.tourStops.booksAndComicsWithYourPlace':
-    'Books and comics, with your reading progress synced across devices.',
-  'screens.tour.tourStops.everyFilmInTheLibraryPress':
-    'Every film in the library. Select one to see details, watch it, or watch it with someone.',
-  'screens.tour.tourStops.lookAcrossFilmsShowsMusicAnd':
-    'Search films, shows, music and books at once.',
-  'screens.tour.tourStops.pickUpWhereYouLeftOff':
-    'Continue watching, see what’s just been added, and find something to watch next.',
-  'screens.tour.tourStops.pressTheHeartOnAnythingTo':
-    'Select the heart on anything to add it to your favourites, so it’s easy to find again.',
-  'screens.tour.tourStops.seriesAndTheirSeasonsValenceRemembers':
-    'Series and their seasons. Valence remembers which episode you’re on.',
-  'screens.tour.tourStops.yourMusicWithPlaylistsAQueue':
-    'Your music, with playlists, a queue you can drag into order, lyrics, and the option to play it on another device.',
   'screens.trackMenu.addedTitleToTheQueue': 'Added {title} to the queue',
   'screens.trackMenu.titlePlaysNext': '{title} plays next',
   'screens.twoFactorChallenge.authenticatorCodesAreTOTPLENGTHDigits':
@@ -8186,7 +8142,6 @@ const ENGLISH = {
     'Open Valence using its network address instead of localhost, so the device can reach it.',
   'screens.videoPlayer.pausedScreen.titleEpEpisodeNumber': '{title}: Ep. {episodeNumber}',
   'screens.videoPlayer.pausedScreen.youReWatching': 'You’re watching',
-  'screens.videoPlayer.playbackFailed': 'Playback failed.',
   'screens.videoPlayer.playerControls.audioTrack': 'Audio track',
   'screens.videoPlayer.playerControls.backSKIPSECONDSSeconds': 'Back {SKIP_SECONDS} seconds',
   'screens.videoPlayer.playerControls.fetchingSubtitle': 'Downloading…',
@@ -8297,8 +8252,6 @@ const ENGLISH = {
   'screens.welcomePage.yourUsernameIsUsername': 'Your username is {username}.',
   'screens.welcomePage.youSignInWithThisOrYourEmail':
     'You sign in with this, or with your email address if you add one.',
-  'screens.welcomeTour.skipTour': 'Skip tour',
-  'screens.welcomeTour.valueOfLength': '{value} of {length}',
   'screens.welcomeToValence.startWatching': 'Start watching',
   'screens.welcomeToValence.youAreAllSetYouCanChange':
     'You’re all set. You can change everything else whenever you like.',
@@ -8316,7 +8269,6 @@ const ENGLISH = {
   'screens.windowBar.goForward': 'Go forward',
   'screens.windowBar.maximise': 'Maximise',
   'screens.windowBar.minimise': 'Minimise',
-  'screens.windowBar.reload': 'Reload',
   'screens.windowBar.restoreDown': 'Restore down',
   'screens.windowBar.retryUpdate': 'Retry update',
   'screens.windowBar.updatingPercent': 'Updating {percent}%',
@@ -9085,7 +9037,6 @@ const ENGLISH = {
   'server.webhooks.formatWebhookBody.vpnUpFrom':
     'The requests service’s download VPN is up, with public IP {address}.',
   'server.webhooks.formatWebhookBody.withOnlyTheSoundConverted': 'with only the audio transcoded',
-  'server.webhooks.libraryFinishedScanning': '{library} finished scanning',
   'server.webhooks.nameOfViewer.aGuestOfHost': 'A guest of {host}',
   'server.webhooks.nameOfViewer.somebodyWithAShareLink': 'Someone with a share link',
   'server.webhooks.notice.approvedAutomatically': '{asker}’s request was approved automatically',
@@ -9204,8 +9155,6 @@ const ENGLISH = {
   'tv.bookPage.thisBookHasNothingToListen': 'This book has no audio.',
   'tv.books.everyAudiobook': 'All audiobooks',
   'tv.books.thereAreNoAudiobooksHereYet': 'No audiobooks yet.',
-  'tv.catalogue.thereAreNoFilmsHereYet': 'No films yet.',
-  'tv.catalogue.thereAreNoShowsHereYet': 'No shows yet.',
   'tv.chooseServer.chooseTheServerThisAndroidTV': 'Choose the server this Android TV connects to.',
   'tv.chooseServer.chooseTheServerThisAppleTV': 'Choose the server this Apple TV connects to.',
   'tv.chooseServer.chooseTheServerThisFireTV': 'Choose the server this Fire TV connects to.',
@@ -9227,7 +9176,6 @@ const ENGLISH = {
   'tv.filmPage.playFromTheBeginning': 'Play from the beginning',
   'tv.filmPage.thisFilmCouldNotBeFound': 'Couldn’t find this film.',
   'tv.hero.resumeResume': 'Resume {resume}',
-  'tv.home.thereIsNothingToWatchHere': 'Nothing to watch yet.',
   'tv.listening.leftLeftInTheBook': '{left} left in the book',
   'tv.liveGuide.channelTimeTitle': '{channel}, {time}: {title}',
   'tv.liveGuide.holdToKeep':
@@ -9238,7 +9186,6 @@ const ENGLISH = {
     'This channel plays on a computer or phone, not on a TV.',
   'tv.music.albumItem.nameAlbum': '{name} • Album',
   'tv.music.playlistItem.playlistName': 'Playlist • {name}',
-  'tv.music.thereIsNoMusicHereYet': 'No music yet.',
   'tv.musicCollection.useCollection.songsValueHrValue2Min': '{songs}, {value} hr {value2} min',
   'tv.nowPlaying.devicesPanel.deviceControlling': '{device} · controlling',
   'tv.nowPlaying.devicesPanel.deviceNotPlaying': '{device} · not playing',
