@@ -271,7 +271,9 @@ describe('createSiteClient', () => {
       expect(session).toEqual({
         cookies: { uid: '1', cf_clearance: 'xyz' },
         userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Firefox/152.0',
+        browserId: session.browserId,
       });
+      expect(session.browserId).toMatch(/^[0-9a-f-]{36}$/);
       expect(solver.fetch).toHaveBeenCalledWith(
         { url: 'https://x.example/s', method: 'POST', body: 'q=dune', headers: {} },
         { uid: '1' },
@@ -294,6 +296,28 @@ describe('createSiteClient', () => {
 
       expect(named[0]).toBe(named[1]);
       expect(named[2]).not.toBe(named[0]);
+    });
+
+    it('names a session the same once it has been saved and read back, as every search reads it', async () => {
+      const { fetch } = aNetwork({ 'https://x.example/s': [CHALLENGE, CHALLENGE] });
+      const solver = aSolver({ 'https://x.example/s': '<p>one</p>' });
+      const session = aSession();
+
+      await createSiteClient({ fetch, solver }).send(aGet('https://x.example/s'), {
+        ...OPTIONS,
+        session,
+      });
+
+      const readBack: SiteSession = structuredClone(session);
+
+      await createSiteClient({ fetch, solver }).send(aGet('https://x.example/s'), {
+        ...OPTIONS,
+        session: readBack,
+      });
+
+      const named = solver.fetch.mock.calls.map((call) => call[2]);
+
+      expect(named[1]).toBe(named[0]);
     });
 
     it('sends the site’s next requests straight to the browser', async () => {

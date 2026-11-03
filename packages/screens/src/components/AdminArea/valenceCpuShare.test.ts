@@ -15,6 +15,7 @@ const resources = (overrides: Partial<Monitor['resources']> = {}): Monitor['reso
   children: [],
   deploymentMemory: null,
   apiMemoryBytes: null,
+  requestsMemoryBytes: null,
   loadAverage: 0,
   disks: [],
   graphics: null,

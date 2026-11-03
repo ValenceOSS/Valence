@@ -12,6 +12,7 @@ import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { DefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 import { readBody } from '@ValenceRequests/readBody';
 import type {
+  RequestsMemory,
   RequestsSolver,
   RequestsStatus,
   RequestsVpn,
@@ -21,6 +22,7 @@ import type { ProfileService } from '@ValenceRequests/profiles/createProfileServ
 import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { say } from '@ValenceI18n/say';
+import { readServiceMemory } from '@ValenceRequests/memory/readServiceMemory';
 
 type CreateAppOptions = {
   secret: string;
@@ -33,6 +35,7 @@ type CreateAppOptions = {
   routes?: readonly Hono[];
   profiles?: Pick<ProfileService, 'find'>;
   readConsole?: () => ConsoleLine[];
+  readMemory?: () => Promise<number>;
 };
 
 const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
@@ -50,6 +53,7 @@ const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
  * @param definitions - The catalogue of sites a definition describes.
  * @param routes - Everything else the service offers, mounted under `/api`.
  * @param readConsole - The last lines this service wrote to its console, for the server to show.
+ * @param readMemory - What the service is costing in memory, its browser included.
  * @param profiles - The quality profiles a search can be judged against.
  * @returns The app.
  */
@@ -64,6 +68,7 @@ const createApp = ({
   routes = [],
   profiles = { find: () => Promise.resolve(null) },
   readConsole = () => [],
+  readMemory = () => readServiceMemory(),
 }: CreateAppOptions) => {
   const app = new Hono();
 
@@ -86,6 +91,10 @@ const createApp = ({
       indexers: await indexers.health(),
       solver: readSolver(),
     } satisfies RequestsStatus),
+  );
+
+  app.get('/api/memory', async (context) =>
+    context.json({ bytes: await readMemory() } satisfies RequestsMemory),
   );
 
   app.get('/api/console', (context) =>

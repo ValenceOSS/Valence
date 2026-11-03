@@ -109,6 +109,23 @@ describe('createSolver', () => {
     expect(pool.has('example.org')).toBe(false);
   });
 
+  it('closes the agent of a request that failed, so the next starts from a fresh context', async () => {
+    const { pool } = aSolver(aSitePage({ standings: ['blocked'] }));
+    const solver = createSolver({ pool });
+
+    await expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow();
+
+    expect(pool.has('example.org one')).toBe(false);
+  });
+
+  it('keeps the agent of a request that passed, for the next request of the session', async () => {
+    const { solver, pool } = aSolver();
+
+    await solver.fetch(A_GET, {}, 'one');
+
+    expect(pool.has('example.org one')).toBe(true);
+  });
+
   it('gives up on a request that runs past its time', async () => {
     const { pool } = aSolver(
       aSitePage({ standings: Array.from({ length: 1000 }, () => 'challenged' as const) }),

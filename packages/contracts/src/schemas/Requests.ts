@@ -45,6 +45,10 @@ const RequestsStatusSchema = z.object({
   solver: RequestsSolverSchema.nullable().default(null),
 });
 
+const RequestsMemorySchema = z.object({
+  bytes: z.number().nonnegative(),
+});
+
 const RequestsAvailabilitySchema = z.object({
   isEnabled: z.boolean(),
   kinds: z.array(MediaRequestKindSchema).default([...MEDIA_REQUEST_KINDS]),
@@ -88,11 +92,13 @@ type RequestsVpn = z.infer<typeof RequestsVpnSchema>;
 type RequestsSolver = z.infer<typeof RequestsSolverSchema>;
 type RequestsStatus = z.infer<typeof RequestsStatusSchema>;
 type RequestsAvailability = z.infer<typeof RequestsAvailabilitySchema>;
+type RequestsMemory = z.infer<typeof RequestsMemorySchema>;
 type RequestsOverview = z.infer<typeof RequestsOverviewSchema>;
 type RequestsWork = z.infer<typeof RequestsWorkSchema>;
 
 export type {
   RequestsAvailability,
+  RequestsMemory,
   RequestsOverview,
   RequestsSolver,
   RequestsStatus,
@@ -105,6 +111,7 @@ export {
   SOLVER_NOT_USED,
   RequestsSolverSchema,
   RequestsAvailabilitySchema,
+  RequestsMemorySchema,
   RequestsOverviewSchema,
   RequestsWorkSchema,
   RequestsStatusSchema,

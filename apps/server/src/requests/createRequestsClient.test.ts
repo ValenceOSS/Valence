@@ -45,6 +45,27 @@ describe('createRequestsClient', () => {
     );
   });
 
+  it('reads what the service costs in memory', async () => {
+    const fetch = answering(200, { bytes: 3_200_000_000 });
+    const client = createRequestsClient({
+      address: 'http://requests:8421',
+      secret: A_SECRET,
+      fetch,
+    });
+
+    expect(await client.readMemory()).toBe(3_200_000_000);
+    expect(fetch).toHaveBeenCalledWith('http://requests:8421/api/memory', expect.anything());
+  });
+
+  it('knows nothing about its memory when the service cannot say, or is too old to', async () => {
+    const make = (fetch: ReturnType<typeof answering>) =>
+      createRequestsClient({ address: 'http://requests:8421', secret: A_SECRET, fetch });
+
+    expect(await make(answering(404, {})).readMemory()).toBeNull();
+    expect(await make(answering(500, {})).readMemory()).toBeNull();
+    expect(await make(answering(200, { bytes: 'lots' })).readMemory()).toBeNull();
+  });
+
   it('says when the secrets do not match', async () => {
     const client = createRequestsClient({
       address: 'http://requests:8421',
