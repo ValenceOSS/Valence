@@ -11,6 +11,8 @@ type ActionBarAction = {
   label: string;
   icon?: ReactNode;
   isPinned?: boolean;
+  isChosen?: boolean;
+  isDisabled?: boolean;
   onChoose: () => void;
   choices?: readonly ActionBarChoice[];
 };

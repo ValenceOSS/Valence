@@ -54,7 +54,14 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
 
   const buttonFor = (action: ActionBarAction) =>
     action.choices === undefined ? (
-      <Button key={action.id} variant="glossy" size="lg" onClick={action.onChoose}>
+      <Button
+        key={action.id}
+        variant="glossy"
+        size="lg"
+        isActive={action.isChosen === true}
+        disabled={action.isDisabled === true}
+        onClick={action.onChoose}
+      >
         {action.icon}
         {action.label}
       </Button>
@@ -63,6 +70,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
         key={action.id}
         label={action.label}
         align="end"
+        isDisabled={action.isDisabled === true}
         look="raised"
         className="h-9 w-auto gap-2 px-3.5 text-sm font-medium"
         trigger={

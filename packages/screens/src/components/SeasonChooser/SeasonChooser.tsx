@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CircleCheck as CircleCheckIcon, Plus as PlusIcon } from '@keyline-icons/react';
 import { CircleCheck as CircleCheckFilledIcon } from '@keyline-icons/react/fill';
@@ -172,7 +172,7 @@ const SeasonChooser = ({
               const isAsked = alreadyAsked.includes(row.season);
 
               return (
-                <span key={row.season} className="contents">
+                <Fragment key={row.season}>
                   {rowOf(
                     row.posterUrl === null || row.posterUrl === undefined ? (
                       <span className="text-lg font-semibold text-text-muted">
@@ -201,7 +201,7 @@ const SeasonChooser = ({
                       choose(tickASeason(seasons, rows, row.season));
                     },
                   )}
-                </span>
+                </Fragment>
               );
             })}
 

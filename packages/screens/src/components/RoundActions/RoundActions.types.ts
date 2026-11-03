@@ -1,9 +1,6 @@
 import type { ActionBarAction } from '@ValenceUI/ActionBar.types';
 
-type RoundAction = ActionBarAction & {
-  isChosen?: boolean;
-  isDisabled?: boolean;
-};
+type RoundAction = ActionBarAction;
 
 type RoundActionsProps = {
   label: string;
