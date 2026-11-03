@@ -1,6 +1,7 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
+import { PLAY_FACE } from '@ValenceUI/tokens/PLAY_FACE';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { Icon } from '@ValenceUI/Icon';
@@ -35,6 +36,11 @@ const LOOKS = {
     buttonStyles({ variant: 'overlay', size: 'none' }),
     'hover:bg-overlay-hover data-[state=open]:bg-overlay-hover',
   ),
+  play: cn(
+    buttonStyles({ variant: 'confirm', size: 'none' }),
+    PLAY_FACE,
+    'w-full data-[state=open]:brightness-95',
+  ),
 } as const;
 
 /**
@@ -68,8 +74,9 @@ const LOOKS = {
  * @param look - Plain, lit only when pointed at; a face, which is a circle that is not lit at all,
  *   for a picture standing in as the control; raised, with a fill and an edge of its own, for a
  *   control that has to be found on a busy row; or labelled, sized to words rather than a glyph, for
- *   a menu that says what it is; a segment, one part of a joined row of them; or overlay, dark
- *   and solid, for a control laid over artwork.
+ *   a menu that says what it is; a segment, one part of a joined row of them; overlay, dark and
+ *   solid, for a control laid over artwork; or play, a title's wide white button, for a main
+ *   action that opens a choice.
  * @param onOpenChange - Told when it opens or closes, for a caller that must not vanish from under
  *   it while it is open.
  * @param className - Extra classes for the caller's own layout.

@@ -38,7 +38,7 @@ import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
-import { cardTintOf } from '@ValenceMobile/theme/cardTintOf';
+import { cardTintOf } from '@ValenceCore/functions/cardTintOf';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';

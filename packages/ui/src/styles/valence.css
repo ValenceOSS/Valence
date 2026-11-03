@@ -255,6 +255,8 @@
   --color-overlay-hover: oklch(0.35 0 0);
   --color-overlay-line: color-mix(in oklab, white 10%, transparent);
   --color-shade: oklch(0 0 0);
+  --color-glass: rgb(85 85 85 / 0.7);
+  --color-glass-hover: rgb(105 105 105 / 0.74);
 
   --color-paper-light: oklch(0.979 0.006 85);
   --color-ink-light: oklch(0.225 0.008 70);

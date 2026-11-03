@@ -27,6 +27,8 @@ const sources = () => {
         runtimeMinutes: 55,
         cast: [{ personId: 1, name: 'Adam Scott', role: 'Mark S.', photoUrl: null }],
         trailerKey: 'abc123',
+        rating: 8.4,
+        certifications: { GB: '15', DE: '16' },
       }),
     ),
     describeMusic: vi.fn<DescriptionSources['describeMusic']>(() =>
@@ -86,6 +88,21 @@ describe('describeCatalogueTitle', () => {
       cast: [{ name: 'Adam Scott' }],
     });
     expect(asked.describeTitle).toHaveBeenCalledWith('95396', 'tv');
+  });
+
+  it('gives a film or series its rating and the age certificate of the region asked for', async () => {
+    expect(await describeCatalogueTitle(sources(), 'series', '95396')).toMatchObject({
+      rating: 8.4,
+      certification: '15',
+      certificationRegion: 'GB',
+    });
+    expect(await describeCatalogueTitle(sources(), 'series', '95396', 'DE')).toMatchObject({
+      certification: '16',
+      certificationRegion: 'DE',
+    });
+    expect(await describeCatalogueTitle(sources(), 'series', '95396', 'FR')).toMatchObject({
+      certification: null,
+    });
   });
 
   it('gives a film or series its title logo, where the catalogue has one', async () => {

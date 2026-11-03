@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { User as UserIcon, X as XIcon } from '@keyline-icons/react';
+import { User as UserIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { ReadMore } from '@ValenceUI/ReadMore';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -15,6 +14,10 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
+import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
+import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButton/ArtworkCloseButton';
+import { useArtworkTint } from '@ValenceScreens/library/useArtworkTint';
+import { ArtworkBackButton } from '@ValenceScreens/components/ArtworkBackButton/ArtworkBackButton';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import type { PersonCredits } from '@ValenceContracts/schemas/Person';
@@ -61,6 +64,9 @@ const describeBirth = (bornOn: string | null): string | null => {
  * @param onPlay - Told to start something of theirs, and where from.
  * @param onInspect - Told to open the page about something of theirs.
  * @param onOpenShow - Told to open a programme of theirs.
+ * @param onBack - Told to go back to the dialog this was opened from, where it was opened from one,
+ *   which is offered in place of closing it.
+ * @param backLabel - What that dialog is about.
  */
 const PersonDialog = ({
   personId,
@@ -69,6 +75,8 @@ const PersonDialog = ({
   onPlay,
   onInspect,
   onOpenShow,
+  onBack,
+  backLabel,
 }: PersonDialogProps) => {
   const [lastOpened, setLastOpened] = useState<number | null>(null);
 
@@ -78,6 +86,7 @@ const PersonDialog = ({
   const person = personId === null ? null : (asked.data ?? null);
   const credits = personId === null ? NOTHING : (theirs.data ?? NOTHING);
   const isLoading = personId !== null && (asked.isPending || theirs.isPending);
+  const tint = useArtworkTint(person?.portraitUrl ?? null);
 
   useEffect(() => {
     if (personId !== null) {
@@ -103,144 +112,171 @@ const PersonDialog = ({
       onClose={onClose}
       size="stage"
     >
-      <DialogContent className="p-0">
-        <div className="absolute right-4 top-4 z-10">
-          <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
-            <Icon of={XIcon} size={18} />
-          </Button>
-        </div>
+      <DialogContent className="p-3 sm:p-4">
+        <TintedGround tint={tint}>
+          {onBack === undefined ? (
+            <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+              <ArtworkCloseButton onClose={onClose} />
+            </div>
+          ) : (
+            <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+              <ArtworkBackButton
+                label={
+                  backLabel === undefined
+                    ? say('common.back')
+                    : say('common.backToName', { name: backLabel })
+                }
+                onBack={onBack}
+              />
+            </div>
+          )}
 
-        <DialogSections key={personId ?? 'nobody'} className="flex flex-col gap-4 p-5 pb-10 sm:p-8">
-          <DialogHeadline className="flex flex-wrap items-start gap-5">
-            <DialogHeadlinePart
-              as="span"
-              className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line"
-            >
-              {person?.portraitUrl === null || person?.portraitUrl === undefined ? (
-                <Icon of={UserIcon} size={36} tone="muted" />
-              ) : (
-                <img
-                  src={person.portraitUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              )}
-            </DialogHeadlinePart>
-
-            <span className="flex min-w-0 flex-col gap-2">
+          <div
+            key={personId ?? 'nobody'}
+            className="grid gap-8 px-1 pb-8 pt-1 sm:px-2 sm:pt-2 md:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] md:gap-12"
+          >
+            <DialogHeadline className="flex flex-col gap-4 md:sticky md:top-0 md:self-start">
               <DialogHeadlinePart
-                as="h2"
-                isTitle
-                className="text-3xl font-semibold tracking-[-0.02em] text-text"
+                as="span"
+                className="mx-auto flex aspect-[3/4] w-full max-w-64 items-center justify-center overflow-hidden rounded-2xl bg-surface-raised shadow-[var(--shadow-lifted)] ring-1 ring-line md:max-w-none"
               >
-                {person?.name ?? say('screens.personDialog.somebodyInTheCast')}
+                {person?.portraitUrl === null || person?.portraitUrl === undefined ? (
+                  <Icon of={UserIcon} size={64} tone="muted" />
+                ) : (
+                  <img src={person.portraitUrl} alt="" className="h-full w-full object-cover" />
+                )}
               </DialogHeadlinePart>
 
-              {role === null || role === undefined || role === '' ? null : (
-                <DialogHeadlinePart as="span" className="font-body text-sm text-text-muted">
-                  {say('screens.personDialog.asRole', { role })}
+              <span className="flex min-w-0 flex-col gap-2 text-center md:text-left">
+                <DialogHeadlinePart
+                  as="h2"
+                  isTitle
+                  className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1] tracking-[-0.03em] text-text"
+                >
+                  {person?.name ?? say('screens.personDialog.somebodyInTheCast')}
                 </DialogHeadlinePart>
+
+                {role === null || role === undefined || role === '' ? null : (
+                  <DialogHeadlinePart as="span" className="text-base text-text-muted">
+                    {say('screens.personDialog.asRole', { role })}
+                  </DialogHeadlinePart>
+                )}
+
+                {said.length === 0 ? null : (
+                  <DialogHeadlinePart as="span" className="text-sm text-text-muted">
+                    {said.join(' · ')}
+                  </DialogHeadlinePart>
+                )}
+              </span>
+            </DialogHeadline>
+
+            <DialogSections isOpen className="flex min-w-0 flex-col gap-10 md:pr-14">
+              {isLoading ? (
+                <div aria-hidden className="flex flex-col gap-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-[92%]" />
+                  <Skeleton className="h-4 w-[70%]" />
+                </div>
+              ) : null}
+
+              {person?.biography === null || person?.biography === undefined ? null : (
+                <DialogSection heading={say('screens.personDialog.biography')}>
+                  <ReadMore lines={6}>{person.biography}</ReadMore>
+                </DialogSection>
               )}
 
-              {said.length === 0 ? null : (
-                <DialogHeadlinePart as="span" className="font-body text-sm text-text-muted">
-                  {said.join(' · ')}
-                </DialogHeadlinePart>
+              {couldNotRead ? (
+                <CouldNotRead
+                  said={say('common.anythingAboutThemCouldNotBeRead')}
+                  isTryingAgain={asked.isFetching || theirs.isFetching}
+                  onTryAgain={() => {
+                    void asked.refetch();
+                    void theirs.refetch();
+                  }}
+                />
+              ) : null}
+
+              {isEmpty ? (
+                <p className="font-body text-sm text-text-muted">
+                  {say('screens.personDialog.nothingIsKnownAboutThemAnd')}
+                </p>
+              ) : null}
+
+              {credits.films.length === 0 ? null : (
+                <DialogSection>
+                  <Rail
+                    title={say('common.films')}
+                    sizesCards
+                    cards="portrait"
+                    hasArrows={false}
+                    look="title"
+                    className="px-0"
+                  >
+                    {credits.films.map((media, at) => (
+                      <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                        <RailCard
+                          shape="poster"
+                          media={media}
+                          onPlay={onPlay}
+                          onInspect={onInspect}
+                        />
+                      </RevealItem>
+                    ))}
+                  </Rail>
+                </DialogSection>
               )}
-            </span>
-          </DialogHeadline>
 
-          {isLoading ? (
-            <div aria-hidden className="flex flex-col gap-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-[92%]" />
-              <Skeleton className="h-4 w-[70%]" />
-            </div>
-          ) : null}
+              {credits.shows.length === 0 ? null : (
+                <DialogSection>
+                  <Rail
+                    title={say('common.programmes')}
+                    sizesCards
+                    cards="portrait"
+                    hasArrows={false}
+                    look="title"
+                    className="px-0"
+                  >
+                    {credits.shows.map((media, at) => (
+                      <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                        <RailCard
+                          shape="poster"
+                          media={media}
+                          onPlay={onPlay}
+                          onInspect={onInspect}
+                          {...(onOpenShow === undefined ? {} : { onOpenShow })}
+                        />
+                      </RevealItem>
+                    ))}
+                  </Rail>
+                </DialogSection>
+              )}
 
-          {person?.biography === null || person?.biography === undefined ? null : (
-            <DialogSection heading={say('screens.personDialog.biography')}>
-              <ReadMore lines={6}>{person.biography}</ReadMore>
-            </DialogSection>
-          )}
-
-          {couldNotRead ? (
-            <CouldNotRead
-              said={say('common.anythingAboutThemCouldNotBeRead')}
-              isTryingAgain={asked.isFetching || theirs.isFetching}
-              onTryAgain={() => {
-                void asked.refetch();
-                void theirs.refetch();
-              }}
-            />
-          ) : null}
-
-          {isEmpty ? (
-            <p className="font-body text-sm text-text-muted">
-              {say('screens.personDialog.nothingIsKnownAboutThemAnd')}
-            </p>
-          ) : null}
-
-          {credits.films.length === 0 ? null : (
-            <DialogSection>
-              <Rail
-                title={say('common.films')}
-                sizesCards
-                hasArrows={false}
-                look="section"
-                className="px-0"
-              >
-                {credits.films.map((media, at) => (
-                  <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                    <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
-                  </RevealItem>
-                ))}
-              </Rail>
-            </DialogSection>
-          )}
-
-          {credits.shows.length === 0 ? null : (
-            <DialogSection>
-              <Rail
-                title={say('common.programmes')}
-                sizesCards
-                hasArrows={false}
-                look="section"
-                className="px-0"
-              >
-                {credits.shows.map((media, at) => (
-                  <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                    <RailCard
-                      media={media}
-                      onPlay={onPlay}
-                      onInspect={onInspect}
-                      {...(onOpenShow === undefined ? {} : { onOpenShow })}
-                    />
-                  </RevealItem>
-                ))}
-              </Rail>
-            </DialogSection>
-          )}
-
-          {credits.episodes.length === 0 ? null : (
-            <DialogSection>
-              <Rail
-                title={say('common.episodes')}
-                sizesCards
-                hasArrows={false}
-                look="section"
-                className="px-0"
-              >
-                {credits.episodes.map((media, at) => (
-                  <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                    <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
-                  </RevealItem>
-                ))}
-              </Rail>
-            </DialogSection>
-          )}
-        </DialogSections>
+              {credits.episodes.length === 0 ? null : (
+                <DialogSection>
+                  <Rail
+                    title={say('common.episodes')}
+                    sizesCards
+                    cards="portrait"
+                    hasArrows={false}
+                    look="title"
+                    className="px-0"
+                  >
+                    {credits.episodes.map((media, at) => (
+                      <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                        <RailCard
+                          shape="poster"
+                          media={media}
+                          onPlay={onPlay}
+                          onInspect={onInspect}
+                        />
+                      </RevealItem>
+                    ))}
+                  </Rail>
+                </DialogSection>
+              )}
+            </DialogSections>
+          </div>
+        </TintedGround>
       </DialogContent>
     </Dialog>
   );

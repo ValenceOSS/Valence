@@ -751,13 +751,9 @@ describe('App routing', () => {
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
     await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
-    const [more] = await screen.findAllByRole('button', { name: 'More actions' });
+    const dialog = await screen.findByRole('dialog', { name: 'Arrival' });
 
-    if (more !== undefined) {
-      await actor.click(more);
-    }
-
-    await actor.click(await screen.findByRole('menuitem', { name: /Start again/ }));
+    await actor.click(await within(dialog).findByRole('button', { name: 'Start again' }));
 
     await waitFor(() => {
       const asked = fetchMock.mock.calls.find(([input]) =>

@@ -2685,6 +2685,11 @@
     "context": "Button above what Discover found for a search, on the phone and the television, returning to what the libraries found for the same words."
   },
   {
+    "handler": "common.backToName",
+    "text": "Back to {name}",
+    "context": "The button that leaves a dialog for the one it was opened from, such as a person opened from a film's cast. {name} is what that dialog is about."
+  },
+  {
     "handler": "common.backupCode",
     "text": "Backup code",
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
@@ -4124,6 +4129,11 @@
     "handler": "common.genre",
     "text": "Genre",
     "context": "The name, used in the use library filters in the library and in the use catalogue filters in the requests."
+  },
+  {
+    "handler": "common.genres",
+    "text": "Genres",
+    "context": "The heading over the genres of a film, episode or programme, beside its synopsis in the web app's dialog about it."
   },
   {
     "handler": "common.georgiaTimesNewRomanSerif",
@@ -24658,6 +24668,11 @@
     "handler": "screens.askableDialog.fetchingItsDetails",
     "text": "Fetching its details…",
     "context": "Shown large in the askable dialog while what a film, series, artist or album is, and its artwork, are still being read from the catalogue."
+  },
+  {
+    "handler": "screens.askableDialog.moreToDoWithThis",
+    "text": "More to do with this",
+    "context": "Read out for the menu of further actions beside the play or request button on a title that can be asked for."
   },
   {
     "handler": "screens.askableDialog.noYearGiven",

@@ -3,7 +3,7 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
+import { foldedActionsOf } from '@ValenceUI/foldedActionsOf';
 import type { ActionBarAction, ActionBarProps } from './ActionBar.types';
 
 const MOST_SHOWN_WHOLE = 4;
@@ -54,7 +54,14 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
 
   const buttonFor = (action: ActionBarAction) =>
     action.choices === undefined ? (
-      <Button key={action.id} variant="glossy" size="lg" onClick={action.onChoose}>
+      <Button
+        key={action.id}
+        variant="glossy"
+        size="lg"
+        isActive={action.isChosen === true}
+        disabled={action.isDisabled === true}
+        onClick={action.onChoose}
+      >
         {action.icon}
         {action.label}
       </Button>
@@ -63,6 +70,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
         key={action.id}
         label={action.label}
         align="end"
+        isDisabled={action.isDisabled === true}
         look="raised"
         className="h-9 w-auto gap-2 px-3.5 text-sm font-medium"
         trigger={
@@ -74,25 +82,6 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
         groups={[{ items: [...action.choices] }]}
       />
     );
-
-  const menuOf = (items: readonly ActionBarAction[]): ActionMenuGroup[] =>
-    items.reduce<ActionMenuGroup[]>((groups, action) => {
-      if (action.choices !== undefined) {
-        return [...groups, { name: action.label, items: [...action.choices] }];
-      }
-
-      const item = {
-        id: action.id,
-        label: action.label,
-        ...(action.icon === undefined ? {} : { icon: action.icon }),
-        onChoose: action.onChoose,
-      };
-      const last = groups.at(-1);
-
-      return last === undefined || last.name !== undefined
-        ? [...groups, { items: [item] }]
-        : [...groups.slice(0, -1), { items: [...last.items, item] }];
-    }, []);
 
   return (
     <div className={cn('@container flex w-full items-center justify-between gap-3', className)}>
@@ -125,7 +114,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
                 look="raised"
                 className="size-9"
                 trigger={<Icon of={MoreHorizontalIcon} size={22} />}
-                groups={menuOf(folded)}
+                groups={foldedActionsOf(folded)}
               />
             )}
           </span>
@@ -136,7 +125,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
             look="raised"
             className="size-9 sm:hidden"
             trigger={<Icon of={MoreHorizontalIcon} size={22} />}
-            groups={menuOf(actions)}
+            groups={foldedActionsOf(actions)}
           />
         </>
       )}

@@ -104,20 +104,19 @@ const EpisodeRow = ({
         {onMarkWatched === undefined ? null : (
           <Button
             variant={(watchedFraction ?? 0) >= 1 ? 'secondary' : 'confirm'}
-            size="sm"
+            size="md"
+            isIconOnly
             {...(onInspect === undefined ? {} : { joins: 'next' as const })}
             label={
               (watchedFraction ?? 0) >= 1
                 ? say('common.markTitleAsUnwatched', { title: episode.title })
                 : say('common.markTitleAsWatched', { title: episode.title })
             }
-            hasTooltip={false}
             isActive={(watchedFraction ?? 0) >= 1}
             onClick={() => {
               onMarkWatched(episode, (watchedFraction ?? 0) < 1);
             }}
           >
-            {(watchedFraction ?? 0) >= 1 ? say('common.watched') : say('common.markAsWatched')}
             <Icon
               of={(watchedFraction ?? 0) >= 1 ? CircleCheckFilledIcon : CircleCheckIcon}
               size={16}
@@ -128,16 +127,15 @@ const EpisodeRow = ({
         {onInspect === undefined ? null : (
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
+            isIconOnly
             {...(onMarkWatched === undefined ? {} : { joins: 'previous' as const })}
             className={onMarkWatched === undefined ? '' : 'border-l-0'}
             label={say('common.aboutTitle', { title: episode.title })}
-            hasTooltip={false}
             onClick={() => {
               onInspect(episode);
             }}
           >
-            {say('common.moreInfo')}
             <Icon of={InfoIcon} size={16} />
           </Button>
         )}

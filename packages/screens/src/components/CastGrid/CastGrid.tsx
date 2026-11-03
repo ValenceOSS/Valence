@@ -9,6 +9,8 @@ import { cn } from '@ValenceUI/cn';
 import { canOpenPerson } from '@ValenceContracts/schemas/Person';
 import type { CastGridProps } from './CastGrid.types';
 import { say } from '@ValenceI18n/say';
+import { useContext } from 'react';
+import { AreSectionsOpen } from '@ValenceScreens/components/DialogSections/AreSectionsOpen';
 
 /**
  * Shows the cast of a film or programme as a row of faces, each with the performer's name and the
@@ -36,6 +38,7 @@ import { say } from '@ValenceI18n/say';
  */
 const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGridProps) => {
   const hrefOf = useHrefOf();
+  const isOpen = useContext(AreSectionsOpen);
 
   return (
     <Rail
@@ -44,13 +47,20 @@ const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGri
       sizesCards
       cards="portrait"
       hasArrows={false}
-      look="section"
+      look={isOpen ? 'title' : 'section'}
       className="px-0"
     >
       {members.map((member) => {
         const face = (
           <>
-            <span className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">
+            <span
+              className={cn(
+                'overflow-hidden bg-surface-raised ring-1 ring-line',
+                isOpen
+                  ? 'mx-auto aspect-square w-4/5 rounded-full'
+                  : 'aspect-[2/3] w-full rounded-lg',
+              )}
+            >
               {member.imageUrl === null ? (
                 <span className="flex h-full w-full items-center justify-center">
                   <Icon of={UserIcon} size={48} tone="muted" />

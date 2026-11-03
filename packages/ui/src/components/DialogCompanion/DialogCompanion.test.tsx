@@ -36,7 +36,7 @@ describe('DialogCompanion', () => {
     );
 
     expect(screen.getByRole('dialog', { name: 'Add an indexer' })).toHaveClass(
-      'sm:w-[min(60rem,94vw)]',
+      'sm:w-[min(76rem,94vw)]',
     );
   });
 

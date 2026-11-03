@@ -131,7 +131,7 @@ describe('RatingPanel', () => {
       expect(fetchHouseholdRating).toHaveBeenCalled();
     });
 
-    expect(screen.queryByText(/rating/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^from \d+ rating/)).not.toBeInTheDocument();
   });
 
   it('asks once for a subject, however many panels are showing it', async () => {

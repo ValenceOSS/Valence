@@ -66,12 +66,14 @@ const musicBrainzIdOf = async (
  * @param sources - Where each kind is described.
  * @param kind - What kind of title it is.
  * @param id - The id it was listed under.
+ * @param region - Whose age certificate a film or series carries.
  * @returns What its page shows, or null where it could not be found.
  */
 const describeCatalogueTitle = async (
   sources: DescriptionSources,
   kind: MediaRequestKind,
   id: string,
+  region = 'GB',
 ): Promise<UnstoodDetail | null> => {
   if (kind === 'film' || kind === 'series') {
     const found = await sources.describeTitle(id, kind === 'film' ? 'movie' : 'tv');
@@ -102,6 +104,9 @@ const describeCatalogueTitle = async (
           tracks: [],
           label: null,
           trailerKey: found.trailerKey,
+          rating: found.rating ?? null,
+          certification: found.certifications?.[region] ?? null,
+          certificationRegion: region,
         };
   }
 

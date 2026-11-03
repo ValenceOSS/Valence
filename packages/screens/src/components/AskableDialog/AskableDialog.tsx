@@ -4,8 +4,15 @@ import { useEffect, useState } from 'react';
 import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { useSample } from '@ValenceScreens/requests/useSample';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { SquarePlay as SquarePlayIcon, X as XIcon } from '@keyline-icons/react';
-import { BackdropScrim } from '@ValenceUI/BackdropScrim';
+import {
+  ChevronDown as ChevronDownIcon,
+  CircleX as CircleXIcon,
+  ListVideo as ListVideoIcon,
+  Plus as PlusIcon,
+  Send as SendIcon,
+  SquarePlay as SquarePlayIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -14,7 +21,6 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Dialog } from '@ValenceUI/Dialog';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { DialogContent } from '@ValenceUI/DialogContent';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { ReadMore } from '@ValenceUI/ReadMore';
@@ -38,6 +44,8 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
+import type { CastMember } from '@ValenceScreens/components/CastGrid/CastGrid.types';
+import { AgeRating } from '@ValenceUI/AgeRating';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
@@ -54,6 +62,20 @@ import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl
 import { groupReleases } from '@ValenceClient/requests/groupReleases';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
+import { TrailerBackdrop } from '@ValenceScreens/components/TrailerBackdrop/TrailerBackdrop';
+import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
+import { catalogueTrailerStreamUrl } from '@ValenceClient/requests/catalogueTrailerStreamUrl';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { iconOfQuality } from '@ValenceScreens/library/iconOfQuality';
+import { TitleHero } from '@ValenceScreens/components/TitleHero/TitleHero';
+import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
+import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButton/ArtworkCloseButton';
+import { RoundActions } from '@ValenceScreens/components/RoundActions/RoundActions';
+import type { RoundAction } from '@ValenceScreens/components/RoundActions/RoundActions.types';
+import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
+import { PLAY_FACE } from '@ValenceUI/tokens/PLAY_FACE';
+import { useArtworkTint } from '@ValenceScreens/library/useArtworkTint';
+import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { DialogArrival } from '@ValenceScreens/components/DialogArrival/DialogArrival';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
@@ -97,8 +119,10 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  *   the library holds is not asked about, but opened as it would be anywhere else, unless the
  *   address asks for more of it, as a show's Request more does: then its seasons are offered, those
  *   held whole locked, and only what is missing is fetched.
+ * @param onOpenPerson - Told whose page to open from its cast, and the part they played, where
+ *   opening one is offered.
  */
-const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) => {
+const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: AskableDialogProps) => {
   const cache = useQueryClient();
   const named = readAsking(asking);
   const found = useQuery({
@@ -118,6 +142,7 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) 
   const faces = useQuery(linkingQueries.faces());
   const [askedAlbums, setAskedAlbums] = useState<ReadonlySet<string>>(new Set());
   const [problem, setProblem] = useState<string | null>(null);
+  const [unlettered, setUnlettered] = useState<string | null>(null);
   const title = found.data ?? null;
   const heldKind = title?.kind ?? null;
   const isMore = named?.isMore === true;
@@ -147,6 +172,7 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) 
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const trailerKey = title?.trailerKey ?? null;
+  const tint = useArtworkTint(title?.backdropUrl ?? null);
   const mayStream = useMayStream();
   const isStreamable =
     mayStream &&
@@ -252,6 +278,29 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) 
     setChoosing({ asked, onAsked });
   };
 
+  const mainAsk: Choosing | null =
+    title === null || isElsewhere
+      ? null
+      : isAskable
+        ? {
+            asked: askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
+            onAsked: () => undefined,
+          }
+        : isAddingSeasons
+          ? {
+              asked: {
+                kind: 'series',
+                tmdbId: Number(title.id),
+                seasons: adding,
+                followsNewSeasons: addsFollowing,
+              },
+              onAsked: () => {
+                setAdding([]);
+                setAddsFollowing(false);
+              },
+            }
+          : null;
+
   const requestAction: DialogConfirmation | undefined =
     title === null
       ? undefined
@@ -312,6 +361,120 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) 
                 }
               : undefined;
 
+  const note =
+    problem ??
+    (isStreamable ? streaming.problem : null) ??
+    (isUnrequestable && title.standing.status === 'askable'
+      ? say('common.noLibraryTakesRequestsForThis')
+      : null);
+
+  const mainAction: (DialogConfirmation & { icon: IconGlyph }) | null = isStreamable
+    ? {
+        label: say('common.play'),
+        icon: PlayFilledIcon,
+        isLoading: streaming.isFinding || streaming.isStarting,
+        onChoose: streaming.start,
+      }
+    : requestAction === undefined
+      ? null
+      : {
+          ...requestAction,
+          icon: isElsewhere && title.standing.mediaId !== null ? PlayFilledIcon : PlusIcon,
+        };
+
+  const actions: RoundAction[] = [
+    ...(trailerKey === null
+      ? []
+      : [
+          {
+            id: 'trailer',
+            label: say('common.watchTheTrailer'),
+            icon: <Icon of={SquarePlayIcon} size={20} />,
+            onChoose: () => {
+              setIsWatchingTrailer(true);
+            },
+          },
+        ]),
+    ...(isStreamable
+      ? [
+          {
+            id: 'sources',
+            label: say('common.sources'),
+            icon: <Icon of={ListVideoIcon} size={20} />,
+            onChoose: streaming.openPicker,
+          },
+        ]
+      : []),
+    ...(isStreamable && requestAction !== undefined
+      ? [
+          {
+            id: 'request',
+            label: requestAction.label,
+            icon: <Icon of={PlusIcon} size={20} />,
+            isDisabled: requestAction.isDisabled === true || requestAction.isLoading === true,
+            onChoose: () => {
+              requestAction.onChoose?.();
+            },
+          },
+        ]
+      : []),
+    ...(title !== null && isElsewhere && isAskable
+      ? [
+          {
+            id: 'request-here',
+            label: say('common.requestHere'),
+            icon: <Icon of={PlusIcon} size={20} />,
+            isDisabled: !isReady || isAsking,
+            onChoose: () => {
+              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries));
+            },
+          },
+        ]
+      : []),
+    ...(title === null || !isAskable || (title.kind !== 'film' && title.kind !== 'series')
+      ? []
+      : (faces.data ?? [])
+          .filter((server) => server.takesRequests && server.isReachable)
+          .map((server) => ({
+            id: `ask-${server.id}`,
+            label: say('common.askName', { name: server.name }),
+            icon: <Icon of={SendIcon} size={20} />,
+            isDisabled: !isReady || askingElsewhere === server.id,
+            onChoose: () => {
+              setAskingElsewhere(server.id);
+
+              void askLinkedServer(
+                server.id,
+                askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
+              )
+                .then((sent) => {
+                  tellOutcome(
+                    say('screens.askableDialog.askedNameForTitle', {
+                      name: server.name,
+                      title: title.title,
+                    }),
+                    failureOfRefusal(sent.refusal),
+                  );
+                })
+                .finally(() => {
+                  setAskingElsewhere(null);
+                });
+            },
+          }))),
+    ...(mayCancel
+      ? [
+          {
+            id: 'cancel',
+            label: say('common.cancelRequest'),
+            icon: <Icon of={CircleXIcon} size={20} />,
+            onChoose: () => {
+              setIsCancelling(true);
+            },
+          },
+        ]
+      : []),
+  ];
+
   return (
     <Dialog
       label={title?.title ?? say('screens.askableDialog.somethingToAskFor')}
@@ -348,372 +511,403 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) 
             <Skeleton shape="soft" className="h-40 w-full" />
           </div>
         ) : (
-          <DialogArrival key={`${title.kind}:${title.id}`} className="flex flex-col gap-4">
-            <div className="relative overflow-hidden rounded-2xl">
-              <div className="relative h-[34vh] min-h-[14rem] sm:h-[22rem]">
-                {title.backdropUrl === null ? (
-                  <div className="absolute inset-0 overflow-hidden">
-                    {title.posterUrl === null ? null : (
-                      <img
-                        src={title.posterUrl}
-                        alt=""
-                        className="size-full scale-110 object-cover opacity-60 blur-2xl"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <img
-                    src={title.backdropUrl}
-                    alt=""
-                    className="absolute inset-0 size-full object-cover"
+          <TintedGround tint={tint}>
+            <DialogArrival key={`${title.kind}:${title.id}`} className="flex flex-col">
+              <TitleHero
+                preview={
+                  <TrailerBackdrop
+                    label={say('common.titleTheTrailer', { title: title.title })}
+                    trailerUrl={
+                      title.backdropUrl === null ||
+                      title.trailerKey === null ||
+                      (title.kind !== 'film' && title.kind !== 'series')
+                        ? null
+                        : catalogueTrailerStreamUrl(title.kind, title.id)
+                    }
+                    closing={<ArtworkCloseButton onClose={onClose} />}
+                    backdrop={
+                      title.backdropUrl === null ? (
+                        <div className="absolute inset-0 overflow-hidden">
+                          {title.posterUrl === null ? null : (
+                            <img
+                              src={title.posterUrl}
+                              alt=""
+                              className="size-full scale-110 object-cover opacity-60 blur-2xl"
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <img
+                          src={title.backdropUrl}
+                          alt=""
+                          className="absolute inset-0 size-full object-cover"
+                        />
+                      )
+                    }
                   />
-                )}
-                <BackdropScrim />
-              </div>
+                }
+              >
+                <DialogHeadline className="flex flex-col items-start gap-8">
+                  <div className="flex items-end gap-5">
+                    {isMusicRequest(title.kind) ? (
+                      <DialogHeadlinePart className="hidden w-32 sm:flex">
+                        <MusicArtwork
+                          src={title.posterUrl}
+                          label={say('common.theCoverOfTitle', { title: title.title })}
+                          shape={title.kind === 'artist' ? 'round' : 'square'}
+                          isLifted
+                          className="w-full"
+                        />
+                      </DialogHeadlinePart>
+                    ) : null}
 
-              <div className="absolute right-4 top-4">
-                <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
-                  <Icon of={XIcon} size={20} />
-                </Button>
-              </div>
-
-              <DialogHeadline className="absolute inset-x-0 bottom-0 flex items-end gap-5 p-5 sm:p-8">
-                {isMusicRequest(title.kind) ? (
-                  <DialogHeadlinePart className="hidden w-32 sm:flex">
-                    <MusicArtwork
-                      src={title.posterUrl}
-                      label={say('common.theCoverOfTitle', { title: title.title })}
-                      shape={title.kind === 'artist' ? 'round' : 'square'}
-                      isLifted
-                      className="w-full"
-                    />
-                  </DialogHeadlinePart>
-                ) : title.posterUrl === null ? null : (
-                  <DialogHeadlinePart className="hidden w-32 sm:block">
-                    <img
-                      src={title.posterUrl}
-                      alt=""
-                      className="aspect-[2/3] w-full rounded-lg object-cover shadow-[var(--shadow-artwork)]"
-                    />
-                  </DialogHeadlinePart>
-                )}
-
-                <div className="flex min-w-0 flex-col gap-2">
-                  {standing === null ? null : (
-                    <DialogHeadlinePart as="span">
-                      <Badge size="sm" tone={standing.tone}>
-                        {standing.label}
-                      </Badge>
-                    </DialogHeadlinePart>
-                  )}
-                  <DialogHeadlinePart
-                    as="h2"
-                    isTitle
-                    className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim"
-                  >
-                    {title.title}
-                  </DialogHeadlinePart>
-                  <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
-                    {describeAskableFacts(title)}
-                  </DialogHeadlinePart>
-                  {whoElse === null ? null : (
-                    <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
-                      {whoElse}
-                    </DialogHeadlinePart>
-                  )}
-                  {myProfileAsk === null ? null : (
-                    <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
-                      {myProfileAsk}
-                    </DialogHeadlinePart>
-                  )}
-
-                  {going === null ? null : (
-                    <DialogHeadlinePart>
-                      <ProgressBar
-                        label={say('common.howFarTitleHasDownloaded', { title: title.title })}
-                        value={Math.round(going.progress * 1000) / 10}
-                        className="max-w-md"
-                        readout={
-                          <DownloadProgressReadout progress={going} className="text-on-scrim/75" />
+                    <div className="flex min-w-0 flex-col gap-2">
+                      {standing === null ? null : (
+                        <DialogHeadlinePart as="span">
+                          <Badge size="sm" tone={standing.tone}>
+                            {standing.label}
+                          </Badge>
+                        </DialogHeadlinePart>
+                      )}
+                      <DialogHeadlinePart
+                        as="h2"
+                        isTitle
+                        className={
+                          title.logoUrl === null || unlettered === title.id
+                            ? 'text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
+                            : 'flex'
                         }
-                      />
+                      >
+                        {title.logoUrl === null || unlettered === title.id ? (
+                          title.title
+                        ) : (
+                          <TitleLogo
+                            src={title.logoUrl}
+                            alt={title.title}
+                            className="max-h-[20svh] w-auto max-w-[min(70vw,30rem)] object-contain object-left"
+                            onError={() => {
+                              setUnlettered(title.id);
+                            }}
+                          />
+                        )}
+                      </DialogHeadlinePart>
+
+                      {going === null ? null : (
+                        <DialogHeadlinePart>
+                          <ProgressBar
+                            label={say('common.howFarTitleHasDownloaded', { title: title.title })}
+                            value={Math.round(going.progress * 1000) / 10}
+                            className="max-w-md"
+                            readout={
+                              <DownloadProgressReadout
+                                progress={going}
+                                className="text-on-scrim/75"
+                              />
+                            }
+                          />
+                        </DialogHeadlinePart>
+                      )}
+                    </div>
+                  </div>
+
+                  {mainAction === null && actions.length === 0 ? null : (
+                    <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
+                      {mainAction === null ? null : (
+                        <div className="w-full sm:w-[21rem]">
+                          {!isStreamable &&
+                          mainAsk !== null &&
+                          choices.length > 1 &&
+                          mainAction.isDisabled !== true &&
+                          !isAsking ? (
+                            <ActionMenu
+                              label={mainAction.label}
+                              align="start"
+                              look="play"
+                              trigger={
+                                <>
+                                  <Icon of={mainAction.icon} size={18} />
+                                  {mainAction.label}
+                                  <Icon of={ChevronDownIcon} size={16} />
+                                </>
+                              }
+                              groups={[
+                                {
+                                  name: say('common.quality'),
+                                  items: choices.map((choice) => ({
+                                    id: choice.id,
+                                    label: choice.name,
+                                    icon: <Icon of={iconOfQuality(choice.name)} size={18} />,
+                                    onChoose: () => {
+                                      send(
+                                        { ...mainAsk.asked, profileId: choice.id },
+                                        mainAsk.onAsked,
+                                      );
+                                    },
+                                  })),
+                                },
+                              ]}
+                            />
+                          ) : (
+                            <PlayWithRestart>
+                              <Button
+                                variant="confirm"
+                                size="none"
+                                className={PLAY_FACE}
+                                disabled={mainAction.isDisabled === true}
+                                isLoading={mainAction.isLoading === true}
+                                onClick={() => {
+                                  mainAction.onChoose?.();
+                                }}
+                              >
+                                <Icon of={mainAction.icon} size={18} />
+                                {mainAction.label}
+                              </Button>
+                            </PlayWithRestart>
+                          )}
+                        </div>
+                      )}
+
+                      {actions.length === 0 ? null : (
+                        <RoundActions
+                          label={say('screens.askableDialog.moreToDoWithThis')}
+                          actions={actions}
+                          isCompact
+                          className="sm:ml-auto"
+                        />
+                      )}
+                    </DialogHeadlinePart>
+                  )}
+
+                  {note === null ? null : (
+                    <DialogHeadlinePart as="span" className="text-sm font-medium text-on-scrim">
+                      <span role="alert">{note}</span>
+                    </DialogHeadlinePart>
+                  )}
+                </DialogHeadline>
+              </TitleHero>
+
+              <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+                <div className="flex min-w-0 flex-col gap-4">
+                  <DialogHeadlinePart className="flex flex-col gap-2.5">
+                    <span className="text-base text-text-muted">
+                      {[
+                        title.rating === null || title.rating === undefined
+                          ? null
+                          : `★ ${title.rating.toFixed(1)}`,
+                        describeAskableFacts({ ...title, genres: [] }),
+                      ]
+                        .filter((fact) => fact !== null && fact !== '')
+                        .join(' · ')}
+                    </span>
+
+                    {title.certification === null ||
+                    title.certification === undefined ||
+                    title.certification === '' ||
+                    title.certificationRegion === null ||
+                    title.certificationRegion === undefined ? null : (
+                      <span className="flex">
+                        <AgeRating
+                          certification={title.certification}
+                          region={title.certificationRegion}
+                        />
+                      </span>
+                    )}
+                  </DialogHeadlinePart>
+
+                  {whoElse === null && myProfileAsk === null ? null : (
+                    <DialogHeadlinePart className="flex flex-col gap-1 text-sm text-text-muted">
+                      {whoElse === null ? null : <span>{whoElse}</span>}
+                      {myProfileAsk === null ? null : <span>{myProfileAsk}</span>}
+                    </DialogHeadlinePart>
+                  )}
+
+                  {title.overview === null ? null : (
+                    <DialogHeadlinePart>
+                      <ReadMore
+                        lines={5}
+                        className="max-w-[65ch] whitespace-pre-line text-base leading-relaxed text-text"
+                      >
+                        {title.overview}
+                      </ReadMore>
                     </DialogHeadlinePart>
                   )}
                 </div>
-              </DialogHeadline>
-            </div>
 
-            <DialogSections className="flex flex-col gap-3 pb-4">
-              {title.overview === null ? null : (
-                <DialogSection heading={say('common.synopsis')}>
-                  <ReadMore
-                    lines={5}
-                    className="max-w-[70ch] whitespace-pre-line text-[0.95rem] leading-relaxed text-text"
-                  >
-                    {title.overview}
-                  </ReadMore>
-                </DialogSection>
-              )}
-
-              {title.tracks.length === 0 ? null : (
-                <DialogSection heading={say('common.songs2')}>
-                  <AlbumTracks tracks={title.tracks} label={title.label} />
-                </DialogSection>
-              )}
-
-              {title.cast.length === 0 ? null : (
-                <DialogSection>
-                  <CastGrid
-                    members={title.cast.map((member) => ({
-                      name: member.name,
-                      role: member.role ?? '',
-                      imageUrl: member.photoUrl,
-                    }))}
-                  />
-                </DialogSection>
-              )}
-
-              {isAddingSeasons ? (
-                <DialogSection>
-                  <SeasonChooser
-                    tmdbId={Number(title.id)}
-                    seasons={adding}
-                    onChange={setAdding}
-                    followsNew={addsFollowing}
-                    onFollowsNew={setAddsFollowing}
-                    alreadyAsked={askedSeasons}
-                    isFollowedAlready={isFollowedAlready}
-                  />
-                </DialogSection>
-              ) : !isAskable ? null : title.kind === 'series' ? (
-                <DialogSection>
-                  <SeasonChooser
-                    tmdbId={Number(title.id)}
-                    seasons={seasons}
-                    onChange={setSeasons}
-                    followsNew={followsNew}
-                    onFollowsNew={setFollowsNew}
-                  />
-                </DialogSection>
-              ) : title.kind === 'artist' ? (
-                <DialogSection>
-                  <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
-                </DialogSection>
-              ) : title.kind === 'book' ? (
-                <DialogSection>
-                  <BookFormatChooser value={bookFormats} onChange={setBookFormats} />
-                  {title.series === null || title.series === undefined ? null : (
-                    <Checkbox
-                      label={say('screens.askableDialog.everyBookInSeries', {
-                        series: title.series.name,
-                      })}
-                      description={say('screens.askableDialog.andItsNewBooks')}
-                      checked={isWholeSeries}
-                      onCheckedChange={setIsWholeSeries}
-                    />
+                <DialogHeadlinePart className="flex flex-col gap-3 text-sm leading-relaxed">
+                  {title.cast.length === 0 ? null : (
+                    <p>
+                      <span className="text-text-muted">{say('common.cast')}: </span>
+                      <span className="text-text">
+                        {title.cast
+                          .slice(0, 3)
+                          .map((member) => member.name)
+                          .join(', ')}
+                      </span>
+                    </p>
                   )}
-                </DialogSection>
-              ) : null}
 
-              {groupReleases(title.albums).map((group) => (
-                <DialogSection key={group.id} heading={group.title}>
-                  <SlidingList
-                    items={group.albums}
-                    keyOf={(album) => album.id}
-                    renderItem={(album) => (
-                      <span className="group flex items-center gap-3 py-2">
-                        <span className="relative size-12 shrink-0">
-                          <MusicArtwork
-                            src={album.coverUrl}
-                            label={say('common.theCoverOfTitle', { title: album.title })}
-                            className="size-12"
-                          />
-                          <span
-                            className={cn(
-                              'absolute inset-0 flex items-center justify-center rounded-md bg-shade/40 transition-opacity duration-[var(--duration-fast)] ease-[var(--ease-out)] focus-within:opacity-100',
-                              sample.heard === album.id || sample.finding === album.id
-                                ? 'opacity-100'
-                                : 'opacity-0 group-hover:opacity-100',
-                            )}
-                          >
+                  {title.genres.length === 0 ? null : (
+                    <p>
+                      <span className="text-text-muted">{say('common.genres')}: </span>
+                      <span className="text-text">{title.genres.join(', ')}</span>
+                    </p>
+                  )}
+                </DialogHeadlinePart>
+              </DialogHeadline>
+
+              <DialogSections isOpen className="flex flex-col gap-10 px-1 pb-8 pt-10 sm:px-2">
+                {title.tracks.length === 0 ? null : (
+                  <DialogSection heading={say('common.songs2')}>
+                    <AlbumTracks tracks={title.tracks} label={title.label} />
+                  </DialogSection>
+                )}
+
+                {isAddingSeasons ? (
+                  <DialogSection>
+                    <SeasonChooser
+                      tmdbId={Number(title.id)}
+                      seasons={adding}
+                      onChange={setAdding}
+                      followsNew={addsFollowing}
+                      onFollowsNew={setAddsFollowing}
+                      alreadyAsked={askedSeasons}
+                      isFollowedAlready={isFollowedAlready}
+                    />
+                  </DialogSection>
+                ) : !isAskable ? null : title.kind === 'series' ? (
+                  <DialogSection>
+                    <SeasonChooser
+                      tmdbId={Number(title.id)}
+                      seasons={seasons}
+                      onChange={setSeasons}
+                      followsNew={followsNew}
+                      onFollowsNew={setFollowsNew}
+                    />
+                  </DialogSection>
+                ) : title.kind === 'artist' ? (
+                  <DialogSection>
+                    <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
+                  </DialogSection>
+                ) : title.kind === 'book' ? (
+                  <DialogSection>
+                    <BookFormatChooser value={bookFormats} onChange={setBookFormats} />
+                    {title.series === null || title.series === undefined ? null : (
+                      <Checkbox
+                        label={say('screens.askableDialog.everyBookInSeries', {
+                          series: title.series.name,
+                        })}
+                        description={say('screens.askableDialog.andItsNewBooks')}
+                        checked={isWholeSeries}
+                        onCheckedChange={setIsWholeSeries}
+                      />
+                    )}
+                  </DialogSection>
+                ) : null}
+
+                {groupReleases(title.albums).map((group) => (
+                  <DialogSection key={group.id} heading={group.title}>
+                    <SlidingList
+                      items={group.albums}
+                      keyOf={(album) => album.id}
+                      renderItem={(album) => (
+                        <span className="group flex items-center gap-3 py-2">
+                          <span className="relative size-12 shrink-0">
+                            <MusicArtwork
+                              src={album.coverUrl}
+                              label={say('common.theCoverOfTitle', { title: album.title })}
+                              className="size-12"
+                            />
+                            <span
+                              className={cn(
+                                'absolute inset-0 flex items-center justify-center rounded-md bg-shade/40 transition-opacity duration-[var(--duration-fast)] ease-[var(--ease-out)] focus-within:opacity-100',
+                                sample.heard === album.id || sample.finding === album.id
+                                  ? 'opacity-100'
+                                  : 'opacity-0 group-hover:opacity-100',
+                              )}
+                            >
+                              <Button
+                                isIconOnly
+                                variant="overlay"
+                                size="xs"
+                                label={
+                                  sample.heard === album.id
+                                    ? say('screens.askableDialog.stopTheSampleOfTitle', {
+                                        title: album.title,
+                                      })
+                                    : say('screens.askableDialog.playASampleOfTitle', {
+                                        title: album.title,
+                                      })
+                                }
+                                isActive={sample.heard === album.id}
+                                isLoading={sample.finding === album.id}
+                                onClick={() => {
+                                  void sample.toggle(album.id, title.title, album.title);
+                                }}
+                              >
+                                <Icon
+                                  of={sample.heard === album.id ? StopFilledIcon : PlayFilledIcon}
+                                  size={14}
+                                />
+                              </Button>
+                            </span>
+                          </span>
+                          <span className="flex min-w-0 flex-1 flex-col">
+                            <span className="truncate text-sm text-text">{album.title}</span>
+                            <span className="text-xs text-text-muted">
+                              {album.firstReleased?.slice(0, 4) ??
+                                say('screens.askableDialog.noYearGiven')}
+                            </span>
+                          </span>
+                          {!kinds.has('album') ? null : askedAlbums.has(album.id) ? (
+                            <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
+                              {say('common.requested')}
+                            </Badge>
+                          ) : (
                             <Button
-                              isIconOnly
-                              variant="overlay"
+                              variant="ghost"
                               size="xs"
-                              label={
-                                sample.heard === album.id
-                                  ? say('screens.askableDialog.stopTheSampleOfTitle', {
-                                      title: album.title,
-                                    })
-                                  : say('screens.askableDialog.playASampleOfTitle', {
-                                      title: album.title,
-                                    })
-                              }
-                              isActive={sample.heard === album.id}
-                              isLoading={sample.finding === album.id}
+                              isLoading={isAsking}
                               onClick={() => {
-                                void sample.toggle(album.id, title.title, album.title);
+                                ask({ kind: 'album', musicBrainzId: album.id }, () => {
+                                  setAskedAlbums(new Set([...askedAlbums, album.id]));
+                                });
                               }}
                             >
-                              <Icon
-                                of={sample.heard === album.id ? StopFilledIcon : PlayFilledIcon}
-                                size={14}
-                              />
+                              {say('common.request')}
                             </Button>
-                          </span>
+                          )}
                         </span>
-                        <span className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate text-sm text-text">{album.title}</span>
-                          <span className="text-xs text-text-muted">
-                            {album.firstReleased?.slice(0, 4) ??
-                              say('screens.askableDialog.noYearGiven')}
-                          </span>
-                        </span>
-                        {!kinds.has('album') ? null : askedAlbums.has(album.id) ? (
-                          <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
-                            {say('common.requested')}
-                          </Badge>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            isLoading={isAsking}
-                            onClick={() => {
-                              ask({ kind: 'album', musicBrainzId: album.id }, () => {
-                                setAskedAlbums(new Set([...askedAlbums, album.id]));
-                              });
-                            }}
-                          >
-                            {say('common.request')}
-                          </Button>
-                        )}
-                      </span>
-                    )}
-                  />
-                </DialogSection>
-              ))}
-            </DialogSections>
-          </DialogArrival>
+                      )}
+                    />
+                  </DialogSection>
+                ))}
+
+                {title.cast.length === 0 ? null : (
+                  <DialogSection>
+                    <CastGrid
+                      members={title.cast.map((member) => ({
+                        personId: member.personId,
+                        name: member.name,
+                        role: member.role ?? '',
+                        imageUrl: member.photoUrl,
+                      }))}
+                      {...(onOpenPerson === undefined
+                        ? {}
+                        : {
+                            onOpenPerson: (member: CastMember) => {
+                              if (member.personId !== null && member.personId !== undefined) {
+                                onOpenPerson(member.personId, member.role);
+                              }
+                            },
+                          })}
+                    />
+                  </DialogSection>
+                )}
+              </DialogSections>
+            </DialogArrival>
+          </TintedGround>
         )}
       </DialogContent>
-
-      <DialogFooter
-        note={
-          problem ??
-          (isStreamable ? streaming.problem : null) ??
-          (isUnrequestable && title.standing.status === 'askable'
-            ? say('common.noLibraryTakesRequestsForThis')
-            : null)
-        }
-        {...(trailerKey === null
-          ? {}
-          : {
-              lead: (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setIsWatchingTrailer(true);
-                  }}
-                >
-                  <Icon of={SquarePlayIcon} size={16} />
-                  {say('common.watchTheTrailer')}
-                </Button>
-              ),
-            })}
-        dismiss={{ onChoose: onClose }}
-        confirm={
-          isStreamable
-            ? {
-                label: say('common.play'),
-                isLoading: streaming.isFinding || streaming.isStarting,
-                onChoose: streaming.start,
-              }
-            : requestAction
-        }
-      >
-        {isStreamable ? (
-          <Button variant="secondary" onClick={streaming.openPicker}>
-            {say('common.sources')}
-          </Button>
-        ) : null}
-
-        {isStreamable && requestAction !== undefined ? (
-          <Button
-            variant="secondary"
-            disabled={requestAction.isDisabled === true}
-            isLoading={requestAction.isLoading === true}
-            onClick={requestAction.onChoose}
-          >
-            {requestAction.label}
-          </Button>
-        ) : null}
-
-        {mayCancel ? (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setIsCancelling(true);
-            }}
-          >
-            {say('common.cancelRequest')}
-          </Button>
-        ) : null}
-
-        {title === null || !isAskable || (title.kind !== 'film' && title.kind !== 'series')
-          ? null
-          : (faces.data ?? [])
-              .filter((server) => server.takesRequests && server.isReachable)
-              .map((server) => (
-                <Button
-                  key={server.id}
-                  variant="ghost"
-                  disabled={!isReady}
-                  isLoading={askingElsewhere === server.id}
-                  onClick={() => {
-                    setAskingElsewhere(server.id);
-
-                    void askLinkedServer(
-                      server.id,
-                      askingFor(
-                        title,
-                        seasons,
-                        releaseTypes,
-                        followsNew,
-                        bookFormats,
-                        isWholeSeries,
-                      ),
-                    )
-                      .then((sent) => {
-                        tellOutcome(
-                          say('screens.askableDialog.askedNameForTitle', {
-                            name: server.name,
-                            title: title.title,
-                          }),
-                          failureOfRefusal(sent.refusal),
-                        );
-                      })
-                      .finally(() => {
-                        setAskingElsewhere(null);
-                      });
-                  }}
-                >
-                  {say('common.askName', { name: server.name })}
-                </Button>
-              ))}
-
-        {title !== null && isElsewhere && isAskable ? (
-          <Button
-            variant="secondary"
-            disabled={!isReady}
-            isLoading={isAsking}
-            onClick={() => {
-              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries));
-            }}
-          >
-            {say('common.requestHere')}
-          </Button>
-        ) : null}
-      </DialogFooter>
 
       <Dialog
         label={

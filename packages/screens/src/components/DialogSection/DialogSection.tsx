@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { IsInDialogSections } from '@ValenceScreens/components/DialogSections/IsInDialogSections';
+import { AreSectionsOpen } from '@ValenceScreens/components/DialogSections/AreSectionsOpen';
 import { Well } from '@ValenceUI/Well';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
@@ -12,6 +13,8 @@ import type { DialogSectionProps } from './DialogSection.types';
  * of its own with its heading in small capitals inside it, so a dialog reads as a stack of cards
  * rather than as text running down the page. A section whose content brings its own heading, such as
  * a row with arrows beside its title, leaves the heading out and lets the content head it.
+ *
+ * Among sections that stand open it has no panel, only a heading over what it holds.
  *
  * Inside a `DialogSections` it rises into place in its turn as the dialog opens; anywhere else it is
  * simply there. It only takes part in an animation it was placed inside on purpose: a dialog opens
@@ -26,7 +29,15 @@ const DialogSection = ({ heading, children, className }: DialogSectionProps) => 
   const prefersReducedMotion = useReducedMotionConfig();
   const isArriving = useContext(IsInDialogSections);
 
-  const panel = (
+  const isOpen = useContext(AreSectionsOpen);
+
+  const panel = isOpen ? (
+    <div className={cn('flex flex-col gap-4', className)}>
+      {heading === undefined ? null : <h3 className={RAIL.title}>{heading}</h3>}
+
+      {children}
+    </div>
+  ) : (
     <Well className={cn('flex flex-col gap-3', className)}>
       {heading === undefined ? null : <h3 className={RAIL.sectionTitle}>{heading}</h3>}
 

@@ -104,6 +104,8 @@ type CatalogueDescription = {
   runtimeMinutes: number | null;
   cast: { personId: number | null; name: string; role: string | null; photoUrl: string | null }[];
   trailerKey: string | null;
+  rating?: number | null;
+  certifications?: Record<string, string>;
 };
 
 type SeriesShape = {

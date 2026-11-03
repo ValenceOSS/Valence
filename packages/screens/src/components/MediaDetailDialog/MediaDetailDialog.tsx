@@ -3,8 +3,6 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
-  ArrowUTurnRight as ArrowUTurnRightIcon,
-  ChevronLeft as ChevronLeftIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
@@ -26,20 +24,26 @@ import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
-import { ActionBar } from '@ValenceUI/ActionBar';
 import { SplitButton } from '@ValenceUI/SplitButton';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Spinner } from '@ValenceUI/Spinner';
 import { DownloadDialog } from '@ValenceScreens/components/DownloadDialog/DownloadDialog';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { useHasScrolledPast } from '@ValenceUI/useHasScrolledPast';
 import { ScrolledTitle } from '@ValenceScreens/components/ScrolledTitle/ScrolledTitle';
-import { BackdropScrim } from '@ValenceUI/BackdropScrim';
-import { Badge } from '@ValenceUI/Badge';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
+import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
+import { PLAY_FACE } from '@ValenceUI/tokens/PLAY_FACE';
+import { WatchedBar } from '@ValenceUI/WatchedBar';
+import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButton/ArtworkCloseButton';
+import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
+import { useArtworkTint } from '@ValenceScreens/library/useArtworkTint';
+import { ArtworkBackButton } from '@ValenceScreens/components/ArtworkBackButton/ArtworkBackButton';
+import { TitleHero } from '@ValenceScreens/components/TitleHero/TitleHero';
+import { RoundActions } from '@ValenceScreens/components/RoundActions/RoundActions';
+import type { RoundAction } from '@ValenceScreens/components/RoundActions/RoundActions.types';
 import { DialogArrival } from '@ValenceScreens/components/DialogArrival/DialogArrival';
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
@@ -78,7 +82,7 @@ import { LikeThisShelf } from '@ValenceScreens/components/LikeThisShelf/LikeThis
 
 const CAST_PLACEHOLDERS = 5;
 
-const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain object-left';
+const LOGO_BOX = 'max-h-[20svh] w-auto max-w-[min(70vw,30rem)] object-contain object-left';
 
 /**
  * Everything known about one item, for deciding whether to watch it: what it is about, who is in it,
@@ -144,6 +148,12 @@ const MediaDetailDialog = ({
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const [isCollecting, setIsCollecting] = useState(false);
   const { may } = useWhatIMayDo();
+
+  const tint = useArtworkTint(
+    media !== null && media.hasBackdrop
+      ? artworkUrl(media.id, 'backdrop', { size: 'small' })
+      : null,
+  );
 
   const prepared = useQuery({ ...downloadQueries.all(), enabled: canKeepFiles() });
 
@@ -211,6 +221,217 @@ const MediaDetailDialog = ({
   const season = metadata?.seasonNumber ?? null;
   const genres = metadata?.genres ?? [];
   const cast = metadata?.cast ?? [];
+  const overview =
+    typeof metadata?.overview === 'string' && metadata.overview !== '' ? metadata.overview : null;
+
+  const startsFrom = chosenVersion === null || isTheSameTitle ? (shownResume ?? 0) : 0;
+  const playSays =
+    chosenVersion !== null
+      ? chosenVersion.versionLabel === null || chosenVersion.versionLabel === undefined
+        ? say('screens.mediaDetailDialog.playThisEdition')
+        : say('common.playName', { name: chosenVersion.versionLabel })
+      : shownResume === undefined
+        ? say('common.play')
+        : say('screens.mediaDetailDialog.resumeFromShownResume', {
+            shownResume: formatDuration(shownResume),
+          });
+
+  const watchedShare =
+    shownResume === undefined || shown.durationSeconds <= 0
+      ? null
+      : shownResume / shown.durationSeconds;
+  const playFaceOf = (
+    <>
+      <Icon of={PlayFilledIcon} size={18} />
+      {playSays}
+      {watchedShare === null ? null : (
+        <WatchedBar
+          watched={watchedShare}
+          className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+        />
+      )}
+    </>
+  );
+
+  const play = (
+    <PlayWithRestart
+      {...(shownResume === undefined
+        ? {}
+        : {
+            onStartAgain: () => {
+              onPlay(chosenVersion ?? shown, 0);
+            },
+          })}
+    >
+      {versions.length === 0 ? (
+        <Button
+          variant="confirm"
+          size="none"
+          className={PLAY_FACE}
+          onClick={() => {
+            onPlay(shown, shownResume ?? 0);
+          }}
+        >
+          {playFaceOf}
+        </Button>
+      ) : (
+        <SplitButton
+          size="lg"
+          choiceLabel={say('screens.mediaDetailDialog.whichEditionToPlay')}
+          choiceName={say('screens.mediaDetailDialog.editions')}
+          onClick={() => {
+            onPlay(chosenVersion ?? shown, startsFrom);
+          }}
+          options={editionOptionsOf(shown, detail?.versionLabel ?? null, versions)}
+          selectedId={chosenVersion?.id ?? shown.id}
+          onSelect={(id) => {
+            setVersion(id === shown.id ? null : id);
+          }}
+        >
+          {playFaceOf}
+        </SplitButton>
+      )}
+    </PlayWithRestart>
+  );
+
+  const actions: RoundAction[] = [
+    ...(onToggleKept === undefined
+      ? []
+      : [
+          {
+            id: 'favourite',
+            label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
+            isChosen: isKept,
+            icon: <KeepHeart isKept={isKept} size={20} />,
+            onChoose: () => {
+              onToggleKept(shown);
+            },
+          },
+        ]),
+    ...(onMarkWatched === undefined
+      ? []
+      : [
+          {
+            id: 'watched',
+            label: isWatched ? say('common.markAsUnwatched') : say('common.markAsWatched'),
+            isChosen: isWatched,
+            icon: <Icon of={isWatched ? CircleCheckFilledIcon : CircleCheckIcon} size={20} />,
+            onChoose: () => {
+              onMarkWatched(shown, !isWatched);
+            },
+          },
+        ]),
+    ...(canKeepFiles()
+      ? [
+          {
+            id: 'download',
+            label:
+              preparing === undefined
+                ? say('common.download')
+                : say('screens.mediaDetailDialog.preparingPercent', { percent }),
+            icon:
+              preparing === undefined ? (
+                <Icon of={DownloadIcon} size={20} />
+              ) : (
+                <Spinner size="sm" label={say('screens.mediaDetailDialog.preparing')} />
+              ),
+            onChoose: () => {
+              setIsDownloading(true);
+            },
+          },
+        ]
+      : []),
+    ...(onShare === undefined
+      ? []
+      : [
+          {
+            id: 'share',
+            label: say('common.share'),
+            icon: <Icon of={ShareIcon} size={20} />,
+            onChoose: () => {
+              onShare(shown);
+            },
+          },
+        ]),
+    ...(onPlayOn === undefined
+      ? []
+      : [
+          {
+            id: 'play-on',
+            label: say('common.playOnTV'),
+            icon: <Icon of={TvIcon} size={18} />,
+            onChoose: () => {
+              onPlayOn(chosenVersion ?? shown, startsFrom);
+            },
+          },
+        ]),
+    ...(!hasTrailer
+      ? []
+      : [
+          {
+            id: 'trailer',
+            label: say('common.watchTheTrailer'),
+            icon: <Icon of={SquarePlayIcon} size={18} />,
+            onChoose: () => {
+              if (trailer === null) {
+                setIsWatchingTrailer(true);
+
+                return;
+              }
+
+              onPlay(trailer, 0);
+            },
+          },
+        ]),
+    ...(onStartParty === undefined
+      ? []
+      : [
+          {
+            id: 'party',
+            label: say('screens.mediaDetailDialog.watchTogether'),
+            icon: <Icon of={UsersIcon} size={18} />,
+            onChoose: () => {
+              onStartParty(shown);
+            },
+          },
+        ]),
+    ...(may('library.edit')
+      ? [
+          {
+            id: 'collection',
+            label: say('common.addToACollection'),
+            icon: <Icon of={LayersIcon} size={18} />,
+            onChoose: () => {
+              setIsCollecting(true);
+            },
+          },
+        ]
+      : []),
+    ...(onDecideForSomebody === undefined
+      ? []
+      : [
+          {
+            id: 'decide',
+            label: say('common.whoMayWatchThis'),
+            icon: <Icon of={UserCheckIcon} size={18} />,
+            onChoose: () => {
+              onDecideForSomebody(shown);
+            },
+          },
+        ]),
+    ...(onHide === undefined
+      ? []
+      : [
+          {
+            id: 'hide',
+            label: say('screens.mediaDetailDialog.hideThis'),
+            icon: <Icon of={EyeOffIcon} size={18} />,
+            onChoose: () => {
+              onHide(shown);
+            },
+          },
+        ]),
+  ];
 
   return (
     <Dialog label={shown.title} isOpen={media !== null} onClose={onClose} size="stage">
@@ -231,478 +452,288 @@ const MediaDetailDialog = ({
           </Button>
         </ScrolledTitle>
 
-        <DialogArrival key={shown.id}>
-          <div ref={topRef} className="relative overflow-hidden rounded-2xl">
-            <div className="relative h-[42vh] min-h-[16rem] sm:h-[26rem]">
-              <MediaPreview
-                mediaId={shown.id}
-                backdropUrl={shown.hasBackdrop ? artworkUrl(shown.id, 'backdrop') : null}
-                durationSeconds={shown.durationSeconds}
-                hasSound
-                {...(onToggleKept === undefined
-                  ? {}
-                  : {
-                      actions: (
-                        <Button
-                          isIconOnly
-                          variant="overlay"
-                          label={
-                            isKept
-                              ? say('screens.bookDialog.stopKeeping')
-                              : say('screens.bookDialog.keep')
-                          }
-                          isActive={isKept}
-                          onClick={() => {
-                            onToggleKept(shown);
-                          }}
-                        >
-                          <KeepHeart isKept={isKept} size={18} />
-                        </Button>
-                      ),
-                    })}
-                repeats={false}
-                fills
-              />
-
-              <BackdropScrim />
-            </div>
-
-            {onBack === undefined ? null : (
-              <div className="absolute left-4 top-4">
-                <Button variant="overlay" size="sm" onClick={onBack}>
-                  <Icon of={ChevronLeftIcon} size={16} />
-                  {backLabel ?? say('common.back')}
-                </Button>
-              </div>
-            )}
-
-            <div className="absolute right-4 top-4">
-              <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
-                <Icon of={XIcon} size={20} />
-              </Button>
-            </div>
-
-            <DialogHeadline className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-5 sm:p-8">
-              <DialogHeadlinePart
-                as="h2"
-                isTitle
-                className={
-                  isLettered
-                    ? 'flex'
-                    : 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
-                }
-              >
-                {isLettered ? (
-                  <TitleLogo
-                    src={titleLogoUrl(shown.id)}
-                    alt={shown.seriesTitle ?? shown.title}
-                    className={LOGO_BOX}
-                    onError={() => {
-                      setUnlettered(shown.id);
-                    }}
-                  />
-                ) : (
-                  (shown.seriesTitle ?? shown.title)
-                )}
-              </DialogHeadlinePart>
-
-              {shown.seriesTitle === null || shown.seriesTitle === undefined ? null : (
-                <DialogHeadlinePart as="span" className="text-sm font-medium text-on-scrim/75">
-                  {shown.title}
-                </DialogHeadlinePart>
-              )}
-
-              <DialogHeadlinePart>
-                <MediaFacts
-                  media={detail === null ? shown : { ...shown, sizeBytes: detail.sizeBytes }}
-                  hasRuntime
-                  hasSize
-                  size="sm"
-                  tone="scrim"
+        <TintedGround tint={tint}>
+          <DialogArrival key={shown.id}>
+            <TitleHero
+              ref={topRef}
+              preview={
+                <MediaPreview
+                  mediaId={shown.id}
+                  backdropUrl={shown.hasBackdrop ? artworkUrl(shown.id, 'backdrop') : null}
+                  durationSeconds={shown.durationSeconds}
+                  hasSound
+                  controlsAtTop
+                  leavesTheTopLeft={onBack !== undefined}
+                  {...(onBack === undefined
+                    ? { closing: <ArtworkCloseButton onClose={onClose} /> }
+                    : {})}
+                  isRoomy
+                  repeats={false}
+                  fills
                 />
-              </DialogHeadlinePart>
-
-              {origin === null ? null : (
-                <DialogHeadlinePart className="text-sm text-on-scrim/80">
-                  {say('common.fromName', { name: origin.name })}
-                </DialogHeadlinePart>
-              )}
-
-              {origin !== null || alsoOn.length === 0 ? null : (
-                <DialogHeadlinePart className="text-sm text-on-scrim/80">
-                  {say('common.alsoOnNames', { names: alsoOn.join(', ') })}
-                </DialogHeadlinePart>
-              )}
-
-              <DialogHeadlinePart className="text-on-scrim/85">
-                <TitleBadges detail={detail} />
-              </DialogHeadlinePart>
-            </DialogHeadline>
-          </div>
-
-          <span ref={pastTheArtwork} aria-hidden className="block h-px" />
-
-          <DialogSections className="flex flex-col gap-3 px-0 pb-4 pt-4">
-            {origin === null || origin.isReachable ? null : (
-              <Callout
-                tone="warning"
-                title={say('common.nameCannotBeReachedRightNow', { name: origin.name })}
-              />
-            )}
-
-            {onRate === undefined ? null : (
-              <RatingPanel
-                subject={{ mediaId: shown.id }}
-                title={shown.title}
-                onRate={(given) => {
-                  onRate(shown, given);
-                }}
-              />
-            )}
-
-            {media !== null && asked.isError ? (
-              <CouldNotRead
-                said={say('screens.mediaDetailDialog.theRestOfThisCouldNotBeRead')}
-                isTryingAgain={asked.isFetching}
-                onTryAgain={() => {
-                  void asked.refetch();
-                }}
-              />
-            ) : null}
-
-            <DialogSection heading={say('common.synopsis')}>
-              {isLoading ? (
-                <div aria-hidden className="flex flex-col gap-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-[92%]" />
-                  <Skeleton className="h-4 w-[70%]" />
-                </div>
-              ) : typeof metadata?.overview === 'string' && metadata.overview !== '' ? (
-                <p className="text-[0.95rem] leading-relaxed text-text">{metadata.overview}</p>
-              ) : (
-                <p className="flex items-center gap-2 text-sm text-text-muted">
-                  <Icon of={InfoIcon} size={16} />
-                  {say('screens.mediaDetailDialog.noSynopsisYetConfigureAMetadata')}
-                </p>
-              )}
-
-              {genres.length === 0 ? null : (
-                <span className="flex flex-wrap gap-1.5">
-                  {genres.map((label) => (
-                    <Badge key={label} size="sm">
-                      {label}
-                    </Badge>
-                  ))}
-                </span>
-              )}
-            </DialogSection>
-
-            <TitleDetails
-              seriesTitle={metadata?.seriesTitle}
-              releaseDate={metadata?.releaseDate}
-              status={metadata?.status}
-              budget={metadata?.budget}
-              revenue={metadata?.revenue}
-              rottenTomatoes={metadata?.rottenTomatoes}
-            />
-
-            <PartOfCollections subject={media === null ? null : subjectOfMedia(shown)} />
-
-            <PluginPanels on="title" subjectId={shown.id} />
-
-            <DialogSection
-              {...(isLoading || cast.length === 0 ? { heading: say('common.cast') } : {})}
+              }
+              {...(onBack === undefined
+                ? {}
+                : {
+                    lead: (
+                      <ArtworkBackButton
+                        label={
+                          backLabel === undefined
+                            ? say('common.back')
+                            : say('common.backToName', { name: backLabel })
+                        }
+                        onBack={onBack}
+                      />
+                    ),
+                  })}
             >
-              {isLoading ? (
-                <>
-                  <ul aria-hidden className="flex gap-4">
-                    {Array.from({ length: CAST_PLACEHOLDERS }, (_, index) => index).map((index) => (
-                      <li key={index} className="flex min-w-0 flex-1 flex-col items-center gap-3">
-                        <Skeleton className="aspect-[2/3] w-full" />
-                        <Skeleton className="h-3 w-16" />
-                        <Skeleton className="h-3 w-12" />
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : cast.length === 0 ? (
-                <>
-                  <p className="flex items-center gap-2 text-sm text-text-muted">
-                    <Icon of={InfoIcon} size={16} />
-                    {say('screens.mediaDetailDialog.nobodyIsCreditedYetAMetadata')}
-                  </p>
-                </>
-              ) : (
-                <CastGrid
-                  members={cast}
-                  {...(onOpenPerson === undefined ? {} : { onOpenPerson })}
-                />
-              )}
-            </DialogSection>
-
-            {extras.length === 0 ? null : (
-              <Rail title={say('common.extras')} sizesCards hasArrows={false} className="px-0">
-                {extras.map((extra) => (
-                  <li key={extra.id}>
-                    <MediaCard
-                      {...(extra.extraKind === null || extra.extraKind === undefined
-                        ? {}
-                        : { eyebrow: EXTRA_KIND_LABELS[extra.extraKind] })}
-                      title={extra.title}
-                      subtitle={<MediaFacts media={extra} hasRuntime />}
-                      shape="wide"
-                      {...(extra.hasBackdrop
-                        ? { imageUrl: artworkUrl(extra.id, 'backdrop', { size: 'medium' }) }
-                        : {})}
-                      onSelect={() => {
-                        onPlay(extra, 0);
+              <DialogHeadline className="flex flex-col items-start gap-8">
+                <DialogHeadlinePart
+                  as="h2"
+                  isTitle
+                  className={
+                    isLettered
+                      ? 'flex'
+                      : 'max-w-[18ch] text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
+                  }
+                >
+                  {isLettered ? (
+                    <TitleLogo
+                      src={titleLogoUrl(shown.id)}
+                      alt={shown.seriesTitle ?? shown.title}
+                      className={LOGO_BOX}
+                      onError={() => {
+                        setUnlettered(shown.id);
                       }}
                     />
-                  </li>
-                ))}
-              </Rail>
-            )}
+                  ) : (
+                    (shown.seriesTitle ?? shown.title)
+                  )}
+                </DialogHeadlinePart>
 
-            {shownSiblings.length === 0 ? null : (
-              <DialogSection>
-                <Rail
-                  title={
-                    season === null
-                      ? say('screens.mediaDetailDialog.moreFromThisSeries')
-                      : say('screens.mediaDetailDialog.moreFromSeasonSeason', {
-                          season: season.toString(),
-                        })
-                  }
-                  hasArrows={false}
-                  look="section"
-                  className="px-0"
-                >
-                  {shownSiblings.map((sibling) => (
-                    <li key={sibling.id} className="flex">
-                      <SeasonMate
-                        episode={sibling}
-                        watched={watchedFractionFor?.(sibling.id)}
+                <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
+                  <div className="w-full sm:w-[21rem]">{play}</div>
+
+                  <RoundActions
+                    label={say('screens.mediaDetailDialog.moreToDoWithThis')}
+                    actions={actions}
+                    isCompact
+                    className="sm:ml-auto"
+                  />
+                </DialogHeadlinePart>
+              </DialogHeadline>
+            </TitleHero>
+
+            <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+              <div className="flex min-w-0 flex-col gap-4">
+                {shown.seriesTitle === null || shown.seriesTitle === undefined ? null : (
+                  <DialogHeadlinePart as="span" className="text-lg font-semibold text-text">
+                    {shown.title}
+                  </DialogHeadlinePart>
+                )}
+
+                <DialogHeadlinePart className="flex flex-col gap-2.5">
+                  <MediaFacts
+                    media={detail === null ? shown : { ...shown, sizeBytes: detail.sizeBytes }}
+                    hasRuntime
+                    hasSize
+                    size="base"
+                    tone="muted"
+                  />
+                  <TitleBadges detail={detail} />
+                </DialogHeadlinePart>
+
+                <DialogHeadlinePart>
+                  {isLoading ? (
+                    <div aria-hidden className="flex flex-col gap-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-[92%]" />
+                      <Skeleton className="h-4 w-[70%]" />
+                    </div>
+                  ) : overview === null ? (
+                    <p className="flex items-center gap-2 text-sm text-text-muted">
+                      <Icon of={InfoIcon} size={16} />
+                      {say('screens.mediaDetailDialog.noSynopsisYetConfigureAMetadata')}
+                    </p>
+                  ) : (
+                    <p className="max-w-[65ch] text-base leading-relaxed text-text">{overview}</p>
+                  )}
+                </DialogHeadlinePart>
+              </div>
+
+              <DialogHeadlinePart className="flex flex-col gap-3 text-sm leading-relaxed">
+                {cast.length === 0 ? null : (
+                  <p>
+                    <span className="text-text-muted">{say('common.cast')}: </span>
+                    <span className="text-text">
+                      {cast
+                        .slice(0, 3)
+                        .map((member) => member.name)
+                        .join(', ')}
+                    </span>
+                  </p>
+                )}
+
+                {genres.length === 0 ? null : (
+                  <p>
+                    <span className="text-text-muted">{say('common.genres')}: </span>
+                    <span className="text-text">{genres.join(', ')}</span>
+                  </p>
+                )}
+
+                {origin === null && alsoOn.length === 0 ? null : (
+                  <p className="text-text-muted">
+                    {origin === null
+                      ? say('common.alsoOnNames', { names: alsoOn.join(', ') })
+                      : say('common.fromName', { name: origin.name })}
+                  </p>
+                )}
+
+                {onRate === undefined ? null : (
+                  <RatingPanel
+                    subject={{ mediaId: shown.id }}
+                    title={shown.title}
+                    isBare
+                    onRate={(given) => {
+                      onRate(shown, given);
+                    }}
+                  />
+                )}
+              </DialogHeadlinePart>
+            </DialogHeadline>
+
+            <span ref={pastTheArtwork} aria-hidden className="block h-px" />
+
+            <DialogSections isOpen className="flex flex-col gap-10 px-1 pb-8 pt-10 sm:px-2">
+              {origin === null || origin.isReachable ? null : (
+                <Callout
+                  tone="warning"
+                  title={say('common.nameCannotBeReachedRightNow', { name: origin.name })}
+                />
+              )}
+
+              {media !== null && asked.isError ? (
+                <CouldNotRead
+                  said={say('screens.mediaDetailDialog.theRestOfThisCouldNotBeRead')}
+                  isTryingAgain={asked.isFetching}
+                  onTryAgain={() => {
+                    void asked.refetch();
+                  }}
+                />
+              ) : null}
+
+              <TitleDetails
+                seriesTitle={metadata?.seriesTitle}
+                releaseDate={metadata?.releaseDate}
+                status={metadata?.status}
+                budget={metadata?.budget}
+                revenue={metadata?.revenue}
+                rottenTomatoes={metadata?.rottenTomatoes}
+              />
+
+              <PartOfCollections subject={media === null ? null : subjectOfMedia(shown)} />
+
+              <PluginPanels on="title" subjectId={shown.id} />
+
+              <DialogSection
+                {...(isLoading || cast.length === 0 ? { heading: say('common.cast') } : {})}
+              >
+                {isLoading ? (
+                  <>
+                    <ul aria-hidden className="flex gap-4">
+                      {Array.from({ length: CAST_PLACEHOLDERS }, (_, index) => index).map(
+                        (index) => (
+                          <li
+                            key={index}
+                            className="flex min-w-0 flex-1 flex-col items-center gap-3"
+                          >
+                            <Skeleton className="aspect-[2/3] w-full" />
+                            <Skeleton className="h-3 w-16" />
+                            <Skeleton className="h-3 w-12" />
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </>
+                ) : cast.length === 0 ? (
+                  <>
+                    <p className="flex items-center gap-2 text-sm text-text-muted">
+                      <Icon of={InfoIcon} size={16} />
+                      {say('screens.mediaDetailDialog.nobodyIsCreditedYetAMetadata')}
+                    </p>
+                  </>
+                ) : (
+                  <CastGrid
+                    members={cast}
+                    {...(onOpenPerson === undefined ? {} : { onOpenPerson })}
+                  />
+                )}
+              </DialogSection>
+
+              {extras.length === 0 ? null : (
+                <Rail title={say('common.extras')} sizesCards hasArrows={false} className="px-0">
+                  {extras.map((extra) => (
+                    <li key={extra.id}>
+                      <MediaCard
+                        {...(extra.extraKind === null || extra.extraKind === undefined
+                          ? {}
+                          : { eyebrow: EXTRA_KIND_LABELS[extra.extraKind] })}
+                        title={extra.title}
+                        subtitle={<MediaFacts media={extra} hasRuntime />}
+                        shape="wide"
+                        {...(extra.hasBackdrop
+                          ? { imageUrl: artworkUrl(extra.id, 'backdrop', { size: 'medium' }) }
+                          : {})}
                         onSelect={() => {
-                          onSelectSibling?.(sibling);
+                          onPlay(extra, 0);
                         }}
                       />
                     </li>
                   ))}
                 </Rail>
-              </DialogSection>
-            )}
-
-            {onInspect === undefined || onOpenShow === undefined || !isAFilm ? null : (
-              <LikeThisShelf
-                mediaId={shown.id}
-                onPlay={onPlay}
-                onInspect={onInspect}
-                onOpenShow={onOpenShow}
-              />
-            )}
-          </DialogSections>
-        </DialogArrival>
-      </DialogContent>
-
-      <DialogFooter>
-        <ActionBar
-          label={say('screens.mediaDetailDialog.moreToDoWithThis')}
-          primary={
-            <div className="flex w-full items-center gap-2">
-              {versions.length === 0 ? (
-                <Button
-                  variant="confirm"
-                  size="lg"
-                  className="min-w-0 flex-1"
-                  onClick={() => {
-                    onPlay(shown, shownResume ?? 0);
-                  }}
-                >
-                  <Icon of={PlayFilledIcon} size={18} />
-                  {shownResume === undefined
-                    ? say('common.play')
-                    : say('screens.mediaDetailDialog.resumeFromShownResume', {
-                        shownResume: formatDuration(shownResume),
-                      })}
-                </Button>
-              ) : (
-                <SplitButton
-                  className="flex-1"
-                  choiceLabel={say('screens.mediaDetailDialog.whichEditionToPlay')}
-                  choiceName={say('screens.mediaDetailDialog.editions')}
-                  onClick={() => {
-                    onPlay(
-                      chosenVersion ?? shown,
-                      chosenVersion === null || isTheSameTitle ? (shownResume ?? 0) : 0,
-                    );
-                  }}
-                  options={editionOptionsOf(shown, detail?.versionLabel ?? null, versions)}
-                  selectedId={chosenVersion?.id ?? shown.id}
-                  onSelect={(id) => {
-                    setVersion(id === shown.id ? null : id);
-                  }}
-                >
-                  <Icon of={PlayFilledIcon} size={18} />
-                  {chosenVersion !== null
-                    ? chosenVersion.versionLabel === null ||
-                      chosenVersion.versionLabel === undefined
-                      ? say('screens.mediaDetailDialog.playThisEdition')
-                      : say('common.playName', { name: chosenVersion.versionLabel })
-                    : shownResume === undefined
-                      ? say('common.play')
-                      : say('screens.mediaDetailDialog.resumeFromShownResume', {
-                          shownResume: formatDuration(shownResume),
-                        })}
-                </SplitButton>
               )}
-            </div>
-          }
-          actions={[
-            ...(!hasTrailer
-              ? []
-              : [
-                  {
-                    id: 'trailer',
-                    isPinned: true,
-                    label: say('common.watchTheTrailer'),
-                    icon: <Icon of={SquarePlayIcon} size={18} />,
-                    onChoose: () => {
-                      if (trailer === null) {
-                        setIsWatchingTrailer(true);
 
-                        return;
-                      }
+              {shownSiblings.length === 0 ? null : (
+                <DialogSection>
+                  <Rail
+                    title={
+                      season === null
+                        ? say('screens.mediaDetailDialog.moreFromThisSeries')
+                        : say('screens.mediaDetailDialog.moreFromSeasonSeason', {
+                            season: season.toString(),
+                          })
+                    }
+                    hasArrows={false}
+                    look="title"
+                    className="px-0"
+                  >
+                    {shownSiblings.map((sibling) => (
+                      <li key={sibling.id} className="flex">
+                        <SeasonMate
+                          episode={sibling}
+                          watched={watchedFractionFor?.(sibling.id)}
+                          onSelect={() => {
+                            onSelectSibling?.(sibling);
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </Rail>
+                </DialogSection>
+              )}
 
-                      onPlay(trailer, 0);
-                    },
-                  },
-                ]),
-            ...(shownResume === undefined
-              ? []
-              : [
-                  {
-                    id: 'again',
-                    label: say('common.startAgain'),
-                    icon: <Icon of={ArrowUTurnRightIcon} size={18} />,
-                    onChoose: () => {
-                      onPlay(shown, 0);
-                    },
-                  },
-                ]),
-            ...(onMarkWatched === undefined
-              ? []
-              : [
-                  {
-                    id: 'watched',
-                    label: isWatched ? say('common.markAsUnwatched') : say('common.markAsWatched'),
-                    icon: (
-                      <Icon of={isWatched ? CircleCheckFilledIcon : CircleCheckIcon} size={18} />
-                    ),
-                    onChoose: () => {
-                      onMarkWatched(shown, !isWatched);
-                    },
-                  },
-                ]),
-            ...(onShare === undefined
-              ? []
-              : [
-                  {
-                    id: 'share',
-                    isPinned: true,
-                    label: say('common.share'),
-                    icon: <Icon of={ShareIcon} size={18} />,
-                    onChoose: () => {
-                      onShare(shown);
-                    },
-                  },
-                ]),
-            ...(canKeepFiles()
-              ? [
-                  {
-                    id: 'download',
-                    label:
-                      preparing === undefined
-                        ? say('common.download')
-                        : say('screens.mediaDetailDialog.preparingPercent', { percent }),
-                    icon:
-                      preparing === undefined ? (
-                        <Icon of={DownloadIcon} size={18} />
-                      ) : (
-                        <Spinner size="sm" label={say('screens.mediaDetailDialog.preparing')} />
-                      ),
-                    onChoose: () => {
-                      setIsDownloading(true);
-                    },
-                  },
-                ]
-              : []),
-            ...(onPlayOn === undefined
-              ? []
-              : [
-                  {
-                    id: 'play-on',
-                    isPinned: true,
-                    label: say('common.playOnTV'),
-                    icon: <Icon of={TvIcon} size={18} />,
-                    onChoose: () => {
-                      onPlayOn(
-                        chosenVersion ?? shown,
-                        chosenVersion === null || isTheSameTitle ? (shownResume ?? 0) : 0,
-                      );
-                    },
-                  },
-                ]),
-            ...(onStartParty === undefined
-              ? []
-              : [
-                  {
-                    id: 'party',
-                    label: say('screens.mediaDetailDialog.watchTogether'),
-                    icon: <Icon of={UsersIcon} size={18} />,
-                    onChoose: () => {
-                      onStartParty(shown);
-                    },
-                  },
-                ]),
-            ...(onHide === undefined
-              ? []
-              : [
-                  {
-                    id: 'hide',
-                    label: say('screens.mediaDetailDialog.hideThis'),
-                    icon: <Icon of={EyeOffIcon} size={18} />,
-                    onChoose: () => {
-                      onHide(shown);
-                    },
-                  },
-                ]),
-            ...(onDecideForSomebody === undefined
-              ? []
-              : [
-                  {
-                    id: 'decide',
-                    label: say('common.whoMayWatchThis'),
-                    icon: <Icon of={UserCheckIcon} size={18} />,
-                    onChoose: () => {
-                      onDecideForSomebody(shown);
-                    },
-                  },
-                ]),
-            ...(may('library.edit')
-              ? [
-                  {
-                    id: 'collection',
-                    label: say('common.addToACollection'),
-                    icon: <Icon of={LayersIcon} size={18} />,
-                    onChoose: () => {
-                      setIsCollecting(true);
-                    },
-                  },
-                ]
-              : []),
-          ]}
-        />
-      </DialogFooter>
+              {onInspect === undefined || onOpenShow === undefined || !isAFilm ? null : (
+                <LikeThisShelf
+                  mediaId={shown.id}
+                  onPlay={onPlay}
+                  onInspect={onInspect}
+                  onOpenShow={onOpenShow}
+                />
+              )}
+            </DialogSections>
+          </DialogArrival>
+        </TintedGround>
+      </DialogContent>
 
       <DownloadDialog
         media={isDownloading ? shown : null}

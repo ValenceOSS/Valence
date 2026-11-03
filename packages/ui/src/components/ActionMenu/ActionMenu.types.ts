@@ -21,7 +21,15 @@ type ActionMenuGroup = {
 
 type ActionMenuSize = 'sm' | 'md';
 
-type ActionMenuLook = 'plain' | 'face' | 'pill' | 'raised' | 'labelled' | 'segment' | 'overlay';
+type ActionMenuLook =
+  | 'plain'
+  | 'face'
+  | 'pill'
+  | 'raised'
+  | 'labelled'
+  | 'segment'
+  | 'overlay'
+  | 'play';
 
 type ActionMenuProps = {
   label: string;

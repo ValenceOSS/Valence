@@ -87,7 +87,7 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
   default: '',
   stage: cn(
     'h-full w-full max-w-none rounded-none p-0',
-    'sm:h-[88vh] sm:max-h-[88vh] sm:w-[min(60rem,94vw)] sm:rounded-2xl',
+    'sm:h-[88vh] sm:max-h-[88vh] sm:w-[min(76rem,94vw)] sm:rounded-2xl',
   ),
   drawer: cn(
     'h-full w-full max-w-none rounded-none p-0',

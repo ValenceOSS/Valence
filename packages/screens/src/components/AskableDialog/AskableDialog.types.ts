@@ -5,6 +5,7 @@ type AskableDialogProps = {
   onClose: () => void;
   onOpen: (kind: MediaRequestKind, mediaId: string) => void;
   onPlay: (mediaId: string) => void;
+  onOpenPerson?: (personId: number, role: string) => void;
 };
 
 export type { AskableDialogProps };

@@ -28,58 +28,65 @@ const NOTHING: HouseholdRating = { average: null, count: 0 };
  * @param subject - The item, programme or book being rated.
  * @param title - What is being rated, for anybody not looking at the screen.
  * @param onRate - Called with what they gave it, or null to take it back.
+ * @param isBare - Whether to stand without a card of its own, beside a title's other details.
  * @param className - Extra classes for the caller's own layout.
  */
-const RatingPanel = ({ subject, title, onRate, className }: RatingPanelProps) => {
+const RatingPanel = ({ subject, title, onRate, isBare = false, className }: RatingPanelProps) => {
   const stars = useStars(useWatchingProfile(), subject);
 
   const asked = useQuery(viewingQueries.household(subject));
 
   const household = asked.data ?? NOTHING;
 
-  return (
+  const ratings = (
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-text-muted">
+          {say('phone.theStars.personalRating')}
+        </span>
+
+        <StarRating
+          stars={stars}
+          label={title}
+          onRate={(given) => {
+            onRate(given);
+          }}
+          onClear={() => {
+            onRate(null);
+          }}
+        />
+      </div>
+
+      {household.average === null ? null : (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-text-muted">
+            {say('screens.ratingPanel.household')}
+          </span>
+
+          <span className="flex items-center gap-2">
+            <StarRating
+              stars={household.average}
+              label={say('screens.ratingPanel.titleHousehold', { title })}
+              size="sm"
+            />
+            <span className="text-sm tabular-nums text-text">{household.average.toFixed(1)}</span>
+            <span className="font-body text-xs text-text-muted">
+              {sayCount('screens.ratingPanel.fromCountRating', household.count)}
+            </span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+
+  return isBare ? (
+    <div className={className}>{ratings}</div>
+  ) : (
     <DialogSection
       heading={say('screens.ratingPanel.ratings')}
       {...(className === undefined ? {} : { className })}
     >
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-text-muted">
-            {say('screens.ratingPanel.you')}
-          </span>
-
-          <StarRating
-            stars={stars}
-            label={title}
-            onRate={(given) => {
-              onRate(given);
-            }}
-            onClear={() => {
-              onRate(null);
-            }}
-          />
-        </div>
-
-        {household.average === null ? null : (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-text-muted">
-              {say('screens.ratingPanel.household')}
-            </span>
-
-            <span className="flex items-center gap-2">
-              <StarRating
-                stars={household.average}
-                label={say('screens.ratingPanel.titleHousehold', { title })}
-                size="sm"
-              />
-              <span className="text-sm tabular-nums text-text">{household.average.toFixed(1)}</span>
-              <span className="font-body text-xs text-text-muted">
-                {sayCount('screens.ratingPanel.fromCountRating', household.count)}
-              </span>
-            </span>
-          </div>
-        )}
-      </div>
+      {ratings}
     </DialogSection>
   );
 };

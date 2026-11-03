@@ -91,7 +91,7 @@ describe('EpisodeRow', () => {
     expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
   });
 
-  it('offers to mark an unwatched episode as watched, in the white button', async () => {
+  it('offers to mark an unwatched episode as watched, as a white mark alone', async () => {
     const user = userEvent.setup();
     const onMarkWatched = vi.fn();
 
@@ -99,7 +99,7 @@ describe('EpisodeRow', () => {
 
     const mark = screen.getByRole('button', { name: "Mark Yuki's World as watched" });
 
-    expect(mark).toHaveTextContent('Mark as watched');
+    expect(mark.textContent).toBe('');
     expect(mark).toHaveClass('bg-white');
 
     await user.click(mark);
@@ -122,7 +122,7 @@ describe('EpisodeRow', () => {
 
     const mark = screen.getByRole('button', { name: "Mark Yuki's World as unwatched" });
 
-    expect(mark).toHaveTextContent('Watched');
+    expect(mark.textContent).toBe('');
     expect(mark).not.toHaveClass('bg-white');
 
     await user.click(mark);

@@ -4,6 +4,8 @@ import { useLikeThis } from '@ValenceClient/library/useLikeThis';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { say } from '@ValenceI18n/say';
+import { useContext } from 'react';
+import { AreSectionsOpen } from '@ValenceScreens/components/DialogSections/AreSectionsOpen';
 import type { LikeThisShelfProps } from './LikeThisShelf.types';
 
 /**
@@ -16,6 +18,7 @@ import type { LikeThisShelfProps } from './LikeThisShelf.types';
  * @param onOpenShow - Told to open a programme's page.
  */
 const LikeThisShelf = ({ mediaId, onPlay, onInspect, onOpenShow }: LikeThisShelfProps) => {
+  const isOpen = useContext(AreSectionsOpen);
   const alike = useLikeThis(mediaId);
 
   if (alike.length === 0) {
@@ -27,8 +30,9 @@ const LikeThisShelf = ({ mediaId, onPlay, onInspect, onOpenShow }: LikeThisShelf
       <Rail
         title={say('common.moreLikeThis')}
         sizesCards
+        cards="portrait"
         hasArrows={false}
-        look="section"
+        look={isOpen ? 'title' : 'section'}
         className="px-0"
       >
         {alike.map((media, at) => (

@@ -4,6 +4,7 @@ type RatingPanelProps = {
   subject: RatingSubject;
   title: string;
   onRate: (stars: number | null) => void;
+  isBare?: boolean;
   className?: string;
 };
 
