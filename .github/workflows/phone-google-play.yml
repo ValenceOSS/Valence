@@ -1,0 +1,135 @@
+name: Phone app to Google Play
+
+# Builds the Android phone app on one of GitHub's Linux runners and uploads it to a Google Play
+# testing track, the way phone-testflight.yml sends the iPhone app to TestFlight.
+#
+# The build runs here rather than on Expo's cloud, so it never waits in their queue. EAS is still
+# asked for two things, both in a few seconds: the upload keystore it keeps for the app, and the
+# next version code, which it counts so that a build from here and one from anywhere else never
+# share one. The upload goes straight to Google Play's publishing API with a service account key,
+# so it never waits for one of Expo's submitters either.
+#
+# Linux rather than macOS: an Android build needs nothing a Mac has, the runner image already
+# carries the Android SDK, and a Linux runner bills at a tenth of a macOS one.
+#
+# Secrets it needs, under Settings → Secrets and variables → Actions:
+#   EXPO_TOKEN                        an Expo robot access token for the valence-oss organisation
+#   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON  the whole JSON key of a Google Cloud service account that
+#                                     has been invited to the Play Console with permission to
+#                                     release to testing tracks
+#
+# Google Play only takes uploads through its API once the app exists in the Play Console and one
+# build has been uploaded there by hand. Until the app's first release has been reviewed, Google
+# only accepts a release as a draft, which is why draft is the default: it is rolled out to the
+# testers from the console.
+
+on:
+  # Called by apps.yml on every release, and runnable by hand.
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+        default: ''
+      profile:
+        type: string
+        required: false
+        default: production
+      track:
+        type: string
+        required: false
+        default: internal
+      status:
+        type: string
+        required: false
+        default: draft
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit to build, where it should not be the one this is started from
+        required: false
+        default: ''
+      profile:
+        description: Which EAS build profile to build with
+        type: choice
+        options:
+          - production
+          - preview
+        default: production
+      track:
+        description: Which Google Play testing track to release to
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+        default: internal
+      status:
+        description: Whether testers get it straight away, or it waits as a draft in the console
+        type: choice
+        options:
+          - draft
+          - completed
+        default: draft
+
+concurrency:
+  group: phone-google-play
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  google-play:
+    name: Build and send to Google Play
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - run: pnpm install --frozen-lockfile
+
+      # EAS gives "expo doctor" thirty seconds, then kills it and every process under it. A process
+      # that has already exited by then makes that kill throw, nothing catches it, and the whole
+      # build fails, although the doctor's findings are only ever warnings. It is left out here.
+      - name: Build
+        working-directory: apps/mobile
+        run: >
+          npx eas-cli@24.10.0 build --local --platform android --profile "$PROFILE" --non-interactive
+          --output "$RUNNER_TEMP/valence.aab"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          PROFILE: ${{ inputs.profile }}
+          EAS_BUILD_DISABLE_EXPO_DOCTOR_STEP: '1'
+
+      - name: Send to Google Play
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: app.valence.android
+          releaseFiles: ${{ runner.temp }}/valence.aab
+          track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
+
+      # Kept for a few days, so a build that Google turns down can be looked at, or sent again by
+      # hand without building it twice.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: valence-android-${{ inputs.profile }}
+          path: ${{ runner.temp }}/valence.aab
+          if-no-files-found: error
+          retention-days: 7
