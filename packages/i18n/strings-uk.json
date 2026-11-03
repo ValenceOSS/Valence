@@ -23731,22 +23731,22 @@
   },
   {
     "handler": "screens.adminArea.updatesPanel.devBuildCard.count.andMore.one",
-    "text": "And {count} more change on GitHub",
+    "text": "And {count} more commit on GitHub",
     "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
     "handler": "screens.adminArea.updatesPanel.devBuildCard.count.andMore.other",
-    "text": "And {count} more changes on GitHub",
+    "text": "And {count} more commits on GitHub",
     "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
     "handler": "screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild.one",
-    "text": "{count} change since this build",
+    "text": "{count} commit on main since this build",
     "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
     "handler": "screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild.other",
-    "text": "{count} changes since this build",
+    "text": "{count} commits on main since this build",
     "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
@@ -35242,13 +35242,13 @@
   },
   {
     "handler": "server.updates.checkDevBuild.githubAnsweredStatus",
-    "text": "GitHub answered {status} when asked for the newest dev build.",
+    "text": "GitHub answered {status} when asked to compare this build with main.",
     "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`). {status} is the HTTP status GitHub answered with."
   },
   {
     "handler": "server.updates.checkDevBuild.githubCouldNotBeReached",
-    "text": "GitHub could not be reached to look for a newer dev build.",
-    "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`)."
+    "text": "Valence could not check whether a newer dev build is out.",
+    "context": "Why the admin area could not say whether a newer development build is out (from `createUpdateChecker`), where the registry or GitHub could not be reached."
   },
   {
     "handler": "server.updates.checkDevBuild.theRegistryAnsweredStatus",

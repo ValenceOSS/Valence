@@ -35242,13 +35242,13 @@
   },
   {
     "handler": "server.updates.checkDevBuild.githubAnsweredStatus",
-    "text": "GitHub answered {status} when asked for the newest dev build.",
+    "text": "GitHub answered {status} when asked to compare this build with main.",
     "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`). {status} is the HTTP status GitHub answered with."
   },
   {
     "handler": "server.updates.checkDevBuild.githubCouldNotBeReached",
-    "text": "GitHub could not be reached to look for a newer dev build.",
-    "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`)."
+    "text": "Valence could not check whether a newer dev build is out.",
+    "context": "Why the admin area could not say whether a newer development build is out (from `createUpdateChecker`), where the registry or GitHub could not be reached."
   },
   {
     "handler": "server.updates.checkDevBuild.theRegistryAnsweredStatus",

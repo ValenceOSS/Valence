@@ -8975,9 +8975,9 @@ const ENGLISH = {
     'The plugin sent something Valence can’t display. The details are in the server log.',
   'server.surfaces.cleanSurface.thisCouldNotBeShown': 'Couldn’t show this',
   'server.updates.checkDevBuild.githubAnsweredStatus':
-    'GitHub answered {status} when asked for the newest dev build.',
+    'GitHub answered {status} when asked to compare this build with main.',
   'server.updates.checkDevBuild.githubCouldNotBeReached':
-    'GitHub could not be reached to look for a newer dev build.',
+    'Valence could not check whether a newer dev build is out.',
   'server.updates.checkDevBuild.theRegistryAnsweredStatus':
     'The container registry answered {status} when asked for the newest dev build.',
   'server.updates.checkDevBuild.thisBuildIsNotOnGithub':
