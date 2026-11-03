@@ -23,11 +23,19 @@ describe('WallpaperCard', () => {
       </ul>,
     );
 
-    expect(screen.getByRole('link', { name: 'Desktop 4K' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '16:9' })).toHaveAttribute(
       'download',
-      'Valence Tide - Desktop 4K.jpg',
+      'Valence Tide - Desktop 16x9 3840x2160.jpg',
     );
-    expect(screen.getByRole('link', { name: 'Phone 4K' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '16:10' })).toHaveAttribute(
+      'href',
+      '/brand/wallpapers/valence-tide-mac.jpg',
+    );
+    expect(screen.getByRole('link', { name: '21:9' })).toHaveAttribute(
+      'href',
+      '/brand/wallpapers/valence-tide-ultrawide.jpg',
+    );
+    expect(screen.getByRole('link', { name: 'Phone' })).toHaveAttribute(
       'href',
       '/brand/wallpapers/valence-tide-phone.jpg',
     );

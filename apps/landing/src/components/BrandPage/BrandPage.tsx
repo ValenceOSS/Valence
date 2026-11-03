@@ -268,7 +268,7 @@ const BrandPage = () => (
     <BrandSection
       id="wallpapers"
       title="Wallpapers"
-      text="Ten wallpapers at 4K, for desktop (3840 × 2160) and phone (2160 × 3840)."
+      text="Ten wallpapers for every screen: 16:9 and 16:10 desktops at 4K, 21:9 ultrawides at 5120 × 2160, and phones at 1800 × 3900."
       actions={
         <>
           <Link
