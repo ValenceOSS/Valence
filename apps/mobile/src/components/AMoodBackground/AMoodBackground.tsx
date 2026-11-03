@@ -29,8 +29,8 @@ const styles = StyleSheet.create({
 /**
  * The lights behind the way in, as the web's mood background draws them: soft blooms of colour
  * across the screen, fading into the page towards the foot. Unlike the web's they hold still, so
- * while nothing in it is changing the whole of it is kept as one picture, and a page moving over it
- * or beneath it costs one layer rather than a screenful of them. While its colours crossfade it is
+ * while nothing in it is changing the whole of it is kept as one picture — on Android as well as the
+ * iPhone — and a page moving over it or beneath it costs one layer rather than a screenful of them. While its colours crossfade it is
  * drawn as it is rather than kept, since a picture of something fading has to be taken again on
  * every frame of the fade.
  *
@@ -143,7 +143,12 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   };
 
   return (
-    <View pointerEvents="none" style={styles.fills} shouldRasterizeIOS={settledOn === lookingAt}>
+    <View
+      pointerEvents="none"
+      style={styles.fills}
+      shouldRasterizeIOS={settledOn === lookingAt}
+      renderToHardwareTextureAndroid={settledOn === lookingAt}
+    >
       {hasHouseLights ? (
         <Animated.View
           style={[
