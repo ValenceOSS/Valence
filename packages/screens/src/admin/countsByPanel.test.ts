@@ -10,6 +10,7 @@ describe('countsByPanel', () => {
       jobs: 3,
       health: 4,
       latest: null,
+      isLatestADevBuild: false,
     });
 
     expect(counts.requests).toEqual({ count: 2, isUrgent: false });
@@ -25,6 +26,7 @@ describe('countsByPanel', () => {
       jobs: 0,
       health: 0,
       latest: null,
+      isLatestADevBuild: false,
     });
 
     expect(counts.catalogue).toEqual({ count: 2, isUrgent: true });

@@ -56,6 +56,7 @@ describe('useAdminAttention', () => {
       expect(result.current.health).toBe(1);
     });
     expect(result.current.latest).toBe('1.7.0');
+    expect(result.current.isLatestADevBuild).toBe(false);
     expect(result.current.jobs).toBe(4);
     expect(result.current.requests).toBe(0);
   });
@@ -108,5 +109,50 @@ describe('useAdminAttention', () => {
       expect(result.current.failedRequests).toBe(2);
     });
     expect(result.current.downloads).toBe(1);
+  });
+
+  it('names a newer release before a newer dev build, where a dev build is behind both', async () => {
+    const answers: Record<string, object> = {
+      ...ANSWERS,
+      '/api/admin/updates': {
+        ...ANSWERS['/api/admin/updates'],
+        current: '1.7.0-dev.a1a1a1a',
+        latest: '1.7.0',
+        isNewer: true,
+        dev: {
+          commit: 'a1a1a1a',
+          newest: 'c3c3c3c',
+          builtAt: null,
+          isNewer: true,
+          isOffMain: false,
+          behindBy: 2,
+          commits: [],
+          problem: null,
+        },
+      },
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((path: string) => {
+        const key = Object.keys(answers).find((one) => path.startsWith(one));
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify(key === undefined ? { records: [], total: 0 } : answers[key]),
+          ),
+        );
+      }),
+    );
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: cache }, children);
+
+    const { result } = renderHook(() => useAdminAttention(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.latest).toBe('1.7.0');
+    });
+    expect(result.current.isLatestADevBuild).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { PublishedReleaseSchema } from './PublishedRelease';
+import { DevBuildCheckSchema } from './DevBuildCheck';
 
 const UpdateCheckSchema = z.object({
   current: z.string(),
@@ -13,6 +14,7 @@ const UpdateCheckSchema = z.object({
   checkedAt: z.string().datetime().nullable(),
   isEnabled: z.boolean(),
   problem: SaidSchema.nullable(),
+  dev: DevBuildCheckSchema.nullable().default(null),
 });
 
 type UpdateCheck = z.infer<typeof UpdateCheckSchema>;

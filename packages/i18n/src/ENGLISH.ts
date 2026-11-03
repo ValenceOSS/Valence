@@ -1711,6 +1711,7 @@ const ENGLISH = {
   'common.unmute': 'Unmute',
   'common.upAFolder': 'Parent folder',
   'common.upcoming': 'Upcoming',
+  'common.updateToDevBuild': 'Update to dev build {commit}',
   'common.updateToVersion': 'Update to {version}',
   'common.upgrades': 'Upgrades',
   'common.upload': 'Upload',
@@ -5096,6 +5097,7 @@ const ENGLISH = {
     'There’s no other library of films or shows to move this into.',
   'screens.adminArea.musicMatchList.foundInMusicBrainz': 'Found in MusicBrainz',
   'screens.adminArea.nameCouldNotBeScanned': 'Couldn’t scan {name}.',
+  'screens.adminArea.needsYouCard.aNewerDevBuildIsOut': 'A newer dev build is out',
   'screens.adminArea.needsYouCard.aNewReleaseIsOut': 'A new release is out',
   'screens.adminArea.needsYouCard.failedRequests': 'Failed requests',
   'screens.adminArea.needsYouCard.jobsThatFailedToday': 'Jobs that failed today',
@@ -6001,15 +6003,31 @@ const ENGLISH = {
   'screens.adminArea.titlePage.trackTable.tracks': 'Tracks',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges':
-    'A backup is taken before the new release changes the database, so you can go back.',
+    'A backup is taken before the update changes the database, so you can go back.',
   'screens.adminArea.updatesPanel.anUpdateIsOut': 'An update is out',
+  'screens.adminArea.updatesPanel.builtWhen': 'Built {when}',
   'screens.adminArea.updatesPanel.cameOutWhen': 'Came out {when}',
   'screens.adminArea.updatesPanel.checkingForUpdatesIsOff': 'Checking for updates is off',
   'screens.adminArea.updatesPanel.couldNotCheck': 'Could not check',
+  'screens.adminArea.updatesPanel.couldNotCheckForADevBuild':
+    'Couldn’t check for a newer dev build',
+  'screens.adminArea.updatesPanel.devBuildCard.count.andMore.one':
+    'And {count} more commit on GitHub',
+  'screens.adminArea.updatesPanel.devBuildCard.count.andMore.other':
+    'And {count} more commits on GitHub',
+  'screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild.one':
+    '{count} commit on main since this build',
+  'screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild.other':
+    '{count} commits on main since this build',
+  'screens.adminArea.updatesPanel.devBuildCard.shaWhen': '{sha} · {when}',
+  'screens.adminArea.updatesPanel.devBuildCard.thisBuildHasCommitsNotOnMain':
+    'This build also has commits that aren’t on main, so it may differ from the newest dev build in other ways.',
+  'screens.adminArea.updatesPanel.fetchTheNewestDevBuild': 'Fetch the newest dev build',
   'screens.adminArea.updatesPanel.fetchTheNewRelease': 'Fetch the new release',
   'screens.adminArea.updatesPanel.howToUpdate': 'How to update',
   'screens.adminArea.updatesPanel.lastChecked': 'Last checked',
   'screens.adminArea.updatesPanel.lookingForUpdates': 'Looking for updates…',
+  'screens.adminArea.updatesPanel.newestDevBuild': 'Newest dev build',
   'screens.adminArea.updatesPanel.newestRelease': 'Newest release',
   'screens.adminArea.updatesPanel.noReleaseNotesYet': 'No release notes to show yet.',
   'screens.adminArea.updatesPanel.readItOnGitHub': 'Read it on GitHub',
@@ -6024,10 +6042,14 @@ const ENGLISH = {
   'screens.adminArea.updatesPanel.releaseEntry.pullNumber': '#{number}',
   'screens.adminArea.updatesPanel.releaseEntry.showWhatChangedInVersion':
     'Show what changed in {version}',
+  'screens.adminArea.updatesPanel.runPullThenStart':
+    'Run {pull}, then {start}, in the folder that holds your compose file.',
   'screens.adminArea.updatesPanel.startItInPlaceOfThisOne': 'Start it in place of this one',
   'screens.adminArea.updatesPanel.thisServerRuns': 'This server runs',
   'screens.adminArea.updatesPanel.thisServerWasStartedWithChecksOff':
     'This server was started with CHECK_FOR_UPDATES=false, so it never asks GitHub. Remove it to be told when a release is out.',
+  'screens.adminArea.updatesPanel.useTheDevTag':
+    'Use the dev tag in your compose file, such as ghcr.io/valenceoss/valence:dev, which always points at the newest dev build. A tag like 1.9.0-dev stops moving once that release is out.',
   'screens.adminArea.updatesPanel.whatsNew': 'What’s new',
   'screens.adminArea.updatesPanel.whatsNewInVersion': 'What’s new in {version}',
   'screens.adminArea.updatesPanel.whetherAnUpdateIsOutCouldNotBeRead':
@@ -8952,8 +8974,18 @@ const ENGLISH = {
   'server.surfaces.cleanSurface.thePluginSentSomethingValenceDoes':
     'The plugin sent something Valence can’t display. The details are in the server log.',
   'server.surfaces.cleanSurface.thisCouldNotBeShown': 'Couldn’t show this',
+  'server.updates.checkDevBuild.githubAnsweredStatus':
+    'GitHub answered {status} when asked for the newest dev build.',
+  'server.updates.checkDevBuild.githubCouldNotBeReached':
+    'GitHub could not be reached to look for a newer dev build.',
+  'server.updates.checkDevBuild.theRegistryAnsweredStatus':
+    'The container registry answered {status} when asked for the newest dev build.',
+  'server.updates.checkDevBuild.thisBuildIsNotOnGithub':
+    'This build’s commit isn’t on GitHub, so it can’t be compared with main.',
   'server.updates.createUpdateChecker.githubAnsweredStatus':
     'GitHub answered {status} when asked for the newest release.',
+  'server.updates.createUpdateChecker.githubAskedToWait':
+    'GitHub has asked Valence to wait before checking again, so it will look again after {time}.',
   'server.updates.createUpdateChecker.githubCouldNotBeReached':
     'GitHub could not be reached to look for a newer release.',
   'server.webhooks.closedServerOn': '{viewer} closed {server} on {device}.',

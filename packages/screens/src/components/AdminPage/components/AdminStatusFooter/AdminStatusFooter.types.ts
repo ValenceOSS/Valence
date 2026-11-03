@@ -5,6 +5,7 @@ type AdminStatusFooterProps = {
   acceleration: Acceleration | null;
   ffmpeg: string | null;
   latest: string | null;
+  isLatestADevBuild?: boolean;
   onOpenUpdates: () => void;
 };
 

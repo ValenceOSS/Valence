@@ -320,6 +320,7 @@ const AdminPage = () => {
                   acceleration={acceleration}
                   ffmpeg={ffmpeg}
                   latest={attention.latest}
+                  isLatestADevBuild={attention.isLatestADevBuild}
                   onOpenUpdates={() => {
                     void go({ to: '/admin/$panel', params: { panel: 'updates' } });
                   }}

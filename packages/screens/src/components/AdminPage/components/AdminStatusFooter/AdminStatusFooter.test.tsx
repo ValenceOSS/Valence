@@ -38,4 +38,19 @@ describe('AdminStatusFooter', () => {
 
     expect(onOpenUpdates).toHaveBeenCalledOnce();
   });
+
+  it('names a newer dev build as a dev build, not as a version', () => {
+    render(
+      <AdminStatusFooter
+        version="1.9.0-dev.d3eee1d"
+        acceleration={null}
+        ffmpeg={null}
+        latest="1806279"
+        isLatestADevBuild
+        onOpenUpdates={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Update to dev build 1806279' })).toBeInTheDocument();
+  });
 });

@@ -21,7 +21,8 @@ const PILL_LOOKS = {
  * @param version - The release this server runs, or null before it has said.
  * @param acceleration - How it converts video, or null before it has said.
  * @param ffmpeg - What to say about its FFmpeg, if anything.
- * @param latest - The newer release, where one is out.
+ * @param latest - The newer release, or the commit of the newer dev build, where one is out.
+ * @param isLatestADevBuild - Whether what is newer is a dev build rather than a release.
  * @param onOpenUpdates - Called to open the updates page.
  */
 const AdminStatusFooter = ({
@@ -29,6 +30,7 @@ const AdminStatusFooter = ({
   acceleration,
   ffmpeg,
   latest,
+  isLatestADevBuild = false,
   onOpenUpdates,
 }: AdminStatusFooterProps) => {
   const look = latest === null ? (acceleration?.tone ?? 'quiet') : 'update';
@@ -60,7 +62,9 @@ const AdminStatusFooter = ({
           label={
             latest === null
               ? say('screens.adminPage.valenceVersion', { version })
-              : say('common.updateToVersion', { version: latest })
+              : isLatestADevBuild
+                ? say('common.updateToDevBuild', { commit: latest })
+                : say('common.updateToVersion', { version: latest })
           }
           onClick={onOpenUpdates}
           className={cn(

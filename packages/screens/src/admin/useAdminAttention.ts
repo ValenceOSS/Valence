@@ -10,13 +10,14 @@ type AdminAttention = {
   jobs: number;
   health: number;
   latest: string | null;
+  isLatestADevBuild: boolean;
 };
 
 /**
  * What is waiting on an administrator, counted the same wherever it is shown — on the overview and
  * beside the sidebar's items: requests to approve, requests that failed, download clients that are
  * not answering, jobs that failed lately, titles in the libraries with something wrong, and a newer
- * release if one is out. Reads the same queries the panels read, so counting costs nothing more
+ * release if one is out, or for a development build a newer development image. Reads the same queries the panels read, so counting costs nothing more
  * than showing.
  *
  * @returns The counts, each zero until it has been read, and the newer release or null.
@@ -36,7 +37,13 @@ const useAdminAttention = (): AdminAttention => {
     downloads: work?.clients.failing.length ?? 0,
     jobs: failures.data?.total ?? 0,
     health: countHealthProblems(health.data),
-    latest: updates.data?.isNewer === true ? updates.data.latest : null,
+    latest:
+      updates.data?.isNewer === true
+        ? updates.data.latest
+        : updates.data?.dev?.isNewer === true
+          ? updates.data.dev.newest
+          : null,
+    isLatestADevBuild: updates.data?.isNewer !== true && updates.data?.dev?.isNewer === true,
   };
 };
 

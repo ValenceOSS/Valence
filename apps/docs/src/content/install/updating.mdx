@@ -29,6 +29,7 @@ Choose one of these approaches:
 - **Follow `latest`.** You get each release when you pull. This suits most home servers.
 - **Pin a version tag**, such as `1.0.0` or `1.0`, if you would rather choose when an upgrade happens. Edit the `image:` line, and change it deliberately when you are ready.
 - **Try something early** with a `-dev` or `-nightly` tag. Expect it to be rough. The version in a dev tag is the release being prepared, and the number in a nightly tag is the commit it was built from. Do not run a dev or nightly build against a database you are not prepared to restore.
+- **Follow `dev`** rather than a tag like `1.0.1-dev` if you run dev builds. `dev` always points at the newest build of `main`, while `1.0.1-dev` stops moving once 1.0.1 is released. On a dev build, the admin area's **Updates** page also says when a newer dev build is out and lists the commits on `main` since the one you run.
 
 If you run the requests service, it has its own image, `ghcr.io/valenceoss/valence-requests`, which follows the same release scheme. Keep it at the same release as the server.
 
