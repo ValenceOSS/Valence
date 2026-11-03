@@ -674,6 +674,7 @@ mod tests {
     /// Linux lists each of the service's threads as a process whose parent is the service, each
     /// carrying the whole service's memory. Counted as children, forty threads made a 2 GB service
     /// read as 90 GB wherever no cgroup said otherwise.
+    #[cfg(target_os = "linux")]
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     async fn counts_none_of_its_own_threads_among_its_children() {
         let monitor = Monitor::new(Journal::new());
