@@ -176,6 +176,7 @@ overrides:
 packageExtensionsChecksum: sha256-daeow0RbvsNSfXgFeWt5IjB1z9nAowZ5ANJJJUWas+8=
 
 patchedDependencies:
+  expo-modules-autolinking@58.0.4: 56e02c6577d8f83acaea29e11c5fb6ccd49e7fddc2f868d5d57dd8a8fce221f0
   expo-video@57.0.4: 71f95119ba3dec49ec5b599ef312e5abb4ce1264fadf8bc5c3ab59815fee4bb5
   react-native-web@0.21.3: bebd075d39fcc6e9153483f5f1c23434710e1321318ebfb5faa02a689d94f1ea
 
@@ -14282,7 +14283,7 @@ snapshots:
       '@expo/json-file': 11.2.0
       '@react-native/normalize-colors': 0.88.0-rc.1
       debug: 4.4.3(supports-color@8.1.1)
-      expo-modules-autolinking: 58.0.4(supports-color@8.1.1)(typescript@7.0.2)
+      expo-modules-autolinking: 58.0.4(patch_hash=56e02c6577d8f83acaea29e11c5fb6ccd49e7fddc2f868d5d57dd8a8fce221f0)(supports-color@8.1.1)(typescript@7.0.2)
       resolve-from: 5.0.0
       semver: 7.8.5
     transitivePeerDependencies:
@@ -19495,7 +19496,7 @@ snapshots:
       - supports-color
       - typescript
 
-  expo-modules-autolinking@58.0.4(supports-color@8.1.1)(typescript@7.0.2):
+  expo-modules-autolinking@58.0.4(patch_hash=56e02c6577d8f83acaea29e11c5fb6ccd49e7fddc2f868d5d57dd8a8fce221f0)(supports-color@8.1.1)(typescript@7.0.2):
     dependencies:
       '@expo/require-utils': 58.0.1(supports-color@8.1.1)(typescript@7.0.2)
       '@expo/spawn-async': 1.8.0
@@ -19642,7 +19643,7 @@ snapshots:
       expo-file-system: 58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))
       expo-font: 58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       expo-keep-awake: 58.0.1(expo@58.0.0-preview.7)(react@19.3.0)
-      expo-modules-autolinking: 58.0.4(supports-color@8.1.1)(typescript@7.0.2)
+      expo-modules-autolinking: 58.0.4(patch_hash=56e02c6577d8f83acaea29e11c5fb6ccd49e7fddc2f868d5d57dd8a8fce221f0)(supports-color@8.1.1)(typescript@7.0.2)
       expo-modules-core: 58.0.7(react-native@0.88.0-rc.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       pretty-format: 29.7.0
       react: 19.3.0
