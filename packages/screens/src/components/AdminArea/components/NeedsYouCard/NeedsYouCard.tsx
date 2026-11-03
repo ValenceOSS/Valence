@@ -76,7 +76,9 @@ const NeedsYouCard = ({ onOpenPanel }: NeedsYouCardProps) => {
       label:
         attention.latest === null
           ? say('screens.adminArea.needsYouCard.valenceIsUpToDate')
-          : say('screens.adminArea.needsYouCard.aNewReleaseIsOut'),
+          : attention.isLatestADevBuild
+            ? say('screens.adminArea.needsYouCard.aNewerDevBuildIsOut')
+            : say('screens.adminArea.needsYouCard.aNewReleaseIsOut'),
       count: null,
       ...(attention.latest === null ? {} : { value: attention.latest }),
       isUrgent: false,

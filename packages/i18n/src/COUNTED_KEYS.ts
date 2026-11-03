@@ -123,6 +123,8 @@ const COUNTED_KEYS = [
   'screens.adminArea.runLibraryJobDialog.runOnCountLibraries',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis',
   'screens.adminArea.titlePage.bookFormats.partsWhereTheyStand',
+  'screens.adminArea.updatesPanel.devBuildCard.count.andMore',
+  'screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild',
   'screens.adminArea.uploadMediaDialog.countFilesCouldNotBeUploaded',
   'screens.adminArea.uploadMediaDialog.countFilesUploadedTheLibraryIsBeingScanned',
   'screens.adminArea.uploadMediaDialog.filesLeftOut',

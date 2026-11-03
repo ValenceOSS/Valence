@@ -7460,6 +7460,11 @@
     "context": "The choice that shows the release calendar as a list of what is coming, starting today."
   },
   {
+    "handler": "common.updateToDevBuild",
+    "text": "Update to dev build {commit}",
+    "context": "The label of the version button in the admin sidebar when a newer dev build is out. {commit} is a short commit id."
+  },
+  {
     "handler": "common.updateToVersion",
     "text": "Update to {version}",
     "context": "Shown, used in the catalogue entry row in the plugins panel and in the window bar. {version} is filled in by the app."
@@ -20200,6 +20205,11 @@
     "context": "Shown in the admin area. {name} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.needsYouCard.aNewerDevBuildIsOut",
+    "text": "A newer dev build is out",
+    "context": "A count on the overview in the admin area, for a server running a dev build when a newer one is out."
+  },
+  {
     "handler": "screens.adminArea.needsYouCard.aNewReleaseIsOut",
     "text": "A new release is out",
     "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
@@ -23686,13 +23696,18 @@
   },
   {
     "handler": "screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges",
-    "text": "A backup is taken before the new release changes the database, so you can go back.",
+    "text": "A backup is taken before the update changes the database, so you can go back.",
     "context": "Explains a step. On the admin area’s updates page."
   },
   {
     "handler": "screens.adminArea.updatesPanel.anUpdateIsOut",
     "text": "An update is out",
     "context": "A badge when a newer release is out. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.builtWhen",
+    "text": "Built {when}",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build. {when} says how long ago, such as 2 hours ago."
   },
   {
     "handler": "screens.adminArea.updatesPanel.cameOutWhen",
@@ -23708,6 +23723,46 @@
     "handler": "screens.adminArea.updatesPanel.couldNotCheck",
     "text": "Could not check",
     "context": "A warning when GitHub could not be asked. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.couldNotCheckForADevBuild",
+    "text": "Couldn’t check for a newer dev build",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.devBuildCard.count.andMore.one",
+    "text": "And {count} more commit on GitHub",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.devBuildCard.count.andMore.other",
+    "text": "And {count} more commits on GitHub",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild.one",
+    "text": "{count} commit on main since this build",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.devBuildCard.count.changesSinceThisBuild.other",
+    "text": "{count} commits on main since this build",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.devBuildCard.shaWhen",
+    "text": "{sha} · {when}",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build. {sha} is a short commit id; {when} says how long ago it was made."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.devBuildCard.thisBuildHasCommitsNotOnMain",
+    "text": "This build also has commits that aren’t on main, so it may differ from the newest dev build in other ways.",
+    "context": "Shown on the updates page in the admin area, for a dev build made from commits that were never merged into main."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.fetchTheNewestDevBuild",
+    "text": "Fetch the newest dev build",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
     "handler": "screens.adminArea.updatesPanel.fetchTheNewRelease",
@@ -23728,6 +23783,11 @@
     "handler": "screens.adminArea.updatesPanel.lookingForUpdates",
     "text": "Looking for updates…",
     "context": "Shown while the updates page loads."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.newestDevBuild",
+    "text": "Newest dev build",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
     "handler": "screens.adminArea.updatesPanel.newestRelease",
@@ -23785,6 +23845,11 @@
     "context": "Label for opening one release in the changelog. {version} is the release. On the admin area’s updates page."
   },
   {
+    "handler": "screens.adminArea.updatesPanel.runPullThenStart",
+    "text": "Run {pull}, then {start}, in the folder that holds your compose file.",
+    "context": "Shown on the updates page in the admin area while the steps for updating are folded. {pull} and {start} are shell commands."
+  },
+  {
     "handler": "screens.adminArea.updatesPanel.startItInPlaceOfThisOne",
     "text": "Start it in place of this one",
     "context": "A step. On the admin area’s updates page."
@@ -23798,6 +23863,11 @@
     "handler": "screens.adminArea.updatesPanel.thisServerWasStartedWithChecksOff",
     "text": "This server was started with CHECK_FOR_UPDATES=false, so it never asks GitHub. Remove it to be told when a release is out.",
     "context": "Explains the note. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.useTheDevTag",
+    "text": "Use the dev tag in your compose file, such as ghcr.io/valenceoss/valence:dev, which always points at the newest dev build. A tag like 1.9.0-dev stops moving once that release is out.",
+    "context": "Shown on the updates page in the admin area, for a server running a dev build."
   },
   {
     "handler": "screens.adminArea.updatesPanel.whatsNew",
@@ -35171,9 +35241,34 @@
     "context": "Shown in the surfaces on the server (from `cleanSurface`)."
   },
   {
+    "handler": "server.updates.checkDevBuild.githubAnsweredStatus",
+    "text": "GitHub answered {status} when asked to compare this build with main.",
+    "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`). {status} is the HTTP status GitHub answered with."
+  },
+  {
+    "handler": "server.updates.checkDevBuild.githubCouldNotBeReached",
+    "text": "Valence could not check whether a newer dev build is out.",
+    "context": "Why the admin area could not say whether a newer development build is out (from `createUpdateChecker`), where the registry or GitHub could not be reached."
+  },
+  {
+    "handler": "server.updates.checkDevBuild.theRegistryAnsweredStatus",
+    "text": "The container registry answered {status} when asked for the newest dev build.",
+    "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`). {status} is the HTTP status the registry answered with."
+  },
+  {
+    "handler": "server.updates.checkDevBuild.thisBuildIsNotOnGithub",
+    "text": "This build’s commit isn’t on GitHub, so it can’t be compared with main.",
+    "context": "Why the admin area could not say whether a newer development build is out (from `checkDevBuild`)."
+  },
+  {
     "handler": "server.updates.createUpdateChecker.githubAnsweredStatus",
     "text": "GitHub answered {status} when asked for the newest release.",
     "context": "Why the admin area could not say whether a newer release is out (from `createUpdateChecker`). {status} is the HTTP status GitHub answered with."
+  },
+  {
+    "handler": "server.updates.createUpdateChecker.githubAskedToWait",
+    "text": "GitHub has asked Valence to wait before checking again, so it will look again after {time}.",
+    "context": "Why the admin area is not checking for updates just now (from `createUpdateChecker`). {time} is a time of day in UTC, such as 15:30 UTC."
   },
   {
     "handler": "server.updates.createUpdateChecker.githubCouldNotBeReached",
