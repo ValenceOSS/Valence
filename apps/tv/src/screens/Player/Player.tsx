@@ -1609,6 +1609,9 @@ const Player = ({
           mediaId={mediaId}
           tracks={tracks.data ?? null}
           onFound={(found, fresh) => {
+            void cache.cancelQueries({
+              queryKey: playbackQueries.subtitleTracks(mediaId).queryKey,
+            });
             cache.setQueryData(playbackQueries.subtitleTracks(mediaId).queryKey, found);
 
             if (fresh !== null) {

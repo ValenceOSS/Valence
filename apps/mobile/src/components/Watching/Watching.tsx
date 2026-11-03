@@ -1627,6 +1627,7 @@ const Watching = ({
             mediaId={mediaId}
             tracks={tracks.data ?? null}
             onFound={(found, fresh) => {
+              void cache.cancelQueries({ queryKey: ['subtitles', mediaId] });
               cache.setQueryData(['subtitles', mediaId], found);
 
               if (fresh !== null) {

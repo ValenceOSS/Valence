@@ -10,9 +10,9 @@ type Kept =
 
 /**
  * Has the server fetch a subtitle found on a subtitle site and keep it beside the video, then reads
- * the title's tracks again and picks out the one that was not there before, so a player can switch
- * it on without starting again. Where nothing new shows up, as when the same file was kept once
- * already, the first track in that language stands in for it. Where the player has not read the
+ * the title's tracks again and picks out the new one in the language asked for, so a player can
+ * switch it on without starting again. Where nothing new shows up in it, as when the same file was
+ * kept once already, the first track in that language stands in for it. Where the player has not read the
  * tracks yet, they are read before the subtitle is kept, so an old one is never taken for it.
  *
  * @param mediaId - The film or episode.
@@ -35,9 +35,12 @@ const keepFoundSubtitle = async (
   const held = new Set(before.map((track) => track.id));
   const named = languageName(choice.language).toLowerCase();
   const tracks = await fetchSubtitleTracks(mediaId);
+  const isInTheLanguage = (track: SubtitleTrack) =>
+    languageName(track.language ?? '').toLowerCase() === named;
   const fresh =
+    tracks.find((track) => !held.has(track.id) && isInTheLanguage(track)) ??
+    tracks.find(isInTheLanguage) ??
     tracks.find((track) => !held.has(track.id)) ??
-    tracks.find((track) => languageName(track.language ?? '').toLowerCase() === named) ??
     null;
 
   return { kind: 'kept', tracks, fresh };

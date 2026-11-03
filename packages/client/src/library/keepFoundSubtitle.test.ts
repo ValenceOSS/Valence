@@ -41,6 +41,15 @@ describe('keepFoundSubtitle', () => {
     expect(fetchFoundSubtitle).toHaveBeenCalledWith('m1', CHOICE);
   });
 
+  it('takes the new track in the language asked for over another new one', async () => {
+    fetchFoundSubtitle.mockResolvedValue({ name: 'Arrival.fr.srt' });
+    fetchSubtitleTracks.mockResolvedValue([track('a', 'en'), track('c', 'de'), track('b', 'fr')]);
+
+    await expect(keepFoundSubtitle('m1', CHOICE, [track('a', 'en')])).resolves.toMatchObject({
+      fresh: track('b', 'fr'),
+    });
+  });
+
   it('takes the first track in the language where nothing new shows up', async () => {
     fetchFoundSubtitle.mockResolvedValue({ name: 'Arrival.fr.srt' });
     fetchSubtitleTracks.mockResolvedValue([track('a', 'en'), track('b', 'fre')]);
