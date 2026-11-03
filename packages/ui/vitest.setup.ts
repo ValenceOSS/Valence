@@ -4,6 +4,7 @@ import { configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
 import { MotionGlobalConfig } from 'motion/react';
+import { quietLateRenderWarnings } from './src/testing/quietLateRenderWarnings';
 
 class LayoutlessResizeObserver implements ResizeObserver {
   observe(): void {
@@ -128,6 +129,8 @@ vi.mock('@paper-design/shaders-react', () => ({
 }));
 
 afterEach(tidyAfterATest);
+
+quietLateRenderWarnings(console);
 
 /**
  * Gives a screen longer to arrive than a second.
