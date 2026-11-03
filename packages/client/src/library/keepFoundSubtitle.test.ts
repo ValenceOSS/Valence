@@ -59,6 +59,17 @@ describe('keepFoundSubtitle', () => {
     });
   });
 
+  it('reads the tracks before keeping it where the player has not read them yet', async () => {
+    fetchFoundSubtitle.mockResolvedValue({ name: 'Arrival.fr.srt' });
+    fetchSubtitleTracks
+      .mockResolvedValueOnce([track('a', 'fr')])
+      .mockResolvedValueOnce([track('a', 'fr'), track('b', 'fr')]);
+
+    await expect(keepFoundSubtitle('m1', CHOICE, null)).resolves.toMatchObject({
+      fresh: track('b', 'fr'),
+    });
+  });
+
   it('says why where the server would not keep it', async () => {
     fetchFoundSubtitle.mockResolvedValue({ problem: 'The site wouldn’t give it.' });
 

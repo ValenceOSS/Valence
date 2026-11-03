@@ -1625,7 +1625,7 @@ const Watching = ({
         {panel === 'findSubtitles' ? (
           <TheSubtitleSearch
             mediaId={mediaId}
-            tracks={tracks.data ?? []}
+            tracks={tracks.data ?? null}
             onFound={(found, fresh) => {
               cache.setQueryData(['subtitles', mediaId], found);
 

@@ -12,18 +12,20 @@ type Kept =
  * Has the server fetch a subtitle found on a subtitle site and keep it beside the video, then reads
  * the title's tracks again and picks out the one that was not there before, so a player can switch
  * it on without starting again. Where nothing new shows up, as when the same file was kept once
- * already, the first track in that language stands in for it.
+ * already, the first track in that language stands in for it. Where the player has not read the
+ * tracks yet, they are read before the subtitle is kept, so an old one is never taken for it.
  *
  * @param mediaId - The film or episode.
  * @param choice - The subtitle chosen, and the language it was looked for in.
- * @param before - The tracks the title had until now.
+ * @param known - The tracks the title had until now, or nothing where they are not read yet.
  * @returns The title's tracks and the one fetched, or why it could not be kept.
  */
 const keepFoundSubtitle = async (
   mediaId: string,
   choice: SubtitleChoice,
-  before: readonly SubtitleTrack[],
+  known: readonly SubtitleTrack[] | null,
 ): Promise<Kept> => {
+  const before = known ?? (await fetchSubtitleTracks(mediaId));
   const saved = await fetchFoundSubtitle(mediaId, choice);
 
   if ('problem' in saved) {

@@ -2,6 +2,7 @@ import { ChevronRight } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { useBackCloses } from '@ValenceMobile/hooks/useBackCloses';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { APlayerList } from '@ValenceMobile/components/Watching/components/APlayerList/APlayerList';
@@ -42,12 +43,13 @@ const styles = StyleSheet.create({
 
 /**
  * Looking on the subtitle sites for subtitles to a film or episode while it plays, as the web's
- * player does: the language to look in, which can be changed, then what was found in it, best match
- * first, each saying how well it fits the file and why. Taking one has the server fetch and keep it,
- * so every app has it from then on, and hands it back to be switched on without starting again.
+ * player does: the language to look in, which can be changed and whose list Back closes, then what
+ * was found in it, best match first, each saying how well it fits the file and why. Taking one has
+ * the server fetch and keep it, so every app has it from then on, and hands it back to be switched
+ * on without starting again.
  *
  * @param mediaId - What is playing.
- * @param tracks - The subtitle tracks it has now.
+ * @param tracks - The subtitle tracks it has now, or nothing where they are not read yet.
  * @param onFound - Told the title's tracks once one is taken, and which of them is new.
  * @param onClose - Told they are done looking.
  */
@@ -55,6 +57,10 @@ const TheSubtitleSearch = ({ mediaId, tracks, onFound, onClose }: TheSubtitleSea
   const search = useSubtitleSearch(mediaId, tracks, true);
   const [isChoosingLanguage, setIsChoosingLanguage] = useState(false);
   const { found } = search;
+
+  useBackCloses(isChoosingLanguage, () => {
+    setIsChoosingLanguage(false);
+  });
 
   return (
     <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose} isACard>
@@ -133,7 +139,7 @@ const TheSubtitleSearch = ({ mediaId, tracks, onFound, onClose }: TheSubtitleSea
                     key={key}
                     tone="bare"
                     label={`${subtitle.name}, ${detail}`}
-                    isDisabled={search.taking !== null && search.taking !== key}
+                    isDisabled={search.taking !== null}
                     onPress={() => {
                       void search.take(subtitle).then((kept) => {
                         if (kept?.kind === 'kept') {

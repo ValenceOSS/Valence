@@ -112,6 +112,14 @@ describe('TheSubtitleSearch', () => {
     expect(onFound).not.toHaveBeenCalled();
   });
 
+  it('takes nothing more while one is being taken', async () => {
+    mockSearch.taking = 'opensubtitles:7';
+
+    const drawn = await drawIt();
+
+    expect(drawn.getByRole('button', { name: /^Arrival/ })).toBeDisabled();
+  });
+
   it('says why the last one could not be kept', async () => {
     mockSearch.problem = 'No key is saved.';
 

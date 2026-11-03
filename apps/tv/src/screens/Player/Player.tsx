@@ -919,6 +919,11 @@ const Player = ({
     touch();
   }, [touch]);
 
+  const backToSubtitles = useCallback(() => {
+    setMenu('subtitles');
+    touch();
+  }, [touch]);
+
   const closeMenu = useCallback(() => {
     setMenu(null);
     touch();
@@ -942,9 +947,7 @@ const Player = ({
               setMenu('captions');
             }
           : menu === 'findSubtitles'
-            ? () => {
-                setMenu('subtitles');
-              }
+            ? backToSubtitles
             : menu !== null
               ? backToSettings
               : isUpNextUp
@@ -1604,7 +1607,7 @@ const Player = ({
       {menu === 'findSubtitles' ? (
         <SubtitleSearch
           mediaId={mediaId}
-          tracks={tracks.data ?? []}
+          tracks={tracks.data ?? null}
           onFound={(found, fresh) => {
             cache.setQueryData(playbackQueries.subtitleTracks(mediaId).queryKey, found);
 

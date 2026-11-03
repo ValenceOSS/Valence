@@ -70,6 +70,38 @@ describe('useSubtitleSearch', () => {
     expect(result.current.language).toBe('en');
   });
 
+  it('asks the sites nothing until the server says which language to look in first', () => {
+    fetchSubtitleSetup.mockReturnValue(new Promise(() => undefined));
+
+    renderHookInACache(() => useSubtitleSearch('m1', [], true));
+
+    expect(findSubtitles).not.toHaveBeenCalled();
+  });
+
+  it('takes one subtitle at a time', async () => {
+    let finish: (kept: Kept) => void = () => undefined;
+
+    keepFoundSubtitle.mockReturnValue(
+      new Promise<Kept>((resolve) => {
+        finish = resolve;
+      }),
+    );
+
+    const { result } = renderHookInACache(() => useSubtitleSearch('m1', [], true));
+    let second: Kept | null | undefined;
+
+    await act(async () => {
+      const first = result.current.take(FOUND);
+
+      second = await result.current.take(FOUND);
+      finish({ kind: 'kept', tracks: [], fresh: null });
+      await first;
+    });
+
+    expect(second).toBeNull();
+    expect(keepFoundSubtitle).toHaveBeenCalledTimes(1);
+  });
+
   it('looks again in a language chosen', async () => {
     const { result } = renderHookInACache(() => useSubtitleSearch('m1', [], true));
 

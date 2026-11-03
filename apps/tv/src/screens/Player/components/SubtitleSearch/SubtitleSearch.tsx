@@ -19,7 +19,7 @@ import { say } from '@ValenceI18n/say';
  * back to be switched on without starting again.
  *
  * @param mediaId - What is playing.
- * @param tracks - The subtitle tracks it has now.
+ * @param tracks - The subtitle tracks it has now, or nothing where they are not read yet.
  * @param onFound - Told the title's tracks once one is taken, and which of them is new.
  */
 const SubtitleSearch = ({ mediaId, tracks, onFound }: SubtitleSearchProps) => {
