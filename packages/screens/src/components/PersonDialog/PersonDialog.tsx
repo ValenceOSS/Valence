@@ -241,6 +241,7 @@ const PersonDialog = ({
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
                           growsOnHover={false}
+                          isSeries
                           shape="poster"
                           media={media}
                           onPlay={onPlay}

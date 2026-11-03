@@ -14,8 +14,16 @@ vi.mock('@ValenceClient/library/fetchPerson', () => ({
   fetchPersonCredits: creditsMock,
 }));
 
+type CardShown = { media: MediaSummary; isSeries?: boolean; growsOnHover?: boolean };
+
+const cardsShown = vi.hoisted((): { cards: CardShown[] } => ({ cards: [] }));
+
 vi.mock('@ValenceScreens/components/RailCard/RailCard', () => ({
-  RailCard: ({ media }: { media: MediaSummary }) => <span>{media.title}</span>,
+  RailCard: (card: CardShown) => {
+    cardsShown.cards.push(card);
+
+    return <span>{card.media.title}</span>;
+  },
 }));
 
 const NOTHING: PersonCredits = { films: [], shows: [], episodes: [] };
@@ -64,6 +72,7 @@ const draw = (over: Partial<Parameters<typeof PersonDialog>[0]> = {}) =>
   );
 
 beforeEach(() => {
+  cardsShown.cards = [];
   personMock.mockReset().mockResolvedValue(SOMEBODY);
   creditsMock.mockReset().mockResolvedValue(NOTHING);
 });
@@ -132,6 +141,23 @@ describe('PersonDialog', () => {
 
     expect(await screen.findByRole('heading', { name: 'Programmes' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Episodes' })).toBeInTheDocument();
+  });
+
+  it('draws a programme as the programme, not the episode that stands for it, and grows no card', async () => {
+    creditsMock.mockResolvedValue({
+      films: [item({ id: 'f' })],
+      shows: [item({ id: 'a', title: 'System', seriesId: 'the-bear', seriesTitle: 'The Bear' })],
+      episodes: [item({ id: 'b', title: 'Review', seriesId: 'the-bear', seriesTitle: 'The Bear' })],
+    });
+
+    draw();
+
+    await screen.findByText('System');
+
+    const programme = cardsShown.cards.findLast((card) => card.media.id === 'a');
+
+    expect(programme?.isSeries).toBe(true);
+    expect(cardsShown.cards.every((card) => card.growsOnHover === false)).toBe(true);
   });
 
   it('draws no heading for a kind this server holds none of', async () => {
