@@ -38,7 +38,7 @@ type AFakeSearch = {
   take: jest.Mock;
 };
 
-const search: AFakeSearch = {
+const mockSearch: AFakeSearch = {
   languages: [
     { code: 'fr', label: 'French' },
     { code: 'en', label: 'English' },
@@ -56,22 +56,22 @@ const search: AFakeSearch = {
 };
 
 jest.mock('@ValenceClient/library/useSubtitleSearch', () => ({
-  useSubtitleSearch: () => search,
+  useSubtitleSearch: () => mockSearch,
 }));
 
 const drawIt = (onFound = jest.fn()) =>
   render(<TheSubtitleSearch mediaId="m1" tracks={[]} onFound={onFound} onClose={jest.fn()} />);
 
 beforeEach(() => {
-  search.found = {
+  mockSearch.found = {
     data: { subtitles: [FOUND], isSetUp: true },
     isError: false,
     refetch: jest.fn(),
   };
-  search.taking = null;
-  search.problem = null;
-  search.take = jest.fn();
-  search.choose = jest.fn();
+  mockSearch.taking = null;
+  mockSearch.problem = null;
+  mockSearch.take = jest.fn();
+  mockSearch.choose = jest.fn();
 });
 
 describe('TheSubtitleSearch', () => {
@@ -85,13 +85,13 @@ describe('TheSubtitleSearch', () => {
   it('takes the one pressed and hands back the track to switch on', async () => {
     const onFound = jest.fn();
 
-    search.take.mockResolvedValue({ kind: 'kept', tracks: [FRESH], fresh: FRESH });
+    mockSearch.take.mockResolvedValue({ kind: 'kept', tracks: [FRESH], fresh: FRESH });
 
     const drawn = await drawIt(onFound);
 
     await userEvent.press(drawn.getByRole('button', { name: /^Arrival\.2016\.1080p\.BluRay/ }));
 
-    expect(search.take).toHaveBeenCalledWith(FOUND);
+    expect(mockSearch.take).toHaveBeenCalledWith(FOUND);
     await waitFor(() => {
       expect(onFound).toHaveBeenCalledWith([FRESH], FRESH);
     });
@@ -100,20 +100,20 @@ describe('TheSubtitleSearch', () => {
   it('switches nothing on where the server would not keep it', async () => {
     const onFound = jest.fn();
 
-    search.take.mockResolvedValue({ kind: 'refused', problem: 'No key is saved.' });
+    mockSearch.take.mockResolvedValue({ kind: 'refused', problem: 'No key is saved.' });
 
     const drawn = await drawIt(onFound);
 
     await userEvent.press(drawn.getByRole('button', { name: /^Arrival/ }));
 
     await waitFor(() => {
-      expect(search.take).toHaveBeenCalled();
+      expect(mockSearch.take).toHaveBeenCalled();
     });
     expect(onFound).not.toHaveBeenCalled();
   });
 
   it('says why the last one could not be kept', async () => {
-    search.problem = 'No key is saved.';
+    mockSearch.problem = 'No key is saved.';
 
     const drawn = await drawIt();
 
@@ -126,12 +126,12 @@ describe('TheSubtitleSearch', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Language' }));
     await userEvent.press(drawn.getByRole('button', { name: 'English' }));
 
-    expect(search.choose).toHaveBeenCalledWith('en');
+    expect(mockSearch.choose).toHaveBeenCalledWith('en');
     expect(drawn.getByText('Find subtitles')).toBeTruthy();
   });
 
   it('says it is still looking', async () => {
-    search.found = { data: undefined, isError: false, refetch: jest.fn() };
+    mockSearch.found = { data: undefined, isError: false, refetch: jest.fn() };
 
     const drawn = await drawIt();
 
@@ -139,14 +139,22 @@ describe('TheSubtitleSearch', () => {
   });
 
   it('says where no subtitle site is set up, or nothing was found', async () => {
-    search.found = { data: { subtitles: [], isSetUp: false }, isError: false, refetch: jest.fn() };
+    mockSearch.found = {
+      data: { subtitles: [], isSetUp: false },
+      isError: false,
+      refetch: jest.fn(),
+    };
 
     const unset = await drawIt();
 
     expect(unset.getByText(/No subtitle site is set up yet/)).toBeTruthy();
     await unset.unmount();
 
-    search.found = { data: { subtitles: [], isSetUp: true }, isError: false, refetch: jest.fn() };
+    mockSearch.found = {
+      data: { subtitles: [], isSetUp: true },
+      isError: false,
+      refetch: jest.fn(),
+    };
 
     const empty = await drawIt();
 
@@ -156,7 +164,7 @@ describe('TheSubtitleSearch', () => {
   it('offers to look again where the sites could not be reached', async () => {
     const refetch = jest.fn();
 
-    search.found = { data: undefined, isError: true, refetch };
+    mockSearch.found = { data: undefined, isError: true, refetch };
 
     const drawn = await drawIt();
 

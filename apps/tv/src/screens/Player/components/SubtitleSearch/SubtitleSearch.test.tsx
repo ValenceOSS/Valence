@@ -38,7 +38,7 @@ type AFakeSearch = {
   take: jest.Mock;
 };
 
-const search: AFakeSearch = {
+const mockSearch: AFakeSearch = {
   languages: [
     { code: 'en', label: 'English' },
     { code: 'de', label: 'German' },
@@ -56,19 +56,19 @@ const search: AFakeSearch = {
 };
 
 jest.mock('@ValenceClient/library/useSubtitleSearch', () => ({
-  useSubtitleSearch: () => search,
+  useSubtitleSearch: () => mockSearch,
 }));
 
 beforeEach(() => {
-  search.found = {
+  mockSearch.found = {
     data: { subtitles: [FOUND], isSetUp: true },
     isError: false,
     refetch: jest.fn(),
   };
-  search.taking = null;
-  search.problem = null;
-  search.take = jest.fn();
-  search.choose = jest.fn();
+  mockSearch.taking = null;
+  mockSearch.problem = null;
+  mockSearch.take = jest.fn();
+  mockSearch.choose = jest.fn();
 });
 
 describe('SubtitleSearch', () => {
@@ -87,7 +87,7 @@ describe('SubtitleSearch', () => {
   it('takes the one pressed and hands back the track to switch on', async () => {
     const onFound = jest.fn();
 
-    search.take.mockResolvedValue({ kind: 'kept', tracks: [FRESH], fresh: FRESH });
+    mockSearch.take.mockResolvedValue({ kind: 'kept', tracks: [FRESH], fresh: FRESH });
 
     const drawn = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={onFound} />);
 
@@ -99,13 +99,13 @@ describe('SubtitleSearch', () => {
   });
 
   it('takes nothing more while one is being taken', async () => {
-    search.taking = 'subdl:4';
+    mockSearch.taking = 'subdl:4';
 
     const drawn = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={jest.fn()} />);
 
     expect(drawn.getByRole('button', { name: 'Arrival.2016.2160p.WEB, In progress' })).toBeTruthy();
     await userEvent.press(drawn.getByRole('button', { name: /^Arrival/ }));
-    expect(search.take).not.toHaveBeenCalled();
+    expect(mockSearch.take).not.toHaveBeenCalled();
   });
 
   it('opens the languages, and looks in the one chosen', async () => {
@@ -114,12 +114,12 @@ describe('SubtitleSearch', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Language, English' }));
     await userEvent.press(drawn.getByRole('button', { name: 'German' }));
 
-    expect(search.choose).toHaveBeenCalledWith('de');
+    expect(mockSearch.choose).toHaveBeenCalledWith('de');
     expect(drawn.getByText('Find subtitles')).toBeTruthy();
   });
 
   it('says why the last one could not be kept', async () => {
-    search.problem = 'The site wouldn’t give it.';
+    mockSearch.problem = 'The site wouldn’t give it.';
 
     const drawn = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={jest.fn()} />);
 
@@ -127,21 +127,29 @@ describe('SubtitleSearch', () => {
   });
 
   it('says where it is still looking, nothing is set up, or nothing was found', async () => {
-    search.found = { data: undefined, isError: false, refetch: jest.fn() };
+    mockSearch.found = { data: undefined, isError: false, refetch: jest.fn() };
 
     const looking = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={jest.fn()} />);
 
     expect(looking.getByText('Looking for subtitles')).toBeTruthy();
     await looking.unmount();
 
-    search.found = { data: { subtitles: [], isSetUp: false }, isError: false, refetch: jest.fn() };
+    mockSearch.found = {
+      data: { subtitles: [], isSetUp: false },
+      isError: false,
+      refetch: jest.fn(),
+    };
 
     const unset = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={jest.fn()} />);
 
     expect(unset.getByText(/No subtitle site is set up yet/)).toBeTruthy();
     await unset.unmount();
 
-    search.found = { data: { subtitles: [], isSetUp: true }, isError: false, refetch: jest.fn() };
+    mockSearch.found = {
+      data: { subtitles: [], isSetUp: true },
+      isError: false,
+      refetch: jest.fn(),
+    };
 
     const empty = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={jest.fn()} />);
 
@@ -151,7 +159,7 @@ describe('SubtitleSearch', () => {
   it('offers to look again where the sites could not be reached', async () => {
     const refetch = jest.fn();
 
-    search.found = { data: undefined, isError: true, refetch };
+    mockSearch.found = { data: undefined, isError: true, refetch };
 
     const drawn = await render(<SubtitleSearch mediaId="m1" tracks={[]} onFound={jest.fn()} />);
 
