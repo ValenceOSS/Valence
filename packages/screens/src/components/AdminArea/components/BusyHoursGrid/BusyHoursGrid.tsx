@@ -43,7 +43,7 @@ const BusyHoursGrid = ({ hours, detail = [], label, className }: BusyHoursGridPr
   const shownCount = shown === null ? 0 : (hours[shown.day]?.[shown.hour] ?? 0);
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div className={cn('flex flex-1 flex-col gap-2', className)}>
       <div
         role="img"
         aria-label={
@@ -55,14 +55,14 @@ const BusyHoursGrid = ({ hours, detail = [], label, className }: BusyHoursGridPr
                 hour: hourName(busiest.hour),
               })
         }
-        className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1"
+        className="grid flex-1 grid-cols-[auto_1fr] grid-rows-[repeat(7,minmax(1rem,1fr))_auto] gap-x-2 gap-y-1"
         onPointerLeave={() => {
           setPointed(null);
         }}
       >
         {hours.map((row, day) => (
           <div key={dayName(day, 'short')} className="contents">
-            <span aria-hidden className="text-[0.6875rem] leading-4 text-text-muted">
+            <span aria-hidden className="self-center text-[0.6875rem] leading-4 text-text-muted">
               {dayName(day, 'short')}
             </span>
 
@@ -77,7 +77,7 @@ const BusyHoursGrid = ({ hours, detail = [], label, className }: BusyHoursGridPr
                       setPointed({ day, hour });
                     }}
                     className={cn(
-                      'block h-4 rounded-[3px] bg-text transition-opacity duration-150',
+                      'block h-full min-h-4 rounded-[3px] bg-text transition-opacity duration-150',
                       count === 0 ? 'opacity-[0.06]' : '',
                       isPointed ? 'ring-1 ring-text' : '',
                     )}
