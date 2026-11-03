@@ -55,6 +55,8 @@ import { ratingOf } from '@ValenceTv/library/ratingOf';
 import { StartedFrom } from '@ValenceTv/screens/Player/components/StartedFrom/StartedFrom';
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
 import { TrackMenu } from '@ValenceTv/screens/Player/components/TrackMenu/TrackMenu';
+import { SubtitleSearch } from '@ValenceTv/screens/Player/components/SubtitleSearch/SubtitleSearch';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { UpNext } from '@ValenceTv/screens/Player/components/UpNext/UpNext';
 import { PartyPanel } from '@ValenceTv/components/PartyPanel/PartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
@@ -107,6 +109,8 @@ const A_TURN_SCRUBS = 60;
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
 const STATS_READ_EVERY_MS = 1000;
+
+const FIND_SUBTITLES = 'findSubtitles';
 
 const NOTHING_READ: StreamReading = {
   positionSeconds: 0,
@@ -212,6 +216,7 @@ const Player = ({
   watchParty,
 }: PlayerProps) => {
   const cache = useQueryClient();
+  const mayFindSubtitles = useWhatIMayDo().may('media.override');
   const detail = useQuery(libraryQueries.detail(mediaId));
   const watching = useQuery(profileQueries.watching());
   const segments = useQuery(playbackQueries.segments(mediaId));
@@ -290,6 +295,7 @@ const Player = ({
   const [menu, setMenu] = useState<
     | 'settings'
     | 'subtitles'
+    | 'findSubtitles'
     | 'audio'
     | 'quality'
     | 'speed'
@@ -913,6 +919,11 @@ const Player = ({
     touch();
   }, [touch]);
 
+  const backToSubtitles = useCallback(() => {
+    setMenu('subtitles');
+    touch();
+  }, [touch]);
+
   const closeMenu = useCallback(() => {
     setMenu(null);
     touch();
@@ -935,13 +946,15 @@ const Player = ({
           ? () => {
               setMenu('captions');
             }
-          : menu !== null
-            ? backToSettings
-            : isUpNextUp
-              ? stayForTheCredits
-              : isShowing && isPlaying
-                ? putControlsAway
-                : onLeave,
+          : menu === 'findSubtitles'
+            ? backToSubtitles
+            : menu !== null
+              ? backToSettings
+              : isUpNextUp
+                ? stayForTheCredits
+                : isShowing && isPlaying
+                  ? putControlsAway
+                  : onLeave,
   );
 
   const isFollowingOn = useRef(false);
@@ -1567,9 +1580,44 @@ const Player = ({
         <TrackMenu
           title={say('common.subtitles')}
           chosen={subtitles}
-          choices={subtitleChoices}
+          choices={
+            mayFindSubtitles
+              ? [
+                  ...subtitleChoices,
+                  {
+                    id: FIND_SUBTITLES,
+                    label: say('screens.videoPlayer.playerControls.findSubtitles'),
+                  },
+                ]
+              : subtitleChoices
+          }
           onChoose={(id) => {
+            if (id === FIND_SUBTITLES) {
+              setMenu('findSubtitles');
+
+              return;
+            }
+
             chooseSubtitles(id);
+            closeMenu();
+          }}
+        />
+      ) : null}
+
+      {menu === 'findSubtitles' ? (
+        <SubtitleSearch
+          mediaId={mediaId}
+          tracks={tracks.data ?? null}
+          onFound={(found, fresh) => {
+            void cache.cancelQueries({
+              queryKey: playbackQueries.subtitleTracks(mediaId).queryKey,
+            });
+            cache.setQueryData(playbackQueries.subtitleTracks(mediaId).queryKey, found);
+
+            if (fresh !== null) {
+              setChosenSubtitles(fresh.id);
+            }
+
             closeMenu();
           }}
         />

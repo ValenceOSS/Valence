@@ -83,6 +83,8 @@ import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { useTheWait } from '@ValenceMobile/components/Watching/useTheWait';
 import { TheAudioAndSubtitles } from '@ValenceMobile/components/Watching/components/TheAudioAndSubtitles/TheAudioAndSubtitles';
+import { TheSubtitleSearch } from '@ValenceMobile/components/Watching/components/TheSubtitleSearch/TheSubtitleSearch';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { TheSpeed } from '@ValenceMobile/components/Watching/components/TheSpeed/TheSpeed';
 import { TheEpisodes } from '@ValenceMobile/components/Watching/components/TheEpisodes/TheEpisodes';
 import { TheStats } from '@ValenceMobile/components/Watching/components/TheStats/TheStats';
@@ -105,6 +107,7 @@ import type { StoppedBy, WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
+import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
@@ -168,6 +171,7 @@ type APanel =
   | 'settings'
   | 'audio'
   | 'subtitles'
+  | 'findSubtitles'
   | 'speed'
   | 'quality'
   | 'style'
@@ -181,6 +185,7 @@ const CARD_PANELS: ReadonlySet<APanel | null> = new Set([
   'speed',
   'audio',
   'subtitles',
+  'findSubtitles',
   'style',
 ]);
 
@@ -189,6 +194,7 @@ const SETTINGS_WITHIN: ReadonlySet<APanel | null> = new Set([
   'speed',
   'audio',
   'subtitles',
+  'findSubtitles',
   'style',
 ]);
 
@@ -386,6 +392,7 @@ const Watching = ({
   const [heard, setHeard] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const isKept = kept !== undefined;
+  const mayFindSubtitles = useWhatIMayDo().may('media.override') && !isKept;
   const frames = useQuery({
     queryKey: ['playback', 'trickplay', mediaId],
     queryFn: () => fetchTrickplay(mediaId),
@@ -1023,8 +1030,8 @@ const Watching = ({
   const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
 
   const readInstead = useCallback(
-    (trackId: string) => {
-      const wanted = (tracks.data ?? []).find((track) => track.id === trackId) ?? null;
+    (trackId: string, among: readonly SubtitleTrack[] = tracks.data ?? []) => {
+      const wanted = among.find((track) => track.id === trackId) ?? null;
 
       setReading(trackId);
       saveSubtitleLanguage(
@@ -1366,7 +1373,22 @@ const Watching = ({
     setPanel('settings');
   }, []);
 
-  useBackCloses(panel !== null, SETTINGS_WITHIN.has(panel) ? backToSettings : stopChoosing);
+  const backToSubtitles = useCallback(() => {
+    setPanel('subtitles');
+  }, []);
+
+  const findSubtitles = useCallback(() => {
+    setPanel('findSubtitles');
+  }, []);
+
+  useBackCloses(
+    panel !== null,
+    panel === 'findSubtitles'
+      ? backToSubtitles
+      : SETTINGS_WITHIN.has(panel)
+        ? backToSettings
+        : stopChoosing,
+  );
 
   const chosenQuality = asking.requestedQuality ?? 'auto';
   const qualityLabel =
@@ -1596,6 +1618,25 @@ const Watching = ({
                 : { offset: subtitleOffset, onChange: setSubtitleOffset }
             }
             onClose={backToSettings}
+            {...(mayFindSubtitles && panel === 'subtitles' ? { onFind: findSubtitles } : {})}
+          />
+        ) : null}
+
+        {panel === 'findSubtitles' ? (
+          <TheSubtitleSearch
+            mediaId={mediaId}
+            tracks={tracks.data ?? null}
+            onFound={(found, fresh) => {
+              void cache.cancelQueries({ queryKey: ['subtitles', mediaId] });
+              cache.setQueryData(['subtitles', mediaId], found);
+
+              if (fresh !== null) {
+                readInstead(fresh.id, found);
+              }
+
+              stopChoosing();
+            }}
+            onClose={backToSubtitles}
           />
         ) : null}
 
@@ -1641,14 +1682,14 @@ const Watching = ({
                       },
                     },
                   ]),
-              ...(settings.subtitles === null
+              ...(settings.subtitles === null && !mayFindSubtitles
                 ? []
                 : [
                     {
                       icon: MessageSquareLines,
                       label: say('common.subtitles'),
                       value:
-                        settings.subtitles.choices.find(
+                        settings.subtitles?.choices.find(
                           (choice) => choice.id === settings.subtitles?.chosen,
                         )?.label ?? say('common.off'),
                       onPress: () => {

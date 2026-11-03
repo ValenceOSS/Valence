@@ -225,6 +225,7 @@ const ENGLISH = {
   'client.library.describeAdvisory.nudity': 'Nudity',
   'client.library.describeAdvisory.sex': 'Sexual content',
   'client.library.describeAdvisory.violence': 'Violence',
+  'client.library.describeFoundSubtitle.scoreMatch': '{score}% match',
   'client.library.describeHiding.everyEpisodeDisappears':
     'Every episode is hidden from your rows, search results and the randomiser. You can unhide it from Hidden on your profile at any time.',
   'client.library.describeHiding.everyEpisodeDisappearsForYou':

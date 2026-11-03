@@ -810,6 +810,11 @@
     "context": "What a title contains: violence (from `describeAdvisory`)."
   },
   {
+    "handler": "client.library.describeFoundSubtitle.scoreMatch",
+    "text": "{score}% match",
+    "context": "How well a subtitle found on a subtitle site fits the video file, at the start of its line in the phone's and the television's subtitle search. {score} is a number from 0 to 100."
+  },
+  {
     "handler": "client.library.describeHiding.everyEpisodeDisappears",
     "text": "Every episode is hidden from your rows, search results and the randomiser. You can unhide it from Hidden on your profile at any time.",
     "context": "Asked before hiding a programme. Hidden is the name of the section on the profile page."
