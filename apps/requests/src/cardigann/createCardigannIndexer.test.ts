@@ -251,6 +251,37 @@ ${SEARCH}`;
       expect(asked.map((one) => new URL(one.url).pathname)).toEqual(['/browse.php']);
     });
 
+    it('forgets the old session’s browser when it logs in again, so none of its cookies come back', async () => {
+      const guarded: Site = (url, init) =>
+        url.pathname === '/browse.php' && init.headers['cookie']?.includes('sid=ok') !== true
+          ? { body: '<form action="takelogin.php">please log in</form>' }
+          : site(url, init);
+      const { engine, session } = standUp(
+        LOGIN,
+        guarded,
+        { username: 'ada', password: 'right' },
+        { cookies: { sid: 'stale' }, userAgent: null, browserId: 'the-old-session' },
+      );
+
+      await engine.search({ query: 'dune' }, []);
+
+      expect(session.cookies).toEqual({ sid: 'ok' });
+      expect(session.browserId).toBeUndefined();
+    });
+
+    it('keeps the session’s browser across searches where nothing made it log in again', async () => {
+      const { engine, session } = standUp(
+        LOGIN,
+        site,
+        { username: 'ada', password: 'right' },
+        { cookies: { sid: 'ok' }, userAgent: null, browserId: 'kept' },
+      );
+
+      await engine.search({ query: 'dune' }, []);
+
+      expect(session.browserId).toBe('kept');
+    });
+
     it('takes a redirect the definition asked to follow as the answer, not as being logged out', async () => {
       const following = LOGIN.replace(
         '    - path: browse.php\n',

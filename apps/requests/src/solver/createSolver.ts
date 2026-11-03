@@ -22,7 +22,7 @@ type Solution = {
 };
 
 type CreateSolverOptions<A extends Agent> = {
-  pool: Pick<SitePool<A>, 'use'>;
+  pool: Pick<SitePool<A>, 'use' | 'drop'>;
   timeoutMs?: number;
   now?: () => number;
 };
@@ -41,6 +41,8 @@ const THE_BROWSERS_OWN = new Set(['cookie', 'host', 'referer', 'user-agent']);
  *
  * A request that runs out of time has its tab closed, so that a tab stuck at the check never holds
  * up the ones after it, and one whose tab only came once its time had gone does nothing with it.
+ * Any request that fails closes its agent too, so the next one starts from a fresh browser context
+ * rather than one the site may have marked.
  *
  * @param pool - The agents, one to a site.
  * @param timeoutMs - How long a request may take, check and all.
@@ -60,7 +62,7 @@ const createSolver = <A extends Agent>({
       'CloudflareCheckFailed',
     );
 
-  const fetch = (
+  const fetch = async (
     request: SiteRequest,
     cookies: Record<string, string>,
     session: string,
@@ -70,55 +72,61 @@ const createSolver = <A extends Agent>({
     const headers = Object.fromEntries(
       Object.entries(request.headers).filter(([name]) => !THE_BROWSERS_OWN.has(name.toLowerCase())),
     );
+    const key = `${hostname} ${session}`;
     let using: SitePage | null = null;
 
-    return inTime(
-      pool.use(`${hostname} ${session}`, (agent) =>
-        agent.withPage(async (page) => {
-          if (now() >= deadline) {
-            throw timedOut();
-          }
+    try {
+      return await inTime(
+        pool.use(key, (agent) =>
+          agent.withPage(async (page) => {
+            if (now() >= deadline) {
+              throw timedOut();
+            }
 
-          using = page;
-          await agent.addCookies(
-            Object.entries(cookies).map(([name, value]) => ({ name, value })),
-            origin,
-          );
+            using = page;
+            await agent.addCookies(
+              Object.entries(cookies).map(([name, value]) => ({ name, value })),
+              origin,
+            );
 
-          const { answer, bytes } = await solveRequest({
-            page,
-            request: {
-              url: request.url,
-              method: request.method,
-              body: request.body,
-              headers: request.body === null ? headers : { 'content-type': A_FORM, ...headers },
-            },
-            deadline,
-            now,
-          });
-          const [held, userAgent] = await Promise.all([
-            agent.cookies(answer.url),
-            agent.userAgent(page),
-          ]);
+            const { answer, bytes } = await solveRequest({
+              page,
+              request: {
+                url: request.url,
+                method: request.method,
+                body: request.body,
+                headers: request.body === null ? headers : { 'content-type': A_FORM, ...headers },
+              },
+              deadline,
+              now,
+            });
+            const [held, userAgent] = await Promise.all([
+              agent.cookies(answer.url),
+              agent.userAgent(page),
+            ]);
 
-          return {
-            url: answer.url,
-            status: answer.status,
-            headers: answer.headers,
-            bytes,
-            cookies: Object.fromEntries(held.map((cookie) => [cookie.name, cookie.value])),
-            userAgent,
-          };
-        }),
-      ),
-      timeoutMs,
-      {
-        failure: timedOut,
-        onLate: () => {
-          void using?.close().catch(() => {});
+            return {
+              url: answer.url,
+              status: answer.status,
+              headers: answer.headers,
+              bytes,
+              cookies: Object.fromEntries(held.map((cookie) => [cookie.name, cookie.value])),
+              userAgent,
+            };
+          }),
+        ),
+        timeoutMs,
+        {
+          failure: timedOut,
+          onLate: () => {
+            void using?.close().catch(() => {});
+          },
         },
-      },
-    );
+      );
+    } catch (error) {
+      await pool.drop(key);
+      throw error;
+    }
   };
 
   return { fetch };

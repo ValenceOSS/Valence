@@ -105,6 +105,18 @@ const createCardigannIndexer = ({
     configVariables(definition, settings, siteLink, now());
   const at = (path: string, base = siteLink) => new URL(path, base).toString();
 
+  /**
+   * Starts the session again with only the cookies given, and forgets the browser it was using, so
+   * that a site behind Cloudflare's check is next asked from a browser holding none of the old
+   * session's cookies either.
+   *
+   * @param cookies - What the new session starts with.
+   */
+  const startOver = (cookies: Record<string, string>): void => {
+    session.cookies = cookies;
+    delete session.browserId;
+  };
+
   const send = async (
     request: SiteRequest,
     followRedirects: boolean,
@@ -201,8 +213,7 @@ const createCardigannIndexer = ({
     const variables = config();
     const url = at(renderTemplate(login?.path ?? '', variables));
 
-    session.cookies =
-      login?.cookies === undefined ? {} : readCookieHeader(login.cookies.join('; '));
+    startOver(login?.cookies === undefined ? {} : readCookieHeader(login.cookies.join('; ')));
 
     const response = await send(
       {
@@ -248,15 +259,14 @@ const createCardigannIndexer = ({
             ? settings['cookie']
             : renderTemplate(block.inputs['cookie'] ?? '', variables);
 
-        session.cookies = readCookieHeader(cookie);
+        startOver(readCookieHeader(cookie));
 
         return;
       }
       case 'post':
       case 'get':
       case 'oneurl': {
-        session.cookies =
-          block.cookies === undefined ? {} : readCookieHeader(block.cookies.join('; '));
+        startOver(block.cookies === undefined ? {} : readCookieHeader(block.cookies.join('; ')));
 
         const path = renderTemplate(block.path, variables);
         const isPost = block.method === 'post';

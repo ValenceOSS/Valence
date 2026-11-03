@@ -113,20 +113,11 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  */
 const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => {
   const throughTheBrowser = new Set<string>();
-  const sessionIds = new WeakMap<SiteSession, string>();
 
-  const idOf = (session: SiteSession): string => {
-    const known = sessionIds.get(session);
+  const browserIdOf = (session: SiteSession): string => {
+    session.browserId ??= randomUUID();
 
-    if (known !== undefined) {
-      return known;
-    }
-
-    const made = randomUUID();
-
-    sessionIds.set(session, made);
-
-    return made;
+    return session.browserId;
   };
 
   const solve = async (
@@ -145,7 +136,11 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
     let solution: Awaited<ReturnType<Solver['fetch']>>;
 
     try {
-      solution = await solver.fetch(request, { ...options.session.cookies }, idOf(options.session));
+      solution = await solver.fetch(
+        request,
+        { ...options.session.cookies },
+        browserIdOf(options.session),
+      );
     } catch (error) {
       throughTheBrowser.delete(host);
       throw error instanceof IndexerFailure

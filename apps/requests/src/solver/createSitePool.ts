@@ -191,7 +191,7 @@ const createSitePool = <A extends Agent>({
     await retire();
   };
 
-  return { use, has, size, closeAll };
+  return { use, drop, has, size, closeAll };
 };
 
 type SitePool<A extends Agent> = ReturnType<typeof createSitePool<A>>;
