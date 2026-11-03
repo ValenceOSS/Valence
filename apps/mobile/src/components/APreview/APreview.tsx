@@ -4,6 +4,7 @@ import { useEvent, useEventListener } from 'expo';
 import { Animated, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { keepsUpWithPreviews } from '@ValenceMobile/platform/keepsUpWithPreviews';
 import { readClipFraming } from '@ValenceClient/playback/readClipFraming';
 import type { ClipFraming } from '@ValenceClient/playback/ClipFraming';
 import { hushThePlayer } from '@ValenceMobile/playback/hushThePlayer';
@@ -39,8 +40,9 @@ const styles = StyleSheet.create({
  * server has made one, so scrolling past a title fetches nothing. Once the title is no longer
  * showing the clip keeps playing while it fades into the backdrop, and only then stops, so it never
  * freezes on a frame and vanishes; it stops at once where a page or the player covers it. It is let
- * go a moment after, since the page may be drawing the same clip behind itself and fading it out. On mobile data
- * there is no clip at all, only the backdrop.
+ * go a moment after, since the page may be drawing the same clip behind itself and fading it out.
+ * On mobile data, and on a phone too slight to keep up with a clip, there is no clip at all, only
+ * the backdrop.
  *
  * Something the library does not hold is given where its clip is instead, such as a trailer the
  * server streams, and has no backdrop of its own drawn, since whatever holds it draws one.
@@ -64,7 +66,7 @@ const APreview = (props: APreviewProps) => {
   const clipAt = 'clip' in props ? props.clip : `/api/media/${props.mediaId}/preview`;
   const isOnTop = useIsOnTop();
   const isOnMobileData = useIsOnMobileData();
-  const isShowing = isAskedToShow && isOnTop && !isOnMobileData;
+  const isShowing = isAskedToShow && isOnTop && !isOnMobileData && keepsUpWithPreviews();
   const [clip, setClip] = useState<VideoSource | null>(null);
   const [framing, setFraming] = useState<ClipFraming | null>(null);
   const [isNotComing, setIsNotComing] = useState(false);
