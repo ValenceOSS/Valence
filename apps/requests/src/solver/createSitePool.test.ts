@@ -208,6 +208,64 @@ describe('createSitePool', () => {
     expect(retire).toHaveBeenCalled();
   });
 
+  it('forgets an agent a request failed in, closing it and opening a fresh one next time', async () => {
+    const { pool, opened } = aPool();
+    const agent = await pool.use('site:a', (one) => Promise.resolve(one));
+
+    await pool.forget('site:a', agent);
+
+    expect(agent.close).toHaveBeenCalled();
+    expect(pool.has('site:a')).toBe(false);
+
+    await pool.use('site:a', nothing);
+
+    expect(opened).toHaveLength(2);
+  });
+
+  it('closes a forgotten agent only once the request still using it has finished', async () => {
+    const { pool } = aPool();
+    let finish = (): void => {};
+    const inUse = new Promise<AnAgent>((resolve) => {
+      void pool.use(
+        'site:a',
+        (agent) =>
+          new Promise<void>((done) => {
+            agent.work(1);
+            finish = () => {
+              agent.work(-1);
+              done();
+            };
+            resolve(agent);
+          }),
+      );
+    });
+    const agent = await inUse;
+
+    await pool.forget('site:a', agent);
+
+    expect(agent.close).not.toHaveBeenCalled();
+    expect(pool.has('site:a')).toBe(false);
+
+    finish();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(agent.close).toHaveBeenCalled();
+  });
+
+  it('never closes the fresh agent that replaced the one being forgotten', async () => {
+    const { pool } = aPool();
+    const first = await pool.use('site:a', (one) => Promise.resolve(one));
+
+    await pool.forget('site:a', first);
+
+    const second = await pool.use('site:a', (one) => Promise.resolve(one));
+
+    await pool.forget('site:a', first);
+
+    expect(second.close).not.toHaveBeenCalled();
+    expect(pool.has('site:a')).toBe(true);
+  });
+
   it('passes on a task’s failure and carries on', async () => {
     const { pool } = aPool();
 

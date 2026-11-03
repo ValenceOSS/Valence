@@ -22,7 +22,7 @@ type Solution = {
 };
 
 type CreateSolverOptions<A extends Agent> = {
-  pool: Pick<SitePool<A>, 'use' | 'drop'>;
+  pool: Pick<SitePool<A>, 'use' | 'forget'>;
   timeoutMs?: number;
   now?: () => number;
 };
@@ -75,10 +75,10 @@ const createSolver = <A extends Agent>({
     const key = `${hostname} ${session}`;
     let using: SitePage | null = null;
 
-    try {
-      return await inTime(
-        pool.use(key, (agent) =>
-          agent.withPage(async (page) => {
+    return inTime(
+      pool.use(key, async (agent) => {
+        try {
+          return await agent.withPage(async (page) => {
             if (now() >= deadline) {
               throw timedOut();
             }
@@ -113,20 +113,20 @@ const createSolver = <A extends Agent>({
               cookies: Object.fromEntries(held.map((cookie) => [cookie.name, cookie.value])),
               userAgent,
             };
-          }),
-        ),
-        timeoutMs,
-        {
-          failure: timedOut,
-          onLate: () => {
-            void using?.close().catch(() => {});
-          },
+          });
+        } catch (error) {
+          await pool.forget(key, agent);
+          throw error;
+        }
+      }),
+      timeoutMs,
+      {
+        failure: timedOut,
+        onLate: () => {
+          void using?.close().catch(() => {});
         },
-      );
-    } catch (error) {
-      await pool.drop(key);
-      throw error;
-    }
+      },
+    );
   };
 
   return { fetch };

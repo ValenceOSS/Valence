@@ -443,6 +443,21 @@ ${SEARCH}`;
       expect(asked).toHaveLength(1);
     });
 
+    it('keeps its browser across searches, since a pasted cookie is the same every time', async () => {
+      const { engine, session } = standUp(
+        `settings:\n  - {name: cookie, type: text, label: Cookie}\nlogin:\n  method: cookie\n  inputs:\n    cookie: "{{ .Config.cookie }}"\n${SEARCH}`,
+        () => ({ body: RESULTS }),
+        { cookie: 'uid=1; pass=x' },
+        { cookies: {}, userAgent: null, browserId: 'kept' },
+      );
+
+      await engine.search({ query: 'dune' }, []);
+      await engine.search({ query: 'arrakis' }, []);
+
+      expect(session.browserId).toBe('kept');
+      expect(session.cookies).toEqual({ uid: '1', pass: 'x' });
+    });
+
     it('reads the cookie through the template where the setting has another name', async () => {
       const { engine, session } = standUp(
         `settings:\n  - {name: sess, type: text, label: Session}\nlogin:\n  method: cookie\n  inputs:\n    cookie: "sid={{ .Config.sess }}"\n${SEARCH}`,

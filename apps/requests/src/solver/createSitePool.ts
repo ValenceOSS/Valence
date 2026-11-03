@@ -62,6 +62,7 @@ const createSitePool = <A extends Agent>({
   timer = unrefTimer,
 }: CreateSitePoolOptions<A>) => {
   const entries = new Map<string, Entry<A>>();
+  const doomed = new Set<A>();
   let working = 0;
   let clock = 0;
 
@@ -164,10 +165,13 @@ const createSitePool = <A extends Agent>({
     await retireIfDue();
     working += 1;
 
+    let held: A | null = null;
+
     try {
       const agent = await agentFor(key);
       const entry = entries.get(key);
 
+      held = agent;
       clock += 1;
 
       if (entry !== undefined) {
@@ -178,7 +182,39 @@ const createSitePool = <A extends Agent>({
       return await task(agent);
     } finally {
       working -= 1;
+
+      if (held !== null && doomed.has(held) && held.busy() === 0) {
+        doomed.delete(held);
+        await held.close().catch(() => {});
+      }
+
       idleAfter(key);
+    }
+  };
+
+  /**
+   * Gives up the agent a request failed in: nothing new is handed it, and it closes once the last
+   * request already using it has finished, so a sibling is never cut off mid-request and a fresh
+   * agent opened for the same site in the meantime is never the one closed.
+   *
+   * @param key - The site the agent was kept for.
+   * @param agent - The agent the request failed in.
+   */
+  const forget = async (key: string, agent: A): Promise<void> => {
+    const entry = entries.get(key);
+
+    if (entry !== undefined && (await entry.agent.catch(() => null)) === agent) {
+      if (entries.get(key) === entry) {
+        entries.delete(key);
+        entry.stopIdling();
+      }
+    }
+
+    if (agent.busy() === 0) {
+      doomed.delete(agent);
+      await agent.close().catch(() => {});
+    } else {
+      doomed.add(agent);
     }
   };
 
@@ -191,7 +227,7 @@ const createSitePool = <A extends Agent>({
     await retire();
   };
 
-  return { use, drop, has, size, closeAll };
+  return { use, forget, has, size, closeAll };
 };
 
 type SitePool<A extends Agent> = ReturnType<typeof createSitePool<A>>;

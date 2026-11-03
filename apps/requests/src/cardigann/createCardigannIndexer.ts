@@ -259,7 +259,7 @@ const createCardigannIndexer = ({
             ? settings['cookie']
             : renderTemplate(block.inputs['cookie'] ?? '', variables);
 
-        startOver(readCookieHeader(cookie));
+        session.cookies = readCookieHeader(cookie);
 
         return;
       }
