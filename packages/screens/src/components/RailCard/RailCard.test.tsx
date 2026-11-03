@@ -306,6 +306,16 @@ describe('RailCard', () => {
     expect(screen.queryByRole('button', { name: 'More about Parasite' })).not.toBeInTheDocument();
   });
 
+  it('does not open inside a dialog, where it would be drawn under the dialog', async () => {
+    const { container } = renderInAnAddress(
+      <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} growsOnHover={false} />,
+    );
+
+    await restOn(cardHolder(container));
+
+    expect(screen.queryByRole('button', { name: 'More about Parasite' })).not.toBeInTheDocument();
+  });
+
   it('reads the rest of what is known about the item once it is open', async () => {
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />,

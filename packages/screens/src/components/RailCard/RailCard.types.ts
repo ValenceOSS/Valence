@@ -19,6 +19,7 @@ type RailCardProps = {
   shape?: ComponentProps<typeof MediaCard>['shape'];
   look?: 'card' | 'art';
   drawsLarge?: boolean;
+  growsOnHover?: boolean;
   flag?: string;
 };
 
