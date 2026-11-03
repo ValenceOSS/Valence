@@ -32,6 +32,15 @@ describe('findDuplicates', () => {
     expect([...found.keys()]).toEqual(['e1', 'e1b']);
   });
 
+  it('leaves specials alone, since extras there are numbered from whatever ends their name', () => {
+    expect(
+      findDuplicates([
+        anItem('behind', { seriesId: 's', seasonNumber: 0, episodeNumber: 1 }),
+        anItem('deleted', { seriesId: 's', seasonNumber: 0, episodeNumber: 1 }),
+      ]).size,
+    ).toBe(0);
+  });
+
   it('leaves unmatched films and unnumbered episodes alone', () => {
     expect(
       findDuplicates([

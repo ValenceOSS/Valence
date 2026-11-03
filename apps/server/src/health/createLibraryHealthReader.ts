@@ -5,6 +5,8 @@ import type { HealthItem, HealthList } from '@ValenceContracts/schemas/LibraryHe
 import { library, mediaItem, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { findDuplicates } from './findDuplicates';
+import { countProblemTitles } from './countProblemTitles';
+import { firstWholeGroups } from './firstWholeGroups';
 import type { LibraryHealthReader } from './LibraryHealthReader';
 
 const SHOWN = 100;
@@ -89,7 +91,7 @@ const createLibraryHealthReader =
           ),
         ),
       db
-        .select(columns)
+        .select({ ...columns, seriesId: mediaItem.seriesId })
         .from(mediaItem)
         .innerJoin(library, eq(library.id, mediaItem.libraryId))
         .where(
@@ -115,7 +117,14 @@ const createLibraryHealthReader =
     ]);
 
     const duplicated = findDuplicates(placed);
-    const shownDuplicates = [...duplicated.keys()].slice(0, SHOWN);
+    const titles = countProblemTitles([
+      ...unmatchedFilms.map((row) => ({ id: row.id, seriesId: null })),
+      ...unmatchedSeries.map((row) => ({ id: row.id, seriesId: null })),
+      ...noArtwork.map((row) => ({ id: row.id, seriesId: null })),
+      ...unreadable,
+      ...placed.filter((row) => duplicated.has(row.id)),
+    ]);
+    const shownDuplicates = firstWholeGroups(duplicated, SHOWN);
     const duplicateRows =
       shownDuplicates.length === 0
         ? []
@@ -127,6 +136,7 @@ const createLibraryHealthReader =
 
     return {
       checkedAt: now().toISOString(),
+      titles,
       unmatched: listOf(
         [...unmatchedSeries.map((row) => ({ ...row, year: null })), ...unmatchedFilms].toSorted(
           (a, b) => a.title.localeCompare(b.title),
@@ -141,7 +151,18 @@ const createLibraryHealthReader =
             (a, b) => (a.group ?? '').localeCompare(b.group ?? '') || a.path.localeCompare(b.path),
           ),
       },
-      unreadable: listOf(unreadable.toSorted((a, b) => a.title.localeCompare(b.title))),
+      unreadable: listOf(
+        unreadable
+          .map(({ id, title, year, libraryId, libraryName, path }) => ({
+            id,
+            title,
+            year,
+            libraryId,
+            libraryName,
+            path,
+          }))
+          .toSorted((a, b) => a.title.localeCompare(b.title)),
+      ),
     };
   };
 

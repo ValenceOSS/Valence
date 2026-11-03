@@ -21,6 +21,7 @@ const HealthListSchema = z.object({
 
 const LibraryHealthSchema = z.object({
   checkedAt: z.string().datetime(),
+  titles: z.number().int().nonnegative().optional(),
   unmatched: HealthListSchema,
   noArtwork: HealthListSchema,
   duplicate: HealthListSchema,

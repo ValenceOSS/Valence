@@ -13,6 +13,7 @@ type PanelCount = {
  */
 const countsByPanel = (attention: AdminAttention): Readonly<Record<string, PanelCount>> => ({
   requests: { count: attention.requests, isUrgent: false },
+  catalogue: { count: attention.failedRequests, isUrgent: true },
   downloads: { count: attention.downloads, isUrgent: true },
   jobs: { count: attention.jobs, isUrgent: true },
   media: { count: attention.health, isUrgent: false },

@@ -29,7 +29,7 @@ type Waiting = {
 
 /**
  * What is waiting on an administrator, each a count that opens the page it is dealt with on:
- * requests to approve, downloads that failed, titles in the libraries that need fixing, and a newer
+ * requests to approve, requests that failed, titles in the libraries that need fixing, and a newer
  * release. Failed jobs are left to the banner above, which already says so on every page. A count of nothing is shown quietly rather than hidden, so the card always reads the
  * same way and an empty one says everything is in hand.
  *
@@ -52,11 +52,11 @@ const NeedsYouCard = ({ onOpenPanel }: NeedsYouCardProps) => {
             isUrgent: false,
           },
           {
-            id: 'downloads',
-            panel: 'downloads',
+            id: 'failedRequests',
+            panel: 'catalogue',
             icon: DownloadFilledIcon,
-            label: say('screens.adminArea.needsYouCard.downloadsThatFailed'),
-            count: attention.downloads,
+            label: say('screens.adminArea.needsYouCard.failedRequests'),
+            count: attention.failedRequests,
             isUrgent: true,
           },
         ]

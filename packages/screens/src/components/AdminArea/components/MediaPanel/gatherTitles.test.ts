@@ -79,6 +79,12 @@ describe('gatherTitles', () => {
     expect(film?.isMatched).toBe(false);
   });
 
+  it('calls a film with an empty catalogue id unmatched, as the server does', () => {
+    const [film] = gatherTitles([item({ externalId: '' })]);
+
+    expect(film?.isMatched).toBe(false);
+  });
+
   it('keeps two libraries’ series of the same name apart, and orders titles by name', () => {
     const titles = gatherTitles([
       episode('a', 1, 1),

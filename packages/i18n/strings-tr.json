@@ -16230,6 +16230,16 @@
     "context": "Said when approving or declining several requests at once failed."
   },
   {
+    "handler": "screens.adminArea.cataloguePanel.count.nameFailed.one",
+    "text": "{name} ({count} failed)",
+    "context": "A kind of library in the catalogue in the admin area, with how many of its requests failed. {name} is the kind, such as Music."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.count.nameFailed.other",
+    "text": "{name} ({count} failed)",
+    "context": "A kind of library in the catalogue in the admin area, with how many of its requests failed. {name} is the kind, such as Music."
+  },
+  {
     "handler": "screens.adminArea.cataloguePanel.countApproved.one",
     "text": "Approved {count} request",
     "context": "Said after approving several requests at once. {count} is how many."
@@ -19880,6 +19890,11 @@
     "context": "The label of the search field in the admin's dialog for correcting which series an episode was matched to."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.alsoNumbered",
+    "text": "Also numbered S{season} E{episode}: {files}",
+    "context": "Under an episode in the media page in the admin area, naming the other episode files that share its season and episode number. {season} and {episode} are numbers; {files} is a list of file names."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.chooseArtwork",
     "text": "Choose artwork…",
     "context": "The label in the media panel in the admin area."
@@ -19888,6 +19903,21 @@
     "handler": "screens.adminArea.mediaPanel.couldNotBeRead",
     "text": "Couldn’t be read",
     "context": "A choice of which titles the admin area’s media page lists: files that could not be read."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.couldNotReadFiles",
+    "text": "Couldn’t read {files}",
+    "context": "Under a title in the media page in the admin area, naming the files that could not be read. {files} is a list of file names."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.nameToFix.one",
+    "text": "{name} ({count} to fix)",
+    "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.nameToFix.other",
+    "text": "{name} ({count} to fix)",
+    "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
   },
   {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
@@ -19965,6 +19995,16 @@
     "context": "The detail of a confirm dialog in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.matchedToTheSameFilm",
+    "text": "Matched to the same film: {files}",
+    "context": "Under a title in the media page in the admin area, naming the files matched to the same catalogue entry. {files} is a list of file names."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.matchedToTheSameFilmAs",
+    "text": "Matched to the same film as {files}",
+    "context": "Under a film in the media page in the admin area, naming the other files matched to the same catalogue entry. {files} is a list of file names."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.moveToAnotherLibrary",
     "text": "Move to another library…",
     "context": "In the menu of a film, programme or file in the admin’s list of media, opening the dialog that moves it into another library."
@@ -19975,9 +20015,19 @@
     "context": "Shown in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.noPoster",
+    "text": "No poster",
+    "context": "A badge on a title in the media page in the admin area that is matched but has no poster."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis",
     "text": "Nothing has been scanned into this library yet.",
     "context": "Shown in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.numberedMoreThanOnce",
+    "text": "Numbered S{season} E{episode} more than once: {files}",
+    "context": "Under a title in the media page in the admin area, naming the episode files that share a season and episode number. {season} and {episode} are numbers; {files} is a list of file names."
   },
   {
     "handler": "screens.adminArea.mediaPanel.rebuilding",
@@ -20145,9 +20195,9 @@
     "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
   },
   {
-    "handler": "screens.adminArea.needsYouCard.downloadsThatFailed",
-    "text": "Downloads that failed",
-    "context": "A count on the admin overview’s Waiting on you card."
+    "handler": "screens.adminArea.needsYouCard.failedRequests",
+    "text": "Failed requests",
+    "context": "A count on the overview in the admin area that opens the catalogue, where the failed requests are listed."
   },
   {
     "handler": "screens.adminArea.needsYouCard.jobsThatFailedToday",

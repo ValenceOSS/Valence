@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { menuGroupsOf } from '@ValenceUI/menuGroupsOf';
 import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
@@ -159,6 +159,24 @@ const CataloguePanel = ({
     ]);
   };
 
+  const failedNow = useQuery(requestsQueries.overview()).data?.work.failed ?? null;
+  const failedSeen = useRef(failedNow);
+
+  useEffect(() => {
+    if (failedNow === null || failedNow === failedSeen.current) {
+      return;
+    }
+
+    const isFirst = failedSeen.current === null;
+
+    failedSeen.current = failedNow;
+
+    if (!isFirst) {
+      void cache.invalidateQueries({ queryKey: requestsQueries.titleCatalogue().queryKey });
+      void cache.invalidateQueries({ queryKey: requestsQueries.mediaRequests().queryKey });
+    }
+  }, [cache, failedNow]);
+
   const tabLibraries = (libraries.data ?? []).filter(
     (library) => library.kind === LIBRARY_KIND_OF_TAB[tab],
   );
@@ -175,6 +193,11 @@ const CataloguePanel = ({
     sort,
   });
   const counts = countTitleStatuses(inTab);
+  const failedRequests = new Set<string | null>(
+    (requests.data ?? [])
+      .filter((request) => request.state === 'failed')
+      .map((request) => request.id),
+  );
   const chosenRequests = (requests.data ?? []).filter((request) =>
     shown.some((entry) => chosen.has(entry.key) && entry.requestId === request.id),
   );
@@ -365,7 +388,28 @@ const CataloguePanel = ({
                 : [
                     {
                       label: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
-                      options: tabs.map((id) => ({ id, label: TAB_NAMES[id] })),
+                      options: tabs.map((id) => {
+                        const failed = new Set(
+                          (catalogue.data ?? [])
+                            .filter((entry) => entry.tab === id && entry.requestId !== null)
+                            .map((entry) => entry.requestId)
+                            .filter((requestId) => failedRequests.has(requestId)),
+                        ).size;
+
+                        return {
+                          id,
+                          label:
+                            failed === 0
+                              ? TAB_NAMES[id]
+                              : sayCount(
+                                  'screens.adminArea.cataloguePanel.count.nameFailed',
+                                  failed,
+                                  {
+                                    name: TAB_NAMES[id],
+                                  },
+                                ),
+                        };
+                      }),
                       value: tab,
                       onChange: (next) => {
                         const found = tabs.find((one) => one === next);

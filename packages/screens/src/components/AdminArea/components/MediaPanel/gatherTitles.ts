@@ -232,7 +232,8 @@ const gatherTitles = (items: readonly MediaSummary[]): MediaTitle[] => {
             .sort()
             .at(-1) ?? item.addedAt,
         posterFrom: item.hasPoster ? item.id : null,
-        isMatched: item.externalId !== null && item.externalId !== undefined,
+        isMatched:
+          item.externalId !== null && item.externalId !== undefined && item.externalId !== '',
       });
       continue;
     }
