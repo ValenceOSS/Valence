@@ -3921,11 +3921,6 @@
     "context": "Shown, used in several places, among them the admin (from `describeReencodeState`) and the requests (from `describeItemBadge`)."
   },
   {
-    "handler": "common.favourite",
-    "text": "Favourite",
-    "context": "The round button under a title's play button that adds the title to the favourites or takes it out, in the web app's dialog about a film, episode or programme."
-  },
-  {
     "handler": "common.favourites",
     "text": "Favourites",
     "context": "The label, used in several places, among them the app shell and the browse area."
@@ -29816,11 +29811,6 @@
     "context": "Text shown in the rating panel."
   },
   {
-    "handler": "screens.ratingPanel.personalRating",
-    "text": "Personal rating",
-    "context": "The label over the stars this viewer gives a film, episode or programme, in the rating panel."
-  },
-  {
     "handler": "screens.ratingPanel.ratings",
     "text": "Ratings",
     "context": "The heading of a dialog section in the rating panel."
@@ -30871,19 +30861,9 @@
     "context": "How many of a series' seasons are chosen. {length} is how many are chosen; {count} is how many there are."
   },
   {
-    "handler": "screens.seasonChooser.fetchedAsEachOneAirs",
-    "text": "Fetched as each one airs",
-    "context": "Under New seasons in the seasons to ask for, saying what ticking it does."
-  },
-  {
     "handler": "screens.seasonChooser.firstAired",
     "text": "First aired",
     "context": "Shown in the season chooser."
-  },
-  {
-    "handler": "screens.seasonChooser.newSeasons",
-    "text": "New seasons",
-    "context": "The last row of the seasons to ask for, which gets seasons that air later as they come."
   },
   {
     "handler": "screens.seasonChooser.noSeasonIsTakenYet",

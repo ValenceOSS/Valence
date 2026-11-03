@@ -42,7 +42,7 @@ const RatingPanel = ({ subject, title, onRate, isBare = false, className }: Rati
     <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
       <div className="flex flex-col gap-1.5">
         <span className="text-xs font-medium text-text-muted">
-          {say('screens.ratingPanel.personalRating')}
+          {say('phone.theStars.personalRating')}
         </span>
 
         <StarRating

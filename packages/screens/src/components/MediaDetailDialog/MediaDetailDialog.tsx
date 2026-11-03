@@ -300,7 +300,7 @@ const MediaDetailDialog = ({
       : [
           {
             id: 'favourite',
-            label: say('common.favourite'),
+            label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
             isChosen: isKept,
             icon: <KeepHeart isKept={isKept} size={20} />,
             onChoose: () => {
@@ -313,7 +313,7 @@ const MediaDetailDialog = ({
       : [
           {
             id: 'watched',
-            label: say('common.watched'),
+            label: isWatched ? say('common.markAsUnwatched') : say('common.markAsWatched'),
             isChosen: isWatched,
             icon: <Icon of={isWatched ? CircleCheckFilledIcon : CircleCheckIcon} size={20} />,
             onChoose: () => {

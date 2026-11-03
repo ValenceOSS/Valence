@@ -9,6 +9,7 @@ import { ShowDialog } from './ShowDialog';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type * as MotionReact from 'motion/react';
+import type { ReactNode } from 'react';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -51,7 +52,9 @@ vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
 }));
 
 vi.mock('@ValenceScreens/components/MediaPreview/MediaPreview', () => ({
-  MediaPreview: () => <div data-testid="preview" />,
+  MediaPreview: ({ closing }: { closing?: ReactNode }) => (
+    <div data-testid="preview">{closing}</div>
+  ),
 }));
 
 vi.mock('@ValenceScreens/components/LikeThisShelf/LikeThisShelf', () => ({
@@ -241,15 +244,17 @@ describe('ShowDialog', () => {
 
       renderInAnAddress(<ShowDialog show={programme} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-      const [menu] = await screen.findAllByRole('button', {
-        name: 'More options',
-      });
+      await screen.findByRole('button', { name: /Play Episode 1/ });
 
-      if (menu !== undefined) {
+      const [square] = screen.queryAllByRole('button', { name: 'Add to a collection' });
+      const [menu] = screen.queryAllByRole('button', { name: 'More options' });
+
+      if (square !== undefined) {
+        await userEvent.click(square);
+      } else if (menu !== undefined) {
         await userEvent.click(menu);
+        await userEvent.click(await screen.findByRole('menuitem', { name: 'Add to a collection' }));
       }
-
-      await userEvent.click(await screen.findByRole('menuitem', { name: 'Add to a collection' }));
 
       expect(
         await screen.findByRole('dialog', { name: 'Add A Sign of Affection to a collection' }),
@@ -761,8 +766,7 @@ describe('what the header says about a series', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
     renderInAnAddress(<ShowDialog show={filed} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Animation')).toBeInTheDocument();
-    expect(screen.getByText('Romance')).toBeInTheDocument();
+    expect(await screen.findByText('Animation, Romance')).toBeInTheDocument();
   });
 
   it('names at most three of them, since a header is not a list', async () => {
@@ -774,9 +778,8 @@ describe('what the header says about a series', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
     renderInAnAddress(<ShowDialog show={many} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByText('Animation');
-
-    expect(screen.queryByText('Comedy')).not.toBeInTheDocument();
+    expect(await screen.findByText('Animation, Romance, Drama')).toBeInTheDocument();
+    expect(screen.queryByText(/Comedy/)).not.toBeInTheDocument();
   });
 
   it('says nothing about genres for a series carrying none', async () => {
@@ -785,7 +788,7 @@ describe('what the header says about a series', () => {
 
     await screen.findByText('3 episodes');
 
-    expect(screen.queryByText('Animation')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Animation/)).not.toBeInTheDocument();
   });
 
   it('closes when asked', async () => {

@@ -485,7 +485,7 @@ const ShowDialog = ({
               {(shown.genres ?? []).length === 0 ? null : (
                 <p>
                   <span className="text-text-muted">{say('common.genres')}: </span>
-                  <span className="text-text">{(shown.genres ?? []).join(', ')}</span>
+                  <span className="text-text">{(shown.genres ?? []).slice(0, 3).join(', ')}</span>
                 </p>
               )}
 

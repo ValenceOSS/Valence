@@ -165,55 +165,67 @@ const SeasonChooser = ({
           {say('screens.seasonChooser.theCatalogueListsNoSeasonsFor')}
         </p>
       ) : (
-        <ul aria-label={say('screens.seasonChooser.whichSeasons')} className="flex flex-col">
-          {rows.map((row) => {
-            const name = row.name ?? nameSeason(row.season);
-            const isAsked = alreadyAsked.includes(row.season);
+        <>
+          <ul aria-label={say('screens.seasonChooser.whichSeasons')} className="flex flex-col">
+            {rows.map((row) => {
+              const name = row.name ?? nameSeason(row.season);
+              const isAsked = alreadyAsked.includes(row.season);
 
-            return (
-              <span key={row.season} className="contents">
-                {rowOf(
-                  row.posterUrl === null || row.posterUrl === undefined ? (
-                    <span className="text-lg font-semibold text-text-muted">
-                      {row.season.toString()}
-                    </span>
-                  ) : (
-                    <img
-                      src={row.posterUrl}
-                      alt=""
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  ),
-                  name,
-                  name,
-                  [
-                    sayCount('common.count.episodes', row.episodeCount),
-                    row.firstAired?.slice(0, 4) ?? null,
-                    SEASON_STANDING_NAMES[row.standing],
-                  ]
-                    .filter((part) => part !== null)
-                    .join(' · '),
-                  isAsked || ticked.includes(row.season),
-                  isAsked || isSeasonHeld(row),
-                  () => {
-                    choose(tickASeason(seasons, rows, row.season));
-                  },
-                )}
-              </span>
-            );
-          })}
+              return (
+                <span key={row.season} className="contents">
+                  {rowOf(
+                    row.posterUrl === null || row.posterUrl === undefined ? (
+                      <span className="text-lg font-semibold text-text-muted">
+                        {row.season.toString()}
+                      </span>
+                    ) : (
+                      <img
+                        src={row.posterUrl}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ),
+                    name,
+                    name,
+                    [
+                      sayCount('common.count.episodes', row.episodeCount),
+                      row.firstAired?.slice(0, 4) ?? null,
+                      SEASON_STANDING_NAMES[row.standing],
+                    ]
+                      .filter((part) => part !== null)
+                      .join(' · '),
+                    isAsked || ticked.includes(row.season),
+                    isAsked || isSeasonHeld(row),
+                    () => {
+                      choose(tickASeason(seasons, rows, row.season));
+                    },
+                  )}
+                </span>
+              );
+            })}
 
-          {rowOf(
-            <Icon of={PlusIcon} size={22} tone="muted" />,
-            say('screens.seasonChooser.newSeasons'),
-            say('common.getNewSeasonsAsTheyCome'),
-            say('screens.seasonChooser.fetchedAsEachOneAirs'),
-            isFollowing,
-            isFollowedAlready,
-            followNewOnes,
-          )}
-        </ul>
+            {rowOf(
+              <Icon of={PlusIcon} size={22} tone="muted" />,
+              say('phone.theSeasons.newSeasons'),
+              say('common.getNewSeasonsAsTheyCome'),
+              say('phone.theSeasons.fetchedAsEachOneAirs'),
+              isFollowing,
+              isFollowedAlready,
+              followNewOnes,
+            )}
+          </ul>
+
+          <p className="text-xs text-text-muted">
+            {isEveryOne
+              ? say('common.everySeason')
+              : ticked.length === 0
+                ? say('screens.seasonChooser.noSeasonIsTakenYet')
+                : sayCount('screens.seasonChooser.chosenOfSeasons', open.length, {
+                    length: ticked.filter((season) => season > 0).length.toString(),
+                  })}
+          </p>
+        </>
       )}
     </div>
   );

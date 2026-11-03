@@ -680,7 +680,7 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: Askabl
 
                   {note === null ? null : (
                     <DialogHeadlinePart as="span" className="text-sm font-medium text-on-scrim">
-                      {note}
+                      <span role="alert">{note}</span>
                     </DialogHeadlinePart>
                   )}
                 </DialogHeadline>

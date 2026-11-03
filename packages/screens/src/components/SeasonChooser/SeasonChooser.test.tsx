@@ -26,7 +26,7 @@ const SERIES = { tmdbId: 95396, followsNew: true, onFollowsNew: vi.fn() };
  * The row naming a season.
  */
 const rowOf = (name: string) =>
-  screen.getAllByRole('row').find((row) => row.textContent.includes(name)) ?? document.body;
+  screen.getAllByRole('listitem').find((row) => row.textContent.includes(name)) ?? document.body;
 
 /**
  * A chooser that keeps what it is told, as the dialogs that draw it do.
@@ -51,9 +51,8 @@ describe('SeasonChooser', () => {
     renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={vi.fn()} />);
 
     expect(await screen.findByText('Season 1')).toBeInTheDocument();
-    expect(within(rowOf('Season 1')).getByText('9')).toBeInTheDocument();
-    expect(within(rowOf('Season 1')).getByText('2022')).toBeInTheDocument();
-    expect(within(rowOf('Specials')).getByText('—')).toBeInTheDocument();
+    expect(within(rowOf('Season 1')).getByText(/9 episodes · 2022/)).toBeInTheDocument();
+    expect(within(rowOf('Specials')).getByText(/^2 episodes · Not requested$/)).toBeInTheDocument();
   });
 
   it("names an anime's cours by their own names", async () => {
@@ -85,10 +84,10 @@ describe('SeasonChooser', () => {
     renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={vi.fn()} />);
 
     expect(await screen.findByText('Season 1')).toBeInTheDocument();
-    expect(within(rowOf('Season 1')).getByText('In the library')).toBeInTheDocument();
-    expect(within(rowOf('Season 2')).getByText('Partially available')).toBeInTheDocument();
-    expect(within(rowOf('Season 3')).getByText('Requested')).toBeInTheDocument();
-    expect(within(rowOf('Season 4')).getByText('Not requested')).toBeInTheDocument();
+    expect(within(rowOf('Season 1')).getByText(/· In the library$/)).toBeInTheDocument();
+    expect(within(rowOf('Season 2')).getByText(/· Partially available$/)).toBeInTheDocument();
+    expect(within(rowOf('Season 3')).getByText(/· Requested$/)).toBeInTheDocument();
+    expect(within(rowOf('Season 4')).getByText(/· Not requested$/)).toBeInTheDocument();
   });
 
   it('locks a season the library holds whole, and leaves one it holds part of open', async () => {

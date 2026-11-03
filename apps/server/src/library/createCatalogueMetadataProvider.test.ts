@@ -1389,6 +1389,8 @@ describe('discovering and describing titles to ask for', () => {
         backdrop_path: '/b.jpg',
         genres: [{ name: 'Drama' }],
         episode_run_time: [55],
+        vote_average: 8.4,
+        content_ratings: { results: [{ iso_3166_1: 'gb', rating: '15' }] },
         credits: {
           cast: [
             { id: 1, name: 'Adam Scott', character: 'Mark S.', profile_path: '/a.jpg' },
@@ -1416,8 +1418,10 @@ describe('discovering and describing titles to ask for', () => {
         { personId: null, name: 'Britt Lower', role: null, photoUrl: null },
       ],
       trailerKey: null,
+      rating: 8.4,
+      certifications: { GB: '15' },
     });
-    expect(calls[0]).toContain('append_to_response=credits');
+    expect(calls[0]).toContain('append_to_response=credits%2Ccontent_ratings');
     expect(calls[0]).not.toContain('videos');
   });
 
@@ -1444,7 +1448,7 @@ describe('discovering and describing titles to ask for', () => {
     await expect(instance.describeTitle?.('95396', 'tv')).resolves.toMatchObject({
       trailerKey: 'official',
     });
-    expect(calls[0]).toContain('append_to_response=credits%2Cvideos');
+    expect(calls[0]).toContain('append_to_response=credits%2Ccontent_ratings%2Cvideos');
   });
 
   it('lists a studio with its logo recoloured in the colours of the text beside it, on either theme', async () => {

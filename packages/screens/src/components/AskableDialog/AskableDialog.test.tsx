@@ -156,7 +156,8 @@ describe('AskableDialog', () => {
     open('book:21277329');
 
     expect(await screen.findByRole('heading', { name: 'Project Hail Mary' })).toBeInTheDocument();
-    expect(screen.getByText('Andy Weir · 2021 · Science fiction')).toBeInTheDocument();
+    expect(screen.getByText('Andy Weir · 2021')).toBeInTheDocument();
+    expect(screen.getByText('Science fiction')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
@@ -192,8 +193,9 @@ describe('AskableDialog', () => {
     open();
 
     expect(await screen.findByRole('heading', { name: 'Dune' })).toBeInTheDocument();
-    expect(screen.getByText('2021 · 2 h 35 min · Science Fiction')).toBeInTheDocument();
-    expect(screen.getByText('Zendaya')).toBeInTheDocument();
+    expect(screen.getByText('2021 · 2 h 35 min')).toBeInTheDocument();
+    expect(screen.getByText('Science Fiction')).toBeInTheDocument();
+    expect(screen.getAllByText('Zendaya')).not.toHaveLength(0);
 
     await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
@@ -281,7 +283,7 @@ describe('AskableDialog', () => {
     open();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
-    await userEvent.click(await screen.findByRole('button', { name: '1080p' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: '1080p' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith({
@@ -319,7 +321,7 @@ describe('AskableDialog', () => {
     });
   });
 
-  it('asks for nothing when the quality prompt is dismissed', async () => {
+  it('asks for nothing when the qualities are put away unchosen', async () => {
     fetchProfilesOnOffer.mockResolvedValue({
       choices: [aQuality('uhd', '4K'), aQuality('hd', '1080p')],
       forcedId: null,
@@ -329,12 +331,13 @@ describe('AskableDialog', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
 
-    const prompt = await screen.findByRole('dialog', { name: 'Which quality for Dune?' });
+    expect(await screen.findByRole('menuitem', { name: '4K' })).toBeInTheDocument();
 
-    expect(within(prompt).getByRole('heading', { name: 'Request Dune' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
 
-    await userEvent.click(within(prompt).getByRole('button', { name: 'Close' }));
-
+    await waitFor(() => {
+      expect(screen.queryByRole('menuitem', { name: '4K' })).not.toBeInTheDocument();
+    });
     expect(askForMedia).not.toHaveBeenCalled();
   });
 

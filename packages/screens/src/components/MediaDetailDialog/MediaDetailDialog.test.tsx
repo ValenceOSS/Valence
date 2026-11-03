@@ -112,9 +112,11 @@ const preview = vi.hoisted(() => ({
 vi.mock('@ValenceScreens/components/MediaPreview/MediaPreview', () => ({
   MediaPreview: ({
     actions,
+    closing,
     onPlayingChange,
   }: {
     actions?: ReactNode;
+    closing?: ReactNode;
     onPlayingChange?: (isPlaying: boolean) => void;
   }) => {
     preview.report = (isPlaying) => {
@@ -125,6 +127,7 @@ vi.mock('@ValenceScreens/components/MediaPreview/MediaPreview', () => ({
       <div>
         preview
         {actions}
+        {closing}
       </div>
     );
   },
@@ -188,28 +191,61 @@ afterEach(() => {
   watcher.prefersBestCopy = false;
 });
 
-const openTheMenu = async (): Promise<void> => {
-  const [menu] = await screen.findAllByRole('button', { name: 'More actions' });
+/**
+ * Finds an action beside the play button, opening the menu of the rest where it was folded there.
+ *
+ * @param name - What the action is called.
+ * @returns The square, or the menu item.
+ */
+const findAction = async (name: string | RegExp): Promise<HTMLElement> => {
+  await screen.findAllByRole('dialog');
+
+  const [square] = screen.queryAllByRole('button', { name });
+
+  if (square !== undefined) {
+    return square;
+  }
+
+  const [menu] = screen.queryAllByRole('button', { name: 'More actions' });
 
   if (menu !== undefined) {
     await userEvent.setup().click(menu);
   }
+
+  return screen.findByRole('menuitem', { name });
 };
 
 /**
- * Presses an action in the dialog's bar. The bar draws each action both whole and folded, leaving
- * CSS to hide one, so the first drawn is the one pressed.
+ * Whether an action is offered beside the play button, either as a square or folded in the menu.
  *
- * @param label - What the action says.
+ * @param name - What the action is called.
+ * @returns Whether it is there.
  */
-const pressAction = async (label: string): Promise<void> => {
-  const [shown] = await screen.findAllByText(label);
+const isOffered = async (name: string | RegExp): Promise<boolean> => {
+  await screen.findAllByRole('dialog');
 
-  expect(shown).toBeDefined();
-
-  if (shown !== undefined) {
-    await userEvent.setup().click(shown);
+  if (screen.queryAllByRole('button', { name }).length > 0) {
+    return true;
   }
+
+  const [menu] = screen.queryAllByRole('button', { name: 'More actions' });
+
+  if (menu === undefined) {
+    return false;
+  }
+
+  await userEvent.setup().click(menu);
+
+  return screen.queryAllByRole('menuitem', { name }).length > 0;
+};
+
+/**
+ * Presses an action beside the play button.
+ *
+ * @param name - What the action is called.
+ */
+const pressAction = async (name: string | RegExp): Promise<void> => {
+  await userEvent.setup().click(await findAction(name));
 };
 
 describe('collections', () => {
@@ -274,10 +310,7 @@ describe('collections', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await openTheMenu();
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('menuitem', { name: 'Add to a collection' }));
+    await pressAction('Add to a collection');
 
     expect(
       await screen.findByRole('dialog', { name: `Add ${summary.title} to a collection` }),
@@ -287,11 +320,8 @@ describe('collections', () => {
   it('offers nobody else a way to add it to one', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByRole('heading', { name: 'Arrival' });
-    await openTheMenu();
-    await screen.findByRole('menuitem', { name: /Download/ });
-
-    expect(screen.queryByRole('menuitem', { name: 'Add to a collection' })).not.toBeInTheDocument();
+    expect(await isOffered(/Download/)).toBe(true);
+    expect(await isOffered('Add to a collection')).toBe(false);
   });
 });
 
@@ -301,11 +331,8 @@ describe('choosing where the preview is cut from', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByRole('heading', { name: 'Arrival' });
-    await openTheMenu();
-    await screen.findByRole('menuitem', { name: /Download/ });
-
-    expect(screen.queryByRole('menuitem', { name: /preview/u })).not.toBeInTheDocument();
+    expect(await isOffered(/Download/)).toBe(true);
+    expect(await isOffered(/preview/u)).toBe(false);
   });
 });
 
@@ -319,9 +346,7 @@ describe('MediaDetailDialog', () => {
   it('offers to download on a client that can keep a file', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await openTheMenu();
-
-    expect(await screen.findByRole('menuitem', { name: /Download/ })).toBeInTheDocument();
+    expect(await findAction(/Download/)).toBeInTheDocument();
   });
 
   it('offers no download in a browser, which cannot be trusted to keep one', async () => {
@@ -329,13 +354,7 @@ describe('MediaDetailDialog', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    const [menu] = screen.queryAllByRole('button', { name: 'More actions' });
-
-    if (menu !== undefined) {
-      await userEvent.setup().click(menu);
-    }
-
-    expect(screen.queryByRole('menuitem', { name: /Download/ })).not.toBeInTheDocument();
+    expect(await isOffered(/Download/)).toBe(false);
   });
 
   it('draws while one of this viewer’s downloads is still being prepared', async () => {
@@ -360,9 +379,7 @@ describe('MediaDetailDialog', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await openTheMenu();
-
-    expect(await screen.findByRole('menuitem', { name: /Preparing 40%/ })).toBeInTheDocument();
+    expect(await findAction(/Preparing 40%/)).toBeInTheDocument();
   });
 
   it('names itself after the item', () => {
@@ -371,10 +388,10 @@ describe('MediaDetailDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Arrival' })).toBeInTheDocument();
   });
 
-  it('offers to play in the white button a dialog answers with, as wide as the actions beside it', () => {
+  it('offers to play in the white button a dialog answers with', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('flex-1', 'bg-white');
+    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('bg-white');
   });
 
   it('asks for the full-size lettering, so a logo is not stretched soft across the artwork', () => {
@@ -424,7 +441,7 @@ describe('MediaDetailDialog', () => {
     );
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Amy Adams')).toBeInTheDocument();
+    expect(await screen.findAllByText('Amy Adams')).not.toHaveLength(0);
     expect(screen.getByText('Louise Banks')).toBeInTheDocument();
   });
 
@@ -631,8 +648,7 @@ describe('keeping something, and getting back to where you were', () => {
       />,
     );
 
-    await openTheMenu();
-    await userEvent.setup().click(await screen.findByRole('menuitem', { name: 'Mark as watched' }));
+    await pressAction('Mark as watched');
 
     expect(onMarkWatched).toHaveBeenCalledWith(summary, true);
   });
@@ -650,10 +666,7 @@ describe('keeping something, and getting back to where you were', () => {
       />,
     );
 
-    await openTheMenu();
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('menuitem', { name: 'Mark as unwatched' }));
+    await pressAction('Mark as unwatched');
 
     expect(onMarkWatched).toHaveBeenCalledWith(summary, false);
   });
@@ -674,7 +687,7 @@ describe('keeping something, and getting back to where you were', () => {
         onClose={vi.fn()}
         onPlay={vi.fn()}
         onBack={onBack}
-        backLabel="Back to the series"
+        backLabel="the series"
       />,
     );
 
@@ -702,7 +715,7 @@ describe('keeping something, and getting back to where you were', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Science fiction')).toBeInTheDocument();
+    expect(await screen.findByText('Science fiction, Drama')).toBeInTheDocument();
   });
 
   it('says nothing about genres for an item carrying none', async () => {
@@ -881,8 +894,9 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Synopsis')).toBeInTheDocument();
+      expect(detailMock).toHaveBeenCalled();
     });
+    await screen.findByText(/No synopsis yet/);
 
     expect(screen.queryByText('Extras')).not.toBeInTheDocument();
   });
@@ -944,7 +958,7 @@ describe('the extras a film carries', () => {
       expect(screen.getByText('Extras')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('Watch the trailer')).not.toBeInTheDocument();
+    expect(await isOffered('Watch the trailer')).toBe(false);
   });
 
   it('offers the trailer beside playing the film, rather than only down among the extras', async () => {
@@ -955,10 +969,6 @@ describe('the extras a film carries', () => {
     });
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Watch the trailer')).not.toHaveLength(0);
-    });
 
     await pressAction('Watch the trailer');
 
@@ -1082,9 +1092,7 @@ describe('playing it on a television', () => {
   it('offers no television where the caller has none to send to', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await openTheMenu();
-
-    expect(screen.queryByText('Play on TV')).not.toBeInTheDocument();
+    expect(await isOffered('Play on TV')).toBe(false);
   });
 
   it('sends it from where this person had got to', async () => {
