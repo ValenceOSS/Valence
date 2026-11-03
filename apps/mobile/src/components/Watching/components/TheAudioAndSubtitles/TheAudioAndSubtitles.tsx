@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
  * @param onStyle - Told they want to change how the words are drawn, where a track is being read.
  * @param onClose - Told they are done choosing.
  * @param only - Which of the two to show alone, where they are chosen apart; both where not said.
+ * @param onFind - Opens a search of the subtitle sites, for somebody who may add to the library.
  */
 const TheAudioAndSubtitles = ({
   audio,
@@ -59,12 +60,23 @@ const TheAudioAndSubtitles = ({
   onStyle,
   onClose,
   only,
+  onFind,
 }: TheAudioAndSubtitlesProps) => {
   const nudge = (by: number) => {
     if (timing !== null) {
       timing.onChange(Math.min(FURTHEST, Math.max(-FURTHEST, timing.offset + by)));
     }
   };
+
+  const finding =
+    onFind === undefined ? null : (
+      <Button tone="bare" label={say('screens.findSubtitlesDialog.findSubtitles')} onPress={onFind}>
+        <View style={styles.extra}>
+          <Text style={styles.extraLabel}>{say('screens.findSubtitlesDialog.findSubtitles')}</Text>
+          <Icon of={ChevronRight} size={20} colour={PLAYER_LOOK.colours.quiet} />
+        </View>
+      </Button>
+    );
 
   return (
     <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose} isACard>
@@ -82,53 +94,58 @@ const TheAudioAndSubtitles = ({
           <View style={styles.only}>
             <Text style={PLAYER_LOOK.styles.heading}>{say('common.subtitles')}</Text>
             <Text style={styles.nothing}>{say('phone.watching.noSubtitlesForThis')}</Text>
+            {finding}
           </View>
         ) : (
           <APlayerList
             set={subtitles}
             footer={
-              timing === null ? null : (
-                <View>
-                  <View style={styles.extra}>
-                    <Text style={styles.extraLabel}>{say('common.subtitleTiming')}</Text>
+              <View>
+                {timing === null ? null : (
+                  <View>
+                    <View style={styles.extra}>
+                      <Text style={styles.extraLabel}>{say('common.subtitleTiming')}</Text>
 
-                    <Button
-                      tone="bare"
-                      label={say('phone.watching.subtitlesEarlier')}
-                      onPress={() => {
-                        nudge(-SUBTITLE_STEP_SECONDS);
-                      }}
-                    >
-                      <View style={styles.nudge}>
-                        <Icon of={Minus} size={18} colour={PLAYER_LOOK.colours.text} />
-                      </View>
-                    </Button>
+                      <Button
+                        tone="bare"
+                        label={say('phone.watching.subtitlesEarlier')}
+                        onPress={() => {
+                          nudge(-SUBTITLE_STEP_SECONDS);
+                        }}
+                      >
+                        <View style={styles.nudge}>
+                          <Icon of={Minus} size={18} colour={PLAYER_LOOK.colours.text} />
+                        </View>
+                      </Button>
 
-                    <Text style={styles.nudgeAt}>{describeSubtitleOffset(timing.offset)}</Text>
+                      <Text style={styles.nudgeAt}>{describeSubtitleOffset(timing.offset)}</Text>
 
-                    <Button
-                      tone="bare"
-                      label={say('phone.watching.subtitlesLater')}
-                      onPress={() => {
-                        nudge(SUBTITLE_STEP_SECONDS);
-                      }}
-                    >
-                      <View style={styles.nudge}>
-                        <Icon of={Plus} size={18} colour={PLAYER_LOOK.colours.text} />
-                      </View>
-                    </Button>
+                      <Button
+                        tone="bare"
+                        label={say('phone.watching.subtitlesLater')}
+                        onPress={() => {
+                          nudge(SUBTITLE_STEP_SECONDS);
+                        }}
+                      >
+                        <View style={styles.nudge}>
+                          <Icon of={Plus} size={18} colour={PLAYER_LOOK.colours.text} />
+                        </View>
+                      </Button>
+                    </View>
+
+                    {onStyle === undefined ? null : (
+                      <Button tone="bare" label={say('common.captionSettings')} onPress={onStyle}>
+                        <View style={styles.extra}>
+                          <Text style={styles.extraLabel}>{say('common.captionSettings')}</Text>
+                          <Icon of={ChevronRight} size={20} colour={PLAYER_LOOK.colours.quiet} />
+                        </View>
+                      </Button>
+                    )}
                   </View>
+                )}
 
-                  {onStyle === undefined ? null : (
-                    <Button tone="bare" label={say('common.captionSettings')} onPress={onStyle}>
-                      <View style={styles.extra}>
-                        <Text style={styles.extraLabel}>{say('common.captionSettings')}</Text>
-                        <Icon of={ChevronRight} size={20} colour={PLAYER_LOOK.colours.quiet} />
-                      </View>
-                    </Button>
-                  )}
-                </View>
-              )
+                {finding}
+              </View>
             }
           />
         )}

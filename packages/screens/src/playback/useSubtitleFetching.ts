@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { fetchFoundSubtitle } from '@ValenceClient/library/fetchFoundSubtitle';
+import { keepFoundSubtitle } from '@ValenceClient/library/keepFoundSubtitle';
 import { findSubtitles } from '@ValenceClient/library/findSubtitles';
-import { fetchSubtitleTracks } from '@ValenceClient/playback/fetchSubtitles';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import { notify } from '@ValenceUI/notify';
 import { say } from '@ValenceI18n/say';
-import { languageName } from '@ValenceScreens/playback/languageName';
+import { languageName } from '@ValenceClient/playback/languageName';
 
 /**
  * The subtitle languages a title could have fetched for it from the sites the server has keys for,
@@ -51,29 +50,20 @@ const useSubtitleFetching = (
         return;
       }
 
-      const saved = await fetchFoundSubtitle(mediaId, {
-        source: best.source,
-        id: best.id,
-        language: code,
-      });
+      const kept = await keepFoundSubtitle(
+        mediaId,
+        { source: best.source, id: best.id, language: code },
+        tracks,
+      );
 
-      if ('problem' in saved) {
-        notify.failed(saved.problem);
+      if (kept.kind === 'refused') {
+        notify.failed(kept.problem);
 
         return;
       }
 
-      const before = new Set(tracks.map((track) => track.id));
-      const after = await fetchSubtitleTracks(mediaId);
-      const fresh =
-        after.find((track) => !before.has(track.id)) ??
-        after.find(
-          (track) =>
-            languageName(track.language ?? '').toLowerCase() === languageName(code).toLowerCase(),
-        );
-
-      if (fresh !== undefined) {
-        onFetched(after, fresh);
+      if (kept.fresh !== null) {
+        onFetched(kept.tracks, kept.fresh);
       }
     } catch {
       notify.failed(

@@ -15,35 +15,28 @@ import { notify } from '@ValenceUI/notify';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { findSubtitles } from '@ValenceClient/library/findSubtitles';
 import { fetchFoundSubtitle } from '@ValenceClient/library/fetchFoundSubtitle';
+import { languageName } from '@ValenceClient/playback/languageName';
+import { SUBTITLE_REASON_LABELS } from '@ValenceClient/library/SUBTITLE_REASON_LABELS';
+import { SUBTITLE_SITE_NAMES } from '@ValenceClient/library/SUBTITLE_SITE_NAMES';
 import { SUBTITLE_LANGUAGES } from '@ValenceContracts/constants/SUBTITLE_LANGUAGES';
 import type { FoundSubtitle, SubtitleReason } from '@ValenceContracts/schemas/SubtitleFinding';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { FindSubtitlesDialogProps } from './FindSubtitlesDialog.types';
 import { say } from '@ValenceI18n/say';
 
-const LANGUAGE_NAMES = new Intl.DisplayNames(undefined, { type: 'language' });
-
-const SOURCE_NAMES = { opensubtitles: 'OpenSubtitles', subdl: 'SubDL' } as const;
-
-const REASONS = {
-  madeForThisFile: { label: say('screens.findSubtitlesDialog.madeForThisFile'), tone: 'success' },
-  sameRelease: { label: say('screens.findSubtitlesDialog.sameRelease'), tone: 'accent' },
-  sameGroup: { label: say('screens.findSubtitlesDialog.sameGroup'), tone: 'quiet' },
-  sameSource: { label: say('screens.findSubtitlesDialog.sameSource'), tone: 'quiet' },
-  sameResolution: { label: say('screens.findSubtitlesDialog.sameResolution'), tone: 'quiet' },
-  sameVideoCodec: { label: say('screens.findSubtitlesDialog.sameVideoCodec'), tone: 'quiet' },
-  sameAudioCodec: { label: say('screens.findSubtitlesDialog.sameAudioCodec'), tone: 'quiet' },
-  sameService: { label: say('screens.findSubtitlesDialog.sameService'), tone: 'quiet' },
-  sameEdition: { label: say('screens.findSubtitlesDialog.sameEdition'), tone: 'quiet' },
-  sameFrameRate: { label: say('screens.findSubtitlesDialog.sameFrameRate'), tone: 'quiet' },
-  differentFrameRate: {
-    label: say('screens.findSubtitlesDialog.differentFrameRateWillDrift'),
-    tone: 'danger',
-  },
-} as const satisfies Record<
-  SubtitleReason,
-  { label: string; tone: 'success' | 'accent' | 'quiet' | 'danger' }
->;
+const REASON_TONES = {
+  madeForThisFile: 'success',
+  sameRelease: 'accent',
+  sameGroup: 'quiet',
+  sameSource: 'quiet',
+  sameResolution: 'quiet',
+  sameVideoCodec: 'quiet',
+  sameAudioCodec: 'quiet',
+  sameService: 'quiet',
+  sameEdition: 'quiet',
+  sameFrameRate: 'quiet',
+  differentFrameRate: 'danger',
+} as const satisfies Record<SubtitleReason, 'success' | 'accent' | 'quiet' | 'danger'>;
 
 /**
  * Looks for subtitles for one film or episode on the sites Valence has keys for, in a language
@@ -73,7 +66,7 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
   });
   const languages = [...new Set([...preferred, ...SUBTITLE_LANGUAGES])].map((code) => ({
     id: code,
-    label: LANGUAGE_NAMES.of(code) ?? code,
+    label: languageName(code),
   }));
   const title =
     media === null
@@ -105,7 +98,7 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
         setFetched(new Set([...fetched, key]));
         notify.worked(
           say('screens.findSubtitlesDialog.savedName', {
-            name: LANGUAGE_NAMES.of(language) ?? language,
+            name: languageName(language),
           }),
         );
         onFetched?.();
@@ -141,8 +134,8 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
       cell: ({ row }) => (
         <span className="flex flex-wrap gap-1.5">
           {row.original.reasons.map((reason) => (
-            <Badge key={reason} size="sm" tone={REASONS[reason].tone}>
-              {REASONS[reason].label}
+            <Badge key={reason} size="sm" tone={REASON_TONES[reason]}>
+              {SUBTITLE_REASON_LABELS[reason]}
             </Badge>
           ))}
         </span>
@@ -169,10 +162,10 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
     {
       id: 'source',
       header: say('common.site'),
-      accessorFn: (subtitle) => SOURCE_NAMES[subtitle.source],
+      accessorFn: (subtitle) => SUBTITLE_SITE_NAMES[subtitle.source],
       meta: { shrinks: true },
       cell: ({ row }) => (
-        <span className="text-text-muted">{SOURCE_NAMES[row.original.source]}</span>
+        <span className="text-text-muted">{SUBTITLE_SITE_NAMES[row.original.source]}</span>
       ),
     },
     {

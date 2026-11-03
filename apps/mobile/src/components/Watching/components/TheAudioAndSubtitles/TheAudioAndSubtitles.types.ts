@@ -7,6 +7,7 @@ type TheAudioAndSubtitlesProps = {
   onStyle?: (() => void) | undefined;
   onClose: () => void;
   only?: 'audio' | 'subtitles';
+  onFind?: (() => void) | undefined;
 };
 
 export type { TheAudioAndSubtitlesProps };
