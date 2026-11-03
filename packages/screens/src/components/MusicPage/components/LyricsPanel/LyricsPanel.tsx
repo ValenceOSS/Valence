@@ -18,7 +18,7 @@ const LyricsPanel = () => {
     return (
       <NothingHere
         of={MusicNoteIcon}
-        title={say('common.nothingIsPlaying2')}
+        title={say('common.nothingIsPlaying')}
         detail={say('common.playASongToFollowIts')}
       />
     );

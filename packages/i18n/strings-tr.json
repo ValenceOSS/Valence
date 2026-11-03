@@ -3971,11 +3971,6 @@
     "context": "In the record of what a linked server asked for: refused, because it asked too many times in a minute."
   },
   {
-    "handler": "common.fetchesEachNewSeasonAsIt",
-    "text": "Fetches each new season as it airs. Specials are only fetched when ticked.",
-    "context": "The description under the 'Get new seasons as they come' switch when asking for a show, on the web and phone."
-  },
-  {
     "handler": "common.files",
     "text": "Files",
     "context": "The label, used in the admin area (from `adminSections`) and in the files panel in the admin area."
@@ -5177,11 +5172,6 @@
     "context": "Text shown, used in the listening player of the phone app and in the music player of the phone app."
   },
   {
-    "handler": "common.nothingIsPlaying2",
-    "text": "Nothing is playing",
-    "context": "The title of a nothing here, used in several places, among them the lyrics panel in the music page and the lyrics view in the music page."
-  },
-  {
     "handler": "common.nothingMatchesAsked",
     "text": "Nothing matches “{asked}”",
     "context": "The title of a nothing here, used in the book results in the search of the phone app and in the music results in the search of the phone app. {asked} is filled in by the app."
@@ -5230,11 +5220,6 @@
     "handler": "common.notInYourLibrary",
     "text": "Not in your library",
     "context": "Shown, used in the artist story in the artist view and in the season picker in the show dialog."
-  },
-  {
-    "handler": "common.notInYourLibraryYet",
-    "text": "Not in your library yet",
-    "context": "The title of a shelf, used in several places, among them the results in the search of the phone app and the search of the television app."
   },
   {
     "handler": "common.noTitleKeepsItsRulesYet",
@@ -6600,11 +6585,6 @@
     "context": "Shown, used in several places, among them the webhook in the schemas and the device list in the account area."
   },
   {
-    "handler": "common.signedInWhen",
-    "text": "Signed in {signedInAt}",
-    "context": "Shown in the devices in the account of the phone and television apps. {signedInAt} is filled in by the app."
-  },
-  {
     "handler": "common.signInATelevision",
     "text": "Sign in to a TV",
     "context": "The title of a group, used in several places, among them the sign in a television in the devices of the phone app and the library of the phone app."
@@ -6923,11 +6903,6 @@
     "handler": "common.switchOn",
     "text": "Enable",
     "context": "Shown, used in the download clients table in the downloads panel and in the indexers panel in the admin area."
-  },
-  {
-    "handler": "common.synopsis",
-    "text": "Synopsis",
-    "context": "The heading of a dialog section, used in the askable dialog and in the media detail dialog."
   },
   {
     "handler": "common.system",
@@ -7373,11 +7348,6 @@
     "handler": "common.tryFewerWords",
     "text": "Try fewer words.",
     "context": "The detail of a nothing here, used in several places, among them the book results in the search of the phone app and the music results in the search of the phone app."
-  },
-  {
-    "handler": "common.turn",
-    "text": "Turn",
-    "context": "The label of a slider, used in the sketch studio in the face editor and in the caustics in the variants."
   },
   {
     "handler": "common.turnedOffName",
@@ -10175,11 +10145,6 @@
     "context": "An error the server answers with (HTTP 400) in the profiles in the requests service (from `createProfileRoutes`)."
   },
   {
-    "handler": "error.profile.thatIsNotAnOrderOf",
-    "text": "That isn’t a valid order of profiles.",
-    "context": "An error the server answers with (HTTP 400) in the profiles in the requests service, when it is asked to put the quality profiles in an order it cannot read."
-  },
-  {
     "handler": "error.profile.thatIsNotAProfile",
     "text": "That isn’t a valid profile.",
     "context": "An error the server answers with (HTTP 400) in the profiles in the requests service (from `createProfileRoutes`)."
@@ -11105,11 +11070,6 @@
     "context": "Shown on a title's download button in the phone app while the server prepares a copy for the phone. {percent} is how far along it is, as a whole number."
   },
   {
-    "handler": "phone.aTitle.preparingPercentTimeLeft",
-    "text": "Preparing {percent}%, {timeLeft}",
-    "context": "Shown on a title's download button in the phone app while the server prepares a copy for the phone. {percent} is how far along it is, as a whole number; {timeLeft} says how long is left, such as about 12 min left."
-  },
-  {
     "handler": "phone.aTitle.resumeFromCarryOnAt",
     "text": "Resume from {carryOnAt}",
     "context": "Shown in the title of the phone app. {carryOnAt} is filled in by the app."
@@ -11505,11 +11465,6 @@
     "context": "Shown in the feature in the featured of the phone app. {resumeAt} is filled in by the app."
   },
   {
-    "handler": "phone.theLibrary.findADownload",
-    "text": "Search downloads",
-    "context": "Shown in an empty text field until something is typed in the library of the phone app."
-  },
-  {
     "handler": "phone.theLibrary.theBooks.carryOnListeningToTitle",
     "text": "Continue listening to {title}",
     "context": "The label of a button in the books in the library of the phone app. {title} is filled in by the app."
@@ -11593,11 +11548,6 @@
     "handler": "phone.theMusicPlayer.showTheCover",
     "text": "Show the cover",
     "context": "The label of a button in the music player of the phone app."
-  },
-  {
-    "handler": "phone.theMusicPlayer.soundsWhatItIs",
-    "text": "{sounds}, what it is",
-    "context": "The label of a button in the music player of the phone app. {sounds} is filled in by the app."
   },
   {
     "handler": "phone.theMusicPlayer.theLyrics.thereAreNoWordsForThis",
@@ -11822,11 +11772,6 @@
   {
     "handler": "phone.watching.theControls.stopWatching",
     "text": "Stop watching",
-    "context": "The label of a button in the controls in the watching of the phone app."
-  },
-  {
-    "handler": "phone.watching.theControls.subtitlesAudioAndQuality",
-    "text": "Subtitles, audio and quality",
     "context": "The label of a button in the controls in the watching of the phone app."
   },
   {
@@ -12272,11 +12217,6 @@
   {
     "handler": "requests.downloads.downloadQueue.theIndexerThatFoundItIs",
     "text": "The indexer that found it has been removed",
-    "context": "Shown in the downloads in the requests service (from `createDownloadQueue`)."
-  },
-  {
-    "handler": "requests.downloads.downloadQueue.theReleaseCouldNotBeFetched",
-    "text": "Couldn’t download the release",
     "context": "Shown in the downloads in the requests service (from `createDownloadQueue`)."
   },
   {
@@ -15795,11 +15735,6 @@
     "context": "Read out for the information mark on the audit log."
   },
   {
-    "handler": "screens.adminArea.auditPanel.everyChange",
-    "text": "Every change",
-    "context": "The choice that shows every kind of change. In the admin area’s audit log."
-  },
-  {
     "handler": "screens.adminArea.auditPanel.everySignInAndChange",
     "text": "Every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, with who did it, when and where from.",
     "context": "Explanation of the admin area’s audit log."
@@ -15863,11 +15798,6 @@
     "handler": "screens.adminArea.auditPanel.theAuditLogCouldNotBeRead",
     "text": "The audit log could not be read.",
     "context": "Shown when the audit log failed to load."
-  },
-  {
-    "handler": "screens.adminArea.auditPanel.whichChanges",
-    "text": "Which changes",
-    "context": "Read out for the choice of which kind of change to show. In the admin area’s audit log."
   },
   {
     "handler": "screens.adminArea.authorUnknown",
@@ -20220,11 +20150,6 @@
     "context": "A count on the overview in the admin area that opens the catalogue, where the failed requests are listed."
   },
   {
-    "handler": "screens.adminArea.needsYouCard.jobsThatFailedToday",
-    "text": "Jobs that failed today",
-    "context": "A count on the admin overview’s Waiting on you card: jobs that failed in the last day."
-  },
-  {
     "handler": "screens.adminArea.needsYouCard.libraryProblems",
     "text": "Library problems",
     "context": "A count on the admin overview’s Waiting on you card."
@@ -20320,11 +20245,6 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.allWork",
-    "text": "All work",
-    "context": "Shown in the overview panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.diskUsage",
     "text": "Disk usage",
     "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
@@ -20385,11 +20305,6 @@
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.noLibrariesYet",
-    "text": "No libraries yet.",
-    "context": "Text shown in the overview panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.nothingIsRunning",
     "text": "Nothing is running.",
     "context": "Shown in the overview panel in the admin area."
@@ -20410,11 +20325,6 @@
     "context": "The label of a trend chart in the overview panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.recentJobs",
-    "text": "Recent jobs",
-    "context": "The title of a region in the overview panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.recentLogs",
     "text": "Recent logs",
     "context": "The title of the admin overview card that lists the newest log lines."
@@ -20423,11 +20333,6 @@
     "handler": "screens.adminArea.overviewPanel.runningNow",
     "text": "Running now",
     "context": "The title of a region in the overview panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.overviewPanel.scannedLastScannedAt",
-    "text": "Scanned {lastScannedAt}",
-    "context": "Text shown in the overview panel in the admin area. {lastScannedAt} is filled in by the app."
   },
   {
     "handler": "screens.adminArea.overviewPanel.serverLoad",
@@ -23875,11 +23780,6 @@
     "context": "A card with the newest release’s notes. On the admin area’s updates page."
   },
   {
-    "handler": "screens.adminArea.updatesPanel.whatsNewInVersion",
-    "text": "What’s new in {version}",
-    "context": "A card with the newest release’s notes. {version} is the release. On the admin area’s updates page."
-  },
-  {
     "handler": "screens.adminArea.updatesPanel.whetherAnUpdateIsOutCouldNotBeRead",
     "text": "Whether an update is out could not be read.",
     "context": "Shown when the updates page failed to load."
@@ -24538,11 +24438,6 @@
     "handler": "screens.apiKeyPanel.yourKeysCouldNotBeRead",
     "text": "Couldn’t load your keys.",
     "context": "Shown where your keys could not be read from the server, followed by a sentence about why and a button to try again."
-  },
-  {
-    "handler": "screens.app.loadingInitialTitle",
-    "text": "Loading {initialTitle}",
-    "context": "The label of a splash screen in the app. {initialTitle} is filled in by the app."
   },
   {
     "handler": "screens.appPasswordsPanel.address",
@@ -25367,11 +25262,6 @@
   {
     "handler": "screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces",
     "text": "A category can only contain letters, numbers, spaces, dots, dashes and underscores.",
-    "context": "The problem in the download client dialog (from `readDownloadClientForm`)."
-  },
-  {
-    "handler": "screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf",
-    "text": "Each media type needs its own category.",
     "context": "The problem in the download client dialog (from `readDownloadClientForm`)."
   },
   {
@@ -28246,11 +28136,6 @@
     "context": "The detail in the music library in the music page. {owner} is filled in by the app."
   },
   {
-    "handler": "screens.musicPage.musicLibrary.yourLibrary",
-    "text": "Your Library",
-    "context": "A heading in the music library in the music page."
-  },
-  {
     "handler": "screens.musicPage.musicSearchView.everyAlbum",
     "text": "All albums",
     "context": "The heading of a album shelf in the music search view in the music page."
@@ -28469,11 +28354,6 @@
     "handler": "screens.observabilityPage.jobHealth.howEachKindOfJobHas",
     "text": "Results by job type",
     "context": "The label of a data table in the job health in the observability page."
-  },
-  {
-    "handler": "screens.observabilityPage.jobHealth.howTheJobsAreDoing",
-    "text": "Job health",
-    "context": "The title of a headed section in the job health in the observability page."
   },
   {
     "handler": "screens.observabilityPage.jobHealth.lastRun",
@@ -31216,11 +31096,6 @@
     "context": "How many of a series' seasons are chosen. {length} is how many are chosen; {count} is how many there are."
   },
   {
-    "handler": "screens.seasonChooser.firstAired",
-    "text": "First aired",
-    "context": "Shown in the season chooser."
-  },
-  {
     "handler": "screens.seasonChooser.noSeasonIsTakenYet",
     "text": "No seasons selected yet.",
     "context": "Shown in the season chooser."
@@ -32181,51 +32056,6 @@
     "context": "Shown in the text reader."
   },
   {
-    "handler": "screens.textReader.thisBookCouldNotBeOpened",
-    "text": "Couldn’t open this book",
-    "context": "Text shown in the text reader."
-  },
-  {
-    "handler": "screens.tour.tourStops.askForSomethingThatIsNot",
-    "text": "Request something that isn’t here yet and track it until it arrives.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.booksAndComicsWithYourPlace",
-    "text": "Books and comics, with your reading progress synced across devices.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.everyFilmInTheLibraryPress",
-    "text": "Every film in the library. Select one to see details, watch it, or watch it with someone.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.lookAcrossFilmsShowsMusicAnd",
-    "text": "Search films, shows, music and books at once.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.pickUpWhereYouLeftOff",
-    "text": "Continue watching, see what’s just been added, and find something to watch next.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.pressTheHeartOnAnythingTo",
-    "text": "Select the heart on anything to add it to your favourites, so it’s easy to find again.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.seriesAndTheirSeasonsValenceRemembers",
-    "text": "Series and their seasons. Valence remembers which episode you’re on.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
-    "handler": "screens.tour.tourStops.yourMusicWithPlaylistsAQueue",
-    "text": "Your music, with playlists, a queue you can drag into order, lyrics, and the option to play it on another device.",
-    "context": "The detail in the tour (from `tourStops`)."
-  },
-  {
     "handler": "screens.trackMenu.addedTitleToTheQueue",
     "text": "Added {title} to the queue",
     "context": "Shown in the track menu. {title} is filled in by the app."
@@ -32404,11 +32234,6 @@
     "handler": "screens.videoPlayer.pausedScreen.youReWatching",
     "text": "You’re watching",
     "context": "Text shown in the paused screen in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.playbackFailed",
-    "text": "Playback failed.",
-    "context": "Shown in the video player."
   },
   {
     "handler": "screens.videoPlayer.playerControls.audioTrack",
@@ -32871,16 +32696,6 @@
     "context": "Beneath the username field on the account setup page."
   },
   {
-    "handler": "screens.welcomeTour.skipTour",
-    "text": "Skip tour",
-    "context": "The label in the welcome tour."
-  },
-  {
-    "handler": "screens.welcomeTour.valueOfLength",
-    "text": "{value} of {length}",
-    "context": "The detail of a dialog title in the welcome tour. {value} is filled in by the app; {length} is filled in by the app."
-  },
-  {
     "handler": "screens.welcomeToValence.startWatching",
     "text": "Start watching",
     "context": "The label of a button in the welcome to valence."
@@ -32954,11 +32769,6 @@
     "handler": "screens.windowBar.minimise",
     "text": "Minimise",
     "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that hides the window to the taskbar, like the system's own minimise button."
-  },
-  {
-    "handler": "screens.windowBar.reload",
-    "text": "Reload",
-    "context": "The label of the button at the top of the desktop app's window that reloads the page showing, like a browser's refresh button."
   },
   {
     "handler": "screens.windowBar.restoreDown",
@@ -35626,11 +35436,6 @@
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`)."
   },
   {
-    "handler": "server.webhooks.libraryFinishedScanning",
-    "text": "{library} finished scanning",
-    "context": "The title of a Discord message sent by a webhook when a library finishes scanning. {library} is the library's name."
-  },
-  {
     "handler": "server.webhooks.nameOfViewer.aGuestOfHost",
     "text": "A guest of {host}",
     "context": "Shown in the webhooks on the server (from `nameOfViewer`). {host} is filled in by the app."
@@ -36211,16 +36016,6 @@
     "context": "Text shown in the books of the television app."
   },
   {
-    "handler": "tv.catalogue.thereAreNoFilmsHereYet",
-    "text": "No films yet.",
-    "context": "Shown in the catalogue of the television app."
-  },
-  {
-    "handler": "tv.catalogue.thereAreNoShowsHereYet",
-    "text": "No shows yet.",
-    "context": "Shown in the catalogue of the television app."
-  },
-  {
     "handler": "tv.chooseServer.chooseTheServerThisAndroidTV",
     "text": "Choose the server this Android TV connects to.",
     "context": "Text shown in the choose server of the television app, on an Android TV."
@@ -36316,11 +36111,6 @@
     "context": "Shown in the hero of the television app. {resume} is filled in by the app."
   },
   {
-    "handler": "tv.home.thereIsNothingToWatchHere",
-    "text": "Nothing to watch yet.",
-    "context": "Text shown in the home of the television app."
-  },
-  {
     "handler": "tv.listening.leftLeftInTheBook",
     "text": "{left} left in the book",
     "context": "Shown in the listening of the television app. {left} is filled in by the app."
@@ -36359,11 +36149,6 @@
     "handler": "tv.music.playlistItem.playlistName",
     "text": "Playlist • {name}",
     "context": "Shown in the music of the television app (from `playlistItem`). {name} is filled in by the app."
-  },
-  {
-    "handler": "tv.music.thereIsNoMusicHereYet",
-    "text": "No music yet.",
-    "context": "Text shown in the music of the television app."
   },
   {
     "handler": "tv.musicCollection.useCollection.songsValueHrValue2Min",

@@ -184,7 +184,7 @@ const HomePage = ({
   if (home.rails.length === 0 && !hasFavourites) {
     return (
       <View style={styles.waiting}>
-        <Text style={styles.empty}>{say('tv.home.thereIsNothingToWatchHere')}</Text>
+        <Text style={styles.empty}>{say('common.nothingToWatchYet')}</Text>
       </View>
     );
   }

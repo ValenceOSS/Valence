@@ -498,7 +498,7 @@ describe('createDownloadQueue', () => {
         problemCode: 'CloudflareRefusesAddress',
       });
       expect(await failing(new Error('boom'))).toEqual({
-        refused: 'Couldn’t download the release',
+        refused: 'Couldn’t download the release.',
         problemCode: null,
       });
       expect(await aQueue({ fetchRelease: () => Promise.resolve(null) }).queue.send(SEND)).toEqual({

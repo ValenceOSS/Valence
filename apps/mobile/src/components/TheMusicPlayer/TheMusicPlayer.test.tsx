@@ -26,7 +26,7 @@ describe('TheMusicPlayer', () => {
     thePhonesMusicPlayer().stop();
     const drawn = await render(aPlayer(), { wrapper: CacheScope });
 
-    expect(drawn.getByText('Nothing is playing.')).toBeTruthy();
+    expect(drawn.getByText('Nothing is playing')).toBeTruthy();
   });
 
   it('shows the song, opens its artist and its album, and skips on', async () => {

@@ -165,9 +165,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
     return (
       <View style={styles.waiting}>
         <Text style={styles.empty}>
-          {kind === 'films'
-            ? say('tv.catalogue.thereAreNoFilmsHereYet')
-            : say('tv.catalogue.thereAreNoShowsHereYet')}
+          {kind === 'films' ? say('common.noFilmsYet') : say('common.noShowsYet')}
         </Text>
       </View>
     );

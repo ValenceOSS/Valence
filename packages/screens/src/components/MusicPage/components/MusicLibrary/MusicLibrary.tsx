@@ -135,9 +135,7 @@ const MusicLibrary = () => {
   return (
     <nav aria-label={say('common.yourLibrary')} className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex items-center justify-between gap-2 px-3 pt-3">
-        <h2 className="text-base font-bold text-text">
-          {say('screens.musicPage.musicLibrary.yourLibrary')}
-        </h2>
+        <h2 className="text-base font-bold text-text">{say('common.yourLibrary')}</h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"

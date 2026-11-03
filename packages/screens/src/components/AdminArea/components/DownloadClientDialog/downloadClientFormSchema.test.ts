@@ -108,7 +108,7 @@ describe('downloadClientFormSchema', () => {
     ],
     [
       { categories: { ...A_NEW_CLIENT.categories, shows: ' Valence-Films ' } },
-      'Each media type needs its own category.',
+      'Each media type needs its own category',
     ],
     [
       { remotePath: '/downloads' },

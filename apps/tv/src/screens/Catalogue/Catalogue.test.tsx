@@ -162,13 +162,13 @@ describe('Catalogue', () => {
   it('says there are no films when the library has none', async () => {
     const drawn = await drawCatalogue('films', []);
 
-    expect(drawn.getByText('No films yet.')).toBeTruthy();
+    expect(drawn.getByText('No films yet')).toBeTruthy();
   });
 
   it('says there are no shows when the library has none', async () => {
     const drawn = await drawCatalogue('shows', []);
 
-    expect(drawn.getByText('No shows yet.')).toBeTruthy();
+    expect(drawn.getByText('No shows yet')).toBeTruthy();
   });
 
   it('draws nothing to choose while the library is still being read', async () => {
@@ -291,7 +291,7 @@ describe('Catalogue', () => {
     const drawn = await drawCatalogue('films', [FIRST_IN], {}, [FINISHED(FIRST_IN.id)]);
 
     expect(drawn.getByText('You’ve watched everything here.')).toBeTruthy();
-    expect(drawn.queryByText('No films yet.')).toBeNull();
+    expect(drawn.queryByText('No films yet')).toBeNull();
     expect(drawn.getByRole('button', { name: 'Unwatched only' })).toBeTruthy();
   });
 

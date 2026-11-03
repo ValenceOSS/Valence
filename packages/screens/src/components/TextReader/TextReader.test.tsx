@@ -232,7 +232,7 @@ describe('TextReader', () => {
 
     open();
 
-    expect(await screen.findByText('Couldn’t open this book')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t open this book.')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

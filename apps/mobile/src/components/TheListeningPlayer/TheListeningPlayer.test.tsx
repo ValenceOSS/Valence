@@ -27,7 +27,7 @@ describe('TheListeningPlayer', () => {
   it('says so while no book is open', async () => {
     const drawn = await render(<TheListeningPlayer onBack={jest.fn()} />, { wrapper: CacheScope });
 
-    expect(drawn.getByText('Nothing is playing.')).toBeTruthy();
+    expect(drawn.getByText('Nothing is playing')).toBeTruthy();
   });
 
   it('shows the chapter playing, the book and who wrote it', async () => {

@@ -108,7 +108,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
   if (recent.length === 0 && everyPlaylist.length === 0) {
     return (
       <View style={styles.waiting}>
-        <Text style={styles.empty}>{say('tv.music.thereIsNoMusicHereYet')}</Text>
+        <Text style={styles.empty}>{say('common.noMusicYet')}</Text>
       </View>
     );
   }

@@ -46,9 +46,7 @@ const downloadClientFormSchema = z
           new Set(DOWNLOAD_CATEGORY_KINDS.map((kind) => categories[kind].toLowerCase())).size ===
           DOWNLOAD_CATEGORY_KINDS.length,
         {
-          error: say(
-            'screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf',
-          ),
+          error: say('contracts.schemas.downloadClient.eachKindNeedsACategoryOf'),
         },
       ),
     remotePath: z.string().trim(),

@@ -394,9 +394,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   if (contents.data === null || text.data === null) {
     return (
       <div className="valence-below-the-bar z-50 flex flex-col items-center justify-center gap-2 bg-shade text-center">
-        <p className="text-lg font-medium text-on-scrim">
-          {say('screens.textReader.thisBookCouldNotBeOpened')}
-        </p>
+        <p className="text-lg font-medium text-on-scrim">{say('common.thatBookCouldNotBeRead')}</p>
         <p className="text-sm text-on-scrim/70">
           {say('screens.textReader.itsFileMayBeDamagedOr')}
         </p>

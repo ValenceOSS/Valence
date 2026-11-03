@@ -614,7 +614,7 @@ const createDownloadQueue = ({
         return error instanceof IndexerFailure
           ? { refused: error.said, problemCode: error.problemCode }
           : {
-              refused: saying('requests.downloads.downloadQueue.theReleaseCouldNotBeFetched'),
+              refused: saying('requests.app.theReleaseCouldNotBeFetched'),
               problemCode: null,
             };
       }
