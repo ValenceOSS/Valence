@@ -282,7 +282,13 @@ describe('AskableDialog', () => {
 
     open();
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Request' })).toHaveAttribute(
+        'aria-haspopup',
+        'menu',
+      );
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Request' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: '1080p' }));
 
     await waitFor(() => {
@@ -329,7 +335,13 @@ describe('AskableDialog', () => {
 
     open();
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Request' })).toHaveAttribute(
+        'aria-haspopup',
+        'menu',
+      );
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
     expect(await screen.findByRole('menuitem', { name: '4K' })).toBeInTheDocument();
 

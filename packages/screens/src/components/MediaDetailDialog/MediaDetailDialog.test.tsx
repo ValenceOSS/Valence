@@ -198,7 +198,12 @@ afterEach(() => {
  * @returns The square, or the menu item.
  */
 const findAction = async (name: string | RegExp): Promise<HTMLElement> => {
-  await screen.findAllByRole('dialog');
+  await waitFor(() => {
+    expect(
+      screen.queryAllByRole('button', { name }).length +
+        screen.queryAllByRole('button', { name: 'More actions' }).length,
+    ).toBeGreaterThan(0);
+  });
 
   const [square] = screen.queryAllByRole('button', { name });
 
