@@ -112,6 +112,55 @@ describe('CataloguePanel', () => {
     expect(onTab).toHaveBeenCalledWith('shows');
   });
 
+  it('says which kind of library holds failed requests, counted as the badge counts them', async () => {
+    const user = userEvent.setup();
+
+    const lost = aMediaRequest({ id: '6ba7b810-9dad-11d1-80b4-00c04fd43004', state: 'failed' });
+    const gone = aMediaRequest({ id: '6ba7b810-9dad-11d1-80b4-00c04fd43005', state: 'failed' });
+    const partly = aMediaRequest({
+      id: '6ba7b810-9dad-11d1-80b4-00c04fd43006',
+      state: 'downloading',
+    });
+
+    requested.requests = [ASKED, lost, gone, partly];
+    catalogue.entries = [
+      ...catalogue.entries,
+      aCatalogueEntry({
+        key: 'series:4',
+        tab: 'shows',
+        kind: 'series',
+        title: 'Lost',
+        status: 'failed',
+        requestId: lost.id,
+      }),
+      aCatalogueEntry({
+        key: 'series:5',
+        tab: 'shows',
+        kind: 'series',
+        title: 'Gone',
+        status: 'failed',
+        requestId: gone.id,
+      }),
+      aCatalogueEntry({
+        key: 'series:6',
+        tab: 'shows',
+        kind: 'series',
+        title: 'Partly',
+        status: 'failed',
+        requestId: partly.id,
+      }),
+    ];
+
+    aPanel();
+
+    await user.click(await screen.findByRole('button', { name: 'Kind of library' }));
+
+    expect(
+      await screen.findByRole('menuitemradio', { name: 'Shows (2 failed)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('menuitemradio', { name: 'Films' })).toBeInTheDocument();
+  });
+
   it('approves several titles waiting on approval at once', async () => {
     const user = userEvent.setup();
 

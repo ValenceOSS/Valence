@@ -1,6 +1,6 @@
 import { render as renderBare, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import type { ReactElement } from 'react';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -14,6 +14,10 @@ import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
  * @returns What testing-library hands back.
  */
 const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   id: 'item-1',
@@ -299,6 +303,23 @@ describe('MediaPanel', () => {
     expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
   });
 
+  it('says which libraries have titles to fix, so each need not be opened to find them', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[item(), { ...episode('e1', 1, 1, 'Pilot'), externalId: null, hasPoster: false }]}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Which library' }));
+
+    expect(
+      await screen.findByRole('menuitemradio', { name: 'Shows (1 to fix)' }),
+    ).toBeInTheDocument();
+  });
+
   it('lists a series once, sized by all its episodes rather than one', async () => {
     const user = userEvent.setup();
 
@@ -506,6 +527,55 @@ describe('MediaPanel', () => {
     expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
     expect(screen.getByText('Heat')).toBeInTheDocument();
     expect(screen.getByText('Alien')).toBeInTheDocument();
+  });
+
+  it('says a matched title is listed for having no poster', () => {
+    render(
+      <MediaPanel {...props} media={[item({ id: 'item-3', title: 'Alien', hasPoster: false })]} />,
+    );
+
+    expect(screen.getByText('No poster')).toBeInTheDocument();
+    expect(screen.queryByText('Unmatched')).not.toBeInTheDocument();
+  });
+
+  it('names the files a title shares its match with, under the title', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((path: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              path.includes('library-health')
+                ? {
+                    checkedAt: '2026-11-03T00:00:00.000Z',
+                    titles: 1,
+                    unmatched: { total: 0, items: [] },
+                    noArtwork: { total: 0, items: [] },
+                    duplicate: {
+                      total: 2,
+                      items: ['item-1', 'item-9'].map((id) => ({
+                        id,
+                        title: 'Parasite',
+                        year: 2019,
+                        libraryId: 'library-1',
+                        libraryName: 'Films',
+                        path: `/films/${id}.mkv`,
+                        group: 'film:tmdb-1',
+                      })),
+                    },
+                    unreadable: { total: 0, items: [] },
+                  }
+                : [],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    render(<MediaPanel {...props} media={[item()]} />);
+
+    expect(await screen.findByText('Matched to the same film as item-9.mkv')).toBeInTheDocument();
+    expect(screen.getByText('There twice')).toBeInTheDocument();
   });
 
   it('says what a film is at a glance: how long, how sharp and how it is encoded', () => {

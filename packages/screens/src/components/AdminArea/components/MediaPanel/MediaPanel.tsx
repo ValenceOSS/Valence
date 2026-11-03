@@ -55,6 +55,8 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { MediaPanelProps, MediaReading } from './MediaPanel.types';
 import type { MediaTitle } from './MediaTitle.types';
+import { describeTitleProblems } from './describeTitleProblems';
+import type { TitleProblem } from './describeTitleProblems';
 import type { ShelfItem } from './ShelfItem.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -95,14 +97,22 @@ const holdsAnyOf = (title: MediaTitle, ids: ReadonlySet<string>): boolean =>
   title.episodes.some((episode) => ids.has(episode.id)) ||
   title.parts.some((part) => holdsAnyOf(part, ids));
 
+const PROBLEM_NAMES: Readonly<Record<TitleProblem, string>> = {
+  unmatched: say('screens.adminArea.mediaPanel.unmatched'),
+  noPoster: say('screens.adminArea.mediaPanel.noPoster'),
+  twice: say('screens.adminArea.mediaPanel.thereTwice'),
+  unreadable: say('screens.adminArea.mediaPanel.couldNotBeRead'),
+};
+
 /**
  * Whether a title is missing something an administrator would want to put right: a match in the
- * catalogue, or a poster.
+ * catalogue, or a film's poster.
  *
  * @param title - The title.
  * @returns Whether it needs a look.
  */
-const needsALook = (title: MediaTitle): boolean => !title.isMatched || title.posterFrom === null;
+const needsALook = (title: MediaTitle): boolean =>
+  !title.isMatched || (title.kind === 'film' && title.posterFrom === null);
 
 const INDENTS: readonly string[] = ['', 'pl-9', 'pl-[4.5rem]'];
 
@@ -282,6 +292,18 @@ const MediaPanel = ({
         (words === '' || title.name.toLowerCase().includes(words)),
     );
   }, [inLibrary, search, showing, isShowingTitle]);
+
+  const toFix = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const title of titles) {
+      if (describeTitleProblems(title, health.data).problems.length > 0) {
+        counts.set(title.libraryId, (counts.get(title.libraryId) ?? 0) + 1);
+      }
+    }
+
+    return counts;
+  }, [titles, health.data]);
 
   const lookingCount = inLibrary.filter(needsALook).length;
   const holdsParts = inLibrary.some((title) => title.parts.length > 0);
@@ -645,6 +667,7 @@ const MediaPanel = ({
           const title = row.original;
           const isOpen = row.getIsExpanded();
           const place = title.kind === 'film' || title.kind === 'series' ? placeOf(title) : null;
+          const problems = describeTitleProblems(title, health.data);
 
           return (
             <span className={cn('flex min-w-0 items-center gap-3', INDENTS[row.depth] ?? '')}>
@@ -710,14 +733,27 @@ const MediaPanel = ({
                     <span className="text-sm tabular-nums text-text-muted">{title.year}</span>
                   )}
 
-                  {title.isMatched ? null : (
-                    <Badge size="sm" tone="warning">
-                      {say('screens.adminArea.mediaPanel.unmatched')}
+                  {problems.problems.map((problem) => (
+                    <Badge
+                      key={problem}
+                      size="sm"
+                      tone={problem === 'unreadable' ? 'danger' : 'warning'}
+                    >
+                      {PROBLEM_NAMES[problem]}
                     </Badge>
-                  )}
+                  ))}
                 </span>
 
                 <span className="truncate text-xs text-text-muted">{describeTitle(title)}</span>
+
+                {((title.kind === 'series' || title.kind === 'season') && isOpen
+                  ? []
+                  : problems.details
+                ).map((detail) => (
+                  <span key={detail} className="text-xs text-warning [overflow-wrap:anywhere]">
+                    {detail}
+                  </span>
+                ))}
 
                 {place === null || onOpenFolder === undefined ? null : (
                   <FolderLink shown={place.shown} folder={place.folder} onOpen={onOpenFolder} />
@@ -767,7 +803,7 @@ const MediaPanel = ({
         },
       },
     ],
-    [actionsFor, holdsParts, onOpenFolder, placeOf],
+    [actionsFor, health.data, holdsParts, onOpenFolder, placeOf],
   );
 
   const held = isShelf ? shelved.length : inLibrary.length;
@@ -801,11 +837,20 @@ const MediaPanel = ({
                   : [
                       {
                         label: say('common.whichLibrary'),
-                        options: librariesByPlace(tabs, faces.data ?? []).map((one) => ({
-                          id: one.library.id,
-                          label: one.library.name,
-                          group: one.group,
-                        })),
+                        options: librariesByPlace(tabs, faces.data ?? []).map((one) => {
+                          const count = toFix.get(one.library.id) ?? 0;
+
+                          return {
+                            id: one.library.id,
+                            label:
+                              count === 0
+                                ? one.library.name
+                                : sayCount('screens.adminArea.mediaPanel.count.nameToFix', count, {
+                                    name: one.library.name,
+                                  }),
+                            group: one.group,
+                          };
+                        }),
                         value: libraryId,
                         onChange: setChosenLibrary,
                       },

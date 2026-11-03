@@ -35,4 +35,32 @@ describe('NeedsYouCard', () => {
 
     expect(onOpenPanel).toHaveBeenCalledWith('media');
   });
+
+  it('opens the catalogue for failed requests, since that is where they are listed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((path: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              path.includes('availability') ? { isEnabled: true } : { records: [], total: 0 },
+            ),
+          ),
+        ),
+      ),
+    );
+    const onOpenPanel = vi.fn();
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <NeedsYouCard onOpenPanel={onOpenPanel} />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /Failed requests/ }));
+
+    expect(onOpenPanel).toHaveBeenCalledWith('catalogue');
+  });
 });

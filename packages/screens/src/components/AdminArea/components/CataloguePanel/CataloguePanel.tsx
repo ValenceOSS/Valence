@@ -175,6 +175,11 @@ const CataloguePanel = ({
     sort,
   });
   const counts = countTitleStatuses(inTab);
+  const failedRequests = new Set<string | null>(
+    (requests.data ?? [])
+      .filter((request) => request.state === 'failed')
+      .map((request) => request.id),
+  );
   const chosenRequests = (requests.data ?? []).filter((request) =>
     shown.some((entry) => chosen.has(entry.key) && entry.requestId === request.id),
   );
@@ -365,7 +370,28 @@ const CataloguePanel = ({
                 : [
                     {
                       label: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
-                      options: tabs.map((id) => ({ id, label: TAB_NAMES[id] })),
+                      options: tabs.map((id) => {
+                        const failed = new Set(
+                          (catalogue.data ?? [])
+                            .filter((entry) => entry.tab === id && entry.requestId !== null)
+                            .map((entry) => entry.requestId)
+                            .filter((requestId) => failedRequests.has(requestId)),
+                        ).size;
+
+                        return {
+                          id,
+                          label:
+                            failed === 0
+                              ? TAB_NAMES[id]
+                              : sayCount(
+                                  'screens.adminArea.cataloguePanel.count.nameFailed',
+                                  failed,
+                                  {
+                                    name: TAB_NAMES[id],
+                                  },
+                                ),
+                        };
+                      }),
                       value: tab,
                       onChange: (next) => {
                         const found = tabs.find((one) => one === next);

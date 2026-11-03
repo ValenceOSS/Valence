@@ -10,6 +10,7 @@ const NOTHING = { total: 0, items: [] };
 const readNoLibraryHealth: LibraryHealthReader = () =>
   Promise.resolve({
     checkedAt: new Date().toISOString(),
+    titles: 0,
     unmatched: NOTHING,
     noArtwork: NOTHING,
     duplicate: NOTHING,
