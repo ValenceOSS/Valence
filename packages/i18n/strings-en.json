@@ -14950,6 +14950,11 @@
     "context": "The label in the admin area (from `adminSections`)."
   },
   {
+    "handler": "screens.adminArea.adminSections.alerts",
+    "text": "Alerts",
+    "context": "The label, used in the admin sidebar for the page that chooses which alerts show on the overview."
+  },
+  {
     "handler": "screens.adminArea.adminSections.auditLog",
     "text": "Audit log",
     "context": "An item in the admin sidebar, under Activity: who changed what on the server."
@@ -15078,6 +15083,236 @@
     "handler": "screens.adminArea.ageChoices.upTo8",
     "text": "Up to 8",
     "context": "The label in the admin area (from `ageChoices`)."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.alertsSaved",
+    "text": "Alerts saved.",
+    "context": "Shown once the alerts page in the admin area has saved a change."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.busyGPUEncoder",
+    "text": "Busy GPU encoder",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.choosesWhichAlertsShow",
+    "text": "Chooses which alerts show on the overview. Turning one off hides it for every admin on this server.",
+    "context": "Shown at the top of the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.cloudflareSolverWontStart",
+    "text": "Cloudflare solver won’t start",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.failedJobs",
+    "text": "Failed jobs",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.failingIndexers",
+    "text": "Failing indexers",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.highCPU",
+    "text": "High CPU",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.jobsThatAlwaysFail",
+    "text": "Jobs that always fail",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.libraryDiskNearlyFull",
+    "text": "Library disk nearly full",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.lowBuffer",
+    "text": "Low buffer",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.lowMemory",
+    "text": "Low memory",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.mediaServiceUnreachable",
+    "text": "Media service unreachable",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.noCatalogueKey",
+    "text": "No catalogue key",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.noLibraries",
+    "text": "No libraries",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.playbackErrors",
+    "text": "Playback errors",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.previewsNotKept",
+    "text": "Previews not kept",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.requestsServiceUnreachable",
+    "text": "Requests service unreachable",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.serverResources",
+    "text": "Server resources",
+    "context": "A heading on the alerts page in the admin area, over the alerts about memory, disk, CPU and GPU."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.services",
+    "text": "Services",
+    "context": "A heading on the alerts page in the admin area, over the alerts about the services Valence talks to."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenAJobFailedInTheLast24Hours",
+    "text": "Shows when a job failed in the last 24 hours.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenAKindOfJobFailsEveryTime",
+    "text": "Shows when a kind of job fails every time it runs.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenALibraryHasNeverBeenScanned",
+    "text": "Shows when a library has never been scanned.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenAnIndexerKeepsFailing",
+    "text": "Shows when an indexer keeps failing and is resting between tries.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenAStreamIsSecondsFromStalling",
+    "text": "Shows when a stream is seconds from stalling.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenMemoryIsOverPercentFull",
+    "text": "Shows when memory is over {percent}% full.",
+    "context": "What an alert is for, on the alerts page in the admin area. {percent} is the level, as a whole number."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenNoCatalogueKeyIsSet",
+    "text": "Shows when no metadata catalogue key is set.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenPlaybackStoppedWithAnError",
+    "text": "Shows when playback stopped with an error in the last 24 hours.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenPreviewsAreLostOnRestart",
+    "text": "Shows when previews and thumbnails are lost on restart.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheCloudflareSolverFailsToStart",
+    "text": "Shows when the Cloudflare solver fails to start.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheCPUStaysAbovePercent",
+    "text": "Shows when the CPU stays above {percent}%.",
+    "context": "What an alert is for, on the alerts page in the admin area. {percent} is the level, as a whole number."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheGPUEncoderStaysAbovePercent",
+    "text": "Shows when the GPU encoder stays above {percent}%.",
+    "context": "What an alert is for, on the alerts page in the admin area. {percent} is the level, as a whole number."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheLibraryDiskIsOverPercentFull",
+    "text": "Shows when the disk your libraries are on is over {percent}% full.",
+    "context": "What an alert is for, on the alerts page in the admin area. {percent} is the level, as a whole number."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheMediaServiceCantReadALibrary",
+    "text": "Shows when the media service can’t read a library’s folder.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheMediaServiceRunsAnUnsupportedFFmpeg",
+    "text": "Shows when the media service runs an FFmpeg version Valence doesn’t support.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheServerCantReachTheMediaService",
+    "text": "Shows when the server can’t reach the media service.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheServerCantReachTheRequestsService",
+    "text": "Shows when the server can’t reach the requests service.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheServerHasNoLibraries",
+    "text": "Shows when the server has no libraries yet.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.showsWhenTheVPNConnectionDrops",
+    "text": "Shows when the requests service’s VPN connection drops.",
+    "context": "What an alert is for, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.theAlertsCouldNotBeRead",
+    "text": "The alerts could not be read.",
+    "context": "Shown on the alerts page in the admin area when the server did not answer."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.theAlertsCouldNotBeSaved",
+    "text": "The alerts could not be saved.",
+    "context": "Shown when the alerts page in the admin area could not save a change."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.titleShowsWhenSomethingIsBroken",
+    "text": "“{title}” shows when something is broken. While it’s off, the overview won’t tell you about it.",
+    "context": "The confirmation shown before turning off an alert about something broken, on the alerts page in the admin area. {title} is the alert's name."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.turnAllOn",
+    "text": "Turn all on",
+    "context": "A button on the alerts page in the admin area that turns every alert back on."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.turnOffThisAlert",
+    "text": "Turn off this alert?",
+    "context": "The title of the confirmation shown before turning off an alert about something broken, on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.unreadableLibraries",
+    "text": "Unreadable libraries",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.unscannedLibraries",
+    "text": "Unscanned libraries",
+    "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.unsupportedFFmpeg",
+    "text": "Unsupported FFmpeg",
+    "context": "An alert's name on the alerts page in the admin area."
   },
   {
     "handler": "screens.adminArea.announcementCard.announcementCouldNotBeChanged",

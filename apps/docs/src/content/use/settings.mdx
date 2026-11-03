@@ -4,7 +4,7 @@ description: Every option in the admin Settings panel, what it does and its defa
 order: 7
 ---
 
-The admin area is where you run the server. It lives at `/admin` and is split into groups of panels down the left: Overview at the top, then **Activity** (Sessions, Links, Statistics, Jobs & logs, Audit log), **Content** (Libraries, Media, Files, Encoding, Live TV), **People** (Accounts, Roles), **Requests** (Overview, Catalogue, Indexers, Profiles, Downloads) and **System** (Settings, Email, Backups, Updates, Storage, Subtitles, Webhooks, Linked servers, Plugins, Import). What you see depends on your permissions, and the Requests group only appears where [requesting](/install/requesting) is set up. This page covers the Settings panel in detail, then the Overview and Encoding panels.
+The admin area is where you run the server. It lives at `/admin` and is split into groups of panels down the left: Overview at the top, then **Activity** (Sessions, Links, Statistics, Jobs & logs, Audit log), **Content** (Libraries, Media, Files, Encoding, Live TV), **People** (Accounts, Roles), **Requests** (Overview, Catalogue, Indexers, Profiles, Downloads) and **System** (Settings, Alerts, Email, Backups, Updates, Storage, Subtitles, Webhooks, Linked servers, Plugins, Import). What you see depends on your permissions, and the Requests group only appears where [requesting](/install/requesting) is set up. This page covers the Settings panel in detail, then the Overview and Encoding panels.
 
 Every setting saves the moment you change it and answers with a small toast so you know it took. Where a save fails the control goes back to its old value and the toast says what could not be saved. Changing settings needs the `server.settings` permission, which only the Administrator role has by default. See [Accounts and roles](/use/accounts-and-roles).
 
@@ -194,13 +194,17 @@ The first panel of the admin area is a live view of the server.
 
 ![The admin Overview panel with the load chart, the Processor, Memory, Graphics and Storage strip and the Libraries, Watching now and Running now regions below.](/screenshots/admin-overview.png)
 
-- **Concerns.** A banner at the top lists problems Valence has noticed and links to the panel that fixes each: the requests service or VPN being down, an indexer failing, the media service being unreachable, an FFmpeg that is too old, failed or stalled jobs, memory or the library disk nearly full, a processor or graphics encoder at full stretch, previews not being kept, libraries never scanned, no libraries, or no catalogue key. Each can be dismissed and stays dismissed until the concern changes.
+- **Concerns.** A banner at the top lists problems Valence has noticed and links to the panel that fixes each: the requests service or VPN being down, an indexer failing, the media service being unreachable, an FFmpeg that is too old, failed or stalled jobs, memory or the library disk nearly full, a processor or graphics encoder at full stretch, previews not being kept, libraries never scanned, no libraries, or no catalogue key. Each can be dismissed and stays dismissed until the concern changes. To stop one kind showing at all, turn it off under [Alerts](#alerts).
 - **Setup guide.** On a fresh server the Overview offers a guide covering adding a library, setting a catalogue key and scanning. You can hide it. If there are no libraries you are taken to the Libraries panel once. See [First run](/use/first-run).
 - **Stat strip.** Processor, memory, graphics and storage, each with how much is Valence's own. Hardware encoding, hardware chains and HDR conversion sit under Graphics.
 - **Server load.** A chart of processor use over the last minute, with longer ranges available.
 - **Watching now, Running now, Libraries and Recent jobs.** What is being streamed, which jobs are working, each library and its last scan, and how recent jobs went. See [Jobs and logs](/use/jobs-and-logs).
 
 Reading the Overview needs `server.monitor`, held by Managers and Administrators.
+
+### Alerts
+
+**System → Alerts** has a switch for every kind of concern the Overview can show, grouped by what it is about: services, requests, playback, jobs, server resources and libraries. Turning one off hides it from the Overview for every administrator until it is turned on again; dismissing a concern only hides that one occurrence. Turning off a red alert, one about something broken, asks first. **Turn all on** puts every alert back. Each switch saves as it is flipped and shows "Alerts saved." Webhooks are not affected: they keep sending what they are set up to send.
 
 ### Storage Valence is using
 
@@ -267,6 +271,7 @@ Small confirmations appear at the corner of the screen after most admin actions.
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Settings  | "Hardware encoding saved.", "Certification region saved.", "Preview quality saved.", "Roundness saved.", "Sign-in screen saved.", "Splashscreen removed.", "Trailer setting saved.", "Music details setting saved.", "TheAudioDB key saved.", "Catalogue key saved.", "OMDb key saved.", "Release types saved." |
 | Overview  | "Counted the storage again."                                                                                                                                                                                                                                                                                    |
+| Alerts    | "Alerts saved."                                                                                                                                                                                                                                                                                                 |
 | Libraries | "Read every file of every library again.", "Rebuilt every library."                                                                                                                                                                                                                                             |
 | Sessions  | "Paused that stream.", "Resumed that stream.", "Stopped that stream.", "Sent the message."                                                                                                                                                                                                                      |
 | Jobs      | "Asked (job name) to stop.", "Schedule added.", "Schedule removed."                                                                                                                                                                                                                                             |

@@ -6,6 +6,7 @@ import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { DeviceIdentityWireSchema } from '@ValenceContracts/schemas/DeviceIdentity';
 import { createRoute, z } from '@hono/zod-openapi';
+import { HiddenAlertsSchema } from '@ValenceContracts/schemas/AdminAlert';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
@@ -87,6 +88,7 @@ const AdminSettingsSchema = z
     requestReleaseTypes: ReleaseTypesSchema,
     controlsConnectedApps: z.boolean(),
     roundness: RoundnessSchema,
+    hiddenAlerts: z.array(z.string()).default([]),
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
     wayInMessage: WayInMessageSchema.nullable().default(null),
@@ -189,6 +191,7 @@ const AdminSettingsRequestSchema = z
     requestReleaseTypes: ReleaseTypesSchema.optional(),
     controlsConnectedApps: z.boolean().optional(),
     roundness: RoundnessSchema.optional(),
+    hiddenAlerts: HiddenAlertsSchema.optional(),
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
     wayInMessage: WayInMessageSchema.nullable().optional(),
     telemetryEnabled: z.boolean().optional(),

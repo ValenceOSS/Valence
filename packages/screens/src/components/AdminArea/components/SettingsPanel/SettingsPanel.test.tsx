@@ -95,6 +95,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     roundness: 'default' as const,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    hiddenAlerts: [],
     telemetryEnabled: true,
     usesPushRelay: false,
     isTelemetryOffByEnvironment: false,

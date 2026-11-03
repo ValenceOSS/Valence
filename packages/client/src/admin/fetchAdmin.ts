@@ -47,6 +47,7 @@ import {
   WhenDevicesFullSchema,
 } from '@ValenceContracts/schemas/DevicePlacement';
 import { PlaybackHardwareSchema } from '@ValenceContracts/schemas/PlaybackHardware';
+import type { AdminAlert } from '@ValenceContracts/schemas/AdminAlert';
 
 const AdminUserSchema = z.object({
   id: z.string(),
@@ -79,6 +80,7 @@ const AdminOverviewSchema = z.object({
     requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
     controlsConnectedApps: z.boolean().default(false),
     roundness: RoundnessSchema.optional(),
+    hiddenAlerts: z.array(z.string()).default([]),
     certificationRegion: z.string().default('GB'),
     keepsDownloadsForDays: z.number().int().nonnegative().default(14),
     splashscreen: z.string().nullish(),
@@ -916,6 +918,24 @@ const savePlaysCatalogueTrailers = async (playsCatalogueTrailers: boolean): Prom
 };
 
 /**
+ * Sets which alerts are left out of what needs attention on the admin overview, for every
+ * administrator on this server.
+ *
+ * @param hiddenAlerts - The alerts to leave out.
+ * @returns Whether the setting was written.
+ */
+const saveHiddenAlerts = async (hiddenAlerts: readonly AdminAlert[]): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ hiddenAlerts }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether films are sent in short segments, which start and seek sooner over a slow
  * connection at the cost of more requests.
  *
@@ -1293,6 +1313,7 @@ export {
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   savePlaysCatalogueTrailers,
+  saveHiddenAlerts,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,

@@ -74,6 +74,7 @@ const ServerSettingsSchema = z.object({
   requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
   controlsConnectedApps: z.boolean().default(false),
   roundness: RoundnessSchema.default('default'),
+  hiddenAlerts: z.array(z.string()).default([]),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
   preTranscoding: z
     .preprocess(withPreTranscodeTargets, PreTranscodingSettingsSchema)

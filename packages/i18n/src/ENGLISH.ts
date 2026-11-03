@@ -3696,6 +3696,7 @@ const ENGLISH = {
   'screens.adminArea.addTriggerDialog.triggerType': 'Trigger type',
   'screens.adminArea.addTriggerDialog.unit': 'Unit',
   'screens.adminArea.adminSections.activity': 'Activity',
+  'screens.adminArea.adminSections.alerts': 'Alerts',
   'screens.adminArea.adminSections.auditLog': 'Audit log',
   'screens.adminArea.adminSections.backups': 'Backups',
   'screens.adminArea.adminSections.content': 'Content',
@@ -3726,6 +3727,73 @@ const ENGLISH = {
   'screens.adminArea.ageChoices.upTo15': 'Up to 15',
   'screens.adminArea.ageChoices.upTo18': 'Up to 18',
   'screens.adminArea.ageChoices.upTo8': 'Up to 8',
+  'screens.adminArea.alertsPanel.alertsSaved': 'Alerts saved.',
+  'screens.adminArea.alertsPanel.busyGPUEncoder': 'Busy GPU encoder',
+  'screens.adminArea.alertsPanel.choosesWhichAlertsShow':
+    'Chooses which alerts show on the overview. Turning one off hides it for every admin on this server.',
+  'screens.adminArea.alertsPanel.cloudflareSolverWontStart': 'Cloudflare solver won’t start',
+  'screens.adminArea.alertsPanel.failedJobs': 'Failed jobs',
+  'screens.adminArea.alertsPanel.failingIndexers': 'Failing indexers',
+  'screens.adminArea.alertsPanel.highCPU': 'High CPU',
+  'screens.adminArea.alertsPanel.jobsThatAlwaysFail': 'Jobs that always fail',
+  'screens.adminArea.alertsPanel.libraryDiskNearlyFull': 'Library disk nearly full',
+  'screens.adminArea.alertsPanel.lowBuffer': 'Low buffer',
+  'screens.adminArea.alertsPanel.lowMemory': 'Low memory',
+  'screens.adminArea.alertsPanel.mediaServiceUnreachable': 'Media service unreachable',
+  'screens.adminArea.alertsPanel.noCatalogueKey': 'No catalogue key',
+  'screens.adminArea.alertsPanel.noLibraries': 'No libraries',
+  'screens.adminArea.alertsPanel.playbackErrors': 'Playback errors',
+  'screens.adminArea.alertsPanel.previewsNotKept': 'Previews not kept',
+  'screens.adminArea.alertsPanel.requestsServiceUnreachable': 'Requests service unreachable',
+  'screens.adminArea.alertsPanel.serverResources': 'Server resources',
+  'screens.adminArea.alertsPanel.services': 'Services',
+  'screens.adminArea.alertsPanel.showsWhenAJobFailedInTheLast24Hours':
+    'Shows when a job failed in the last 24 hours.',
+  'screens.adminArea.alertsPanel.showsWhenAKindOfJobFailsEveryTime':
+    'Shows when a kind of job fails every time it runs.',
+  'screens.adminArea.alertsPanel.showsWhenALibraryHasNeverBeenScanned':
+    'Shows when a library has never been scanned.',
+  'screens.adminArea.alertsPanel.showsWhenAnIndexerKeepsFailing':
+    'Shows when an indexer keeps failing and is resting between tries.',
+  'screens.adminArea.alertsPanel.showsWhenAStreamIsSecondsFromStalling':
+    'Shows when a stream is seconds from stalling.',
+  'screens.adminArea.alertsPanel.showsWhenMemoryIsOverPercentFull':
+    'Shows when memory is over {percent}% full.',
+  'screens.adminArea.alertsPanel.showsWhenNoCatalogueKeyIsSet':
+    'Shows when no metadata catalogue key is set.',
+  'screens.adminArea.alertsPanel.showsWhenPlaybackStoppedWithAnError':
+    'Shows when playback stopped with an error in the last 24 hours.',
+  'screens.adminArea.alertsPanel.showsWhenPreviewsAreLostOnRestart':
+    'Shows when previews and thumbnails are lost on restart.',
+  'screens.adminArea.alertsPanel.showsWhenTheCloudflareSolverFailsToStart':
+    'Shows when the Cloudflare solver fails to start.',
+  'screens.adminArea.alertsPanel.showsWhenTheCPUStaysAbovePercent':
+    'Shows when the CPU stays above {percent}%.',
+  'screens.adminArea.alertsPanel.showsWhenTheGPUEncoderStaysAbovePercent':
+    'Shows when the GPU encoder stays above {percent}%.',
+  'screens.adminArea.alertsPanel.showsWhenTheLibraryDiskIsOverPercentFull':
+    'Shows when the disk your libraries are on is over {percent}% full.',
+  'screens.adminArea.alertsPanel.showsWhenTheMediaServiceCantReadALibrary':
+    'Shows when the media service can’t read a library’s folder.',
+  'screens.adminArea.alertsPanel.showsWhenTheMediaServiceRunsAnUnsupportedFFmpeg':
+    'Shows when the media service runs an FFmpeg version Valence doesn’t support.',
+  'screens.adminArea.alertsPanel.showsWhenTheServerCantReachTheMediaService':
+    'Shows when the server can’t reach the media service.',
+  'screens.adminArea.alertsPanel.showsWhenTheServerCantReachTheRequestsService':
+    'Shows when the server can’t reach the requests service.',
+  'screens.adminArea.alertsPanel.showsWhenTheServerHasNoLibraries':
+    'Shows when the server has no libraries yet.',
+  'screens.adminArea.alertsPanel.showsWhenTheVPNConnectionDrops':
+    'Shows when the requests service’s VPN connection drops.',
+  'screens.adminArea.alertsPanel.theAlertsCouldNotBeRead': 'The alerts could not be read.',
+  'screens.adminArea.alertsPanel.theAlertsCouldNotBeSaved': 'The alerts could not be saved.',
+  'screens.adminArea.alertsPanel.titleShowsWhenSomethingIsBroken':
+    '“{title}” shows when something is broken. While it’s off, the overview won’t tell you about it.',
+  'screens.adminArea.alertsPanel.turnAllOn': 'Turn all on',
+  'screens.adminArea.alertsPanel.turnOffThisAlert': 'Turn off this alert?',
+  'screens.adminArea.alertsPanel.unreadableLibraries': 'Unreadable libraries',
+  'screens.adminArea.alertsPanel.unscannedLibraries': 'Unscanned libraries',
+  'screens.adminArea.alertsPanel.unsupportedFFmpeg': 'Unsupported FFmpeg',
   'screens.adminArea.announcementCard.announcementCouldNotBeChanged':
     'The announcement could not be changed.',
   'screens.adminArea.announcementCard.announcementPosted': 'Announcement posted.',

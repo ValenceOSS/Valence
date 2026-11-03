@@ -2318,6 +2318,41 @@ describe('changing one setting without disturbing the others', () => {
     expect((await settings.read()).wayInMessage ?? null).toBeNull();
   });
 
+  it('lets an administrator hide alerts from the overview, keeping each one once', async () => {
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const changed = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ hiddenAlerts: ['memory', 'playback-problems', 'memory'] }),
+    });
+
+    expect(changed.status).toBe(200);
+    expect(await changed.json()).toMatchObject({ hiddenAlerts: ['memory', 'playback-problems'] });
+    expect((await settings.read()).hiddenAlerts).toEqual(['memory', 'playback-problems']);
+
+    const overview = await app.request(`${BASE}/api/admin/overview`, { headers: { cookie } });
+
+    expect(await overview.json()).toMatchObject({
+      settings: { hiddenAlerts: ['memory', 'playback-problems'] },
+    });
+  });
+
+  it('refuses to hide an alert it does not know', async () => {
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ hiddenAlerts: ['toaster'] }),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await settings.read()).hiddenAlerts).toEqual([]);
+  });
+
   it('refuses a level of roundness it does not know', async () => {
     const { app, auth, store, permissions, settings } = build();
     const cookie = await signedInAsAdmin(app, auth, store, permissions);

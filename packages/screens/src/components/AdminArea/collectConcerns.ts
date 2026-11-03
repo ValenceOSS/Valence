@@ -14,11 +14,14 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
+import type { AdminAlert } from '@ValenceContracts/schemas/AdminAlert';
+import { ALERT_TONES } from './ALERT_TONES';
+import { ALERT_THRESHOLDS } from './ALERT_THRESHOLDS';
 
 type ConcernTone = 'broken' | 'attention' | 'setup';
 
 type Concern = {
-  id: string;
+  id: AdminAlert;
   tone: ConcernTone;
   title: string;
   detail: string;
@@ -39,15 +42,15 @@ type CollectConcernsOptions = {
   recentFailures?: JobRunPage | null;
 };
 
-const MEMORY_PRESSURE = 0.92;
+const MEMORY_PRESSURE = ALERT_THRESHOLDS.memoryShare;
 
-const CPU_PRESSURE = 90;
+const CPU_PRESSURE = ALERT_THRESHOLDS.cpuPercent;
 
-const CPU_READINGS = 15;
+const CPU_READINGS = ALERT_THRESHOLDS.readings;
 
-const ENCODER_PRESSURE = 90;
+const ENCODER_PRESSURE = ALERT_THRESHOLDS.encoderPercent;
 
-const DISK_PRESSURE = 0.95;
+const DISK_PRESSURE = ALERT_THRESHOLDS.diskShare;
 
 const VALENCE_BLAME = 50;
 
@@ -88,7 +91,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'requests',
-      tone: 'broken',
+      tone: ALERT_TONES['requests'],
       title: say('screens.adminArea.collectConcerns.theRequestsServiceIsUnreachable'),
       detail:
         problem === null
@@ -109,7 +112,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'requests-indexers',
-      tone: 'attention',
+      tone: ALERT_TONES['requests-indexers'],
       title:
         failingIndexers.length === 1
           ? say('screens.adminArea.collectConcerns.theIndexerNameKeepsFailing', {
@@ -141,7 +144,7 @@ const collectConcerns = ({
   if (requests?.isReachable === true && vpn?.isConfigured === true && vpn.isUp === false) {
     concerns.push({
       id: 'requests-vpn',
-      tone: 'broken',
+      tone: ALERT_TONES['requests-vpn'],
       title: say('screens.adminArea.collectConcerns.theVPNIsDown'),
       detail:
         sayAgainIfAny(vpn.problem) ??
@@ -156,7 +159,7 @@ const collectConcerns = ({
   if (requests?.isReachable === true && solver !== null && solver.startProblem !== null) {
     concerns.push({
       id: 'requests-solver',
-      tone: 'broken',
+      tone: ALERT_TONES['requests-solver'],
       title: say('screens.adminArea.collectConcerns.theCloudflareSolverWillNotStart'),
       detail: sayAgain(solver.startProblem),
       panel: 'requests',
@@ -169,7 +172,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'transcoder',
-      tone: 'broken',
+      tone: ALERT_TONES['transcoder'],
       title: say('screens.adminArea.collectConcerns.theMediaServiceIsUnreachable'),
       detail:
         address === ''
@@ -190,7 +193,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'ffmpeg-version',
-      tone: 'attention',
+      tone: ALERT_TONES['ffmpeg-version'],
       title: say('screens.adminArea.collectConcerns.theMediaServiceIsRunningAn'),
       detail:
         version === null
@@ -207,7 +210,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'unreadable-libraries',
-      tone: 'broken',
+      tone: ALERT_TONES['unreadable-libraries'],
       title:
         unreadable.length === 1
           ? say('screens.adminArea.collectConcerns.nameCannotBePlayed', { name: first?.name ?? '' })
@@ -238,7 +241,7 @@ const collectConcerns = ({
   if (failed > 0) {
     concerns.push({
       id: 'failed-jobs',
-      tone: 'broken',
+      tone: ALERT_TONES['failed-jobs'],
       title:
         failed === 1
           ? say('screens.adminArea.collectConcerns.aJobFailedInTheLast')
@@ -258,7 +261,7 @@ const collectConcerns = ({
   if (stopped > 0) {
     concerns.push({
       id: 'playback-problems',
-      tone: 'attention',
+      tone: ALERT_TONES['playback-problems'],
       title: sayCount('screens.adminArea.collectConcerns.playbackStoppedInTheLastDay', stopped),
       detail: say('screens.adminArea.collectConcerns.openTheLogToSeeWhatStopped'),
       panel: 'jobs',
@@ -273,7 +276,7 @@ const collectConcerns = ({
   if (worst !== undefined) {
     concerns.push({
       id: 'stalled-jobs',
-      tone: 'broken',
+      tone: ALERT_TONES['stalled-jobs'],
       title:
         stalled.length === 1
           ? worst.everSucceeded
@@ -298,7 +301,7 @@ const collectConcerns = ({
   if (memory !== null && memory.usedBytes / memory.totalBytes > MEMORY_PRESSURE) {
     concerns.push({
       id: 'memory',
-      tone: 'attention',
+      tone: ALERT_TONES['memory'],
       title: memory.isLimited
         ? say('screens.adminArea.collectConcerns.valenceIsNearlyAtTheMemory')
         : say('screens.adminArea.collectConcerns.memoryIsNearlyFull'),
@@ -319,7 +322,7 @@ const collectConcerns = ({
   ) {
     concerns.push({
       id: 'disk',
-      tone: 'attention',
+      tone: ALERT_TONES['disk'],
       title: say('screens.adminArea.collectConcerns.theLibraryDiskIsNearlyFull'),
       detail: say('screens.adminArea.collectConcerns.availableBytesLeftOnMountPointAScan', {
         availableBytes: formatBytes(disk.availableBytes),
@@ -336,7 +339,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'cpu',
-      tone: 'attention',
+      tone: ALERT_TONES['cpu'],
       title: say('screens.adminArea.collectConcerns.theProcessorHasBeenAtFull'),
       detail:
         share === null
@@ -357,7 +360,7 @@ const collectConcerns = ({
   if (artefacts !== null && !artefacts.survivesRestart) {
     concerns.push({
       id: 'artefacts',
-      tone: 'attention',
+      tone: ALERT_TONES['artefacts'],
       title: say('screens.adminArea.collectConcerns.previewsAndThumbnailsAreNotBeing'),
       detail: say('screens.adminArea.collectConcerns.theyAreBeingWrittenToRoot', {
         root: artefacts.root,
@@ -374,7 +377,7 @@ const collectConcerns = ({
   ) {
     concerns.push({
       id: 'encoder',
-      tone: 'attention',
+      tone: ALERT_TONES['encoder'],
       title: say('screens.adminArea.collectConcerns.theGraphicsEncoderHasBeenAt'),
       detail: say('screens.adminArea.collectConcerns.theNextStreamThatNeedsConverting'),
       panel: 'activity',
@@ -394,7 +397,7 @@ const collectConcerns = ({
 
     concerns.push({
       id: 'starved-sessions',
-      tone: 'attention',
+      tone: ALERT_TONES['starved-sessions'],
       title:
         starved.length === 1
           ? watching === null
@@ -411,7 +414,7 @@ const collectConcerns = ({
   if (unscanned.length > 0) {
     concerns.push({
       id: 'unscanned',
-      tone: 'attention',
+      tone: ALERT_TONES['unscanned'],
       title:
         unscanned.length === 1
           ? unscanned[0] === undefined
@@ -428,7 +431,7 @@ const collectConcerns = ({
   if (overview !== null && libraries !== null && libraries.length === 0) {
     concerns.push({
       id: 'no-libraries',
-      tone: 'setup',
+      tone: ALERT_TONES['no-libraries'],
       title: say('screens.adminArea.collectConcerns.thereAreNoLibrariesYet'),
       detail: say('screens.adminArea.collectConcerns.addOnePointingAtAFolder'),
       panel: 'libraries',
@@ -438,7 +441,7 @@ const collectConcerns = ({
   if (overview !== null && !overview.settings.hasCatalogueKey) {
     concerns.push({
       id: 'no-catalogue-key',
-      tone: 'setup',
+      tone: ALERT_TONES['no-catalogue-key'],
       title: say('screens.adminArea.collectConcerns.noMetadataCatalogueKeyIsSet'),
       detail: say('screens.adminArea.collectConcerns.titlesArtworkAndYearsComeFrom'),
       panel: 'settings',

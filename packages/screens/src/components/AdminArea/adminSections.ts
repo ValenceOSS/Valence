@@ -1,6 +1,7 @@
 import {
   Activity as ActivityIcon,
   Archive as ArchiveIcon,
+  Bell as BellIcon,
   Broadcast as BroadcastIcon,
   ChartColumn as ChartColumnIcon,
   CircleArrowDown as CircleArrowDownIcon,
@@ -30,6 +31,7 @@ import {
 import {
   Activity as ActivityFilledIcon,
   Archive as ArchiveFilledIcon,
+  Bell as BellFilledIcon,
   Broadcast as BroadcastFilledIcon,
   ChartColumn as ChartColumnFilledIcon,
   CircleArrowDown as CircleArrowDownFilledIcon,
@@ -199,6 +201,12 @@ const ADMIN_SECTIONS = [
         label: say('common.settings'),
         icon: SettingsIcon,
         activeIcon: SettingsFilledIcon,
+      },
+      {
+        id: 'alerts',
+        label: say('screens.adminArea.adminSections.alerts'),
+        icon: BellIcon,
+        activeIcon: BellFilledIcon,
       },
       { id: 'email', label: say('common.email'), icon: MailIcon, activeIcon: MailFilledIcon },
       {

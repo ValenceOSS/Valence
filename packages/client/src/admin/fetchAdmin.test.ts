@@ -32,6 +32,7 @@ import {
   savePreviewQuality,
   saveRoundness,
   saveKeepsDownloadsForDays,
+  saveHiddenAlerts,
   watchActiveSessions,
   measureStorage,
   saveSplashscreen,
@@ -79,6 +80,7 @@ const OVERVIEW = {
     controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    hiddenAlerts: ['memory'],
     telemetryEnabled: true,
     usesPushRelay: false,
     isTelemetryOffByEnvironment: false,
@@ -1118,6 +1120,24 @@ describe('stopping a job and choosing a backend', () => {
     expect(url).toBe('/api/admin/settings');
     expect(init?.method).toBe('PATCH');
     expect(init?.body).toBe(JSON.stringify({ previewQuality: 'low' }));
+  });
+
+  it('sends the alerts to leave off the overview to the server', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
+
+    await expect(saveHiddenAlerts(['memory', 'playback-problems'])).resolves.toBe(true);
+
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/admin/settings');
+    expect(init?.method).toBe('PATCH');
+    expect(init?.body).toBe(JSON.stringify({ hiddenAlerts: ['memory', 'playback-problems'] }));
+  });
+
+  it('says the alerts were not saved when the server refuses them', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 400, json: () => Promise.resolve({}) });
+
+    await expect(saveHiddenAlerts(['memory'])).resolves.toBe(false);
   });
 
   it('sends how long downloads are kept to the server', async () => {
