@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { THE_MARKS_PLACE } from '@ValenceMobile/components/ACarriedMark/THE_MARKS_PLACE';
 import { makeTheMarksWay } from '@ValenceMobile/components/ACarriedMark/makeTheMarksWay';
 import { TheFlyingMark } from './TheFlyingMark';
@@ -13,8 +13,16 @@ describe('TheFlyingMark', () => {
       </THE_MARKS_PLACE.Provider>,
     );
 
-    way.leave({ x: 0, y: 0, width: 40, height: 40 });
+    await act(() => {
+      way.leave({ x: 0, y: 0, width: 40, height: 40 });
+    });
 
-    expect(way.land({ x: 100, y: 100, width: 40, height: 40 }, jest.fn())).toBe(true);
+    let isLanding = false;
+
+    await act(() => {
+      isLanding = way.land({ x: 100, y: 100, width: 40, height: 40 }, jest.fn());
+    });
+
+    expect(isLanding).toBe(true);
   });
 });
