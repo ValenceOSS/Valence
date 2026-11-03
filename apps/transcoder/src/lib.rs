@@ -25,6 +25,7 @@ pub mod durability;
 pub mod fingerprint;
 pub mod fonts;
 pub mod frame;
+pub mod freed_memory;
 pub mod graphics;
 pub mod hardware;
 pub mod hardware_test;

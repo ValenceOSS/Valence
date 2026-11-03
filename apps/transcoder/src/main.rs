@@ -167,6 +167,21 @@ fn spawn_reaper(registry: SessionRegistry) {
     });
 }
 
+/// Hands freed memory back to the system on a timer.
+///
+/// On a blocking thread, because the walk takes each arena's lock in turn and a
+/// runtime worker should not wait on one. See
+/// [`valence_transcoder::freed_memory::give_back`].
+fn spawn_giver_back() {
+    tokio::spawn(async {
+        loop {
+            tokio::time::sleep(valence_transcoder::freed_memory::GIVE_BACK_EVERY).await;
+
+            let _ = tokio::task::spawn_blocking(valence_transcoder::freed_memory::give_back).await;
+        }
+    });
+}
+
 /// Reclaims spent transcode directories on a timer.
 ///
 /// Separate from the reaper because they undo different things: that one frees
@@ -432,6 +447,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
 
     spawn_reaper(registry.clone());
     spawn_sweeper(registry.clone());
+    spawn_giver_back();
 
     let result = match target {
         ListenTarget::Address(address) => {
