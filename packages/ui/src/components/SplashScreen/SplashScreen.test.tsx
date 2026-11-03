@@ -71,7 +71,26 @@ describe('SplashScreen', () => {
 
     const name = screen.getByText('The Morgan Family Home Cinema');
 
-    expect(name).toHaveClass('truncate', 'max-w-[calc(100vw-7.5rem)]', 'text-4xl');
+    expect(name).toHaveClass(
+      'overflow-hidden',
+      'whitespace-nowrap',
+      'max-w-[calc(100vw-7.5rem)]',
+      'text-4xl',
+    );
+  });
+
+  it('clips the name without an ellipsis while it is still opening', () => {
+    render(<SplashScreen name="Valence" />);
+
+    expect(screen.getByText('Valence')).not.toHaveClass('text-ellipsis');
+  });
+
+  it('ends a name too long for the screen in an ellipsis once it is open', () => {
+    motion.isReduced = true;
+
+    render(<SplashScreen name="The Morgan Family Home Cinema" />);
+
+    expect(screen.getByText('The Morgan Family Home Cinema')).toHaveClass('text-ellipsis');
   });
 
   it('draws a short name at the wordmark’s own size', () => {

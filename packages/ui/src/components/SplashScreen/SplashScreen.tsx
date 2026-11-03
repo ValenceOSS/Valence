@@ -109,6 +109,7 @@ const SplashScreen = ({
   const [isCarryingOn] = useState(() => Date.now() - startedAt > 50);
   const [hadLanded] = useState(() => Date.now() - startedAt >= NAME_AT_MILLISECONDS);
   const [hasLanded, setHasLanded] = useState(prefersReducedMotion === true || hadLanded);
+  const [hasNameOpened, setHasNameOpened] = useState(prefersReducedMotion === true || hadLanded);
   const [hasIntroPlayed, setHasIntroPlayed] = useState(false);
   const [isRingFull, setIsRingFull] = useState(false);
   const ringFilled = useCallback(() => {
@@ -277,12 +278,18 @@ const SplashScreen = ({
           <motion.span
             aria-hidden
             className={cn(
-              'max-w-[calc(100vw-7.5rem)] truncate pl-5 font-normal',
+              'max-w-[calc(100vw-7.5rem)] overflow-hidden whitespace-nowrap pl-5 font-normal',
+              hasNameOpened ? 'text-ellipsis' : '',
               name.length > SHORT_NAME_LENGTH ? 'text-4xl sm:text-6xl' : 'text-6xl',
             )}
             initial={prefersReducedMotion === true || hadLanded ? false : { width: 0 }}
             animate={{ width: hasLanded || prefersReducedMotion === true ? 'auto' : 0 }}
             transition={prefersReducedMotion === true || hadLanded ? { duration: 0 } : openSpring}
+            onAnimationComplete={() => {
+              if (hasLanded || prefersReducedMotion === true) {
+                setHasNameOpened(true);
+              }
+            }}
           >
             {name}
           </motion.span>
