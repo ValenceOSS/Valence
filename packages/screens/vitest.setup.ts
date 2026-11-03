@@ -6,6 +6,7 @@ import { MotionGlobalConfig } from 'motion/react';
 import { JSDOM } from 'jsdom';
 import { installATestClient } from './src/testing/installATestClient';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
+import { quietLateRenderWarnings } from '@valence/ui/src/testing/quietLateRenderWarnings';
 import '@valence/ui/src/testing/stubMediaElements';
 
 /**
@@ -243,6 +244,8 @@ if (typeof HTMLCanvasElement !== 'undefined') {
 }
 
 afterEach(tidyAfterATest);
+
+quietLateRenderWarnings(console);
 
 /**
  * Takes back everything that outlives the component that made it.

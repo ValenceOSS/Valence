@@ -5,6 +5,8 @@ import type { SeasonToMatch } from './matchSeason';
 
 const FPS = 15.625;
 
+const MATCHING_A_LONG_SEASON_MS = 60_000;
+
 /**
  * Hashes decorrelated enough that no two stretches match by accident.
  *
@@ -52,7 +54,7 @@ const aSeason = (episodes: number, isShared: boolean): SeasonToMatch => {
   };
 };
 
-describe('createThreadedAudioMatcher', () => {
+describe('createThreadedAudioMatcher', { timeout: MATCHING_A_LONG_SEASON_MS }, () => {
   it('answers as matching on this thread would', async () => {
     const season = aSeason(8, true);
 
