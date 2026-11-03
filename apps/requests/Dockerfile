@@ -70,10 +70,15 @@ FROM node:24.21.0-bookworm-slim AS runtime
 ARG VALENCE_VERSION=0.0.0
 
 # What Firefox needs to run without a screen: the browser that gets indexers past Cloudflare's
-# check lives in this service rather than in a container of its own.
+# check lives in this service rather than in a container of its own. And tini, to stand first in
+# the container: every time the browser closes, Firefox's helper processes outlive it, pass to
+# whatever runs first, and wait there to be reaped. Node never reaps them, so they piled up four
+# per browser, over three hundred a day on a busy server, each holding a process id the container
+# would one day run out of.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates libgtk-3-0 libx11-xcb1 libasound2 libdbus-glib-1-2 libxt6 libxtst6 libpci3 \
+      tini \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -112,4 +117,5 @@ EXPOSE 8421
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD node -e "fetch('http://127.0.0.1:8421/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "apps/requests/dist/Main.js"]
