@@ -30,13 +30,13 @@ describe('BrandPage', () => {
     expect(screen.getByText('#0066FF')).toBeInTheDocument();
   });
 
-  it('offers ten wallpapers at both sizes, and a pack of each', () => {
+  it('offers ten wallpapers at every size, and a pack of each', () => {
     render(<BrandPage />);
 
     const wallpapers = screen.getByRole('region', { name: 'Wallpapers' });
 
-    expect(within(wallpapers).getAllByRole('link', { name: 'Desktop 4K' })).toHaveLength(10);
-    expect(within(wallpapers).getAllByRole('link', { name: 'Phone 4K' })).toHaveLength(10);
+    expect(within(wallpapers).getAllByRole('link', { name: '16:10' })).toHaveLength(10);
+    expect(within(wallpapers).getAllByRole('link', { name: 'Phone' })).toHaveLength(10);
     expect(within(wallpapers).getByRole('link', { name: 'Desktop pack' })).toHaveAttribute(
       'href',
       '/brand/valence-wallpapers-desktop.zip',
