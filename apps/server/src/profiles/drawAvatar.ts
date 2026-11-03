@@ -1,13 +1,29 @@
-import { createAvatar } from '@dicebear/core';
-import { adventurer, bottts, funEmoji, lorelei, notionists, thumbs } from '@dicebear/collection';
+import { Avatar, Style } from '@dicebear/core';
+import adventurer from '@dicebear/styles/adventurer.json' with { type: 'json' };
+import bottts from '@dicebear/styles/bottts.json' with { type: 'json' };
+import funEmoji from '@dicebear/styles/fun-emoji.json' with { type: 'json' };
+import lorelei from '@dicebear/styles/lorelei.json' with { type: 'json' };
+import notionists from '@dicebear/styles/notionists.json' with { type: 'json' };
+import thumbs from '@dicebear/styles/thumbs.json' with { type: 'json' };
+
+/**
+ * Draws one avatar in a style, round, from its seed.
+ *
+ * @param style - The style to draw in.
+ * @returns What draws it from a seed.
+ */
+const drawnIn =
+  <D>(style: Style<D>) =>
+  (seed: string): string =>
+    new Avatar(style, { seed, borderRadius: 50 }).toString();
 
 const AVATAR_STYLES = {
-  adventurer: (seed: string) => createAvatar(adventurer, { seed, radius: 50 }).toString(),
-  lorelei: (seed: string) => createAvatar(lorelei, { seed, radius: 50 }).toString(),
-  notionists: (seed: string) => createAvatar(notionists, { seed, radius: 50 }).toString(),
-  bottts: (seed: string) => createAvatar(bottts, { seed, radius: 50 }).toString(),
-  funEmoji: (seed: string) => createAvatar(funEmoji, { seed, radius: 50 }).toString(),
-  thumbs: (seed: string) => createAvatar(thumbs, { seed, radius: 50 }).toString(),
+  adventurer: drawnIn(new Style(adventurer)),
+  lorelei: drawnIn(new Style(lorelei)),
+  notionists: drawnIn(new Style(notionists)),
+  bottts: drawnIn(new Style(bottts)),
+  funEmoji: drawnIn(new Style(funEmoji)),
+  thumbs: drawnIn(new Style(thumbs)),
 } as const;
 
 type AvatarStyle = keyof typeof AVATAR_STYLES;
