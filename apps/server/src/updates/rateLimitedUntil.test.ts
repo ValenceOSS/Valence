@@ -19,6 +19,15 @@ describe('rateLimitedUntil', () => {
     expect(rateLimitedUntil(answer, NOW)).toBe(NOW + 60_000);
   });
 
+  it('waits until the date GitHub gives, where it gives one rather than seconds', () => {
+    const answer = new Response('', {
+      status: 429,
+      headers: { 'retry-after': new Date(NOW + 90_000).toUTCString() },
+    });
+
+    expect(rateLimitedUntil(answer, NOW)).toBe(NOW + 90_000);
+  });
+
   it('does not wait over a refusal that is not about being asked too often', () => {
     expect(rateLimitedUntil(new Response('', { status: 403 }), NOW)).toBeNull();
     expect(rateLimitedUntil(new Response('', { status: 200 }), NOW)).toBeNull();

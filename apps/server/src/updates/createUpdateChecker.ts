@@ -214,14 +214,16 @@ const createUpdateChecker = ({
           : null,
       ]);
 
+      const isWaiting = now().getTime() < waitUntil;
+
       if (freshReleases !== null) {
         releases = freshReleases;
-        releasesAt = now().getTime();
+        releasesAt = isWaiting && freshReleases.problem !== null ? releasesAt : now().getTime();
       }
 
       if (freshDev !== null) {
         dev = freshDev;
-        devAt = now().getTime();
+        devAt = isWaiting && freshDev.problem !== null ? devAt : now().getTime();
       }
 
       return { ...releases, dev };

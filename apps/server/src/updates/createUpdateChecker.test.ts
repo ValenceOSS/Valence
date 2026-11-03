@@ -185,6 +185,33 @@ describe('createUpdateChecker', () => {
       expect(waiting.problem?.code).toBe('server.updates.createUpdateChecker.githubAskedToWait');
       expect(waiting.problem?.values).toMatchObject({ time: '15:30 UTC' });
     });
+
+    it('asks again as soon as the wait is over, rather than hours later', async () => {
+      let at = new Date('2026-11-03T15:00:00Z');
+      let isLimited = true;
+      const fetchReleases = vi.fn(() =>
+        Promise.resolve(
+          isLimited
+            ? new Response('{}', {
+                status: 403,
+                headers: {
+                  'x-ratelimit-remaining': '0',
+                  'x-ratelimit-reset': (Date.parse('2026-11-03T15:30:00Z') / 1000).toString(),
+                },
+              })
+            : new Response(JSON.stringify([RELEASE])),
+        ),
+      );
+      const checker = devChecker({ fetchReleases, now: () => at });
+
+      await checker.read();
+      isLimited = false;
+      at = new Date('2026-11-03T15:31:00Z');
+      const read = await checker.read();
+
+      expect(fetchReleases).toHaveBeenCalledTimes(2);
+      expect(read).toMatchObject({ latest: '1.7.0', problem: null });
+    });
   });
 
   it('never asks about dev builds on a release', async () => {
