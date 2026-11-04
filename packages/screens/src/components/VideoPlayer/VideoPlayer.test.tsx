@@ -831,10 +831,20 @@ describe('VideoPlayer', () => {
   });
 
   it('reconnects where the playlist could not be read', async () => {
-    attachMock.mockRejectedValue({ category: 4, code: 4032 });
+    attachMock.mockRejectedValue({ category: 1, code: 1001 });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
+  });
+
+  it('asks for the stream converted, never to reconnect, where the browser will not take it', async () => {
+    attachMock.mockRejectedValueOnce({ category: 4, code: 4032 });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.[7]).toBe('pictureAndSound');
+    });
+    expect(screen.queryByText('Reconnecting…')).not.toBeInTheDocument();
   });
 
   it('stops the session and tears down the engine when closed', async () => {
@@ -4246,5 +4256,57 @@ describe('VideoPlayer, playing in the browser with a sound language remembered',
     expect(startMock.mock.calls[0]?.[4]).toBe(2);
     expect(startMock.mock.calls[0]?.[11]).toBe(true);
     expect(stopMock).not.toHaveBeenCalled();
+  });
+
+  it('offers to pick the sound itself where the server chooses the language', async () => {
+    writePlaybackPreferences({ playsInTheBrowser: true, audioLanguage: null });
+    detectMock.mockReturnValue({
+      name: 'Browser',
+      directPlayProfiles: [],
+      supportedVideoRanges: ['SDR'],
+      tenBitVideoCodecs: [],
+    });
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    expect(startMock).toHaveBeenCalledTimes(1);
+    expect(startMock.mock.calls[0]?.[4]).toBeUndefined();
+    expect(startMock.mock.calls[0]?.[11]).toBe(true);
+  });
+
+  it('asks again as the plain browser where the stream sent carries a sound only its own player decodes', async () => {
+    const plain: Partial<DeviceProfile> = {
+      name: 'Browser',
+      directPlayProfiles: [{ container: 'mp4', videoCodecs: ['hevc'], audioCodecs: ['aac'] }],
+      supportedVideoRanges: ['SDR', 'HDR10'],
+      tenBitVideoCodecs: ['hevc'],
+    };
+
+    writePlaybackPreferences({ playsInTheBrowser: true, audioLanguage: null });
+    detectMock.mockReturnValue(plain);
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    startMock.mockResolvedValueOnce({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        sessionId: 'copied',
+        plan: {
+          ...transcodingPlan,
+          mediaId: 'media-1',
+          container: { kind: 'remux', target: 'fmp4', reason },
+          video: { kind: 'passthrough', reason },
+          audio: { kind: 'passthrough', streamIndex: 2, reason },
+        },
+      },
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(startMock).toHaveBeenCalledTimes(2);
+    });
+    expect(stopMock).toHaveBeenCalledWith('copied', 'client-1');
+    expect(startMock.mock.calls[1]?.[1]).toBe(plain);
+    expect(startMock.mock.calls[1]?.[11]).toBe(false);
   });
 });

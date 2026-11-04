@@ -1,5 +1,6 @@
 import { keptCopiesFor } from '@ValenceCore/functions/keptCopiesFor';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { isDirectPlay } from '@ValenceCore/functions/isDirectPlay';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
@@ -303,7 +304,7 @@ const createPlaybackService = ({
           : null;
 
       if (
-        chosen.isDirectPlay &&
+        isDirectPlay(plan, source, picksItsOwnSound === true) &&
         !(found.isSplit === true && chosen.source.isOriginal) &&
         (audioStreamIndex === undefined || picksItsOwnSound === true) &&
         rungs.length === 0 &&

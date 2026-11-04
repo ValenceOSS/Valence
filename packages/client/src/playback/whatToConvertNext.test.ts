@@ -48,6 +48,16 @@ describe('whatToConvertNext', () => {
     }
   });
 
+  it('converts a stream the browser would not take at all, which reconnecting would only fetch again', () => {
+    expect(
+      whatToConvertNext({
+        plan: copying,
+        converted: undefined,
+        fault: { category: 4, code: 4032 },
+      }),
+    ).toBe('picture');
+  });
+
   it('leaves a full buffer alone, which converting would not empty', () => {
     expect(
       whatToConvertNext({

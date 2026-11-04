@@ -112,7 +112,7 @@ const withEveryArgument = ({
   audioStreamIndex,
   picksItsOwnSound,
 }: {
-  audioStreamIndex: number;
+  audioStreamIndex: number | undefined;
   picksItsOwnSound: boolean;
 }) => ({
   all: [
@@ -550,8 +550,30 @@ describe('createPlaybackService', () => {
     expect(startedSpecs).toEqual([]);
   });
 
+  it('hands the whole file to a client that picks its own sound, though the language chosen is not the file’s first', async () => {
+    const { service, startedSpecs } = harness('en', false, { ...bilingual, videoCodec: 'h264' });
+    const { all } = withEveryArgument({ audioStreamIndex: undefined, picksItsOwnSound: true });
+
+    const outcome = await service.start(...all);
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { delivery: { kind: 'direct' }, plan: { audio: { streamIndex: 2 } } },
+    });
+    expect(startedSpecs).toEqual([]);
+  });
+
+  it('streams the language chosen when it is not the file’s first and the client cannot pick its own sound', async () => {
+    const { service, startedSpecs } = harness('en', false, { ...bilingual, videoCodec: 'h264' });
+
+    const outcome = await service.start(MEDIA_ID, capableProfile, 0);
+
+    expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'hls' } } });
+    expect(startedSpecs).toHaveLength(1);
+  });
+
   it('delivers the named track where the file cannot go whole, though the client picks its own sound', async () => {
-    const { service, startedSpecs } = harness('en');
+    const { service, startedSpecs } = harness('en', false, { ...bilingual, container: 'mp4' });
     const { all } = withEveryArgument({ audioStreamIndex: 1, picksItsOwnSound: true });
 
     const outcome = await service.start(...all);

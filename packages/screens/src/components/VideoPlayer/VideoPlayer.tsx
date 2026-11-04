@@ -156,6 +156,8 @@ import { chooseBrowserRoute } from '@ValenceClient/playback/chooseBrowserRoute';
 import { readEngineSupport } from '@ValenceScreens/playback/readEngineSupport';
 import { withTheEngine } from '@ValenceClient/playback/withTheEngine';
 import { isPlayedNatively } from '@ValenceClient/playback/isPlayedNatively';
+import { isStreamedNatively } from '@ValenceClient/playback/isStreamedNatively';
+import { naturalAudioStreamIndex } from '@ValenceCore/functions/naturalAudioStreamIndex';
 import type { EngineStats } from '@ValenceScreens/playback/engine/EngineStats';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -1081,7 +1083,7 @@ const VideoPlayer = ({
         request.requestedQuality === 'original' ||
         (request.requestedQuality === 'auto' && request.autoRung === 'original');
       const mayPickSound =
-        isWhole && engine !== null && asked !== null && engine.audioCodecs.includes(asked.codec);
+        isWhole && engine !== null && (asked === null || engine.audioCodecs.includes(asked.codec));
       const ask = (heardIndex: number | undefined, picksSound: boolean) =>
         startPlaybackSession(
           request.mediaId,
@@ -1134,7 +1136,12 @@ const VideoPlayer = ({
             ? ({ kind: 'started', session: readied } as const)
             : await ask(audioStreamIndex, mayPickSound);
       const picksItsOwnSound =
-        mayPickSound && outcome.kind === 'started' && outcome.session.delivery.kind === 'direct';
+        mayPickSound &&
+        outcome.kind === 'started' &&
+        outcome.session.delivery.kind === 'direct' &&
+        (audioStreamIndex !== undefined ||
+          outcome.session.plan.audio.streamIndex !==
+            naturalAudioStreamIndex(film?.audioStreams ?? []));
 
       if (outcome.kind === 'failed') {
         if (outcome.problem === 'unreachable') {
@@ -1158,6 +1165,20 @@ const VideoPlayer = ({
 
         return;
       }
+
+      if (
+        startedId !== null &&
+        engine !== null &&
+        film !== null &&
+        !isStreamedNatively(deviceProfile, outcome.session.plan, film)
+      ) {
+        abandonStartedSession(startedId, clientId);
+        engineRefusedRef.current = true;
+        setRequest((asked) => ({ ...asked }));
+
+        return;
+      }
+
       setSessionMadeFor({
         isCast: request.isCast === true,
         burnInSubtitleId: request.burnInSubtitleId,
@@ -1243,7 +1264,8 @@ const VideoPlayer = ({
           film?.audioStreams.findIndex(
             (stream) =>
               stream.index ===
-              (picksItsOwnSound ? audioStreamIndex : outcome.session.plan.audio.streamIndex),
+              ((picksItsOwnSound ? audioStreamIndex : undefined) ??
+                outcome.session.plan.audio.streamIndex),
           ) ?? -1;
         const isTheEngines =
           outcome.session.delivery.kind === 'direct' &&

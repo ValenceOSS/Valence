@@ -155,4 +155,24 @@ describe('isDirectPlay', () => {
 
     expect(isDirectPlay(negotiatePlayback(twoTracks, profile, null, 'fra'), twoTracks)).toBe(false);
   });
+
+  it('is true for a track other than the natural one when the player picks its own sound', () => {
+    const twoTracks: MediaItem = {
+      ...media,
+      audioStreams: [
+        { index: 1, codec: 'aac', channels: 2, language: 'jpn', isDefault: true, isAtmos: false },
+        { index: 2, codec: 'aac', channels: 2, language: 'eng', isDefault: false, isAtmos: false },
+      ],
+    };
+
+    expect(isDirectPlay(negotiatePlayback(twoTracks, profile, null, 'eng'), twoTracks, true)).toBe(
+      true,
+    );
+  });
+
+  it('still refuses a rewrapped file when the player picks its own sound', () => {
+    const avi: MediaItem = { ...media, container: 'avi' };
+
+    expect(isDirectPlay(negotiatePlayback(avi, profile), avi, true)).toBe(false);
+  });
 });

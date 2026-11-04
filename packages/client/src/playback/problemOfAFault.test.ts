@@ -20,6 +20,10 @@ describe('problemOfAFault', () => {
     expect(problemOfAFault({ from: 'element', code: 4 }, false)).toBe('unsupported');
   });
 
+  it('calls a stream the browser would not take at all a format it cannot play, never a reason to reconnect', () => {
+    expect(problemOfAFault({ from: 'engine', category: 4, code: 4032 }, false)).toBe('unsupported');
+  });
+
   it('calls a picture that stopped while the sound went on damaged', () => {
     expect(problemOfAFault({ from: 'picture' }, true)).toBe('damaged');
   });

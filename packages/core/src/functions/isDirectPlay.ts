@@ -61,13 +61,15 @@ const mayBeHandedOver = (item: MediaItem): boolean => {
  *
  * @param plan - What the negotiator decided.
  * @param item - The file it decided about.
+ * @param picksItsOwnSound - Whether the player chooses the track from the whole file itself, so any
+ *   track it can take may be handed over.
  * @returns Whether the file is being handed over as it is.
  */
-const isDirectPlay = (plan: PlaybackPlan, item: MediaItem): boolean =>
+const isDirectPlay = (plan: PlaybackPlan, item: MediaItem, picksItsOwnSound = false): boolean =>
   plan.container.kind === 'passthrough' &&
   plan.video.kind === 'passthrough' &&
   plan.audio.kind === 'passthrough' &&
-  plan.audio.streamIndex === naturalAudioStreamIndex(item.audioStreams) &&
+  (picksItsOwnSound || plan.audio.streamIndex === naturalAudioStreamIndex(item.audioStreams)) &&
   plan.subtitles.kind !== 'burnIn' &&
   mayBeHandedOver(item);
 
