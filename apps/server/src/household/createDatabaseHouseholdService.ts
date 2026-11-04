@@ -164,6 +164,26 @@ const createDatabaseHouseholdService = (
       return changed > 0;
     },
 
+    wayInOf: async (userId) => {
+      const [row] = await db
+        .select({ wayInId: userProfile.wayInId })
+        .from(userProfile)
+        .where(eq(userProfile.userId, userId))
+        .limit(1);
+
+      return row?.wayInId ?? null;
+    },
+
+    accountOfWayIn: async (wayInId) => {
+      const [row] = await db
+        .select({ userId: userProfile.userId })
+        .from(userProfile)
+        .where(eq(userProfile.wayInId, wayInId))
+        .limit(1);
+
+      return row?.userId ?? null;
+    },
+
     readAvatar: async (userId) => {
       const row = await rowFor(userId);
 

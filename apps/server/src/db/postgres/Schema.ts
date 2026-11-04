@@ -1820,6 +1820,7 @@ const userProfile = pgTable('user_profile', {
   avatarStyle: text('avatarStyle'),
   avatarSeed: text('avatarSeed'),
   photoPath: text('photoPath'),
+  wayInId: text('wayInId').unique(),
   onboardedAt: timestamp('onboardedAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),

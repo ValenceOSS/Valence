@@ -21,6 +21,28 @@ const aService = async () => {
 
 describe('createDatabaseHouseholdService', () => {
   it(
+    'finds an account by the id it is known by on the way in, and that id by the account',
+    async () => {
+      const db = await aMigratedDatabase();
+
+      await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+      await db
+        .insert(userProfile)
+        .values({ userId: 'ada', wayInId: '8d0c2f3e-6f5b-4c0e-9a51-3f1e2d4c5b6a' });
+
+      const service = createDatabaseHouseholdService(db, '/nowhere');
+
+      await expect(service.wayInOf('ada')).resolves.toBe('8d0c2f3e-6f5b-4c0e-9a51-3f1e2d4c5b6a');
+      await expect(service.accountOfWayIn('8d0c2f3e-6f5b-4c0e-9a51-3f1e2d4c5b6a')).resolves.toBe(
+        'ada',
+      );
+      await expect(service.accountOfWayIn('nobody')).resolves.toBeNull();
+      await expect(service.wayInOf('nobody')).resolves.toBeNull();
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'changes a household that is there, and says so',
     async () => {
       const service = await aService();

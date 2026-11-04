@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { HOUSEHOLD_LIMITS } from './HouseholdPicture';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
@@ -10,6 +11,7 @@ type Held = {
   updatedAt: string;
   onboardedAt: string | null;
   picture: Uint8Array | null;
+  wayInId?: string;
 };
 
 type MemoryState = Record<string, Held>;
@@ -63,6 +65,19 @@ const createMemoryHouseholdService = (
         updatedAt: one.updatedAt,
       });
     },
+
+    wayInOf: (userId) => {
+      const one = held(userId);
+
+      one.wayInId ??= randomUUID();
+
+      return Promise.resolve(one.wayInId);
+    },
+
+    accountOfWayIn: (wayInId) =>
+      Promise.resolve(
+        Object.entries(state).find(([, one]) => one.wayInId === wayInId)?.[0] ?? null,
+      ),
 
     isOnboarded: (userId) => Promise.resolve(held(userId).onboardedAt !== null),
 

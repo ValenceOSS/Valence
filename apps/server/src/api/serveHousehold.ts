@@ -18,6 +18,8 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
 import { isDemoAccount } from '@ValenceServer/demo/isDemoAccount';
+import { faceBeforeAnyProfile } from '@ValenceServer/household/faceBeforeAnyProfile';
+import { fitProfileName } from '@ValenceServer/household/fitProfileName';
 
 /**
  * Registers the household endpoints.
@@ -45,6 +47,25 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     listUsers,
     recordAudit,
   } = context;
+
+  /**
+   * Finds how to sign in to the account a way-in id was kept for, which is how an account that holds
+   * no profile yet is chosen there.
+   *
+   * @param wayInId - The id chosen on the way in.
+   * @returns The account's address and username, or nothing where no account keeps that id.
+   */
+  const signInBeforeAnyProfile = async (
+    wayInId: string,
+  ): Promise<{ email: string; username: string | null } | null> => {
+    const accountId = (await households?.accountOfWayIn(wayInId)) ?? null;
+    const account =
+      accountId === null ? undefined : (await listUsers?.())?.find((one) => one.id === accountId);
+
+    return account === undefined
+      ? null
+      : { email: account.email, username: account.username ?? null };
+  };
 
   app.openapi(readOnboardingRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);
@@ -184,7 +205,12 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.get('/api/profiles/:profileId/household', async (context) => {
     const profileId = context.req.param('profileId');
     const standing = await profiles?.standingOf(profileId);
-    const accountId = standing?.isOwner === true ? await profiles?.accountOf(profileId) : null;
+    const accountId =
+      standing === null || standing === undefined
+        ? await households?.accountOfWayIn(profileId)
+        : standing.isOwner
+          ? await profiles?.accountOf(profileId)
+          : null;
     const picture =
       accountId === null || accountId === undefined ? null : await faces?.readPicture(accountId);
 
@@ -224,13 +250,22 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
         : new Set(
             accounts.filter((account) => account.canSignIn ?? true).map((account) => account.id),
           );
+    const ownerOf = new Map(
+      profiles === undefined
+        ? []
+        : await Promise.all(
+            everyone.map(
+              async (profile) => [profile.id, await profiles.accountOf(profile.id)] as const,
+            ),
+          ),
+    );
     const shown =
       profiles === undefined
         ? everyone
         : (
             await Promise.all(
               everyone.map(async (profile) => {
-                const owner = signsIn === null ? null : await profiles.accountOf(profile.id);
+                const owner = signsIn === null ? null : (ownerOf.get(profile.id) ?? null);
 
                 if (signsIn !== null && (owner === null || !signsIn.has(owner))) {
                   return [];
@@ -250,7 +285,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const names = new Map((accounts ?? []).map((account) => [account.id, account.name]));
     const shownFaces = await Promise.all(
       shown.map(async (profile) => {
-        const accountId = faces === undefined ? null : await profiles?.accountOf(profile.id);
+        const accountId = faces === undefined ? null : ownerOf.get(profile.id);
 
         if (faces === undefined || accountId === null || accountId === undefined) {
           return profile;
@@ -260,7 +295,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
         return {
           ...profile,
-          name: household.name,
+          name: fitProfileName(household.name),
           colour: household.colour,
           avatar: household.avatar,
           updatedAt: household.updatedAt,
@@ -269,9 +304,41 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       }),
     );
 
+    const owners = new Set(
+      [...ownerOf.values()].flatMap((owner) => (owner === null ? [] : [owner])),
+    );
+    const faceless =
+      accounts === null ||
+      profiles === undefined ||
+      households === undefined ||
+      faces === undefined ||
+      demoAccounts.length > 0
+        ? []
+        : (
+            await Promise.all(
+              accounts
+                .filter((account) => (account.canSignIn ?? true) && !owners.has(account.id))
+                .map(async (account) => {
+                  const wayInId = await households.wayInOf(account.id);
+
+                  return wayInId === null
+                    ? []
+                    : [
+                        faceBeforeAnyProfile(
+                          wayInId,
+                          await faces.read(account.id, account.name),
+                          account.createdAt,
+                        ),
+                      ];
+                }),
+            )
+          ).flat();
+
     return context.json(
       {
-        profiles: shownFaces.sort((one, other) => one.name.localeCompare(other.name)),
+        profiles: [...shownFaces, ...faceless].sort((one, other) =>
+          one.name.localeCompare(other.name),
+        ),
         splashscreen: await splashscreen.address(),
         message: (await settings.read()).wayInMessage,
       },
@@ -352,7 +419,8 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const profileId = context.req.param('profileId');
-    const account = await profiles.findSignIn(profileId);
+    const account =
+      (await profiles.findSignIn(profileId)) ?? (await signInBeforeAnyProfile(profileId));
 
     if (account === null) {
       return context.json(refuse('error.common.noSuchProfile'), 404);

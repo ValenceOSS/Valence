@@ -1810,6 +1810,7 @@ const userProfile = mysqlTable('user_profile', {
   avatarStyle: mediumtext('avatarStyle'),
   avatarSeed: mediumtext('avatarSeed'),
   photoPath: mediumtext('photoPath'),
+  wayInId: varchar('wayInId', { length: 36 }).unique(),
   onboardedAt: moment('onboardedAt'),
   createdAt: momentNow('createdAt').notNull(),
   updatedAt: momentNow('updatedAt').notNull(),
