@@ -126,6 +126,13 @@ jobs:
           EXPO_TV: ${{ matrix.tv }}
           EAS_BUILD_DISABLE_EXPO_DOCTOR_STEP: '1'
 
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: valence-android-${{ matrix.app }}
+          path: ${{ runner.temp }}/valence.aab
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Send to Google Play's internal testing
         working-directory: apps/${{ matrix.app }}
         run: >
@@ -133,13 +140,6 @@ jobs:
           --path "$RUNNER_TEMP/valence.aab"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: valence-android-${{ matrix.app }}
-          path: ${{ runner.temp }}/valence.aab
-          if-no-files-found: error
-          retention-days: 7
 
   # Fire TV is the Android TV build as an APK. The Amazon Appstore has no submission EAS can reach,
   # so the APK is attached to the release for uploading in the Amazon Developer Console.
