@@ -2413,6 +2413,7 @@ const VideoPlayer = ({
 
   const lastTapRef = useRef<{ at: number; zone: TapZone } | null>(null);
   const pendingTapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressClosesAMenuRef = useRef(false);
   const togglePlayRef = useRef(togglePlay);
 
   useEffect(() => {
@@ -2438,6 +2439,13 @@ const VideoPlayer = ({
   const onTapStage = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.pointerType === 'mouse' || hasFinePointer()) {
+        return;
+      }
+
+      if (pressClosesAMenuRef.current) {
+        pressClosesAMenuRef.current = false;
+        lastTapRef.current = null;
+
         return;
       }
 
@@ -2489,6 +2497,12 @@ const VideoPlayer = ({
       target.matches('[data-slot="picture-cover"], [data-slot="episode-fade"]'));
 
   const onClickStage = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (pressClosesAMenuRef.current) {
+      pressClosesAMenuRef.current = false;
+
+      return;
+    }
+
     if (!hasFinePointer() || event.detail !== 1 || !isOnThePicture(event.target)) {
       return;
     }
@@ -2930,6 +2944,9 @@ const VideoPlayer = ({
       <div
         ref={stageRef}
         tabIndex={-1}
+        onPointerDown={() => {
+          pressClosesAMenuRef.current = isMenuOpen;
+        }}
         onPointerUp={onTapStage}
         onClick={onClickStage}
         onDoubleClick={onDoubleClickStage}
