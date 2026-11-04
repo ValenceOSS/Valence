@@ -11,7 +11,7 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * One field of a title's metadata, with where its value came from: a badge beside the label says
- * the catalogue, the file name, an edit or a lock, and an edited field says beneath it what the
+ * where it is not the catalogue's — the file name, an edit or a lock — and an edited field says beneath it what the
  * catalogue says, with a way back to it. A menu beside the label puts it back, locks it as it
  * stands, or shows its history.
  *
@@ -49,15 +49,15 @@ const SourcedField = ({
       {...(className === undefined ? {} : { className })}
       aside={
         <>
-          <Badge size="sm" tone={isEdited ? 'accent' : 'quiet'}>
-            {source === 'edited'
-              ? say('screens.adminArea.sourcedField.edited')
-              : source === 'locked'
-                ? say('screens.adminArea.sourcedField.locked')
-                : source === 'file'
-                  ? say('screens.adminArea.titlePage.episodeTable.fileName')
-                  : say('screens.adminArea.sourcedField.tmdb')}
-          </Badge>
+          {source === 'catalogue' ? null : (
+            <Badge size="sm" tone={isEdited ? 'accent' : 'quiet'}>
+              {source === 'edited'
+                ? say('screens.adminArea.sourcedField.edited')
+                : source === 'locked'
+                  ? say('screens.adminArea.sourcedField.locked')
+                  : say('screens.adminArea.titlePage.episodeTable.fileName')}
+            </Badge>
+          )}
 
           <span className="ml-auto">
             <ActionMenu

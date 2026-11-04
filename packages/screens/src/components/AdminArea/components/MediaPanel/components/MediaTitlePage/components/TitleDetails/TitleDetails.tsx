@@ -3,6 +3,8 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { Spinner } from '@ValenceUI/Spinner';
 import { cn } from '@ValenceUI/cn';
+import { sortKeyOf } from '@ValenceCore/functions/sortKeyOf';
+import { textOfValue } from './textOfValue';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { FIELDS_OF_KIND } from '@ValenceContracts/schemas/TitleEdit';
 import { TITLE_VALUE_FIELDS } from '@ValenceContracts/schemas/TitleList';
@@ -69,47 +71,66 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
   const { kind } = metadata.data.subject;
   const has = FIELDS_OF_KIND[kind];
 
+  /**
+   * Draws one card of fields, the fields side by side where it is in the main column.
+   *
+   * @param card - The card.
+   * @returns The card, or nothing where the title has none of its fields.
+   */
+  const cardOf = (card: (typeof TITLE_FIELD_CARDS)[number]) => {
+    const fields = card.fields.filter((field) => has.includes(field));
+    const isSideBySide = card.isAside !== true;
+
+    return fields.length === 0 ? null : (
+      <PanelCard key={card.id} title={card.title}>
+        <div className={cn('grid gap-4', isSideBySide ? '@xl:grid-cols-2' : '')}>
+          {card.id === 'ids' && (kind === 'film' || kind === 'show') ? (
+            <CatalogueIdRow
+              subjectKey={metadata.data.subject.key}
+              isShow={kind === 'show'}
+              {...(onFixMatch === undefined ? {} : { onFixMatch })}
+            />
+          ) : null}
+          {fields.map((field) => {
+            const suggestions = suggestionsOf(field);
+
+            return (
+              <MetadataField
+                key={field}
+                field={field}
+                kind={kind}
+                state={metadata.data.fields[field]}
+                change={change}
+                {...(onShowHistory === undefined ? {} : { onShowHistory })}
+                {...(suggestions === undefined ? {} : { suggestions })}
+                {...(metadata.data.certificationRegion === undefined
+                  ? {}
+                  : { region: metadata.data.certificationRegion })}
+                {...(field === 'sortTitle'
+                  ? {
+                      placeholder: sortKeyOf(
+                        textOfValue(metadata.data.fields.title?.value ?? null),
+                      ),
+                    }
+                  : {})}
+                className={cn(isSideBySide && SPANS_BOTH.includes(field) ? '@xl:col-span-2' : '')}
+              />
+            );
+          })}
+        </div>
+      </PanelCard>
+    );
+  };
+
+  const main = TITLE_FIELD_CARDS.filter((card) => card.isAside !== true).map(cardOf);
+  const aside = TITLE_FIELD_CARDS.filter((card) => card.isAside === true).map(cardOf);
+
   return (
-    <div className="flex flex-col gap-4">
-      {TITLE_FIELD_CARDS.flatMap((card) => {
-        const fields = card.fields.filter((field) => has.includes(field));
-
-        return fields.length === 0
-          ? []
-          : [
-              <PanelCard key={card.id} title={card.title}>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {card.id === 'ids' && (kind === 'film' || kind === 'show') ? (
-                    <CatalogueIdRow
-                      subjectKey={metadata.data.subject.key}
-                      isShow={kind === 'show'}
-                      {...(onFixMatch === undefined ? {} : { onFixMatch })}
-                      className="sm:col-span-2"
-                    />
-                  ) : null}
-                  {fields.map((field) => {
-                    const suggestions = suggestionsOf(field);
-
-                    return (
-                      <MetadataField
-                        key={field}
-                        field={field}
-                        kind={kind}
-                        state={metadata.data.fields[field]}
-                        change={change}
-                        {...(onShowHistory === undefined ? {} : { onShowHistory })}
-                        {...(suggestions === undefined ? {} : { suggestions })}
-                        {...(metadata.data.certificationRegion === undefined
-                          ? {}
-                          : { region: metadata.data.certificationRegion })}
-                        className={cn(SPANS_BOTH.includes(field) ? 'sm:col-span-2' : '')}
-                      />
-                    );
-                  })}
-                </div>
-              </PanelCard>,
-            ];
-      })}
+    <div className="@container">
+      <div className="grid items-start gap-4 @5xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="@container flex min-w-0 flex-col gap-4">{main}</div>
+        <div className="@container flex min-w-0 flex-col gap-4">{aside}</div>
+      </div>
     </div>
   );
 };

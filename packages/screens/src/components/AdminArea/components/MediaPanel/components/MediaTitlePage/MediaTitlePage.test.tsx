@@ -73,8 +73,9 @@ describe('MediaTitlePage', () => {
   it('names the title, its library and its match', () => {
     drawn(titleOf({ id: 'film', title: 'Film', year: 2020, externalId: '603' }));
 
-    expect(screen.getByText('2020').parentElement).toHaveTextContent('Film2020');
-    expect(screen.getByText(/Films · Matched · TMDB 603/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Film2020');
+    expect(screen.getByText('Films')).toBeInTheDocument();
+    expect(screen.getByText('Matched · TMDB 603')).toBeInTheDocument();
   });
 
   it('says a title the catalogue never matched is unmatched', () => {

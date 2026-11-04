@@ -3,6 +3,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ChevronLeft as ChevronLeftIcon,
+  Star as StarIcon,
   MoveLeft as MoveLeftIcon,
   MoveRight as MoveRightIcon,
 } from '@keyline-icons/react';
@@ -40,7 +41,6 @@ import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { localDayOf } from '@ValenceCore/functions/localDayOf';
 import { FIELDS_OF_KIND } from '@ValenceContracts/schemas/TitleEdit';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
-import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaPoster/MediaPoster';
 import { describeAudio } from '@ValenceScreens/components/AdminArea/components/MediaPanel/describeAudio';
 import { describeNumber } from '@ValenceScreens/components/AdminArea/components/MediaPanel/describeNumber';
 import { describeTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/describeTitle';
@@ -52,6 +52,8 @@ import type { ReactNode } from 'react';
 import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
+import { MediaTitleHero } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/MediaTitleHero/MediaTitleHero';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
@@ -338,6 +340,9 @@ const MediaTitlePage = ({
       group.filter((one) => one.id !== 'wrong-match' && one.id !== 'artwork'),
     ),
   ].filter((group) => group.length > 0);
+  const best = sharpestStepOf(title.lead)?.label ?? null;
+  const match = describeMatch(title);
+  const range = describeRange(title.lead.videoRange);
   const totalBytes = leaves.reduce((sum, leaf) => sum + (leaf.lead.sizeBytes ?? 0), 0);
   const filesWord = title.kind === 'series' ? say('common.episodes') : say('common.files');
   const nameOfLeaf = (leaf: MediaTitle) =>
@@ -588,9 +593,90 @@ const MediaTitlePage = ({
           )}
         </div>
 
-        <PanelCard
-          title={library?.name ?? say('common.media')}
-          below={
+        <MediaTitleHero
+          name={title.name}
+          year={title.year}
+          posterUrl={
+            title.posterFrom === null
+              ? null
+              : artworkUrl(title.posterFrom, 'poster', { size: 'medium' })
+          }
+          badges={
+            <>
+              {title.isMatched ? null : (
+                <Badge size="sm" tone="warning">
+                  {say('screens.adminArea.mediaPanel.unmatched')}
+                </Badge>
+              )}
+              {isRefreshing ? (
+                <Badge size="sm" tone="busy">
+                  {say('screens.adminArea.mediaTitlePage.refreshing')}
+                </Badge>
+              ) : null}
+              {best === null ? null : <Badge size="sm">{best}</Badge>}
+              {range === null ? null : <Badge size="sm">{range}</Badge>}
+              {title.lead.rating === null || title.lead.rating === undefined ? null : (
+                <Badge size="sm">
+                  <Icon of={StarIcon} size={12} />
+                  {title.lead.rating.toFixed(1)}
+                </Badge>
+              )}
+            </>
+          }
+          facts={[
+            ...(library === null ? [] : [library.name]),
+            ...(title.kind === 'series' ? [describeTitle(title)] : []),
+            ...(match === null ? [] : [match]),
+            say('phone.theAccount.theSecurity.addedCreatedAt', {
+              createdAt: new Date(title.addedAt).toLocaleDateString(undefined, {
+                dateStyle: 'medium',
+              }),
+            }),
+            `${sayCount('common.count.files', leaves.length)} · ${formatBytes(totalBytes)}`,
+            ...(title.lead.genres === null ||
+            title.lead.genres === undefined ||
+            title.lead.genres.length === 0
+              ? []
+              : [title.lead.genres.join(', ')]),
+          ]}
+          overview={overview}
+          actions={
+            <>
+              {fix === undefined ? null : (
+                <Button variant="secondary" size="md" onClick={fix.onChoose}>
+                  {say('screens.adminArea.mediaTitlePage.fixMatch')}
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setIsRefreshOpen(true);
+                }}
+              >
+                {say('screens.adminArea.refreshTitleDialog.refresh')}
+              </Button>
+              {catalogueEntry === null || onOpenInCatalogue === undefined ? null : (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => {
+                    onOpenInCatalogue({ tab: catalogueEntry.tab, title: catalogueEntry.key });
+                  }}
+                >
+                  {say('screens.adminArea.mediaTitlePage.openInCatalogue')}
+                </Button>
+              )}
+              {moreActions.length === 0 ? null : (
+                <ActionMenu
+                  label={say('common.moreForName', { name: title.name })}
+                  size="md"
+                  groups={moreActions.map((items) => ({ items }))}
+                />
+              )}
+            </>
+          }
+          tabs={
             <TabRow
               label={say('screens.adminArea.mediaTitlePage.whatToShowOfTheTitle')}
               tone="underlined"
@@ -610,128 +696,7 @@ const MediaTitlePage = ({
               ]}
             />
           }
-        >
-          <img
-            src={artworkUrl(title.lead.id, 'backdrop', { isOfTitle: true, size: 'medium' })}
-            alt=""
-            className="-mx-1 -mt-1 mb-5 h-44 w-[calc(100%+0.5rem)] rounded-lg object-cover object-[center_30%] opacity-80"
-            onError={(event) => {
-              event.currentTarget.style.display = 'none';
-            }}
-          />
-          <div className="flex flex-wrap items-start gap-5">
-            <MediaPoster
-              className="w-28"
-              src={
-                title.posterFrom === null
-                  ? null
-                  : artworkUrl(title.posterFrom, 'poster', { size: 'small' })
-              }
-            />
-
-            <div className="flex min-w-0 flex-1 flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <span className="text-2xl font-semibold text-text">
-                  {title.name}
-                  {title.year === null ? null : (
-                    <span className="ml-2 font-normal text-text-muted">{title.year}</span>
-                  )}
-                </span>
-                <span className="text-sm text-text-muted">
-                  {[
-                    library?.name,
-                    title.kind === 'series' ? describeTitle(title) : null,
-                    describeMatch(title),
-                  ]
-                    .filter((part) => part !== null && part !== undefined)
-                    .join(' · ')}
-                  {title.isMatched ? null : (
-                    <Badge size="sm" tone="warning" className="ml-2">
-                      {say('screens.adminArea.mediaPanel.unmatched')}
-                    </Badge>
-                  )}
-                  {isRefreshing ? (
-                    <Badge size="sm" tone="busy" className="ml-2">
-                      {say('screens.adminArea.mediaTitlePage.refreshing')}
-                    </Badge>
-                  ) : null}
-                </span>
-              </div>
-
-              {overview === null || overview === '' ? null : (
-                <p className="max-w-3xl font-body text-sm leading-relaxed text-text-muted">
-                  {overview}
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-2">
-                {fix === undefined ? null : (
-                  <Button variant="secondary" size="md" onClick={fix.onChoose}>
-                    {say('screens.adminArea.mediaTitlePage.fixMatch')}
-                  </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => {
-                    setIsRefreshOpen(true);
-                  }}
-                >
-                  {say('screens.adminArea.refreshTitleDialog.refresh')}
-                </Button>
-                {catalogueEntry === null || onOpenInCatalogue === undefined ? null : (
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={() => {
-                      onOpenInCatalogue({ tab: catalogueEntry.tab, title: catalogueEntry.key });
-                    }}
-                  >
-                    {say('screens.adminArea.mediaTitlePage.openInCatalogue')}
-                  </Button>
-                )}
-                {moreActions.length === 0 ? null : (
-                  <ActionMenu
-                    label={say('common.moreForName', { name: title.name })}
-                    size="md"
-                    groups={moreActions.map((items) => ({ items }))}
-                  />
-                )}
-              </div>
-
-              <dl className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-6 gap-y-3 pt-2 text-sm">
-                <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">{say('common.added')}</dt>
-                  <dd className="text-text">
-                    {new Date(title.addedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">{say('common.files')}</dt>
-                  <dd className="tabular-nums text-text">{leaves.length.toLocaleString()}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">{say('common.size')}</dt>
-                  <dd className="tabular-nums text-text">{formatBytes(totalBytes)}</dd>
-                </div>
-                {title.lead.genres === null ||
-                title.lead.genres === undefined ||
-                title.lead.genres.length === 0 ? null : (
-                  <div className="flex flex-col gap-0.5">
-                    <dt className="text-xs text-text-muted">{say('common.genres')}</dt>
-                    <dd className="text-text">{title.lead.genres.join(', ')}</dd>
-                  </div>
-                )}
-                {title.lead.rating === null || title.lead.rating === undefined ? null : (
-                  <div className="flex flex-col gap-0.5">
-                    <dt className="text-xs text-text-muted">{say('common.rating')}</dt>
-                    <dd className="tabular-nums text-text">{title.lead.rating.toFixed(1)}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-          </div>
-        </PanelCard>
+        />
 
         <TabPanel value="details" travel={travel}>
           <TitleDetails

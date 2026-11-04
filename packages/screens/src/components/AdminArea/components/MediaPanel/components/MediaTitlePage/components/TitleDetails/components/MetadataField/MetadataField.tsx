@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { TagField } from '@ValenceUI/TagField';
+import { textOfValue } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/textOfValue';
 import { Link } from '@ValenceUI/Link';
 import { addressOfId } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/addressOfId';
 import { ContentRatingField } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/components/ContentRatingField/ContentRatingField';
@@ -21,15 +22,6 @@ const WORDS: readonly TitleField[] = ['genres', 'tags', 'studios', 'networks'];
 const NUMBERS: readonly TitleField[] = ['rating', 'rottenTomatoes'];
 
 const CLEARABLE_TO_NOTHING: readonly TitleField[] = ['title'];
-
-/**
- * Reads a field's value as the text its field shows.
- *
- * @param value - The value.
- * @returns The text.
- */
-const textOf = (value: TitleValue): string =>
-  typeof value === 'string' ? value : typeof value === 'number' ? value.toString() : '';
 
 /**
  * Reads what was typed into a field as the value it is saved as.
@@ -61,6 +53,7 @@ const valueOfTyped = (field: TitleField, typed: string): TitleValue => {
  * @param onShowHistory - Opens the title's history.
  * @param suggestions - The words in use elsewhere, offered as a list field is typed in.
  * @param region - The server's own country, whose content rating decides ages.
+ * @param placeholder - What an empty text field shows, such as what a title sorts as without one.
  * @param className - Extra classes for the caller's own layout.
  */
 const MetadataField = ({
@@ -71,6 +64,7 @@ const MetadataField = ({
   onShowHistory,
   suggestions,
   region = 'GB',
+  placeholder,
   className,
 }: MetadataFieldProps) => {
   const label = labelOfField(field, kind);
@@ -131,8 +125,9 @@ const MetadataField = ({
     <TextField
       label={label}
       isLabelHidden
-      value={textOf(shown)}
+      value={textOfValue(shown)}
       type={field === 'releaseDate' ? 'date' : NUMBERS.includes(field) ? 'number' : 'text'}
+      {...(placeholder === undefined ? {} : { placeholder })}
       {...(LONG.includes(field) ? { rows: field === 'note' ? 3 : 6 } : {})}
       {...(field === 'rating' ? { min: 0, max: 10 } : {})}
       {...(field === 'rottenTomatoes' ? { min: 0, max: 100 } : {})}

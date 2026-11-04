@@ -14,6 +14,7 @@ type MetadataFieldProps = {
   onShowHistory?: () => void;
   suggestions?: readonly TagSuggestion[];
   region?: string;
+  placeholder?: string;
   className?: string;
 };
 

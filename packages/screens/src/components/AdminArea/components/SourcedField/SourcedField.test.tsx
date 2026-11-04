@@ -32,11 +32,11 @@ const drawn = (state: TitleFieldState) => {
 };
 
 describe('SourcedField', () => {
-  it('says a value came from TMDB, and offers to lock it', async () => {
+  it('marks nothing on a value as TMDB has it, and offers to lock it', async () => {
     const user = userEvent.setup();
     const { onLock } = drawn(FROM_TMDB);
 
-    expect(screen.getByText('TMDB')).toBeInTheDocument();
+    expect(screen.queryByText('TMDB')).not.toBeInTheDocument();
     expect(screen.queryByText(/^TMDB:/)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'More for Title' }));
