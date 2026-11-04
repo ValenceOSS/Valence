@@ -49,6 +49,8 @@ jest.mock('expo-crypto', () => ({
 }));
 
 jest.mock('expo-notifications', () => ({
+  AndroidImportance: { HIGH: 4 },
+  setNotificationChannelAsync: jest.fn(() => Promise.resolve(null)),
   PermissionStatus: { DENIED: 'denied', GRANTED: 'granted', UNDETERMINED: 'undetermined' },
   getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: false })),
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: false })),

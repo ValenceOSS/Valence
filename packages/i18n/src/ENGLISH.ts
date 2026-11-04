@@ -2654,6 +2654,7 @@ const ENGLISH = {
     'This server has no music library set up.',
   'phone.liveTv.nextChannel': 'Next channel',
   'phone.liveTv.previousChannel': 'Previous channel',
+  'phone.makeTheNotificationChannel.fromYourServer': 'From your server',
   'phone.platform.describeThisPhone.anEmulator': 'Emulator',
   'phone.platform.describeThisPhone.aPhone': 'Phone',
   'phone.platform.describeThisPhone.nameOnAndroid': '{name} on Android',

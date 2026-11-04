@@ -1,0 +1,3 @@
+const NOTIFICATION_CHANNEL = 'valence';
+
+export { NOTIFICATION_CHANNEL };

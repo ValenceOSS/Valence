@@ -3,8 +3,11 @@ import { withTheSceneLifecycle } from './plugins/withTheSceneLifecycle.ts';
 import { withCarPlay } from './plugins/withCarPlay.ts';
 import { withNotificationService } from './plugins/withNotificationService.ts';
 import { releaseVersion } from '@valence/core/src/functions/releaseVersion.ts';
+import { NOTIFICATION_CHANNEL } from './src/push/NOTIFICATION_CHANNEL.ts';
 
 const version = releaseVersion();
+
+const firebase = process.env.GOOGLE_SERVICES_JSON;
 
 const config: ExpoConfig = {
   name: 'Valence',
@@ -63,7 +66,15 @@ const config: ExpoConfig = {
       backgroundColor: '#0088FF',
     },
     permissions: ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE'],
+    blockedPermissions: [
+      'android.permission.RECORD_AUDIO',
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.WRITE_SETTINGS',
+    ],
     allowBackup: false,
+    ...(firebase === undefined ? {} : { googleServicesFile: firebase }),
   },
   extra: {
     eas: {
@@ -87,7 +98,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-status-bar',
-    'expo-notifications',
+    ['expo-notifications', { color: '#0088FF', defaultChannel: NOTIFICATION_CHANNEL }],
     ['expo-video', { supportsBackgroundPlayback: true, supportsPictureInPicture: true }],
     [
       'react-native-google-cast',
