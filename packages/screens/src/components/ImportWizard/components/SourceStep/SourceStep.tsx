@@ -116,7 +116,7 @@ const SourceStep = ({ sources, onConnected, onForgotten }: SourceStepProps) => {
         </PanelCard>
       )}
 
-      <PanelCard title={say('screens.importWizard.sourceStep.whereIsEverythingNow')}>
+      <PanelCard title={say('common.server')}>
         <div className="flex flex-col gap-4">
           <ChoiceList
             label={say('screens.importWizard.sourceStep.whereIsEverythingNow')}
@@ -134,8 +134,8 @@ const SourceStep = ({ sources, onConnected, onForgotten }: SourceStepProps) => {
               title: wordsFor(one).title,
               detail:
                 one === 'plex'
-                  ? say('screens.importWizard.sourceStep.signsInWithAPlexToken')
-                  : say('screens.importWizard.sourceStep.signsInWithAnApiKey'),
+                  ? say('screens.importWizard.sourceStep.signsInWithPlexToken')
+                  : say('screens.importWizard.sourceStep.signsInWithApiKey'),
             }))}
           />
 
@@ -169,7 +169,7 @@ const SourceStep = ({ sources, onConnected, onForgotten }: SourceStepProps) => {
                 void connect();
               }}
             >
-              {say('screens.importWizard.sourceStep.connect')}
+              {say('common.connect')}
             </Button>
           </div>
         </div>

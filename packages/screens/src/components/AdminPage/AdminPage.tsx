@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
-import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Pin as PinIcon, PinOff as PinOffIcon } from '@keyline-icons/react';
@@ -46,7 +45,6 @@ import {
   readPinnedPanels,
   savePinnedPanels,
 } from '@ValenceScreens/navigation/pinnedPanelsPreference';
-import { AccelerationNote } from './components/AccelerationNote/AccelerationNote';
 import { AdminStatusFooter } from './components/AdminStatusFooter/AdminStatusFooter';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { AdminSearch } from './components/AdminSearch/AdminSearch';
@@ -79,7 +77,7 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job, folder, tab, title } = search;
+  const { job, folder, tab, title, media, webhook, server } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -356,6 +354,24 @@ const AdminPage = () => {
               <span className="truncate font-sans font-semibold text-text">{showingName}</span>
             </h1>
 
+            <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
+
+            {!isClosed ? null : (
+              <span className="hidden sm:flex">
+                <AdminStatusFooter
+                  version={version}
+                  acceleration={acceleration}
+                  ffmpeg={ffmpeg}
+                  latest={attention.latest}
+                  isLatestADevBuild={attention.isLatestADevBuild}
+                  onOpenUpdates={() => {
+                    void go({ to: '/admin/$panel', params: { panel: 'updates' } });
+                  }}
+                  isInHeader
+                />
+              </span>
+            )}
+
             <Button
               variant="subtle"
               size="sm"
@@ -376,29 +392,6 @@ const AdminPage = () => {
             >
               <Icon of={isPinned ? PinOffIcon : PinIcon} size={15} />
             </Button>
-
-            <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
-
-            {version === null || !isClosed ? null : (
-              <span
-                aria-label={say('screens.adminPage.valenceVersion', { version })}
-                className="hidden shrink-0 sm:inline-flex"
-              >
-                <Badge size="md" tone="quiet" className="gap-1.5 tabular-nums">
-                  <span aria-hidden>{say('common.valence')}</span>
-                  <span aria-hidden className="size-1 rounded-full bg-current" />
-                  <span aria-hidden>{version}</span>
-
-                  {acceleration === null ? null : (
-                    <>
-                      <span aria-hidden className="mx-1 h-3.5 w-px bg-current opacity-40" />
-
-                      <AccelerationNote acceleration={acceleration} ffmpeg={ffmpeg} />
-                    </>
-                  )}
-                </Badge>
-              </span>
-            )}
           </div>
 
           <div className="flex-1 p-4">
@@ -426,6 +419,9 @@ const AdminPage = () => {
               }}
               folder={folder ?? null}
               catalogue={{ tab: tab ?? 'films', title: title ?? null }}
+              mediaTitle={media ?? null}
+              webhook={webhook ?? null}
+              linkedServer={server ?? null}
               onCatalogue={(address) => {
                 void go({
                   to: '/admin/$panel',
@@ -434,6 +430,27 @@ const AdminPage = () => {
                     tab: address.tab,
                     ...(address.title === null ? {} : { title: address.title }),
                   },
+                });
+              }}
+              onMediaTitle={(id) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: id === null ? {} : { media: id },
+                });
+              }}
+              onLinkedServer={(id) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'linking' },
+                  search: id === null ? {} : { server: id },
+                });
+              }}
+              onWebhook={(id) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'webhooks' },
+                  search: id === null ? {} : { webhook: id },
                 });
               }}
               onOpenFolder={(path) => {

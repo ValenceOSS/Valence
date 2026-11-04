@@ -590,6 +590,7 @@ describe('job history and load history endpoints', () => {
         offset: 0,
         limit: 10,
         runningFirst: false,
+        hidesRoutine: false,
       },
     ]);
   });
@@ -600,6 +601,14 @@ describe('job history and load history endpoints', () => {
     await app.request(`${TEST_ORIGIN}/api/admin/jobs/history?runningFirst=true`);
 
     expect(readCalls[0]).toMatchObject({ runningFirst: true });
+  });
+
+  it('hides routine runs from the job history only when asked', async () => {
+    const { app, readCalls } = withHistory();
+
+    await app.request(`${TEST_ORIGIN}/api/admin/jobs/history?hidesRoutine=true`);
+
+    expect(readCalls[0]).toMatchObject({ hidesRoutine: true });
   });
 
   it('reads a page of job history in the order and from the page asked for', async () => {

@@ -14,7 +14,6 @@ import {
   PenLine as PenLineFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -317,13 +316,17 @@ const FilesPanel = ({
       },
       {
         id: 'catalogue',
-        header: say('common.valence'),
+        header: say('common.status'),
         enableSorting: false,
         cell: ({ row }) =>
-          row.original.mediaId === null ? null : (
-            <Badge size="sm" tone="success">
-              {say('screens.adminArea.filesPanel.inTheCatalogue')}
-            </Badge>
+          row.original.mediaId !== null ||
+          row.original.isFolder ||
+          !/\.(mkv|mp4|m4v|avi|mov|webm|ts|m2ts|wmv|flac|mp3|m4a|m4b|ogg|opus|wav)$/i.test(
+            row.original.name,
+          ) ? null : (
+            <span className="whitespace-nowrap text-text-muted">
+              {say('screens.adminArea.filesPanel.notInLibrary')}
+            </span>
           ),
       },
       {
@@ -555,7 +558,14 @@ const FilesPanel = ({
               label={
                 isSearching ? say('screens.adminArea.filesPanel.filesFound') : say('common.files')
               }
-              columns={columns}
+              columns={
+                at === null
+                  ? columns.filter(
+                      (column) =>
+                        !['choose', 'size', 'modified', 'catalogue'].includes(column.id ?? ''),
+                    )
+                  : columns
+              }
               rows={rows}
               pageSize={50}
               getRowId={(entry) => entry.path}

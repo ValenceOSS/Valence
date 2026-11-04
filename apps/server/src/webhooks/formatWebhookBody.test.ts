@@ -964,4 +964,32 @@ describe('formatWebhookBody, a sign-in', () => {
     expect(discord?.footer?.text).toBe('Playlist import');
     expect(JSON.parse(formatWebhookBody('generic', reported).body)).toStrictEqual(reported);
   });
+
+  it('fills a Custom webhook’s own template, sent as its format says', () => {
+    const written = formatWebhookBody(
+      'custom',
+      { ...anEnvelope, event: 'webhook.test', data: {} },
+      {
+        custom: {
+          method: 'POST',
+          format: 'form',
+          template: '{"event": "{{event}}", "server": "{{server.name}}"}',
+          headers: [],
+          isSigned: true,
+        },
+      },
+    );
+
+    expect(written).toStrictEqual({
+      body: 'event=webhook.test&server=Valence',
+      contentType: 'application/x-www-form-urlencoded',
+    });
+  });
+
+  it('fills the default template for a Custom webhook with no setup held', () => {
+    const written = formatWebhookBody('custom', { ...anEnvelope, event: 'webhook.test', data: {} });
+
+    expect(JSON.parse(written.body)).toMatchObject({ event: 'webhook.test', server: 'Valence' });
+    expect(written.contentType).toBe('application/json');
+  });
 });

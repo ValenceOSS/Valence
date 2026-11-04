@@ -16,6 +16,7 @@ const share = (overrides: Partial<Share> = {}): Share => ({
   viewCap: null,
   views: 0,
   isRevoked: false,
+  episode: null,
   isSpent: false,
   ...overrides,
 });

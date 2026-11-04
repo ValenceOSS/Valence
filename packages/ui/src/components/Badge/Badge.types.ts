@@ -3,6 +3,7 @@ import type { IconGlyph } from '@ValenceUI/Icon.types';
 
 type BadgeTone =
   | 'quiet'
+  | 'ended'
   | 'accent'
   | 'success'
   | 'highlight'

@@ -49,6 +49,8 @@ const COALESCED_TOPICS: ReadonlySet<RealtimeTopic> = new Set([
   'monitor',
   'sessions',
   'downloads',
+  'audit',
+  'linking',
   'media',
   'requests',
   'profile',

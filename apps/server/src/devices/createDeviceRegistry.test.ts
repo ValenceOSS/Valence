@@ -27,6 +27,8 @@ const entry = (
   playback: null,
 });
 
+const RESUMED = () => ({ kind: 'resumed' }) as const;
+
 const presenceWith = (entries: PresenceEntry[], isTold = true) => {
   const listeners = new Set<() => void>();
   let connected = entries;
@@ -238,5 +240,42 @@ describe('createDeviceRegistry', () => {
         kind: 'resumed',
       })),
     ).toBe(false);
+  });
+
+  it('remembers which device last commanded another, from both ends', () => {
+    const { presence } = presenceWith([entry('phone', 'me'), entry('tv', 'me')]);
+    const registry = createDeviceRegistry<string>({ presence });
+
+    registry.tell(ME, 'phone', 'tv', RESUMED);
+
+    expect(registry.controllerOf('tv')).toStrictEqual({ clientId: 'phone', label: 'phone label' });
+    expect(registry.remoteFor('phone')).toStrictEqual({ clientId: 'tv', label: 'tv label' });
+    expect(registry.controllerOf('phone')).toBeNull();
+  });
+
+  it('forgets the remote once the controlled device stops or either one leaves', () => {
+    const { presence, change } = presenceWith([entry('phone', 'me'), entry('tv', 'me')]);
+    const registry = createDeviceRegistry<string>({ presence });
+
+    registry.tell(ME, 'phone', 'tv', RESUMED);
+    registry.report(ME, 'tv', null);
+
+    expect(registry.controllerOf('tv')).toBeNull();
+
+    registry.tell(ME, 'phone', 'tv', RESUMED);
+    change([entry('tv', 'me')]);
+
+    expect(registry.controllerOf('tv')).toBeNull();
+    expect(registry.remoteFor('phone')).toBeNull();
+  });
+
+  it('does not link a device to itself or to somebody else’s', () => {
+    const { presence } = presenceWith([entry('phone', 'me'), entry('theirs', 'them')]);
+    const registry = createDeviceRegistry<string>({ presence });
+
+    registry.tell(ME, 'phone', 'phone', RESUMED);
+    registry.tell(ME, 'phone', 'theirs', RESUMED);
+
+    expect(registry.remoteFor('phone')).toBeNull();
   });
 });

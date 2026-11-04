@@ -54,6 +54,8 @@ const columnsFor = (db: AnyValenceDatabase) => ({
   views: db.$count(shareVisit, eq(shareVisit.shareId, share.id)),
   itemTitle: mediaItem.title,
   itemSeriesTitle: mediaItem.seriesTitle,
+  itemSeasonNumber: mediaItem.seasonNumber,
+  itemEpisodeNumber: mediaItem.episodeNumber,
   seriesTitle: series.title,
   bookTitle: book.title,
 });
@@ -70,6 +72,8 @@ type ShareRow = {
   revokedAt: Date | null;
   views: number;
   itemTitle: string | null;
+  itemSeasonNumber: number | null;
+  itemEpisodeNumber: number | null;
   itemSeriesTitle: string | null;
   seriesTitle: string | null;
   bookTitle: string | null;
@@ -93,6 +97,32 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
       .where(eq(shareVisit.shareId, shareId));
 
     return found?.howMany ?? 0;
+  };
+
+  /**
+   * Says which episode a share of one file is for, so it can be told apart from the rest of its
+   * series.
+   *
+   * @param mediaId - The file shared.
+   * @returns Its season, number and title, or nothing when it is not an episode.
+   */
+  const episodeOf = async (mediaId: string): Promise<Share['episode']> => {
+    const rows = await db
+      .select({
+        seriesTitle: mediaItem.seriesTitle,
+        seasonNumber: mediaItem.seasonNumber,
+        episodeNumber: mediaItem.episodeNumber,
+        title: mediaItem.title,
+      })
+      .from(mediaItem)
+      .where(eq(mediaItem.id, mediaId))
+      .limit(1);
+
+    const row = rows[0];
+
+    return row === undefined || row.seriesTitle === null
+      ? null
+      : { seasonNumber: row.seasonNumber, episodeNumber: row.episodeNumber, title: row.title };
   };
 
   /**
@@ -168,6 +198,14 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
       seriesId: row.seriesId,
       bookId: row.bookId,
       title: title ?? GONE,
+      episode:
+        kind === 'item' && row.itemSeriesTitle !== null
+          ? {
+              seasonNumber: row.itemSeasonNumber,
+              episodeNumber: row.itemEpisodeNumber,
+              title: row.itemTitle,
+            }
+          : null,
       createdAt: row.createdAt.toISOString(),
       expiresAt: row.expiresAt === null ? null : row.expiresAt.toISOString(),
       viewCap: row.viewCap,
@@ -235,6 +273,7 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
         seriesId: asked.kind === 'series' ? subjectId : null,
         bookId: asked.kind === 'book' ? subjectId : null,
         title,
+        episode: asked.kind === 'item' ? await episodeOf(subjectId) : null,
         createdAt: createdAt.toISOString(),
         expiresAt: expiresAt === null ? null : expiresAt.toISOString(),
         viewCap: asked.viewCap ?? null,

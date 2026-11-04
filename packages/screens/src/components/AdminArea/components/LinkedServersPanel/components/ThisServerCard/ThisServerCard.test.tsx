@@ -47,85 +47,71 @@ describe('ThisServerCard', () => {
     expect(screen.getByText('0123 4567 89ab cdef')).toBeInTheDocument();
   });
 
-  it('saves a new name, and only once something has changed', async () => {
+  it('saves a new name with its own button, once something has changed', async () => {
     renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
 
-    const save = screen.getByRole('button', { name: 'Save' });
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
 
-    expect(save).toBeDisabled();
+    const name = screen.getByRole('textbox', { name: 'Name' });
 
-    await userEvent.clear(screen.getByLabelText('Name'));
-    await userEvent.type(screen.getByLabelText('Name'), 'Kai’s Valence');
-    await userEvent.click(save);
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Kai’s Valence');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(changeLinkIdentity).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Kai’s Valence' }),
-      );
+      expect(changeLinkIdentity).toHaveBeenCalledWith({ name: 'Kai’s Valence' });
     });
   });
 
-  it('drops requests a linked server has once saved, not when switched', async () => {
+  it('drops requests a linked server has as soon as it is switched', async () => {
     renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
 
     await userEvent.click(
       screen.getByRole('switch', { name: 'Remove requests a linked server already has' }),
     );
 
+    await waitFor(() => {
+      expect(changeLinkIdentity).toHaveBeenCalledWith({ dropsRequestsElsewhere: true });
+    });
+  });
+
+  it('sends a new picture as soon as it is chosen', async () => {
+    renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
+
+    await userEvent.upload(screen.getByLabelText(/Choose a picture/u), PICTURE);
+
+    await waitFor(() => {
+      expect(changeServerPicture).toHaveBeenCalledWith(PICTURE);
+    });
     expect(changeLinkIdentity).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(changeLinkIdentity).toHaveBeenCalledWith(
-        expect.objectContaining({ dropsRequestsElsewhere: true }),
-      );
-    });
   });
 
-  it('sends a new picture once saved, not when chosen', async () => {
-    renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
+  it('offers to remove a picture only once there is one, and removes it at once', async () => {
+    const { unmount } = renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
 
-    await userEvent.upload(screen.getByLabelText(/Choose a picture/u), PICTURE);
+    expect(screen.queryByRole('button', { name: 'Remove picture' })).not.toBeInTheDocument();
 
-    expect(changeServerPicture).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(changeLinkIdentity).toHaveBeenCalled();
-    });
-    expect(changeServerPicture).toHaveBeenCalledWith(PICTURE);
-  });
-
-  it('keeps a picture that was saved even when the rest is refused, so it is not sent twice', async () => {
-    changeLinkIdentity.mockResolvedValue({ value: null, refusal: { message: 'No.' } });
-
-    renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
-
-    await userEvent.upload(screen.getByLabelText(/Choose a picture/u), PICTURE);
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(changeLinkIdentity).toHaveBeenCalled();
-    });
-    expect(changeServerPicture).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-  });
-
-  it('removes the picture once saved, and keeps the rest when the picture is refused', async () => {
-    changeServerPicture.mockResolvedValue({ refusal: 'That picture could not be removed.' });
-
+    unmount();
     renderInAnAddress(
       <ThisServerCard identity={{ ...IDENTITY, pictureAt: '2026-10-20T00:00:00.000Z' }} />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Remove picture' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       expect(changeServerPicture).toHaveBeenCalledWith(null);
     });
-    expect(changeLinkIdentity).not.toHaveBeenCalled();
+  });
+
+  it('warns that an address only this machine can reach will not do for other servers', () => {
+    renderInAnAddress(
+      <ThisServerCard identity={{ ...IDENTITY, address: 'http://localhost:8420' }} />,
+    );
+
+    expect(screen.getByText('Not reachable from other servers')).toBeInTheDocument();
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(ThisServerCard.displayName).toBe('ThisServerCard');
   });
 });

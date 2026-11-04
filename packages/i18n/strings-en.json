@@ -485,6 +485,16 @@
     "context": "Shown in the admin (from `describeReencodeState`)."
   },
   {
+    "handler": "client.admin.describeScanResult.changed.one",
+    "text": "{count} changed",
+    "context": "How many items a library scan found changed."
+  },
+  {
+    "handler": "client.admin.describeScanResult.changed.other",
+    "text": "{count} changed",
+    "context": "How many items a library scan found changed."
+  },
+  {
     "handler": "client.admin.describeScanResult.nothingChanged",
     "text": "Nothing changed",
     "context": "Shown in the admin (from `describeScanResult`)."
@@ -3581,6 +3591,11 @@
     "context": "Shown, used in several places, among them the text reader in the reader of the phone app and the theme choice of the phone app."
   },
   {
+    "handler": "common.date",
+    "text": "Date",
+    "context": "A column heading: when something happened."
+  },
+  {
     "handler": "common.dayAtTime",
     "text": "{day} at {time}",
     "context": "A day and a time together, as in Monday at 09:00. {day} is the name of a day, or Weekly; {time} is a time of day."
@@ -5789,6 +5804,7 @@
     "text": "{percent}% read",
     "context": "How much of a book or chapter has been read. {percent} is a whole number from 0 to 100."
   },
+  { "handler": "common.person", "text": "Person", "context": "A column heading: who it was." },
   {
     "handler": "common.pickSomeEpisodes",
     "text": "Select episodes",
@@ -9870,6 +9886,11 @@
     "context": "Refusal when an admin acts on a live TV source that is not there."
   },
   {
+    "handler": "error.live.thatAddressCannotBeRead",
+    "text": "That address isn’t one Valence can read.",
+    "context": "Refusal when an administrator changes a live TV source to an address that isn’t a web address."
+  },
+  {
     "handler": "error.live.thatChannelCouldNotBeStarted",
     "text": "That channel couldn’t be started.",
     "context": "Refusal when a live TV channel was chosen but its stream could not be opened."
@@ -10625,6 +10646,11 @@
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveUpload`)."
   },
   {
+    "handler": "error.webhook.aFormTemplateIsAnObjectOfFields",
+    "text": "A form template has to be a JSON object of fields.",
+    "context": "Refusal, and a delivery's error, when a Custom webhook sent as a form has a template that isn't a JSON object."
+  },
+  {
     "handler": "error.webhook.noSuchDeliveryOrTheSubscription",
     "text": "No such delivery, or the subscription was deleted or turned off.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveWebhook`)."
@@ -10643,6 +10669,11 @@
     "handler": "error.webhook.theAddressIsMissingSettings",
     "text": "The address is missing {settings}.",
     "context": "An error the server answers with (HTTP 400), used in the app on the server (from `serveWebhook`) and shown under the address in the webhook fields in the admin area, when a format needs settings in the address that are not there. {settings} is a list of the receiver's own setting names, such as chat_id."
+  },
+  {
+    "handler": "error.webhook.theMessageTemplateIsNotValidJson",
+    "text": "The message template isn’t valid JSON.",
+    "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
   },
   {
     "handler": "native.captionTextStyle.avenirNextCondensed",
@@ -14710,6 +14741,11 @@
     "context": "Text shown in the accounts panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.accountStanding.noPasswordDetail",
+    "text": "This account has no password or passkey.",
+    "context": "Hover text on the no-password standing."
+  },
+  {
     "handler": "screens.adminArea.accountStreamLimits.couldNotRead",
     "text": "This account’s streaming limits couldn’t be read.",
     "context": "When reading failed (from `AccountStreamLimits`)."
@@ -15045,6 +15081,11 @@
     "context": "The label in the admin area (from `ageChoices`)."
   },
   {
+    "handler": "screens.adminArea.alertsPanel.aboutAlerts",
+    "text": "About alerts",
+    "context": "Label of the info button on the alerts card."
+  },
+  {
     "handler": "screens.adminArea.alertsPanel.alertsSaved",
     "text": "Alerts saved.",
     "context": "Shown once the alerts page in the admin area has saved a change."
@@ -15058,6 +15099,11 @@
     "handler": "screens.adminArea.alertsPanel.choosesWhichAlertsShow",
     "text": "Chooses which alerts show on the overview. Turning one off hides it for every admin on this server.",
     "context": "Shown at the top of the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.choosesWhichAlertsShowOnTheOverview",
+    "text": "Chooses which alerts show on the overview.",
+    "context": "At the top of the alerts card."
   },
   {
     "handler": "screens.adminArea.alertsPanel.cloudflareSolverWontStart",
@@ -15098,6 +15144,11 @@
     "handler": "screens.adminArea.alertsPanel.lowMemory",
     "text": "Low memory",
     "context": "An alert's name on the alerts page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.alertsPanel.mediaService",
+    "text": "Media service",
+    "context": "A group of alerts about the media service that converts video."
   },
   {
     "handler": "screens.adminArea.alertsPanel.mediaServiceUnreachable",
@@ -15255,6 +15306,11 @@
     "context": "A button on the alerts page in the admin area that turns every alert back on."
   },
   {
+    "handler": "screens.adminArea.alertsPanel.turningAnAlertOff",
+    "text": "Turning an alert off hides it for every admin on this server.",
+    "context": "The info hover on the alerts card."
+  },
+  {
     "handler": "screens.adminArea.alertsPanel.turnOffThisAlert",
     "text": "Turn off this alert?",
     "context": "The title of the confirmation shown before turning off an alert about something broken, on the alerts page in the admin area."
@@ -15295,9 +15351,19 @@
     "context": "The announcement an administrator posts for everybody, from the admin area. The label of the choice of severity."
   },
   {
+    "handler": "screens.adminArea.announcementCard.messageDetail",
+    "text": "Shown at the top of every page. Posting replaces the one up now.",
+    "context": "Under the announcement message field."
+  },
+  {
     "handler": "screens.adminArea.announcementCard.news",
     "text": "News",
     "context": "The announcement an administrator posts for everybody, from the admin area. The least serious kind of announcement."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.post",
+    "text": "Post",
+    "context": "Button that posts the announcement."
   },
   {
     "handler": "screens.adminArea.announcementCard.postIt",
@@ -15310,9 +15376,19 @@
     "context": "The announcement an administrator posts for everybody, from the admin area. Beneath the field."
   },
   {
+    "handler": "screens.adminArea.announcementCard.serverRestarting",
+    "text": "Server restarting at 10pm",
+    "context": "Example shown in the empty announcement field."
+  },
+  {
     "handler": "screens.adminArea.announcementCard.shownOverEveryPage",
     "text": "Shown over every page on every device, the player included, until it ends, is taken down, or somebody puts it away on their own device.",
     "context": "The announcement an administrator posts for everybody, from the admin area. What the card is for."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.showsFor",
+    "text": "Shows for",
+    "context": "A setting: how long the announcement shows."
   },
   {
     "handler": "screens.adminArea.announcementCard.staysUpFor",
@@ -15555,6 +15631,21 @@
     "context": "Shown in the admin area: the detail of the confirmation before disconnecting a Prowlarr."
   },
   {
+    "handler": "screens.adminArea.artistRequestsCard.artistReleases",
+    "text": "Artist releases",
+    "context": "A setting: which of an artist's releases a request downloads."
+  },
+  {
+    "handler": "screens.adminArea.artistRequestsCard.artistReleasesDetail",
+    "text": "Sets which releases an artist request downloads unless the requester chooses.",
+    "context": "Under the artist releases setting."
+  },
+  {
+    "handler": "screens.adminArea.artistRequestsCard.artistRequests",
+    "text": "Artist requests",
+    "context": "Heading of the card for what a request for an artist downloads."
+  },
+  {
     "handler": "screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas",
     "text": "Loading artwork",
     "context": "The label of a spinner in the artwork picker in the admin area."
@@ -15740,6 +15831,21 @@
     "context": "Read out for the information mark on the audit log."
   },
   {
+    "handler": "screens.adminArea.auditPanel.action",
+    "text": "Action",
+    "context": "Column heading in the audit log: what was done."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.addressSameMachine",
+    "text": "{address} · same machine",
+    "context": "In the audit log, an address that is the server's own machine. {address} is the address."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.apiKeyName",
+    "text": "API key · {name}",
+    "context": "In the audit log, a change made with an API key. {name} is the key's name."
+  },
+  {
     "handler": "screens.adminArea.auditPanel.everySignInAndChange",
     "text": "Every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, with who did it, when and where from.",
     "context": "Explanation of the admin area’s audit log."
@@ -15748,6 +15854,11 @@
     "handler": "screens.adminArea.auditPanel.filterTheAuditLog",
     "text": "Filter the audit log",
     "context": "Label of the button that narrows the admin area’s audit log to a kind of change or a person."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.item",
+    "text": "Item",
+    "context": "Column heading in the audit log: what it was done to."
   },
   {
     "handler": "screens.adminArea.auditPanel.kindOfChange",
@@ -15775,11 +15886,6 @@
     "context": "A column heading: what the change was made to. In the admin area’s audit log."
   },
   {
-    "handler": "screens.adminArea.auditPanel.readFurtherBack",
-    "text": "Read further back",
-    "context": "A button that loads older changes. In the admin area’s audit log."
-  },
-  {
     "handler": "screens.adminArea.auditPanel.readingTheAuditLog",
     "text": "Reading the audit log…",
     "context": "Shown while the audit log loads."
@@ -15803,6 +15909,11 @@
     "handler": "screens.adminArea.auditPanel.theAuditLogCouldNotBeRead",
     "text": "The audit log could not be read.",
     "context": "Shown when the audit log failed to load."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.thisAccountNoLongerExists",
+    "text": "This account no longer exists.",
+    "context": "Tooltip on the initial of somebody in the audit log whose account has since been removed."
   },
   {
     "handler": "screens.adminArea.authorUnknown",
@@ -15885,14 +15996,29 @@
     "context": "The title of the dialog that confirms deleting a backup."
   },
   {
+    "handler": "screens.adminArea.backupsPanel.installToolWhereValenceRuns",
+    "text": "Install {tool} where Valence runs. The Docker image includes it.",
+    "context": "Under the warning that backups cannot be taken. {tool} is the backup tool, like pg_dump."
+  },
+  {
     "handler": "screens.adminArea.backupsPanel.itIsRemovedFromTheBackupFolder",
     "text": "It is removed from the backup folder and cannot be put back afterwards.",
     "context": "Explains what deleting a backup does."
   },
   {
+    "handler": "screens.adminArea.backupsPanel.noBackupsTakenYet",
+    "text": "No backups yet.",
+    "context": "Shown when there are no backups and none can be taken here."
+  },
+  {
     "handler": "screens.adminArea.backupsPanel.noBackupsYet",
     "text": "No backups yet. One is taken every week, and before every upgrade.",
     "context": "Shown when there are no backups. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.noBackupsYetScheduled",
+    "text": "No backups yet. One is taken on the schedule and before every upgrade.",
+    "context": "Shown when there are no backups yet."
   },
   {
     "handler": "screens.adminArea.backupsPanel.onTheSchedule",
@@ -16348,6 +16474,16 @@
     "handler": "screens.adminArea.cataloguePanel.searchAllMissing",
     "text": "Search all missing",
     "context": "A button in the admin Catalogue that searches again for everything missing."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.searchForEverythingMissing",
+    "text": "Search for everything missing?",
+    "context": "Title of the confirmation before searching for everything still wanted."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.searchForEverythingMissingDetail",
+    "text": "Valence searches your indexers again for everything still wanted, and for anything a quality profile would upgrade.",
+    "context": "Body of the confirmation before searching for everything still wanted."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.searchingAgainForCount.one",
@@ -16875,6 +17011,226 @@
     "context": "The label of a button in the correction picker in the admin area."
   },
   {
+    "handler": "screens.adminArea.customHeadersCard.addHeader",
+    "text": "Add header",
+    "context": "Adds a header row to a Custom webhook."
+  },
+  {
+    "handler": "screens.adminArea.customHeadersCard.aNameIsLettersNumbersAndDashes",
+    "text": "A name is letters, numbers and dashes, and can’t be one Valence sets itself, such as Content-Type. Neither part can hold a line break.",
+    "context": "Under a Custom webhook header that couldn't be sent."
+  },
+  {
+    "handler": "screens.adminArea.customHeadersCard.headers",
+    "text": "Headers",
+    "context": "On a Custom webhook's page, in the card listing the headers it sends."
+  },
+  {
+    "handler": "screens.adminArea.customHeadersCard.hideThisValueOnceSaved",
+    "text": "Hide this value once saved",
+    "context": "On a Custom webhook's page, in the card listing the headers it sends."
+  },
+  {
+    "handler": "screens.adminArea.customHeadersCard.noneYetAddOneForA",
+    "text": "None yet. Add one for a token the receiver asks for.",
+    "context": "Shown when a Custom webhook sends no headers of its own."
+  },
+  {
+    "handler": "screens.adminArea.customHeadersCard.removeThisHeader",
+    "text": "Remove this header",
+    "context": "On a Custom webhook's page, in the card listing the headers it sends."
+  },
+  {
+    "handler": "screens.adminArea.customHeadersCard.showThisValue",
+    "text": "Show this value",
+    "context": "On a Custom webhook's page, in the card listing the headers it sends."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.aFormBodyHasToBe",
+    "text": "A form body has to be a JSON object of fields.",
+    "context": "Under a Custom webhook's template, when it can't be read."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.aHeadlineForTheEvent",
+    "text": "A headline for the event",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.aPosterOrCoverAddress",
+    "text": "A poster or cover address",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.aUniqueIdForTheDelivery",
+    "text": "A unique id for the delivery",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.count.placeholdersLeftEmpty.one",
+    "text": "{placeholders} has nothing for this event, so it’s left empty.",
+    "context": "Over a Custom webhook's preview. {placeholders} is the placeholder."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.count.placeholdersLeftEmpty.other",
+    "text": "{placeholders} have nothing for this event, so they’re left empty.",
+    "context": "Over a Custom webhook's preview. {placeholders} lists the placeholders."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.eventsData",
+    "text": "{event}’s data",
+    "context": "Heading in the placeholder menu of a Custom webhook: the values one event carries. {event} is the event's name."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.eventToPreview",
+    "text": "Event to preview",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.failureAttentionArrivalViewingOrQuiet",
+    "text": "failure, attention, arrival, viewing or quiet",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.forExample",
+    "text": "e.g. {example}",
+    "context": "Beside a placeholder in a Custom webhook's menu: what it is filled with for the sample event."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.itsNameInWords",
+    "text": "Its name in words",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.more",
+    "text": "More…",
+    "context": "Opens the menu of every placeholder a Custom webhook's template can use."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.moreDetailWhereThereIsAny",
+    "text": "More detail, where there is any",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.morePlaceholders",
+    "text": "More placeholders",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.oneLineSayingWhatHappened",
+    "text": "One line saying what happened",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.placeholdersAreSwappedInAsThey",
+    "text": "Placeholders are swapped in as they are.",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.resetToDefault",
+    "text": "Reset to default",
+    "context": "Button that puts a Custom webhook's template back to the one it started with."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.template",
+    "text": "Template",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.theEvent",
+    "text": "The event",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.theEventsNameLikeJobFailed",
+    "text": "The event’s name, like job.failed",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.thisIsntValidJSON",
+    "text": "This isn’t valid JSON.",
+    "context": "Under a Custom webhook's template, when it can't be read."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.thisIsntValidJsonLineColumn",
+    "text": "This isn’t valid JSON: line {line}, column {column}.",
+    "context": "Under a Custom webhook's template, when it can't be read. {line} and {column} say where."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.thisServersAddress",
+    "text": "This server’s address",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.thisServersName",
+    "text": "This server’s name",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.trueWhenItNeedsLookingAt",
+    "text": "true when it needs looking at",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.valuesAreEscapedSoTheyCant",
+    "text": "Values are escaped, so they can’t break the JSON. \"{{urgent}}\" on its own keeps its type: true, not \"true\".",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.whenAsAnISODate",
+    "text": "When, as an ISO date",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.whereToSeeItInValence",
+    "text": "Where to see it in Valence",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customMessageCard.writeTheFieldsAsAJSON",
+    "text": "Write the fields as a JSON object; each is sent as a form field.",
+    "context": "On a Custom webhook's page, in the card where its message template is written and previewed."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.addsAnXValenceSignatureHeader",
+    "text": "Adds an X-Valence-Signature header made with this webhook’s secret.",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.alsoSetsTheContentTypeHeader",
+    "text": "Also sets the Content-Type header.",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.bodyFormat",
+    "text": "Body format",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.form",
+    "text": "Form",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.howEachMessageIsSent",
+    "text": "How each message is sent.",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.method",
+    "text": "Method",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.plainText",
+    "text": "Plain text",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
+    "handler": "screens.adminArea.customRequestRows.signEachMessage",
+    "text": "Sign each message",
+    "context": "On a Custom webhook's page, in the card saying where it goes."
+  },
+  {
     "handler": "screens.adminArea.deliveredItAgain",
     "text": "Resent.",
     "context": "Shown in the admin area."
@@ -16998,6 +17354,11 @@
     "handler": "screens.adminArea.describeGraphics.wholeCardNotEncoder",
     "text": "whole GPU, not encoder",
     "context": "The detail in the admin area (from `describeGraphics`)."
+  },
+  {
+    "handler": "screens.adminArea.describeIndexerSearches.keywords",
+    "text": "Keywords",
+    "context": "An indexer search kind: searching by words."
   },
   {
     "handler": "screens.adminArea.describeLibraryPart.ageRatings",
@@ -17580,6 +17941,36 @@
     "context": "The label of a tab row in the downloads panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.editLiveSourceDialog.changingItReadsTheChannelsAgain",
+    "text": "Changing it reads the channels again.",
+    "context": "Under a live TV source's address field."
+  },
+  {
+    "handler": "screens.adminArea.editLiveSourceDialog.editSource",
+    "text": "Edit source",
+    "context": "Title of the dialog that renames a live TV source or changes its address."
+  },
+  {
+    "handler": "screens.adminArea.editLiveSourceDialog.giveItAnAddress",
+    "text": "Give it an address.",
+    "context": "Shown when someone saves a live TV source with an empty address."
+  },
+  {
+    "handler": "screens.adminArea.editLiveSourceDialog.giveItAName",
+    "text": "Give it a name.",
+    "context": "Shown when someone saves a live TV source with an empty name."
+  },
+  {
+    "handler": "screens.adminArea.editLiveSourceDialog.itsChannelsAreReadAgainFromTheNewFile",
+    "text": "Its channels are read again from the new file.",
+    "context": "Under the button that replaces a live TV source's playlist file."
+  },
+  {
+    "handler": "screens.adminArea.editLiveSourceDialog.replaceThePlaylist",
+    "text": "Replace the playlist",
+    "context": "Button that picks a new playlist file for a live TV source."
+  },
+  {
     "handler": "screens.adminArea.emailCard.aPasswordIsSavedLeaveIt",
     "text": "A password is saved. Leave the field empty to keep it, or type a new one to replace it.",
     "context": "Shown in the admin Settings, on the Email card, under signing in to the mail server."
@@ -17680,6 +18071,11 @@
     "context": "Shown in the admin Settings, on the Email card: a toast."
   },
   {
+    "handler": "screens.adminArea.emailCard.saveFirstToTest",
+    "text": "Save first to test these settings.",
+    "context": "Under the test email while there are unsaved email settings."
+  },
+  {
     "handler": "screens.adminArea.emailCard.sendAs",
     "text": "Send as",
     "context": "Shown in the admin Settings, on the Email card: the name and address emails come from."
@@ -17703,6 +18099,11 @@
     "handler": "screens.adminArea.emailCard.sendPasswordResetLinksAndSetup",
     "text": "Send password reset links and setup links by email, using any mail server you have an account with.",
     "context": "Shown in the admin Settings, on the Email card: what the card is for."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendsPasswordResetLinks",
+    "text": "Sends password reset and setup links by email.",
+    "context": "Under the email card while email is turned off."
   },
   {
     "handler": "screens.adminArea.emailCard.sendTestEmail",
@@ -17743,6 +18144,11 @@
     "handler": "screens.adminArea.emailCard.theSmtpServerOfYourEmail",
     "text": "Your email provider’s SMTP server, port and connection encryption.",
     "context": "Shown in the admin Settings, on the Email card."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.theUsernameAndPassword",
+    "text": "The username and password from your mail provider.",
+    "context": "Under the mail account fields when no password is saved."
   },
   {
     "handler": "screens.adminArea.emailCard.tls",
@@ -17865,6 +18271,66 @@
     "context": "Shown in the encoding panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.encodingSettings.gaplessEpisodesAbout",
+    "text": "In the last moments of an episode, Valence starts preparing the next one, so it follows with no pause, black screen or fade. It starts the next stream a little early, so turn it off on a server that struggles to transcode.",
+    "context": "The info hover beside the gapless episodes setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.gaplessEpisodesDetail",
+    "text": "Gets the next episode ready before this one ends.",
+    "context": "Under the gapless episodes setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.hardware",
+    "text": "Hardware",
+    "context": "Heading of the Encoding page card for the hardware video is converted on."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.hardwareAccelerationAbout",
+    "text": "Converting video on the graphics chip is much faster and lighter than on the processor. Automatic uses whichever backend passes Valence's check; choose one to force it if the check gets it wrong. Test runs a five-second conversion and shows what happened.",
+    "context": "The info hover beside the hardware acceleration setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.hardwareAccelerationDetail",
+    "text": "Automatic uses whichever backend passes the hardware check.",
+    "context": "Under the hardware acceleration setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.keepPreparedDownloads",
+    "text": "Keep prepared downloads",
+    "context": "A setting: how long a download converted for a device is kept."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.keepPreparedDownloadsAbout",
+    "text": "When a download has to be converted for a device, the converted file is kept. Anyone who downloads the same title in that time gets it straight away instead of waiting. Longer uses more disk space.",
+    "context": "The info hover beside the keep prepared downloads setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.keepPreparedDownloadsDetail",
+    "text": "How long a converted download stays, so the next person gets it at once.",
+    "context": "Under the keep prepared downloads setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.previewQualityAbout",
+    "text": "Previews are the short clips that play when you point at a title, and behind the banner on the home page. Higher quality looks sharper but takes more disk space and longer to make. Changing it remakes every preview in the background.",
+    "context": "The info hover beside the preview quality setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.previewQualityDetail",
+    "text": "Quality of hover previews and banner clips. Changing it remakes them.",
+    "context": "Under the preview quality setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.shortSegmentsAbout",
+    "text": "Video is streamed in small pieces called segments, and the player has to fetch the first one before anything plays. Two-second pieces instead of four mean playback starts and seeks about twice as fast, especially over a slow connection or a tunnel. The cost is twice as many requests to the server.",
+    "context": "The info hover beside the short segments setting."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.shortSegmentsDetail",
+    "text": "Sends video in 2-second pieces, so playback starts and seeks sooner.",
+    "context": "Under the short segments setting."
+  },
+  {
     "handler": "screens.adminArea.fileDetails.addingUp",
     "text": "Adding up…",
     "context": "In the side of the admin’s file manager that says what is chosen. Shown while a folder’s size is being added up."
@@ -17983,6 +18449,11 @@
     "handler": "screens.adminArea.filesPanel.nothingHereIsCalledThat",
     "text": "No files or folders match that name.",
     "context": "Shown in the files panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.notInLibrary",
+    "text": "Not in library",
+    "context": "A file the library has not taken in."
   },
   {
     "handler": "screens.adminArea.filesPanel.readingTheFolder",
@@ -18605,6 +19076,16 @@
     "context": "Read aloud by screen readers as the name in the indexer report list in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexersPanel.aboutPriority",
+    "text": "About priority",
+    "context": "Label of the info button beside the priority column."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.canSearch",
+    "text": "Can search",
+    "context": "A column heading: what an indexer can search by."
+  },
+  {
     "handler": "screens.adminArea.indexersPanel.everyLibraryHandsOff",
     "text": "Every library that takes requests hands them to a connected app, so Valence doesn’t search these indexers for them.",
     "context": "Note above the indexers in Admin › Requests › Indexers, when every library hands requests to Radarr, Sonarr or Lidarr."
@@ -18633,6 +19114,11 @@
     "handler": "screens.adminArea.indexersPanel.noIndexersYetAddASite",
     "text": "No indexers yet. Add one from the catalogue, or any Torznab or Newznab indexer, to start searching.",
     "context": "Shown in the indexers panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.priorityAbout",
+    "text": "Among equally good releases, the indexer with the lower number wins.",
+    "context": "The info hover beside the priority column."
   },
   {
     "handler": "screens.adminArea.indexersPanel.readingTheIndexers",
@@ -18783,6 +19269,16 @@
     "handler": "screens.adminArea.labelCouldNotBeStopped",
     "text": "Couldn’t stop {label}.",
     "context": "Shown in the admin area. {label} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.ladderTable.automaticAt",
+    "text": "Automatic ({bitrate})",
+    "context": "The first bitrate choice for a copy: the usual limit for its quality, like \"Automatic (4.5 Mb/s)\"."
+  },
+  {
+    "handler": "screens.adminArea.ladderTable.megabitsASecond",
+    "text": "{megabits} Mb/s",
+    "context": "A bitrate in megabits a second, like \"4.5 Mb/s\"."
   },
   {
     "handler": "screens.adminArea.leaveOutDialog.breaksUpAnHourIn",
@@ -18983,6 +19479,16 @@
     "handler": "screens.adminArea.libraryLockRow.unlockedForGood",
     "text": "Lock taken away.",
     "context": "After removing a library's lock (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryPicker.chosenOfCount",
+    "text": "{chosen} of {count} chosen",
+    "context": "Above the library tiles: how many are chosen. {chosen} is how many are ticked, {count} how many there are."
+  },
+  {
+    "handler": "screens.adminArea.libraryPicker.selectAll",
+    "text": "Select all",
+    "context": "Button that ticks every library."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor",
@@ -19215,6 +19721,21 @@
     "context": "The detail in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.aboutTheFingerprint",
+    "text": "About the fingerprint",
+    "context": "Label of the button that explains a server's fingerprint."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.aboutThisServer",
+    "text": "About this server",
+    "context": "Label of the button that explains this server's card on the linking page."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.ageLimit",
+    "text": "Age limit",
+    "context": "Setting for a linked server: the highest age rating its people may see."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.ageLimitForName",
     "text": "Age limit for {name}",
     "context": "Accessible name of the menu choosing the highest age a linked server's people may watch. {name} is the server."
@@ -19230,9 +19751,24 @@
     "context": "Explains invites to link servers."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.askedFor",
+    "text": "Asked for",
+    "context": "Column heading on a linked server's activity: what their person asked for."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.askedNameToLink",
     "text": "Sent a link request to {name}. You’ll be linked once their admin approves it.",
     "context": "Toast after using an invite, waiting for the other server's admin."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.backToLinkedServers",
+    "text": "Back to Linked servers",
+    "context": "Button on a linked server's page that goes back to the list."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.betweenTheServers",
+    "text": "Between the servers",
+    "context": "Heading of the settings for what passes between two linked servers."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.blockedName",
@@ -19245,9 +19781,24 @@
     "context": "Accessible name of the button blocking one person from a linked server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.bothAdminsCanCompareThis",
+    "text": "Both admins can compare this to be sure they’re linking with the right server.",
+    "context": "Explains a server's fingerprint."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.copyItNowItIsNotShownAgain",
     "text": "Copy it now. It won’t be shown again.",
     "context": "Shown under a freshly made invite to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.copyTheFingerprint",
+    "text": "Copy the fingerprint",
+    "context": "Button that copies a server's fingerprint."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.createAnInvite",
+    "text": "Create an invite",
+    "context": "First step of linking servers."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas",
@@ -19280,9 +19831,19 @@
     "context": "Explains the setting of how many streams a linked server may play at once. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.howManyOfTheirPeopleCanWatch",
+    "text": "How many of their people can watch from here at once.",
+    "context": "Explains a linked server's limit on people watching at once."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne",
     "text": "How other Valence servers see this one. Another admin verifies an invite by comparing this fingerprint.",
     "context": "Explains the card with this server's name, colour, address and fingerprint."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.howTheyWatch",
+    "text": "How they watch",
+    "context": "Heading of the settings for how a linked server's people watch from here."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.inviteAServer",
@@ -19290,9 +19851,24 @@
     "context": "Card title: making an invite for another Valence's admin."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.lastHeardFrom",
+    "text": "Last heard from",
+    "context": "Column heading in the list of linked servers: when each last answered."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.lastHeardFromWhen",
     "text": "Last responded {when}",
     "context": "When a linked server last answered, as a relative time."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.lastHeardFromWhenSentence",
+    "text": "Last heard from {when}.",
+    "context": "When a linked server that can't be reached last answered. {when} is how long ago."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.lastSeen",
+    "text": "Last seen",
+    "context": "Column heading on a linked server's people: when each was last seen here."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.letNameBackIn",
@@ -19310,6 +19886,11 @@
     "context": "Explains the setting to show a linked server its record. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.letsThroughTitlesWithNoAgeRating",
+    "text": "Lets through titles with no age rating at all.",
+    "context": "Explains letting a linked server see titles with no age rating."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage",
     "text": "Let their admin pause and message your people",
     "context": "Setting: whether a linked server's admin may pause, or send a message to, somebody here watching something of theirs."
@@ -19325,6 +19906,11 @@
     "context": "Button that uses a pasted invite to link with another server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.linkedServer",
+    "text": "Linked server",
+    "context": "Heading of a linked server's page."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.linkedServersCouldNotBeRead",
     "text": "Couldn’t load linked servers.",
     "context": "Shown when the linked servers page could not be read from the server."
@@ -19335,14 +19921,29 @@
     "context": "Toast when two servers become linked."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.linkingLetsTwoValenceServersShare",
+    "text": "Linking lets two Valence servers share their libraries with each other’s people.",
+    "context": "Explains linking, when no servers are linked."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.linkToAServer",
     "text": "Link to a server",
     "context": "Card title: using an invite another Valence's admin made."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.madeWhen",
+    "text": "Made {when}",
+    "context": "When an open invite was made. {when} is how long ago."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.makeAnInvite",
     "text": "Create invite",
     "context": "Button that makes an invite to link another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.makeOneHereAndSendIt",
+    "text": "Make one here and send it to the other server’s admin.",
+    "context": "Explains the first step of linking servers."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.manageName",
@@ -19420,9 +20021,29 @@
     "context": "Empty state of the list of linked servers."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.noServersAreLinkedYetHeading",
+    "text": "No servers are linked yet",
+    "context": "Heading shown when this server is linked with no others."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.nothingIsSharedUntilYouChoose",
     "text": "Nothing is shared until you choose. Their people see only these libraries, and only titles within the age limit you set.",
     "context": "Explains how sharing with a linked server works, under the heading of the card that chooses it."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.notReachableFromOtherServers",
+    "text": "Not reachable from other servers",
+    "context": "Badge when this server's address is one only this machine can reach."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.openInvites",
+    "text": "Open invites",
+    "context": "Heading over the invites made here and not yet used."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.otherServersCantReachLocalhost",
+    "text": "Other servers can’t reach localhost. Use this server’s network or public address.",
+    "context": "Under this server's address when it is one only this machine can reach."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.pasteAnInvite",
@@ -19460,6 +20081,11 @@
     "context": "Accessible label while linked servers load."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.removesARequestHereOnce",
+    "text": "Removes a request here once a linked server gets that title.",
+    "context": "Explains closing requests that a linked server fills."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.removeThePicture",
     "text": "Remove picture",
     "context": "Button on the admin’s This server card that takes away the server’s picture, so it shows its initial again."
@@ -19485,9 +20111,19 @@
     "context": "When a person from a linked server was last seen, such as “Seen 5 minutes ago”."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.sendThisToTheOtherServers",
+    "text": "Send this to the other server’s admin. It works once and runs out in a day, and you approve their server before it’s linked.",
+    "context": "Explains a new invite."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.sendYourPeoplesNames",
     "text": "Send your people’s names",
     "context": "Setting: whether this server tells a linked server the names of its people who watch from there."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.sentAnInviteBySomeoneElse",
+    "text": "Sent an invite by someone else?",
+    "context": "Before a link to use an invite another server sent."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.shareNameWithName2",
@@ -19525,6 +20161,11 @@
     "context": "Explains the quality ceiling for a linked server. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.theBestQualityTheyreSent",
+    "text": "The best quality they’re sent, whatever they ask for.",
+    "context": "Explains a linked server's quality limit."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.theInvite",
     "text": "The invite",
     "context": "Accessible label of the box showing a freshly made invite."
@@ -19535,14 +20176,54 @@
     "context": "Toast when copying a new linking invite to the clipboard fails."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.theirAdminCanPauseOrMessage",
+    "text": "Their admin can pause or message your people watching from them.",
+    "context": "Explains letting a linked server's admin control playback."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theirAdminPastesItIntoUse",
+    "text": "Their admin pastes it into Use an invite on their server.",
+    "context": "Explains the second step of linking servers."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.theirInvite",
     "text": "Their invite",
     "context": "Label of the field an invite from another server is pasted into."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.theirPlayersFetchTitlesFromThem",
+    "text": "Their players fetch titles from them directly.",
+    "context": "Explains a linked server's people streaming through their own server."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.theirRecordOfYourPeople",
     "text": "Their request history for your people",
     "context": "Heading of a linked server's record of what this server's people asked it for."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theirRequestsJoinYourQueue",
+    "text": "Their requests join your queue, for you to approve.",
+    "context": "Explains taking a linked server's requests."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theyShowUpHereToApprove",
+    "text": "They show up here to approve. Check their fingerprint matches first.",
+    "context": "Explains the third step of linking servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theyUseIt",
+    "text": "They use it",
+    "context": "Second step of linking servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.times",
+    "text": "Times",
+    "context": "Column heading on a linked server's activity: how many times."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.titlesRatedAboveThisStayHidden",
+    "text": "Titles rated above this stay hidden from them.",
+    "context": "Explains a linked server's age limit."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.unlink",
@@ -19560,6 +20241,16 @@
     "context": "Title of the confirmation before unlinking a server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.useAnInvite",
+    "text": "Use an invite",
+    "context": "Button and dialog for linking with an invite another server sent."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.useItHere",
+    "text": "Use it here",
+    "context": "Link that opens the dialog for using an invite."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.whatNameAskedFor",
     "text": "What {name} requested",
     "context": "Heading of this server's record of what a linked server and its people asked for. {name} is that server."
@@ -19575,6 +20266,11 @@
     "context": "Heading of the card listing the libraries a linked server shares with this one. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.whatOtherServersCallThisOne",
+    "text": "What other servers call this one.",
+    "context": "Explains this server's name on the linking page."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.whenALinkedServerGetsSomething",
     "text": "When a linked server gets something someone here requested, they’re notified either way. When on, the request here is also removed.",
     "context": "Explains the setting to drop requests a linked server already has."
@@ -19585,9 +20281,19 @@
     "context": "Label of the field holding the public address of this server for linking."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.whereOtherServersReachThisOne",
+    "text": "Where other servers reach this one.",
+    "context": "Explains this server's address on the linking page."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.withdrawTheInvite",
     "text": "Revoke the invite created {when}",
     "context": "Accessible label of the button withdrawing an open invite."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.youApproveThem",
+    "text": "You approve them",
+    "context": "Third step of linking servers."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.addALiveTvSource",
@@ -19645,6 +20351,11 @@
     "context": "Button that picks an M3U file to upload as a live TV source."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.edit",
+    "text": "Edit…",
+    "context": "Menu item that opens a live TV source to change it."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.embeddedPage",
     "text": "Embedded page",
     "context": "A kind of live TV source: a web page with its own video player, shown inside Valence. Option in the add source dialog and badge in the sources table."
@@ -19653,11 +20364,6 @@
     "handler": "screens.adminArea.liveTvPanel.fillInANameAndAnAddress",
     "text": "Give it a name and a working address, or choose a playlist.",
     "context": "Shown in the add live TV source dialog when something required is missing or not an address."
-  },
-  {
-    "handler": "screens.adminArea.liveTvPanel.formulaOneLive",
-    "text": "Formula 1 live",
-    "context": "Example name shown in the empty name field when adding a single live stream."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.freeGuidesThatCoverManyChannels",
@@ -19708,11 +20414,6 @@
     "handler": "screens.adminArea.liveTvPanel.logoAddressOptional",
     "text": "Logo address (optional)",
     "context": "Label of the field holding a single stream’s logo address."
-  },
-  {
-    "handler": "screens.adminArea.liveTvPanel.myChannels",
-    "text": "My channels",
-    "context": "Example name shown in the empty name field when adding a live TV playlist or tuner."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.noSourcesYet",
@@ -19770,6 +20471,11 @@
     "context": "Button adding the free Samsung TV Plus programme guide to a live TV source."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.scanNow",
+    "text": "Scan now",
+    "context": "Menu item that reads a live TV source again now."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.streamAddress",
     "text": "Stream address",
     "context": "Label of the field holding a single live stream’s address."
@@ -19793,6 +20499,11 @@
     "handler": "screens.adminArea.liveTvPanel.tunerAddress",
     "text": "Tuner address",
     "context": "Label of the field holding an HDHomeRun tuner’s address on the network."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.tvGuide",
+    "text": "TV guide…",
+    "context": "Menu item that opens a live TV source’s programme guides."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.ukGuideEpgPw",
@@ -19840,6 +20551,11 @@
     "context": "The label of the search field in the admin's dialog for correcting which series an episode was matched to."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.allTitles",
+    "text": "All titles",
+    "context": "Media filter showing every title in a library."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.alsoNumbered",
     "text": "Also numbered S{season} E{episode}: {files}",
     "context": "Under an episode in the media page in the admin area, naming the other episode files that share its season and episode number. {season} and {episode} are numbers; {files} is a list of file names."
@@ -19858,6 +20574,16 @@
     "handler": "screens.adminArea.mediaPanel.couldNotReadFiles",
     "text": "Couldn’t read {files}",
     "context": "Under a title in the media page in the admin area, naming the files that could not be read. {files} is a list of file names."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.deleteCountFiles.one",
+    "text": "Delete {count} file?",
+    "context": "Title of the dialog that deletes the titles selected in Media. {count} is how many files."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.deleteCountFiles.other",
+    "text": "Delete {count} files?",
+    "context": "Title of the dialog that deletes the titles selected in Media. {count} is how many files."
   },
   {
     "handler": "screens.adminArea.mediaPanel.count.nameToFix.one",
@@ -19898,6 +20624,11 @@
     "handler": "screens.adminArea.mediaPanel.deleteThisFile",
     "text": "Delete this file?",
     "context": "The title of the dialog confirming a media file is deleted from disk, in the admin's media panel, before it knows which file."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.duplicates",
+    "text": "Duplicates",
+    "context": "Media filter showing titles held more than once."
   },
   {
     "handler": "screens.adminArea.mediaPanel.everyEpisodesFileIsDeletedFrom",
@@ -19955,6 +20686,11 @@
     "context": "Under a film in the media page in the admin area, naming the other files matched to the same catalogue entry. {files} is a list of file names."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.mixed",
+    "text": "Mixed",
+    "context": "In a media table column, when the files of a title differ, such as an episode in 4K and another in HD."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.moveToAnotherLibrary",
     "text": "Move to another library…",
     "context": "In the menu of a film, programme or file in the admin’s list of media, opening the dialog that moves it into another library."
@@ -20010,9 +20746,24 @@
     "context": "The label in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.reEncodeSelected",
+    "text": "Re-encode",
+    "context": "Button that re-encodes the titles selected in Media."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.reEncodeThisSeason",
     "text": "Re-encode this season…",
     "context": "The label in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.selectEveryTitleShown",
+    "text": "Select every title shown",
+    "context": "Hidden label of the checkbox that selects every title in the media table."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.selectName",
+    "text": "Select {name}",
+    "context": "Hidden label of the checkbox that selects one title in the media table. {name} is the title."
   },
   {
     "handler": "screens.adminArea.mediaPanel.showInFiles",
@@ -20040,6 +20791,11 @@
     "context": "Shown in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.theFilesAreDeletedFromTheDisk",
+    "text": "The files are deleted from the disk and removed from the library. This can't be undone.",
+    "context": "Detail of the dialog that deletes the titles selected in Media."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.theLibrariesCouldNotBeRead",
     "text": "Couldn’t load the libraries from the server. This doesn’t mean they’re empty.",
     "context": "Text shown in the media panel in the admin area."
@@ -20058,6 +20814,11 @@
     "handler": "screens.adminArea.mediaPanel.unmatched",
     "text": "Unmatched",
     "context": "Shown in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.unreadable",
+    "text": "Unreadable",
+    "context": "Media filter showing titles with a file that could not be read."
   },
   {
     "handler": "screens.adminArea.mediaPanel.whichTitles",
@@ -20083,6 +20844,46 @@
     "handler": "screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf",
     "text": "Expand {title}",
     "context": "The label of the button that unfolds a request's seasons, episodes or albums in the admin's requests table. {title} is the requested title."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.askedWhen",
+    "text": "Asked {when}",
+    "context": "When a re-encode was asked for. {when} is how long ago, such as 3 days ago."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.backToMedia",
+    "text": "Back to Media",
+    "context": "Button on a title's page in Media that goes back to every title."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.fixMatch",
+    "text": "Fix match",
+    "context": "Button on a title's page in Media that corrects which catalogue entry it is matched to."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.matchedId",
+    "text": "Matched · {id}",
+    "context": "On a title's page in Media: it is matched in the catalogue. {id} is the catalogue's id for it."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.matchedTmdbId",
+    "text": "Matched · TMDB {id}",
+    "context": "On a title's page in Media: it is matched to TMDB. {id} is TMDB's number for it."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.openFolder",
+    "text": "Open folder",
+    "context": "Button on a title's page in Media that opens its folder in Files."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.openInCatalogue",
+    "text": "Open in Catalogue",
+    "context": "Button on a title's page in Media that opens the title in the Catalogue page."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.reEncodes",
+    "text": "Re-encodes",
+    "context": "Heading of the card listing the re-encodes asked of a title's files."
   },
   {
     "handler": "screens.adminArea.memory",
@@ -20160,6 +20961,11 @@
     "context": "A count on the admin overview’s Waiting on you card."
   },
   {
+    "handler": "screens.adminArea.needsYouCard.nothingNeedsYou",
+    "text": "Nothing needs you. Valence is up to date.",
+    "context": "Shown when nothing on the server needs the admin."
+  },
+  {
     "handler": "screens.adminArea.needsYouCard.requestsToApprove",
     "text": "Requests to approve",
     "context": "A count on the admin overview’s Waiting on you card."
@@ -20173,6 +20979,16 @@
     "handler": "screens.adminArea.needsYouCard.waitingOnYou",
     "text": "Waiting on you",
     "context": "The card at the top of the admin overview that counts what needs an administrator."
+  },
+  {
+    "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
+    "text": "It starts by sending failed jobs. Choose the rest of its events on its page.",
+    "context": "In the dialog that creates a webhook: which events a new webhook sends."
+  },
+  {
+    "handler": "screens.adminArea.newWebhookDialog.leftEmptyItsNamedAfterThe",
+    "text": "Left empty, it's named after the service.",
+    "context": "In the dialog that creates a webhook."
   },
   {
     "handler": "screens.adminArea.noAlbumIsBeingCorrected",
@@ -20228,6 +21044,116 @@
     "handler": "screens.adminArea.ofTotalValenceUses",
     "text": "of {total} · Valence {used}",
     "context": "Under the memory figure at the top of the admin area, after the memory in use. {total} is all the machine's memory, and {used} how much Valence itself uses, such as 1.2 GB."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.everythingValenceConnectsTo",
+    "text": "Everything Valence connects to outside this server. Nothing else leaves it.",
+    "context": "At the top of the online services card."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.musicDetails",
+    "text": "Music details",
+    "context": "An online feature: filling in album covers, artist photos and lyrics."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.musicDetailsAbout",
+    "text": "Album covers come from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced.",
+    "context": "The info hover beside the music details setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.musicDetailsDetail",
+    "text": "Fills in missing album covers, artist photos and lyrics.",
+    "context": "Under the music details setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.omdb",
+    "text": "OMDb",
+    "context": "An online service that lists Rotten Tomatoes scores. A product name."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.omdbAbout",
+    "text": "OMDb is a free service that lists Rotten Tomatoes scores. Scores are fetched when a title is scanned.",
+    "context": "The info hover beside OMDb."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.omdbDetail",
+    "text": "Adds Rotten Tomatoes scores when titles are scanned.",
+    "context": "Under OMDb: what it brings."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.onlineServices",
+    "text": "Online services",
+    "context": "Heading of the admin Settings card listing everything Valence connects to outside the server."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.phoneNotificationsAbout",
+    "text": "Phones only receive notifications through Apple's and Google's servers, so Valence's relay passes on a wake-up. It's told which phone to wake, never what the notification says; the phone reads that from this server.",
+    "context": "The info hover beside the phone notifications setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.phoneNotificationsDetail",
+    "text": "Wakes the phone app through Valence's push relay. It never sees the message.",
+    "context": "Under the phone notifications setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.seeWhatsSent",
+    "text": "See what's sent",
+    "context": "A link after the usage statistics description that shows the exact report sent."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.theAudioDb",
+    "text": "TheAudioDB",
+    "context": "An online service with artist photos and music videos. A product name."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.theAudioDbAbout",
+    "text": "Without a key, artists are looked up with the free key, which finds only one music video per artist.",
+    "context": "The info hover beside TheAudioDB."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.theAudioDbDetail",
+    "text": "Artist photos and music videos for music details.",
+    "context": "Under TheAudioDB: what it brings."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.theMovieDatabase",
+    "text": "The Movie Database",
+    "context": "The online catalogue Valence matches files against. A product name."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.theMovieDatabaseAbout",
+    "text": "The catalogue Valence matches your files against. Without a key, titles and years come only from the file names, with no posters or descriptions.",
+    "context": "The info hover beside The Movie Database."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.theMovieDatabaseDetail",
+    "text": "Titles, posters, cast and trailers for films and series.",
+    "context": "Under The Movie Database: what it brings."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.trailersAbout",
+    "text": "Trailers play in an embedded player from the video site the catalogue links to. A trailer saved next to the file on disk is always used instead.",
+    "context": "The info hover beside the trailers setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.trailersDetail",
+    "text": "Plays a trailer from YouTube for titles without one on disk.",
+    "context": "Under the trailers setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.usageStatistics",
+    "text": "Usage statistics",
+    "context": "An online feature: sending a few anonymous facts about the server once a day."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.usageStatisticsAbout",
+    "text": "Once a day: Valence's version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.",
+    "context": "The info hover beside the usage statistics setting."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.usageStatisticsDetail",
+    "text": "Sends a few anonymous facts about this server once a day.",
+    "context": "Under the usage statistics setting, followed by a link to see what is sent."
   },
   {
     "handler": "screens.adminArea.overviewPanel.activeNow",
@@ -20333,6 +21259,11 @@
     "handler": "screens.adminArea.overviewPanel.recentLogs",
     "text": "Recent logs",
     "context": "The title of the admin overview card that lists the newest log lines."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.recentWarnings",
+    "text": "Recent warnings",
+    "context": "Heading of the overview card listing recent warnings and errors."
   },
   {
     "handler": "screens.adminArea.overviewPanel.runningNow",
@@ -20445,9 +21376,24 @@
     "context": "Read out for the list of reasons the server converted plays, the admin area's statistics."
   },
   {
+    "handler": "screens.adminArea.pluginsPanel.availableCount",
+    "text": "Available  {count}",
+    "context": "Tab of plugins in the catalogue not yet installed. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts",
     "text": "Choose a .vplugin file, plus its .sig file if it has one.",
     "context": "Shown in the plugins panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.pluginsPanel.everyPluginInTheCatalogueIsInstalled",
+    "text": "Every plugin in the catalogue is installed.",
+    "context": "Shown when nothing in the catalogue is left to install."
+  },
+  {
+    "handler": "screens.adminArea.pluginsPanel.installedCount",
+    "text": "Installed  {count}",
+    "context": "Tab of installed plugins. {count} is how many."
   },
   {
     "handler": "screens.adminArea.pluginsPanel.installedPlugins",
@@ -20545,6 +21491,11 @@
     "context": "The detail of the dialog confirming a plugin is rolled back to its earlier version, in the admin's plugins panel. {version} is the earlier version's number, such as 1.2.0."
   },
   {
+    "handler": "screens.adminArea.pluginsPanel.whichPlugins",
+    "text": "Which plugins",
+    "context": "Label of the switch between installed plugins and those in the catalogue."
+  },
+  {
     "handler": "screens.adminArea.preRollCard.aShortClipPlaysFirst",
     "text": "Play a short clip before a film or episode starts from the beginning, such as your own intro or a cinema ident. One is chosen at random each time, and anyone watching can skip it. Nothing plays when someone resumes partway through or joins a watch party.",
     "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. What it does, under the title."
@@ -20575,6 +21526,11 @@
     "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. The choice that plays a clip before films and episodes alike."
   },
   {
+    "handler": "screens.adminArea.preRollCard.folderDetail",
+    "text": "MP4, M4V or MOV, sent as they are.",
+    "context": "Under the pre-roll folder setting: which clips it plays."
+  },
+  {
     "handler": "screens.adminArea.preRollCard.mp4OrMovFiles",
     "text": "MP4, M4V or MOV files in a folder on the machine running Valence. They're sent as they are, so every app can play them without converting.",
     "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Under the folder field."
@@ -20588,6 +21544,16 @@
     "handler": "screens.adminArea.preRollCard.playAClipFirst",
     "text": "Play a clip first",
     "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. The switch that turns it on."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.playAClipFirstAbout",
+    "text": "Pick a clip such as your own intro or a cinema ident. One is chosen at random each time. Nothing plays when someone resumes partway through or joins a watch party.",
+    "context": "The info hover beside the pre-roll switch."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.playAClipFirstDetail",
+    "text": "Plays a random clip from a folder before a title starts. Viewers can skip it.",
+    "context": "Under the pre-roll switch."
   },
   {
     "handler": "screens.adminArea.preRollCard.playsBefore",
@@ -20615,6 +21581,26 @@
     "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. When they could not be read."
   },
   {
+    "handler": "screens.adminArea.preRollCard.thePreRollSettingsCouldNotBeSaved",
+    "text": "The pre-roll settings couldn't be saved.",
+    "context": "Shown when saving the pre-roll settings fails."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.aboutCompressingLosslessAudio",
+    "text": "About compressing lossless audio",
+    "context": "Label of the info button beside the compress lossless audio setting."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.aboutVersions",
+    "text": "About versions",
+    "context": "Label of the info button beside the versions setting."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.aboutWhenItRuns",
+    "text": "About when it runs",
+    "context": "Label of the info button beside the runs setting."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung",
     "text": "A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.",
     "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
@@ -20623,6 +21609,21 @@
     "handler": "screens.adminArea.preTranscodingCard.addARung",
     "text": "Add a rung",
     "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.addAVersion",
+    "text": "Add a version",
+    "context": "Button that adds another copy to make of each title."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.anyTime",
+    "text": "Any time",
+    "context": "Choice: copies are made at any time."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.atAnyHour",
+    "text": "At any hour, until every file has its copies.",
+    "context": "Under the runs setting when copies are made at any time."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile",
@@ -20640,6 +21641,16 @@
     "context": "A setting on the pre-transcoding card: the most video bitrate a copy may spend."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.compressLosslessAudio",
+    "text": "Compress lossless audio",
+    "context": "A setting: shrink lossless audio tracks in the copies."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.compressLosslessAudioAbout",
+    "text": "TrueHD and DTS-HD tracks often take up a large share of a remux. Compressing them saves that space but downmixes 7.1 to 5.1.",
+    "context": "The info hover beside the compress lossless audio setting."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.container",
     "text": "Container format",
     "context": "A choice on the pre-transcoding card: the file format each copy is written in, such as MP4 or MKV."
@@ -20650,14 +21661,44 @@
     "context": "A figure on the pre-transcoding card: how many films and episodes already have a copy."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.deleteOriginals",
+    "text": "Delete originals",
+    "context": "Confirms that originals are deleted once their copies are made."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.deleteOriginalsAsk",
+    "text": "Delete originals?",
+    "context": "Title of the confirmation before originals start being deleted."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.deleteOriginalsDetail",
+    "text": "From now on, once a film's copies are made, its original file is deleted and the highest-quality copy takes its place. Turn Keep the original back on to stop it.",
+    "context": "Body of the confirmation before originals start being deleted."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.deletesOriginals",
+    "text": "Deletes originals",
+    "context": "Badge warning that originals are deleted once their copies are made."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.eachCopyTakesDiskBesideIts",
     "text": "Each copy uses disk space next to its original, and Valence needs write access to the library folders.",
     "context": "The description of the switch that turns pre-transcoding on."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.eachFilmGetsACopy",
+    "text": "Each film gets a copy at every quality below its original.",
+    "context": "Under the versions setting."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.endingAt",
     "text": "Ending at",
     "context": "The hour pre-transcoding's quiet hours end."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.everyFilmAndSeriesLibrary",
+    "text": "Every film and series library, including ones added later.",
+    "context": "Under the libraries setting when every library is chosen."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows",
@@ -20715,6 +21756,16 @@
     "context": "The description of when pre-transcoding works, when it keeps to quiet hours. {timezone} is a time zone such as Europe/London."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.onlyDuringQuietHours",
+    "text": "Only during quiet hours.",
+    "context": "Under the runs setting when copies are made only in quiet hours."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.onlyTheLibrariesChosenBelow",
+    "text": "Only the libraries chosen below.",
+    "context": "Under the libraries setting when only some are chosen."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.passedOver",
     "text": "Skipped",
     "context": "A figure on the pre-transcoding card: how many files pre-transcoding has stopped trying, because a copy was refused or failed twice."
@@ -20770,6 +21821,11 @@
     "context": "A notice shown after the pre-transcoding settings were saved."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.shrinksTrueHdAndDtsHd",
+    "text": "Shrinks TrueHD and DTS-HD tracks in the copies.",
+    "context": "Under the compress lossless audio setting."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.startingAt",
     "text": "Starting at",
     "context": "The hour pre-transcoding's quiet hours begin."
@@ -20790,6 +21846,16 @@
     "context": "A notice shown after an administrator asked pre-transcoding to make the next copy straight away."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.theOriginalFileIsDeleted",
+    "text": "The original file is deleted and the highest-quality copy takes its place.",
+    "context": "Under the keep the original setting while it is off."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.theOriginalFileStays",
+    "text": "The original file stays as it is, next to the copies.",
+    "context": "Under the keep the original setting while it is on."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.thereIsNothingToMakeA",
     "text": "Nothing needs a copy, or pre-transcoding is off.",
     "context": "A notice shown when an administrator asked pre-transcoding to make the next copy and none could be started."
@@ -20805,9 +21871,24 @@
     "context": "A choice in the pre-transcoding settings: make copies at any hour until every file has one."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.versions",
+    "text": "Versions",
+    "context": "The setting listing the copies made of each title."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.versionsAbout",
+    "text": "A copy is made at every quality below the original, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices. A copy is never larger than its original. Automatic uses the usual bitrate limit for that quality, a little higher for high-frame-rate files, and never more than the original's own bitrate.",
+    "context": "The info hover beside the versions setting."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.waitingForQuietHours",
     "text": "Waiting for quiet hours",
     "context": "What pre-transcoding is doing at the moment: it is outside the hours it may run in."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.whenItRunsAbout",
+    "text": "Quiet hours are in the {timezone} time zone used by scheduled jobs. Any copy still being made stops when they end.",
+    "context": "The info hover beside when pre-transcoding runs. {timezone} is the server time zone."
   },
   {
     "handler": "screens.adminArea.processor",
@@ -21050,6 +22131,11 @@
     "context": "The label of a tab row in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.addQualityProfile",
+    "text": "Add quality profile",
+    "context": "Button that adds a quality profile."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.everyLibraryHandsOff",
     "text": "Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.",
     "context": "Note above the profiles of one kind in Admin › Requests › Profiles, when every library of that kind hands requests to Radarr, Sonarr or Lidarr."
@@ -21258,6 +22344,11 @@
     "handler": "screens.adminArea.releaseColumns.verdict",
     "text": "Verdict",
     "context": "Shown in the admin area (from `releaseColumns`)."
+  },
+  {
+    "handler": "screens.adminArea.releaseEntry.showAllCount",
+    "text": "Show all {count}",
+    "context": "Button that shows every change in a release section. {count} is how many there are."
   },
   {
     "handler": "screens.adminArea.releasePickTable.downloadBoth",
@@ -21495,6 +22586,36 @@
     "context": "The label in the request detail dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.requestPageCard.backgroundTrailers",
+    "text": "Background trailers",
+    "context": "A setting: a muted trailer plays behind a title on its request page."
+  },
+  {
+    "handler": "screens.adminArea.requestPageCard.backgroundTrailersAbout",
+    "text": "Valence finds each trailer on YouTube with yt-dlp and streams it through itself. YouTube's terms don't allow this, and YouTube may refuse a server it sees doing it.",
+    "context": "The info hover beside the background trailers setting."
+  },
+  {
+    "handler": "screens.adminArea.requestPageCard.backgroundTrailersDetail",
+    "text": "Plays a muted trailer behind a title on its request page.",
+    "context": "Under the background trailers setting."
+  },
+  {
+    "handler": "screens.adminArea.requestPageCard.needsTrailersTurnedOn",
+    "text": "Needs Trailers turned on in Settings › Online services.",
+    "context": "Under the background trailers setting while trailers are turned off."
+  },
+  {
+    "handler": "screens.adminArea.requestPageCard.requestPage",
+    "text": "Request page",
+    "context": "Heading of the card for how a title's request page looks."
+  },
+  {
+    "handler": "screens.adminArea.requestsPanel.aboutTheVpn",
+    "text": "About the VPN",
+    "context": "Label of the info button beside the VPN."
+  },
+  {
     "handler": "screens.adminArea.requestsPanel.atAddressLastCheckedWhen",
     "text": "At {address}. Last checked {when}.",
     "context": "Describes the requests service in the admin's requests panel. {address} is its web address; {when} is how long ago it was checked, such as \"5 minutes ago\"."
@@ -21645,6 +22766,11 @@
     "context": "Shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.rolesPanel.aboutRank",
+    "text": "About rank",
+    "context": "Label of the info button beside the rank column."
+  },
+  {
     "handler": "screens.adminArea.rolesPanel.aHigherRankManagesALower",
     "text": "A higher rank can manage lower ranks. No one can change a role at or above their own rank.",
     "context": "The detail of a dialog title in the roles panel in the admin area."
@@ -21723,6 +22849,11 @@
     "handler": "screens.adminArea.rolesPanel.rank",
     "text": "Rank",
     "context": "The label of a text field in the roles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.rankAbout",
+    "text": "People can only change accounts whose highest role ranks below their own.",
+    "context": "The info hover beside the rank column."
   },
   {
     "handler": "screens.adminArea.rolesPanel.rankIsAWholeNumber",
@@ -21890,6 +23021,11 @@
     "context": "Heads the address to add in Overseerr or Jellyseerr as a Sonarr server. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
   },
   {
+    "handler": "screens.adminArea.seerrCard.chooseAnAccount",
+    "text": "Choose an account",
+    "context": "The empty choice of which account Overseerr asks as."
+  },
+  {
     "handler": "screens.adminArea.seerrCard.chooseAnAccountBeforeTheySend",
     "text": "Choose an account to request as. Until you do, requests from them are rejected.",
     "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
@@ -21908,6 +23044,11 @@
     "handler": "screens.adminArea.seerrCard.keepAskingInOverseerrOr",
     "text": "Already request films and series in Overseerr or Jellyseerr? You can keep using it. Add Valence there as a Radarr server and a Sonarr server, and anything approved there is requested here, approved, and downloaded using its library’s settings.",
     "context": "The card's introduction. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.letsOverseerrSendRequests",
+    "text": "Lets Overseerr and Jellyseerr send requests here, as if Valence were Radarr and Sonarr.",
+    "context": "Under the Overseerr card while it is turned off."
   },
   {
     "handler": "screens.adminArea.seerrCard.madeANewKey",
@@ -21980,14 +23121,104 @@
     "context": "Shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.serverCard.accentDetail",
+    "text": "Colours buttons, highlights and emails.",
+    "context": "Under the accent colour setting."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.ageRatingsAbout",
+    "text": "A 15 and an R aren't the same, so Valence ranks ratings within one country instead of matching them across countries. Every country's ratings are already stored, so changing this doesn't need a rescan.",
+    "context": "The info hover beside the age ratings setting."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.ageRatingsDetail",
+    "text": "Which country's ratings to show and filter by.",
+    "context": "Under the age ratings setting."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.aValenceServer",
+    "text": "A Valence server",
+    "context": "Example shown in the empty server description field."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.corners",
+    "text": "Corners",
+    "context": "A server setting: how rounded the corners of cards, buttons and posters are."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.cornersDetail",
+    "text": "How rounded cards, buttons and posters are.",
+    "context": "Under the corners setting."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.descriptionDetail",
+    "text": "Shown by search engines and in link previews.",
+    "context": "Under the server description setting."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.logoDetail",
+    "text": "Square PNG, JPEG, WebP or AVIF, up to 2 MB.",
+    "context": "Under the server logo setting: which pictures it takes."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.logoRemoved",
+    "text": "Logo removed.",
+    "context": "Shown once the server's own logo is removed, so Valence's is used again."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.nameDetail",
+    "text": "Shown in the apps, the browser tab and emails.",
+    "context": "Under the server name setting."
+  },
+  {
+    "handler": "screens.adminArea.serviceKeyRow.addKey",
+    "text": "Add key",
+    "context": "Button that opens the field to add a key."
+  },
+  {
+    "handler": "screens.adminArea.serviceKeyRow.changeKey",
+    "text": "Change key",
+    "context": "Button that opens the field to change a saved key."
+  },
+  {
+    "handler": "screens.adminArea.serviceKeyRow.keySet",
+    "text": "Key set",
+    "context": "Badge beside an online service whose key is saved."
+  },
+  {
+    "handler": "screens.adminArea.serviceKeyRow.noKey",
+    "text": "No key",
+    "context": "Badge beside an online service with no key saved."
+  },
+  {
+    "handler": "screens.adminArea.serviceKeyRow.titleKey",
+    "text": "{title} key",
+    "context": "Label of the field a service's key is pasted into. {title} is the service, like OMDb."
+  },
+  {
     "handler": "screens.adminArea.sessionCard.cached",
     "text": "Cached",
     "context": "Shown in the session card in the admin area."
   },
   {
+    "handler": "screens.adminArea.sessionCard.controlledFromLabel",
+    "text": "Controlled from {label}",
+    "context": "Under a session another device is controlling. {label} is that device."
+  },
+  {
     "handler": "screens.adminArea.sessionCard.message",
     "text": "Message",
     "context": "The label of a button in the session card in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.sessionCard.messagesShowOnlyWhileWatching",
+    "text": "Messages show only while they’re watching a video.",
+    "context": "Why a session cannot be sent a message: nothing is playing."
+  },
+  {
+    "handler": "screens.adminArea.sessionCard.nothingPlaying",
+    "text": "Nothing playing",
+    "context": "A session with nothing playing."
   },
   {
     "handler": "screens.adminArea.sessionCard.notWatchingAnything",
@@ -21998,6 +23229,11 @@
     "handler": "screens.adminArea.sessionCard.shared",
     "text": "Shared",
     "context": "Shown in the session card in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.sessionCard.theTvAppCannotShowMessages",
+    "text": "The TV app can’t show messages.",
+    "context": "Why a session cannot be sent a message: it is the TV app."
   },
   {
     "handler": "screens.adminArea.sessionHardware.deviceAccel",
@@ -22550,9 +23786,34 @@
     "context": "The label of a icon in the shares panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.sharesPanel.activeCount",
+    "text": "Active ({count})",
+    "context": "Filter showing shared links that still work. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.allOpensUsed",
+    "text": "All opens used",
+    "context": "A shared link's status: it has been opened as many times as it allows."
+  },
+  {
     "handler": "screens.adminArea.sharesPanel.anybodyHoldingOneOfTheseCan",
     "text": "Anyone with one of these links can watch what it points to without an account. Revoking a link stops it immediately and notifies the person who created it.",
     "context": "Text shown in the shares panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.count.endsInCountDays.one",
+    "text": "Ends in {count} day",
+    "context": "A shared link's status: how many days until it stops working. {count} is the number of days."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.count.endsInCountDays.other",
+    "text": "Ends in {count} days",
+    "context": "A shared link's status: how many days until it stops working. {count} is the number of days."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.created",
+    "text": "Created",
+    "context": "Column heading: when a shared link was made."
   },
   {
     "handler": "screens.adminArea.sharesPanel.createdByNameSLinkToTitleStops",
@@ -22560,14 +23821,44 @@
     "context": "Shown in the shares panel in the admin area. {createdByName} is filled in by the app; {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.sharesPanel.endedCount",
+    "text": "Ended ({count})",
+    "context": "Filter showing shared links that no longer work. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.endsToday",
+    "text": "Ends today",
+    "context": "A shared link's status: it stops working before tomorrow."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.expiredWhen",
+    "text": "Expired {when}",
+    "context": "A shared link's status: it stopped working. {when} is how long ago, such as 3 days ago."
+  },
+  {
     "handler": "screens.adminArea.sharesPanel.handedOutBy",
     "text": "Created by",
     "context": "Shown in the shares panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.sharesPanel.noActiveLinks",
+    "text": "No active links.",
+    "context": "Shown when no shared link still works, though some have ended."
+  },
+  {
     "handler": "screens.adminArea.sharesPanel.nobodyHasHandedOutALink",
     "text": "No share links have been created.",
     "context": "Shown in the shares panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.noEndDate",
+    "text": "No end date",
+    "context": "A shared link's status: it works until it is revoked."
+  },
+  {
+    "handler": "screens.adminArea.sharesPanel.once",
+    "text": "Once",
+    "context": "How many times a shared link has been opened: one time."
   },
   {
     "handler": "screens.adminArea.sharesPanel.readingTheLinks",
@@ -22588,6 +23879,81 @@
     "handler": "screens.adminArea.signedThatDeviceOut",
     "text": "Signed that device out.",
     "context": "Shown when an administrator has signed out the device an open session is on, from the sessions page."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.apps",
+    "text": "Apps",
+    "context": "A setting: which apps people can sign in with."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.appsAbout",
+    "text": "The web is always on, since it's how this page is reached.",
+    "context": "The info hover beside the apps setting."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.appsDetail",
+    "text": "Which apps people can sign in with.",
+    "context": "Under the apps setting."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.backgroundDetail",
+    "text": "JPEG, PNG, WebP, AVIF or GIF, up to 16 MB.",
+    "context": "Under the sign-in background setting: which pictures it takes."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.desktop",
+    "text": "Desktop",
+    "context": "One of the apps people can sign in with: the desktop app."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.messageColour",
+    "text": "Message colour",
+    "context": "The colour of the message on the sign-in screen."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.messageDetail",
+    "text": "Shown under “Who's watching?” on every device.",
+    "context": "Under the sign-in message setting."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.showProfiles",
+    "text": "Show profiles",
+    "context": "A setting: whether the sign-in screen lists everyone's profile."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.showProfilesAbout",
+    "text": "When off, the sign-in screen asks for a username or email and a password instead, and nobody who isn't signed in can see the names, pictures or IDs of the people on this server.",
+    "context": "The info hover beside the show profiles setting."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.showProfilesDetail",
+    "text": "Lists everyone's profile so people pick theirs instead of typing a username.",
+    "context": "Under the show profiles setting."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.signInIsNotOverHttps",
+    "text": "Sign-in isn't over HTTPS",
+    "context": "Warning heading on the admin Settings page when sign-in cookies are not secure."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.signInIsNotOverHttpsDetail",
+    "text": "Sign-in cookies aren't marked secure, so anyone on the network can read them. Put Valence behind HTTPS. Allowed addresses: {addresses}.",
+    "context": "Under the not-over-HTTPS warning. {addresses} is the list of addresses allowed to sign in from."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.signInScreen",
+    "text": "Sign-in screen",
+    "context": "Heading of the admin Settings card for the screen people sign in from."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.tv",
+    "text": "TV",
+    "context": "One of the apps people can sign in with: the TV app."
+  },
+  {
+    "handler": "screens.adminArea.signInCard.welcomeHome",
+    "text": "Welcome home",
+    "context": "Example shown in the empty sign-in message field."
   },
   {
     "handler": "screens.adminArea.sizeFree",
@@ -22660,6 +24026,11 @@
     "context": "A figure: how many profiles watched something, the admin area's statistics."
   },
   {
+    "handler": "screens.adminArea.statisticsPanel.playedAsIs",
+    "text": "Played as-is",
+    "context": "A column heading: plays that needed no conversion."
+  },
+  {
     "handler": "screens.adminArea.statisticsPanel.playsEachDay",
     "text": "Plays each day",
     "context": "A chart the admin area's statistics."
@@ -22673,6 +24044,11 @@
     "handler": "screens.adminArea.statisticsPanel.theStatisticsCouldNotBeRead",
     "text": "The statistics could not be read.",
     "context": "Shown when the admin area’s statistics failed to load."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.timeWatched",
+    "text": "Time watched",
+    "context": "A statistic: how long was watched in all."
   },
   {
     "handler": "screens.adminArea.statisticsPanel.titlesAdded",
@@ -22730,6 +24106,11 @@
     "context": "The title of the admin panel listing S3-compatible buckets."
   },
   {
+    "handler": "screens.adminArea.storagePanel.bucketsCannotBeMountedHere",
+    "text": "Buckets can't be mounted here",
+    "context": "Warning heading when the server cannot mount storage buckets."
+  },
+  {
     "handler": "screens.adminArea.storagePanel.cannotMountHere",
     "text": "Can’t mount here",
     "context": "A badge saying this server cannot mount buckets at all."
@@ -22740,6 +24121,11 @@
     "context": "The explanation at the top of the admin Buckets panel."
   },
   {
+    "handler": "screens.adminArea.storagePanel.installRcloneAndFuse",
+    "text": "Install rclone and FUSE. In Docker, add the buckets compose file.",
+    "context": "Under the warning that buckets cannot be mounted: what to install."
+  },
+  {
     "handler": "screens.adminArea.storagePanel.mounted",
     "text": "Mounted",
     "context": "A badge saying a bucket is mounted and readable."
@@ -22748,6 +24134,11 @@
     "handler": "screens.adminArea.storagePanel.mounting",
     "text": "Mounting",
     "context": "A badge saying a bucket is being mounted."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.mountsBuckets",
+    "text": "Mounts S3-compatible buckets as folders your libraries can use.",
+    "context": "At the top of the storage page."
   },
   {
     "handler": "screens.adminArea.storagePanel.noBucketsYet",
@@ -22763,6 +24154,16 @@
     "handler": "screens.adminArea.storagePanel.readingTheBuckets",
     "text": "Reading the buckets",
     "context": "The label of the spinner while the Buckets panel loads."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.removeThisBucket",
+    "text": "Remove this bucket?",
+    "context": "Title of the confirmation before a storage bucket is removed."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.removeThisBucketDetail",
+    "text": "Its folder is unmounted. Libraries that point at it can't find their files until it's added again.",
+    "context": "Body of the confirmation before a storage bucket is removed."
   },
   {
     "handler": "screens.adminArea.storagePanel.theBucketsCouldNotBeRead",
@@ -22785,9 +24186,44 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.closeMatch",
+    "text": "Close match",
+    "context": "Subtitle match level: a close match."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.episodeMatch",
+    "text": "Episode match",
+    "context": "A setting: how closely a subtitle must match an episode to be fetched."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.episodeMatchDetail",
+    "text": "How closely a subtitle must match an episode to be fetched.",
+    "context": "Under the episode match setting."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.exactFileOnly",
+    "text": "Exact file only",
+    "context": "Subtitle match level: only subtitles made for this exact file."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.fetchAutomatically",
     "text": "Fetch automatically",
     "context": "On the admin’s Subtitles page, under System. The switch that turns on fetching subtitles without anyone asking."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.fetchAutomaticallyDetail",
+    "text": "Finds subtitles in your languages for new films and episodes, and swaps in better ones.",
+    "context": "Under the fetch subtitles automatically setting."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.filmMatch",
+    "text": "Film match",
+    "context": "A setting: how closely a subtitle must match a film to be fetched."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.filmMatchDetail",
+    "text": "How closely a subtitle must match a film to be fetched.",
+    "context": "Under the film match setting."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries",
@@ -22820,9 +24256,19 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.languagesDetail",
+    "text": "Offered first when someone looks for subtitles.",
+    "context": "Under the subtitle languages setting."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.languageSpoken",
     "text": "Language spoken",
     "context": "The label of the menu that tells Whisper which language the films are spoken in."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.languageSpokenDetail",
+    "text": "Leave it to Whisper unless it guesses wrong.",
+    "context": "Under the language spoken setting."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.minimumScore",
@@ -22833,6 +24279,11 @@
     "handler": "screens.adminArea.subtitlesCard.modelBase",
     "text": "Base",
     "context": "A Whisper model size in the subtitle settings."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelDetail",
+    "text": "A larger model hears better and takes longer.",
+    "context": "Under the Whisper model setting."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.modelLarge",
@@ -22860,6 +24311,16 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.openSubtitlesDetail",
+    "text": "The biggest catalogue, and it can find subtitles timed to your exact file.",
+    "context": "Under OpenSubtitles when no account is set."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.openSubtitlesDetailWithAccount",
+    "text": "The biggest catalogue. Downloads count against {username}.",
+    "context": "Under OpenSubtitles when an account is set. {username} is the account."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.readingTheSubtitleSettings",
     "text": "Loading subtitle settings",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -22868,6 +24329,11 @@
     "handler": "screens.adminArea.subtitlesCard.savedTheSubtitleSettings",
     "text": "Subtitle settings saved",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.scoreOrMore",
+    "text": "Score {score} or more",
+    "context": "A subtitle match level saved before the levels were fixed. {score} is the minimum score."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.subdl",
@@ -22900,9 +24366,24 @@
     "context": "On the admin’s Subtitles page, under System."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.whisper",
+    "text": "Whisper",
+    "context": "The speech-recognition tool that writes subtitles. A product name."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whisperDetail",
+    "text": "Listens to titles with no subtitles at all and writes them.",
+    "context": "Under the write subtitles with Whisper setting."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe",
     "text": "Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.",
     "context": "The description of the Whisper setting when the media service has no Whisper."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whisperNotInstalled",
+    "text": "Whisper isn’t installed with the media service.",
+    "context": "Under the Whisper setting when Whisper is not installed."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper",
@@ -23980,6 +25461,16 @@
     "context": "The label of the button that opens one viewer’s watch history in the admin’s watch history table. {name} is the viewer."
   },
   {
+    "handler": "screens.adminArea.watchHistoryCard.underAMinute",
+    "text": "Under 1 min",
+    "context": "How long something was watched, when under a minute."
+  },
+  {
+    "handler": "screens.adminArea.watchHistoryCard.watchedFor",
+    "text": "Watched for",
+    "context": "A column heading: how long something was watched."
+  },
+  {
     "handler": "screens.adminArea.wayInMessageRow.messageCouldNotBeSaved",
     "text": "The message could not be saved.",
     "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when saving it failed."
@@ -24023,6 +25514,96 @@
     "handler": "screens.adminArea.webhookDeleted",
     "text": "Webhook deleted.",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.aboutSayingWhenItsFixed",
+    "text": "About saying when it’s fixed",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.aJobKeepsFailing",
+    "text": "A job keeps failing",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.alsoSayWhenItsFixed",
+    "text": "Also say when it’s fixed",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.andWhenItsBack",
+    "text": "And when it’s back",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.andWhenItsBackUp",
+    "text": "And when it’s back up",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.andWhenItWorksAgain",
+    "text": "And when it works again",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.andWhenTheresRoomAgain",
+    "text": "And when there’s room again",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.anIndexerKeepsFailing",
+    "text": "An indexer keeps failing",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.diskSpaceRunsLow",
+    "text": "Disk space runs low",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.problemsAndRequests",
+    "text": "Problems and requests",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.problemsOnly",
+    "text": "Problems only",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.requestsCantBeReached",
+    "text": "Requests can’t be reached",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.sendsASecondMessageWhenSomething",
+    "text": "Sends a second message when something that went wrong is working again: the disk has room, the VPN is back, an indexer answers.",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.theCatalogueCantBeReached",
+    "text": "The catalogue can’t be reached",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.theTranscoderCantBeReached",
+    "text": "The transcoder can’t be reached",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.theVPNGoesDown",
+    "text": "The VPN goes down",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.turnAllOff",
+    "text": "Turn all off",
+    "context": "On a webhook's page, in the card choosing which events it sends."
+  },
+  {
+    "handler": "screens.adminArea.webhookEventsCard.whatItSends",
+    "text": "What it sends",
+    "context": "On a webhook's page, in the card choosing which events it sends."
   },
   {
     "handler": "screens.adminArea.webhookFields.aFirstScanOfALarge",
@@ -24225,6 +25806,76 @@
     "context": "The description of the address field in the webhook fields in the admin area, when the Gotify format is chosen. token is Gotify’s own name and stays as it is."
   },
   {
+    "handler": "screens.adminArea.webhookPage.backToWebhooks",
+    "text": "Back to Webhooks",
+    "context": "Button on a webhook's page that goes back to the list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.deliveries",
+    "text": "Deliveries",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.event",
+    "text": "Event",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.everyKind",
+    "text": "Every kind",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.onlyFor",
+    "text": "Only for",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.shapesEachMessageForWhereIts",
+    "text": "Shapes each message for where it's posted.",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.tries",
+    "text": "Tries",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.valenceJSON",
+    "text": "Valence JSON",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.whatItsCalledOnThisPage",
+    "text": "What it's called on this page.",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.whereEachMessageIsPosted",
+    "text": "Where each message is posted.",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.whereItGoes",
+    "text": "Where it goes",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.whichKindsOfTitleAreSent",
+    "text": "Which kinds of title are sent when they arrive or are watched.",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.whoseSignInsAndAccountChanges",
+    "text": "Whose sign-ins and account changes are sent.",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookPage.whoseWatchingIsSent",
+    "text": "Whose watching is sent.",
+    "context": "On a webhook's own page in the admin area."
+  },
+  {
     "handler": "screens.adminArea.webhookSaved",
     "text": "Webhook saved.",
     "context": "Shown in the admin area."
@@ -24255,6 +25906,16 @@
     "context": "The label of a button in the webhooks panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.webhooksPanel.keepItTo100CharactersOr",
+    "text": "Keep it to 100 characters or fewer.",
+    "context": "Under a webhook's name field, when what was typed is too long."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.lastDelivery",
+    "text": "Last delivery",
+    "context": "In the admin list of webhooks."
+  },
+  {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",
     "text": "{name} is set up. Copy its signing secret now.",
     "context": "Text shown in the webhooks panel in the admin area. {name} is filled in by the app."
@@ -24275,9 +25936,29 @@
     "context": "The detail of a confirm dialog in the webhooks panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.webhooksPanel.noWebhooksYetCreateOne",
+    "text": "No webhooks yet. Create one to post events to Discord, ntfy or any address.",
+    "context": "Shown when there are no webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.pasteTheAddressToPostTo",
+    "text": "Paste the address to post to.",
+    "context": "Under a webhook's address field, when what was typed can't be used."
+  },
+  {
     "handler": "screens.adminArea.webhooksPanel.sendATest",
     "text": "Send a test",
     "context": "The label of a button in the webhooks panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.sends",
+    "text": "Sends",
+    "context": "In the admin list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.thatIsntAWebAddressIt",
+    "text": "That isn’t a web address. It starts with https:// or http://.",
+    "context": "Under a webhook's address field, when what was typed can't be used."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.theWebhooksCouldNotBeRead",
@@ -25638,6 +27319,11 @@
     "handler": "screens.downloadsPanel.downloadQueueTable.onceItHasDownloaded",
     "text": "When the download finishes.",
     "context": "Shown in the download queue table in the downloads panel."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.perSecond",
+    "text": "/s",
+    "context": "After a download speed, like \"4 MB/s\"."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.states.processing",
@@ -27205,9 +28891,19 @@
     "context": "In the import wizard, under a kind of server to import from. Jellyfin and Emby."
   },
   {
+    "handler": "screens.importWizard.sourceStep.signsInWithApiKey",
+    "text": "Signs in with an API key.",
+    "context": "Under Jellyfin or Emby when choosing where to import from."
+  },
+  {
     "handler": "screens.importWizard.sourceStep.signsInWithAPlexToken",
     "text": "Imports users, watch history and libraries using a Plex token.",
     "context": "In the import wizard, under a kind of server to import from. Plex."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.signsInWithPlexToken",
+    "text": "Signs in with a Plex token.",
+    "context": "Under Plex when choosing where to import from."
   },
   {
     "handler": "screens.importWizard.sourceStep.theAddressValenceCanReachItOn",
@@ -28416,6 +30112,16 @@
     "context": "Text shown in the job history in the observability page."
   },
   {
+    "handler": "screens.observabilityPage.jobHistory.hideRoutineChecks",
+    "text": "Hide routine checks",
+    "context": "Button that hides the routine checks that went fine."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHistory.hoursAgo",
+    "text": "{hours} h ago",
+    "context": "When a job ran, a few hours ago. {hours} is how many."
+  },
+  {
     "handler": "screens.observabilityPage.jobHistory.inTheOrderItHappened",
     "text": "Chronological",
     "context": "The detail in the job history in the observability page."
@@ -28444,6 +30150,11 @@
     "handler": "screens.observabilityPage.jobHistory.longestFirst",
     "text": "Longest first",
     "context": "The label in the job history in the observability page."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHistory.minutesAndSeconds",
+    "text": "{minutes} min {seconds} s",
+    "context": "How long a job took, in minutes and seconds."
   },
   {
     "handler": "screens.observabilityPage.jobHistory.noIssuesWereRecordedForThis",
@@ -28489,6 +30200,16 @@
     "handler": "screens.observabilityPage.jobHistory.searchJobRuns",
     "text": "Search job runs",
     "context": "The label of a text field in the job history in the observability page."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHistory.seconds",
+    "text": "{seconds} s",
+    "context": "How long a job took, in seconds."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHistory.showRoutineChecks",
+    "text": "Show routine checks",
+    "context": "Button that shows the routine checks that went fine."
   },
   {
     "handler": "screens.observabilityPage.jobHistory.theWholeServer",
@@ -29606,6 +31327,16 @@
     "context": "The admin area's Plugins panel: a plugin signed by a key this server trusts rather than by Valence (from `TrustBadge`)."
   },
   {
+    "handler": "screens.pluginsPanel.trustedKeysCard.aboutTrustedSigningKeys",
+    "text": "About trusted signing keys",
+    "context": "Label of the button explaining trusted plugin signing keys."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.giveTheKeyItsId",
+    "text": "Give the key its id.",
+    "context": "Under the key id field when it is empty."
+  },
+  {
     "handler": "screens.pluginsPanel.trustedKeysCard.keyId",
     "text": "Key id",
     "context": "The admin area's Plugins panel: the field for a trusted key's id, as its signatures name it (from `TrustedKeysCard`)."
@@ -29619,6 +31350,16 @@
     "handler": "screens.pluginsPanel.trustedKeysCard.nowTrustingId",
     "text": "Now trusting {id}.",
     "context": "The admin area's Plugins panel: shown once a trusted key is added (from `TrustedKeysCard`). {id} is the key's id."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.onlyValencesOwnKey",
+    "text": "Only Valence’s own key. Add one to install plugins someone else signs without the unsigned warning.",
+    "context": "Shown when no signing keys are trusted beyond Valence's own."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.pasteThePublicKey",
+    "text": "Paste the public key.",
+    "context": "Under the public key field when it is empty."
   },
   {
     "handler": "screens.pluginsPanel.trustedKeysCard.pluginsItSignedStayInstalled",
@@ -29644,6 +31385,11 @@
     "handler": "screens.pluginsPanel.trustedKeysCard.stopTrustingId",
     "text": "Stop trusting {id}?",
     "context": "The admin area's Plugins panel: the question before a trusted signing key is forgotten (from `TrustedKeysCard`). {id} is the key's id."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.trustASigningKey",
+    "text": "Trust a signing key",
+    "context": "Dialog for trusting a plugin signing key."
   },
   {
     "handler": "screens.pluginsPanel.trustedKeysCard.trustedSigningKeys",
@@ -36587,9 +38333,14 @@
     "context": "Shown in the data table."
   },
   {
-    "handler": "ui.dataTable.pageValueOfPageCountEveryRowIn",
-    "text": "Page {value} of {pageCount} · {everyRow} in total",
-    "context": "Text shown in the data table. {value} is filled in by the app; {pageCount} is filled in by the app; {everyRow} is filled in by the app."
+    "handler": "ui.dataTable.rowsFromTo",
+    "text": "{from}–{to}",
+    "context": "Under a table that can read more rows than it holds, which rows are shown, with no total since it is not known. {from} and {to} are row numbers."
+  },
+  {
+    "handler": "ui.dataTable.rowsFromToOfCount",
+    "text": "{from}–{to} of {count}",
+    "context": "Under a data table, which rows are showing out of how many there are, like \"1–10 of 23\". {from} and {to} are the first and last row shown, and {count} how many there are in all."
   },
   {
     "handler": "ui.dataTable.showingHoldingOfLengthScrollFor",

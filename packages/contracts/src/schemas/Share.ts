@@ -12,6 +12,14 @@ const ShareSchema = z.object({
   seriesId: z.string().uuid().nullable(),
   bookId: z.string().uuid().nullable().default(null),
   title: z.string(),
+  episode: z
+    .object({
+      seasonNumber: z.number().int().nullable(),
+      episodeNumber: z.number().int().nullable(),
+      title: z.string().nullable(),
+    })
+    .nullable()
+    .default(null),
   createdAt: z.string().datetime(),
   expiresAt: z.string().datetime().nullable(),
   viewCap: z.number().int().positive().nullable(),

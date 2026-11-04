@@ -38,6 +38,8 @@ const LISTENING: ActiveSession = {
   },
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
 };
 
 const draw = (sessions: ActiveSession[]) => {
@@ -72,17 +74,18 @@ describe('SessionCards', () => {
     expect(screen.getAllByRole('article')).toHaveLength(3);
   });
 
-  it('hands the session on when one is paused, stopped or told something', async () => {
+  it('hands the session on when one is paused or stopped, and says why music takes no message', async () => {
     const user = userEvent.setup();
     const calls = draw([LISTENING]);
 
     await user.click(screen.getByRole('button', { name: 'Pause' }));
     await user.click(screen.getByRole('button', { name: 'Stop' }));
-    await user.click(screen.getByRole('button', { name: 'Message' }));
 
     expect(calls.onPause).toHaveBeenCalledWith('tab-1');
     expect(calls.onStop).toHaveBeenCalledWith('tab-1');
-    expect(calls.onMessage).toHaveBeenCalledWith(LISTENING);
+    expect(
+      screen.getByRole('button', { name: 'Messages show only while they’re watching a video.' }),
+    ).toBeDisabled();
   });
 
   it('hands the session on when a paused one is let carry on', async () => {

@@ -22,6 +22,7 @@ import { freshnessOf } from '@ValenceClient/query/freshnessOf';
 import { useLookAgainWhenShown } from '@ValenceClient/query/useLookAgainWhenShown';
 import { AdminPageActions } from '@ValenceScreens/components/AdminPage/components/AdminPageActions/AdminPageActions';
 import { say } from '@ValenceI18n/say';
+import { hoursInWords } from '@ValenceScreens/admin/hoursInWords';
 import type { StatisticsPanelProps } from './StatisticsPanel.types';
 
 type ClientRow = Statistics['clients'][number];
@@ -52,7 +53,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
     () => [
       {
         id: 'client',
-        header: say('common.browserOrApp'),
+        header: say('common.device'),
         accessorFn: (row) => row.client,
         cell: ({ row }) => (
           <Tooltip label={row.original.client}>
@@ -73,7 +74,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
       {
         id: 'asItLies',
         meta: { hidesOnPhones: true },
-        header: say('screens.adminArea.statisticsPanel.asTheFileLies'),
+        header: say('screens.adminArea.statisticsPanel.playedAsIs'),
         accessorFn: (row) => row.modes.DirectPlay + row.modes.Remux,
         cell: ({ row }) => (
           <FormattedNumber
@@ -125,8 +126,8 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
                 value: <FormattedNumber value={statistics.totals.plays} />,
               },
               {
-                label: say('screens.adminArea.statisticsPanel.hoursWatched'),
-                value: <FormattedNumber value={statistics.totals.hours} />,
+                label: say('screens.adminArea.statisticsPanel.timeWatched'),
+                value: hoursInWords(statistics.totals.hours),
               },
               {
                 label: say('screens.adminArea.statisticsPanel.peopleWatching'),
@@ -238,9 +239,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
                   value: viewer.plays,
                   ...(viewer.hours > 0
                     ? {
-                        detail: say('screens.adminArea.mostWatchedList.hours', {
-                          hours: viewer.hours.toLocaleString(),
-                        }),
+                        detail: hoursInWords(viewer.hours),
                       }
                     : {}),
                 }))}

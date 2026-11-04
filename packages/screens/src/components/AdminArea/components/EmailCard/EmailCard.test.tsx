@@ -60,7 +60,18 @@ describe('EmailCard', () => {
     );
   });
 
+  it('saves at once when email is turned on, where a mail server is set', async () => {
+    renderInAnAddress(<EmailCard />);
+
+    await userEvent.click(await screen.findByRole('switch', { name: 'Send email' }));
+
+    await waitFor(() => {
+      expect(saveEmailSetup).toHaveBeenCalledWith(expect.objectContaining({ isEnabled: true }));
+    });
+  });
+
   it('turns on what is emailed', async () => {
+    fetchEmailSetup.mockResolvedValue({ ...SETUP, isEnabled: true });
     renderInAnAddress(<EmailCard />);
 
     await userEvent.click(
@@ -85,17 +96,18 @@ describe('EmailCard', () => {
         values: { host: 'smtp.example.com' },
       },
     });
+    fetchEmailSetup.mockResolvedValue({ ...SETUP, isEnabled: true });
     renderInAnAddress(<EmailCard />);
 
     await userEvent.type(await screen.findByLabelText('Send test email to'), 'ada@example.com');
-    await userEvent.click(screen.getByRole('button', { name: 'Send test email' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(
       await screen.findByText('Sent. Check the inbox for ada@example.com.'),
     ).toBeInTheDocument();
     expect(sendTestEmail).toHaveBeenCalledWith('ada@example.com');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Send test email' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(
       await screen.findByText(

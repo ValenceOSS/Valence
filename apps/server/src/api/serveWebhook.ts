@@ -16,6 +16,26 @@ import { queueWebhookRedelivery } from '@ValenceServer/webhooks/queueWebhookRede
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { DEFAULT_CUSTOM_WEBHOOK } from '@ValenceContracts/constants/DEFAULT_CUSTOM_WEBHOOK';
+import { renderWebhookTemplate } from '@ValenceContracts/functions/renderWebhookTemplate';
+import { templateProblemKey } from '@ValenceServer/webhooks/templateProblemKey';
+import type { CustomWebhook } from '@ValenceContracts/schemas/Webhook';
+
+/**
+ * What is wrong with a Custom webhook's template that no event could fix, read by filling it with
+ * nothing.
+ *
+ * @param custom - The setup asked for, where one was.
+ * @returns The refusal to give, or nothing where the template can be filled.
+ */
+const templateRefusalOf = (custom: CustomWebhook | null | undefined) => {
+  const problem =
+    custom === null || custom === undefined
+      ? null
+      : renderWebhookTemplate(custom.template, custom.format, {}).problem;
+
+  return problem === null ? null : refuse(templateProblemKey(problem));
+};
 
 /**
  * Registers the webhook endpoints.
@@ -63,7 +83,16 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
-    const made = await webhooks.create(asked);
+    const refusedTemplate = templateRefusalOf(asked.custom);
+
+    if (refusedTemplate !== null) {
+      return context.json(refusedTemplate, 400);
+    }
+
+    const made = await webhooks.create({
+      ...asked,
+      custom: asked.custom ?? (asked.preset === 'custom' ? DEFAULT_CUSTOM_WEBHOOK : null),
+    });
 
     await recordAudit(context, 'webhook.added', made.subscription.name, {
       host: URL.parse(made.subscription.url)?.host ?? '',
@@ -87,11 +116,19 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.valenceWillNotSendDeliveriesTo'), 400);
     }
 
+    const refusedTemplate = templateRefusalOf(asked.custom);
+
+    if (refusedTemplate !== null) {
+      return context.json(refusedTemplate, 400);
+    }
+
     const id = context.req.valid('param').id;
     const before =
       asked.url === undefined && asked.preset === undefined
         ? null
         : (await webhooks.list()).find((one) => one.id === id);
+    const isNewlyCustom =
+      asked.preset === 'custom' && asked.custom === undefined && before?.custom === null;
     const missing =
       before === null || before === undefined
         ? []
@@ -104,7 +141,10 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
-    const changed = await webhooks.update(id, asked);
+    const changed = await webhooks.update(
+      id,
+      isNewlyCustom ? { ...asked, custom: DEFAULT_CUSTOM_WEBHOOK } : asked,
+    );
 
     if (changed !== null) {
       await recordAudit(context, 'webhook.changed', changed.name);

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryWebhookStore } from './createMemoryWebhookStore';
 import type { WebhookStore } from './WebhookStore';
+import type { CustomWebhook } from '@ValenceContracts/schemas/Webhook';
 
 const aSubscription = {
   name: 'Discord',
@@ -20,6 +21,17 @@ const aFailure = {
     reason: 'no space left',
   },
 } as const;
+
+const CUSTOM: CustomWebhook = {
+  method: 'PUT',
+  format: 'text',
+  template: '{{title}}',
+  headers: [
+    { name: 'Authorization', value: 'Bearer token', isSecret: true },
+    { name: 'X-Source', value: 'valence', isSecret: false },
+  ],
+  isSigned: false,
+};
 
 let store: WebhookStore;
 
@@ -67,6 +79,7 @@ describe('createMemoryWebhookStore', () => {
       url: aSubscription.url,
       preset: 'discord',
       secret: created.secret,
+      custom: null,
     });
   });
 
@@ -255,5 +268,43 @@ describe('changing a subscription that already exists', () => {
     await store.update(subscription.id, { events: ['job.completed'] });
 
     expect(await store.listenersFor(aFailure)).toStrictEqual([]);
+  });
+  it('shows a Custom setup with its secrets hidden, and hands delivery the whole of it', async () => {
+    const { subscription } = await store.create({
+      ...aSubscription,
+      events: ['job.failed'],
+      preset: 'custom',
+      custom: CUSTOM,
+    });
+
+    expect(subscription.custom?.headers[0]?.value).toBe('');
+    expect(subscription.custom?.headers[1]?.value).toBe('valence');
+    expect((await store.list())[0]?.custom?.headers[0]?.value).toBe('');
+    expect((await store.readTarget(subscription.id))?.custom).toStrictEqual(CUSTOM);
+  });
+
+  it('keeps a secret saved back empty, and clears the setup when asked', async () => {
+    const { subscription } = await store.create({
+      ...aSubscription,
+      events: ['job.failed'],
+      preset: 'custom',
+      custom: CUSTOM,
+    });
+    const shown = subscription.custom;
+
+    if (shown === null) {
+      throw new Error('No setup was shown.');
+    }
+
+    await store.update(subscription.id, { custom: { ...shown, template: '{{summary}}' } });
+
+    expect((await store.readTarget(subscription.id))?.custom).toStrictEqual({
+      ...CUSTOM,
+      template: '{{summary}}',
+    });
+
+    await store.update(subscription.id, { custom: null });
+
+    expect((await store.readTarget(subscription.id))?.custom).toBeNull();
   });
 });

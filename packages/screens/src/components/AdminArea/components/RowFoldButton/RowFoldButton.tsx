@@ -18,7 +18,10 @@ const RowFoldButton = ({ label, isOpen, onToggle }: RowFoldButtonProps) => (
     isIconOnly
     label={label}
     aria-expanded={isOpen}
-    onClick={onToggle}
+    onClick={(event) => {
+      event.stopPropagation();
+      onToggle();
+    }}
     className="size-6 shrink-0"
   >
     <Icon

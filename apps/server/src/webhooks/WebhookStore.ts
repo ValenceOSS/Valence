@@ -1,6 +1,7 @@
 import type { WebhookAttempt, WebhookTarget } from './deliverWebhook';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type {
+  CustomWebhook,
   WebhookDelivery,
   WebhookEvent,
   WebhookFilters,
@@ -14,6 +15,7 @@ type NewWebhookSubscription = {
   preset: WebhookPreset;
   events: WebhookEvent[];
   filters?: WebhookFilters;
+  custom?: CustomWebhook | null;
 };
 
 type CreatedWebhookSubscription = {
@@ -27,6 +29,7 @@ type WebhookSubscriptionChange = {
   preset?: WebhookPreset | undefined;
   events?: WebhookEvent[] | undefined;
   filters?: WebhookFilters | undefined;
+  custom?: CustomWebhook | null | undefined;
   enabled?: boolean | undefined;
 };
 

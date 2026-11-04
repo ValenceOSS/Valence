@@ -7,6 +7,7 @@ import { say } from '@ValenceI18n/say';
 
 const TONES: Readonly<Record<StatusTone, MediaCardMeter['tone']>> = {
   quiet: 'quiet',
+  ended: 'quiet',
   waiting: 'accent',
   busy: 'busy',
   warning: 'highlight',

@@ -5,7 +5,7 @@ import type {
   Refusal,
   WebhookChange,
 } from '@ValenceClient/admin/fetchWebhooks';
-import type { WebhookFilterChoice } from './components/WebhookFilterList/WebhookFilterList.types';
+import type { WebhookFilterChoice } from './WebhookFilterChoice.types';
 
 type WebhooksPanelProps = {
   webhooks: WebhookSubscription[];
@@ -28,6 +28,8 @@ type WebhooksPanelProps = {
   isHistoryLoading: boolean;
   onOpenHistory: (id: string | null) => void;
   onRedeliver: (subscriptionId: string, deliveryId: string) => void;
+  openedWebhook?: string | null;
+  onOpenWebhook?: (id: string | null) => void;
 };
 
 export type { WebhooksPanelProps };

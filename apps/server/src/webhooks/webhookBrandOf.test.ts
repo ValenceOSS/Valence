@@ -7,6 +7,7 @@ describe('webhookBrandOf', () => {
   it('signs as Valence with its icon, where nobody chose a brand', () => {
     expect(webhookBrandOf('https://watch.example.com', NO_BRAND, null)).toStrictEqual({
       name: 'Valence',
+      url: 'https://watch.example.com',
       iconUrl: 'https://watch.example.com/icon.png',
       accent: null,
     });
@@ -21,6 +22,7 @@ describe('webhookBrandOf', () => {
       ),
     ).toStrictEqual({
       name: 'Flux',
+      url: 'https://watch.example.com',
       iconUrl: 'https://watch.example.com/api/brand/logo?v=brand-logo-1.png',
       accent: 0x3ac47d,
     });
@@ -29,5 +31,12 @@ describe('webhookBrandOf', () => {
   it('gives no picture where the server has no public address a receiver could fetch it from', () => {
     expect(webhookBrandOf('http://192.168.1.10:8420', NO_BRAND, null).iconUrl).toBeNull();
     expect(webhookBrandOf('not an address', NO_BRAND, null).iconUrl).toBeNull();
+  });
+
+  it('carries the server’s own address for a template to name, plain or secure, and none for nonsense', () => {
+    expect(webhookBrandOf('http://192.168.1.10:8420/', NO_BRAND, null).url).toBe(
+      'http://192.168.1.10:8420',
+    );
+    expect(webhookBrandOf('not an address', NO_BRAND, null).url).toBeNull();
   });
 });

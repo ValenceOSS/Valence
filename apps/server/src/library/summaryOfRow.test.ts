@@ -25,6 +25,10 @@ const ROW = {
   rating: 8.2,
   externalId: '603',
   genres: ['Action', 'Science Fiction'],
+  audioStreams: [
+    { codec: 'aac', channels: 2 },
+    { codec: 'eac3', channels: 6, isDefault: true, isAtmos: true },
+  ],
 };
 
 describe('turning a stored row into the summary a client lists it by', () => {
@@ -53,7 +57,18 @@ describe('turning a stored row into the summary a client lists it by', () => {
       rating: 8.2,
       externalId: '603',
       genres: ['Action', 'Science Fiction'],
+      audio: { codec: 'eac3', channels: 6, isAtmos: true },
     });
+  });
+
+  it('takes the first audio track when none is the default, and none from what it cannot read', () => {
+    expect(summaryOfRow({ ...ROW, audioStreams: [{ codec: 'aac', channels: 2 }] }).audio).toEqual({
+      codec: 'aac',
+      channels: 2,
+      isAtmos: false,
+    });
+    expect(summaryOfRow({ ...ROW, audioStreams: 'not streams' }).audio).toBeNull();
+    expect(summaryOfRow({ ...ROW, audioStreams: [] }).audio).toBeNull();
   });
 
   it('carries the revision of pictures that changed, and any column read beside the summary', () => {

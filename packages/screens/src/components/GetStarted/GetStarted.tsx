@@ -206,7 +206,7 @@ const GetStarted = ({
 
                                         <div className="flex items-center gap-2">
                                           <Button
-                                            variant="primary"
+                                            variant="confirm"
                                             size="sm"
                                             onClick={step.onAction}
                                           >

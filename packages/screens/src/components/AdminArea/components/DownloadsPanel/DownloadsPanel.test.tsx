@@ -472,6 +472,7 @@ describe('DownloadsPanel', () => {
 
     renderInAnAddress(<DownloadsPanel />);
 
+    await user.click(screen.getByRole('tab', { name: 'Clients' }));
     await user.click(screen.getByRole('button', { name: 'Add a download client' }));
 
     expect(

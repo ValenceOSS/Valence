@@ -353,6 +353,8 @@ describe('fetchActiveSessions', () => {
         listening: null,
         bookListening: null,
         reading: null,
+        controlledFrom: null,
+        remoteFor: null,
         isGuest: false,
         guestOf: null,
         fromServer: null,

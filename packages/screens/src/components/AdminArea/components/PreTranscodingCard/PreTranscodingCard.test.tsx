@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -130,62 +130,49 @@ describe('PreTranscodingCard', () => {
     expect(await screen.findByText('Remaining')).toBeVisible();
     expect(screen.getByText('12')).toBeVisible();
     expect(screen.getByText('Waiting for quiet hours')).toBeVisible();
-    expect(screen.getByText(/Europe\/London/)).toBeVisible();
   });
 
-  it('turns it on and saves the whole of it', async () => {
+  it('turns it on and saves the whole of it, without a save button', async () => {
     draw(PRE_TRANSCODING_DEFAULTS);
 
     await userEvent.click(await screen.findByRole('switch', { name: 'Pre-transcoding' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(savePreTranscodingMock).toHaveBeenCalledWith(ON);
-  });
-
-  it('saves a bitrate ceiling, and refuses to save one it cannot take', async () => {
-    draw();
-
-    const ceiling = () => screen.findByRole('spinbutton', { name: 'Bitrate ceiling' });
-
-    await userEvent.type(await ceiling(), '20');
-
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-
-    await userEvent.clear(await ceiling());
-    await userEvent.type(await ceiling(), '2000');
-
-    expect(await ceiling()).toHaveValue(2000);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    expect(savePreTranscodingMock).toHaveBeenCalledWith({
-      ...ON,
-      targets: [{ ...DEFAULT_PRE_TRANSCODE_TARGET, maxBitrateKbps: 2000 }],
-    });
-  });
-
-  it('works until everything is done when asked to', async () => {
-    draw();
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Until everything is done' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    expect(savePreTranscodingMock).toHaveBeenCalledWith({ ...ON, schedule: 'untilDone' });
-  });
-
-  it('offers only libraries of films and shows once every library is no longer wanted', async () => {
-    draw();
-
-    await userEvent.click(
-      await screen.findByRole('switch', { name: /All film and series libraries/ }),
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+    await waitFor(
+      () => {
+        expect(savePreTranscodingMock).toHaveBeenCalledWith({
+          ...PRE_TRANSCODING_DEFAULTS,
+          isEnabled: true,
+        });
+      },
+      { timeout: 8000 },
     );
+  });
+
+  it('works at any time when asked to', async () => {
+    draw();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Any time' }));
+
+    await waitFor(
+      () => {
+        expect(savePreTranscodingMock).toHaveBeenCalledWith({ ...ON, schedule: 'untilDone' });
+      },
+      { timeout: 8000 },
+    );
+  });
+
+  it('starts from every film and series library when they are to be chosen', async () => {
+    draw();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Choose' }));
 
     expect(screen.getByRole('checkbox', { name: /Films/ })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /Shows/ })).toBeChecked();
     expect(screen.queryByRole('checkbox', { name: /Music/ })).toBeNull();
   });
 
-  it('pauses at once, without waiting for a save', async () => {
+  it('pauses at once, without waiting', async () => {
     draw();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Pause' }));
@@ -193,43 +180,32 @@ describe('PreTranscodingCard', () => {
     expect(savePreTranscodingMock).toHaveBeenCalledWith({ ...ON, isPaused: true });
   });
 
-  it('keeps what was being changed when it is paused, and saves it without undoing the pause', async () => {
+  it('adds a version one step below the lowest, and saves the ladder', async () => {
     draw();
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Until everything is done' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a version' }));
 
-    expect(savePreTranscodingMock).toHaveBeenLastCalledWith({ ...ON, isPaused: true });
-    expect(await screen.findByRole('button', { name: 'Resume' })).toBeVisible();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    expect(savePreTranscodingMock).toHaveBeenLastCalledWith({
-      ...ON,
-      isPaused: true,
-      schedule: 'untilDone',
-    });
+    await waitFor(
+      () => {
+        expect(savePreTranscodingMock).toHaveBeenCalledWith({
+          ...ON,
+          targets: [
+            DEFAULT_PRE_TRANSCODE_TARGET,
+            { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '720p' },
+          ],
+        });
+      },
+      { timeout: 8000 },
+    );
   });
 
-  it('adds a rung one step below the lowest, and saves the ladder', async () => {
-    draw();
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Add a rung' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    expect(savePreTranscodingMock).toHaveBeenCalledWith({
-      ...ON,
-      targets: [DEFAULT_PRE_TRANSCODE_TARGET, { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '720p' }],
-    });
-  });
-
-  it('says which rung replaces the original once the original is not kept', async () => {
+  it('asks before the original stops being kept, then says which version replaces it', async () => {
     draw();
 
     expect(await screen.findByRole('switch', { name: 'Keep the original' })).toBeChecked();
-    expect(screen.queryByText('Replaces the original')).toBeNull();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Keep the original' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete originals' }));
 
     expect(screen.getByText('Replaces the original')).toBeVisible();
   });

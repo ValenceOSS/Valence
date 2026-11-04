@@ -55,13 +55,14 @@ describe('StoragePanel', () => {
 
     draw();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/can’t mount buckets/u);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Buckets can't be mounted here/u);
   });
 
   it('removes a bucket', async () => {
     draw();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Remove Films in the cloud' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
 
     await waitFor(() => {
       expect(removeBucket).toHaveBeenCalledWith('films');

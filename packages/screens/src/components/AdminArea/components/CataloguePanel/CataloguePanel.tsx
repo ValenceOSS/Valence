@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { menuGroupsOf } from '@ValenceUI/menuGroupsOf';
 import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
@@ -147,6 +148,7 @@ const CataloguePanel = ({
     setIsFollowingAll(true);
   });
   const [isSearching, setIsSearching] = useState(false);
+  const [isConfirmingSearch, setIsConfirmingSearch] = useState(false);
   const [isChoosing, setIsChoosing] = useState(false);
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const [isDeciding, setIsDeciding] = useState(false);
@@ -299,10 +301,26 @@ const CataloguePanel = ({
       freshness={freshnessOf([catalogue], isLookingAgain)}
       actions={
         <>
+          <ConfirmDialog
+            isOpen={isConfirmingSearch}
+            title={say('screens.adminArea.cataloguePanel.searchForEverythingMissing')}
+            detail={say('screens.adminArea.cataloguePanel.searchForEverythingMissingDetail')}
+            confirmLabel={say('common.search')}
+            onClose={() => {
+              setIsConfirmingSearch(false);
+            }}
+            onConfirm={() => {
+              setIsConfirmingSearch(false);
+              searchEverythingMissing();
+            }}
+          />
+
           <PanelCardAction
             icon={SearchFilledIcon}
             isLoading={isSearching}
-            onClick={searchEverythingMissing}
+            onClick={() => {
+              setIsConfirmingSearch(true);
+            }}
           >
             {say('screens.adminArea.cataloguePanel.searchAllMissing')}
           </PanelCardAction>

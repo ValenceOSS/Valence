@@ -35,7 +35,7 @@ import { say } from '@ValenceI18n/say';
  */
 const Button = ({
   children,
-  variant = 'primary',
+  variant = 'confirm',
   size = 'md',
   isLoading = false,
   isPill = false,

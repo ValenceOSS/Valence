@@ -522,7 +522,7 @@ describe('MediaPanel', () => {
 
     expect(screen.getByText('Unmatched')).toBeInTheDocument();
 
-    await chooseFrom(user, 'Which titles', 'Unmatched (2)');
+    await user.click(screen.getByRole('button', { name: 'Unmatched 2' }));
 
     expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
     expect(screen.getByText('Heat')).toBeInTheDocument();
@@ -581,7 +581,11 @@ describe('MediaPanel', () => {
   it('says what a film is at a glance: how long, how sharp and how it is encoded', () => {
     render(<MediaPanel {...props} media={[item()]} />);
 
-    expect(screen.getByText('2:12:00 · 1080p · HEVC')).toBeInTheDocument();
+    const film = screen.getByRole('row', { name: /Parasite/ });
+
+    expect(within(film).getByText('2:12:00')).toBeInTheDocument();
+    expect(within(film).getByText('1080p')).toBeInTheDocument();
+    expect(within(film).getByText('HEVC')).toBeInTheDocument();
   });
 
   it('tells an empty library apart from one it could not read, and from having none', () => {
@@ -611,11 +615,10 @@ describe('MediaPanel', () => {
       />,
     );
 
-    expect(screen.getByText('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
+    expect(screen.getByTitle('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole('button', { name: 'Open /media/films/Parasite (2019) in Files' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Actions for Parasite' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Show in Files' }));
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/films/Parasite (2019)');
   });
@@ -689,9 +692,7 @@ describe('MediaPanel', () => {
 
     await chooseFrom(user, 'Which library', 'Shows');
 
-    expect(
-      await screen.findByRole('button', { name: 'Open /media/shows/From in Files' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByTitle('From')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Show the episodes of From' }));
     await user.click(screen.getByRole('button', { name: 'Show the episodes in Season 2' }));
@@ -736,11 +737,7 @@ describe('MediaPanel', () => {
     expect(await screen.findByText('Blue')).toBeInTheDocument();
     expect(screen.getByText('Joni Mitchell · 10 tracks · 36:00')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Which titles' }));
-
-    expect(await screen.findByRole('menuitemradio', { name: 'No cover (1)' })).toBeInTheDocument();
-
-    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'No cover 1' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Actions for Blue' }));
     await user.click(screen.getByRole('menuitem', { name: /Wrong match/ }));
@@ -905,6 +902,112 @@ describe('MediaPanel', () => {
 
     expect(screen.getByText('Checking for changes')).toBeInTheDocument();
     expect(screen.getByText('Parasite')).toBeInTheDocument();
+  });
+
+  it('deletes every file of the titles selected, once asked', async () => {
+    const onDelete = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[item(), item({ id: 'item-2', title: 'Heat' })]}
+        onDelete={onDelete}
+      />,
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select every title shown' }));
+
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    const asking = await screen.findByRole('dialog');
+
+    expect(within(asking).getByText('Delete 2 files?')).toBeInTheDocument();
+
+    await user.click(within(asking).getByRole('button', { name: 'Delete' }));
+
+    expect(onDelete).toHaveBeenCalledTimes(2);
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-2' }), false);
+  });
+
+  it('selects one title at a time and clears the selection', async () => {
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item(), item({ id: 'item-2', title: 'Heat' })]} />);
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select Heat' }));
+
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+  });
+
+  it('opens a title on a page of its own, from its name or its menu', async () => {
+    const onOpenTitle = vi.fn();
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onOpenTitle={onOpenTitle} />);
+
+    await user.click(screen.getByRole('button', { name: 'Parasite' }));
+    await user.click(screen.getByRole('button', { name: 'Actions for Parasite' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Open' }));
+
+    expect(onOpenTitle).toHaveBeenNthCalledWith(1, 'item-1');
+    expect(onOpenTitle).toHaveBeenNthCalledWith(2, 'item-1');
+  });
+
+  it('draws the open title’s page, and goes back to every title', async () => {
+    const onOpenTitle = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel {...props} media={[item()]} openedTitle="item-1" onOpenTitle={onOpenTitle} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Back to Media' }));
+
+    expect(onOpenTitle).toHaveBeenCalledWith(null);
+  });
+
+  it('asks before deleting a file from a title’s own page', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[item()]}
+        openedTitle="item-1"
+        onOpenTitle={vi.fn()}
+        onDelete={vi.fn().mockResolvedValue(true)}
+      />,
+    );
+
+    await user.click(
+      screen.getAllByRole('button', { name: 'Actions for Parasite' })[0] ?? document.body,
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /Delete/ }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('forgets the titles chosen once the library, search or filter changes', async () => {
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item(), item({ id: 'item-2', title: 'Heat' })]} />);
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select Heat' }));
+
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Find a series or film'), 'Para');
+
+    await waitFor(() => {
+      expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+    });
   });
 
   it('sets a display name so devtools can identify it', () => {

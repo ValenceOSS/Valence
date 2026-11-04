@@ -20,23 +20,25 @@ const CatalogueEntryRow = ({ entry, isBusy, onInstall }: CatalogueEntryRowProps)
     entry.installedVersion !== null && compareVersions(entry.installedVersion, entry.version) >= 0;
 
   return (
-    <li className="flex items-start gap-3 px-4 py-4">
+    <li className="flex items-center gap-4 px-5 py-4">
       {entry.iconUrl === null || !entry.iconUrl.startsWith('/api/') ? (
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-text-muted">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)] text-text-muted">
           <Icon of={PuzzleIcon} size={18} />
         </span>
       ) : (
         <img src={entry.iconUrl} alt="" className="size-10 shrink-0 rounded-lg object-cover" />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate font-medium text-text">{entry.name}</span>
+          <span className="truncate text-[0.9375rem] font-medium text-text">{entry.name}</span>
           <span className="text-xs text-text-muted">{entry.version}</span>
           {entry.kinds.includes('theme') ? <Badge size="sm">{say('common.theme')}</Badge> : null}
         </div>
 
-        <p className="text-xs leading-relaxed text-text-muted">{entry.description}</p>
+        <p className="line-clamp-1 text-xs text-text-muted" title={entry.description}>
+          {entry.description}
+        </p>
 
         <p className="flex flex-wrap items-center gap-x-3 text-xs text-text-muted/80">
           <span>{say('common.byAuthor', { author: entry.author })}</span>
@@ -49,9 +51,9 @@ const CatalogueEntryRow = ({ entry, isBusy, onInstall }: CatalogueEntryRowProps)
           {say('screens.pluginsPanel.catalogueEntryRow.needsANewerValence')}
         </Badge>
       ) : isCurrent ? (
-        <Badge size="sm" tone="success">
+        <span className="pt-1 text-xs text-text-muted">
           {say('screens.pluginsPanel.catalogueEntryRow.installed')}
-        </Badge>
+        </span>
       ) : (
         <Button size="sm" variant="confirm" isLoading={isBusy} onClick={onInstall}>
           {entry.installedVersion === null

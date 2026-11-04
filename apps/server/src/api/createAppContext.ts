@@ -989,7 +989,14 @@ const createAppContext = (options: CreateAppOptions) => {
     recording: AuditRecording = {},
   ): Promise<void> => {
     const headers = asked.req.raw.headers;
-    const account = await readAccount(headers);
+    const session = await readSessionOnce(auth, headers);
+    const account = session?.user ?? null;
+    const key = headers.get('x-api-key');
+    const keyName =
+      session === null || key === null || key === '' || session.session.token !== key
+        ? null
+        : ((await apiKeys.list(headers)).find((one) => one.id === session.session.id)?.name ??
+          session.session.id);
 
     await audit.record(
       {
@@ -997,7 +1004,7 @@ const createAppContext = (options: CreateAppOptions) => {
         actorName: account?.name ?? '',
         action,
         target,
-        detail,
+        detail: keyName === null ? detail : { ...detail, apiKey: keyName },
         address: callerOf?.(asked) ?? null,
         userAgent: headers.get('user-agent'),
       },

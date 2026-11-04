@@ -29,7 +29,7 @@ const nameOf = (kind: AccountStandingKind): string => {
     case 'expired':
       return say('screens.accountStanding.linkExpired');
     case 'cannotSignIn':
-      return say('screens.accountStanding.cannotSignInYet');
+      return say('common.partyPanel.noPassword');
     case 'active':
       return say('screens.accountStanding.active');
   }
@@ -57,9 +57,17 @@ const AccountStanding = ({ account, now, hasDetail = true }: AccountStandingProp
 
   return (
     <span className="flex min-w-0 flex-col items-start gap-1">
-      <Badge size="sm" tone={TONES[kind]}>
-        {nameOf(kind)}
-      </Badge>
+      <span
+        title={
+          kind === 'cannotSignIn'
+            ? say('screens.adminArea.accountStanding.noPasswordDetail')
+            : undefined
+        }
+      >
+        <Badge size="sm" tone={TONES[kind]}>
+          {nameOf(kind)}
+        </Badge>
+      </span>
 
       {detail === null ? null : <span className="truncate text-xs text-text-muted">{detail}</span>}
     </span>

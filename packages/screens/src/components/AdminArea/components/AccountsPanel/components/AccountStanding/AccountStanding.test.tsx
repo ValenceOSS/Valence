@@ -88,6 +88,6 @@ describe('AccountStanding', () => {
   it('says an account with no way in cannot be signed in to yet', () => {
     render(<AccountStanding account={account({ canSignIn: false })} now={NOW} />);
 
-    expect(screen.getByText('Can’t sign in yet')).toBeVisible();
+    expect(screen.getByText('No password')).toBeVisible();
   });
 });

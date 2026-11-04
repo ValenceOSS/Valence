@@ -48,21 +48,21 @@ describe('SharingCard', () => {
   it('offers only this server’s own libraries, marking those that are shared', async () => {
     renderInAnAddress(<SharingCard server={FILMS} thisServer="Anime" />);
 
-    expect(await screen.findByRole('button', { name: 'Share Films with Films' })).toHaveAttribute(
-      'aria-pressed',
+    expect(await screen.findByRole('checkbox', { name: /^Films/u })).toHaveAttribute(
+      'aria-checked',
       'true',
     );
-    expect(screen.getByRole('button', { name: 'Share Anime with Films' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('checkbox', { name: /^Anime/u })).toHaveAttribute(
+      'aria-checked',
       'false',
     );
-    expect(screen.queryByRole('button', { name: 'Share Cinema with Films' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: /^Cinema/u })).toBeNull();
   });
 
   it('shares a library, and stops sharing one', async () => {
     renderInAnAddress(<SharingCard server={FILMS} thisServer="Anime" />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Share Anime with Films' }));
+    await userEvent.click(await screen.findByRole('checkbox', { name: /^Anime/u }));
 
     await waitFor(() => {
       expect(changeLinkSharing).toHaveBeenLastCalledWith(FILMS.id, {
@@ -70,7 +70,7 @@ describe('SharingCard', () => {
       });
     });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Share Films with Films' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /^Films/u }));
 
     await waitFor(() => {
       expect(changeLinkSharing).toHaveBeenLastCalledWith(FILMS.id, { libraryIds: [] });

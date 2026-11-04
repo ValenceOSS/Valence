@@ -17,6 +17,8 @@ import {
   Stop as StopIcon,
 } from '@keyline-icons/react/fill';
 import { useState } from 'react';
+import { Cast as CastIcon } from '@keyline-icons/react';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
@@ -127,7 +129,25 @@ const SessionCard = ({
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium text-text">{titleOfSession(session)}</span>
+          {playback === null &&
+          listening === null &&
+          book === null &&
+          session.remoteFor !== null ? (
+            <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-text">
+              <Icon of={CastIcon} size={14} tone="muted" className="shrink-0" />
+              <span className="truncate">
+                {say('screens.videoRemote.remoteForLabel', { label: session.remoteFor.label })}
+              </span>
+            </span>
+          ) : playback === null && listening === null && book === null ? (
+            <span className="truncate text-sm font-medium text-text-muted">
+              {say('screens.adminArea.sessionCard.nothingPlaying')}
+            </span>
+          ) : (
+            <span className="truncate text-sm font-medium text-text">
+              {titleOfSession(session)}
+            </span>
+          )}
 
           {listening === null || playback !== null ? null : (
             <Badge size="sm">
@@ -152,6 +172,17 @@ const SessionCard = ({
             </Badge>
           )}
         </span>
+
+        {session.controlledFrom === null ? null : (
+          <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
+            <Icon of={CastIcon} size={13} className="shrink-0" />
+            <span className="truncate">
+              {say('screens.adminArea.sessionCard.controlledFromLabel', {
+                label: session.controlledFrom.label,
+              })}
+            </span>
+          </span>
+        )}
 
         {episode === null ? null : (
           <span className="truncate text-xs text-text" title={episode}>
@@ -179,6 +210,12 @@ const SessionCard = ({
           >
             {deviceAndClient}
           </span>
+
+          {session.clientId === platformInUse().thisClientId() ? (
+            <Badge size="sm" tone="accent">
+              {say('common.thisDevice')}
+            </Badge>
+          ) : null}
 
           {!isActive ? null : (
             <span className="shrink-0">
@@ -245,9 +282,9 @@ const SessionCard = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {!isActive ? null : (
+        {!isActive && reading === null ? null : (
           <>
-            {isPlaying ? (
+            {!isActive ? null : isPlaying ? (
               <Button
                 isIconOnly
                 variant="ghost"
@@ -282,16 +319,24 @@ const SessionCard = ({
               <Icon of={StopIcon} size={15} />
             </Button>
 
-            <Button
-              isIconOnly
-              variant="ghost"
-              label={say('screens.adminArea.sessionCard.message')}
-              size="sm"
-              disabled={isBusy}
-              onClick={onMessage}
-            >
-              <Icon of={MessageSquareIcon} size={15} />
-            </Button>
+            {session.clientId === platformInUse().thisClientId() ? null : (
+              <Button
+                isIconOnly
+                variant="ghost"
+                label={
+                  session.clientKind === 'tv'
+                    ? say('screens.adminArea.sessionCard.theTvAppCannotShowMessages')
+                    : playback === null
+                      ? say('screens.adminArea.sessionCard.messagesShowOnlyWhileWatching')
+                      : say('screens.adminArea.sessionCard.message')
+                }
+                size="sm"
+                disabled={isBusy || session.clientKind === 'tv' || playback === null}
+                onClick={onMessage}
+              >
+                <Icon of={MessageSquareIcon} size={15} />
+              </Button>
+            )}
           </>
         )}
 

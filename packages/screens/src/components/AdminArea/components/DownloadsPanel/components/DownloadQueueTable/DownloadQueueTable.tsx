@@ -171,7 +171,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'state',
-        header: say('common.state'),
+        header: say('common.status'),
         accessorFn: (download) => describeDownloadState(download).label,
         filterFn: (row, _columnId, filterValue) => row.original.state === filterValue,
         meta: {
@@ -188,7 +188,11 @@ const DownloadQueueTable = ({
                 {state.label}
               </Badge>
 
-              {state.detail === null ? null : (
+              {state.detail !== null && state.tone === 'danger' ? (
+                <span className="max-w-[16rem] truncate text-xs text-danger" title={state.detail}>
+                  {state.detail}
+                </span>
+              ) : state.detail === null ? null : (
                 <PanelCardInfo
                   align="start"
                   label={state.detail}
@@ -214,6 +218,23 @@ const DownloadQueueTable = ({
           return (
             <DownloadProgress title={row.original.title} progress={row.original.progress}>
               {arrived}
+              {row.original.downloadBytesPerSecond === null ||
+              row.original.downloadBytesPerSecond === 0 ? null : (
+                <>
+                  {' · '}
+                  <FormattedBytes bytes={row.original.downloadBytesPerSecond} />
+                  {say('screens.downloadsPanel.downloadQueueTable.perSecond')}
+                </>
+              )}
+              {row.original.secondsLeft === null ? null : (
+                <>
+                  {' · '}
+                  <Sentence
+                    words="common.durationLeft"
+                    fillings={{ timeLeft: describeTimeLeft(row.original.secondsLeft) }}
+                  />
+                </>
+              )}
             </DownloadProgress>
           );
         },
@@ -368,7 +389,13 @@ const DownloadQueueTable = ({
     <DataTable
       height={fillsScreen ? 'fills' : 'compact'}
       label={say('common.downloads')}
-      columns={columns}
+      columns={columns.filter(
+        (column) =>
+          column.id !== 'speed' &&
+          column.id !== 'left' &&
+          (column.id !== 'peers' ||
+            downloads.some((download) => download.seeds !== null || download.peers !== null)),
+      )}
       rows={[...downloads]}
       getRowId={(download) => download.id}
       {...(toolbar === undefined ? {} : { toolbar })}

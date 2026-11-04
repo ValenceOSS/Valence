@@ -5,7 +5,6 @@ import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { SelectField } from '@ValenceUI/SelectField';
-import { TextField } from '@ValenceUI/TextField';
 import { CODEC_NAMES } from '@ValenceCore/functions/renditionLabel';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
@@ -30,6 +29,65 @@ const CONTAINER_CHOICES = REENCODE_CONTAINERS.map((container) => ({
   id: container,
   label: container.toUpperCase(),
 }));
+
+const LIMITS_KBPS = [
+  300, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000,
+];
+
+/**
+ * Writes a bitrate in megabits a second, as the bitrate menu shows it.
+ *
+ * @param kbps - The bitrate in kilobits a second.
+ * @returns The bitrate in words, like "4.5 Mb/s".
+ */
+const mbps = (kbps: number): string =>
+  say('screens.adminArea.ladderTable.megabitsASecond', {
+    megabits: (kbps / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 }),
+  });
+
+/**
+ * Names the limit a rung's bitrate field stands at, as the menu of limits knows it.
+ *
+ * @param bitrate - The ceiling as stored.
+ * @returns The limit's id, or the usual limit where there is none.
+ */
+const chosenLimitOf = (bitrate: string): string => {
+  const reading = readBitrate(bitrate);
+
+  return reading.kind === 'kbps' ? String(reading.kbps) : 'auto';
+};
+
+/**
+ * The limits a rung's bitrate can be held to: the usual limit for its quality first, then every
+ * preset under it, with the rung's own ceiling kept where it is none of them.
+ *
+ * @param current - The rung's ceiling as stored.
+ * @param quality - The rung's quality.
+ * @returns The choices, highest first after the usual one.
+ */
+const limitChoices = (current: string, quality: string) => {
+  const automatic =
+    QUALITY_STEPS.find((step) => step.id === quality)?.maxVideoBitrateKbps ?? Infinity;
+  const presets = LIMITS_KBPS.filter((kbps) => kbps < automatic).map((kbps) => ({
+    id: String(kbps),
+    label: mbps(kbps),
+  }));
+  const reading = readBitrate(current);
+  const extra =
+    reading.kind === 'kbps' && !presets.some((one) => one.id === String(reading.kbps))
+      ? [{ id: String(reading.kbps), label: mbps(reading.kbps) }]
+      : [];
+
+  return [
+    {
+      id: 'auto',
+      label: Number.isFinite(automatic)
+        ? say('screens.adminArea.ladderTable.automaticAt', { bitrate: mbps(automatic) })
+        : say('common.automatic'),
+    },
+    ...[...extra, ...presets].sort((a, b) => Number(b.id) - Number(a.id)),
+  ];
+};
 
 /**
  * The pre-transcoding ladder as a table, one rung to a row: the picture, codec and container a copy
@@ -94,6 +152,7 @@ const LadderTable = ({
       },
       {
         id: 'codec',
+        meta: { hasLineBefore: true },
         header: say('screens.reencodeDialog.codec'),
         enableSorting: false,
         cell: ({ row }) => (
@@ -113,6 +172,7 @@ const LadderTable = ({
       },
       {
         id: 'container',
+        meta: { hasLineBefore: true },
         header: say('screens.adminArea.preTranscodingCard.container'),
         enableSorting: false,
         cell: ({ row }) => (
@@ -132,23 +192,19 @@ const LadderTable = ({
       },
       {
         id: 'ceiling',
+        meta: { hasLineBefore: true },
         header: say('screens.adminArea.preTranscodingCard.bitrateCeiling'),
         enableSorting: false,
         cell: ({ row }) => (
-          <TextField
+          <SelectField
             label={say('screens.adminArea.preTranscodingCard.bitrateCeiling')}
             isLabelHidden
-            type="number"
             size="sm"
-            min={100}
-            placeholder={say('common.noBitrateCeiling')}
-            value={row.original.bitrate}
-            onValueChange={(next) => {
-              told.current.onBitrateChange(row.original.id, next);
+            options={limitChoices(row.original.bitrate, row.original.target.quality)}
+            value={chosenLimitOf(row.original.bitrate)}
+            onSelect={(id) => {
+              told.current.onBitrateChange(row.original.id, id === 'auto' ? '' : id);
             }}
-            {...(readBitrate(row.original.bitrate).kind === 'invalid'
-              ? { error: say('screens.adminArea.preTranscodingCard.aWholeNumberFrom100') }
-              : {})}
           />
         ),
       },

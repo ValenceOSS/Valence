@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
-import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
+import { SelectField } from '@ValenceUI/SelectField';
+import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
@@ -17,7 +15,6 @@ import { PanelCard } from '@ValenceUI/PanelCard';
 import { changeLinkSharing } from '@ValenceClient/admin/changeLinkSharing';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import type { LinkSharing, LinkSharingChange } from '@ValenceContracts/schemas/LinkSharing';
 import { QUALITY_STEPS, QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import type { SharingCardProps } from './SharingCard.types';
@@ -89,17 +86,48 @@ const SharingCard = ({ server, thisServer }: SharingCardProps) => {
   const sharing: LinkSharing = asked.data;
   const own = libraries.data.filter((library) => (library.linkedServerId ?? null) === null);
 
-  const toggle = (libraryId: string) => {
-    change({
-      libraryIds: sharing.libraryIds.includes(libraryId)
-        ? sharing.libraryIds.filter((id) => id !== libraryId)
-        : [...sharing.libraryIds, libraryId],
-    });
-  };
+  const head = (text: string, isFirst = false) => (
+    <h3
+      className={
+        isFirst
+          ? 'px-5 pt-4 text-xs font-medium text-text-muted'
+          : 'border-t border-[var(--surface-line)] px-5 pt-4 text-xs font-medium text-text-muted'
+      }
+    >
+      {text}
+    </h3>
+  );
+
+  const toggleRow = (
+    titleText: string,
+    description: string,
+    isOn: boolean,
+    onToggle: () => void,
+    detail?: string,
+  ) => (
+    <SettingRow
+      title={titleText}
+      description={description}
+      {...(detail === undefined
+        ? {}
+        : {
+            info: (
+              <PanelCardInfo
+                label={say('common.aboutName', { name: titleText })}
+                detail={detail}
+                align="start"
+              />
+            ),
+          })}
+    >
+      <Switch label={titleText} isLabelHidden isOn={isOn} disabled={isSaving} onToggle={onToggle} />
+    </SettingRow>
+  );
 
   return (
     <PanelCard
       title={title}
+      isFlush
       actions={
         <PanelCardInfo
           label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
@@ -107,271 +135,166 @@ const SharingCard = ({ server, thisServer }: SharingCardProps) => {
         />
       }
     >
-      <div className="flex flex-col gap-4">
+      {head(say('common.libraries'), true)}
+      <div className="px-5 pt-3 pb-1">
         {own.length === 0 ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-[0.8125rem] text-text-muted">
             {say('screens.adminArea.linkedServersPanel.noLibrariesToShareYet')}
           </p>
         ) : (
-          <ul className="flex flex-wrap gap-2">
-            {own.map((library) => {
-              const isShared = sharing.libraryIds.includes(library.id);
-
-              return (
-                <li key={library.id}>
-                  <Button
-                    variant={isShared ? 'glossy' : 'ghost'}
-                    size="sm"
-                    aria-pressed={isShared}
-                    disabled={isSaving}
-                    label={say('screens.adminArea.linkedServersPanel.shareNameWithName2', {
-                      name: library.name,
-                      name2: server.name,
-                    })}
-                    onClick={() => {
-                      toggle(library.id);
-                    }}
-                  >
-                    {library.name}
-                  </Button>
-                </li>
-              );
-            })}
-          </ul>
+          <LibraryPicker
+            libraries={own}
+            chosen={new Set(sharing.libraryIds)}
+            onChange={(chosen) => {
+              change({ libraryIds: [...chosen] });
+            }}
+          />
         )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          <OptionMenu
+      </div>
+      <SettingList isInset>
+        <SettingRow
+          title={say('screens.adminArea.linkedServersPanel.ageLimit')}
+          description={say('screens.adminArea.linkedServersPanel.titlesRatedAboveThisStayHidden')}
+        >
+          <SelectField
             label={say('screens.adminArea.linkedServersPanel.ageLimitForName', {
               name: server.name,
             })}
-            groups={[
-              {
-                name: say('common.nothingAbove'),
-                selectedId: sharing.maximumAge === null ? 'none' : String(sharing.maximumAge),
-                onSelect: (id) => {
-                  change({ maximumAge: id === 'none' ? null : Number.parseInt(id, 10) });
-                },
-                options: AGE_CHOICES,
-              },
-            ]}
-            trigger={
-              <>
-                <span className="truncate">{describeCeiling(sharing.maximumAge)}</span>
-
-                <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
-              </>
-            }
-            triggerShape="field"
-            align="start"
-            className="w-40 max-w-full"
+            isLabelHidden
+            size="sm"
+            className="w-56 max-w-full"
+            options={AGE_CHOICES}
+            value={sharing.maximumAge === null ? 'none' : String(sharing.maximumAge)}
+            onSelect={(id) => {
+              change({ maximumAge: id === 'none' ? null : Number.parseInt(id, 10) });
+            }}
           />
-
-          {sharing.maximumAge === null ? null : (
-            <Button
-              variant={sharing.allowsUnrated ? 'glossy' : 'ghost'}
-              size="sm"
-              aria-pressed={sharing.allowsUnrated}
-              disabled={isSaving}
-              label={say('screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName', {
-                name: server.name,
-              })}
-              onClick={() => {
+        </SettingRow>
+        {sharing.maximumAge === null
+          ? null
+          : toggleRow(
+              say('common.allowUnrated'),
+              say('screens.adminArea.linkedServersPanel.letsThroughTitlesWithNoAgeRating'),
+              sharing.allowsUnrated,
+              () => {
                 change({ allowsUnrated: !sharing.allowsUnrated });
-              }}
-            >
-              {say('common.allowUnrated')}
-            </Button>
-          )}
-        </div>
-
-        <SettingList>
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.streamsAtOnce')}
-            description={say('screens.adminArea.linkedServersPanel.howManyOfNamesPeopleMayWatch', {
-              name: server.name,
-            })}
-          >
-            <OptionMenu
-              label={say('screens.adminArea.linkedServersPanel.streamsAtOnceForName', {
-                name: server.name,
-              })}
-              groups={[
-                {
-                  name: say('screens.adminArea.linkedServersPanel.streamsAtOnce'),
-                  selectedId: sharing.mostStreams === null ? NO_LIMIT : String(sharing.mostStreams),
-                  onSelect: (id) => {
-                    change({ mostStreams: id === NO_LIMIT ? null : Number.parseInt(id, 10) });
-                  },
-                  options: [
-                    { id: NO_LIMIT, label: say('common.noLimit') },
-                    ...STREAM_CHOICES.map((count) => ({ id: String(count), label: String(count) })),
-                  ],
-                },
-              ]}
-              trigger={
-                <>
-                  <span className="truncate">
-                    {sharing.mostStreams === null
-                      ? say('common.noLimit')
-                      : String(sharing.mostStreams)}
-                  </span>
-
-                  <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
-                </>
-              }
-              triggerShape="field"
-              align="end"
-              className="w-32 max-w-full"
-            />
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.highestQuality')}
-            description={say('screens.adminArea.linkedServersPanel.theBestNamesPeopleAreSent', {
-              name: server.name,
-            })}
-          >
-            <OptionMenu
-              label={say('screens.adminArea.linkedServersPanel.highestQualityForName', {
-                name: server.name,
-              })}
-              groups={[
-                {
-                  name: say('screens.adminArea.linkedServersPanel.highestQuality'),
-                  selectedId: sharing.qualityCeiling ?? NO_LIMIT,
-                  onSelect: (id) => {
-                    change({ qualityCeiling: QualityStepIdSchema.safeParse(id).data ?? null });
-                  },
-                  options: [
-                    { id: NO_LIMIT, label: say('common.noLimit') },
-                    ...QUALITY_STEPS.map((step) => ({ id: step.id, label: step.label })),
-                  ],
-                },
-              ]}
-              trigger={
-                <>
-                  <span className="truncate">
-                    {QUALITY_STEPS.find((step) => step.id === sharing.qualityCeiling)?.label ??
-                      say('common.noLimit')}
-                  </span>
-
-                  <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
-                </>
-              }
-              triggerShape="field"
-              align="end"
-              className="w-32 max-w-full"
-            />
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.takeTheirRequests')}
-            description={say('screens.adminArea.linkedServersPanel.namesPeopleMayAskThisServer', {
-              name: server.name,
-            })}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.takeTheirRequests')}
-              isLabelHidden
-              isOn={sharing.takesTheirRequests}
-              disabled={isSaving}
-              onToggle={() => {
-                change({ takesTheirRequests: !sharing.takesTheirRequests });
-              }}
-            />
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.playStraightFromThem')}
-            description={say('screens.adminArea.linkedServersPanel.playersFetchFromNameDirectly', {
-              name: server.name,
-            })}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.playStraightFromThem')}
-              isLabelHidden
-              isOn={sharing.playsDirect}
-              disabled={isSaving}
-              onToggle={() => {
-                change({ playsDirect: !sharing.playsDirect });
-              }}
-            />
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.letThemKeepTitlesOffline')}
-            description={say('screens.adminArea.linkedServersPanel.namesPeopleMayDownloadWhatIs', {
-              name: server.name,
-            })}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.letThemKeepTitlesOffline')}
-              isLabelHidden
-              isOn={sharing.allowsDownloads}
-              disabled={isSaving}
-              onToggle={() => {
-                change({ allowsDownloads: !sharing.allowsDownloads });
-              }}
-            />
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage')}
-            description={say(
-              'screens.adminArea.linkedServersPanel.namesAdminCanPauseSomebodyHere',
-              {
-                name: server.name,
               },
             )}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage')}
-              isLabelHidden
-              isOn={sharing.takesTheirControls}
-              disabled={isSaving}
-              onToggle={() => {
-                change({ takesTheirControls: !sharing.takesTheirControls });
-              }}
-            />
-          </SettingRow>
+      </SettingList>
 
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.sendYourPeoplesNames')}
-            description={say('screens.adminArea.linkedServersPanel.nameSeesWhoIsWatchingByName', {
-              name: server.name,
-              server: thisServer,
-            })}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.sendYourPeoplesNames')}
-              isLabelHidden
-              isOn={sharing.namesTravel}
-              disabled={isSaving}
-              onToggle={() => {
-                change({ namesTravel: !sharing.namesTravel });
-              }}
-            />
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.showThemTheirRecord')}
-            description={say('screens.adminArea.linkedServersPanel.letsNamesAdminReadWhatTheir', {
+      {head(say('screens.adminArea.linkedServersPanel.howTheyWatch'))}
+      <SettingList isInset>
+        <SettingRow
+          title={say('screens.adminArea.linkedServersPanel.streamsAtOnce')}
+          description={say('screens.adminArea.linkedServersPanel.howManyOfTheirPeopleCanWatch')}
+        >
+          <SelectField
+            label={say('screens.adminArea.linkedServersPanel.streamsAtOnceForName', {
               name: server.name,
             })}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.showThemTheirRecord')}
-              isLabelHidden
-              isOn={sharing.showsActivity}
-              disabled={isSaving}
-              onToggle={() => {
-                change({ showsActivity: !sharing.showsActivity });
-              }}
-            />
-          </SettingRow>
-        </SettingList>
-      </div>
+            isLabelHidden
+            size="sm"
+            className="w-56 max-w-full"
+            options={[
+              { id: NO_LIMIT, label: say('common.noLimit') },
+              ...STREAM_CHOICES.map((count) => ({ id: String(count), label: String(count) })),
+            ]}
+            value={sharing.mostStreams === null ? NO_LIMIT : String(sharing.mostStreams)}
+            onSelect={(id) => {
+              change({ mostStreams: id === NO_LIMIT ? null : Number.parseInt(id, 10) });
+            }}
+          />
+        </SettingRow>
+        <SettingRow
+          title={say('screens.adminArea.linkedServersPanel.highestQuality')}
+          description={say('screens.adminArea.linkedServersPanel.theBestQualityTheyreSent')}
+        >
+          <SelectField
+            label={say('screens.adminArea.linkedServersPanel.highestQualityForName', {
+              name: server.name,
+            })}
+            isLabelHidden
+            size="sm"
+            className="w-56 max-w-full"
+            options={[
+              { id: NO_LIMIT, label: say('common.noLimit') },
+              ...QUALITY_STEPS.map((step) => ({ id: step.id, label: step.label })),
+            ]}
+            value={sharing.qualityCeiling ?? NO_LIMIT}
+            onSelect={(id) => {
+              change({ qualityCeiling: QualityStepIdSchema.safeParse(id).data ?? null });
+            }}
+          />
+        </SettingRow>
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.playStraightFromThem'),
+          say('screens.adminArea.linkedServersPanel.theirPlayersFetchTitlesFromThem'),
+          sharing.playsDirect,
+          () => {
+            change({ playsDirect: !sharing.playsDirect });
+          },
+          say('screens.adminArea.linkedServersPanel.playersFetchFromNameDirectly', {
+            name: server.name,
+          }),
+        )}
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.letThemKeepTitlesOffline'),
+          say('screens.adminArea.linkedServersPanel.namesPeopleMayDownloadWhatIs', {
+            name: server.name,
+          }),
+          sharing.allowsDownloads,
+          () => {
+            change({ allowsDownloads: !sharing.allowsDownloads });
+          },
+        )}
+      </SettingList>
+
+      {head(say('screens.adminArea.linkedServersPanel.betweenTheServers'))}
+      <SettingList isInset>
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.takeTheirRequests'),
+          say('screens.adminArea.linkedServersPanel.theirRequestsJoinYourQueue'),
+          sharing.takesTheirRequests,
+          () => {
+            change({ takesTheirRequests: !sharing.takesTheirRequests });
+          },
+          say('screens.adminArea.linkedServersPanel.namesPeopleMayAskThisServer', {
+            name: server.name,
+          }),
+        )}
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage'),
+          say('screens.adminArea.linkedServersPanel.theirAdminCanPauseOrMessage'),
+          sharing.takesTheirControls,
+          () => {
+            change({ takesTheirControls: !sharing.takesTheirControls });
+          },
+          say('screens.adminArea.linkedServersPanel.namesAdminCanPauseSomebodyHere', {
+            name: server.name,
+          }),
+        )}
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.sendYourPeoplesNames'),
+          say('screens.adminArea.linkedServersPanel.nameSeesWhoIsWatchingByName', {
+            name: server.name,
+            server: thisServer,
+          }),
+          sharing.namesTravel,
+          () => {
+            change({ namesTravel: !sharing.namesTravel });
+          },
+        )}
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.showThemTheirRecord'),
+          say('screens.adminArea.linkedServersPanel.letsNamesAdminReadWhatTheir', {
+            name: server.name,
+          }),
+          sharing.showsActivity,
+          () => {
+            change({ showsActivity: !sharing.showsActivity });
+          },
+        )}
+      </SettingList>
     </PanelCard>
   );
 };

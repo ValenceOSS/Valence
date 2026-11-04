@@ -1,7 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 
 type ButtonVariant =
-  | 'primary'
   | 'glossy'
   | 'confirm'
   | 'secondary'

@@ -41,7 +41,7 @@ const AnimeQuestionCard = ({ question, isBusy, onAnswer, onDismiss }: AnimeQuest
         {question.readings.map((reading) => (
           <span key={reading.numbering} className="flex items-center gap-2">
             <Button
-              variant={reading.numbering === question.guess ? 'primary' : 'secondary'}
+              variant={reading.numbering === question.guess ? 'confirm' : 'secondary'}
               size="sm"
               disabled={isBusy}
               onClick={() => {

@@ -24,6 +24,7 @@ const aShare = (overrides: object = {}) => ({
   viewCap: null,
   views: 2,
   isRevoked: false,
+  episode: null,
   isSpent: false,
   ...overrides,
 });

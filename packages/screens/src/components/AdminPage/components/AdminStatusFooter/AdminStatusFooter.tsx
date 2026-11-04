@@ -32,12 +32,18 @@ const AdminStatusFooter = ({
   latest,
   isLatestADevBuild = false,
   onOpenUpdates,
+  isInHeader = false,
 }: AdminStatusFooterProps) => {
   const look = latest === null ? (acceleration?.tone ?? 'quiet') : 'update';
 
   return (
-    <div className="flex min-w-0 items-center gap-3 border-t border-[var(--surface-line)] px-2.5 pt-3">
-      <span className="flex min-w-0 flex-1 flex-col">
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-3',
+        isInHeader ? 'shrink-0' : 'border-t border-[var(--surface-line)] px-2.5 pt-3',
+      )}
+    >
+      <span className={cn('flex min-w-0 flex-col', isInHeader ? 'items-end text-right' : 'flex-1')}>
         <span className="truncate text-[0.8125rem] font-medium text-text">
           {say('common.valence')}
         </span>

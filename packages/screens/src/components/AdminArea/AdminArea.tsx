@@ -5,13 +5,14 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
+import { EncodingSettings } from './components/EncodingSettings/EncodingSettings';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
+import { ArtistRequestsCard } from './components/ArtistRequestsCard/ArtistRequestsCard';
+import { RequestPageCard } from './components/RequestPageCard/RequestPageCard';
 import { AlertsPanel } from './components/AlertsPanel/AlertsPanel';
 import { AnnouncementCard } from './components/AnnouncementCard/AnnouncementCard';
-import { BrandCard } from '@ValenceScreens/components/AdminArea/components/BrandCard/BrandCard';
 import { EmailCard } from './components/EmailCard/EmailCard';
 import { LiveTvPanel } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/LiveTvPanel';
-import { PreRollCard } from '@ValenceScreens/components/AdminArea/components/PreRollCard/PreRollCard';
 import { StoragePanel } from '@ValenceScreens/components/AdminArea/components/StoragePanel/StoragePanel';
 import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
 import { WatchHistoryCard } from '@ValenceScreens/components/AdminArea/components/WatchHistoryCard/WatchHistoryCard';
@@ -89,7 +90,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
-import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -196,6 +196,12 @@ const stayStill = (): (() => void) => () => {};
  * @param historyLength - How many readings to keep for the graphs.
  * @param panel - Which panel is open, which the dialog around this holds.
  * @param onPanel - Told which panel to open, and what to narrow it to where that was said.
+ * @param mediaTitle - The title the address says to open in Media.
+ * @param onMediaTitle - Called with the title opened in Media, or null on going back.
+ * @param webhook - The webhook the address says to open.
+ * @param onWebhook - Called with the webhook opened, or null on going back.
+ * @param linkedServer - The linked server the address says to open.
+ * @param onLinkedServer - Called with the linked server opened, or null on going back.
  * @param initialJob - The job whose schedule to open, where the address named one.
  * @param observability - What the address says the jobs and logs page is showing and narrowed to.
  * @param onObservabilityChange - Called with each change to it, to write into the address.
@@ -209,6 +215,12 @@ const AdminArea = ({
   historyLength = HISTORY_LENGTH,
   panel,
   onPanel,
+  mediaTitle = null,
+  onMediaTitle,
+  webhook = null,
+  onWebhook,
+  linkedServer = null,
+  onLinkedServer,
   initialJob,
   observability,
   onObservabilityChange,
@@ -1114,6 +1126,8 @@ const AdminArea = ({
               onMessage={tellViewer}
             />
 
+            <AnnouncementCard />
+
             <WatchHistoryCard />
           </TabPanel>
 
@@ -1157,6 +1171,8 @@ const AdminArea = ({
 
           <TabPanel value="media">
             <MediaTab
+              openedTitle={mediaTitle}
+              {...(onMediaTitle === undefined ? {} : { onOpenTitle: onMediaTitle })}
               libraries={libraries}
               mayDelete={mayDeleteMedia}
               {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
@@ -1167,6 +1183,7 @@ const AdminArea = ({
               onChooseMoment={setChoosingMoment}
               onReencode={chooseToReencode}
               onShowCopies={showCopies}
+              {...(onCatalogue === undefined ? {} : { onOpenInCatalogue: onCatalogue })}
             />
           </TabPanel>
 
@@ -1184,6 +1201,8 @@ const AdminArea = ({
 
           <TabPanel value="encoding">
             <div className="flex flex-col gap-4">
+              <EncodingSettings overview={overview} devices={devices} />
+
               <PreTranscodingCard libraries={libraries} />
 
               <EncodingPanel
@@ -1238,6 +1257,8 @@ const AdminArea = ({
                 <div className="flex flex-col gap-4">
                   <RequestsPanel />
 
+                  <RequestPageCard overview={overview} />
+
                   <ArrAppsPanel />
 
                   <SeerrCard origin={window.location.origin} />
@@ -1266,7 +1287,11 @@ const AdminArea = ({
               </TabPanel>
 
               <TabPanel value="profiles">
-                <ProfilesPanel />
+                <div className="flex flex-col gap-4">
+                  <ProfilesPanel />
+
+                  <ArtistRequestsCard overview={overview} />
+                </div>
               </TabPanel>
 
               <TabPanel value="downloads">
@@ -1284,56 +1309,7 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="settings">
-            <div className="flex flex-col gap-4">
-              <AnnouncementCard />
-
-              <BrandCard />
-
-              <SettingsPanel
-                overview={overview}
-                onCatalogueKeySaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onHardwareAccelSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onRoundnessSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                  void cache.invalidateQueries({ queryKey: appearanceQueries.key });
-                }}
-                onPreviewQualitySaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onCertificationRegionSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onProfileVisibilitySaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onCatalogueTrailersSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onMusicDetailsSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onReleaseTypesSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
-                onSplashscreenSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                  void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
-                }}
-                devices={devices}
-                onDevicesSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                  void cache.invalidateQueries({
-                    queryKey: adminQueries.transcodeDevices().queryKey,
-                  });
-                }}
-              />
-
-              <PreRollCard />
-            </div>
+            <SettingsPanel overview={overview} />
           </TabPanel>
 
           <TabPanel value="alerts">
@@ -1385,7 +1361,10 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="linking">
-            <LinkedServersPanel />
+            <LinkedServersPanel
+              openedServer={linkedServer}
+              {...(onLinkedServer === undefined ? {} : { onOpenServer: onLinkedServer })}
+            />
           </TabPanel>
 
           <TabPanel value="imports">
@@ -1454,12 +1433,18 @@ const AdminArea = ({
                     say('screens.adminArea.sentATestDelivery'),
                     failureOfRefusal(refusal),
                   );
+                  window.setTimeout(() => {
+                    void reloadDeliveries(id);
+                    void reloadWebhooks();
+                  }, 2500);
                 });
               }}
               deliveries={deliveries}
               openHistoryId={openHistoryId}
               isHistoryLoading={isHistoryLoading}
               onOpenHistory={setOpenHistoryId}
+              openedWebhook={webhook}
+              {...(onWebhook === undefined ? {} : { onOpenWebhook: onWebhook })}
               onRedeliver={(subscriptionId, deliveryId) => {
                 void redeliverWebhook(subscriptionId, deliveryId).then((refusal) => {
                   tellOutcome(say('screens.adminArea.deliveredItAgain'), failureOfRefusal(refusal));

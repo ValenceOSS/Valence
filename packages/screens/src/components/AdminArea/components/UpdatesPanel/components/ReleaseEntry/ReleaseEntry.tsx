@@ -71,6 +71,8 @@ const SECTION_NAMES: Record<Exclude<ReleaseSection['kind'], 'written'>, string> 
  * @param now - The time, for how long ago it came out.
  */
 const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
+  const [openSections, setOpenSections] = useState<ReadonlySet<string>>(new Set());
+
   const prefersReducedMotion = useReducedMotionConfig();
   const [isOpen, setIsOpen] = useState(isOpenAtFirst);
   const notes = release.notes === null ? [] : readReleaseNotes(release.notes);
@@ -151,7 +153,12 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                     )}
 
                     <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-text-muted marker:text-text-muted/60">
-                      {section.points.map((point) => (
+                      {(openSections.has(
+                        section.kind === 'written' ? section.heading : section.kind,
+                      )
+                        ? section.points
+                        : section.points.slice(0, 10)
+                      ).map((point) => (
                         <li
                           key={`${point.scope ?? ''}${point.text}`}
                           className="leading-relaxed [overflow-wrap:anywhere]"
@@ -190,6 +197,29 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                         </li>
                       ))}
                     </ul>
+
+                    {section.points.length <= 10 ||
+                    openSections.has(
+                      section.kind === 'written' ? section.heading : section.kind,
+                    ) ? null : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="self-start"
+                        onClick={() => {
+                          setOpenSections(
+                            new Set([
+                              ...openSections,
+                              section.kind === 'written' ? section.heading : section.kind,
+                            ]),
+                          );
+                        }}
+                      >
+                        {say('screens.adminArea.releaseEntry.showAllCount', {
+                          count: section.points.length.toString(),
+                        })}
+                      </Button>
+                    )}
                   </section>
                 ))
               )}

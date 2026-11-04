@@ -51,16 +51,15 @@ describe('SubtitlesCard', () => {
     expect(screen.getByRole('switch', { name: 'Write subtitles with Whisper' })).toBeDisabled();
   });
 
-  it('shows how Whisper listens once writing is turned on, and saves the choice', async () => {
+  it('saves writing with Whisper as it is turned on, and then shows how it listens', async () => {
     draw();
 
     await userEvent.click(
       await screen.findByRole('switch', { name: 'Write subtitles with Whisper' }),
     );
 
-    expect(screen.getByText('How Whisper listens')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByRole('button', { name: /Language spoken/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
 
     await waitFor(() => {
       expect(saveSubtitleSetup).toHaveBeenCalledWith(

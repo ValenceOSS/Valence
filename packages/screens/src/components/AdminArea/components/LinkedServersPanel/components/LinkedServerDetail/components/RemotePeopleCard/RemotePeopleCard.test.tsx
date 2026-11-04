@@ -1,12 +1,13 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { aFederationActivity } from '@ValenceClient/testing/aFederationActivity';
 import { aLinkedServer } from '@ValenceClient/testing/aLinkedServer';
 import { aRemotePerson } from '@ValenceClient/testing/aRemotePerson';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { RemotePeopleCard } from './RemotePeopleCard';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
-import type { RemotePerson } from '@ValenceContracts/schemas/LinkSharing';
+import type { FederationActivity, RemotePerson } from '@ValenceContracts/schemas/LinkSharing';
 
 const fetchRemotePeople = vi.fn<() => Promise<RemotePerson[]>>();
 const blockRemotePerson =
@@ -14,6 +15,12 @@ const blockRemotePerson =
 
 vi.mock('@ValenceClient/admin/fetchRemotePeople', () => ({
   fetchRemotePeople: () => fetchRemotePeople(),
+}));
+
+const fetchLinkActivity = vi.fn<() => Promise<FederationActivity[]>>();
+
+vi.mock('@ValenceClient/admin/fetchLinkActivity', () => ({
+  fetchLinkActivity: () => fetchLinkActivity(),
 }));
 
 vi.mock('@ValenceClient/admin/blockRemotePerson', () => ({
@@ -25,6 +32,7 @@ const FILMS = aLinkedServer({ state: 'linked' });
 
 beforeEach(() => {
   fetchRemotePeople.mockReset().mockResolvedValue([aRemotePerson()]);
+  fetchLinkActivity.mockReset().mockResolvedValue([]);
   blockRemotePerson.mockReset().mockResolvedValue({ value: aRemotePerson(), refusal: null });
 });
 
@@ -63,5 +71,34 @@ describe('RemotePeopleCard', () => {
     await waitFor(() => {
       expect(blockRemotePerson).toHaveBeenCalledWith(FILMS.id, aRemotePerson().id, false);
     });
+  });
+
+  it('counts only what somebody asked to have requested, not everything they looked up', async () => {
+    fetchLinkActivity.mockResolvedValue([
+      aFederationActivity({
+        id: '00000000-0000-4000-8000-0000000000e1',
+        action: 'requests',
+        count: 2,
+      }),
+      aFederationActivity({
+        id: '00000000-0000-4000-8000-0000000000e2',
+        action: 'media',
+        count: 5,
+      }),
+      aFederationActivity({
+        id: '00000000-0000-4000-8000-0000000000e3',
+        action: 'requests',
+        count: 1,
+      }),
+    ]);
+
+    renderInAnAddress(<RemotePeopleCard server={FILMS} />);
+
+    const row = await screen.findByRole('row', { name: /Sam/u });
+
+    await waitFor(() => {
+      expect(within(row).getByText('3')).toBeInTheDocument();
+    });
+    expect(within(row).queryByText('8')).not.toBeInTheDocument();
   });
 });

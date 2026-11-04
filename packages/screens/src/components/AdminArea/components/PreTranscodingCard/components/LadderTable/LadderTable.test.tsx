@@ -44,7 +44,7 @@ describe('LadderTable', () => {
     expect(screen.getByText('3 of 10')).toBeInTheDocument();
   });
 
-  it('changes a rung’s picture, and takes its bitrate ceiling as typed', async () => {
+  it('takes a rung’s bitrate ceiling from the menu of limits', async () => {
     const on = handlers();
     const user = userEvent.setup();
 
@@ -56,9 +56,10 @@ describe('LadderTable', () => {
       throw new Error('The ladder drew no rows.');
     }
 
-    await user.type(within(first).getByRole('spinbutton', { name: 'Bitrate ceiling' }), '9');
+    await user.click(within(first).getByRole('button', { name: /Bitrate ceiling/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: '1 Mb/s' }));
 
-    expect(on.onBitrateChange).toHaveBeenCalledWith('a', '9');
+    expect(on.onBitrateChange).toHaveBeenCalledWith('a', '1000');
   });
 
   it('removes a rung', async () => {
@@ -80,18 +81,16 @@ describe('LadderTable', () => {
     expect(screen.getByRole('button', { name: /^Remove the/ })).toBeDisabled();
   });
 
-  it('keeps the cursor in a ceiling while it is typed', async () => {
+  it('offers the usual limit for the quality first, and goes back to it', async () => {
     const on = handlers();
     const user = userEvent.setup();
 
-    render(<LadderTable rungs={[rung('a')]} {...on} />);
+    render(<LadderTable rungs={[rung('a', { bitrate: '1000' })]} {...on} />);
 
-    const field = screen.getByRole('spinbutton', { name: 'Bitrate ceiling' });
+    await user.click(screen.getByRole('button', { name: /Bitrate ceiling/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /^Automatic/ }));
 
-    await user.type(field, '12');
-
-    expect(field).toHaveFocus();
-    expect(on.onBitrateChange).toHaveBeenCalledTimes(2);
+    expect(on.onBitrateChange).toHaveBeenCalledWith('a', '');
   });
 
   it('marks the rung that replaces the original', () => {

@@ -74,17 +74,40 @@ beforeEach(() => {
   told.failed.mockReset();
 });
 
+/**
+ * Switches to the plugins in the catalogue not yet installed.
+ */
+const openAvailable = async () => {
+  await userEvent.click(await screen.findByRole('button', { name: /^Available/u }));
+};
+
+/**
+ * Takes one of a plugin's actions from its menu.
+ *
+ * @param plugin - The plugin's name.
+ * @param action - The action.
+ */
+const choose = async (plugin: string, action: string) => {
+  await userEvent.click(await screen.findByRole('button', { name: `Actions for ${plugin}` }));
+  await userEvent.click(await screen.findByRole('menuitem', { name: action }));
+};
+
 describe('PluginsPanel', () => {
-  it('lists what is installed and what the catalogue offers', async () => {
+  it('lists what is installed and, a switch away, what the catalogue offers', async () => {
     renderInAnAddress(<PluginsPanel />);
 
     expect(await screen.findByText('AniList')).toBeInTheDocument();
+    expect(screen.queryByText('Music import')).not.toBeInTheDocument();
+
+    await openAvailable();
+
     expect(await screen.findByText('Music import')).toBeInTheDocument();
   });
 
   it('reviews a catalogue plugin before installing it', async () => {
     renderInAnAddress(<PluginsPanel />);
 
+    await openAvailable();
     await userEvent.click(await screen.findByRole('button', { name: 'Install' }));
 
     expect(await screen.findByRole('dialog', { name: 'Install a plugin' })).toBeInTheDocument();
@@ -126,7 +149,7 @@ describe('PluginsPanel', () => {
       expect(changePlugin).toHaveBeenCalledWith('anilist', { isEnabled: false });
     });
 
-    await userEvent.click(screen.getByRole('button', { name: /Remove/u }));
+    await choose('AniList', 'Remove');
     await userEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove it' }),
     );
@@ -149,7 +172,7 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /Remove/u }));
+    await choose('AniList', 'Remove');
 
     const dialog = screen.getByRole('dialog');
 
@@ -177,7 +200,7 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Roll back to 0.9.0' }));
+    await choose('AniList', 'Roll back to 0.9.0');
 
     const dialog = screen.getByRole('dialog');
 
@@ -204,17 +227,20 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
+    expect(await screen.findByText(/No plugins yet/u)).toBeInTheDocument();
+
+    await openAvailable();
+
     expect(
       await screen.findByText(/GitHub did not answer\. Installed plugins still work\./u),
     ).toBeInTheDocument();
     expect(screen.getByText('Official plugins are unavailable')).toBeInTheDocument();
-    expect(await screen.findByText(/No plugins yet/u)).toBeInTheDocument();
   });
 
   it('opens a plugin’s settings and saves them', async () => {
     renderInAnAddress(<PluginsPanel />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /Settings/u }));
+    await choose('AniList', 'Settings');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -263,25 +289,26 @@ describe('PluginsPanel', () => {
     renderInAnAddress(<PluginsPanel />);
 
     await userEvent.click(await screen.findByRole('switch', { name: 'Disable AniList' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Install' }));
     await userEvent.upload(
       screen.getByLabelText(/Install from a file/u),
       new File(['x'], 'big.vplugin'),
     );
-    await userEvent.click(screen.getByRole('button', { name: /Remove/u }));
+    await choose('AniList', 'Remove');
     await userEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove it' }),
     );
 
     await waitFor(() => {
       expect(told.failed.mock.calls.map(([said]: string[]) => said)).toEqual(
-        expect.arrayContaining([
-          'It is busy.',
-          'The catalogue declined.',
-          'Too large.',
-          'It would not go.',
-        ]),
+        expect.arrayContaining(['It is busy.', 'Too large.', 'It would not go.']),
       );
+    });
+
+    await openAvailable();
+    await userEvent.click(await screen.findByRole('button', { name: 'Install' }));
+
+    await waitFor(() => {
+      expect(told.failed).toHaveBeenCalledWith('The catalogue declined.');
     });
   });
 
@@ -291,7 +318,11 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
-    expect(await screen.findAllByRole('button', { name: /Try again/u })).toHaveLength(2);
+    expect(await screen.findByRole('button', { name: /Try again/u })).toBeInTheDocument();
+
+    await openAvailable();
+
+    expect(await screen.findByRole('button', { name: /Try again/u })).toBeInTheDocument();
   });
 
   it('says when the catalogue is empty', async () => {
@@ -303,6 +334,8 @@ describe('PluginsPanel', () => {
     });
 
     renderInAnAddress(<PluginsPanel />);
+
+    await openAvailable();
 
     expect(await screen.findByText('The catalogue has no plugins yet.')).toBeInTheDocument();
   });
@@ -322,7 +355,10 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
-    expect(await screen.findByText('Plugins from a key you trust')).toBeInTheDocument();
     expect(await screen.findByText('home-lab')).toBeInTheDocument();
+
+    await openAvailable();
+
+    expect(await screen.findByText('Plugins from a key you trust')).toBeInTheDocument();
   });
 });

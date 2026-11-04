@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuditPanel } from './AuditPanel';
+import type { AuditEntry } from '@ValenceContracts/schemas/Audit';
 
 const CHROME =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
-const ENTRIES = [
+const ENTRIES: AuditEntry[] = [
   {
     id: '1',
     at: '2026-10-17T03:00:00.000Z',
@@ -34,6 +35,28 @@ const ENTRIES = [
 
 const asked: string[] = [];
 
+let pages: { entries: AuditEntry[]; nextCursor: string | null }[] = [];
+
+/**
+ * A run of sign-ins for paging through, each its own entry.
+ *
+ * @param count - How many.
+ * @param from - The number of the first.
+ * @returns The entries.
+ */
+const signIns = (count: number, from: number): AuditEntry[] =>
+  Array.from({ length: count }, (_, at) => ({
+    id: `sign-in-${(from + at).toString()}`,
+    at: '2026-10-17T01:00:00.000Z',
+    actorId: null,
+    actorName: `Person ${(from + at).toString()}`,
+    action: 'auth.signedIn',
+    target: null,
+    detail: null,
+    address: null,
+    userAgent: null,
+  }));
+
 /**
  * Answers the panel's questions: the log, the accounts that can be narrowed to, and the jobs.
  *
@@ -44,7 +67,9 @@ const answer = (url: string): Promise<Response> => {
   asked.push(url);
 
   if (url.startsWith('/api/admin/audit')) {
-    return Promise.resolve(new Response(JSON.stringify({ entries: ENTRIES, nextCursor: null })));
+    const page = url.includes('cursor=more') ? pages[1] : pages[0];
+
+    return Promise.resolve(new Response(JSON.stringify(page)));
   }
 
   if (url.startsWith('/api/admin/accounts')) {
@@ -67,6 +92,7 @@ const drawn = () =>
 
 beforeEach(() => {
   asked.length = 0;
+  pages = [{ entries: ENTRIES, nextCursor: null }];
   vi.stubGlobal('fetch', vi.fn(answer));
 });
 
@@ -80,7 +106,7 @@ describe('AuditPanel', () => {
 
     expect(await screen.findByText('Amara')).toBeInTheDocument();
     expect(screen.getAllByText('Kids').length).toBeGreaterThan(0);
-    expect(screen.getByText('Mac · Chromium on macOS')).toHaveAttribute('title', CHROME);
+    expect(screen.getAllByTitle(CHROME)[0]).toHaveTextContent('Mac');
     expect(screen.getByText('203.0.113.7')).toBeInTheDocument();
   });
 
@@ -103,5 +129,69 @@ describe('AuditPanel', () => {
     await waitFor(() => {
       expect(asked.some((url) => url.includes('search=tom'))).toBe(true);
     });
+  });
+
+  it('says an address is the server’s own machine', async () => {
+    pages = [
+      {
+        entries: ENTRIES.slice(0, 1).map((entry) => ({
+          ...entry,
+          id: 'local',
+          address: '127.0.0.1',
+        })),
+        nextCursor: null,
+      },
+    ];
+    drawn();
+
+    expect(await screen.findByText('127.0.0.1 · same machine')).toBeInTheDocument();
+  });
+
+  it('names the API key a change was made with', async () => {
+    pages = [
+      {
+        entries: ENTRIES.slice(0, 1).map((entry) => ({
+          ...entry,
+          id: 'keyed',
+          detail: { apiKey: 'Home automation' },
+        })),
+        nextCursor: null,
+      },
+    ];
+    drawn();
+
+    expect(await screen.findByText('API key · Home automation')).toBeInTheDocument();
+  });
+
+  it('reads the next page from the server once the table moves past what it holds', async () => {
+    pages = [
+      { entries: signIns(25, 1), nextCursor: 'more' },
+      { entries: signIns(3, 26), nextCursor: null },
+    ];
+    drawn();
+
+    expect(await screen.findByText('1–25')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+    expect(await screen.findByText('Person 26')).toBeInTheDocument();
+    expect(asked.some((url) => url.includes('cursor=more'))).toBe(true);
+    expect(screen.getByText('26–28 of 28')).toBeInTheDocument();
+  });
+
+  it('goes back to the first page when what it is narrowed to changes', async () => {
+    pages = [
+      { entries: signIns(25, 1), nextCursor: 'more' },
+      { entries: signIns(3, 26), nextCursor: null },
+    ];
+    drawn();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Next page' }));
+    expect(await screen.findByText('Person 26')).toBeInTheDocument();
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search the audit log' }), 'Person');
+
+    expect(await screen.findByText('Person 1')).toBeInTheDocument();
+    expect(screen.queryByText('Person 26')).not.toBeInTheDocument();
   });
 });

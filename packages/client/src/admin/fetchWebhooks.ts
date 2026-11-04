@@ -7,6 +7,7 @@ import {
   WebhookSubscriptionSchema,
 } from '@ValenceContracts/schemas/Webhook';
 import type {
+  CustomWebhook,
   WebhookDelivery,
   WebhookFilters,
   WebhookPreset,
@@ -25,6 +26,7 @@ type WebhookChange = {
   preset?: WebhookPreset;
   events?: WebhookSubscribableEvent[];
   filters?: WebhookFilters;
+  custom?: CustomWebhook | null;
   enabled?: boolean;
 };
 

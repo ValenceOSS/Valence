@@ -9,7 +9,6 @@ import { SplitButton } from '@ValenceUI/SplitButton';
 import type { UiExample } from './UiExample.types';
 
 const VARIANTS = [
-  'primary',
   'confirm',
   'secondary',
   'glossy',

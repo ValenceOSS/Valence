@@ -35,6 +35,9 @@ import type { TextFieldProps } from './TextField.types';
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
  * @param inputMode - Which keyboard a phone shows, such as only digits for a PIN.
  * @param ref - Reaches the input itself, so a form can put the cursor back where something is wrong.
+ * @param rows - How many lines to show, which makes it a box for several lines rather than one.
+ * @param isCode - Whether what is typed is code, drawn in a fixed-width face with no spelling marks.
+ * @param areaRef - The box for several lines, for a caller that writes into it where the caret is.
  * @param className - Extra classes for the caller's own layout.
  */
 const TextField = ({
@@ -61,6 +64,9 @@ const TextField = ({
   joins,
   hasFocusOnMount = false,
   ref,
+  rows,
+  isCode = false,
+  areaRef,
   className,
 }: TextFieldProps) => {
   const fieldId = useId();
@@ -92,50 +98,77 @@ const TextField = ({
       >
         {icon === undefined ? null : <span className="shrink-0 text-text-muted">{icon}</span>}
 
-        <input
-          {...(ref === undefined ? {} : { ref })}
-          id={fieldId}
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          {...(error === undefined ? {} : { 'aria-invalid': true })}
-          {...(describers.length === 0 ? {} : { 'aria-describedby': describers.join(' ') })}
-          {...(autoComplete === undefined ? {} : { autoComplete })}
-          {...(inputMode === undefined ? {} : { inputMode })}
-          {...(min === undefined ? {} : { min })}
-          {...(max === undefined ? {} : { max })}
-          onChange={(event) => {
-            onValueChange(event.currentTarget.value);
-          }}
-          autoFocus={hasFocusOnMount}
-          className={cn(
-            'valence-field text-text outline-none',
-            'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-            'motion-reduce:transition-none placeholder:text-text-muted',
-            'focus-visible:focus-ring',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            'w-full',
-            isBare
-              ? 'bg-transparent outline-none'
-              : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
-            isBare
-              ? ''
-              : size === 'sm'
-                ? 'h-7 px-2.5 text-xs'
-                : size === 'lg'
-                  ? 'h-9 px-3.5 text-sm'
-                  : size === 'xl'
-                    ? 'h-12 px-6 text-base'
-                    : 'h-8 px-3 text-[0.8125rem]',
-            isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
-            isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
-            isBare ? '' : isPill ? 'rounded-full' : 'rounded-lg',
-            joins === 'next' ? 'rounded-r-none border-r-0' : '',
-            error === undefined ? '' : 'border-destructive',
-          )}
-        />
+        {rows === undefined ? null : (
+          <textarea
+            {...(areaRef === undefined ? {} : { ref: areaRef })}
+            id={fieldId}
+            rows={rows}
+            value={value}
+            placeholder={placeholder}
+            required={required}
+            disabled={disabled}
+            spellCheck={!isCode}
+            {...(error === undefined ? {} : { 'aria-invalid': true })}
+            {...(describers.length === 0 ? {} : { 'aria-describedby': describers.join(' ') })}
+            onChange={(event) => {
+              onValueChange(event.currentTarget.value);
+            }}
+            className={cn(
+              'valence-field w-full resize-y rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-3 py-2.5 text-text outline-none',
+              'hover:border-[var(--surface-divider)] focus-visible:focus-ring placeholder:text-text-muted',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+              isCode ? 'font-mono text-xs leading-relaxed' : 'text-[0.8125rem] leading-snug',
+              error === undefined ? '' : 'border-destructive',
+            )}
+          />
+        )}
+
+        {rows !== undefined ? null : (
+          <input
+            {...(ref === undefined ? {} : { ref })}
+            id={fieldId}
+            type={type}
+            value={value}
+            placeholder={placeholder}
+            required={required}
+            disabled={disabled}
+            {...(error === undefined ? {} : { 'aria-invalid': true })}
+            {...(describers.length === 0 ? {} : { 'aria-describedby': describers.join(' ') })}
+            {...(autoComplete === undefined ? {} : { autoComplete })}
+            {...(inputMode === undefined ? {} : { inputMode })}
+            {...(min === undefined ? {} : { min })}
+            {...(max === undefined ? {} : { max })}
+            onChange={(event) => {
+              onValueChange(event.currentTarget.value);
+            }}
+            autoFocus={hasFocusOnMount}
+            className={cn(
+              'valence-field text-text outline-none',
+              'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+              'motion-reduce:transition-none placeholder:text-text-muted',
+              'focus-visible:focus-ring',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+              'w-full',
+              isBare
+                ? 'bg-transparent outline-none'
+                : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
+              isBare
+                ? ''
+                : size === 'sm'
+                  ? 'h-7 px-2.5 text-[0.8125rem]'
+                  : size === 'lg'
+                    ? 'h-9 px-3.5 text-sm'
+                    : size === 'xl'
+                      ? 'h-12 px-6 text-base'
+                      : 'h-8 px-3 text-[0.8125rem]',
+              isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
+              isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
+              isBare ? '' : isPill ? 'rounded-full' : 'rounded-lg',
+              joins === 'next' ? 'rounded-r-none border-r-0' : '',
+              error === undefined ? '' : 'border-destructive',
+            )}
+          />
+        )}
 
         {trailing === undefined ? null : <span className="flex shrink-0">{trailing}</span>}
       </span>

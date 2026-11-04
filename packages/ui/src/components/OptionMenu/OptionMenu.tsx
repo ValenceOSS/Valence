@@ -284,6 +284,7 @@ const OptionMenu = ({
       <RadixMenu.Portal {...(portalContainer === undefined ? {} : { container: portalContainer })}>
         <RadixMenu.Content
           sideOffset={8}
+          collisionPadding={12}
           align={align}
           aria-label={label}
           onKeyDown={(event) => {
@@ -314,7 +315,11 @@ const OptionMenu = ({
           {...(matchTriggerWidth
             ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
             : {})}
-          className={cn(MENU.content, 'flex max-h-[min(70vh,34rem)] flex-col', POPUP_MOTION)}
+          className={cn(
+            MENU.content,
+            'flex max-h-[min(70vh,34rem,var(--radix-dropdown-menu-content-available-height))] flex-col',
+            POPUP_MOTION,
+          )}
         >
           <div
             ref={containerRef}

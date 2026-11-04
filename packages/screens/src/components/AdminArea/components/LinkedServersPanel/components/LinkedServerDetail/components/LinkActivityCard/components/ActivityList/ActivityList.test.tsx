@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { aFederationActivity } from '@ValenceClient/testing/aFederationActivity';
 import { ActivityList } from './ActivityList';
@@ -20,9 +20,12 @@ describe('ActivityList', () => {
     );
 
     expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(screen.getByText('Looked up a title · Arrival')).toBeInTheDocument();
-    expect(screen.getByText('Above the age limit')).toBeInTheDocument();
-    expect(screen.getByText(/3 times/u)).toBeInTheDocument();
+    const row = screen.getByRole('row', { name: /Sam/u });
+
+    expect(within(row).getByText('Looked up a title')).toBeInTheDocument();
+    expect(within(row).getByText('Arrival')).toBeInTheDocument();
+    expect(within(row).getByText('Above the age limit')).toBeInTheDocument();
+    expect(within(row).getByText('3')).toBeInTheDocument();
   });
 
   it('names a request the server made for itself, and a person whose name was not sent', () => {
@@ -40,5 +43,17 @@ describe('ActivityList', () => {
     expect(screen.getByText('Films itself')).toBeInTheDocument();
     expect(screen.getByText('Someone from Films')).toBeInTheDocument();
     expect(screen.getByText('Listed shared libraries')).toBeInTheDocument();
+  });
+
+  it('badges an allowed answer as plainly as a refused one', () => {
+    render(
+      <ActivityList
+        entries={[aFederationActivity({ outcome: 'allowed' })]}
+        itself="Films itself"
+        someone="Someone from Films"
+      />,
+    );
+
+    expect(screen.getByText('Allowed')).toBeInTheDocument();
   });
 });

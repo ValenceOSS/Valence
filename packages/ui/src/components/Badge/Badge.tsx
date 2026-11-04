@@ -1,6 +1,7 @@
 import { cn } from '@ValenceUI/cn';
 import {
   CircleCheck as CircleCheckIcon,
+  CircleMinus as CircleMinusIcon,
   CircleX as CircleXIcon,
   Clock as ClockIcon,
   TriangleAlert as TriangleAlertIcon,
@@ -16,6 +17,7 @@ const BADGE_TINT = 0.18;
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   quiet: 'bg-[var(--surface-hover)] text-text-muted',
+  ended: 'bg-[var(--surface-hover)] text-text-muted',
   accent: 'bg-accent/15 text-accent',
   success: 'bg-success/15 text-success',
   highlight: 'bg-highlight/15 text-highlight',
@@ -30,6 +32,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
 
 const TONE_ICONS: Partial<Record<BadgeTone, IconGlyph>> = {
   success: CircleCheckIcon,
+  ended: CircleMinusIcon,
   waiting: ClockIcon,
   warning: TriangleAlertIcon,
   danger: CircleXIcon,

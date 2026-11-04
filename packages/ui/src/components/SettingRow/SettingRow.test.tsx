@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { Button } from '@ValenceUI/Button';
 import { SettingRow } from './SettingRow';
 
 const rowOf = (title: string): HTMLElement => {
@@ -64,5 +65,18 @@ describe('SettingRow', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(SettingRow.displayName).toBe('SettingRow');
+  });
+
+  it('sets a way to read more beside the title, and says more than words where it has to', () => {
+    render(
+      <SettingRow
+        title="Usage statistics"
+        info={<Button variant="ghost">About usage statistics</Button>}
+        description={<span>Sends a few facts once a day.</span>}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'About usage statistics' })).toBeInTheDocument();
+    expect(screen.getByText('Sends a few facts once a day.')).toBeInTheDocument();
   });
 });

@@ -176,7 +176,7 @@ describe('FilesPanel', () => {
     const trail = screen.getByRole('navigation', { name: 'Current folder' });
 
     expect(within(trail).getByRole('button', { name: 'Films' })).toBeInTheDocument();
-    expect(screen.getByText('In the catalogue')).toBeInTheDocument();
+    expect(screen.queryByText('Not in library')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /New folder/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Upload here/ })).toBeInTheDocument();
 

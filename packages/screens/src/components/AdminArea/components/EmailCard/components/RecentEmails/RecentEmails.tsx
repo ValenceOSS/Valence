@@ -21,10 +21,6 @@ const KIND_WORDS: Record<EmailKind, string> = {
  */
 const RecentEmails = ({ sends, now }: RecentEmailsProps) => (
   <div className="flex flex-col gap-2">
-    <h3 className="font-body text-sm font-semibold text-text">
-      {say('screens.adminArea.emailCard.recentEmails.recentEmails')}
-    </h3>
-
     {sends.length === 0 ? (
       <NothingHere
         of={EmptyMailIcon}
@@ -43,11 +39,7 @@ const RecentEmails = ({ sends, now }: RecentEmailsProps) => (
               </span>
             </span>
 
-            {send.state === 'sent' ? (
-              <span className="font-body text-xs text-text-muted">
-                {say('screens.adminArea.emailCard.recentEmails.sent')}
-              </span>
-            ) : (
+            {send.state === 'sent' ? null : (
               <span className="font-body text-xs text-danger">
                 {say('screens.adminArea.emailCard.recentEmails.failedBecause', {
                   reason:

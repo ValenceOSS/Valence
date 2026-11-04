@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   columnFilteringFeature,
   createExpandedRowModel,
@@ -13,7 +14,10 @@ import {
 type DataTableColumnMeta = {
   filterOptions?: readonly { id: string; label: string }[];
   shrinks?: boolean;
+  hasLineBefore?: boolean;
+  info?: ReactNode;
   hidesOnPhones?: boolean;
+  showsOnlyWhenWide?: boolean;
   fills?: boolean;
 };
 

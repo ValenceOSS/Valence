@@ -41,6 +41,9 @@ type LiveTvStore = {
       problem?: Said | null;
       guideUrl?: string | null;
       logoUrl?: string | null;
+      name?: string;
+      address?: string | null;
+      playlist?: string | null;
     },
   ) => Promise<void>;
   removeSource: (id: string) => Promise<boolean>;

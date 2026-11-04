@@ -82,7 +82,7 @@ const SeerrCard = ({ origin }: SeerrCardProps) => {
   }
 
   const choices = [
-    { id: '', label: say('screens.adminArea.seerrCard.nobodyYet') },
+    { id: '', label: say('screens.adminArea.seerrCard.chooseAnAccount') },
     ...(accounts.data ?? []).map((account) => ({ id: account.id, label: account.name })),
   ];
   const servers = [
@@ -114,6 +114,23 @@ const SeerrCard = ({ origin }: SeerrCardProps) => {
               {say('screens.adminArea.seerrCard.makeANewKey')}
             </PanelCardAction>
           ) : null}
+          {link.isRequestingOn ? (
+            <Switch
+              label={say('screens.adminArea.seerrCard.answerOverseerrAndJellyseerr')}
+              isLabelHidden
+              isOn={link.isEnabled}
+              disabled={isSaving}
+              onToggle={() => {
+                change(
+                  link,
+                  { isEnabled: !link.isEnabled },
+                  link.isEnabled
+                    ? say('screens.adminArea.seerrCard.valenceNoLongerAnswersThem')
+                    : say('screens.adminArea.seerrCard.valenceNowAnswersThem'),
+                );
+              }}
+            />
+          ) : null}
           <PanelCardInfo
             label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
             detail={say('screens.adminArea.seerrCard.keepAskingInOverseerrOr')}
@@ -124,47 +141,34 @@ const SeerrCard = ({ origin }: SeerrCardProps) => {
       <div className="flex flex-col gap-5">
         {link.isRequestingOn ? (
           <>
-            <SettingList>
-              <SettingRow
-                title={say('screens.adminArea.seerrCard.answerOverseerrAndJellyseerr')}
-                description={say('screens.adminArea.seerrCard.valenceAnswersThemAsRadarr')}
-              >
-                <Switch
-                  label={say('screens.adminArea.seerrCard.answerOverseerrAndJellyseerr')}
-                  isLabelHidden
-                  isOn={link.isEnabled}
-                  disabled={isSaving}
-                  onToggle={() => {
-                    change(
-                      link,
-                      { isEnabled: !link.isEnabled },
-                      link.isEnabled
-                        ? say('screens.adminArea.seerrCard.valenceNoLongerAnswersThem')
-                        : say('screens.adminArea.seerrCard.valenceNowAnswersThem'),
-                    );
-                  }}
-                />
-              </SettingRow>
+            {link.isEnabled ? null : (
+              <p className="font-body text-sm text-text-muted">
+                {say('screens.adminArea.seerrCard.letsOverseerrSendRequests')}
+              </p>
+            )}
 
-              <SettingRow
-                title={say('screens.adminArea.seerrCard.askAs')}
-                description={say('screens.adminArea.seerrCard.everythingTheySendIsAsked')}
-              >
-                <Choice
-                  label={say('screens.adminArea.seerrCard.askAs')}
-                  isLabelHidden
-                  options={choices}
-                  value={link.accountId}
-                  onSelect={(accountId) => {
-                    change(
-                      link,
-                      { accountId },
-                      say('screens.adminArea.seerrCard.savedWhoTheyAskAs'),
-                    );
-                  }}
-                />
-              </SettingRow>
-            </SettingList>
+            {!link.isEnabled ? null : (
+              <SettingList>
+                <SettingRow
+                  title={say('screens.adminArea.seerrCard.askAs')}
+                  description={say('screens.adminArea.seerrCard.everythingTheySendIsAsked')}
+                >
+                  <Choice
+                    label={say('screens.adminArea.seerrCard.askAs')}
+                    isLabelHidden
+                    options={choices}
+                    value={link.accountId}
+                    onSelect={(accountId) => {
+                      change(
+                        link,
+                        { accountId },
+                        say('screens.adminArea.seerrCard.savedWhoTheyAskAs'),
+                      );
+                    }}
+                  />
+                </SettingRow>
+              </SettingList>
+            )}
 
             {link.isEnabled && link.accountId === '' ? (
               <p className="text-sm text-text-muted">

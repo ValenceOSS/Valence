@@ -22,6 +22,8 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   listening: null,
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
   ...overrides,
 });
 
@@ -96,6 +98,8 @@ describe('groupSessionsByViewer, where nobody has chosen a profile', () => {
     listening: null,
     bookListening: null,
     reading: null,
+    controlledFrom: null,
+    remoteFor: null,
     ...overrides,
   });
 

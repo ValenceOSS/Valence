@@ -120,7 +120,7 @@ describe('JobHistory', () => {
     expect(await screen.findByText('Rematch')).toBeInTheDocument();
   });
 
-  it('shows the subject, status and progress of a run', async () => {
+  it('shows the subject and status of a finished run, without the progress it last reported', async () => {
     askedHistory.mockResolvedValue(page([record()]));
 
     renderHistory(
@@ -135,10 +135,9 @@ describe('JobHistory', () => {
       />,
     );
 
-    expect(await screen.findByText('Movies')).toBeInTheDocument();
+    expect(await screen.findAllByText('Movies')).not.toHaveLength(0);
     expect(screen.getByText('Done')).toBeInTheDocument();
-    expect(screen.getByText('4')).toBeInTheDocument();
-    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.queryByText('4 of 10')).not.toBeInTheDocument();
   });
 
   it('shows why a run failed alongside its subject', async () => {
@@ -316,7 +315,7 @@ describe('JobHistory', () => {
         />,
       );
 
-      await screen.findByText('Movies');
+      await screen.findAllByText('Movies');
       askedHistory.mockClear();
 
       onEvent?.(STARTED_EVENT);
@@ -348,7 +347,7 @@ describe('JobHistory', () => {
       />,
     );
 
-    await screen.findByText('Movies');
+    await screen.findAllByText('Movies');
 
     const table = screen.getByRole('table', { name: 'Job run history' });
 
@@ -608,7 +607,7 @@ describe('JobHistory', () => {
       />,
     );
 
-    expect(await screen.findByText('Movies')).toBeInTheDocument();
+    expect(await screen.findAllByText('Movies')).not.toHaveLength(0);
     expect(screen.queryByText(id)).not.toBeInTheDocument();
   });
 
@@ -783,7 +782,7 @@ describe('JobHistory', () => {
 
       drawHistory();
 
-      expect(await screen.findByText(/^took/)).toHaveTextContent('took 5 s');
+      expect((await screen.findAllByText('5 s'))[0]).toBeInTheDocument();
     });
 
     it('draws how far a run got as a bar, not only as numbers', async () => {
@@ -792,7 +791,9 @@ describe('JobHistory', () => {
       drawHistory();
 
       expect(
-        await screen.findByRole('progressbar', { name: 'Generate missing previews progress' }),
+        (
+          await screen.findAllByRole('progressbar', { name: 'Generate missing previews progress' })
+        )[0],
       ).toBeInTheDocument();
     });
 

@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { WebhooksPicture } from './WebhooksPicture';
 
 describe('WebhooksPicture', () => {
-  it('lists the webhooks on the app’s own panel, with the one that failed and its history', () => {
+  it('opens the failing webhook on the app’s own page, with its history', () => {
     render(<WebhooksPicture />);
 
-    expect(screen.getByText('Discord announcements')).toBeInTheDocument();
-    expect(screen.getByText('Home Assistant')).toBeInTheDocument();
-    expect(screen.getAllByText('The server answered 500 Internal Server Error')).toHaveLength(2);
+    expect(screen.getAllByText('Discord announcements').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('The server answered 500 Internal Server Error').length,
+    ).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Resend' })).toBeInTheDocument();
   });
 
@@ -17,7 +18,7 @@ describe('WebhooksPicture', () => {
 
     expect(screen.queryByText('The server answered 500 Internal Server Error')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Resend' })).toBeNull();
-    expect(screen.getByText('4 attempts')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '4' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

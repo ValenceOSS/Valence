@@ -179,7 +179,7 @@ const ADMIN_SECTIONS = [
       },
       {
         id: 'profiles',
-        label: say('common.profiles'),
+        label: say('screens.importWizard.arrImportStep.qualityProfiles'),
         icon: PodiumIcon,
         activeIcon: PodiumFilledIcon,
       },

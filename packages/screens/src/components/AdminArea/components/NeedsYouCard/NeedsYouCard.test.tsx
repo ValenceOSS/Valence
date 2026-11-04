@@ -7,6 +7,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const attention = vi.hoisted(() => ({
+  requests: 0,
+  failedRequests: 2,
+  downloads: 0,
+  jobs: 0,
+  health: 3,
+  latest: null,
+  isLatestADevBuild: false,
+}));
+
+vi.mock('@ValenceScreens/admin/useAdminAttention', () => ({
+  useAdminAttention: () => attention,
+}));
+
 describe('NeedsYouCard', () => {
   it('opens the page a count is dealt with on', async () => {
     vi.stubGlobal(

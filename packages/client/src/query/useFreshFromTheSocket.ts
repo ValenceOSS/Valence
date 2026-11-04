@@ -90,6 +90,14 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
         void cache.invalidateQueries({ queryKey: pluginQueries.key });
       }),
 
+      client.subscribe('audit', () => {
+        void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'audit'] });
+      }),
+
+      client.subscribe('linking', () => {
+        void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'linking'] });
+      }),
+
       client.subscribe('announcement', () => {
         void cache.invalidateQueries({ queryKey: announcementQueries.key });
       }),

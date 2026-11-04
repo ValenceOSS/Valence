@@ -1,4 +1,5 @@
 import {
+  changeLiveSourceRoute,
   addLiveSourceRoute,
   changeLiveGuideRoute,
   dropLiveChannelRoute,
@@ -18,6 +19,7 @@ import { bodyOf } from '@ValenceI18n/bodyOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { refuseWith } from '@ValenceI18n/refuseWith';
 
 const GUIDE_SHOWS_BEHIND_MS = 60 * 60 * 1000;
 
@@ -100,6 +102,22 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     return source === null
       ? context.json(refuse('error.live.noSuchSource'), 404)
       : context.json(source, 200);
+  });
+
+  app.openapi(changeLiveSourceRoute, async (context) => {
+    if (!(await isAdmin(context.req.raw.headers))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const changed =
+      (await liveTv?.service.change(context.req.valid('param').id, context.req.valid('json'))) ??
+      null;
+
+    if (changed === null) {
+      return context.json(refuse('error.live.noSuchSource'), 404);
+    }
+
+    return 'id' in changed ? context.json(changed, 200) : context.json(refuseWith(changed), 400);
   });
 
   app.openapi(iptvOrgCatalogueRoute, async (context) => {

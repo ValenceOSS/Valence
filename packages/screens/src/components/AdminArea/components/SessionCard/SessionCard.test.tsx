@@ -40,6 +40,8 @@ const IDLE_SESSION: ActiveSession = {
   listening: null,
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
 };
 
 const LISTENING_SESSION: ActiveSession = {
@@ -142,7 +144,8 @@ describe('SessionCard', () => {
 
     expect(screen.getByText('Dune · Frank Herbert')).toBeInTheDocument();
     expect(screen.getByText(/Reading · 42% read/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Pause|Stop/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
   });
 
   it('shows the device for a tab that is not watching anything', () => {
@@ -158,7 +161,7 @@ describe('SessionCard', () => {
     );
 
     expect(screen.getByText('Living room TV')).toBeInTheDocument();
-    expect(screen.getByText('Not watching anything')).toBeInTheDocument();
+    expect(screen.getByText('Nothing playing')).toBeInTheDocument();
   });
 
   it('offers no playback controls when nothing is playing', () => {
@@ -173,7 +176,8 @@ describe('SessionCard', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: /Pause|Stop/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
   });
 
   it('shows no reuse badge for a transcode this session is paying for', () => {
@@ -305,7 +309,7 @@ describe('SessionCard', () => {
     );
 
     expect(screen.getByText(/Arrival/)).toBeInTheDocument();
-    expect(screen.getByText('DirectPlay')).toBeInTheDocument();
+    expect(screen.getByText('Direct play')).toBeInTheDocument();
   });
 
   it('names an episode by its show, then its season, number and name, then the device', () => {

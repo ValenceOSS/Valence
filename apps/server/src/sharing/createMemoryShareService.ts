@@ -50,6 +50,7 @@ const createMemoryShareService = (
     expiresAt: held.expiresAt === null ? null : held.expiresAt.toISOString(),
     viewCap: held.viewCap,
     views: held.joiners.size,
+    episode: null,
     isRevoked: held.revokedAt !== null,
     isSpent: !isShareLive(
       {

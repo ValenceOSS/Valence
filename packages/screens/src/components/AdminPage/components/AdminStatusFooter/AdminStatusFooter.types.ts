@@ -7,6 +7,7 @@ type AdminStatusFooterProps = {
   latest: string | null;
   isLatestADevBuild?: boolean;
   onOpenUpdates: () => void;
+  isInHeader?: boolean;
 };
 
 export type { AdminStatusFooterProps };

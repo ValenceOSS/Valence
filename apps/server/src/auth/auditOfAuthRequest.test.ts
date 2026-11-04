@@ -68,6 +68,14 @@ describe('auditOfAuthRequest', () => {
     ).toBeNull();
   });
 
+  it('does not take a session quietly renewed for a sign-in', () => {
+    expect(
+      auditOfAuthRequest(
+        attempted({ path: '/get-session', account: { id: 'u1', name: 'Dan' }, address: null }),
+      ),
+    ).toBeNull();
+  });
+
   it('records nothing for anything else the sign-in service answers', () => {
     expect(auditOfAuthRequest(attempted({ path: '/get-session', signedInAs: ADA }))).toBeNull();
     expect(auditOfAuthRequest(attempted({}))).toBeNull();

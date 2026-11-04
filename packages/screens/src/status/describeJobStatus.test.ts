@@ -19,8 +19,8 @@ describe('describeJobStatus', () => {
     expect(describeJobStatus('completed')).toEqual({ label: 'Done', tone: 'success' });
   });
 
-  it('says stopped for work that was stopped, quietly, since nothing went wrong', () => {
-    expect(describeJobStatus('stopped')).toEqual({ label: 'Stopped', tone: 'quiet' });
+  it('says stopped for work that was stopped, in the tone of something that ended, since nothing went wrong', () => {
+    expect(describeJobStatus('stopped')).toEqual({ label: 'Stopped', tone: 'ended' });
   });
 
   it('paints what went wrong red', () => {

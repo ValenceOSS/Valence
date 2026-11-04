@@ -245,9 +245,10 @@ describe('CataloguePanel', () => {
   it('searches for everything missing', async () => {
     aPanel();
 
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('button', { name: 'Search all missing' }));
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Search all missing' }));
+    await user.click(await screen.findByRole('button', { name: 'Search' }));
 
     await waitFor(() => {
       expect(searchMissing).toHaveBeenCalled();

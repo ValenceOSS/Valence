@@ -66,6 +66,8 @@ const aShowcaseSession = (of: ShowcaseSessionOf): ActiveSession => ({
   clientKind: of.kind,
   connectedAt: 0,
   streams: null,
+  controlledFrom: null,
+  remoteFor: null,
   playback: {
     mediaId: of.id,
     mediaTitle: of.episode?.title ?? of.title,

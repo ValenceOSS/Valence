@@ -2,6 +2,8 @@ import type { AuditAction } from '@ValenceContracts/schemas/Audit';
 import type { AuditToRecord } from '@ValenceServer/audit/AuditService';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 
+const SESSION_RENEWAL_PATH = '/get-session';
+
 const SECURITY_CHANGES: Readonly<Record<string, AuditAction>> = {
   '/change-password': 'auth.passwordChanged',
   '/two-factor/enable': 'auth.twoFactorTurnedOn',
@@ -59,6 +61,10 @@ const isSigningIn = (path: string): boolean =>
  */
 const auditOfAuthRequest = (attempt: SignInAttempt): AuditToRecord | null => {
   const where = { address: attempt.address, userAgent: attempt.userAgent };
+
+  if (attempt.path === SESSION_RENEWAL_PATH) {
+    return null;
+  }
 
   if (attempt.account !== null) {
     return {

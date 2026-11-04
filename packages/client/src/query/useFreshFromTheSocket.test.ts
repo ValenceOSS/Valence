@@ -185,6 +185,8 @@ describe('useFreshFromTheSocket', () => {
       'requests',
       'keeping',
       'plugins',
+      'audit',
+      'linking',
       'announcement',
       'sessions',
       'resumed',

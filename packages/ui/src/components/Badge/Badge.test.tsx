@@ -179,4 +179,11 @@ describe('Badge', () => {
 
     expect(badgeOf('HD')).toHaveClass('border', 'border-current/60', 'bg-transparent');
   });
+
+  it('marks something that has ended in the quiet colour, with a sign of its own', () => {
+    render(<Badge tone="ended">Stopped</Badge>);
+
+    expect(badgeOf('Stopped')).toHaveClass('text-text-muted');
+    expect(badgeOf('Stopped').lastElementChild?.tagName.toLowerCase()).toBe('svg');
+  });
 });

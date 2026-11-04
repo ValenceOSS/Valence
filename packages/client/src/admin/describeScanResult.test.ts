@@ -14,21 +14,17 @@ describe('describeScanResult', () => {
     expect(describeScanResult(aScan())).toBe('Nothing changed');
   });
 
-  it('counts what a scan found', () => {
-    expect(describeScanResult(aScan({ added: 4, updated: 1 }))).toBe('+4 ~1 −0');
+  it('counts what a scan found, leaving out what did not happen', () => {
+    expect(describeScanResult(aScan({ added: 4, updated: 1 }))).toBe('4 added 1 changed');
   });
 
-  it('states removals even when there are none, since that is the number to watch', () => {
-    expect(describeScanResult(aScan({ added: 4 }))).toContain('−0');
-  });
-
-  it('makes a scan that emptied a library impossible to miss', () => {
-    expect(describeScanResult(aScan({ removed: 214 }))).toBe('+0 ~0 −214');
+  it('says how many were removed', () => {
+    expect(describeScanResult(aScan({ removed: 214 }))).toBe('214 removed');
   });
 
   it('says what went missing and what came back, even when nothing else changed', () => {
-    expect(describeScanResult(aScan({ missing: 3 }))).toBe('+0 ~0 −0 3 missing');
-    expect(describeScanResult(aScan({ returned: 1 }))).toBe('+0 ~0 −0 1 back');
+    expect(describeScanResult(aScan({ missing: 3 }))).toBe('3 missing');
+    expect(describeScanResult(aScan({ returned: 1 }))).toBe('1 back');
   });
 
   it('names unreadable files only when there are some', () => {

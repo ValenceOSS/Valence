@@ -4,6 +4,8 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
+import { DataTable } from '@ValenceUI/DataTable';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCard } from '@ValenceUI/PanelCard';
@@ -24,6 +26,7 @@ import { say } from '@ValenceI18n/say';
 const RemotePeopleCard = ({ server }: RemotePeopleCardProps) => {
   const cache = useQueryClient();
   const asked = useQuery(adminQueries.remotePeople(server.id));
+  const activity = useQuery(adminQueries.linkActivity(server.id));
   const [working, setWorking] = useState<string | null>(null);
   const title = say('screens.adminArea.linkedServersPanel.peopleFromName', { name: server.name });
   const nameOf = (person: RemotePerson) =>
@@ -51,6 +54,82 @@ const RemotePeopleCard = ({ server }: RemotePeopleCardProps) => {
       });
   };
 
+  const requestsOf = new Map<string, number>();
+
+  for (const entry of activity.data ?? []) {
+    if (entry.personId !== null && entry.action === 'requests') {
+      requestsOf.set(entry.personId, (requestsOf.get(entry.personId) ?? 0) + entry.count);
+    }
+  }
+
+  const columns: DataTableColumn<RemotePerson>[] = [
+    {
+      id: 'person',
+      header: say('common.person'),
+      accessorFn: nameOf,
+      cell: ({ row }) => (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-medium text-text">{nameOf(row.original)}</span>
+          {row.original.blockedAt === null ? null : (
+            <Badge tone="danger" size="sm">
+              {say('common.blocked')}
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    {
+      id: 'seen',
+      header: say('screens.adminArea.linkedServersPanel.lastSeen'),
+      accessorFn: (person) => person.lastSeenAt,
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap text-text-muted">
+          {saidWhen(row.original.lastSeenAt)}
+        </span>
+      ),
+    },
+    {
+      id: 'requests',
+      meta: { hidesOnPhones: true },
+      header: say('common.requests'),
+      accessorFn: (person) => requestsOf.get(person.id) ?? 0,
+      cell: ({ row }) => (
+        <span className="tabular-nums text-text-muted">{requestsOf.get(row.original.id) ?? 0}</span>
+      ),
+    },
+    {
+      id: 'act',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const person = row.original;
+        const isBlocked = person.blockedAt !== null;
+
+        return (
+          <span className="flex justify-end">
+            <Button
+              variant={isBlocked ? 'secondary' : 'ghost'}
+              size="sm"
+              isLoading={working === person.id}
+              label={
+                isBlocked
+                  ? say('screens.adminArea.linkedServersPanel.letNameBackInAsk', {
+                      name: nameOf(person),
+                    })
+                  : say('screens.adminArea.linkedServersPanel.blockName', { name: nameOf(person) })
+              }
+              onClick={() => {
+                block(person);
+              }}
+            >
+              {isBlocked ? say('common.letBackIn') : say('common.block')}
+            </Button>
+          </span>
+        );
+      },
+    },
+  ];
+
   return (
     <PanelCard title={title} isFlush>
       {asked.isError ? (
@@ -70,52 +149,13 @@ const RemotePeopleCard = ({ server }: RemotePeopleCardProps) => {
           })}
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-          {asked.data.map((person) => {
-            const isBlocked = person.blockedAt !== null;
-            const lastSeen = saidWhen(person.lastSeenAt);
-
-            return (
-              <li key={person.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-medium">{nameOf(person)}</span>
-                    {isBlocked ? (
-                      <Badge size="sm" tone="danger">
-                        {say('common.blocked')}
-                      </Badge>
-                    ) : null}
-                  </div>
-                  {lastSeen === null ? null : (
-                    <span className="text-xs text-text-muted">
-                      {say('screens.adminArea.linkedServersPanel.seenWhen', { when: lastSeen })}
-                    </span>
-                  )}
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isLoading={working === person.id}
-                  label={
-                    isBlocked
-                      ? say('screens.adminArea.linkedServersPanel.letNameBackInAsk', {
-                          name: nameOf(person),
-                        })
-                      : say('screens.adminArea.linkedServersPanel.blockName', {
-                          name: nameOf(person),
-                        })
-                  }
-                  onClick={() => {
-                    block(person);
-                  }}
-                >
-                  {isBlocked ? say('common.letBackIn') : say('common.block')}
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
+        <DataTable
+          label={title}
+          columns={columns}
+          rows={asked.data}
+          getRowId={(person) => person.id}
+          pageSize={10}
+        />
       )}
     </PanelCard>
   );

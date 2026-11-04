@@ -7,7 +7,7 @@ const STATUS_LOOK = {
   attention: { label: say('common.needsAttention'), tone: 'warning' },
   done: { label: say('common.done'), tone: 'success' },
   failed: { label: say('common.failed'), tone: 'danger' },
-  stopped: { label: say('common.stopped'), tone: 'quiet' },
+  stopped: { label: say('common.stopped'), tone: 'ended' },
 } as const satisfies Record<string, { label: string; tone: StatusTone }>;
 
 export { STATUS_LOOK };

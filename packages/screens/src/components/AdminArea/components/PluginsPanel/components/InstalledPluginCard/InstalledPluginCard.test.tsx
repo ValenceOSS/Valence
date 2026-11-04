@@ -16,7 +16,7 @@ const handlers = () => ({
 });
 
 describe('InstalledPluginCard', () => {
-  it('says how a plugin is getting on and offers its controls', async () => {
+  it('says how a plugin is getting on, leaving an official one unmarked, and offers its controls', async () => {
     const said = handlers();
 
     renderInAnAddress(
@@ -34,7 +34,7 @@ describe('InstalledPluginCard', () => {
       </ul>,
     );
 
-    expect(screen.getByText('Official')).toBeInTheDocument();
+    expect(screen.queryByText('Official')).not.toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(document.querySelector('img')?.getAttribute('src')).toBe(
       '/api/plugins/anilist/assets/icon.png',
@@ -42,10 +42,12 @@ describe('InstalledPluginCard', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Update to 1.1.0' }));
     await userEvent.click(screen.getByRole('button', { name: 'Sync log' }));
-    await userEvent.click(screen.getByRole('button', { name: /Settings/u }));
-    await userEvent.click(screen.getByRole('button', { name: 'Roll back to 0.9.0' }));
-    await userEvent.click(screen.getByRole('button', { name: /Remove/u }));
     await userEvent.click(screen.getByRole('switch', { name: 'Disable AniList' }));
+
+    for (const item of ['Settings', 'Roll back to 0.9.0', 'Remove']) {
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for AniList' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: item }));
+    }
 
     expect(said.onUpdate).toHaveBeenCalled();
     expect(said.onOpenPage).toHaveBeenCalledWith({ pageId: 'log', title: 'Sync log' });

@@ -29,7 +29,6 @@ const CacheBreakdown = ({
 }: CacheBreakdownProps) => {
   const rows = cacheRows(cache, artwork, liveSessions, library, bookPages);
   const kept = rows.filter((row) => row.isLibrary !== true);
-  const libraryRow = rows.find((row) => row.isLibrary === true);
   const keptBytes = kept.reduce((sum, row) => sum + (row.bytes ?? 0), 0);
 
   const nameOf = (row: (typeof rows)[number]) => (
@@ -80,18 +79,6 @@ const CacheBreakdown = ({
           </div>
         ))}
       </dl>
-
-      {libraryRow === undefined ? null : (
-        <dl className="mt-auto flex items-start justify-between gap-4 border-t border-[var(--surface-line)] pt-4">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            {nameOf(libraryRow)}
-            <dd className="text-xs text-text-muted">{libraryRow.detail}</dd>
-          </div>
-          <dd className="shrink-0 text-sm font-medium tabular-nums text-text">
-            {libraryRow.value}
-          </dd>
-        </dl>
-      )}
     </div>
   );
 };

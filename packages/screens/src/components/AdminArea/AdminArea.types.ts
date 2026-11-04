@@ -12,6 +12,12 @@ type AdminAreaProps = {
   folder?: string | null;
   onOpenFolder?: (path: string) => void;
   catalogue?: CatalogueAddress;
+  mediaTitle?: string | null;
+  onMediaTitle?: (id: string | null) => void;
+  webhook?: string | null;
+  onWebhook?: (id: string | null) => void;
+  linkedServer?: string | null;
+  onLinkedServer?: (id: string | null) => void;
   onCatalogue?: (address: CatalogueAddress) => void;
 };
 

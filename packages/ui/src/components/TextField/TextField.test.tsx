@@ -363,4 +363,32 @@ describe('a control after the field', () => {
     expect(field.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(control.parentElement?.parentElement).toBe(field.parentElement);
   });
+
+  it('becomes a box for several lines where it is given rows, reaching the caller by its own ref', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const areaRef = createRef<HTMLTextAreaElement>();
+
+    render(
+      <TextField
+        label="Template"
+        value=""
+        rows={6}
+        isCode
+        areaRef={areaRef}
+        onValueChange={onValueChange}
+      />,
+    );
+
+    const box = screen.getByRole('textbox', { name: 'Template' });
+
+    expect(box.tagName.toLowerCase()).toBe('textarea');
+    expect(box).toHaveAttribute('rows', '6');
+    expect(box).toHaveAttribute('spellcheck', 'false');
+    expect(areaRef.current).toBe(box);
+
+    await user.type(box, 'a');
+
+    expect(onValueChange).toHaveBeenCalledWith('a');
+  });
 });

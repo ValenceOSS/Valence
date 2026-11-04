@@ -80,7 +80,7 @@ const NextEpisodeCard = ({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="primary" size="sm" onClick={onPlay}>
+        <Button variant="confirm" size="sm" onClick={onPlay}>
           <Icon of={PlayFilledIcon} size={14} />
           {say('common.playNextEpisode')}
         </Button>

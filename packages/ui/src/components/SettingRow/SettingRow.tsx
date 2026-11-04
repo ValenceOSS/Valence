@@ -15,7 +15,8 @@ import type { SettingRowProps } from './SettingRow.types';
  * keeps one press target per row instead of two that disagree about what they do.
  *
  * @param title - What the setting is.
- * @param description - What changing it does, in one line.
+ * @param info - A way to read more about it, set beside the title.
+ * @param description - What changing it does, in one line, which may carry a link or a warning.
  * @param icon - Something to draw before the title.
  * @param children - The control that answers it.
  * @param isMarked - Whether this is the row being pointed at, which outlines it.
@@ -23,6 +24,7 @@ import type { SettingRowProps } from './SettingRow.types';
  */
 const SettingRow = ({
   title,
+  info,
   description,
   icon,
   children,
@@ -48,7 +50,10 @@ const SettingRow = ({
       )}
 
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-[0.9375rem] font-semibold leading-tight text-text">{title}</span>
+        <span className="flex items-center gap-1 text-[0.9375rem] font-semibold leading-tight text-text">
+          {title}
+          {info === undefined ? null : <span className="-my-1 flex">{info}</span>}
+        </span>
 
         {description === undefined ? null : (
           <span className="font-body text-[0.8125rem] leading-snug text-text-muted">

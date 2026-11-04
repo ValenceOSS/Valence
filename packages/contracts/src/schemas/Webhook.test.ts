@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CustomWebhookHeaderSchema,
   WEBHOOK_EVENTS,
   WEBHOOK_EVENT_GROUPS,
   WEBHOOK_SUBSCRIBABLE_EVENTS,
@@ -522,5 +523,32 @@ describe('WebhookPayloadSchema, where somebody came from', () => {
     });
 
     expect(payload.data).toMatchObject({ address: '192.168.1.40' });
+  });
+});
+
+describe('CustomWebhookHeaderSchema', () => {
+  it('takes a header name and a value on one line', () => {
+    expect(
+      CustomWebhookHeaderSchema.safeParse({ name: 'X-Api-Key', value: 'abc', isSecret: true })
+        .success,
+    ).toBe(true);
+  });
+
+  it('refuses a name that is not a header name, or one Valence sets itself', () => {
+    for (const name of [
+      'X Api Key',
+      'X-Token:',
+      'Content-Length',
+      'transfer-encoding',
+      'X-Valence-Signature',
+    ]) {
+      expect(CustomWebhookHeaderSchema.safeParse({ name, value: 'a' }).success).toBe(false);
+    }
+  });
+
+  it('refuses a value holding a line break', () => {
+    expect(CustomWebhookHeaderSchema.safeParse({ name: 'X-Token', value: 'a\r\nb' }).success).toBe(
+      false,
+    );
   });
 });

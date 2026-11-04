@@ -210,11 +210,6 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
               label={say('common.name')}
               value={name}
               onValueChange={setName}
-              placeholder={
-                way === 'stream' || way === 'embed'
-                  ? say('screens.adminArea.liveTvPanel.formulaOneLive')
-                  : say('screens.adminArea.liveTvPanel.myChannels')
-              }
               {...(way === 'playlistFile' || way === 'iptvOrg'
                 ? { description: say('screens.adminArea.liveTvPanel.leftEmptyItIsNamedForYou') }
                 : {})}

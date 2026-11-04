@@ -4,15 +4,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { AdminPage } from './AdminPage';
 import type * as Router from '@tanstack/react-router';
+import type { AdminAreaProps } from '@ValenceScreens/components/AdminArea/AdminArea.types';
 
 const go = vi.fn(() => Promise.resolve());
 
 const address: { panel?: string } = {};
 
+const searched: { media?: string; webhook?: string; server?: string } = {};
+
+const drawnWith: AdminAreaProps[] = [];
+
 vi.mock('@tanstack/react-router', async (original) => ({
   ...(await original<typeof Router>()),
   useParams: () => address,
-  useSearch: () => ({}),
+  useSearch: () => searched,
   useNavigate: () => go,
 }));
 
@@ -21,7 +26,11 @@ vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
 }));
 
 vi.mock('@ValenceScreens/components/AdminArea/AdminArea', () => ({
-  AdminArea: ({ panel }: { panel: string }) => <p>{`Showing ${panel}`}</p>,
+  AdminArea: (props: AdminAreaProps) => {
+    drawnWith.push(props);
+
+    return <p>{`Showing ${props.panel}`}</p>;
+  },
 }));
 
 vi.mock('@ValenceClient/admin/fetchAdmin', async (original) => ({
@@ -59,6 +68,11 @@ const isSidebarReachable = () =>
 afterEach(() => {
   vi.unstubAllGlobals();
   delete address.panel;
+  delete searched.media;
+  delete searched.webhook;
+  delete searched.server;
+  drawnWith.length = 0;
+  go.mockClear();
 });
 
 describe('AdminPage', () => {
@@ -124,5 +138,48 @@ describe('AdminPage', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(AdminPage.displayName).toBe('AdminPage');
+  });
+
+  it('opens the title, webhook and linked server the address names, each by its own name', () => {
+    aWindow(true);
+    searched.media = 'media-1';
+    searched.webhook = 'webhook-1';
+    searched.server = 'server-1';
+
+    renderInAnAddress(<AdminPage />);
+
+    expect(drawnWith.at(-1)).toMatchObject({
+      mediaTitle: 'media-1',
+      webhook: 'webhook-1',
+      linkedServer: 'server-1',
+    });
+  });
+
+  it('writes what was opened into the address under its own name', () => {
+    aWindow(true);
+
+    renderInAnAddress(<AdminPage />);
+
+    const drawn = drawnWith.at(-1);
+
+    drawn?.onMediaTitle?.('media-1');
+    drawn?.onWebhook?.('webhook-1');
+    drawn?.onLinkedServer?.(null);
+
+    expect(go).toHaveBeenCalledWith({
+      to: '/admin/$panel',
+      params: { panel: 'media' },
+      search: { media: 'media-1' },
+    });
+    expect(go).toHaveBeenCalledWith({
+      to: '/admin/$panel',
+      params: { panel: 'webhooks' },
+      search: { webhook: 'webhook-1' },
+    });
+    expect(go).toHaveBeenCalledWith({
+      to: '/admin/$panel',
+      params: { panel: 'linking' },
+      search: {},
+    });
   });
 });

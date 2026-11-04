@@ -66,7 +66,7 @@ describe('describeSessionDelivery', () => {
   it('calls a file handed over untouched a direct play, quietly', () => {
     const delivery = describeSessionDelivery(playing(PLAN));
 
-    expect(delivery.label).toBe('DirectPlay');
+    expect(delivery.label).toBe('Direct play');
   });
 
   it('calls a rewrapped container a remux, rather than lumping it in with a re-encode', () => {
@@ -78,7 +78,7 @@ describe('describeSessionDelivery', () => {
   it('calls converting only the sound a direct stream', () => {
     const delivery = describeSessionDelivery(playing(SOUND_CONVERTED));
 
-    expect(delivery.label).toBe('DirectStream');
+    expect(delivery.label).toBe('Direct stream');
   });
 
   it('calls converting the picture transcoding, which is the one worth noticing', () => {

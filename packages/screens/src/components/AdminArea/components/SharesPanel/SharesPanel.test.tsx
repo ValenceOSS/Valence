@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { SharesPanel } from './SharesPanel';
+import { anAdminShare } from '@ValenceScreens/testing/anAdminShare';
 import type { AdminShare } from '@ValenceContracts/schemas/Share';
 
 const fetchEverybodysShares = vi.fn<() => Promise<AdminShare[]>>();
@@ -13,24 +14,7 @@ vi.mock('@ValenceClient/sharing/fetchShares', () => ({
   revokeAnybodysShare: (shareId: string) => revokeAnybodysShare(shareId),
 }));
 
-const share = (overrides: Partial<AdminShare> = {}): AdminShare => ({
-  id: 'share-1',
-  kind: 'item',
-  mediaId: 'media-1',
-  seriesId: null,
-  bookId: null,
-  title: 'The Thing',
-  createdAt: '2026-08-10T09:00:00.000Z',
-  expiresAt: null,
-  viewCap: null,
-  views: 0,
-  isRevoked: false,
-  isSpent: false,
-  createdBy: 'account-1',
-  createdByName: 'Ada',
-  createdByProfileName: null,
-  ...overrides,
-});
+const share = anAdminShare;
 
 beforeEach(() => {
   fetchEverybodysShares.mockReset().mockResolvedValue([]);
@@ -94,8 +78,7 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    expect(await screen.findByText('Live')).toBeInTheDocument();
-    expect(screen.getByText('Until revoked')).toBeInTheDocument();
+    expect(await screen.findByText('No end date')).toBeInTheDocument();
   });
 
   it('warns that withdrawing tells whoever made the link, and names them', async () => {
@@ -144,7 +127,7 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    await user.click(await screen.findByRole('button', { name: /Link to/ }));
+    await user.click(await screen.findByRole('button', { name: /Title/ }));
 
     expect(screen.getAllByRole('row')[1]?.textContent).toContain('Alien');
 
@@ -192,7 +175,11 @@ describe('SharesPanel', () => {
   it('offers no way to withdraw a link that has already ended', async () => {
     fetchEverybodysShares.mockResolvedValue([share({ isRevoked: true, isSpent: true })]);
 
+    const user = userEvent.setup();
+
     renderInAnAddress(<SharesPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Ended (1)' }));
 
     expect(await screen.findByText('Revoked')).toBeInTheDocument();
     expect(
@@ -207,7 +194,9 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    expect(await screen.findByText('Anyone who opened it can still watch')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Ended (1)' }));
+
+    expect(await screen.findByText('All opens used')).toBeInTheDocument();
 
     await user.click(
       await screen.findByRole('button', { name: 'Revoke the share link for The Thing' }),

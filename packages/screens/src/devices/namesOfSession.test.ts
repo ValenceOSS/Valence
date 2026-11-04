@@ -24,6 +24,8 @@ const A_SESSION: ActiveSession = {
   listening: null,
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
 };
 
 describe('namesOfSession', () => {

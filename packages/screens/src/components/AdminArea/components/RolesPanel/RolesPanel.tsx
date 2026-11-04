@@ -11,7 +11,7 @@ import {
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Badge } from '@ValenceUI/Badge';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -342,7 +342,7 @@ const RolesPanel = () => {
           <span className="flex min-w-0 items-center gap-2.5">
             <span
               aria-hidden
-              className="size-2.5 shrink-0 rounded-full bg-subtle"
+              className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-[var(--surface-divider)]"
               style={row.original.color === null ? {} : { backgroundColor: row.original.color }}
             />
 
@@ -360,8 +360,19 @@ const RolesPanel = () => {
       {
         id: 'position',
         header: say('screens.adminArea.rolesPanel.rank'),
+        meta: {
+          info: (
+            <PanelCardInfo
+              label={say('screens.adminArea.rolesPanel.aboutRank')}
+              align="start"
+              detail={say('screens.adminArea.rolesPanel.rankAbout')}
+            />
+          ),
+        },
         accessorFn: (role) => role.position,
-        cell: ({ row }) => <Badge size="sm">{row.original.position.toString()}</Badge>,
+        cell: ({ row }) => (
+          <span className="tabular-nums text-text-muted">{row.original.position.toString()}</span>
+        ),
       },
       rowActionsColumn(
         (item) => item.name,

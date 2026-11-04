@@ -1,6 +1,7 @@
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Puzzle as EmptyPuzzleIcon, Upload as UploadIcon } from '@keyline-icons/react/fill';
 import { Callout } from '@ValenceUI/Callout';
@@ -46,6 +47,10 @@ const PluginsPanel = () => {
     null,
   );
   const [isUploading, setIsUploading] = useState(false);
+  const [tab, setTab] = useState<'installed' | 'available'>('installed');
+  const available = (catalogue.data?.plugins ?? []).filter(
+    (entry) => entry.installedVersion === null,
+  );
 
   usePluginWithdrawn(page?.pluginId ?? null, () => {
     setPage(null);
@@ -93,7 +98,7 @@ const PluginsPanel = () => {
   return (
     <div className="flex flex-col gap-4">
       <PanelCard
-        title={say('screens.adminArea.pluginsPanel.installedPlugins')}
+        title={say('common.plugins')}
         isFlush
         actions={
           <FilePicker
@@ -129,103 +134,132 @@ const PluginsPanel = () => {
           </FilePicker>
         }
       >
-        {installed.isError ? (
-          <CouldNotRead
-            said={say('screens.adminArea.pluginsPanel.thePluginsCouldNotBeRead')}
-            isTryingAgain={installed.isFetching}
-            onTryAgain={() => {
-              void installed.refetch();
-            }}
-          />
-        ) : installed.isPending ? (
-          <Spinner
-            isCentered
+        <div className="border-b border-[var(--surface-line)] px-5 py-3">
+          <SegmentedRow
+            label={say('screens.adminArea.pluginsPanel.whichPlugins')}
             size="sm"
-            label={say('screens.adminArea.pluginsPanel.readingThePlugins')}
-          />
-        ) : installed.data.plugins.length === 0 ? (
-          <NothingHere
-            of={EmptyPuzzleIcon}
-            title={say('screens.adminArea.pluginsPanel.noPluginsYetPluginsRunIn')}
-            isCompact
-          />
-        ) : (
-          <ul className="flex flex-col divide-y divide-border/50">
-            {installed.data.plugins.map((plugin) => (
-              <InstalledPluginCard
-                key={plugin.id}
-                plugin={plugin}
-                isBusy={busy === plugin.id || fetching === plugin.id}
-                onToggle={() => {
-                  toggle(plugin);
-                }}
-                onSettings={() => {
-                  setSettingsOf(plugin);
-                }}
-                onUpdate={() => {
-                  look(plugin.id);
-                }}
-                onRollback={() => {
-                  setRollingBack(plugin);
-                }}
-                onRemove={() => {
-                  setRemoving(plugin);
-                }}
-                onOpenPage={(opened) => {
-                  setPage({ pluginId: plugin.id, ...opened });
-                }}
-              />
-            ))}
-          </ul>
-        )}
-      </PanelCard>
-
-      <PanelCard
-        title={
-          catalogue.data?.signedBy === 'trusted'
-            ? say('screens.adminArea.pluginsPanel.pluginsFromAKeyYouTrust')
-            : say('screens.adminArea.pluginsPanel.officialPlugins')
-        }
-        isFlush
-      >
-        {catalogue.isError ? (
-          <CouldNotRead
-            said={say('common.theCatalogueCouldNotBeRead')}
-            isTryingAgain={catalogue.isFetching}
-            onTryAgain={() => {
-              void catalogue.refetch();
+            items={[
+              {
+                id: 'installed',
+                label: say('screens.adminArea.pluginsPanel.installedCount', {
+                  count: installed.data?.plugins.length ?? 0,
+                }),
+              },
+              {
+                id: 'available',
+                label: say('screens.adminArea.pluginsPanel.availableCount', {
+                  count: available.length,
+                }),
+              },
+            ]}
+            value={tab}
+            onSelect={(id) => {
+              setTab(id === 'available' ? 'available' : 'installed');
             }}
           />
-        ) : catalogue.isPending ? (
-          <Spinner isCentered size="sm" label={say('common.readingTheCatalogue')} />
-        ) : !catalogue.data.isReachable ? (
-          <Callout
-            title={say('screens.adminArea.pluginsPanel.officialPluginsAreUnavailable')}
-            tone="warning"
-            className="m-4"
-          >
-            {say('screens.adminArea.pluginsPanel.problemPluginsAlreadyInstalledKeepWorking', {
-              problem:
-                sayAgainIfAny(catalogue.data.problem) ?? say('common.thePluginCatalogueCouldNotBe'),
-            })}
-          </Callout>
-        ) : catalogue.data.plugins.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-text-muted">
-            {say('screens.adminArea.pluginsPanel.theCatalogueHasNoPluginsYet')}
-          </p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-border/50">
-            {catalogue.data.plugins.map((entry) => (
-              <CatalogueEntryRow
-                key={entry.id}
-                entry={entry}
-                isBusy={fetching === entry.id}
-                onInstall={() => {
-                  look(entry.id);
+          {tab === 'available' && catalogue.data?.signedBy === 'trusted' ? (
+            <span className="ml-3 text-xs text-text-muted">
+              {say('screens.adminArea.pluginsPanel.pluginsFromAKeyYouTrust')}
+            </span>
+          ) : null}
+        </div>
+        {tab === 'installed' ? (
+          <>
+            {installed.isError ? (
+              <CouldNotRead
+                said={say('screens.adminArea.pluginsPanel.thePluginsCouldNotBeRead')}
+                isTryingAgain={installed.isFetching}
+                onTryAgain={() => {
+                  void installed.refetch();
                 }}
               />
-            ))}
-          </ul>
+            ) : installed.isPending ? (
+              <Spinner
+                isCentered
+                size="sm"
+                label={say('screens.adminArea.pluginsPanel.readingThePlugins')}
+              />
+            ) : installed.data.plugins.length === 0 ? (
+              <NothingHere
+                of={EmptyPuzzleIcon}
+                title={say('screens.adminArea.pluginsPanel.noPluginsYetPluginsRunIn')}
+                isCompact
+              />
+            ) : (
+              <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+                {installed.data.plugins.map((plugin) => (
+                  <InstalledPluginCard
+                    key={plugin.id}
+                    plugin={plugin}
+                    isBusy={busy === plugin.id || fetching === plugin.id}
+                    onToggle={() => {
+                      toggle(plugin);
+                    }}
+                    onSettings={() => {
+                      setSettingsOf(plugin);
+                    }}
+                    onUpdate={() => {
+                      look(plugin.id);
+                    }}
+                    onRollback={() => {
+                      setRollingBack(plugin);
+                    }}
+                    onRemove={() => {
+                      setRemoving(plugin);
+                    }}
+                    onOpenPage={(opened) => {
+                      setPage({ pluginId: plugin.id, ...opened });
+                    }}
+                  />
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <>
+            {catalogue.isError ? (
+              <CouldNotRead
+                said={say('common.theCatalogueCouldNotBeRead')}
+                isTryingAgain={catalogue.isFetching}
+                onTryAgain={() => {
+                  void catalogue.refetch();
+                }}
+              />
+            ) : catalogue.isPending ? (
+              <Spinner isCentered size="sm" label={say('common.readingTheCatalogue')} />
+            ) : !catalogue.data.isReachable ? (
+              <Callout
+                title={say('screens.adminArea.pluginsPanel.officialPluginsAreUnavailable')}
+                tone="warning"
+                className="m-4"
+              >
+                {say('screens.adminArea.pluginsPanel.problemPluginsAlreadyInstalledKeepWorking', {
+                  problem:
+                    sayAgainIfAny(catalogue.data.problem) ??
+                    say('common.thePluginCatalogueCouldNotBe'),
+                })}
+              </Callout>
+            ) : available.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-text-muted">
+                {catalogue.data.plugins.length === 0
+                  ? say('screens.adminArea.pluginsPanel.theCatalogueHasNoPluginsYet')
+                  : say('screens.adminArea.pluginsPanel.everyPluginInTheCatalogueIsInstalled')}
+              </p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+                {available.map((entry) => (
+                  <CatalogueEntryRow
+                    key={entry.id}
+                    entry={entry}
+                    isBusy={fetching === entry.id}
+                    onInstall={() => {
+                      look(entry.id);
+                    }}
+                  />
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </PanelCard>
 

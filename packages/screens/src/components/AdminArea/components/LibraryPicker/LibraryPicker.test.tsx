@@ -35,7 +35,7 @@ describe('LibraryPicker', () => {
 
     render(<LibraryPicker libraries={[MOVIES, SHOWS]} chosen={new Set()} onChange={onChange} />);
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Every library' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Select all' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set(['lib-movies', 'lib-shows']));
   });
@@ -51,9 +51,9 @@ describe('LibraryPicker', () => {
       />,
     );
 
-    expect(screen.getByRole('checkbox', { name: 'Every library' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Every library' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set());
   });
@@ -69,7 +69,7 @@ describe('LibraryPicker', () => {
       />,
     );
 
-    expect(screen.getByRole('checkbox', { name: 'Every library' })).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'Select all' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('checkbox', { name: /Shows/ }));
 

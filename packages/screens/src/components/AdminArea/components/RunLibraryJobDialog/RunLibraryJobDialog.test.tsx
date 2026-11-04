@@ -74,7 +74,7 @@ describe('RunLibraryJobDialog', () => {
       />,
     );
 
-    expect(screen.getByRole('checkbox', { name: 'Every library' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Run on every library' }));
 
@@ -109,7 +109,7 @@ describe('RunLibraryJobDialog', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Every library' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     expect(screen.getByRole('button', { name: 'Run on 0 libraries' })).toBeDisabled();
   });
@@ -171,7 +171,7 @@ describe('RunLibraryJobDialog', () => {
       />,
     );
 
-    expect(screen.getByRole('checkbox', { name: 'Every library' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

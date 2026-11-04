@@ -104,6 +104,35 @@ describe('DataTable', () => {
     expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
   });
 
+  it('opens a row with rows beneath it when pressed, where it expands on choosing', async () => {
+    const user = userEvent.setup();
+    const onChooseRow = vi.fn();
+    const shelves = [
+      { name: 'Shows', items: 2, parts: [{ name: 'Season 1', items: 1 }] },
+      { name: 'Films', items: 1 },
+    ];
+
+    render(
+      <DataTable
+        label="Shelves"
+        columns={[{ id: 'name', header: 'Name', accessorFn: (shelf) => shelf.name }]}
+        rows={shelves}
+        getSubRows={(shelf) => shelf.parts}
+        expandsOnChoose
+        onChooseRow={onChooseRow}
+      />,
+    );
+
+    await user.click(screen.getByText('Shows'));
+
+    expect(screen.getByText('Season 1')).toBeInTheDocument();
+    expect(onChooseRow).not.toHaveBeenCalled();
+
+    await user.click(screen.getByText('Films'));
+
+    expect(onChooseRow).toHaveBeenCalledWith(shelves[1]);
+  });
+
   it('stands as tall as the room left below it where asked, however little it holds', () => {
     const { container } = render(
       <DataTable label="Libraries" columns={COLUMNS} rows={ROWS} height="fills" />,
@@ -170,7 +199,7 @@ describe('DataTable', () => {
       );
 
       expect(screen.getByText('Library 6')).toBeInTheDocument();
-      expect(screen.getByText('Page 2 of 2', { exact: false })).toBeInTheDocument();
+      expect(screen.getByText('6–7 of 7')).toBeInTheDocument();
     });
 
     it('goes back to the first page when the order is changed', async () => {
@@ -182,7 +211,7 @@ describe('DataTable', () => {
         screen.getByRole('columnheader', { name: /Items/ }).querySelector('button')!,
       );
 
-      expect(screen.getByText('Page 1 of 3', { exact: false })).toBeInTheDocument();
+      expect(screen.getByText('1–5 of 12', { exact: false })).toBeInTheDocument();
     });
 
     it('shows the page the caller keeps, and tells it each time the page changes', async () => {
@@ -205,6 +234,72 @@ describe('DataTable', () => {
       await user.click(screen.getByRole('button', { name: 'Next page' }));
 
       expect(onPageChange).toHaveBeenCalledWith(2);
+    });
+
+    it('names no total where more rows can be read than it holds', () => {
+      render(
+        <DataTable label="Libraries" columns={COLUMNS} rows={MANY} pageSize={5} hasMoreRows />,
+      );
+
+      expect(screen.getByText('1–5')).toBeInTheDocument();
+      expect(screen.queryByText(/ of /u)).not.toBeInTheDocument();
+    });
+
+    it('still shows one page of what it holds at a time', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <DataTable label="Libraries" columns={COLUMNS} rows={MANY} pageSize={5} hasMoreRows />,
+      );
+
+      expect(screen.getByText('Library 5')).toBeInTheDocument();
+      expect(screen.queryByText('Library 6')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Next page' }));
+
+      expect(screen.getByText('Library 6')).toBeInTheDocument();
+      expect(screen.queryByText('Library 1')).not.toBeInTheDocument();
+    });
+
+    it('keeps the next page open past what it holds, and asks the caller for it', async () => {
+      const user = userEvent.setup();
+      const onPageChange = vi.fn();
+
+      render(
+        <DataTable
+          label="Libraries"
+          columns={COLUMNS}
+          rows={MANY.slice(0, 5)}
+          pageSize={5}
+          page={0}
+          onPageChange={onPageChange}
+          hasMoreRows
+        />,
+      );
+
+      const next = screen.getByRole('button', { name: 'Next page' });
+
+      expect(next).toBeEnabled();
+
+      await user.click(next);
+
+      expect(onPageChange).toHaveBeenCalledWith(1);
+    });
+
+    it('closes the next page once nothing more can be read', () => {
+      render(
+        <DataTable
+          label="Libraries"
+          columns={COLUMNS}
+          rows={MANY}
+          pageSize={5}
+          page={2}
+          hasMoreRows={false}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+      expect(screen.getByText('11–12 of 12')).toBeInTheDocument();
     });
   });
 
@@ -273,7 +368,7 @@ describe('DataTable', () => {
     );
 
     expect(screen.getAllByRole('row')).toHaveLength(6);
-    expect(screen.getByText('Page 1 of 5 · 23 in total')).toBeInTheDocument();
+    expect(screen.getByText('1–5 of 23')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Next page' }));
 
@@ -295,12 +390,31 @@ describe('DataTable', () => {
     );
   });
 
-  it('stripes every other row, so a long table can be followed across', () => {
+  it('rules a hairline under every row but the last, so a long table can be followed across', () => {
     render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
 
     const body = screen.getAllByRole('rowgroup').find((group) => group.tagName === 'TBODY');
 
-    expect(body?.className).toMatch(/even/);
+    expect(body?.className).toMatch(/not\(:last-child\)>td\]:border-b/);
+  });
+
+  it('draws a line before a column that asks for one, and hides a wide-only column on narrow screens', () => {
+    render(
+      <DataTable
+        label="Library roots"
+        columns={[
+          { ...COLUMNS[0]!, meta: { hasLineBefore: true } },
+          { ...COLUMNS[1]!, meta: { showsOnlyWhenWide: true, info: <span>About items</span> } },
+        ]}
+        rows={ROWS}
+      />,
+    );
+
+    const [first, second] = screen.getAllByRole('columnheader');
+
+    expect(first?.className).toMatch(/border-l/);
+    expect(second?.className).toMatch(/max-xl:hidden/);
+    expect(screen.getByText('About items')).toBeInTheDocument();
   });
 
   it('caps its height, or takes the room its parent gives it', () => {

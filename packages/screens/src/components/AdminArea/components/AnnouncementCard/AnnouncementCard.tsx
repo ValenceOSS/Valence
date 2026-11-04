@@ -106,74 +106,80 @@ const AnnouncementCard = () => {
         )}
 
         <SettingRow
-          title={say('screens.adminArea.announcementCard.whatItSays')}
-          description={say('screens.adminArea.announcementCard.replacesAnyUpNow')}
+          title={say('screens.adminArea.sessionCard.message')}
+          description={say('screens.adminArea.announcementCard.messageDetail')}
         >
-          <div className="flex w-full max-w-md flex-col gap-3">
-            <TextField
-              label={say('screens.adminArea.announcementCard.whatItSays')}
-              isLabelHidden
-              value={text}
-              onValueChange={(next) => {
-                setText(next.slice(0, ANNOUNCEMENT_LIMIT));
-              }}
-              size="sm"
-            />
-
-            <SegmentedRow
-              size="sm"
-              label={say('screens.adminArea.announcementCard.howSerious')}
-              items={[
-                { id: 'info', label: say('screens.adminArea.announcementCard.news') },
-                { id: 'warning', label: say('screens.adminArea.announcementCard.warning') },
-                { id: 'critical', label: say('screens.adminArea.announcementCard.urgent') },
-              ]}
-              value={severity}
-              onSelect={(picked) => {
-                if (isASeverity(picked)) {
-                  setSeverity(picked);
-                }
-              }}
-            />
-
-            <SegmentedRow
-              size="sm"
-              label={say('screens.adminArea.announcementCard.staysUpFor')}
-              items={[
-                { id: 'forever', label: say('screens.adminArea.announcementCard.untilTakenDown') },
-                { id: 'hour', label: say('common.anHour') },
-                { id: 'day', label: say('common.aDay') },
-                { id: 'week', label: say('common.aWeek') },
-              ]}
-              value={lasts}
-              onSelect={(picked) => {
-                if (isALength(picked)) {
-                  setLasts(picked);
-                }
-              }}
-            />
-
-            <span>
-              <Button
-                variant="secondary"
-                size="sm"
-                isLoading={isPosting}
-                disabled={isPosting || text.trim() === ''}
-                onClick={() => {
-                  const forMs = LASTS[lasts];
-
-                  send({
-                    text: text.trim(),
-                    severity,
-                    endsAt: forMs === null ? null : new Date(Date.now() + forMs).toISOString(),
-                  });
-                }}
-              >
-                {say('screens.adminArea.announcementCard.postIt')}
-              </Button>
-            </span>
-          </div>
+          <TextField
+            label={say('screens.adminArea.sessionCard.message')}
+            isLabelHidden
+            value={text}
+            placeholder={say('screens.adminArea.announcementCard.serverRestarting')}
+            onValueChange={(next) => {
+              setText(next.slice(0, ANNOUNCEMENT_LIMIT));
+            }}
+            size="sm"
+            className="w-80 max-w-full"
+          />
         </SettingRow>
+
+        <SettingRow title={say('screens.adminArea.addLibraryDialog.type')}>
+          <SegmentedRow
+            size="sm"
+            tone="accent"
+            label={say('screens.adminArea.addLibraryDialog.type')}
+            items={[
+              { id: 'info', label: say('screens.adminArea.announcementCard.news') },
+              { id: 'warning', label: say('screens.adminArea.announcementCard.warning') },
+              { id: 'critical', label: say('screens.adminArea.announcementCard.urgent') },
+            ]}
+            value={severity}
+            onSelect={(picked) => {
+              if (isASeverity(picked)) {
+                setSeverity(picked);
+              }
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow title={say('screens.adminArea.announcementCard.showsFor')}>
+          <SegmentedRow
+            size="sm"
+            tone="accent"
+            label={say('screens.adminArea.announcementCard.showsFor')}
+            items={[
+              { id: 'forever', label: say('screens.adminArea.announcementCard.untilTakenDown') },
+              { id: 'hour', label: say('common.anHour') },
+              { id: 'day', label: say('common.aDay') },
+              { id: 'week', label: say('common.aWeek') },
+            ]}
+            value={lasts}
+            onSelect={(picked) => {
+              if (isALength(picked)) {
+                setLasts(picked);
+              }
+            }}
+          />
+        </SettingRow>
+
+        <div className="flex justify-end py-4">
+          <Button
+            variant="confirm"
+            size="sm"
+            isLoading={isPosting}
+            disabled={isPosting || text.trim() === ''}
+            onClick={() => {
+              const forMs = LASTS[lasts];
+
+              send({
+                text: text.trim(),
+                severity,
+                endsAt: forMs === null ? null : new Date(Date.now() + forMs).toISOString(),
+              });
+            }}
+          >
+            {say('screens.adminArea.announcementCard.post')}
+          </Button>
+        </div>
       </SettingList>
     </PanelCard>
   );

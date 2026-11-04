@@ -1,6 +1,10 @@
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { randomUUID } from 'node:crypto';
-import { MOST_PLAYLIST_BYTES } from '@ValenceContracts/schemas/LiveTv';
+import {
+  LiveAddressSchema,
+  MOST_PLAYLIST_BYTES,
+  PageAddressSchema,
+} from '@ValenceContracts/schemas/LiveTv';
 import { checkChannel } from './checkChannel';
 import { checkEmbed } from './checkEmbed';
 import { saying } from '@ValenceI18n/saying';
@@ -280,6 +284,49 @@ const createLiveTvService = ({
       await store.changeSource(id, { guideUrl });
 
       return refreshed({ ...source, guideUrl });
+    },
+
+    change: async (id, change) => {
+      const source = await store.readSource(id);
+
+      if (source === null) {
+        return null;
+      }
+
+      const address =
+        change.address === undefined
+          ? undefined
+          : (source.kind === 'embed' ? PageAddressSchema : LiveAddressSchema).safeParse(
+              change.address,
+            );
+
+      const logo =
+        change.logoUrl === undefined || change.logoUrl === null
+          ? undefined
+          : LiveAddressSchema.safeParse(change.logoUrl);
+
+      if ((address !== undefined && !address.success) || (logo !== undefined && !logo.success)) {
+        return saying('error.live.thatAddressCannotBeRead');
+      }
+
+      const next = {
+        ...(change.name === undefined ? {} : { name: change.name }),
+        ...(address === undefined ? {} : { address: address.data }),
+        ...(change.playlist === undefined ? {} : { playlist: change.playlist }),
+        ...(change.logoUrl === undefined ? {} : { logoUrl: change.logoUrl }),
+      };
+
+      await store.changeSource(id, next);
+
+      const changed = { ...source, ...next };
+
+      const isOneChannel = source.kind === 'stream' || source.kind === 'embed';
+      const isReadAgain =
+        address !== undefined ||
+        change.playlist !== undefined ||
+        (isOneChannel && (change.name !== undefined || change.logoUrl !== undefined));
+
+      return isReadAgain ? refreshed(changed) : shownOf(changed);
     },
 
     refreshAll: async () => {

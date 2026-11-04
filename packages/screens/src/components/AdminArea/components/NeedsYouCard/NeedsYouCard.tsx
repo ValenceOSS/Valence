@@ -85,6 +85,16 @@ const NeedsYouCard = ({ onOpenPanel }: NeedsYouCardProps) => {
     },
   ];
 
+  if (waiting.every((one) => one.count === null || one.count === 0) && attention.latest === null) {
+    return (
+      <DashboardRegion title={say('screens.adminArea.needsYouCard.waitingOnYou')}>
+        <p className="font-body text-sm text-text-muted">
+          {say('screens.adminArea.needsYouCard.nothingNeedsYou')}
+        </p>
+      </DashboardRegion>
+    );
+  }
+
   return (
     <DashboardRegion title={say('screens.adminArea.needsYouCard.waitingOnYou')}>
       <ul

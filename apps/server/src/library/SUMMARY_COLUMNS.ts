@@ -10,6 +10,7 @@ const SUMMARY_COLUMNS = {
   height: mediaItem.height,
   videoCodec: mediaItem.videoCodec,
   videoRange: mediaItem.videoRange,
+  audioStreams: mediaItem.audioStreams,
   addedAt: mediaItem.addedAt,
   posterUrl: mediaItem.posterUrl,
   artworkChangedAt: mediaItem.artworkChangedAt,

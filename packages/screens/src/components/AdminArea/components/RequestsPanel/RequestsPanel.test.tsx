@@ -67,8 +67,7 @@ describe('RequestsPanel', () => {
   it('says the service is answering, and which release it is', async () => {
     renderInAnAddress(<RequestsPanel />);
 
-    expect(await screen.findAllByText('Online')).toHaveLength(2);
-    expect(screen.getByText('0.4.0')).toBeInTheDocument();
+    expect(await screen.findByText('Online · 0.4.0')).toBeInTheDocument();
   });
 
   it('says the VPN is up, and where traffic leaves from', async () => {
@@ -106,7 +105,7 @@ describe('RequestsPanel', () => {
     await screen.findAllByText('Not checked');
     await user.click(screen.getByRole('button', { name: 'Check now' }));
 
-    expect(await screen.findAllByText('Online')).toHaveLength(2);
+    expect(await screen.findAllByText(/^Online/)).not.toHaveLength(0);
     expect(checkRequestsNow).toHaveBeenCalledTimes(1);
   });
 

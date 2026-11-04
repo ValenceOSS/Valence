@@ -14,6 +14,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { checkRequestsNow } from '@ValenceClient/requests/fetchRequests';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { describeRequestsSolver } from './describeRequestsSolver';
 import { describeRequestsVpn } from './describeRequestsVpn';
@@ -125,6 +126,7 @@ const RequestsPanel = () => {
               ) : overview.isReachable ? (
                 <Badge size="sm" tone="success">
                   {say('common.online')}
+                  {overview.status === null ? '' : ` · ${overview.status.version}`}
                 </Badge>
               ) : (
                 <Badge size="sm" tone="danger">
@@ -133,18 +135,21 @@ const RequestsPanel = () => {
               )}
             </SettingRow>
 
-            {overview.status === null ? null : (
-              <SettingRow
-                title={say('common.release')}
-                description={say(
-                  'screens.adminArea.requestsPanel.whichVersionOfTheRequestsService',
-                )}
-              >
-                <Badge size="sm">{overview.status.version}</Badge>
-              </SettingRow>
-            )}
-
-            <SettingRow title={say('screens.adminArea.requestsPanel.vPN')} description={vpn.detail}>
+            <SettingRow
+              title={say('screens.adminArea.requestsPanel.vPN')}
+              description={vpn.detail.split('. ')[0]?.replace(/\.?$/, '.') ?? vpn.detail}
+              {...(vpn.detail.includes('. ')
+                ? {
+                    info: (
+                      <PanelCardInfo
+                        label={say('screens.adminArea.requestsPanel.aboutTheVpn')}
+                        align="start"
+                        detail={vpn.detail.split('. ').slice(1).join('. ')}
+                      />
+                    ),
+                  }
+                : {})}
+            >
               <HowToFix href={vpn.help} />
 
               <Badge size="sm" tone={vpn.tone}>

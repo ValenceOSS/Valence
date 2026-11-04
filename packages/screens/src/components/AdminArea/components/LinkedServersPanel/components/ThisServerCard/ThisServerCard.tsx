@@ -1,182 +1,167 @@
-import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
-import { TextField } from '@ValenceUI/TextField';
-import { notify } from '@ValenceUI/notify';
-import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { Image as ImageIcon } from '@keyline-icons/react';
+import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { Icon } from '@ValenceUI/Icon';
-import { ServerFace } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerFace/ServerFace';
-import { changeServerPicture } from '@ValenceClient/admin/changeServerPicture';
-import { serverPictureUrl } from '@ValenceClient/linking/serverPictureUrl';
 import { PanelCard } from '@ValenceUI/PanelCard';
-import { changeLinkIdentity } from '@ValenceClient/admin/changeLinkIdentity';
-import { groupFingerprint } from '@ValenceClient/linking/groupFingerprint';
-import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
-import type { PictureChange, ThisServerCardProps } from './ThisServerCard.types';
+import { notify } from '@ValenceUI/notify';
+import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
+import { ServerCallingCard } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerCallingCard/ServerCallingCard';
+import { changeServerPicture } from '@ValenceClient/admin/changeServerPicture';
+import { changeLinkIdentity } from '@ValenceClient/admin/changeLinkIdentity';
+import { serverPictureUrl } from '@ValenceClient/linking/serverPictureUrl';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { say } from '@ValenceI18n/say';
+import type { LinkIdentityChange } from '@ValenceContracts/schemas/LinkedServer';
+import type { ThisServerCardProps } from './ThisServerCard.types';
+import { SavedText } from '@ValenceScreens/components/AdminArea/components/SavedText/SavedText';
+
+const IS_LOCAL = /^https?:\/\/(localhost|127\.|\[::1\])/u;
 
 /**
- * How other Valence servers see this one: its name, colour and picture, which they draw beside what comes
- * from here, where they reach it, and the fingerprint another admin checks an invite against.
+ * How other Valence servers see this one, as settings that save as they change: its picture,
+ * name and colour, the address they reach it at, the fingerprint another admin checks an invite
+ * against, and whether a request here goes once a linked server has the title.
  *
  * @param identity - This server as other servers see it.
  */
 const ThisServerCard = ({ identity }: ThisServerCardProps) => {
   const cache = useQueryClient();
-  const [name, setName] = useState(identity.name);
-  const [colour, setColour] = useState(identity.colour);
-  const [address, setAddress] = useState(identity.address);
-  const [dropsRequests, setDropsRequests] = useState(identity.dropsRequestsElsewhere);
-  const [picture, setPicture] = useState<PictureChange>({ kind: 'kept' });
-  const [isSaving, setIsSaving] = useState(false);
-  const isChanged =
-    name.trim() !== identity.name ||
-    colour !== identity.colour ||
-    address !== identity.address ||
-    dropsRequests !== identity.dropsRequestsElsewhere ||
-    picture.kind !== 'kept';
-  const hasAPicture =
-    picture.kind === 'new' || (picture.kind === 'kept' && identity.pictureAt !== null);
+  const reread = () => cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
 
-  const save = async (): Promise<void> => {
-    setIsSaving(true);
-
-    const pictureSent =
-      picture.kind === 'kept'
-        ? null
-        : await changeServerPicture(picture.kind === 'new' ? picture.file : null);
-
-    if (pictureSent !== null && pictureSent.refusal !== null) {
-      setIsSaving(false);
-      notify.failed(pictureSent.refusal);
-
-      return;
-    }
-
-    if (pictureSent !== null) {
-      setPicture({ kind: 'kept' });
-      await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
-    }
-
-    const sent = await changeLinkIdentity({
-      name: name.trim(),
-      colour,
-      address,
-      dropsRequestsElsewhere: dropsRequests,
-    });
-
-    setIsSaving(false);
+  const save = async (change: LinkIdentityChange): Promise<boolean> => {
+    const sent = await changeLinkIdentity(change);
 
     if (sent.refusal !== null) {
       notify.failed(sent.refusal.message);
 
-      return;
+      return false;
     }
 
     notify.worked(say('screens.adminArea.linkedServersPanel.savedThisServer'));
-    await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
+    await reread();
+
+    return true;
+  };
+
+  const changePicture = (file: File | null) => {
+    void changeServerPicture(file).then(async (sent) => {
+      if (sent.refusal !== null) {
+        notify.failed(sent.refusal);
+
+        return;
+      }
+
+      await reread();
+    });
   };
 
   return (
-    <PanelCard title={say('common.thisServer')}>
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <ServerFace
-            name={name === '' ? identity.name : name}
-            colour={colour}
-            picture={picture.kind === 'removed' ? null : serverPictureUrl(null, identity.pictureAt)}
-            pending={picture.kind === 'new' ? picture.file : null}
-            className="size-10 text-base"
+    <PanelCard
+      title={say('common.thisServer')}
+      isFlush
+      actions={
+        <PanelCardInfo
+          label={say('screens.adminArea.linkedServersPanel.aboutThisServer')}
+          detail={say('screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne')}
+        />
+      }
+    >
+      <div className="border-b border-[var(--surface-line)]">
+        <ServerCallingCard
+          name={identity.name}
+          colour={identity.colour}
+          picture={serverPictureUrl(null, identity.pictureAt)}
+          address={identity.address}
+          fingerprint={identity.fingerprint}
+          standing={
+            IS_LOCAL.test(identity.address) ? (
+              <Badge tone="warning" size="sm">
+                {say('screens.adminArea.linkedServersPanel.notReachableFromOtherServers')}
+              </Badge>
+            ) : null
+          }
+        >
+          <ColourChoice
+            label={say('common.colour')}
+            value={identity.colour}
+            isCompact
+            onChange={(colour) => {
+              void save({ colour });
+            }}
           />
-          <p className="min-w-0 flex-1 basis-48 text-xs leading-relaxed text-text-muted">
-            {say('screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne')}
-          </p>
-          <span className="flex items-center gap-2">
-            <FilePicker
-              label={say('common.chooseAPicture')}
-              accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
+          <FilePicker
+            label={say('common.chooseAPicture')}
+            accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
+            size="sm"
+            onPick={changePicture}
+          >
+            <Icon of={ImageIcon} size={15} />
+            {identity.pictureAt === null
+              ? say('common.chooseAPicture')
+              : say('common.chooseAnother')}
+          </FilePicker>
+          {identity.pictureAt === null ? null : (
+            <Button
+              variant="ghost"
               size="sm"
-              disabled={isSaving}
-              onPick={(file) => {
-                setPicture({ kind: 'new', file });
+              onClick={() => {
+                changePicture(null);
               }}
             >
-              <Icon of={ImageIcon} size={15} />
-              {hasAPicture ? say('common.chooseAnother') : say('common.chooseAPicture')}
-            </FilePicker>
-            {hasAPicture ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={isSaving}
-                onClick={() => {
-                  setPicture(identity.pictureAt === null ? { kind: 'kept' } : { kind: 'removed' });
-                }}
-              >
-                {say('screens.adminArea.linkedServersPanel.removeThePicture')}
-              </Button>
-            ) : null}
-          </span>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2">
-          <TextField label={say('common.name')} value={name} onValueChange={setName} size="sm" />
-          <TextField
-            label={say('screens.adminArea.linkedServersPanel.whereOtherServersReachIt')}
-            value={address}
-            onValueChange={setAddress}
-            type="url"
-            size="sm"
-          />
-        </div>
-
-        <ColourChoice label={say('common.colour')} value={colour} onChange={setColour} />
-
-        <SettingList>
-          <SettingRow
-            title={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
-            description={say('screens.adminArea.linkedServersPanel.whenALinkedServerGetsSomething')}
-          >
-            <Switch
-              label={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
-              isLabelHidden
-              isOn={dropsRequests}
-              disabled={isSaving}
-              onToggle={() => {
-                setDropsRequests(!dropsRequests);
-              }}
-            />
-          </SettingRow>
-        </SettingList>
-
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-text-muted">
-              {say('screens.adminArea.linkedServersPanel.fingerprint')}
-            </span>
-            <code className="select-all font-mono text-sm">
-              {groupFingerprint(identity.fingerprint)}
-            </code>
-          </div>
-
-          <Button
-            variant="glossy"
-            size="sm"
-            isLoading={isSaving}
-            disabled={!isChanged || name.trim() === ''}
-            onClick={() => {
-              void save();
-            }}
-          >
-            {say('common.save')}
-          </Button>
-        </div>
+              {say('screens.adminArea.linkedServersPanel.removeThePicture')}
+            </Button>
+          )}
+        </ServerCallingCard>
       </div>
+
+      <SettingList isInset>
+        <SettingRow
+          title={say('common.name')}
+          description={say('screens.adminArea.linkedServersPanel.whatOtherServersCallThisOne')}
+        >
+          <SavedText
+            label={say('common.name')}
+            saved={identity.name}
+            onSave={(name) => save({ name })}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('common.address')}
+          description={
+            IS_LOCAL.test(identity.address)
+              ? say('screens.adminArea.linkedServersPanel.otherServersCantReachLocalhost')
+              : say('screens.adminArea.linkedServersPanel.whereOtherServersReachThisOne')
+          }
+        >
+          <SavedText
+            label={say('common.address')}
+            type="url"
+            saved={identity.address}
+            onSave={(address) => save({ address })}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
+          description={say('screens.adminArea.linkedServersPanel.removesARequestHereOnce')}
+        >
+          <Switch
+            label={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
+            isLabelHidden
+            isOn={identity.dropsRequestsElsewhere}
+            onToggle={() => {
+              void save({ dropsRequestsElsewhere: !identity.dropsRequestsElsewhere });
+            }}
+          />
+        </SettingRow>
+      </SettingList>
     </PanelCard>
   );
 };

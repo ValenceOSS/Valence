@@ -4,11 +4,10 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { ThisServerCard } from './components/ThisServerCard/ThisServerCard';
-import { InviteCard } from './components/InviteCard/InviteCard';
-import { LinkToServerCard } from './components/LinkToServerCard/LinkToServerCard';
 import { LinkedServerList } from './components/LinkedServerList/LinkedServerList';
-import { LinkedServerDetail } from './components/LinkedServerDetail/LinkedServerDetail';
+import { LinkedServerPage } from './components/LinkedServerPage/LinkedServerPage';
 import { say } from '@ValenceI18n/say';
+import type { LinkedServersPanelProps } from './LinkedServersPanel.types';
 
 const ASKS_AGAIN_MS = 15_000;
 
@@ -19,8 +18,10 @@ const ASKS_AGAIN_MS = 15_000;
  * again every few seconds while a request is waiting on either side, so an approval made on the
  * other server shows here without anybody reloading.
  */
-const LinkedServersPanel = () => {
-  const [managing, setManaging] = useState<string | null>(null);
+const LinkedServersPanel = ({ openedServer, onOpenServer }: LinkedServersPanelProps) => {
+  const [localOpened, setLocalOpened] = useState<string | null>(null);
+  const managing = onOpenServer === undefined ? localOpened : (openedServer ?? null);
+  const setManaging = onOpenServer ?? setLocalOpened;
   const asked = useQuery({
     ...adminQueries.linking(),
     refetchInterval: (query) =>
@@ -56,20 +57,22 @@ const LinkedServersPanel = () => {
   const { identity, invites, servers } = asked.data;
   const managed = servers.find((server) => server.id === managing && server.state === 'linked');
 
+  if (managed !== undefined) {
+    return (
+      <LinkedServerPage
+        server={managed}
+        thisServer={identity.name}
+        onBack={() => {
+          setManaging(null);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <LinkedServerList servers={servers} managing={managed?.id ?? null} onManage={setManaging} />
-      {managed === undefined ? null : (
-        <LinkedServerDetail server={managed} thisServer={identity.name} />
-      )}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <InviteCard invites={invites} />
-        <LinkToServerCard />
-      </div>
-      <ThisServerCard
-        key={`${identity.name}\n${identity.colour}\n${identity.address}`}
-        identity={identity}
-      />
+      <LinkedServerList servers={servers} invites={invites} onOpen={setManaging} />
+      <ThisServerCard identity={identity} />
     </div>
   );
 };

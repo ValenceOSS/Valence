@@ -5,7 +5,7 @@ import type {
   VideoDevice,
   VideoNowWatching,
 } from '@ValenceContracts/schemas/VideoRemote';
-import type { DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
+import type { DeviceLink, DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 
 type VideoDevicesOptions = {
@@ -22,6 +22,8 @@ type VideoDevices = {
     toClientId: string,
     command: VideoCommand,
   ) => boolean;
+  controllerOf: (clientId: string) => DeviceLink | null;
+  remoteFor: (clientId: string) => DeviceLink | null;
 };
 
 /**
@@ -49,6 +51,10 @@ const createVideoDevices = ({ presence, onChanged }: VideoDevicesOptions): Video
       })),
 
     report: devices.report,
+
+    controllerOf: devices.controllerOf,
+
+    remoteFor: devices.remoteFor,
 
     command: (owner, fromClientId, toClientId, command) =>
       devices.tell(owner, fromClientId, toClientId, (fromLabel) => ({
