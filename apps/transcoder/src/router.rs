@@ -306,6 +306,9 @@ pub struct SessionResponse {
     /// keyframes and this source's are something else. False for an encode
     /// that was asked for, and for a source that cannot be cut at all.
     pub encoded_for_keyframes: bool,
+    /// Whether the picture is tone mapped to SDR, so the caller can say the
+    /// range that arrives rather than the source's.
+    pub tone_maps: bool,
     /// What this session found already made when it started.
     ///
     /// A transcode is addressed by the treatment it performs, so a request for
@@ -1263,6 +1266,7 @@ async fn start_both(
         id,
         encodes_video: started.encodes_video,
         encoded_for_keyframes: started.encoded_for_keyframes,
+        tone_maps: started.tone_maps,
         reuse: started.reuse,
         dash_manifest: None,
         hardware: started.hardware,
@@ -1378,6 +1382,7 @@ async fn start_split(
         id: halves.video.id,
         encodes_video: halves.video.encodes_video,
         encoded_for_keyframes: halves.video.encoded_for_keyframes,
+        tone_maps: halves.video.tone_maps,
         reuse: halves.video.reuse,
         hardware: halves.video.hardware,
     }))

@@ -100,6 +100,7 @@ const SessionResponseSchema = z.object({
   manifest: z.string().min(1),
   encodesVideo: z.boolean().default(false),
   encodedForKeyframes: z.boolean().default(false),
+  toneMaps: z.boolean().optional(),
   reuse: TranscodeReuseSchema.default('none'),
   dashManifest: z.string().min(1).optional(),
   hardware: PlaybackHardwareSchema.optional(),

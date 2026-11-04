@@ -404,7 +404,7 @@ const createPlaybackService = ({
 
         const delivered = withDeliveredRange(
           asDelivered(plan, source, session),
-          outcome.deliveredRange,
+          session.toneMaps === true ? 'SDR' : outcome.deliveredRange,
         );
 
         return {

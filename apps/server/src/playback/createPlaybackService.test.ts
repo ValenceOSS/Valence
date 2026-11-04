@@ -141,6 +141,7 @@ const harness = (
   subtitles?: CreatePlaybackServiceOptions['subtitles'],
   isSplit = false,
   encodedForKeyframes = false,
+  toneMaps = false,
 ) => {
   const media: MediaLookup = {
     findForPlayback: (mediaId) =>
@@ -182,6 +183,7 @@ const harness = (
         manifest: '/session-1',
         encodesVideo,
         encodedForKeyframes,
+        toneMaps,
         reuse,
       });
     },
@@ -389,6 +391,36 @@ describe('createPlaybackService', () => {
           },
         },
       },
+    });
+  });
+
+  it('says an HDR film the media service tone mapped arrives in SDR', async () => {
+    const { service } = harness('en', true, bilingual, 'none', undefined, false, true, true);
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      { ...capableProfile, needsIdrKeyframes: true },
+      0,
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { plan: { video: { kind: 'transcode', codec: 'h264', range: 'SDR' } } },
+    });
+  });
+
+  it('keeps saying HDR where the media service could not tone map', async () => {
+    const { service } = harness('en', true, bilingual, 'none', undefined, false, true, false);
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      { ...capableProfile, needsIdrKeyframes: true },
+      0,
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { plan: { video: { kind: 'transcode', range: 'HDR10' } } },
     });
   });
 

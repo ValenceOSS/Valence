@@ -162,6 +162,40 @@ fn open_gop_film_with_sound() -> PathBuf {
     )
 }
 
+/// The same film graded in HDR10: ten bits, BT.2020 and the PQ curve.
+fn open_gop_hdr_film_with_sound() -> PathBuf {
+    generate(
+        "idr-keyframes-session-hdr.mkv",
+        &[
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc2=size=320x180:rate=24",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440",
+            "-map",
+            "0:v",
+            "-map",
+            "1:a",
+            "-t",
+            "30",
+            "-c:v",
+            "libx265",
+            "-pix_fmt",
+            "yuv420p10le",
+            "-x265-params",
+            "keyint=60:min-keyint=60:scenecut=0:open-gop=1:log-level=error:\
+             colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc",
+            "-c:a",
+            "aac",
+            "-ac",
+            "2",
+        ],
+    )
+}
+
 /// A transcoder set up the way `serve` sets one up.
 async fn app(name: &str) -> axum::Router {
     valence_transcoder::capability::detect_capabilities(
@@ -324,4 +358,82 @@ async fn every_other_client_still_gets_the_copy() {
 
     assert_eq!(started["encodesVideo"], serde_json::json!(false));
     assert_eq!(started["encodedForKeyframes"], serde_json::json!(false));
+}
+
+/// The transfer curve the first segment of a session declares.
+async fn first_segment_transfer(app: &axum::Router, started: &serde_json::Value) -> String {
+    let id = started["id"].as_str().expect("a session has an id");
+    let fetch = |name: String| async move {
+        let (status, body) = call(
+            app,
+            Request::builder()
+                .uri(format!("/sessions/{id}/{name}"))
+                .body(Body::empty())
+                .expect("builds the request"),
+        )
+        .await;
+
+        assert_eq!(status, StatusCode::OK, "{name} was not served");
+
+        body
+    };
+
+    let playlist = String::from_utf8(fetch("index.m3u8".to_owned()).await).expect("text");
+    let first = playlist
+        .lines()
+        .find(|line| line.starts_with("segment"))
+        .expect("the playlist lists a segment")
+        .to_owned();
+    let mut joined = fetch("init.mp4".to_owned()).await;
+
+    joined.extend(fetch(first).await);
+
+    let at = common::scratch(format!("valence-idr-keyframes-segment-{id}.mp4"));
+
+    std::fs::write(&at, joined).expect("writes the segment out");
+
+    let output = std::process::Command::new(ffprobe())
+        .args([
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=color_transfer",
+            "-of",
+            "csv=p=0",
+        ])
+        .arg(&at)
+        .output()
+        .expect("runs ffprobe");
+
+    String::from_utf8_lossy(&output.stdout).trim().to_owned()
+}
+
+#[tokio::test]
+async fn an_hdr_film_encoded_for_its_keyframes_arrives_tone_mapped() {
+    require_ffmpeg();
+    let film = open_gop_hdr_film_with_sound();
+    let app = app("hdr").await;
+    let able = valence_transcoder::capability::detect_capabilities(
+        &ffmpeg(),
+        valence_transcoder::transcode_plan::DEFAULT_DEVICE,
+    )
+    .await;
+
+    let started = start(&app, &copy_spec(&film, true)).await;
+
+    assert_eq!(started["encodesVideo"], serde_json::json!(true));
+
+    if able.tone_mapping == valence_transcoder::transcode_plan::ToneMapping::Unavailable {
+        assert_eq!(started["toneMaps"], serde_json::json!(false));
+        return;
+    }
+
+    assert_eq!(started["toneMaps"], serde_json::json!(true));
+    assert_eq!(
+        first_segment_transfer(&app, &started).await,
+        "bt709",
+        "eight-bit H.264 under the PQ curve bands; it has to arrive as SDR"
+    );
 }
