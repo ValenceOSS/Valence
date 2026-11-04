@@ -1,7 +1,7 @@
 ---
 title: Sharing
 description: Hand out a link so somebody without an account can watch one title, a whole series or read a book, then limit it by time or people and withdraw it at once.
-order: 9
+order: 10
 ---
 
 A share link lets a person with no account on your server watch or read one specific thing. It does not give them a library, search or a profile. The link is the credential: anybody holding it can use it, so Valence lets you decide how long it lasts, how many people may use it and lets you withdraw it at any moment.
@@ -74,7 +74,9 @@ To withdraw a link, press the withdraw action on its row and confirm. It stops a
 
 ## Managing everybody's links
 
-An account with `sharing.manage` (Managers and Administrators by default) sees the **Links** panel under Activity in the admin area. It lists every link on the server, adds a **Created by** column and lets you withdraw anybody's.
+An account with `sharing.manage` (Managers and Administrators by default) sees the **Links** panel under Activity in the admin area. Its **Share links** card lists every link on the server and lets you withdraw anybody's. **Active**, **Ended** and **All** above it switch between the links that still work, the ones that don't, and both, each with how many; it opens on the active ones.
+
+Each row shows the title's poster and name (with the episode, or **Whole series**), who it was **Created by**, its **Status**, how often it was **Opened**, and when it was made. The status says **No end date**, **Ends today** or how many days it has left for a link that works, and **Revoked**, **Expired** and when, or **All opens used** for one that doesn't. **Opened** counts against its allowance where it has one ("2 of 5"), and otherwise says **Never**, **Once** or how many times. The button at the end of the row revokes the link, after **Revoke this share link?**; a used-up link can still be revoked, since whoever opened it can still watch.
 
 When you withdraw somebody else's link, Valence confirms it with a toast reading "Withdrew the link." and sends the person who made it a notification saying which link was withdrawn and by whom. That is deliberate: a link disappearing without a word makes a shared server feel arbitrary. The guest, by contrast, is only told that the link was withdrawn, not who did it. The notification appears in the bell described in [Notifications and webhooks](/use/notifications-and-webhooks).
 

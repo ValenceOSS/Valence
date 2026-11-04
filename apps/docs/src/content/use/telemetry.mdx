@@ -1,7 +1,7 @@
 ---
 title: Anonymous usage statistics
 description: The one anonymous report a Valence server can send each day, every field in it, what it never holds, where the results are public, and how to turn it on or off.
-order: 20
+order: 21
 ---
 
 Once a day, a Valence server sends the Valence project one short, anonymous report about itself: which release it runs, what sort of machine it is on, and roughly how big its libraries are. It holds no names, no email addresses, no titles, no file paths and nothing about what anybody watched.
@@ -14,7 +14,7 @@ Valence has no accounts with us and no service of ours your server depends on, s
 
 ## Seeing what is sent
 
-In the admin area, open **Settings** under **System** and find **Share anonymous usage statistics**. Press **See what is sent** and the whole report is shown, exactly as it would be sent the next time, with where it goes and, when nothing is being sent, why. Changing anything here needs the `server.settings` permission.
+In the admin area, open **Settings** under **System** and find **Usage statistics** under **Features** in the **Online services** card. Press **See what's sent** and the whole report is shown, exactly as it would be sent the next time, with where it goes and, when nothing is being sent, why. Changing anything here needs the `server.settings` permission.
 
 ## What is in the report
 
@@ -94,7 +94,7 @@ Nothing is sent until you turn it on:
 
 - **In setup.** The access step of [first-run setup](/use/first-run) has **Share anonymous usage statistics**, off until you turn it on.
 - **In Settings.** Turn **Share anonymous usage statistics** on or off under **Settings**. It takes effect straight away.
-- **From the environment.** Set `VALENCE_TELEMETRY=off`, or the more general `DO_NOT_TRACK=1`, in the server's environment. Either one stops every report whatever the setting says, and setup and Settings say it has been turned off by the environment.
+- **From the environment.** Set `VALENCE_TELEMETRY=off`, or the more general `DO_NOT_TRACK=1`, in the server's environment. Either one stops every report whatever the setting says, and setup and Settings say it has been turned off by the environment, with the switch off and unable to be changed.
 
 A server run from a source checkout in development never reports, so working on Valence does not count as a server. Set `VALENCE_TELEMETRY=on` to send from one anyway, with `VALENCE_TELEMETRY_URL` pointing at a statistics site of your own.
 
@@ -108,4 +108,4 @@ See [Environment variables](/reference/environment-variables#anonymous-usage-sta
 
 ## Making a new install ID
 
-Reports from one server carry the same install ID, so they can be counted as one install over time rather than a new one each day. To make your later reports impossible to tie to earlier ones, press **See what is sent** and then **Make a new install ID**. The new ID is random, like the first, and the old one is forgotten. The metrics server cannot tell the two apart as one install, and the old one is deleted with its reports once twelve months pass without it.
+Reports from one server carry the same install ID, so they can be counted as one install over time rather than a new one each day. To make your later reports impossible to tie to earlier ones, press **See what's sent** and then **Make a new install ID**. The new ID is random, like the first, and the old one is forgotten. The metrics server cannot tell the two apart as one install, and the old one is deleted with its reports once twelve months pass without it.

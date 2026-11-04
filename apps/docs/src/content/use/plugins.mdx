@@ -1,7 +1,7 @@
 ---
 title: Plugins
 description: Install plugins from the official catalogue or a file, read what they ask for, fill in their settings, grant their permissions, roll them back, and turn them off or remove them.
-order: 13
+order: 14
 ---
 
 Plugins add to Valence: an anime list that stays in step, playlists brought across from another service, new themes. Installing and managing them is for administrators, from **Admin**, then **Plugins**. This needs the plugins permission, `server.plugins`, which administrators have.
@@ -25,7 +25,7 @@ Their source is in [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/va
 
 ## From the catalogue
 
-**Official plugins** lists the plugins in the catalogue. Each is signed by the Valence project, and your server checks the signature before it installs anything. Where the newest version of a plugin needs a newer Valence than yours, you're offered the newest version yours runs; where none does, it's marked **Needs a newer Valence**.
+The **Plugins** card switches between **Installed** and **Available**, each with how many there are. **Available** lists the plugins in the catalogue that aren't installed yet. Each is signed by the Valence project, and your server checks the signature before it installs anything. Where the newest version of a plugin needs a newer Valence than yours, you're offered the newest version yours runs; where none does, it's marked **Needs a newer Valence**.
 
 1. Choose a plugin, then **Install**.
 2. Read what it asks to be allowed to do. Every permission is said in plain words, for example "Talks to api.spotify.com" or "Reads and updates what people have watched".
@@ -33,7 +33,7 @@ Their source is in [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/va
 
 ## From a file
 
-**Install from a file** takes a `.vplugin` file, for a plugin someone gave you or one you wrote. Choose its `.sig` file with it if it came with one.
+**Install from a file**, at the top of the **Plugins** card, takes a `.vplugin` file, for a plugin someone gave you or one you wrote. Choose its `.sig` file with it if it came with one.
 
 <Callout title="Unsigned plugins" tone="warning">
   If the file isn't signed by Valence or by a [key you trust](#trusting-other-signing-keys), Valence
@@ -50,9 +50,9 @@ Only a package Valence signed can replace a plugin from the official catalogue, 
 
 A plugin's author can sign it with a key of their own. Trusting their key lets you install what it signs without the unsigned warning. It's still never called official: its badge says **Key you trust**, Valence hasn't checked it, and it can't replace an official plugin.
 
-To trust a key, add it under **Trusted signing keys** on the Plugins page: its id, as the author named it, and its public key, the `.pub.pem` file the author shared or the line of text inside it. **Remove** beside a key stops trusting it, once you confirm. Plugins it signed stay installed as they are.
+To trust a key, press **Add key** on the **Trusted signing keys** card of the Plugins page. Give its **Key id**, as the author named it, and its **Public key**, the `.pub.pem` file the author shared or the line of text inside it, then press **Trust key**. The dialog stays open until the key is saved, and says which of the two is still empty. **Remove** beside a key stops trusting it, once you confirm. Plugins it signed stay installed as they are.
 
-Keys can also be set with the `VALENCE_PLUGIN_TRUSTED_KEYS` [environment variable](/reference/environment-variables), as `id=key` pairs separated by commas. Those are listed as set by it and can't be removed from the page. A key can't take the id of one of Valence's own.
+Keys can also be set with the `VALENCE_PLUGIN_TRUSTED_KEYS` [environment variable](/reference/environment-variables), as `id=key` pairs separated by commas. Those are marked **Set by VALENCE_PLUGIN_TRUSTED_KEYS** and can't be removed from the page. A key can't take the id of one of Valence's own.
 
 Pointing your server at a catalogue of your own with `VALENCE_PLUGIN_CATALOGUE_URL` works the same way: sign it with a key you trust, and its plugins are listed as **Plugins from a key you trust**.
 
@@ -80,7 +80,7 @@ A plugin acts only for the people who open one of its pages or connect an accoun
 
 ## Settings
 
-Some plugins need details from you before they work, such as an OAuth client ID for a service people will connect to. Fill them in on the plugin's **Settings**. Secret settings are stored encrypted and never shown again once saved; type a new value to replace one.
+Some plugins need details from you before they work, such as an OAuth client ID for a service people will connect to. Fill them in on the plugin's **Settings**, in the menu on its row. Secret settings are stored encrypted and never shown again once saved; type a new value to replace one.
 
 A plugin that connects people's accounts on another service needs you to register an OAuth application with that service. Use this address as its redirect:
 
@@ -122,11 +122,11 @@ Some updates convert what the plugin kept to a new shape as they install. While 
 
 ### Rolling back
 
-Valence keeps the version an update replaced, with its settings and what it had kept as they were at that moment. **Roll back to** and that version puts it back. Anything the plugin kept after the update is lost, and only one step back is kept: rolling back again, or updating again, starts afresh. A rollback is written to the audit log.
+Valence keeps the version an update replaced, with its settings and what it had kept as they were at that moment. **Roll back to** and that version, in the menu on the plugin's row, puts it back. Anything the plugin kept after the update is lost, and only one step back is kept: rolling back again, or updating again, starts afresh. A rollback is written to the audit log.
 
 ## Turning a plugin off, or removing it
 
 - **The switch** on its row turns a plugin off at once. Its pages, panels and themes disappear and its scheduled work stops, but its settings, data and people's connected accounts are kept for when you turn it back on. Anybody on one of its pages, on the web, the phone or the TV, is taken back to where they came from and told why.
-- **Remove** takes the plugin away with its settings, everything it kept, every connected account, its permissions in roles, its webhook addresses and the version kept for rolling back. The dialog first lists what this particular plugin would take with it, such as how much it kept and how many people connected an account to which service, and offers **Disable plugin** instead, which keeps all of that. Where a service supports it, Valence also asks that service to cancel the access people gave, so the plugin disappears from their account there too.
+- **Remove**, in the menu on its row, takes the plugin away with its settings, everything it kept, every connected account, its permissions in roles, its webhook addresses and the version kept for rolling back. The dialog first lists what this particular plugin would take with it, such as how much it kept and how many people connected an account to which service, and offers **Disable plugin** instead, which keeps all of that. Where a service supports it, Valence also asks that service to cancel the access people gave, so the plugin disappears from their account there too.
 
 If a plugin fails, its row says **Plugin stopped working** and why. Valence waits before starting it again, a second at first and twice as long each time it fails again, up to five minutes, so a broken plugin can't keep the server busy. Turning it off and on again starts it afresh at once.
