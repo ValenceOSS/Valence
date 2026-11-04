@@ -419,9 +419,9 @@ const AdminPage = () => {
               }}
               folder={folder ?? null}
               catalogue={{ tab: tab ?? 'films', title: title ?? null }}
-              mediaTitle={media ?? null}
-              webhook={webhook ?? null}
-              linkedServer={server ?? null}
+              mediaTitle={media ?? (showing === 'media' ? (title ?? null) : null)}
+              webhook={webhook ?? (showing === 'webhooks' ? (title ?? null) : null)}
+              linkedServer={server ?? (showing === 'linking' ? (title ?? null) : null)}
               onCatalogue={(address) => {
                 void go({
                   to: '/admin/$panel',

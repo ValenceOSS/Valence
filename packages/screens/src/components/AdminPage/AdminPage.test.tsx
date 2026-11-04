@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { cleanup, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -10,7 +10,7 @@ const go = vi.fn(() => Promise.resolve());
 
 const address: { panel?: string } = {};
 
-const searched: { media?: string; webhook?: string; server?: string } = {};
+const searched: { media?: string; webhook?: string; server?: string; title?: string } = {};
 
 const drawnWith: AdminAreaProps[] = [];
 
@@ -71,6 +71,7 @@ afterEach(() => {
   delete searched.media;
   delete searched.webhook;
   delete searched.server;
+  delete searched.title;
   drawnWith.length = 0;
   go.mockClear();
 });
@@ -153,6 +154,33 @@ describe('AdminPage', () => {
       webhook: 'webhook-1',
       linkedServer: 'server-1',
     });
+  });
+
+  it('still opens what a link from before the pages had their own names points at', () => {
+    for (const [panel, opened] of [
+      ['media', 'mediaTitle'],
+      ['webhooks', 'webhook'],
+      ['linking', 'linkedServer'],
+    ] as const) {
+      aWindow(true);
+      address.panel = panel;
+      searched.title = 'item-1';
+
+      renderInAnAddress(<AdminPage />);
+
+      expect(drawnWith.at(-1)?.[opened]).toBe('item-1');
+      cleanup();
+    }
+  });
+
+  it('leaves the old name to the Catalogue on every other page', () => {
+    aWindow(true);
+    address.panel = 'catalogue';
+    searched.title = 'title-1';
+
+    renderInAnAddress(<AdminPage />);
+
+    expect(drawnWith.at(-1)).toMatchObject({ mediaTitle: null, webhook: null, linkedServer: null });
   });
 
   it('writes what was opened into the address under its own name', () => {
