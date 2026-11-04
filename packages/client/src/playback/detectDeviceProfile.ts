@@ -12,6 +12,7 @@ type DetectDeviceProfileOptions = {
   name: string;
   maxBitrateKbps?: number;
   maxAudioChannels?: number;
+  needsIdrKeyframes?: boolean;
 };
 
 const STEREO = 2;
@@ -208,6 +209,9 @@ const atLeastStereo = (claimed: number): number =>
  * deinterlacer, so a browser decodes an interlaced stream and then shows the combing, and there is
  * no MIME type that asks the question.
  *
+ * Whether a picture can start only from an IDR keyframe is passed in rather than probed, since no
+ * MIME type asks it either; see `needsIdrKeyframes`.
+ *
  * Frame rate, reference frames, audio sample rate and bitrate are deliberately left unstated. None
  * can be asked of a browser, and a guessed ceiling costs a needless transcode on every file above
  * it.
@@ -230,6 +234,7 @@ const detectDeviceProfile = ({
   name,
   maxBitrateKbps,
   maxAudioChannels = STEREO,
+  needsIdrKeyframes = false,
 }: DetectDeviceProfileOptions): DeviceProfile => {
   const videoCodecs = VIDEO_PROBES.filter((probe) => isTypeSupported(probe.mimeType)).map(
     (probe) => probe.codec,
@@ -267,6 +272,7 @@ const detectDeviceProfile = ({
       ...(hevcLevel === null ? {} : { hevc: hevcLevel }),
     },
     canPlayInterlaced: false,
+    needsIdrKeyframes,
     unsupportedAudioProfiles: unsupportedAudioProfilesFor(audio, isTypeSupported),
     supportedSubtitleFormats: ['webvtt'],
     directPlayProfiles: [

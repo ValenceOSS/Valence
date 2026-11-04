@@ -36,6 +36,7 @@ const iPhone: DeviceProfile = {
   canPlayInterlaced: false,
   canPlayAnamorphic: true,
   canRotate: true,
+  needsIdrKeyframes: false,
   unsupportedAudioProfiles: [],
   supportedSubtitleFormats: ['webvtt'],
   directPlayProfiles: [

@@ -28,6 +28,7 @@ const PROFILE: DeviceProfile = {
   canPlayInterlaced: false,
   canPlayAnamorphic: false,
   canRotate: false,
+  needsIdrKeyframes: false,
 };
 
 const A_DOWNLOAD = {

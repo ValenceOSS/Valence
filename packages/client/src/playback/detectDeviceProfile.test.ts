@@ -92,6 +92,14 @@ describe('detectDeviceProfile', () => {
     expect(profile.directPlayProfiles[0]?.audioCodecs).toEqual(['aac']);
   });
 
+  it('takes any keyframe unless told otherwise', () => {
+    expect(build(supporting('avc1')).needsIdrKeyframes).toBe(false);
+  });
+
+  it('says when it needs IDR keyframes', () => {
+    expect(build(supporting('avc1'), { needsIdrKeyframes: true }).needsIdrKeyframes).toBe(true);
+  });
+
   it('claims only SDR by default', () => {
     expect(build(supporting('avc1')).supportedVideoRanges).toEqual(['SDR']);
   });

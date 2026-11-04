@@ -40,6 +40,7 @@ type SessionSpec = {
   sourceVideoCodec?: string;
   sourceRange?: string;
   sourceRangeBase?: string;
+  needsIdrKeyframes?: boolean;
 };
 
 type PlanToSessionSpecOptions = {
@@ -61,6 +62,7 @@ type PlanToSessionSpecOptions = {
   sourceBitDepth?: number;
   sourceIsInterlaced?: boolean;
   sourcePixelAspect?: string | null;
+  needsIdrKeyframes?: boolean;
 };
 
 type SpecOutcome =
@@ -137,6 +139,7 @@ const planToSessionSpec = ({
   sourceBitDepth,
   sourceIsInterlaced = false,
   sourcePixelAspect = null,
+  needsIdrKeyframes = false,
 }: PlanToSessionSpecOptions): SpecOutcome => {
   const burnsIn = plan.subtitles.kind === 'burnIn' ? plan.subtitles : null;
   const burnsInStream = burnsIn?.streamIndex ?? null;
@@ -186,6 +189,7 @@ const planToSessionSpec = ({
         ...(sourceSize === undefined ? {} : { sourceSize }),
         ...(sourceVideoCodec === undefined ? {} : { sourceVideoCodec }),
         ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
+        ...(needsIdrKeyframes ? { needsIdrKeyframes } : {}),
         video: { kind: 'copy' },
         audio:
           plan.audio.kind === 'transcode'

@@ -3,6 +3,7 @@ import { say } from '@ValenceI18n/say';
 import type { BrowsersMedia } from '@ValenceClient/playback/BrowsersMedia';
 import type { CodecProbe } from '@ValenceClient/playback/CodecProbe';
 import { detectDeviceProfile } from '@ValenceClient/playback/detectDeviceProfile';
+import { needsIdrKeyframes } from '@ValenceClient/playback/needsIdrKeyframes';
 
 const STEREO = 2;
 
@@ -63,6 +64,7 @@ const detectFromBrowser = (
     screenHeight: Math.round(page.screen.height * page.devicePixelRatio),
     name,
     maxAudioChannels: channelsTheOutputAccepts(page),
+    needsIdrKeyframes: needsIdrKeyframes(page.navigator.userAgent ?? ''),
   });
 };
 

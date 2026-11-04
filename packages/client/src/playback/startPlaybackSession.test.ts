@@ -59,6 +59,7 @@ const profile: DeviceProfile = {
   canPlayInterlaced: true,
   canPlayAnamorphic: true,
   canRotate: true,
+  needsIdrKeyframes: false,
   unsupportedAudioProfiles: [],
   supportedSubtitleFormats: ['webvtt'],
   directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac'] }],

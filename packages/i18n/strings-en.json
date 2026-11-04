@@ -36222,6 +36222,11 @@
     "context": "The detail in the playback on the server (from `createPlaybackService`)."
   },
   {
+    "handler": "server.playback.playbackService.thisBrowserStartsOnlyOnIdr",
+    "text": "This browser can’t start playback from this file’s keyframes, so it’s transcoded instead",
+    "context": "The detail in the playback on the server (from `createPlaybackService`). Shown in Firefox when an HEVC video that could have been copied is transcoded instead, because its keyframes (CRA pictures) are ones Firefox can’t resume playback from."
+  },
+  {
     "handler": "server.playback.publicMaxAge31536000Immutable",
     "text": "public, max-age=31536000, immutable",
     "context": "Shown in the app on the server (from `servePlayback`)."

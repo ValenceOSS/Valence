@@ -12,11 +12,12 @@ use tokio::sync::{oneshot, Mutex, Notify};
 use crate::boundaries::ensure_boundaries;
 use crate::capability::Capabilities;
 use crate::devices::{DeviceReport, GraphicsDevice};
+use crate::media::VideoRange;
 use crate::placement::{Candidate, Choice, Placement};
 use crate::playlist::segment_at;
 use crate::transcode_plan::{
-    DeviceFilters, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, TranscodePlan,
-    VideoAction, MANIFEST_NAME, RUN_PLAYLIST_NAME,
+    DeviceFilters, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, ToneMapping, Track,
+    TranscodePlan, VideoAction, MANIFEST_NAME, RUN_PLAYLIST_NAME,
 };
 
 /// Written only when ffmpeg exits cleanly.
@@ -306,6 +307,9 @@ pub struct Session {
     ladder_root: Option<String>,
     /// The graphics device it was placed on, where sessions are being spread across devices.
     placed_on: Option<GraphicsDevice>,
+    /// Whether it encodes because its client needs IDR keyframes the source
+    /// does not have, as [`startable`] decided when it began.
+    encoded_for_keyframes: bool,
 }
 
 /// Every session that using this one keeps: itself, its other half, the rungs
@@ -427,15 +431,48 @@ fn fallback_encoder(capabilities: &crate::capability::Capabilities) -> (String, 
 /// it was asked for. Encoding puts a keyframe on every boundary, so the
 /// segments come out the length that was asked for and every one of them is a
 /// place a decoder can start.
-///
-/// A source that cannot be probed a second time is left as it was asked for.
-/// That is the state Valence was in before any of this, so it is no worse, and
-/// refusing to play over it would be.
 async fn deliverable(config: &SessionConfig, spec: SessionSpec, can_copy: bool) -> SessionSpec {
     if can_copy {
         return spec;
     }
 
+    encoded(config, spec).await
+}
+
+/// The spec a session is cut for, before its boundaries are worked out.
+///
+/// A client that starts a picture only from an IDR keyframe cannot be handed a
+/// copy whose keyframes are something else: every segment after the first is
+/// thrown away. See [`crate::idr_keyframes`]. So such a copy is encoded unless
+/// the source is known to open only on IDR pictures; one whose keyframes could
+/// not be read in time is encoded too, since the copy it would otherwise get
+/// freezes for good if they are not. Decided before the boundaries, unlike
+/// [`deliverable`], because a copy is cut where the source's keyframes fall and
+/// an encode in equal lengths, and a playlist describing the one while the
+/// other is written stalls the player at the first segment where they part.
+///
+/// Says alongside whether it turned a copy into an encode because the source's
+/// keyframes were found not to be IDR pictures, so the caller can tell a viewer
+/// why; an encode for keyframes that could not be read claims nothing.
+async fn startable(config: &SessionConfig, spec: SessionSpec) -> (SessionSpec, bool) {
+    let found = match idr_keyframes_of(config, &spec).await {
+        IdrKeyframes::NotAsked | IdrKeyframes::Only => return (spec, false),
+        IdrKeyframes::Not => true,
+        IdrKeyframes::Unknown => false,
+    };
+
+    let spec = encoded(config, spec).await;
+    let encodes = matches!(spec.video, VideoAction::Encode { .. });
+
+    (spec, encodes && found)
+}
+
+/// The same picture encoded rather than copied.
+///
+/// A source that cannot be probed a second time is left as it was asked for.
+/// That is the state Valence was in before any of this, so it is no worse, and
+/// refusing to play over it would be.
+async fn encoded(config: &SessionConfig, spec: SessionSpec) -> SessionSpec {
     let Ok(probe) = crate::probe::probe_media(&config.ffprobe, Path::new(&spec.input_path)).await
     else {
         return spec;
@@ -446,13 +483,77 @@ async fn deliverable(config: &SessionConfig, spec: SessionSpec, can_copy: bool) 
     encode_instead(spec, &probe, &capabilities)
 }
 
+/// What is known of a source's keyframes, for a copy whose client starts only
+/// from an IDR.
+enum IdrKeyframes {
+    /// Nothing to ask: the client takes any keyframe, the picture is being
+    /// encoded already, or its codec always opens on an IDR.
+    NotAsked,
+    /// Every keyframe read is an IDR picture.
+    Only,
+    /// A keyframe is something else.
+    Not,
+    /// They could not be read in time.
+    Unknown,
+}
+
+/// What is known of the keyframes a copy asked for by a client that starts
+/// only from IDR keyframes would hand it.
+async fn idr_keyframes_of(config: &SessionConfig, spec: &SessionSpec) -> IdrKeyframes {
+    if !spec.needs_idr_keyframes
+        || !matches!(spec.video, VideoAction::Copy)
+        || spec.track == Track::Audio
+    {
+        return IdrKeyframes::NotAsked;
+    }
+
+    let Some(codec) = spec
+        .source_video_codec
+        .as_deref()
+        .filter(|codec| crate::idr_keyframes::applies_to(codec))
+    else {
+        return IdrKeyframes::NotAsked;
+    };
+
+    match crate::idr_keyframes::opens_only_on_idr(
+        &config.ffmpeg,
+        &config.artefact_root,
+        Path::new(&spec.input_path),
+        codec,
+    )
+    .await
+    {
+        Some(true) => IdrKeyframes::Only,
+        Some(false) => IdrKeyframes::Not,
+        None => IdrKeyframes::Unknown,
+    }
+}
+
+/// Whether a session converts its picture's HDR to SDR.
+fn tone_maps(spec: &SessionSpec) -> bool {
+    matches!(
+        spec.video,
+        VideoAction::Encode {
+            tone_map: Some(_),
+            ..
+        }
+    )
+}
+
 /// Turns a copy into an encode of the same picture.
 ///
 /// Only reached when the source's own keyframes cannot produce deliverable
 /// segments. Every limit is taken from the source, which is safe because the
 /// server only asked for a copy after deciding the source already satisfied
-/// the client: its size, its bitrate and its range were all acceptable, so an
-/// encode that matches them is acceptable too.
+/// the client: its size and its bitrate were acceptable, so an encode that
+/// matches them is acceptable too.
+///
+/// Its range is the exception. The encode is H.264, which carries eight bits,
+/// and an HDR picture squeezed into eight bits under its own transfer curve
+/// bands across every gradient. So an HDR source is tone mapped to SDR, as
+/// every other picture Valence encodes for a browser is, wherever this build
+/// can; one that cannot is left as it was, and says so by reporting no tone
+/// mapping.
 ///
 /// The session keeps the id it was addressed by. The request has not changed —
 /// only what has to be done to answer it — and the substitution is the same
@@ -475,6 +576,20 @@ fn encode_instead(
         .or(probe.bitrate_kbps)
         .unwrap_or(8_000);
 
+    let range = video.map_or(VideoRange::Sdr, |stream| stream.range);
+    let tone_map = (range != VideoRange::Sdr
+        && capabilities.tone_mapping != ToneMapping::Unavailable)
+        .then_some(capabilities.tone_mapping);
+    let (source_range, source_range_base) = if tone_map.is_some() {
+        (
+            spec.source_range.or(Some(range)),
+            spec.source_range_base
+                .or_else(|| video.map(|stream| stream.range_base)),
+        )
+    } else {
+        (spec.source_range, spec.source_range_base)
+    };
+
     SessionSpec {
         hardware_accel: accel,
         video: VideoAction::Encode {
@@ -482,10 +597,12 @@ fn encode_instead(
             max_bitrate_kbps,
             max_width,
             max_height,
-            tone_map: None,
+            tone_map,
             deinterlace: video.is_some_and(|stream| stream.is_interlaced),
             square_pixels: video.is_some_and(|stream| stream.pixel_aspect.is_some()),
         },
+        source_range,
+        source_range_base,
         ..spec
     }
 }
@@ -622,6 +739,13 @@ pub struct Started {
     /// it will report that decision to a viewer, and it would otherwise report
     /// something that is not happening.
     pub encodes_video: bool,
+    /// Whether that encode is because the client starts only from IDR
+    /// keyframes and the source has others, rather than because it cannot be
+    /// cut at all. Said apart because the caller tells a viewer why.
+    pub encoded_for_keyframes: bool,
+    /// Whether the picture is being tone mapped to SDR, so the caller says the
+    /// range that is really delivered rather than the source's.
+    pub tone_maps: bool,
     /// What this session found already made when it started.
     pub reuse: Reuse,
     /// The device it was placed on, where devices are being spread across.
@@ -1298,6 +1422,8 @@ impl SessionRegistry {
 
         let directory = existing.directory.clone();
         let encodes_video = matches!(existing.spec.video, VideoAction::Encode { .. });
+        let encoded_for_keyframes = existing.encoded_for_keyframes;
+        let tone_maps = tone_maps(&existing.spec);
         let found = existing.reuse;
         let hardware = existing.placed_hardware();
 
@@ -1310,6 +1436,8 @@ impl SessionRegistry {
         Some(Started {
             id: id.to_owned(),
             encodes_video,
+            encoded_for_keyframes,
+            tone_maps,
             reuse: if is_already_complete(&directory).await {
                 Reuse::Whole
             } else if is_another_viewer {
@@ -1342,6 +1470,7 @@ impl SessionRegistry {
             record_device(&directory, device).await;
         }
 
+        let (spec, encoded_for_keyframes) = startable(&self.config, spec).await;
         let boundary_started = Instant::now();
         let boundaries = ensure_boundaries(
             &self.config.ffprobe,
@@ -1411,6 +1540,7 @@ impl SessionRegistry {
             variants: Vec::new(),
             ladder_root: None,
             placed_on,
+            encoded_for_keyframes,
         };
 
         if is_complete {
@@ -1420,6 +1550,7 @@ impl SessionRegistry {
         }
 
         let encodes_video = matches!(session.spec.video, VideoAction::Encode { .. });
+        let tone_maps = tone_maps(&session.spec);
         let hardware = session.placed_hardware();
 
         let mut sessions = self.sessions.lock().await;
@@ -1429,6 +1560,8 @@ impl SessionRegistry {
         Ok(Started {
             id,
             encodes_video,
+            encoded_for_keyframes,
+            tone_maps,
             reuse,
             hardware,
         })
@@ -2705,6 +2838,7 @@ mod tests {
             track: Track::Both,
             source_range: None,
             source_range_base: None,
+            needs_idr_keyframes: false,
         };
 
         let directory = root.join(spec.plan_id());
@@ -2719,6 +2853,7 @@ mod tests {
             can_copy: true,
             groups: Vec::new(),
             provisional: false,
+            cut_for_an_encode: None,
         };
 
         std::fs::write(
@@ -3118,6 +3253,7 @@ mod tests {
             track: Track::Both,
             source_range: None,
             source_range_base: None,
+            needs_idr_keyframes: false,
         };
         let (cancel, stopped) = oneshot::channel();
 
@@ -3151,6 +3287,7 @@ mod tests {
             variants: Vec::new(),
             ladder_root: None,
             placed_on: None,
+            encoded_for_keyframes: false,
         };
 
         (session, stopped)

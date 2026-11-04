@@ -188,6 +188,18 @@ pub struct Boundaries {
     /// [`read_cached`] works out for itself.
     #[serde(default)]
     pub provisional: bool,
+    /// Whether these were worked out for an encode, cut in equal lengths, or
+    /// for a copy, cut where the source's keyframes fall.
+    ///
+    /// A directory is addressed before the media service decides whether a
+    /// copy has to be encoded instead, so the same directory can be asked for
+    /// either: a viewer whose browser needs IDR keyframes gets an encode while
+    /// they cannot be read, and a copy once they are known to be IDR pictures.
+    /// Boundaries kept for the one describe segments the other never makes.
+    /// Absent from boundaries written before this was recorded, which are
+    /// trusted as they always were.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cut_for_an_encode: Option<bool>,
 }
 
 impl Boundaries {
@@ -240,6 +252,7 @@ impl Boundaries {
             can_copy: true,
             groups: Vec::new(),
             provisional: false,
+            cut_for_an_encode: None,
         }
     }
 }
@@ -251,6 +264,15 @@ impl Boundaries {
 /// its segments away for nothing.
 fn is_superseded(cached: &Boundaries, keyframes_read: bool) -> bool {
     cached.provisional && keyframes_read
+}
+
+/// Whether kept boundaries were worked out for the kind of session this spec
+/// asks for, an encode or a copy. See [`Boundaries::cut_for_an_encode`].
+#[must_use]
+pub fn is_cut_as_asked(cached: &Boundaries, spec: &SessionSpec) -> bool {
+    cached
+        .cut_for_an_encode
+        .is_none_or(|encoded| encoded == spec.starts_where_sought())
 }
 
 /// The segments an encode produces, which are the length that was asked for.
@@ -457,6 +479,7 @@ fn from_keyframes(
         seeks_forward,
         can_copy: true,
         provisional: false,
+        cut_for_an_encode: None,
     }
 }
 
@@ -693,6 +716,7 @@ async fn compute_boundaries(
             seeks_forward,
             can_copy,
             provisional: false,
+            cut_for_an_encode: None,
         }
     };
 
@@ -853,7 +877,7 @@ pub async fn ensure_boundaries(
                 .await
                 .is_some();
 
-        if !is_superseded(&found, keyframes_read) {
+        if !is_superseded(&found, keyframes_read) && is_cut_as_asked(&found, spec) {
             if found.provisional {
                 fill_index_later(
                     ffprobe.to_owned(),
@@ -868,7 +892,10 @@ pub async fn ensure_boundaries(
     }
 
     let before = recorded_boundaries(directory).await;
-    let found = compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await;
+    let found = Boundaries {
+        cut_for_an_encode: Some(spec.starts_where_sought()),
+        ..compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await
+    };
 
     if found.is_empty() {
         return found;
@@ -910,9 +937,10 @@ pub async fn ensure_boundaries(
 mod tests {
     use super::{
         can_copy_segments, claim_index_read, encoded_lengths, equal_lengths, from_keyframes,
-        is_superseded, keeps_its_segments, may_copy_without_keyframes, offered_ceiling,
-        read_cached, settle_index_read, Boundaries, IndexReads, DEFAULT_KEYFRAME_DEADLINE,
-        INDEX_TRIES, LAYOUT, LAYOUT_WITH_THE_SAME_SEGMENTS, OFFERED_BYTES_PER_SECOND_ASKED,
+        is_cut_as_asked, is_superseded, keeps_its_segments, may_copy_without_keyframes,
+        offered_ceiling, read_cached, settle_index_read, Boundaries, IndexReads,
+        DEFAULT_KEYFRAME_DEADLINE, INDEX_TRIES, LAYOUT, LAYOUT_WITH_THE_SAME_SEGMENTS,
+        OFFERED_BYTES_PER_SECOND_ASKED,
     };
     use crate::keyframes::{Cut, Keyframes};
     use std::collections::HashMap;
@@ -930,6 +958,65 @@ mod tests {
             !is_superseded(&stopgap, false),
             "until the keyframes are read the stopgap is still the best answer"
         );
+    }
+
+    /// A spec as the server sends one, copying or encoding the picture.
+    fn asked(video: &serde_json::Value) -> crate::transcode_plan::SessionSpec {
+        serde_json::from_value(serde_json::json!({
+            "inputPath": "/media/film.mkv",
+            "startSeconds": 0,
+            "segmentSeconds": 4,
+            "hardwareAccel": "none",
+            "video": video,
+            "audio": { "kind": "copy" },
+        }))
+        .expect("a spec reads")
+    }
+
+    fn an_encode() -> crate::transcode_plan::SessionSpec {
+        asked(&serde_json::json!({
+            "kind": "encode",
+            "encoder": "libx264",
+            "maxBitrateKbps": 4000,
+            "maxWidth": 1920,
+            "maxHeight": 1080,
+        }))
+    }
+
+    fn a_copy() -> crate::transcode_plan::SessionSpec {
+        asked(&serde_json::json!({ "kind": "copy" }))
+    }
+
+    fn kept_for(cut_for_an_encode: Option<bool>) -> Boundaries {
+        Boundaries {
+            cut_for_an_encode,
+            ..grouped(vec![4.0, 4.0, 4.0], Vec::new())
+        }
+    }
+
+    #[test]
+    fn an_encode_will_not_take_boundaries_kept_for_a_copy() {
+        assert!(!is_cut_as_asked(&kept_for(Some(false)), &an_encode()));
+    }
+
+    #[test]
+    fn a_copy_will_not_take_boundaries_kept_for_an_encode() {
+        assert!(
+            !is_cut_as_asked(&kept_for(Some(true)), &a_copy()),
+            "even where the lengths happen to agree, the segments are another codec"
+        );
+    }
+
+    #[test]
+    fn each_takes_its_own() {
+        assert!(is_cut_as_asked(&kept_for(Some(true)), &an_encode()));
+        assert!(is_cut_as_asked(&kept_for(Some(false)), &a_copy()));
+    }
+
+    #[test]
+    fn boundaries_kept_before_this_was_recorded_are_trusted() {
+        assert!(is_cut_as_asked(&kept_for(None), &an_encode()));
+        assert!(is_cut_as_asked(&kept_for(None), &a_copy()));
     }
 
     #[test]
@@ -1051,6 +1138,7 @@ mod tests {
             can_copy: true,
             groups,
             provisional: false,
+            cut_for_an_encode: None,
         }
     }
 
@@ -1157,6 +1245,7 @@ mod tests {
             seeks_forward: false,
             can_copy: false,
             provisional: false,
+            cut_for_an_encode: None,
         };
         let before = Boundaries {
             layout: LAYOUT_WITH_THE_SAME_SEGMENTS,

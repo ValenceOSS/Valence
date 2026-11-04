@@ -52,6 +52,40 @@ describe('detectFromBrowser', () => {
     expect(profile.maxVideoLevels).toEqual({});
   });
 
+  it('says Firefox needs IDR keyframes', () => {
+    const profile = detectFromBrowser(
+      aPage({
+        navigator: {
+          platform: 'MacIntel',
+          userAgent:
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:159.0) Gecko/20100101 Firefox/159.0',
+        },
+      }),
+      NO_FILES,
+    );
+
+    expect(profile.needsIdrKeyframes).toBe(true);
+  });
+
+  it('lets Chromium take any keyframe', () => {
+    const profile = detectFromBrowser(
+      aPage({
+        navigator: {
+          platform: 'MacIntel',
+          userAgent:
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
+        },
+      }),
+      NO_FILES,
+    );
+
+    expect(profile.needsIdrKeyframes).toBe(false);
+  });
+
+  it('assumes any keyframe will do where the browser does not say what it is', () => {
+    expect(detectFromBrowser(aPage(), NO_FILES).needsIdrKeyframes).toBe(false);
+  });
+
   it('asks the video element what it plays from a file', () => {
     const profile = detectFromBrowser(aPage(), {
       canPlayType: (mimeType) => (/matroska.*(av01|opus)/.test(mimeType) ? 'maybe' : ''),

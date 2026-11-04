@@ -203,6 +203,7 @@ fn spec(video: VideoAction, audio: AudioAction) -> SessionSpec {
         track: Track::Both,
         source_range: None,
         source_range_base: None,
+        needs_idr_keyframes: false,
     }
 }
 

@@ -38,6 +38,7 @@ const keepingProfile = (): DeviceProfile => ({
   canPlayInterlaced: false,
   canPlayAnamorphic: false,
   canRotate: false,
+  needsIdrKeyframes: false,
 });
 
 export { keepingProfile };

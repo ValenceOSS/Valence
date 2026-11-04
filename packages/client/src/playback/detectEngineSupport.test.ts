@@ -35,6 +35,29 @@ describe('detectEngineSupport', () => {
     expect(support.toneMappedCodecs).toEqual(['hevc']);
   });
 
+  it('repackages no HEVC for a browser that resumes it only from an IDR keyframe', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        canDecodeVideo: ({ codec }) => Promise.resolve(codec.startsWith('hvc1')),
+        canStream: (mimeType) => /mp4a|opus|hvc1|avc1/.test(mimeType),
+        needsIdrKeyframes: true,
+      }),
+    );
+
+    expect(support.remuxVideoCodecs).toEqual(['h264']);
+    expect(support.remuxTenBitVideoCodecs).toEqual([]);
+    expect(support.videoCodecs).toContain('hevc');
+  });
+
+  it('repackages HEVC for every other browser that streams it', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({ canStream: (mimeType) => /mp4a|opus|hvc1|avc1/.test(mimeType) }),
+    );
+
+    expect(support.remuxVideoCodecs).toContain('hevc');
+    expect(support.remuxTenBitVideoCodecs).toContain('hevc');
+  });
+
   it('leaves HDR alone where the browser does not hand the signal over untouched', async () => {
     const support = await detectEngineSupport(
       aBrowser({

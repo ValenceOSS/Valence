@@ -216,6 +216,7 @@ fn burn_in_spec(path: &Path, subtitle_index: u32, accel: HardwareAccel) -> Sessi
         track: Track::Both,
         source_range: None,
         source_range_base: None,
+        needs_idr_keyframes: false,
     }
 }
 

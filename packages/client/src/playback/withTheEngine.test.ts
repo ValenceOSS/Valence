@@ -15,6 +15,7 @@ const BROWSER: DeviceProfile = {
   canPlayInterlaced: true,
   canPlayAnamorphic: true,
   canRotate: true,
+  needsIdrKeyframes: false,
   unsupportedAudioProfiles: [],
   supportedSubtitleFormats: ['webvtt'],
   directPlayProfiles: [
