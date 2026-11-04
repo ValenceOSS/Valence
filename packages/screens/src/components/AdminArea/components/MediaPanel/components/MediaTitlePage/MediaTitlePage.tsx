@@ -22,6 +22,7 @@ import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceUI/PanelCard';
+import { Spinner } from '@ValenceUI/Spinner';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
@@ -29,7 +30,9 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHistory } from './components/TitleHistory/TitleHistory';
-import { TitlePartDialog } from './components/TitlePartDialog/TitlePartDialog';
+import { TitlePartPage } from './components/TitlePartPage/TitlePartPage';
+import { EpisodeTable } from '@ValenceScreens/components/AdminArea/components/EpisodeTable/EpisodeTable';
+import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
 import { RefreshTitleDialog } from './components/RefreshTitleDialog/RefreshTitleDialog';
 import { useTitleChange } from './components/TitleDetails/useTitleChange';
 import { unmatchTitle } from '@ValenceClient/admin/unmatchTitle';
@@ -58,10 +61,9 @@ import { FolderView } from '@ValenceScreens/components/AdminArea/components/Medi
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
 import { useShortcut } from '@ValenceUI/useShortcut';
-import type { OpenPart } from './components/TitlePartDialog/TitlePartDialog.types';
 import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
 
-const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null };
+const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null, isSeasonPage: false };
 
 const NO_LIBRARIES: readonly Library[] = [];
 
@@ -74,6 +76,8 @@ const FILE_ONLY: readonly string[] = [
 ];
 
 const ALREADY_A_FILE_ACTION: readonly string[] = ['leave-out', 'show-in-files', 'delete'];
+
+const EPISODE_BUTTONS: readonly string[] = ['find-subtitles', 'reencode'];
 
 /**
  * Every file a title is made of, down to the versions of each.
@@ -147,9 +151,6 @@ const MediaTitlePage = ({
   const [localPlace, setLocalPlace] = useState<TitlePlace>(NOWHERE);
   const at = titlePlace ?? localPlace;
   const moveTo = onTitlePlace ?? setLocalPlace;
-  const [editingSeason, setEditingSeason] = useState<OpenPart | null>(null);
-  const [isSeasonOpen, setIsSeasonOpen] = useState(false);
-  const [lastEpisode, setLastEpisode] = useState<OpenPart | null>(null);
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
@@ -158,8 +159,6 @@ const MediaTitlePage = ({
   const tab = tabs.includes(at.tab) ? at.tab : 'details';
   const travel = useTravelDirection([...tabs], tab);
 
-  useShortcut('K', onPrevious);
-  useShortcut('J', onNext);
   const prefersReducedMotion = useReducedMotionConfig();
   const show = useQuery({
     ...libraryQueries.show(
@@ -184,30 +183,7 @@ const MediaTitlePage = ({
   );
 
   /**
-   * Describes an episode for its editor.
-   *
-   * @param season - The season it is in.
-   * @param episode - The episode, which has a file.
-   * @param mediaId - Its file.
-   * @returns What the editor shows of it.
-   */
-  const partOf = (season: TitleSeason, episode: TitleEpisode, mediaId: string): OpenPart => {
-    const code = say('common.searchWhatEpisode', {
-      season: season.season.toString().padStart(2, '0'),
-      episode: episode.episode.toString().padStart(2, '0'),
-    });
-
-    return {
-      scope: 'episode',
-      mediaId,
-      title: episode.title === '' ? code : episode.title,
-      detail: code,
-      path: episode.path,
-    };
-  };
-
-  /**
-   * Opens an episode's editor.
+   * Opens an episode's page.
    *
    * @param season - The season it is in.
    * @param episode - The episode.
@@ -217,23 +193,48 @@ const MediaTitlePage = ({
       return;
     }
 
-    moveTo({ tab: 'seasons', season: season.season, episode: episode.mediaId });
+    moveTo({ ...NOWHERE, season: season.season, episode: episode.mediaId });
   };
 
-  const openSeason = seasons.find((one) =>
+  /**
+   * The first file of a season, which its details are read and kept through.
+   *
+   * @param season - The season.
+   * @returns The file, or nothing where none of it is here.
+   */
+  const fileOfSeason = (season: TitleSeason): string | null =>
+    season.episodes.find((episode) => episode.mediaId !== null && episode.mediaId !== undefined)
+      ?.mediaId ?? null;
+
+  /**
+   * Opens a season's page.
+   *
+   * @param season - The season.
+   */
+  const openSeasonPage = (season: number) => {
+    moveTo({ ...NOWHERE, season, isSeasonPage: true });
+  };
+
+  const episodeSeason = seasons.find((one) =>
     one.episodes.some((episode) => at.episode !== null && episode.mediaId === at.episode),
   );
-  const editable = (openSeason?.episodes ?? []).filter(
+  const editable = (episodeSeason?.episodes ?? []).filter(
     (episode) => episode.mediaId !== null && episode.mediaId !== undefined,
   );
   const openAt = editable.findIndex((episode) => episode.mediaId === at.episode);
   const openEpisodeOf = openAt < 0 ? undefined : editable[openAt];
-  const episodePart =
-    openSeason === undefined || openEpisodeOf === undefined || at.episode === null
-      ? null
-      : partOf(openSeason, openEpisodeOf, at.episode);
   const before = openAt > 0 ? editable[openAt - 1] : undefined;
   const after = openAt >= 0 ? editable[openAt + 1] : undefined;
+  const pagedSeasons = seasons.filter((one) => fileOfSeason(one) !== null);
+  const seasonPageAt =
+    openEpisodeOf !== undefined || !at.isSeasonPage
+      ? -1
+      : pagedSeasons.findIndex((one) => one.season === at.season);
+  const seasonPage = seasonPageAt < 0 ? undefined : pagedSeasons[seasonPageAt];
+  const isPartPage = openEpisodeOf !== undefined || seasonPage !== undefined;
+
+  useShortcut('K', isPartPage ? undefined : onPrevious);
+  useShortcut('J', isPartPage ? undefined : onNext);
 
   const leaves = leavesOf(title);
   const leafIds = new Set(leaves.map((leaf) => leaf.lead.id));
@@ -535,6 +536,262 @@ const MediaTitlePage = ({
     },
   ];
 
+  if ((at.episode !== null || at.isSeasonPage) && title.kind === 'series' && show.isPending) {
+    return <Spinner isCentered size="sm" label={say('common.loading')} />;
+  }
+
+  const mediaCrumb = { id: 'media', label: say('common.media') };
+  const showCrumb = { id: 'show', label: title.name };
+
+  /**
+   * Follows a step of a season's or an episode's trail back up.
+   *
+   * @param id - The step pressed.
+   * @param season - The season the page is in.
+   */
+  const followTrail = (id: string, season: number) => {
+    if (id === 'media') {
+      onBack();
+    } else if (id === 'show') {
+      moveTo({ ...NOWHERE, tab: 'seasons', season });
+    } else if (id === 'season') {
+      openSeasonPage(season);
+    }
+  };
+
+  const day = (date: string | null) =>
+    date === null
+      ? null
+      : new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'medium' });
+
+  if (episodeSeason !== undefined && openEpisodeOf !== undefined && at.episode !== null) {
+    const episodeId = at.episode;
+    const leaf = leafById.get(episodeId);
+    const seasonName = episodeSeason.name ?? nameSeason(episodeSeason.season);
+    const code = say('common.searchWhatEpisode', {
+      season: episodeSeason.season.toString().padStart(2, '0'),
+      episode: openEpisodeOf.episode.toString().padStart(2, '0'),
+    });
+    const name = openEpisodeOf.title === '' ? code : openEpisodeOf.title;
+    const file = openEpisodeOf.path;
+    const fileName = file === null ? null : (file.split(/[\\/]/u).at(-1) ?? file);
+    const quality = leaf === undefined ? null : (sharpestStepOf(leaf.lead)?.label ?? null);
+    const leafRange = leaf === undefined ? null : describeRange(leaf.lead.videoRange);
+    const every = leaf === undefined ? [] : actionsFor(leaf);
+    const buttons = every.flat().filter((one) => EPISODE_BUTTONS.includes(one.id));
+    const groups = every
+      .map((group) =>
+        group.filter((one) => one.id !== 'wrong-match' && !EPISODE_BUTTONS.includes(one.id)),
+      )
+      .filter((group) => group.length > 0);
+    const aired = day(openEpisodeOf.airDate);
+
+    return (
+      <TitlePartPage
+        key={episodeId}
+        scope="episode"
+        mediaId={episodeId}
+        name={name}
+        aside={code}
+        imageUrl={artworkUrl(episodeId, 'backdrop', { size: 'medium' })}
+        trail={[
+          mediaCrumb,
+          showCrumb,
+          { id: 'season', label: seasonName },
+          { id: 'here', label: name },
+        ]}
+        onTrail={(id) => {
+          followTrail(id, episodeSeason.season);
+        }}
+        badges={
+          <>
+            {quality === null ? null : <Badge size="sm">{quality}</Badge>}
+            {leafRange === null ? null : <Badge size="sm">{leafRange}</Badge>}
+          </>
+        }
+        facts={[
+          { label: say('common.show'), value: title.name },
+          ...(aired === null
+            ? []
+            : [{ label: say('screens.adminArea.titleDetails.airDate'), value: aired }]),
+          ...(leaf === undefined
+            ? []
+            : [
+                {
+                  label: say('screens.adminArea.titlePage.trackTable.length'),
+                  value: formatDuration(leaf.lead.durationSeconds),
+                },
+                {
+                  label: say('common.size'),
+                  value: formatBytes(leaf.lead.sizeBytes ?? 0),
+                },
+                {
+                  label: say('common.added'),
+                  value: new Date(leaf.addedAt).toLocaleDateString(undefined, {
+                    dateStyle: 'medium',
+                  }),
+                },
+              ]),
+        ]}
+        actions={
+          <>
+            {buttons.map((one) => (
+              <Button
+                key={one.id}
+                variant="secondary"
+                size="md"
+                disabled={one.isDisabled === true}
+                onClick={one.onChoose}
+              >
+                {one.label}
+              </Button>
+            ))}
+            {groups.length === 0 ? null : (
+              <ActionMenu
+                label={say('common.actionsForName', { name })}
+                size="md"
+                groups={groups.map((items) => ({ items }))}
+              />
+            )}
+          </>
+        }
+        tab={at.tab}
+        onTab={(tab) => {
+          moveTo({ ...at, tab });
+        }}
+        filesLabel={say('desktop.main.theApplicationMenu.file')}
+        files={
+          <PanelCard title={say('desktop.main.theApplicationMenu.file')} isFlush>
+            {place === null || file === null ? (
+              <DataTable
+                label={say('desktop.main.theApplicationMenu.file')}
+                columns={fileColumns}
+                rows={leaf === undefined ? [] : [leaf]}
+                getRowId={(row) => row.id}
+              />
+            ) : (
+              <FolderView
+                key={file}
+                libraries={libraries}
+                mayDelete={mayManageFiles}
+                root={folderOf(file)}
+                onChanged={() => {
+                  onFilesChanged?.();
+                }}
+                onScan={(scanned) => {
+                  onScan?.(scanned);
+                }}
+                hidesTitles
+                keeps={(entry) =>
+                  entry.mediaId === episodeId || (fileName !== null && entry.belongsTo === fileName)
+                }
+                columns={mediaColumns}
+                actionsOf={mediaActionsOf}
+              />
+            )}
+          </PanelCard>
+        }
+        onPrevious={
+          before === undefined
+            ? undefined
+            : () => {
+                openEpisode(episodeSeason, before);
+              }
+        }
+        onNext={
+          after === undefined
+            ? undefined
+            : () => {
+                openEpisode(episodeSeason, after);
+              }
+        }
+      />
+    );
+  }
+
+  if (seasonPage !== undefined) {
+    const seasonFile = fileOfSeason(seasonPage);
+    const seasonName = seasonPage.name ?? nameSeason(seasonPage.season);
+    const held = seasonPage.episodes.filter((episode) => episode.part === 'library').length;
+    const seasonLeaves = leaves.filter((leaf) => leaf.lead.seasonNumber === seasonPage.season);
+    const firstAired = seasonPage.episodes.find((episode) => episode.airDate !== null)?.airDate;
+    const aired = day(firstAired ?? null);
+    const previousSeason = pagedSeasons[seasonPageAt - 1];
+    const nextSeason = pagedSeasons[seasonPageAt + 1];
+
+    return seasonFile === null ? null : (
+      <TitlePartPage
+        key={`season:${seasonPage.season.toString()}`}
+        scope="season"
+        mediaId={seasonFile}
+        name={seasonName}
+        aside={aired === null ? null : (firstAired?.slice(0, 4) ?? null)}
+        imageUrl={
+          title.posterFrom === null
+            ? null
+            : artworkUrl(title.posterFrom, 'poster', { size: 'medium' })
+        }
+        trail={[mediaCrumb, showCrumb, { id: 'here', label: seasonName }]}
+        onTrail={(id) => {
+          followTrail(id, seasonPage.season);
+        }}
+        badges={null}
+        facts={[
+          { label: say('common.show'), value: title.name },
+          {
+            label: say('common.episodes'),
+            value: say('screens.adminArea.titlePage.seasonList.heldOfTotal', {
+              held: held.toString(),
+              total: seasonPage.episodes.length.toString(),
+            }),
+          },
+          ...(aired === null
+            ? []
+            : [{ label: say('screens.adminArea.titleDetails.airDate'), value: aired }]),
+          {
+            label: say('common.size'),
+            value: formatBytes(
+              seasonLeaves.reduce((sum, leaf) => sum + (leaf.lead.sizeBytes ?? 0), 0),
+            ),
+          },
+        ]}
+        actions={null}
+        tab={at.tab}
+        onTab={(tab) => {
+          moveTo({ ...at, tab });
+        }}
+        filesLabel={say('common.episodes')}
+        files={
+          <PanelCard title={say('common.episodes')} isFlush>
+            <EpisodeTable
+              label={seasonName}
+              season={seasonPage.season}
+              episodes={seasonPage.episodes}
+              {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+              onOpenEpisode={(episode) => {
+                openEpisode(seasonPage, episode);
+              }}
+            />
+          </PanelCard>
+        }
+        onPrevious={
+          previousSeason === undefined
+            ? undefined
+            : () => {
+                openSeasonPage(previousSeason.season);
+              }
+        }
+        onNext={
+          nextSeason === undefined
+            ? undefined
+            : () => {
+                openSeasonPage(nextSeason.season);
+              }
+        }
+      />
+    );
+  }
+
   return (
     <Tabs
       value={tab}
@@ -542,7 +799,7 @@ const MediaTitlePage = ({
         const chosen = tabs.find((one) => one === next);
 
         if (chosen !== undefined) {
-          moveTo({ tab: chosen, season: null, episode: null });
+          moveTo({ ...NOWHERE, tab: chosen });
         }
       }}
     >
@@ -589,7 +846,7 @@ const MediaTitlePage = ({
 
         <MediaTitleHero
           name={title.name}
-          year={title.year}
+          aside={title.year === null ? null : title.year.toString()}
           posterUrl={
             title.posterFrom === null
               ? null
@@ -694,7 +951,7 @@ const MediaTitlePage = ({
             scope="title"
             {...(fix === undefined ? {} : { onFixMatch: fix.onChoose })}
             onShowHistory={() => {
-              moveTo({ tab: 'history', season: null, episode: null });
+              moveTo({ ...NOWHERE, tab: 'history' });
             }}
           />
         </TabPanel>
@@ -704,34 +961,23 @@ const MediaTitlePage = ({
             <SeasonList
               seasons={seasons}
               {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
-              actionsOf={(season) => {
-                const mediaId = season.episodes.find(
-                  (episode) => episode.mediaId !== null && episode.mediaId !== undefined,
-                )?.mediaId;
-
-                return mediaId === null || mediaId === undefined
+              actionsOf={(season) =>
+                fileOfSeason(season) === null
                   ? []
                   : [
                       {
                         id: 'edit',
                         label: say('common.editDetails'),
                         onChoose: () => {
-                          setEditingSeason({
-                            scope: 'season',
-                            mediaId,
-                            title: season.name ?? nameSeason(season.season),
-                            detail: title.name,
-                            path: null,
-                          });
-                          setIsSeasonOpen(true);
+                          openSeasonPage(season.season);
                         },
                       },
-                    ];
-              }}
+                    ]
+              }
               onOpenEpisode={openEpisode}
               openSeason={at.season}
               onOpenSeason={(season) => {
-                moveTo({ tab: 'seasons', season, episode: null });
+                moveTo({ ...NOWHERE, tab: 'seasons', season });
               }}
             />
           </TabPanel>
@@ -822,36 +1068,6 @@ const MediaTitlePage = ({
           setIsRefreshOpen(false);
         }}
         onStarted={follow}
-      />
-
-      <TitlePartDialog
-        part={episodePart ?? (isSeasonOpen ? editingSeason : null) ?? lastEpisode ?? editingSeason}
-        isOpen={episodePart !== null || isSeasonOpen}
-        onClose={() => {
-          if (episodePart === null) {
-            setIsSeasonOpen(false);
-
-            return;
-          }
-
-          setLastEpisode(episodePart);
-          setEditingSeason(null);
-          moveTo({ ...at, episode: null });
-        }}
-        onPrevious={
-          before === undefined || openSeason === undefined
-            ? undefined
-            : () => {
-                openEpisode(openSeason, before);
-              }
-        }
-        onNext={
-          after === undefined || openSeason === undefined
-            ? undefined
-            : () => {
-                openEpisode(openSeason, after);
-              }
-        }
       />
     </Tabs>
   );

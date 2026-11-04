@@ -1,16 +1,19 @@
 import { InfoRow } from '@ValenceUI/InfoRow';
+import { cn } from '@ValenceUI/cn';
 import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaPoster/MediaPoster';
 import type { MediaTitleHeroProps } from './MediaTitleHero.types';
 
 /**
- * The head of a title's page in Media: its poster, its name and year in large type, what stands
+ * The head of a title's page in Media, or of one season or episode of it: its poster or still, its
+ * name in large type with its year or episode beside it, what stands
  * out about it in a line of badges, what can be done to it, and the facts of it in a column of
  * their own at the right where there is room, under the badges where there is not, with the tabs
  * onto the rest of the page along its foot, so they sit right above what they switch between.
  *
  * @param name - What the title is called.
- * @param year - Its year, where known.
- * @param posterUrl - Its poster, where it has one.
+ * @param aside - What is set beside the name, quieter, such as its year or an episode's number.
+ * @param posterUrl - Its poster or still, where it has one.
+ * @param isWide - Whether the picture is a still from the video rather than a poster.
  * @param badges - What stands out about it, such as its match and its best quality.
  * @param facts - What else it is, each named, such as its library, how many files and how large.
  * @param actions - What can be done to it.
@@ -18,8 +21,9 @@ import type { MediaTitleHeroProps } from './MediaTitleHero.types';
  */
 const MediaTitleHero = ({
   name,
-  year,
+  aside,
   posterUrl,
+  isWide = false,
   badges,
   facts,
   actions,
@@ -30,7 +34,11 @@ const MediaTitleHero = ({
       <div className="flex flex-col gap-6 p-5 sm:flex-row sm:gap-7 sm:p-7">
         <MediaPoster
           src={posterUrl}
-          className="w-32 shrink-0 self-start shadow-[var(--shadow-lifted)]"
+          isWide={isWide}
+          className={cn(
+            'shrink-0 self-start shadow-[var(--shadow-lifted)]',
+            isWide ? 'w-full max-w-xs sm:w-72' : 'w-32',
+          )}
         />
 
         <div className="flex min-w-0 flex-1 flex-col gap-5">
@@ -39,9 +47,9 @@ const MediaTitleHero = ({
               <span className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">
                 {name}
               </span>
-              {year === null ? null : (
+              {aside === null ? null : (
                 <span className="text-xl font-medium tabular-nums text-text-muted sm:text-2xl">
-                  {year}
+                  {aside}
                 </span>
               )}
             </h1>

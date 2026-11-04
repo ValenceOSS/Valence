@@ -12,16 +12,17 @@ import { say } from '@ValenceI18n/say';
  *
  * @param src - Where the server serves the picture, or null where there is none.
  * @param isSquare - Whether it is a square cover, as an album's is, rather than a tall poster.
+ * @param isWide - Whether it is a still from the video, as an episode's is, rather than a poster.
  * @param className - Extra classes for the caller's own layout.
  */
-const MediaPoster = ({ src, isSquare = false, className }: MediaPosterProps) => {
+const MediaPoster = ({ src, isSquare = false, isWide = false, className }: MediaPosterProps) => {
   const [missing, setMissing] = useState<string | null>(null);
 
   return (
     <span
       className={cn(
         'relative flex w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--surface-hover)]',
-        isSquare ? 'aspect-square' : 'aspect-[2/3]',
+        isSquare ? 'aspect-square' : isWide ? 'aspect-video' : 'aspect-[2/3]',
         className,
       )}
     >

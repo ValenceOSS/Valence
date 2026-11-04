@@ -114,6 +114,7 @@ const adminSearch = z.object({
   mediaView: z.enum(['titles', 'folders']).optional().catch(undefined),
   season: z.coerce.number().int().nonnegative().optional().catch(undefined),
   episode: z.string().optional(),
+  part: z.enum(['season']).optional().catch(undefined),
   webhook: z.string().optional(),
   server: z.string().optional(),
   ...ObservabilitySearchSchema.shape,

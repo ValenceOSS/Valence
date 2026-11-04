@@ -77,7 +77,7 @@ import { sayCount } from '@ValenceI18n/sayCount';
 
 const MEDIA_VIEWS = ['titles', 'folders'] as const;
 
-const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null };
+const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null, isSeasonPage: false };
 
 const MEDIA_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
@@ -1034,12 +1034,16 @@ const MediaPanel = ({
 
     if (row.kind === 'episode') {
       setOpenedId(top.id, {
-        tab: 'seasons',
+        ...NOWHERE,
         season: row.lead.seasonNumber ?? null,
         episode: row.lead.id,
       });
     } else if (row.kind === 'season') {
-      setOpenedId(top.id, { ...NOWHERE, tab: 'seasons', season: row.lead.seasonNumber ?? null });
+      setOpenedId(top.id, {
+        ...NOWHERE,
+        season: row.lead.seasonNumber ?? null,
+        isSeasonPage: row.lead.seasonNumber !== null && row.lead.seasonNumber !== undefined,
+      });
     } else if (row.kind === 'version') {
       setOpenedId(top.id, { ...NOWHERE, tab: 'files' });
     } else {

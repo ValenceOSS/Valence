@@ -101,7 +101,7 @@ const chooseFrom = async (
   await user.click(await screen.findByRole('menuitemradio', { name: choice }));
 };
 
-const NOWHERE = { tab: 'details', season: null, episode: null };
+const NOWHERE = { tab: 'details', season: null, episode: null, isSeasonPage: false };
 
 describe('MediaPanel', () => {
   it('lists what the libraries hold', () => {

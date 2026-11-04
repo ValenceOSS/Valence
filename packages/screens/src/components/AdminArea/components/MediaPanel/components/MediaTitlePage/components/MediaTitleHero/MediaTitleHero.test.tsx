@@ -7,7 +7,7 @@ describe('MediaTitleHero', () => {
     render(
       <MediaTitleHero
         name="Arrival"
-        year={2016}
+        aside="2016"
         posterUrl={null}
         badges={<span>4K</span>}
         facts={[

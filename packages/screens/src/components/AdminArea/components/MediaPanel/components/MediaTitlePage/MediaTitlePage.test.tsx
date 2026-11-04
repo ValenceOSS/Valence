@@ -8,11 +8,30 @@ import { MediaTitlePage } from './MediaTitlePage';
 import type { ReactElement } from 'react';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
+import type * as LibraryQueriesModule from '@ValenceClient/query/libraryQueries';
 
-const { unmatch, listFolder } = vi.hoisted(() => ({ unmatch: vi.fn(), listFolder: vi.fn() }));
+const { unmatch, listFolder, readShow } = vi.hoisted(() => ({
+  unmatch: vi.fn(),
+  listFolder: vi.fn(),
+  readShow: vi.fn(),
+}));
 
 vi.mock('@ValenceClient/admin/unmatchTitle', () => ({ unmatchTitle: unmatch }));
 vi.mock('@ValenceClient/admin/fetchLibraryFolder', () => ({ fetchLibraryFolder: listFolder }));
+vi.mock('@ValenceClient/query/libraryQueries', async (importOriginal) => {
+  const actual = await importOriginal<typeof LibraryQueriesModule>();
+
+  return {
+    libraryQueries: {
+      ...actual.libraryQueries,
+      show: (libraryId: string | null, showId: string | null) => ({
+        queryKey: ['show', libraryId, showId],
+        queryFn: readShow,
+        enabled: libraryId !== null && showId !== null,
+      }),
+    },
+  };
+});
 
 const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
 
@@ -242,7 +261,7 @@ describe('MediaTitlePage', () => {
     const onTitlePlace = vi.fn();
 
     drawn(titleOf({ id: 'film' }), {
-      titlePlace: { tab: 'files', season: null, episode: null },
+      titlePlace: { tab: 'files', season: null, episode: null, isSeasonPage: false },
       onTitlePlace,
     });
 
@@ -250,14 +269,108 @@ describe('MediaTitlePage', () => {
 
     await user.click(screen.getByRole('tab', { name: 'History' }));
 
-    expect(onTitlePlace).toHaveBeenCalledWith({ tab: 'history', season: null, episode: null });
+    expect(onTitlePlace).toHaveBeenCalledWith({
+      tab: 'history',
+      season: null,
+      episode: null,
+      isSeasonPage: false,
+    });
   });
 
   it('keeps a film off the Seasons tab its address names', () => {
-    drawn(titleOf({ id: 'film' }), { titlePlace: { tab: 'seasons', season: null, episode: null } });
+    drawn(titleOf({ id: 'film' }), {
+      titlePlace: { tab: 'seasons', season: null, episode: null, isSeasonPage: false },
+    });
 
     expect(screen.queryByRole('tab', { name: 'Seasons' })).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  const EPISODES = [
+    { id: 'e1', title: 'The First', episodeNumber: 1 },
+    { id: 'e2', title: 'The Second', episodeNumber: 2 },
+  ].map((one) =>
+    aMediaSummary({
+      ...one,
+      seriesId: 'show-1',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+    }),
+  );
+  const aShow = () => {
+    readShow.mockResolvedValue({ seasons: [{ seasonNumber: 1, episodes: EPISODES }] });
+
+    return titleOf(...EPISODES);
+  };
+
+  it('opens an episode as a page of its own, with the way back up and on to the next', async () => {
+    const onTitlePlace = vi.fn();
+    const user = userEvent.setup();
+
+    drawn(aShow(), {
+      titlePlace: { tab: 'details', season: 1, episode: 'e1', isSeasonPage: false },
+      onTitlePlace,
+    });
+
+    expect(await screen.findByRole('heading', { level: 1, name: /The First/u })).toHaveTextContent(
+      'The FirstS01E01',
+    );
+
+    await user.click(screen.getByRole('button', { name: /^Next/u }));
+
+    expect(onTitlePlace).toHaveBeenLastCalledWith({
+      tab: 'details',
+      season: 1,
+      episode: 'e2',
+      isSeasonPage: false,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Season 1' }));
+
+    expect(onTitlePlace).toHaveBeenLastCalledWith({
+      tab: 'details',
+      season: 1,
+      episode: null,
+      isSeasonPage: true,
+    });
+  });
+
+  it('opens a season as a page of its own, its episodes each opening theirs', async () => {
+    const onTitlePlace = vi.fn();
+
+    drawn(aShow(), {
+      titlePlace: { tab: 'files', season: 1, episode: null, isSeasonPage: true },
+      onTitlePlace,
+    });
+
+    expect(await screen.findByRole('heading', { level: 1, name: /Season 1/u })).toBeInTheDocument();
+
+    await userEvent.setup().click(await screen.findByText('The Second'));
+
+    expect(onTitlePlace).toHaveBeenLastCalledWith({
+      tab: 'details',
+      season: 1,
+      episode: 'e2',
+      isSeasonPage: false,
+    });
+  });
+
+  it('goes back from an episode to its programme’s seasons', async () => {
+    const onTitlePlace = vi.fn();
+
+    drawn(aShow(), {
+      titlePlace: { tab: 'details', season: 1, episode: 'e2', isSeasonPage: false },
+      onTitlePlace,
+    });
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'A Show' }));
+
+    expect(onTitlePlace).toHaveBeenLastCalledWith({
+      tab: 'seasons',
+      season: 1,
+      episode: null,
+      isSeasonPage: false,
+    });
   });
 
   it('sets a display name so devtools can identify it', () => {

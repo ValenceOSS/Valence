@@ -77,8 +77,20 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job, folder, tab, title, media, webhook, server, titleTab, season, episode, mediaView } =
-    search;
+  const {
+    job,
+    folder,
+    tab,
+    title,
+    media,
+    webhook,
+    server,
+    titleTab,
+    season,
+    episode,
+    part,
+    mediaView,
+  } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -461,6 +473,7 @@ const AdminPage = () => {
                           ...(place?.episode === null || place?.episode === undefined
                             ? {}
                             : { episode: place.episode }),
+                          ...(place?.isSeasonPage === true ? { part: 'season' as const } : {}),
                         },
                 });
               }}
@@ -468,6 +481,7 @@ const AdminPage = () => {
                 tab: titleTab ?? 'details',
                 season: season ?? null,
                 episode: episode ?? null,
+                isSeasonPage: part === 'season',
               }}
               onMediaPlace={(place) => {
                 void go({
@@ -480,8 +494,11 @@ const AdminPage = () => {
                     ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
                     ...(place.season === null ? {} : { season: place.season }),
                     ...(place.episode === null ? {} : { episode: place.episode }),
+                    ...(place.isSeasonPage ? { part: 'season' as const } : {}),
                   },
-                  replace: true,
+                  replace:
+                    place.episode === (episode ?? null) &&
+                    place.isSeasonPage === (part === 'season'),
                 });
               }}
               onLinkedServer={(id) => {

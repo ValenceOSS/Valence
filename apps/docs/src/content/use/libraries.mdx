@@ -274,7 +274,7 @@ Nothing a file already carries is replaced by fetched music details, and each al
 ### Titles
 
 - **The table.** Each film shows its poster, name and year, then its **Quality**, **Video** and **Audio**, how long it runs, its **Size** and how long ago it was **Added**. A series shows how many seasons and episodes are on the disk and folds open to its seasons and episodes; a film held more than once folds open to each version. Where the files of a title differ, a column says **Mixed**.
-- **Opening a title.** Pressing a row opens the title's own page. Pressing a season opens the page on its **Seasons** tab, an episode opens its editor there, and a version opens the **Files** tab.
+- **Opening a title.** Pressing a row opens the title's own page. Pressing a season opens the season's page, an episode opens the episode's page, and a version opens the **Files** tab.
 - **What needs a look.** A title missing something is marked **Unmatched**, **No poster**, **There twice** or **Couldn’t be read**. The row above the table narrows it to **All titles**, **Unmatched**, **Duplicates** or **Unreadable**, each with how many. A music or book library offers **No cover** instead.
 - **Doing several at once.** Tick titles, or the box in the heading for every one shown, and the row says how many are selected, with **Re-encode**, **Rebuild previews**, **Delete** (which asks first) and **Clear**.
 - **A title's menu** holds **Open**, **Wrong match?**, **Choose artwork…**, **Show in Folders**, **Rebuild previews**, **Find subtitles…**, **Choose the preview frame**, **Re-encode…**, **Saved copies**, **Move to another library…**, **Exclude from library** and **Delete file…** or **Delete series…**, as far as each applies and you're allowed.
@@ -289,14 +289,23 @@ Opening a title from **Folders** and pressing **Media** at the top of its page b
 
 ### A title's own page
 
-A title's page shows its backdrop, poster, name and year, its library and how it is matched, such as "Matched · TMDB 603", with **Unmatched** where it isn't. **Previous** and **Next** at the top step through the list as it is shown, and **K** and **J** do the same. Its buttons are **Fix match**, **Refresh** and **Open in Catalogue** where requesting is set up, with **Artwork**, **Lock all fields**, **Unmatch**, **Open folder** and the title's other actions in its menu.
+A title's page shows its poster, name and year, badges for its best quality and rating, with **Unmatched** where it isn't matched, and at the right its library, what it is matched to in the catalogue, when it was added, and how many files it has and how large they are. **Previous** and **Next** at the top step through the list as it is shown, and **K** and **J** do the same. Its buttons are **Fix match**, **Refresh** and **Open in Catalogue** where requesting is set up, with **Artwork**, **Lock all fields**, **Unmatch**, **Open folder** and the title's other actions in its menu.
 
-- **Details** holds every field of the title's metadata, grouped into cards. Each field saves as you type and says where its value came from: **TMDB**, **File name**, **Edited** or **Locked**. An edited field shows what TMDB says beneath it, with **Reset**. Edits are kept through every scan and refresh.
-- **Seasons**, for a series, lists each season and its episodes. A season's menu edits its name, overview and air date, and pressing an episode opens its editor, with **Previous** and **Next** through the season.
+- **Details** holds every field of the title's metadata in one form, in sections: **Title and release**, **Story**, **Classification**, **Ratings**, **IDs** and **Note**. Each field saves as you type and says where its value came from: **TMDB**, **File name**, **Edited** or **Locked**. An edited field shows what TMDB says beneath it, with **Reset**. Edits are kept through every scan and refresh.
+- **Seasons**, for a series, lists each season and its episodes. A season's menu opens the season's page, and pressing an episode opens the episode's page.
 - **Files**, or **Episodes** for a series, is the file manager for the title's own folder: every file with its status and, for a video, its quality, video, audio and length, subtitles and pictures beside their video, and the tools to upload, rename, move, exclude or delete, alongside the title's own file actions. A **Re-encodes** card lists any re-encodes asked of its files.
 - **History** lists every change to the title's metadata, who made it and what each field went from and to, with **Undo**.
 
 The page's address names the title and where you are on it (`?media=`, `&titleTab=`, `&season=`, `&episode=`).
+
+### A season's or an episode's page
+
+A season and an episode each have a page of their own, laid out as the series' is. A trail at the top leads back up to **Media**, the series and, from an episode, its season, and **Previous** and **Next**, or **K** and **J**, step to the season or episode before and after it.
+
+- An episode's page shows its still, its name and number, such as S01E02, its quality, and at the right the series, when it aired, how long it runs, its size and when it was added. **Find subtitles** and **Re-encode** are its buttons, with its other file actions in its menu. Its tabs are **Details** (its title, overview, air date and note), **File** (the file manager narrowed to its video and the subtitles and pictures beside it) and **History**.
+- A season's page shows the series' poster, the season's name and year, and how many of its episodes are here. Its tabs are **Details** (its name, overview, air date and note), **Episodes**, where pressing an episode opens its page, and **History**.
+
+A season's page adds `&part=season` to the address, and an episode's names it with `&episode=`.
 
 ## Correcting a wrong match
 
