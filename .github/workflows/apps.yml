@@ -17,6 +17,9 @@ name: Client apps to the stores
 #   EXPO_TOKEN         an Expo robot access token for the valence-oss organisation (every family)
 #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_API_KEY_P8
 #                      the App Store Connect API key (iOS; see phone-testflight.yml)
+#   GOOGLE_SERVICES_JSON
+#                      the whole contents of the phone app's google-services.json from Firebase,
+#                      without which an Android phone is never woken by a push
 # Google Play's service account key is not a secret here: it is uploaded to EAS once with
 # `eas credentials`, and `eas submit` reads it from there. The docs page "Releasing" covers every
 # one of these and how to rotate it.
@@ -102,6 +105,16 @@ jobs:
           java-version: '17'
 
       - run: pnpm install --frozen-lockfile
+
+      # EAS keeps these settings too, but hands a file variable only to its own builders, never to a
+      # build run here, so the phone app's configuration is pointed at a copy written from the secret.
+      - name: Put the phone app's Firebase settings where its configuration looks for them
+        if: matrix.app == 'mobile'
+        run: |
+          printf '%s' "$GOOGLE_SERVICES" > "$RUNNER_TEMP/google-services.json"
+          echo "GOOGLE_SERVICES_JSON=$RUNNER_TEMP/google-services.json" >> "$GITHUB_ENV"
+        env:
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Build
         working-directory: apps/${{ matrix.app }}
