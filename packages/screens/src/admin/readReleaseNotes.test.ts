@@ -95,6 +95,15 @@ describe('readReleaseNotes', () => {
     ]);
   });
 
+  it('leaves out the release bot announcing the release itself', () => {
+    const notes = `## What's Changed
+* chore(main): release 1.8.0 by @valence-release[bot] in https://github.com/ValenceOSS/Valence/pull/600
+* fix(tv): the top shelf says it needs arm64 by @MarquesCoding in https://github.com/ValenceOSS/Valence/pull/538
+`;
+
+    expect(readReleaseNotes(notes).flatMap((section) => section.points)).toHaveLength(1);
+  });
+
   it('reads nothing from notes with no points', () => {
     expect(readReleaseNotes('Just a line.')).toEqual([]);
   });

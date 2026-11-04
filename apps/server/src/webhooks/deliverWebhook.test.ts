@@ -49,6 +49,7 @@ const aTarget: WebhookDestination = {
   url: 'https://example.com/hook',
   preset: 'generic',
   secret: 'whsec_1',
+  custom: null,
 };
 
 const answering = (status: number): Mock<WebhookFetcher> =>
@@ -192,5 +193,107 @@ describe('deliverWebhook', () => {
     );
 
     expect(fetchPoster).not.toHaveBeenCalled();
+  });
+
+  it('sends a Custom webhook with its own method and headers, filled from its template', async () => {
+    const fetchImpl = answering(200);
+
+    await deliverWebhook(
+      {
+        ...aTarget,
+        preset: 'custom',
+        custom: {
+          method: 'PUT',
+          format: 'text',
+          template: '{{eventLabel}}: {{data.subjectName}}',
+          headers: [{ name: 'Authorization', value: 'Bearer token', isSecret: true }],
+          isSigned: true,
+        },
+      },
+      aPayload,
+      fetchImpl,
+    );
+
+    const request = requestMadeBy(fetchImpl);
+
+    expect(request.method).toBe('PUT');
+    expect(request.headers['authorization']).toBe('Bearer token');
+    expect(request.headers['content-type']).toBe('text/plain; charset=utf-8');
+    expect(request.body).toBe('Job failed: Films');
+    expect(request.headers[WEBHOOK_SIGNATURE_HEADER]).toBe(
+      signWebhookPayload('whsec_1', request.body),
+    );
+  });
+
+  it('leaves a Custom webhook unsigned where it asks to be, and lets no header stand in for the signature', async () => {
+    const fetchImpl = answering(200);
+
+    await deliverWebhook(
+      {
+        ...aTarget,
+        preset: 'custom',
+        custom: {
+          method: 'POST',
+          format: 'json',
+          template: '{"title": "{{title}}"}',
+          headers: [{ name: 'X-Valence-Signature', value: 'forged', isSecret: false }],
+          isSigned: false,
+        },
+      },
+      aPayload,
+      fetchImpl,
+    );
+
+    expect(requestMadeBy(fetchImpl).headers[WEBHOOK_SIGNATURE_HEADER]).toBe('forged');
+
+    const signed = answering(200);
+
+    await deliverWebhook(
+      {
+        ...aTarget,
+        preset: 'custom',
+        custom: {
+          method: 'POST',
+          format: 'json',
+          template: '{"title": "{{title}}"}',
+          headers: [{ name: 'X-Valence-Signature', value: 'forged', isSecret: false }],
+          isSigned: true,
+        },
+      },
+      aPayload,
+      signed,
+    );
+
+    expect(requestMadeBy(signed).headers[WEBHOOK_SIGNATURE_HEADER]).not.toBe('forged');
+  });
+
+  it('records a template it cannot fill as a failed delivery, sending nothing', async () => {
+    const fetchImpl = answering(200);
+
+    const attempt = await deliverWebhook(
+      {
+        ...aTarget,
+        preset: 'custom',
+        custom: { method: 'POST', format: 'json', template: '{ nope', headers: [], isSigned: true },
+      },
+      aPayload,
+      fetchImpl,
+    );
+
+    expect(attempt).toStrictEqual({
+      ok: false,
+      status: null,
+      error: 'The message template isn’t valid JSON.',
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('sends other services as it always has, posted and signed', async () => {
+    const fetchImpl = answering(200);
+
+    await deliverWebhook({ ...aTarget, preset: 'discord' }, aPayload, fetchImpl);
+
+    expect(requestMadeBy(fetchImpl).method).toBe('POST');
+    expect(requestMadeBy(fetchImpl).headers[WEBHOOK_SIGNATURE_HEADER]).toBeDefined();
   });
 });

@@ -29,13 +29,6 @@ import { say } from '@ValenceI18n/say';
 
 type Draft = Omit<EmailSetupChange, 'password'> & { password: string };
 
-const RESEND = {
-  host: 'smtp.resend.com',
-  port: 465,
-  security: 'tls',
-  username: 'resend',
-} as const;
-
 const SECURITY_CHOICES = [
   { id: 'tls', label: say('screens.adminArea.emailCard.tls') },
   { id: 'starttls', label: say('screens.adminArea.emailCard.starttls') },
@@ -127,10 +120,10 @@ const EmailCard = () => {
     setDraft({ ...draft, ...patch });
   };
 
-  const save = async () => {
+  const save = async (next: Draft = chosen) => {
     setIsSaving(true);
 
-    const answer = await saveEmailSetup(chosen);
+    const answer = await saveEmailSetup(next);
 
     setIsSaving(false);
 
@@ -166,232 +159,262 @@ const EmailCard = () => {
   };
 
   return (
-    <PanelCard
-      title={title}
-      actions={
-        <PanelCardInfo
-          label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
-          detail={
-            <>
-              {say('screens.adminArea.emailCard.sendPasswordResetLinksAndSetup')}{' '}
-              <Link href={EMAIL_DOCS}>{say('screens.adminArea.emailCard.howToSetUpEmail')}</Link>
-            </>
-          }
-        />
-      }
-    >
-      <div className="flex flex-col gap-5">
-        {isFixed ? (
-          <Callout tone="quiet" title={say('screens.adminArea.emailCard.setByTheEnvironment')}>
-            {say('screens.adminArea.emailCard.smtpUrlIsSetSoTheMail')}
-          </Callout>
-        ) : null}
-
-        <SettingList>
-          {isFixed ? null : (
-            <SettingRow
-              title={say('screens.adminArea.emailCard.sendEmail')}
-              description={say('screens.adminArea.emailCard.nothingIsEmailedWhileThisIs')}
-            >
+    <div className="flex flex-col gap-4">
+      <PanelCard
+        title={title}
+        actions={
+          <>
+            {isFixed ? null : (
               <Switch
                 label={say('screens.adminArea.emailCard.sendEmail')}
                 isLabelHidden
                 isOn={draft.isEnabled}
                 onToggle={() => {
-                  change({ isEnabled: !draft.isEnabled });
-                }}
-              />
-            </SettingRow>
-          )}
+                  const isEnabled = !draft.isEnabled;
 
-          <SettingGroup
-            title={say('screens.adminArea.emailCard.mailServer')}
-            description={say('screens.adminArea.emailCard.theSmtpServerOfYourEmail')}
-          >
-            <div className="grid items-start gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_10rem]">
-              <TextField
-                label={say('common.serverAddress')}
-                placeholder={RESEND.host}
-                value={draft.host}
-                disabled={isFixed}
-                onValueChange={(host) => {
-                  change({ host });
-                }}
-              />
+                  change({ isEnabled });
 
-              <TextField
-                label={say('screens.adminArea.emailCard.port')}
-                type="number"
-                min={1}
-                max={65_535}
-                value={port}
-                disabled={isFixed}
-                onValueChange={setPort}
-                {...(isPortValid
-                  ? {}
-                  : { error: say('screens.adminArea.emailCard.aPortFrom1To65535') })}
-              />
-
-              <SelectField
-                label={say('common.security')}
-                options={[...SECURITY_CHOICES]}
-                value={draft.security}
-                onSelect={(id) => {
-                  if (isFixed) {
-                    return;
+                  if (!isEnabled || setup.host !== '') {
+                    void save({ ...chosen, isEnabled });
                   }
-
-                  change({
-                    security: EMAIL_SECURITIES.find((one) => one === id) ?? 'tls',
-                  });
                 }}
               />
-            </div>
-          </SettingGroup>
-
-          <SettingGroup
-            title={say('screens.adminArea.settingsPanel.signingIn')}
-            description={
-              setup.hasPassword
-                ? say('screens.adminArea.emailCard.aPasswordIsSavedLeaveIt')
-                : say('screens.adminArea.emailCard.forResendTheUsernameIs')
-            }
-          >
-            <div className="grid items-start gap-3 sm:grid-cols-2">
-              <TextField
-                label={say('common.username')}
-                autoComplete="off"
-                value={draft.username}
-                disabled={isFixed}
-                onValueChange={(username) => {
-                  change({ username });
-                }}
-              />
-
-              <TextField
-                label={say('common.password')}
-                type="password"
-                autoComplete="new-password"
-                placeholder={
-                  setup.hasPassword ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep') : ''
-                }
-                value={draft.password}
-                disabled={isFixed}
-                onValueChange={(password) => {
-                  change({ password });
-                }}
-              />
-            </div>
-          </SettingGroup>
-
-          <SettingGroup
-            title={say('screens.adminArea.emailCard.sendAs')}
-            description={say('screens.adminArea.emailCard.theAddressMustBeOneYour')}
-          >
-            <div className="grid items-start gap-3 sm:grid-cols-2">
-              <TextField
-                label={say('common.name')}
-                placeholder={say('common.valence')}
-                value={draft.fromName}
-                disabled={isFixed}
-                onValueChange={(fromName) => {
-                  change({ fromName });
-                }}
-              />
-
-              <TextField
-                label={say('common.address')}
-                type="email"
-                value={draft.fromAddress}
-                disabled={isFixed}
-                onValueChange={(fromAddress) => {
-                  change({ fromAddress });
-                }}
-              />
-            </div>
-          </SettingGroup>
-
-          <SettingRow
-            title={say('screens.adminArea.emailCard.emailPasswordResetLinks')}
-            description={say('screens.adminArea.emailCard.toWhoeverAsksOnTheSign')}
-          >
-            <Switch
-              label={say('screens.adminArea.emailCard.emailPasswordResetLinks')}
-              isLabelHidden
-              isOn={draft.sendsPasswordResets}
-              onToggle={() => {
-                change({ sendsPasswordResets: !draft.sendsPasswordResets });
-              }}
+            )}
+            <PanelCardInfo
+              label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
+              detail={
+                <>
+                  {say('screens.adminArea.emailCard.sendPasswordResetLinksAndSetup')}{' '}
+                  <Link href={EMAIL_DOCS}>
+                    {say('screens.adminArea.emailCard.howToSetUpEmail')}
+                  </Link>
+                </>
+              }
             />
-          </SettingRow>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          {isFixed ? (
+            <Callout tone="quiet" title={say('screens.adminArea.emailCard.setByTheEnvironment')}>
+              {say('screens.adminArea.emailCard.smtpUrlIsSetSoTheMail')}
+            </Callout>
+          ) : null}
 
-          <SettingRow
-            title={say('screens.adminArea.emailCard.emailSetupLinks')}
-            description={say('screens.adminArea.emailCard.sendByEmailAppearsBesideCopy')}
-          >
-            <Switch
-              label={say('screens.adminArea.emailCard.emailSetupLinks')}
-              isLabelHidden
-              isOn={draft.sendsSetupLinks}
-              onToggle={() => {
-                change({ sendsSetupLinks: !draft.sendsSetupLinks });
-              }}
-            />
-          </SettingRow>
-        </SettingList>
+          {!draft.isEnabled && !isFixed ? (
+            <p className="font-body text-sm text-text-muted">
+              {say('screens.adminArea.emailCard.sendsPasswordResetLinks')}
+            </p>
+          ) : null}
 
-        <div className="flex justify-end">
-          <Button
-            variant="primary"
-            size="sm"
-            isLoading={isSaving}
-            disabled={!isChanged || !isPortValid}
-            onClick={() => {
-              void save();
-            }}
-          >
-            {say('common.save')}
-          </Button>
+          {!draft.isEnabled && !isFixed ? null : (
+            <>
+              <SettingList>
+                <SettingGroup
+                  title={say('screens.adminArea.emailCard.mailServer')}
+                  description={say('screens.adminArea.emailCard.theSmtpServerOfYourEmail')}
+                >
+                  <div className="grid items-start gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_10rem]">
+                    <TextField
+                      label={say('common.serverAddress')}
+                      placeholder="smtp.example.com"
+                      value={draft.host}
+                      disabled={isFixed}
+                      onValueChange={(host) => {
+                        change({ host });
+                      }}
+                    />
+
+                    <TextField
+                      label={say('screens.adminArea.emailCard.port')}
+                      type="number"
+                      min={1}
+                      max={65_535}
+                      value={port}
+                      disabled={isFixed}
+                      onValueChange={setPort}
+                      {...(isPortValid
+                        ? {}
+                        : { error: say('screens.adminArea.emailCard.aPortFrom1To65535') })}
+                    />
+
+                    <SelectField
+                      label={say('common.security')}
+                      options={[...SECURITY_CHOICES]}
+                      value={draft.security}
+                      onSelect={(id) => {
+                        if (isFixed) {
+                          return;
+                        }
+
+                        change({
+                          security: EMAIL_SECURITIES.find((one) => one === id) ?? 'tls',
+                        });
+                      }}
+                    />
+                  </div>
+                </SettingGroup>
+
+                <SettingGroup
+                  title={say('screens.adminArea.settingsPanel.signingIn')}
+                  description={
+                    setup.hasPassword
+                      ? say('screens.adminArea.emailCard.aPasswordIsSavedLeaveIt')
+                      : say('screens.adminArea.emailCard.theUsernameAndPassword')
+                  }
+                >
+                  <div className="grid items-start gap-3 sm:grid-cols-2">
+                    <TextField
+                      label={say('common.username')}
+                      autoComplete="off"
+                      value={draft.username}
+                      disabled={isFixed}
+                      onValueChange={(username) => {
+                        change({ username });
+                      }}
+                    />
+
+                    <TextField
+                      label={say('common.password')}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder={
+                        setup.hasPassword
+                          ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep')
+                          : ''
+                      }
+                      value={draft.password}
+                      disabled={isFixed}
+                      onValueChange={(password) => {
+                        change({ password });
+                      }}
+                    />
+                  </div>
+                </SettingGroup>
+
+                <SettingGroup
+                  title={say('screens.adminArea.emailCard.sendAs')}
+                  description={say('screens.adminArea.emailCard.theAddressMustBeOneYour')}
+                >
+                  <div className="grid items-start gap-3 sm:grid-cols-2">
+                    <TextField
+                      label={say('common.name')}
+                      placeholder={say('common.valence')}
+                      value={draft.fromName}
+                      disabled={isFixed}
+                      onValueChange={(fromName) => {
+                        change({ fromName });
+                      }}
+                    />
+
+                    <TextField
+                      label={say('common.address')}
+                      type="email"
+                      value={draft.fromAddress}
+                      disabled={isFixed}
+                      onValueChange={(fromAddress) => {
+                        change({ fromAddress });
+                      }}
+                    />
+                  </div>
+                </SettingGroup>
+
+                <SettingRow
+                  title={say('screens.adminArea.emailCard.emailPasswordResetLinks')}
+                  description={say('screens.adminArea.emailCard.toWhoeverAsksOnTheSign')}
+                >
+                  <Switch
+                    label={say('screens.adminArea.emailCard.emailPasswordResetLinks')}
+                    isLabelHidden
+                    isOn={draft.sendsPasswordResets}
+                    onToggle={() => {
+                      change({ sendsPasswordResets: !draft.sendsPasswordResets });
+                    }}
+                  />
+                </SettingRow>
+
+                <SettingRow
+                  title={say('screens.adminArea.emailCard.emailSetupLinks')}
+                  description={say('screens.adminArea.emailCard.sendByEmailAppearsBesideCopy')}
+                >
+                  <Switch
+                    label={say('screens.adminArea.emailCard.emailSetupLinks')}
+                    isLabelHidden
+                    isOn={draft.sendsSetupLinks}
+                    onToggle={() => {
+                      change({ sendsSetupLinks: !draft.sendsSetupLinks });
+                    }}
+                  />
+                </SettingRow>
+              </SettingList>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="confirm"
+                  size="sm"
+                  isLoading={isSaving}
+                  disabled={!isChanged || !isPortValid}
+                  onClick={() => {
+                    void save();
+                  }}
+                >
+                  {say('common.save')}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
+      </PanelCard>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-end gap-2">
-            <TextField
-              label={say('screens.adminArea.emailCard.sendATestTo')}
-              type="email"
-              size="sm"
-              value={testTo}
-              onValueChange={setTestTo}
-              className="min-w-0 flex-1"
-            />
+      {!draft.isEnabled && !isFixed ? null : (
+        <PanelCard title={say('screens.adminArea.emailCard.recentEmails.testEmail')}>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField
+                label={say('screens.adminArea.emailCard.sendATestTo')}
+                type="email"
+                size="sm"
+                value={testTo}
+                onValueChange={setTestTo}
+                className="min-w-0 flex-1"
+              />
 
-            <Button
-              variant="secondary"
-              size="sm"
-              isLoading={isTesting}
-              disabled={testTo.trim() === '' || setup.host === ''}
-              onClick={() => {
-                void test();
-              }}
-            >
-              {say('screens.adminArea.emailCard.sendTestEmail')}
-            </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                isLoading={isTesting}
+                disabled={testTo.trim() === '' || setup.host === '' || isChanged}
+                onClick={() => {
+                  void test();
+                }}
+              >
+                {say('screens.adminArea.sessionMessageDialog.send')}
+              </Button>
+            </div>
+
+            {tested === null ? null : tested.problem === null ? (
+              <p role="status" className="font-body text-[0.8125rem] text-text-muted">
+                {say('screens.adminArea.emailCard.sentCheckTheInboxOf', { to: tested.to })}
+              </p>
+            ) : (
+              <p role="alert" className="font-body text-[0.8125rem] text-danger">
+                {tested.problem}
+              </p>
+            )}
           </div>
 
-          {tested === null ? null : tested.problem === null ? (
-            <p role="status" className="font-body text-[0.8125rem] text-text-muted">
-              {say('screens.adminArea.emailCard.sentCheckTheInboxOf', { to: tested.to })}
+          {isChanged ? (
+            <p className="pt-2 font-body text-[0.8125rem] text-text-muted">
+              {say('screens.adminArea.emailCard.saveFirstToTest')}
             </p>
-          ) : (
-            <p role="alert" className="font-body text-[0.8125rem] text-danger">
-              {tested.problem}
-            </p>
-          )}
-        </div>
+          ) : null}
+        </PanelCard>
+      )}
 
+      <PanelCard title={say('screens.adminArea.emailCard.recentEmails.recentEmails')}>
         <RecentEmails sends={setup.recent} now={now} />
-      </div>
-    </PanelCard>
+      </PanelCard>
+    </div>
   );
 };
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { createDatabaseWebhookStore } from './createDatabaseWebhookStore';
+import type { CustomWebhook } from '@ValenceContracts/schemas/Webhook';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -10,6 +11,17 @@ const A_SUBSCRIPTION = {
   preset: 'discord',
   events: ['job.failed'],
 } as const;
+
+const CUSTOM: CustomWebhook = {
+  method: 'PUT',
+  format: 'text',
+  template: '{{title}}',
+  headers: [
+    { name: 'Authorization', value: 'Bearer token', isSecret: true },
+    { name: 'X-Source', value: 'valence', isSecret: false },
+  ],
+  isSigned: false,
+};
 
 const LANDED = { ok: true, status: 200, error: null };
 
@@ -86,6 +98,50 @@ describe('createDatabaseWebhookStore', () => {
       expect(await store.pruneDeliveries(new Date(Date.now() - 60_000))).toBe(0);
       expect(await store.pruneDeliveries(new Date(Date.now() + 60_000))).toBe(2);
       expect(await store.listDeliveries(subscription.id, 10)).toStrictEqual([]);
+    },
+    STARTING_POSTGRES_MS,
+  );
+  it(
+    'stores a Custom setup, shows it with its secrets hidden and keeps a secret saved back empty',
+    async () => {
+      const store = createDatabaseWebhookStore(await aMigratedDatabase());
+      const { subscription } = await store.create({
+        ...A_SUBSCRIPTION,
+        preset: 'custom',
+        events: ['job.failed'],
+        custom: CUSTOM,
+      });
+
+      expect(subscription.custom?.headers[0]?.value).toBe('');
+      expect((await store.list())[0]?.custom?.headers[0]?.value).toBe('');
+      expect((await store.readTarget(subscription.id))?.custom).toStrictEqual(CUSTOM);
+
+      const shown = subscription.custom;
+
+      if (shown === null) {
+        throw new Error('No setup was shown.');
+      }
+
+      const changed = await store.update(subscription.id, {
+        custom: { ...shown, template: '{{summary}}' },
+      });
+
+      expect(changed?.custom?.template).toBe('{{summary}}');
+      expect((await store.readTarget(subscription.id))?.custom?.headers[0]?.value).toBe(
+        'Bearer token',
+      );
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'reads a subscription made before Custom setups as having none',
+    async () => {
+      const store = createDatabaseWebhookStore(await aMigratedDatabase());
+      const { subscription } = await store.create({ ...A_SUBSCRIPTION, events: ['job.failed'] });
+
+      expect((await store.list())[0]?.custom).toBeNull();
+      expect((await store.readTarget(subscription.id))?.custom).toBeNull();
     },
     STARTING_POSTGRES_MS,
   );

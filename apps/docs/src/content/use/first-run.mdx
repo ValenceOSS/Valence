@@ -106,8 +106,9 @@ If the administrator cannot be created, the server answers with a `400` and the 
 
 <Callout title="Setup happens once">
   Once any account exists, `GET /api/setup/status` reports setup as complete and nobody else is
-  offered the wizard. Trusted origins and the cookie mode can afterwards be reviewed in the admin
-  Settings panel, described in [Settings](/use/settings).
+  offered the wizard. Where sign-in isn't over HTTPS afterwards, the Sign-in screen card of the
+  admin Settings panel says so and lists the addresses allowed to sign in, described in
+  [Settings](/use/settings#sign-in-isnt-over-https).
 </Callout>
 
 ## Signing in

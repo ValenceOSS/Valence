@@ -3,7 +3,22 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, desc, eq, gte, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  ne,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { countWhere } from '@ValenceDatabase/countWhere';
@@ -71,6 +86,8 @@ const asIssue = (row: JobRunIssueRow): JobRunIssue => ({
   atMs: row.atMs,
 });
 
+const ROUTINE_KINDS = ['server.checkTranscoder', 'server.checkRequests', 'server.checkDiskSpace'];
+
 /**
  * The conditions a history listing is filtered by, shared between reading the page itself and
  * counting how many rows match it in total.
@@ -102,6 +119,9 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
         ? or(gte(jobRun.createdAt, new Date(query.sinceMs)), eq(jobRun.status, 'running'))
         : gte(jobRun.createdAt, new Date(query.sinceMs)),
     query.untilMs === null ? undefined : lte(jobRun.createdAt, new Date(query.untilMs)),
+    query.hidesRoutine
+      ? or(notInArray(jobRun.kind, ROUTINE_KINDS), ne(jobRun.status, 'completed'))
+      : undefined,
   ].filter((one) => one !== undefined);
 
   return wheres.length === 0 ? undefined : and(...wheres);

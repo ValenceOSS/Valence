@@ -14,8 +14,10 @@ type DataTableProps<Row extends RowData> = {
   columns: DataTableColumn<Row>[];
   rows: Row[];
   totalRows?: number;
+  hasMoreRows?: boolean;
   emptyMessage?: string;
   onChooseRow?: (row: Row) => void;
+  expandsOnChoose?: boolean;
   onReorder?: (ids: string[]) => void;
   getRowId?: (row: Row) => string;
   toolbar?: ReactNode;

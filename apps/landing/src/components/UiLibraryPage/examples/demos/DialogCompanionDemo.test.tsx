@@ -10,7 +10,7 @@ describe('DialogCompanionDemo', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Open a dialog' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Open its companion' }));
 
-    expect(await screen.findByText('Louise Banks')).toBeInTheDocument();
+    expect(await screen.findByText('The character they play')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

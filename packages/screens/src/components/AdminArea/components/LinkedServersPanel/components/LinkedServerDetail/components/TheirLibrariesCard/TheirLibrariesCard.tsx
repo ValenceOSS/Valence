@@ -12,6 +12,8 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { cn } from '@ValenceUI/cn';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
+import { Button } from '@ValenceUI/Button';
+import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { LIBRARY_KIND_NAMES } from '@ValenceClient/library/LIBRARY_KIND_NAMES';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -93,25 +95,56 @@ const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
         />
       ) : asked.isPending ? (
         <Spinner isCentered size="sm" label={say('common.reading')} />
-      ) : !asked.data.isReachable || asked.data.libraries.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-text-muted">
-          {asked.data.isReachable
-            ? say('screens.adminArea.linkedServersPanel.nameSharesNothingWithThisServer', {
-                name: server.name,
-              })
-            : say('screens.adminArea.linkedServersPanel.nameCouldNotBeReached', {
+      ) : !asked.data.isReachable ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[0.8125rem] text-text">
+              {say('screens.adminArea.linkedServersPanel.nameCouldNotBeReached', {
                 name: server.name,
               })}
+            </span>
+            {server.lastSeenAt === null ? null : (
+              <span className="text-xs text-text-muted">
+                {say('screens.adminArea.linkedServersPanel.lastHeardFromWhenSentence', {
+                  when: saidWhen(server.lastSeenAt) ?? '',
+                })}
+              </span>
+            )}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            isLoading={asked.isFetching}
+            onClick={() => {
+              void asked.refetch();
+            }}
+          >
+            {say('common.tryAgain')}
+          </Button>
+        </div>
+      ) : asked.data.libraries.length === 0 ? (
+        <p className="px-5 py-4 text-[0.8125rem] text-text-muted">
+          {say('screens.adminArea.linkedServersPanel.nameSharesNothingWithThisServer', {
+            name: server.name,
+          })}
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+        <ul className="grid gap-2 p-4 sm:grid-cols-2 xl:grid-cols-3">
           {asked.data.libraries.map((library) => (
-            <li key={library.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <li
+              key={library.id}
+              className={cn(
+                'flex items-center justify-between gap-3 rounded-lg border px-4 py-3',
+                library.isTaken
+                  ? 'border-[var(--surface-divider)] bg-[var(--surface-hover)]'
+                  : 'border-[var(--surface-line)]',
+              )}
+            >
               <span className="flex min-w-0 flex-col">
                 <span
                   className={cn(
-                    'truncate text-sm font-medium',
-                    library.isTaken ? '' : 'text-text-muted',
+                    'truncate text-[0.8125rem] font-medium',
+                    library.isTaken ? 'text-text' : 'text-text-muted',
                   )}
                 >
                   {library.name}

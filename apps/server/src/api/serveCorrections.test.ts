@@ -89,6 +89,8 @@ const aMusic = () =>
       report: vi.fn(() => false),
       command: vi.fn(() => false),
       playingOn: vi.fn(() => null),
+      controllerOf: vi.fn(() => null),
+      remoteFor: vi.fn(() => null),
       order: vi.fn(() => false),
     },
     pictures: {

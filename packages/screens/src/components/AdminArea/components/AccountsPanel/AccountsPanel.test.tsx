@@ -278,7 +278,7 @@ describe('AccountsPanel', () => {
     expect(screen.getByText('Member')).toBeInTheDocument();
   });
 
-  it('draws each role in the colour that role was given, not by whether it is the administrator', async () => {
+  it('marks each role with the colour that role was given, not by whether it is the administrator', async () => {
     mocks.fetchRoles.mockResolvedValue([
       { ...ADMINISTRATOR, color: '#E74C3C' },
       { ...MEMBER, color: '#206694' },
@@ -290,11 +290,17 @@ describe('AccountsPanel', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText('Administrator')).toHaveStyle({ color: 'rgb(231, 76, 60)' });
+      expect(screen.getByText('Administrator').firstElementChild).toHaveStyle({
+        backgroundColor: 'rgb(231, 76, 60)',
+      });
     });
 
-    expect(screen.getByText('Member')).toHaveStyle({ color: 'rgb(32, 102, 148)' });
-    expect(screen.getByText('Manager').getAttribute('style')).toBeNull();
+    expect(screen.getByText('Member').firstElementChild).toHaveStyle({
+      backgroundColor: 'rgb(32, 102, 148)',
+    });
+    expect(screen.getByText('Manager').firstElementChild).toHaveStyle({
+      backgroundColor: 'rgba(0, 0, 0, 0)',
+    });
   });
 
   it('says so plainly when somebody holds none', async () => {
@@ -524,7 +530,7 @@ describe('AccountsPanel', () => {
 
     renderInAnAddress(<AccountsPanel />);
 
-    expect(await screen.findByText('never')).toBeInTheDocument();
+    expect(await screen.findByText('Never')).toBeInTheDocument();
   });
 
   it('changes a username from the editor', async () => {

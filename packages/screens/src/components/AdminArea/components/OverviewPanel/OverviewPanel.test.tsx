@@ -185,6 +185,8 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   listening: null,
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
   ...overrides,
 });
 
@@ -278,7 +280,7 @@ describe('OverviewPanel', () => {
       'Libraries',
       'Server load',
       'Disk usage',
-      'Recent logs',
+      'Recent warnings',
     ]) {
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
     }

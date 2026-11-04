@@ -73,13 +73,13 @@ const ProblemScreen = ({ problem, details, onRetry, onSignIn }: ProblemScreenPro
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               {problem.action === 'retry' && onRetry !== undefined ? (
-                <Button variant="primary" size="lg" isPill onClick={onRetry}>
+                <Button variant="confirm" size="lg" isPill onClick={onRetry}>
                   {say('common.tryAgain')}
                 </Button>
               ) : null}
 
               {problem.action === 'signIn' && onSignIn !== undefined ? (
-                <Button variant="primary" size="lg" isPill onClick={onSignIn}>
+                <Button variant="confirm" size="lg" isPill onClick={onSignIn}>
                   {say('screens.profileGate.signIn')}
                 </Button>
               ) : null}

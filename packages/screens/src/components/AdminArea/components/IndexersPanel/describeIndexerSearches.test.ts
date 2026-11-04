@@ -43,7 +43,7 @@ const AN_INDEXER: Indexer = {
 
 describe('describeIndexerSearches', () => {
   it('names the kinds of search an indexer takes', () => {
-    expect(describeIndexerSearches(AN_INDEXER)).toBe('Words · Films · Series');
+    expect(describeIndexerSearches(AN_INDEXER)).toBe('Keywords · Films · Series');
   });
 
   it('says to test one nobody has asked', () => {

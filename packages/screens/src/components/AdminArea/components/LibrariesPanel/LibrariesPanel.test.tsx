@@ -6,7 +6,6 @@ import { LibrariesPanel } from './LibrariesPanel';
 import type { ReactElement } from 'react';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
-import { readsWhole } from '@ValenceScreens/testing/readsWhole';
 
 /**
  * Draws the panel with a query client, since it asks which servers its linked libraries come from.
@@ -194,14 +193,14 @@ describe('LibrariesPanel', () => {
       />,
     );
 
-    expect(screen.getByText('Anime')).toBeInTheDocument();
+    expect(screen.getByText(/^Anime/)).toBeInTheDocument();
     expect(screen.queryByText('shows')).not.toBeInTheDocument();
   });
 
   it('labels a library with the kind it is where it has no type of its own', () => {
     render(<LibrariesPanel {...props} libraries={[library({ name: 'Cinema', flavour: null })]} />);
 
-    expect(screen.getByText('Films')).toBeInTheDocument();
+    expect(screen.getByText(/^Films ·/)).toBeInTheDocument();
   });
 
   it('tells somebody not to add a library when the list simply could not be read', () => {
@@ -222,13 +221,7 @@ describe('LibrariesPanel', () => {
 
     expect(screen.getByText('Cinema')).toBeInTheDocument();
     expect(screen.getByText('/media/films')).toBeInTheDocument();
-    expect(screen.getByText(readsWhole('4 items'))).toBeInTheDocument();
-  });
-
-  it('counts one item without saying "1 items"', () => {
-    render(<LibrariesPanel {...props} libraries={[library({ itemCount: 1 })]} />);
-
-    expect(screen.getByText(readsWhole('1 item'))).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '4' })).toBeInTheDocument();
   });
 
   it('scans one library on request', async () => {
@@ -384,7 +377,7 @@ describe('LibrariesPanel', () => {
         />,
       );
 
-      expect(screen.getByText('+4 ~1 −0')).toBeInTheDocument();
+      expect(screen.getByText('4 added 1 changed')).toBeInTheDocument();
     });
 
     it('says so plainly when a scan changed nothing', () => {
@@ -398,15 +391,15 @@ describe('LibrariesPanel', () => {
       expect(screen.getByText('Nothing changed')).toBeInTheDocument();
     });
 
-    it('makes a scan that removed things impossible to mistake for a quiet one', () => {
+    it('makes a scan that could not read files impossible to mistake for a quiet one', () => {
       render(
         <LibrariesPanel
           {...props}
-          libraries={[library({ lastScan: { added: 0, updated: 0, removed: 214, failed: 0 } })]}
+          libraries={[library({ lastScan: { added: 0, updated: 0, removed: 0, failed: 3 } })]}
         />,
       );
 
-      expect(screen.getByText('+0 ~0 −214')).toHaveClass('text-danger');
+      expect(screen.getByText(/3 unreadable/)).toHaveClass('text-danger');
     });
   });
 

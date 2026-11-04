@@ -55,11 +55,11 @@ describe('SourceStep', () => {
     connectImportSource.mockResolvedValue({ kind: 'answered', value: DEN });
     render(<SourceStep sources={[]} onConnected={onConnected} onForgotten={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Connect and check' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled();
 
     await userEvent.type(screen.getByLabelText('Address'), ' http://den:8096 ');
     await userEvent.type(screen.getByLabelText('API key'), 'key');
-    await userEvent.click(screen.getByRole('button', { name: 'Connect and check' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
 
     expect(connectImportSource).toHaveBeenCalledWith({
       kind: 'jellyfin',
@@ -78,7 +78,7 @@ describe('SourceStep', () => {
 
     await userEvent.type(screen.getByLabelText('Address'), 'http://den');
     await userEvent.type(screen.getByLabelText('API key'), 'bad');
-    await userEvent.click(screen.getByRole('button', { name: 'Connect and check' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
 
     expect(await screen.findByText('Jellyfin refused the key.')).toBeVisible();
   });

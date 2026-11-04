@@ -21,6 +21,10 @@ const webhookBrandOf = (
 
   return {
     name: brand.name ?? say('common.valence'),
+    url:
+      parsed === null || (parsed.protocol !== 'https:' && parsed.protocol !== 'http:')
+        ? null
+        : parsed.origin,
     iconUrl:
       parsed === null || parsed.protocol !== 'https:'
         ? null

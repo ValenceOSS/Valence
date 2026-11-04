@@ -18,6 +18,11 @@ type DeviceRegistryOptions<Report> = {
   now?: () => number;
 };
 
+type DeviceLink = {
+  clientId: string;
+  label: string;
+};
+
 type DeviceRegistry<Report> = {
   owned: (owner: DeviceOwner) => PresenceEntry[];
   report: (owner: DeviceOwner, clientId: string, report: Report | null) => boolean;
@@ -29,6 +34,8 @@ type DeviceRegistry<Report> = {
     toClientId: string,
     event: (fromLabel: string) => PresenceControlEvent,
   ) => boolean;
+  controllerOf: (clientId: string) => DeviceLink | null;
+  remoteFor: (clientId: string) => DeviceLink | null;
 };
 
 /**
@@ -56,6 +63,7 @@ const createDeviceRegistry = <Report>({
   const reports = new Map<string, Report>();
   const heardAt = new Map<string, number>();
   const reporters = new Map<string, PresenceEntry>();
+  const controllers = new Map<string, { from: PresenceEntry; to: PresenceEntry }>();
   let known = new Map(presence.list().map((entry) => [entry.clientId, entry.accountId]));
 
   const owned = ({ accountId, profileId }: DeviceOwner): PresenceEntry[] =>
@@ -78,6 +86,13 @@ const createDeviceRegistry = <Report>({
         reports.delete(clientId);
         reporters.delete(clientId);
         heardAt.delete(clientId);
+        controllers.delete(clientId);
+
+        for (const [toClientId, link] of controllers) {
+          if (link.from.clientId === clientId) {
+            controllers.delete(toClientId);
+          }
+        }
 
         if (reporter !== undefined) {
           onReport?.(reporter, null);
@@ -116,6 +131,7 @@ const createDeviceRegistry = <Report>({
         reports.delete(clientId);
         reporters.delete(clientId);
         heardAt.delete(clientId);
+        controllers.delete(clientId);
       } else {
         reports.set(clientId, report);
         reporters.set(clientId, device);
@@ -145,6 +161,11 @@ const createDeviceRegistry = <Report>({
       }
 
       const from = devices.find((entry) => entry.clientId === fromClientId);
+      const to = devices.find((entry) => entry.clientId === toClientId);
+
+      if (from !== undefined && to !== undefined && from.clientId !== to.clientId) {
+        controllers.set(toClientId, { from, to });
+      }
 
       return presence.tell(
         toClientId,
@@ -155,9 +176,25 @@ const createDeviceRegistry = <Report>({
         ),
       );
     },
+
+    controllerOf: (clientId) => {
+      const link = controllers.get(clientId);
+
+      return link === undefined
+        ? null
+        : { clientId: link.from.clientId, label: pickerLabelOf(link.from) };
+    },
+
+    remoteFor: (clientId) => {
+      const link = [...controllers.values()].findLast((one) => one.from.clientId === clientId);
+
+      return link === undefined
+        ? null
+        : { clientId: link.to.clientId, label: pickerLabelOf(link.to) };
+    },
   };
 };
 
-export type { DeviceOwner, DeviceRegistry };
+export type { DeviceLink, DeviceOwner, DeviceRegistry };
 
 export { createDeviceRegistry };

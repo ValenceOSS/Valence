@@ -17,6 +17,7 @@ import {
 } from '@keyline-icons/react/fill';
 import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { Badge } from '@ValenceUI/Badge';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -243,25 +244,32 @@ const IndexersPanel = () => {
             row.original.privacy === null ? null : INDEXER_PRIVACY_LOOKS[row.original.privacy];
 
           return look === null ? (
-            <Badge size="sm">{KIND_LABELS[row.original.kind]}</Badge>
+            <span className="text-sm text-text-muted">{KIND_LABELS[row.original.kind]}</span>
           ) : (
-            <Badge size="sm" tone={look.tone}>
-              {look.label}
-            </Badge>
+            <span className="text-sm text-text-muted">{look.label}</span>
           );
         },
       },
       {
         id: 'priority',
-        meta: { hidesOnPhones: true },
         header: say('common.priority'),
+        meta: {
+          hidesOnPhones: true,
+          info: (
+            <PanelCardInfo
+              label={say('screens.adminArea.indexersPanel.aboutPriority')}
+              align="start"
+              detail={say('screens.adminArea.indexersPanel.priorityAbout')}
+            />
+          ),
+        },
         accessorFn: (indexer) => indexer.priority,
         cell: ({ row }) => <span className="text-sm text-text">{row.original.priority}</span>,
       },
       {
         id: 'searches',
         meta: { hidesOnPhones: true },
-        header: say('screens.adminArea.indexersPanel.searches'),
+        header: say('screens.adminArea.indexersPanel.canSearch'),
         accessorFn: describeIndexerSearches,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeIndexerSearches(row.original)}</span>
@@ -269,7 +277,7 @@ const IndexersPanel = () => {
       },
       {
         id: 'state',
-        header: say('common.state'),
+        header: say('common.status'),
         accessorFn: (indexer) => describeIndexerState(indexer).label,
         cell: ({ row }) => {
           const state = describeIndexerState(row.original);
@@ -496,7 +504,11 @@ const IndexersPanel = () => {
         <DataTable
           height="fills"
           label={say('common.indexers')}
-          columns={columns}
+          columns={
+            new Set(asked.data.map((indexer) => indexer.priority)).size > 1
+              ? columns
+              : columns.filter((column) => column.id !== 'priority')
+          }
           rows={asked.data}
           getRowId={(indexer) => indexer.id}
           emptyMessage={say('screens.adminArea.indexersPanel.noIndexersYetAddASite')}

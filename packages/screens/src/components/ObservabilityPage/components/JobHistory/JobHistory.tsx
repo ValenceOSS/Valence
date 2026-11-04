@@ -9,11 +9,7 @@ import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
-import {
-  JOB_RUN_NO_SUBJECT,
-  JOB_RUN_STATUSES,
-  JobRunStatusSchema,
-} from '@ValenceContracts/schemas/JobRun';
+import { JobRunStatusSchema } from '@ValenceContracts/schemas/JobRun';
 import { FilterSplit } from '@ValenceUI/FilterSplit';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { ScopedField } from '@ValenceUI/ScopedField';
@@ -35,7 +31,6 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeWords } from '@ValenceClient/admin/describeWords';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
-import { ElapsedTime } from '@ValenceScreens/components/ElapsedTime/ElapsedTime';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
 import { logRangeStart } from '@ValenceClient/admin/logRanges';
@@ -110,6 +105,38 @@ const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: describeJobStat
  */
 const describeMoment = (atMs: number | null): string =>
   atMs === null ? '—' : `${describeLogDay(atMs)}, ${describeLogTime(atMs)}`;
+
+const describeAgo = (atMs: number): string => {
+  const minutes = Math.round((Date.now() - atMs) / 60_000);
+
+  if (minutes < 1) {
+    return say('client.history.describeWhen.justNow');
+  }
+
+  if (minutes < 60) {
+    return say('client.history.describeWhen.minutesMinAgo', { minutes: minutes.toString() });
+  }
+
+  if (minutes < 24 * 60) {
+    return say('screens.observabilityPage.jobHistory.hoursAgo', {
+      hours: Math.round(minutes / 60).toString(),
+    });
+  }
+
+  return describeMoment(atMs);
+};
+
+const describeTook = (ms: number): string =>
+  ms < 1000
+    ? ''
+    : ms < 60_000
+      ? say('screens.observabilityPage.jobHistory.seconds', {
+          seconds: Math.round(ms / 1000).toString(),
+        })
+      : say('screens.observabilityPage.jobHistory.minutesAndSeconds', {
+          minutes: Math.floor(ms / 60_000).toString(),
+          seconds: Math.round((ms % 60_000) / 1000).toString(),
+        });
 
 /**
  * Says where a run stands in one line, rather than in two columns that mostly repeat each other —
@@ -202,6 +229,7 @@ const JobHistoryPanel = ({
   }, [typed, onSearchChange, setAnchor]);
 
   const page = (search.rpage ?? 1) - 1;
+  const [showsRoutine, setShowsRoutine] = useState(false);
   const narrowing = useMemo(
     () => ({
       sort,
@@ -210,8 +238,9 @@ const JobHistoryPanel = ({
       untilMs: until ?? null,
       kind: rkind ?? null,
       subject: rsubject ?? null,
+      hidesRoutine: !showsRoutine,
     }),
-    [rq, range, from, until, sort, anchor, rkind, rsubject],
+    [rq, range, from, until, sort, anchor, rkind, rsubject, showsRoutine],
   );
   const isAsOpened =
     rq === undefined &&
@@ -388,6 +417,8 @@ const JobHistoryPanel = ({
     setOpenIssuesFor(null);
   };
 
+  const shownRecords = records;
+
   const columns = useMemo<DataTableColumn<JobRunRecord>[]>(
     () => [
       {
@@ -396,18 +427,57 @@ const JobHistoryPanel = ({
         enableSorting: false,
         accessorFn: (record) => describeJobKind(record.kind, labels),
         cell: ({ row }) => (
-          <span className="flex max-w-[12rem] items-center gap-1.5 text-text-muted">
-            {pinned.has(row.original.id) ? (
-              <Icon
-                of={PinFilledIcon}
-                size={14}
-                label={say('screens.observabilityPage.jobHistory.pinnedToTheTop')}
-                className="shrink-0"
-              />
-            ) : null}
-            <span className="truncate" title={describeJobKind(row.original.kind, labels)}>
-              {describeJobKind(row.original.kind, labels)}
+          <span className="flex min-w-48 max-w-[30rem] flex-col gap-0.5">
+            <span className="flex min-w-0 items-center gap-1.5 text-text">
+              {pinned.has(row.original.id) ? (
+                <Icon
+                  of={PinFilledIcon}
+                  size={14}
+                  label={say('screens.observabilityPage.jobHistory.pinnedToTheTop')}
+                  className="shrink-0"
+                />
+              ) : null}
+              <span className="truncate" title={describeJobKind(row.original.kind, labels)}>
+                {describeJobKind(row.original.kind, labels)}
+              </span>
             </span>
+            <span className="truncate text-xs text-text-muted xl:hidden">
+              {describeRunSubject(row.original.subject, libraries, row.original.kind).name}
+            </span>
+            {row.original.progress === null || row.original.status === 'completed' ? null : (
+              <span className="mt-1 flex w-56 max-w-full flex-col gap-1 xl:hidden">
+                <span className="flex items-baseline justify-between gap-3 whitespace-nowrap text-xs text-text-muted">
+                  <span className="truncate">
+                    {describeWords(sayAgain(row.original.progress.phase))}
+                  </span>
+                  <span className="tabular-nums">
+                    {say('common.doneOfTotal', {
+                      done: row.original.progress.processed.toLocaleString(),
+                      total: row.original.progress.total.toLocaleString(),
+                    })}
+                  </span>
+                </span>
+                <ProgressBar
+                  isFull
+                  label={say('screens.observabilityPage.jobHistory.kindProgress', {
+                    kind: describeJobKind(row.original.kind, labels),
+                  })}
+                  value={row.original.progress.processed}
+                  max={Math.max(row.original.progress.total, 1)}
+                />
+              </span>
+            )}
+            {row.original.errorMessage === null ? null : (
+              <span
+                className={cn(
+                  'line-clamp-2 whitespace-normal text-xs leading-snug',
+                  row.original.status === 'failed' ? 'text-danger' : 'text-text-muted',
+                )}
+                title={sayAgain(row.original.errorMessage)}
+              >
+                {sayAgain(row.original.errorMessage)}
+              </span>
+            )}
           </span>
         ),
       },
@@ -415,12 +485,6 @@ const JobHistoryPanel = ({
         id: 'status',
         header: say('common.status'),
         enableSorting: false,
-        meta: {
-          filterOptions: JOB_RUN_STATUSES.map((status) => ({
-            id: status,
-            label: describeJobStatus(status).label,
-          })),
-        },
         accessorFn: (record) => record.status,
         cell: ({ row }) => (
           <span className="flex items-center gap-1.5">
@@ -450,15 +514,7 @@ const JobHistoryPanel = ({
         id: 'subject',
         header: say('common.subject'),
         enableSorting: false,
-        meta: {
-          filterOptions: [
-            {
-              id: JOB_RUN_NO_SUBJECT,
-              label: say('screens.observabilityPage.jobHistory.theWholeServer'),
-            },
-            ...libraries.map((library) => ({ id: library.id, label: library.name })),
-          ],
-        },
+        meta: { showsOnlyWhenWide: true },
         accessorFn: (record) => describeRunSubject(record.subject, libraries, record.kind).name,
         cell: ({ row }) => {
           const { name, library } = describeRunSubject(
@@ -470,7 +526,7 @@ const JobHistoryPanel = ({
           return (
             <span className="flex max-w-[12rem] min-w-0 flex-col">
               <span className="flex min-w-0 items-center gap-1.5">
-                <span className="truncate text-text" title={name}>
+                <span className="truncate text-text-muted" title={name}>
                   {name}
                 </span>
 
@@ -528,18 +584,6 @@ const JobHistoryPanel = ({
                   </HoverCard>
                 )}
               </span>
-
-              {row.original.errorMessage === null ? null : (
-                <span
-                  className={cn(
-                    'truncate text-xs',
-                    row.original.status === 'failed' ? 'text-danger' : 'text-text-muted',
-                  )}
-                  title={sayAgain(row.original.errorMessage)}
-                >
-                  {sayAgain(row.original.errorMessage)}
-                </span>
-              )}
             </span>
           );
         },
@@ -548,15 +592,16 @@ const JobHistoryPanel = ({
         id: 'progress',
         header: say('common.progress'),
         enableSorting: false,
+        meta: { showsOnlyWhenWide: true },
         cell: ({ row }) => {
           const progress = row.original.progress;
 
-          if (progress === null) {
+          if (progress === null || row.original.status === 'completed') {
             return null;
           }
 
           return (
-            <span className="flex w-52 flex-col gap-1.5">
+            <span className="flex w-48 flex-col gap-1.5">
               <span className="flex items-baseline justify-between gap-3 whitespace-nowrap text-xs">
                 <span className="truncate text-text-muted">
                   {describeWords(sayAgain(progress.phase))}
@@ -586,7 +631,7 @@ const JobHistoryPanel = ({
                 label={say('screens.observabilityPage.jobHistory.kindProgress', {
                   kind: describeJobKind(row.original.kind, labels),
                 })}
-                value={row.original.status === 'completed' ? progress.total : progress.processed}
+                value={progress.processed}
                 max={Math.max(progress.total, 1)}
               />
             </span>
@@ -598,22 +643,27 @@ const JobHistoryPanel = ({
         header: say('screens.observabilityPage.jobHistory.when'),
         accessorFn: (record) => record.finishedAtMs ?? record.startedAtMs ?? 0,
         cell: ({ row }) => (
-          <span className="flex flex-col whitespace-nowrap tabular-nums text-text-muted">
-            <span>{describeWhen(row.original)}</span>
-            {row.original.startedAtMs === null || row.original.finishedAtMs === null ? null : (
-              <span className="text-xs">
-                <Sentence
-                  words="screens.observabilityPage.jobHistory.tookElapsed"
-                  fillings={{
-                    elapsed: (
-                      <ElapsedTime ms={row.original.finishedAtMs - row.original.startedAtMs} />
-                    ),
-                  }}
-                />
-              </span>
-            )}
+          <span
+            className="whitespace-nowrap tabular-nums text-text-muted"
+            title={describeMoment(row.original.finishedAtMs)}
+          >
+            {row.original.finishedAtMs === null
+              ? describeWhen(row.original)
+              : describeAgo(row.original.finishedAtMs)}
           </span>
         ),
+      },
+      {
+        id: 'took',
+        header: say('common.took'),
+        enableSorting: false,
+        meta: { shrinks: true },
+        cell: ({ row }) =>
+          row.original.startedAtMs === null || row.original.finishedAtMs === null ? null : (
+            <span className="block whitespace-nowrap text-right tabular-nums text-text-muted">
+              {describeTook(row.original.finishedAtMs - row.original.startedAtMs)}
+            </span>
+          ),
       },
       {
         id: 'act',
@@ -693,7 +743,7 @@ const JobHistoryPanel = ({
               },
             },
           ]}
-          className="min-w-56 flex-1"
+          className="min-w-[24rem] flex-1"
         />
 
         <FilterSplit
@@ -702,6 +752,18 @@ const JobHistoryPanel = ({
           selected={chosen}
           onChange={changeFilters}
         />
+
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={() => {
+            setShowsRoutine(!showsRoutine);
+          }}
+        >
+          {showsRoutine
+            ? say('screens.observabilityPage.jobHistory.hideRoutineChecks')
+            : say('screens.observabilityPage.jobHistory.showRoutineChecks')}
+        </Button>
       </div>
 
       <Well>
@@ -716,8 +778,21 @@ const JobHistoryPanel = ({
       <DataTable
         className="m-0 in-[.valence-card-face]:-mx-4 in-[.valence-card-face]:-mb-4"
         label={say('screens.observabilityPage.jobHistory.whatTheJobQueueHasRun')}
-        columns={columns}
-        rows={records}
+        columns={columns.filter(
+          (column) =>
+            (column.id !== 'progress' ||
+              shownRecords.some(
+                (record) => record.progress !== null && record.status !== 'completed',
+              )) &&
+            (column.id !== 'took' ||
+              shownRecords.some(
+                (record) =>
+                  record.startedAtMs !== null &&
+                  record.finishedAtMs !== null &&
+                  record.finishedAtMs - record.startedAtMs >= 1000,
+              )),
+        )}
+        rows={shownRecords}
         totalRows={askedHistory.data?.total ?? records.length}
         page={page}
         onPageChange={(next) => {

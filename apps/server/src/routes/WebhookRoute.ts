@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  CustomWebhookSchema,
   WEBHOOK_EVENTS,
   WEBHOOK_PRESETS,
   WEBHOOK_SUBSCRIBABLE_EVENTS,
@@ -17,6 +18,8 @@ const WebhookPreset = z.enum(WEBHOOK_PRESETS);
 
 const WebhookFilters = WebhookFiltersSchema.openapi('WebhookFilters');
 
+const CustomWebhook = CustomWebhookSchema.openapi('CustomWebhook');
+
 const Webhook = z
   .object({
     id: z.string().uuid(),
@@ -25,6 +28,7 @@ const Webhook = z
     preset: WebhookPreset,
     events: z.array(WebhookEvent),
     filters: WebhookFilters,
+    custom: CustomWebhook.nullable(),
     enabled: z.boolean(),
     createdAt: z.string().datetime(),
     lastAttemptAt: z.string().datetime().nullable(),
@@ -42,6 +46,7 @@ const CreateWebhookRequest = z
     preset: WebhookPreset.default('generic'),
     events: z.array(SubscribableEvent).min(1),
     filters: WebhookFiltersSchema.prefault({}),
+    custom: CustomWebhook.nullable().optional(),
   })
   .openapi('CreateWebhookRequest');
 
@@ -52,6 +57,7 @@ const UpdateWebhookRequest = z
     preset: WebhookPreset.optional(),
     events: z.array(SubscribableEvent).min(1).optional(),
     filters: WebhookFiltersSchema.optional(),
+    custom: CustomWebhook.nullable().optional(),
     enabled: z.boolean().optional(),
   })
   .openapi('UpdateWebhookRequest');
@@ -89,7 +95,8 @@ const createWebhookRoute = createRoute({
       content: { 'application/json': { schema: CreatedWebhook } },
     },
     400: {
-      description: 'Valence will not send deliveries to that address',
+      description:
+        'Valence will not send deliveries to that address, or the template could never be filled',
       content: { 'application/json': { schema: WebhookError } },
     },
     401: {
@@ -123,7 +130,8 @@ const updateWebhookRoute = createRoute({
       content: { 'application/json': { schema: WebhookError } },
     },
     400: {
-      description: 'Valence will not send deliveries to that address',
+      description:
+        'Valence will not send deliveries to that address, or the template could never be filled',
       content: { 'application/json': { schema: WebhookError } },
     },
     404: {

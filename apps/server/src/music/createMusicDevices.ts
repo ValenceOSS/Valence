@@ -6,7 +6,7 @@ import type {
   MusicDevice,
   MusicNowPlaying,
 } from '@ValenceContracts/schemas/MusicRemote';
-import type { DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
+import type { DeviceLink, DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
 import type { PlayWatchers } from '@ValenceServer/devices/createPlayTracker';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 import { say } from '@ValenceI18n/say';
@@ -29,6 +29,8 @@ type MusicDevices = {
     command: MusicCommand,
   ) => boolean;
   playingOn: (clientId: string) => MusicNowPlaying | null;
+  controllerOf: (clientId: string) => DeviceLink | null;
+  remoteFor: (clientId: string) => DeviceLink | null;
   order: (clientId: string, command: MusicCommand) => boolean;
 };
 
@@ -73,6 +75,10 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
     report: devices.report,
 
     playingOn: devices.reportOf,
+
+    controllerOf: devices.controllerOf,
+
+    remoteFor: devices.remoteFor,
 
     order: (clientId, command) =>
       devices.reportOf(clientId) !== null &&

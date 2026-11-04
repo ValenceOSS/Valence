@@ -24,6 +24,7 @@ const MADE = {
   viewCap: null,
   views: 0,
   isRevoked: false,
+  episode: null,
   isSpent: false,
   token: 'abc',
 };

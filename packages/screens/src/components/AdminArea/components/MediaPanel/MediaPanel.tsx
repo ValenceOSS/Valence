@@ -24,6 +24,11 @@ import { MoveToLibraryDialog } from '@ValenceScreens/components/AdminArea/compon
 import type { MoveTarget } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog.types';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
+import { Checkbox } from '@ValenceUI/Checkbox';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
+import { describeRange } from '@ValenceClient/library/describeRange';
 import { cn } from '@ValenceUI/cn';
 import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -36,13 +41,17 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
-import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { Spinner } from '@ValenceUI/Spinner';
 import { MediaPoster } from './components/MediaPoster/MediaPoster';
+import { MediaTitlePage } from './components/MediaTitlePage/MediaTitlePage';
+import { describeAudio } from './describeAudio';
+import { describeNumber } from './describeNumber';
+import { describeTitle } from './describeTitle';
+import { filesOf } from './filesOf';
+import { lengthOf } from './lengthOf';
+import { sharedOf } from './sharedOf';
 import { ShelfTable } from './components/ShelfTable/ShelfTable';
-import { describePicture } from '@ValenceClient/library/describePicture';
 import { folderOf } from './folderOf';
 import { gatherTitles } from './gatherTitles';
 import { pathInLibrary } from '@ValenceScreens/components/AdminArea/pathInLibrary';
@@ -59,6 +68,7 @@ import { describeTitleProblems } from './describeTitleProblems';
 import type { TitleProblem } from './describeTitleProblems';
 import type { ShelfItem } from './ShelfItem.types';
 import { say } from '@ValenceI18n/say';
+import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const NO_PATHS: Readonly<Record<string, string>> = {};
@@ -70,10 +80,10 @@ const NO_ALBUMS: readonly MusicAlbum[] = [];
 const NO_BOOKS: readonly Book[] = [];
 
 const SHOWING = [
-  { id: 'all', label: say('common.all') },
+  { id: 'all', label: say('screens.adminArea.mediaPanel.allTitles') },
   { id: 'look', label: say('screens.adminArea.mediaPanel.unmatched') },
-  { id: 'twice', label: say('screens.adminArea.mediaPanel.thereTwice') },
-  { id: 'unreadable', label: say('screens.adminArea.mediaPanel.couldNotBeRead') },
+  { id: 'twice', label: say('screens.adminArea.mediaPanel.duplicates') },
+  { id: 'unreadable', label: say('screens.adminArea.mediaPanel.unreadable') },
 ] as const;
 
 const NO_IDS: ReadonlySet<string> = new Set();
@@ -117,50 +127,6 @@ const needsALook = (title: MediaTitle): boolean =>
 const INDENTS: readonly string[] = ['', 'pl-9', 'pl-[4.5rem]'];
 
 /**
- * Says where an episode falls in its season, as its row is numbered.
- *
- * @param episode - The episode.
- * @returns Such as "E1" or "E3–4", or a dash where the file does not say.
- */
-const describeNumber = (episode: MediaSummary): string =>
-  episode.episodeNumber === null || episode.episodeNumber === undefined
-    ? '—'
-    : `E${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}`;
-
-/**
- * Says what a row is at a glance, beneath its name: how long and how sharp a film or an episode
- * is, how many seasons and episodes of a series are on the disk, or how many episodes a season has.
- *
- * @param title - The title.
- * @returns The line to show.
- */
-const describeTitle = (title: MediaTitle): string => {
-  if (title.kind === 'film' && title.parts.length > 0) {
-    return sayCount('common.count.editions', title.parts.length);
-  }
-
-  if (title.kind === 'episode' && title.parts.length > 0) {
-    return `${formatDuration(title.lead.durationSeconds)} · ${sayCount('common.count.editions', title.parts.length)}`;
-  }
-
-  if (title.kind === 'season') {
-    return sayCount('common.count.episodes', title.episodes.length);
-  }
-
-  if (title.kind === 'series') {
-    return `${sayCount('common.count.seasons', title.seasons)} · ${sayCount('common.count.episodes', title.episodes.length)}`;
-  }
-
-  return [
-    formatDuration(title.lead.durationSeconds),
-    describePicture(title.lead),
-    title.lead.videoCodec.toUpperCase(),
-  ]
-    .filter((part) => part !== null && part !== '')
-    .join(' · ');
-};
-
-/**
  * Everything the libraries hold, one library at a time, each title with its poster: every film on
  * its own, and every series once, opening to show every episode on the disk season by season.
  * What can be done to a file is done to that file — rebuilding its previews, choosing its preview
@@ -178,11 +144,15 @@ const describeTitle = (title: MediaTitle): string => {
  * @param albums - Every album in the music libraries.
  * @param books - Every book in the book libraries.
  * @param onCorrect - Called with the item whose match is to be corrected.
+ * @param onChooseArtwork - Called with what to choose artwork for, where offered.
  * @param onCorrectAlbum - Called with the album whose match is to be corrected, where offered.
  * @param onCorrectBook - Called with the book whose match is to be corrected, where offered.
  * @param onChooseMoment - Called with the item whose preview moment is to be chosen.
  * @param onRebuildArtefacts - Called with the item whose previews and thumbnails are to be remade,
  *   answering whether the request was accepted.
+ * @param openedTitle - The title open on a page of its own, where one is.
+ * @param onOpenTitle - Called with the title to open, or null to go back; where it is not given, the
+ *   page keeps which title is open itself.
  * @param onReencode - Called with the files to be re-encoded, where re-encoding is offered at all.
  * @param onShowCopies - Called with the file whose kept copies are to be shown, where offered.
  * @param onDelete - Called with the file to delete, and whether its whole series goes with it, where
@@ -191,6 +161,7 @@ const describeTitle = (title: MediaTitle): string => {
  * @param onOpenFolder - Called with a folder to open in Files, where the file manager is offered.
  * @param onMoved - Told the library media went to and the job reading it there, once moved; where
  *   it is not given, nothing offers to move.
+ * @param onOpenInCatalogue - Called with where a title is in the Catalogue, to open it there.
  */
 const MediaPanel = ({
   isUnreachable = false,
@@ -206,12 +177,15 @@ const MediaPanel = ({
   onCorrectBook,
   onChooseMoment,
   onRebuildArtefacts,
+  openedTitle = null,
+  onOpenTitle,
   onReencode,
   onShowCopies,
   onDelete,
   paths = NO_PATHS,
   onOpenFolder,
   onMoved,
+  onOpenInCatalogue,
 }: MediaPanelProps) => {
   const tabs = useMemo(
     () =>
@@ -229,6 +203,22 @@ const MediaPanel = ({
     : (tabs[0]?.id ?? '');
   const [search, setSearch] = useState('');
   const [showing, setShowing] = useState<string>('all');
+  const narrowing = `${libraryId}\n${search}\n${showing}`;
+  const [picking, setPicking] = useState<{ narrowing: string; ids: ReadonlySet<string> }>({
+    narrowing,
+    ids: NO_IDS,
+  });
+  const picked = picking.narrowing === narrowing ? picking.ids : NO_IDS;
+  const setPicked = useCallback(
+    (ids: ReadonlySet<string>) => {
+      setPicking({ narrowing, ids });
+    },
+    [narrowing],
+  );
+  const [localOpenedId, setLocalOpenedId] = useState<string | null>(null);
+  const openedId = onOpenTitle === undefined ? localOpenedId : openedTitle;
+  const setOpenedId = onOpenTitle ?? setLocalOpenedId;
+  const [isDeletingPicked, setIsDeletingPicked] = useState(false);
   const [rebuilding, setRebuilding] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<MediaSummary | null>(null);
   const [rebuilt, setRebuilt] = useState<ReadonlySet<string>>(new Set());
@@ -306,7 +296,6 @@ const MediaPanel = ({
   }, [titles, health.data]);
 
   const lookingCount = inLibrary.filter(needsALook).length;
-  const holdsParts = inLibrary.some((title) => title.parts.length > 0);
   const chosen = tabs.find((library) => library.id === libraryId) ?? null;
   const libraryPath = chosen?.path ?? null;
   const isShelf = chosen?.kind === 'music' || chosen?.kind === 'books';
@@ -656,8 +645,57 @@ const MediaPanel = ({
     [artworkAction, fileActions, moveItem, onCorrect, onReencode, seriesActions],
   );
 
-  const columns = useMemo<DataTableColumn<MediaTitle>[]>(
-    () => [
+  const pickedFiles = shown
+    .filter((title) => picked.has(title.id))
+    .flatMap((title) => filesOf(title));
+
+  const columns = useMemo<DataTableColumn<MediaTitle>[]>(() => {
+    const mixed = say('screens.adminArea.mediaPanel.mixed');
+
+    return [
+      {
+        id: 'choose',
+        enableSorting: false,
+        meta: { shrinks: true },
+        header: () => (
+          <Checkbox
+            label={say('screens.adminArea.mediaPanel.selectEveryTitleShown')}
+            isLabelHidden
+            checked={shown.length > 0 && shown.every((one) => picked.has(one.id))}
+            isMixed={
+              shown.some((one) => picked.has(one.id)) && !shown.every((one) => picked.has(one.id))
+            }
+            onCheckedChange={(isChecked) => {
+              setPicked(new Set(isChecked ? shown.map((one) => one.id) : []));
+            }}
+          />
+        ),
+        cell: ({ row }) =>
+          row.depth > 0 ? null : (
+            <span
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <Checkbox
+                label={say('screens.adminArea.mediaPanel.selectName', { name: row.original.name })}
+                isLabelHidden
+                checked={picked.has(row.original.id)}
+                onCheckedChange={(isChecked) => {
+                  const next = new Set(picked);
+
+                  if (isChecked) {
+                    next.add(row.original.id);
+                  } else {
+                    next.delete(row.original.id);
+                  }
+
+                  setPicked(next);
+                }}
+              />
+            </span>
+          ),
+      },
       {
         id: 'title',
         meta: { fills: true },
@@ -670,46 +708,17 @@ const MediaPanel = ({
           const problems = describeTitleProblems(title, health.data);
 
           return (
-            <span className={cn('flex min-w-0 items-center gap-3', INDENTS[row.depth] ?? '')}>
-              {!holdsParts ? null : row.getCanExpand() ? (
-                <RowFoldButton
-                  label={
-                    title.kind === 'series'
-                      ? say(
-                          isOpen
-                            ? 'screens.adminArea.mediaPanel.hideTheEpisodesOfName'
-                            : 'screens.adminArea.mediaPanel.showTheEpisodesOfName',
-                          { name: title.name },
-                        )
-                      : title.kind === 'film' || title.kind === 'episode'
-                        ? say(
-                            isOpen
-                              ? 'screens.adminArea.mediaPanel.hideTheEditionsOfName'
-                              : 'screens.adminArea.mediaPanel.showTheEditionsOfName',
-                            { name: title.name },
-                          )
-                        : say(
-                            isOpen
-                              ? 'screens.adminArea.mediaPanel.hideTheEpisodesInName'
-                              : 'screens.adminArea.mediaPanel.showTheEpisodesInName',
-                            { name: title.name },
-                          )
-                  }
-                  isOpen={isOpen}
-                  onToggle={() => {
-                    row.toggleExpanded();
-                  }}
-                />
-              ) : (
-                <span className="size-6 shrink-0" />
-              )}
-
+            <span
+              className={cn('flex min-w-0 items-center gap-3', INDENTS[row.depth] ?? '')}
+              title={place?.shown}
+            >
               {title.kind === 'episode' ? (
                 <span className="w-10 shrink-0 text-xs tabular-nums text-text-muted">
                   {describeNumber(title.lead)}
                 </span>
               ) : title.kind === 'season' || title.kind === 'version' ? null : (
                 <MediaPoster
+                  className="w-7"
                   src={
                     title.posterFrom === null
                       ? null
@@ -720,14 +729,21 @@ const MediaPanel = ({
 
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span
-                    className={cn(
-                      'truncate text-text',
-                      row.depth === 0 ? 'font-medium' : 'text-sm',
-                    )}
-                  >
-                    {title.name}
-                  </span>
+                  {row.depth === 0 ? (
+                    <Button
+                      variant="bare"
+                      size="none"
+                      className="truncate font-medium text-text hover:underline"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setOpenedId(title.id);
+                      }}
+                    >
+                      {title.name}
+                    </Button>
+                  ) : (
+                    <span className="truncate text-sm text-text">{title.name}</span>
+                  )}
 
                   {title.year === null ? null : (
                     <span className="text-sm tabular-nums text-text-muted">{title.year}</span>
@@ -744,7 +760,41 @@ const MediaPanel = ({
                   ))}
                 </span>
 
-                <span className="truncate text-xs text-text-muted">{describeTitle(title)}</span>
+                {title.kind === 'series' || title.kind === 'season' || title.parts.length > 0 ? (
+                  <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted">
+                    {row.getCanExpand() ? (
+                      <RowFoldButton
+                        label={
+                          title.kind === 'series'
+                            ? say(
+                                isOpen
+                                  ? 'screens.adminArea.mediaPanel.hideTheEpisodesOfName'
+                                  : 'screens.adminArea.mediaPanel.showTheEpisodesOfName',
+                                { name: title.name },
+                              )
+                            : title.kind === 'film' || title.kind === 'episode'
+                              ? say(
+                                  isOpen
+                                    ? 'screens.adminArea.mediaPanel.hideTheEditionsOfName'
+                                    : 'screens.adminArea.mediaPanel.showTheEditionsOfName',
+                                  { name: title.name },
+                                )
+                              : say(
+                                  isOpen
+                                    ? 'screens.adminArea.mediaPanel.hideTheEpisodesInName'
+                                    : 'screens.adminArea.mediaPanel.showTheEpisodesInName',
+                                  { name: title.name },
+                                )
+                        }
+                        isOpen={isOpen}
+                        onToggle={() => {
+                          row.toggleExpanded();
+                        }}
+                      />
+                    ) : null}
+                    <span className="truncate">{describeTitle(title)}</span>
+                  </span>
+                ) : null}
 
                 {((title.kind === 'series' || title.kind === 'season') && isOpen
                   ? []
@@ -754,14 +804,84 @@ const MediaPanel = ({
                     {detail}
                   </span>
                 ))}
-
-                {place === null || onOpenFolder === undefined ? null : (
-                  <FolderLink shown={place.shown} folder={place.folder} onOpen={onOpenFolder} />
-                )}
               </span>
             </span>
           );
         },
+      },
+      {
+        id: 'quality',
+        meta: { hidesOnPhones: true },
+        header: say('common.quality'),
+        accessorFn: (title) => Math.max(0, ...filesOf(title).map((file) => file.height)),
+        cell: ({ row }) => {
+          const files = filesOf(row.original);
+          const step = sharedOf(
+            files.map((file) => sharpestStepOf(file)?.label ?? '—'),
+            mixed,
+          );
+          const range = sharedOf(
+            files.map((file) => describeRange(file.videoRange) ?? ''),
+            mixed,
+          );
+
+          return step === null ? null : (
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              <span
+                className={cn('tabular-nums', step === mixed ? 'text-text-muted' : 'text-text')}
+              >
+                {step}
+              </span>
+              {range === null || range === '' || range === mixed ? null : (
+                <Badge size="sm">{range}</Badge>
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'codec',
+        meta: { showsOnlyWhenWide: true },
+        header: say('common.video'),
+        accessorFn: (title) =>
+          sharedOf(
+            filesOf(title).map((file) => file.videoCodec),
+            mixed,
+          ) ?? '',
+        cell: ({ row }) => {
+          const codec = sharedOf(
+            filesOf(row.original).map((file) => file.videoCodec.toUpperCase()),
+            mixed,
+          );
+
+          return codec === null ? null : (
+            <span className="whitespace-nowrap text-text-muted">{codec}</span>
+          );
+        },
+      },
+      {
+        id: 'audio',
+        meta: { showsOnlyWhenWide: true },
+        header: say('common.audio'),
+        accessorFn: (title) => sharedOf(filesOf(title).map(describeAudio), mixed) ?? '',
+        cell: ({ row }) => {
+          const audio = sharedOf(filesOf(row.original).map(describeAudio), mixed);
+
+          return audio === null ? null : (
+            <span className="whitespace-nowrap text-text-muted">{audio}</span>
+          );
+        },
+      },
+      {
+        id: 'length',
+        meta: { showsOnlyWhenWide: true },
+        header: say('screens.adminArea.titlePage.trackTable.length'),
+        accessorFn: lengthOf,
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap tabular-nums text-text-muted">
+            {formatDuration(lengthOf(row.original))}
+          </span>
+        ),
       },
       {
         id: 'size',
@@ -779,8 +899,13 @@ const MediaPanel = ({
         header: say('common.added'),
         accessorFn: (title) => title.addedAt,
         cell: ({ row }) => (
-          <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {new Date(row.original.addedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+          <span
+            className="whitespace-nowrap tabular-nums text-text-muted"
+            title={new Date(row.original.addedAt).toLocaleDateString(undefined, {
+              dateStyle: 'medium',
+            })}
+          >
+            {describeSince(String(row.original.addedAt), Date.now())}
           </span>
         ),
       },
@@ -790,7 +915,21 @@ const MediaPanel = ({
         enableSorting: false,
         cell: ({ row }) => {
           const title = row.original;
-          const groups = actionsFor(title);
+          const groups =
+            row.depth === 0
+              ? [
+                  [
+                    {
+                      id: 'open',
+                      label: say('common.open'),
+                      onChoose: () => {
+                        setOpenedId(title.id);
+                      },
+                    },
+                  ],
+                  ...actionsFor(title),
+                ]
+              : actionsFor(title);
 
           return groups.length === 0 ? null : (
             <span className="flex justify-end">
@@ -802,9 +941,8 @@ const MediaPanel = ({
           );
         },
       },
-    ],
-    [actionsFor, health.data, holdsParts, onOpenFolder, placeOf],
-  );
+    ];
+  }, [actionsFor, health.data, picked, placeOf, setOpenedId, setPicked, shown]);
 
   const held = isShelf ? shelved.length : inLibrary.length;
   const looking = isShelf ? shelved.filter((item) => item.cover === null).length : lookingCount;
@@ -816,6 +954,130 @@ const MediaPanel = ({
           ? say('screens.adminArea.mediaPanel.everythingHereHasACover')
           : say('screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas')
         : say('common.nothingHereMatchesThat');
+
+  const opened = openedId === null ? null : (titles.find((one) => one.id === openedId) ?? null);
+
+  const dialogs = (
+    <>
+      <FindSubtitlesDialog
+        media={subtitling}
+        onClose={() => {
+          setSubtitling(null);
+        }}
+      />
+
+      <MoveToLibraryDialog
+        target={moving}
+        libraries={libraries}
+        onClose={() => {
+          setMoving(null);
+        }}
+        onMoved={(toLibraryId, jobId) => {
+          setMoving(null);
+          onMoved?.(toLibraryId, jobId);
+        }}
+      />
+
+      <LeaveOutDialog
+        target={leaving}
+        onClose={() => {
+          setLeaving(null);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={confirming !== null}
+        title={
+          confirming === null
+            ? say('screens.adminArea.mediaPanel.rebuildThePreviewsForThisTitle')
+            : say('screens.adminArea.mediaPanel.rebuildThePreviewsForTitle', {
+                title: confirming.title,
+              })
+        }
+        detail={say('screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown')}
+        confirmLabel={say('screens.adminArea.mediaPanel.rebuildPreviews')}
+        isDestructive
+        isBusy={rebuilding !== null}
+        onClose={() => {
+          setConfirming(null);
+        }}
+        onConfirm={() => {
+          if (confirming === null) {
+            return;
+          }
+
+          void rebuild(confirming).then(() => {
+            setConfirming(null);
+          });
+        }}
+      />
+
+      {onDelete === undefined ? null : (
+        <ConfirmDialog
+          isOpen={condemned !== null}
+          title={
+            condemned?.isWholeSeries === true
+              ? say('screens.adminArea.mediaPanel.deleteEveryEpisodeOfName', {
+                  name: condemned.name,
+                })
+              : condemned === null
+                ? say('screens.adminArea.mediaPanel.deleteThisFile')
+                : say('common.deleteName', { name: condemned.name })
+          }
+          detail={
+            condemned?.isWholeSeries === true
+              ? say('screens.adminArea.mediaPanel.everyEpisodesFileIsDeletedFrom')
+              : say('screens.adminArea.mediaPanel.theFileIsDeletedFromThe')
+          }
+          confirmLabel={
+            condemned?.isWholeSeries === true
+              ? say('screens.adminArea.mediaPanel.deleteSeries')
+              : say('screens.adminArea.mediaPanel.deleteFile')
+          }
+          isDestructive
+          isBusy={isDeleting}
+          onClose={() => {
+            setCondemned(null);
+          }}
+          onConfirm={() => {
+            if (condemned === null) {
+              return;
+            }
+
+            setIsDeleting(true);
+
+            void onDelete(condemned.item, condemned.isWholeSeries).then((isGone) => {
+              setIsDeleting(false);
+
+              if (isGone) {
+                setCondemned(null);
+              }
+            });
+          }}
+        />
+      )}
+    </>
+  );
+
+  if (opened !== null) {
+    return (
+      <>
+        <MediaTitlePage
+          title={opened}
+          library={tabs.find((one) => one.id === opened.libraryId) ?? null}
+          actionsFor={actionsFor}
+          place={opened.kind === 'film' || opened.kind === 'series' ? placeOf(opened) : null}
+          paths={paths}
+          {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+          {...(onOpenInCatalogue === undefined ? {} : { onOpenInCatalogue })}
+          onBack={() => {
+            setOpenedId(null);
+          }}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <Tabs value={libraryId} onValueChange={setChosenLibrary}>
@@ -831,8 +1093,8 @@ const MediaPanel = ({
               placeholder={say('common.findATitle')}
               value={search}
               onValueChange={setSearch}
-              choices={[
-                ...(tabs.length < 2
+              choices={
+                tabs.length < 2
                   ? []
                   : [
                       {
@@ -854,29 +1116,8 @@ const MediaPanel = ({
                         value: libraryId,
                         onChange: setChosenLibrary,
                       },
-                    ]),
-                {
-                  label: say('screens.adminArea.mediaPanel.whichTitles'),
-                  options: SHOWING.filter(
-                    (item) => !isShelf || item.id === 'all' || item.id === 'look',
-                  ).map((item) =>
-                    item.id === 'all'
-                      ? item
-                      : {
-                          id: item.id,
-                          label: `${item.id === 'look' && isShelf ? say('screens.adminArea.mediaPanel.noCover') : item.label} (${(item.id === 'look' ? looking : inLibrary.filter((title) => isShowingTitle(title, item.id)).length).toString()})`,
-                        },
-                  ),
-                  value: showing,
-                  onChange: (id) => {
-                    const found = SHOWING.find((item) => item.id === id);
-
-                    if (found !== undefined) {
-                      setShowing(found.id);
-                    }
-                  },
-                },
-              ]}
+                    ]
+              }
               className="w-[28rem] max-w-full"
             />
           </>
@@ -893,140 +1134,151 @@ const MediaPanel = ({
             {say('screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd')}
           </p>
         ) : (
-          tabs.map((library) => (
-            <TabPanel key={library.id} value={library.id} isInstant>
-              {(
-                library.kind === 'music'
-                  ? stillReading.albums
-                  : library.kind === 'books'
-                    ? stillReading.books
-                    : stillReading.files
-              ) ? (
-                <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
-              ) : library.kind === 'music' || library.kind === 'books' ? (
-                <ShelfTable
-                  label={say('screens.adminArea.mediaPanel.everythingInName', {
-                    name: library.name,
-                  })}
-                  items={library.id === libraryId ? shelfShown : []}
-                  emptyMessage={emptyMessage}
-                  {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
-                />
-              ) : (
-                <DataTable
-                  label={say('screens.adminArea.mediaPanel.everythingInName', {
-                    name: library.name,
-                  })}
-                  columns={columns}
-                  rows={library.id === libraryId ? shown : []}
-                  getRowId={(title) => title.id}
-                  pageSize={25}
-                  height="fills"
-                  getSubRows={(title) => (title.parts.length === 0 ? undefined : title.parts)}
-                  emptyMessage={emptyMessage}
-                />
+          <>
+            <ConfirmDialog
+              isOpen={isDeletingPicked}
+              isDestructive
+              title={sayCount(
+                'screens.adminArea.mediaPanel.count.deleteCountFiles',
+                pickedFiles.length,
               )}
-            </TabPanel>
-          ))
-        )}
+              detail={say('screens.adminArea.mediaPanel.theFilesAreDeletedFromTheDisk')}
+              confirmLabel={say('common.delete')}
+              onClose={() => {
+                setIsDeletingPicked(false);
+              }}
+              onConfirm={() => {
+                setIsDeletingPicked(false);
 
-        <FindSubtitlesDialog
-          media={subtitling}
-          onClose={() => {
-            setSubtitling(null);
-          }}
-        />
-
-        <MoveToLibraryDialog
-          target={moving}
-          libraries={libraries}
-          onClose={() => {
-            setMoving(null);
-          }}
-          onMoved={(toLibraryId, jobId) => {
-            setMoving(null);
-            onMoved?.(toLibraryId, jobId);
-          }}
-        />
-
-        <LeaveOutDialog
-          target={leaving}
-          onClose={() => {
-            setLeaving(null);
-          }}
-        />
-
-        <ConfirmDialog
-          isOpen={confirming !== null}
-          title={
-            confirming === null
-              ? say('screens.adminArea.mediaPanel.rebuildThePreviewsForThisTitle')
-              : say('screens.adminArea.mediaPanel.rebuildThePreviewsForTitle', {
-                  title: confirming.title,
-                })
-          }
-          detail={say('screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown')}
-          confirmLabel={say('screens.adminArea.mediaPanel.rebuildPreviews')}
-          isDestructive
-          isBusy={rebuilding !== null}
-          onClose={() => {
-            setConfirming(null);
-          }}
-          onConfirm={() => {
-            if (confirming === null) {
-              return;
-            }
-
-            void rebuild(confirming).then(() => {
-              setConfirming(null);
-            });
-          }}
-        />
-
-        {onDelete === undefined ? null : (
-          <ConfirmDialog
-            isOpen={condemned !== null}
-            title={
-              condemned?.isWholeSeries === true
-                ? say('screens.adminArea.mediaPanel.deleteEveryEpisodeOfName', {
-                    name: condemned.name,
-                  })
-                : condemned === null
-                  ? say('screens.adminArea.mediaPanel.deleteThisFile')
-                  : say('common.deleteName', { name: condemned.name })
-            }
-            detail={
-              condemned?.isWholeSeries === true
-                ? say('screens.adminArea.mediaPanel.everyEpisodesFileIsDeletedFrom')
-                : say('screens.adminArea.mediaPanel.theFileIsDeletedFromThe')
-            }
-            confirmLabel={
-              condemned?.isWholeSeries === true
-                ? say('screens.adminArea.mediaPanel.deleteSeries')
-                : say('screens.adminArea.mediaPanel.deleteFile')
-            }
-            isDestructive
-            isBusy={isDeleting}
-            onClose={() => {
-              setCondemned(null);
-            }}
-            onConfirm={() => {
-              if (condemned === null) {
-                return;
-              }
-
-              setIsDeleting(true);
-
-              void onDelete(condemned.item, condemned.isWholeSeries).then((isGone) => {
-                setIsDeleting(false);
-
-                if (isGone) {
-                  setCondemned(null);
+                for (const file of pickedFiles) {
+                  void onDelete?.(file, false);
                 }
-              });
-            }}
-          />
+
+                setPicked(new Set());
+              }}
+            />
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-1 pt-3">
+              <SegmentedRow
+                label={say('screens.adminArea.mediaPanel.whichTitles')}
+                size="sm"
+                tone="accent"
+                items={SHOWING.filter(
+                  (item) => !isShelf || item.id === 'all' || item.id === 'look',
+                ).map((item) => ({
+                  id: item.id,
+                  label: `${item.id === 'look' && isShelf ? say('screens.adminArea.mediaPanel.noCover') : item.label} ${(item.id === 'all' ? (isShelf ? shelved.length : inLibrary.length) : item.id === 'look' ? looking : inLibrary.filter((title) => isShowingTitle(title, item.id)).length).toLocaleString()}`,
+                }))}
+                value={showing}
+                onSelect={(id) => {
+                  const found = SHOWING.find((item) => item.id === id);
+
+                  if (found !== undefined) {
+                    setShowing(found.id);
+                  }
+                }}
+              />
+
+              {picked.size === 0 ? null : (
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-text-muted">
+                    {sayCount('common.count.selected', picked.size)}
+                  </span>
+                  {onReencode === undefined ? null : (
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      onClick={() => {
+                        onReencode(pickedFiles);
+                      }}
+                    >
+                      {say('screens.adminArea.mediaPanel.reEncodeSelected')}
+                    </Button>
+                  )}
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => {
+                      for (const file of pickedFiles) {
+                        void rebuild(file);
+                      }
+                    }}
+                  >
+                    {say('screens.adminArea.mediaPanel.rebuildPreviews')}
+                  </Button>
+                  {onDelete === undefined ? null : (
+                    <Button
+                      variant="danger"
+                      size="md"
+                      onClick={() => {
+                        setIsDeletingPicked(true);
+                      }}
+                    >
+                      {say('common.delete')}
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    onClick={() => {
+                      setPicked(new Set());
+                    }}
+                  >
+                    {say('common.clear')}
+                  </Button>
+                </span>
+              )}
+            </div>
+            {tabs.map((library) => (
+              <TabPanel key={library.id} value={library.id} isInstant>
+                {(
+                  library.kind === 'music'
+                    ? stillReading.albums
+                    : library.kind === 'books'
+                      ? stillReading.books
+                      : stillReading.files
+                ) ? (
+                  <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
+                ) : library.kind === 'music' || library.kind === 'books' ? (
+                  <ShelfTable
+                    label={say('screens.adminArea.mediaPanel.everythingInName', {
+                      name: library.name,
+                    })}
+                    items={library.id === libraryId ? shelfShown : []}
+                    emptyMessage={emptyMessage}
+                    {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+                  />
+                ) : (
+                  <DataTable
+                    label={say('screens.adminArea.mediaPanel.everythingInName', {
+                      name: library.name,
+                    })}
+                    columns={columns}
+                    rows={library.id === libraryId ? shown : []}
+                    getRowId={(title) => title.id}
+                    {...(onOpenFolder === undefined
+                      ? {}
+                      : {
+                          expandsOnChoose: true,
+                          onChooseRow: (title: MediaTitle) => {
+                            const file = paths[title.lead.id];
+
+                            if (title.parts.length === 0 && file !== undefined) {
+                              onOpenFolder(folderOf(file));
+                            }
+                          },
+                        })}
+                    pageSize={25}
+                    height="fills"
+                    getSubRows={(title) => (title.parts.length === 0 ? undefined : title.parts)}
+                    emptyMessage={emptyMessage}
+                  />
+                )}
+              </TabPanel>
+            ))}
+          </>
         )}
+
+        {dialogs}
       </PanelCard>
     </Tabs>
   );

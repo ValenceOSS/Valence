@@ -2,6 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   LiveGuideChangeSchema,
+  LiveSourceChangeSchema,
   LiveGuideSchema,
   LiveSourceSchema,
   LiveSourcesSchema,
@@ -108,6 +109,26 @@ const changeLiveGuideRoute = createRoute({
   },
 });
 
+const changeLiveSourceRoute = createRoute({
+  method: 'patch',
+  path: '/api/live/sources/{id}',
+  tags: ['Live TV'],
+  summary: 'Rename a source, or change where it reads its channels from and read it again',
+  request: {
+    params: IdParams,
+    body: { content: { 'application/json': { schema: LiveSourceChangeSchema } } },
+  },
+  responses: {
+    200: {
+      description: 'The source, as read now',
+      content: { 'application/json': { schema: LiveSource } },
+    },
+    400: refused('The address can’t be read'),
+    403: refused('Not allowed to change the server’s settings'),
+    404: refused('No such source'),
+  },
+});
+
 const iptvOrgCatalogueRoute = createRoute({
   method: 'get',
   path: '/api/live/iptv-org',
@@ -189,6 +210,7 @@ const watchLiveChannelRoute = createRoute({
 
 export {
   addLiveSourceRoute,
+  changeLiveSourceRoute,
   changeLiveGuideRoute,
   dropLiveChannelRoute,
   iptvOrgCatalogueRoute,

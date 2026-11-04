@@ -1,4 +1,7 @@
 import { BarList } from '@ValenceUI/BarList';
+import { DataTable } from '@ValenceUI/DataTable';
+import { ShareChart } from '@ValenceUI/ShareChart';
+import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { StatStrip } from '@ValenceUI/StatStrip';
 import { StatTile } from '@ValenceUI/StatTile';
 import { TimeBars } from '@ValenceUI/TimeBars';
@@ -9,6 +12,23 @@ import { VirtualStripDemo } from '@ValenceLanding/components/UiLibraryPage/examp
 import type { UiExample } from './UiExample.types';
 
 const HOUR_MS = 3_600_000;
+
+const ENTRIES = Array.from({ length: 30 }, (_, at) => ({
+  id: `entry-${(at + 1).toString()}`,
+  what: `Signed in from device ${(at + 1).toString()}`,
+}));
+
+/**
+ * The initial of somebody on a shared timeline, in a small round face.
+ *
+ * @param initial - Their initial.
+ * @returns The face.
+ */
+const faceOf = (initial: string) => (
+  <span className="flex size-6 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[0.6875rem] font-semibold text-text">
+    {initial}
+  </span>
+);
 
 const START_MS = Date.UTC(2026, 8, 30);
 
@@ -101,6 +121,60 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
     {
       title: 'Sortable films',
       render: () => <DataTableDemo />,
+    },
+    {
+      title: 'More to read, and no total yet',
+      render: () => (
+        <div className="w-full">
+          <DataTable
+            label="Sign-ins"
+            columns={[{ id: 'what', header: 'What happened', accessorFn: (entry) => entry.what }]}
+            rows={ENTRIES}
+            getRowId={(entry) => entry.id}
+            pageSize={10}
+            hasMoreRows
+          />
+        </div>
+      ),
+    },
+  ],
+  ShareChart: [
+    {
+      title: 'How something splits',
+      render: () => (
+        <ShareChart
+          label="How titles were played"
+          totalLabel="Plays"
+          total="412"
+          emptyMessage="Nothing has been played yet."
+          slices={[
+            { id: 'direct', label: 'Played as-is', value: 280, shown: '280' },
+            { id: 'stream', label: 'Remuxed', value: 92, shown: '92' },
+            { id: 'transcode', label: 'Transcoded', value: 40, shown: '40' },
+          ]}
+        />
+      ),
+    },
+  ],
+  SharedTimeline: [
+    {
+      title: 'Three people watching together',
+      render: () => (
+        <SharedTimeline
+          label="Watch party"
+          className="w-full max-w-md"
+          durationSeconds={6600}
+          filledSeconds={4200}
+          inSyncSeconds={3000}
+          elapsed="50:00"
+          total="1:50:00"
+          people={[
+            { id: 'a', atSeconds: 3000, label: 'Sam', face: faceOf('S') },
+            { id: 'b', atSeconds: 2980, label: 'Alex', face: faceOf('A') },
+            { id: 'c', atSeconds: 2400, label: 'Jo', face: faceOf('J') },
+          ]}
+        />
+      ),
     },
   ],
   VirtualGrid: [

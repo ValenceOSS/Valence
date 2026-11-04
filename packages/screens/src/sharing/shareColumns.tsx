@@ -25,7 +25,7 @@ const shareColumns = <Row extends Share>(
 ): DataTableColumn<Row>[] => [
   {
     id: 'title',
-    header: say('common.linkTo'),
+    header: say('common.title'),
     accessorFn: (share) => share.title,
     cell: ({ row }) => {
       const made = saidWhen(row.original.createdAt);
@@ -57,9 +57,13 @@ const shareColumns = <Row extends Share>(
 
       return (
         <span className="flex min-w-0 flex-col items-start gap-1">
-          <Badge size="sm" tone={standing.isLive ? 'accent' : 'quiet'}>
-            {standing.label}
-          </Badge>
+          {standing.isLive ? (
+            <span className="text-text-muted">{standing.label}</span>
+          ) : (
+            <Badge size="sm" tone="quiet">
+              {standing.label}
+            </Badge>
+          )}
 
           {standing.canWithdraw ? (
             <span className="truncate text-xs text-text-muted">{untilWhen(row.original)}</span>
@@ -74,7 +78,9 @@ const shareColumns = <Row extends Share>(
     header: say('common.opened'),
     accessorFn: (share) => share.views,
     cell: ({ row }) => (
-      <span className="whitespace-nowrap text-xs text-text-muted">{saidOpened(row.original)}</span>
+      <span className="whitespace-nowrap text-xs text-text-muted">
+        {row.original.views === 0 ? say('common.never') : saidOpened(row.original)}
+      </span>
     ),
   },
   {

@@ -3,16 +3,20 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Plus as PlusFilledIcon, Webhook as EmptyWebhookIcon } from '@keyline-icons/react/fill';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { Icon } from '@ValenceUI/Icon';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+import { DataTable } from '@ValenceUI/DataTable';
 import { Switch } from '@ValenceUI/Switch';
-import { WEBHOOK_EVENT_LABELS } from '@ValenceContracts/schemas/Webhook';
+import { isSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
-import { AddWebhookDialog } from './components/AddWebhookDialog/AddWebhookDialog';
-import { EditWebhookDialog } from './components/EditWebhookDialog/EditWebhookDialog';
-import { DeliveryHistory } from './components/DeliveryHistory/DeliveryHistory';
+import { NewWebhookDialog } from './components/NewWebhookDialog/NewWebhookDialog';
+import { WebhookPage } from './components/WebhookPage/WebhookPage';
+import { WEBHOOK_SERVICE_NAMES } from './WEBHOOK_SERVICE_NAMES';
+import { lastDeliveryOf } from './lastDeliveryOf';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceUI/PanelCard';
@@ -20,67 +24,13 @@ import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
- * Says how a subscription's last delivery went, in a word and a colour: never used, when it last
- * succeeded, or what went wrong. The failing case is coloured because a webhook that has quietly
- * stopped working looks exactly like one nothing has happened for.
+ * The webhooks: a table of them, each opening onto a page of its own where it is set up, tested and
+ * its deliveries read. A new one is started with only its service and address.
  *
- * @param webhook - The subscription.
- * @param now - The moment to measure against.
- * @returns How alarming it is, and what to say.
- */
-const describeLastAttempt = (
-  webhook: WebhookSubscription,
-  now: number,
-): { tone: 'quiet' | 'danger'; label: string } => {
-  if (webhook.lastAttemptAt === null) {
-    return { tone: 'quiet', label: say('common.neverUsed') };
-  }
-
-  if (webhook.lastError === null) {
-    return {
-      tone: 'quiet',
-      label: say('screens.adminArea.webhooksPanel.deliveredLastAttemptAt', {
-        lastAttemptAt: describeSince(webhook.lastAttemptAt, now),
-      }),
-    };
-  }
-
-  return {
-    tone: 'danger',
-    label: say('screens.adminArea.webhooksPanel.failingSinceLastAttemptAt', {
-      lastAttemptAt: describeSince(webhook.lastAttemptAt, now),
-    }),
-  };
-};
-
-/**
- * Where an operator says what they want to be told about and sees whether they are still being told:
- * the subscriptions, what each last did, and a way to test, pause, remove or look through the
- * deliveries of any of them. A new subscription's secret is shown once, on creation, and never
- * again.
- *
- * @param webhooks - The subscriptions configured.
- * @param isReading - Whether they are still being read for the first time.
- * @param isUnreachable - Whether the server didn't answer when they were first read.
- * @param isReadingAgain - Whether they are being read again after that.
- * @param onReadAgain - Asked to read them again.
- * @param created - A subscription just made, whose secret is still being shown.
- * @param onCreate - Called with a subscription to make, answering with any refusal.
- * @param onEdit - Called with a subscription to change, answering with any refusal.
- * @param accounts - The accounts a new subscription can be narrowed to.
- * @param profiles - The profiles a new subscription can be narrowed to.
- * @param hasRequests - Whether requesting is on, without which its events are not offered.
- * @param onDismissCreated - Called once the secret has been taken down.
- * @param onSetEnabled - Called with a subscription and whether it should be delivering.
- * @param onDelete - Called with the subscription to remove.
- * @param onTest - Called with the subscription to send a test to.
- * @param deliveries - The deliveries of whichever subscription's history is open.
- * @param openHistoryId - The subscription whose history is open, if any.
- * @param isHistoryLoading - Whether that history is still being fetched.
- * @param onOpenHistory - Called with the subscription whose history to open, or null to close it.
- * @param onRedeliver - Called with a delivery to send again.
+ * @param props - See {@link WebhooksPanelProps}.
  */
 const WebhooksPanel = ({
   webhooks,
@@ -103,87 +53,196 @@ const WebhooksPanel = ({
   isHistoryLoading,
   onOpenHistory,
   onRedeliver,
+  openedWebhook,
+  onOpenWebhook,
 }: WebhooksPanelProps) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [localOpened, setLocalOpened] = useState<string | null>(null);
+  const openedId = onOpenWebhook === undefined ? localOpened : (openedWebhook ?? null);
+  const open = onOpenWebhook ?? setLocalOpened;
 
   useAdminCommand('createWebhook', () => {
     setIsAdding(true);
   });
-  const [editing, setEditing] = useState<WebhookSubscription | null>(null);
   const [deleting, setDeleting] = useState<WebhookSubscription | null>(null);
   const now = useTicking(A_CAPTION_AGES_EVERY);
 
+  useEffect(() => {
+    if (openedId !== openHistoryId) {
+      onOpenHistory(openedId);
+    }
+  }, [openedId, openHistoryId, onOpenHistory]);
+
+  const [shownCreated, setShownCreated] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (created !== null && created.id !== shownCreated) {
+      setShownCreated(created.id);
+      open(created.id);
+    }
+  }, [created, shownCreated, open]);
+
+  const opened = webhooks.find((webhook) => webhook.id === openedId) ?? null;
+
+  const deleteDialog = (
+    <ConfirmDialog
+      title={
+        deleting === null
+          ? say('screens.adminArea.webhooksPanel.deleteThisWebhook')
+          : say('common.deleteName', { name: deleting.name })
+      }
+      detail={say('screens.adminArea.webhooksPanel.nothingMoreWillBeSentThere')}
+      confirmLabel={say('common.delete')}
+      isDestructive
+      isOpen={deleting !== null}
+      onClose={() => {
+        setDeleting(null);
+      }}
+      onConfirm={() => {
+        if (deleting !== null) {
+          onDelete(deleting.id);
+          open(null);
+        }
+
+        setDeleting(null);
+      }}
+    />
+  );
+
+  if (opened !== null) {
+    return (
+      <>
+        {deleteDialog}
+        <WebhookPage
+          webhook={opened}
+          created={created !== null && created.id === opened.id ? created : null}
+          deliveries={deliveries}
+          isHistoryLoading={isHistoryLoading}
+          accounts={accounts}
+          profiles={profiles}
+          hasRequests={hasRequests}
+          onBack={() => {
+            open(null);
+          }}
+          onEdit={onEdit}
+          onSetEnabled={(enabled) => {
+            onSetEnabled(opened.id, enabled);
+          }}
+          onTest={() => {
+            onTest(opened.id);
+          }}
+          onDelete={() => {
+            setDeleting(opened);
+          }}
+          onRedeliver={(deliveryId) => {
+            onRedeliver(opened.id, deliveryId);
+          }}
+          onDismissCreated={onDismissCreated}
+        />
+      </>
+    );
+  }
+
+  const columns: DataTableColumn<WebhookSubscription>[] = [
+    {
+      id: 'name',
+      header: say('common.name'),
+      accessorFn: (webhook) => webhook.name,
+      cell: ({ row }) => (
+        <span className="flex min-w-0 items-center gap-3.5 py-3.5">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)] text-text-muted">
+            {row.original.preset === 'discord' ? (
+              <BrandGlyph of="discord" size={20} />
+            ) : (
+              <Icon of={EmptyWebhookIcon} size={18} />
+            )}
+          </span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-[0.9375rem] font-medium text-text">
+              {row.original.name}
+            </span>
+            <span className="max-w-[28rem] truncate text-xs text-text-muted">
+              {row.original.url}
+            </span>
+          </span>
+        </span>
+      ),
+    },
+    {
+      id: 'service',
+      header: say('screens.adminArea.bucketDialog.service'),
+      accessorFn: (webhook) => WEBHOOK_SERVICE_NAMES[webhook.preset],
+      cell: ({ row }) => (
+        <span className="text-text-muted">{WEBHOOK_SERVICE_NAMES[row.original.preset]}</span>
+      ),
+    },
+    {
+      id: 'events',
+      meta: { hidesOnPhones: true },
+      header: say('screens.adminArea.webhooksPanel.sends'),
+      accessorFn: (webhook) => webhook.events.filter(isSubscribableEvent).length,
+      cell: ({ row }) => {
+        const count = row.original.events.filter(isSubscribableEvent).length;
+
+        return (
+          <span className="tabular-nums text-text-muted">
+            {sayCount('screens.observabilityPage.logExplorer.levelToggles.countEvents', count)}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'last',
+      header: say('screens.adminArea.webhooksPanel.lastDelivery'),
+      accessorFn: (webhook) => webhook.lastAttemptAt ?? '',
+      cell: ({ row }) => {
+        const last = lastDeliveryOf(row.original);
+
+        return (
+          <span className="flex items-center gap-2">
+            <Badge tone={last.tone}>{last.label}</Badge>
+            {row.original.lastAttemptAt === null ? null : (
+              <span className="whitespace-nowrap text-xs text-text-muted">
+                {describeSince(row.original.lastAttemptAt, now)}
+              </span>
+            )}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'on',
+      header: say('common.on'),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span
+          className="flex justify-end"
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+        >
+          <Switch
+            label={say('common.enabled')}
+            isLabelHidden
+            isOn={row.original.enabled}
+            onToggle={() => {
+              onSetEnabled(row.original.id, !row.original.enabled);
+            }}
+          />
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      <EditWebhookDialog
-        webhook={editing}
-        accounts={accounts}
-        profiles={profiles}
-        hasRequests={hasRequests}
-        onClose={() => {
-          setEditing(null);
-        }}
-        onSave={onEdit}
-      />
-
-      <AddWebhookDialog
-        accounts={accounts}
-        profiles={profiles}
-        hasRequests={hasRequests}
+      <NewWebhookDialog
         isOpen={isAdding}
         onClose={() => {
           setIsAdding(false);
         }}
         onCreate={onCreate}
       />
-
-      <ConfirmDialog
-        title={
-          deleting === null
-            ? say('screens.adminArea.webhooksPanel.deleteThisWebhook')
-            : say('common.deleteName', { name: deleting.name })
-        }
-        detail={say('screens.adminArea.webhooksPanel.nothingMoreWillBeSentThere')}
-        confirmLabel={say('common.delete')}
-        isDestructive
-        isOpen={deleting !== null}
-        onClose={() => {
-          setDeleting(null);
-        }}
-        onConfirm={() => {
-          if (deleting !== null) {
-            onDelete(deleting.id);
-          }
-
-          setDeleting(null);
-        }}
-      />
-
-      {created === null ? null : (
-        <PanelCard title={say('screens.adminArea.webhooksPanel.newWebhook')} isHighlighted>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-text">
-                {say('screens.adminArea.webhooksPanel.nameIsSetUpCopyIts', { name: created.name })}
-              </span>
-
-              <span className="text-xs text-text-muted">
-                {say('screens.adminArea.webhooksPanel.thisIsTheOnlyTimeIt')}
-              </span>
-            </div>
-
-            <code className="select-all break-all rounded-lg bg-[var(--surface-hover)] px-3 py-2 font-mono text-xs text-text">
-              {created.secret}
-            </code>
-
-            <div className="flex justify-end">
-              <Button variant="secondary" size="sm" onClick={onDismissCreated}>
-                {say('screens.adminArea.webhooksPanel.iHaveCopiedIt')}
-              </Button>
-            </div>
-          </div>
-        </PanelCard>
-      )}
 
       <PanelCard
         title={say('common.webhooks')}
@@ -210,105 +269,19 @@ const WebhooksPanel = ({
         ) : webhooks.length === 0 ? (
           <NothingHere
             of={EmptyWebhookIcon}
-            title={say('screens.adminArea.webhooksPanel.nothingIsBeingToldAboutAnything')}
+            title={say('screens.adminArea.webhooksPanel.noWebhooksYetCreateOne')}
             isCompact
           />
         ) : (
-          <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-            {webhooks.map((webhook) => {
-              const attempt = describeLastAttempt(webhook, now);
-
-              return (
-                <li key={webhook.id} className="flex flex-col gap-3 px-4 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium text-text">{webhook.name}</span>
-
-                    <Badge tone={attempt.tone}>{attempt.label}</Badge>
-
-                    {webhook.enabled ? null : <Badge tone="quiet">{say('common.off')}</Badge>}
-                  </div>
-
-                  <span className="break-all text-xs text-text-muted">{webhook.url}</span>
-
-                  <span className="text-xs text-text-muted">
-                    {webhook.events
-                      .filter((event) => event !== 'webhook.test')
-                      .map((event) => WEBHOOK_EVENT_LABELS[event])
-                      .join(' · ')}
-                  </span>
-
-                  {webhook.lastError === null ? null : (
-                    <span className="text-xs text-danger">{webhook.lastError}</span>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Switch
-                      label={say('common.enabled')}
-                      isOn={webhook.enabled}
-                      onToggle={() => {
-                        onSetEnabled(webhook.id, !webhook.enabled);
-                      }}
-                    />
-
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={!webhook.enabled}
-                      onClick={() => {
-                        onTest(webhook.id);
-                      }}
-                    >
-                      {say('screens.adminArea.webhooksPanel.sendATest')}
-                    </Button>
-
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setEditing(webhook);
-                      }}
-                    >
-                      {say('common.edit')}
-                    </Button>
-
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      aria-expanded={openHistoryId === webhook.id}
-                      onClick={() => {
-                        onOpenHistory(openHistoryId === webhook.id ? null : webhook.id);
-                      }}
-                    >
-                      {openHistoryId === webhook.id
-                        ? say('screens.adminArea.webhooksPanel.hideHistory')
-                        : say('common.history')}
-                    </Button>
-
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => {
-                        setDeleting(webhook);
-                      }}
-                    >
-                      {say('common.delete')}
-                    </Button>
-                  </div>
-
-                  {openHistoryId === webhook.id ? (
-                    <DeliveryHistory
-                      deliveries={deliveries}
-                      isLoading={isHistoryLoading}
-                      canRedeliver={webhook.enabled}
-                      onRedeliver={(deliveryId) => {
-                        onRedeliver(webhook.id, deliveryId);
-                      }}
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+          <DataTable
+            label={say('common.webhooks')}
+            columns={columns}
+            rows={webhooks}
+            getRowId={(webhook) => webhook.id}
+            onChooseRow={(webhook) => {
+              open(webhook.id);
+            }}
+          />
         )}
       </PanelCard>
     </div>

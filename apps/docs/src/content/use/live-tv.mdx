@@ -1,0 +1,68 @@
+---
+title: Live TV
+description: Add live channels from a stream, an M3U playlist, an HDHomeRun tuner, a web page's own player or iptv-org, give them a programme guide, and watch them from the Live TV page.
+order: 4
+---
+
+Live TV turns sources an admin adds into numbered channels, with what is on each from a programme guide. Everyone signed in can watch them from **Live TV**. Valence fetches each channel itself and passes it on, so a stream that a browser can't play directly still plays.
+
+## Adding a source
+
+Sources are managed under **Server → Live TV**, which needs the permission to change the server's settings. **Add a source** opens **Add a live TV source**. **What to add** chooses the kind:
+
+| Kind                 | What it takes                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **One stream**       | A **Stream address**. An HLS address ending in `.m3u8` plays as it is; other streams are converted for the browser. It becomes one channel.                                             |
+| **Playlist address** | An address of an M3U playlist. Each stream in it becomes a numbered channel, in the order the playlist lists them.                                                                      |
+| **Playlist file**    | An M3U file you upload with **Choose a playlist**, up to 20 MB.                                                                                                                         |
+| **Tuner**            | The **Tuner address** of an HDHomeRun on your network, such as `http://192.168.1.50`. Its lineup becomes the channels.                                                                  |
+| **Embedded page**    | A **Page address**: a web page with its own player, such as an embed link. It is shown as it is, with its own controls, as long as the page allows other sites to show it.              |
+| **iptv-org**         | A playlist from [iptv-org](https://github.com/iptv-org/iptv), picked **By country** or **By category**. iptv-org lists publicly available channels; some may not play in every country. |
+
+**Name** is optional: left empty, it's named for you. A single stream or page can take a **Logo address (optional)** or an uploaded channel picture.
+
+**Guide address (optional)** is an XMLTV guide, which says what is on each channel. A playlist that names its own guide uses that one. Valence reads the source as soon as it is added and says how many channels it found.
+
+## Managing sources
+
+The table lists each source with its kind, its **Channels** and when it was **Last scanned**. Each row's menu has:
+
+- **Scan now** reads the source again straight away.
+- **Edit…** opens **Edit source**:
+  - change its name and where it reads its channels from: the stream, playlist, tuner or page address;
+  - for an uploaded playlist, **Replace the playlist** with a new file;
+  - changing where it reads from reads its channels again;
+  - renaming a single stream or page renames its channel too.
+- **TV guide…** sets the source's **Guide addresses**:
+  - one or more XMLTV addresses, separated by spaces, each starting with `https://`;
+  - suggested free guides cover many channels in free playlists;
+  - add several and each fills in what the others miss.
+- **Remove** takes the source away, with its channels, its guide and anyone's favourites among those channels.
+
+Two jobs keep live TV current. You'll find both under [Jobs and logs](/use/jobs-and-logs), where either can be run by hand or rescheduled:
+
+- **Read the live TV sources** reads every source and its guide again, every six hours by default.
+- **Check which live channels play** asks each channel for a moment of pictures every hour. The guide uses this to mark channels that are off air, blocked or gone.
+
+## Watching
+
+The **Live TV** page shows every channel, either as a **Guide**, a grid of what is on through the day with **Jump to now**, or as a **List** with each channel's **On now**, **Genre** and **State**. **Find a channel** searches by name, and **Which channels** narrows to **All channels**, **On air now**, **Favourites** or one of the playlist's **Groups**.
+
+Star a channel to add it to your favourites. Favourites belong to your profile, so everyone in a household keeps their own.
+
+Choosing a channel plays it. A channel's tags say why one might not play:
+
+| Tag                               | What it means                                           |
+| --------------------------------- | ------------------------------------------------------- |
+| **Geo-blocked** · country         | It most likely only plays in that country.              |
+| **Not 24/7**                      | It only broadcasts at some times, such as for an event. |
+| **Off air**                       | It isn't broadcasting right now.                        |
+| **Blocked here**                  | The broadcaster refuses to send it to this server.      |
+| **Blocked, even through the VPN** | It is refused through the live TV proxy too.            |
+| **Not working**                   | The last check couldn't play it at all.                 |
+
+## Playing geo-blocked channels through a proxy
+
+Many free channels only play in their own country. Set [`LIVE_TV_PROXY`](/reference/environment-variables) to an HTTP proxy, and Valence fetches live TV through it: streams, playlists, guides and channel logos. Valence tries a channel directly first and uses the proxy for one the broadcaster refuses or that can't be reached.
+
+With the bundled VPN, set `VPN_HTTP_PROXY=on` and `LIVE_TV_PROXY=http://gluetun:8888` to send live TV through it. A channel that is still refused then shows **Blocked, even through the VPN**.

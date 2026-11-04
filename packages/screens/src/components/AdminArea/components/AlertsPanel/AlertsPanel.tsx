@@ -16,6 +16,7 @@ import type { AdminAlert } from '@ValenceContracts/schemas/AdminAlert';
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { ALERT_TONES } from '@ValenceScreens/components/AdminArea/ALERT_TONES';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { ConcernMark } from '@ValenceScreens/components/AdminArea/components/ConcernMark/ConcernMark';
 import { say } from '@ValenceI18n/say';
 import { ALERT_GROUPS } from './ALERT_GROUPS';
@@ -101,21 +102,27 @@ const AlertsPanel = () => {
       title={title}
       isFlush
       actions={
-        hiddenNow.length === 0 ? null : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              save([]);
-            }}
-          >
-            {say('screens.adminArea.alertsPanel.turnAllOn')}
-          </Button>
-        )
+        <>
+          <PanelCardInfo
+            label={say('screens.adminArea.alertsPanel.aboutAlerts')}
+            detail={say('screens.adminArea.alertsPanel.turningAnAlertOff')}
+          />
+          {hiddenNow.length === 0 ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                save([]);
+              }}
+            >
+              {say('screens.adminArea.alertsPanel.turnAllOn')}
+            </Button>
+          )}
+        </>
       }
     >
       <p className="px-5 pb-1 pt-3 text-sm text-text-muted">
-        {say('screens.adminArea.alertsPanel.choosesWhichAlertsShow')}
+        {say('screens.adminArea.alertsPanel.choosesWhichAlertsShowOnTheOverview')}
       </p>
 
       {groups.map((group) => (

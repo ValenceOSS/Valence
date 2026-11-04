@@ -13,13 +13,24 @@ import { VALENCE_BRAND } from './VALENCE_BRAND';
 import type { WebhookBrand } from './WebhookBrand';
 import type { PosterAttachment } from './fetchPosterAttachment';
 import { settingsInAddress } from '@ValenceContracts/functions/settingsInAddress';
-import { WEBHOOK_ADDRESS_SETTINGS } from '@ValenceContracts/schemas/Webhook';
+import {
+  CUSTOM_WEBHOOK_CONTENT_TYPES,
+  WEBHOOK_ADDRESS_SETTINGS,
+} from '@ValenceContracts/schemas/Webhook';
+import { DEFAULT_CUSTOM_WEBHOOK } from '@ValenceContracts/constants/DEFAULT_CUSTOM_WEBHOOK';
+import { renderWebhookTemplate } from '@ValenceContracts/functions/renderWebhookTemplate';
+import { customValuesFor } from './customValuesFor';
+import { templateProblemKey } from './templateProblemKey';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
 import { deviceInASentence } from './deviceInASentence';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
-import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
+import type {
+  CustomWebhook,
+  WebhookPayload,
+  WebhookPreset,
+} from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
 import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -34,12 +45,14 @@ const HOW_PLAYED: Record<PlaybackMode, string> = {
 type WebhookRequestBody = {
   body: string;
   contentType: string;
+  problem?: string;
 };
 
 type WebhookReceiver = {
   brand?: WebhookBrand;
   address?: string;
   poster?: PosterAttachment | null;
+  custom?: CustomWebhook | null;
 };
 
 /**
@@ -442,17 +455,19 @@ const withHowToFix = (sentence: string, docs: string | null): string =>
  * whichever way the receiver understands. A Discord message saying a request is ready or refused
  * mentions everybody who asked, where their account carries their Discord ID, and lets nobody else
  * be pinged by it. Settings a service reads from its body, such as a Telegram chat, are taken from
- * the subscription's address.
+ * the subscription's address. A Custom webhook's body is its own template, filled for the event; a
+ * template that cannot be filled is said as the problem rather than sent.
  *
  * @param preset The shape this subscriber expects.
  * @param payload The event being delivered.
  * @param receiver Where the delivery goes, where the receiver can fetch Valence's mark to show beside
- *   the message, if anywhere, and the poster to attach for a receiver that cannot fetch it itself.
+ *   the message, if anywhere, the poster to attach for a receiver that cannot fetch it itself, and
+ *   a Custom webhook's setup.
  */
 const formatWebhookBody = (
   preset: WebhookPreset,
   payload: WebhookPayload,
-  { brand = VALENCE_BRAND, address = '', poster = null }: WebhookReceiver = {},
+  { brand = VALENCE_BRAND, address = '', poster = null, custom = null }: WebhookReceiver = {},
 ): WebhookRequestBody => {
   const settings = settingsInAddress(address, [
     ...WEBHOOK_ADDRESS_SETTINGS[preset].required,
@@ -534,6 +549,20 @@ const formatWebhookBody = (
         body: JSON.stringify(appriseMessageFor(webhookNoticeFor(payload, brand.name))),
         contentType: 'application/json',
       };
+    }
+
+    case 'custom': {
+      const setup = custom ?? DEFAULT_CUSTOM_WEBHOOK;
+      const rendered = renderWebhookTemplate(
+        setup.template,
+        setup.format,
+        customValuesFor(payload, brand),
+      );
+      const contentType = CUSTOM_WEBHOOK_CONTENT_TYPES[setup.format];
+
+      return rendered.problem === null
+        ? { body: rendered.body, contentType }
+        : { body: '', contentType, problem: say(templateProblemKey(rendered.problem)) };
     }
   }
 };

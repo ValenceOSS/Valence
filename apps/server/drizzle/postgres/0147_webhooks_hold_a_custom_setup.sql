@@ -1,0 +1,1 @@
+ALTER TABLE "webhook_subscription" ADD COLUMN "custom" jsonb;

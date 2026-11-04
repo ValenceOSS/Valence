@@ -7,7 +7,6 @@ import {
   Download as DownloadFilledIcon,
   History as HistoryFilledIcon,
 } from '@keyline-icons/react/fill';
-import { Badge } from '@ValenceUI/Badge';
 import { Callout } from '@ValenceUI/Callout';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -84,33 +83,30 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
     () => [
       {
         id: 'takenAt',
-        header: say('screens.adminArea.backupsPanel.taken'),
+        header: say('common.date'),
         accessorFn: (backup) => backup.takenAt,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <Tooltip label={row.original.name}>
-              <span className="truncate font-medium text-text">
-                {new Date(row.original.takenAt).toLocaleString(undefined, {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                })}
-              </span>
-            </Tooltip>
-            <span className="text-xs text-text-muted">
+          <Tooltip
+            label={new Date(row.original.takenAt).toLocaleString(undefined, {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })}
+          >
+            <span className="truncate text-text">
               {describeSince(row.original.takenAt, now)}
-              <span className="sm:hidden"> · {KIND_NAMES[row.original.kind]}</span>
+              <span className="text-text-muted sm:hidden"> · {KIND_NAMES[row.original.kind]}</span>
             </span>
-          </span>
+          </Tooltip>
         ),
       },
       {
         id: 'kind',
         meta: { hidesOnPhones: true },
-        header: say('common.why'),
+        header: say('screens.adminArea.addLibraryDialog.type'),
         accessorFn: (backup) => KIND_NAMES[backup.kind],
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col items-start gap-1">
-            <Badge size="sm">{KIND_NAMES[row.original.kind]}</Badge>
+            <span className="text-text-muted">{KIND_NAMES[row.original.kind]}</span>
 
             {row.original.before === null ? null : (
               <span className="truncate text-xs text-text-muted">{row.original.before}</span>
@@ -143,7 +139,7 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
               },
               {
                 id: 'restore',
-                label: say('screens.adminArea.backupsPanel.putItBack'),
+                label: say('common.bringBack'),
                 icon: <Icon of={HistoryFilledIcon} size={15} />,
                 onChoose: () => {
                   setRestoring(backup);
@@ -244,7 +240,7 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
             tone="warning"
             title={say('screens.adminArea.backupsPanel.backupsCannotBeTakenHere')}
           >
-            {say('screens.adminArea.backupsPanel.toolIsNotInstalled', { tool: list.tool })}
+            {say('screens.adminArea.backupsPanel.installToolWhereValenceRuns', { tool: list.tool })}
           </Callout>
         </div>
       )}
@@ -269,7 +265,11 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
           columns={columns}
           rows={[...list.backups]}
           getRowId={(backup) => backup.name}
-          emptyMessage={say('screens.adminArea.backupsPanel.noBackupsYet')}
+          emptyMessage={
+            list.isToolInstalled === false
+              ? say('screens.adminArea.backupsPanel.noBackupsTakenYet')
+              : say('screens.adminArea.backupsPanel.noBackupsYetScheduled')
+          }
         />
       )}
     </PanelCard>

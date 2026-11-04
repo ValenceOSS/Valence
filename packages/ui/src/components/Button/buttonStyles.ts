@@ -14,12 +14,6 @@ const buttonStyles = cva(
   {
     variants: {
       variant: {
-        primary: [
-          'border-0 font-[575] text-accent-contrast hover:brightness-105',
-          '[background:linear-gradient(color-mix(in_oklab,var(--color-accent)_75%,white),var(--color-accent))]',
-          '[text-shadow:0_0.5px_0_rgb(0_30_66/0.32)]',
-          'shadow-[inset_0_0_1px_1px_rgb(255_255_255/0.18),0_0_0_1px_rgb(0_0_0/0.08),0_2px_2px_rgb(0_0_0/0.04),0_0_0_1px_color-mix(in_oklab,var(--color-accent)_88%,white)]',
-        ].join(' '),
         glossy: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
         confirm: `${FLAT} border-transparent bg-white text-on-white hover:bg-white-hover`,
         secondary: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
@@ -61,7 +55,6 @@ const buttonStyles = cva(
     compoundVariants: [
       {
         variant: [
-          'primary',
           'glossy',
           'confirm',
           'secondary',
@@ -76,17 +69,7 @@ const buttonStyles = cva(
         class: 'shrink-0 items-center justify-center whitespace-nowrap',
       },
       {
-        variant: [
-          'primary',
-          'glossy',
-          'confirm',
-          'secondary',
-          'raised',
-          'soft',
-          'ghost',
-          'danger',
-          'overlay',
-        ],
+        variant: ['glossy', 'confirm', 'secondary', 'raised', 'soft', 'ghost', 'danger', 'overlay'],
         class: 'coarse:min-h-11',
       },
       { isIconOnly: true, size: 'xs', class: 'size-6 coarse:size-11' },
@@ -94,7 +77,6 @@ const buttonStyles = cva(
       { isIconOnly: true, size: 'md', class: 'size-8 coarse:size-11' },
       { isIconOnly: true, size: 'lg', class: 'size-9 coarse:size-11' },
       { isIconOnly: true, size: 'xl', class: 'size-11' },
-      { variant: 'primary', class: 'hover-hover:hover:scale-100' },
       { variant: 'bare', class: 'shadow-none active:translate-y-0' },
       {
         variant: ['bare', 'row', 'link', 'subtle'],
@@ -108,7 +90,7 @@ const buttonStyles = cva(
       },
     ],
     defaultVariants: {
-      variant: 'primary',
+      variant: 'confirm',
       size: 'md',
       shape: 'square',
       isIconOnly: false,

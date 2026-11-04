@@ -1,24 +1,22 @@
-import { FolderField } from '@ValenceScreens/components/FolderField/FolderField';
-import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { SettingGroup } from '@ValenceUI/SettingGroup';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { savePreRollSetup } from '@ValenceClient/admin/savePreRollSetup';
-import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
-import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { PanelCard } from '@ValenceUI/PanelCard';
+import { useSavedSetting } from '@ValenceScreens/admin/useSavedSetting';
+import { FolderField } from '@ValenceScreens/components/FolderField/FolderField';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PRE_ROLL_PLAYS_BEFORE } from '@ValenceContracts/schemas/PreRollSettings';
+import { say } from '@ValenceI18n/say';
 import type { PreRollChange, PreRollSetup } from '@ValenceContracts/schemas/PreRoll';
 import type { PreRollPlaysBefore } from '@ValenceContracts/schemas/PreRollSettings';
-import { say } from '@ValenceI18n/say';
-import { sayCount } from '@ValenceI18n/sayCount';
+
+const TYPING_SETTLES_MS = 700;
 
 const PLAYS_BEFORE_LABELS: Record<PreRollPlaysBefore, string> = {
   films: say('common.films'),
@@ -41,30 +39,55 @@ const playsBeforeOf = (id: string): PreRollPlaysBefore | null =>
   PRE_ROLL_PLAYS_BEFORE.find((one) => one === id) ?? null;
 
 /**
- * What the form starts from: the settings as saved.
+ * Saves the pre-roll setup and keeps the answer, so how many clips the folder holds is current.
  *
- * @param setup - The setup as saved.
- * @returns The form's first state.
+ * @param change - The whole setup to save.
+ * @param remember - Keeps what the server answered.
+ * @returns Whether it saved.
  */
-const draftOf = (setup: PreRollSetup): PreRollChange => ({
-  isOn: setup.isOn,
-  folder: setup.folder,
-  playsBefore: setup.playsBefore,
-});
+const saveSetup = (
+  change: PreRollChange,
+  remember: (setup: PreRollSetup) => void,
+): Promise<boolean> =>
+  savePreRollSetup(change).then((answer) => {
+    if (answer !== null) {
+      remember(answer);
+    }
+
+    return answer !== null;
+  });
 
 /**
- * Pre-roll: a short clip played before a film or episode that starts from the beginning, such as a
- * household's own intro or a cinema ident, chosen at random from a folder on the server. It says
- * how many clips the folder holds once saved, and why there are none where the folder cannot be
- * read or holds nothing every app can play.
+ * Pre-roll: a short clip played before a film or episode that starts from the beginning, chosen at
+ * random from a folder on the server. Each setting saves as it is changed, and the folder once the
+ * typing stops; where the folder can't be read or holds no clips every app can play, it says so.
  */
 const PreRollCard = () => {
   const cache = useQueryClient();
   const asked = useQuery(adminQueries.preRollSetup());
-  const [draft, setDraft] = useState<PreRollChange | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const title = say('screens.adminArea.preRollCard.preRoll');
   const setup = asked.data;
+
+  const remember = (answer: PreRollSetup) => {
+    cache.setQueryData(adminQueries.preRollSetup().queryKey, answer);
+  };
+
+  const words = {
+    done: say('screens.adminArea.preRollCard.savedThePreRollSettings'),
+    failed: say('screens.adminArea.preRollCard.thePreRollSettingsCouldNotBeSaved'),
+  };
+
+  const [choices, changeChoices] = useSavedSetting(
+    { isOn: setup?.isOn ?? false, playsBefore: setup?.playsBefore ?? 'films' },
+    (next) => saveSetup({ ...next, folder: setup?.folder ?? '' }, remember),
+    words,
+  );
+
+  const [folder, changeFolder] = useSavedSetting(
+    setup?.folder ?? '',
+    (next) => saveSetup({ ...choices, folder: next }, remember),
+    { ...words, delayMs: TYPING_SETTLES_MS },
+  );
 
   if (asked.isError) {
     return (
@@ -92,109 +115,82 @@ const PreRollCard = () => {
     );
   }
 
-  const shown = draft ?? draftOf(setup);
-  const isChanged = JSON.stringify(shown) !== JSON.stringify(draftOf(setup));
-  const isFolderSaved = setup.folder !== '' && shown.folder === setup.folder;
-
-  const change = (patch: Partial<PreRollChange>) => {
-    setDraft({ ...shown, ...patch });
-  };
+  const isFolderSaved = setup.folder !== '' && folder === setup.folder;
+  const folderProblem = !isFolderSaved
+    ? null
+    : !setup.isFolderReadable
+      ? say('error.common.valenceIsNotAllowedToRead')
+      : setup.clips.length === 0
+        ? say('screens.adminArea.preRollCard.noClipsInThatFolder')
+        : null;
 
   return (
-    <PanelCard title={title}>
-      <div className="flex flex-col gap-5">
-        <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {say('screens.adminArea.preRollCard.aShortClipPlaysFirst')}
-        </p>
-
-        <SettingList>
-          <SettingRow
-            title={say('screens.adminArea.preRollCard.playAClipFirst')}
-            description={say('screens.adminArea.preRollCard.everyAppPlaysTheClip')}
-          >
-            <Switch
-              label={say('screens.adminArea.preRollCard.playAClipFirst')}
-              isLabelHidden
-              isOn={shown.isOn}
-              onToggle={() => {
-                change({ isOn: !shown.isOn });
-              }}
+    <PanelCard title={title} isFlush>
+      <SettingList isInset>
+        <SettingRow
+          title={say('screens.adminArea.preRollCard.playAClipFirst')}
+          info={
+            <PanelCardInfo
+              label={say('screens.adminArea.statStrip.aboutLabel', {
+                label: say('screens.adminArea.preRollCard.playAClipFirst'),
+              })}
+              detail={say('screens.adminArea.preRollCard.playAClipFirstAbout')}
+              align="start"
             />
-          </SettingRow>
+          }
+          description={say('screens.adminArea.preRollCard.playAClipFirstDetail')}
+        >
+          <Switch
+            label={say('screens.adminArea.preRollCard.playAClipFirst')}
+            isLabelHidden
+            isOn={choices.isOn}
+            onToggle={() => {
+              changeChoices({ ...choices, isOn: !choices.isOn });
+            }}
+          />
+        </SettingRow>
 
-          <SettingRow title={say('screens.adminArea.preRollCard.playsBefore')}>
-            <SegmentedRow
-              label={say('screens.adminArea.preRollCard.playsBefore')}
-              size="sm"
-              items={PLAYS_BEFORE_CHOICES}
-              value={shown.playsBefore}
-              onSelect={(id) => {
-                const playsBefore = playsBeforeOf(id);
+        {choices.isOn ? (
+          <>
+            <SettingRow title={say('screens.adminArea.preRollCard.playsBefore')}>
+              <SegmentedRow
+                label={say('screens.adminArea.preRollCard.playsBefore')}
+                size="sm"
+                tone="accent"
+                items={PLAYS_BEFORE_CHOICES}
+                value={choices.playsBefore}
+                onSelect={(id) => {
+                  const playsBefore = playsBeforeOf(id);
 
-                if (playsBefore !== null) {
-                  change({ playsBefore });
-                }
-              }}
-            />
-          </SettingRow>
-
-          <SettingGroup
-            title={say('screens.adminArea.preRollCard.clipsFolder')}
-            description={say('screens.adminArea.preRollCard.mp4OrMovFiles')}
-          >
-            <div className="flex flex-col gap-3">
-              <FolderField
-                label={say('screens.adminArea.preRollCard.clipsFolder')}
-                isLabelHidden
-                placeholder="/media/pre-roll"
-                value={shown.folder}
-                onValueChange={(folder) => {
-                  change({ folder });
+                  if (playsBefore !== null) {
+                    changeChoices({ ...choices, playsBefore });
+                  }
                 }}
               />
+            </SettingRow>
 
-              {isFolderSaved ? (
-                <p className="font-body text-[0.8125rem] text-text-muted">
-                  {!setup.isFolderReadable
-                    ? say('error.common.valenceIsNotAllowedToRead')
-                    : setup.clips.length === 0
-                      ? say('screens.adminArea.preRollCard.noClipsInThatFolder')
-                      : sayCount('screens.adminArea.preRollCard.countClips', setup.clips.length)}
-                </p>
-              ) : null}
-            </div>
-          </SettingGroup>
-        </SettingList>
-
-        <div className="flex justify-end">
-          <Button
-            variant="confirm"
-            size="sm"
-            disabled={!isChanged}
-            isLoading={isSaving}
-            onClick={() => {
-              setIsSaving(true);
-
-              void savePreRollSetup(shown).then((answer) => {
-                setIsSaving(false);
-
-                if (
-                  tellOutcome(
-                    say('screens.adminArea.preRollCard.savedThePreRollSettings'),
-                    failureOfMissing(answer),
-                  ) &&
-                  answer !== null
-                ) {
-                  cache.setQueryData(adminQueries.preRollSetup().queryKey, answer);
-                  setDraft(null);
-                }
-              });
-            }}
-          >
-            {say('common.save')}
-          </Button>
-        </div>
-      </div>
+            <SettingRow
+              title={say('screens.observabilityPage.jobHistory.folder')}
+              description={
+                folderProblem === null ? (
+                  say('screens.adminArea.preRollCard.folderDetail')
+                ) : (
+                  <span className="text-danger">{folderProblem}</span>
+                )
+              }
+            >
+              <div className="w-80 max-w-full">
+                <FolderField
+                  label={say('screens.observabilityPage.jobHistory.folder')}
+                  isLabelHidden
+                  value={folder}
+                  onValueChange={changeFolder}
+                />
+              </div>
+            </SettingRow>
+          </>
+        ) : null}
+      </SettingList>
     </PanelCard>
   );
 };

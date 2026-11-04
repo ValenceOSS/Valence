@@ -96,6 +96,7 @@ const MediaSummarySchema = z.object({
   height: z.number().int().positive(),
   videoCodec: z.string(),
   videoRange: z.string(),
+  audio: z.object({ codec: z.string(), channels: z.number(), isAtmos: z.boolean() }).nullish(),
   addedAt: z.string().datetime(),
   hasPoster: z.boolean().default(false),
   hasBackdrop: z.boolean().default(false),

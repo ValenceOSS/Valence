@@ -37,11 +37,17 @@ const NO_FILTERS = {
   offset: 0,
   limit: 200,
   runningFirst: false,
+  hidesRoutine: false,
 } as const;
 
 describe('reading a page of job history', () => {
   it('reads from the job run table', () => {
     expect(sqlFor(NO_FILTERS)).toContain('"job_run"');
+  });
+
+  it('leaves out routine runs that finished cleanly only when asked', () => {
+    expect(sqlFor(NO_FILTERS)).not.toContain('not in');
+    expect(sqlFor({ ...NO_FILTERS, hidesRoutine: true })).toContain('not in');
   });
 
   it('narrows to the runs on one subject, or to those on none', () => {
@@ -372,6 +378,7 @@ describe('createJobHistoryStore', () => {
         offset: 0,
         limit: 10,
         runningFirst: false,
+        hidesRoutine: false,
       });
 
       expect(read.records.map((one) => one.id)).toEqual(['b']);
@@ -406,6 +413,7 @@ describe('createJobHistoryStore', () => {
         offset: 0,
         limit: 10,
         runningFirst: false,
+        hidesRoutine: false,
       });
 
       expect(read.records.map((one) => one.id)).toEqual(['a']);

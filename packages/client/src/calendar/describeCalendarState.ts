@@ -24,6 +24,7 @@ const describeCalendarState = (state: CalendarState): StateBadge => {
     case 'notHeld':
       return {
         ...STATUS_LOOK.stopped,
+        tone: 'quiet',
         label: say('common.notInTheLibrary'),
         detail: null,
       };

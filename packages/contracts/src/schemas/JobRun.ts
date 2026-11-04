@@ -55,6 +55,7 @@ const JobRunQuerySchema = z.object({
   offset: z.number().int().nonnegative().default(0),
   limit: z.number().int().positive().max(1000).default(200),
   runningFirst: z.boolean().default(false),
+  hidesRoutine: z.boolean().default(false),
 });
 
 const JobKindStatsSchema = z.object({

@@ -13,7 +13,7 @@ const TrustBadge = ({ trust, isAsking = false }: TrustBadgeProps) => (
     size="sm"
     tone={
       trust === 'official'
-        ? 'success'
+        ? 'quiet'
         : trust === 'trusted'
           ? 'accent'
           : isAsking

@@ -6,14 +6,17 @@ import { upsert } from '@ValenceDatabase/upsert';
 import { toIso } from '@ValenceCore/functions/toIso';
 import { webhookDelivery, webhookSubscription } from '#dialect/Schema';
 import {
+  CustomWebhookSchema,
   DEFAULT_WEBHOOK_FILTERS,
   WebhookEventSchema,
   WebhookFiltersSchema,
   WebhookPresetSchema,
 } from '@ValenceContracts/schemas/Webhook';
+import { blankSecretHeaders } from './blankSecretHeaders';
+import { keepSecretHeaders } from './keepSecretHeaders';
 import { subscriptionWants } from './subscriptionWants';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
-import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
+import type { CustomWebhook, WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookStore } from './WebhookStore';
 
 const WEBHOOK_SECRET_PREFIX = 'whsec_';
@@ -21,6 +24,19 @@ const WEBHOOK_SECRET_PREFIX = 'whsec_';
 const WEBHOOK_SECRET_BYTES = 32;
 
 const StoredEventsSchema = z.array(WebhookEventSchema);
+
+/**
+ * Reads a Custom webhook's setup from the column that holds it, taking anything it cannot read as no
+ * setup at all rather than losing the whole subscription.
+ *
+ * @param row - The subscription's row.
+ * @returns The setup, or nothing.
+ */
+const customOf = (row: typeof webhookSubscription.$inferSelect): CustomWebhook | null => {
+  const read = CustomWebhookSchema.safeParse(row.custom);
+
+  return read.success ? read.data : null;
+};
 
 /**
  * Webhook subscriptions and their delivery history, held in the database — who asked about what, and
@@ -47,6 +63,7 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
         preset: preset.data,
         events: events.data,
         filters: filters.success ? filters.data : DEFAULT_WEBHOOK_FILTERS,
+        custom: blankSecretHeaders(customOf(row)),
         enabled: row.enabled,
         createdAt: row.createdAt.toISOString(),
         lastAttemptAt: toIso(row.lastAttemptAt),
@@ -66,14 +83,30 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
       return rows.flatMap((row) => readRow(row));
     },
 
-    create: async ({ name, url, preset, events, filters = DEFAULT_WEBHOOK_FILTERS }) => {
+    create: async ({
+      name,
+      url,
+      preset,
+      events,
+      filters = DEFAULT_WEBHOOK_FILTERS,
+      custom = null,
+    }) => {
       const id = randomUUID();
       const secret = `${WEBHOOK_SECRET_PREFIX}${randomBytes(WEBHOOK_SECRET_BYTES).toString('base64url')}`;
       const createdAt = new Date();
 
-      await db
-        .insert(webhookSubscription)
-        .values({ id, name, url, secret, preset, events, filters, enabled: true, createdAt });
+      await db.insert(webhookSubscription).values({
+        id,
+        name,
+        url,
+        secret,
+        preset,
+        events,
+        filters,
+        custom,
+        enabled: true,
+        createdAt,
+      });
 
       return {
         secret,
@@ -84,6 +117,7 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
           preset,
           events,
           filters,
+          custom: blankSecretHeaders(custom),
           enabled: true,
           createdAt: createdAt.toISOString(),
           lastAttemptAt: null,
@@ -95,6 +129,16 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
 
     update: async (id, change) => {
       const changed = await db.transaction(async (transaction) => {
+        const stored =
+          change.custom === undefined || change.custom === null
+            ? null
+            : ((
+                await transaction
+                  .select()
+                  .from(webhookSubscription)
+                  .where(eq(webhookSubscription.id, id))
+              ).map(customOf)[0] ?? null);
+
         await transaction
           .update(webhookSubscription)
           .set({
@@ -103,6 +147,11 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
             ...(change.preset === undefined ? {} : { preset: change.preset }),
             ...(change.events === undefined ? {} : { events: change.events }),
             ...(change.filters === undefined ? {} : { filters: change.filters }),
+            ...(change.custom === undefined
+              ? {}
+              : {
+                  custom: change.custom === null ? null : keepSecretHeaders(change.custom, stored),
+                }),
             ...(change.enabled === undefined ? {} : { enabled: change.enabled }),
           })
           .where(eq(webhookSubscription.id, id));
@@ -145,7 +194,9 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
 
       const preset = WebhookPresetSchema.safeParse(row.preset);
 
-      return preset.success ? { url: row.url, preset: preset.data, secret: row.secret } : null;
+      return preset.success
+        ? { url: row.url, preset: preset.data, secret: row.secret, custom: customOf(row) }
+        : null;
     },
 
     recordAttempt: async (id, attempt) => {

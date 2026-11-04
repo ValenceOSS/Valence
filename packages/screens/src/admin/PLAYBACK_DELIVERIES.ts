@@ -8,7 +8,7 @@ type SessionDelivery = {
 
 const PLAYBACK_DELIVERIES = {
   DirectPlay: {
-    label: 'DirectPlay',
+    label: say('server.webhooks.discordEmbedFor.directPlay'),
     detail: say('screens.admin.describeSessionDelivery.directPlayTheOriginalFileHanded'),
   },
   Remux: {
@@ -16,7 +16,7 @@ const PLAYBACK_DELIVERIES = {
     detail: say('screens.admin.describeSessionDelivery.remuxTheOriginalPictureAndSound'),
   },
   DirectStream: {
-    label: 'DirectStream',
+    label: say('server.webhooks.discordEmbedFor.directStream'),
     detail: say('screens.admin.describeSessionDelivery.directStreamTheOriginalPictureWith'),
   },
   Transcode: {

@@ -104,7 +104,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                 <Button
                   key={entry.id}
                   size="sm"
-                  variant={entry.id === form.values.preset ? 'primary' : 'secondary'}
+                  variant={entry.id === form.values.preset ? 'confirm' : 'secondary'}
                   aria-pressed={entry.id === form.values.preset}
                   onClick={() => {
                     form.set('preset', entry.id);
@@ -134,7 +134,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                     <Button
                       key={entry}
                       size="sm"
-                      variant={entry === form.values.customKind ? 'primary' : 'secondary'}
+                      variant={entry === form.values.customKind ? 'confirm' : 'secondary'}
                       aria-pressed={entry === form.values.customKind}
                       onClick={() => {
                         form.set('customKind', entry);

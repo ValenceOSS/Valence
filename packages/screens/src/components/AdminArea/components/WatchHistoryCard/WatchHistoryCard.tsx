@@ -1,93 +1,101 @@
-import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Spinner } from '@ValenceUI/Spinner';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@ValenceUI/Badge';
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { DataTable } from '@ValenceUI/DataTable';
-import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { SelectField } from '@ValenceUI/SelectField';
+import { Spinner } from '@ValenceUI/Spinner';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountFace/AccountFace';
 import { DeviceLabel } from '@ValenceScreens/components/DeviceLabel/DeviceLabel';
-import { PanelCard } from '@ValenceUI/PanelCard';
-import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
+import { hoursInWords } from '@ValenceScreens/admin/hoursInWords';
 import { say } from '@ValenceI18n/say';
-import { sayCount } from '@ValenceI18n/sayCount';
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { RecentViewing } from '@ValenceContracts/schemas/RecentViewing';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { HistoryRow } from './WatchHistoryCard.types';
+
+const EVERYONE = 'everyone';
+
+const dayOf = (at: string): string => {
+  const then = new Date(at);
+  const today = new Date();
+  const days = Math.round(
+    (new Date(today.toDateString()).getTime() - new Date(then.toDateString()).getTime()) /
+      86_400_000,
+  );
+
+  if (days === 0) {
+    return say('common.today');
+  }
+
+  if (days === 1) {
+    return say('client.history.describeWhen.yesterday');
+  }
+
+  if (days < 7) {
+    return then.toLocaleDateString(undefined, { weekday: 'long' });
+  }
+
+  return then.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    ...(then.getFullYear() === today.getFullYear() ? {} : { year: 'numeric' }),
+  });
+};
+
+const kindOfLabel = (label: string): ClientKind | undefined =>
+  /\b(TV|Fire TV|Apple TV|Android TV|Shield)\b/i.test(label)
+    ? 'tv'
+    : /\b(iPhone|iPad|Android|Pixel|Galaxy)\b/i.test(label)
+      ? 'phone'
+      : undefined;
 
 /**
- * What was watched lately on the server, newest first: who watched it, with their picture, what it
- * was, on what device, when they last had it on, for how long, and whether they got to the end.
- * Watching the same thing again shortly after carries on one row rather than starting another.
- * Everything one viewer watched sits indented beneath a single row for them.
+ * What was watched lately on the server, newest first and grouped by day: the poster, what it was,
+ * who watched it, on what, for how long and whether they finished.
  */
 const WatchHistoryCard = () => {
   const asked = useQuery(adminQueries.watchHistory());
   const known = useQuery(adminQueries.accounts());
   const accounts = new Map((known.data ?? []).map((account) => [account.id, account]));
-  const byViewer = new Map<string, RecentViewing[]>();
+  const [viewer, setViewer] = useState(EVERYONE);
+  const viewings = asked.data ?? [];
+  const viewers = [
+    ...new Map(
+      viewings.map((viewing) => [
+        viewing.profileId,
+        viewing.profileName ?? say('screens.admin.nameOfSession.unknownViewer'),
+      ]),
+    ),
+  ];
+  const picked =
+    viewer === EVERYONE ? viewings : viewings.filter((viewing) => viewing.profileId === viewer);
+  const whenOf = (at: string) =>
+    `${dayOf(at)}, ${new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
 
-  for (const viewing of asked.data ?? []) {
-    byViewer.set(viewing.profileId, [...(byViewer.get(viewing.profileId) ?? []), viewing]);
-  }
-
-  const isGrouped = [...byViewer.values()].some((viewings) => viewings.length > 1);
-  const rows = [...byViewer.entries()].flatMap(([profileId, viewings]): HistoryRow[] => {
-    const parts = viewings.map((viewing): HistoryRow => ({
-      id: viewing.id,
-      viewing,
-      count: 0,
-      parts: [],
-    }));
-    const [first] = viewings;
-
-    return parts.length > 1 && first !== undefined
-      ? [{ id: `viewer:${profileId}`, viewing: first, count: parts.length, parts }]
-      : parts;
-  });
-  const nameOf = (viewing: RecentViewing) =>
-    viewing.profileName ?? say('screens.admin.nameOfSession.unknownViewer');
-
-  const columns: DataTableColumn<HistoryRow>[] = [
+  const columns: DataTableColumn<RecentViewing>[] = [
     {
-      id: 'viewer',
-      header: say('screens.adminArea.sessionTable.viewer'),
-      accessorFn: (shown) => shown.viewing.profileName ?? '',
+      id: 'title',
+      header: say('common.title'),
+      accessorFn: (viewing) => viewing.seriesTitle ?? viewing.title ?? '',
       cell: ({ row }) => {
-        if (row.depth > 0) {
-          return null;
-        }
-
-        const { viewing, count } = row.original;
-        const account = accounts.get(viewing.accountId ?? '');
-        const name = nameOf(viewing);
-        const isOpen = row.getIsExpanded();
+        const viewing = row.original;
 
         return (
-          <span className="flex items-center gap-2.5 whitespace-nowrap">
-            {!isGrouped ? null : count === 0 ? (
-              <span className="size-6 shrink-0" />
-            ) : (
-              <RowFoldButton
-                label={say(
-                  isOpen
-                    ? 'screens.adminArea.watchHistoryCard.hideWhatNameWatched'
-                    : 'screens.adminArea.watchHistoryCard.showWhatNameWatched',
-                  { name },
-                )}
-                isOpen={isOpen}
-                onToggle={() => {
-                  row.toggleExpanded();
-                }}
-              />
-            )}
-            {account === undefined ? null : <AccountFace account={account} />}
-            <span className="flex min-w-0 flex-col">
-              <span className="font-medium text-text">{name}</span>
-              {count === 0 ? null : (
-                <span className="text-xs text-text-muted">
-                  {sayCount('common.count.thingsWatched', count)}
-                </span>
+          <span className="flex min-w-0 items-center gap-3">
+            <img
+              src={artworkUrl(viewing.mediaItemId, 'poster', { isOfTitle: true, size: 'small' })}
+              alt=""
+              loading="lazy"
+              className="aspect-[2/3] w-7 shrink-0 rounded bg-[var(--surface-hover)] object-cover"
+            />
+            <span className="flex min-w-0 max-w-[24rem] flex-col">
+              <span className="truncate font-medium text-text">
+                {viewing.seriesTitle ?? viewing.title ?? '—'}
+              </span>
+              {viewing.seriesTitle === null || viewing.title === null ? null : (
+                <span className="truncate text-xs text-text-muted">{viewing.title}</span>
               )}
             </span>
           </span>
@@ -95,67 +103,101 @@ const WatchHistoryCard = () => {
       },
     },
     {
-      id: 'watched',
-      header: say('common.watched'),
-      accessorFn: (shown) => shown.viewing.seriesTitle ?? shown.viewing.title ?? '',
-      cell: ({ row }) =>
-        row.original.count > 0 ? null : (
-          <span className="flex max-w-[20rem] min-w-0 flex-col">
-            <span className="truncate text-text">
-              {row.original.viewing.seriesTitle ?? row.original.viewing.title ?? '—'}
-            </span>
-            {row.original.viewing.seriesTitle === null ||
-            row.original.viewing.title === null ? null : (
-              <span className="truncate text-xs text-text-muted">{row.original.viewing.title}</span>
+      id: 'person',
+      header: say('common.person'),
+      accessorFn: (viewing) => viewing.profileName ?? '',
+      cell: ({ row }) => {
+        const account = accounts.get(row.original.accountId ?? '');
+
+        return (
+          <span className="flex min-w-0 items-center gap-2">
+            {account === undefined ? null : (
+              <span className="flex shrink-0 [&>*]:!size-6">
+                <AccountFace account={account} />
+              </span>
             )}
+            <span className="truncate text-text">
+              {row.original.profileName ?? say('screens.admin.nameOfSession.unknownViewer')}
+            </span>
           </span>
-        ),
+        );
+      },
     },
     {
       id: 'device',
       meta: { hidesOnPhones: true },
       header: say('common.device'),
-      accessorFn: (shown) => shown.viewing.deviceLabel ?? '',
-      cell: ({ row }) =>
-        row.original.count > 0 ? null : row.original.viewing.deviceLabel === null ? (
+      accessorFn: (viewing) => viewing.deviceLabel ?? '',
+      cell: ({ row }) => {
+        const label = row.original.deviceLabel;
+        const kind = label === null ? undefined : kindOfLabel(label);
+
+        return label === null ? (
           <span className="text-text-muted">—</span>
         ) : (
-          <DeviceLabel device={row.original.viewing.deviceLabel} />
-        ),
+          <span className="block max-w-[16rem] truncate text-text-muted">
+            <DeviceLabel
+              device={label.replace(/^Valence on /, '')}
+              {...(kind === undefined ? {} : { clientKind: kind })}
+            />
+          </span>
+        );
+      },
+    },
+    {
+      id: 'watched',
+      header: say('screens.adminArea.watchHistoryCard.watchedFor'),
+      accessorFn: (viewing) => viewing.secondsWatched,
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap tabular-nums text-text-muted">
+          {row.original.secondsWatched < 60
+            ? say('screens.adminArea.watchHistoryCard.underAMinute')
+            : hoursInWords(row.original.secondsWatched / 3600)}
+          {row.original.isFinished ? ` · ${say('common.finished')}` : ''}
+        </span>
+      ),
     },
     {
       id: 'when',
       header: say('screens.observabilityPage.jobHistory.when'),
-      accessorFn: (shown) => shown.viewing.lastWatchedAt,
-      cell: ({ row }) =>
-        row.original.count > 0 ? null : (
-          <span className="whitespace-nowrap text-text-muted">
-            {new Date(row.original.viewing.lastWatchedAt).toLocaleString(undefined, {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-            })}
-          </span>
-        ),
-    },
-    {
-      id: 'for',
-      meta: { hidesOnPhones: true },
-      header: say('common.progress'),
-      accessorFn: (shown) => shown.viewing.secondsWatched,
-      cell: ({ row }) =>
-        row.original.count > 0 ? null : (
-          <span className="flex items-center gap-2 whitespace-nowrap tabular-nums text-text-muted">
-            {formatDuration(row.original.viewing.secondsWatched)}
-            {row.original.viewing.isFinished ? (
-              <Badge size="sm">{say('common.finished')}</Badge>
-            ) : null}
-          </span>
-        ),
+      accessorFn: (viewing) => viewing.lastWatchedAt,
+      cell: ({ row }) => (
+        <span
+          className="whitespace-nowrap tabular-nums text-text-muted"
+          title={new Date(row.original.lastWatchedAt).toLocaleString(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })}
+        >
+          {whenOf(row.original.lastWatchedAt)}
+        </span>
+      ),
     },
   ];
 
   return (
-    <PanelCard title={say('common.watchHistory')} isFlush>
+    <PanelCard
+      title={say('common.watchHistory')}
+      isFlush
+      actions={
+        viewers.length < 2 ? undefined : (
+          <SelectField
+            label={say('common.person')}
+            isLabelHidden
+            size="sm"
+            className="w-40"
+            options={[
+              { id: EVERYONE, label: say('common.everyone') },
+              ...viewers.map(([id, name]) => ({ id, label: name })),
+            ]}
+            value={viewer}
+            onSelect={(id) => {
+              setViewer(id);
+            }}
+          />
+        )
+      }
+    >
       {asked.isLoadingError ? (
         <CouldNotRead
           said={say('common.whatItHasDoneCouldNotBeRead')}
@@ -169,12 +211,15 @@ const WatchHistoryCard = () => {
       ) : (
         <DataTable
           label={say('common.watchHistory')}
-          columns={columns}
-          rows={rows}
-          getRowId={(shown) => shown.id}
-          getSubRows={(shown) => (shown.parts.length === 0 ? undefined : shown.parts)}
-          isOpenAtFirst
-          pageSize={15}
+          columns={
+            viewers.length < 2 && viewer === EVERYONE
+              ? columns.filter((column) => column.id !== 'person')
+              : columns
+          }
+          rows={picked}
+          getRowId={(viewing) => viewing.id}
+          height="fill"
+          pageSize={10}
           emptyMessage={say('screens.adminArea.watchHistoryCard.nothingWatchedYet')}
         />
       )}

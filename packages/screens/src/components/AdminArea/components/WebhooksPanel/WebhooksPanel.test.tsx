@@ -1,24 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { WebhooksPanel } from './WebhooksPanel';
-import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { CreatedWebhook } from '@ValenceClient/admin/fetchWebhooks';
-
-const aWebhook = (overrides: Partial<WebhookSubscription> = {}): WebhookSubscription => ({
-  id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-  name: 'Discord',
-  url: 'https://discord.com/api/webhooks/1/abc',
-  preset: 'discord',
-  events: ['job.failed'],
-  filters: { mediaAdded: 'perScan', accounts: [], profiles: [], itemTypes: [] },
-  enabled: true,
-  createdAt: '2026-08-14T20:00:00.000Z',
-  lastAttemptAt: null,
-  lastStatus: null,
-  lastError: null,
-  ...overrides,
-});
+import { aWebhook } from '@ValenceScreens/testing/aWebhook';
 
 const draw = (overrides: Partial<Parameters<typeof WebhooksPanel>[0]> = {}) => {
   const props = {
@@ -74,11 +59,13 @@ describe('WebhooksPanel', () => {
     expect(screen.getByText(/No webhooks yet/)).toBeInTheDocument();
   });
 
-  it('names a subscription and where it points', () => {
-    draw({ webhooks: [aWebhook()] });
+  it('names each webhook, where it points and the service it posts to', () => {
+    draw({ webhooks: [aWebhook({ name: 'Alerts' })] });
 
-    expect(screen.getByText('Discord')).toBeInTheDocument();
-    expect(screen.getByText('https://discord.com/api/webhooks/1/abc')).toBeInTheDocument();
+    const row = screen.getByRole('row', { name: /Alerts/ });
+
+    expect(within(row).getByText('https://discord.com/api/webhooks/1/abc')).toBeInTheDocument();
+    expect(within(row).getByText('Discord')).toBeInTheDocument();
   });
 
   it('says when one has never been used', () => {
@@ -87,7 +74,7 @@ describe('WebhooksPanel', () => {
     expect(screen.getByText('Never used')).toBeInTheDocument();
   });
 
-  it('leads with the fact that one is failing, which is the point of the list', () => {
+  it('says one is failing when its last delivery failed', () => {
     draw({
       webhooks: [
         aWebhook({
@@ -98,11 +85,10 @@ describe('WebhooksPanel', () => {
       ],
     });
 
-    expect(screen.getByText(/Failing since/)).toBeInTheDocument();
-    expect(screen.getByText('The receiving server returned 500.')).toBeInTheDocument();
+    expect(screen.getByText('Failing')).toBeInTheDocument();
   });
 
-  it('turns one off', async () => {
+  it('turns one off from the list', async () => {
     const user = userEvent.setup();
     const { onSetEnabled } = draw({ webhooks: [aWebhook()] });
 
@@ -111,87 +97,90 @@ describe('WebhooksPanel', () => {
     expect(onSetEnabled).toHaveBeenCalledWith(aWebhook().id, false);
   });
 
-  it('will not offer to test one that is turned off', () => {
-    draw({ webhooks: [aWebhook({ enabled: false })] });
+  it('opens a webhook onto its own page and reads its deliveries, and goes back', async () => {
+    const user = userEvent.setup();
+    const { onOpenHistory } = draw({ webhooks: [aWebhook({ name: 'Alerts' })] });
 
-    expect(screen.getByRole('button', { name: 'Send a test' })).toBeDisabled();
+    await user.click(screen.getByText('Alerts'));
+
+    expect(screen.getByRole('button', { name: 'Back to Webhooks' })).toBeInTheDocument();
+    expect(onOpenHistory).toHaveBeenCalledWith(aWebhook().id);
+
+    await user.click(screen.getByRole('button', { name: 'Back to Webhooks' }));
+
+    expect(screen.getByRole('table', { name: 'Webhooks' })).toBeInTheDocument();
   });
 
-  it('sends a test', async () => {
+  it('writes which webhook is open into the address where it is asked to', async () => {
+    const onOpenWebhook = vi.fn();
     const user = userEvent.setup();
-    const { onTest } = draw({ webhooks: [aWebhook()] });
+
+    draw({ webhooks: [aWebhook({ name: 'Alerts' })], openedWebhook: null, onOpenWebhook });
+    await user.click(screen.getByText('Alerts'));
+
+    expect(onOpenWebhook).toHaveBeenCalledWith(aWebhook().id);
+  });
+
+  it('sends a test from its page', async () => {
+    const user = userEvent.setup();
+    const { onTest } = draw({
+      webhooks: [aWebhook()],
+      openedWebhook: aWebhook().id,
+      onOpenWebhook: vi.fn(),
+    });
 
     await user.click(screen.getByRole('button', { name: 'Send a test' }));
 
     expect(onTest).toHaveBeenCalledWith(aWebhook().id);
   });
 
-  it('asks before deleting, and says the secret goes with it', async () => {
-    const user = userEvent.setup();
-    const { onDelete } = draw({ webhooks: [aWebhook()] });
+  it('will not offer to test one that is turned off', () => {
+    draw({
+      webhooks: [aWebhook({ enabled: false })],
+      openedWebhook: aWebhook().id,
+      onOpenWebhook: vi.fn(),
+    });
 
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
-
-    expect(screen.getByText(/the signing secret is deleted/)).toBeInTheDocument();
-    expect(onDelete).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Send a test' })).toBeDisabled();
   });
 
-  it('deletes once that is confirmed', async () => {
+  it('asks before deleting, says the secret goes with it, and goes back once it is gone', async () => {
+    const onOpenWebhook = vi.fn();
     const user = userEvent.setup();
-    const { onDelete } = draw({ webhooks: [aWebhook()] });
+    const { onDelete } = draw({
+      webhooks: [aWebhook()],
+      openedWebhook: aWebhook().id,
+      onOpenWebhook,
+    });
 
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
-    await user.click(screen.getByRole('button', { name: 'Delete', hidden: false }));
+    await user.click(screen.getByRole('button', { name: 'Actions for Discord' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    const asking = await screen.findByRole('dialog');
+
+    expect(within(asking).getByText(/the signing secret is deleted/)).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.click(within(asking).getByRole('button', { name: 'Delete' }));
 
     expect(onDelete).toHaveBeenCalledWith(aWebhook().id);
+    expect(onOpenWebhook).toHaveBeenCalledWith(null);
   });
 
-  it('opens an editor for a subscription rather than making somebody start again', async () => {
+  it('starts a new webhook from the list', async () => {
     const user = userEvent.setup();
 
-    draw({ webhooks: [aWebhook()] });
+    draw();
 
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
-    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /Name/ })).toHaveValue('Discord');
+    expect(await screen.findByRole('dialog', { name: 'Create webhook' })).toBeInTheDocument();
   });
 
-  it('opens the history for the subscription that was asked about', async () => {
-    const user = userEvent.setup();
-    const { onOpenHistory } = draw({ webhooks: [aWebhook()] });
-
-    await user.click(screen.getByRole('button', { name: 'History' }));
-
-    expect(onOpenHistory).toHaveBeenCalledWith(aWebhook().id);
-  });
-
-  it('closes an open history rather than opening it twice', async () => {
-    const user = userEvent.setup();
-    const { onOpenHistory } = draw({
-      webhooks: [aWebhook()],
-      openHistoryId: aWebhook().id,
-    });
-
-    await user.click(screen.getByRole('button', { name: 'Hide history' }));
-
-    expect(onOpenHistory).toHaveBeenCalledWith(null);
-  });
-
-  it('shows the history only for the subscription it belongs to', () => {
-    draw({
-      webhooks: [aWebhook(), aWebhook({ id: 'other', name: 'ntfy' })],
-      openHistoryId: aWebhook().id,
-      deliveries: [],
-    });
-
-    expect(screen.getAllByText('Nothing has been sent to this webhook yet.')).toHaveLength(1);
-  });
-
-  it('shows a new secret once, and says it will not be shown again', () => {
+  it('opens a webhook just made and shows its secret once', () => {
     const created: CreatedWebhook = { ...aWebhook(), secret: 'whsec_abc123' };
 
-    draw({ created });
+    draw({ webhooks: [aWebhook()], created });
 
     expect(screen.getByText('whsec_abc123')).toBeInTheDocument();
     expect(screen.getByText(/only time it’s shown/)).toBeInTheDocument();
@@ -200,10 +189,14 @@ describe('WebhooksPanel', () => {
   it('lets somebody put the secret away once they have copied it', async () => {
     const user = userEvent.setup();
     const created: CreatedWebhook = { ...aWebhook(), secret: 'whsec_abc123' };
-    const { onDismissCreated } = draw({ created });
+    const { onDismissCreated } = draw({ webhooks: [aWebhook()], created });
 
     await user.click(screen.getByRole('button', { name: 'I’ve copied it' }));
 
     expect(onDismissCreated).toHaveBeenCalled();
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(WebhooksPanel.displayName).toBe('WebhooksPanel');
   });
 });

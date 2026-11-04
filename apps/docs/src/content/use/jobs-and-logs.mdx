@@ -1,7 +1,7 @@
 ---
 title: Jobs and logs
 description: See what Valence is doing in the background, run and schedule jobs, stop or pause work, and search the server log with its levels, context and retention.
-order: 6
+order: 7
 ---
 
 Valence does its heavy lifting in the background: scanning libraries, making previews, checking that its own parts are alive, tidying caches. The **Jobs & logs** page in the admin area is where you watch that work, start it, stop it, decide when it repeats, and read the log lines it leaves behind.
@@ -176,7 +176,8 @@ Above the table are:
 
 - A search box, "Search by job, library, error or run id".
 - An order menu: newest first, oldest first, or longest first.
-- A filter menu to narrow by kind and by status.
+- A filter menu whose **Job** list narrows the table to one kind of job.
+- **Show routine checks**. The regular checks of the media service, the requests service and the disk that went well are left out unless you ask for them, so they don't bury everything else; ones that failed always show. **Hide routine checks** leaves them out again.
 - Summary counts for how the runs stand.
 
 Each row has an actions menu.
@@ -241,6 +242,12 @@ From the more menu you can copy or download the lines currently shown, wrap or c
 ### Retention
 
 The **Prune old log records** job runs daily and forgets records past the age their level is kept for, so the log cannot grow until the disk fills. Job history is pruned after 30 days, webhook deliveries after a week and server load samples after a week. You can run any of these by hand, or change when they run, like any other job.
+
+## The audit log
+
+**Audit log**, under **Activity**, lists every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, newest first. Each row says **When**, the **Person** who did it, the **Action** with an icon for its kind, the **Item** it was done to with any detail beneath, and the **Device** and address it came from. A change made with an API key names the key ("API key · …"), a tool such as `curl` is named as itself, and an address on the server's own machine says "same machine". Somebody whose account has since gone is shown by their initial and name, and a failed sign-in by nobody.
+
+**Search by person, title or address** searches the log; the menu beside it chooses a **Time range**, and **Filter the audit log** narrows it to one **Type** of change or one **Person**. Sorting by **When** turns it oldest first. The log is read a page at a time: the foot of the table says which rows are shown, such as "1–25", and the next page reads further back, so no total is given. Sign-ins are kept for 90 days, and everything else as described under the **Prune old audit entries** job above. Reading it needs the `server.logs` permission.
 
 ## Filters are kept in the address
 

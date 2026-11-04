@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -48,8 +49,8 @@ describe('LinkedServersPanel', () => {
     renderInAnAddress(<LinkedServersPanel />);
 
     expect(await screen.findByText('Films')).toBeInTheDocument();
-    expect(screen.getByText('Invite a server')).toBeInTheDocument();
-    expect(screen.getByText('Link to a server')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create invite' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use an invite' })).toBeInTheDocument();
     expect(screen.getByText('0123 4567 89ab cdef')).toBeInTheDocument();
   });
 
@@ -87,5 +88,30 @@ describe('LinkedServersPanel', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Name')).toHaveValue('Kai’s Anime');
     });
+  });
+
+  it('opens the linked server the address names on its own page, and goes back', async () => {
+    const onOpenServer = vi.fn();
+
+    renderInAnAddress(
+      <LinkedServersPanel
+        openedServer="00000000-0000-4000-8000-000000000001"
+        onOpenServer={onOpenServer}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Back to Linked servers' }));
+
+    expect(onOpenServer).toHaveBeenCalledWith(null);
+  });
+
+  it('opens a linked server from the list', async () => {
+    const onOpenServer = vi.fn();
+
+    renderInAnAddress(<LinkedServersPanel openedServer={null} onOpenServer={onOpenServer} />);
+
+    await userEvent.click(await screen.findByText('Films'));
+
+    expect(onOpenServer).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
   });
 });

@@ -108,6 +108,9 @@ const adminSearch = z.object({
   folder: z.string().optional(),
   tab: CatalogueTabSchema.optional().catch(undefined),
   title: z.string().optional(),
+  media: z.string().optional(),
+  webhook: z.string().optional(),
+  server: z.string().optional(),
   ...ObservabilitySearchSchema.shape,
 });
 

@@ -33,6 +33,8 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
  * tab is open, with what can be done to each. It is drawn again only when what it holds or is handed
  * changes, not on every reading of the server's load the rest of the admin area takes each second.
  *
+ * @param openedTitle - The title open, where one is.
+ * @param onOpenTitle - Called with the title to open, or null to go back to every title.
  * @param libraries - The libraries there are.
  * @param mayDelete - Whether whoever is looking may delete and move media.
  * @param onOpenFolder - Told a folder to open in Files.
@@ -43,8 +45,11 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
  * @param onChooseMoment - Told a title to choose a preview moment for, once its previews exist.
  * @param onReencode - Told the titles to re-encode.
  * @param onShowCopies - Told a title whose kept copies to show, and its name.
+ * @param onOpenInCatalogue - Told where a title is in the Catalogue, to open it there.
  */
 const MediaTabContents = ({
+  openedTitle = null,
+  onOpenTitle,
   libraries,
   mayDelete,
   onOpenFolder,
@@ -55,6 +60,7 @@ const MediaTabContents = ({
   onChooseMoment,
   onReencode,
   onShowCopies,
+  onOpenInCatalogue,
 }: MediaTabProps) => {
   const cache = useQueryClient();
   const libraryIds = useMemo(() => libraries.map((library) => library.id), [libraries]);
@@ -95,6 +101,9 @@ const MediaTabContents = ({
 
   return (
     <MediaPanel
+      openedTitle={openedTitle}
+      {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
+      {...(onOpenInCatalogue === undefined ? {} : { onOpenInCatalogue })}
       isUnreachable={askedEveryFile.isLoadingError || askedLibraries.isLoadingError}
       freshness={freshnessOf(
         [askedLibraries, askedEveryFile, askedPaths, askedAlbums, askedBooks],

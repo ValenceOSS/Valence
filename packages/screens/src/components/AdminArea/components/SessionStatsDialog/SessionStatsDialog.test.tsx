@@ -67,6 +67,8 @@ const WATCHING_SESSION: ActiveSession = {
   listening: null,
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
 };
 
 const IDLE_SESSION: ActiveSession = { ...WATCHING_SESSION, playback: null };

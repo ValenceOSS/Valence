@@ -157,7 +157,7 @@ const ArrAppsPanel = () => {
       },
       {
         id: 'state',
-        header: say('common.state'),
+        header: say('common.status'),
         accessorFn: (app) => describeArrAppState(app).label,
         cell: ({ row }) => {
           const state = describeArrAppState(row.original);
@@ -359,7 +359,7 @@ const ArrAppsPanel = () => {
         />
       )}
 
-      <ConnectedAppsControl />
+      {(asked.data?.length ?? 0) === 0 ? null : <ConnectedAppsControl />}
     </PanelCard>
   );
 };

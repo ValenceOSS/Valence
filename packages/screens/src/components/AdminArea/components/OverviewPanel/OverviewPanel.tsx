@@ -99,7 +99,7 @@ const OverviewPanel = ({
   const waiting = monitor?.queue.queued ?? 0;
 
   const recentLogs = useQuery({
-    ...adminQueries.logs({ levels: ['info', 'warn', 'error'], sort: 'newest', limit: 8 }),
+    ...adminQueries.logs({ levels: ['warn', 'error'], sort: 'newest', limit: 8 }),
     refetchInterval: RECENT_LOGS_EVERY_MS,
   });
 
@@ -135,9 +135,7 @@ const OverviewPanel = ({
       header: say('screens.adminArea.sessionCard.message'),
       accessorFn: (record) => record.message,
       cell: ({ getValue }) => (
-        <span className="block max-w-[28rem] truncate font-mono text-xs text-text">
-          {String(getValue())}
-        </span>
+        <span className="block truncate font-mono text-xs text-text">{String(getValue())}</span>
       ),
     },
   ];
@@ -210,7 +208,12 @@ const OverviewPanel = ({
       cell: ({ row }) => (
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-text">{row.original.name}</span>
-          <Badge size="sm">{LIBRARY_KIND_NAMES[row.original.kind].label}</Badge>
+          {LIBRARY_KIND_NAMES[row.original.kind].label.toLowerCase() ===
+          row.original.name.toLowerCase() ? null : (
+            <span className="shrink-0 text-xs text-text-muted">
+              {LIBRARY_KIND_NAMES[row.original.kind].label}
+            </span>
+          )}
         </span>
       ),
     },
@@ -220,15 +223,6 @@ const OverviewPanel = ({
       header: say('screens.adminArea.librariesPanel.lastRead'),
       accessorFn: (library) => describeSince(library.lastScannedAt, now),
       cell: ({ getValue }) => <span className="text-text-muted">{String(getValue())}</span>,
-    },
-    {
-      id: 'size',
-      header: say('common.size'),
-      accessorFn: (library) => library.sizeBytes ?? 0,
-      cell: ({ row }) =>
-        row.original.sizeBytes === undefined ? null : (
-          <FormattedBytes bytes={row.original.sizeBytes} className="tabular-nums text-text-muted" />
-        ),
     },
     {
       id: 'items',
@@ -460,7 +454,7 @@ const OverviewPanel = ({
         </DashboardRegion>
 
         <DashboardRegion
-          title={say('screens.adminArea.overviewPanel.recentLogs')}
+          title={say('screens.adminArea.overviewPanel.recentWarnings')}
           action={say('screens.adminArea.overviewPanel.allLogs')}
           onAction={() => {
             onOpenPanel('jobs');

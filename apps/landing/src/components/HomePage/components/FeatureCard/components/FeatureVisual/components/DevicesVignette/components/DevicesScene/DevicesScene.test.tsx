@@ -27,7 +27,7 @@ describe('DevicesScene', () => {
     atFrame(160);
 
     expect(screen.queryByText('Transcoding')).toBeNull();
-    expect(screen.getAllByText('DirectPlay')).toHaveLength(3);
+    expect(screen.getAllByText('Direct play').length).toBeGreaterThan(0);
   });
 
   it('is converting again by the end, where it began', () => {

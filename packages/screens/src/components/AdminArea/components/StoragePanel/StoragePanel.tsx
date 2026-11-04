@@ -1,6 +1,8 @@
 import { Cloud as EmptyCloudIcon } from '@keyline-icons/react/fill';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { useState } from 'react';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+import { Callout } from '@ValenceUI/Callout';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus as PlusIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
@@ -35,6 +37,7 @@ const StoragePanel = () => {
   const asked = useQuery(bucketQueries.all());
   const [editing, setEditing] = useState<Bucket | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [removing, setRemoving] = useState<Bucket | null>(null);
   const title = say('screens.adminArea.storagePanel.buckets');
 
   const refresh = () => {
@@ -60,6 +63,7 @@ const StoragePanel = () => {
         <Button
           variant="secondary"
           size="sm"
+          disabled={asked.data?.canMount === false}
           onClick={() => {
             setEditing(null);
             setIsOpen(true);
@@ -70,9 +74,27 @@ const StoragePanel = () => {
         </Button>
       }
     >
+      <ConfirmDialog
+        isOpen={removing !== null}
+        isDestructive
+        title={say('screens.adminArea.storagePanel.removeThisBucket')}
+        detail={say('screens.adminArea.storagePanel.removeThisBucketDetail')}
+        confirmLabel={say('common.forget')}
+        onClose={() => {
+          setRemoving(null);
+        }}
+        onConfirm={() => {
+          if (removing !== null) {
+            void remove(removing);
+          }
+
+          setRemoving(null);
+        }}
+      />
+
       <div className="flex flex-col gap-4">
         <p className="text-sm text-text-muted">
-          {say('screens.adminArea.storagePanel.eachBucketIsMountedAsA')}
+          {say('screens.adminArea.storagePanel.mountsBuckets')}
         </p>
 
         {asked.isError ? (
@@ -92,9 +114,12 @@ const StoragePanel = () => {
         ) : (
           <>
             {asked.data.canMount ? null : (
-              <p role="alert" className="text-sm text-text-muted">
-                {say('screens.adminArea.storagePanel.thisServerCannotMountBuckets')}
-              </p>
+              <Callout
+                tone="warning"
+                title={say('screens.adminArea.storagePanel.bucketsCannotBeMountedHere')}
+              >
+                {say('screens.adminArea.storagePanel.installRcloneAndFuse')}
+              </Callout>
             )}
 
             {asked.data.buckets.length === 0 ? (
@@ -133,7 +158,7 @@ const StoragePanel = () => {
                         setIsOpen(true);
                       }}
                     >
-                      {say('common.change')}
+                      {say('common.edit')}
                     </Button>
 
                     <Button
@@ -141,7 +166,7 @@ const StoragePanel = () => {
                       size="sm"
                       label={say('common.forgetName', { name: bucket.name })}
                       onClick={() => {
-                        void remove(bucket);
+                        setRemoving(bucket);
                       }}
                     >
                       {say('common.forget')}

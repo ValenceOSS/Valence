@@ -78,9 +78,8 @@ describe('DownloadQueueTable', () => {
     expect(row.getByText('Downloading')).toBeInTheDocument();
     expect(row.getByText('45%')).toBeInTheDocument();
     expect(row.getByText('2.0 GB').parentElement).toHaveTextContent('2.0 GB of 4.0 GB');
-    expect(row.getByText('↓ 1.0 MB/s')).toBeInTheDocument();
-    expect(row.getByText('↑ 40 KB/s')).toBeInTheDocument();
-    expect(row.getByText('12 min')).toBeInTheDocument();
+    expect(row.getByText(/1\.0 MB/)).toBeInTheDocument();
+    expect(rowOf('Dune')).toHaveTextContent('· 12 min left');
     expect(row.getByText('9 seeding')).toBeInTheDocument();
     expect(row.getByText('2 fetching')).toBeInTheDocument();
     expect(
@@ -113,7 +112,7 @@ describe('DownloadQueueTable', () => {
     expect(row.getByText('4.0 GB')).toBeInTheDocument();
     expect(row.getByRole('button', { name: /finished it with a warning/ })).toBeInTheDocument();
     expect(row.queryByText(/finished it with a warning/)).not.toBeInTheDocument();
-    expect(row.getAllByText('—')).toHaveLength(3);
+    expect(row.queryByText(/left/)).not.toBeInTheDocument();
   });
 
   it('keeps where a download was filed behind an icon beside its state, until hovered', async () => {

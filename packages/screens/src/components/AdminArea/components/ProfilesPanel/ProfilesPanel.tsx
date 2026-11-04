@@ -303,7 +303,7 @@ const ProfilesPanel = () => {
       }}
     >
       <PanelCard
-        title={say('common.profiles')}
+        title={say('screens.importWizard.arrImportStep.qualityProfiles')}
         isFlush
         actions={
           <>
@@ -323,7 +323,7 @@ const ProfilesPanel = () => {
                 setIsAdding(true);
               }}
             >
-              {say('common.addMediaProfile')}
+              {say('screens.adminArea.profilesPanel.addQualityProfile')}
             </PanelCardAction>
           </>
         }

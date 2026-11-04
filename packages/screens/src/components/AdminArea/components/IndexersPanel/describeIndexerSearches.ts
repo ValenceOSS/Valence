@@ -2,7 +2,7 @@ import type { Indexer, IndexerSearchMode } from '@ValenceContracts/schemas/Index
 import { say } from '@ValenceI18n/say';
 
 const MODE_WORDS: Record<IndexerSearchMode, string> = {
-  search: say('common.words'),
+  search: say('screens.adminArea.describeIndexerSearches.keywords'),
   movie: say('common.films'),
   tv: say('common.series'),
   music: say('common.music'),

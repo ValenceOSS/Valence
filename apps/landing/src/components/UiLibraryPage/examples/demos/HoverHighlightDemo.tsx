@@ -1,7 +1,7 @@
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 
-const ROWS = ['Arrival', 'Blade Runner 2049', 'Dune', 'Sicario'] as const;
+const ROWS = ['Film A', 'Film B', 'Film C', 'Film D'] as const;
 
 /**
  * A short list with one highlight that slides from row to row under the pointer, as menus and lists

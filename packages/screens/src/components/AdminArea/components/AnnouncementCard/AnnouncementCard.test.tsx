@@ -20,9 +20,9 @@ describe('AnnouncementCard', () => {
 
     renderInAnAddress(<AnnouncementCard />);
 
-    await user.type(screen.getByRole('textbox', { name: 'What it says' }), 'Back at six');
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Back at six');
     await user.click(screen.getByRole('button', { name: 'Urgent' }));
-    await user.click(screen.getByRole('button', { name: 'Post it' }));
+    await user.click(screen.getByRole('button', { name: 'Post' }));
 
     expect(postAnnouncement).toHaveBeenCalledWith({
       text: 'Back at six',
@@ -36,9 +36,9 @@ describe('AnnouncementCard', () => {
 
     renderInAnAddress(<AnnouncementCard />);
 
-    await user.type(screen.getByRole('textbox', { name: 'What it says' }), 'Back at six');
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Back at six');
     await user.click(screen.getByRole('button', { name: 'An hour' }));
-    await user.click(screen.getByRole('button', { name: 'Post it' }));
+    await user.click(screen.getByRole('button', { name: 'Post' }));
 
     const [draft] = vi.mocked(postAnnouncement).mock.calls[0] ?? [];
 
@@ -48,7 +48,7 @@ describe('AnnouncementCard', () => {
   it('will not post nothing', () => {
     renderInAnAddress(<AnnouncementCard />);
 
-    expect(screen.getByRole('button', { name: 'Post it' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
   });
 
   it('shows the announcement up now, and takes it down', async () => {

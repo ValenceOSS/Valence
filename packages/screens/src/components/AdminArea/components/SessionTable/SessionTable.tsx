@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
+import { Cast as CastIcon } from '@keyline-icons/react';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -26,7 +27,34 @@ import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/grou
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 import type { SessionRow, SessionTableProps } from './SessionTable.types';
+
+/**
+ * Why a session can't be sent a message, where it can't: the TV app shows none, and the others
+ * only over a video playing.
+ *
+ * @param session - The session.
+ * @returns Why not, or nothing where a message can be sent.
+ */
+const whyNoMessage = (session: ActiveSession): string | null =>
+  session.clientKind === 'tv'
+    ? say('screens.adminArea.sessionCard.theTvAppCannotShowMessages')
+    : session.playback === null
+      ? say('screens.adminArea.sessionCard.messagesShowOnlyWhileWatching')
+      : null;
+
+/**
+ * Whether a session is playing, listening to or reading anything.
+ *
+ * @param session - The session.
+ * @returns Whether it is.
+ */
+const isDoingSomething = (session: ActiveSession): boolean =>
+  session.playback !== null ||
+  session.listening !== null ||
+  session.bookListening !== null ||
+  session.reading !== null;
 
 /**
  * Every open session as a row of a table: who has it, with their picture, what they have open, on what, whether it is
@@ -134,9 +162,33 @@ const SessionTable = ({
 
         return (
           <span className="flex max-w-[20rem] min-w-0 flex-col">
-            <span className="truncate text-text">{titleOfSession(row.original.session)}</span>
+            <span
+              className={
+                isDoingSomething(row.original.session) || row.original.session.remoteFor !== null
+                  ? 'truncate text-text'
+                  : 'truncate text-text-muted'
+              }
+            >
+              {isDoingSomething(row.original.session)
+                ? titleOfSession(row.original.session)
+                : row.original.session.remoteFor === null
+                  ? say('screens.adminArea.sessionCard.nothingPlaying')
+                  : say('screens.videoRemote.remoteForLabel', {
+                      label: row.original.session.remoteFor.label,
+                    })}
+            </span>
             {episode === null ? null : (
               <span className="truncate text-xs text-text-muted">{episode}</span>
+            )}
+            {row.original.session.controlledFrom === null ? null : (
+              <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted">
+                <Icon of={CastIcon} size={12} className="shrink-0" />
+                <span className="truncate">
+                  {say('screens.adminArea.sessionCard.controlledFromLabel', {
+                    label: row.original.session.controlledFrom.label,
+                  })}
+                </span>
+              </span>
             )}
           </span>
         );
@@ -149,12 +201,19 @@ const SessionTable = ({
       accessorFn: (shown) => namesOfSession(shown.session).device,
       cell: ({ row }) =>
         row.original.group !== null ? null : (
-          <DeviceLabel
-            {...namesOfSession(row.original.session)}
-            identity={row.original.session.identity}
-            clientKind={row.original.session.clientKind}
-            userAgent={row.original.session.userAgent}
-          />
+          <span className="flex min-w-0 items-center gap-2">
+            <DeviceLabel
+              {...namesOfSession(row.original.session)}
+              identity={row.original.session.identity}
+              clientKind={row.original.session.clientKind}
+              userAgent={row.original.session.userAgent}
+            />
+            {row.original.session.clientId === platformInUse().thisClientId() ? (
+              <Badge size="sm" tone="accent">
+                {say('common.thisDevice')}
+              </Badge>
+            ) : null}
+          </span>
         ),
     },
     {
@@ -249,74 +308,85 @@ const SessionTable = ({
         const isBusy = busyClientId === session.clientId;
         const isPlaying = session.playback?.isPlaying ?? false;
 
-        return (
+        const items = [
+          ...(session.playback === null
+            ? []
+            : [
+                isPlaying
+                  ? {
+                      id: 'pause',
+                      label: say('common.pause'),
+                      icon: <Icon of={PauseFilledIcon} size={15} />,
+                      isDisabled: isBusy,
+                      onChoose: () => {
+                        onPause(session.clientId);
+                      },
+                    }
+                  : {
+                      id: 'play',
+                      label: say('common.play'),
+                      icon: <Icon of={PlayFilledIcon} size={15} />,
+                      isDisabled: isBusy,
+                      onChoose: () => {
+                        onResume(session.clientId);
+                      },
+                    },
+              ]),
+          ...(session.clientId === platformInUse().thisClientId()
+            ? []
+            : [
+                {
+                  id: 'message',
+                  label: say('screens.adminArea.sessionCard.message'),
+                  icon: <Icon of={MessageSquareIcon} size={15} />,
+                  isDisabled: isBusy || whyNoMessage(session) !== null,
+                  ...(whyNoMessage(session) === null
+                    ? {}
+                    : { detail: whyNoMessage(session) ?? '' }),
+                  onChoose: () => {
+                    onMessage(session);
+                  },
+                },
+              ]),
+          ...(!isDoingSomething(session)
+            ? []
+            : [
+                {
+                  id: 'stop',
+                  label: say('common.stop'),
+                  icon: <Icon of={StopIcon} size={15} />,
+                  isDestructive: true,
+                  isDisabled: isBusy,
+                  onChoose: () => {
+                    onStop(session.clientId);
+                  },
+                },
+              ]),
+          ...(onSignOut === undefined ||
+          session.accountId === null ||
+          session.clientId === platformInUse().thisClientId()
+            ? []
+            : [
+                {
+                  id: 'signOut',
+                  label: say('common.signThisOut'),
+                  icon: <Icon of={LogOutFilledIcon} size={15} />,
+                  isDestructive: true,
+                  isDisabled: isBusy,
+                  onChoose: () => {
+                    onSignOut(session);
+                  },
+                },
+              ]),
+        ];
+
+        return items.length === 0 ? (
+          <span aria-hidden className="block size-8" />
+        ) : (
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: nameOfSession(session) })}
-              groups={[
-                {
-                  items: [
-                    ...(session.playback === null
-                      ? []
-                      : [
-                          isPlaying
-                            ? {
-                                id: 'pause',
-                                label: say('common.pause'),
-                                icon: <Icon of={PauseFilledIcon} size={15} />,
-                                isDisabled: isBusy,
-                                onChoose: () => {
-                                  onPause(session.clientId);
-                                },
-                              }
-                            : {
-                                id: 'play',
-                                label: say('common.play'),
-                                icon: <Icon of={PlayFilledIcon} size={15} />,
-                                isDisabled: isBusy,
-                                onChoose: () => {
-                                  onResume(session.clientId);
-                                },
-                              },
-                        ]),
-                    {
-                      id: 'message',
-                      label: say('screens.adminArea.sessionCard.message'),
-                      icon: <Icon of={MessageSquareIcon} size={15} />,
-                      isDisabled: isBusy,
-                      onChoose: () => {
-                        onMessage(session);
-                      },
-                    },
-                    {
-                      id: 'stop',
-                      label: say('common.stop'),
-                      icon: <Icon of={StopIcon} size={15} />,
-                      isDestructive: true,
-                      isDisabled: isBusy,
-                      onChoose: () => {
-                        onStop(session.clientId);
-                      },
-                    },
-                    ...(onSignOut === undefined ||
-                    session.accountId === null ||
-                    session.clientId === platformInUse().thisClientId()
-                      ? []
-                      : [
-                          {
-                            id: 'signOut',
-                            label: say('common.signThisOut'),
-                            icon: <Icon of={LogOutFilledIcon} size={15} />,
-                            isDestructive: true,
-                            isDisabled: isBusy,
-                            onChoose: () => {
-                              onSignOut(session);
-                            },
-                          },
-                        ]),
-                  ],
-                },
-              ]}
+              groups={[{ items }]}
             />
           </span>
         );
@@ -327,7 +397,11 @@ const SessionTable = ({
   return (
     <DataTable
       label={say('common.sessions')}
-      columns={columns}
+      columns={
+        sessions.some(isDoingSomething)
+          ? columns
+          : columns.filter((column) => !['state', 'progress', 'delivery'].includes(column.id ?? ''))
+      }
       rows={rows}
       getRowId={(shown) => shown.id}
       getSubRows={(shown) => (shown.parts.length === 0 ? undefined : shown.parts)}

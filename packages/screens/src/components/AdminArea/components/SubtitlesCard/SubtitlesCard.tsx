@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Link } from '@ValenceUI/Link';
 import { MultiSelectField } from '@ValenceUI/MultiSelectField';
 import { SelectField } from '@ValenceUI/SelectField';
-import { SettingGroup } from '@ValenceUI/SettingGroup';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
@@ -20,6 +17,7 @@ import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCar
 import { PanelCard } from '@ValenceUI/PanelCard';
 import type { SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
 import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
+import { SourceRow } from './components/SourceRow/SourceRow';
 import { say } from '@ValenceI18n/say';
 
 const LANGUAGE_NAMES = new Intl.DisplayNames(undefined, { type: 'language' });
@@ -81,210 +79,216 @@ const draftOf = (setup: SubtitleSetup): Draft => ({
   translatesToEnglish: setup.translatesToEnglish,
 });
 
+const MATCH_CHOICES = [
+  { id: '100', label: say('screens.adminArea.subtitlesCard.exactFileOnly') },
+  { id: '80', label: say('screens.findSubtitlesDialog.sameRelease') },
+  { id: '60', label: say('screens.adminArea.subtitlesCard.closeMatch') },
+  { id: '0', label: say('common.anything') },
+];
+
 /**
- * Where Valence finds subtitles for what the libraries hold: the keys for OpenSubtitles and SubDL,
- * the OpenSubtitles account downloads are counted against, and the languages offered first when
- * somebody looks for subtitles. Keys and the password are never shown once saved; a field left
- * empty keeps what is saved.
+ * The info button beside a setting's name.
+ *
+ * @param label - The setting.
+ * @param detail - What to say about it.
+ * @returns The button.
+ */
+const about = (label: string, detail: string) => (
+  <PanelCardInfo
+    label={say('screens.adminArea.statStrip.aboutLabel', { label })}
+    detail={detail}
+    align="start"
+  />
+);
+
+/**
+ * The match levels to offer, keeping one saved before the levels were fixed.
+ *
+ * @param value - The minimum score saved.
+ * @returns The choices.
+ */
+const matchChoicesFor = (value: number) =>
+  MATCH_CHOICES.some((one) => one.id === value.toString())
+    ? MATCH_CHOICES
+    : [
+        ...MATCH_CHOICES,
+        {
+          id: value.toString(),
+          label: say('screens.adminArea.subtitlesCard.scoreOrMore', { score: value.toString() }),
+        },
+      ];
+
+/**
+ * Where Valence finds subtitles for what the libraries hold, and what it does with them: the
+ * languages offered first, fetching on its own, writing them with Whisper, and the keys for
+ * OpenSubtitles and SubDL. Each setting saves as it is changed; a key or password is never shown
+ * once saved.
  */
 const SubtitlesCard = () => {
   const cache = useQueryClient();
   const asked = useQuery(adminQueries.subtitleSetup());
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [pending, setPending] = useState<Partial<Draft>>({});
+  const [secrets, setSecrets] = useState<{
+    openSubtitlesKey: string;
+    openSubtitlesUsername: string | null;
+    openSubtitlesPassword: string;
+    subdlKey: string;
+  }>({
+    openSubtitlesKey: '',
+    openSubtitlesUsername: null,
+    openSubtitlesPassword: '',
+    subdlKey: '',
+  });
+  const [savingSource, setSavingSource] = useState<'openSubtitles' | 'subdl' | null>(null);
   const title = say('common.subtitles');
   const setup = asked.data;
 
-  if (asked.isError) {
+  if (asked.isError || setup === undefined) {
     return (
       <PanelCard title={title}>
-        <CouldNotRead
-          said={say('screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe')}
-          isTryingAgain={asked.isFetching}
-          onTryAgain={() => {
-            void asked.refetch();
-          }}
-        />
+        {asked.isError ? (
+          <CouldNotRead
+            said={say('screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe')}
+            isTryingAgain={asked.isFetching}
+            onTryAgain={() => {
+              void asked.refetch();
+            }}
+          />
+        ) : (
+          <Spinner
+            isCentered
+            size="sm"
+            label={say('screens.adminArea.subtitlesCard.readingTheSubtitleSettings')}
+          />
+        )}
       </PanelCard>
     );
   }
 
-  if (setup === undefined) {
-    return (
-      <PanelCard title={title}>
-        <Spinner
-          isCentered
-          size="sm"
-          label={say('screens.adminArea.subtitlesCard.readingTheSubtitleSettings')}
-        />
-      </PanelCard>
-    );
-  }
+  const shown = { ...draftOf(setup), ...pending };
 
-  const shown = draft ?? draftOf(setup);
-  const isChanged = JSON.stringify(shown) !== JSON.stringify(draftOf(setup));
+  const save = (patch: Partial<Draft>): Promise<boolean> => {
+    setPending((was) => ({ ...was, ...patch }));
 
-  const change = (patch: Partial<Draft>) => {
-    setDraft({ ...shown, ...patch });
+    return saveSubtitleSetup({ ...shown, ...patch }).then((answer) => {
+      setPending({});
+
+      if (
+        tellOutcome(
+          say('screens.adminArea.subtitlesCard.savedTheSubtitleSettings'),
+          failureOfMissing(answer),
+        ) &&
+        answer !== null
+      ) {
+        cache.setQueryData(adminQueries.subtitleSetup().queryKey, answer);
+        void cache.invalidateQueries({ queryKey: ['subtitles'] });
+
+        return true;
+      }
+
+      return false;
+    });
   };
 
+  const username = secrets.openSubtitlesUsername ?? setup.openSubtitlesUsername;
+
   return (
-    <PanelCard
-      title={title}
-      actions={
-        <PanelCardInfo
-          label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
-          detail={say('screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries')}
-        />
-      }
-    >
-      <div className="flex flex-col gap-5">
-        <SettingList>
-          <SettingGroup
-            title={say('screens.adminArea.subtitlesCard.openSubtitles')}
-            description={say('screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs')}
-          >
-            <div className="flex flex-col gap-3">
-              <TextField
-                label={say('common.aPIKey')}
-                type="password"
-                autoComplete="off"
-                placeholder={
-                  setup.hasOpenSubtitlesKey
-                    ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep')
-                    : ''
-                }
-                value={shown.openSubtitlesKey}
-                onValueChange={(openSubtitlesKey) => {
-                  change({ openSubtitlesKey });
-                }}
-              />
-
-              <div className="grid items-start gap-3 sm:grid-cols-2">
-                <TextField
-                  label={say('common.username')}
-                  autoComplete="off"
-                  value={shown.openSubtitlesUsername}
-                  onValueChange={(openSubtitlesUsername) => {
-                    change({ openSubtitlesUsername });
-                  }}
-                />
-
-                <TextField
-                  label={say('common.password')}
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder={
-                    setup.hasOpenSubtitlesPassword
-                      ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep')
-                      : ''
-                  }
-                  value={shown.openSubtitlesPassword}
-                  onValueChange={(openSubtitlesPassword) => {
-                    change({ openSubtitlesPassword });
-                  }}
-                />
-              </div>
-
-              <Link href="https://www.opensubtitles.com/en/consumers">
-                {say('screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey')}
-              </Link>
-            </div>
-          </SettingGroup>
-
-          <SettingGroup
-            title={say('screens.adminArea.subtitlesCard.subdl')}
-            description={say('screens.adminArea.subtitlesCard.askedToo')}
-          >
-            <div className="flex flex-col gap-3">
-              <TextField
-                label={say('common.aPIKey')}
-                type="password"
-                autoComplete="off"
-                placeholder={
-                  setup.hasSubdlKey ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep') : ''
-                }
-                value={shown.subdlKey}
-                onValueChange={(subdlKey) => {
-                  change({ subdlKey });
-                }}
-              />
-
-              <Link href="https://subdl.com/panel/api">
-                {say('screens.adminArea.subtitlesCard.getASubdlKey')}
-              </Link>
-            </div>
-          </SettingGroup>
-
-          <SettingGroup
+    <div className="flex flex-col gap-4">
+      <PanelCard
+        title={title}
+        isFlush
+        actions={about(
+          title,
+          say('screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries'),
+        )}
+      >
+        <SettingList isInset>
+          <SettingRow
             title={say('screens.adminArea.subtitlesCard.languages')}
-            description={say('screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks')}
+            description={say('screens.adminArea.subtitlesCard.languagesDetail')}
           >
             <MultiSelectField
               label={say('screens.adminArea.subtitlesCard.languages')}
               isLabelHidden
+              size="sm"
               placeholder={say('common.none')}
               options={LANGUAGE_CHOICES}
               value={shown.languages}
               onChange={(languages) => {
-                change({ languages });
+                void save({ languages });
               }}
-              className="max-w-md"
+              className="w-56 max-w-full"
             />
-          </SettingGroup>
+          </SettingRow>
 
           <SettingRow
             title={say('screens.adminArea.subtitlesCard.fetchAutomatically')}
-            description={say('screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive')}
+            description={say('screens.adminArea.subtitlesCard.fetchAutomaticallyDetail')}
           >
             <Switch
               label={say('screens.adminArea.subtitlesCard.fetchAutomatically')}
               isLabelHidden
               isOn={shown.isAutomatic}
               onToggle={() => {
-                change({ isAutomatic: !shown.isAutomatic });
+                void save({ isAutomatic: !shown.isAutomatic });
               }}
             />
           </SettingRow>
 
-          {shown.isAutomatic ? (
-            <SettingGroup
-              title={say('screens.adminArea.subtitlesCard.minimumScore')}
-              description={say('screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores')}
-            >
-              <div className="grid max-w-md items-start gap-3 sm:grid-cols-2">
-                <TextField
-                  label={say('common.films')}
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={shown.filmMinimumScore.toString()}
-                  onValueChange={(value) => {
-                    change({ filmMinimumScore: Math.min(100, Math.max(0, Number(value) || 0)) });
-                  }}
-                />
-                <TextField
-                  label={say('common.episodes')}
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={shown.episodeMinimumScore.toString()}
-                  onValueChange={(value) => {
-                    change({
-                      episodeMinimumScore: Math.min(100, Math.max(0, Number(value) || 0)),
-                    });
-                  }}
-                />
-              </div>
-            </SettingGroup>
-          ) : null}
+          {shown.isAutomatic
+            ? (['film', 'episode'] as const).map((which) => {
+                const value = which === 'film' ? shown.filmMinimumScore : shown.episodeMinimumScore;
+                const label =
+                  which === 'film'
+                    ? say('screens.adminArea.subtitlesCard.filmMatch')
+                    : say('screens.adminArea.subtitlesCard.episodeMatch');
+
+                return (
+                  <SettingRow
+                    key={which}
+                    title={label}
+                    info={about(
+                      'match',
+                      say('screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores'),
+                    )}
+                    description={
+                      which === 'film'
+                        ? say('screens.adminArea.subtitlesCard.filmMatchDetail')
+                        : say('screens.adminArea.subtitlesCard.episodeMatchDetail')
+                    }
+                  >
+                    <SelectField
+                      label={label}
+                      isLabelHidden
+                      size="sm"
+                      className="w-56 max-w-full"
+                      options={matchChoicesFor(value)}
+                      value={value.toString()}
+                      onSelect={(id) => {
+                        void save(
+                          which === 'film'
+                            ? { filmMinimumScore: Number(id) }
+                            : { episodeMinimumScore: Number(id) },
+                        );
+                      }}
+                    />
+                  </SettingRow>
+                );
+              })
+            : null}
 
           <SettingRow
             title={say('screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper')}
-            description={
+            info={about(
+              say('screens.adminArea.subtitlesCard.whisper'),
               setup.canWriteSubtitles
                 ? say('screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles')
-                : say('screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe')
+                : say('screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe'),
+            )}
+            description={
+              setup.canWriteSubtitles
+                ? say('screens.adminArea.subtitlesCard.whisperDetail')
+                : say('screens.adminArea.subtitlesCard.whisperNotInstalled')
             }
           >
             <Switch
@@ -293,90 +297,204 @@ const SubtitlesCard = () => {
               isOn={shown.writesSubtitles}
               disabled={!setup.canWriteSubtitles && !shown.writesSubtitles}
               onToggle={() => {
-                change({ writesSubtitles: !shown.writesSubtitles });
+                void save({ writesSubtitles: !shown.writesSubtitles });
               }}
             />
           </SettingRow>
 
           {shown.writesSubtitles ? (
-            <SettingGroup
-              title={say('screens.adminArea.subtitlesCard.howWhisperListens')}
-              description={say('screens.adminArea.subtitlesCard.aLargerModelHearsBetter')}
-            >
-              <div className="grid max-w-md items-start gap-3 sm:grid-cols-2">
+            <>
+              <SettingRow
+                title={say('screens.adminArea.hardware.model')}
+                description={say('screens.adminArea.subtitlesCard.modelDetail')}
+              >
                 <SelectField
                   label={say('screens.adminArea.hardware.model')}
+                  isLabelHidden
+                  size="sm"
+                  className="w-56 max-w-full"
                   options={MODEL_CHOICES}
                   value={shown.whisperModel}
                   onSelect={(id) => {
                     const picked = MODEL_CHOICES.find((choice) => choice.id === id);
 
                     if (picked !== undefined) {
-                      change({ whisperModel: picked.id });
+                      void save({ whisperModel: picked.id });
                     }
                   }}
                 />
+              </SettingRow>
 
+              <SettingRow
+                title={say('screens.adminArea.subtitlesCard.languageSpoken')}
+                description={say('screens.adminArea.subtitlesCard.languageSpokenDetail')}
+              >
                 <SelectField
                   label={say('screens.adminArea.subtitlesCard.languageSpoken')}
+                  isLabelHidden
+                  size="sm"
+                  className="w-56 max-w-full"
                   options={HEARD_CHOICES}
                   value={shown.whisperLanguage ?? AUTO}
                   onSelect={(id) => {
-                    change({ whisperLanguage: id === AUTO ? null : id });
+                    void save({ whisperLanguage: id === AUTO ? null : id });
                   }}
                 />
-              </div>
-            </SettingGroup>
-          ) : null}
+              </SettingRow>
 
-          {shown.writesSubtitles ? (
-            <SettingRow
-              title={say('screens.adminArea.subtitlesCard.writeThemInEnglish')}
-              description={say('screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish')}
-            >
-              <Switch
-                label={say('screens.adminArea.subtitlesCard.writeThemInEnglish')}
-                isLabelHidden
-                isOn={shown.translatesToEnglish}
-                onToggle={() => {
-                  change({ translatesToEnglish: !shown.translatesToEnglish });
-                }}
-              />
-            </SettingRow>
+              <SettingRow
+                title={say('screens.adminArea.subtitlesCard.writeThemInEnglish')}
+                description={say('screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish')}
+              >
+                <Switch
+                  label={say('screens.adminArea.subtitlesCard.writeThemInEnglish')}
+                  isLabelHidden
+                  isOn={shown.translatesToEnglish}
+                  onToggle={() => {
+                    void save({ translatesToEnglish: !shown.translatesToEnglish });
+                  }}
+                />
+              </SettingRow>
+            </>
           ) : null}
         </SettingList>
+      </PanelCard>
 
-        <div className="flex justify-end">
-          <Button
-            variant="confirm"
-            size="sm"
-            disabled={!isChanged}
-            isLoading={isSaving}
-            onClick={() => {
-              setIsSaving(true);
+      <PanelCard title={say('common.sources')} isFlush>
+        <SettingList isInset>
+          <SourceRow
+            title={say('screens.adminArea.subtitlesCard.openSubtitles')}
+            description={
+              setup.openSubtitlesUsername === ''
+                ? say('screens.adminArea.subtitlesCard.openSubtitlesDetail')
+                : say('screens.adminArea.subtitlesCard.openSubtitlesDetailWithAccount', {
+                    username: setup.openSubtitlesUsername,
+                  })
+            }
+            isSet={setup.hasOpenSubtitlesKey}
+            freeKeyAt="https://www.opensubtitles.com/en/consumers"
+            canSave={
+              secrets.openSubtitlesKey !== '' ||
+              secrets.openSubtitlesPassword !== '' ||
+              username !== setup.openSubtitlesUsername
+            }
+            isSaving={savingSource === 'openSubtitles'}
+            onCancel={() => {
+              setSecrets((was) => ({
+                ...was,
+                openSubtitlesKey: '',
+                openSubtitlesUsername: null,
+                openSubtitlesPassword: '',
+              }));
+            }}
+            onSave={() => {
+              setSavingSource('openSubtitles');
 
-              void saveSubtitleSetup(shown).then((answer) => {
-                setIsSaving(false);
+              return save({
+                openSubtitlesKey: secrets.openSubtitlesKey,
+                openSubtitlesUsername: username,
+                openSubtitlesPassword: secrets.openSubtitlesPassword,
+              }).then((isSaved) => {
+                setSavingSource(null);
 
-                if (
-                  tellOutcome(
-                    say('screens.adminArea.subtitlesCard.savedTheSubtitleSettings'),
-                    failureOfMissing(answer),
-                  ) &&
-                  answer !== null
-                ) {
-                  cache.setQueryData(adminQueries.subtitleSetup().queryKey, answer);
-                  void cache.invalidateQueries({ queryKey: ['subtitles'] });
-                  setDraft(null);
+                if (isSaved) {
+                  setSecrets((was) => ({
+                    ...was,
+                    openSubtitlesKey: '',
+                    openSubtitlesUsername: null,
+                    openSubtitlesPassword: '',
+                  }));
                 }
+
+                return isSaved;
               });
             }}
-          >
-            {say('common.save')}
-          </Button>
-        </div>
-      </div>
-    </PanelCard>
+            fields={
+              <>
+                <TextField
+                  label={say('common.aPIKey')}
+                  type="password"
+                  autoComplete="off"
+                  size="sm"
+                  placeholder={
+                    setup.hasOpenSubtitlesKey
+                      ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep')
+                      : ''
+                  }
+                  value={secrets.openSubtitlesKey}
+                  onValueChange={(openSubtitlesKey) => {
+                    setSecrets((was) => ({ ...was, openSubtitlesKey }));
+                  }}
+                />
+                <div className="grid items-start gap-3 sm:grid-cols-2">
+                  <TextField
+                    label={say('common.username')}
+                    autoComplete="off"
+                    size="sm"
+                    value={username}
+                    onValueChange={(openSubtitlesUsername) => {
+                      setSecrets((was) => ({ ...was, openSubtitlesUsername }));
+                    }}
+                  />
+                  <TextField
+                    label={say('common.password')}
+                    type="password"
+                    autoComplete="new-password"
+                    size="sm"
+                    placeholder={
+                      setup.hasOpenSubtitlesPassword
+                        ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep')
+                        : ''
+                    }
+                    value={secrets.openSubtitlesPassword}
+                    onValueChange={(openSubtitlesPassword) => {
+                      setSecrets((was) => ({ ...was, openSubtitlesPassword }));
+                    }}
+                  />
+                </div>
+              </>
+            }
+          />
+
+          <SourceRow
+            title={say('screens.adminArea.subtitlesCard.subdl')}
+            description={say('screens.adminArea.subtitlesCard.askedToo')}
+            isSet={setup.hasSubdlKey}
+            freeKeyAt="https://subdl.com/panel/api"
+            canSave={secrets.subdlKey !== ''}
+            isSaving={savingSource === 'subdl'}
+            onCancel={() => {
+              setSecrets((was) => ({ ...was, subdlKey: '' }));
+            }}
+            onSave={() => {
+              setSavingSource('subdl');
+
+              return save({ subdlKey: secrets.subdlKey }).then((isSaved) => {
+                setSavingSource(null);
+
+                if (isSaved) {
+                  setSecrets((was) => ({ ...was, subdlKey: '' }));
+                }
+
+                return isSaved;
+              });
+            }}
+            fields={
+              <TextField
+                label={say('common.aPIKey')}
+                type="password"
+                autoComplete="off"
+                size="sm"
+                value={secrets.subdlKey}
+                onValueChange={(subdlKey) => {
+                  setSecrets((was) => ({ ...was, subdlKey }));
+                }}
+              />
+            }
+          />
+        </SettingList>
+      </PanelCard>
+    </div>
   );
 };
 

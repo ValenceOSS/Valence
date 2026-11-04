@@ -17,7 +17,8 @@ const REFERENCES = /\s*\((?:\[[^\]]*\]\([^)]*\)|#\d+|[0-9a-f]{7,40})\)/g;
 
 const LINKED_PULL = /\[#(\d+)\]\((https:\/\/github\.com\/[^)\s]+)\)/;
 
-const WRITTEN_BY = /\s+by\s+@([\w-]+)\s+in\s+(https:\/\/github\.com\/\S+\/pull\/(\d+))\s*$/;
+const WRITTEN_BY =
+  /\s+by\s+@([\w-]+(?:\[bot\])?)\s+in\s+(https:\/\/github\.com\/\S+\/pull\/(\d+))\s*$/;
 
 const CONVENTIONAL = /^([a-z]+)(?:\(([^)]+)\))?!?:\s+(.+)$/;
 
@@ -118,6 +119,17 @@ const readPoint = (line: string): { point: ReleasePoint; kind: GroupedKind | nul
  * @param notes - The release's notes, as written.
  * @returns Each section and its points, in order.
  */
+/**
+ * Whether a point is the release bot announcing the release itself, which says nothing about what
+ * changed.
+ *
+ * @param point - The point.
+ * @returns Whether it is that announcement.
+ */
+const isReleaseAnnouncement = (point: { text: string; author: string | null }): boolean =>
+  point.author?.endsWith('[bot]') === true &&
+  /(?:^|:\s+)release\s+v?\d/iu.test(point.text.replace(/^`[^`]*`\s*/u, ''));
+
 const readReleaseNotes = (notes: string): ReleaseSection[] => {
   const written: ReleaseSection[] = [];
   const grouped = new Map<GroupedKind, ReleasePoint[]>();
@@ -151,6 +163,10 @@ const readReleaseNotes = (notes: string): ReleaseSection[] => {
     }
 
     const { point, kind } = readPoint(bullet[1] ?? '');
+
+    if (isReleaseAnnouncement(point)) {
+      continue;
+    }
 
     if (current === null) {
       const into = kind ?? 'other';

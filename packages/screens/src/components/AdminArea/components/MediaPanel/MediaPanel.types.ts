@@ -2,6 +2,7 @@ import type { Freshness } from '@ValenceClient/query/Freshness';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
+import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { ArtworkSubject } from '@ValenceScreens/components/AdminArea/components/ArtworkPicker/ArtworkPicker.types';
 
 type MediaReading = {
@@ -25,12 +26,15 @@ type MediaPanelProps = {
   onCorrectBook?: (book: Book) => void;
   onChooseMoment: (media: MediaSummary) => void;
   onRebuildArtefacts: (media: MediaSummary) => Promise<boolean>;
+  openedTitle?: string | null;
+  onOpenTitle?: (id: string | null) => void;
   onReencode?: (media: readonly MediaSummary[]) => void;
   onShowCopies?: (media: MediaSummary, name: string) => void;
   onDelete?: (media: MediaSummary, isWholeSeries: boolean) => Promise<boolean>;
   paths?: Readonly<Record<string, string>>;
   onOpenFolder?: (path: string) => void;
   onMoved?: (libraryId: string, jobId: string | null) => void;
+  onOpenInCatalogue?: (address: CatalogueAddress) => void;
 };
 
 export type { MediaPanelProps, MediaReading };

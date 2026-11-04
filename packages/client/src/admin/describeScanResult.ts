@@ -25,9 +25,9 @@ const describeScanResult = (result: ScanResult): string => {
   }
 
   const counts = [
-    `+${added.toString()}`,
-    `~${updated.toString()}`,
-    `−${removed.toString()}`,
+    ...(added === 0 ? [] : [sayCount('server.jobs.phase.arrived', added)]),
+    ...(updated === 0 ? [] : [sayCount('client.admin.describeScanResult.changed', updated)]),
+    ...(removed === 0 ? [] : [sayCount('common.count.removed', removed)]),
     ...(missing === 0 ? [] : [sayCount('common.count.missingFiles', missing)]),
     ...(returned === 0 ? [] : [sayCount('common.count.returnedFiles', returned)]),
     ...(failed === 0 ? [] : [sayCount('common.count.unreadable', failed)]),

@@ -51,7 +51,7 @@ const ProfileAskCard = ({
           </Button>
         ) : null}
         <Button
-          variant="primary"
+          variant="confirm"
           size="sm"
           isLoading={isBusy}
           onClick={() => {

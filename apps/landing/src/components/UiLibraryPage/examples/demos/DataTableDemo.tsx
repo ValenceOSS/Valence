@@ -4,11 +4,11 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 type Film = { id: string; title: string; year: number; gigabytes: number };
 
 const FILMS: Film[] = [
-  { id: 'arrival', title: 'Arrival', year: 2016, gigabytes: 12.4 },
-  { id: 'dune', title: 'Dune', year: 2021, gigabytes: 58.1 },
-  { id: 'sicario', title: 'Sicario', year: 2015, gigabytes: 9.8 },
-  { id: 'blade-runner', title: 'Blade Runner 2049', year: 2017, gigabytes: 44.6 },
-  { id: 'prisoners', title: 'Prisoners', year: 2013, gigabytes: 11.2 },
+  { id: 'a', title: 'Film A', year: 2016, gigabytes: 12.4 },
+  { id: 'b', title: 'Film B', year: 2021, gigabytes: 58.1 },
+  { id: 'c', title: 'Film C', year: 2015, gigabytes: 9.8 },
+  { id: 'd', title: 'Film D', year: 2017, gigabytes: 44.6 },
+  { id: 'e', title: 'Film E', year: 2013, gigabytes: 11.2 },
 ];
 
 const COLUMNS: DataTableColumn<Film>[] = [
@@ -17,13 +17,15 @@ const COLUMNS: DataTableColumn<Film>[] = [
   {
     id: 'size',
     header: 'Size',
+    meta: { info: 'The space the file takes on the disk.', hasLineBefore: true },
     accessorFn: (film) => film.gigabytes,
     cell: ({ row }) => `${row.original.gigabytes.toFixed(1)} GB`,
   },
 ];
 
 /**
- * A table of films, sortable by any column, as the admin pages draw their lists.
+ * A table of films, sortable by any column, as the admin pages draw their lists, with an ⓘ beside
+ * one heading and a line before its column.
  */
 const DataTableDemo = () => (
   <div className="w-full">

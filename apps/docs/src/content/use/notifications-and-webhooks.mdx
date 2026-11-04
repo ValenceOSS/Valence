@@ -1,7 +1,7 @@
 ---
 title: Notifications and webhooks
 description: How Valence tells people and other systems what happened, through the in app bell, browser push and signed webhooks, with events, payloads and redelivery.
-order: 8
+order: 9
 ---
 
 Valence talks in two directions. Notifications tell the people in your household that something happened to them: new media arrived, a request is ready. Webhooks tell other systems, such as a Discord or Slack channel, a Telegram chat, a notification service or your own script, what is happening on the server: a job failed, the disk is filling, somebody started watching. The two are independent, and a household usually wants both.
@@ -62,19 +62,31 @@ A push service holds a notification for a device that's switched off or asleep f
 
 ## Webhooks
 
-A webhook is a subscription: an address, a format and a list of events. When one of those events occurs Valence posts a message to the address. Webhooks are managed by accounts holding the `server.webhooks` permission, under **Webhooks** in the System group of the admin area.
+A webhook is a subscription: an address, a service and a list of events. When one of those events occurs Valence posts a message to the address. Webhooks are managed by accounts holding the `server.webhooks` permission, under **Webhooks** in the System group of the admin area.
+
+The **Webhooks** page lists every webhook with its **Service**, how many events it **Sends** and its **Last delivery**: **Delivered**, **Failing** or **Never used**. Choosing one opens it on a page of its own, and **Back to Webhooks** returns to the list. The page's address names the webhook (`?webhook=`), so it can be bookmarked or shared with another administrator.
 
 ### Creating a webhook
 
 1. Open the admin area, choose **Webhooks** and press **Create webhook**.
-2. Give it a **Name**. Only you see it.
-3. Choose a **Format**: what Valence sends, so the other end understands it.
-4. Enter the **Address** the deliveries are posted to. The hint beneath it changes with the format to say which address that service gives you.
-5. Tick the events you want, grouped as The server, Requests, People, The library, Watching and Plugins.
-6. Optionally narrow it with filters, described below.
-7. Press **Create webhook**.
+2. Choose the **Service**: what Valence sends, so the other end understands it.
+3. Paste the **Address** the deliveries are posted to.
+4. Optionally give it a **Name**. Left empty, it's named after the service.
+5. Press **Create**.
 
-The signing secret is then shown once, in a highlighted card. Copy it and give it to the receiver. If you lose it, delete the webhook and create another; the delete confirmation says as much.
+A new webhook starts by sending failed jobs, and opens on its own page to choose the rest. Its signing secret is shown there once, in a highlighted card. Copy it, give it to the receiver and press **I’ve copied it**. If you lose it, delete the webhook and create another.
+
+An address that isn't a web address, or a name longer than 100 characters, is pointed out under its field before anything is sent.
+
+### A webhook's page
+
+- **The top card** shows the service, how the last delivery went and when, the address, and the last error if it is failing. Beside them are the **Enabled** switch, **Send a test**, and a menu holding **Delete**.
+- **Where it goes** holds the **Name**, the **Service** and the **Address**. A changed name or address saves with its own **Save** button; a new service saves as soon as it is chosen.
+- **What it sends** chooses the events, described below.
+- **Only for** narrows who and what it reports, described under Filters.
+- **Deliveries** lists what it has sent lately.
+
+Every change saves as it is made and confirms with "Webhook saved."
 
 <Callout title="Where deliveries may go" tone="quiet">
   Valence refuses to send to anything that is not HTTP or HTTPS, and to link local addresses such as
@@ -82,20 +94,22 @@ The signing secret is then shown once, in a highlighted card. Copy it and give i
   credentials.
 </Callout>
 
-### Shapes
+### Services
 
-| Shape    | What is sent                                                                                                                                                                                                                                                                 |
+The service decides the shape of each message. **Valence JSON** (Generic) is Valence's own envelope, and **Custom** lets you write the request yourself, described below.
+
+| Service  | What is sent                                                                                                                                                                                                                                                                 |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| generic  | Valence's own envelope as JSON, sent as `application/json`. Build against this one.                                                                                                                                                                                          |
-| discord  | A message with an embed, for a Discord channel webhook URL. It is signed with the name and logo set under Branding, or Valence's, and drawn in the brand's accent where nothing is wrong. Where `BETTER_AUTH_URL` is https, the logo is fetched by Discord from your server. |
-| slack    | A Block Kit message for a Slack incoming webhook: the title as a header, the sentence beside the poster, and the rest in sections beneath.                                                                                                                                   |
-| telegram | A message from your bot: the title in bold above the details, with the poster as its preview.                                                                                                                                                                                |
+| Generic  | Valence's own envelope as JSON, sent as `application/json`. Build against this one.                                                                                                                                                                                          |
+| Discord  | A message with an embed, for a Discord channel webhook URL. It is signed with the name and logo set under Branding, or Valence's, and drawn in the brand's accent where nothing is wrong. Where `BETTER_AUTH_URL` is https, the logo is fetched by Discord from your server. |
+| Slack    | A Block Kit message for a Slack incoming webhook: the title as a header, the sentence beside the poster, and the rest in sections beneath.                                                                                                                                   |
+| Telegram | A message from your bot: the title in bold above the details, with the poster as its preview.                                                                                                                                                                                |
 | ntfy     | The event written as one plain text sentence, for an ntfy topic.                                                                                                                                                                                                             |
-| gotify   | A Gotify message in Markdown, with the poster as the notification's picture on Android.                                                                                                                                                                                      |
-| pushover | A Pushover notification, with names in bold where Pushover shows them, and the poster attached. Valence fetches the poster itself, since Pushover can't, and sends without it if it can't be fetched.                                                                        |
-| apprise  | A notification for an Apprise API server, which passes it on to whichever of its many services you have configured.                                                                                                                                                          |
+| Gotify   | A Gotify message in Markdown, with the poster as the notification's picture on Android.                                                                                                                                                                                      |
+| Pushover | A Pushover notification, with names in bold where Pushover shows them, and the poster attached. Valence fetches the poster itself, since Pushover can't, and sends without it if it can't be fetched.                                                                        |
+| Apprise  | A notification for an Apprise API server, which passes it on to whichever of its many services you have configured.                                                                                                                                                          |
 
-Every shape except generic and ntfy carries the same message as Discord's: a short title saying what happened (or the title a request or a new arrival is about), a sentence with the people and things it is about in bold, a small line of where and which (a device and what it runs, the seasons of a request, how much of a disk is free), the summary where there is one, short details such as `4K HDR` or `3 attempts` between bars, anything that went wrong quoted, a link to put it right, the poster where there is one, and which part of Valence it came from at the foot. A problem somebody has to put right, such as a failed job, an unreachable service, the VPN or an indexer going down, a failed download or a disk running out of room, is sent at high priority to Gotify (8, which sounds and vibrates on Android) and Pushover (1, which gets through quiet hours), and as a `failure` to Apprise. Everything else goes at the usual priority.
+Every service except Generic, ntfy and Custom carries the same message as Discord's: a short title saying what happened (or the title a request or a new arrival is about), a sentence with the people and things it is about in bold, a small line of where and which (a device and what it runs, the seasons of a request, how much of a disk is free), the summary where there is one, short details such as `4K HDR` or `3 attempts` between bars, anything that went wrong quoted, a link to put it right, the poster where there is one, and which part of Valence it came from at the foot. A problem somebody has to put right, such as a failed job, an unreachable service, the VPN or an indexer going down, a failed download or a disk running out of room, is sent at high priority to Gotify (8, which sounds and vibrates on Android) and Pushover (1, which gets through quiet hours), and as a `failure` to Apprise. Everything else goes at the usual priority.
 
 #### Addresses for each service
 
@@ -110,6 +124,15 @@ Some services read settings from the message itself. A webhook is only an addres
 | Apprise  | `http://<your Apprise API>/notify/<key>`, the key of a configuration saved in Apprise. Without a tag Apprise notifies only the services in it that have none; add `?tag=<tag>` to notify the ones with that tag.         |
 
 ### Events
+
+**What it sends** starts with a **Quick start**:
+
+- **Problems only:** failed and stalled jobs, unreachable services, low disk space, the VPN or an indexer going down, failed downloads and failed sign-ins.
+- **Problems and requests:** those, and requests being made, approved, refused and becoming available. Offered only where the requests service is set up.
+- **Everything:** every event.
+- **Custom:** shown once the events have been chosen one by one.
+
+Beneath it the events are listed in groups that fold, each saying how many of its events are on, with **Turn all on** or **Turn all off**. **Also say when it’s fixed** sends a second message when something that went wrong is working again: the disk has room again, the VPN is back up, a failing job works again. With it on, each problem brings its recovery with it, so the recoveries aren't listed separately. A webhook always sends at least one event.
 
 You can subscribe to these events. The test delivery is separate and is sent only when you ask.
 
@@ -137,18 +160,20 @@ Some notes worth knowing:
 
 Filters narrow a subscription without changing its events. An empty filter means everything, and a filter that does not apply to an event lets it through, so a failed sign in (which names no account) is not silently dropped by an account filter.
 
-The Watching events cover films, episodes, songs and audiobooks. Songs are the one exception to an empty filter meaning everything: a song being played is only sent when **Song** is chosen under Kinds, so an album played through doesn't post every track to a channel set up to hear about films.
+The Watching events cover films, episodes, songs and audiobooks. Songs are the one exception to an empty filter meaning everything: a song being played is only sent when **Song** is chosen under Media types, so an album played through doesn't post every track to a channel set up to hear about films.
 
-| Filter                    | Effect                                                                                                                                                                                                  |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts                  | Only events about the chosen accounts. A request counts when any of them asked for it, first or later.                                                                                                  |
-| Profiles                  | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests any of them asked for.                                                                                        |
-| Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                   |
-| How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
+They live in the **Only for** card of a webhook's page. **Everyone** and **Every kind** mean no filter.
+
+| Filter              | Effect                                                                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts            | Only events about the chosen accounts. A request counts when any of them asked for it, first or later.                                                                                                  |
+| Profiles            | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests any of them asked for.                                                                                        |
+| Media types         | Only `media.added`, `media.removed` and playback events about the chosen media types.                                                                                                                   |
+| When media is added | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
 
 ### Payload format
 
-The generic shape posts this envelope as the request body:
+The Generic service posts this envelope as the request body:
 
 ```json
 {
@@ -175,7 +200,7 @@ The request events above add a `request` object to `data`: its `id`, `kind` (`fi
 
 ### Signing
 
-Every delivery carries an `x-valence-signature` header of the form `sha256=` followed by a hex HMAC SHA-256 of the exact request body, computed with the webhook's secret. The user agent is `Valence`. To verify, compute the HMAC over the raw bytes you received and compare it to the header in constant time.
+Every delivery, except from a Custom webhook with **Sign each message** off, carries an `x-valence-signature` header of the form `sha256=` followed by a hex HMAC SHA-256 of the exact request body, computed with the webhook's secret. The user agent is `Valence`. To verify, compute the HMAC over the raw bytes you received and compare it to the header in constant time.
 
 ```ts
 import { createHmac, timingSafeEqual } from 'node:crypto';
@@ -189,23 +214,68 @@ const isFromValence = (secret: string, rawBody: string, header: string): boolean
 };
 ```
 
-Verify against the raw body before parsing it. Every other shape is signed too, over whatever body it sends.
+Verify against the raw body before parsing it. Every other service is signed too, over whatever body it sends.
 
 ### Testing
 
-Press **Send a test** on a webhook. It queues a `webhook.test` delivery and Valence confirms with a toast reading "Sent a test delivery." The test is only available while the webhook is enabled. The receiver gets a normal envelope with an empty `data` object, or, for every other shape, a message saying that it is a test.
+Press **Send a test** on a webhook's page. It queues a `webhook.test` delivery and Valence confirms with a toast reading "Sent a test delivery." The test is only available while the webhook is enabled. The receiver gets a normal envelope with an empty `data` object, or, for every other service, a message saying that it is a test. A Custom webhook fills its own template for the test, from the values every event has.
 
 ### Delivery, retries and history
 
 Deliveries are queued as jobs so a slow or dead receiver delays nothing else. A delivery counts as landed when the receiver answers with a 2xx status within ten seconds. Anything else, including a timeout or a refused address, is recorded and retried by the job queue with growing delays, for up to two retries after the first attempt.
 
-Each webhook shows a status badge from its last attempt. Press **History** to see recent deliveries with the event, the number of attempts, the status and any error. History is kept for seven days.
+A webhook's page lists its recent deliveries under **Deliveries**, each with its status (**Delivered** or **Failed**), the **Event** with any error beneath it, the number of **Tries** and when. History is kept for seven days.
 
-To resend one, use the redeliver action on that row; a toast reads "Delivered it again." A redelivery replays the stored body byte for byte, with a fresh signature computed over the same bytes, rather than describing the event as it looks today. It uses the same `id`, so a receiver that deduplicates will recognise it. Redelivery is only offered while the webhook is enabled.
+To resend a failed one, press **Resend** on its row; a toast reads "Delivered it again." A redelivery replays the stored body byte for byte, with a fresh signature computed over the same bytes, rather than describing the event as it looks today. It uses the same `id`, so a receiver that deduplicates will recognise it. Redelivery is only offered while the webhook is enabled.
 
-### Editing, pausing and deleting
+### Pausing and deleting
 
-Use the **Enabled** switch to pause a webhook without losing its secret or settings. A toast confirms "Webhook turned on." or "Webhook turned off." **Edit** changes its name, address, shape, events and filters and confirms with "Webhook saved." **Delete** asks first, then removes it and its secret, with "Webhook deleted."
+Use the **Enabled** switch on a webhook's page to pause it without losing its secret or settings. A toast confirms "Webhook turned on." or "Webhook turned off." **Delete**, in the page's menu, asks first, then removes it and its secret, with "Webhook deleted."
+
+### Custom
+
+The **Custom** service writes the request itself, for a receiver none of the other services fit: a home automation hook, a chat service Valence doesn't know, a script of your own. Choose **Custom** under **Service** on a webhook's page. It starts from a JSON template that sends the event's headline, summary, details, poster and link, and three more settings appear under **Where it goes**:
+
+- **Method:** **POST**, **PUT** or **PATCH**.
+- **Body format:** **JSON**, **Plain text** or **Form**. It also sets the `Content-Type` header. Changing it swaps a template you haven't touched for that format's own.
+- **Sign each message:** adds the `X-Valence-Signature` header made with the webhook's secret, as described under Signing. Turn it off for a receiver that has no use for it.
+
+#### Headers
+
+The **Headers** card adds headers of your own, such as a token the receiver asks for. Press **Add header**, then type its name and value; headers save a moment after you stop typing. The lock beside a value hides it once saved: a hidden value is never sent back to the page again, only to the receiver, and saving the header with its value left empty keeps the one already stored.
+
+A name is letters, numbers and dashes, and can't be one Valence sets itself, such as `Content-Type`, `Content-Length`, `User-Agent` or `X-Valence-Signature`. Neither part can hold a line break. A header that breaks these rules says so under it, and nothing saves until it's put right.
+
+#### Message
+
+The **Message** card holds the template on the left and, on the right, the request it makes for a sample of whichever event is chosen under **Event to preview**, with the events the webhook sends offered first. The preview shows the method and address, the headers (hidden values as dots) and the body. The template saves with its own **Save** button, which isn't offered while it can't be read; **Reset to default** puts back the one it started with.
+
+A placeholder is a name in double braces, such as `{{title}}`. The buttons above the template insert the common ones, and **More…** lists the rest, including every value in the chosen event's data:
+
+| Placeholder   | What it is filled with                                          |
+| ------------- | --------------------------------------------------------------- |
+| `title`       | A headline for the event.                                       |
+| `summary`     | One line saying what happened.                                  |
+| `body`        | More detail, where there is any.                                |
+| `poster`      | A poster or cover address, or nothing.                          |
+| `link`        | Where to see it in Valence, or nothing.                         |
+| `urgent`      | `true` when it needs looking at.                                |
+| `event`       | The event's name, like `job.failed`.                            |
+| `eventLabel`  | Its name in words.                                              |
+| `tone`        | `failure`, `attention`, `arrival`, `viewing` or `quiet`.        |
+| `occurredAt`  | When, as an ISO date.                                           |
+| `id`          | A unique id for the delivery.                                   |
+| `server.name` | This server's name.                                             |
+| `server.url`  | This server's address.                                          |
+| `data.…`      | Any value in the event's data, as the Generic service sends it. |
+
+How placeholders are filled depends on the body format:
+
+- **JSON:** the template is read as JSON first and only its string values are filled, so a value can never break the JSON. A string that is a lone placeholder takes the value's own type: `"{{urgent}}"` sends `true`, not `"true"`.
+- **Form:** the template is written as a JSON object, and each of its fields is sent as a form field.
+- **Plain text:** placeholders are swapped in as they are.
+
+A placeholder that names nothing for an event is left empty, and the preview says which. Valence refuses to save a template that can't be read, such as JSON with a missing comma. If a delivery's template still can't be filled, the delivery is recorded as failed with the reason and nothing is sent.
 
 ## Related pages
 

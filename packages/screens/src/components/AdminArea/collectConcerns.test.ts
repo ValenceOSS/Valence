@@ -189,6 +189,8 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
   listening: null,
   bookListening: null,
   reading: null,
+  controlledFrom: null,
+  remoteFor: null,
 });
 
 const healthy = {

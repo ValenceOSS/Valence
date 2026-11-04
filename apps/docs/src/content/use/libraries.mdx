@@ -257,7 +257,7 @@ Valence uses these sources, all configured in the admin **Settings** panel and d
 | The Movie Database (the catalogue) | Titles, years, overviews, cast, artwork, logos, certificates and trailers for films and shows | A free catalogue key. Without one, titles and years come from filenames alone.                    |
 | OMDb                               | Rotten Tomatoes scores                                                                        | An optional free key. Scores fill in as titles are scanned again.                                 |
 | TheAudioDB                         | Artist photographs and music videos                                                           | An optional key. Without one, a free key is used that finds only one music video for each artist. |
-| Cover Art Archive and LRCLIB       | Album covers and song words                                                                   | None. Enabled by the **Download music metadata from the web** switch, which is off by default.    |
+| Cover Art Archive and LRCLIB       | Album covers and song words                                                                   | None. Enabled by the **Music details** switch in Settings › Online services, off by default.      |
 
 Nothing a file already carries is replaced by fetched music details, and each album, artist and song is asked about once, on the next scan.
 
@@ -267,11 +267,26 @@ Nothing a file already carries is replaced by fetched music details, and each al
   used in preference.
 </Callout>
 
+## The Media page
+
+**Media**, under **Content**, lists what each library holds. Choose the library from **Which library** in the search field's menu, where a library with titles to fix says how many. Type in **Find a title** to narrow the list.
+
+- **The table.** Each film shows its poster, name and year, then its **Quality**, **Video** and **Audio**, how long it runs, its **Size** and how long ago it was **Added**. A series shows how many seasons and episodes are on the disk and folds open to its seasons and episodes; a film held more than once folds open to each version. Where the files of a title differ, a column says **Mixed**. Resting on a title shows where it is on the disk.
+- **What needs a look.** A title missing something is marked **Unmatched**, **No poster**, **There twice** or **Couldn’t be read**. The row above the table narrows it to **All titles**, **Unmatched**, **Duplicates** or **Unreadable**, each with how many. A music or book library offers **No cover** instead.
+- **Doing several at once.** Tick titles, or the box in the heading for every one shown, and the row says how many are selected, with **Re-encode**, **Rebuild previews**, **Delete** (which asks first) and **Clear**. Changing the library, the search or what's shown clears the selection.
+- **A title's menu** holds **Open**, **Wrong match?**, **Choose artwork…**, **Show in Files**, **Rebuild previews**, **Find subtitles…**, **Choose the preview frame**, **Re-encode…**, **Saved copies**, **Move to another library…**, **Exclude from library** and **Delete file…** or **Delete series…**, as far as each applies and you're allowed.
+
+### A title's own page
+
+Pressing a title's name, or **Open** in its menu, opens it on a page of its own; **Back to Media** returns to the list. The page's address names the title (`?media=`). It shows the title's backdrop, poster and overview, its library and how it is matched, such as "Matched · TMDB 603", with **Unmatched** where it isn't. Its buttons are **Open in Catalogue** where requesting is set up and the title is in the catalogue, **Fix match**, **Artwork** and **Open folder**. Beneath them are when it was added, how many files it has, their size, its genres and its rating.
+
+The **Files** card, or **Episodes** for a series, lists every file with its quality, video, audio, length and size, and the same menu as in the list. A **Re-encodes** card lists any re-encodes asked of its files, with when they were asked, the size before and after, and where each stands.
+
 ## Correcting a wrong match
 
 Sometimes the catalogue matches a file to the wrong film or series, usually because the name was ambiguous. Fix it once and the fix sticks across future scans.
 
-1. Open **Media** under **Content** and find the title with the search box, or open the film's actions menu wherever it is offered.
+1. Open **Media** under **Content** and find the title with the search box, or open the film's actions menu wherever it is offered. On a title's own page, **Fix match** does the same.
 2. Choose **Wrong match?**. The match picker opens, titled with the item's name.
 3. The search box is filled with the current title. Edit it if needed and press **Search**. The picker asks the catalogue and lists matches.
 4. Choose the correct entry. For a film the correction applies to that film. For an episode it applies to every episode of the series.
@@ -297,7 +312,7 @@ Valence has three layers of visibility, and they do different jobs.
 
 An administrator can stop an account reaching a library at all, or set an age ceiling per library, from **Accounts** in the admin area. Access is stored as refusals, so every account reaches every library until somebody says otherwise, and a new account needs no extra step before it can watch.
 
-- **Age limit**: choices are No ceiling, Suitable for all, Up to 8, Up to 12, Up to 15 and Up to 18. The ceiling is compared with the certificates the catalogue supplies, read for the country chosen under **Age certificates** in Settings (default GB).
+- **Age limit**: choices are No ceiling, Suitable for all, Up to 8, Up to 12, Up to 15 and Up to 18. The ceiling is compared with the certificates the catalogue supplies, read for the country chosen under **Age ratings** in Settings (default GB).
 - **Allow unrated**: items nobody has certificated are refused to an account with a ceiling unless this is on. That is deliberate: an unrated title shown to a child because a field was missing is the failure the feature exists to prevent. Music is never treated as unrated.
 - **Exceptions**: on a title's dialog, **Who can watch this** lets an administrator allow or deny a single film or series for an account. A deny always wins, an allow beats the ceiling, and otherwise the library ceiling applies.
 

@@ -76,7 +76,7 @@ const aVpnDrop = (reason: string): WebhookPayload => ({
 describe('discordEmbedFor', () => {
   it('draws Valence at the head, the title, the sentence over a small line, the summary and tags, the poster and the foot', () => {
     expect(
-      discordEmbedFor(aRequestMade, { name: 'Valence', iconUrl: ICON, accent: null }),
+      discordEmbedFor(aRequestMade, { name: 'Valence', url: null, iconUrl: ICON, accent: null }),
     ).toStrictEqual({
       title: 'A Quiet Town (2019)',
       description:
@@ -321,6 +321,7 @@ describe('discordEmbedFor, staying inside what Discord accepts', () => {
   it('signs with the name and logo the server was given, in its accent where nothing is wrong', () => {
     const brand = {
       name: 'Flux',
+      url: 'https://flux.example.com',
       iconUrl: 'https://flux.example.com/api/brand/logo',
       accent: 0x123456,
     };

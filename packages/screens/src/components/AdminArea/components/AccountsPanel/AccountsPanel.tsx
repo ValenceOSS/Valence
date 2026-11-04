@@ -19,7 +19,6 @@ import {
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -194,6 +193,20 @@ const avatarsEqual = (first: Avatar, second: Avatar): boolean => {
   }
 
   return true;
+};
+
+/**
+ * The roles worth showing on an account's row: all of them, less any role every account holds,
+ * which says nothing about this one, unless that would leave none.
+ *
+ * @param roles - The account's roles.
+ * @param everyones - The roles every account holds.
+ * @returns The roles to show.
+ */
+const shownRolesOf = (roles: readonly string[], everyones: ReadonlySet<string>): string[] => {
+  const telling = roles.filter((role) => !everyones.has(role));
+
+  return telling.length === 0 ? [...roles] : telling;
 };
 
 /**
@@ -631,12 +644,23 @@ const AccountsPanel = () => {
   }, [accounts, search, showing]);
 
   const roleColours = useMemo(() => new Map(roles.map((role) => [role.name, role.color])), [roles]);
+  const everyonesRoles = useMemo(
+    () =>
+      accounts.length < 2
+        ? new Set<string>()
+        : new Set(
+            (accounts[0]?.roles ?? []).filter((role) =>
+              accounts.every((account) => account.roles.includes(role)),
+            ),
+          ),
+    [accounts],
+  );
 
   const columns = useMemo<DataTableColumn<Account>[]>(
     () => [
       {
         id: 'name',
-        header: say('common.account'),
+        header: say('common.name'),
         accessorFn: (account) => account.name,
         cell: ({ row }) => (
           <Button
@@ -675,18 +699,22 @@ const AccountsPanel = () => {
               {say('screens.adminArea.accountsPanel.noRoles')}
             </span>
           ) : (
-            <span className="flex flex-wrap items-center gap-1.5">
-              {row.original.roles.map((role) => (
-                <Badge key={role} size="sm" colour={roleColours.get(role) ?? null}>
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {shownRolesOf(row.original.roles, everyonesRoles).map((role) => (
+                <span key={role} className="flex items-center gap-1.5 text-sm text-text">
+                  <span
+                    className="size-2 shrink-0 rounded-full ring-1 ring-inset ring-[var(--surface-divider)]"
+                    style={{ backgroundColor: roleColours.get(role) ?? 'transparent' }}
+                  />
                   {role}
-                </Badge>
+                </span>
               ))}
             </span>
           ),
       },
       {
         id: 'state',
-        header: say('common.state'),
+        header: say('common.status'),
         accessorFn: (account) => accountStandingOf(account),
         cell: ({ row }) => <AccountStanding account={row.original} now={now} />,
       },
@@ -695,8 +723,20 @@ const AccountsPanel = () => {
         header: say('screens.adminArea.accountsPanel.lastSignedIn'),
         accessorFn: (account) => account.lastSignedInAt ?? '',
         cell: ({ row }) => (
-          <span className="text-xs text-text-muted">
-            {describeSince(row.original.lastSignedInAt, now)}
+          <span
+            className="text-xs text-text-muted"
+            title={
+              row.original.lastSignedInAt === null
+                ? undefined
+                : new Date(row.original.lastSignedInAt).toLocaleString(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })
+            }
+          >
+            {row.original.lastSignedInAt === null
+              ? say('common.never')
+              : describeSince(row.original.lastSignedInAt, now)}
           </span>
         ),
       },
@@ -851,6 +891,7 @@ const AccountsPanel = () => {
     ],
     [
       act,
+      everyonesRoles,
       mayBan,
       roleColours,
       held,

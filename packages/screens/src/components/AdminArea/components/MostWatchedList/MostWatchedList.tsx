@@ -1,5 +1,6 @@
 import { BarList } from '@ValenceUI/BarList';
 import { say } from '@ValenceI18n/say';
+import { hoursInWords } from '@ValenceScreens/admin/hoursInWords';
 import type { MostWatchedListProps } from './MostWatchedList.types';
 
 /**
@@ -21,9 +22,7 @@ const MostWatchedList = ({ titles, limit = 10 }: MostWatchedListProps) => (
       value: title.plays,
       ...(title.hours > 0
         ? {
-            detail: say('screens.adminArea.mostWatchedList.hours', {
-              hours: title.hours.toLocaleString(),
-            }),
+            detail: hoursInWords(title.hours),
           }
         : {}),
     }))}

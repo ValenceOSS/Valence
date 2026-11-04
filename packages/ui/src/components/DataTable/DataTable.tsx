@@ -1,7 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ChevronDown as ChevronDownIcon,
-  ChevronUp as ChevronUpIcon,
+  ArrowDown as ArrowDownIcon,
+  ArrowUp as ArrowUpIcon,
   ChevronsUpDown as ChevronsUpDownIcon,
   MoveLeft as MoveLeftIcon,
   MoveRight as MoveRightIcon,
@@ -71,8 +71,11 @@ const FILLS = 'w-full min-w-64 max-w-0';
 
 const BAND = TABLE_LOOKS.band;
 
+const LINE_BEFORE =
+  'border-l border-[var(--surface-line)] in-[.valence-card-face]:border-[var(--card-face-line)]';
+
 const STRIPES =
-  '[&>tr:nth-child(even)]:bg-[color-mix(in_oklab,var(--color-text)_2.5%,transparent)]';
+  '[&>tr:not(:last-child)>td]:border-b [&>tr>td]:border-[color-mix(in_oklab,var(--color-text)_6%,transparent)]';
 
 const HEIGHT_CLASSES = {
   compact: 'max-h-[28rem]',
@@ -95,8 +98,13 @@ const HEIGHT_CLASSES = {
  * @param totalRows - How many rows there are in all, where the caller holds only the page being
  *   shown and reads each one from a server. The table then pages by this count rather than by the
  *   rows it was given, and shows them as they come instead of cutting a page out of them.
+ * @param hasMoreRows - Whether more rows can be read beyond those given, where how many is not
+ *   known: the table pages through what it holds, names no total, and keeps the next page open,
+ *   telling `onPageChange` so the caller reads the rest.
  * @param emptyMessage - What to say when there are none, rather than showing an empty grid.
  * @param onChooseRow - Told which row was pressed, where rows lead somewhere.
+ * @param expandsOnChoose - Whether pressing a row with rows beneath it opens or shuts them instead
+ *   of choosing it, so a group opens where it is and only its own rows lead somewhere.
  * @param onReorder - Told every row's id in its new order once a row is dragged to another place,
  *   where rows can be put in order by hand; the columns are not sorted then, since a sorted table
  *   has no order of its own to change.
@@ -128,8 +136,10 @@ const DataTable = <Row extends RowData>({
   columns,
   rows,
   totalRows,
+  hasMoreRows = false,
   emptyMessage = say('ui.dataTable.nothingHereYet'),
   onChooseRow,
+  expandsOnChoose = false,
   getRowId,
   toolbar,
   getSubRows,
@@ -287,7 +297,9 @@ const DataTable = <Row extends RowData>({
   });
 
   const pageCount =
-    totalRows === undefined ? table.getPageCount() : Math.max(1, Math.ceil(totalRows / pageSize));
+    totalRows === undefined
+      ? table.getPageCount() + (hasMoreRows ? 1 : 0)
+      : Math.max(1, Math.ceil(totalRows / pageSize));
 
   return (
     <div className={cn(TABLE_LOOKS.well, className)}>
@@ -337,10 +349,15 @@ const DataTable = <Row extends RowData>({
                       key={header.id}
                       scope="col"
                       className={cn(
-                        'sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2.5 text-left text-xs font-medium text-text-muted in-[.valence-card-face]:border-[var(--card-face-line)] sm:px-5',
-                        BAND,
+                        'group/th sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2 text-left text-xs font-medium text-text-muted in-[.valence-card-face]:border-[var(--card-face-line)] sm:px-5',
+                        TABLE_LOOKS.body,
+                        'in-[.valence-card-face]:bg-[var(--card-face)] in-[.valence-card-face]:bg-none',
                         header.column.columnDef.meta?.shrinks === true ? SHRINKS : '',
+                        header.column.columnDef.meta?.hasLineBefore === true ? LINE_BEFORE : '',
                         header.column.columnDef.meta?.hidesOnPhones === true ? 'max-sm:hidden' : '',
+                        header.column.columnDef.meta?.showsOnlyWhenWide === true
+                          ? 'max-xl:hidden'
+                          : '',
                       )}
                     >
                       <div className="flex items-center gap-1">
@@ -349,7 +366,10 @@ const DataTable = <Row extends RowData>({
                             variant="subtle"
                             size="none"
                             onClick={header.column.getToggleSortingHandler()}
-                            className="inline-flex items-center gap-1.5 font-medium"
+                            className={cn(
+                              'inline-flex items-center gap-1.5 font-medium',
+                              direction === false ? '' : 'text-text',
+                            )}
                           >
                             <DrawnCell
                               draw={() =>
@@ -358,11 +378,15 @@ const DataTable = <Row extends RowData>({
                             />
 
                             {direction === 'asc' ? (
-                              <Icon of={ChevronUpIcon} size={13} />
+                              <Icon of={ArrowUpIcon} size={12} />
                             ) : direction === 'desc' ? (
-                              <Icon of={ChevronDownIcon} size={13} />
+                              <Icon of={ArrowDownIcon} size={12} />
                             ) : (
-                              <Icon of={ChevronsUpDownIcon} size={13} className="opacity-40" />
+                              <Icon
+                                of={ChevronsUpDownIcon}
+                                size={12}
+                                className="opacity-0 transition-opacity group-hover/th:opacity-40 group-focus-within/th:opacity-40"
+                              />
                             )}
                           </Button>
                         ) : (
@@ -372,6 +396,8 @@ const DataTable = <Row extends RowData>({
                             }
                           />
                         )}
+
+                        {header.column.columnDef.meta?.info ?? null}
 
                         {filterOptions === undefined ? null : (
                           <OptionMenu
@@ -441,12 +467,18 @@ const DataTable = <Row extends RowData>({
                   const shrinks = row
                     .getAllCells()
                     .map((cell) => cell.column.columnDef.meta?.shrinks === true);
+                  const lines = row
+                    .getAllCells()
+                    .map((cell) => cell.column.columnDef.meta?.hasLineBefore === true);
                   const fills = row
                     .getAllCells()
                     .map((cell) => cell.column.columnDef.meta?.fills === true);
                   const hides = row
                     .getAllCells()
                     .map((cell) => cell.column.columnDef.meta?.hidesOnPhones === true);
+                  const wides = row
+                    .getAllCells()
+                    .map((cell) => cell.column.columnDef.meta?.showsOnlyWhenWide === true);
 
                   return row.depth === 0 ? (
                     <ReorderRow
@@ -459,15 +491,23 @@ const DataTable = <Row extends RowData>({
                           onReorder?.(dragOrder);
                         }
                       }}
-                      {...(onChooseRow === undefined
+                      {...(onChooseRow === undefined && !expandsOnChoose
                         ? {}
                         : {
                             onClick: () => {
-                              onChooseRow(row.original);
+                              if (expandsOnChoose && row.getCanExpand()) {
+                                row.toggleExpanded();
+
+                                return;
+                              }
+
+                              onChooseRow?.(row.original);
                             },
                           })}
                       className={cn(
-                        onChooseRow === undefined ? '' : 'cursor-pointer',
+                        onChooseRow === undefined && !(expandsOnChoose && row.getCanExpand())
+                          ? ''
+                          : 'cursor-pointer',
                         isReordering ? 'relative cursor-grab active:cursor-grabbing' : '',
                       )}
                     >
@@ -475,10 +515,12 @@ const DataTable = <Row extends RowData>({
                         <td
                           key={drawn.key}
                           className={cn(
-                            'px-3 py-3 align-middle sm:px-5',
+                            'px-3 py-2.5 align-middle sm:px-5',
                             shrinks[at] === true ? SHRINKS : '',
+                            lines[at] === true ? LINE_BEFORE : '',
                             fills[at] === true ? FILLS : '',
                             hides[at] === true ? 'max-sm:hidden' : '',
+                            wides[at] === true ? 'max-xl:hidden' : '',
                           )}
                         >
                           {drawn}
@@ -496,6 +538,12 @@ const DataTable = <Row extends RowData>({
                         onChooseRow === undefined
                           ? undefined
                           : () => {
+                              if (expandsOnChoose && row.getCanExpand()) {
+                                row.toggleExpanded();
+
+                                return;
+                              }
+
                               onChooseRow(row.original);
                             }
                       }
@@ -507,8 +555,10 @@ const DataTable = <Row extends RowData>({
                           className={cn(
                             'px-3 align-middle sm:px-5',
                             shrinks[at] === true ? SHRINKS : '',
+                            lines[at] === true ? LINE_BEFORE : '',
                             fills[at] === true ? FILLS : '',
                             hides[at] === true ? 'max-sm:hidden' : '',
+                            wides[at] === true ? 'max-xl:hidden' : '',
                           )}
                         >
                           <motion.div
@@ -553,11 +603,16 @@ const DataTable = <Row extends RowData>({
           )}
         >
           <p className="font-body text-xs text-text-muted">
-            {say('ui.dataTable.pageValueOfPageCountEveryRowIn', {
-              value: (page + 1).toString(),
-              pageCount: pageCount.toString(),
-              everyRow: everyRow.toString(),
-            })}
+            {hasMoreRows
+              ? say('ui.dataTable.rowsFromTo', {
+                  from: (page * pageSize + 1).toLocaleString(),
+                  to: Math.min((page + 1) * pageSize, everyRow).toLocaleString(),
+                })
+              : say('ui.dataTable.rowsFromToOfCount', {
+                  from: (page * pageSize + 1).toLocaleString(),
+                  to: Math.min((page + 1) * pageSize, everyRow).toLocaleString(),
+                  count: everyRow.toLocaleString(),
+                })}
           </p>
 
           <div className="flex items-center gap-1.5">

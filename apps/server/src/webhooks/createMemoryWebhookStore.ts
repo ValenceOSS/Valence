@@ -1,14 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { DEFAULT_WEBHOOK_FILTERS } from '@ValenceContracts/schemas/Webhook';
+import { blankSecretHeaders } from './blankSecretHeaders';
+import { keepSecretHeaders } from './keepSecretHeaders';
 import { subscriptionWants } from './subscriptionWants';
-import type { WebhookDelivery, WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
+import type {
+  CustomWebhook,
+  WebhookDelivery,
+  WebhookSubscription,
+} from '@ValenceContracts/schemas/Webhook';
 import type { WebhookStore } from './WebhookStore';
 
 /**
  * Subscriptions held in memory, for tests and for a server started without a database.
  */
 const createMemoryWebhookStore = (): WebhookStore => {
-  const subscriptions = new Map<string, { subscription: WebhookSubscription; secret: string }>();
+  const subscriptions = new Map<
+    string,
+    { subscription: WebhookSubscription; secret: string; custom: CustomWebhook | null }
+  >();
   const deliveries = new Map<
     string,
     { delivery: WebhookDelivery; body: string; eventId: string }
@@ -31,10 +40,11 @@ const createMemoryWebhookStore = (): WebhookStore => {
   return {
     list: () => Promise.resolve([...subscriptions.values()].map((held) => held.subscription)),
 
-    create: ({ name, url, preset, events, filters = DEFAULT_WEBHOOK_FILTERS }) => {
+    create: ({ name, url, preset, events, filters = DEFAULT_WEBHOOK_FILTERS, custom = null }) => {
       const id = randomUUID();
       const held = {
         secret: `whsec_memory_${id}`,
+        custom,
         subscription: {
           id,
           name,
@@ -42,6 +52,7 @@ const createMemoryWebhookStore = (): WebhookStore => {
           preset,
           events,
           filters,
+          custom: blankSecretHeaders(custom),
           enabled: true,
           createdAt: new Date().toISOString(),
           lastAttemptAt: null,
@@ -52,7 +63,7 @@ const createMemoryWebhookStore = (): WebhookStore => {
 
       subscriptions.set(id, held);
 
-      return Promise.resolve(held);
+      return Promise.resolve({ secret: held.secret, subscription: held.subscription });
     },
 
     update: (id, change) => {
@@ -62,8 +73,15 @@ const createMemoryWebhookStore = (): WebhookStore => {
         return Promise.resolve(null);
       }
 
+      const custom =
+        change.custom === undefined
+          ? held.custom
+          : change.custom === null
+            ? null
+            : keepSecretHeaders(change.custom, held.custom);
       const changed = {
         ...held.subscription,
+        custom: blankSecretHeaders(custom),
         ...(change.name === undefined ? {} : { name: change.name }),
         ...(change.url === undefined ? {} : { url: change.url }),
         ...(change.preset === undefined ? {} : { preset: change.preset }),
@@ -72,7 +90,7 @@ const createMemoryWebhookStore = (): WebhookStore => {
         ...(change.enabled === undefined ? {} : { enabled: change.enabled }),
       };
 
-      subscriptions.set(id, { ...held, subscription: changed });
+      subscriptions.set(id, { ...held, custom, subscription: changed });
 
       return Promise.resolve(changed);
     },
@@ -99,6 +117,7 @@ const createMemoryWebhookStore = (): WebhookStore => {
         url: held.subscription.url,
         preset: held.subscription.preset,
         secret: held.secret,
+        custom: held.custom,
       });
     },
 

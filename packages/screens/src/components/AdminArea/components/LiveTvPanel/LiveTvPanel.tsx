@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bin as BinFilledIcon,
   Calendar as CalendarFilledIcon,
+  Pen as PenFilledIcon,
   Plus as PlusFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -18,6 +19,7 @@ import { removeLiveSource } from '@ValenceClient/live/removeLiveSource';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { EditLiveSourceDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/EditLiveSourceDialog/EditLiveSourceDialog';
 import { LiveGuideDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/LiveGuideDialog/LiveGuideDialog';
 import { AddLiveSourceDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/AddLiveSourceDialog/AddLiveSourceDialog';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
@@ -50,6 +52,7 @@ const LiveTvPanel = () => {
   const [removing, setRemoving] = useState<LiveSource | null>(null);
   const [reading, setReading] = useState<string | null>(null);
   const [guiding, setGuiding] = useState<LiveSource | null>(null);
+  const [editing, setEditing] = useState<LiveSource | null>(null);
 
   const reread = () => cache.invalidateQueries({ queryKey: liveQueries.key });
 
@@ -101,7 +104,7 @@ const LiveTvPanel = () => {
           items: [
             {
               id: 'read',
-              label: say('screens.adminArea.linkedServersPanel.readAgainNow'),
+              label: say('screens.adminArea.liveTvPanel.scanNow'),
               icon: <Icon of={RefreshCwFilledIcon} size={15} />,
               isDisabled: reading !== null,
               onChoose: () => {
@@ -127,8 +130,16 @@ const LiveTvPanel = () => {
         {
           items: [
             {
+              id: 'edit',
+              label: say('screens.adminArea.liveTvPanel.edit'),
+              icon: <Icon of={PenFilledIcon} size={15} />,
+              onChoose: () => {
+                setEditing(item);
+              },
+            },
+            {
               id: 'guide',
-              label: say('screens.adminArea.liveTvPanel.guideAddressesMenu'),
+              label: say('screens.adminArea.liveTvPanel.tvGuide'),
               icon: <Icon of={CalendarFilledIcon} size={15} />,
               onChoose: () => {
                 setGuiding(item);
@@ -194,6 +205,16 @@ const LiveTvPanel = () => {
           setIsAdding(false);
         }}
         onAdded={() => {
+          void reread();
+        }}
+      />
+
+      <EditLiveSourceDialog
+        source={editing}
+        onClose={() => {
+          setEditing(null);
+        }}
+        onChanged={() => {
           void reread();
         }}
       />

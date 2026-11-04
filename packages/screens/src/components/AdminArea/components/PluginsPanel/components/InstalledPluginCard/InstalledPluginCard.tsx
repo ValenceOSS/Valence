@@ -5,6 +5,7 @@ import {
   RotateCcw as RotateCcwIcon,
   Settings as SettingsIcon,
 } from '@keyline-icons/react/fill';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
@@ -16,8 +17,8 @@ import { say } from '@ValenceI18n/say';
 
 const STATES = {
   running: { label: say('common.running'), tone: 'success' },
-  idle: { label: say('screens.pluginsPanel.installedPluginCard.ready'), tone: 'quiet' },
-  stopped: { label: say('common.off'), tone: 'quiet' },
+  idle: { label: say('screens.pluginsPanel.installedPluginCard.ready'), tone: 'success' },
+  stopped: { label: say('common.off'), tone: 'ended' },
   failed: { label: say('common.failed'), tone: 'danger' },
   upgrading: { label: say('screens.pluginsPanel.installedPluginCard.updating'), tone: 'busy' },
 } as const;
@@ -50,99 +51,131 @@ const InstalledPluginCard = ({
   const adminPages = plugin.pages.filter((page) => page.placement === 'admin');
 
   return (
-    <li className="flex flex-col gap-3 px-4 py-4">
-      <div className="flex items-start gap-3">
+    <li className="flex flex-col gap-3 px-5 py-4">
+      <div className="flex items-center gap-4">
         {plugin.iconUrl === null || !plugin.iconUrl.startsWith('/api/') ? (
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-text-muted">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)] text-text-muted">
             <Icon of={PuzzleIcon} size={18} />
           </span>
         ) : (
           <img src={plugin.iconUrl} alt="" className="size-10 shrink-0 rounded-lg object-cover" />
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="truncate font-medium text-text">{plugin.name}</span>
-            <span className="text-xs text-text-muted">{plugin.version}</span>
-            <TrustBadge trust={plugin.trust} />
+            <span className="truncate text-[0.9375rem] font-medium text-text">{plugin.name}</span>
+            <span className="text-xs tabular-nums text-text-muted">{plugin.version}</span>
+            {plugin.trust === 'official' ? null : <TrustBadge trust={plugin.trust} />}
             {plugin.isEnabled ? (
               <Badge size="sm" tone={state.tone}>
                 {state.label}
               </Badge>
-            ) : null}
+            ) : (
+              <Badge size="sm" tone="ended">
+                {say('common.off')}
+              </Badge>
+            )}
           </div>
 
-          <p className="text-xs leading-relaxed text-text-muted">{plugin.description}</p>
-          <p className="text-xs text-text-muted/80">
-            {say('common.byAuthor', { author: plugin.author })}
+          <p className="line-clamp-1 text-xs text-text-muted" title={plugin.description}>
+            {plugin.description}
           </p>
         </div>
 
-        <Switch
-          label={
-            plugin.isEnabled
-              ? say('common.turnNameOff', { name: plugin.name })
-              : say('common.turnNameOn', { name: plugin.name })
-          }
-          isLabelHidden
-          isOn={plugin.isEnabled}
-          disabled={isBusy}
-          onToggle={onToggle}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          {plugin.updateAvailable === null ? null : (
+            <Button size="sm" variant="confirm" disabled={isBusy} onClick={onUpdate}>
+              {say('screens.pluginsPanel.installedPluginCard.updateToUpdateAvailable', {
+                updateAvailable: plugin.updateAvailable,
+              })}
+            </Button>
+          )}
+
+          {adminPages.map((page) => (
+            <Button
+              key={page.id}
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                onOpenPage({ pageId: page.id, title: page.title });
+              }}
+            >
+              {page.title}
+            </Button>
+          ))}
+
+          <Switch
+            label={
+              plugin.isEnabled
+                ? say('common.turnNameOff', { name: plugin.name })
+                : say('common.turnNameOn', { name: plugin.name })
+            }
+            isLabelHidden
+            isOn={plugin.isEnabled}
+            disabled={isBusy}
+            onToggle={onToggle}
+          />
+
+          <ActionMenu
+            label={say('common.actionsForName', { name: plugin.name })}
+            groups={[
+              ...(plugin.settings.length === 0 && plugin.webhooks.length === 0
+                ? []
+                : [
+                    {
+                      items: [
+                        {
+                          id: 'settings',
+                          label: say('common.settings'),
+                          icon: <Icon of={SettingsIcon} size={15} />,
+                          onChoose: onSettings,
+                        },
+                      ],
+                    },
+                  ]),
+              ...(plugin.previousVersion === null
+                ? []
+                : [
+                    {
+                      items: [
+                        {
+                          id: 'rollback',
+                          label: say('screens.adminArea.pluginsPanel.rollBackToVersion', {
+                            version: plugin.previousVersion,
+                          }),
+                          icon: <Icon of={RotateCcwIcon} size={15} />,
+                          isDisabled: isBusy,
+                          onChoose: onRollback,
+                        },
+                      ],
+                    },
+                  ]),
+              {
+                items: [
+                  {
+                    id: 'remove',
+                    label: say('common.forget'),
+                    icon: <Icon of={BinIcon} size={15} />,
+                    isDestructive: true,
+                    isDisabled: isBusy,
+                    onChoose: onRemove,
+                  },
+                ],
+              },
+            ]}
+          />
+        </div>
       </div>
 
       {plugin.problem === null ? null : (
         <Callout
           title={say('screens.pluginsPanel.installedPluginCard.itStoppedWorking')}
           tone="danger"
+          className="ml-14"
         >
           {sayAgain(plugin.problem)}
         </Callout>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        {plugin.updateAvailable === null ? null : (
-          <Button size="sm" variant="confirm" disabled={isBusy} onClick={onUpdate}>
-            {say('screens.pluginsPanel.installedPluginCard.updateToUpdateAvailable', {
-              updateAvailable: plugin.updateAvailable,
-            })}
-          </Button>
-        )}
-
-        {adminPages.map((page) => (
-          <Button
-            key={page.id}
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              onOpenPage({ pageId: page.id, title: page.title });
-            }}
-          >
-            {page.title}
-          </Button>
-        ))}
-
-        {plugin.settings.length === 0 && plugin.webhooks.length === 0 ? null : (
-          <Button size="sm" variant="secondary" onClick={onSettings}>
-            <Icon of={SettingsIcon} size={14} />
-            {say('common.settings')}
-          </Button>
-        )}
-
-        {plugin.previousVersion === null ? null : (
-          <Button size="sm" variant="ghost" disabled={isBusy} onClick={onRollback}>
-            <Icon of={RotateCcwIcon} size={14} />
-            {say('screens.adminArea.pluginsPanel.rollBackToVersion', {
-              version: plugin.previousVersion,
-            })}
-          </Button>
-        )}
-
-        <Button size="sm" variant="ghost" disabled={isBusy} onClick={onRemove}>
-          <Icon of={BinIcon} size={14} />
-          {say('common.forget')}
-        </Button>
-      </div>
     </li>
   );
 };

@@ -42,6 +42,7 @@ const webhooksAt = (now: number, isAnswered: boolean): WebhookSubscription[] => 
     preset: 'discord',
     events: ['media.added', 'playback.started'],
     filters: { mediaAdded: 'perScan', accounts: [], profiles: [], itemTypes: [] },
+    custom: null,
     enabled: true,
     createdAt: before(now, 86_400),
     lastAttemptAt: before(now, isAnswered ? 1 : 30),
@@ -55,6 +56,7 @@ const webhooksAt = (now: number, isAnswered: boolean): WebhookSubscription[] => 
     preset: 'generic',
     events: ['playback.started', 'playback.stopped'],
     filters: { mediaAdded: 'perScan', accounts: [], profiles: [], itemTypes: [] },
+    custom: null,
     enabled: true,
     createdAt: before(now, 86_400),
     lastAttemptAt: before(now, 120),
@@ -103,7 +105,7 @@ const deliveriesAt = (now: number, isAnswered: boolean): WebhookDelivery[] => [
 const takes = (): Promise<null> => Promise.resolve(null);
 
 /**
- * The admin page of webhooks, drawn by the app's own panel with the failing one's history open;
+ * The admin page of webhooks, drawn by the app's own panel with the failing one's page open;
  * acted out, its failed delivery is sent again and this time answered.
  *
  * @param isActed - Whether the failed delivery has been sent again.
@@ -128,6 +130,8 @@ const WebhooksPicture = ({ isActed = false }: WebhooksPictureProps) => {
           onTest={nothing}
           deliveries={deliveriesAt(now, isActed)}
           openHistoryId={DISCORD}
+          openedWebhook={DISCORD}
+          onOpenWebhook={nothing}
           isHistoryLoading={false}
           onOpenHistory={nothing}
           onRedeliver={nothing}

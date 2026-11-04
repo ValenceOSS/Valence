@@ -300,14 +300,16 @@ const DownloadsPanel = () => {
               <span className="text-xs tabular-nums text-text-muted">{total}</span>
             )}
 
-            <PanelCardAction
-              icon={PlusFilledIcon}
-              onClick={() => {
-                setIsAdding(true);
-              }}
-            >
-              {say('common.addADownloadClient')}
-            </PanelCardAction>
+            {tab !== 'clients' ? null : (
+              <PanelCardAction
+                icon={PlusFilledIcon}
+                onClick={() => {
+                  setIsAdding(true);
+                }}
+              >
+                {say('common.addADownloadClient')}
+              </PanelCardAction>
+            )}
           </>
         }
         below={

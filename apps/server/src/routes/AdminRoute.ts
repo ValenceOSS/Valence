@@ -297,6 +297,8 @@ const AdminSessionSchema = z
     listening: ListeningSessionSchema.nullable().default(null),
     bookListening: BookListeningSessionSchema.nullable().default(null),
     reading: ReadingSessionSchema.nullable().default(null),
+    controlledFrom: z.object({ clientId: z.string(), label: z.string() }).nullable().default(null),
+    remoteFor: z.object({ clientId: z.string(), label: z.string() }).nullable().default(null),
     streams: z
       .object({ limit: StreamLimitSchema, now: z.number().int().nonnegative() })
       .nullable()
@@ -908,6 +910,7 @@ const adminJobHistoryRoute = createRoute({
       offset: z.coerce.number().int().nonnegative().optional(),
       limit: z.coerce.number().int().positive().max(1000).optional(),
       runningFirst: z.enum(['true', 'false']).optional(),
+      hidesRoutine: z.enum(['true', 'false']).optional(),
     }),
   },
   responses: {

@@ -1481,6 +1481,7 @@ const webhookSubscription = mysqlTable(
     filters: jsonColumn('filters')
       .notNull()
       .$defaultFn(() => ({})),
+    custom: jsonColumn('custom'),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: momentNow('createdAt').notNull(),
     lastAttemptAt: moment('lastAttemptAt'),

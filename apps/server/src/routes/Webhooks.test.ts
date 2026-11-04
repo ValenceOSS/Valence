@@ -12,6 +12,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
 import { createMemoryWebhookStore } from '@ValenceServer/webhooks/createMemoryWebhookStore';
+import { DEFAULT_CUSTOM_WEBHOOK } from '@ValenceContracts/constants/DEFAULT_CUSTOM_WEBHOOK';
 import {
   WebhookDeliverySchema,
   WebhookSubscriptionSchema,
@@ -404,5 +405,83 @@ describe('the test delivery is a button, not a subscription', () => {
     const made = await create();
 
     expect((await request(`/api/webhooks/${made.id}/test`, 'POST')).status).toBe(202);
+  });
+
+  it('gives a Custom webhook made without a setup the default one', async () => {
+    const { create } = await asKeeper();
+
+    const made = await create({ ...aSubscription, preset: 'custom' });
+
+    expect(made.custom).toStrictEqual(DEFAULT_CUSTOM_WEBHOOK);
+  });
+
+  it('gives a webhook switched to Custom the default setup, and keeps one it already has', async () => {
+    const { request, create } = await asKeeper();
+    const made = await create();
+
+    const switched = WebhookSubscriptionSchema.parse(
+      await (await request(`/api/webhooks/${made.id}`, 'PATCH', { preset: 'custom' })).json(),
+    );
+
+    expect(switched.custom).toStrictEqual(DEFAULT_CUSTOM_WEBHOOK);
+
+    await request(`/api/webhooks/${made.id}`, 'PATCH', {
+      custom: { ...DEFAULT_CUSTOM_WEBHOOK, method: 'PUT' },
+    });
+
+    const again = WebhookSubscriptionSchema.parse(
+      await (await request(`/api/webhooks/${made.id}`, 'PATCH', { preset: 'custom' })).json(),
+    );
+
+    expect(again.custom?.method).toBe('PUT');
+  });
+
+  it('refuses a template that could never be filled, saying why', async () => {
+    const { request } = await asKeeper();
+
+    const response = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      preset: 'custom',
+      custom: { ...DEFAULT_CUSTOM_WEBHOOK, template: '{ nope' },
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: 'error.webhook.theMessageTemplateIsNotValidJson',
+    });
+  });
+
+  it('refuses a header that could split the request', async () => {
+    const { request } = await asKeeper();
+
+    const response = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      preset: 'custom',
+      custom: {
+        ...DEFAULT_CUSTOM_WEBHOOK,
+        headers: [{ name: 'X-Evil', value: 'a\r\nHost: elsewhere', isSecret: false }],
+      },
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('never answers a secret header’s value, and keeps it when it comes back empty', async () => {
+    const { request, create, webhooks } = await asKeeper();
+    const made = await create({
+      ...aSubscription,
+      preset: 'custom',
+      custom: {
+        ...DEFAULT_CUSTOM_WEBHOOK,
+        headers: [{ name: 'Authorization', value: 'Bearer token', isSecret: true }],
+      },
+    });
+
+    expect(JSON.stringify(made)).not.toContain('Bearer token');
+    expect(await (await request('/api/webhooks')).text()).not.toContain('Bearer token');
+
+    await request(`/api/webhooks/${made.id}`, 'PATCH', { custom: made.custom });
+
+    expect((await webhooks.readTarget(made.id))?.custom?.headers[0]?.value).toBe('Bearer token');
   });
 });

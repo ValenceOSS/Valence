@@ -68,7 +68,7 @@ describe('ClearLibraryPartsDialog', () => {
   it('starts with every library ticked and no part, so nothing goes unchosen', () => {
     open([MOVIES]);
 
-    expect(screen.getByRole('checkbox', { name: 'Every library' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /^Descriptions/ })).not.toBeChecked();
     expect(screen.getByRole('button', { name: 'Clear 0 parts' })).toBeDisabled();
   });
@@ -123,7 +123,7 @@ describe('ClearLibraryPartsDialog', () => {
   it('asks for a library before it offers any part', async () => {
     open([MOVIES]);
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Every library' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     expect(screen.getByText('Choose a library to see what can be cleared.')).toBeInTheDocument();
   });

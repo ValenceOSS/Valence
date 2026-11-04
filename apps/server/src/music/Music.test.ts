@@ -147,6 +147,8 @@ const fakeMusic = () => {
       report: vi.fn(() => true),
       command: vi.fn(() => false),
       playingOn: vi.fn(() => null),
+      controllerOf: vi.fn(() => null),
+      remoteFor: vi.fn(() => null),
       order: vi.fn(() => false),
     },
     pictures: {

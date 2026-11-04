@@ -169,15 +169,15 @@ describe('Button', () => {
     );
   });
 
-  it('lights the main action with the accent and fills the dangerous one in its own colour', () => {
+  it('draws the main action in white and fills the dangerous one in its own colour', () => {
     render(
       <>
-        <Button variant="primary">Save</Button>
+        <Button variant="confirm">Save</Button>
         <Button variant="danger">Delete</Button>
       </>,
     );
 
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('text-accent-contrast');
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-white');
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('bg-danger');
   });
 

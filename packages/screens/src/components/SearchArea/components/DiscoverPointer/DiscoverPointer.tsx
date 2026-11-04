@@ -77,7 +77,7 @@ const DiscoverPointer = ({ query, isAlone, onAsk, onDiscover }: DiscoverPointerP
       )}
 
       <Button
-        variant={isAlone ? 'primary' : 'secondary'}
+        variant={isAlone ? 'confirm' : 'secondary'}
         onClick={() => {
           onDiscover(query);
         }}

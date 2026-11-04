@@ -13,10 +13,8 @@ import type { LinkedServerDetailProps } from './LinkedServerDetail.types';
  */
 const LinkedServerDetail = ({ server, thisServer }: LinkedServerDetailProps) => (
   <div className="flex flex-col gap-4">
-    <div className="grid gap-4 lg:grid-cols-2">
-      <SharingCard server={server} thisServer={thisServer} />
-      <TheirLibrariesCard server={server} />
-    </div>
+    <TheirLibrariesCard server={server} />
+    <SharingCard server={server} thisServer={thisServer} />
     <RemotePeopleCard server={server} />
     <LinkActivityCard server={server} thisServer={thisServer} />
   </div>

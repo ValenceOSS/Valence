@@ -1497,6 +1497,7 @@ const webhookSubscription = pgTable(
     preset: text('preset').notNull().default('generic'),
     events: jsonb('events').notNull(),
     filters: jsonb('filters').notNull().default({}),
+    custom: jsonb('custom'),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     lastAttemptAt: timestamp('lastAttemptAt'),

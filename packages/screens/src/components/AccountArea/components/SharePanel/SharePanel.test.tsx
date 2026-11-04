@@ -25,6 +25,7 @@ const share = (overrides: Partial<Share> = {}): Share => ({
   viewCap: null,
   views: 0,
   isRevoked: false,
+  episode: null,
   isSpent: false,
   ...overrides,
 });
@@ -99,7 +100,7 @@ describe('SharePanel', () => {
 
     renderInAnAddress(<SharePanel />);
 
-    await user.click(await screen.findByRole('button', { name: /Link to/ }));
+    await user.click(await screen.findByRole('button', { name: /Title/ }));
 
     const [, first] = screen.getAllByRole('row');
 

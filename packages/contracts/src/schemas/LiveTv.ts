@@ -99,6 +99,13 @@ const NewLiveSourceSchema = z.discriminatedUnion('kind', [
 
 const LiveGuideChangeSchema = z.object({ guideUrl: GuideAddressesSchema.nullable() });
 
+const LiveSourceChangeSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  address: z.string().trim().min(1).max(2048).optional(),
+  playlist: z.string().min(1).max(MOST_PLAYLIST_BYTES).optional(),
+  logoUrl: z.string().trim().min(1).max(2048).nullable().optional(),
+});
+
 const LiveChannelSchema = z.object({
   id: z.string().uuid(),
   sourceId: z.string().uuid(),
@@ -145,7 +152,10 @@ type LiveProgramme = z.infer<typeof LiveProgrammeSchema>;
 type LiveGuide = z.infer<typeof LiveGuideSchema>;
 type LiveStream = z.infer<typeof LiveStreamSchema>;
 
+type LiveSourceChange = z.infer<typeof LiveSourceChangeSchema>;
+
 export type {
+  LiveSourceChange,
   LiveChannel,
   LiveGuide,
   LiveHealth,
@@ -164,6 +174,7 @@ export {
   LiveAddressSchema,
   LiveChannelSchema,
   LiveGuideChangeSchema,
+  LiveSourceChangeSchema,
   LiveGuideSchema,
   LiveProgrammeSchema,
   LiveSourceKindSchema,

@@ -149,6 +149,8 @@ const ENGLISH = {
     'Start a watch party that plays one stream to everyone who joins.',
   'client.admin.describeReencodeState.checkingWhatCameOut': 'Checking the result',
   'client.admin.describeReencodeState.rejectedOriginalRestored': 'Rejected, original restored',
+  'client.admin.describeScanResult.changed.one': '{count} changed',
+  'client.admin.describeScanResult.changed.other': '{count} changed',
   'client.admin.describeScanResult.nothingChanged': 'Nothing changed',
   'client.admin.describeStreamLimit.streamsOfMost': '{now} of {most} streams',
   'client.admin.describeStreamLimit.upToMbps': 'Up to {mbps} Mbps',
@@ -890,6 +892,7 @@ const ENGLISH = {
   'common.create': 'Create',
   'common.createWebhook': 'Create webhook',
   'common.dark': 'Dark',
+  'common.date': 'Date',
   'common.dayAtTime': '{day} at {time}',
   'common.daysDaysAgo': '{days} days ago',
   'common.decade': 'Decade',
@@ -1364,6 +1367,7 @@ const ENGLISH = {
   'common.percent': '{value}%',
   'common.percentDone': '{percent} done',
   'common.percentRead': '{percent}% read',
+  'common.person': 'Person',
   'common.pickSomeEpisodes': 'Select episodes',
   'common.picture': 'Picture',
   'common.pixel': 'Pixel',
@@ -2335,6 +2339,7 @@ const ENGLISH = {
   'error.live.iptvOrgCouldNotBeReached': 'iptv-org couldn’t be reached.',
   'error.live.noSuchChannel': 'There’s no such channel.',
   'error.live.noSuchSource': 'There’s no such live TV source.',
+  'error.live.thatAddressCannotBeRead': 'That address isn’t one Valence can read.',
   'error.live.thatChannelCouldNotBeStarted': 'That channel couldn’t be started.',
   'error.live.thatChannelHasNoLogo': 'That channel has no logo.',
   'error.live.thatIsNotAStream': 'The address answered with a web page rather than a stream.',
@@ -2530,11 +2535,14 @@ const ENGLISH = {
   'error.upload.thatPieceWasBytesBytesWhere':
     'That part was {bytes} bytes, but {expected} were expected.',
   'error.upload.thereIsAlreadyAFileCalled': 'A file with that name already exists.',
+  'error.webhook.aFormTemplateIsAnObjectOfFields':
+    'A form template has to be a JSON object of fields.',
   'error.webhook.noSuchDeliveryOrTheSubscription':
     'No such delivery, or the subscription was deleted or turned off.',
   'error.webhook.noSuchSubscription': 'No such subscription.',
   'error.webhook.noSuchSubscriptionOrItIs': 'No such subscription, or it’s turned off.',
   'error.webhook.theAddressIsMissingSettings': 'The address is missing {settings}.',
+  'error.webhook.theMessageTemplateIsNotValidJson': 'The message template isn’t valid JSON.',
   'native.captionTextStyle.avenirNextCondensed': 'Avenir Next Condensed',
   'native.captionTextStyle.chalkboardSE': 'Chalkboard SE',
   'native.captionTextStyle.courierNew': 'Courier New',
@@ -3637,6 +3645,7 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.whoToShow': 'Filter accounts',
   'screens.adminArea.accountsPanel.youDoNotHoldThePermission':
     'You don’t have permission to reset passwords or sign accounts out.',
+  'screens.adminArea.accountStanding.noPasswordDetail': 'This account has no password or passkey.',
   'screens.adminArea.accountStreamLimits.couldNotRead':
     'This account’s streaming limits couldn’t be read.',
   'screens.adminArea.accountStreamLimits.couldNotSave': 'Streaming limits couldn’t be saved.',
@@ -3718,10 +3727,13 @@ const ENGLISH = {
   'screens.adminArea.ageChoices.upTo15': 'Up to 15',
   'screens.adminArea.ageChoices.upTo18': 'Up to 18',
   'screens.adminArea.ageChoices.upTo8': 'Up to 8',
+  'screens.adminArea.alertsPanel.aboutAlerts': 'About alerts',
   'screens.adminArea.alertsPanel.alertsSaved': 'Alerts saved.',
   'screens.adminArea.alertsPanel.busyGPUEncoder': 'Busy GPU encoder',
   'screens.adminArea.alertsPanel.choosesWhichAlertsShow':
     'Chooses which alerts show on the overview. Turning one off hides it for every admin on this server.',
+  'screens.adminArea.alertsPanel.choosesWhichAlertsShowOnTheOverview':
+    'Chooses which alerts show on the overview.',
   'screens.adminArea.alertsPanel.cloudflareSolverWontStart': 'Cloudflare solver won’t start',
   'screens.adminArea.alertsPanel.failedJobs': 'Failed jobs',
   'screens.adminArea.alertsPanel.failingIndexers': 'Failing indexers',
@@ -3730,6 +3742,7 @@ const ENGLISH = {
   'screens.adminArea.alertsPanel.libraryDiskNearlyFull': 'Library disk nearly full',
   'screens.adminArea.alertsPanel.lowBuffer': 'Low buffer',
   'screens.adminArea.alertsPanel.lowMemory': 'Low memory',
+  'screens.adminArea.alertsPanel.mediaService': 'Media service',
   'screens.adminArea.alertsPanel.mediaServiceUnreachable': 'Media service unreachable',
   'screens.adminArea.alertsPanel.noCatalogueKey': 'No catalogue key',
   'screens.adminArea.alertsPanel.noLibraries': 'No libraries',
@@ -3781,6 +3794,8 @@ const ENGLISH = {
   'screens.adminArea.alertsPanel.titleShowsWhenSomethingIsBroken':
     '“{title}” shows when something is broken. While it’s off, the overview won’t tell you about it.',
   'screens.adminArea.alertsPanel.turnAllOn': 'Turn all on',
+  'screens.adminArea.alertsPanel.turningAnAlertOff':
+    'Turning an alert off hides it for every admin on this server.',
   'screens.adminArea.alertsPanel.turnOffThisAlert': 'Turn off this alert?',
   'screens.adminArea.alertsPanel.unreadableLibraries': 'Unreadable libraries',
   'screens.adminArea.alertsPanel.unscannedLibraries': 'Unscanned libraries',
@@ -3790,12 +3805,17 @@ const ENGLISH = {
   'screens.adminArea.announcementCard.announcementPosted': 'Announcement posted.',
   'screens.adminArea.announcementCard.announcementTakenDown': 'Announcement taken down.',
   'screens.adminArea.announcementCard.howSerious': 'How serious it is',
+  'screens.adminArea.announcementCard.messageDetail':
+    'Shown at the top of every page. Posting replaces the one up now.',
   'screens.adminArea.announcementCard.news': 'News',
+  'screens.adminArea.announcementCard.post': 'Post',
   'screens.adminArea.announcementCard.postIt': 'Post it',
   'screens.adminArea.announcementCard.replacesAnyUpNow':
     'Posting a new one replaces any that is up now.',
+  'screens.adminArea.announcementCard.serverRestarting': 'Server restarting at 10pm',
   'screens.adminArea.announcementCard.shownOverEveryPage':
     'Shown over every page on every device, the player included, until it ends, is taken down, or somebody puts it away on their own device.',
+  'screens.adminArea.announcementCard.showsFor': 'Shows for',
   'screens.adminArea.announcementCard.staysUpFor': 'Stays up for',
   'screens.adminArea.announcementCard.takeItDown': 'Take it down',
   'screens.adminArea.announcementCard.untilTakenDown': 'Until taken down',
@@ -3865,6 +3885,10 @@ const ENGLISH = {
   'screens.adminArea.arrAppsPanel.theConnectedAppsCouldNotBe': 'Couldn’t load connected apps.',
   'screens.adminArea.arrAppsPanel.theIndexersItBroughtInAre':
     'The indexers imported from it are removed too. Nothing is deleted from Prowlarr itself.',
+  'screens.adminArea.artistRequestsCard.artistReleases': 'Artist releases',
+  'screens.adminArea.artistRequestsCard.artistReleasesDetail':
+    'Sets which releases an artist request downloads unless the requester chooses.',
+  'screens.adminArea.artistRequestsCard.artistRequests': 'Artist requests',
   'screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas': 'Loading artwork',
   'screens.adminArea.artworkPicker.backdrop': 'Backdrop',
   'screens.adminArea.artworkPicker.backToTheCataloguesOwnPicture': 'Reset to the default artwork.',
@@ -3916,20 +3940,24 @@ const ENGLISH = {
   'screens.adminArea.askForMediaDialog.youPickFromWhatTheIndexers':
     'You choose a release from your indexers before anything is downloaded.{LATER_PICKS}',
   'screens.adminArea.auditPanel.aboutTheAuditLog': 'About the audit log',
+  'screens.adminArea.auditPanel.action': 'Action',
+  'screens.adminArea.auditPanel.addressSameMachine': '{address} · same machine',
+  'screens.adminArea.auditPanel.apiKeyName': 'API key · {name}',
   'screens.adminArea.auditPanel.everySignInAndChange':
     'Every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, with who did it, when and where from.',
   'screens.adminArea.auditPanel.filterTheAuditLog': 'Filter the audit log',
+  'screens.adminArea.auditPanel.item': 'Item',
   'screens.adminArea.auditPanel.kindOfChange': 'Kind of change',
   'screens.adminArea.auditPanel.nobodySignedIn': 'Nobody signed in',
   'screens.adminArea.auditPanel.nothingHasBeenChangedYet': 'Nothing has been changed yet.',
   'screens.adminArea.auditPanel.nothingMatchesThat': 'Nothing in the audit log matches that.',
   'screens.adminArea.auditPanel.onWhat': 'On what',
-  'screens.adminArea.auditPanel.readFurtherBack': 'Read further back',
   'screens.adminArea.auditPanel.readingTheAuditLog': 'Reading the audit log…',
   'screens.adminArea.auditPanel.searchByWhoWhatOrAddress': 'Search by person, title or address',
   'screens.adminArea.auditPanel.searchTheAuditLog': 'Search the audit log',
   'screens.adminArea.auditPanel.somebodySinceRemoved': 'Somebody since removed',
   'screens.adminArea.auditPanel.theAuditLogCouldNotBeRead': 'The audit log could not be read.',
+  'screens.adminArea.auditPanel.thisAccountNoLongerExists': 'This account no longer exists.',
   'screens.adminArea.authorUnknown': 'Author unknown',
   'screens.adminArea.backgroundJobs.backgroundJobs': 'Background jobs',
   'screens.adminArea.backgroundJobs.nothingQueued': 'No jobs queued.',
@@ -3949,10 +3977,15 @@ const ENGLISH = {
   'screens.adminArea.backupsPanel.byHand': 'By hand',
   'screens.adminArea.backupsPanel.deletedTheBackup': 'Deleted the backup.',
   'screens.adminArea.backupsPanel.deleteThisBackup': 'Delete this backup?',
+  'screens.adminArea.backupsPanel.installToolWhereValenceRuns':
+    'Install {tool} where Valence runs. The Docker image includes it.',
   'screens.adminArea.backupsPanel.itIsRemovedFromTheBackupFolder':
     'It is removed from the backup folder and cannot be put back afterwards.',
+  'screens.adminArea.backupsPanel.noBackupsTakenYet': 'No backups yet.',
   'screens.adminArea.backupsPanel.noBackupsYet':
     'No backups yet. One is taken every week, and before every upgrade.',
+  'screens.adminArea.backupsPanel.noBackupsYetScheduled':
+    'No backups yet. One is taken on the schedule and before every upgrade.',
   'screens.adminArea.backupsPanel.onTheSchedule': 'On the schedule',
   'screens.adminArea.backupsPanel.putItBack': 'Put it back',
   'screens.adminArea.backupsPanel.readingTheBackups': 'Reading the backups…',
@@ -4066,6 +4099,9 @@ const ENGLISH = {
     'Nothing matches. Try another status or search.',
   'screens.adminArea.cataloguePanel.reading': 'Reading the Catalogue',
   'screens.adminArea.cataloguePanel.searchAllMissing': 'Search all missing',
+  'screens.adminArea.cataloguePanel.searchForEverythingMissing': 'Search for everything missing?',
+  'screens.adminArea.cataloguePanel.searchForEverythingMissingDetail':
+    'Valence searches your indexers again for everything still wanted, and for anything a quality profile would upgrade.',
   'screens.adminArea.cataloguePanel.searchingAgainForCount.one':
     'Searching again for {count} title',
   'screens.adminArea.cataloguePanel.searchingAgainForCount.other':
@@ -4227,6 +4263,64 @@ const ENGLISH = {
   'screens.adminArea.correctionPicker.itWillSayWhatItsFiles':
     'It will use the details from its files after the next scan.',
   'screens.adminArea.correctionPicker.useWhatTheFilesSay': 'Use details from the files',
+  'screens.adminArea.customHeadersCard.addHeader': 'Add header',
+  'screens.adminArea.customHeadersCard.aNameIsLettersNumbersAndDashes':
+    'A name is letters, numbers and dashes, and can’t be one Valence sets itself, such as Content-Type. Neither part can hold a line break.',
+  'screens.adminArea.customHeadersCard.headers': 'Headers',
+  'screens.adminArea.customHeadersCard.hideThisValueOnceSaved': 'Hide this value once saved',
+  'screens.adminArea.customHeadersCard.noneYetAddOneForA':
+    'None yet. Add one for a token the receiver asks for.',
+  'screens.adminArea.customHeadersCard.removeThisHeader': 'Remove this header',
+  'screens.adminArea.customHeadersCard.showThisValue': 'Show this value',
+  'screens.adminArea.customMessageCard.aFormBodyHasToBe':
+    'A form body has to be a JSON object of fields.',
+  'screens.adminArea.customMessageCard.aHeadlineForTheEvent': 'A headline for the event',
+  'screens.adminArea.customMessageCard.aPosterOrCoverAddress': 'A poster or cover address',
+  'screens.adminArea.customMessageCard.aUniqueIdForTheDelivery': 'A unique id for the delivery',
+  'screens.adminArea.customMessageCard.count.placeholdersLeftEmpty.one':
+    '{placeholders} has nothing for this event, so it’s left empty.',
+  'screens.adminArea.customMessageCard.count.placeholdersLeftEmpty.other':
+    '{placeholders} have nothing for this event, so they’re left empty.',
+  'screens.adminArea.customMessageCard.eventsData': '{event}’s data',
+  'screens.adminArea.customMessageCard.eventToPreview': 'Event to preview',
+  'screens.adminArea.customMessageCard.failureAttentionArrivalViewingOrQuiet':
+    'failure, attention, arrival, viewing or quiet',
+  'screens.adminArea.customMessageCard.forExample': 'e.g. {example}',
+  'screens.adminArea.customMessageCard.itsNameInWords': 'Its name in words',
+  'screens.adminArea.customMessageCard.more': 'More…',
+  'screens.adminArea.customMessageCard.moreDetailWhereThereIsAny':
+    'More detail, where there is any',
+  'screens.adminArea.customMessageCard.morePlaceholders': 'More placeholders',
+  'screens.adminArea.customMessageCard.oneLineSayingWhatHappened': 'One line saying what happened',
+  'screens.adminArea.customMessageCard.placeholdersAreSwappedInAsThey':
+    'Placeholders are swapped in as they are.',
+  'screens.adminArea.customMessageCard.resetToDefault': 'Reset to default',
+  'screens.adminArea.customMessageCard.template': 'Template',
+  'screens.adminArea.customMessageCard.theEvent': 'The event',
+  'screens.adminArea.customMessageCard.theEventsNameLikeJobFailed':
+    'The event’s name, like job.failed',
+  'screens.adminArea.customMessageCard.thisIsntValidJSON': 'This isn’t valid JSON.',
+  'screens.adminArea.customMessageCard.thisIsntValidJsonLineColumn':
+    'This isn’t valid JSON: line {line}, column {column}.',
+  'screens.adminArea.customMessageCard.thisServersAddress': 'This server’s address',
+  'screens.adminArea.customMessageCard.thisServersName': 'This server’s name',
+  'screens.adminArea.customMessageCard.trueWhenItNeedsLookingAt': 'true when it needs looking at',
+  'screens.adminArea.customMessageCard.valuesAreEscapedSoTheyCant':
+    'Values are escaped, so they can’t break the JSON. "{{urgent}}" on its own keeps its type: true, not "true".',
+  'screens.adminArea.customMessageCard.whenAsAnISODate': 'When, as an ISO date',
+  'screens.adminArea.customMessageCard.whereToSeeItInValence': 'Where to see it in Valence',
+  'screens.adminArea.customMessageCard.writeTheFieldsAsAJSON':
+    'Write the fields as a JSON object; each is sent as a form field.',
+  'screens.adminArea.customRequestRows.addsAnXValenceSignatureHeader':
+    'Adds an X-Valence-Signature header made with this webhook’s secret.',
+  'screens.adminArea.customRequestRows.alsoSetsTheContentTypeHeader':
+    'Also sets the Content-Type header.',
+  'screens.adminArea.customRequestRows.bodyFormat': 'Body format',
+  'screens.adminArea.customRequestRows.form': 'Form',
+  'screens.adminArea.customRequestRows.howEachMessageIsSent': 'How each message is sent.',
+  'screens.adminArea.customRequestRows.method': 'Method',
+  'screens.adminArea.customRequestRows.plainText': 'Plain text',
+  'screens.adminArea.customRequestRows.signEachMessage': 'Sign each message',
   'screens.adminArea.deliveredItAgain': 'Resent.',
   'screens.adminArea.describeAcceleration.hardwareEncodingIsTurnedOffSo':
     'Hardware encoding is off, so every transcode runs on the CPU, which is much slower and supports fewer streams at once. Choose Automatic to use the server’s hardware encoder where available.',
@@ -4263,6 +4357,7 @@ const ENGLISH = {
   'screens.adminArea.describeGraphics.nothingReadable': 'No data',
   'screens.adminArea.describeGraphics.videoEngineOursOnly': 'video engine (Valence)',
   'screens.adminArea.describeGraphics.wholeCardNotEncoder': 'whole GPU, not encoder',
+  'screens.adminArea.describeIndexerSearches.keywords': 'Keywords',
   'screens.adminArea.describeLibraryPart.ageRatings': 'Age ratings',
   'screens.adminArea.describeLibraryPart.albumCovers': 'Album covers',
   'screens.adminArea.describeLibraryPart.artistPictures': 'Artist images',
@@ -4415,6 +4510,14 @@ const ENGLISH = {
   'screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead': 'Couldn’t load downloads.',
   'screens.adminArea.downloadsPanel.untickThem': 'Clear selection',
   'screens.adminArea.downloadsPanel.whatToShowAboutDownloads': 'Download views',
+  'screens.adminArea.editLiveSourceDialog.changingItReadsTheChannelsAgain':
+    'Changing it reads the channels again.',
+  'screens.adminArea.editLiveSourceDialog.editSource': 'Edit source',
+  'screens.adminArea.editLiveSourceDialog.giveItAnAddress': 'Give it an address.',
+  'screens.adminArea.editLiveSourceDialog.giveItAName': 'Give it a name.',
+  'screens.adminArea.editLiveSourceDialog.itsChannelsAreReadAgainFromTheNewFile':
+    'Its channels are read again from the new file.',
+  'screens.adminArea.editLiveSourceDialog.replaceThePlaylist': 'Replace the playlist',
   'screens.adminArea.emailCard.aPasswordIsSavedLeaveIt':
     'A password is saved. Leave the field empty to keep it, or type a new one to replace it.',
   'screens.adminArea.emailCard.aPortFrom1To65535': 'Enter a port from 1 to 65535.',
@@ -4438,6 +4541,7 @@ const ENGLISH = {
   'screens.adminArea.emailCard.recentEmails.testEmail': 'Test email',
   'screens.adminArea.emailCard.savedLeaveEmptyToKeep': 'Saved. Leave empty to keep it',
   'screens.adminArea.emailCard.savedTheEmailSettings': 'Email settings saved.',
+  'screens.adminArea.emailCard.saveFirstToTest': 'Save first to test these settings.',
   'screens.adminArea.emailCard.sendAs': 'Send as',
   'screens.adminArea.emailCard.sendATestTo': 'Send test email to',
   'screens.adminArea.emailCard.sendByEmailAppearsBesideCopy':
@@ -4445,6 +4549,8 @@ const ENGLISH = {
   'screens.adminArea.emailCard.sendEmail': 'Send email',
   'screens.adminArea.emailCard.sendPasswordResetLinksAndSetup':
     'Send password reset links and setup links by email, using any mail server you have an account with.',
+  'screens.adminArea.emailCard.sendsPasswordResetLinks':
+    'Sends password reset and setup links by email.',
   'screens.adminArea.emailCard.sendTestEmail': 'Send test email',
   'screens.adminArea.emailCard.sentCheckTheInboxOf': 'Sent. Check the inbox for {to}.',
   'screens.adminArea.emailCard.setByTheEnvironment': 'Set by the environment',
@@ -4456,6 +4562,8 @@ const ENGLISH = {
   'screens.adminArea.emailCard.theEmailSettingsCouldNotBe': 'Couldn’t load email settings.',
   'screens.adminArea.emailCard.theSmtpServerOfYourEmail':
     'Your email provider’s SMTP server, port and connection encryption.',
+  'screens.adminArea.emailCard.theUsernameAndPassword':
+    'The username and password from your mail provider.',
   'screens.adminArea.emailCard.tls': 'TLS',
   'screens.adminArea.emailCard.toWhoeverAsksOnTheSign':
     'Sends a reset link to anyone who requests one on the sign-in screen, if their account has an email address.',
@@ -4488,6 +4596,28 @@ const ENGLISH = {
   'screens.adminArea.encodingPanel.theReEncodingQueueCouldNot':
     'Couldn’t load the re-encoding queue from the server. It may not be empty.',
   'screens.adminArea.encodingPanel.whatHappened': 'Result',
+  'screens.adminArea.encodingSettings.gaplessEpisodesAbout':
+    'In the last moments of an episode, Valence starts preparing the next one, so it follows with no pause, black screen or fade. It starts the next stream a little early, so turn it off on a server that struggles to transcode.',
+  'screens.adminArea.encodingSettings.gaplessEpisodesDetail':
+    'Gets the next episode ready before this one ends.',
+  'screens.adminArea.encodingSettings.hardware': 'Hardware',
+  'screens.adminArea.encodingSettings.hardwareAccelerationAbout':
+    "Converting video on the graphics chip is much faster and lighter than on the processor. Automatic uses whichever backend passes Valence's check; choose one to force it if the check gets it wrong. Test runs a five-second conversion and shows what happened.",
+  'screens.adminArea.encodingSettings.hardwareAccelerationDetail':
+    'Automatic uses whichever backend passes the hardware check.',
+  'screens.adminArea.encodingSettings.keepPreparedDownloads': 'Keep prepared downloads',
+  'screens.adminArea.encodingSettings.keepPreparedDownloadsAbout':
+    'When a download has to be converted for a device, the converted file is kept. Anyone who downloads the same title in that time gets it straight away instead of waiting. Longer uses more disk space.',
+  'screens.adminArea.encodingSettings.keepPreparedDownloadsDetail':
+    'How long a converted download stays, so the next person gets it at once.',
+  'screens.adminArea.encodingSettings.previewQualityAbout':
+    'Previews are the short clips that play when you point at a title, and behind the banner on the home page. Higher quality looks sharper but takes more disk space and longer to make. Changing it remakes every preview in the background.',
+  'screens.adminArea.encodingSettings.previewQualityDetail':
+    'Quality of hover previews and banner clips. Changing it remakes them.',
+  'screens.adminArea.encodingSettings.shortSegmentsAbout':
+    'Video is streamed in small pieces called segments, and the player has to fetch the first one before anything plays. Two-second pieces instead of four mean playback starts and seeks about twice as fast, especially over a slow connection or a tunnel. The cost is twice as many requests to the server.',
+  'screens.adminArea.encodingSettings.shortSegmentsDetail':
+    'Sends video in 2-second pieces, so playback starts and seeks sooner.',
   'screens.adminArea.fileDetails.addingUp': 'Adding up…',
   'screens.adminArea.fileDetails.atLeastSize': 'At least {size}',
   'screens.adminArea.fileDetails.chooseSomethingToSeeIt':
@@ -4513,6 +4643,7 @@ const ENGLISH = {
   'screens.adminArea.filesPanel.move': 'Move…',
   'screens.adminArea.filesPanel.movedName': 'Moved {name}.',
   'screens.adminArea.filesPanel.nothingHereIsCalledThat': 'No files or folders match that name.',
+  'screens.adminArea.filesPanel.notInLibrary': 'Not in library',
   'screens.adminArea.filesPanel.readingTheFolder': 'Loading folder',
   'screens.adminArea.filesPanel.rename': 'Rename…',
   'screens.adminArea.filesPanel.renamedToName': 'Renamed to {name}.',
@@ -4671,6 +4802,8 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.whichOfTheSitesAddressesTo':
     'The site address to use. Try another if one is blocked.',
   'screens.adminArea.indexerReportList.whatEachIndexerSaid': 'Results by indexer',
+  'screens.adminArea.indexersPanel.aboutPriority': 'About priority',
+  'screens.adminArea.indexersPanel.canSearch': 'Can search',
   'screens.adminArea.indexersPanel.everyLibraryHandsOff':
     'Every library that takes requests hands them to a connected app, so Valence doesn’t search these indexers for them.',
   'screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved':
@@ -4681,6 +4814,8 @@ const ENGLISH = {
     'It won’t be searched again, and its API key is deleted. To add it back, you’ll need to enter the key again.',
   'screens.adminArea.indexersPanel.noIndexersYetAddASite':
     'No indexers yet. Add one from the catalogue, or any Torznab or Newznab indexer, to start searching.',
+  'screens.adminArea.indexersPanel.priorityAbout':
+    'Among equally good releases, the indexer with the lower number wins.',
   'screens.adminArea.indexersPanel.readingTheIndexers': 'Loading indexers',
   'screens.adminArea.indexersPanel.removeThisIndexer': 'Remove this indexer?',
   'screens.adminArea.indexersPanel.searches': 'Searches',
@@ -4719,6 +4854,8 @@ const ENGLISH = {
   'screens.adminArea.keptTheNewEncodeAndRemoved': 'Replaced the original with the new encode.',
   'screens.adminArea.labelCouldNotBeStarted': 'Couldn’t start {label}.',
   'screens.adminArea.labelCouldNotBeStopped': 'Couldn’t stop {label}.',
+  'screens.adminArea.ladderTable.automaticAt': 'Automatic ({bitrate})',
+  'screens.adminArea.ladderTable.megabitsASecond': '{megabits} Mb/s',
   'screens.adminArea.leaveOutDialog.breaksUpAnHourIn': 'Corrupted after the first hour',
   'screens.adminArea.leaveOutDialog.leaveNameOut': 'Exclude {name}?',
   'screens.adminArea.leaveOutDialog.nameIsLeftOut':
@@ -4774,6 +4911,8 @@ const ENGLISH = {
   'screens.adminArea.libraryLockRow.newSecret': 'New password or PIN',
   'screens.adminArea.libraryLockRow.takeTheLockAway': 'Take the lock away',
   'screens.adminArea.libraryLockRow.unlockedForGood': 'Lock taken away.',
+  'screens.adminArea.libraryPicker.chosenOfCount': '{chosen} of {count} chosen',
+  'screens.adminArea.libraryPicker.selectAll': 'Select all',
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A separate folder for downloaded requests, if you want them kept apart. Otherwise, the library’s own folder is used.',
   'screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation':
@@ -4843,17 +4982,27 @@ const ENGLISH = {
     'The profile assigned to this library',
   'screens.adminArea.librarySettingsDialog.whoFulfilsRequests': 'Download requests with',
   'screens.adminArea.librarySettingsDialog.yourBrowser': 'Your browser',
+  'screens.adminArea.linkedServersPanel.aboutTheFingerprint': 'About the fingerprint',
+  'screens.adminArea.linkedServersPanel.aboutThisServer': 'About this server',
+  'screens.adminArea.linkedServersPanel.ageLimit': 'Age limit',
   'screens.adminArea.linkedServersPanel.ageLimitForName': 'Age limit for {name}',
   'screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName':
     'Allow unrated titles for {name}',
   'screens.adminArea.linkedServersPanel.anInviteLinksOneServer':
     'An invite links another Valence server to this one. It can be used once, expires after a day, and you approve the server that uses it before they’re linked.',
+  'screens.adminArea.linkedServersPanel.askedFor': 'Asked for',
   'screens.adminArea.linkedServersPanel.askedNameToLink':
     'Sent a link request to {name}. You’ll be linked once their admin approves it.',
+  'screens.adminArea.linkedServersPanel.backToLinkedServers': 'Back to Linked servers',
+  'screens.adminArea.linkedServersPanel.betweenTheServers': 'Between the servers',
   'screens.adminArea.linkedServersPanel.blockedName': 'Blocked {name}.',
   'screens.adminArea.linkedServersPanel.blockName': 'Block {name}',
+  'screens.adminArea.linkedServersPanel.bothAdminsCanCompareThis':
+    'Both admins can compare this to be sure they’re linking with the right server.',
   'screens.adminArea.linkedServersPanel.copyItNowItIsNotShownAgain':
     'Copy it now. It won’t be shown again.',
+  'screens.adminArea.linkedServersPanel.copyTheFingerprint': 'Copy the fingerprint',
+  'screens.adminArea.linkedServersPanel.createAnInvite': 'Create an invite',
   'screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas':
     'Remove requests a linked server already has',
   'screens.adminArea.linkedServersPanel.everythingKeptFromNameGoes':
@@ -4863,23 +5012,37 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.highestQualityForName': 'Highest quality for {name}',
   'screens.adminArea.linkedServersPanel.howManyOfNamesPeopleMayWatch':
     'How many of {name}’s people can stream from this server at the same time.',
+  'screens.adminArea.linkedServersPanel.howManyOfTheirPeopleCanWatch':
+    'How many of their people can watch from here at once.',
   'screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne':
     'How other Valence servers see this one. Another admin verifies an invite by comparing this fingerprint.',
+  'screens.adminArea.linkedServersPanel.howTheyWatch': 'How they watch',
   'screens.adminArea.linkedServersPanel.inviteAServer': 'Invite a server',
+  'screens.adminArea.linkedServersPanel.lastHeardFrom': 'Last heard from',
   'screens.adminArea.linkedServersPanel.lastHeardFromWhen': 'Last responded {when}',
+  'screens.adminArea.linkedServersPanel.lastHeardFromWhenSentence': 'Last heard from {when}.',
+  'screens.adminArea.linkedServersPanel.lastSeen': 'Last seen',
   'screens.adminArea.linkedServersPanel.letNameBackIn': 'Unblocked {name}.',
   'screens.adminArea.linkedServersPanel.letNameBackInAsk': 'Unblock {name}',
   'screens.adminArea.linkedServersPanel.letsNamesAdminReadWhatTheir':
     'Lets {name}’s admin see what their people requested from this server.',
+  'screens.adminArea.linkedServersPanel.letsThroughTitlesWithNoAgeRating':
+    'Lets through titles with no age rating at all.',
   'screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage':
     'Let their admin pause and message your people',
   'screens.adminArea.linkedServersPanel.letThemKeepTitlesOffline': 'Allow downloads',
   'screens.adminArea.linkedServersPanel.link': 'Link',
+  'screens.adminArea.linkedServersPanel.linkedServer': 'Linked server',
   'screens.adminArea.linkedServersPanel.linkedServersCouldNotBeRead':
     'Couldn’t load linked servers.',
   'screens.adminArea.linkedServersPanel.linkedWithName': 'Linked with {name}.',
+  'screens.adminArea.linkedServersPanel.linkingLetsTwoValenceServersShare':
+    'Linking lets two Valence servers share their libraries with each other’s people.',
   'screens.adminArea.linkedServersPanel.linkToAServer': 'Link to a server',
+  'screens.adminArea.linkedServersPanel.madeWhen': 'Made {when}',
   'screens.adminArea.linkedServersPanel.makeAnInvite': 'Create invite',
+  'screens.adminArea.linkedServersPanel.makeOneHereAndSendIt':
+    'Make one here and send it to the other server’s admin.',
   'screens.adminArea.linkedServersPanel.manageName': 'Manage {name}',
   'screens.adminArea.linkedServersPanel.nameCouldNotBeReached': 'Couldn’t reach {name}.',
   'screens.adminArea.linkedServersPanel.nameDoesNotShowThisServerIts':
@@ -4905,8 +5068,14 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.noLibrariesToShareYet':
     'This server has no libraries to share yet.',
   'screens.adminArea.linkedServersPanel.noServersAreLinkedYet': 'No servers are linked yet.',
+  'screens.adminArea.linkedServersPanel.noServersAreLinkedYetHeading': 'No servers are linked yet',
   'screens.adminArea.linkedServersPanel.nothingIsSharedUntilYouChoose':
     'Nothing is shared until you choose. Their people see only these libraries, and only titles within the age limit you set.',
+  'screens.adminArea.linkedServersPanel.notReachableFromOtherServers':
+    'Not reachable from other servers',
+  'screens.adminArea.linkedServersPanel.openInvites': 'Open invites',
+  'screens.adminArea.linkedServersPanel.otherServersCantReachLocalhost':
+    'Other servers can’t reach localhost. Use this server’s network or public address.',
   'screens.adminArea.linkedServersPanel.pasteAnInvite':
     'Paste an invite from another Valence server’s admin. They approve this server before you’re linked.',
   'screens.adminArea.linkedServersPanel.peopleFromName': 'People from {name}',
@@ -4917,12 +5086,18 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.readCountTitlesFromName':
     'Synced {count} titles from {name}.',
   'screens.adminArea.linkedServersPanel.readingLinkedServers': 'Loading linked servers',
+  'screens.adminArea.linkedServersPanel.removesARequestHereOnce':
+    'Removes a request here once a linked server gets that title.',
   'screens.adminArea.linkedServersPanel.removeThePicture': 'Remove picture',
   'screens.adminArea.linkedServersPanel.runsOutWhen': 'Expires {when}',
   'screens.adminArea.linkedServersPanel.savedThisServer': 'Saved this server’s linking details.',
   'screens.adminArea.linkedServersPanel.savedWhatNameCanSee': 'Saved what {name} can see.',
   'screens.adminArea.linkedServersPanel.seenWhen': 'Seen {when}',
+  'screens.adminArea.linkedServersPanel.sendThisToTheOtherServers':
+    'Send this to the other server’s admin. It works once and runs out in a day, and you approve their server before it’s linked.',
   'screens.adminArea.linkedServersPanel.sendYourPeoplesNames': 'Send your people’s names',
+  'screens.adminArea.linkedServersPanel.sentAnInviteBySomeoneElse':
+    'Sent an invite by someone else?',
   'screens.adminArea.linkedServersPanel.shareNameWithName2': 'Share {name} with {name2}',
   'screens.adminArea.linkedServersPanel.showNameOnThisServer': 'Show {name} on this server',
   'screens.adminArea.linkedServersPanel.showThemTheirRecord': 'Share their request history',
@@ -4931,22 +5106,45 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.takeTheirRequests': 'Accept their requests',
   'screens.adminArea.linkedServersPanel.theBestNamesPeopleAreSent':
     'The highest quality {name}’s people receive, whatever they request.',
+  'screens.adminArea.linkedServersPanel.theBestQualityTheyreSent':
+    'The best quality they’re sent, whatever they ask for.',
   'screens.adminArea.linkedServersPanel.theInvite': 'The invite',
   'screens.adminArea.linkedServersPanel.theInviteCouldNotBeCopied':
     'Couldn’t copy the invite. Select it and copy it manually, because it won’t be shown again.',
+  'screens.adminArea.linkedServersPanel.theirAdminCanPauseOrMessage':
+    'Their admin can pause or message your people watching from them.',
+  'screens.adminArea.linkedServersPanel.theirAdminPastesItIntoUse':
+    'Their admin pastes it into Use an invite on their server.',
   'screens.adminArea.linkedServersPanel.theirInvite': 'Their invite',
+  'screens.adminArea.linkedServersPanel.theirPlayersFetchTitlesFromThem':
+    'Their players fetch titles from them directly.',
   'screens.adminArea.linkedServersPanel.theirRecordOfYourPeople':
     'Their request history for your people',
+  'screens.adminArea.linkedServersPanel.theirRequestsJoinYourQueue':
+    'Their requests join your queue, for you to approve.',
+  'screens.adminArea.linkedServersPanel.theyShowUpHereToApprove':
+    'They show up here to approve. Check their fingerprint matches first.',
+  'screens.adminArea.linkedServersPanel.theyUseIt': 'They use it',
+  'screens.adminArea.linkedServersPanel.times': 'Times',
+  'screens.adminArea.linkedServersPanel.titlesRatedAboveThisStayHidden':
+    'Titles rated above this stay hidden from them.',
   'screens.adminArea.linkedServersPanel.unlink': 'Unlink',
   'screens.adminArea.linkedServersPanel.unlinkedName': 'Unlinked {name}.',
   'screens.adminArea.linkedServersPanel.unlinkNameAsk': 'Unlink {name}?',
+  'screens.adminArea.linkedServersPanel.useAnInvite': 'Use an invite',
+  'screens.adminArea.linkedServersPanel.useItHere': 'Use it here',
   'screens.adminArea.linkedServersPanel.whatNameAskedFor': 'What {name} requested',
   'screens.adminArea.linkedServersPanel.whatNameCanSee': 'What {name} can see',
   'screens.adminArea.linkedServersPanel.whatNameSharesWithYou': 'What {name} shares with you',
+  'screens.adminArea.linkedServersPanel.whatOtherServersCallThisOne':
+    'What other servers call this one.',
   'screens.adminArea.linkedServersPanel.whenALinkedServerGetsSomething':
     'When a linked server gets something someone here requested, they’re notified either way. When on, the request here is also removed.',
   'screens.adminArea.linkedServersPanel.whereOtherServersReachIt': 'Public address',
+  'screens.adminArea.linkedServersPanel.whereOtherServersReachThisOne':
+    'Where other servers reach this one.',
   'screens.adminArea.linkedServersPanel.withdrawTheInvite': 'Revoke the invite created {when}',
+  'screens.adminArea.linkedServersPanel.youApproveThem': 'You approve them',
   'screens.adminArea.liveTvPanel.addALiveTvSource': 'Add a live TV source',
   'screens.adminArea.liveTvPanel.addASource': 'Add a source',
   'screens.adminArea.liveTvPanel.addedNameWithCountChannels': 'Added {name} with {count} channels.',
@@ -4962,10 +5160,10 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.byCountry': 'By country',
   'screens.adminArea.liveTvPanel.channels': 'Channels',
   'screens.adminArea.liveTvPanel.chooseAPlaylist': 'Choose a playlist',
+  'screens.adminArea.liveTvPanel.edit': 'Edit…',
   'screens.adminArea.liveTvPanel.embeddedPage': 'Embedded page',
   'screens.adminArea.liveTvPanel.fillInANameAndAnAddress':
     'Give it a name and a working address, or choose a playlist.',
-  'screens.adminArea.liveTvPanel.formulaOneLive': 'Formula 1 live',
   'screens.adminArea.liveTvPanel.freeGuidesThatCoverManyChannels':
     'Free guides that cover many channels in free playlists. Add several; each fills in what the others miss.',
   'screens.adminArea.liveTvPanel.guideAddresses': 'Guide addresses',
@@ -4979,7 +5177,6 @@ const ENGLISH = {
     'Its channels and guide go with it, and so does anyone’s favourite of those channels.',
   'screens.adminArea.liveTvPanel.leftEmptyItIsNamedForYou': 'Left empty, it’s named for you.',
   'screens.adminArea.liveTvPanel.logoAddressOptional': 'Logo address (optional)',
-  'screens.adminArea.liveTvPanel.myChannels': 'My channels',
   'screens.adminArea.liveTvPanel.noSourcesYet':
     'No live TV yet. Add a stream, a playlist, a tuner or a playlist from iptv-org.',
   'screens.adminArea.liveTvPanel.oneOrMoreXmltvGuides':
@@ -4993,6 +5190,7 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.readNameCountChannels': 'Read {count} channels from {name}.',
   'screens.adminArea.liveTvPanel.removeThisSource': 'Remove this source?',
   'screens.adminArea.liveTvPanel.samsungTvPlusGuide': 'Samsung TV Plus guide',
+  'screens.adminArea.liveTvPanel.scanNow': 'Scan now',
   'screens.adminArea.liveTvPanel.streamAddress': 'Stream address',
   'screens.adminArea.liveTvPanel.theHdHomeRunsAddress':
     'The HDHomeRun’s address on your network, such as http://192.168.1.50.',
@@ -5000,6 +5198,7 @@ const ENGLISH = {
     'One of those isn’t a guide address. Each should start with https://.',
   'screens.adminArea.liveTvPanel.tuner': 'Tuner',
   'screens.adminArea.liveTvPanel.tunerAddress': 'Tuner address',
+  'screens.adminArea.liveTvPanel.tvGuide': 'TV guide…',
   'screens.adminArea.liveTvPanel.ukGuideEpgPw': 'UK guide · epg.pw',
   'screens.adminArea.liveTvPanel.ukGuideEpgShare': 'UK guide · epgshare01',
   'screens.adminArea.liveTvPanel.uploadAChannelPicture': 'Upload a channel picture',
@@ -5011,10 +5210,13 @@ const ENGLISH = {
   'screens.adminArea.matchPicker.forgetTheCorrection': 'Remove correction',
   'screens.adminArea.matchPicker.searchForAFilm': 'Search for a film',
   'screens.adminArea.matchPicker.searchForASeries': 'Search for a series',
+  'screens.adminArea.mediaPanel.allTitles': 'All titles',
   'screens.adminArea.mediaPanel.alsoNumbered': 'Also numbered S{season} E{episode}: {files}',
   'screens.adminArea.mediaPanel.chooseArtwork': 'Choose artwork…',
   'screens.adminArea.mediaPanel.couldNotBeRead': 'Couldn’t be read',
   'screens.adminArea.mediaPanel.couldNotReadFiles': 'Couldn’t read {files}',
+  'screens.adminArea.mediaPanel.count.deleteCountFiles.one': 'Delete {count} file?',
+  'screens.adminArea.mediaPanel.count.deleteCountFiles.other': 'Delete {count} files?',
   'screens.adminArea.mediaPanel.count.nameToFix.one': '{name} ({count} to fix)',
   'screens.adminArea.mediaPanel.count.nameToFix.other': '{name} ({count} to fix)',
   'screens.adminArea.mediaPanel.deleteEveryEpisodeOfName': 'Delete every episode of {name}?',
@@ -5023,6 +5225,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.deleteSeries': 'Delete series',
   'screens.adminArea.mediaPanel.deleteSeries2': 'Delete series…',
   'screens.adminArea.mediaPanel.deleteThisFile': 'Delete this file?',
+  'screens.adminArea.mediaPanel.duplicates': 'Duplicates',
   'screens.adminArea.mediaPanel.everyEpisodesFileIsDeletedFrom':
     'Deletes every episode file from disk, along with its subtitles and artwork, and removes the series from the library. This can’t be undone.',
   'screens.adminArea.mediaPanel.everythingHereHasACover': 'Everything here has a cover.',
@@ -5037,6 +5240,7 @@ const ENGLISH = {
     'Its previews and thumbnails are deleted and regenerated from the file. This takes a while and uses the server’s encoder.',
   'screens.adminArea.mediaPanel.matchedToTheSameFilm': 'Matched to the same film: {files}',
   'screens.adminArea.mediaPanel.matchedToTheSameFilmAs': 'Matched to the same film as {files}',
+  'screens.adminArea.mediaPanel.mixed': 'Mixed',
   'screens.adminArea.mediaPanel.moveToAnotherLibrary': 'Move to another library…',
   'screens.adminArea.mediaPanel.noCover': 'No cover',
   'screens.adminArea.mediaPanel.noPoster': 'No poster',
@@ -5051,24 +5255,38 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.rebuildThePreviewsForTitle': 'Rebuild the previews for {title}?',
   'screens.adminArea.mediaPanel.reEncode': 'Re-encode…',
   'screens.adminArea.mediaPanel.reEncodeEveryEpisode': 'Re-encode every episode…',
+  'screens.adminArea.mediaPanel.reEncodeSelected': 'Re-encode',
   'screens.adminArea.mediaPanel.reEncodeThisSeason': 'Re-encode this season…',
+  'screens.adminArea.mediaPanel.selectEveryTitleShown': 'Select every title shown',
+  'screens.adminArea.mediaPanel.selectName': 'Select {name}',
   'screens.adminArea.mediaPanel.showInFiles': 'Show in Files',
   'screens.adminArea.mediaPanel.showTheEditionsOfName': 'Show the editions of {name}',
   'screens.adminArea.mediaPanel.showTheEpisodesInName': 'Show the episodes in {name}',
   'screens.adminArea.mediaPanel.showTheEpisodesOfName': 'Show the episodes of {name}',
   'screens.adminArea.mediaPanel.theFileIsDeletedFromThe':
     'Deletes the file from disk, along with its subtitles and artwork, and removes it from the library. This can’t be undone.',
+  'screens.adminArea.mediaPanel.theFilesAreDeletedFromTheDisk':
+    "The files are deleted from the disk and removed from the library. This can't be undone.",
   'screens.adminArea.mediaPanel.theLibrariesCouldNotBeRead':
     'Couldn’t load the libraries from the server. This doesn’t mean they’re empty.',
   'screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd':
     'There are no libraries yet. Add one on the Libraries page.',
   'screens.adminArea.mediaPanel.thereTwice': 'There twice',
   'screens.adminArea.mediaPanel.unmatched': 'Unmatched',
+  'screens.adminArea.mediaPanel.unreadable': 'Unreadable',
   'screens.adminArea.mediaPanel.whichTitles': 'Which titles',
   'screens.adminArea.mediaPanel.willRebuild': 'Will rebuild',
   'screens.adminArea.mediaRequestsPanel.dateRequested': 'Date requested',
   'screens.adminArea.mediaRequestsPanel.hideWhatTitleIsMadeOf': 'Collapse {title}',
   'screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf': 'Expand {title}',
+  'screens.adminArea.mediaTitlePage.askedWhen': 'Asked {when}',
+  'screens.adminArea.mediaTitlePage.backToMedia': 'Back to Media',
+  'screens.adminArea.mediaTitlePage.fixMatch': 'Fix match',
+  'screens.adminArea.mediaTitlePage.matchedId': 'Matched · {id}',
+  'screens.adminArea.mediaTitlePage.matchedTmdbId': 'Matched · TMDB {id}',
+  'screens.adminArea.mediaTitlePage.openFolder': 'Open folder',
+  'screens.adminArea.mediaTitlePage.openInCatalogue': 'Open in Catalogue',
+  'screens.adminArea.mediaTitlePage.reEncodes': 'Re-encodes',
   'screens.adminArea.memory': 'Memory',
   'screens.adminArea.mostWatchedList.hours': '{hours} h',
   'screens.adminArea.mostWatchedList.mostWatched': 'Most watched',
@@ -5087,9 +5305,14 @@ const ENGLISH = {
   'screens.adminArea.needsYouCard.aNewReleaseIsOut': 'A new release is out',
   'screens.adminArea.needsYouCard.failedRequests': 'Failed requests',
   'screens.adminArea.needsYouCard.libraryProblems': 'Library problems',
+  'screens.adminArea.needsYouCard.nothingNeedsYou': 'Nothing needs you. Valence is up to date.',
   'screens.adminArea.needsYouCard.requestsToApprove': 'Requests to approve',
   'screens.adminArea.needsYouCard.valenceIsUpToDate': 'Valence is up to date',
   'screens.adminArea.needsYouCard.waitingOnYou': 'Waiting on you',
+  'screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs':
+    'It starts by sending failed jobs. Choose the rest of its events on its page.',
+  'screens.adminArea.newWebhookDialog.leftEmptyItsNamedAfterThe':
+    "Left empty, it's named after the service.",
   'screens.adminArea.noAlbumIsBeingCorrected': 'No album is being corrected.',
   'screens.adminArea.noBookIsBeingCorrected': 'No book is being corrected.',
   'screens.adminArea.notEveryLibraryCouldBeRead': 'Couldn’t rescan every library.',
@@ -5101,6 +5324,43 @@ const ENGLISH = {
   'screens.adminArea.ofTotalOnMount': 'of {total} · {mountPoint}',
   'screens.adminArea.ofTotalValenceNotMeasured': 'of {total} · Valence not measured',
   'screens.adminArea.ofTotalValenceUses': 'of {total} · Valence {used}',
+  'screens.adminArea.onlineServicesCard.everythingValenceConnectsTo':
+    'Everything Valence connects to outside this server. Nothing else leaves it.',
+  'screens.adminArea.onlineServicesCard.musicDetails': 'Music details',
+  'screens.adminArea.onlineServicesCard.musicDetailsAbout':
+    'Album covers come from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced.',
+  'screens.adminArea.onlineServicesCard.musicDetailsDetail':
+    'Fills in missing album covers, artist photos and lyrics.',
+  'screens.adminArea.onlineServicesCard.omdb': 'OMDb',
+  'screens.adminArea.onlineServicesCard.omdbAbout':
+    'OMDb is a free service that lists Rotten Tomatoes scores. Scores are fetched when a title is scanned.',
+  'screens.adminArea.onlineServicesCard.omdbDetail':
+    'Adds Rotten Tomatoes scores when titles are scanned.',
+  'screens.adminArea.onlineServicesCard.onlineServices': 'Online services',
+  'screens.adminArea.onlineServicesCard.phoneNotificationsAbout':
+    "Phones only receive notifications through Apple's and Google's servers, so Valence's relay passes on a wake-up. It's told which phone to wake, never what the notification says; the phone reads that from this server.",
+  'screens.adminArea.onlineServicesCard.phoneNotificationsDetail':
+    "Wakes the phone app through Valence's push relay. It never sees the message.",
+  'screens.adminArea.onlineServicesCard.seeWhatsSent': "See what's sent",
+  'screens.adminArea.onlineServicesCard.theAudioDb': 'TheAudioDB',
+  'screens.adminArea.onlineServicesCard.theAudioDbAbout':
+    'Without a key, artists are looked up with the free key, which finds only one music video per artist.',
+  'screens.adminArea.onlineServicesCard.theAudioDbDetail':
+    'Artist photos and music videos for music details.',
+  'screens.adminArea.onlineServicesCard.theMovieDatabase': 'The Movie Database',
+  'screens.adminArea.onlineServicesCard.theMovieDatabaseAbout':
+    'The catalogue Valence matches your files against. Without a key, titles and years come only from the file names, with no posters or descriptions.',
+  'screens.adminArea.onlineServicesCard.theMovieDatabaseDetail':
+    'Titles, posters, cast and trailers for films and series.',
+  'screens.adminArea.onlineServicesCard.trailersAbout':
+    'Trailers play in an embedded player from the video site the catalogue links to. A trailer saved next to the file on disk is always used instead.',
+  'screens.adminArea.onlineServicesCard.trailersDetail':
+    'Plays a trailer from YouTube for titles without one on disk.',
+  'screens.adminArea.onlineServicesCard.usageStatistics': 'Usage statistics',
+  'screens.adminArea.onlineServicesCard.usageStatisticsAbout':
+    "Once a day: Valence's version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.",
+  'screens.adminArea.onlineServicesCard.usageStatisticsDetail':
+    'Sends a few anonymous facts about this server once a day.',
   'screens.adminArea.overviewPanel.activeNow': 'Active now',
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
@@ -5125,6 +5385,7 @@ const ENGLISH = {
     'CPU usage over the last {loadRange}',
   'screens.adminArea.overviewPanel.processorUseOverTheLastMinute': 'CPU usage over the last minute',
   'screens.adminArea.overviewPanel.recentLogs': 'Recent logs',
+  'screens.adminArea.overviewPanel.recentWarnings': 'Recent warnings',
   'screens.adminArea.overviewPanel.runningNow': 'Running now',
   'screens.adminArea.overviewPanel.serverLoad': 'Server load',
   'screens.adminArea.overviewPanel.storageInfo.aboutTheStorage':
@@ -5155,8 +5416,12 @@ const ENGLISH = {
     'Nothing was played in this range.',
   'screens.adminArea.playbackModeShare.whyItWasConverted': 'Why it was converted',
   'screens.adminArea.playbackModeShare.whyPlaysWereConverted': 'Why plays were converted',
+  'screens.adminArea.pluginsPanel.availableCount': 'Available  {count}',
   'screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts':
     'Choose a .vplugin file, plus its .sig file if it has one.',
+  'screens.adminArea.pluginsPanel.everyPluginInTheCatalogueIsInstalled':
+    'Every plugin in the catalogue is installed.',
+  'screens.adminArea.pluginsPanel.installedCount': 'Installed  {count}',
   'screens.adminArea.pluginsPanel.installedPlugins': 'Installed plugins',
   'screens.adminArea.pluginsPanel.installFromAFile': 'Install from a file',
   'screens.adminArea.pluginsPanel.noPluginsYetPluginsRunIn':
@@ -5181,6 +5446,7 @@ const ENGLISH = {
   'screens.adminArea.pluginsPanel.turnedNameOn': 'Turned {name} on.',
   'screens.adminArea.pluginsPanel.versionComesBackWithWhat':
     'Rolls the plugin back to {version} and restores the data it had saved before the upgrade. Anything it saved after the upgrade is deleted.',
+  'screens.adminArea.pluginsPanel.whichPlugins': 'Which plugins',
   'screens.adminArea.preRollCard.aShortClipPlaysFirst':
     'Play a short clip before a film or episode starts from the beginning, such as your own intro or a cinema ident. One is chosen at random each time, and anyone watching can skip it. Nothing plays when someone resumes partway through or joins a watch party.',
   'screens.adminArea.preRollCard.clipsFolder': 'Clips folder',
@@ -5189,29 +5455,55 @@ const ENGLISH = {
   'screens.adminArea.preRollCard.everyAppPlaysTheClip':
     'Every app plays the clip before the title, then carries on as normal.',
   'screens.adminArea.preRollCard.filmsAndEpisodes': 'Both',
+  'screens.adminArea.preRollCard.folderDetail': 'MP4, M4V or MOV, sent as they are.',
   'screens.adminArea.preRollCard.mp4OrMovFiles':
     "MP4, M4V or MOV files in a folder on the machine running Valence. They're sent as they are, so every app can play them without converting.",
   'screens.adminArea.preRollCard.noClipsInThatFolder':
     'There are no MP4, M4V or MOV files in that folder.',
   'screens.adminArea.preRollCard.playAClipFirst': 'Play a clip first',
+  'screens.adminArea.preRollCard.playAClipFirstAbout':
+    'Pick a clip such as your own intro or a cinema ident. One is chosen at random each time. Nothing plays when someone resumes partway through or joins a watch party.',
+  'screens.adminArea.preRollCard.playAClipFirstDetail':
+    'Plays a random clip from a folder before a title starts. Viewers can skip it.',
   'screens.adminArea.preRollCard.playsBefore': 'Plays before',
   'screens.adminArea.preRollCard.preRoll': 'Pre-roll',
   'screens.adminArea.preRollCard.readingThePreRollSettings': 'Loading the pre-roll settings',
   'screens.adminArea.preRollCard.savedThePreRollSettings': 'Pre-roll settings saved',
   'screens.adminArea.preRollCard.thePreRollSettingsCouldNotBe':
     'Couldn’t load the pre-roll settings.',
+  'screens.adminArea.preRollCard.thePreRollSettingsCouldNotBeSaved':
+    "The pre-roll settings couldn't be saved.",
+  'screens.adminArea.preTranscodingCard.aboutCompressingLosslessAudio':
+    'About compressing lossless audio',
+  'screens.adminArea.preTranscodingCard.aboutVersions': 'About versions',
+  'screens.adminArea.preTranscodingCard.aboutWhenItRuns': 'About when it runs',
   'screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung':
     'A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.',
   'screens.adminArea.preTranscodingCard.addARung': 'Add a rung',
+  'screens.adminArea.preTranscodingCard.addAVersion': 'Add a version',
+  'screens.adminArea.preTranscodingCard.anyTime': 'Any time',
+  'screens.adminArea.preTranscodingCard.atAnyHour': 'At any hour, until every file has its copies.',
   'screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile':
     'At any time, one file at a time, until every file has a copy.',
   'screens.adminArea.preTranscodingCard.aWholeNumberFrom100': 'A whole number from 100 to 200000.',
   'screens.adminArea.preTranscodingCard.bitrateCeiling': 'Bitrate ceiling',
+  'screens.adminArea.preTranscodingCard.compressLosslessAudio': 'Compress lossless audio',
+  'screens.adminArea.preTranscodingCard.compressLosslessAudioAbout':
+    'TrueHD and DTS-HD tracks often take up a large share of a remux. Compressing them saves that space but downmixes 7.1 to 5.1.',
   'screens.adminArea.preTranscodingCard.container': 'Container format',
   'screens.adminArea.preTranscodingCard.copiesMade': 'Copies made',
+  'screens.adminArea.preTranscodingCard.deleteOriginals': 'Delete originals',
+  'screens.adminArea.preTranscodingCard.deleteOriginalsAsk': 'Delete originals?',
+  'screens.adminArea.preTranscodingCard.deleteOriginalsDetail':
+    "From now on, once a film's copies are made, its original file is deleted and the highest-quality copy takes its place. Turn Keep the original back on to stop it.",
+  'screens.adminArea.preTranscodingCard.deletesOriginals': 'Deletes originals',
   'screens.adminArea.preTranscodingCard.eachCopyTakesDiskBesideIts':
     'Each copy uses disk space next to its original, and Valence needs write access to the library folders.',
+  'screens.adminArea.preTranscodingCard.eachFilmGetsACopy':
+    'Each film gets a copy at every quality below its original.',
   'screens.adminArea.preTranscodingCard.endingAt': 'Ending at',
+  'screens.adminArea.preTranscodingCard.everyFilmAndSeriesLibrary':
+    'Every film and series library, including ones added later.',
   'screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows':
     'All film and series libraries',
   'screens.adminArea.preTranscodingCard.everyRungIsKeptBesideThe':
@@ -5228,6 +5520,9 @@ const ENGLISH = {
   'screens.adminArea.preTranscodingCard.makingACopyOfTitle': 'Making a copy of {title}',
   'screens.adminArea.preTranscodingCard.onlyBetweenTheseHoursOnThe':
     'Only between these hours, in the {timezone} time zone used by scheduled jobs. Any copy in progress stops when they end.',
+  'screens.adminArea.preTranscodingCard.onlyDuringQuietHours': 'Only during quiet hours.',
+  'screens.adminArea.preTranscodingCard.onlyTheLibrariesChosenBelow':
+    'Only the libraries chosen below.',
   'screens.adminArea.preTranscodingCard.passedOver': 'Skipped',
   'screens.adminArea.preTranscodingCard.preTranscodingCarriesOn': 'Pre-transcoding resumed.',
   'screens.adminArea.preTranscodingCard.preTranscodingCouldNotBeRead':
@@ -5243,16 +5538,27 @@ const ENGLISH = {
   'screens.adminArea.preTranscodingCard.replacesTheOriginal': 'Replaces the original',
   'screens.adminArea.preTranscodingCard.rightNow': 'Right now',
   'screens.adminArea.preTranscodingCard.savedPreTranscoding': 'Saved the pre-transcoding settings.',
+  'screens.adminArea.preTranscodingCard.shrinksTrueHdAndDtsHd':
+    'Shrinks TrueHD and DTS-HD tracks in the copies.',
   'screens.adminArea.preTranscodingCard.startingAt': 'Starting at',
   'screens.adminArea.preTranscodingCard.stillToMake': 'Remaining',
   'screens.adminArea.preTranscodingCard.theLadder': 'The ladder',
   'screens.adminArea.preTranscodingCard.theNextCopyIsBeingMade': 'Started the next copy.',
+  'screens.adminArea.preTranscodingCard.theOriginalFileIsDeleted':
+    'The original file is deleted and the highest-quality copy takes its place.',
+  'screens.adminArea.preTranscodingCard.theOriginalFileStays':
+    'The original file stays as it is, next to the copies.',
   'screens.adminArea.preTranscodingCard.thereIsNothingToMakeA':
     'Nothing needs a copy, or pre-transcoding is off.',
   'screens.adminArea.preTranscodingCard.theTallestRungReplacesTheOriginal':
     'The tallest rung takes the original’s place, made after the others so they come from the original. Each one waits for you to confirm in Re-encoding before the original is deleted, and the queue pauses while five are waiting.',
   'screens.adminArea.preTranscodingCard.untilEverythingIsDone': 'Until everything is done',
+  'screens.adminArea.preTranscodingCard.versions': 'Versions',
+  'screens.adminArea.preTranscodingCard.versionsAbout':
+    "A copy is made at every quality below the original, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices. A copy is never larger than its original. Automatic uses the usual bitrate limit for that quality, a little higher for high-frame-rate files, and never more than the original's own bitrate.",
   'screens.adminArea.preTranscodingCard.waitingForQuietHours': 'Waiting for quiet hours',
+  'screens.adminArea.preTranscodingCard.whenItRunsAbout':
+    'Quiet hours are in the {timezone} time zone used by scheduled jobs. Any copy still being made stops when they end.',
   'screens.adminArea.processor': 'CPU',
   'screens.adminArea.profileEditor.addProfile': 'Add profile',
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
@@ -5319,6 +5625,7 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
+  'screens.adminArea.profilesPanel.addQualityProfile': 'Add quality profile',
   'screens.adminArea.profilesPanel.everyLibraryHandsOff':
     'Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.',
   'screens.adminArea.profilesPanel.noMusicLibraryTakesRequests':
@@ -5371,6 +5678,7 @@ const ENGLISH = {
   'screens.adminArea.releaseColumns.torrent': 'Torrent',
   'screens.adminArea.releaseColumns.usenet': 'Usenet',
   'screens.adminArea.releaseColumns.verdict': 'Verdict',
+  'screens.adminArea.releaseEntry.showAllCount': 'Show all {count}',
   'screens.adminArea.releasePickTable.downloadBoth': 'Download both',
   'screens.adminArea.releasePickTable.replaceIt': 'Replace it',
   'screens.adminArea.releaseSearchPanel.copyTheMagnetLink': 'Copy magnet link',
@@ -5432,6 +5740,15 @@ const ENGLISH = {
   'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
     'They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
+  'screens.adminArea.requestPageCard.backgroundTrailers': 'Background trailers',
+  'screens.adminArea.requestPageCard.backgroundTrailersAbout':
+    "Valence finds each trailer on YouTube with yt-dlp and streams it through itself. YouTube's terms don't allow this, and YouTube may refuse a server it sees doing it.",
+  'screens.adminArea.requestPageCard.backgroundTrailersDetail':
+    'Plays a muted trailer behind a title on its request page.',
+  'screens.adminArea.requestPageCard.needsTrailersTurnedOn':
+    'Needs Trailers turned on in Settings › Online services.',
+  'screens.adminArea.requestPageCard.requestPage': 'Request page',
+  'screens.adminArea.requestsPanel.aboutTheVpn': 'About the VPN',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhen': 'At {address}. Last checked {when}.',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem':
     'At {address}. Last checked {when}. {problem}.',
@@ -5474,6 +5791,7 @@ const ENGLISH = {
   'screens.adminArea.restoreBackupDialog.theDatabaseCannotBeReplaced':
     'The database can’t be replaced while the server is using it.',
   'screens.adminArea.resumedThatStream': 'Resumed that stream.',
+  'screens.adminArea.rolesPanel.aboutRank': 'About rank',
   'screens.adminArea.rolesPanel.aHigherRankManagesALower':
     'A higher rank can manage lower ranks. No one can change a role at or above their own rank.',
   'screens.adminArea.rolesPanel.aRoleIsANameAnd':
@@ -5493,6 +5811,8 @@ const ENGLISH = {
   'screens.adminArea.rolesPanel.noRolesYet': 'No roles yet.',
   'screens.adminArea.rolesPanel.permissions': 'Permissions',
   'screens.adminArea.rolesPanel.rank': 'Rank',
+  'screens.adminArea.rolesPanel.rankAbout':
+    'People can only change accounts whose highest role ranks below their own.',
   'screens.adminArea.rolesPanel.rankIsAWholeNumber': 'A rank is a whole number from 0 up.',
   'screens.adminArea.rolesPanel.roleSaved': 'Role saved.',
   'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole':
@@ -5532,6 +5852,7 @@ const ENGLISH = {
   'screens.adminArea.seerrCard.askAs': 'Request as',
   'screens.adminArea.seerrCard.asRadarrForFilms': 'Radarr server, for films',
   'screens.adminArea.seerrCard.asSonarrForSeries': 'Sonarr server, for series',
+  'screens.adminArea.seerrCard.chooseAnAccount': 'Choose an account',
   'screens.adminArea.seerrCard.chooseAnAccountBeforeTheySend':
     'Choose an account to request as. Until you do, requests from them are rejected.',
   'screens.adminArea.seerrCard.everythingTheySendIsAsked':
@@ -5540,6 +5861,8 @@ const ENGLISH = {
     'Hostname {hostname}, port {port}, Use SSL {ssl}, URL Base {urlBase}.',
   'screens.adminArea.seerrCard.keepAskingInOverseerrOr':
     'Already request films and series in Overseerr or Jellyseerr? You can keep using it. Add Valence there as a Radarr server and a Sonarr server, and anything approved there is requested here, approved, and downloaded using its library’s settings.',
+  'screens.adminArea.seerrCard.letsOverseerrSendRequests':
+    'Lets Overseerr and Jellyseerr send requests here, as if Valence were Radarr and Sonarr.',
   'screens.adminArea.seerrCard.madeANewKey':
     'Generated a new API key. Paste it into both servers in Overseerr or Jellyseerr.',
   'screens.adminArea.seerrCard.makeANewKey': 'Regenerate API key',
@@ -5561,10 +5884,31 @@ const ENGLISH = {
     'Valence now accepts requests from Overseerr and Jellyseerr.',
   'screens.adminArea.sentATestDelivery': 'Sent a test delivery.',
   'screens.adminArea.sentTheMessage': 'Sent the message.',
+  'screens.adminArea.serverCard.accentDetail': 'Colours buttons, highlights and emails.',
+  'screens.adminArea.serverCard.ageRatingsAbout':
+    "A 15 and an R aren't the same, so Valence ranks ratings within one country instead of matching them across countries. Every country's ratings are already stored, so changing this doesn't need a rescan.",
+  'screens.adminArea.serverCard.ageRatingsDetail': "Which country's ratings to show and filter by.",
+  'screens.adminArea.serverCard.aValenceServer': 'A Valence server',
+  'screens.adminArea.serverCard.corners': 'Corners',
+  'screens.adminArea.serverCard.cornersDetail': 'How rounded cards, buttons and posters are.',
+  'screens.adminArea.serverCard.descriptionDetail': 'Shown by search engines and in link previews.',
+  'screens.adminArea.serverCard.logoDetail': 'Square PNG, JPEG, WebP or AVIF, up to 2 MB.',
+  'screens.adminArea.serverCard.logoRemoved': 'Logo removed.',
+  'screens.adminArea.serverCard.nameDetail': 'Shown in the apps, the browser tab and emails.',
+  'screens.adminArea.serviceKeyRow.addKey': 'Add key',
+  'screens.adminArea.serviceKeyRow.changeKey': 'Change key',
+  'screens.adminArea.serviceKeyRow.keySet': 'Key set',
+  'screens.adminArea.serviceKeyRow.noKey': 'No key',
+  'screens.adminArea.serviceKeyRow.titleKey': '{title} key',
   'screens.adminArea.sessionCard.cached': 'Cached',
+  'screens.adminArea.sessionCard.controlledFromLabel': 'Controlled from {label}',
   'screens.adminArea.sessionCard.message': 'Message',
+  'screens.adminArea.sessionCard.messagesShowOnlyWhileWatching':
+    'Messages show only while they’re watching a video.',
+  'screens.adminArea.sessionCard.nothingPlaying': 'Nothing playing',
   'screens.adminArea.sessionCard.notWatchingAnything': 'Not watching anything',
   'screens.adminArea.sessionCard.shared': 'Shared',
+  'screens.adminArea.sessionCard.theTvAppCannotShowMessages': 'The TV app can’t show messages.',
   'screens.adminArea.sessionHardware.deviceAccel': '{device} · {accel}',
   'screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH':
     '{length} of {SESSION_MESSAGE_MAX_LENGTH} characters. This won’t pause what they’re watching.',
@@ -5714,16 +6058,46 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.withoutOneArtistsAreLookedUp':
     'Without one, artists are looked up with the free key, which finds only one music video per artist.',
   'screens.adminArea.sharesPanel.aboutSharedLinks': 'About share links',
+  'screens.adminArea.sharesPanel.activeCount': 'Active ({count})',
+  'screens.adminArea.sharesPanel.allOpensUsed': 'All opens used',
   'screens.adminArea.sharesPanel.anybodyHoldingOneOfTheseCan':
     'Anyone with one of these links can watch what it points to without an account. Revoking a link stops it immediately and notifies the person who created it.',
+  'screens.adminArea.sharesPanel.count.endsInCountDays.one': 'Ends in {count} day',
+  'screens.adminArea.sharesPanel.count.endsInCountDays.other': 'Ends in {count} days',
+  'screens.adminArea.sharesPanel.created': 'Created',
   'screens.adminArea.sharesPanel.createdByNameSLinkToTitleStops':
     '{createdByName}’s share link for {title} stops working immediately, including for anyone watching through it now. They’ll be told the link was revoked.',
+  'screens.adminArea.sharesPanel.endedCount': 'Ended ({count})',
+  'screens.adminArea.sharesPanel.endsToday': 'Ends today',
+  'screens.adminArea.sharesPanel.expiredWhen': 'Expired {when}',
   'screens.adminArea.sharesPanel.handedOutBy': 'Created by',
+  'screens.adminArea.sharesPanel.noActiveLinks': 'No active links.',
   'screens.adminArea.sharesPanel.nobodyHasHandedOutALink': 'No share links have been created.',
+  'screens.adminArea.sharesPanel.noEndDate': 'No end date',
+  'screens.adminArea.sharesPanel.once': 'Once',
   'screens.adminArea.sharesPanel.readingTheLinks': 'Loading share links',
   'screens.adminArea.sharesPanel.theLinksCouldNotBeRead': 'Couldn’t load share links.',
   'screens.adminArea.sharesPanel.withdrewTheLink': 'Revoked the share link.',
   'screens.adminArea.signedThatDeviceOut': 'Signed that device out.',
+  'screens.adminArea.signInCard.apps': 'Apps',
+  'screens.adminArea.signInCard.appsAbout':
+    "The web is always on, since it's how this page is reached.",
+  'screens.adminArea.signInCard.appsDetail': 'Which apps people can sign in with.',
+  'screens.adminArea.signInCard.backgroundDetail': 'JPEG, PNG, WebP, AVIF or GIF, up to 16 MB.',
+  'screens.adminArea.signInCard.desktop': 'Desktop',
+  'screens.adminArea.signInCard.messageColour': 'Message colour',
+  'screens.adminArea.signInCard.messageDetail': "Shown under “Who's watching?” on every device.",
+  'screens.adminArea.signInCard.showProfiles': 'Show profiles',
+  'screens.adminArea.signInCard.showProfilesAbout':
+    "When off, the sign-in screen asks for a username or email and a password instead, and nobody who isn't signed in can see the names, pictures or IDs of the people on this server.",
+  'screens.adminArea.signInCard.showProfilesDetail':
+    "Lists everyone's profile so people pick theirs instead of typing a username.",
+  'screens.adminArea.signInCard.signInIsNotOverHttps': "Sign-in isn't over HTTPS",
+  'screens.adminArea.signInCard.signInIsNotOverHttpsDetail':
+    "Sign-in cookies aren't marked secure, so anyone on the network can read them. Put Valence behind HTTPS. Allowed addresses: {addresses}.",
+  'screens.adminArea.signInCard.signInScreen': 'Sign-in screen',
+  'screens.adminArea.signInCard.tv': 'TV',
+  'screens.adminArea.signInCard.welcomeHome': 'Welcome home',
   'screens.adminArea.sizeFree': '{size} free',
   'screens.adminArea.someCouldNotBeConfirmed':
     'Some could not be confirmed, and are still waiting.',
@@ -5740,10 +6114,12 @@ const ENGLISH = {
   'screens.adminArea.statisticsPanel.howThingsPlayed': 'How things played',
   'screens.adminArea.statisticsPanel.mostActive': 'Most active',
   'screens.adminArea.statisticsPanel.peopleWatching': 'People watching',
+  'screens.adminArea.statisticsPanel.playedAsIs': 'Played as-is',
   'screens.adminArea.statisticsPanel.playsEachDay': 'Plays each day',
   'screens.adminArea.statisticsPanel.readingTheStatistics': 'Reading the statistics…',
   'screens.adminArea.statisticsPanel.theStatisticsCouldNotBeRead':
     'The statistics could not be read.',
+  'screens.adminArea.statisticsPanel.timeWatched': 'Time watched',
   'screens.adminArea.statisticsPanel.titlesAdded': 'Titles added',
   'screens.adminArea.statisticsPanel.titlesWatched': 'Titles watched',
   'screens.adminArea.statisticsRangeChoice.howFarBackToLook': 'How far back to look',
@@ -5755,14 +6131,22 @@ const ENGLISH = {
   'screens.adminArea.stoppedTheReEncode': 'Stopped the re-encode.',
   'screens.adminArea.storage': 'Storage',
   'screens.adminArea.storagePanel.buckets': 'Buckets',
+  'screens.adminArea.storagePanel.bucketsCannotBeMountedHere': "Buckets can't be mounted here",
   'screens.adminArea.storagePanel.cannotMountHere': 'Can’t mount here',
   'screens.adminArea.storagePanel.eachBucketIsMountedAsA':
     'Each bucket is mounted as a folder under the path shown. Point a library at that folder and it scans, plays, downloads and takes requests like any other. Works with Amazon S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi and other S3-compatible services.',
+  'screens.adminArea.storagePanel.installRcloneAndFuse':
+    'Install rclone and FUSE. In Docker, add the buckets compose file.',
   'screens.adminArea.storagePanel.mounted': 'Mounted',
   'screens.adminArea.storagePanel.mounting': 'Mounting',
+  'screens.adminArea.storagePanel.mountsBuckets':
+    'Mounts S3-compatible buckets as folders your libraries can use.',
   'screens.adminArea.storagePanel.noBucketsYet': 'No buckets yet.',
   'screens.adminArea.storagePanel.notMounted': 'Not mounted',
   'screens.adminArea.storagePanel.readingTheBuckets': 'Reading the buckets',
+  'screens.adminArea.storagePanel.removeThisBucket': 'Remove this bucket?',
+  'screens.adminArea.storagePanel.removeThisBucketDetail':
+    "Its folder is unmounted. Libraries that point at it can't find their files until it's added again.",
   'screens.adminArea.storagePanel.theBucketsCouldNotBeRead': 'The buckets couldn’t be read.',
   'screens.adminArea.storagePanel.thisServerCannotMountBuckets':
     'This server can’t mount buckets. It needs rclone and FUSE: in Docker, add the buckets compose file, which gives the container /dev/fuse.',
@@ -5770,7 +6154,17 @@ const ENGLISH = {
     'A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.',
   'screens.adminArea.subtitlesCard.askedToo':
     'Searched alongside OpenSubtitles, and often stronger for shows.',
+  'screens.adminArea.subtitlesCard.closeMatch': 'Close match',
+  'screens.adminArea.subtitlesCard.episodeMatch': 'Episode match',
+  'screens.adminArea.subtitlesCard.episodeMatchDetail':
+    'How closely a subtitle must match an episode to be fetched.',
+  'screens.adminArea.subtitlesCard.exactFileOnly': 'Exact file only',
   'screens.adminArea.subtitlesCard.fetchAutomatically': 'Fetch automatically',
+  'screens.adminArea.subtitlesCard.fetchAutomaticallyDetail':
+    'Finds subtitles in your languages for new films and episodes, and swaps in better ones.',
+  'screens.adminArea.subtitlesCard.filmMatch': 'Film match',
+  'screens.adminArea.subtitlesCard.filmMatchDetail':
+    'How closely a subtitle must match a film to be fetched.',
   'screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries':
     'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re kept in Valence’s own data, not among your media, so every app can show them.',
   'screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles':
@@ -5779,9 +6173,14 @@ const ENGLISH = {
   'screens.adminArea.subtitlesCard.getASubdlKey': 'Get a SubDL API key',
   'screens.adminArea.subtitlesCard.howWhisperListens': 'How Whisper listens',
   'screens.adminArea.subtitlesCard.languages': 'Languages',
+  'screens.adminArea.subtitlesCard.languagesDetail':
+    'Offered first when someone looks for subtitles.',
   'screens.adminArea.subtitlesCard.languageSpoken': 'Language spoken',
+  'screens.adminArea.subtitlesCard.languageSpokenDetail':
+    'Leave it to Whisper unless it guesses wrong.',
   'screens.adminArea.subtitlesCard.minimumScore': 'Minimum score',
   'screens.adminArea.subtitlesCard.modelBase': 'Base',
+  'screens.adminArea.subtitlesCard.modelDetail': 'A larger model hears better and takes longer.',
   'screens.adminArea.subtitlesCard.modelLarge': 'Large (best, slowest)',
   'screens.adminArea.subtitlesCard.modelTiny': 'Tiny (fastest)',
   'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
@@ -5789,8 +6188,13 @@ const ENGLISH = {
   'screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores':
     'Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.',
   'screens.adminArea.subtitlesCard.openSubtitles': 'OpenSubtitles',
+  'screens.adminArea.subtitlesCard.openSubtitlesDetail':
+    'The biggest catalogue, and it can find subtitles timed to your exact file.',
+  'screens.adminArea.subtitlesCard.openSubtitlesDetailWithAccount':
+    'The biggest catalogue. Downloads count against {username}.',
   'screens.adminArea.subtitlesCard.readingTheSubtitleSettings': 'Loading subtitle settings',
   'screens.adminArea.subtitlesCard.savedTheSubtitleSettings': 'Subtitle settings saved',
+  'screens.adminArea.subtitlesCard.scoreOrMore': 'Score {score} or more',
   'screens.adminArea.subtitlesCard.subdl': 'SubDL',
   'screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs':
     'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
@@ -5801,8 +6205,13 @@ const ENGLISH = {
   'screens.adminArea.subtitlesCard.whateverIsSpoken': 'Whatever is spoken',
   'screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive':
     'When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.',
+  'screens.adminArea.subtitlesCard.whisper': 'Whisper',
+  'screens.adminArea.subtitlesCard.whisperDetail':
+    'Listens to titles with no subtitles at all and writes them.',
   'screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe':
     'Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.',
+  'screens.adminArea.subtitlesCard.whisperNotInstalled':
+    'Whisper isn’t installed with the media service.',
   'screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper': 'Write subtitles with Whisper',
   'screens.adminArea.subtitlesCard.writeThemInEnglish': 'Write them in English',
   'screens.adminArea.telemetryPreviewDialog.aNewInstallIdCouldNotBeMade':
@@ -6088,6 +6497,8 @@ const ENGLISH = {
   'screens.adminArea.watchHistoryCard.hideWhatNameWatched': 'Hide what {name} watched',
   'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
   'screens.adminArea.watchHistoryCard.showWhatNameWatched': 'Show what {name} watched',
+  'screens.adminArea.watchHistoryCard.underAMinute': 'Under 1 min',
+  'screens.adminArea.watchHistoryCard.watchedFor': 'Watched for',
   'screens.adminArea.wayInMessageRow.messageCouldNotBeSaved': 'The message could not be saved.',
   'screens.adminArea.wayInMessageRow.messageOnTheWayIn': 'Message on the sign in page',
   'screens.adminArea.wayInMessageRow.messageRemoved': 'Message removed.',
@@ -6098,6 +6509,26 @@ const ENGLISH = {
   'screens.adminArea.wayInMessageRow.useTheThemesColour': 'Use the theme’s colour',
   'screens.adminArea.webhookCreated': 'Webhook created.',
   'screens.adminArea.webhookDeleted': 'Webhook deleted.',
+  'screens.adminArea.webhookEventsCard.aboutSayingWhenItsFixed': 'About saying when it’s fixed',
+  'screens.adminArea.webhookEventsCard.aJobKeepsFailing': 'A job keeps failing',
+  'screens.adminArea.webhookEventsCard.alsoSayWhenItsFixed': 'Also say when it’s fixed',
+  'screens.adminArea.webhookEventsCard.andWhenItsBack': 'And when it’s back',
+  'screens.adminArea.webhookEventsCard.andWhenItsBackUp': 'And when it’s back up',
+  'screens.adminArea.webhookEventsCard.andWhenItWorksAgain': 'And when it works again',
+  'screens.adminArea.webhookEventsCard.andWhenTheresRoomAgain': 'And when there’s room again',
+  'screens.adminArea.webhookEventsCard.anIndexerKeepsFailing': 'An indexer keeps failing',
+  'screens.adminArea.webhookEventsCard.diskSpaceRunsLow': 'Disk space runs low',
+  'screens.adminArea.webhookEventsCard.problemsAndRequests': 'Problems and requests',
+  'screens.adminArea.webhookEventsCard.problemsOnly': 'Problems only',
+  'screens.adminArea.webhookEventsCard.requestsCantBeReached': 'Requests can’t be reached',
+  'screens.adminArea.webhookEventsCard.sendsASecondMessageWhenSomething':
+    'Sends a second message when something that went wrong is working again: the disk has room, the VPN is back, an indexer answers.',
+  'screens.adminArea.webhookEventsCard.theCatalogueCantBeReached': 'The catalogue can’t be reached',
+  'screens.adminArea.webhookEventsCard.theTranscoderCantBeReached':
+    'The transcoder can’t be reached',
+  'screens.adminArea.webhookEventsCard.theVPNGoesDown': 'The VPN goes down',
+  'screens.adminArea.webhookEventsCard.turnAllOff': 'Turn all off',
+  'screens.adminArea.webhookEventsCard.whatItSends': 'What it sends',
   'screens.adminArea.webhookFields.aFirstScanOfALarge':
     'A large library’s first scan adds everything at once. One message per scan keeps that readable; one per item doesn’t.',
   'screens.adminArea.webhookFields.aMessageInADiscordChannel': 'A message in a Discord channel',
@@ -6155,12 +6586,31 @@ const ENGLISH = {
     'Your bot’s sendMessage URL, ending in chat_id= and the chat it posts to. Add message_thread_id= to post in a topic.',
   'screens.adminArea.webhookFields.yourGotifyServersMessageUrlWithAnApplicationToken':
     'Your Gotify server’s message URL, ending in token= and an application’s token.',
+  'screens.adminArea.webhookPage.backToWebhooks': 'Back to Webhooks',
+  'screens.adminArea.webhookPage.deliveries': 'Deliveries',
+  'screens.adminArea.webhookPage.event': 'Event',
+  'screens.adminArea.webhookPage.everyKind': 'Every kind',
+  'screens.adminArea.webhookPage.onlyFor': 'Only for',
+  'screens.adminArea.webhookPage.shapesEachMessageForWhereIts':
+    "Shapes each message for where it's posted.",
+  'screens.adminArea.webhookPage.tries': 'Tries',
+  'screens.adminArea.webhookPage.valenceJSON': 'Valence JSON',
+  'screens.adminArea.webhookPage.whatItsCalledOnThisPage': "What it's called on this page.",
+  'screens.adminArea.webhookPage.whereEachMessageIsPosted': 'Where each message is posted.',
+  'screens.adminArea.webhookPage.whereItGoes': 'Where it goes',
+  'screens.adminArea.webhookPage.whichKindsOfTitleAreSent':
+    'Which kinds of title are sent when they arrive or are watched.',
+  'screens.adminArea.webhookPage.whoseSignInsAndAccountChanges':
+    'Whose sign-ins and account changes are sent.',
+  'screens.adminArea.webhookPage.whoseWatchingIsSent': 'Whose watching is sent.',
   'screens.adminArea.webhookSaved': 'Webhook saved.',
   'screens.adminArea.webhooksPanel.deleteThisWebhook': 'Delete this webhook?',
   'screens.adminArea.webhooksPanel.deliveredLastAttemptAt': 'Delivered {lastAttemptAt}',
   'screens.adminArea.webhooksPanel.failingSinceLastAttemptAt': 'Failing since {lastAttemptAt}',
   'screens.adminArea.webhooksPanel.hideHistory': 'Hide history',
   'screens.adminArea.webhooksPanel.iHaveCopiedIt': 'I’ve copied it',
+  'screens.adminArea.webhooksPanel.keepItTo100CharactersOr': 'Keep it to 100 characters or fewer.',
+  'screens.adminArea.webhooksPanel.lastDelivery': 'Last delivery',
   'screens.adminArea.webhooksPanel.nameIsSetUpCopyIts':
     '{name} is set up. Copy its signing secret now.',
   'screens.adminArea.webhooksPanel.newWebhook': 'New webhook',
@@ -6168,7 +6618,13 @@ const ENGLISH = {
     'No webhooks yet. Create one to have Valence post to Discord, ntfy or anywhere else when a job fails.',
   'screens.adminArea.webhooksPanel.nothingMoreWillBeSentThere':
     'Nothing more will be sent there, and the signing secret is deleted. Adding it again means giving the receiver a new secret.',
+  'screens.adminArea.webhooksPanel.noWebhooksYetCreateOne':
+    'No webhooks yet. Create one to post events to Discord, ntfy or any address.',
+  'screens.adminArea.webhooksPanel.pasteTheAddressToPostTo': 'Paste the address to post to.',
   'screens.adminArea.webhooksPanel.sendATest': 'Send a test',
+  'screens.adminArea.webhooksPanel.sends': 'Sends',
+  'screens.adminArea.webhooksPanel.thatIsntAWebAddressIt':
+    'That isn’t a web address. It starts with https:// or http://.',
   'screens.adminArea.webhooksPanel.theWebhooksCouldNotBeRead': 'Couldn’t load the webhooks.',
   'screens.adminArea.webhooksPanel.thisIsTheOnlyTimeIt':
     'This is the only time it’s shown. Give it to the receiver so it can verify that deliveries really come from Valence. If you lose it, delete this webhook and create a new one.',
@@ -6505,6 +6961,7 @@ const ENGLISH = {
   'screens.downloadsPanel.downloadQueueTable.nowNamedFromTheRelease':
     'Now, named from the release.',
   'screens.downloadsPanel.downloadQueueTable.onceItHasDownloaded': 'When the download finishes.',
+  'screens.downloadsPanel.downloadQueueTable.perSecond': '/s',
   'screens.downloadsPanel.downloadQueueTable.states.processing': 'Processing',
   'screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat':
     'A magnet link that never fetches its file list, usually because there are no seeders.',
@@ -6908,8 +7365,10 @@ const ENGLISH = {
   'screens.importWizard.sourceStep.plexToken': 'Plex token',
   'screens.importWizard.sourceStep.signsInWithAnApiKey':
     'Imports users, watch history and libraries using an API key.',
+  'screens.importWizard.sourceStep.signsInWithApiKey': 'Signs in with an API key.',
   'screens.importWizard.sourceStep.signsInWithAPlexToken':
     'Imports users, watch history and libraries using a Plex token.',
+  'screens.importWizard.sourceStep.signsInWithPlexToken': 'Signs in with a Plex token.',
   'screens.importWizard.sourceStep.theAddressValenceCanReachItOn':
     'The address Valence can reach it on, including the port. A local address is fine.',
   'screens.importWizard.sourceStep.whereIsEverythingNow': 'Which server are you moving from?',
@@ -7189,6 +7648,8 @@ const ENGLISH = {
   'screens.observabilityPage.jobHistory.actionsForKind': 'Actions for {kind}',
   'screens.observabilityPage.jobHistory.filterJobRuns': 'Filter job runs',
   'screens.observabilityPage.jobHistory.folder': 'Folder',
+  'screens.observabilityPage.jobHistory.hideRoutineChecks': 'Hide routine checks',
+  'screens.observabilityPage.jobHistory.hoursAgo': '{hours} h ago',
   'screens.observabilityPage.jobHistory.inTheOrderItHappened': 'Chronological',
   'screens.observabilityPage.jobHistory.issuesFromThisRun': 'Issues from this run',
   'screens.observabilityPage.jobHistory.jobHistoryCouldNotBeRead':
@@ -7196,6 +7657,7 @@ const ENGLISH = {
   'screens.observabilityPage.jobHistory.jobRunIssues': 'Job run issues',
   'screens.observabilityPage.jobHistory.kindProgress': '{kind} progress',
   'screens.observabilityPage.jobHistory.longestFirst': 'Longest first',
+  'screens.observabilityPage.jobHistory.minutesAndSeconds': '{minutes} min {seconds} s',
   'screens.observabilityPage.jobHistory.noIssuesWereRecordedForThis':
     'No issues were recorded for this run.',
   'screens.observabilityPage.jobHistory.noJobRunsMatchThis': 'No job runs match these filters.',
@@ -7207,6 +7669,8 @@ const ENGLISH = {
   'screens.observabilityPage.jobHistory.searchByJobLibraryErrorOr':
     'Search by job, library, error or run ID',
   'screens.observabilityPage.jobHistory.searchJobRuns': 'Search job runs',
+  'screens.observabilityPage.jobHistory.seconds': '{seconds} s',
+  'screens.observabilityPage.jobHistory.showRoutineChecks': 'Show routine checks',
   'screens.observabilityPage.jobHistory.theWholeServer': 'The whole server',
   'screens.observabilityPage.jobHistory.tookElapsed': 'took {elapsed}',
   'screens.observabilityPage.jobHistory.traceThisRun': 'Trace this run',
@@ -7484,9 +7948,14 @@ const ENGLISH = {
   'screens.pluginsPanel.removePluginDialog.valenceCouldNotSayWhatIt':
     'Valence couldn’t list the plugin’s saved data. Any data it saved is deleted with it.',
   'screens.pluginsPanel.trustBadge.keyYouTrust': 'Key you trust',
+  'screens.pluginsPanel.trustedKeysCard.aboutTrustedSigningKeys': 'About trusted signing keys',
+  'screens.pluginsPanel.trustedKeysCard.giveTheKeyItsId': 'Give the key its id.',
   'screens.pluginsPanel.trustedKeysCard.keyId': 'Key id',
   'screens.pluginsPanel.trustedKeysCard.noLongerTrustingId': 'No longer trusting {id}.',
   'screens.pluginsPanel.trustedKeysCard.nowTrustingId': 'Now trusting {id}.',
+  'screens.pluginsPanel.trustedKeysCard.onlyValencesOwnKey':
+    'Only Valence’s own key. Add one to install plugins someone else signs without the unsigned warning.',
+  'screens.pluginsPanel.trustedKeysCard.pasteThePublicKey': 'Paste the public key.',
   'screens.pluginsPanel.trustedKeysCard.pluginsItSignedStayInstalled':
     'Plugins it signed stay installed. New packages it signs are treated as unsigned, and you’ll need the key again to trust it.',
   'screens.pluginsPanel.trustedKeysCard.pluginsSignedByOneOfThese':
@@ -7494,6 +7963,7 @@ const ENGLISH = {
   'screens.pluginsPanel.trustedKeysCard.publicKey': 'Public key',
   'screens.pluginsPanel.trustedKeysCard.setByTheEnvironment': 'Set by VALENCE_PLUGIN_TRUSTED_KEYS',
   'screens.pluginsPanel.trustedKeysCard.stopTrustingId': 'Stop trusting {id}?',
+  'screens.pluginsPanel.trustedKeysCard.trustASigningKey': 'Trust a signing key',
   'screens.pluginsPanel.trustedKeysCard.trustedSigningKeys': 'Trusted signing keys',
   'screens.pluginsPanel.trustedKeysCard.trustKey': 'Trust key',
   'screens.pluginSurfaceView.askingThePlugin': 'Loading plugin',
@@ -9280,8 +9750,8 @@ const ENGLISH = {
   'ui.dataTable.filter': 'Filter',
   'ui.dataTable.filterById': 'Filter by {id}',
   'ui.dataTable.nothingHereYet': 'Nothing here yet.',
-  'ui.dataTable.pageValueOfPageCountEveryRowIn':
-    'Page {value} of {pageCount} · {everyRow} in total',
+  'ui.dataTable.rowsFromTo': '{from}–{to}',
+  'ui.dataTable.rowsFromToOfCount': '{from}–{to} of {count}',
   'ui.dataTable.showingHoldingOfLengthScrollFor':
     'Showing {holding} of {length} · scroll to load more',
   'ui.filterMenu.clearFilters': 'Clear filters',

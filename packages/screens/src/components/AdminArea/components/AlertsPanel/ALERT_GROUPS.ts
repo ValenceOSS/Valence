@@ -15,7 +15,7 @@ type AlertGroup = {
 
 const ALERT_GROUPS: readonly AlertGroup[] = [
   {
-    title: say('screens.adminArea.alertsPanel.services'),
+    title: say('common.requests'),
     alerts: [
       {
         id: 'requests',
@@ -35,6 +35,16 @@ const ALERT_GROUPS: readonly AlertGroup[] = [
         description: say('screens.adminArea.alertsPanel.showsWhenTheCloudflareSolverFailsToStart'),
       },
       {
+        id: 'requests-indexers',
+        title: say('screens.adminArea.alertsPanel.failingIndexers'),
+        description: say('screens.adminArea.alertsPanel.showsWhenAnIndexerKeepsFailing'),
+      },
+    ],
+  },
+  {
+    title: say('screens.adminArea.alertsPanel.mediaService'),
+    alerts: [
+      {
         id: 'transcoder',
         title: say('screens.adminArea.alertsPanel.mediaServiceUnreachable'),
         description: say(
@@ -47,16 +57,6 @@ const ALERT_GROUPS: readonly AlertGroup[] = [
         description: say(
           'screens.adminArea.alertsPanel.showsWhenTheMediaServiceRunsAnUnsupportedFFmpeg',
         ),
-      },
-    ],
-  },
-  {
-    title: say('common.requests'),
-    alerts: [
-      {
-        id: 'requests-indexers',
-        title: say('screens.adminArea.alertsPanel.failingIndexers'),
-        description: say('screens.adminArea.alertsPanel.showsWhenAnIndexerKeepsFailing'),
       },
     ],
   },

@@ -512,6 +512,8 @@ import { seedDefaultRoles } from '@ValenceServer/auth/seedDefaultRoles';
 import { giveAccountsUsernames } from '@ValenceServer/auth/giveAccountsUsernames';
 import { ADMINISTRATOR_ROLE_NAME, DEFAULT_ROLE_NAME } from '@ValenceCore/functions/defaultRoles';
 import { createDatabaseStatisticsService } from '@ValenceServer/statistics/createDatabaseStatisticsService';
+import { withAuditNews } from '@ValenceServer/audit/withAuditNews';
+import { withLinkingNews } from '@ValenceServer/linking/withLinkingNews';
 import { createDatabaseAuditService } from '@ValenceServer/audit/createDatabaseAuditService';
 import { createBackupService } from '@ValenceServer/backups/createBackupService';
 import { RESTORE_COMMAND } from '@ValenceServer/backups/RESTORE_COMMAND';
@@ -705,7 +707,9 @@ const historyService = createDatabaseHistoryService(db);
 const deviceNotes = createDatabaseDeviceNotes(db);
 const askingDevices = createAskingDevices();
 const statisticsService = createDatabaseStatisticsService(db);
-const auditService = createDatabaseAuditService(db);
+const auditService = withAuditNews(createDatabaseAuditService(db), () => {
+  realtime.publish('audit', { changed: true }, { kind: 'everyone' });
+});
 const backupService = createBackupService({
   folder: env.BACKUP_DIR,
   kept: env.BACKUPS_KEPT,
@@ -1846,7 +1850,9 @@ const librariesAcrossProcesses = createDatabaseWorkLock({
 
 const webhookSubscriptions = createDatabaseWebhookStore(db);
 
-const linkStore = createDatabaseLinkStore(db);
+const linkStore = withLinkingNews(createDatabaseLinkStore(db), () => {
+  realtime.publish('linking', { changed: true }, { kind: 'everyone' });
+});
 
 const linkPeers = createPeerClient();
 

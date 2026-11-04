@@ -37,7 +37,7 @@ describe('RecentEmails', () => {
     );
 
     expect(screen.getByText('Password reset')).toBeInTheDocument();
-    expect(screen.getByText('Sent')).toBeInTheDocument();
+    expect(screen.queryByText('Sent')).toBeNull();
     expect(screen.getByText('Test email')).toBeInTheDocument();
     expect(screen.getByText('Failed: no reason was given')).toBeInTheDocument();
   });

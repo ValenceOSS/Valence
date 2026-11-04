@@ -39,6 +39,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrariesPanelProps } from './LibrariesPanel.types';
 import { PanelCardMenu } from '@ValenceScreens/components/PanelCardMenu/PanelCardMenu';
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
@@ -47,7 +48,6 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { say } from '@ValenceI18n/say';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
-import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 /**
  * The folders Valence reads and what it is doing to them: adding one, scanning one or all of them,
@@ -131,18 +131,18 @@ const LibrariesPanel = ({
         accessorFn: (library) => library.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">
-                {row.original.flavour ?? LIBRARY_KIND_NAMES[row.original.kind].label}
-              </Badge>
-            </span>
+            <span className="truncate font-medium text-text">{row.original.name}</span>
 
-            <FolderLink
-              shown={row.original.path}
-              folder={row.original.path}
-              onOpen={onOpenFolder}
-            />
+            <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
+              <span className="shrink-0">
+                {row.original.flavour ?? LIBRARY_KIND_NAMES[row.original.kind].label} ·
+              </span>
+              <FolderLink
+                shown={row.original.path}
+                folder={row.original.path}
+                onOpen={onOpenFolder}
+              />
+            </span>
           </span>
         ),
       },
@@ -152,11 +152,7 @@ const LibrariesPanel = ({
         accessorFn: (library) => library.itemCount,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
-            <Sentence
-              counted="common.count.items"
-              count={row.original.itemCount}
-              fillings={{ count: <FormattedNumber value={row.original.itemCount} /> }}
-            />
+            <FormattedNumber value={row.original.itemCount} />
           </span>
         ),
       },
@@ -174,7 +170,7 @@ const LibrariesPanel = ({
               <span
                 className={cn(
                   'whitespace-nowrap text-xs',
-                  row.original.lastScan.removed === 0 ? 'text-text-muted' : 'text-danger',
+                  row.original.lastScan.failed === 0 ? 'text-text-muted' : 'text-danger',
                 )}
               >
                 {describeScanResult(row.original.lastScan)}
@@ -185,7 +181,7 @@ const LibrariesPanel = ({
       },
       {
         id: 'state',
-        header: say('common.state'),
+        header: say('common.status'),
         enableSorting: false,
         cell: ({ row }) => {
           const busy = workOf(progress, row.original.id);
@@ -358,48 +354,46 @@ const LibrariesPanel = ({
       title={say('common.libraries')}
       isFlush
       actions={
-        <PanelCardMenu
-          label={say('screens.adminArea.librariesPanel.libraryActions')}
-          groups={[
-            {
-              items: [
-                {
-                  id: 'scanAll',
-                  label: isScanningAll
-                    ? say('screens.adminArea.librariesPanel.scanningAllLibraries')
-                    : say('screens.adminArea.adminSetupGuide.scanAll'),
-                  icon: <Icon of={RotateCwFilledIcon} size={15} />,
-                  isDisabled: isBusy || isScanningAll,
-                  onChoose: onScanAll,
-                },
-                {
-                  id: 'resetAll',
-                  label: isResettingAll
-                    ? say('screens.adminArea.librariesPanel.resettingAndRebuilding')
-                    : say('common.resetAndRebuild'),
-                  icon: <Icon of={BinFilledIcon} size={15} />,
-                  isDestructive: true,
-                  isDisabled: isBusy || isResettingAll,
-                  onChoose: () => {
-                    setIsConfirmingReset(true);
+        <>
+          <PanelCardAction
+            icon={PlusFilledIcon}
+            onClick={() => {
+              setIsAdding(true);
+            }}
+          >
+            {say('common.addLibrary')}
+          </PanelCardAction>
+          <PanelCardMenu
+            label={say('screens.adminArea.librariesPanel.libraryActions')}
+            groups={[
+              {
+                items: [
+                  {
+                    id: 'scanAll',
+                    label: isScanningAll
+                      ? say('screens.adminArea.librariesPanel.scanningAllLibraries')
+                      : say('screens.adminArea.adminSetupGuide.scanAll'),
+                    icon: <Icon of={RotateCwFilledIcon} size={15} />,
+                    isDisabled: isBusy || isScanningAll,
+                    onChoose: onScanAll,
                   },
-                },
-              ],
-            },
-            {
-              items: [
-                {
-                  id: 'add',
-                  label: say('common.addLibrary'),
-                  icon: <Icon of={PlusFilledIcon} size={15} />,
-                  onChoose: () => {
-                    setIsAdding(true);
+                  {
+                    id: 'resetAll',
+                    label: isResettingAll
+                      ? say('screens.adminArea.librariesPanel.resettingAndRebuilding')
+                      : say('common.resetAndRebuild'),
+                    icon: <Icon of={BinFilledIcon} size={15} />,
+                    isDestructive: true,
+                    isDisabled: isBusy || isResettingAll,
+                    onChoose: () => {
+                      setIsConfirmingReset(true);
+                    },
                   },
-                },
-              ],
-            },
-          ]}
-        />
+                ],
+              },
+            ]}
+          />
+        </>
       }
     >
       {isUnreachable ? (

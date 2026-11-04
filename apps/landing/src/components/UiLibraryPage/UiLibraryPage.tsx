@@ -32,6 +32,7 @@ const UiLibraryPage = () => {
   const slug = (UI_PATH.exec(pathname)?.groups?.slug ?? '').toLowerCase();
   const doc = catalogue.find((one) => one.name.toLowerCase() === slug) ?? null;
   const everything = groupComponents(catalogue, UI_EXAMPLE_GROUPS);
+  const shownCount = everything.reduce((sum, one) => sum + one.components.length, 0);
   const listed = groupComponents(catalogue, UI_EXAMPLE_GROUPS, query);
   const group = everything.find((one) => one.components.some((each) => each.name === doc?.name));
   const examples =
@@ -131,8 +132,7 @@ const UiLibraryPage = () => {
                           : `There is no component called ${slug}`}
                       </h2>
                       <p className="text-text-muted">
-                        {catalogue.length.toString()} components in {everything.length.toString()}{' '}
-                        groups.
+                        {shownCount.toString()} components in {everything.length.toString()} groups.
                       </p>
                     </div>
                     <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

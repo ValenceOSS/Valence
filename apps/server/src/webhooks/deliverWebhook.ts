@@ -7,7 +7,11 @@ import { resolvesSafely } from './resolvesSafely';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
 import { webhookNoticeFor } from './webhookNoticeFor';
 import type { PosterAttachment } from './fetchPosterAttachment';
-import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
+import type {
+  CustomWebhook,
+  WebhookPayload,
+  WebhookPreset,
+} from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
 
 const WEBHOOK_TIMEOUT_MILLISECONDS = 10_000;
@@ -26,6 +30,7 @@ type WebhookTarget = {
   url: string;
   preset: WebhookPreset;
   secret: string;
+  custom: CustomWebhook | null;
 };
 
 type WebhookDestination = WebhookTarget & { brand: WebhookBrand };
@@ -42,7 +47,8 @@ type WebhookAttempt = {
  * outright to send anywhere the address checks reject, whether as written or as its name resolves,
  * follows no redirect — a redirect is an answer that did not arrive, not a new address to send to —
  * and gives up on anything too slow to answer, so that one unresponsive endpoint cannot hold a worker
- * open.
+ * open. A Custom webhook is sent with its own method and headers, and signed only where it asks to
+ * be; a template that cannot be filled is recorded as a failed delivery rather than sent.
  *
  * @param target Where to send it, what to sign it with, and where Valence's mark can be fetched.
  * @param payload The event being delivered.
@@ -78,19 +84,32 @@ const deliverWebhook = async (
       ? await fetchPoster(webhookNoticeFor(payload, target.brand.name).posterUrl)
       : null;
 
-  const { body, contentType } = formatWebhookBody(target.preset, payload, {
+  const { body, contentType, problem } = formatWebhookBody(target.preset, payload, {
     brand: target.brand,
     address: target.url,
     poster,
+    custom: target.custom,
   });
+
+  if (problem !== undefined) {
+    return { ok: false, status: null, error: problem };
+  }
+
+  const custom = target.preset === 'custom' ? target.custom : null;
+  const isSigned = custom?.isSigned ?? true;
 
   try {
     const response = await call(addressToSend(target.preset, target.url), {
-      method: 'POST',
+      method: custom?.method ?? 'POST',
       headers: {
+        ...Object.fromEntries(
+          (custom?.headers ?? []).map((header) => [header.name.toLowerCase(), header.value]),
+        ),
         'content-type': contentType,
         'user-agent': 'Valence',
-        [WEBHOOK_SIGNATURE_HEADER]: signWebhookPayload(target.secret, body),
+        ...(isSigned
+          ? { [WEBHOOK_SIGNATURE_HEADER]: signWebhookPayload(target.secret, body) }
+          : {}),
       },
       body,
       signal: AbortSignal.timeout(timeoutMilliseconds),

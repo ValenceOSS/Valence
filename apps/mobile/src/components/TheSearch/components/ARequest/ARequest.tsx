@@ -35,6 +35,7 @@ const TONES = {
   success: 'success',
   danger: 'danger',
   quiet: 'quiet',
+  ended: 'quiet',
 } as const satisfies Record<StatusTone, ABadgeTone>;
 
 const EXPLAINED: ReadonlySet<StatusTone> = new Set(['danger', 'warning', 'waiting']);

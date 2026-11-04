@@ -734,7 +734,7 @@ describe('AdminArea', () => {
       renderInAnAddress(<TheAdmin panel="requests" />);
 
       expect(await screen.findByText('Requests service')).toBeInTheDocument();
-      expect(await screen.findByText('Online')).toBeInTheDocument();
+      expect(await screen.findByText(/^Online/u)).toBeInTheDocument();
     });
 
     it('opens on the indexers where the address names them', async () => {
@@ -1064,7 +1064,17 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Settings');
-    await actor.type(screen.getByLabelText('Catalogue key'), 'a-key');
+
+    await screen.findByText('The Movie Database');
+
+    const [addCatalogueKey] = screen.getAllByRole('button', { name: 'Add key' });
+
+    if (addCatalogueKey === undefined) {
+      throw new Error('There is no key to add.');
+    }
+
+    await actor.click(addCatalogueKey);
+    await actor.type(screen.getByLabelText('The Movie Database key'), 'a-key');
     await actor.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -1079,7 +1089,7 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Settings');
 
-    expect(await screen.findByText('Signing in')).toBeInTheDocument();
+    expect(await screen.findByText('Sign-in screen')).toBeInTheDocument();
     expect(screen.queryByText('marques@valence.local')).not.toBeInTheDocument();
   });
 
@@ -1124,7 +1134,7 @@ describe('AdminArea', () => {
     expect(screen.getByText(/Playing/)).toBeInTheDocument();
     expect(screen.getByText('Living room TV')).toBeInTheDocument();
     expect(screen.getAllByText('Dan').length).toBeGreaterThan(0);
-    expect(screen.getByText('DirectPlay')).toBeInTheDocument();
+    expect(screen.getByText('Direct play')).toBeInTheDocument();
   });
 
   it('stops a stream on request', async () => {
@@ -1193,9 +1203,9 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await chooseLibraryAction(actor, 'Add library');
+    await actor.click(await screen.findByRole('button', { name: 'Add library' }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Add a library' });
+    const dialog = await screen.findByRole('dialog', { name: 'Add a library' });
 
     await actor.type(within(dialog).getByLabelText('Name'), 'Shows');
     await actor.type(within(dialog).getByLabelText('Path'), '/media/shows');
@@ -1590,7 +1600,7 @@ describe('AdminArea', () => {
 
       await actor.click(await screen.findByRole('button', { name: 'Add it in Settings' }));
 
-      expect(await screen.findByLabelText('Catalogue key')).toBeInTheDocument();
+      expect(await screen.findByText('The Movie Database')).toBeInTheDocument();
     });
 
     it('can be put away, and stays away', async () => {

@@ -292,6 +292,8 @@ const ActiveSessionSchema = z.object({
   listening: ListeningSessionSchema.nullable().default(null),
   bookListening: BookListeningSessionSchema.nullable().default(null),
   reading: ReadingSessionSchema.nullable().default(null),
+  controlledFrom: z.object({ clientId: z.string(), label: z.string() }).nullable().default(null),
+  remoteFor: z.object({ clientId: z.string(), label: z.string() }).nullable().default(null),
 });
 
 const JobDefinitionSchema = z.object({
@@ -723,6 +725,10 @@ const fetchJobHistory = async (query: Partial<JobRunQuery> = {}): Promise<JobRun
 
   if (query.sort !== undefined) {
     parameters.set('sort', query.sort);
+  }
+
+  if (query.hidesRoutine === true) {
+    parameters.set('hidesRoutine', 'true');
   }
 
   if (query.runningFirst === true) {

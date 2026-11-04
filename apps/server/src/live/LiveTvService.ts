@@ -3,7 +3,9 @@ import type {
   LiveHealth,
   LiveSource,
   NewLiveSource,
+  LiveSourceChange,
 } from '@ValenceContracts/schemas/LiveTv';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { StoredLiveChannel } from './LiveTvStore';
 
 type LiveTvService = {
@@ -12,6 +14,7 @@ type LiveTvService = {
   remove: (id: string) => Promise<boolean>;
   refresh: (id: string) => Promise<LiveSource | null>;
   changeGuide: (id: string, guideUrl: string | null) => Promise<LiveSource | null>;
+  change: (id: string, change: LiveSourceChange) => Promise<LiveSource | Said | null>;
   changeLogo: (id: string, logoUrl: string | null) => Promise<LiveSource | null>;
   isEmbedded: (channel: StoredLiveChannel) => Promise<boolean>;
   refreshAll: () => Promise<number>;

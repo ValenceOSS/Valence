@@ -84,6 +84,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     music,
     books,
     bookDevices,
+    videoDevices,
     listUsers,
     capabilities,
     hardware,
@@ -578,6 +579,14 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           listening: await listeningOn(entry.clientId),
           bookListening: await bookListeningOn(entry.clientId),
           reading: await readingOn(entry.clientId),
+          controlledFrom:
+            videoDevices?.controllerOf(entry.clientId) ??
+            music?.devices.controllerOf(entry.clientId) ??
+            null,
+          remoteFor:
+            videoDevices?.remoteFor(entry.clientId) ??
+            music?.devices.remoteFor(entry.clientId) ??
+            null,
           streams:
             entry.accountId === null
               ? null
@@ -874,6 +883,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         offset: asked.offset ?? 0,
         limit: asked.limit ?? 200,
         runningFirst: asked.runningFirst === 'true',
+        hidesRoutine: asked.hidesRoutine === 'true',
       }),
       200,
     );

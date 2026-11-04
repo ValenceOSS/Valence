@@ -610,6 +610,7 @@ const WEBHOOK_PRESETS = [
   'gotify',
   'pushover',
   'apprise',
+  'custom',
 ] as const;
 
 const WebhookPresetSchema = z.enum(WEBHOOK_PRESETS);
@@ -628,7 +629,66 @@ const WEBHOOK_ADDRESS_SETTINGS: Record<
   gotify: { required: ['token'], optional: [], isMovedToBody: false },
   pushover: { required: ['token', 'user'], optional: ['device', 'sound'], isMovedToBody: true },
   apprise: { required: [], optional: [], isMovedToBody: false },
+  custom: { required: [], optional: [], isMovedToBody: false },
 };
+
+const CUSTOM_WEBHOOK_METHODS = ['POST', 'PUT', 'PATCH'] as const;
+
+const CUSTOM_WEBHOOK_FORMATS = ['json', 'text', 'form'] as const;
+
+const CustomWebhookFormatSchema = z.enum(CUSTOM_WEBHOOK_FORMATS);
+
+type CustomWebhookFormat = (typeof CUSTOM_WEBHOOK_FORMATS)[number];
+
+const CUSTOM_WEBHOOK_CONTENT_TYPES: Record<CustomWebhookFormat, string> = {
+  json: 'application/json',
+  // oxlint-disable-next-line valence/no-hard-coded-strings -- a media type sent as a header, never shown
+  text: 'text/plain; charset=utf-8',
+  form: 'application/x-www-form-urlencoded',
+};
+
+const HEADERS_VALENCE_SETS = new Set([
+  'connection',
+  'content-length',
+  'content-type',
+  'expect',
+  'host',
+  'keep-alive',
+  'proxy-connection',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'user-agent',
+  'x-valence-signature',
+]);
+
+const CustomWebhookHeaderSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .regex(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/u)
+    .refine((name) => !HEADERS_VALENCE_SETS.has(name.toLowerCase())),
+  value: z
+    .string()
+    .max(4000)
+    .regex(/^[^\r\n]*$/u),
+  isSecret: z.boolean().default(false),
+});
+
+type CustomWebhookHeader = z.infer<typeof CustomWebhookHeaderSchema>;
+
+const CustomWebhookSchema = z.object({
+  method: z.enum(CUSTOM_WEBHOOK_METHODS).default('POST'),
+  format: CustomWebhookFormatSchema.default('json'),
+  template: z.string().max(20_000),
+  headers: z.array(CustomWebhookHeaderSchema).max(20).default([]),
+  isSigned: z.boolean().default(true),
+});
+
+type CustomWebhook = z.infer<typeof CustomWebhookSchema>;
 
 const WebhookDeliveryResultSchema = z.object({
   lastAttemptAt: z.string().datetime().nullable(),
@@ -644,6 +704,7 @@ const WebhookSubscriptionSchema = z
     preset: WebhookPresetSchema,
     events: z.array(WebhookEventSchema).min(1),
     filters: WebhookFiltersSchema.prefault({}),
+    custom: CustomWebhookSchema.nullable().default(null),
     enabled: z.boolean(),
     createdAt: z.string().datetime(),
   })
@@ -667,6 +728,12 @@ type WebhookDelivery = z.infer<typeof WebhookDeliverySchema>;
 
 export {
   ARRIVED_TITLES_KEPT,
+  CUSTOM_WEBHOOK_CONTENT_TYPES,
+  CUSTOM_WEBHOOK_FORMATS,
+  CUSTOM_WEBHOOK_METHODS,
+  CustomWebhookFormatSchema,
+  CustomWebhookHeaderSchema,
+  CustomWebhookSchema,
   WEBHOOK_EVENT_GROUPS,
   WEBHOOK_EVENT_NOTES,
   WEBHOOK_SUBSCRIBABLE_EVENTS,
@@ -696,6 +763,9 @@ export {
 
 export type {
   ArrivedTitle,
+  CustomWebhook,
+  CustomWebhookFormat,
+  CustomWebhookHeader,
   WebhookRequest,
   ScannedLibrary,
   WebhookSubscribableEvent,
