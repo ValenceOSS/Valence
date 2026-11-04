@@ -1,0 +1,193 @@
+import { useId, useState } from 'react';
+import { X as XIcon } from '@keyline-icons/react';
+import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
+import { TextField } from '@ValenceUI/TextField';
+import { MENU } from '@ValenceUI/tokens/menu';
+import { cn } from '@ValenceUI/cn';
+import { sameWord } from './sameWord';
+import type { KeyboardEvent } from 'react';
+import type { TagFieldProps } from './TagField.types';
+import { say } from '@ValenceI18n/say';
+
+const MOST_SUGGESTED = 8;
+
+/**
+ * A list of words, such as genres or tags, written one at a time: each is a chip that can be taken
+ * away, and the field beneath suggests the words already in use as you type, with how often each
+ * is, so a library keeps one spelling of a word rather than three. Enter or a comma adds what was
+ * typed, a suggestion's own spelling winning over a close one, and Backspace in an empty field
+ * takes the last word away.
+ *
+ * @param label - What the words are.
+ * @param values - The words, in order.
+ * @param onValuesChange - Told the new words whenever one is added or taken away.
+ * @param suggestions - The words already in use, with how often each is.
+ * @param placeholder - What the empty field says.
+ * @param isLabelHidden - Whether the label is for screen readers only.
+ * @param disabled - Whether the words can be changed.
+ * @param className - Extra classes for the caller's own layout.
+ */
+const TagField = ({
+  label,
+  values,
+  onValuesChange,
+  suggestions = [],
+  placeholder,
+  isLabelHidden = false,
+  disabled = false,
+  className,
+}: TagFieldProps) => {
+  const [draft, setDraft] = useState('');
+  const [isOpen, setOpen] = useState(false);
+  const [at, setAt] = useState(0);
+  const listId = useId();
+  const taken = new Set(values.map(sameWord));
+  const typed = sameWord(draft);
+  const offered =
+    typed === ''
+      ? []
+      : suggestions
+          .filter((one) => !taken.has(sameWord(one.value)) && sameWord(one.value).includes(typed))
+          .toSorted(
+            (one, other) =>
+              Number(!sameWord(other.value).startsWith(typed)) -
+                Number(!sameWord(one.value).startsWith(typed)) ||
+              (other.count ?? 0) - (one.count ?? 0),
+          )
+          .slice(0, MOST_SUGGESTED);
+
+  /**
+   * Adds words, each spelled as the library already spells it where it does.
+   *
+   * @param words - What was typed or chosen.
+   */
+  const add = (words: readonly string[]) => {
+    const added = [...values];
+
+    for (const word of words) {
+      const trimmed = word.trim();
+      const spelled =
+        suggestions.find((one) => sameWord(one.value) === sameWord(trimmed))?.value ?? trimmed;
+
+      if (spelled !== '' && !added.some((one) => sameWord(one) === sameWord(spelled))) {
+        added.push(spelled);
+      }
+    }
+
+    if (added.length !== values.length) {
+      onValuesChange(added);
+    }
+
+    setDraft('');
+    setAt(0);
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      add([offered[at]?.value ?? draft]);
+    } else if (event.key === 'Backspace' && draft === '' && values.length > 0) {
+      onValuesChange(values.slice(0, -1));
+    } else if (event.key === 'ArrowDown' && offered.length > 0) {
+      event.preventDefault();
+      setAt((current) => Math.min(current + 1, offered.length - 1));
+    } else if (event.key === 'ArrowUp' && offered.length > 0) {
+      event.preventDefault();
+      setAt((current) => Math.max(current - 1, 0));
+    } else if (event.key === 'Escape' && isOpen && offered.length > 0) {
+      event.preventDefault();
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div data-slot="tag-field" className={cn('relative flex flex-col gap-2', className)}>
+      {values.length === 0 ? null : (
+        <ul className="flex flex-wrap items-center gap-2">
+          {values.map((value) => (
+            <li key={value} className="flex h-7 items-center">
+              <Button
+                variant="glossy"
+                size="xs"
+                label={say('ui.appliedFilters.removeSaid', { said: value })}
+                hasTooltip={false}
+                disabled={disabled}
+                onClick={() => {
+                  onValuesChange(values.filter((one) => one !== value));
+                }}
+              >
+                {value}
+                <Icon of={XIcon} size={13} />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <TextField
+        label={label}
+        isLabelHidden={isLabelHidden || values.length > 0}
+        value={draft}
+        {...(placeholder === undefined ? {} : { placeholder })}
+        disabled={disabled}
+        autoComplete="off"
+        onValueChange={(next) => {
+          const parts = next.split(',');
+
+          if (parts.length > 1) {
+            add(parts.slice(0, -1));
+            setDraft(parts.at(-1) ?? '');
+          } else {
+            setDraft(next);
+            setAt(0);
+          }
+
+          setOpen(true);
+        }}
+        onKeyDown={onKeyDown}
+        onFocus={() => {
+          setOpen(true);
+        }}
+        onBlur={() => {
+          setOpen(false);
+        }}
+      />
+
+      {!isOpen || offered.length === 0 ? null : (
+        <div
+          id={listId}
+          role="listbox"
+          aria-label={say('ui.tagField.suggestions', { label })}
+          className={cn(MENU.content, 'absolute inset-x-0 top-full mt-1')}
+        >
+          {offered.map((one, index) => (
+            <Button
+              key={one.value}
+              variant="row"
+              size="none"
+              role="option"
+              aria-selected={index === at}
+              className={cn(MENU.item, index === at ? 'bg-[var(--surface-hover)]' : '')}
+              onPointerDown={(event) => {
+                event.preventDefault();
+              }}
+              onClick={() => {
+                add([one.value]);
+              }}
+            >
+              <span className={MENU.itemLabel}>{one.value}</span>
+              {one.count === undefined ? null : (
+                <span className={MENU.detail}>{one.count.toString()}</span>
+              )}
+            </Button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+TagField.displayName = 'TagField';
+
+export { TagField };

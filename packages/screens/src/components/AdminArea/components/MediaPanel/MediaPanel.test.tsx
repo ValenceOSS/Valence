@@ -968,7 +968,7 @@ describe('MediaPanel', () => {
       <MediaPanel {...props} media={[item()]} openedTitle="item-1" onOpenTitle={onOpenTitle} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Back to Media' }));
+    await user.click(screen.getByRole('button', { name: 'Media' }));
 
     expect(onOpenTitle).toHaveBeenCalledWith(null);
   });
@@ -986,6 +986,7 @@ describe('MediaPanel', () => {
       />,
     );
 
+    await user.click(screen.getByRole('tab', { name: 'Files' }));
     await user.click(
       screen.getAllByRole('button', { name: 'Actions for Parasite' })[0] ?? document.body,
     );

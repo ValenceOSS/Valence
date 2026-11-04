@@ -13,6 +13,9 @@ import type { TextFieldProps } from './TextField.types';
  * @param label - What is being asked for, shown unless the caller hides it.
  * @param value - What the field holds now.
  * @param onValueChange - Told the new text on every keystroke.
+ * @param onKeyDown - Told of each key pressed in a single-line field, for a control built on it.
+ * @param onFocus - Told when the field takes focus.
+ * @param onBlur - Told when the field loses focus.
  * @param type - Which kind of input, such as a search box or a password.
  * @param description - A line explaining what is wanted.
  * @param descriptionPlacement - Where that line sits: between the label and the field, or under the
@@ -44,6 +47,9 @@ const TextField = ({
   label,
   value,
   onValueChange,
+  onKeyDown,
+  onFocus,
+  onBlur,
   type = 'text',
   description,
   descriptionPlacement = 'above',
@@ -113,6 +119,8 @@ const TextField = ({
             onChange={(event) => {
               onValueChange(event.currentTarget.value);
             }}
+            {...(onFocus === undefined ? {} : { onFocus })}
+            {...(onBlur === undefined ? {} : { onBlur })}
             className={cn(
               'valence-field w-full resize-y rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-3 py-2.5 text-text outline-none',
               'hover:border-[var(--surface-divider)] focus-visible:focus-ring placeholder:text-text-muted',
@@ -141,6 +149,9 @@ const TextField = ({
             onChange={(event) => {
               onValueChange(event.currentTarget.value);
             }}
+            {...(onKeyDown === undefined ? {} : { onKeyDown })}
+            {...(onFocus === undefined ? {} : { onFocus })}
+            {...(onBlur === undefined ? {} : { onBlur })}
             autoFocus={hasFocusOnMount}
             className={cn(
               'valence-field text-text outline-none',

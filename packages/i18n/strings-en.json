@@ -20876,11 +20876,6 @@
     "context": "When a re-encode was asked for. {when} is how long ago, such as 3 days ago."
   },
   {
-    "handler": "screens.adminArea.mediaTitlePage.backToMedia",
-    "text": "Back to Media",
-    "context": "Button on a title's page in Media that goes back to every title."
-  },
-  {
     "handler": "screens.adminArea.mediaTitlePage.fixMatch",
     "text": "Fix match",
     "context": "Button on a title's page in Media that corrects which catalogue entry it is matched to."
@@ -20909,6 +20904,11 @@
     "handler": "screens.adminArea.mediaTitlePage.reEncodes",
     "text": "Re-encodes",
     "context": "Heading of the card listing the re-encodes asked of a title's files."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.whatToShowOfTheTitle",
+    "text": "What to show of this title",
+    "context": "What a screen reader calls the tabs of a title’s page in the admin area (from `MediaTitlePage`)."
   },
   {
     "handler": "screens.adminArea.memory",
@@ -23996,6 +23996,41 @@
     "context": "A warning across the admin area when some of what it shows could not be read."
   },
   {
+    "handler": "screens.adminArea.sourcedField.edited",
+    "text": "Edited",
+    "context": "A badge on a field whose value an administrator set. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.locked",
+    "text": "Locked",
+    "context": "A badge on a field kept as it stands through every refresh. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.nothing",
+    "text": "Nothing",
+    "context": "What a field with no value is quoted as. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.tmdb",
+    "text": "TMDB",
+    "context": "A badge on a field whose value came from TMDB. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.tmdbChangedTo",
+    "text": "TMDB changed to: {value}",
+    "context": "Beneath an edited field, when TMDB’s own value has changed since the edit. {value} is TMDB’s new value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.tmdbSays",
+    "text": "TMDB: {value}",
+    "context": "Beneath an edited field, what TMDB says instead. {value} is TMDB’s value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.useThis",
+    "text": "Use this",
+    "context": "A button beneath an edited field that takes up TMDB’s new value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
     "handler": "screens.adminArea.startedReEncoding",
     "text": "Started re-encoding.",
     "context": "Shown in the admin area."
@@ -24519,6 +24554,116 @@
     "handler": "screens.adminArea.thePreviewsOfTitleCouldNot",
     "text": "Couldn’t rebuild previews for {title}.",
     "context": "Shown in the admin area. {title} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.airDate",
+    "text": "Air date",
+    "context": "A field for the day an episode or season was shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.classification",
+    "text": "Classification",
+    "context": "The heading of the card holding a title’s genres, tags, studios and networks. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.contentRating",
+    "text": "Content rating",
+    "context": "The heading of the card holding a title’s age ratings by country. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.firstAired",
+    "text": "First aired",
+    "context": "A field for the day a programme was first shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.ids",
+    "text": "IDs",
+    "context": "The heading of the card holding a title’s ids on other sites. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.imdb",
+    "text": "IMDb",
+    "context": "A field for a title’s IMDb id. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.names",
+    "text": "Names",
+    "context": "The heading of the card holding a title’s names. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.networks",
+    "text": "Networks",
+    "context": "A field for the channels a programme was shown on. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.note",
+    "text": "Note",
+    "context": "A field for a note about a title that only administrators see. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.originalTitle",
+    "text": "Original title",
+    "context": "A field for a title’s title in its own language. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.saved",
+    "text": "Change saved",
+    "context": "A toast once a change to a title’s metadata has been saved. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.sortTitle",
+    "text": "Sort title",
+    "context": "A field for the title a title is sorted by. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.story",
+    "text": "Story",
+    "context": "The heading of the card holding a title’s tagline and overview. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.tagline",
+    "text": "Tagline",
+    "context": "A field for a title’s one-line tagline. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.tags",
+    "text": "Tags",
+    "context": "A field for words an administrator files a title under. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.theDetailsCouldNotBeRead",
+    "text": "Couldn’t read this title’s details.",
+    "context": "Shown on the Details tab of a title in the admin area when its metadata couldn’t be read (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.tvdb",
+    "text": "TVDB",
+    "context": "A field for a title’s TVDB id. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.undone",
+    "text": "Change undone",
+    "context": "A toast once a change to a title’s metadata has been undone. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.fields",
+    "text": "Fields",
+    "context": "The header of the column saying which fields a change changed. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.fieldWentFromTo",
+    "text": "{field}: {before} → {after}",
+    "context": "One field a change changed. {field} is its name; {before} and {after} its values. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.nothingChangedYet",
+    "text": "Nothing has been changed on this title yet.",
+    "context": "Shown when no administrator has edited a title. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.theHistoryCouldNotBeRead",
+    "text": "Couldn’t read this title’s history.",
+    "context": "Shown when a title’s history couldn’t be read. On the History tab of a title in the admin area (from `TitleHistory`)."
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.answered",
@@ -38721,6 +38866,11 @@
     "handler": "ui.stepTrail.showEarlierSteps.other",
     "text": "Show {count} earlier steps",
     "context": "A button above a list of steps that shows the earlier steps hidden for space."
+  },
+  {
+    "handler": "ui.tagField.suggestions",
+    "text": "Suggestions for {label}",
+    "context": "What a screen reader calls the list of words suggested while typing into a list of words such as genres or tags. {label} is what the words are."
   },
   {
     "handler": "ui.timeBars.dragAcrossTheBarsToZoom",

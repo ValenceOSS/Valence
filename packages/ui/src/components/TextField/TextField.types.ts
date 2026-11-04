@@ -1,11 +1,14 @@
-import type { HTMLInputAutoCompleteAttribute, ReactNode, Ref } from 'react';
+import type { HTMLInputAutoCompleteAttribute, KeyboardEvent, ReactNode, Ref } from 'react';
 
-type TextFieldType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | 'time';
+type TextFieldType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | 'time' | 'date';
 
 type TextFieldProps = {
   label: string;
   value: string;
   onValueChange: (value: string) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   type?: TextFieldType;
   description?: string;
   descriptionPlacement?: 'above' | 'below';

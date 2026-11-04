@@ -105,13 +105,17 @@ describe('MediaTitlePage', () => {
     expect(screen.queryByRole('button', { name: 'Open folder' })).not.toBeInTheDocument();
   });
 
-  it('lists every version of a film held more than once as a file of its own', () => {
+  it('lists every version of a film held more than once as a file of its own', async () => {
+    const user = userEvent.setup();
+
     drawn(
       titleOf(
         { id: 'film', title: 'Film' },
         { id: 'cut', title: 'Film', parentId: 'film', versionLabel: 'Long cut' },
       ),
     );
+
+    await user.click(screen.getByRole('tab', { name: 'Files' }));
 
     const files = screen.getByRole('table', { name: 'Files' });
 
@@ -123,7 +127,7 @@ describe('MediaTitlePage', () => {
     const user = userEvent.setup();
     const { onBack } = drawn(titleOf({ id: 'film' }));
 
-    await user.click(screen.getByRole('button', { name: 'Back to Media' }));
+    await user.click(screen.getByRole('button', { name: 'Media' }));
 
     expect(onBack).toHaveBeenCalled();
   });

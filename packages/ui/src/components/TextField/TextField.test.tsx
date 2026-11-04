@@ -134,6 +134,15 @@ describe('TextField', () => {
     expect(input.className).not.toContain('color-scheme');
   });
 
+  it('takes a date as a calendar date, written the way the server keeps it', () => {
+    render(<TextField label="Released" value="2001-05-04" onValueChange={vi.fn()} type="date" />);
+
+    const input = screen.getByLabelText('Released');
+
+    expect(input).toHaveAttribute('type', 'date');
+    expect(input).toHaveValue('2001-05-04');
+  });
+
   it('does not accept input when disabled', async () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();

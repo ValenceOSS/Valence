@@ -1,3 +1,5 @@
+import { fetchTitleHistory, fetchTitleMetadata } from '@ValenceClient/admin/fetchTitleMetadata';
+import type { TitleScope } from '@ValenceClient/admin/fetchTitleMetadata';
 import { fetchRecentViewings } from '@ValenceClient/admin/fetchRecentViewings';
 import { fetchStatistics } from '@ValenceClient/admin/fetchStatistics';
 import { fetchLibraryHealth } from '@ValenceClient/admin/fetchLibraryHealth';
@@ -636,6 +638,32 @@ const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | 
   });
 
 /**
+ * A title's metadata, each field with where its value came from.
+ *
+ * @param mediaId - A file of the title.
+ * @param scope - The film or programme, the file's season, or the file's episode.
+ * @returns The query.
+ */
+const titleMetadata = (mediaId: string, scope: TitleScope) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-metadata', mediaId, scope],
+    queryFn: () => fetchTitleMetadata(mediaId, scope),
+  });
+
+/**
+ * The changes made to a title, newest first.
+ *
+ * @param mediaId - A file of the title.
+ * @param scope - The film or programme, the file's season, or the file's episode.
+ * @returns The query.
+ */
+const titleHistory = (mediaId: string, scope: TitleScope) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-history', mediaId, scope],
+    queryFn: () => fetchTitleHistory(mediaId, scope),
+  });
+
+/**
  * Every re-encode, including the ones waiting for somebody to judge them.
  *
  * Asked for again while anything is still being written, because an encode reports its progress by
@@ -796,6 +824,8 @@ const backups = () =>
   });
 
 const adminQueries = {
+  titleMetadata,
+  titleHistory,
   statistics,
   libraryHealth,
   updateCheck,

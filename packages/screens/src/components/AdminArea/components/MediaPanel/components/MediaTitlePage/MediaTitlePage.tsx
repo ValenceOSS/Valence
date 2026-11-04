@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { motion, useReducedMotionConfig } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft as ChevronLeftIcon } from '@keyline-icons/react';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -12,7 +15,15 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
+import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceUI/PanelCard';
+import { TabPanel } from '@ValenceUI/TabPanel';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
+import { TitleDetails } from './components/TitleDetails/TitleDetails';
+import { TitleHistory } from './components/TitleHistory/TitleHistory';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaPoster/MediaPoster';
 import { describeAudio } from '@ValenceScreens/components/AdminArea/components/MediaPanel/describeAudio';
@@ -22,6 +33,8 @@ import { say } from '@ValenceI18n/say';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 import type { MediaTitlePageProps } from './MediaTitlePage.types';
+
+const TITLE_TABS = ['details', 'files', 'history'] as const;
 
 /**
  * Every file a title is made of, down to the versions of each.
@@ -78,6 +91,9 @@ const MediaTitlePage = ({
   onOpenInCatalogue,
   onBack,
 }: MediaTitlePageProps) => {
+  const [tab, setTab] = useState<(typeof TITLE_TABS)[number]>('details');
+  const travel = useTravelDirection([...TITLE_TABS], tab);
+  const prefersReducedMotion = useReducedMotionConfig();
   const detail = useQuery({
     ...libraryQueries.detail(title.kind === 'film' ? title.lead.id : null),
     enabled: title.kind === 'film',
@@ -203,173 +219,231 @@ const MediaTitlePage = ({
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <PanelCard
-        title={library?.name ?? say('common.media')}
-        actions={
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            {say('screens.adminArea.mediaTitlePage.backToMedia')}
-          </Button>
+    <Tabs
+      value={tab}
+      onValueChange={(next) => {
+        const chosen = TITLE_TABS.find((one) => one === next);
+
+        if (chosen !== undefined) {
+          setTab(chosen);
         }
+      }}
+    >
+      <motion.div
+        className="flex flex-col gap-4"
+        initial="hidden"
+        animate="shown"
+        variants={revealVariants(prefersReducedMotion)}
+        transition={revealTransition(prefersReducedMotion, 'heavy')}
       >
-        <img
-          src={artworkUrl(title.lead.id, 'backdrop', { isOfTitle: true, size: 'medium' })}
-          alt=""
-          className="-mx-1 -mt-1 mb-5 h-44 w-[calc(100%+0.5rem)] rounded-lg object-cover object-[center_30%] opacity-80"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none';
-          }}
-        />
-        <div className="flex flex-wrap items-start gap-5">
-          <MediaPoster
-            className="w-28"
-            src={
-              title.posterFrom === null
-                ? null
-                : artworkUrl(title.posterFrom, 'poster', { size: 'small' })
-            }
+        <Button variant="ghost" size="sm" onClick={onBack} className="self-start">
+          <Icon of={ChevronLeftIcon} size={15} />
+          {say('common.media')}
+        </Button>
+
+        <PanelCard
+          title={library?.name ?? say('common.media')}
+          below={
+            <TabRow
+              label={say('screens.adminArea.mediaTitlePage.whatToShowOfTheTitle')}
+              tone="underlined"
+              size="sm"
+              value={tab}
+              groups={[
+                {
+                  items: [
+                    { id: 'details', label: say('common.details') },
+                    { id: 'files', label: filesWord },
+                    { id: 'history', label: say('common.history') },
+                  ],
+                },
+              ]}
+            />
+          }
+        >
+          <img
+            src={artworkUrl(title.lead.id, 'backdrop', { isOfTitle: true, size: 'medium' })}
+            alt=""
+            className="-mx-1 -mt-1 mb-5 h-44 w-[calc(100%+0.5rem)] rounded-lg object-cover object-[center_30%] opacity-80"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
           />
+          <div className="flex flex-wrap items-start gap-5">
+            <MediaPoster
+              className="w-28"
+              src={
+                title.posterFrom === null
+                  ? null
+                  : artworkUrl(title.posterFrom, 'poster', { size: 'small' })
+              }
+            />
 
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-2xl font-semibold text-text">
-                {title.name}
-                {title.year === null ? null : (
-                  <span className="ml-2 font-normal text-text-muted">{title.year}</span>
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-2xl font-semibold text-text">
+                  {title.name}
+                  {title.year === null ? null : (
+                    <span className="ml-2 font-normal text-text-muted">{title.year}</span>
+                  )}
+                </span>
+                <span className="text-sm text-text-muted">
+                  {[
+                    library?.name,
+                    title.kind === 'series' ? describeTitle(title) : null,
+                    describeMatch(title),
+                  ]
+                    .filter((part) => part !== null && part !== undefined)
+                    .join(' · ')}
+                  {title.isMatched ? null : (
+                    <Badge size="sm" tone="warning" className="ml-2">
+                      {say('screens.adminArea.mediaPanel.unmatched')}
+                    </Badge>
+                  )}
+                </span>
+              </div>
+
+              {overview === null || overview === '' ? null : (
+                <p className="max-w-3xl font-body text-sm leading-relaxed text-text-muted">
+                  {overview}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {catalogueEntry === null || onOpenInCatalogue === undefined ? null : (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => {
+                      onOpenInCatalogue({ tab: catalogueEntry.tab, title: catalogueEntry.key });
+                    }}
+                  >
+                    {say('screens.adminArea.mediaTitlePage.openInCatalogue')}
+                  </Button>
                 )}
-              </span>
-              <span className="text-sm text-text-muted">
-                {[
-                  library?.name,
-                  title.kind === 'series' ? describeTitle(title) : null,
-                  describeMatch(title),
-                ]
-                  .filter((part) => part !== null && part !== undefined)
-                  .join(' · ')}
-                {title.isMatched ? null : (
-                  <Badge size="sm" tone="warning" className="ml-2">
-                    {say('screens.adminArea.mediaPanel.unmatched')}
-                  </Badge>
+                {fix === undefined ? null : (
+                  <Button variant="secondary" size="md" onClick={fix.onChoose}>
+                    {say('screens.adminArea.mediaTitlePage.fixMatch')}
+                  </Button>
                 )}
-              </span>
-            </div>
-
-            {overview === null || overview === '' ? null : (
-              <p className="max-w-3xl font-body text-sm leading-relaxed text-text-muted">
-                {overview}
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {catalogueEntry === null || onOpenInCatalogue === undefined ? null : (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => {
-                    onOpenInCatalogue({ tab: catalogueEntry.tab, title: catalogueEntry.key });
-                  }}
-                >
-                  {say('screens.adminArea.mediaTitlePage.openInCatalogue')}
-                </Button>
-              )}
-              {fix === undefined ? null : (
-                <Button variant="secondary" size="md" onClick={fix.onChoose}>
-                  {say('screens.adminArea.mediaTitlePage.fixMatch')}
-                </Button>
-              )}
-              {artwork === undefined ? null : (
-                <Button variant="secondary" size="md" onClick={artwork.onChoose}>
-                  {say('common.artwork')}
-                </Button>
-              )}
-              {place === null || onOpenFolder === undefined ? null : (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => {
-                    onOpenFolder(place.folder);
-                  }}
-                >
-                  {say('screens.adminArea.mediaTitlePage.openFolder')}
-                </Button>
-              )}
-            </div>
-
-            <dl className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-6 gap-y-3 pt-2 text-sm">
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-xs text-text-muted">{say('common.added')}</dt>
-                <dd className="text-text">
-                  {new Date(title.addedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                </dd>
+                {artwork === undefined ? null : (
+                  <Button variant="secondary" size="md" onClick={artwork.onChoose}>
+                    {say('common.artwork')}
+                  </Button>
+                )}
+                {place === null || onOpenFolder === undefined ? null : (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => {
+                      onOpenFolder(place.folder);
+                    }}
+                  >
+                    {say('screens.adminArea.mediaTitlePage.openFolder')}
+                  </Button>
+                )}
               </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-xs text-text-muted">{say('common.files')}</dt>
-                <dd className="tabular-nums text-text">{leaves.length.toLocaleString()}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-xs text-text-muted">{say('common.size')}</dt>
-                <dd className="tabular-nums text-text">{formatBytes(totalBytes)}</dd>
-              </div>
-              {title.lead.genres === null ||
-              title.lead.genres === undefined ||
-              title.lead.genres.length === 0 ? null : (
+
+              <dl className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-6 gap-y-3 pt-2 text-sm">
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">{say('common.genres')}</dt>
-                  <dd className="text-text">{title.lead.genres.join(', ')}</dd>
+                  <dt className="text-xs text-text-muted">{say('common.added')}</dt>
+                  <dd className="text-text">
+                    {new Date(title.addedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                  </dd>
                 </div>
-              )}
-              {title.lead.rating === null || title.lead.rating === undefined ? null : (
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">{say('common.rating')}</dt>
-                  <dd className="tabular-nums text-text">{title.lead.rating.toFixed(1)}</dd>
+                  <dt className="text-xs text-text-muted">{say('common.files')}</dt>
+                  <dd className="tabular-nums text-text">{leaves.length.toLocaleString()}</dd>
                 </div>
-              )}
-            </dl>
+                <div className="flex flex-col gap-0.5">
+                  <dt className="text-xs text-text-muted">{say('common.size')}</dt>
+                  <dd className="tabular-nums text-text">{formatBytes(totalBytes)}</dd>
+                </div>
+                {title.lead.genres === null ||
+                title.lead.genres === undefined ||
+                title.lead.genres.length === 0 ? null : (
+                  <div className="flex flex-col gap-0.5">
+                    <dt className="text-xs text-text-muted">{say('common.genres')}</dt>
+                    <dd className="text-text">{title.lead.genres.join(', ')}</dd>
+                  </div>
+                )}
+                {title.lead.rating === null || title.lead.rating === undefined ? null : (
+                  <div className="flex flex-col gap-0.5">
+                    <dt className="text-xs text-text-muted">{say('common.rating')}</dt>
+                    <dd className="tabular-nums text-text">{title.lead.rating.toFixed(1)}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
           </div>
-        </div>
-      </PanelCard>
-
-      <PanelCard title={filesWord} isFlush>
-        <DataTable
-          label={filesWord}
-          columns={fileColumns}
-          rows={leaves}
-          getRowId={(leaf) => leaf.id}
-          pageSize={25}
-        />
-      </PanelCard>
-
-      {pastReencodes.length === 0 ? null : (
-        <PanelCard title={say('screens.adminArea.mediaTitlePage.reEncodes')} isFlush>
-          <ul className="flex flex-col divide-y divide-[color-mix(in_oklab,var(--color-text)_6%,transparent)] px-5">
-            {pastReencodes.map((one) => (
-              <li
-                key={one.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-              >
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-text">
-                    {one.seriesTitle === null ? one.title : `${one.seriesTitle} · ${one.title}`}
-                  </span>
-                  <span className="text-xs text-text-muted">
-                    {say('screens.adminArea.mediaTitlePage.askedWhen', {
-                      when: describeSince(one.askedAt, Date.now()),
-                    })}
-                  </span>
-                </span>
-                <span className="flex items-center gap-4 text-text-muted">
-                  <span className="tabular-nums">
-                    {formatBytes(one.originalSizeBytes)} →{' '}
-                    {one.producedBytes === null ? '…' : formatBytes(one.producedBytes)}
-                  </span>
-                  <Badge size="sm">{describeReencodeState(one.state)}</Badge>
-                </span>
-              </li>
-            ))}
-          </ul>
         </PanelCard>
-      )}
-    </div>
+
+        <TabPanel value="details" travel={travel}>
+          <TitleDetails
+            mediaId={title.lead.id}
+            scope="title"
+            onShowHistory={() => {
+              setTab('history');
+            }}
+          />
+        </TabPanel>
+
+        <TabPanel value="files" travel={travel}>
+          <div className="flex flex-col gap-4">
+            <PanelCard title={filesWord} isFlush>
+              <DataTable
+                label={filesWord}
+                columns={fileColumns}
+                rows={leaves}
+                getRowId={(leaf) => leaf.id}
+                pageSize={25}
+              />
+            </PanelCard>
+
+            {pastReencodes.length === 0 ? null : (
+              <PanelCard title={say('screens.adminArea.mediaTitlePage.reEncodes')} isFlush>
+                <ul className="flex flex-col divide-y divide-[color-mix(in_oklab,var(--color-text)_6%,transparent)] px-5">
+                  {pastReencodes.map((one) => (
+                    <li
+                      key={one.id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                    >
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-text">
+                          {one.seriesTitle === null
+                            ? one.title
+                            : `${one.seriesTitle} · ${one.title}`}
+                        </span>
+                        <span className="text-xs text-text-muted">
+                          {say('screens.adminArea.mediaTitlePage.askedWhen', {
+                            when: describeSince(one.askedAt, Date.now()),
+                          })}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-4 text-text-muted">
+                        <span className="tabular-nums">
+                          {formatBytes(one.originalSizeBytes)} →{' '}
+                          {one.producedBytes === null ? '…' : formatBytes(one.producedBytes)}
+                        </span>
+                        <Badge size="sm">{describeReencodeState(one.state)}</Badge>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </PanelCard>
+            )}
+          </div>
+        </TabPanel>
+
+        <TabPanel value="history" travel={travel}>
+          <TitleHistory
+            mediaId={title.lead.id}
+            scope="title"
+            kind={title.kind === 'series' ? 'show' : 'film'}
+          />
+        </TabPanel>
+      </motion.div>
+    </Tabs>
   );
 };
 
