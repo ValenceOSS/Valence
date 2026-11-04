@@ -1,4 +1,5 @@
 import { serveCorrections } from '@ValenceServer/api/serveCorrections';
+import { serveMetadata } from '@ValenceServer/api/serveMetadata';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { createAppContext } from '@ValenceServer/api/createAppContext';
 import { serveEveryRequest } from '@ValenceServer/api/serveEveryRequest';
@@ -126,6 +127,7 @@ const createApp = (options: CreateAppOptions) => {
   serveBook(app, context);
   serveCollections(app, context);
   serveCorrections(app, context);
+  serveMetadata(app, context);
   serveImage(app, context);
   serveCataloguePicture(app, context);
   serveSubtitle(app, context);

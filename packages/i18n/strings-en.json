@@ -9931,6 +9931,16 @@
     "context": "Why a live TV channel would not play: the stream answered 404 or 410."
   },
   {
+    "handler": "error.metadata.thatChangeWasChangedSince",
+    "text": "That change can’t be undone, because something it changed has been changed again since.",
+    "context": "An error the server answers with (HTTP 409) when an administrator undoes a change to a title’s metadata (from `serveMetadata`)."
+  },
+  {
+    "handler": "error.metadata.thatValueCannotBeSaved",
+    "text": "That can’t be saved. The field isn’t one this title has, or the value isn’t one it accepts.",
+    "context": "An error the server answers with (HTTP 400) when an administrator edits a title’s metadata (from `serveMetadata`)."
+  },
+  {
     "handler": "error.music.aSmartPlaylistFillsItself",
     "text": "A smart playlist fills itself from its rules, so nothing can be added to it, moved or taken out.",
     "context": "An error the server answers with (HTTP 409) when somebody tries to add to, reorder or take something out of a smart playlist (from `registerMusicRoutes`)."
@@ -13963,6 +13973,16 @@
   {
     "handler": "screens.admin.auditActionNames.mediaMatchReset",
     "text": "Match reset",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaMetadataChanged",
+    "text": "Metadata changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaMetadataUndone",
+    "text": "Metadata change undone",
     "context": "A kind of change in the admin area’s audit log."
   },
   {

@@ -2352,6 +2352,10 @@ const ENGLISH = {
     'The stream’s server didn’t answer. It may be down, or not reachable from here.',
   'error.live.theStreamIsGone':
     'The stream isn’t there any more. The playlist it came from may be out of date.',
+  'error.metadata.thatChangeWasChangedSince':
+    'That change can’t be undone, because something it changed has been changed again since.',
+  'error.metadata.thatValueCannotBeSaved':
+    'That can’t be saved. The field isn’t one this title has, or the value isn’t one it accepts.',
   'error.music.aSmartPlaylistFillsItself':
     'A smart playlist fills itself from its rules, so nothing can be added to it, moved or taken out.',
   'error.music.chooseAProfileFirst': 'Choose a profile first.',
@@ -3459,6 +3463,8 @@ const ENGLISH = {
   'screens.admin.auditActionNames.mediaArtworkReset': 'Artwork reset',
   'screens.admin.auditActionNames.mediaMatchFixed': 'Match fixed',
   'screens.admin.auditActionNames.mediaMatchReset': 'Match reset',
+  'screens.admin.auditActionNames.mediaMetadataChanged': 'Metadata changed',
+  'screens.admin.auditActionNames.mediaMetadataUndone': 'Metadata change undone',
   'screens.admin.auditActionNames.mediaMoved': 'Title moved',
   'screens.admin.auditActionNames.mediaRemoved': 'Title deleted',
   'screens.admin.auditActionNames.pluginAppPasswordMade': 'App password made',
