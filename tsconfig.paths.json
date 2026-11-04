@@ -62,6 +62,10 @@
       "@ValenceUI/BackToTop": ["./packages/ui/src/components/BackToTop/BackToTop.tsx"],
       "@ValenceUI/Badge": ["./packages/ui/src/components/Badge/Badge.tsx"],
       "@ValenceUI/Badge.types": ["./packages/ui/src/components/Badge/Badge.types.ts"],
+      "@ValenceUI/Breadcrumbs": ["./packages/ui/src/components/Breadcrumbs/Breadcrumbs.tsx"],
+      "@ValenceUI/Breadcrumbs.types": [
+        "./packages/ui/src/components/Breadcrumbs/Breadcrumbs.types.ts"
+      ],
       "@ValenceUI/Button": ["./packages/ui/src/components/Button/Button.tsx"],
       "@ValenceUI/Button/buttonStyles": ["./packages/ui/src/components/Button/buttonStyles.ts"],
       "@ValenceUI/Button.types": ["./packages/ui/src/components/Button/Button.types.ts"],

@@ -2,7 +2,6 @@ import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bin as BinFilledIcon,
-  ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   EyeOff as EyeOffFilledIcon,
   File as FileIcon,
@@ -15,6 +14,7 @@ import {
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
+import { Breadcrumbs } from '@ValenceUI/Breadcrumbs';
 import { Button } from '@ValenceUI/Button';
 import { FILE_STATUS_LOOKS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FILE_STATUS_LOOKS';
 import { Checkbox } from '@ValenceUI/Checkbox';
@@ -453,38 +453,25 @@ const FolderView = ({
           <Icon of={ChevronUpIcon} size={14} />
         </Button>
 
-        <nav
-          aria-label={say('common.whereYouAre')}
-          className="valence-rail flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
-        >
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={() => {
-              open(null);
-            }}
-          >
-            {say('common.libraries')}
-          </Button>
-
-          {at === null || folder?.path === null || folder?.path === undefined || library === null
-            ? null
-            : trailInLibrary(folder.path, library.path, library.name).map((segment) => (
-                <span key={segment.path} className="flex shrink-0 items-center gap-0.5">
-                  <Icon of={ChevronRightIcon} size={12} tone="muted" />
-
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => {
-                      open(segment.path);
-                    }}
-                  >
-                    {segment.label}
-                  </Button>
-                </span>
-              ))}
-        </nav>
+        <Breadcrumbs
+          label={say('common.whereYouAre')}
+          crumbs={[
+            { id: '', label: say('common.libraries') },
+            ...(at === null ||
+            folder?.path === null ||
+            folder?.path === undefined ||
+            library === null
+              ? []
+              : trailInLibrary(folder.path, library.path, library.name).map((segment) => ({
+                  id: segment.path,
+                  label: segment.label,
+                }))),
+          ]}
+          onChoose={(id) => {
+            open(id === '' ? null : id);
+          }}
+          className="flex-1"
+        />
 
         {chosen.length > 1 && (at !== null || isSearching) ? (
           <span className="flex shrink-0 gap-2">
