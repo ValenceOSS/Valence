@@ -164,6 +164,7 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
   const before = useRef<readonly AStackedPage[]>(pages);
   const [peeling] = useState(() => new Animated.Value(0));
   const [peeled, setPeeled] = useState<string | null>(null);
+  const [arrivingKey, setArrivingKey] = useState<string | null>(null);
 
   if (held !== pages) {
     const gone = held.at(-1) ?? null;
@@ -361,12 +362,16 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
     if (pages.length > was.length && opened !== null) {
       const arriving = placeIn(places, opened.key, PUSHED_OFF);
 
+      setArrivingKey(opened.key);
+
       if (opened.rises === true || opened.isCard === true) {
         let hasRisen = false;
 
         const rise = () => {
           hasRisen = true;
-          Animated.spring(arriving, { ...MOVE, toValue: IN_PLACE }).start();
+          Animated.spring(arriving, { ...MOVE, toValue: IN_PLACE }).start(() => {
+            setArrivingKey((still) => (still === opened.key ? null : still));
+          });
 
           if (opened.isCard === true && under !== null) {
             Animated.spring(placeIn(places, under.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
@@ -385,7 +390,9 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
         };
       }
 
-      Animated.spring(arriving, { ...MOVE, toValue: IN_PLACE }).start();
+      Animated.spring(arriving, { ...MOVE, toValue: IN_PLACE }).start(() => {
+        setArrivingKey((still) => (still === opened.key ? null : still));
+      });
 
       if (under !== null) {
         Animated.spring(placeIn(places, under.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
@@ -711,6 +718,9 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
             <IS_ON_TOP.Provider key={slots.get(page.key) ?? page.key} value={isTop}>
               <Animated.View
                 style={[StyleSheet.absoluteFill, shape, moving]}
+                renderToHardwareTextureAndroid={
+                  !isTop || page.key === arrivingKey || page.key === leaving?.key
+                }
                 pointerEvents={isTop ? 'auto' : 'none'}
                 accessibilityElementsHidden={!isTop}
                 importantForAccessibility={isTop ? 'auto' : 'no-hide-descendants'}

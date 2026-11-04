@@ -60,6 +60,29 @@ packageExtensions:
     peerDependencies:
       react-native: '*'
 patchedDependencies:
-  expo-modules-autolinking@58.0.4: patches/expo-modules-autolinking@58.0.4.patch
   expo-video@57.0.4: patches/expo-video@57.0.4.patch
   react-native-web@0.21.3: patches/react-native-web@0.21.3.patch
+minimumReleaseAgeExclude:
+  - '@expo/cli@58.1.19'
+  - '@expo/config-plugins@58.0.12'
+  - '@expo/config@58.0.11'
+  - '@expo/env@2.5.4'
+  - '@expo/fingerprint@0.21.9'
+  - '@expo/inline-modules@0.2.9'
+  - '@expo/local-build-cache-provider@58.0.11'
+  - '@expo/log-box@58.0.15'
+  - '@expo/metro-config@58.0.21'
+  - '@expo/prebuild-config@58.0.19'
+  - '@expo/router-server@58.0.21'
+  - '@expo/ui@58.0.27'
+  - babel-preset-expo@58.0.24
+  - expo-asset@58.0.20
+  - expo-constants@58.0.15
+  - expo-modules-autolinking@58.0.17
+  - expo-modules-core@58.0.30
+  - expo-modules-jsi@58.0.22
+  - expo-notifications@58.1.8
+  - expo-screen-orientation@58.0.4
+  - expo@58.0.23
+  - jest-expo@58.0.14
+  - react-native-safe-area-context@5.11.1

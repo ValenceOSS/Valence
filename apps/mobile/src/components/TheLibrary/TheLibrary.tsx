@@ -399,7 +399,7 @@ const TheLibrary = ({
    */
   const lit = (drawn: ReactNode) => (
     <View style={[styles.lit, { backgroundColor: colours.surface }]}>
-      <TheClipBehind player={part === 'home' ? clip : null}>
+      <TheClipBehind player={part === 'home' && !isAside && isOnTop ? clip : null}>
         <AMoodBackground palette={palette} />
       </TheClipBehind>
       <View
@@ -704,7 +704,7 @@ const TheLibrary = ({
       <IS_ON_TOP.Provider value={isOnTop && part === 'home'}>
         <TheHome
           header={header}
-          isOnScreen={part === 'home'}
+          isOnScreen={part === 'home' && !isAside && isOnTop}
           watchable={watchable}
           librariesAre={
             libraries.data === undefined
