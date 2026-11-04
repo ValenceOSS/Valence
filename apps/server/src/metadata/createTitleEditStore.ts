@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { titleChange, titleEdit } from '#dialect/Schema';
 import { upsert } from '@ValenceDatabase/upsert';
+import { retryingDeadlocks } from './retryingDeadlocks';
 import { TitleFieldSchema, TitleValueSchema } from '@ValenceContracts/schemas/TitleEdit';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
@@ -201,60 +202,67 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
       return null;
     }
 
-    await db.transaction(async (tx) => {
-      for (const one of kept) {
-        if (one.edit === null) {
-          await tx
-            .delete(titleEdit)
-            .where(
-              and(
-                eq(titleEdit.libraryId, subject.libraryId),
-                eq(titleEdit.subjectKey, subject.key),
-                eq(titleEdit.field, one.field),
-                eq(titleEdit.source, ADMIN),
-              ),
-            );
-        } else {
-          const values = {
-            subjectKind: subject.kind,
-            value: one.edit.value,
-            providerValue: one.edit.catalogue,
-            setAt: at,
-            setBy: actor.id,
-          };
+    await retryingDeadlocks(() =>
+      db.transaction(async (tx) => {
+        for (const one of kept) {
+          if (one.edit === null) {
+            await tx
+              .delete(titleEdit)
+              .where(
+                and(
+                  eq(titleEdit.libraryId, subject.libraryId),
+                  eq(titleEdit.subjectKey, subject.key),
+                  eq(titleEdit.field, one.field),
+                  eq(titleEdit.source, ADMIN),
+                ),
+              );
+          } else {
+            const values = {
+              subjectKind: subject.kind,
+              value: one.edit.value,
+              providerValue: one.edit.catalogue,
+              setAt: at,
+              setBy: actor.id,
+            };
 
-          await upsert(tx, titleEdit, {
-            values: [
-              {
-                id: randomUUID(),
-                libraryId: subject.libraryId,
-                subjectKey: subject.key,
-                field: one.field,
-                source: ADMIN,
-                ...values,
-              },
-            ],
-            target: [titleEdit.libraryId, titleEdit.subjectKey, titleEdit.field, titleEdit.source],
-            set: values,
+            await upsert(tx, titleEdit, {
+              values: [
+                {
+                  id: randomUUID(),
+                  libraryId: subject.libraryId,
+                  subjectKey: subject.key,
+                  field: one.field,
+                  source: ADMIN,
+                  ...values,
+                },
+              ],
+              target: [
+                titleEdit.libraryId,
+                titleEdit.subjectKey,
+                titleEdit.field,
+                titleEdit.source,
+              ],
+              set: values,
+            });
+          }
+
+          await tx.insert(titleChange).values({
+            id: randomUUID(),
+            changeSetId,
+            libraryId: subject.libraryId,
+            subjectKey: subject.key,
+            subjectKind: subject.kind,
+            field: one.field,
+            before: one.beforeState,
+            after: one.afterState,
+            action,
+            at,
+            actorId: actor.id,
+            actorName: actor.name,
           });
         }
-
-        await tx.insert(titleChange).values({
-          id: randomUUID(),
-          changeSetId,
-          libraryId: subject.libraryId,
-          subjectKey: subject.key,
-          subjectKind: subject.kind,
-          field: one.field,
-          before: one.beforeState,
-          after: one.afterState,
-          action,
-          at,
-          actorId: actor.id,
-          actorName: actor.name,
-        });
-      }
-    });
+      }),
+    );
 
     return changeSetId;
   };

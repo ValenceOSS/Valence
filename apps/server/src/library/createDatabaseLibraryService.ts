@@ -703,6 +703,7 @@ const createDatabaseLibraryService = ({
       .select({
         libraryId: mediaItem.libraryId,
         path: mediaItem.path,
+        seriesId: mediaItem.seriesId,
         seriesTitle: mediaItem.seriesTitle,
       })
       .from(mediaItem)
@@ -721,7 +722,12 @@ const createDatabaseLibraryService = ({
       .select({ path: mediaItem.path })
       .from(mediaItem)
       .where(
-        and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.seriesTitle, row.seriesTitle)),
+        and(
+          eq(mediaItem.libraryId, row.libraryId),
+          row.seriesId === null
+            ? eq(mediaItem.seriesTitle, row.seriesTitle)
+            : eq(mediaItem.seriesId, row.seriesId),
+        ),
       );
 
     return { libraryId: row.libraryId, paths: siblings.map((one) => one.path) };
@@ -1863,6 +1869,22 @@ const createDatabaseLibraryService = ({
       }
 
       if (mode === 'details') {
+        const [held] = await db
+          .select({ externalId: mediaItem.externalId, seriesTitle: mediaItem.seriesTitle })
+          .from(mediaItem)
+          .where(eq(mediaItem.id, mediaId))
+          .limit(1);
+
+        if (held?.externalId !== null && held?.externalId !== undefined) {
+          const { externalId } = held;
+
+          shapes.forgetWhere((key) => key === externalId);
+
+          for (const provider of providers ?? []) {
+            provider.forgetAnswersAbout?.(externalId, held.seriesTitle === null ? 'movie' : 'tv');
+          }
+        }
+
         return {
           corrected: paths.paths.length,
           jobId: await queueReadAgain(paths.libraryId, paths.paths, true),

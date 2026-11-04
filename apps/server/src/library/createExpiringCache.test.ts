@@ -91,4 +91,17 @@ describe('what it holds at most', () => {
     expect(cache.get('a')).toBeUndefined();
     expect(cache.get('b')).toBe('two');
   });
+
+  it('forgets the entries a test picks out', () => {
+    const cache = createExpiringCache<string>(1000);
+
+    cache.set('/movie/1', 'one');
+    cache.set('/movie/1/images', 'its images');
+    cache.set('/movie/12', 'another');
+    cache.forgetWhere((key) => key === '/movie/1' || key.startsWith('/movie/1/'));
+
+    expect(cache.get('/movie/1')).toBeUndefined();
+    expect(cache.get('/movie/1/images')).toBeUndefined();
+    expect(cache.get('/movie/12')).toBe('another');
+  });
 });

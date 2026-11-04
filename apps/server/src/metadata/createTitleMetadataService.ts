@@ -12,6 +12,7 @@ import {
 import { columnOfField } from './columnOfField';
 import { subjectKeysOf } from './subjectKeysOf';
 import { valuesOfCandidate } from './valuesOfCandidate';
+import { retryingDeadlocks } from './retryingDeadlocks';
 import { z } from 'zod';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { CatalogueDescription, SeriesShape } from '@ValenceServer/library/MetadataProvider';
@@ -43,6 +44,7 @@ type MetadataServiceOptions = {
     externalId: string,
     kind: 'tv' | 'movie',
   ) => Promise<CatalogueDescription | null>;
+  forgetCatalogue?: (externalId: string, kind: 'tv' | 'movie') => void;
   onChanged?: (mediaIds: string[]) => void;
 };
 
@@ -90,8 +92,8 @@ const ROW = {
  * without waiting for a scan.
  *
  * @param options - The database, the kept edits, whose age certificates to read, how to read a
- *   programme's shape and another entry's description from the catalogue, and who to tell when
- *   files change.
+ *   programme's shape and another entry's description from the catalogue, how to make it forget
+ *   what it said of one, and who to tell when files change.
  * @returns The service.
  */
 const createTitleMetadataService = ({
@@ -100,6 +102,7 @@ const createTitleMetadataService = ({
   certificationRegion,
   seriesShape,
   describeCandidate,
+  forgetCatalogue,
   onChanged,
 }: MetadataServiceOptions) => {
   /**
@@ -391,10 +394,12 @@ const createTitleMetadataService = ({
       return;
     }
 
-    await db
-      .update(mediaItem)
-      .set({ ...set, updatedAt: new Date() })
-      .where(inArray(mediaItem.id, ids));
+    await retryingDeadlocks(() =>
+      db
+        .update(mediaItem)
+        .set({ ...set, updatedAt: new Date() })
+        .where(inArray(mediaItem.id, ids)),
+    );
 
     if (subject.kind === 'show' && file.seriesId !== null && typeof values.title === 'string') {
       await db.update(series).set({ title: values.title }).where(eq(series.id, file.seriesId));
@@ -731,10 +736,14 @@ const createTitleMetadataService = ({
       return 'notThisKind';
     }
 
-    const ahead = await lookAhead(mediaId, {
+    const matched = {
       externalId: file.externalId,
-      kind: subject.kind === 'show' ? 'tv' : 'movie',
-    });
+      kind: subject.kind === 'show' ? ('tv' as const) : ('movie' as const),
+    };
+
+    forgetCatalogue?.(matched.externalId, matched.kind);
+
+    const ahead = await lookAhead(mediaId, matched);
 
     if (typeof ahead === 'string') {
       return ahead;

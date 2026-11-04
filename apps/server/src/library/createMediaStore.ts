@@ -31,6 +31,7 @@ import { resolveSeriesKey } from './resolveSeriesKey';
 import { keptCopiesOf } from './keptCopiesOf';
 import { carryOverViewing } from './carryOverViewing';
 import { successorsOf } from './successorsOf';
+import { carryOverAddedAt } from './carryOverAddedAt';
 import type { MediaStore, StoredPart } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -530,6 +531,7 @@ const createMediaStore = (
       const successions = await successionsOf(db, libraryId, paths);
 
       await carryOverViewing(db, successions);
+      await carryOverAddedAt(db, successions);
 
       const removed = await db.transaction(async (tx) => {
         const found = await tx

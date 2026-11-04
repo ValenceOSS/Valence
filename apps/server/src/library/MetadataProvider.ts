@@ -183,6 +183,7 @@ type MetadataProvider = {
   seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
   readEpisodeGroups?: (externalId: string) => Promise<EpisodeGroup[]>;
   forgetAnswers?: () => void;
+  forgetAnswersAbout?: (externalId: string, kind: 'tv' | 'movie') => void;
 };
 
 /**

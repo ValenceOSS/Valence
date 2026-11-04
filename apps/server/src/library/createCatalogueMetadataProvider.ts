@@ -848,6 +848,14 @@ const createCatalogueMetadataProvider = ({
       said.clear();
     },
 
+    forgetAnswersAbout: (externalId, kind) => {
+      const about = `/${kind}/${externalId}`;
+
+      said.forgetWhere(
+        (at) => at === about || at.startsWith(`${about}/`) || at.startsWith(`${about}?`),
+      );
+    },
+
     describe: async (facts) => {
       const key = await readKey();
 

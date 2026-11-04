@@ -5281,6 +5281,9 @@ const app = createApp({
       catalogueProvider.describeSeries?.(externalId) ?? Promise.resolve(null),
     describeCandidate: (externalId, kind) =>
       catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
+    forgetCatalogue: (externalId, kind) => {
+      catalogueProvider.forgetAnswersAbout?.(externalId, kind);
+    },
     onChanged: (mediaIds) => {
       realtime.publish('media', { event: 'metadata', mediaIds }, { kind: 'everyone' });
     },
