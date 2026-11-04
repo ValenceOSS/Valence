@@ -877,6 +877,17 @@ describe('searching the catalogue by name', () => {
     await expect(instance.search?.('Arrival', 'movie')).resolves.toEqual([]);
   });
 
+  it('finds the entry an IMDb or a TVDB id names', async () => {
+    const { instance, calls } = provider({
+      '/find/tt0133093': { movie_results: [{ id: 603 }], tv_results: [] },
+      '/find/121361': { movie_results: [], tv_results: [{ id: 1399 }] },
+    });
+
+    await expect(instance.findByImdbId?.('tt0133093', 'movie')).resolves.toBe('603');
+    await expect(instance.findByTvdbId?.('121361', 'tv')).resolves.toBe('1399');
+    expect(calls[1]).toContain('external_source=tvdb_id');
+  });
+
   it('offers nothing rather than guessing when the catalogue answers with nonsense', async () => {
     const { instance } = provider({ '/search/movie': { unexpected: true } });
 

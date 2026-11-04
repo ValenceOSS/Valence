@@ -5773,6 +5773,9 @@ const ENGLISH = {
     'Forgets its match and finds it again from its file names.',
   'screens.adminArea.refreshTitleDialog.onlyAMatchedTitle':
     'Only a title matched to TMDB has fields to ask for again.',
+  'screens.adminArea.refreshTitleDialog.readTheFilesAgain': 'Read the files again',
+  'screens.adminArea.refreshTitleDialog.readTheFilesAgainDetail':
+    'Looks at the files afresh, such as after replacing one, keeping the match and your edits.',
   'screens.adminArea.refreshTitleDialog.refresh': 'Refresh',
   'screens.adminArea.refreshTitleDialog.refreshName': 'Refresh {name}',
   'screens.adminArea.refreshTitleDialog.updateDetails': 'Update details',
@@ -6380,6 +6383,8 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.classification': 'Classification',
   'screens.adminArea.titleDetails.contentRating': 'Content rating',
   'screens.adminArea.titleDetails.contentRatingIn': 'Content rating ({country})',
+  'screens.adminArea.titleDetails.count.savedChanges.one': 'Saved {count} change',
+  'screens.adminArea.titleDetails.count.savedChanges.other': 'Saved {count} changes',
   'screens.adminArea.titleDetails.firstAired': 'First aired',
   'screens.adminArea.titleDetails.ids': 'IDs',
   'screens.adminArea.titleDetails.imdb': 'IMDb',

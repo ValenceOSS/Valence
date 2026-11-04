@@ -1406,6 +1406,25 @@ const createCatalogueMetadataProvider = ({
       return results[0]?.id.toString() ?? null;
     },
 
+    findByTvdbId: async (tvdbId, kind) => {
+      const key = await readKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const found = FindResponseSchema.safeParse(
+        await request(`/find/${tvdbId}`, key, { external_source: 'tvdb_id' }),
+      );
+      const results = found.success
+        ? kind === 'tv'
+          ? found.data.tv_results
+          : found.data.movie_results
+        : [];
+
+      return results[0]?.id.toString() ?? null;
+    },
+
     browse: async ({ list, kind, page, studio, filters = {} }) => {
       const key = await readKey();
 

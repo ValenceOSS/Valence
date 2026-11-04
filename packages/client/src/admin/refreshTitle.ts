@@ -2,7 +2,7 @@ import { sendTitleWork } from '@ValenceClient/admin/sendTitleWork';
 import type { TitleWorkAnswer } from '@ValenceClient/admin/sendTitleWork';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 
-type RefreshMode = 'details' | 'fields' | 'matchAgain' | 'artwork';
+type RefreshMode = 'details' | 'fields' | 'matchAgain' | 'artwork' | 'files';
 
 /**
  * Asks the catalogue again for a title: its details keeping its match and edits, some fields of it,

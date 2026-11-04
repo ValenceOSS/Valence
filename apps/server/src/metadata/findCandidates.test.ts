@@ -37,6 +37,9 @@ const sourcesFinding = (found: (words: string) => CatalogueMatch[] = () => [A_MA
       }),
     ),
     findByImdbId: vi.fn<CandidateSources['findByImdbId']>(() => Promise.resolve('603')),
+    findByTvdbId: vi.fn<NonNullable<CandidateSources['findByTvdbId']>>(() =>
+      Promise.resolve('1399'),
+    ),
   };
 
   return sources;
@@ -62,6 +65,23 @@ describe('findCandidates', () => {
 
     expect(fromAddress.matches).toMatchObject([{ externalId: '1399', kind: 'tv' }]);
     expect(fromImdb.matches).toMatchObject([{ externalId: '603', title: 'Found by id' }]);
+    expect(sources.searchPages).not.toHaveBeenCalled();
+  });
+
+  it('opens on the entry a pasted TVDB address or id names, alone', async () => {
+    const sources = sourcesFinding();
+
+    for (const query of [
+      'https://thetvdb.com/?tab=series&id=121361',
+      'https://thetvdb.com/dereferrer/series/121361',
+      'tvdb:121361',
+    ]) {
+      const found = await findCandidates({ query, kind: 'tv', page: 1 }, sources);
+
+      expect(found.matches).toMatchObject([{ externalId: '1399', kind: 'tv' }]);
+    }
+
+    expect(sources.findByTvdbId).toHaveBeenCalledWith('121361', 'tv');
     expect(sources.searchPages).not.toHaveBeenCalled();
   });
 

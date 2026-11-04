@@ -139,6 +139,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries',
   'screens.adminArea.runLibraryJobDialog.runOnCountLibraries',
   'screens.adminArea.sharesPanel.count.endsInCountDays',
+  'screens.adminArea.titleDetails.count.savedChanges',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis',
   'screens.adminArea.titlePage.bookFormats.partsWhereTheyStand',
   'screens.adminArea.updatesPanel.devBuildCard.count.andMore',

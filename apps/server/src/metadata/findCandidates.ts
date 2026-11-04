@@ -10,11 +10,15 @@ type CandidateSources = {
   searchPages: (searching: CatalogueSearching) => Promise<CataloguePaged>;
   describeTitle: (externalId: string, kind: 'tv' | 'movie') => Promise<CatalogueDescription | null>;
   findByImdbId: (imdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
+  findByTvdbId?: (tvdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
 };
 
 type Candidates = { matches: CatalogueMatch[]; hasMore: boolean; total: number };
 
 const IMDB_ID = /\b(tt\d{5,})\b/u;
+
+const TVDB_ID =
+  /(?:thetvdb\.com\/(?:\?(?:[^#]*&)?id=|(?:dereferrer\/)?series\/)|^tvdb[:\s]*)(\d+)\b/iu;
 
 const AMPERSAND = /\s*&\s*/u;
 
@@ -23,10 +27,12 @@ const SPOKEN_AND = /\s+and\s+/iu;
 /**
  * Finds the catalogue entries a title might be, for Fix match: by name a page at a time, saying how
  * many there are in all, with "&" and "and" taken as the same where the name as written finds
- * nothing; and by id, where a TMDB address, a TMDB number or an IMDb id was pasted, that entry first.
+ * nothing; and by id, where a TMDB address, a TMDB number, an IMDb id or a TVDB address or id was
+ * pasted, that entry first.
  *
  * @param asked - What was typed, whether films or programmes are wanted, and which page.
- * @param sources - How to search the catalogue, describe one entry and find an entry by IMDb id.
+ * @param sources - How to search the catalogue, describe one entry and find an entry by IMDb or
+ *   TVDB id.
  * @returns The entries, whether there are more, and how many there are in all.
  */
 const findCandidates = async (
@@ -35,12 +41,16 @@ const findCandidates = async (
 ): Promise<Candidates> => {
   const query = asked.query.trim();
   const imdbId = IMDB_ID.exec(query)?.[1];
-  const reference = imdbId === undefined ? readCatalogueReference(query) : null;
+  const tvdbId = imdbId === undefined ? TVDB_ID.exec(query)?.[1] : undefined;
+  const byOtherId = imdbId !== undefined || tvdbId !== undefined;
+  const reference = byOtherId ? null : readCatalogueReference(query);
   const kind = reference?.kind ?? asked.kind;
   const id =
-    imdbId === undefined
-      ? (reference?.id ?? null)
-      : await sources.findByImdbId(imdbId, asked.kind).catch(() => null);
+    imdbId !== undefined
+      ? await sources.findByImdbId(imdbId, asked.kind).catch(() => null)
+      : tvdbId !== undefined
+        ? ((await sources.findByTvdbId?.(tvdbId, asked.kind).catch(() => null)) ?? null)
+        : (reference?.id ?? null);
   const described =
     id === null || asked.page !== 1
       ? null
@@ -59,7 +69,7 @@ const findCandidates = async (
           },
         ];
 
-  if (imdbId !== undefined || (reference !== null && reference.kind !== null)) {
+  if (byOtherId || (reference !== null && reference.kind !== null)) {
     return { matches: named, hasMore: false, total: named.length };
   }
 

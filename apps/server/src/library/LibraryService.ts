@@ -182,7 +182,10 @@ type LibraryService = ShowService & {
   ) => Promise<Correction | null>;
   forgetCorrection: (mediaId: string) => Promise<Correction | null>;
   unmatch: (mediaId: string, by: string | null) => Promise<Correction | null>;
-  refreshTitle: (mediaId: string, mode: 'details' | 'artwork') => Promise<Correction | null>;
+  refreshTitle: (
+    mediaId: string,
+    mode: 'details' | 'artwork' | 'files',
+  ) => Promise<Correction | null>;
   listLeftOut: (libraryId: string) => Promise<LeftOut[] | null>;
   leaveOut: (
     libraryId: string,

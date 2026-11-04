@@ -5315,6 +5315,8 @@ const app = createApp({
         catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
       findByImdbId: (imdbId, kind) =>
         catalogueProvider.findByImdbId?.(imdbId, kind) ?? Promise.resolve(null),
+      findByTvdbId: (tvdbId, kind) =>
+        catalogueProvider.findByTvdbId?.(tvdbId, kind) ?? Promise.resolve(null),
     }),
   titleMetadata: titleMetadataService,
   bulkTitles: createBulkTitleEditor({

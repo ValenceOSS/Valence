@@ -18,11 +18,12 @@ const MOST_SUGGESTED = 8;
  * away, and the field beneath suggests the words already in use as you type, with how often each
  * is, so a library keeps one spelling of a word rather than three. Enter or a comma adds what was
  * typed, a suggestion's own spelling winning over a close one, and Backspace in an empty field
- * takes the last word away.
+ * takes the last word away. A chip is dragged to put the words in order, or moved with Alt and an
+ * arrow, since the first genre is the one a card shows.
  *
  * @param label - What the words are.
  * @param values - The words, in order.
- * @param onValuesChange - Told the new words whenever one is added or taken away.
+ * @param onValuesChange - Told the new words whenever one is added, taken away or moved.
  * @param suggestions - The words already in use, with how often each is.
  * @param placeholder - What the empty field says.
  * @param isLabelHidden - Whether the label is for screen readers only.
@@ -42,6 +43,7 @@ const TagField = ({
   const [draft, setDraft] = useState('');
   const [isOpen, setOpen] = useState(false);
   const [at, setAt] = useState(0);
+  const [dragging, setDragging] = useState<number | null>(null);
   const listId = useId();
   const field = useRef<HTMLInputElement>(null);
   const taken = new Set(values.map(sameWord));
@@ -85,6 +87,25 @@ const TagField = ({
     setAt(0);
   };
 
+  /**
+   * Moves a word to another place in the list, as the first genre is the one a card shows.
+   *
+   * @param from - Where it is.
+   * @param to - Where it goes.
+   */
+  const moveWord = (from: number, to: number) => {
+    const word = values[from];
+
+    if (word === undefined || to < 0 || to >= values.length || from === to) {
+      return;
+    }
+
+    const next = values.filter((_, index) => index !== from);
+
+    next.splice(to, 0, word);
+    onValuesChange(next);
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -125,21 +146,59 @@ const TagField = ({
           }
         }}
       >
-        {values.map((value) => (
-          <Button
+        {values.map((value, index) => (
+          <span
             key={value}
-            variant="glossy"
-            size="xs"
-            label={say('ui.appliedFilters.removeSaid', { said: value })}
-            hasTooltip={false}
-            disabled={disabled}
-            onClick={() => {
-              onValuesChange(values.filter((one) => one !== value));
+            data-slot="tag"
+            draggable={!disabled}
+            className={cn(
+              'flex',
+              disabled ? '' : 'cursor-grab active:cursor-grabbing',
+              dragging === index ? 'opacity-50' : '',
+            )}
+            onDragStart={(event) => {
+              setDragging(index);
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData('text/plain', value);
+            }}
+            onDragOver={(event) => {
+              if (dragging !== null) {
+                event.preventDefault();
+              }
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+
+              if (dragging !== null) {
+                moveWord(dragging, index);
+              }
+
+              setDragging(null);
+            }}
+            onDragEnd={() => {
+              setDragging(null);
+            }}
+            onKeyDown={(event) => {
+              if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+                event.preventDefault();
+                moveWord(index, index + (event.key === 'ArrowLeft' ? -1 : 1));
+              }
             }}
           >
-            {value}
-            <Icon of={XIcon} size={13} />
-          </Button>
+            <Button
+              variant="glossy"
+              size="xs"
+              label={say('ui.appliedFilters.removeSaid', { said: value })}
+              hasTooltip={false}
+              disabled={disabled}
+              onClick={() => {
+                onValuesChange(values.filter((one) => one !== value));
+              }}
+            >
+              {value}
+              <Icon of={XIcon} size={13} />
+            </Button>
+          </span>
         ))}
 
         <TextField

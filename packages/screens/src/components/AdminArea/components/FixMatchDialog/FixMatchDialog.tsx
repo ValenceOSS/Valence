@@ -1,3 +1,5 @@
+import { titleFolderOf } from '@ValenceCore/functions/titleFolderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -31,6 +33,26 @@ import { say } from '@ValenceI18n/say';
 const YEAR = /\b(?:19|20)\d{2}\b/gu;
 
 /**
+ * Where the title being matched is on the disk, to name in the dialog: a film's one file, or the
+ * folder holding a film's versions or a programme's episodes.
+ *
+ * @param paths - Its files.
+ * @param isShow - Whether it is a programme.
+ * @returns The file or folder, or nothing before its files are read.
+ */
+const placeOfFiles = (paths: readonly string[], isShow: boolean): string | null => {
+  const [only] = paths;
+
+  return only === undefined
+    ? null
+    : isShow
+      ? titleFolderOf(paths)
+      : paths.length === 1
+        ? only
+        : folderOf(only);
+};
+
+/**
  * Fixes what a film or a programme is matched to, in two steps: find the right catalogue entry,
  * searched for under the title's name as soon as it opens, then compare the title with it field by
  * field and tick what to take from it. Fields left unticked keep what they say now, and so do edits
@@ -50,6 +72,8 @@ const FixMatchDialog = ({
   const isShow = isInShows || (media?.seriesTitle !== null && media?.seriesTitle !== undefined);
   const name = media === null ? '' : (media.seriesTitle ?? media.title);
   const mediaId = media?.id ?? null;
+  const files = useQuery(adminQueries.titleFiles(mediaId));
+  const where = placeOfFiles(Object.values(files.data?.paths ?? {}), isShow);
   const [kind, setKind] = useState<'tv' | 'movie'>(isShow ? 'tv' : 'movie');
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<
@@ -207,12 +231,23 @@ const FixMatchDialog = ({
       <DialogTitle
         size="compact"
         title={say('screens.adminArea.mediaTitlePage.fixMatch')}
-        detail={[
-          isComparing ? `${name} → ${chosen.title}` : name,
-          isComparing
-            ? say('screens.adminArea.fixMatchDialog.stepCompare')
-            : say('screens.adminArea.fixMatchDialog.stepFind'),
-        ].join(' · ')}
+        detail={
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span>
+              {[
+                isComparing ? `${name} → ${chosen.title}` : name,
+                isComparing
+                  ? say('screens.adminArea.fixMatchDialog.stepCompare')
+                  : say('screens.adminArea.fixMatchDialog.stepFind'),
+              ].join(' · ')}
+            </span>
+            {where === null ? null : (
+              <span className="truncate font-mono text-[0.6875rem] text-text-muted" title={where}>
+                {where}
+              </span>
+            )}
+          </span>
+        }
       />
 
       <DialogContent className="flex flex-col gap-5">

@@ -89,7 +89,13 @@ const RefreshTitleDialog = ({
           look="rows"
           value={mode}
           onChoose={(id) => {
-            if (id === 'details' || id === 'fields' || id === 'matchAgain' || id === 'artwork') {
+            if (
+              id === 'details' ||
+              id === 'fields' ||
+              id === 'matchAgain' ||
+              id === 'artwork' ||
+              id === 'files'
+            ) {
               setMode(id);
             }
           }}
@@ -112,6 +118,11 @@ const RefreshTitleDialog = ({
               id: 'matchAgain',
               title: say('screens.adminArea.refreshTitleDialog.matchAgain'),
               detail: say('screens.adminArea.refreshTitleDialog.matchAgainDetail'),
+            },
+            {
+              id: 'files',
+              title: say('screens.adminArea.refreshTitleDialog.readTheFilesAgain'),
+              detail: say('screens.adminArea.refreshTitleDialog.readTheFilesAgainDetail'),
             },
             {
               id: 'artwork',

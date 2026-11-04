@@ -6,7 +6,8 @@ import { aMediaSummary } from '@ValenceClient/testing/aMediaSummary';
 import { FixMatchDialog } from './FixMatchDialog';
 import type { MatchPreview } from '@ValenceContracts/schemas/TitleEdit';
 
-const { search, correct, forget, previewOf } = vi.hoisted(() => ({
+const { search, correct, forget, previewOf, filesOf } = vi.hoisted(() => ({
+  filesOf: vi.fn(),
   search: vi.fn(),
   correct: vi.fn(),
   forget: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   forgetCorrection: forget,
 }));
 vi.mock('@ValenceClient/admin/fetchMatchPreview', () => ({ fetchMatchPreview: previewOf }));
+vi.mock('@ValenceClient/admin/fetchTitleFiles', () => ({ fetchTitleFiles: filesOf }));
 vi.mock('@ValenceUI/notify', () => ({ notify: { worked: vi.fn(), failed: vi.fn() } }));
 
 const FILM = aMediaSummary({ id: '00000000-0000-4000-8000-000000000001', title: 'A wrong film' });
@@ -163,5 +165,14 @@ describe('FixMatchDialog', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(FixMatchDialog.displayName).toBe('FixMatchDialog');
+  });
+
+  it('names the file being matched, so two films of one name can be told apart', async () => {
+    filesOf.mockResolvedValue({ files: [FILM], paths: { [FILM.id]: '/films/A (2020)/A.mkv' } });
+    search.mockResolvedValue({ matches: [], hasMore: false, total: 0 });
+
+    opened();
+
+    expect(await screen.findByText('/films/A (2020)/A.mkv')).toBeInTheDocument();
   });
 });

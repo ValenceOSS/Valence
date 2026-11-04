@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -83,5 +83,33 @@ describe('TagField', () => {
 
     await user.type(screen.getByLabelText('Genres'), '{Backspace}');
     expect(onChange).toHaveBeenLastCalledWith([]);
+  });
+
+  it('moves a word with Alt and an arrow, and by dragging it onto another', async () => {
+    const onValuesChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <TagField
+        label="Genres"
+        values={['Drama', 'Crime', 'Thriller']}
+        onValuesChange={onValuesChange}
+      />,
+    );
+
+    screen.getByRole('button', { name: 'Remove Crime' }).focus();
+    await user.keyboard('{Alt>}{ArrowLeft}{/Alt}');
+
+    expect(onValuesChange).toHaveBeenLastCalledWith(['Crime', 'Drama', 'Thriller']);
+
+    const [, crime, thriller] = document.querySelectorAll('[data-slot="tag"]');
+
+    fireEvent.dragStart(thriller ?? document.body, {
+      dataTransfer: { setData: vi.fn(), effectAllowed: '' },
+    });
+    fireEvent.dragOver(crime ?? document.body);
+    fireEvent.drop(crime ?? document.body);
+
+    expect(onValuesChange).toHaveBeenLastCalledWith(['Drama', 'Thriller', 'Crime']);
   });
 });

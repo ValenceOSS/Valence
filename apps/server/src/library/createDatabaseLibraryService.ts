@@ -1869,6 +1869,20 @@ const createDatabaseLibraryService = ({
         return null;
       }
 
+      if (mode === 'files') {
+        await db
+          .update(mediaItem)
+          .set({ probeVersion: null })
+          .where(
+            and(eq(mediaItem.libraryId, paths.libraryId), inArray(mediaItem.path, paths.paths)),
+          );
+
+        return {
+          corrected: paths.paths.length,
+          jobId: await queueReadAgain(paths.libraryId, paths.paths, true),
+        };
+      }
+
       if (mode === 'details') {
         const [held] = await db
           .select({ externalId: mediaItem.externalId, seriesTitle: mediaItem.seriesTitle })

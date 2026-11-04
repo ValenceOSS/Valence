@@ -50,7 +50,13 @@ describe('useTitleChange', () => {
 
     expect(outcome.isSaved).toBe(true);
     expect(cache.getQueryData(adminQueries.titleMetadata('a', 'title').queryKey)).toEqual(METADATA);
-    expect(vi.mocked(notify.worked).mock.calls[0]?.[0]).toBe('Change saved');
+    expect(vi.mocked(notify.worked).mock.calls[0]?.[0]).toBe('Saved 1 change');
+
+    await act(async () => {
+      await result.current.change({ set: { title: 'Mine again' } });
+    });
+
+    expect(vi.mocked(notify.worked).mock.calls[1]?.[0]).toBe('Saved 2 changes');
     expect(vi.mocked(notify.worked).mock.calls[0]?.[1]).toMatchObject({
       id: 'title-metadata-movie:603',
       action: { label: 'Undo' },

@@ -161,7 +161,7 @@ const refreshTitleRoute = createRoute({
         'application/json': {
           schema: z
             .object({
-              mode: z.enum(['details', 'fields', 'matchAgain', 'artwork']),
+              mode: z.enum(['details', 'fields', 'matchAgain', 'artwork', 'files']),
               fields: z.array(TitleFieldSchema).optional(),
             })
             .openapi('TitleRefreshRequest'),

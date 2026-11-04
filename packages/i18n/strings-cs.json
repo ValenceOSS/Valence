@@ -22776,6 +22776,16 @@
     "context": "Why the Update some fields choice can't be picked for an unmatched title."
   },
   {
+    "handler": "screens.adminArea.refreshTitleDialog.readTheFilesAgain",
+    "text": "Read the files again",
+    "context": "A choice in the dialog refreshing a title in the admin's media: look at its files afresh, as after replacing one, keeping its match and every edit."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.readTheFilesAgainDetail",
+    "text": "Looks at the files afresh, such as after replacing one, keeping the match and your edits.",
+    "context": "Explains the choice to read a title's files again in the dialog refreshing it, in the admin's media."
+  },
+  {
     "handler": "screens.adminArea.refreshTitleDialog.refresh",
     "text": "Refresh",
     "context": "The button on a title's page in the admin's Media, and in the dialog it opens, that asks the catalogue again about the title."
@@ -25124,6 +25134,16 @@
     "handler": "screens.adminArea.titleDetails.contentRatingIn",
     "text": "Content rating ({country})",
     "context": "The label of a title’s age rating in the server’s own country, the one that decides what a child’s profile may see, with every other country’s folded beneath it. {country} is a country such as United Kingdom. On the Details tab of a title in the admin area (from `MetadataField`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.count.savedChanges.one",
+    "text": "Saved {count} change",
+    "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.count.savedChanges.other",
+    "text": "Saved {count} changes",
+    "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
   },
   {
     "handler": "screens.adminArea.titleDetails.firstAired",
