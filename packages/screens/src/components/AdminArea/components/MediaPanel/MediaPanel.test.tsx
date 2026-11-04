@@ -108,6 +108,22 @@ describe('MediaPanel', () => {
     expect(screen.getByText('Parasite')).toBeInTheDocument();
   });
 
+  it('switches to its folders, which the address keeps where it is asked to', async () => {
+    const user = userEvent.setup();
+    const onView = vi.fn();
+
+    const { rerender } = render(<MediaPanel {...props} media={[item()]} onView={onView} />);
+
+    await user.click(screen.getByRole('tab', { name: 'Folders' }));
+
+    expect(onView).toHaveBeenCalledWith('folders');
+
+    rerender(<MediaPanel {...props} media={[item()]} view="folders" onView={onView} />);
+
+    expect(screen.getByLabelText('Search files and folders')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Find a series or film')).not.toBeInTheDocument();
+  });
+
   it('narrows to what was searched for', async () => {
     const user = userEvent.setup();
 

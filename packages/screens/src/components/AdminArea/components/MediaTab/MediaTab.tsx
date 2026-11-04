@@ -37,6 +37,12 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
  * @param onOpenTitle - Called with the title to open, or null to go back to every title.
  * @param titlePlace - Which tab, season and episode of the open title to show.
  * @param onTitlePlace - Called with where the open title has moved to.
+ * @param view - Whether titles or folders are shown.
+ * @param onView - Called with which is to be shown.
+ * @param folder - The folder open in the folder view.
+ * @param onFolder - Called with the folder the folder view has open.
+ * @param onFilesChanged - Told that something on the disk changed.
+ * @param onScan - Asked to scan a library once something is uploaded into it.
  * @param libraries - The libraries there are.
  * @param mayDelete - Whether whoever is looking may delete and move media.
  * @param onOpenFolder - Told a folder to open in Files.
@@ -54,6 +60,12 @@ const MediaTabContents = ({
   onOpenTitle,
   titlePlace,
   onTitlePlace,
+  view,
+  onView,
+  folder = null,
+  onFolder,
+  onFilesChanged,
+  onScan,
   libraries,
   mayDelete,
   onOpenFolder,
@@ -109,6 +121,13 @@ const MediaTabContents = ({
       {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
       {...(titlePlace === undefined ? {} : { titlePlace })}
       {...(onTitlePlace === undefined ? {} : { onTitlePlace })}
+      {...(view === undefined ? {} : { view })}
+      {...(onView === undefined ? {} : { onView })}
+      folder={folder}
+      {...(onFolder === undefined ? {} : { onFolder })}
+      mayManageFiles={mayDelete}
+      {...(onFilesChanged === undefined ? {} : { onFilesChanged })}
+      {...(onScan === undefined ? {} : { onScan })}
       {...(onOpenInCatalogue === undefined ? {} : { onOpenInCatalogue })}
       isUnreachable={askedEveryFile.isLoadingError || askedLibraries.isLoadingError}
       freshness={freshnessOf(

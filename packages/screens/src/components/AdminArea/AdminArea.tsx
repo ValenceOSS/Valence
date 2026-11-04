@@ -24,7 +24,6 @@ import { KeptCopiesDialog } from './components/KeptCopiesDialog/KeptCopiesDialog
 import { PreTranscodingCard } from './components/PreTranscodingCard/PreTranscodingCard';
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { KeptCopiesSubject } from './components/KeptCopiesDialog/KeptCopiesDialog.types';
-import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
 import { MediaTab } from './components/MediaTab/MediaTab';
 import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
 import { ReencodeReview } from '@ValenceScreens/components/ReencodeReview/ReencodeReview';
@@ -208,8 +207,11 @@ const stayStill = (): (() => void) => () => {};
  * @param observability - What the address says the jobs and logs page is showing and narrowed to.
  * @param onObservabilityChange - Called with each change to it, to write into the address.
  * @param onJobChange - Called with the job whose schedule was opened, or null on going back.
- * @param folder - The folder the address says to open in Files.
- * @param onOpenFolder - Called with a folder to open in Files.
+ * @param folder - The folder the address says to open in Media's folder view.
+ * @param onOpenFolder - Called with a folder to open in Media's folder view.
+ * @param mediaView - Whether Media shows its titles or its folders, as the address says.
+ * @param onMediaView - Called with which Media is to show.
+ * @param onMediaFolder - Called with the folder Media's folder view has open.
  * @param catalogue - The Catalogue's tab and the title open in it, as the address says them.
  * @param onCatalogue - Called with a change to either, to write into the address.
  */
@@ -230,6 +232,9 @@ const AdminArea = ({
   onObservabilityChange,
   onJobChange,
   folder = null,
+  mediaView,
+  onMediaView,
+  onMediaFolder,
   onOpenFolder,
   catalogue = CATALOGUE_AT_FIRST,
   onCatalogue,
@@ -1190,15 +1195,11 @@ const AdminArea = ({
               onReencode={chooseToReencode}
               onShowCopies={showCopies}
               {...(onCatalogue === undefined ? {} : { onOpenInCatalogue: onCatalogue })}
-            />
-          </TabPanel>
-
-          <TabPanel value="files">
-            <FilesPanel
-              libraries={libraries}
-              mayDelete={mayDeleteMedia}
-              openAt={folder}
-              onChanged={readTheLibraryAgain}
+              {...(mediaView === undefined ? {} : { view: mediaView })}
+              {...(onMediaView === undefined ? {} : { onView: onMediaView })}
+              folder={folder}
+              {...(onMediaFolder === undefined ? {} : { onFolder: onMediaFolder })}
+              onFilesChanged={readTheLibraryAgain}
               onScan={(libraryId) => {
                 void rescan(libraryId);
               }}

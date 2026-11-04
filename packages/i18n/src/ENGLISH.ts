@@ -5256,6 +5256,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.hideTheEditionsOfName': 'Hide the editions of {name}',
   'screens.adminArea.mediaPanel.hideTheEpisodesInName': 'Hide the episodes in {name}',
   'screens.adminArea.mediaPanel.hideTheEpisodesOfName': 'Hide the episodes of {name}',
+  'screens.adminArea.mediaPanel.howToShowTheMedia': 'How to show the media',
   'screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown':
     'Its previews and thumbnails are deleted and regenerated from the file. This takes a while and uses the server’s encoder.',
   'screens.adminArea.mediaPanel.matchedToTheSameFilm': 'Matched to the same film: {files}',

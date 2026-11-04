@@ -34,6 +34,9 @@ import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/R
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TabPanel } from '@ValenceUI/TabPanel';
+import { TabRow } from '@ValenceUI/TabRow';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
 import { Tabs } from '@ValenceUI/Tabs';
 import { ScopedField } from '@ValenceUI/ScopedField';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -62,7 +65,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
-import type { MediaPanelProps, MediaReading } from './MediaPanel.types';
+import type { MediaPanelProps, MediaView, MediaReading } from './MediaPanel.types';
 import type { MediaTitle } from './MediaTitle.types';
 import { describeTitleProblems } from './describeTitleProblems';
 import type { TitleProblem } from './describeTitleProblems';
@@ -70,6 +73,8 @@ import type { ShelfItem } from './ShelfItem.types';
 import { say } from '@ValenceI18n/say';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { sayCount } from '@ValenceI18n/sayCount';
+
+const MEDIA_VIEWS = ['titles', 'folders'] as const;
 
 const MEDIA_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
@@ -155,6 +160,13 @@ const INDENTS: readonly string[] = ['', 'pl-9', 'pl-[4.5rem]'];
  * @param openedTitle - The title open on a page of its own, where one is.
  * @param onOpenTitle - Called with the title to open, or null to go back; where it is not given, the
  *   page keeps which title is open itself.
+ * @param view - Whether titles or folders are shown, where the address keeps it.
+ * @param onView - Told which is to be shown, where the address keeps it.
+ * @param folder - The folder open in the folder view, where the address keeps it.
+ * @param onFolder - Told which folder the folder view has open.
+ * @param mayManageFiles - Whether whoever is looking may delete and move files in the folder view.
+ * @param onFilesChanged - Told that something on the disk changed in the folder view.
+ * @param onScan - Asked to scan a library once something is uploaded into it.
  * @param titlePlace - Which tab, season and episode of the open title to show, where the address
  *   keeps them.
  * @param onTitlePlace - Called with where the open title has moved to.
@@ -186,6 +198,13 @@ const MediaPanel = ({
   onOpenTitle,
   titlePlace,
   onTitlePlace,
+  view: givenView,
+  onView,
+  folder = null,
+  onFolder,
+  mayManageFiles = false,
+  onFilesChanged,
+  onScan,
   onReencode,
   onShowCopies,
   onDelete,
@@ -222,6 +241,9 @@ const MediaPanel = ({
     },
     [narrowing],
   );
+  const [localView, setLocalView] = useState<MediaView>('titles');
+  const view = givenView ?? localView;
+  const travel = useTravelDirection([...MEDIA_VIEWS], view);
   const [localOpenedId, setLocalOpenedId] = useState<string | null>(null);
   const openedId = onOpenTitle === undefined ? localOpenedId : openedTitle;
   const setOpenedId = onOpenTitle ?? setLocalOpenedId;
@@ -1114,203 +1136,253 @@ const MediaPanel = ({
   }
 
   return (
-    <Tabs value={libraryId} onValueChange={setChosenLibrary}>
+    <Tabs
+      value={view}
+      onValueChange={(next) => {
+        const chosenView = MEDIA_VIEWS.find((one) => one === next);
+
+        if (chosenView !== undefined) {
+          (onView ?? setLocalView)(chosenView);
+        }
+      }}
+    >
       <PanelCard
         title={say('common.media')}
         {...(freshness === undefined ? {} : { freshness })}
         isFlush
+        below={
+          <TabRow
+            label={say('screens.adminArea.mediaPanel.howToShowTheMedia')}
+            tone="underlined"
+            size="sm"
+            value={view}
+            groups={[
+              {
+                items: [
+                  { id: 'titles', label: say('screens.adminArea.cataloguePanel.titles') },
+                  { id: 'folders', label: say('screens.adminArea.folderBrowser.folders') },
+                ],
+              },
+            ]}
+          />
+        }
         actions={
-          <>
-            <ScopedField
-              label={say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')}
-              isLabelHidden
-              placeholder={say('common.findATitle')}
-              value={search}
-              onValueChange={setSearch}
-              choices={
-                tabs.length < 2
-                  ? []
-                  : [
-                      {
-                        label: say('common.whichLibrary'),
-                        options: librariesByPlace(tabs, faces.data ?? []).map((one) => {
-                          const count = toFix.get(one.library.id) ?? 0;
+          view === 'folders' ? null : (
+            <>
+              <ScopedField
+                label={say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')}
+                isLabelHidden
+                placeholder={say('common.findATitle')}
+                value={search}
+                onValueChange={setSearch}
+                choices={
+                  tabs.length < 2
+                    ? []
+                    : [
+                        {
+                          label: say('common.whichLibrary'),
+                          options: librariesByPlace(tabs, faces.data ?? []).map((one) => {
+                            const count = toFix.get(one.library.id) ?? 0;
 
-                          return {
-                            id: one.library.id,
-                            label:
-                              count === 0
-                                ? one.library.name
-                                : sayCount('screens.adminArea.mediaPanel.count.nameToFix', count, {
-                                    name: one.library.name,
-                                  }),
-                            group: one.group,
-                          };
-                        }),
-                        value: libraryId,
-                        onChange: setChosenLibrary,
-                      },
-                    ]
-              }
-              className="w-[28rem] max-w-full"
-            />
-          </>
+                            return {
+                              id: one.library.id,
+                              label:
+                                count === 0
+                                  ? one.library.name
+                                  : sayCount(
+                                      'screens.adminArea.mediaPanel.count.nameToFix',
+                                      count,
+                                      {
+                                        name: one.library.name,
+                                      },
+                                    ),
+                              group: one.group,
+                            };
+                          }),
+                          value: libraryId,
+                          onChange: setChosenLibrary,
+                        },
+                      ]
+                }
+                className="w-[28rem] max-w-full"
+              />
+            </>
+          )
         }
       >
-        {isUnreachable ? (
-          <p className="p-5 text-sm text-text-muted">
-            {say('screens.adminArea.mediaPanel.theLibrariesCouldNotBeRead')}
-          </p>
-        ) : tabs.length === 0 && stillReading.libraries ? (
-          <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
-        ) : tabs.length === 0 ? (
-          <p className="p-5 text-sm text-text-muted">
-            {say('screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd')}
-          </p>
-        ) : (
-          <>
-            <ConfirmDialog
-              isOpen={isDeletingPicked}
-              isDestructive
-              title={sayCount(
-                'screens.adminArea.mediaPanel.count.deleteCountFiles',
-                pickedFiles.length,
-              )}
-              detail={say('screens.adminArea.mediaPanel.theFilesAreDeletedFromTheDisk')}
-              confirmLabel={say('common.delete')}
-              onClose={() => {
-                setIsDeletingPicked(false);
-              }}
-              onConfirm={() => {
-                setIsDeletingPicked(false);
+        <TabPanel value="folders" travel={travel}>
+          <FolderView
+            libraries={libraries}
+            mayDelete={mayManageFiles}
+            openAt={folder}
+            onChanged={() => {
+              onFilesChanged?.();
+            }}
+            onScan={(scanned) => {
+              onScan?.(scanned);
+            }}
+            {...(onFolder === undefined ? {} : { onOpen: onFolder })}
+          />
+        </TabPanel>
 
-                for (const file of pickedFiles) {
-                  void onDelete?.(file, false);
-                }
-
-                setPicked(new Set());
-              }}
-            />
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-1 pt-3">
-              <SegmentedRow
-                label={say('screens.adminArea.mediaPanel.whichTitles')}
-                size="sm"
-                tone="accent"
-                items={SHOWING.filter(
-                  (item) => !isShelf || item.id === 'all' || item.id === 'look',
-                ).map((item) => ({
-                  id: item.id,
-                  label: `${item.id === 'look' && isShelf ? say('screens.adminArea.mediaPanel.noCover') : item.label} ${(item.id === 'all' ? (isShelf ? shelved.length : inLibrary.length) : item.id === 'look' ? looking : inLibrary.filter((title) => isShowingTitle(title, item.id)).length).toLocaleString()}`,
-                }))}
-                value={showing}
-                onSelect={(id) => {
-                  const found = SHOWING.find((item) => item.id === id);
-
-                  if (found !== undefined) {
-                    setShowing(found.id);
-                  }
-                }}
-              />
-
-              {picked.size === 0 ? null : (
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-text-muted">
-                    {sayCount('common.count.selected', picked.size)}
-                  </span>
-                  {onReencode === undefined ? null : (
-                    <Button
-                      variant="secondary"
-                      size="md"
-                      onClick={() => {
-                        onReencode(pickedFiles);
-                      }}
-                    >
-                      {say('screens.adminArea.mediaPanel.reEncodeSelected')}
-                    </Button>
+        <TabPanel value="titles" travel={travel}>
+          <Tabs value={libraryId} onValueChange={setChosenLibrary}>
+            {isUnreachable ? (
+              <p className="p-5 text-sm text-text-muted">
+                {say('screens.adminArea.mediaPanel.theLibrariesCouldNotBeRead')}
+              </p>
+            ) : tabs.length === 0 && stillReading.libraries ? (
+              <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
+            ) : tabs.length === 0 ? (
+              <p className="p-5 text-sm text-text-muted">
+                {say('screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd')}
+              </p>
+            ) : (
+              <>
+                <ConfirmDialog
+                  isOpen={isDeletingPicked}
+                  isDestructive
+                  title={sayCount(
+                    'screens.adminArea.mediaPanel.count.deleteCountFiles',
+                    pickedFiles.length,
                   )}
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={() => {
-                      for (const file of pickedFiles) {
-                        void rebuild(file);
+                  detail={say('screens.adminArea.mediaPanel.theFilesAreDeletedFromTheDisk')}
+                  confirmLabel={say('common.delete')}
+                  onClose={() => {
+                    setIsDeletingPicked(false);
+                  }}
+                  onConfirm={() => {
+                    setIsDeletingPicked(false);
+
+                    for (const file of pickedFiles) {
+                      void onDelete?.(file, false);
+                    }
+
+                    setPicked(new Set());
+                  }}
+                />
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-1 pt-3">
+                  <SegmentedRow
+                    label={say('screens.adminArea.mediaPanel.whichTitles')}
+                    size="sm"
+                    tone="accent"
+                    items={SHOWING.filter(
+                      (item) => !isShelf || item.id === 'all' || item.id === 'look',
+                    ).map((item) => ({
+                      id: item.id,
+                      label: `${item.id === 'look' && isShelf ? say('screens.adminArea.mediaPanel.noCover') : item.label} ${(item.id === 'all' ? (isShelf ? shelved.length : inLibrary.length) : item.id === 'look' ? looking : inLibrary.filter((title) => isShowingTitle(title, item.id)).length).toLocaleString()}`,
+                    }))}
+                    value={showing}
+                    onSelect={(id) => {
+                      const found = SHOWING.find((item) => item.id === id);
+
+                      if (found !== undefined) {
+                        setShowing(found.id);
                       }
                     }}
-                  >
-                    {say('screens.adminArea.mediaPanel.rebuildPreviews')}
-                  </Button>
-                  {onDelete === undefined ? null : (
-                    <Button
-                      variant="danger"
-                      size="md"
-                      onClick={() => {
-                        setIsDeletingPicked(true);
-                      }}
-                    >
-                      {say('common.delete')}
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="md"
-                    onClick={() => {
-                      setPicked(new Set());
-                    }}
-                  >
-                    {say('common.clear')}
-                  </Button>
-                </span>
-              )}
-            </div>
-            {tabs.map((library) => (
-              <TabPanel key={library.id} value={library.id} isInstant>
-                {(
-                  library.kind === 'music'
-                    ? stillReading.albums
-                    : library.kind === 'books'
-                      ? stillReading.books
-                      : stillReading.files
-                ) ? (
-                  <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
-                ) : library.kind === 'music' || library.kind === 'books' ? (
-                  <ShelfTable
-                    label={say('screens.adminArea.mediaPanel.everythingInName', {
-                      name: library.name,
-                    })}
-                    items={library.id === libraryId ? shelfShown : []}
-                    emptyMessage={emptyMessage}
-                    {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
                   />
-                ) : (
-                  <DataTable
-                    label={say('screens.adminArea.mediaPanel.everythingInName', {
-                      name: library.name,
-                    })}
-                    columns={columns}
-                    rows={library.id === libraryId ? shown : []}
-                    getRowId={(title) => title.id}
-                    {...(onOpenFolder === undefined
-                      ? {}
-                      : {
-                          expandsOnChoose: true,
-                          onChooseRow: (title: MediaTitle) => {
-                            const file = paths[title.lead.id];
 
-                            if (title.parts.length === 0 && file !== undefined) {
-                              onOpenFolder(folderOf(file));
-                            }
-                          },
+                  {picked.size === 0 ? null : (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm text-text-muted">
+                        {sayCount('common.count.selected', picked.size)}
+                      </span>
+                      {onReencode === undefined ? null : (
+                        <Button
+                          variant="secondary"
+                          size="md"
+                          onClick={() => {
+                            onReencode(pickedFiles);
+                          }}
+                        >
+                          {say('screens.adminArea.mediaPanel.reEncodeSelected')}
+                        </Button>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="md"
+                        onClick={() => {
+                          for (const file of pickedFiles) {
+                            void rebuild(file);
+                          }
+                        }}
+                      >
+                        {say('screens.adminArea.mediaPanel.rebuildPreviews')}
+                      </Button>
+                      {onDelete === undefined ? null : (
+                        <Button
+                          variant="danger"
+                          size="md"
+                          onClick={() => {
+                            setIsDeletingPicked(true);
+                          }}
+                        >
+                          {say('common.delete')}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="md"
+                        onClick={() => {
+                          setPicked(new Set());
+                        }}
+                      >
+                        {say('common.clear')}
+                      </Button>
+                    </span>
+                  )}
+                </div>
+                {tabs.map((library) => (
+                  <TabPanel key={library.id} value={library.id} isInstant>
+                    {(
+                      library.kind === 'music'
+                        ? stillReading.albums
+                        : library.kind === 'books'
+                          ? stillReading.books
+                          : stillReading.files
+                    ) ? (
+                      <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
+                    ) : library.kind === 'music' || library.kind === 'books' ? (
+                      <ShelfTable
+                        label={say('screens.adminArea.mediaPanel.everythingInName', {
+                          name: library.name,
                         })}
-                    pageSize={25}
-                    height="fills"
-                    getSubRows={(title) => (title.parts.length === 0 ? undefined : title.parts)}
-                    emptyMessage={emptyMessage}
-                  />
-                )}
-              </TabPanel>
-            ))}
-          </>
-        )}
+                        items={library.id === libraryId ? shelfShown : []}
+                        emptyMessage={emptyMessage}
+                        {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+                      />
+                    ) : (
+                      <DataTable
+                        label={say('screens.adminArea.mediaPanel.everythingInName', {
+                          name: library.name,
+                        })}
+                        columns={columns}
+                        rows={library.id === libraryId ? shown : []}
+                        getRowId={(title) => title.id}
+                        {...(onOpenFolder === undefined
+                          ? {}
+                          : {
+                              expandsOnChoose: true,
+                              onChooseRow: (title: MediaTitle) => {
+                                const file = paths[title.lead.id];
+
+                                if (title.parts.length === 0 && file !== undefined) {
+                                  onOpenFolder(folderOf(file));
+                                }
+                              },
+                            })}
+                        pageSize={25}
+                        height="fills"
+                        getSubRows={(title) => (title.parts.length === 0 ? undefined : title.parts)}
+                        emptyMessage={emptyMessage}
+                      />
+                    )}
+                  </TabPanel>
+                ))}
+              </>
+            )}
+          </Tabs>
+        </TabPanel>
 
         {dialogs}
       </PanelCard>

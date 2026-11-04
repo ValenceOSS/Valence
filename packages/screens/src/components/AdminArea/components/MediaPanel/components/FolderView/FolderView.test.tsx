@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { FilesPanel } from './FilesPanel';
+import { FolderView } from './FolderView';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry, LibraryFolder } from '@ValenceContracts/schemas/LibraryFiles';
 
@@ -110,7 +110,7 @@ const draw = (mayDelete = true, openAt: string | null = null) => {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <FilesPanel
+      <FolderView
         libraries={[FILMS]}
         mayDelete={mayDelete}
         openAt={openAt}
@@ -133,7 +133,7 @@ const openFilms = async (actor: ReturnType<typeof userEvent.setup>) => {
   await screen.findByRole('cell', { name: /^Arrival\.mkv/ });
 };
 
-describe('FilesPanel', () => {
+describe('FolderView', () => {
   it('offers to leave a folder out of its library, saying it takes everything in it', async () => {
     const actor = userEvent.setup();
 
@@ -323,6 +323,6 @@ describe('FilesPanel', () => {
   });
 
   it('sets a display name so devtools can identify it', () => {
-    expect(FilesPanel.displayName).toBe('FilesPanel');
+    expect(FolderView.displayName).toBe('FolderView');
   });
 });

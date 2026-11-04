@@ -77,7 +77,8 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job, folder, tab, title, media, webhook, server, titleTab, season, episode } = search;
+  const { job, folder, tab, title, media, webhook, server, titleTab, season, episode, mediaView } =
+    search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -95,7 +96,11 @@ const AdminPage = () => {
   const sections = visibleAdminSections(requesting.data?.isEnabled ?? false);
   const items = sections.flatMap((section) => section.items);
   const showing =
-    items.find((one) => one.id === (panel === 'logs' ? 'jobs' : panel))?.id ?? 'overview';
+    items.find(
+      (one) => one.id === (panel === 'logs' ? 'jobs' : panel === 'files' ? 'media' : panel),
+    )?.id ?? 'overview';
+  const shownMediaView =
+    panel === 'files' || folder !== undefined ? 'folders' : (mediaView ?? 'titles');
   const showingName = items.find((one) => one.id === showing)?.label ?? '';
   const showingGroup =
     sections.find((section) => section.items.some((one) => one.id === showing))?.label ?? null;
@@ -477,8 +482,25 @@ const AdminPage = () => {
               onOpenFolder={(path) => {
                 void go({
                   to: '/admin/$panel',
-                  params: { panel: 'files' },
-                  search: { folder: path },
+                  params: { panel: 'media' },
+                  search: { mediaView: 'folders', folder: path },
+                });
+              }}
+              mediaView={shownMediaView}
+              onMediaView={(view) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: view === 'titles' ? {} : { mediaView: view },
+                  replace: true,
+                });
+              }}
+              onMediaFolder={(path) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: { mediaView: 'folders', ...(path === null ? {} : { folder: path }) },
+                  replace: true,
                 });
               }}
               onJobChange={(next) => {

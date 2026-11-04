@@ -9,7 +9,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { InfoRow } from '@ValenceUI/InfoRow';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
-import { fileDetailsWidth } from '@ValenceScreens/components/AdminArea/components/FilesPanel/fileDetailsWidth';
+import { fileDetailsWidth } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/fileDetailsWidth';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { FolderMeasure } from '@ValenceContracts/schemas/LibraryFiles';

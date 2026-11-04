@@ -111,6 +111,7 @@ const adminSearch = z.object({
   title: z.string().optional(),
   media: z.string().optional(),
   titleTab: z.enum(TITLE_TABS).optional().catch(undefined),
+  mediaView: z.enum(['titles', 'folders']).optional().catch(undefined),
   season: z.coerce.number().int().nonnegative().optional().catch(undefined),
   episode: z.string().optional(),
   webhook: z.string().optional(),

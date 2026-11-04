@@ -27,7 +27,6 @@ import { changeLibraryFile } from '@ValenceClient/admin/changeLibraryFile';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
-import { PanelCard } from '@ValenceUI/PanelCard';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
 import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
 import { libraryHolding } from './libraryHolding';
@@ -40,12 +39,12 @@ import { FileDetails } from './components/FileDetails/FileDetails';
 import { trailInLibrary } from './trailInLibrary';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
-import type { FilesPanelProps } from './FilesPanel.types';
+import type { FolderViewProps } from './FolderView.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
- * The file manager: what is in each library's folders, as it sits on the disk, with everything an
+ * Media's folder view, the file manager: what is in each library's folders, as it sits on the disk, with everything an
  * administrator does to files without a terminal — find something by name, open a folder, rename,
  * move or delete what is there, make a folder, and upload into the one being looked at.
  *
@@ -61,14 +60,16 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * @param onChanged - Told that something on the disk changed, so what depends on the catalogue can
  *   be read again.
  * @param onScan - Asked to scan a library once something is uploaded into it.
+ * @param onOpen - Told which folder is open, or nothing for the libraries, so the address can keep it.
  */
-const FilesPanel = ({
+const FolderView = ({
   libraries,
   mayDelete,
   openAt = null,
   onChanged,
   onScan,
-}: FilesPanelProps) => {
+  onOpen,
+}: FolderViewProps) => {
   const [at, setAt] = useState<string | null>(openAt);
   const [wasHanded, setWasHanded] = useState(openAt);
   const [typed, setTyped] = useState('');
@@ -103,11 +104,19 @@ const FilesPanel = ({
 
   const chosen = rows.filter((entry) => chosenPaths.has(entry.path));
 
-  const open = (path: string | null) => {
+  const show = useCallback((path: string | null) => {
     setTyped('');
     setChosenPaths(new Set());
     setAt(path);
-  };
+  }, []);
+
+  const open = useCallback(
+    (path: string | null) => {
+      show(path);
+      onOpen?.(path);
+    },
+    [show, onOpen],
+  );
 
   const shownPath = (path: string): string => {
     const holding = libraryHolding(path, libraries);
@@ -121,7 +130,7 @@ const FilesPanel = ({
     setWasHanded(openAt);
 
     if (openAt !== null) {
-      open(openAt);
+      show(openAt);
     }
   }
 
@@ -395,29 +404,11 @@ const FilesPanel = ({
           ),
       },
     ],
-    [at, chosenPaths, isSearching, leaveOutItemsFor, mayDelete, rows],
+    [at, chosenPaths, isSearching, leaveOutItemsFor, mayDelete, open, rows],
   );
 
   return (
-    <PanelCard
-      title={say('common.files')}
-      isFlush
-      actions={
-        <TextField
-          label={say('screens.adminArea.filesPanel.findAFileOrFolder')}
-          isLabelHidden
-          type="search"
-          placeholder={
-            at === null
-              ? say('screens.adminArea.filesPanel.findInEveryLibrary')
-              : say('screens.adminArea.filesPanel.findInThisFolder')
-          }
-          value={typed}
-          onValueChange={setTyped}
-          className="w-64 max-w-full"
-        />
-      }
-    >
+    <div className="flex flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--surface-line)] px-4 py-2.5">
         <Button
           isIconOnly
@@ -518,6 +509,21 @@ const FilesPanel = ({
             </Button>
           </span>
         ) : null}
+
+        <TextField
+          label={say('screens.adminArea.filesPanel.findAFileOrFolder')}
+          isLabelHidden
+          type="search"
+          size="sm"
+          placeholder={
+            at === null
+              ? say('screens.adminArea.filesPanel.findInEveryLibrary')
+              : say('screens.adminArea.filesPanel.findInThisFolder')
+          }
+          value={typed}
+          onValueChange={setTyped}
+          className="w-64 max-w-full"
+        />
       </div>
 
       {(isSearching ? searched.isPending : asked.isPending) ? (
@@ -761,10 +767,10 @@ const FilesPanel = ({
           void refresh();
         }}
       />
-    </PanelCard>
+    </div>
   );
 };
 
-FilesPanel.displayName = 'FilesPanel';
+FolderView.displayName = 'FolderView';
 
-export { FilesPanel };
+export { FolderView };

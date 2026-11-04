@@ -20771,6 +20771,11 @@
     "context": "The label of the button that folds away a series' episodes in the admin's media table. {name} is the series' name."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.howToShowTheMedia",
+    "text": "How to show the media",
+    "context": "The hidden label of the tabs in the admin's Media that switch between its titles and its folders."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown",
     "text": "Its previews and thumbnails are deleted and regenerated from the file. This takes a while and uses the server’s encoder.",
     "context": "The detail of a confirm dialog in the media panel in the admin area."

@@ -6,6 +6,8 @@ import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { ArtworkSubject } from '@ValenceScreens/components/AdminArea/components/ArtworkPicker/ArtworkPicker.types';
 
+type MediaView = 'titles' | 'folders';
+
 type MediaReading = {
   libraries: boolean;
   files: boolean;
@@ -38,6 +40,13 @@ type MediaPanelProps = {
   onOpenFolder?: (path: string) => void;
   onMoved?: (libraryId: string, jobId: string | null) => void;
   onOpenInCatalogue?: (address: CatalogueAddress) => void;
+  view?: MediaView;
+  onView?: (view: MediaView) => void;
+  folder?: string | null;
+  onFolder?: (path: string | null) => void;
+  mayManageFiles?: boolean;
+  onFilesChanged?: () => void;
+  onScan?: (libraryId: string) => void;
 };
 
-export type { MediaPanelProps, MediaReading };
+export type { MediaPanelProps, MediaReading, MediaView };
