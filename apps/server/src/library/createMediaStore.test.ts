@@ -138,6 +138,50 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(showEdit?.catalogue).toBe('Show Renamed');
   });
 
+  it('carries the edits made to a programme before it was matched over to its match', async () => {
+    const { db, store } = await aStore();
+    const edits = createTitleEditStore(db);
+    const nobody = { id: null, name: null };
+    const unmatched = anEpisode('/shows/Show/1.mkv', 'Show', null);
+
+    await store.upsert(unmatched);
+
+    const [folder] = await db.select({ key: series.key }).from(series);
+    const showKey = `series:${folder?.key ?? ''}`;
+
+    await edits.change(
+      { libraryId: SHOWS_ID, key: showKey, kind: 'show' },
+      [{ field: 'title', edit: { value: 'My show', catalogue: 'Show' } }],
+      nobody,
+      'set',
+    );
+    await edits.change(
+      { libraryId: SHOWS_ID, key: `${showKey}:s1e1`, kind: 'episode' },
+      [{ field: 'title', edit: { value: 'My pilot', catalogue: 'Pilot' } }],
+      nobody,
+      'set',
+    );
+
+    const matched = anEpisode('/shows/Show/1.mkv', 'Show', '1');
+
+    await store.upsert({
+      ...matched,
+      metadata: { ...matched.metadata, catalogueEpisodeId: '77' },
+    });
+
+    const [stored] = await db
+      .select({ title: mediaItem.title, seriesTitle: mediaItem.seriesTitle })
+      .from(mediaItem);
+
+    expect(stored).toEqual({ title: 'My pilot', seriesTitle: 'My show' });
+    expect((await edits.editsFor(SHOWS_ID, ['tv:1', 'tv:1:e77'])).map((one) => one.field)).toEqual([
+      'title',
+      'title',
+    ]);
+    expect(await edits.editsFor(SHOWS_ID, [showKey, `${showKey}:s1e1`])).toEqual([]);
+    expect(await edits.history(SHOWS_ID, 'tv:1')).toHaveLength(1);
+  });
+
   it('keeps what is left out of a library once per path, and brings it back', async () => {
     const { store } = await aStore();
     const asked = {

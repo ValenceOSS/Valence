@@ -40,6 +40,7 @@ import { isNotDistinctFrom } from '@ValenceDatabase/isNotDistinctFrom';
 import { upsert } from '@ValenceDatabase/upsert';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import { layTitleEdits } from '@ValenceServer/metadata/layTitleEdits';
+import { movesBetween } from '@ValenceServer/metadata/movesBetween';
 import { subjectKeysOf } from '@ValenceServer/metadata/subjectKeysOf';
 
 const LEFT_OUT_COLUMNS = {
@@ -329,39 +330,72 @@ const createMediaStore = (
         seriesTitle,
       });
 
-      const laid = await layTitleEdits(
-        titleEdits,
-        row.libraryId,
-        subjectKeysOf({
-          path: row.path,
-          externalId: row.metadata.externalId ?? null,
-          seriesKey,
-          seasonNumber: row.episode.seasonNumber,
-          episodeNumber: row.episode.episodeNumber,
-          catalogueEpisodeId: row.metadata.catalogueEpisodeId ?? null,
-          extraKind: row.extraKind,
-        }),
-        {
-          title: row.title,
-          sortTitle: null,
-          originalTitle: row.metadata.originalTitle ?? null,
-          year: row.year,
-          tagline: row.metadata.tagline ?? null,
-          overview: row.metadata.overview ?? null,
-          releaseDate: row.metadata.releaseDate ?? null,
-          genres: row.metadata.genres ?? null,
-          tags: null,
-          studios: row.metadata.studios ?? null,
-          networks: row.metadata.networks ?? null,
-          certifications: row.metadata.certifications ?? null,
-          rating: row.metadata.rating ?? null,
-          rottenTomatoes: row.metadata.rottenTomatoes ?? null,
-          imdbId: row.metadata.imdbId ?? null,
-          tvdbId: row.metadata.tvdbId ?? null,
-          seriesTitle,
-          seriesSortTitle: null,
-        },
-      );
+      const keys = subjectKeysOf({
+        path: row.path,
+        externalId: row.metadata.externalId ?? null,
+        seriesKey,
+        seasonNumber: row.episode.seasonNumber,
+        episodeNumber: row.episode.episodeNumber,
+        catalogueEpisodeId: row.metadata.catalogueEpisodeId ?? null,
+        extraKind: row.extraKind,
+      });
+      const [stored] = await db
+        .select({
+          id: mediaItem.id,
+          externalId: mediaItem.externalId,
+          seriesTitle: mediaItem.seriesTitle,
+          seasonNumber: mediaItem.seasonNumber,
+          episodeNumber: mediaItem.episodeNumber,
+          catalogueEpisodeId: mediaItem.catalogueEpisodeId,
+          extraKind: mediaItem.extraKind,
+          seriesKey: series.key,
+        })
+        .from(mediaItem)
+        .leftJoin(series, eq(series.id, mediaItem.seriesId))
+        .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)))
+        .limit(1);
+
+      if (stored !== undefined) {
+        await titleEdits.move(
+          row.libraryId,
+          movesBetween(
+            subjectKeysOf({
+              path: row.path,
+              externalId: stored.externalId,
+              seriesKey:
+                stored.seriesTitle === null
+                  ? null
+                  : (stored.seriesKey ?? `title:${stored.seriesTitle}`),
+              seasonNumber: stored.seasonNumber,
+              episodeNumber: stored.episodeNumber,
+              catalogueEpisodeId: stored.catalogueEpisodeId,
+              extraKind: stored.extraKind,
+            }),
+            keys,
+          ),
+        );
+      }
+
+      const laid = await layTitleEdits(titleEdits, row.libraryId, keys, {
+        title: row.title,
+        sortTitle: null,
+        originalTitle: row.metadata.originalTitle ?? null,
+        year: row.year,
+        tagline: row.metadata.tagline ?? null,
+        overview: row.metadata.overview ?? null,
+        releaseDate: row.metadata.releaseDate ?? null,
+        genres: row.metadata.genres ?? null,
+        tags: null,
+        studios: row.metadata.studios ?? null,
+        networks: row.metadata.networks ?? null,
+        certifications: row.metadata.certifications ?? null,
+        rating: row.metadata.rating ?? null,
+        rottenTomatoes: row.metadata.rottenTomatoes ?? null,
+        imdbId: row.metadata.imdbId ?? null,
+        tvdbId: row.metadata.tvdbId ?? null,
+        seriesTitle,
+        seriesSortTitle: null,
+      });
       const edited = laid.columns;
 
       const seriesId =

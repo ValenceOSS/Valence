@@ -143,4 +143,43 @@ describe('createTitleEditStore', () => {
     },
     STARTING_DATABASE_MS,
   );
+  it(
+    'moves a title’s edits and history to a new key, where an edit kept there already wins',
+    async () => {
+      const store = await aStore();
+      const unmatched = { libraryId: 'films', key: 'file:/films/A.mkv', kind: 'film' as const };
+
+      await store.change(
+        unmatched,
+        [
+          { field: 'title', edit: { value: 'From the file', catalogue: 'A' } },
+          { field: 'note', edit: { value: 'Mine', catalogue: null } },
+        ],
+        ADA,
+        'set',
+      );
+      await store.change(
+        FILM,
+        [{ field: 'title', edit: { value: 'Already here', catalogue: 'A film' } }],
+        ADA,
+        'set',
+      );
+
+      await expect(
+        store.move('films', [{ from: unmatched.key, to: FILM.key, kind: 'film' }]),
+      ).resolves.toBe(1);
+
+      const kept = await store.editsFor('films', [FILM.key, unmatched.key]);
+
+      expect(kept.map((edit) => [edit.subjectKey, edit.field, edit.value])).toEqual([
+        ['movie:603', 'note', 'Mine'],
+        ['movie:603', 'title', 'Already here'],
+      ]);
+      await expect(store.history('films', FILM.key)).resolves.toHaveLength(2);
+      await expect(
+        store.move('films', [{ from: unmatched.key, to: FILM.key, kind: 'film' }]),
+      ).resolves.toBe(0);
+    },
+    STARTING_DATABASE_MS,
+  );
 });

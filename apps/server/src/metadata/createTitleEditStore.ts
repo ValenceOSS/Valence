@@ -349,7 +349,56 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
     return { kind: 'undoable', subject, restore };
   };
 
-  return { editsFor, noteCatalogue, change, history, planUndo };
+  /**
+   * Moves the edits and history kept under one key of a title to another, as when a title edited
+   * before it was matched is matched; an edit already kept under the new key wins over the old one.
+   *
+   * @param libraryId - The library.
+   * @param moves - Each key to move from, the key to move to, and the kind of title it is.
+   * @returns How many edits moved.
+   */
+  const move = async (
+    libraryId: string,
+    moves: readonly { from: string; to: string; kind: TitleSubjectKind }[],
+  ): Promise<number> => {
+    const wanted = moves.filter((one) => one.from !== one.to);
+    const held = await editsFor(
+      libraryId,
+      wanted.flatMap((one) => [one.from, one.to]),
+    );
+    const moving = wanted.filter((one) => held.some((edit) => edit.subjectKey === one.from));
+
+    if (moving.length === 0) {
+      return 0;
+    }
+
+    let moved = 0;
+
+    await db.transaction(async (tx) => {
+      for (const one of moving) {
+        const taken = held.filter((edit) => edit.subjectKey === one.to).map((edit) => edit.field);
+        const from = and(eq(titleEdit.libraryId, libraryId), eq(titleEdit.subjectKey, one.from));
+
+        if (taken.length > 0) {
+          await tx.delete(titleEdit).where(and(from, inArray(titleEdit.field, taken)));
+        }
+
+        await tx.update(titleEdit).set({ subjectKey: one.to, subjectKind: one.kind }).where(from);
+        await tx
+          .update(titleChange)
+          .set({ subjectKey: one.to, subjectKind: one.kind })
+          .where(and(eq(titleChange.libraryId, libraryId), eq(titleChange.subjectKey, one.from)));
+
+        moved += held.filter(
+          (edit) => edit.subjectKey === one.from && !taken.includes(edit.field),
+        ).length;
+      }
+    });
+
+    return moved;
+  };
+
+  return { editsFor, noteCatalogue, change, history, planUndo, move };
 };
 
 type TitleEditStore = ReturnType<typeof createTitleEditStore>;
