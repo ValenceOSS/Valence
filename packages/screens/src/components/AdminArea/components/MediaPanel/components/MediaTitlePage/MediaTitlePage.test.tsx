@@ -96,15 +96,28 @@ describe('MediaTitlePage', () => {
     expect(artwork).toHaveBeenCalled();
   });
 
-  it('opens its folder in Files only where Files is offered', async () => {
+  it('keeps a film’s file actions to its Files tab, and its title’s in the head', async () => {
     const user = userEvent.setup();
-    const onOpenFolder = vi.fn();
 
-    drawn(titleOf({ id: 'film' }), { onOpenFolder });
+    render(
+      <MediaTitlePage
+        title={titleOf({ id: 'film', title: 'Film', externalId: '603' })}
+        library={FILMS}
+        actionsFor={() => [
+          [
+            { id: 'rebuild', label: 'Rebuild previews', onChoose: vi.fn() },
+            { id: 'show-in-files', label: 'Show in Folders', onChoose: vi.fn() },
+          ],
+        ]}
+        place={null}
+        paths={{}}
+        onBack={vi.fn()}
+      />,
+    );
     await user.click(screen.getByRole('button', { name: /^More for /u }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Open folder' }));
 
-    expect(onOpenFolder).toHaveBeenCalledWith('/media/films/Film (2020)');
+    expect(await screen.findByRole('menuitem', { name: 'Show in Folders' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Rebuild previews' })).not.toBeInTheDocument();
   });
 
   it('offers no folder without Files', async () => {

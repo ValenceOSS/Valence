@@ -5315,7 +5315,7 @@ const ENGLISH = {
   'screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf': 'Expand {title}',
   'screens.adminArea.mediaTitlePage.askedWhen': 'Asked {when}',
   'screens.adminArea.mediaTitlePage.fixMatch': 'Fix match',
-  'screens.adminArea.mediaTitlePage.keepEverythingAsItIs': 'Keep everything as it is',
+  'screens.adminArea.mediaTitlePage.lockAllFields': 'Lock all fields',
   'screens.adminArea.mediaTitlePage.lockedEveryField': 'Locked every field.',
   'screens.adminArea.mediaTitlePage.matchedId': 'Matched · {id}',
   'screens.adminArea.mediaTitlePage.matchedTmdbId': 'Matched · TMDB {id}',

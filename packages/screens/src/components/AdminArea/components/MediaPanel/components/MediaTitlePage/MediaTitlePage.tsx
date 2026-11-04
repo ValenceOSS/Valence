@@ -49,6 +49,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 import type { MediaTitlePageProps } from './MediaTitlePage.types';
 import type { ReactNode } from 'react';
+import { Lock as LockFilledIcon, Unlink as UnlinkFilledIcon } from '@keyline-icons/react/fill';
 import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
@@ -64,6 +65,14 @@ import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsO
 const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null };
 
 const NO_LIBRARIES: readonly Library[] = [];
+
+const FILE_ONLY: readonly string[] = [
+  'rebuild',
+  'find-subtitles',
+  'preview-moment',
+  'reencode',
+  'kept-copies',
+];
 
 const ALREADY_A_FILE_ACTION: readonly string[] = ['leave-out', 'show-in-files', 'delete'];
 
@@ -291,7 +300,8 @@ const MediaTitlePage = ({
         : [
             {
               id: 'lock',
-              label: say('screens.adminArea.mediaTitlePage.keepEverythingAsItIs'),
+              label: say('screens.adminArea.mediaTitlePage.lockAllFields'),
+              icon: <Icon of={LockFilledIcon} size={15} />,
               onChoose: () => {
                 void change(
                   { lock: unlocked },
@@ -309,6 +319,7 @@ const MediaTitlePage = ({
             {
               id: 'unmatch',
               label: say('screens.adminArea.mediaTitlePage.unmatch'),
+              icon: <Icon of={UnlinkFilledIcon} size={15} />,
               onChoose: () => {
                 void unmatchTitle(title.lead.id).then((answer) => {
                   if (answer.kind === 'refused') {
@@ -325,19 +336,13 @@ const MediaTitlePage = ({
           ]
         : []),
     ],
-    place === null || onOpenFolder === undefined
-      ? []
-      : [
-          {
-            id: 'open-folder',
-            label: say('screens.adminArea.mediaTitlePage.openFolder'),
-            onChoose: () => {
-              onOpenFolder(place.folder);
-            },
-          },
-        ],
     ...titleActions.map((group) =>
-      group.filter((one) => one.id !== 'wrong-match' && one.id !== 'artwork'),
+      group.filter(
+        (one) =>
+          one.id !== 'wrong-match' &&
+          one.id !== 'artwork' &&
+          !(title.kind === 'film' && FILE_ONLY.includes(one.id)),
+      ),
     ),
   ].filter((group) => group.length > 0);
   const best = sharpestStepOf(title.lead)?.label ?? null;

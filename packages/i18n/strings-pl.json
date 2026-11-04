@@ -21016,8 +21016,8 @@
     "context": "Button on a title's page in Media that corrects which catalogue entry it is matched to."
   },
   {
-    "handler": "screens.adminArea.mediaTitlePage.keepEverythingAsItIs",
-    "text": "Keep everything as it is",
+    "handler": "screens.adminArea.mediaTitlePage.lockAllFields",
+    "text": "Lock all fields",
     "context": "A menu item on a title's page in the admin's Media that locks every field, so TMDB never changes them."
   },
   {
