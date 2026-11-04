@@ -12,6 +12,7 @@ const READ_AGAIN_JOB = 'library.readAgain';
 const ReadAgainJobSchema = z.object({
   libraryId: z.string().uuid(),
   paths: z.array(z.string().min(1)).min(1),
+  keepsMatches: z.boolean().optional(),
 });
 
 const ScanLibraryJobSchema = z.object({

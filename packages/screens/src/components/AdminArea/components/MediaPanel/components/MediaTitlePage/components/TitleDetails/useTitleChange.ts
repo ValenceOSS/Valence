@@ -67,11 +67,17 @@ const useTitleChange = (mediaId: string, scope: TitleScope) => {
     }
   };
 
-  const change = async (request: TitleEditRequest) =>
-    settle(
-      await editTitleMetadata(mediaId, scope, request),
-      say('screens.adminArea.titleDetails.saved'),
-    );
+  /**
+   * Sets, locks or puts back fields of the title.
+   *
+   * @param request - What to change.
+   * @param said - What to say once it worked, where something other than that it saved fits.
+   * @returns Whether it worked, and why not.
+   */
+  const change = async (
+    request: TitleEditRequest,
+    said: string = say('screens.adminArea.titleDetails.saved'),
+  ) => settle(await editTitleMetadata(mediaId, scope, request), said);
 
   return { change, undo };
 };

@@ -9,6 +9,10 @@ import type { ReactElement } from 'react';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 
+const { unmatch } = vi.hoisted(() => ({ unmatch: vi.fn() }));
+
+vi.mock('@ValenceClient/admin/unmatchTitle', () => ({ unmatchTitle: unmatch }));
+
 const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
 
 const FILMS: Library = {
@@ -83,7 +87,8 @@ describe('MediaTitlePage', () => {
     const { fix, artwork } = drawn(titleOf({ id: 'film' }));
 
     await user.click(screen.getByRole('button', { name: 'Fix match' }));
-    await user.click(screen.getByRole('button', { name: 'Artwork' }));
+    await user.click(screen.getByRole('button', { name: /^More for /u }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Choose artwork' }));
 
     expect(fix).toHaveBeenCalled();
     expect(artwork).toHaveBeenCalled();
@@ -94,15 +99,40 @@ describe('MediaTitlePage', () => {
     const onOpenFolder = vi.fn();
 
     drawn(titleOf({ id: 'film' }), { onOpenFolder });
-    await user.click(screen.getByRole('button', { name: 'Open folder' }));
+    await user.click(screen.getByRole('button', { name: /^More for /u }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Open folder' }));
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/films/Film (2020)');
   });
 
-  it('offers no folder without Files', () => {
-    drawn(titleOf({ id: 'film' }));
+  it('offers no folder without Files', async () => {
+    const user = userEvent.setup();
 
-    expect(screen.queryByRole('button', { name: 'Open folder' })).not.toBeInTheDocument();
+    drawn(titleOf({ id: 'film' }));
+    await user.click(screen.getByRole('button', { name: /^More for /u }));
+
+    expect(await screen.findByRole('menuitem', { name: 'Choose artwork' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Open folder' })).not.toBeInTheDocument();
+  });
+
+  it('unmatches a matched title, and offers it only where it is matched', async () => {
+    const user = userEvent.setup();
+
+    unmatch.mockResolvedValue({ kind: 'reached', count: 1, jobId: null });
+    drawn(titleOf({ id: 'film', externalId: '603' }));
+    await user.click(screen.getByRole('button', { name: /^More for /u }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Unmatch' }));
+
+    expect(unmatch).toHaveBeenCalledWith('film');
+  });
+
+  it('opens the refresh dialog', async () => {
+    const user = userEvent.setup();
+
+    drawn(titleOf({ id: 'film', title: 'Film', externalId: '603' }));
+    await user.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Refresh Film' })).toBeInTheDocument();
   });
 
   it('lists every version of a film held more than once as a file of its own', async () => {

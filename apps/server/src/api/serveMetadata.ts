@@ -1,4 +1,6 @@
 import {
+  refreshTitleRoute,
+  unmatchTitleRoute,
   previewMatchRoute,
   editTitleMetadataRoute,
   readTitleHistoryRoute,
@@ -21,7 +23,7 @@ const NO_SUCH_ITEM = refuse('error.common.noSuchItem');
  * @param context - What they are answered with.
  */
 const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
-  const { titleMetadata, requires, readAccount, recordAudit } = context;
+  const { titleMetadata, library, requires, readAccount, recordAudit } = context;
 
   /**
    * Reads who is changing a title, for the history.
@@ -106,6 +108,74 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     return typeof previewed === 'string'
       ? context.json(NO_SUCH_ITEM, 404)
       : context.json(previewed, 200);
+  });
+
+  app.openapi(refreshTitleRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { id } = context.req.valid('param');
+    const { mode, fields } = context.req.valid('json');
+
+    if (mode === 'fields') {
+      const refreshed =
+        titleMetadata === undefined
+          ? 'missing'
+          : await titleMetadata.refreshFields(id, fields ?? []);
+
+      if (refreshed === 'notThisKind') {
+        return context.json(refuse('error.library.notMatchedToTheCatalogueYet'), 400);
+      }
+
+      if (refreshed === 'notInCatalogue') {
+        return context.json(refuse('error.common.theCatalogueDoesNotKnowThat'), 404);
+      }
+
+      if (typeof refreshed === 'string') {
+        return context.json(NO_SUCH_ITEM, 404);
+      }
+
+      await recordAudit(context, 'media.refreshed', refreshed.metadata.subject.key, {
+        mode,
+        fields: (fields ?? []).join(', '),
+      });
+
+      return context.json({ corrected: refreshed.updated, jobId: null }, 200);
+    }
+
+    const reached =
+      mode === 'matchAgain'
+        ? await library.forgetCorrection(id)
+        : await library.refreshTitle(id, mode);
+
+    if (reached === null) {
+      return context.json(NO_SUCH_ITEM, 404);
+    }
+
+    await recordAudit(context, mode === 'matchAgain' ? 'media.matchReset' : 'media.refreshed', id, {
+      mode,
+      files: reached.corrected.toString(),
+    });
+
+    return context.json(reached, 200);
+  });
+
+  app.openapi(unmatchTitleRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { id } = context.req.valid('param');
+    const reached = await library.unmatch(id, (await actorOf(context.req.raw.headers)).id);
+
+    if (reached === null) {
+      return context.json(NO_SUCH_ITEM, 404);
+    }
+
+    await recordAudit(context, 'media.unmatched', id, { files: reached.corrected.toString() });
+
+    return context.json(reached, 200);
   });
 
   app.openapi(readTitleHistoryRoute, async (context) => {

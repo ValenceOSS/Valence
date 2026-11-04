@@ -13991,8 +13991,18 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.mediaRefreshed",
+    "text": "Title refreshed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.mediaRemoved",
     "text": "Title deleted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaUnmatched",
+    "text": "Title unmatched",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
@@ -20911,6 +20921,16 @@
     "context": "Button on a title's page in Media that corrects which catalogue entry it is matched to."
   },
   {
+    "handler": "screens.adminArea.mediaTitlePage.keepEverythingAsItIs",
+    "text": "Keep everything as it is",
+    "context": "A menu item on a title's page in the admin's Media that locks every field, so TMDB never changes them."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.lockedEveryField",
+    "text": "Locked every field.",
+    "context": "Said once every field of a title has been locked."
+  },
+  {
     "handler": "screens.adminArea.mediaTitlePage.matchedId",
     "text": "Matched · {id}",
     "context": "On a title's page in Media: it is matched in the catalogue. {id} is the catalogue's id for it."
@@ -20934,6 +20954,16 @@
     "handler": "screens.adminArea.mediaTitlePage.reEncodes",
     "text": "Re-encodes",
     "context": "Heading of the card listing the re-encodes asked of a title's files."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.refreshing",
+    "text": "Refreshing…",
+    "context": "A badge on a title's page in the admin's Media while it is being read again."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.unmatch",
+    "text": "Unmatch",
+    "context": "A menu item on a title's page in the admin's Media that takes it back to what its file names say."
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.whatToShowOfTheTitle",
@@ -22309,6 +22339,76 @@
     "handler": "screens.adminArea.rebuiltEveryLibrary",
     "text": "Rebuilt every library.",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.askedTmdbAgain",
+    "text": "Asked TMDB again.",
+    "context": "Said once a title has been refreshed from the admin's Media."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.fetchArtwork",
+    "text": "Fetch artwork",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.fetchArtworkDetail",
+    "text": "Fetches its poster, backdrop and logo again.",
+    "context": "What the Fetch artwork choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.fieldsToUpdate",
+    "text": "Fields to update",
+    "context": "The heading over the tick boxes choosing which fields to ask TMDB for again."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.matchAgain",
+    "text": "Match again",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.matchAgainDetail",
+    "text": "Forgets its match and finds it again from its file names.",
+    "context": "What the Match again choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.onlyAMatchedTitle",
+    "text": "Only a title matched to TMDB has fields to ask for again.",
+    "context": "Why the Update some fields choice can't be picked for an unmatched title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.refresh",
+    "text": "Refresh",
+    "context": "The button on a title's page in the admin's Media, and in the dialog it opens, that asks the catalogue again about the title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.refreshName",
+    "text": "Refresh {name}",
+    "context": "The title of the admin's dialog for asking the catalogue again about one title. {name} is the title's name."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateDetails",
+    "text": "Update details",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateDetailsDetail",
+    "text": "Reads its files and asks TMDB again, keeping its match and every edit.",
+    "context": "What the Update details choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateSomeFields",
+    "text": "Update some fields",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateSomeFieldsDetail",
+    "text": "Asks TMDB again for only the fields you tick, such as the ratings.",
+    "context": "What the Update some fields choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.whatToAskAgain",
+    "text": "What to ask again",
+    "context": "The hidden label of the list of choices in the admin's dialog for asking the catalogue again about one title."
   },
   {
     "handler": "screens.adminArea.refuseRequestDialog.itCouldNotBeRefused",

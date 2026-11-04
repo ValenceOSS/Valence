@@ -247,7 +247,7 @@ const createMediaStore = (
     libraryId: string;
     path: string;
     externalId: string;
-    externalKind: 'tv' | 'movie';
+    externalKind: 'tv' | 'movie' | 'none';
     updatedBy: string | null;
   }) => Promise<void>;
   removeOverrides: (libraryId: string, paths: string[]) => Promise<number>;
@@ -881,7 +881,10 @@ const createMediaStore = (
       return rows.map((row) => ({
         path: row.path,
         externalId: row.externalId,
-        externalKind: row.externalKind === 'movie' ? ('movie' as const) : ('tv' as const),
+        externalKind:
+          row.externalKind === 'movie' || row.externalKind === 'none'
+            ? row.externalKind
+            : ('tv' as const),
       }));
     },
 

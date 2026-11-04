@@ -93,12 +93,13 @@ const harness = (options: {
   probeImpl?: (path: string) => Promise<MediaProbe>;
   providers?: MetadataProvider[];
   force?: boolean;
+  keepsMatches?: boolean;
   isPartial?: boolean;
   isCancelled?: () => boolean;
   onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: ScanPhase, processed: number, total: number) => void;
   trickplay?: { intervalSeconds: number; tileWidth: number; columns: number; rows: number };
-  overrides?: { path: string; externalId: string; externalKind: 'tv' | 'movie' }[];
+  overrides?: { path: string; externalId: string; externalKind: 'tv' | 'movie' | 'none' }[];
   defaultAudioLanguage?: string | null;
   atOnce?: number;
   capabilitiesImpl?: () => Promise<never>;
@@ -243,6 +244,7 @@ const harness = (options: {
         : { defaultAudioLanguage: options.defaultAudioLanguage }),
       ...(options.providers === undefined ? {} : { providers: options.providers }),
       ...(options.force === undefined ? {} : { force: options.force }),
+      ...(options.keepsMatches === undefined ? {} : { keepsMatches: options.keepsMatches }),
       ...(options.isPartial === undefined ? {} : { isPartial: options.isPartial }),
       ...(options.isCancelled === undefined ? {} : { isCancelled: options.isCancelled }),
       ...(options.onProblem === undefined ? {} : { onProblem: options.onProblem }),
@@ -1589,6 +1591,65 @@ describe('a correction somebody made', () => {
     await run();
 
     expect(asked).toEqual({ known: null, remembered: '777' });
+  });
+});
+
+describe('a re-read that keeps each match', () => {
+  it('asks the provider about the entry the file is matched to, not its name', async () => {
+    let asked: { known: string | null | undefined; kind: string | undefined } = {
+      known: undefined,
+      kind: undefined,
+    };
+    const { run } = harness({
+      found: [file('/media/films/b.mkv')],
+      existing: [stored('/media/films/b.mkv', { externalId: '777' })],
+      force: true,
+      keepsMatches: true,
+      providers: [
+        {
+          name: 'catalogue',
+          describe: (facts) => {
+            asked = { known: facts.knownExternalId, kind: facts.knownExternalKind };
+
+            return Promise.resolve({ title: 'B', year: 2000, externalId: '777' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked).toEqual({ known: '777', kind: 'movie' });
+  });
+});
+
+describe('a title somebody unmatched', () => {
+  it('is read from its file name alone, and stays unmatched', async () => {
+    const asked: string[] = [];
+    const { run, rows } = harness({
+      found: [file('/media/films/Some Film (2001).mkv')],
+      existing: [stored('/media/films/Some Film (2001).mkv', { externalId: '777' })],
+      overrides: [
+        { path: '/media/films/Some Film (2001).mkv', externalId: '', externalKind: 'none' },
+      ],
+      force: true,
+      providers: [
+        {
+          name: 'catalogue',
+          describe: () => {
+            asked.push('catalogue');
+
+            return Promise.resolve({ title: 'Wrong', year: 2000, externalId: '777' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked).toEqual([]);
+    expect(rows.at(-1)).toMatchObject({ title: 'Some Film', year: 2001 });
+    expect(rows.at(-1)?.metadata.externalId).toBeUndefined();
   });
 });
 

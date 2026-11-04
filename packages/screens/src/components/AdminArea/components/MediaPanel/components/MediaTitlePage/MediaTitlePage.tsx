@@ -25,10 +25,16 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHistory } from './components/TitleHistory/TitleHistory';
 import { TitlePartDialog } from './components/TitlePartDialog/TitlePartDialog';
+import { RefreshTitleDialog } from './components/RefreshTitleDialog/RefreshTitleDialog';
+import { useTitleChange } from './components/TitleDetails/useTitleChange';
+import { unmatchTitle } from '@ValenceClient/admin/unmatchTitle';
+import { notify } from '@ValenceUI/notify';
+import { watchJob } from '@ValenceScreens/components/AdminArea/scanCoordinator';
 import { SeasonList } from '@ValenceScreens/components/AdminArea/components/SeasonList/SeasonList';
 import { seasonsOfShow } from '@ValenceScreens/components/AdminArea/components/MediaPanel/seasonsOfShow';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { localDayOf } from '@ValenceCore/functions/localDayOf';
+import { FIELDS_OF_KIND } from '@ValenceContracts/schemas/TitleEdit';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaPoster/MediaPoster';
 import { describeAudio } from '@ValenceScreens/components/AdminArea/components/MediaPanel/describeAudio';
@@ -101,6 +107,10 @@ const MediaTitlePage = ({
   const [tab, setTab] = useState<(typeof TITLE_TABS)[number]>('details');
   const [opened, setOpened] = useState<{ part: OpenPart; season: number } | null>(null);
   const [isPartOpen, setIsPartOpen] = useState(false);
+  const [isRefreshOpen, setIsRefreshOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
+  const { change } = useTitleChange(title.lead.id, 'title');
   const tabs = TITLE_TABS.filter((one) => one !== 'seasons' || title.kind === 'series');
   const travel = useTravelDirection([...tabs], tab);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -185,9 +195,97 @@ const MediaTitlePage = ({
           (entry.kind === 'film') === (title.kind === 'film')),
     ) ?? null;
   const pastReencodes = (reencodes.data ?? []).filter((one) => leafIds.has(one.mediaId));
-  const everyAction = actionsFor(title).flat();
+  const titleActions = actionsFor(title);
+  const everyAction = titleActions.flat();
   const fix = everyAction.find((one) => one.id === 'wrong-match');
   const artwork = everyAction.find((one) => one.id === 'artwork');
+
+  /**
+   * Follows a job reading the title again, showing that it is being refreshed until it is done.
+   *
+   * @param jobId - The job, or nothing where the work is already done.
+   */
+  const follow = (jobId: string | null) => {
+    if (jobId === null) {
+      return;
+    }
+
+    setIsRefreshing(true);
+    void watchJob(title.libraryId, 'library.readAgain', jobId).finally(() => {
+      setIsRefreshing(false);
+    });
+  };
+
+  const unlocked =
+    metadata.data === undefined
+      ? []
+      : FIELDS_OF_KIND[metadata.data.subject.kind].filter((field) => {
+          const state = metadata.data.fields[field];
+
+          return (
+            field !== 'note' &&
+            state !== undefined &&
+            state.source !== 'edited' &&
+            state.source !== 'locked'
+          );
+        });
+  const moreActions = [
+    [
+      ...(artwork === undefined ? [] : [artwork]),
+      ...(unlocked.length === 0
+        ? []
+        : [
+            {
+              id: 'lock',
+              label: say('screens.adminArea.mediaTitlePage.keepEverythingAsItIs'),
+              onChoose: () => {
+                void change(
+                  { lock: unlocked },
+                  say('screens.adminArea.mediaTitlePage.lockedEveryField'),
+                ).then((outcome) => {
+                  if (!outcome.isSaved) {
+                    notify.failed(outcome.reason);
+                  }
+                });
+              },
+            },
+          ]),
+      ...(title.isMatched
+        ? [
+            {
+              id: 'unmatch',
+              label: say('screens.adminArea.mediaTitlePage.unmatch'),
+              onChoose: () => {
+                void unmatchTitle(title.lead.id).then((answer) => {
+                  if (answer.kind === 'refused') {
+                    notify.failed(answer.reason);
+
+                    return;
+                  }
+
+                  notify.worked(say('screens.adminArea.correctionPicker.itWillSayWhatItsFiles'));
+                  follow(answer.jobId);
+                });
+              },
+            },
+          ]
+        : []),
+    ],
+    place === null || onOpenFolder === undefined
+      ? []
+      : [
+          {
+            id: 'open-folder',
+            label: say('screens.adminArea.mediaTitlePage.openFolder'),
+            onChoose: () => {
+              onOpenFolder(place.folder);
+            },
+          },
+        ],
+    ...titleActions.map((group) =>
+      group.filter((one) => one.id !== 'wrong-match' && one.id !== 'artwork'),
+    ),
+  ].filter((group) => group.length > 0);
   const totalBytes = leaves.reduce((sum, leaf) => sum + (leaf.lead.sizeBytes ?? 0), 0);
   const filesWord = title.kind === 'series' ? say('common.episodes') : say('common.files');
   const nameOfLeaf = (leaf: MediaTitle) =>
@@ -360,6 +458,11 @@ const MediaTitlePage = ({
                       {say('screens.adminArea.mediaPanel.unmatched')}
                     </Badge>
                   )}
+                  {isRefreshing ? (
+                    <Badge size="sm" tone="busy" className="ml-2">
+                      {say('screens.adminArea.mediaTitlePage.refreshing')}
+                    </Badge>
+                  ) : null}
                 </span>
               </div>
 
@@ -370,6 +473,20 @@ const MediaTitlePage = ({
               )}
 
               <div className="flex flex-wrap gap-2">
+                {fix === undefined ? null : (
+                  <Button variant="secondary" size="md" onClick={fix.onChoose}>
+                    {say('screens.adminArea.mediaTitlePage.fixMatch')}
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => {
+                    setIsRefreshOpen(true);
+                  }}
+                >
+                  {say('screens.adminArea.refreshTitleDialog.refresh')}
+                </Button>
                 {catalogueEntry === null || onOpenInCatalogue === undefined ? null : (
                   <Button
                     variant="secondary"
@@ -381,26 +498,12 @@ const MediaTitlePage = ({
                     {say('screens.adminArea.mediaTitlePage.openInCatalogue')}
                   </Button>
                 )}
-                {fix === undefined ? null : (
-                  <Button variant="secondary" size="md" onClick={fix.onChoose}>
-                    {say('screens.adminArea.mediaTitlePage.fixMatch')}
-                  </Button>
-                )}
-                {artwork === undefined ? null : (
-                  <Button variant="secondary" size="md" onClick={artwork.onChoose}>
-                    {say('common.artwork')}
-                  </Button>
-                )}
-                {place === null || onOpenFolder === undefined ? null : (
-                  <Button
-                    variant="secondary"
+                {moreActions.length === 0 ? null : (
+                  <ActionMenu
+                    label={say('common.moreForName', { name: title.name })}
                     size="md"
-                    onClick={() => {
-                      onOpenFolder(place.folder);
-                    }}
-                  >
-                    {say('screens.adminArea.mediaTitlePage.openFolder')}
-                  </Button>
+                    groups={moreActions.map((items) => ({ items }))}
+                  />
                 )}
               </div>
 
@@ -540,6 +643,18 @@ const MediaTitlePage = ({
           />
         </TabPanel>
       </motion.div>
+
+      <RefreshTitleDialog
+        mediaId={title.lead.id}
+        name={title.name}
+        kind={title.kind === 'series' ? 'show' : 'film'}
+        isMatched={title.isMatched}
+        isOpen={isRefreshOpen}
+        onClose={() => {
+          setIsRefreshOpen(false);
+        }}
+        onStarted={follow}
+      />
 
       <TitlePartDialog
         part={opened?.part ?? null}

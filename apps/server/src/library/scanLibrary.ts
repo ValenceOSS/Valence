@@ -79,10 +79,12 @@ type MediaFileSystem = {
   readText?: (path: string) => Promise<string | null>;
 };
 
+const FILE_NAMES_ONLY = createFilenameMetadataProvider();
+
 type MediaOverride = {
   path: string;
   externalId: string;
-  externalKind: 'tv' | 'movie';
+  externalKind: 'tv' | 'movie' | 'none';
 };
 
 type ScannedItem = {
@@ -126,6 +128,7 @@ type ScanLibraryOptions = {
   transcoder: Transcoder;
   providers?: MetadataProvider[];
   force?: boolean;
+  keepsMatches?: boolean;
   isPartial?: boolean;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
@@ -453,6 +456,7 @@ const scanLibrary = async ({
   transcoder,
   providers = [createFilenameMetadataProvider()],
   force = false,
+  keepsMatches = false,
   isPartial: askedPartial = false,
   atOnce = 1,
   onProblem,
@@ -712,18 +716,36 @@ const scanLibrary = async ({
           : (catalogueBySeries.get(episode.seriesFolder) ??
             storedByPath.get(file.path)?.externalId ??
             null);
-      const knownExternalId = corrected?.externalId ?? null;
+      const isLeftUnmatched = corrected?.externalKind === 'none';
+      const stillMatched =
+        keepsMatches && corrected === null
+          ? ((episode.seriesFolder === null ? null : catalogueBySeries.get(episode.seriesFolder)) ??
+            storedByPath.get(file.path)?.externalId ??
+            null)
+          : null;
+      const knownExternalId = isLeftUnmatched ? null : (corrected?.externalId ?? stillMatched);
+      const knownExternalKind =
+        corrected !== null && corrected.externalKind !== 'none'
+          ? corrected.externalKind
+          : stillMatched === null
+            ? null
+            : episode.seriesFolder === null
+              ? 'movie'
+              : 'tv';
+      const asked = isLeftUnmatched
+        ? providers.filter((provider) => provider.name === FILE_NAMES_ONLY.name)
+        : providers;
 
       const metadata =
         extra === null
           ? await resolveMetadata(
-              providers,
+              asked.length === 0 ? [FILE_NAMES_ONLY] : asked,
               {
                 path: file.path,
                 probe,
                 episode,
                 knownExternalId,
-                ...(corrected === null ? {} : { knownExternalKind: corrected.externalKind }),
+                ...(knownExternalKind === null ? {} : { knownExternalKind }),
                 title: placement?.title ?? nameOfFile(file.path),
                 year: placement?.year ?? null,
                 ids,
@@ -752,7 +774,7 @@ const scanLibrary = async ({
 
       const heldBefore = knownExternalId ?? storedByPath.get(file.path)?.externalId ?? null;
 
-      if (heldBefore !== null && (metadata.externalId ?? null) === null) {
+      if (!isLeftUnmatched && heldBefore !== null && (metadata.externalId ?? null) === null) {
         failed += 1;
         onProblem?.(
           file.path,

@@ -62,6 +62,8 @@ const AUDIT_ACTIONS = [
   'media.matchReset',
   'media.metadataChanged',
   'media.metadataUndone',
+  'media.unmatched',
+  'media.refreshed',
   'settings.changed',
   'library.added',
   'library.changed',

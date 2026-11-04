@@ -930,6 +930,16 @@ const createMemoryLibraryService = (
       state.media.some((one) => one.id === mediaId) ? { corrected: 1, jobId: null } : null,
     ),
 
+  unmatch: (mediaId) =>
+    Promise.resolve(
+      state.media.some((one) => one.id === mediaId) ? { corrected: 1, jobId: null } : null,
+    ),
+
+  refreshTitle: (mediaId) =>
+    Promise.resolve(
+      state.media.some((one) => one.id === mediaId) ? { corrected: 1, jobId: null } : null,
+    ),
+
   deleteMedia: (mediaId) => {
     if (!state.media.some((one) => one.id === mediaId)) {
       return Promise.resolve({ kind: 'absent' });

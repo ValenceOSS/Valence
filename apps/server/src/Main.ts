@@ -2766,10 +2766,10 @@ const jobs = createJobQueue({
           return;
         }
 
-        const { libraryId, paths } = parsed.data;
+        const { libraryId, paths, keepsMatches } = parsed.data;
 
         await runLibraryWork(READ_AGAIN_JOB, libraryId, payload, async () => {
-          const read = await libraryService.runReadAgain(libraryId, paths, jobId);
+          const read = await libraryService.runReadAgain(libraryId, paths, jobId, keepsMatches);
 
           if (read.mediaIds.length === 0) {
             return;

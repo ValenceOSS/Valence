@@ -255,7 +255,12 @@ type ReadAgainOutcome = {
 
 type DatabaseLibraryService = LibraryService & {
   runScan: (libraryId: string, force?: boolean, jobId?: string) => Promise<ScanResult | null>;
-  runReadAgain: (libraryId: string, paths: string[], jobId?: string) => Promise<ReadAgainOutcome>;
+  runReadAgain: (
+    libraryId: string,
+    paths: string[],
+    jobId?: string,
+    keepsMatches?: boolean,
+  ) => Promise<ReadAgainOutcome>;
   runScanFolder: (libraryId: string, folder: string, jobId?: string) => Promise<ScanResult | null>;
   findByCatalogueId: (
     libraryId: string,
@@ -734,11 +739,14 @@ const createDatabaseLibraryService = ({
    * @param libraryId - The library the files are in.
    * @param paths - The files to read again.
    * @param onProgress - The job to report progress against, where one is watching.
+   * @param keepsMatches - Whether each file keeps the entry it is matched to, rather than being
+   *   matched again from its name.
    */
   const readAgain = async (
     libraryId: string,
     paths: string[],
     onProgress?: (phase: ScanPhase, processed: number, total: number) => void,
+    keepsMatches = false,
   ): Promise<void> => {
     const items = await db
       .select({
@@ -791,6 +799,7 @@ const createDatabaseLibraryService = ({
       transcoder,
       providers: providers ?? [],
       force: true,
+      keepsMatches,
       isPartial: true,
       ...(onProblem === undefined ? {} : { onProblem }),
       ...(onProgress === undefined ? {} : { onProgress }),
@@ -810,10 +819,19 @@ const createDatabaseLibraryService = ({
    *
    * @param libraryId - The library the files are in.
    * @param paths - The files to read again.
+   * @param keepsMatches - Whether each file keeps the entry it is matched to.
    * @returns The job reading these files, or null where there is none and none could be started.
    */
-  const queueReadAgain = async (libraryId: string, paths: string[]): Promise<string | null> => {
-    const jobId = await jobs.enqueue(READ_AGAIN_JOB, { libraryId, paths }, libraryId);
+  const queueReadAgain = async (
+    libraryId: string,
+    paths: string[],
+    keepsMatches = false,
+  ): Promise<string | null> => {
+    const jobId = await jobs.enqueue(
+      READ_AGAIN_JOB,
+      keepsMatches ? { libraryId, paths, keepsMatches } : { libraryId, paths },
+      libraryId,
+    );
 
     return jobId ?? (await jobs.liveJob(READ_AGAIN_JOB, libraryId));
   };
@@ -1815,6 +1833,75 @@ const createDatabaseLibraryService = ({
       return { leftOut, jobId: queued?.jobId ?? null };
     },
 
+    unmatch: async (mediaId, by) => {
+      const paths = await pathsOfTheSameThing(mediaId);
+
+      if (paths === null) {
+        return null;
+      }
+
+      for (const path of paths.paths) {
+        await store.saveOverride({
+          libraryId: paths.libraryId,
+          path,
+          externalId: '',
+          externalKind: 'none',
+          updatedBy: by,
+        });
+      }
+
+      const jobId = await queueReadAgain(paths.libraryId, paths.paths);
+
+      return { corrected: paths.paths.length, jobId };
+    },
+
+    refreshTitle: async (mediaId, mode) => {
+      const paths = await pathsOfTheSameThing(mediaId);
+
+      if (paths === null) {
+        return null;
+      }
+
+      if (mode === 'details') {
+        return {
+          corrected: paths.paths.length,
+          jobId: await queueReadAgain(paths.libraryId, paths.paths, true),
+        };
+      }
+
+      const files = await db
+        .select({
+          id: mediaItem.id,
+          posterUrl: mediaItem.posterUrl,
+          backdropUrl: mediaItem.backdropUrl,
+          logoUrl: mediaItem.logoUrl,
+        })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, paths.libraryId), inArray(mediaItem.path, paths.paths)));
+      const addresses = new Set(
+        files.flatMap((file) =>
+          [file.posterUrl, file.backdropUrl, file.logoUrl].filter((url) => url !== null),
+        ),
+      );
+      const forgetting = images ?? { forget: () => Promise.resolve() };
+
+      for (const address of addresses) {
+        await forgetting.forget(address);
+      }
+
+      const ids = files.map((file) => file.id);
+
+      if (ids.length > 0) {
+        await db
+          .update(mediaItem)
+          .set({ artworkChangedAt: new Date() })
+          .where(inArray(mediaItem.id, ids));
+        onArtworkChanged?.(ids);
+      }
+
+      return { corrected: ids.length, jobId: null };
+    },
+
     forgetCorrection: async (mediaId) => {
       const paths = await pathsOfTheSameThing(mediaId);
 
@@ -2672,7 +2759,7 @@ const createDatabaseLibraryService = ({
       };
     },
 
-    runReadAgain: async (libraryId, paths, jobId) => {
+    runReadAgain: async (libraryId, paths, jobId, keepsMatches = false) => {
       const readFiles = () =>
         db
           .select({
@@ -2694,6 +2781,7 @@ const createDatabaseLibraryService = ({
           ? undefined
           : (phase, processed, total) =>
               jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total),
+        keepsMatches,
       );
 
       const after = await readFiles();

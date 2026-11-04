@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  TitleFieldSchema,
   MatchPreviewSchema,
   TitleEditOutcomeSchema,
   TitleEditRequestSchema,
@@ -119,7 +120,61 @@ const previewMatchRoute = createRoute({
   },
 });
 
+const Reached = z
+  .object({ corrected: z.number().int().nonnegative(), jobId: z.string().nullable() })
+  .openapi('TitleWorkReached');
+
+const refreshTitleRoute = createRoute({
+  method: 'post',
+  path: '/api/media/{id}/refresh',
+  tags: ['Library'],
+  summary: 'Ask the catalogue again for a title, for some of its fields, or for its artwork',
+  request: {
+    params: Params,
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              mode: z.enum(['details', 'fields', 'matchAgain', 'artwork']),
+              fields: z.array(TitleFieldSchema).optional(),
+            })
+            .openapi('TitleRefreshRequest'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'How many files or fields it reached, and the job doing the work, where one is',
+      content: { 'application/json': { schema: Reached } },
+    },
+    400: {
+      description: 'Fields were asked for again of a title that is not matched',
+      content: { 'application/json': { schema: Refusal } },
+    },
+    404: { description: 'No such file', content: { 'application/json': { schema: Refusal } } },
+  },
+});
+
+const unmatchTitleRoute = createRoute({
+  method: 'post',
+  path: '/api/media/{id}/unmatch',
+  tags: ['Library'],
+  summary: 'Take a title back to what its file names say, and keep it unmatched',
+  request: { params: Params },
+  responses: {
+    200: {
+      description: 'How many files it reached, and the job reading them again',
+      content: { 'application/json': { schema: Reached } },
+    },
+    404: { description: 'No such file', content: { 'application/json': { schema: Refusal } } },
+  },
+});
+
 export {
+  refreshTitleRoute,
+  unmatchTitleRoute,
   previewMatchRoute,
   readTitleMetadataRoute,
   editTitleMetadataRoute,

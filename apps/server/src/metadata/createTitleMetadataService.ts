@@ -707,7 +707,70 @@ const createTitleMetadataService = ({
     };
   };
 
-  return { read, edit, history, undo, preview, carry };
+  /**
+   * Asks the catalogue again for some fields of a title, keeping its match and every edit: a field
+   * left as the catalogue had it takes the new value, and an edited one only notes what the
+   * catalogue says now.
+   *
+   * @param mediaId - A file of the title.
+   * @param fields - The fields to ask for again.
+   * @returns How many fields took a new value, and the title as it now stands, or why not.
+   */
+  const refreshFields = async (
+    mediaId: string,
+    fields: readonly TitleField[],
+  ): Promise<{ updated: number; metadata: TitleMetadata } | Refusal> => {
+    const file = await fileOf(mediaId);
+    const subject = file === null ? null : subjectOf(file, 'title');
+
+    if (file === null) {
+      return 'missing';
+    }
+
+    if (subject === null || file.externalId === null || file.externalId === '') {
+      return 'notThisKind';
+    }
+
+    const ahead = await lookAhead(mediaId, {
+      externalId: file.externalId,
+      kind: subject.kind === 'show' ? 'tv' : 'movie',
+    });
+
+    if (typeof ahead === 'string') {
+      return ahead;
+    }
+
+    const values: Partial<Record<TitleField, TitleValue>> = {};
+    const noted: { subjectKey: string; field: TitleField; value: TitleValue }[] = [];
+
+    for (const field of FIELDS_OF_KIND[subject.kind]) {
+      const next = ahead.next[field];
+      const state = ahead.current.fields[field];
+      const isLive = subject.kind === 'show' && SHOW_FROM_SHAPE.includes(field);
+
+      if (!fields.includes(field) || next === undefined || state === undefined || isLive) {
+        continue;
+      }
+
+      if (state.source === 'edited' || state.source === 'locked') {
+        noted.push({ subjectKey: subject.key, field, value: next });
+      } else if (!isSameTitleValue(state.value, next)) {
+        values[field] = next;
+      }
+    }
+
+    await edits.noteCatalogue(subject.libraryId, noted);
+    await writeThrough(file, subject, values, values);
+
+    const fresh = await fileOf(mediaId);
+
+    return {
+      updated: Object.keys(values).length,
+      metadata: await describe(fresh ?? file, subject),
+    };
+  };
+
+  return { read, edit, history, undo, preview, carry, refreshFields };
 };
 
 type TitleMetadataService = ReturnType<typeof createTitleMetadataService>;
