@@ -2319,6 +2319,87 @@ describe('VideoPlayer', () => {
     });
   });
 
+  it('only closes an open menu with a tap on the picture, and plays or pauses with the next', async () => {
+    const actor = userEvent.setup();
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+    await settled();
+
+    const element = screen.getByLabelText('Arrival');
+    const stage = stageOf(element);
+    const tap = { clientX: 500, clientY: 250, pointerType: 'touch' };
+
+    stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
+    await actor.click(screen.getByRole('button', { name: 'Settings' }));
+
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockReturnValue(undefined);
+
+    fireEvent.pointerDown(element, tap);
+    fireEvent.pointerUp(element, tap);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 400);
+    });
+
+    expect(play).not.toHaveBeenCalled();
+    expect(pause).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(element, tap);
+    fireEvent.pointerUp(element, tap);
+
+    await waitFor(() => {
+      expect(play.mock.calls.length + pause.mock.calls.length).toBe(1);
+    });
+  });
+
+  it('only closes an open menu with a click on the picture, and plays or pauses with the next', async () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+    const actor = userEvent.setup();
+
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (query: string) => ({
+        matches: query === '(hover: hover) and (pointer: fine)',
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }),
+    });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      await settled();
+
+      const element = screen.getByLabelText('Arrival');
+
+      await actor.click(screen.getByRole('button', { name: 'Settings' }));
+
+      const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+      const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockReturnValue(undefined);
+
+      await actor.click(element);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 400);
+      });
+
+      expect(play).not.toHaveBeenCalled();
+      expect(pause).not.toHaveBeenCalled();
+
+      await actor.click(element);
+
+      await waitFor(() => {
+        expect(play.mock.calls.length + pause.mock.calls.length).toBe(1);
+      });
+    } finally {
+      if (original === undefined) {
+        Reflect.deleteProperty(window, 'matchMedia');
+      } else {
+        Object.defineProperty(window, 'matchMedia', original);
+      }
+    }
+  });
+
   it('leaves the film alone for a single tap, which is only asking for the controls', async () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
 
@@ -2436,6 +2517,41 @@ describe('VideoPlayer', () => {
       }
 
       expect(stage?.className).toContain('cursor-none');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the controls up after a tap that only closed a menu', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      const actor = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      const element = await screen.findByLabelText('Arrival');
+      const stage = stageOf(element);
+      const tap = { clientX: 500, clientY: 250, pointerType: 'touch' };
+
+      stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
+      fireEvent.play(element);
+      await actor.click(screen.getByRole('button', { name: 'Settings' }));
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      fireEvent.pointerDown(element, tap);
+      fireEvent.pointerUp(element, tap);
+      fireEvent.click(element);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toHaveAttribute(
+          'aria-expanded',
+          'false',
+        );
+      });
+      expect(stage.className).toContain('cursor-default');
     } finally {
       vi.useRealTimers();
     }
