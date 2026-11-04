@@ -1,6 +1,7 @@
 import {
   listTitlesRoute,
   listTitleValuesRoute,
+  findTitleCandidatesRoute,
   readTitleFilesRoute,
   refreshTitleRoute,
   unmatchTitleRoute,
@@ -26,7 +27,8 @@ const NO_SUCH_ITEM = refuse('error.common.noSuchItem');
  * @param context - What they are answered with.
  */
 const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
-  const { titleMetadata, titleList, library, requires, readAccount, recordAudit } = context;
+  const { titleMetadata, titleList, findCandidates, library, requires, readAccount, recordAudit } =
+    context;
 
   /**
    * Reads who is changing a title, for the history.
@@ -118,6 +120,17 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     const { field, libraryId } = context.req.valid('query');
 
     return context.json(await titleList.values(field, libraryId), 200);
+  });
+
+  app.openapi(findTitleCandidatesRoute, async (context) => {
+    if (
+      findCandidates === undefined ||
+      !(await requires(context.req.raw.headers, 'media.override'))
+    ) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(await findCandidates(context.req.valid('query')), 200);
   });
 
   app.openapi(readTitleFilesRoute, async (context) => {

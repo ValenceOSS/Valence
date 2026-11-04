@@ -4,6 +4,7 @@ type PosterMatch = {
   year: number | null;
   detail: string;
   posterUrl: string | null;
+  score?: number;
 };
 
 type PosterMatchListProps = {

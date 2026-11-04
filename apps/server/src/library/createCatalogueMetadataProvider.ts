@@ -97,6 +97,7 @@ const FindResponseSchema = z.object({
 const SearchResponseSchema = z.object({
   results: z.array(SearchResultSchema).default([]),
   total_pages: z.number().int().nonnegative().default(1),
+  total_results: z.number().int().nonnegative().optional(),
 });
 
 const CompanyResponseSchema = z.object({
@@ -838,6 +839,7 @@ const createCatalogueMetadataProvider = ({
     return {
       matches: results.data.results.map((entry) => matchOf(entry, kind, query, imageBaseUrl)),
       hasMore: page < results.data.total_pages,
+      ...(results.data.total_results === undefined ? {} : { total: results.data.total_results }),
     };
   };
 
@@ -1384,6 +1386,25 @@ const createCatalogueMetadataProvider = ({
     search: async (query, kind) => (await searchPages({ query, kind, page: 1 })).matches,
 
     searchPages,
+
+    findByImdbId: async (imdbId, kind) => {
+      const key = await readKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const found = FindResponseSchema.safeParse(
+        await request(`/find/${imdbId}`, key, { external_source: 'imdb_id' }),
+      );
+      const results = found.success
+        ? kind === 'tv'
+          ? found.data.tv_results
+          : found.data.movie_results
+        : [];
+
+      return results[0]?.id.toString() ?? null;
+    },
 
     browse: async ({ list, kind, page, studio, filters = {} }) => {
       const key = await readKey();

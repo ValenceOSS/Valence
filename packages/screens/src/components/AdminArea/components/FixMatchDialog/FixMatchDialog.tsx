@@ -5,7 +5,8 @@ import {
   Search as SearchIcon,
 } from '@keyline-icons/react/fill';
 import { ChevronLeft as ChevronLeftIcon } from '@keyline-icons/react';
-import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
+import { fetchTitleCandidates } from '@ValenceClient/admin/fetchTitleCandidates';
+import { scoreOfMatch } from '@ValenceClient/admin/scoreOfMatch';
 import { correctMatch, forgetCorrection } from '@ValenceClient/library/fetchLibrary';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { isSameTitleValue } from '@ValenceCore/functions/isSameTitleValue';
@@ -23,8 +24,11 @@ import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/compone
 import { MatchCompare } from './components/MatchCompare/MatchCompare';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
+import type { TitleCandidates } from '@ValenceContracts/schemas/TitleList';
 import type { FixMatchDialogProps } from './FixMatchDialog.types';
 import { say } from '@ValenceI18n/say';
+
+const YEAR = /\b(?:19|20)\d{2}\b/gu;
 
 /**
  * Fixes what a film or a programme is matched to, in two steps: find the right catalogue entry,
@@ -48,8 +52,11 @@ const FixMatchDialog = ({
   const mediaId = media?.id ?? null;
   const [kind, setKind] = useState<'tv' | 'movie'>(isShow ? 'tv' : 'movie');
   const [query, setQuery] = useState('');
-  const [found, setFound] = useState<CatalogueMatch[] | { problem: string } | null>(null);
+  const [found, setFound] = useState<
+    (TitleCandidates & { query: string; page: number }) | { problem: string } | null
+  >(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isShowingMore, setIsShowingMore] = useState(false);
   const [chosen, setChosen] = useState<CatalogueMatch | null>(null);
   const [taken, setTaken] = useState<ReadonlySet<TitleField>>(new Set());
   const [isApplying, setIsApplying] = useState(false);
@@ -60,16 +67,49 @@ const FixMatchDialog = ({
   });
 
   /**
-   * Asks the catalogue what it holds under a name.
+   * Asks the catalogue what it holds under a name or a pasted id, from its first page.
    *
-   * @param asked - The name.
+   * @param asked - The name or id.
    * @param as - Whether to look for films or programmes.
    */
   const look = async (asked: string, as: 'tv' | 'movie') => {
     setIsSearching(true);
-    setFound(await searchCatalogue(asked, as));
+
+    const answer = await fetchTitleCandidates(asked, as);
+
+    setFound('problem' in answer ? answer : { ...answer, query: asked, page: 1 });
     setIsSearching(false);
   };
+
+  /**
+   * Lists the next page of what the last search found.
+   */
+  const lookFurther = async () => {
+    if (found === null || 'problem' in found) {
+      return;
+    }
+
+    setIsShowingMore(true);
+
+    const answer = await fetchTitleCandidates(found.query, kind, found.page + 1);
+
+    setIsShowingMore(false);
+
+    if ('problem' in answer) {
+      notify.failed(answer.problem);
+
+      return;
+    }
+
+    setFound({
+      ...answer,
+      matches: [...found.matches, ...answer.matches],
+      query: found.query,
+      page: found.page + 1,
+    });
+  };
+
+  const withoutYear = query.replace(YEAR, ' ').replace(/\s+/gu, ' ').trim();
 
   useEffect(() => {
     if (mediaId === null) {
@@ -162,6 +202,7 @@ const FixMatchDialog = ({
       isOpen={media !== null}
       onClose={onClose}
       size="stage"
+      holdsOutsideClicks={chosen !== null}
     >
       <DialogTitle
         size="compact"
@@ -262,12 +303,59 @@ const FixMatchDialog = ({
               <p role="alert" className="font-body text-sm text-text-muted">
                 {found.problem}
               </p>
-            ) : found.length === 0 ? (
-              <p className="font-body text-sm text-text-muted">
-                {say('common.nothingCameBackUnderThatName')}
-              </p>
+            ) : found.matches.length === 0 ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="font-body text-sm text-text-muted">
+                  {say('screens.adminArea.fixMatchDialog.nothingCameBackForQuery', {
+                    query: found.query,
+                  })}
+                </p>
+                {withoutYear === query.trim() || withoutYear === '' ? null : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setQuery(withoutYear);
+                      void look(withoutYear, kind);
+                    }}
+                  >
+                    {say('screens.adminArea.fixMatchDialog.tryWithoutTheYear')}
+                  </Button>
+                )}
+              </div>
             ) : (
-              <CatalogueMatchList matches={found} onChoose={setChosen} />
+              <div className="flex flex-col gap-3">
+                <CatalogueMatchList
+                  matches={found.matches}
+                  onChoose={setChosen}
+                  scoreOf={(match) =>
+                    scoreOfMatch(
+                      { title: name, year: isShow ? null : (media?.year ?? null) },
+                      match,
+                    )
+                  }
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs tabular-nums text-text-muted">
+                    {say('screens.observabilityPage.logExplorer.showingShownOfTotal', {
+                      shown: found.matches.length.toLocaleString(),
+                      total: Math.max(found.total, found.matches.length).toLocaleString(),
+                    })}
+                  </span>
+                  {found.hasMore ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      isLoading={isShowingMore}
+                      onClick={() => {
+                        void lookFurther();
+                      }}
+                    >
+                      {say('common.showMore')}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
             )}
           </>
         )}

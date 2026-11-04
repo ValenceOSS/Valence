@@ -18586,6 +18586,11 @@
     "context": "The heading of the column naming each field, in the table comparing a title with the catalogue entry it is about to be matched to."
   },
   {
+    "handler": "screens.adminArea.fixMatchDialog.nothingCameBackForQuery",
+    "text": "Nothing came back for “{query}”.",
+    "context": "Said in Fix match when a search found nothing. {query} is what was searched for."
+  },
+  {
     "handler": "screens.adminArea.fixMatchDialog.nothingWouldChange",
     "text": "Nothing would change but the match.",
     "context": "Said in the admin's Fix match dialog when the chosen catalogue entry gives every field the value it already has."
@@ -18609,6 +18614,11 @@
     "handler": "screens.adminArea.fixMatchDialog.takeTheNewField",
     "text": "Take the new {field}",
     "context": "The hidden label of the tick box choosing whether a field takes the new catalogue entry's value. {field} is the field's name, such as Title."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.tryWithoutTheYear",
+    "text": "Try without the year",
+    "context": "A button in Fix match that searches again with the year taken out of what was searched for."
   },
   {
     "handler": "screens.adminArea.folderBrowser.anime",

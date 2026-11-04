@@ -97,7 +97,7 @@ type CatalogueBrowsing = {
 
 type CatalogueSearching = { query: string; kind: 'tv' | 'movie'; page: number };
 
-type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean };
+type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean; total?: number };
 
 type CatalogueDescription = {
   title: string;
@@ -181,6 +181,7 @@ type MetadataProvider = {
     kind: 'tv' | 'movie',
   ) => Promise<RequestCatalogue | null>;
   seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
+  findByImdbId?: (imdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
   readEpisodeGroups?: (externalId: string) => Promise<EpisodeGroup[]>;
   forgetAnswers?: () => void;
   forgetAnswersAbout?: (externalId: string, kind: 'tv' | 'movie') => void;

@@ -27,6 +27,21 @@ const TitleValuesSchema = z.object({
   values: z.array(z.object({ value: z.string(), count: z.number().int().positive() })),
 });
 
+const TitleCandidatesSchema = z.object({
+  matches: z.array(
+    z.object({
+      externalId: z.string(),
+      kind: z.enum(['tv', 'movie']),
+      title: z.string(),
+      year: z.number().int().nullable(),
+      overview: z.string().nullable(),
+      posterUrl: z.string().nullable(),
+    }),
+  ),
+  hasMore: z.boolean(),
+  total: z.number().int().nonnegative(),
+});
+
 const TITLE_VALUE_FIELDS = ['genres', 'tags', 'studios', 'networks'] as const;
 
 type TitleRow = z.infer<typeof TitleRowSchema>;
@@ -34,7 +49,15 @@ type TitlePage = z.infer<typeof TitlePageSchema>;
 type TitleFiles = z.infer<typeof TitleFilesSchema>;
 type TitleValues = z.infer<typeof TitleValuesSchema>;
 type TitleValueField = (typeof TITLE_VALUE_FIELDS)[number];
+type TitleCandidates = z.infer<typeof TitleCandidatesSchema>;
 
-export type { TitleRow, TitlePage, TitleFiles, TitleValues, TitleValueField };
+export type { TitleRow, TitlePage, TitleFiles, TitleValues, TitleValueField, TitleCandidates };
 
-export { TITLE_VALUE_FIELDS, TitleRowSchema, TitlePageSchema, TitleFilesSchema, TitleValuesSchema };
+export {
+  TITLE_VALUE_FIELDS,
+  TitleRowSchema,
+  TitlePageSchema,
+  TitleFilesSchema,
+  TitleValuesSchema,
+  TitleCandidatesSchema,
+};

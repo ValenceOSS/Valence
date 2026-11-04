@@ -5,6 +5,7 @@ import {
   TitleFilesSchema,
   TitlePageSchema,
   TitleValuesSchema,
+  TitleCandidatesSchema,
 } from '@ValenceContracts/schemas/TitleList';
 import {
   TitleFieldSchema,
@@ -224,6 +225,32 @@ const listTitleValuesRoute = createRoute({
   },
 });
 
+const findTitleCandidatesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/candidates',
+  tags: ['Library'],
+  summary: 'Find what a title might be in the catalogue, by name or by a pasted TMDB or IMDb id',
+  request: {
+    query: z.object({
+      query: z.string().min(1),
+      kind: z.enum(['tv', 'movie']),
+      page: z.coerce.number().int().min(1).max(500).default(1),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'A page of what it might be, whether there is more, and how many in all',
+      content: {
+        'application/json': { schema: TitleCandidatesSchema.openapi('TitleCandidates') },
+      },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
 const readTitleFilesRoute = createRoute({
   method: 'get',
   path: '/api/admin/titles/{id}',
@@ -242,6 +269,7 @@ const readTitleFilesRoute = createRoute({
 export {
   listTitlesRoute,
   listTitleValuesRoute,
+  findTitleCandidatesRoute,
   readTitleFilesRoute,
   refreshTitleRoute,
   unmatchTitleRoute,

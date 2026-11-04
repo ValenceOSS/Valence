@@ -13,7 +13,7 @@ const { search, correct, forget, previewOf } = vi.hoisted(() => ({
   previewOf: vi.fn(),
 }));
 
-vi.mock('@ValenceClient/admin/fetchAdmin', () => ({ searchCatalogue: search }));
+vi.mock('@ValenceClient/admin/fetchTitleCandidates', () => ({ fetchTitleCandidates: search }));
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   correctMatch: correct,
   forgetCorrection: forget,
@@ -61,16 +61,20 @@ const opened = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  search.mockResolvedValue([
-    {
-      externalId: '604',
-      kind: 'movie',
-      title: 'The right film',
-      year: 1999,
-      overview: null,
-      posterUrl: null,
-    },
-  ]);
+  search.mockResolvedValue({
+    matches: [
+      {
+        externalId: '604',
+        kind: 'movie',
+        title: 'The right film',
+        year: 1999,
+        overview: null,
+        posterUrl: null,
+      },
+    ],
+    hasMore: true,
+    total: 134,
+  });
   previewOf.mockResolvedValue(PREVIEW);
   correct.mockResolvedValue({ corrected: 1, jobId: 'job' });
 });
@@ -118,6 +122,43 @@ describe('FixMatchDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(await screen.findByText('A wrong film · Step 1 of 2: Find')).toBeInTheDocument();
+  });
+
+  it('scores each entry, says how many there are, and lists the next page on asking', async () => {
+    const user = userEvent.setup();
+
+    opened();
+
+    expect(await screen.findByText('Showing 1 of 134')).toBeInTheDocument();
+    expect(screen.getByText(/^\d+%$/u)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show more' }));
+
+    expect(search).toHaveBeenLastCalledWith('A wrong film', 'movie', 2);
+    expect(await screen.findByText('Showing 2 of 134')).toBeInTheDocument();
+  });
+
+  it('says what found nothing, and searches again without the year', async () => {
+    const user = userEvent.setup();
+
+    search.mockResolvedValue({ matches: [], hasMore: false, total: 0 });
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <FixMatchDialog
+          media={{ ...FILM, title: 'A wrong film 2001' }}
+          onClose={vi.fn()}
+          onCorrected={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText('Nothing came back for “A wrong film 2001”.'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Try without the year' }));
+
+    expect(search).toHaveBeenLastCalledWith('A wrong film', 'movie');
   });
 
   it('sets a display name so devtools can identify it', () => {

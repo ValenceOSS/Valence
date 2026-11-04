@@ -89,6 +89,27 @@ describe('Dialog', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('stays open for a press anywhere outside it while it holds unsaved choices', async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+
+    render(
+      <>
+        <span>Elsewhere</span>
+        <Dialog label="Arrival" isOpen onClose={onClose} holdsOutsideClicks>
+          <p>Details</p>
+        </Dialog>
+      </>,
+    );
+
+    await new Promise((settled) => {
+      setTimeout(settled, 0);
+    });
+    await user.click(screen.getByText('Elsewhere'));
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('puts its overlay at the same height as its panel, so the last dialog opened is on top', () => {
     render(
       <Dialog label="Share" isOpen onClose={() => undefined}>
