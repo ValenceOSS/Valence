@@ -196,8 +196,33 @@ fn open_gop_hdr_film_with_sound() -> PathBuf {
     )
 }
 
+/// An ffmpeg that refuses to copy a picture out, the way a source behaves
+/// whose keyframes cannot be read in time, and runs everything else.
+fn ffmpeg_refusing_reads(directory: &Path) -> String {
+    use std::os::unix::fs::PermissionsExt;
+
+    std::fs::create_dir_all(directory).expect("makes the directory for the refusing ffmpeg");
+
+    let path = directory.join("refusing-ffmpeg");
+    let script = format!(
+        "#!/bin/sh\ncase \"$*\" in\n  *pipe:1*) exit 1 ;;\nesac\nexec '{}' \"$@\"\n",
+        ffmpeg().replace('\'', r"'\''"),
+    );
+
+    std::fs::write(&path, script).expect("writes the refusing ffmpeg");
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
+        .expect("makes the refusing ffmpeg runnable");
+
+    path.to_string_lossy().into_owned()
+}
+
 /// A transcoder set up the way `serve` sets one up.
 async fn app(name: &str) -> axum::Router {
+    app_with(name, ffmpeg()).await
+}
+
+/// The same, driving the given ffmpeg.
+async fn app_with(name: &str, ffmpeg_path: String) -> axum::Router {
     valence_transcoder::capability::detect_capabilities(
         &ffmpeg(),
         valence_transcoder::transcode_plan::DEFAULT_DEVICE,
@@ -210,7 +235,7 @@ async fn app(name: &str) -> axum::Router {
 
     let registry = SessionRegistry::new(SessionConfig {
         device: valence_transcoder::transcode_plan::DEFAULT_DEVICE.to_owned(),
-        ffmpeg: ffmpeg(),
+        ffmpeg: ffmpeg_path,
         ffprobe: ffprobe(),
         cache_root: root.join("cache"),
         artefact_root: root.join("artefacts"),
@@ -435,5 +460,37 @@ async fn an_hdr_film_encoded_for_its_keyframes_arrives_tone_mapped() {
         first_segment_transfer(&app, &started).await,
         "bt709",
         "eight-bit H.264 under the PQ curve bands; it has to arrive as SDR"
+    );
+}
+
+#[tokio::test]
+async fn a_film_whose_keyframes_cannot_be_read_is_encoded_without_claiming_why() {
+    require_ffmpeg();
+    let film = open_gop_film_with_sound();
+    let root = common::scratch("valence-test-idr-keyframes-unread-bin");
+    let app = app_with("unread", ffmpeg_refusing_reads(&root)).await;
+
+    let started = start(&app, &copy_spec(&film, true)).await;
+
+    assert_eq!(
+        started["encodesVideo"],
+        serde_json::json!(true),
+        "a copy that may freeze for good is not worth the encode it saves"
+    );
+    assert_eq!(
+        started["encodedForKeyframes"],
+        serde_json::json!(false),
+        "nothing was proven about the keyframes, so nothing is claimed"
+    );
+    assert_eq!(
+        opens_only_on_idr(
+            "/nonexistent/ffmpeg",
+            &common::scratch("valence-test-idr-keyframes-unread").join("artefacts"),
+            &film,
+            "hevc"
+        )
+        .await,
+        None,
+        "an answer that was never read is not kept"
     );
 }

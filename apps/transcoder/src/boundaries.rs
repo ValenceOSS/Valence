@@ -188,6 +188,18 @@ pub struct Boundaries {
     /// [`read_cached`] works out for itself.
     #[serde(default)]
     pub provisional: bool,
+    /// Whether these were worked out for an encode, cut in equal lengths, or
+    /// for a copy, cut where the source's keyframes fall.
+    ///
+    /// A directory is addressed before the media service decides whether a
+    /// copy has to be encoded instead, so the same directory can be asked for
+    /// either: a viewer whose browser needs IDR keyframes gets an encode while
+    /// they cannot be read, and a copy once they are known to be IDR pictures.
+    /// Boundaries kept for the one describe segments the other never makes.
+    /// Absent from boundaries written before this was recorded, which are
+    /// trusted as they always were.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cut_for_an_encode: Option<bool>,
 }
 
 impl Boundaries {
@@ -240,6 +252,7 @@ impl Boundaries {
             can_copy: true,
             groups: Vec::new(),
             provisional: false,
+            cut_for_an_encode: None,
         }
     }
 }
@@ -253,29 +266,13 @@ fn is_superseded(cached: &Boundaries, keyframes_read: bool) -> bool {
     cached.provisional && keyframes_read
 }
 
-/// Whether kept boundaries are cut the way this spec will cut its segments.
-///
-/// A directory is addressed before the media service decides whether a copy
-/// has to be encoded instead, so the same directory can hold a copy cut on the
-/// source's keyframes and later be asked for an encode: a viewer whose browser
-/// needs IDR keyframes copies while they cannot be read, and encodes once they
-/// have been. An encode is cut in equal lengths, and a playlist kept from the
-/// copy would describe segments the encoder never makes, stalling the player
-/// where the two part. Only an encode can be checked this way; a copy's lengths
-/// are whatever its keyframes give.
+/// Whether kept boundaries were worked out for the kind of session this spec
+/// asks for, an encode or a copy. See [`Boundaries::cut_for_an_encode`].
 #[must_use]
 pub fn is_cut_as_asked(cached: &Boundaries, spec: &SessionSpec) -> bool {
-    if !spec.starts_where_sought() {
-        return true;
-    }
-
-    let wanted = f64::from(spec.segment_seconds.max(1));
-
-    cached.lengths.split_last().is_none_or(|(_, every_other)| {
-        every_other
-            .iter()
-            .all(|length| (length - wanted).abs() < CUT_TOLERANCE_SECONDS)
-    })
+    cached
+        .cut_for_an_encode
+        .is_none_or(|encoded| encoded == spec.starts_where_sought())
 }
 
 /// The segments an encode produces, which are the length that was asked for.
@@ -482,6 +479,7 @@ fn from_keyframes(
         seeks_forward,
         can_copy: true,
         provisional: false,
+        cut_for_an_encode: None,
     }
 }
 
@@ -718,6 +716,7 @@ async fn compute_boundaries(
             seeks_forward,
             can_copy,
             provisional: false,
+            cut_for_an_encode: None,
         }
     };
 
@@ -893,7 +892,10 @@ pub async fn ensure_boundaries(
     }
 
     let before = recorded_boundaries(directory).await;
-    let found = compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await;
+    let found = Boundaries {
+        cut_for_an_encode: Some(spec.starts_where_sought()),
+        ..compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await
+    };
 
     if found.is_empty() {
         return found;
@@ -981,33 +983,40 @@ mod tests {
         }))
     }
 
-    #[test]
-    fn an_encode_will_not_take_boundaries_kept_from_a_copy() {
-        let kept_from_a_copy = grouped(vec![3.378, 5.297, 2.628, 4.254], Vec::new());
+    fn a_copy() -> crate::transcode_plan::SessionSpec {
+        asked(&serde_json::json!({ "kind": "copy" }))
+    }
 
-        assert!(!is_cut_as_asked(&kept_from_a_copy, &an_encode()));
+    fn kept_for(cut_for_an_encode: Option<bool>) -> Boundaries {
+        Boundaries {
+            cut_for_an_encode,
+            ..grouped(vec![4.0, 4.0, 4.0], Vec::new())
+        }
     }
 
     #[test]
-    fn an_encode_takes_its_own_boundaries_whatever_its_last_segment_runs() {
-        assert!(is_cut_as_asked(
-            &grouped(vec![4.0, 4.0, 4.0, 6.5], Vec::new()),
-            &an_encode()
-        ));
-        assert!(is_cut_as_asked(
-            &grouped(vec![4.0, 4.0, 1.2], Vec::new()),
-            &an_encode()
-        ));
+    fn an_encode_will_not_take_boundaries_kept_for_a_copy() {
+        assert!(!is_cut_as_asked(&kept_for(Some(false)), &an_encode()));
     }
 
     #[test]
-    fn a_copy_takes_whatever_its_keyframes_gave() {
-        let copy = asked(&serde_json::json!({ "kind": "copy" }));
+    fn a_copy_will_not_take_boundaries_kept_for_an_encode() {
+        assert!(
+            !is_cut_as_asked(&kept_for(Some(true)), &a_copy()),
+            "even where the lengths happen to agree, the segments are another codec"
+        );
+    }
 
-        assert!(is_cut_as_asked(
-            &grouped(vec![3.378, 5.297, 2.628], Vec::new()),
-            &copy
-        ));
+    #[test]
+    fn each_takes_its_own() {
+        assert!(is_cut_as_asked(&kept_for(Some(true)), &an_encode()));
+        assert!(is_cut_as_asked(&kept_for(Some(false)), &a_copy()));
+    }
+
+    #[test]
+    fn boundaries_kept_before_this_was_recorded_are_trusted() {
+        assert!(is_cut_as_asked(&kept_for(None), &an_encode()));
+        assert!(is_cut_as_asked(&kept_for(None), &a_copy()));
     }
 
     #[test]
@@ -1129,6 +1138,7 @@ mod tests {
             can_copy: true,
             groups,
             provisional: false,
+            cut_for_an_encode: None,
         }
     }
 
@@ -1235,6 +1245,7 @@ mod tests {
             seeks_forward: false,
             can_copy: false,
             provisional: false,
+            cut_for_an_encode: None,
         };
         let before = Boundaries {
             layout: LAYOUT_WITH_THE_SAME_SEGMENTS,

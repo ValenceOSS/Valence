@@ -443,22 +443,28 @@ async fn deliverable(config: &SessionConfig, spec: SessionSpec, can_copy: bool) 
 ///
 /// A client that starts a picture only from an IDR keyframe cannot be handed a
 /// copy whose keyframes are something else: every segment after the first is
-/// thrown away. See [`crate::idr_keyframes`]. Decided before the boundaries,
-/// unlike [`deliverable`], because a copy is cut where the source's keyframes
-/// fall and an encode in equal lengths, and a playlist describing the one while
-/// the other is written stalls the player at the first segment where they part.
+/// thrown away. See [`crate::idr_keyframes`]. So such a copy is encoded unless
+/// the source is known to open only on IDR pictures; one whose keyframes could
+/// not be read in time is encoded too, since the copy it would otherwise get
+/// freezes for good if they are not. Decided before the boundaries, unlike
+/// [`deliverable`], because a copy is cut where the source's keyframes fall and
+/// an encode in equal lengths, and a playlist describing the one while the
+/// other is written stalls the player at the first segment where they part.
 ///
-/// Says alongside whether it turned a copy into an encode for that reason, so
-/// the caller can tell a viewer why.
+/// Says alongside whether it turned a copy into an encode because the source's
+/// keyframes were found not to be IDR pictures, so the caller can tell a viewer
+/// why; an encode for keyframes that could not be read claims nothing.
 async fn startable(config: &SessionConfig, spec: SessionSpec) -> (SessionSpec, bool) {
-    if !lacks_the_keyframes_asked_for(config, &spec).await {
-        return (spec, false);
-    }
+    let found = match idr_keyframes_of(config, &spec).await {
+        IdrKeyframes::NotAsked | IdrKeyframes::Only => return (spec, false),
+        IdrKeyframes::Not => true,
+        IdrKeyframes::Unknown => false,
+    };
 
     let spec = encoded(config, spec).await;
     let encodes = matches!(spec.video, VideoAction::Encode { .. });
 
-    (spec, encodes)
+    (spec, encodes && found)
 }
 
 /// The same picture encoded rather than copied.
@@ -477,31 +483,50 @@ async fn encoded(config: &SessionConfig, spec: SessionSpec) -> SessionSpec {
     encode_instead(spec, &probe, &capabilities)
 }
 
-/// Whether a copy asked for by a client that starts only from IDR keyframes
-/// would hand it keyframes of another kind.
-///
-/// False wherever it cannot be told, so a source whose pictures will not read
-/// is copied as it always was.
-async fn lacks_the_keyframes_asked_for(config: &SessionConfig, spec: &SessionSpec) -> bool {
+/// What is known of a source's keyframes, for a copy whose client starts only
+/// from an IDR.
+enum IdrKeyframes {
+    /// Nothing to ask: the client takes any keyframe, the picture is being
+    /// encoded already, or its codec always opens on an IDR.
+    NotAsked,
+    /// Every keyframe read is an IDR picture.
+    Only,
+    /// A keyframe is something else.
+    Not,
+    /// They could not be read in time.
+    Unknown,
+}
+
+/// What is known of the keyframes a copy asked for by a client that starts
+/// only from IDR keyframes would hand it.
+async fn idr_keyframes_of(config: &SessionConfig, spec: &SessionSpec) -> IdrKeyframes {
     if !spec.needs_idr_keyframes
         || !matches!(spec.video, VideoAction::Copy)
         || spec.track == Track::Audio
     {
-        return false;
+        return IdrKeyframes::NotAsked;
     }
 
-    let Some(codec) = spec.source_video_codec.as_deref() else {
-        return false;
+    let Some(codec) = spec
+        .source_video_codec
+        .as_deref()
+        .filter(|codec| crate::idr_keyframes::applies_to(codec))
+    else {
+        return IdrKeyframes::NotAsked;
     };
 
-    crate::idr_keyframes::opens_only_on_idr(
+    match crate::idr_keyframes::opens_only_on_idr(
         &config.ffmpeg,
         &config.artefact_root,
         Path::new(&spec.input_path),
         codec,
     )
     .await
-        == Some(false)
+    {
+        Some(true) => IdrKeyframes::Only,
+        Some(false) => IdrKeyframes::Not,
+        None => IdrKeyframes::Unknown,
+    }
 }
 
 /// Whether a session converts its picture's HDR to SDR.
@@ -2828,6 +2853,7 @@ mod tests {
             can_copy: true,
             groups: Vec::new(),
             provisional: false,
+            cut_for_an_encode: None,
         };
 
         std::fs::write(

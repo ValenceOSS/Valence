@@ -193,9 +193,11 @@ async fn read_opening(ffmpeg: String, path: PathBuf, at_seconds: f64) -> Option<
 
 /// Whether every keyframe of an HEVC source opens on an IDR picture.
 ///
-/// Kept once known. Nothing where it cannot be told, from a source that will
-/// not read or a codec this does not apply to: a session then copies as it
-/// always has.
+/// Kept once known. One keyframe that is not an IDR answers for the film; an
+/// IDR-only answer needs every sample read, since a keyframe that did not
+/// answer may be the CRA. Nothing where it cannot be told, which is not kept,
+/// so a later session asks again; and nothing for a codec this does not apply
+/// to.
 pub async fn opens_only_on_idr(
     ffmpeg: &str,
     artefact_root: &Path,
@@ -224,28 +226,28 @@ pub async fn opens_only_on_idr(
         ));
     }
 
-    let mut read_any = false;
-    let mut only_idr = true;
+    let mut read_all = true;
 
     while let Some(read) = reads.join_next().await {
         match read.ok().flatten() {
-            Some(Opening::Idr) => read_any = true,
+            Some(Opening::Idr) => {}
             Some(Opening::Other) => {
-                read_any = true;
-                only_idr = false;
                 reads.abort_all();
+                keep(artefact_root, &kept_at, false).await;
+
+                return Some(false);
             }
-            None => {}
+            None => read_all = false,
         }
     }
 
-    if !read_any {
+    if !read_all {
         return None;
     }
 
-    keep(artefact_root, &kept_at, only_idr).await;
+    keep(artefact_root, &kept_at, true).await;
 
-    Some(only_idr)
+    Some(true)
 }
 
 /// The answer kept at a place, where there is one.
