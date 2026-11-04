@@ -35,6 +35,8 @@ import type { TextFieldProps } from './TextField.types';
  * @param icon - Something to draw inside the field, such as a magnifying glass.
  * @param trailing - A control to set after the field on the same line, such as a way to browse for
  *   what it asks, kept level with the field however the notes beneath it grow.
+ * @param unit - What the value is counted in, such as "/ 10", shown at the end inside the box and
+ *   read out with the field.
  * @param joins - Whether the field runs on into the control after it, squared off and without its
  *   own edge on that side, as a split button's halves do.
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
@@ -70,6 +72,7 @@ const TextField = ({
   isLabelHidden = false,
   icon,
   trailing,
+  unit,
   joins,
   hasFocusOnMount = false,
   ref,
@@ -81,11 +84,69 @@ const TextField = ({
   const fieldId = useId();
   const describedBy = `${fieldId}-said`;
   const wrongBy = `${fieldId}-wrong`;
+  const unitBy = `${fieldId}-unit`;
   const isBelow = descriptionPlacement === 'below';
   const describers = [
     ...(description === undefined && !(isBelow && error !== undefined) ? [] : [describedBy]),
     ...(error === undefined || isBelow ? [] : [wrongBy]),
+    ...(unit === undefined || rows !== undefined ? [] : [unitBy]),
   ];
+
+  const input = (
+    <input
+      {...(ref === undefined ? {} : { ref })}
+      id={fieldId}
+      type={type}
+      value={value}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      {...(error === undefined ? {} : { 'aria-invalid': true })}
+      {...(describers.length === 0 ? {} : { 'aria-describedby': describers.join(' ') })}
+      {...(autoComplete === undefined ? {} : { autoComplete })}
+      {...(inputMode === undefined ? {} : { inputMode })}
+      {...(min === undefined ? {} : { min })}
+      {...(max === undefined ? {} : { max })}
+      onChange={(event) => {
+        onValueChange(event.currentTarget.value);
+      }}
+      {...(onKeyDown === undefined ? {} : { onKeyDown })}
+      {...(onFocus === undefined ? {} : { onFocus })}
+      {...(onBlur === undefined ? {} : { onBlur })}
+      autoFocus={hasFocusOnMount}
+      className={cn(
+        'valence-field text-text outline-none',
+        'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+        'motion-reduce:transition-none placeholder:text-text-muted',
+        isInset ? 'h-6 bg-transparent px-1 text-[0.8125rem]' : 'focus-visible:focus-ring',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        'w-full',
+        type === 'number'
+          ? '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+          : '',
+        isInset
+          ? ''
+          : isBare
+            ? 'bg-transparent outline-none'
+            : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
+        isBare || isInset
+          ? ''
+          : size === 'sm'
+            ? 'h-7 px-2.5 text-[0.8125rem]'
+            : size === 'lg'
+              ? 'h-9 px-3.5 text-sm'
+              : size === 'xl'
+                ? 'h-12 px-6 text-base'
+                : 'h-8 px-3 text-[0.8125rem]',
+        isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
+        isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
+        isBare || isInset ? '' : isPill ? 'rounded-full' : 'rounded-lg',
+        joins === 'next' ? 'rounded-r-none border-r-0' : '',
+        error === undefined ? '' : 'border-destructive',
+        unit === undefined ? '' : 'pr-12',
+      )}
+    />
+  );
 
   return (
     <div data-slot="field" className={cn('flex flex-col gap-1.5', className)}>
@@ -134,59 +195,18 @@ const TextField = ({
           />
         )}
 
-        {rows !== undefined ? null : (
-          <input
-            {...(ref === undefined ? {} : { ref })}
-            id={fieldId}
-            type={type}
-            value={value}
-            placeholder={placeholder}
-            required={required}
-            disabled={disabled}
-            {...(error === undefined ? {} : { 'aria-invalid': true })}
-            {...(describers.length === 0 ? {} : { 'aria-describedby': describers.join(' ') })}
-            {...(autoComplete === undefined ? {} : { autoComplete })}
-            {...(inputMode === undefined ? {} : { inputMode })}
-            {...(min === undefined ? {} : { min })}
-            {...(max === undefined ? {} : { max })}
-            onChange={(event) => {
-              onValueChange(event.currentTarget.value);
-            }}
-            {...(onKeyDown === undefined ? {} : { onKeyDown })}
-            {...(onFocus === undefined ? {} : { onFocus })}
-            {...(onBlur === undefined ? {} : { onBlur })}
-            autoFocus={hasFocusOnMount}
-            className={cn(
-              'valence-field text-text outline-none',
-              'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-              'motion-reduce:transition-none placeholder:text-text-muted',
-              isInset ? 'h-6 bg-transparent px-1 text-[0.8125rem]' : 'focus-visible:focus-ring',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-              'w-full',
-              type === 'number'
-                ? '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
-                : '',
-              isInset
-                ? ''
-                : isBare
-                  ? 'bg-transparent outline-none'
-                  : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
-              isBare || isInset
-                ? ''
-                : size === 'sm'
-                  ? 'h-7 px-2.5 text-[0.8125rem]'
-                  : size === 'lg'
-                    ? 'h-9 px-3.5 text-sm'
-                    : size === 'xl'
-                      ? 'h-12 px-6 text-base'
-                      : 'h-8 px-3 text-[0.8125rem]',
-              isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
-              isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
-              isBare || isInset ? '' : isPill ? 'rounded-full' : 'rounded-lg',
-              joins === 'next' ? 'rounded-r-none border-r-0' : '',
-              error === undefined ? '' : 'border-destructive',
-            )}
-          />
+        {rows !== undefined ? null : unit === undefined ? (
+          input
+        ) : (
+          <span className="relative flex min-w-0 flex-1 items-center">
+            {input}
+            <span
+              id={unitBy}
+              className="pointer-events-none absolute right-3 text-[0.8125rem] tabular-nums text-text-muted"
+            >
+              {unit}
+            </span>
+          </span>
         )}
 
         {trailing === undefined ? null : <span className="flex shrink-0">{trailing}</span>}

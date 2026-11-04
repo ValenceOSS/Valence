@@ -24801,6 +24801,11 @@
     "context": "The heading of the card holding a title’s age ratings by country. On the Details tab of a title in the admin area (from `TitleDetails`)."
   },
   {
+    "handler": "screens.adminArea.titleDetails.contentRatingIn",
+    "text": "Content rating ({country})",
+    "context": "The label of a title’s age rating in the server’s own country, the one that decides what a child’s profile may see, with every other country’s folded beneath it. {country} is a country such as United Kingdom. On the Details tab of a title in the admin area (from `MetadataField`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.firstAired",
     "text": "First aired",
     "context": "A field for the day a programme was first shown. On the Details tab of a title in the admin area (from `TitleDetails`)."

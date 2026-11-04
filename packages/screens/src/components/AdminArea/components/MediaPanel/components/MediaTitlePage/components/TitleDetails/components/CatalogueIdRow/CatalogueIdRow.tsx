@@ -30,7 +30,7 @@ const CatalogueIdRow = ({ subjectKey, isShow, onFixMatch, className }: Catalogue
       aside={
         onFixMatch === undefined ? undefined : (
           <span className="ml-auto">
-            <Button variant="ghost" size="xs" onClick={onFixMatch}>
+            <Button variant="ghost" size="xs" className="h-7" onClick={onFixMatch}>
               {say('screens.adminArea.mediaTitlePage.fixMatch')}
             </Button>
           </span>

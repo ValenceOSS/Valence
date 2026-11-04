@@ -11,11 +11,10 @@ import { SourcedField } from '@ValenceScreens/components/AdminArea/components/So
 import { labelOfField } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/labelOfField';
 import type { TitleField, TitleValue } from '@ValenceContracts/schemas/TitleEdit';
 import type { MetadataFieldProps } from './MetadataField.types';
+import { regionName } from '@ValenceScreens/live/regionName';
 import { say } from '@ValenceI18n/say';
 
 const TYPING_SETTLES_MS = 700;
-
-const SCALE = 'w-8 text-right text-sm tabular-nums text-text-muted';
 
 const LONG: readonly TitleField[] = ['overview', 'note'];
 
@@ -71,7 +70,10 @@ const MetadataField = ({
   isCard = false,
   className,
 }: MetadataFieldProps) => {
-  const label = labelOfField(field, kind);
+  const label =
+    field === 'certifications'
+      ? say('screens.adminArea.titleDetails.contentRatingIn', { country: regionName(region) })
+      : labelOfField(field, kind);
   const [isBusy, setBusy] = useState(false);
   const reason = useRef('');
   const isWords = WORDS.includes(field);
@@ -132,14 +134,10 @@ const MetadataField = ({
       value={textOfValue(shown)}
       type={field === 'releaseDate' ? 'date' : NUMBERS.includes(field) ? 'number' : 'text'}
       {...(placeholder === undefined ? {} : { placeholder })}
-      {...(LONG.includes(field) ? { rows: field === 'note' ? 3 : 6 } : {})}
+      {...(LONG.includes(field) ? { rows: field === 'note' ? 3 : 4 } : {})}
       {...(field === 'rating' ? { min: 0, max: 10 } : {})}
       {...(field === 'rottenTomatoes' ? { min: 0, max: 100 } : {})}
-      {...(field === 'rating'
-        ? { trailing: <span className={SCALE}>/ 10</span> }
-        : field === 'rottenTomatoes'
-          ? { trailing: <span className={SCALE}>%</span> }
-          : {})}
+      {...(field === 'rating' ? { unit: '/ 10' } : field === 'rottenTomatoes' ? { unit: '%' } : {})}
       onValueChange={(typed) => {
         setShown(valueOfTyped(field, typed));
       }}

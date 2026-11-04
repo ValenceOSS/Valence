@@ -407,4 +407,21 @@ describe('a control after the field', () => {
     expect(screen.getByLabelText('Genres')).toHaveClass('bg-transparent');
     expect(screen.getByLabelText('Genres')).not.toHaveClass('rounded-lg');
   });
+
+  it('shows what its value is counted in inside the box and reads it out with the field', () => {
+    render(
+      <TextField
+        label="Rating"
+        type="number"
+        unit="/ 10"
+        value="7"
+        onValueChange={() => undefined}
+      />,
+    );
+
+    const field = screen.getByLabelText('Rating');
+
+    expect(field).toHaveAccessibleDescription('/ 10');
+    expect(field).toHaveClass('pr-12');
+  });
 });

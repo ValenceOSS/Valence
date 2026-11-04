@@ -58,43 +58,45 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
   const ownAge = own === '' ? null : describeRatingAge(region, own);
 
   return (
-    <div className="flex flex-col gap-4">
-      {known === undefined ? (
-        <TextField
-          label={regionName(region)}
-          value={own}
-          {...(ownAge === null ? {} : { description: ownAge, descriptionPlacement: 'below' })}
-          onValueChange={(next) => {
-            rate(region, next);
-          }}
-          className="sm:max-w-xs"
-        />
-      ) : (
-        <SelectField
-          label={regionName(region)}
-          value={own}
-          options={[
-            { id: '', label: say('screens.adminArea.contentRatingField.noRating') },
-            ...Object.keys(known).flatMap((rating) => {
-              const age = describeRatingAge(region, rating);
+    <div className="flex flex-col gap-3" {...(isOpen ? { 'data-open': true } : {})}>
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
+        {known === undefined ? (
+          <TextField
+            label={regionName(region)}
+            isLabelHidden
+            value={own}
+            {...(ownAge === null ? {} : { description: ownAge, descriptionPlacement: 'below' })}
+            onValueChange={(next) => {
+              rate(region, next);
+            }}
+            className="w-full max-w-48"
+          />
+        ) : (
+          <SelectField
+            label={regionName(region)}
+            isLabelHidden
+            value={own}
+            options={[
+              { id: '', label: say('screens.adminArea.contentRatingField.noRating') },
+              ...Object.keys(known).flatMap((rating) => {
+                const age = describeRatingAge(region, rating);
 
-              return age === null ? [] : [{ id: rating, label: rating, detail: age }];
-            }),
-            ...(own !== '' && !Object.hasOwn(known, own) ? [{ id: own, label: own }] : []),
-          ]}
-          onSelect={(rating) => {
-            rate(region, rating);
-          }}
-          className="sm:max-w-xs"
-        />
-      )}
+                return age === null ? [] : [{ id: rating, label: rating, detail: age }];
+              }),
+              ...(own !== '' && !Object.hasOwn(known, own) ? [{ id: own, label: own }] : []),
+            ]}
+            onSelect={(rating) => {
+              rate(region, rating);
+            }}
+            className="w-full max-w-48"
+          />
+        )}
 
-      <div className="flex flex-col gap-3 border-t border-[var(--surface-line)] pt-3">
         <Button
           variant="bare"
           size="none"
           aria-expanded={isOpen}
-          className="flex items-center gap-2 self-start text-sm text-text"
+          className="flex h-8 items-center gap-2 text-sm text-text"
           onClick={() => {
             setIsOpen(!isOpen);
           }}
@@ -110,50 +112,52 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
           {say('screens.adminArea.contentRatingField.otherCountries')}
           <Badge size="sm">{others.length.toLocaleString()}</Badge>
         </Button>
-
-        {isOpen ? (
-          <>
-            {others.length === 0 ? null : (
-              <div className="grid grid-cols-2 gap-3">
-                {others.map((country) => (
-                  <TextField
-                    key={country}
-                    label={regionName(country)}
-                    value={ratings[country] ?? ''}
-                    onValueChange={(next) => {
-                      rate(country, next);
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
-            <form
-              className="flex items-end gap-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-
-                if (canAdd) {
-                  setAdded([...added, code]);
-                  setTyped('');
-                }
-              }}
-            >
-              <TextField
-                label={say('screens.adminArea.contentRatingField.countryCode')}
-                isLabelHidden
-                placeholder={say('screens.adminArea.contentRatingField.countryCode')}
-                value={typed}
-                onValueChange={setTyped}
-                className="w-36"
-              />
-              <Button type="submit" variant="secondary" disabled={!canAdd}>
-                {say('screens.adminArea.contentRatingField.addCountry')}
-              </Button>
-            </form>
-          </>
-        ) : null}
       </div>
+
+      {isOpen ? (
+        <div className="flex flex-col gap-3 rounded-lg border border-[var(--surface-line)] p-3">
+          {others.length === 0 ? null : (
+            <div className="grid grid-cols-2 gap-3 @xl:grid-cols-4 @4xl:grid-cols-6 @6xl:grid-cols-8">
+              {others.map((country) => (
+                <TextField
+                  key={country}
+                  label={regionName(country)}
+                  size="sm"
+                  value={ratings[country] ?? ''}
+                  onValueChange={(next) => {
+                    rate(country, next);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <form
+            className="flex items-end gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              if (canAdd) {
+                setAdded([...added, code]);
+                setTyped('');
+              }
+            }}
+          >
+            <TextField
+              label={say('screens.adminArea.contentRatingField.countryCode')}
+              isLabelHidden
+              size="sm"
+              placeholder={say('screens.adminArea.contentRatingField.countryCode')}
+              value={typed}
+              onValueChange={setTyped}
+              className="w-36"
+            />
+            <Button type="submit" variant="secondary" size="sm" disabled={!canAdd}>
+              {say('screens.adminArea.contentRatingField.addCountry')}
+            </Button>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 };

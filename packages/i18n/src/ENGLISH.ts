@@ -6307,6 +6307,7 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.airDate': 'Air date',
   'screens.adminArea.titleDetails.classification': 'Classification',
   'screens.adminArea.titleDetails.contentRating': 'Content rating',
+  'screens.adminArea.titleDetails.contentRatingIn': 'Content rating ({country})',
   'screens.adminArea.titleDetails.firstAired': 'First aired',
   'screens.adminArea.titleDetails.ids': 'IDs',
   'screens.adminArea.titleDetails.imdb': 'IMDb',

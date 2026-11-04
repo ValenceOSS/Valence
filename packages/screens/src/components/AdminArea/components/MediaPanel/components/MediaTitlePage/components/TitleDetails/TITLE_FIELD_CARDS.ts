@@ -5,7 +5,6 @@ const TITLE_FIELD_CARDS: readonly {
   id: string;
   title: string;
   fields: readonly TitleField[];
-  isAside?: boolean;
 }[] = [
   {
     id: 'names',
@@ -23,26 +22,17 @@ const TITLE_FIELD_CARDS: readonly {
     fields: ['genres', 'tags', 'studios', 'networks'],
   },
   {
-    id: 'contentRating',
-    isAside: true,
-    title: say('screens.adminArea.titleDetails.contentRating'),
-    fields: ['certifications'],
-  },
-  {
     id: 'ratings',
-    isAside: true,
     title: say('screens.ratingPanel.ratings'),
-    fields: ['rating', 'rottenTomatoes'],
+    fields: ['rating', 'rottenTomatoes', 'certifications'],
   },
   {
     id: 'ids',
-    isAside: true,
     title: say('screens.adminArea.titleDetails.ids'),
     fields: ['imdbId', 'tvdbId'],
   },
   {
     id: 'note',
-    isAside: true,
     title: say('screens.adminArea.titleDetails.note'),
     fields: ['note'],
   },

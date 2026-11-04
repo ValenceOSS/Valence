@@ -1,8 +1,9 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { PanelCard } from '@ValenceUI/PanelCard';
+import { SettingGroup } from '@ValenceUI/SettingGroup';
+import { SettingList } from '@ValenceUI/SettingList';
 import { Spinner } from '@ValenceUI/Spinner';
-import { cn } from '@ValenceUI/cn';
 import { sortKeyOf } from '@ValenceCore/functions/sortKeyOf';
 import { textOfValue } from './textOfValue';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -16,10 +17,38 @@ import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 import type { TitleDetailsProps } from './TitleDetails.types';
 import { say } from '@ValenceI18n/say';
 
-const SPANS_BOTH: readonly TitleField[] = ['tagline', 'overview', 'note', 'certifications'];
+const FULL_WIDTH: readonly TitleField[] = ['tagline', 'overview', 'note'];
+
+const HALF_WIDTH: readonly TitleField[] = [
+  'title',
+  'originalTitle',
+  'sortTitle',
+  'genres',
+  'tags',
+  'studios',
+  'networks',
+];
 
 /**
- * A title's Details tab: every field of its metadata, grouped into cards, each saved as it changes
+ * Says how much of a section's row a field takes, so each is as wide as what it holds: a name or a
+ * list of words half the row, a date, a score or an ID a quarter, prose all of it, and the content
+ * ratings all of it once every country's is open.
+ *
+ * @param field - The field.
+ * @param fields - Every field in its section.
+ * @returns The classes that set its width.
+ */
+const widthOf = (field: TitleField, fields: readonly TitleField[]): string =>
+  FULL_WIDTH.includes(field) || (field === 'studios' && !fields.includes('networks'))
+    ? 'col-span-full'
+    : field === 'certifications'
+      ? '@xl:col-span-2 has-[[data-open]]:col-span-full'
+      : HALF_WIDTH.includes(field)
+        ? '@xl:col-span-2'
+        : '';
+
+/**
+ * A title's Details tab: every field of its metadata in one card, grouped into sections, each saved as it changes
  * and saying where its value came from.
  *
  * @param mediaId - A file of the title.
@@ -64,40 +93,50 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
   const has = FIELDS_OF_KIND[kind];
 
   /**
-   * Draws one card of fields, the fields side by side where it is in the main column, the last of
-   * a column growing so both columns end level.
+   * Draws one section of fields, a field the only one of its section standing without a heading
+   * since its own label already says what it is.
    *
-   * @param card - The card.
-   * @param isLast - Whether it is the last card of its column.
-   * @returns The card, or nothing where the title has none of its fields.
+   * @param card - The section.
+   * @returns The section, or nothing where the title has none of its fields.
    */
-  const cardOf = (card: (typeof TITLE_FIELD_CARDS)[number], isLast: boolean) => {
+  const sectionOf = (card: (typeof TITLE_FIELD_CARDS)[number]) => {
     const fields = card.fields.filter((field) => has.includes(field));
-    const isSideBySide = card.isAside !== true;
+    const fieldOf = (field: TitleField) => {
+      const suggestions = suggestionsOf(field);
+
+      return (
+        <MetadataField
+          key={field}
+          field={field}
+          kind={kind}
+          state={metadata.data.fields[field]}
+          change={change}
+          {...(onShowHistory === undefined ? {} : { onShowHistory })}
+          {...(suggestions === undefined ? {} : { suggestions })}
+          {...(metadata.data.certificationRegion === undefined
+            ? {}
+            : { region: metadata.data.certificationRegion })}
+          {...(field === 'sortTitle'
+            ? { placeholder: sortKeyOf(textOfValue(metadata.data.fields.title?.value ?? null)) }
+            : {})}
+          className={widthOf(field, fields)}
+        />
+      );
+    };
 
     const [only] = fields;
 
     if (fields.length === 1 && only !== undefined && card.id !== 'ids') {
       return (
-        <MetadataField
-          key={card.id}
-          field={only}
-          kind={kind}
-          state={metadata.data.fields[only]}
-          change={change}
-          isCard
-          {...(isLast ? { className: 'flex-1' } : {})}
-          {...(onShowHistory === undefined ? {} : { onShowHistory })}
-          {...(metadata.data.certificationRegion === undefined
-            ? {}
-            : { region: metadata.data.certificationRegion })}
-        />
+        <div key={card.id} className="py-4">
+          {fieldOf(only)}
+        </div>
       );
     }
 
     return fields.length === 0 ? null : (
-      <PanelCard key={card.id} title={card.title} {...(isLast ? { className: 'flex-1' } : {})}>
-        <div className={cn('grid gap-4', isSideBySide ? '@xl:grid-cols-2' : '')}>
+      <SettingGroup key={card.id} title={card.title}>
+        <div className="grid gap-4 @xl:grid-cols-2 @4xl:grid-cols-4">
           {card.id === 'ids' && (kind === 'film' || kind === 'show') ? (
             <CatalogueIdRow
               subjectKey={metadata.data.subject.key}
@@ -105,58 +144,17 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
               {...(onFixMatch === undefined ? {} : { onFixMatch })}
             />
           ) : null}
-          {fields.map((field) => {
-            const suggestions = suggestionsOf(field);
-
-            return (
-              <MetadataField
-                key={field}
-                field={field}
-                kind={kind}
-                state={metadata.data.fields[field]}
-                change={change}
-                {...(onShowHistory === undefined ? {} : { onShowHistory })}
-                {...(suggestions === undefined ? {} : { suggestions })}
-                {...(metadata.data.certificationRegion === undefined
-                  ? {}
-                  : { region: metadata.data.certificationRegion })}
-                {...(field === 'sortTitle'
-                  ? {
-                      placeholder: sortKeyOf(
-                        textOfValue(metadata.data.fields.title?.value ?? null),
-                      ),
-                    }
-                  : {})}
-                className={cn(isSideBySide && SPANS_BOTH.includes(field) ? '@xl:col-span-2' : '')}
-              />
-            );
-          })}
+          {fields.map(fieldOf)}
         </div>
-      </PanelCard>
+      </SettingGroup>
     );
   };
 
-  /**
-   * Draws a column's cards, leaving out those the title has no fields of.
-   *
-   * @param cards - The column's cards.
-   * @returns The cards drawn.
-   */
-  const columnOf = (cards: readonly (typeof TITLE_FIELD_CARDS)[number][]) => {
-    const shown = cards.filter((card) => card.fields.some((field) => has.includes(field)));
-
-    return shown.map((card, at) => cardOf(card, at === shown.length - 1));
-  };
-
-  const main = columnOf(TITLE_FIELD_CARDS.filter((card) => card.isAside !== true));
-  const aside = columnOf(TITLE_FIELD_CARDS.filter((card) => card.isAside === true));
-
   return (
-    <div className="@container">
-      <div className="grid gap-4 @5xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <div className="@container flex min-w-0 flex-col gap-4">{main}</div>
-        <div className="@container flex min-w-0 flex-col gap-4">{aside}</div>
-      </div>
+    <div className="@container min-w-0">
+      <PanelCard title={say('common.details')}>
+        <SettingList>{TITLE_FIELD_CARDS.map(sectionOf)}</SettingList>
+      </PanelCard>
     </div>
   );
 };
