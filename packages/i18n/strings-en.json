@@ -21031,16 +21031,6 @@
     "context": "Said once every field of a title has been locked."
   },
   {
-    "handler": "screens.adminArea.mediaTitlePage.matchedId",
-    "text": "Matched · {id}",
-    "context": "On a title's page in Media: it is matched in the catalogue. {id} is the catalogue's id for it."
-  },
-  {
-    "handler": "screens.adminArea.mediaTitlePage.matchedTmdbId",
-    "text": "Matched · TMDB {id}",
-    "context": "On a title's page in Media: it is matched to TMDB. {id} is TMDB's number for it."
-  },
-  {
     "handler": "screens.adminArea.mediaTitlePage.openFolder",
     "text": "Open folder",
     "context": "Button on a title's page in Media that opens its folder in Files."

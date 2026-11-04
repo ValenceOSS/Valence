@@ -15,7 +15,7 @@ vi.mock('@ValenceClient/admin/fetchTitleMetadata', () => ({
 vi.mock('@ValenceClient/admin/fetchTitleValues', () => ({ fetchTitleValues: values }));
 
 describe('TitleDetails', () => {
-  it('lays a film’s fields out in cards, with its TMDB id and Fix match beside it', async () => {
+  it('lays a film’s fields out in sections, with its TMDB id and Fix match beside it', async () => {
     read.mockResolvedValue({
       subject: { kind: 'film', key: 'movie:603', libraryId: 'lib', isMatched: true },
       fields: {
@@ -32,7 +32,7 @@ describe('TitleDetails', () => {
 
     expect(await screen.findByText('Title and release')).toBeInTheDocument();
     expect(screen.getByLabelText('Title')).toHaveValue('A film');
-    expect(screen.getByLabelText('TMDB')).toHaveValue('603');
+    expect(screen.getByText('603')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Fix match' })).toBeInTheDocument();
   });
 

@@ -26,10 +26,12 @@ type TextFieldProps = {
   icon?: ReactNode;
   trailing?: ReactNode;
   unit?: string;
+  inside?: ReactNode;
   joins?: 'next';
   hasFocusOnMount?: boolean;
   ref?: Ref<HTMLInputElement>;
   rows?: number;
+  isGrowing?: boolean;
   isCode?: boolean;
   areaRef?: Ref<HTMLTextAreaElement>;
   autoComplete?: HTMLInputAutoCompleteAttribute;

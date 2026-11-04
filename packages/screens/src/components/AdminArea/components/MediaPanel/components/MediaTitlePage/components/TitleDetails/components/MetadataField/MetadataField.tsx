@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { TagField } from '@ValenceUI/TagField';
 import { textOfValue } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/textOfValue';
-import { Link } from '@ValenceUI/Link';
+import { OpenOnSite } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/components/OpenOnSite/OpenOnSite';
 import { addressOfId } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/addressOfId';
 import { ContentRatingField } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/components/ContentRatingField/ContentRatingField';
 import { TextField } from '@ValenceUI/TextField';
@@ -107,6 +107,10 @@ const MetadataField = ({
     });
   };
 
+  const address =
+    (field === 'imdbId' || field === 'tvdbId') && typeof shown === 'string'
+      ? addressOfId(field, shown, kind === 'show')
+      : null;
   const control = isWords ? (
     <TagField
       label={label}
@@ -132,35 +136,25 @@ const MetadataField = ({
       value={textOfValue(shown)}
       type={field === 'releaseDate' ? 'date' : NUMBERS.includes(field) ? 'number' : 'text'}
       {...(placeholder === undefined ? {} : { placeholder })}
-      {...(LONG.includes(field) ? { rows: field === 'note' ? 3 : 4 } : {})}
+      {...(LONG.includes(field) ? { rows: field === 'note' ? 1 : 3, isGrowing: true } : {})}
       {...(field === 'rating' ? { min: 0, max: 10 } : {})}
       {...(field === 'rottenTomatoes' ? { min: 0, max: 100 } : {})}
       {...(field === 'rating' ? { unit: '/ 10' } : field === 'rottenTomatoes' ? { unit: '%' } : {})}
+      {...(address === null
+        ? {}
+        : {
+            inside: (
+              <OpenOnSite
+                href={address}
+                label={say('screens.adminArea.titleDetails.openOnSite', { site: label })}
+              />
+            ),
+          })}
       onValueChange={(typed) => {
         setShown(valueOfTyped(field, typed));
       }}
     />
   );
-
-  const address =
-    (field === 'imdbId' || field === 'tvdbId') && typeof shown === 'string'
-      ? addressOfId(field, shown, kind === 'show')
-      : null;
-  const shownControl =
-    address === null ? (
-      control
-    ) : (
-      <span className="flex items-center gap-3 [&>:first-child]:min-w-0 [&>:first-child]:flex-1">
-        {control}
-        <Link
-          href={address}
-          label={say('screens.adminArea.titleDetails.openOnSite', { site: label })}
-          className="shrink-0 text-sm"
-        >
-          {say('common.open')}
-        </Link>
-      </span>
-    );
 
   return (
     <SourcedField
@@ -179,7 +173,7 @@ const MetadataField = ({
         act({ set: { [field]: state?.catalogue ?? null } });
       }}
     >
-      {shownControl}
+      {control}
     </SourcedField>
   );
 };

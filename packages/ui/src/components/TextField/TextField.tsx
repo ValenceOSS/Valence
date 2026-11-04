@@ -37,12 +37,16 @@ import type { TextFieldProps } from './TextField.types';
  *   what it asks, kept level with the field however the notes beneath it grow.
  * @param unit - What the value is counted in, such as "/ 10", shown at the end inside the box and
  *   read out with the field.
+ * @param inside - A small control set inside the box at its end, such as a link out to the page
+ *   of what the field names, so the box keeps the width of the fields beside it.
  * @param joins - Whether the field runs on into the control after it, squared off and without its
  *   own edge on that side, as a split button's halves do.
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
  * @param inputMode - Which keyboard a phone shows, such as only digits for a PIN.
  * @param ref - Reaches the input itself, so a form can put the cursor back where something is wrong.
  * @param rows - How many lines to show, which makes it a box for several lines rather than one.
+ * @param isGrowing - Whether a box for several lines starts a line high and grows with what is
+ *   written in it, rather than standing at its rows however little it holds.
  * @param isCode - Whether what is typed is code, drawn in a fixed-width face with no spelling marks.
  * @param areaRef - The box for several lines, for a caller that writes into it where the caret is.
  * @param className - Extra classes for the caller's own layout.
@@ -73,10 +77,12 @@ const TextField = ({
   icon,
   trailing,
   unit,
+  inside,
   joins,
   hasFocusOnMount = false,
   ref,
   rows,
+  isGrowing = false,
   isCode = false,
   areaRef,
   className,
@@ -144,6 +150,7 @@ const TextField = ({
         joins === 'next' ? 'rounded-r-none border-r-0' : '',
         error === undefined ? '' : 'border-destructive',
         unit === undefined ? '' : 'pr-12',
+        inside === undefined ? '' : 'pr-9',
       )}
     />
   );
@@ -190,22 +197,28 @@ const TextField = ({
               'hover:border-[var(--surface-divider)] focus-visible:focus-ring placeholder:text-text-muted',
               'disabled:cursor-not-allowed disabled:opacity-50',
               isCode ? 'font-mono text-xs leading-relaxed' : 'text-[0.8125rem] leading-snug',
+              isGrowing ? 'field-sizing-content max-h-96 min-h-8 resize-none py-1.5' : '',
               error === undefined ? '' : 'border-destructive',
             )}
           />
         )}
 
-        {rows !== undefined ? null : unit === undefined ? (
+        {rows !== undefined ? null : unit === undefined && inside === undefined ? (
           input
         ) : (
           <span className="relative flex min-w-0 flex-1 items-center">
             {input}
-            <span
-              id={unitBy}
-              className="pointer-events-none absolute right-3 text-[0.8125rem] tabular-nums text-text-muted"
-            >
-              {unit}
-            </span>
+            {unit === undefined ? null : (
+              <span
+                id={unitBy}
+                className="pointer-events-none absolute right-3 text-[0.8125rem] tabular-nums text-text-muted"
+              >
+                {unit}
+              </span>
+            )}
+            {inside === undefined ? null : (
+              <span className="absolute right-1.5 flex items-center">{inside}</span>
+            )}
           </span>
         )}
 

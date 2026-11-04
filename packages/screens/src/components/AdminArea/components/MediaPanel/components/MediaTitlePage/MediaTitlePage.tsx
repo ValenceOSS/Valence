@@ -54,7 +54,6 @@ import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
 import { MediaTitleHero } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/MediaTitleHero/MediaTitleHero';
-import { sayCount } from '@ValenceI18n/sayCount';
 import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
@@ -86,8 +85,8 @@ const leavesOf = (title: MediaTitle): MediaTitle[] =>
   title.parts.length === 0 ? [title] : title.parts.flatMap(leavesOf);
 
 /**
- * Says how a title is matched in the catalogue: matched, matched to a TMDB number, or matched to
- * another catalogue's id.
+ * Says what a title is matched to in the catalogue: a TMDB number, another catalogue's id, or only
+ * that it is matched.
  *
  * @param title - The title.
  * @returns What to say, or nothing when it is not matched.
@@ -103,13 +102,11 @@ const describeMatch = (title: MediaTitle): string | null => {
     return say('screens.importWizard.importReportView.matched');
   }
 
-  return /^\d+$/u.test(id)
-    ? say('screens.adminArea.mediaTitlePage.matchedTmdbId', { id })
-    : say('screens.adminArea.mediaTitlePage.matchedId', { id });
+  return /^\d+$/u.test(id) ? [say('screens.adminArea.sourcedField.tmdb'), id].join(' ') : id;
 };
 
 /**
- * One title opened from Media: its backdrop, poster, overview and match, what can be done to it,
+ * One title opened from Media: its poster, the facts of it and its match, what can be done to it,
  * its files with their quality and sound, and any re-encodes asked of them.
  *
  * @param title - The title.
@@ -164,10 +161,6 @@ const MediaTitlePage = ({
   useShortcut('K', onPrevious);
   useShortcut('J', onNext);
   const prefersReducedMotion = useReducedMotionConfig();
-  const detail = useQuery({
-    ...libraryQueries.detail(title.kind === 'film' ? title.lead.id : null),
-    enabled: title.kind === 'film',
-  });
   const show = useQuery({
     ...libraryQueries.show(
       title.libraryId,
@@ -244,10 +237,6 @@ const MediaTitlePage = ({
 
   const leaves = leavesOf(title);
   const leafIds = new Set(leaves.map((leaf) => leaf.lead.id));
-  const overview =
-    title.kind === 'series'
-      ? (show.data?.overview ?? null)
-      : (detail.data?.metadata.overview ?? null);
   const catalogueEntry =
     catalogue.data?.find(
       (entry) =>
@@ -629,22 +618,18 @@ const MediaTitlePage = ({
             </>
           }
           facts={[
-            ...(library === null ? [] : [library.name]),
-            ...(title.kind === 'series' ? [describeTitle(title)] : []),
-            ...(match === null ? [] : [match]),
-            say('phone.theAccount.theSecurity.addedCreatedAt', {
-              createdAt: new Date(title.addedAt).toLocaleDateString(undefined, {
-                dateStyle: 'medium',
-              }),
-            }),
-            `${sayCount('common.count.files', leaves.length)} · ${formatBytes(totalBytes)}`,
-            ...(title.lead.genres === null ||
-            title.lead.genres === undefined ||
-            title.lead.genres.length === 0
-              ? []
-              : [title.lead.genres.join(', ')]),
+            ...(library === null ? [] : [{ label: say('common.library'), value: library.name }]),
+            ...(title.kind === 'series'
+              ? [{ label: say('common.episodes'), value: describeTitle(title) }]
+              : []),
+            ...(match === null ? [] : [{ label: say('common.catalogue'), value: match }]),
+            {
+              label: say('common.added'),
+              value: new Date(title.addedAt).toLocaleDateString(undefined, { dateStyle: 'medium' }),
+            },
+            { label: say('common.files'), value: leaves.length.toLocaleString() },
+            { label: say('common.size'), value: formatBytes(totalBytes) },
           ]}
-          overview={overview}
           actions={
             <>
               {fix === undefined ? null : (

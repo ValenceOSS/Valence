@@ -27,7 +27,8 @@ const keptOf = (ratings: Readonly<Record<string, string>>): Record<string, strin
  * A title's content ratings: the server's own country first, picked from the ratings it knows with
  * the age each is for, since that one decides what a child's profile may see, then every other
  * country's as written, folded away behind how many there are so a title rated in forty countries
- * takes no more room than one rated in two, and a way to add another country.
+ * takes no more room than one rated in two, and a way to add another country. The rating and the
+ * way to the others take a column each of the grid the fields around them stand on.
  *
  * @param ratings - The ratings by country.
  * @param region - The server's own country, whose rating decides ages.
@@ -59,7 +60,9 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
 
   return (
     <div className="flex flex-col gap-3" {...(isOpen ? { 'data-open': true } : {})}>
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
+      <div
+        className={cn('grid items-start gap-4 @xl:grid-cols-2', isOpen ? '@4xl:grid-cols-4' : '')}
+      >
         {known === undefined ? (
           <TextField
             label={regionName(region)}
@@ -69,7 +72,6 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
             onValueChange={(next) => {
               rate(region, next);
             }}
-            className="w-full max-w-48"
           />
         ) : (
           <SelectField
@@ -88,7 +90,6 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
             onSelect={(rating) => {
               rate(region, rating);
             }}
-            className="w-full max-w-48"
           />
         )}
 
@@ -96,7 +97,7 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
           variant="bare"
           size="none"
           aria-expanded={isOpen}
-          className="flex h-8 items-center gap-2 text-sm text-text"
+          className="flex h-8 items-center gap-2 self-start text-[0.8125rem] text-text"
           onClick={() => {
             setIsOpen(!isOpen);
           }}

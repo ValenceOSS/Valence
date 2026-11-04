@@ -5318,8 +5318,6 @@ const ENGLISH = {
   'screens.adminArea.mediaTitlePage.fixMatch': 'Fix match',
   'screens.adminArea.mediaTitlePage.lockAllFields': 'Lock all fields',
   'screens.adminArea.mediaTitlePage.lockedEveryField': 'Locked every field.',
-  'screens.adminArea.mediaTitlePage.matchedId': 'Matched · {id}',
-  'screens.adminArea.mediaTitlePage.matchedTmdbId': 'Matched · TMDB {id}',
   'screens.adminArea.mediaTitlePage.openFolder': 'Open folder',
   'screens.adminArea.mediaTitlePage.openInCatalogue': 'Open in Catalogue',
   'screens.adminArea.mediaTitlePage.reEncodes': 'Re-encodes',

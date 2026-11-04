@@ -1,17 +1,18 @@
+import { InfoRow } from '@ValenceUI/InfoRow';
 import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaPoster/MediaPoster';
 import type { MediaTitleHeroProps } from './MediaTitleHero.types';
 
 /**
- * The head of a title's page in Media: its poster, its name and year in large type, what it is in
- * a line of badges and facts, its overview, what can be done to it, and the tabs onto the rest of
- * the page along its foot, so they sit right above what they switch between.
+ * The head of a title's page in Media: its poster, its name and year in large type, what stands
+ * out about it in a line of badges, what can be done to it, and the facts of it in a column of
+ * their own at the right where there is room, under the badges where there is not, with the tabs
+ * onto the rest of the page along its foot, so they sit right above what they switch between.
  *
  * @param name - What the title is called.
  * @param year - Its year, where known.
  * @param posterUrl - Its poster, where it has one.
  * @param badges - What stands out about it, such as its match and its best quality.
- * @param facts - What else it is, such as its library, how many files and how large.
- * @param overview - What it is about, where known.
+ * @param facts - What else it is, each named, such as its library, how many files and how large.
  * @param actions - What can be done to it.
  * @param tabs - The tabs onto the rest of the page.
  */
@@ -21,16 +22,15 @@ const MediaTitleHero = ({
   posterUrl,
   badges,
   facts,
-  overview,
   actions,
   tabs,
 }: MediaTitleHeroProps) => (
-  <section className="valence-card-shell flex flex-col overflow-hidden">
+  <section className="valence-card-shell @container flex flex-col overflow-hidden">
     <div className="valence-card-face flex flex-col p-0">
       <div className="flex flex-col gap-6 p-5 sm:flex-row sm:gap-7 sm:p-7">
         <MediaPoster
           src={posterUrl}
-          className="w-32 shrink-0 self-start shadow-[var(--shadow-lifted)] sm:w-40"
+          className="w-32 shrink-0 self-start shadow-[var(--shadow-lifted)]"
         />
 
         <div className="flex min-w-0 flex-1 flex-col gap-5">
@@ -48,23 +48,27 @@ const MediaTitleHero = ({
 
             <span className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
               {badges}
-              {facts.map((fact, at) => (
-                <span key={fact} className="flex items-center gap-2">
-                  {at === 0 ? null : <span aria-hidden>·</span>}
-                  {fact}
+              {facts.map((fact) => (
+                <span key={fact.label} className="flex items-center gap-2 @4xl:hidden">
+                  <span aria-hidden>·</span>
+                  {fact.value}
                 </span>
               ))}
             </span>
-
-            {overview === null || overview === '' ? null : (
-              <p className="line-clamp-3 max-w-2xl font-body text-sm leading-relaxed text-text-muted">
-                {overview}
-              </p>
-            )}
           </div>
 
           <span className="mt-auto flex flex-wrap items-center gap-2">{actions}</span>
         </div>
+
+        {facts.length === 0 ? null : (
+          <div className="-my-1 hidden w-72 shrink-0 flex-col self-start border-l border-[var(--surface-line)] pl-5 text-[0.8125rem] @4xl:flex">
+            {facts.map((fact) => (
+              <InfoRow key={fact.label} label={fact.label}>
+                {fact.value}
+              </InfoRow>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="border-t border-[var(--surface-line)] px-5 sm:px-7">{tabs}</div>

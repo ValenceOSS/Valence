@@ -5,8 +5,7 @@ type MediaTitleHeroProps = {
   year: number | null;
   posterUrl: string | null;
   badges: ReactNode;
-  facts: readonly string[];
-  overview: string | null;
+  facts: readonly { label: string; value: string }[];
   actions: ReactNode;
   tabs: ReactNode;
 };
