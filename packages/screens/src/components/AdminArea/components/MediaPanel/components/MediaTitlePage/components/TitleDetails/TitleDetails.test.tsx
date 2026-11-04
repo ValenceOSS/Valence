@@ -32,7 +32,7 @@ describe('TitleDetails', () => {
 
     expect(await screen.findByText('Title and release')).toBeInTheDocument();
     expect(screen.getByLabelText('Title')).toHaveValue('A film');
-    expect(screen.getByText('603')).toBeInTheDocument();
+    expect(screen.getByLabelText('TMDB')).toHaveValue('603');
     expect(screen.getByRole('button', { name: 'Fix match' })).toBeInTheDocument();
   });
 

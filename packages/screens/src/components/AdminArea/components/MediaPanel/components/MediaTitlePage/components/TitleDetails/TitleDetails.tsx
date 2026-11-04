@@ -64,12 +64,14 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
   const has = FIELDS_OF_KIND[kind];
 
   /**
-   * Draws one card of fields, the fields side by side where it is in the main column.
+   * Draws one card of fields, the fields side by side where it is in the main column, the last of
+   * a column growing so both columns end level.
    *
    * @param card - The card.
+   * @param isLast - Whether it is the last card of its column.
    * @returns The card, or nothing where the title has none of its fields.
    */
-  const cardOf = (card: (typeof TITLE_FIELD_CARDS)[number]) => {
+  const cardOf = (card: (typeof TITLE_FIELD_CARDS)[number], isLast: boolean) => {
     const fields = card.fields.filter((field) => has.includes(field));
     const isSideBySide = card.isAside !== true;
 
@@ -84,6 +86,7 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
           state={metadata.data.fields[only]}
           change={change}
           isCard
+          {...(isLast ? { className: 'flex-1' } : {})}
           {...(onShowHistory === undefined ? {} : { onShowHistory })}
           {...(metadata.data.certificationRegion === undefined
             ? {}
@@ -93,7 +96,7 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
     }
 
     return fields.length === 0 ? null : (
-      <PanelCard key={card.id} title={card.title}>
+      <PanelCard key={card.id} title={card.title} {...(isLast ? { className: 'flex-1' } : {})}>
         <div className={cn('grid gap-4', isSideBySide ? '@xl:grid-cols-2' : '')}>
           {card.id === 'ids' && (kind === 'film' || kind === 'show') ? (
             <CatalogueIdRow
@@ -133,12 +136,24 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
     );
   };
 
-  const main = TITLE_FIELD_CARDS.filter((card) => card.isAside !== true).map(cardOf);
-  const aside = TITLE_FIELD_CARDS.filter((card) => card.isAside === true).map(cardOf);
+  /**
+   * Draws a column's cards, leaving out those the title has no fields of.
+   *
+   * @param cards - The column's cards.
+   * @returns The cards drawn.
+   */
+  const columnOf = (cards: readonly (typeof TITLE_FIELD_CARDS)[number][]) => {
+    const shown = cards.filter((card) => card.fields.some((field) => has.includes(field)));
+
+    return shown.map((card, at) => cardOf(card, at === shown.length - 1));
+  };
+
+  const main = columnOf(TITLE_FIELD_CARDS.filter((card) => card.isAside !== true));
+  const aside = columnOf(TITLE_FIELD_CARDS.filter((card) => card.isAside === true));
 
   return (
     <div className="@container">
-      <div className="grid items-start gap-4 @5xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      <div className="grid gap-4 @5xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="@container flex min-w-0 flex-col gap-4">{main}</div>
         <div className="@container flex min-w-0 flex-col gap-4">{aside}</div>
       </div>

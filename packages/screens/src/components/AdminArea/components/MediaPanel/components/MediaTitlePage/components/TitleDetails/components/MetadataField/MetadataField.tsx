@@ -15,6 +15,8 @@ import { say } from '@ValenceI18n/say';
 
 const TYPING_SETTLES_MS = 700;
 
+const SCALE = 'w-8 text-right text-sm tabular-nums text-text-muted';
+
 const LONG: readonly TitleField[] = ['overview', 'note'];
 
 const WORDS: readonly TitleField[] = ['genres', 'tags', 'studios', 'networks'];
@@ -134,9 +136,9 @@ const MetadataField = ({
       {...(field === 'rating' ? { min: 0, max: 10 } : {})}
       {...(field === 'rottenTomatoes' ? { min: 0, max: 100 } : {})}
       {...(field === 'rating'
-        ? { trailing: <span className="text-sm tabular-nums text-text-muted">/ 10</span> }
+        ? { trailing: <span className={SCALE}>/ 10</span> }
         : field === 'rottenTomatoes'
-          ? { trailing: <span className="text-sm tabular-nums text-text-muted">%</span> }
+          ? { trailing: <span className={SCALE}>%</span> }
           : {})}
       onValueChange={(typed) => {
         setShown(valueOfTyped(field, typed));

@@ -9,7 +9,7 @@ describe('CatalogueIdRow', () => {
 
     render(<CatalogueIdRow subjectKey="tv:1399" isShow onFixMatch={onFixMatch} />);
 
-    expect(screen.getByText('1399')).toBeInTheDocument();
+    expect(screen.getByLabelText('TMDB')).toHaveValue('1399');
     expect(screen.getByRole('link', { name: 'Open on TMDB' })).toHaveAttribute(
       'href',
       'https://www.themoviedb.org/tv/1399',
@@ -23,7 +23,7 @@ describe('CatalogueIdRow', () => {
   it('says an unmatched title is not matched yet, with nothing to open', () => {
     render(<CatalogueIdRow subjectKey="file:/films/A.mkv" isShow={false} />);
 
-    expect(screen.getByText('Not matched yet')).toBeInTheDocument();
+    expect(screen.getByLabelText('TMDB')).toHaveValue('Not matched yet');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 

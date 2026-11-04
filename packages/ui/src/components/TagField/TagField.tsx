@@ -113,7 +113,7 @@ const TagField = ({
 
       <div
         className={cn(
-          'flex min-h-8 flex-wrap items-center gap-1.5 rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-1.5 py-1 backdrop-blur-xl',
+          'flex min-h-8 flex-wrap items-center gap-1 rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-[3px] py-[3px] backdrop-blur-xl',
           'transition-[border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
           'hover:border-[var(--surface-divider)] focus-within:focus-ring',
           disabled ? 'opacity-50' : '',

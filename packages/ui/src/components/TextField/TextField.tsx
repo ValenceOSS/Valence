@@ -163,6 +163,9 @@ const TextField = ({
               isInset ? 'h-6 bg-transparent px-1 text-[0.8125rem]' : 'focus-visible:focus-ring',
               'disabled:cursor-not-allowed disabled:opacity-50',
               'w-full',
+              type === 'number'
+                ? '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                : '',
               isInset
                 ? ''
                 : isBare
