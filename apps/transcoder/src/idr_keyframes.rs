@@ -195,7 +195,8 @@ async fn read_opening(ffmpeg: String, path: PathBuf, at_seconds: f64) -> Option<
 ///
 /// Kept once known. One keyframe that is not an IDR answers for the film; an
 /// IDR-only answer needs every sample read, since a keyframe that did not
-/// answer may be the CRA. Nothing where it cannot be told, which is not kept,
+/// answer may be the CRA, and at least one read: a film with no keyframe after
+/// its first says nothing, since a file cut from a broadcast can open on a CRA. Nothing where it cannot be told, which is not kept,
 /// so a later session asks again; and nothing for a codec this does not apply
 /// to.
 pub async fn opens_only_on_idr(
@@ -216,9 +217,15 @@ pub async fn opens_only_on_idr(
     }
 
     let keyframes = crate::keyframe_index::read(artefact_root, path).await;
+    let times = sample_times(keyframes.as_ref());
+
+    if times.is_empty() {
+        return None;
+    }
+
     let mut reads = JoinSet::new();
 
-    for at_seconds in sample_times(keyframes.as_ref()) {
+    for at_seconds in times {
         reads.spawn(read_opening(
             ffmpeg.to_owned(),
             path.to_path_buf(),

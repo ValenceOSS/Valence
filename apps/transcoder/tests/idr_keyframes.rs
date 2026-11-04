@@ -17,6 +17,7 @@ use http_body_util::BodyExt;
 use tower::ServiceExt;
 
 use valence_transcoder::idr_keyframes::opens_only_on_idr;
+use valence_transcoder::keyframes::{Cut, Keyframes};
 use valence_transcoder::monitor::{Journal, Monitor};
 use valence_transcoder::preview::PreviewRegistry;
 use valence_transcoder::queue::WorkQueue;
@@ -492,5 +493,31 @@ async fn a_film_whose_keyframes_cannot_be_read_is_encoded_without_claiming_why()
         .await,
         None,
         "an answer that was never read is not kept"
+    );
+}
+
+#[tokio::test]
+async fn a_film_with_nothing_to_sample_says_nothing_and_keeps_nothing() {
+    require_ffmpeg();
+    let film = hevc("idr-keyframes-one-keyframe.mkv", false);
+    let root = artefacts("one-keyframe");
+    let only_the_opening = Keyframes {
+        cuts: vec![Cut {
+            at_seconds: 0.0,
+            starts_at_seconds: 0.0,
+        }],
+        starts_at_seconds: 0.0,
+        duration_seconds: 12.0,
+    };
+
+    assert!(valence_transcoder::keyframe_index::write(&root, &film, &only_the_opening).await);
+    assert_eq!(
+        opens_only_on_idr(&ffmpeg(), &root, &film, "hevc").await,
+        None,
+        "no keyframe was read, so nothing is known"
+    );
+    assert!(
+        !root.join("idr").exists(),
+        "and nothing is kept, so a later session asks again"
     );
 }
