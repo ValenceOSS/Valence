@@ -978,6 +978,8 @@ const createMemoryLibraryService = (
 
   mediaIdsAt: () => Promise.resolve({}),
 
+  readEntryFacts: () => Promise.resolve({ media: {}, shows: {}, leftOut: [], issues: {} }),
+
   mediaPathsIn: () => Promise.resolve({}),
 
   rebuildArtefacts: (mediaId) =>

@@ -66,7 +66,7 @@ describe('LeftOutList', () => {
     fetchLeftOutMock.mockResolvedValue([]);
     draw();
 
-    expect(await screen.findByText(/Exclude a file or folder from Media or Files/)).toBeVisible();
+    expect(await screen.findByText(/Exclude a title, file or folder from Media/)).toBeVisible();
   });
 
   it('says the list could not be read rather than that it is empty', async () => {

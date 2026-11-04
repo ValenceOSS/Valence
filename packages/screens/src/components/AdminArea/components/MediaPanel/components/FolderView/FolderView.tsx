@@ -14,7 +14,9 @@ import {
   PenLine as PenLineFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { FILE_STATUS_LOOKS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FILE_STATUS_LOOKS';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -61,6 +63,7 @@ import { sayCount } from '@ValenceI18n/sayCount';
  *   be read again.
  * @param onScan - Asked to scan a library once something is uploaded into it.
  * @param onOpen - Told which folder is open, or nothing for the libraries, so the address can keep it.
+ * @param onOpenTitle - Opens the title a file or folder belongs to, by its id in Media.
  */
 const FolderView = ({
   libraries,
@@ -69,6 +72,7 @@ const FolderView = ({
   onChanged,
   onScan,
   onOpen,
+  onOpenTitle,
 }: FolderViewProps) => {
   const [at, setAt] = useState<string | null>(openAt);
   const [wasHanded, setWasHanded] = useState(openAt);
@@ -324,19 +328,45 @@ const FolderView = ({
         ),
       },
       {
-        id: 'catalogue',
+        id: 'title',
+        header: say('common.title'),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const { title, titleId } = row.original;
+
+          return title === null || title === undefined ? (
+            <span className="text-text-muted">—</span>
+          ) : titleId === null || titleId === undefined || onOpenTitle === undefined ? (
+            <span className="block max-w-56 truncate text-text">{title}</span>
+          ) : (
+            <Button
+              variant="subtle"
+              size="none"
+              label={say('common.openTitle', { title })}
+              className="max-w-56 justify-start underline-offset-4 hover:underline"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenTitle(titleId);
+              }}
+            >
+              <span className="truncate">{title}</span>
+            </Button>
+          );
+        },
+      },
+      {
+        id: 'status',
         header: say('common.status'),
         enableSorting: false,
-        cell: ({ row }) =>
-          row.original.mediaId !== null ||
-          row.original.isFolder ||
-          !/\.(mkv|mp4|m4v|avi|mov|webm|ts|m2ts|wmv|flac|mp3|m4a|m4b|ogg|opus|wav)$/i.test(
-            row.original.name,
-          ) ? null : (
-            <span className="whitespace-nowrap text-text-muted">
-              {say('screens.adminArea.filesPanel.notInLibrary')}
-            </span>
-          ),
+        cell: ({ row }) => {
+          const { status } = row.original;
+
+          return status === null || status === undefined ? null : (
+            <Badge size="sm" tone={FILE_STATUS_LOOKS[status].tone}>
+              {FILE_STATUS_LOOKS[status].label}
+            </Badge>
+          );
+        },
       },
       {
         id: 'actions',
@@ -404,7 +434,7 @@ const FolderView = ({
           ),
       },
     ],
-    [at, chosenPaths, isSearching, leaveOutItemsFor, mayDelete, open, rows],
+    [at, chosenPaths, isSearching, leaveOutItemsFor, mayDelete, onOpenTitle, open, rows],
   );
 
   return (
@@ -608,6 +638,7 @@ const FolderView = ({
                   }
             }
             selected={chosen}
+            {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
             shownPath={shownPath}
             onClear={() => {
               setChosenPaths(new Set());

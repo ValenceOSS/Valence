@@ -8,6 +8,9 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { InfoRow } from '@ValenceUI/InfoRow';
+import { InfoNote } from '@ValenceUI/InfoNote';
+import { FILE_STATUS_LOOKS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FILE_STATUS_LOOKS';
+import { reasonOfEntry } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/reasonOfEntry';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
 import { fileDetailsWidth } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/fileDetailsWidth';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -41,9 +44,11 @@ const sizeOf = (measure: FolderMeasure | undefined): string =>
  * @param selected - What is chosen.
  * @param shownPath - Writes a path as it is shown, from inside its library.
  * @param onClear - Chooses nothing.
+ * @param onOpenTitle - Opens the title what is chosen belongs to, by its id in Media.
  */
-const FileDetails = ({ where, selected, shownPath, onClear }: FileDetailsProps) => {
+const FileDetails = ({ where, selected, shownPath, onClear, onOpenTitle }: FileDetailsProps) => {
   const only = selected.length === 1 ? (selected[0] ?? null) : null;
+  const reason = only === null ? null : reasonOfEntry(only);
   const measuredPath =
     only === null
       ? selected.length === 0
@@ -113,14 +118,51 @@ const FileDetails = ({ where, selected, shownPath, onClear }: FileDetailsProps) 
               <InfoRow label={say('screens.adminArea.filesPanel.changed')}>
                 {only.modifiedAt === null ? '—' : new Date(only.modifiedAt).toLocaleString()}
               </InfoRow>
-              {only.mediaId === null ? null : (
-                <InfoRow label={say('common.valence')}>
-                  <Badge size="sm" tone="success">
-                    {say('screens.adminArea.filesPanel.inTheCatalogue')}
+              {only.status === null || only.status === undefined ? null : (
+                <InfoRow label={say('common.status')}>
+                  <Badge size="sm" tone={FILE_STATUS_LOOKS[only.status].tone}>
+                    {FILE_STATUS_LOOKS[only.status].label}
                   </Badge>
                 </InfoRow>
               )}
+              {only.title === null || only.title === undefined ? null : (
+                <InfoRow label={say('common.title')}>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate">{only.title}</span>
+                    {only.titleId === null ||
+                    only.titleId === undefined ||
+                    onOpenTitle === undefined ? null : (
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        label={say('common.openTitle', { title: only.title })}
+                        onClick={() => {
+                          if (only.titleId !== null && only.titleId !== undefined) {
+                            onOpenTitle(only.titleId);
+                          }
+                        }}
+                      >
+                        {say('common.open')}
+                      </Button>
+                    )}
+                  </span>
+                </InfoRow>
+              )}
+              {only.belongsTo === null || only.belongsTo === undefined ? null : (
+                <InfoRow label={say('screens.adminArea.folderView.belongsWith')}>
+                  <span className="break-all">{only.belongsTo}</span>
+                </InfoRow>
+              )}
             </div>
+
+            {reason === null ? null : (
+              <InfoNote>
+                <span className="font-medium text-text">
+                  {say('screens.adminArea.folderView.whyItIsNotInTheLibrary')}
+                </span>{' '}
+                {reason}
+              </InfoNote>
+            )}
           </>
         ) : selected.length > 1 ? (
           <>

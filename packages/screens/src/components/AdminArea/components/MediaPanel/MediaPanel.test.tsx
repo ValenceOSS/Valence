@@ -618,7 +618,7 @@ describe('MediaPanel', () => {
     expect(screen.getByText(/no libraries yet/)).toBeInTheDocument();
   });
 
-  it('shows where a film’s file is, and opens its folder in Files', async () => {
+  it('shows where a film’s file is, and opens its folder in Media’s folders', async () => {
     const onOpenFolder = vi.fn();
     const user = userEvent.setup();
 
@@ -634,7 +634,7 @@ describe('MediaPanel', () => {
     expect(screen.getByTitle('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Actions for Parasite' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Show in Files' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Show in Folders' }));
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/films/Parasite (2019)');
   });
@@ -713,7 +713,7 @@ describe('MediaPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Show the episodes of From' }));
     await user.click(screen.getByRole('button', { name: 'Show the episodes in Season 2' }));
     await user.click(screen.getByRole('button', { name: 'Actions for Return' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Show in Files' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Show in Folders' }));
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/shows/From/Season 2');
   });
@@ -799,7 +799,7 @@ describe('MediaPanel', () => {
     expect(await screen.findByText('Dune')).toBeInTheDocument();
     expect(screen.getByText('Frank Herbert · 48 chapters')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Open /media/books in Files' }));
+    await user.click(screen.getByRole('button', { name: 'Show /media/books in Folders' }));
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/books');
     expect(screen.getByText('Dune.epub')).toBeInTheDocument();

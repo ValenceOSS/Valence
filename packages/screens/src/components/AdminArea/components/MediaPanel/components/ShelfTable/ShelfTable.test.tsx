@@ -52,7 +52,7 @@ describe('ShelfTable', () => {
     expect(onCorrect).toHaveBeenCalled();
   });
 
-  it('shows where each thing is, and opens its folder in Files', async () => {
+  it('shows where each thing is, and opens its folder in Media’s folders', async () => {
     const onOpenFolder = vi.fn();
     const user = userEvent.setup();
 
@@ -71,7 +71,7 @@ describe('ShelfTable', () => {
     );
 
     await user.click(
-      screen.getByRole('button', { name: 'Open /media/music/Joni Mitchell/Blue in Files' }),
+      screen.getByRole('button', { name: 'Show /media/music/Joni Mitchell/Blue in Folders' }),
     );
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/music/Joni Mitchell/Blue');

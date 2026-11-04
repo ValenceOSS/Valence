@@ -1,3 +1,4 @@
+import type { EntryFacts } from '@ValenceServer/files/describeLibraryEntries';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
@@ -168,6 +169,11 @@ type LibraryService = ShowService & {
   deleteSeries: (seriesId: string) => Promise<SeriesDeletion>;
   moveMedia: (mediaIds: readonly string[], toLibraryId: string) => Promise<MediaMove>;
   mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>;
+  readEntryFacts: (
+    libraryId: string,
+    files: readonly string[],
+    folders: readonly string[],
+  ) => Promise<EntryFacts>;
   mediaPathsIn: (libraryId: string) => Promise<Record<string, string>>;
   correctMatch: (
     mediaId: string,

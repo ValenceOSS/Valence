@@ -7,6 +7,7 @@ type FolderViewProps = {
   onChanged: () => void;
   onScan: (libraryId: string) => void;
   onOpen?: (path: string | null) => void;
+  onOpenTitle?: (titleId: string) => void;
 };
 
 export type { FolderViewProps };

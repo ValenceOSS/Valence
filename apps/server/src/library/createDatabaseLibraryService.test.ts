@@ -812,6 +812,43 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
   });
 });
 
+describe('what the folder view says of files', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('reads what the library holds of some paths, its left-out rules, and its programmes’ folders', async () => {
+    const { db, service } = await aLibrary();
+
+    await db.insert(series).values({
+      id: 'folder-show',
+      libraryId: FILMS_ID,
+      key: 'folder:/films/A Show',
+      title: 'A Show',
+    });
+    await service.leaveOut(FILMS_ID, { path: '/films/brazil.mkv', note: null }, null);
+
+    const facts = await service.readEntryFacts(
+      FILMS_ID,
+      ['/films/alien-cut.mkv', '/films/nothing.mkv'],
+      ['/films/A Show', '/films/Elsewhere'],
+    );
+
+    expect(facts.media).toEqual({
+      '/films/alien-cut.mkv': {
+        id: 'alien-cut',
+        rootId: 'alien',
+        seriesId: null,
+        title: 'Alien',
+        seriesTitle: null,
+        isMatched: false,
+        isExtra: false,
+      },
+    });
+    expect(facts.shows).toEqual({
+      '/films/A Show': { seriesId: 'folder-show', title: 'A Show' },
+    });
+    expect(facts.leftOut).toEqual([{ path: '/films/brazil.mkv', isFolder: false }]);
+    expect(facts.issues).toEqual({});
+  });
+});
+
 describe('leaving files out of a library', { timeout: STARTING_POSTGRES_MS }, () => {
   /**
    * The library of films, its files on the disk exactly as stored, so a scan has nothing to read

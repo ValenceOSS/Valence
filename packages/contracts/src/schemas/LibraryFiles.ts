@@ -1,4 +1,19 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
+
+const FILE_STATUSES = [
+  'inLibrary',
+  'unmatched',
+  'extra',
+  'leftOut',
+  'sample',
+  'skipped',
+  'unreadable',
+  'notReadYet',
+  'sidecar',
+  'orphaned',
+  'notAVideo',
+] as const;
 
 const LibraryEntrySchema = z.object({
   name: z.string(),
@@ -7,6 +22,11 @@ const LibraryEntrySchema = z.object({
   sizeBytes: z.number().int().nonnegative().nullable(),
   modifiedAt: z.string().datetime().nullable(),
   mediaId: z.string().nullable(),
+  title: z.string().nullish(),
+  titleId: z.string().nullish(),
+  status: z.enum(FILE_STATUSES).nullish(),
+  reason: SaidSchema.nullish(),
+  belongsTo: z.string().nullish(),
 });
 
 const LibraryFolderSchema = z.object({
@@ -48,13 +68,22 @@ const FolderMeasureSchema = z.object({
 
 type FolderMeasure = z.infer<typeof FolderMeasureSchema>;
 type LibraryEntry = z.infer<typeof LibraryEntrySchema>;
+type FileStatus = (typeof FILE_STATUSES)[number];
 type LibraryFolder = z.infer<typeof LibraryFolderSchema>;
 type LibraryFileSearch = z.infer<typeof LibraryFileSearchSchema>;
 type MediaPaths = z.infer<typeof MediaPathsSchema>;
 
-export type { FolderMeasure, LibraryEntry, LibraryFileSearch, LibraryFolder, MediaPaths };
+export type {
+  FileStatus,
+  FolderMeasure,
+  LibraryEntry,
+  LibraryFileSearch,
+  LibraryFolder,
+  MediaPaths,
+};
 
 export {
+  FILE_STATUSES,
   ChangedEntrySchema,
   FolderMeasureSchema,
   LibraryEntrySchema,

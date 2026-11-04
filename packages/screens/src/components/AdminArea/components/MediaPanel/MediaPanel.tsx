@@ -1222,6 +1222,7 @@ const MediaPanel = ({
               onScan?.(scanned);
             }}
             {...(onFolder === undefined ? {} : { onOpen: onFolder })}
+            onOpenTitle={setOpenedId}
           />
         </TabPanel>
 

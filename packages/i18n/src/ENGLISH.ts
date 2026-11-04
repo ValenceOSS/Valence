@@ -4708,6 +4708,19 @@ const ENGLISH = {
     'Couldn’t create the folder. Try again.',
   'screens.adminArea.folderBrowser.theFoldersCouldNotBeRead': 'Couldn’t load folders.',
   'screens.adminArea.folderBrowser.useThisFolder': 'Use this folder',
+  'screens.adminArea.folderView.belongsWith': 'Belongs with',
+  'screens.adminArea.folderView.excluded': 'Excluded',
+  'screens.adminArea.folderView.excludedFromTheLibrary': 'Somebody excluded it from the library.',
+  'screens.adminArea.folderView.inAFolderScansSkip':
+    'It’s in a folder scans skip, such as one of extras or metadata.',
+  'screens.adminArea.folderView.itsVideoIsGone': 'Its video is gone',
+  'screens.adminArea.folderView.looksLikeASample': 'It looks like a sample, which scans skip.',
+  'screens.adminArea.folderView.notAVideo': 'Not a video',
+  'screens.adminArea.folderView.notReadYet': 'Not read yet',
+  'screens.adminArea.folderView.theLibraryHasNotReadItYet':
+    'The library hasn’t read it yet. It’s added at the next scan.',
+  'screens.adminArea.folderView.whyItIsNotInTheLibrary': 'Why it isn’t in the library',
+  'screens.adminArea.folderView.withItsVideo': 'With its video',
   'screens.adminArea.generatedTheMissingPreviewsOfName':
     'Generated the missing previews for {name}.',
   'screens.adminArea.giveUpRulesList.whatSaved': '{what} saved.',
@@ -4895,7 +4908,7 @@ const ENGLISH = {
     'Files and folders this library’s scans skip. Include one again and the next scan adds it back.',
   'screens.adminArea.leftOutList.leftOutOfThisLibrary': 'Excluded from this library',
   'screens.adminArea.leftOutList.nothingIsLeftOut':
-    'Nothing is excluded. Exclude a file or folder from Media or Files.',
+    'Nothing is excluded. Exclude a title, file or folder from Media.',
   'screens.adminArea.leftOutList.pathIsBack':
     '{path} is included again. The next scan adds it back.',
   'screens.adminArea.leftOutList.whatIsLeftOutCouldNot':
@@ -5280,7 +5293,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.reEncodeThisSeason': 'Re-encode this season…',
   'screens.adminArea.mediaPanel.selectEveryTitleShown': 'Select every title shown',
   'screens.adminArea.mediaPanel.selectName': 'Select {name}',
-  'screens.adminArea.mediaPanel.showInFiles': 'Show in Files',
+  'screens.adminArea.mediaPanel.showInFiles': 'Show in Folders',
   'screens.adminArea.mediaPanel.showTheEditionsOfName': 'Show the editions of {name}',
   'screens.adminArea.mediaPanel.showTheEpisodesInName': 'Show the episodes in {name}',
   'screens.adminArea.mediaPanel.showTheEpisodesOfName': 'Show the episodes of {name}',
@@ -7131,7 +7144,7 @@ const ENGLISH = {
   'screens.firstPassword.passwordSet': 'Password set. You can sign in with it from now on.',
   'screens.firstPassword.yourAccountHasNoPasswordYet':
     'Your account doesn’t have a password yet. Set one so you can sign in without a passkey.',
-  'screens.folderLink.openFolderInFiles': 'Open {folder} in Files',
+  'screens.folderLink.openFolderInFiles': 'Show {folder} in Folders',
   'screens.forgotPassword.ifAnAccountAnswersToThat':
     'If an account matches, a link to set a new password has been sent. It works once and expires after an hour. No email? Your server admin can find the link in the server log.',
   'screens.forgotPassword.resetYourPassword': 'Reset your password',

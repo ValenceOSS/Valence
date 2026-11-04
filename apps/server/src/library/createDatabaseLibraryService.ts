@@ -5,6 +5,7 @@ import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
@@ -66,6 +67,7 @@ import {
   mediaOverride,
   mediaPreviewOverride,
   series,
+  jobRunIssue,
 } from '#dialect/Schema';
 import {
   LibraryKindSchema,
@@ -2636,6 +2638,90 @@ const createDatabaseLibraryService = ({
       ]);
 
       return Object.fromEntries([...parts, ...rows].map((row) => [row.path, row.id]));
+    },
+
+    readEntryFacts: async (libraryId, files, folders) => {
+      const HELD = {
+        id: mediaItem.id,
+        parentId: mediaItem.parentId,
+        seriesId: mediaItem.seriesId,
+        title: mediaItem.title,
+        seriesTitle: mediaItem.seriesTitle,
+        externalId: mediaItem.externalId,
+        extraKind: mediaItem.extraKind,
+      };
+      const [items, parts, shows, leftOut, issues] = await Promise.all([
+        files.length === 0
+          ? []
+          : db
+              .select({ ...HELD, path: mediaItem.path })
+              .from(mediaItem)
+              .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, [...files]))),
+        files.length === 0
+          ? []
+          : db
+              .select({ ...HELD, path: mediaPart.path })
+              .from(mediaPart)
+              .innerJoin(mediaItem, eq(mediaItem.id, mediaPart.mediaItemId))
+              .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaPart.path, [...files]))),
+        folders.length === 0
+          ? []
+          : db
+              .select({ id: series.id, key: series.key, title: series.title })
+              .from(series)
+              .where(
+                and(
+                  eq(series.libraryId, libraryId),
+                  inArray(
+                    series.key,
+                    folders.map((folder) => `folder:${folder}`),
+                  ),
+                ),
+              ),
+        store.listLeftOut(libraryId),
+        files.length === 0
+          ? []
+          : db
+              .select({
+                path: jobRunIssue.path,
+                reason: jobRunIssue.reason,
+                atMs: jobRunIssue.atMs,
+              })
+              .from(jobRunIssue)
+              .where(inArray(jobRunIssue.path, [...files]))
+              .orderBy(asc(jobRunIssue.atMs)),
+      ]);
+
+      return {
+        media: Object.fromEntries(
+          [...parts, ...items].map((row) => [
+            row.path,
+            {
+              id: row.id,
+              rootId: row.parentId ?? row.id,
+              seriesId: row.seriesId,
+              title: row.title,
+              seriesTitle: row.seriesTitle,
+              isMatched: row.externalId !== null && row.externalId !== '',
+              isExtra: row.extraKind !== null,
+            },
+          ]),
+        ),
+        shows: Object.fromEntries(
+          shows.map((one) => [
+            one.key.slice('folder:'.length),
+            { seriesId: one.id, title: one.title },
+          ]),
+        ),
+        leftOut: leftOut.map((one) => ({ path: one.path, isFolder: one.isFolder })),
+        issues: Object.fromEntries(
+          issues.flatMap((one) => {
+            const said = SaidSchema.safeParse(one.reason);
+
+            return said.success ? [[one.path, said.data]] : [];
+          }),
+        ),
+      };
     },
 
     mediaPathsIn: async (libraryId) => {

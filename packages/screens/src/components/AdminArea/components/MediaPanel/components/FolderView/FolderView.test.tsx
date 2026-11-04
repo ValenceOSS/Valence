@@ -105,6 +105,7 @@ beforeEach(() => {
 const draw = (mayDelete = true, openAt: string | null = null) => {
   const onChanged = vi.fn();
   const onScan = vi.fn();
+  const onOpenTitle = vi.fn();
 
   render(
     <QueryClientProvider
@@ -116,11 +117,12 @@ const draw = (mayDelete = true, openAt: string | null = null) => {
         openAt={openAt}
         onChanged={onChanged}
         onScan={onScan}
+        onOpenTitle={onOpenTitle}
       />
     </QueryClientProvider>,
   );
 
-  return { onChanged, onScan };
+  return { onChanged, onScan, onOpenTitle };
 };
 
 /**
@@ -320,6 +322,46 @@ describe('FolderView', () => {
 
     expect(await screen.findByText('/media/films/Arrival (2016)/Arrival.mkv')).toBeInTheDocument();
     expect(searchLibraryFilesMock).toHaveBeenLastCalledWith('arr', '/media/films');
+  });
+
+  it('names the title a file belongs to, opens it, and badges where each file stands', async () => {
+    const user = userEvent.setup();
+
+    fetchLibraryFolderMock.mockImplementation(() =>
+      Promise.resolve({
+        ...FOLDERS['/media/films'],
+        entries: [
+          entry({ mediaId: 'm1', title: 'Arrival', titleId: 'm1', status: 'inLibrary' }),
+          entry({
+            name: 'Broken.mkv',
+            path: '/media/films/Broken.mkv',
+            status: 'unreadable',
+            reason: { code: 'x', message: 'No video stream', values: {} },
+          }),
+          entry({
+            name: 'Arrival.en.srt',
+            path: '/media/films/Arrival.en.srt',
+            status: 'sidecar',
+            belongsTo: 'Arrival.mkv',
+          }),
+        ],
+      }),
+    );
+
+    const { onOpenTitle } = draw(true, '/media/films');
+
+    expect(await screen.findByText('In the library')).toBeInTheDocument();
+    expect(screen.getByText('Unreadable')).toBeInTheDocument();
+    expect(screen.getByText('With its video')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open Arrival' }));
+
+    expect(onOpenTitle).toHaveBeenCalledWith('m1');
+
+    await user.click(screen.getByText('Broken.mkv'));
+
+    expect(await screen.findByText('No video stream')).toBeInTheDocument();
+    expect(screen.getByText('Why it isn’t in the library')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

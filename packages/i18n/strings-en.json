@@ -18731,6 +18731,61 @@
     "context": "The label of a button in the folder browser in the admin area."
   },
   {
+    "handler": "screens.adminArea.folderView.belongsWith",
+    "text": "Belongs with",
+    "context": "The label in the folder view's details pane naming the video a subtitle, NFO or picture belongs beside."
+  },
+  {
+    "handler": "screens.adminArea.folderView.excluded",
+    "text": "Excluded",
+    "context": "A status badge on a file in the folder view of the admin's Media. Somebody excluded it from the library."
+  },
+  {
+    "handler": "screens.adminArea.folderView.excludedFromTheLibrary",
+    "text": "Somebody excluded it from the library.",
+    "context": "The reason in the folder view's details pane for a file that was excluded."
+  },
+  {
+    "handler": "screens.adminArea.folderView.inAFolderScansSkip",
+    "text": "It’s in a folder scans skip, such as one of extras or metadata.",
+    "context": "The reason in the folder view's details pane for a video in a folder that scans skip."
+  },
+  {
+    "handler": "screens.adminArea.folderView.itsVideoIsGone",
+    "text": "Its video is gone",
+    "context": "A status badge on a file in the folder view of the admin's Media. A subtitle, NFO or picture whose video is no longer there."
+  },
+  {
+    "handler": "screens.adminArea.folderView.looksLikeASample",
+    "text": "It looks like a sample, which scans skip.",
+    "context": "The reason in the folder view's details pane for a video that looks like a sample."
+  },
+  {
+    "handler": "screens.adminArea.folderView.notAVideo",
+    "text": "Not a video",
+    "context": "A status badge on a file in the folder view of the admin's Media. A file that is neither a video nor belongs with one."
+  },
+  {
+    "handler": "screens.adminArea.folderView.notReadYet",
+    "text": "Not read yet",
+    "context": "A status badge on a file in the folder view of the admin's Media. A video the library has not scanned yet."
+  },
+  {
+    "handler": "screens.adminArea.folderView.theLibraryHasNotReadItYet",
+    "text": "The library hasn’t read it yet. It’s added at the next scan.",
+    "context": "The reason in the folder view's details pane for a video the library hasn't scanned yet."
+  },
+  {
+    "handler": "screens.adminArea.folderView.whyItIsNotInTheLibrary",
+    "text": "Why it isn’t in the library",
+    "context": "The label in the folder view's details pane above the reason a file isn't in the library."
+  },
+  {
+    "handler": "screens.adminArea.folderView.withItsVideo",
+    "text": "With its video",
+    "context": "A status badge on a file in the folder view of the admin's Media. A subtitle, NFO or picture that belongs beside a video."
+  },
+  {
     "handler": "screens.adminArea.generatedTheMissingPreviewsOfName",
     "text": "Generated the missing previews for {name}.",
     "context": "Shown in the admin area. {name} is filled in by the app."
@@ -19437,7 +19492,7 @@
   },
   {
     "handler": "screens.adminArea.leftOutList.nothingIsLeftOut",
-    "text": "Nothing is excluded. Exclude a file or folder from Media or Files.",
+    "text": "Nothing is excluded. Exclude a title, file or folder from Media.",
     "context": "Shown in a library's settings when nothing is left out of it."
   },
   {
@@ -20872,7 +20927,7 @@
   },
   {
     "handler": "screens.adminArea.mediaPanel.showInFiles",
-    "text": "Show in Files",
+    "text": "Show in Folders",
     "context": "The label in the media panel in the admin area."
   },
   {
@@ -28072,7 +28127,7 @@
   },
   {
     "handler": "screens.folderLink.openFolderInFiles",
-    "text": "Open {folder} in Files",
+    "text": "Show {folder} in Folders",
     "context": "The label of a button in the folder link. {folder} is filled in by the app."
   },
   {
