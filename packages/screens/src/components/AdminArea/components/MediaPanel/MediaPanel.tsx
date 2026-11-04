@@ -36,6 +36,7 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SelectionBar } from '@ValenceUI/SelectionBar';
 import { notify } from '@ValenceUI/notify';
 import { BulkEditDialog } from './components/BulkEditDialog/BulkEditDialog';
+import { OrphanedEditsDialog } from './components/OrphanedEditsDialog/OrphanedEditsDialog';
 import { RefreshTitleDialog } from './components/MediaTitlePage/components/RefreshTitleDialog/RefreshTitleDialog';
 import { AddTagsDialog } from './components/AddTagsDialog/AddTagsDialog';
 import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectionDialog/AddToCollectionDialog';
@@ -388,6 +389,7 @@ const MediaPanel = ({
   const [moving, setMoving] = useState<MoveTarget | null>(null);
   const [subtitling, setSubtitling] = useState<{ id: string; name: string } | null>(null);
   const [refreshingTitle, setRefreshingTitle] = useState<MediaTitle | null>(null);
+  const [isSeeingOrphans, setIsSeeingOrphans] = useState(false);
 
   const moveAll = useCallback(
     (title: MediaTitle): ActionMenuItem[] =>
@@ -512,6 +514,10 @@ const MediaPanel = ({
   };
 
   const problemCounts = useQuery(adminQueries.libraryProblems());
+  const orphans = useQuery(
+    adminQueries.orphanedEdits(asked.libraryId === '' ? null : asked.libraryId),
+  );
+  const orphanCount = orphans.data?.orphans.length ?? 0;
   const choices = useQuery(
     adminQueries.titleChoices(asked.libraryId === '' ? null : asked.libraryId),
   );
@@ -1709,6 +1715,14 @@ const MediaPanel = ({
         }}
       />
 
+      <OrphanedEditsDialog
+        libraryId={libraryId}
+        isOpen={isSeeingOrphans}
+        onClose={() => {
+          setIsSeeingOrphans(false);
+        }}
+      />
+
       <BulkEditDialog
         targets={editing}
         hasShows={hasPickedShows}
@@ -1971,6 +1985,28 @@ const MediaPanel = ({
                   }
                   className="w-[28rem] max-w-full"
                 />
+                {view === 'titles' && orphanCount > 0 ? (
+                  <ActionMenu
+                    label={say('screens.adminArea.mediaPanel.moreForTheMedia')}
+                    size="sm"
+                    groups={[
+                      {
+                        items: [
+                          {
+                            id: 'orphans',
+                            label: sayCount(
+                              'screens.adminArea.mediaPanel.count.editsWithoutATitle',
+                              orphanCount,
+                            ),
+                            onChoose: () => {
+                              setIsSeeingOrphans(true);
+                            },
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                ) : null}
               </>
             }
           >

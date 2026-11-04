@@ -4,6 +4,7 @@ import { fetchTitlePage } from '@ValenceClient/admin/fetchTitlePage';
 import { fetchTitleKeys } from '@ValenceClient/admin/fetchTitleKeys';
 import { fetchTitleChoices } from '@ValenceClient/admin/fetchTitleChoices';
 import { fetchLibraryProblems } from '@ValenceClient/admin/fetchLibraryProblems';
+import { fetchOrphanedEdits } from '@ValenceClient/admin/fetchOrphanedEdits';
 import type { TitleListAsk } from '@ValenceClient/admin/TitleListAsk.types';
 import type { TitleValueField } from '@ValenceContracts/schemas/TitleList';
 import { fetchMatchPreview } from '@ValenceClient/admin/fetchMatchPreview';
@@ -745,6 +746,19 @@ const titleChoices = (libraryId: string | null) =>
   });
 
 /**
+ * The titles of a library whose edits are kept though their files have gone.
+ *
+ * @param libraryId - The library, or nothing where none is chosen.
+ * @returns The query options.
+ */
+const orphanedEdits = (libraryId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'orphaned-edits', libraryId],
+    queryFn: () => fetchOrphanedEdits(libraryId ?? ''),
+    enabled: libraryId !== null && libraryId !== '',
+  });
+
+/**
  * How many titles in each library need a look.
  *
  * @returns The query options.
@@ -937,6 +951,7 @@ const adminQueries = {
   titleKeys,
   titleChoices,
   libraryProblems,
+  orphanedEdits,
   titleFiles,
   statistics,
   libraryHealth,

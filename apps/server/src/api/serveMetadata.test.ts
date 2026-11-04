@@ -14,6 +14,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import type { TitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import type { TitleListService } from '@ValenceServer/metadata/createTitleListService';
 import type { BulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
+import type { OrphanedEditsService } from '@ValenceServer/metadata/createOrphanedEdits';
 import type { TitleMetadata } from '@ValenceContracts/schemas/TitleEdit';
 
 const BASE = 'http://localhost:8420';
@@ -64,6 +65,7 @@ const build = () => {
     problems: vi.fn<TitleListService['problems']>(() =>
       Promise.resolve({ libraries: [{ libraryId: 'lib', titles: 1 }] }),
     ),
+    subjects: vi.fn<TitleListService['subjects']>(() => Promise.resolve([])),
     filesOf: vi.fn<TitleListService['filesOf']>(() => Promise.resolve(null)),
     values: vi.fn<TitleListService['values']>(() =>
       Promise.resolve({ values: [{ value: 'Drama', count: 2 }] }),
@@ -82,6 +84,11 @@ const build = () => {
     ),
     undoMany: vi.fn<BulkTitleEditor['undoMany']>(() => Promise.resolve('changedSince' as const)),
   } satisfies BulkTitleEditor;
+  const orphanedEdits = {
+    list: vi.fn<OrphanedEditsService['list']>(() => Promise.resolve({ orphans: [] })),
+    attach: vi.fn<OrphanedEditsService['attach']>(() => Promise.resolve(null)),
+    throwAway: vi.fn<OrphanedEditsService['throwAway']>(() => Promise.resolve(2)),
+  } satisfies OrphanedEditsService;
   const app = createApp({
     auth,
     settings,
@@ -99,6 +106,7 @@ const build = () => {
     titleMetadata,
     titleList,
     bulkTitles,
+    orphanedEdits,
   });
 
   return { app, auth, permissions, store, titleMetadata, titleList, bulkTitles };
@@ -254,5 +262,29 @@ describe('serveMetadata', () => {
         })
       ).status,
     ).toBe(409);
+  });
+
+  it('lists the edits of titles gone, refuses to attach them to a title not there, and throws them away', async () => {
+    const ask = await signedIn(true);
+
+    expect(await (await ask('/api/admin/titles/orphans?libraryId=lib')).json()).toEqual({
+      orphans: [],
+    });
+    expect(
+      (
+        await ask('/api/admin/titles/orphans/attach', {
+          method: 'POST',
+          body: { libraryId: 'lib', key: 'movie:9', toId: 'nothing' },
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      await (
+        await ask('/api/admin/titles/orphans/forget', {
+          method: 'POST',
+          body: { libraryId: 'lib', key: 'movie:9' },
+        })
+      ).json(),
+    ).toEqual({ edits: 2 });
   });
 });

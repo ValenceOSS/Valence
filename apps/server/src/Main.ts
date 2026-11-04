@@ -45,6 +45,7 @@ import { randomUUID } from 'node:crypto';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import { createTitleListService } from '@ValenceServer/metadata/createTitleListService';
 import { createBulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
+import { createOrphanedEdits } from '@ValenceServer/metadata/createOrphanedEdits';
 import { findCandidates } from '@ValenceServer/metadata/findCandidates';
 import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import { existsSync, readFileSync } from 'node:fs';
@@ -5093,9 +5094,15 @@ const streamService = createStreamService({
 
 const signedInSockets = createSignedInSockets();
 
+const titleEdits = createTitleEditStore(db);
+
+const titleListService = createTitleListService(db, {
+  certificationRegion: async () => (await settings.read()).certificationRegion,
+});
+
 const titleMetadataService = createTitleMetadataService({
   db,
-  edits: createTitleEditStore(db),
+  edits: titleEdits,
   certificationRegion: async () => (await settings.read()).certificationRegion,
   seriesShape: (externalId) =>
     catalogueProvider.describeSeries?.(externalId) ?? Promise.resolve(null),
@@ -5292,8 +5299,12 @@ const app = createApp({
   brandLogo,
   unlockSecret: `${env.BETTER_AUTH_SECRET}:library-locks`,
   books: createLinkedBooks(bookService, db, linkedAsker),
-  titleList: createTitleListService(db, {
-    certificationRegion: async () => (await settings.read()).certificationRegion,
+  titleList: titleListService,
+  orphanedEdits: createOrphanedEdits({
+    subjects: titleEdits.subjects,
+    titles: titleListService.subjects,
+    move: titleEdits.move,
+    forget: titleEdits.forget,
   }),
   findCandidates: (asked) =>
     findCandidates(asked, {

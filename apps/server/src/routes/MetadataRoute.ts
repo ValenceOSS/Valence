@@ -12,6 +12,12 @@ import {
   TitleCandidatesSchema,
 } from '@ValenceContracts/schemas/TitleList';
 import {
+  AttachOrphanRequestSchema,
+  ForgetOrphanRequestSchema,
+  OrphanOutcomeSchema,
+  OrphanedEditsSchema,
+} from '@ValenceContracts/schemas/OrphanedEdits';
+import {
   BulkTitleEditOutcomeSchema,
   BulkTitleEditRequestSchema,
   BulkTitleFieldsSchema,
@@ -412,7 +418,76 @@ const undoTitlesTogetherRoute = createRoute({
   },
 });
 
+const listOrphanedEditsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/orphans',
+  tags: ['Library'],
+  summary: 'List the titles of a library whose edits are kept though their files have gone',
+  request: { query: z.object({ libraryId: z.string().min(1) }) },
+  responses: {
+    200: {
+      description: 'The titles gone, with what is kept for each',
+      content: { 'application/json': { schema: OrphanedEditsSchema.openapi('OrphanedEdits') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const attachOrphanedEditsRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/titles/orphans/attach',
+  tags: ['Library'],
+  summary: 'Move the edits of a title that has gone onto one still there',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: AttachOrphanRequestSchema.openapi('AttachOrphanRequest') },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'How many edits moved',
+      content: { 'application/json': { schema: OrphanOutcomeSchema.openapi('OrphanOutcome') } },
+    },
+    404: {
+      description: 'Not for this account, or no such title',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const forgetOrphanedEditsRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/titles/orphans/forget',
+  tags: ['Library'],
+  summary: 'Throw away the edits of a title that has gone',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: ForgetOrphanRequestSchema.openapi('ForgetOrphanRequest') },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'How many edits went',
+      content: { 'application/json': { schema: OrphanOutcomeSchema } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
 export {
+  listOrphanedEditsRoute,
+  attachOrphanedEditsRoute,
+  forgetOrphanedEditsRoute,
   readTitlesTogetherRoute,
   editTitlesTogetherRoute,
   undoTitlesTogetherRoute,

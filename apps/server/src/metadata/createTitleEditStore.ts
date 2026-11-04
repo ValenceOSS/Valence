@@ -419,7 +419,72 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
     return moved;
   };
 
-  return { editsFor, noteCatalogue, change, history, planUndo, move };
+  /**
+   * Reads every title of a library that edits are kept for, with how many fields, when it was last
+   * edited and what its title was edited to, where it was.
+   *
+   * @param libraryId - The library.
+   * @returns Each title's key and kind, and what is kept for it.
+   */
+  const subjects = async (libraryId: string) => {
+    const rows = await db
+      .select({
+        subjectKey: titleEdit.subjectKey,
+        subjectKind: titleEdit.subjectKind,
+        field: titleEdit.field,
+        value: titleEdit.value,
+        setAt: titleEdit.setAt,
+      })
+      .from(titleEdit)
+      .where(eq(titleEdit.libraryId, libraryId));
+    const held = new Map<
+      string,
+      { key: string; kind: string; fields: number; setAt: Date; name: string | null }
+    >();
+
+    for (const row of rows) {
+      const one = held.get(row.subjectKey) ?? {
+        key: row.subjectKey,
+        kind: row.subjectKind,
+        fields: 0,
+        setAt: row.setAt,
+        name: null,
+      };
+      const named = row.field === 'title' ? z.string().safeParse(row.value) : null;
+
+      held.set(row.subjectKey, {
+        ...one,
+        fields: one.fields + 1,
+        setAt: row.setAt > one.setAt ? row.setAt : one.setAt,
+        name: named?.success === true ? named.data : one.name,
+      });
+    }
+
+    return [...held.values()];
+  };
+
+  /**
+   * Throws away the edits kept for some titles of a library, leaving their history.
+   *
+   * @param libraryId - The library.
+   * @param keys - The titles' keys.
+   * @returns How many edits went.
+   */
+  const forget = async (libraryId: string, keys: readonly string[]): Promise<number> => {
+    if (keys.length === 0) {
+      return 0;
+    }
+
+    const gone = await editsFor(libraryId, keys);
+
+    await db
+      .delete(titleEdit)
+      .where(and(eq(titleEdit.libraryId, libraryId), inArray(titleEdit.subjectKey, [...keys])));
+
+    return gone.length;
+  };
+
+  return { editsFor, noteCatalogue, change, history, planUndo, move, subjects, forget };
 };
 
 type TitleEditStore = ReturnType<typeof createTitleEditStore>;

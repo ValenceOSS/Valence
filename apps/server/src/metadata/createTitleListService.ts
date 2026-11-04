@@ -415,7 +415,28 @@ const createTitleListService = (
     };
   };
 
-  return { list, keys, choices, problems, filesOf, values };
+  /**
+   * Names every title of a library by the key its edits are kept under.
+   *
+   * @param libraryId - The library.
+   * @returns Each title's key, row id, name, lead file and kind.
+   */
+  const subjects = async (libraryId: string) =>
+    (await listed(libraryId)).flatMap((title) =>
+      title.subjectKey === null
+        ? []
+        : [
+            {
+              key: title.subjectKey,
+              id: title.row.id,
+              name: title.row.name,
+              leadId: title.row.lead.id,
+              kind: title.row.kind,
+            },
+          ],
+    );
+
+  return { list, keys, choices, problems, filesOf, values, subjects };
 };
 
 type TitleListService = ReturnType<typeof createTitleListService>;

@@ -2,6 +2,7 @@ import type { Candidates } from '@ValenceServer/metadata/findCandidates';
 import type { CatalogueSearching, CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import type { TitleListService } from '@ValenceServer/metadata/createTitleListService';
 import type { BulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
+import type { OrphanedEditsService } from '@ValenceServer/metadata/createOrphanedEdits';
 import type { TitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
 import type { DeviceNotes } from '@ValenceServer/devices/DeviceNotes';
@@ -233,6 +234,7 @@ type CreateAppOptions = {
   titleMetadata?: TitleMetadataService;
   titleList?: TitleListService;
   bulkTitles?: BulkTitleEditor;
+  orphanedEdits?: OrphanedEditsService;
   findCandidates?: (asked: CatalogueSearching) => Promise<Candidates>;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;

@@ -1,4 +1,7 @@
 import {
+  listOrphanedEditsRoute,
+  attachOrphanedEditsRoute,
+  forgetOrphanedEditsRoute,
   readTitlesTogetherRoute,
   editTitlesTogetherRoute,
   undoTitlesTogetherRoute,
@@ -37,6 +40,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     titleMetadata,
     titleList,
     bulkTitles,
+    orphanedEdits,
     findCandidates,
     library,
     requires,
@@ -105,6 +109,53 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(edited, 200);
+  });
+
+  app.openapi(listOrphanedEditsRoute, async (context) => {
+    if (
+      orphanedEdits === undefined ||
+      !(await requires(context.req.raw.headers, 'media.override'))
+    ) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(await orphanedEdits.list(context.req.valid('query').libraryId), 200);
+  });
+
+  app.openapi(attachOrphanedEditsRoute, async (context) => {
+    if (
+      orphanedEdits === undefined ||
+      !(await requires(context.req.raw.headers, 'media.override'))
+    ) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { libraryId, key, toId } = context.req.valid('json');
+    const moved = await orphanedEdits.attach(libraryId, key, toId);
+
+    if (moved === null) {
+      return context.json(NO_SUCH_ITEM, 404);
+    }
+
+    await recordAudit(context, 'media.metadataChanged', key, { attachedTo: toId });
+
+    return context.json({ edits: moved }, 200);
+  });
+
+  app.openapi(forgetOrphanedEditsRoute, async (context) => {
+    if (
+      orphanedEdits === undefined ||
+      !(await requires(context.req.raw.headers, 'media.override'))
+    ) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { libraryId, key } = context.req.valid('json');
+    const gone = await orphanedEdits.throwAway(libraryId, key);
+
+    await recordAudit(context, 'media.metadataUndone', key, { thrownAway: gone.toString() });
+
+    return context.json({ edits: gone }, 200);
   });
 
   app.openapi(readTitlesTogetherRoute, async (context) => {

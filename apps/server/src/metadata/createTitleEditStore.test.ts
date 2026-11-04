@@ -182,4 +182,58 @@ describe('createTitleEditStore', () => {
     },
     STARTING_DATABASE_MS,
   );
+
+  it(
+    'names every title edits are kept for, and throws a title’s away',
+    async () => {
+      const store = await aStore();
+
+      await store.change(
+        FILM,
+        [
+          { field: 'title', edit: { value: 'My title', catalogue: 'A film' } },
+          { field: 'tags', edit: { value: ['Kept'], catalogue: null } },
+        ],
+        ADA,
+        'set',
+      );
+
+      await expect(store.subjects('films')).resolves.toMatchObject([
+        { key: 'movie:603', kind: 'film', fields: 2, name: 'My title' },
+      ]);
+      await expect(store.forget('films', ['movie:603'])).resolves.toBe(2);
+      await expect(store.subjects('films')).resolves.toEqual([]);
+      await expect(store.history('films', 'movie:603')).resolves.toHaveLength(1);
+    },
+    STARTING_DATABASE_MS,
+  );
+
+  it(
+    'adds one title’s part of a change made to many to the change set it was given',
+    async () => {
+      const store = await aStore();
+      const shared = await store.change(
+        FILM,
+        [{ field: 'tags', edit: { value: ['A'], catalogue: null } }],
+        ADA,
+        'set',
+      );
+      const other = { ...FILM, key: 'movie:604' };
+
+      await expect(
+        store.change(
+          other,
+          [{ field: 'tags', edit: { value: ['A'], catalogue: null } }],
+          ADA,
+          'set',
+          shared ?? '',
+        ),
+      ).resolves.toBe(shared);
+      await expect(store.planUndo(shared ?? '', other)).resolves.toMatchObject({
+        kind: 'undoable',
+        subject: { key: 'movie:604' },
+      });
+    },
+    STARTING_DATABASE_MS,
+  );
 });

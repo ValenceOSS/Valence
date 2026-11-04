@@ -5284,6 +5284,8 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.count.duplicates.other': 'Duplicates {count}',
   'screens.adminArea.mediaPanel.count.edited.one': 'Edited {count}',
   'screens.adminArea.mediaPanel.count.edited.other': 'Edited {count}',
+  'screens.adminArea.mediaPanel.count.editsWithoutATitle.one': '{count} edit without a title',
+  'screens.adminArea.mediaPanel.count.editsWithoutATitle.other': '{count} edits without a title',
   'screens.adminArea.mediaPanel.count.nameToFix.one': '{name} ({count} to fix)',
   'screens.adminArea.mediaPanel.count.nameToFix.other': '{name} ({count} to fix)',
   'screens.adminArea.mediaPanel.count.noCover.one': 'No cover {count}',
@@ -5320,6 +5322,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.matchedToTheSameFilm': 'Matched to the same film: {files}',
   'screens.adminArea.mediaPanel.matchedToTheSameFilmAs': 'Matched to the same film as {files}',
   'screens.adminArea.mediaPanel.mixed': 'Mixed',
+  'screens.adminArea.mediaPanel.moreForTheMedia': 'More for the media',
   'screens.adminArea.mediaPanel.moveToAnotherLibrary': 'Move to another library…',
   'screens.adminArea.mediaPanel.noCover': 'No cover',
   'screens.adminArea.mediaPanel.noPoster': 'No poster',
@@ -5448,6 +5451,22 @@ const ENGLISH = {
     "Once a day: Valence's version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.",
   'screens.adminArea.onlineServicesCard.usageStatisticsDetail':
     'Sends a few anonymous facts about this server once a day.',
+  'screens.adminArea.orphanedEditsDialog.attachToATitle': 'Attach to a title',
+  'screens.adminArea.orphanedEditsDialog.count.movedEditsToName.one':
+    'Moved {count} edit to {name}',
+  'screens.adminArea.orphanedEditsDialog.count.movedEditsToName.other':
+    'Moved {count} edits to {name}',
+  'screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.one': 'Threw away {count} edit',
+  'screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.other': 'Threw away {count} edits',
+  'screens.adminArea.orphanedEditsDialog.editsWithoutATitle': 'Edits without a title',
+  'screens.adminArea.orphanedEditsDialog.everyEditHasATitle':
+    'Every edit belongs to a title still here.',
+  'screens.adminArea.orphanedEditsDialog.fieldsEditedWhen': '{fields} edited {when}',
+  'screens.adminArea.orphanedEditsDialog.theseTitlesWereEditedButTheirFiles':
+    'These titles were edited, but their files have gone. Attach the edits to a title still here, or throw them away.',
+  'screens.adminArea.orphanedEditsDialog.theyCannotBeGotBack':
+    'They can’t be got back. Their history stays.',
+  'screens.adminArea.orphanedEditsDialog.throwTheseEditsAway': 'Throw these edits away?',
   'screens.adminArea.overviewPanel.activeNow': 'Active now',
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allLogs': 'All logs',

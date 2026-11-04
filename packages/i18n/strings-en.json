@@ -20901,6 +20901,16 @@
     "context": "A quick filter above the admin's media list that shows the titles an administrator has edited the metadata of, with how many there are. {count} is the number."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.count.editsWithoutATitle.one",
+    "text": "{count} edit without a title",
+    "context": "In the menu beside the search in the admin's media: open the titles whose files have gone but whose edits are kept. {count} is how many titles."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.editsWithoutATitle.other",
+    "text": "{count} edits without a title",
+    "context": "In the menu beside the search in the admin's media: open the titles whose files have gone but whose edits are kept. {count} is how many titles."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.count.nameToFix.one",
     "text": "{name} ({count} to fix)",
     "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
@@ -21064,6 +21074,11 @@
     "handler": "screens.adminArea.mediaPanel.mixed",
     "text": "Mixed",
     "context": "In a media table column, when the files of a title differ, such as an episode in 4K and another in HD."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.moreForTheMedia",
+    "text": "More for the media",
+    "context": "The hidden label of the menu beside the search in the admin's media, holding less common tools such as the edits whose titles have gone."
   },
   {
     "handler": "screens.adminArea.mediaPanel.moveToAnotherLibrary",
@@ -21569,6 +21584,61 @@
     "handler": "screens.adminArea.onlineServicesCard.usageStatisticsDetail",
     "text": "Sends a few anonymous facts about this server once a day.",
     "context": "Under the usage statistics setting, followed by a link to see what is sent."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.attachToATitle",
+    "text": "Attach to a title",
+    "context": "A button beside a title whose files have gone that opens a search for the title still here to move its edits to."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.movedEditsToName.one",
+    "text": "Moved {count} edit to {name}",
+    "context": "Said once the edits of a title whose files have gone are moved onto a title still here. {count} is how many; {name} is the title."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.movedEditsToName.other",
+    "text": "Moved {count} edits to {name}",
+    "context": "Said once the edits of a title whose files have gone are moved onto a title still here. {count} is how many; {name} is the title."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.one",
+    "text": "Threw away {count} edit",
+    "context": "Said once the edits of a title whose files have gone are thrown away. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.other",
+    "text": "Threw away {count} edits",
+    "context": "Said once the edits of a title whose files have gone are thrown away. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.editsWithoutATitle",
+    "text": "Edits without a title",
+    "context": "The heading of the dialog listing the edits kept for titles of a library whose files have since gone, in the admin's media."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.everyEditHasATitle",
+    "text": "Every edit belongs to a title still here.",
+    "context": "Shown in the dialog of edits whose titles have gone, where there are none."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.fieldsEditedWhen",
+    "text": "{fields} edited {when}",
+    "context": "Under a title whose files have gone, in the dialog of its edits: how many fields were edited and when last. {fields} is such as 3 fields; {when} is such as 2 days ago."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.theseTitlesWereEditedButTheirFiles",
+    "text": "These titles were edited, but their files have gone. Attach the edits to a title still here, or throw them away.",
+    "context": "The line under the heading of the dialog listing edits whose titles have gone, in the admin's media."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.theyCannotBeGotBack",
+    "text": "They can’t be got back. Their history stays.",
+    "context": "Said when asking before throwing away the edits of a title whose files have gone."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.throwTheseEditsAway",
+    "text": "Throw these edits away?",
+    "context": "Asked before throwing away the edits of a title whose files have gone."
   },
   {
     "handler": "screens.adminArea.overviewPanel.activeNow",

@@ -22,6 +22,7 @@ type ListedFile = {
 
 type ListedTitle = {
   row: TitleRow;
+  subjectKey: string | null;
   files: readonly ListedFile[];
   haystack: string;
   genres: ReadonlySet<string>;
@@ -239,6 +240,7 @@ const listedTitlesOf = (files: readonly ListedFile[], context: ListingContext): 
 
     return {
       row,
+      subjectKey: subject,
       files: ordered,
       haystack: [
         name,
