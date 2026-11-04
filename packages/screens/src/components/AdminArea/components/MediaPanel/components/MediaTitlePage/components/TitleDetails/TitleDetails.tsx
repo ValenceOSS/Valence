@@ -152,7 +152,7 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
 
   return (
     <div className="@container min-w-0">
-      <PanelCard title={say('common.details')}>
+      <PanelCard title={say('screens.adminArea.clearLibraryPartsDialog.aboutEachTitle')}>
         <SettingList>{TITLE_FIELD_CARDS.map(sectionOf)}</SettingList>
       </PanelCard>
     </div>

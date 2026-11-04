@@ -9,7 +9,6 @@ type SourcedFieldProps = {
   onUseCatalogue: () => void;
   onShowHistory?: () => void;
   isBusy?: boolean;
-  isCard?: boolean;
   children: ReactNode;
   className?: string;
 };

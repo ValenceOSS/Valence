@@ -55,7 +55,6 @@ const valueOfTyped = (field: TitleField, typed: string): TitleValue => {
  * @param suggestions - The words in use elsewhere, offered as a list field is typed in.
  * @param region - The server's own country, whose content rating decides ages.
  * @param placeholder - What an empty text field shows, such as what a title sorts as without one.
- * @param isCard - Whether it stands as a card of its own, for a field with nothing beside it.
  * @param className - Extra classes for the caller's own layout.
  */
 const MetadataField = ({
@@ -67,7 +66,6 @@ const MetadataField = ({
   suggestions,
   region = 'GB',
   placeholder,
-  isCard = false,
   className,
 }: MetadataFieldProps) => {
   const label =
@@ -167,7 +165,6 @@ const MetadataField = ({
   return (
     <SourcedField
       label={label}
-      isCard={isCard}
       state={state}
       isBusy={isBusy}
       {...(className === undefined ? {} : { className })}

@@ -4,8 +4,8 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { FormField } from '@ValenceUI/FormField';
-import { PanelCard } from '@ValenceUI/PanelCard';
 import { Icon } from '@ValenceUI/Icon';
+import { cn } from '@ValenceUI/cn';
 import { describeTitleValue } from './describeTitleValue';
 import type { SourcedFieldProps } from './SourcedField.types';
 import { say } from '@ValenceI18n/say';
@@ -13,8 +13,9 @@ import { say } from '@ValenceI18n/say';
 /**
  * One field of a title's metadata, with where its value came from: a badge beside the label says
  * where it is not the catalogue's — the file name, an edit or a lock — and an edited field says beneath it what the
- * catalogue says, with a way back to it. A menu beside the label puts it back, locks it as it
- * stands, or shows its history.
+ * catalogue says, with a way back to it. A menu beside the label, there whenever the pointer or
+ * the focus is on the field and always on a touch screen, puts it back, locks it as it stands, or
+ * shows its history.
  *
  * @param label - What the field is.
  * @param state - The field's value, where it came from, and what the catalogue says.
@@ -23,8 +24,6 @@ import { say } from '@ValenceI18n/say';
  * @param onUseCatalogue - Takes up a value the catalogue has changed to since the field was edited.
  * @param onShowHistory - Opens the title's history, where there is one to open.
  * @param isBusy - Whether a change to the field is being saved.
- * @param isCard - Whether it stands as a card of its own, named by its label, its badge and menu in
- *   the card's head, for a field with nothing else beside it.
  * @param children - The control the field is edited with.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -36,7 +35,6 @@ const SourcedField = ({
   onUseCatalogue,
   onShowHistory,
   isBusy = false,
-  isCard = false,
   children,
   className,
 }: SourcedFieldProps) => {
@@ -59,7 +57,7 @@ const SourcedField = ({
         </Badge>
       )}
 
-      <span className="ml-auto">
+      <span className="ml-auto opacity-0 transition-opacity duration-[var(--duration-fast)] group-focus-within/field:opacity-100 group-hover/field:opacity-100 has-[[data-state=open]]:opacity-100 coarse:opacity-100 motion-reduce:transition-none">
         <ActionMenu
           label={say('common.moreForName', { name: label })}
           size="sm"
@@ -129,29 +127,10 @@ const SourcedField = ({
       </>
     );
 
-  if (isCard) {
-    return (
-      <PanelCard
-        title={label}
-        actions={<span className="flex items-center gap-2">{badge}</span>}
-        {...(className === undefined ? {} : { className })}
-      >
-        <div className="flex flex-col gap-2">
-          {children}
-          {hint === null ? null : (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-xs leading-snug text-text-muted">
-              {hint}
-            </div>
-          )}
-        </div>
-      </PanelCard>
-    );
-  }
-
   return (
     <FormField
       label={label}
-      {...(className === undefined ? {} : { className })}
+      className={cn('group/field', className)}
       aside={badge}
       {...(hint === null ? {} : { hint })}
     >
