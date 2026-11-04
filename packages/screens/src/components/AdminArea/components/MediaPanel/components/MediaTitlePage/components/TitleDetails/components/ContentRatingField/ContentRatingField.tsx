@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { CERTIFICATE_AGES } from '@ValenceCore/constants/CERTIFICATE_AGES';
+import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
+import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
+import { cn } from '@ValenceUI/cn';
 import { SelectField } from '@ValenceUI/SelectField';
 import { TextField } from '@ValenceUI/TextField';
 import { regionName } from '@ValenceScreens/live/regionName';
@@ -22,7 +26,8 @@ const keptOf = (ratings: Readonly<Record<string, string>>): Record<string, strin
 /**
  * A title's content ratings: the server's own country first, picked from the ratings it knows with
  * the age each is for, since that one decides what a child's profile may see, then every other
- * country's as written, and a way to add another country.
+ * country's as written, folded away behind how many there are so a title rated in forty countries
+ * takes no more room than one rated in two, and a way to add another country.
  *
  * @param ratings - The ratings by country.
  * @param region - The server's own country, whose rating decides ages.
@@ -30,6 +35,7 @@ const keptOf = (ratings: Readonly<Record<string, string>>): Record<string, strin
  */
 const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingFieldProps) => {
   const [added, setAdded] = useState<readonly string[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   const [typed, setTyped] = useState('');
   const known = CERTIFICATE_AGES[region];
   const own = ratings[region] ?? '';
@@ -83,44 +89,71 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
         />
       )}
 
-      {others.length === 0 ? null : (
-        <div className="grid grid-cols-2 gap-4">
-          {others.map((country) => (
-            <TextField
-              key={country}
-              label={regionName(country)}
-              value={ratings[country] ?? ''}
-              onValueChange={(next) => {
-                rate(country, next);
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      <form
-        className="flex items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-
-          if (canAdd) {
-            setAdded([...added, code]);
-            setTyped('');
-          }
-        }}
-      >
-        <TextField
-          label={say('screens.adminArea.contentRatingField.countryCode')}
-          isLabelHidden
-          placeholder={say('screens.adminArea.contentRatingField.countryCode')}
-          value={typed}
-          onValueChange={setTyped}
-          className="w-36"
-        />
-        <Button type="submit" variant="secondary" disabled={!canAdd}>
-          {say('screens.adminArea.contentRatingField.addCountry')}
+      <div className="flex flex-col gap-3 border-t border-[var(--surface-line)] pt-3">
+        <Button
+          variant="bare"
+          size="none"
+          aria-expanded={isOpen}
+          className="flex items-center gap-2 self-start text-sm text-text"
+          onClick={() => {
+            setIsOpen(!isOpen);
+          }}
+        >
+          <Icon
+            of={ChevronRightIcon}
+            size={14}
+            className={cn(
+              'transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none',
+              isOpen ? 'rotate-90' : '',
+            )}
+          />
+          {say('screens.adminArea.contentRatingField.otherCountries')}
+          <Badge size="sm">{others.length.toLocaleString()}</Badge>
         </Button>
-      </form>
+
+        {isOpen ? (
+          <>
+            {others.length === 0 ? null : (
+              <div className="grid grid-cols-2 gap-3">
+                {others.map((country) => (
+                  <TextField
+                    key={country}
+                    label={regionName(country)}
+                    value={ratings[country] ?? ''}
+                    onValueChange={(next) => {
+                      rate(country, next);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            <form
+              className="flex items-end gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+
+                if (canAdd) {
+                  setAdded([...added, code]);
+                  setTyped('');
+                }
+              }}
+            >
+              <TextField
+                label={say('screens.adminArea.contentRatingField.countryCode')}
+                isLabelHidden
+                placeholder={say('screens.adminArea.contentRatingField.countryCode')}
+                value={typed}
+                onValueChange={setTyped}
+                className="w-36"
+              />
+              <Button type="submit" variant="secondary" disabled={!canAdd}>
+                {say('screens.adminArea.contentRatingField.addCountry')}
+              </Button>
+            </form>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 };

@@ -22,7 +22,7 @@ describe('ContentRatingField', () => {
     expect(onRatingsChange).toHaveBeenCalledWith({ GB: '15', US: 'PG-13' });
   });
 
-  it('takes another country’s rating away once it is emptied, and adds a country', async () => {
+  it('folds other countries away, takes one’s rating away once emptied, and adds a country', async () => {
     const user = userEvent.setup();
     const onRatingsChange = vi.fn();
 
@@ -34,6 +34,9 @@ describe('ContentRatingField', () => {
       />,
     );
 
+    expect(screen.queryByLabelText('United States')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Other countries/u }));
     await user.clear(screen.getByLabelText('United States'));
 
     expect(onRatingsChange).toHaveBeenLastCalledWith({ GB: '12A' });

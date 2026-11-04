@@ -4267,6 +4267,7 @@ const ENGLISH = {
   'screens.adminArea.contentRatingField.forAgeAndOver': 'For {age} and over',
   'screens.adminArea.contentRatingField.forEveryone': 'For everyone',
   'screens.adminArea.contentRatingField.noRating': 'No rating',
+  'screens.adminArea.contentRatingField.otherCountries': 'Other countries',
   'screens.adminArea.coreMap.efficiency': 'Efficiency cores',
   'screens.adminArea.coreMap.label': '{cores} cores running {threads} threads',
   'screens.adminArea.coreMap.performance': 'Performance cores',

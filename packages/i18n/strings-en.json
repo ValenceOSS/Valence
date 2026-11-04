@@ -17026,6 +17026,11 @@
     "context": "The choice in the admin's content rating picker that leaves the server's own country unrated."
   },
   {
+    "handler": "screens.adminArea.contentRatingField.otherCountries",
+    "text": "Other countries",
+    "context": "The row on a title's content rating card that opens the ratings other countries give it, beside how many there are."
+  },
+  {
     "handler": "screens.adminArea.coreMap.efficiency",
     "text": "Efficiency cores",
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The power-saving cores of a chip that has both fast and efficient ones."
