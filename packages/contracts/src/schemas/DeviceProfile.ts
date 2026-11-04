@@ -52,6 +52,12 @@ const DeviceProfileSchema = z.object({
   canPlayInterlaced: z.boolean().default(true),
   canPlayAnamorphic: z.boolean().default(true),
   canRotate: z.boolean().default(true),
+  needsIdrKeyframes: z
+    .boolean()
+    .default(false)
+    .describe(
+      'Whether this client starts an HEVC picture only from an IDR keyframe after its buffer is reset, on starting, resuming or seeking. Firefox does: a copied HEVC film whose keyframes are CRA pictures, as an open-GOP encode makes them, plays its first segment and freezes, so the media service encodes it instead. False means any keyframe will do, which is every other client.',
+    ),
   maxAudioSampleRate: z.number().int().positive().nullish(),
   unsupportedAudioProfiles: z.array(z.string()).default([]),
   supportedSubtitleFormats: z.array(SubtitleFormatSchema),

@@ -167,6 +167,7 @@ async fn press_play(app: &axum::Router, input: &Path) {
         track: Track::Both,
         source_range: None,
         source_range_base: None,
+        needs_idr_keyframes: false,
     };
     let (status, body) = call(
         app,

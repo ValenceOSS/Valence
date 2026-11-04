@@ -42,17 +42,6 @@ const TRICKPLAY_INDEX_NAME = 'thumbnails.vtt';
 const PREVIEW_NAME = 'preview.mp4';
 
 /**
- * Rewrites a plan to say what was actually done rather than what was decided, for the cases where
- * the media service does more than the negotiator asked — a session that was to pass the picture
- * through but is being encoded should report itself as encoding, or the statistics panel describes a
- * session nobody is watching.
- *
- * @param plan - What the negotiator decided.
- * @param item - The file it decided about.
- * @param encodesVideo - Whether the picture is in fact being encoded.
- * @returns The plan as carried out.
- */
-/**
  * Corrects the range a plan claims to the one the output will really carry.
  *
  * A transcode that cannot tone map does not produce SDR. It re-encodes the picture and leaves its
@@ -75,8 +64,24 @@ const withDeliveredRange = (plan: PlaybackPlan, deliveredRange: string): Playbac
   return range.success ? { ...plan, video: { ...plan.video, range: range.data } } : plan;
 };
 
-const asDelivered = (plan: PlaybackPlan, item: MediaItem, encodesVideo: boolean): PlaybackPlan => {
-  if (!encodesVideo || plan.video.kind !== 'passthrough') {
+/**
+ * Rewrites a plan to say what was actually done rather than what was decided, for the cases where
+ * the media service does more than the negotiator asked — a session that was to pass the picture
+ * through but is being encoded should report itself as encoding, or the statistics panel describes a
+ * session nobody is watching. It says why, too: a source that cannot be cut into segments at all,
+ * or one whose keyframes this browser cannot start playback from.
+ *
+ * @param plan - What the negotiator decided.
+ * @param item - The file it decided about.
+ * @param started - What the media service says it is doing: whether the picture is in fact being encoded, and whether that is for this browser's keyframes.
+ * @returns The plan as carried out.
+ */
+const asDelivered = (
+  plan: PlaybackPlan,
+  item: MediaItem,
+  started: { encodesVideo: boolean; encodedForKeyframes: boolean },
+): PlaybackPlan => {
+  if (!started.encodesVideo || plan.video.kind !== 'passthrough') {
     return plan;
   }
 
@@ -91,7 +96,9 @@ const asDelivered = (plan: PlaybackPlan, item: MediaItem, encodesVideo: boolean)
       maxHeight: item.height,
       reason: {
         code: 'VideoNotSegmentable',
-        detail: saying('server.playback.playbackService.theSourceCannotBeCutInto'),
+        detail: started.encodedForKeyframes
+          ? saying('server.playback.playbackService.thisBrowserStartsOnlyOnIdr')
+          : saying('server.playback.playbackService.theSourceCannotBeCutInto'),
       },
     },
   };
@@ -361,6 +368,7 @@ const createPlaybackService = ({
           startSeconds,
           segmentSeconds: shortSegments ? SHORT_SEGMENT_SECONDS : SEGMENT_SECONDS,
           container: segmentContainerFor(profile),
+          needsIdrKeyframes: profile.needsIdrKeyframes,
           ...(audioStreamIndex !== undefined
             ? { audioStreamIndex }
             : plan.audio.streamIndex === null
@@ -395,7 +403,7 @@ const createPlaybackService = ({
         );
 
         const delivered = withDeliveredRange(
-          asDelivered(plan, source, session.encodesVideo),
+          asDelivered(plan, source, session),
           outcome.deliveredRange,
         );
 

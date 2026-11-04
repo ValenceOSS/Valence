@@ -103,6 +103,7 @@ pub fn sample_plan(
             track: Track::Video,
             source_range: None,
             source_range_base: None,
+            needs_idr_keyframes: false,
         },
         output_directory: output.to_string_lossy().into_owned(),
         device: device.to_owned(),

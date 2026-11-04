@@ -135,7 +135,13 @@ const harness = (options: {
     sweepTrickplay: () => Promise.reject(new Error('not used')),
     probe: options.probeImpl ?? (() => Promise.resolve(probe())),
     startSession: () =>
-      Promise.resolve({ id: 'x', manifest: '/x', encodesVideo: false, reuse: 'none' as const }),
+      Promise.resolve({
+        id: 'x',
+        manifest: '/x',
+        encodesVideo: false,
+        encodedForKeyframes: false,
+        reuse: 'none' as const,
+      }),
     readSessionFile: () => Promise.resolve(null),
     readFile: () => Promise.resolve(null),
     readAudioRendition: () => Promise.resolve(null),
@@ -1011,7 +1017,13 @@ describe('scanLibrary', () => {
         sweepTrickplay: () => Promise.reject(new Error('not used')),
         probe: () => Promise.reject(new Error('moov atom not found')),
         startSession: () =>
-          Promise.resolve({ id: 'x', manifest: '/x', encodesVideo: false, reuse: 'none' as const }),
+          Promise.resolve({
+            id: 'x',
+            manifest: '/x',
+            encodesVideo: false,
+            encodedForKeyframes: false,
+            reuse: 'none' as const,
+          }),
         readSessionFile: () => Promise.resolve(null),
         readFile: () => Promise.resolve(null),
         readAudioRendition: () => Promise.resolve(null),

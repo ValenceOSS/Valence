@@ -29,6 +29,8 @@ const REMUXED_TEN_BIT_VIDEO = [
   { codec: 'vp9', mimeType: 'video/mp4; codecs="vp09.02.41.10"' },
 ] as const;
 
+const RESUMED_ONLY_FROM_IDR = 'hevc';
+
 const CARRIED_AUDIO = [
   { codec: 'aac', mimeType: 'audio/mp4; codecs="mp4a.40.2"' },
   { codec: 'opus', mimeType: 'audio/mp4; codecs="opus"' },
@@ -123,6 +125,12 @@ const toneMappingCheckOf = async (
  * those decoders also bring MPEG-2 pictures, drawn by the browser's own player. Nothing is claimed without a GPU,
  * a secure page and somewhere to put the sound, since the player needs all three.
  *
+ * HEVC is not repackaged for a browser that starts it only from an IDR keyframe: Firefox throws away
+ * every segment after a seek that opens on a CRA, without an error to fall back on, so such a film
+ * goes to the media service instead, which encodes it where it has to. Its own player still decodes
+ * HEVC where WebCodecs does, since a decoder that refuses a picture says so and playback is handed
+ * back.
+ *
  * @param browser - What this browser offers.
  * @returns The codecs it can play through its own player, or none.
  */
@@ -193,9 +201,9 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
     ...(hasDecoders ? PICTURES_DECODED_BY_VALENCE : []),
   ];
 
-  const remuxVideoCodecs = REMUXED_VIDEO.filter(({ mimeType }) => canStream(mimeType)).map(
-    ({ codec }) => codec,
-  );
+  const remuxes = ({ codec, mimeType }: { codec: string; mimeType: string }) =>
+    canStream(mimeType) && (browser.needsIdrKeyframes !== true || codec !== RESUMED_ONLY_FROM_IDR);
+  const remuxVideoCodecs = REMUXED_VIDEO.filter(remuxes).map(({ codec }) => codec);
   const tenBitVideoCodecs = await decodes(TEN_BIT_VIDEO_PROBES);
   const { checkToneMapping } = browser;
   const toneMappingChecks: Partial<Record<string, ToneMappingCheck>> =
@@ -218,9 +226,7 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
         videoCodecs,
         tenBitVideoCodecs,
         remuxVideoCodecs,
-        remuxTenBitVideoCodecs: REMUXED_TEN_BIT_VIDEO.filter(({ mimeType }) =>
-          canStream(mimeType),
-        ).map(({ codec }) => codec),
+        remuxTenBitVideoCodecs: REMUXED_TEN_BIT_VIDEO.filter(remuxes).map(({ codec }) => codec),
         toneMappedCodecs: Object.entries(toneMappingChecks)
           .filter(([, check]) => check?.outcome === 'trusted')
           .map(([codec]) => codec),

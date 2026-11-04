@@ -35,7 +35,13 @@ describe('withJoinedInputs', () => {
             ...[...(variants ?? []), ...(deferred ?? [])].map((variant) => variant.inputPath),
           );
 
-          return Promise.resolve({ id: 's', manifest: 'm', encodesVideo: false, reuse: 'none' });
+          return Promise.resolve({
+            id: 's',
+            manifest: 'm',
+            encodesVideo: false,
+            encodedForKeyframes: false,
+            reuse: 'none',
+          });
         },
         readFrame: (request) => {
           asked.push(request.inputPath);

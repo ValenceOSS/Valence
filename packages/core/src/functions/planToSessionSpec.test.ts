@@ -112,6 +112,44 @@ describe('planToSessionSpec', () => {
     expect(outcome.kind === 'ok' ? outcome.spec.sourceVideoCodec : 'missing').toBeUndefined();
   });
 
+  it('passes on that a copy has to open on IDR keyframes for this client', () => {
+    const outcome = planToSessionSpec({
+      plan: directPlay,
+      inputPath: '/media/film.mkv',
+      sourceRange: 'SDR',
+      sourceVideoCodec: 'hevc',
+      capabilities,
+      startSeconds: 0,
+      segmentSeconds: 4,
+      container: 'fmp4',
+      needsIdrKeyframes: true,
+    });
+
+    expect(outcome).toMatchObject({ kind: 'ok', spec: { needsIdrKeyframes: true } });
+  });
+
+  it('leaves it out for every other client, so their sessions keep their address', () => {
+    const outcome = build(directPlay);
+
+    expect(outcome.kind === 'ok' && 'needsIdrKeyframes' in outcome.spec).toBe(false);
+  });
+
+  it('leaves it out of an encode, which puts an IDR keyframe on every segment anyway', () => {
+    const outcome = planToSessionSpec({
+      plan: { ...directPlay, video: transcodeVideo },
+      inputPath: '/media/film.mkv',
+      sourceRange: 'SDR',
+      sourceVideoCodec: 'hevc',
+      capabilities,
+      startSeconds: 0,
+      segmentSeconds: 4,
+      container: 'fmp4',
+      needsIdrKeyframes: true,
+    });
+
+    expect(outcome.kind === 'ok' && 'needsIdrKeyframes' in outcome.spec).toBe(false);
+  });
+
   it('does not ask for hardware when nothing is being encoded', () => {
     const outcome = build({ ...directPlay, container: { kind: 'remux', target: 'mp4', reason } });
 

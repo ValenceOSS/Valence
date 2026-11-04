@@ -302,6 +302,10 @@ pub struct SessionResponse {
     /// viewer so, and this is how it learns that what it decided is not what is
     /// happening. See VAL-125.
     pub encodes_video: bool,
+    /// Whether that encode is because the client starts only from IDR
+    /// keyframes and this source's are something else. False for an encode
+    /// that was asked for, and for a source that cannot be cut at all.
+    pub encoded_for_keyframes: bool,
     /// What this session found already made when it started.
     ///
     /// A transcode is addressed by the treatment it performs, so a request for
@@ -1258,6 +1262,7 @@ async fn start_both(
         manifest: format!("/sessions/{id}/{MANIFEST_NAME}"),
         id,
         encodes_video: started.encodes_video,
+        encoded_for_keyframes: started.encoded_for_keyframes,
         reuse: started.reuse,
         dash_manifest: None,
         hardware: started.hardware,
@@ -1372,6 +1377,7 @@ async fn start_split(
         }),
         id: halves.video.id,
         encodes_video: halves.video.encodes_video,
+        encoded_for_keyframes: halves.video.encoded_for_keyframes,
         reuse: halves.video.reuse,
         hardware: halves.video.hardware,
     }))

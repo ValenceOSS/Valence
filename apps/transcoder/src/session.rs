@@ -15,8 +15,8 @@ use crate::devices::{DeviceReport, GraphicsDevice};
 use crate::placement::{Candidate, Choice, Placement};
 use crate::playlist::segment_at;
 use crate::transcode_plan::{
-    DeviceFilters, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, TranscodePlan,
-    VideoAction, MANIFEST_NAME, RUN_PLAYLIST_NAME,
+    DeviceFilters, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, Track,
+    TranscodePlan, VideoAction, MANIFEST_NAME, RUN_PLAYLIST_NAME,
 };
 
 /// Written only when ffmpeg exits cleanly.
@@ -306,6 +306,9 @@ pub struct Session {
     ladder_root: Option<String>,
     /// The graphics device it was placed on, where sessions are being spread across devices.
     placed_on: Option<GraphicsDevice>,
+    /// Whether it encodes because its client needs IDR keyframes the source
+    /// does not have, as [`startable`] decided when it began.
+    encoded_for_keyframes: bool,
 }
 
 /// Every session that using this one keeps: itself, its other half, the rungs
@@ -427,15 +430,42 @@ fn fallback_encoder(capabilities: &crate::capability::Capabilities) -> (String, 
 /// it was asked for. Encoding puts a keyframe on every boundary, so the
 /// segments come out the length that was asked for and every one of them is a
 /// place a decoder can start.
-///
-/// A source that cannot be probed a second time is left as it was asked for.
-/// That is the state Valence was in before any of this, so it is no worse, and
-/// refusing to play over it would be.
 async fn deliverable(config: &SessionConfig, spec: SessionSpec, can_copy: bool) -> SessionSpec {
     if can_copy {
         return spec;
     }
 
+    encoded(config, spec).await
+}
+
+/// The spec a session is cut for, before its boundaries are worked out.
+///
+/// A client that starts a picture only from an IDR keyframe cannot be handed a
+/// copy whose keyframes are something else: every segment after the first is
+/// thrown away. See [`crate::idr_keyframes`]. Decided before the boundaries,
+/// unlike [`deliverable`], because a copy is cut where the source's keyframes
+/// fall and an encode in equal lengths, and a playlist describing the one while
+/// the other is written stalls the player at the first segment where they part.
+///
+/// Says alongside whether it turned a copy into an encode for that reason, so
+/// the caller can tell a viewer why.
+async fn startable(config: &SessionConfig, spec: SessionSpec) -> (SessionSpec, bool) {
+    if !lacks_the_keyframes_asked_for(config, &spec).await {
+        return (spec, false);
+    }
+
+    let spec = encoded(config, spec).await;
+    let encodes = matches!(spec.video, VideoAction::Encode { .. });
+
+    (spec, encodes)
+}
+
+/// The same picture encoded rather than copied.
+///
+/// A source that cannot be probed a second time is left as it was asked for.
+/// That is the state Valence was in before any of this, so it is no worse, and
+/// refusing to play over it would be.
+async fn encoded(config: &SessionConfig, spec: SessionSpec) -> SessionSpec {
     let Ok(probe) = crate::probe::probe_media(&config.ffprobe, Path::new(&spec.input_path)).await
     else {
         return spec;
@@ -444,6 +474,33 @@ async fn deliverable(config: &SessionConfig, spec: SessionSpec, can_copy: bool) 
     let capabilities = crate::capability::detect_capabilities(&config.ffmpeg, &config.device).await;
 
     encode_instead(spec, &probe, &capabilities)
+}
+
+/// Whether a copy asked for by a client that starts only from IDR keyframes
+/// would hand it keyframes of another kind.
+///
+/// False wherever it cannot be told, so a source whose pictures will not read
+/// is copied as it always was.
+async fn lacks_the_keyframes_asked_for(config: &SessionConfig, spec: &SessionSpec) -> bool {
+    if !spec.needs_idr_keyframes
+        || !matches!(spec.video, VideoAction::Copy)
+        || spec.track == Track::Audio
+    {
+        return false;
+    }
+
+    let Some(codec) = spec.source_video_codec.as_deref() else {
+        return false;
+    };
+
+    crate::idr_keyframes::opens_only_on_idr(
+        &config.ffmpeg,
+        &config.artefact_root,
+        Path::new(&spec.input_path),
+        codec,
+    )
+    .await
+        == Some(false)
 }
 
 /// Turns a copy into an encode of the same picture.
@@ -622,6 +679,10 @@ pub struct Started {
     /// it will report that decision to a viewer, and it would otherwise report
     /// something that is not happening.
     pub encodes_video: bool,
+    /// Whether that encode is because the client starts only from IDR
+    /// keyframes and the source has others, rather than because it cannot be
+    /// cut at all. Said apart because the caller tells a viewer why.
+    pub encoded_for_keyframes: bool,
     /// What this session found already made when it started.
     pub reuse: Reuse,
     /// The device it was placed on, where devices are being spread across.
@@ -1298,6 +1359,7 @@ impl SessionRegistry {
 
         let directory = existing.directory.clone();
         let encodes_video = matches!(existing.spec.video, VideoAction::Encode { .. });
+        let encoded_for_keyframes = existing.encoded_for_keyframes;
         let found = existing.reuse;
         let hardware = existing.placed_hardware();
 
@@ -1310,6 +1372,7 @@ impl SessionRegistry {
         Some(Started {
             id: id.to_owned(),
             encodes_video,
+            encoded_for_keyframes,
             reuse: if is_already_complete(&directory).await {
                 Reuse::Whole
             } else if is_another_viewer {
@@ -1342,6 +1405,7 @@ impl SessionRegistry {
             record_device(&directory, device).await;
         }
 
+        let (spec, encoded_for_keyframes) = startable(&self.config, spec).await;
         let boundary_started = Instant::now();
         let boundaries = ensure_boundaries(
             &self.config.ffprobe,
@@ -1411,6 +1475,7 @@ impl SessionRegistry {
             variants: Vec::new(),
             ladder_root: None,
             placed_on,
+            encoded_for_keyframes,
         };
 
         if is_complete {
@@ -1429,6 +1494,7 @@ impl SessionRegistry {
         Ok(Started {
             id,
             encodes_video,
+            encoded_for_keyframes,
             reuse,
             hardware,
         })
@@ -2705,6 +2771,7 @@ mod tests {
             track: Track::Both,
             source_range: None,
             source_range_base: None,
+            needs_idr_keyframes: false,
         };
 
         let directory = root.join(spec.plan_id());
@@ -3118,6 +3185,7 @@ mod tests {
             track: Track::Both,
             source_range: None,
             source_range_base: None,
+            needs_idr_keyframes: false,
         };
         let (cancel, stopped) = oneshot::channel();
 
@@ -3151,6 +3219,7 @@ mod tests {
             variants: Vec::new(),
             ladder_root: None,
             placed_on: None,
+            encoded_for_keyframes: false,
         };
 
         (session, stopped)

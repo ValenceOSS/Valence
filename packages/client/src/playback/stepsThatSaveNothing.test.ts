@@ -15,6 +15,7 @@ const LAPTOP: DeviceProfile = {
   canPlayInterlaced: true,
   canPlayAnamorphic: true,
   canRotate: true,
+  needsIdrKeyframes: false,
   unsupportedAudioProfiles: [],
   supportedSubtitleFormats: ['srt', 'webvtt'],
   directPlayProfiles: [{ container: 'mkv', videoCodecs: ['hevc', 'h264'], audioCodecs: ['aac'] }],

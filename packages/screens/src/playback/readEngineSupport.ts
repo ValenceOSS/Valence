@@ -1,4 +1,5 @@
 import { detectEngineSupport } from '@ValenceClient/playback/detectEngineSupport';
+import { needsIdrKeyframes } from '@ValenceClient/playback/needsIdrKeyframes';
 import type { EngineSupport } from '@ValenceClient/playback/EngineSupport';
 import { checkToneMapping } from '@ValenceScreens/playback/engine/checkToneMapping';
 import { loadBrowserDecoders } from '@ValenceScreens/playback/engine/loadBrowserDecoders';
@@ -50,6 +51,7 @@ const readEngineSupport = (): Promise<EngineSupport> => {
     checkToneMapping,
     hasDecoders: async () => (await loadBrowserDecoders()) !== null,
     canRunWebAssembly,
+    needsIdrKeyframes: needsIdrKeyframes(navigator.userAgent),
   });
 
   return asked.answer;

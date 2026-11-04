@@ -253,6 +253,31 @@ fn is_superseded(cached: &Boundaries, keyframes_read: bool) -> bool {
     cached.provisional && keyframes_read
 }
 
+/// Whether kept boundaries are cut the way this spec will cut its segments.
+///
+/// A directory is addressed before the media service decides whether a copy
+/// has to be encoded instead, so the same directory can hold a copy cut on the
+/// source's keyframes and later be asked for an encode: a viewer whose browser
+/// needs IDR keyframes copies while they cannot be read, and encodes once they
+/// have been. An encode is cut in equal lengths, and a playlist kept from the
+/// copy would describe segments the encoder never makes, stalling the player
+/// where the two part. Only an encode can be checked this way; a copy's lengths
+/// are whatever its keyframes give.
+#[must_use]
+pub fn is_cut_as_asked(cached: &Boundaries, spec: &SessionSpec) -> bool {
+    if !spec.starts_where_sought() {
+        return true;
+    }
+
+    let wanted = f64::from(spec.segment_seconds.max(1));
+
+    cached.lengths.split_last().is_none_or(|(_, every_other)| {
+        every_other
+            .iter()
+            .all(|length| (length - wanted).abs() < CUT_TOLERANCE_SECONDS)
+    })
+}
+
 /// The segments an encode produces, which are the length that was asked for.
 ///
 /// `-force_key_frames` puts a keyframe on every boundary, so unlike a copied
@@ -853,7 +878,7 @@ pub async fn ensure_boundaries(
                 .await
                 .is_some();
 
-        if !is_superseded(&found, keyframes_read) {
+        if !is_superseded(&found, keyframes_read) && is_cut_as_asked(&found, spec) {
             if found.provisional {
                 fill_index_later(
                     ffprobe.to_owned(),
@@ -910,9 +935,10 @@ pub async fn ensure_boundaries(
 mod tests {
     use super::{
         can_copy_segments, claim_index_read, encoded_lengths, equal_lengths, from_keyframes,
-        is_superseded, keeps_its_segments, may_copy_without_keyframes, offered_ceiling,
-        read_cached, settle_index_read, Boundaries, IndexReads, DEFAULT_KEYFRAME_DEADLINE,
-        INDEX_TRIES, LAYOUT, LAYOUT_WITH_THE_SAME_SEGMENTS, OFFERED_BYTES_PER_SECOND_ASKED,
+        is_cut_as_asked, is_superseded, keeps_its_segments, may_copy_without_keyframes,
+        offered_ceiling, read_cached, settle_index_read, Boundaries, IndexReads,
+        DEFAULT_KEYFRAME_DEADLINE, INDEX_TRIES, LAYOUT, LAYOUT_WITH_THE_SAME_SEGMENTS,
+        OFFERED_BYTES_PER_SECOND_ASKED,
     };
     use crate::keyframes::{Cut, Keyframes};
     use std::collections::HashMap;
@@ -930,6 +956,58 @@ mod tests {
             !is_superseded(&stopgap, false),
             "until the keyframes are read the stopgap is still the best answer"
         );
+    }
+
+    /// A spec as the server sends one, copying or encoding the picture.
+    fn asked(video: &serde_json::Value) -> crate::transcode_plan::SessionSpec {
+        serde_json::from_value(serde_json::json!({
+            "inputPath": "/media/film.mkv",
+            "startSeconds": 0,
+            "segmentSeconds": 4,
+            "hardwareAccel": "none",
+            "video": video,
+            "audio": { "kind": "copy" },
+        }))
+        .expect("a spec reads")
+    }
+
+    fn an_encode() -> crate::transcode_plan::SessionSpec {
+        asked(&serde_json::json!({
+            "kind": "encode",
+            "encoder": "libx264",
+            "maxBitrateKbps": 4000,
+            "maxWidth": 1920,
+            "maxHeight": 1080,
+        }))
+    }
+
+    #[test]
+    fn an_encode_will_not_take_boundaries_kept_from_a_copy() {
+        let kept_from_a_copy = grouped(vec![3.378, 5.297, 2.628, 4.254], Vec::new());
+
+        assert!(!is_cut_as_asked(&kept_from_a_copy, &an_encode()));
+    }
+
+    #[test]
+    fn an_encode_takes_its_own_boundaries_whatever_its_last_segment_runs() {
+        assert!(is_cut_as_asked(
+            &grouped(vec![4.0, 4.0, 4.0, 6.5], Vec::new()),
+            &an_encode()
+        ));
+        assert!(is_cut_as_asked(
+            &grouped(vec![4.0, 4.0, 1.2], Vec::new()),
+            &an_encode()
+        ));
+    }
+
+    #[test]
+    fn a_copy_takes_whatever_its_keyframes_gave() {
+        let copy = asked(&serde_json::json!({ "kind": "copy" }));
+
+        assert!(is_cut_as_asked(
+            &grouped(vec![3.378, 5.297, 2.628], Vec::new()),
+            &copy
+        ));
     }
 
     #[test]

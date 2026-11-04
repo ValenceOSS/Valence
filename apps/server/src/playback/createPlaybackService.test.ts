@@ -48,6 +48,7 @@ const capableProfile: DeviceProfile = {
   canPlayInterlaced: true,
   canPlayAnamorphic: true,
   canRotate: true,
+  needsIdrKeyframes: false,
   unsupportedAudioProfiles: [],
   supportedSubtitleFormats: ['webvtt'],
   directPlayProfiles: [
@@ -81,6 +82,7 @@ const anything = (): Transcoder => ({
       id: 'session-1',
       manifest: '/session-1',
       encodesVideo: false,
+      encodedForKeyframes: false,
       reuse: 'none' as const,
     }),
   readSessionFile: () => Promise.resolve(null),
@@ -138,6 +140,7 @@ const harness = (
   reuse: TranscodeReuse = 'none',
   subtitles?: CreatePlaybackServiceOptions['subtitles'],
   isSplit = false,
+  encodedForKeyframes = false,
 ) => {
   const media: MediaLookup = {
     findForPlayback: (mediaId) =>
@@ -174,7 +177,13 @@ const harness = (
     startSession: (spec) => {
       startedSpecs.push(spec);
 
-      return Promise.resolve({ id: 'session-1', manifest: '/session-1', encodesVideo, reuse });
+      return Promise.resolve({
+        id: 'session-1',
+        manifest: '/session-1',
+        encodesVideo,
+        encodedForKeyframes,
+        reuse,
+      });
     },
     readSessionFile: () => Promise.resolve(null),
     readFile: () => Promise.resolve(null),
@@ -357,6 +366,48 @@ describe('createPlaybackService', () => {
     });
   });
 
+  it('says so when it is this browser’s keyframes the copy was refused for', async () => {
+    const { service } = harness('en', true, bilingual, 'none', undefined, false, true);
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      { ...capableProfile, needsIdrKeyframes: true },
+      0,
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: {
+        mode: 'Transcode',
+        plan: {
+          video: {
+            kind: 'transcode',
+            reason: {
+              code: 'VideoNotSegmentable',
+              detail: { code: 'server.playback.playbackService.thisBrowserStartsOnlyOnIdr' },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('tells the media service a browser needs IDR keyframes', async () => {
+    const { service, startedSpecs } = harness('en');
+
+    await service.start(MEDIA_ID, { ...capableProfile, needsIdrKeyframes: true }, 0);
+
+    expect(startedSpecs[0]).toMatchObject({ video: { kind: 'copy' }, needsIdrKeyframes: true });
+  });
+
+  it('asks nothing of the kind for a browser that takes any keyframe', async () => {
+    const { service, startedSpecs } = harness('en');
+
+    await service.start(MEDIA_ID, capableProfile, 0);
+
+    expect(startedSpecs[0] !== undefined && 'needsIdrKeyframes' in startedSpecs[0]).toBe(false);
+  });
+
   it('leaves the plan alone when the media service copied as it was asked to', async () => {
     const { service } = harness('en');
 
@@ -511,6 +562,7 @@ describe('createPlaybackService', () => {
             id: 'session-1',
             manifest: '/session-1',
             encodesVideo: true,
+            encodedForKeyframes: false,
             reuse: 'none' as const,
             hardware: { deviceId: 'pci:0', deviceName: 'RTX 5080', accel: 'nvenc' },
           });
@@ -634,6 +686,7 @@ const profile = (overrides: Partial<DeviceProfile> = {}): DeviceProfile => ({
   canPlayInterlaced: true,
   canPlayAnamorphic: true,
   canRotate: true,
+  needsIdrKeyframes: false,
   unsupportedAudioProfiles: [],
   supportedSubtitleFormats: ['srt', 'webvtt'],
   directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac'] }],
@@ -678,6 +731,7 @@ const build = (
         id: 'session-1',
         manifest: 'index.m3u8',
         encodesVideo: false,
+        encodedForKeyframes: false,
         reuse: 'none' as const,
       }),
     readFrame: () => Promise.resolve(new ArrayBuffer(4)),
@@ -805,6 +859,7 @@ describe('starting playback', () => {
               id: 'session-1',
               manifest: 'index.m3u8',
               encodesVideo: false,
+              encodedForKeyframes: false,
               reuse: 'none' as const,
             });
           },
@@ -877,6 +932,7 @@ describe('starting playback', () => {
           id: 'session-1',
           manifest: 'index.m3u8',
           encodesVideo: false,
+          encodedForKeyframes: false,
           reuse: 'none' as const,
           dashManifest: '/sessions/session-1/manifest.mpd',
         }),

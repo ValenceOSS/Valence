@@ -9212,6 +9212,8 @@ const ENGLISH = {
   'server.playback.playbackService.theMediaServiceFailed': 'The media service failed.',
   'server.playback.playbackService.theSourceCannotBeCutInto':
     'The source can’t be split into segments a player can start from, so it’s transcoded instead',
+  'server.playback.playbackService.thisBrowserStartsOnlyOnIdr':
+    'This browser can’t start playback from this file’s keyframes, so it’s transcoded instead',
   'server.playback.publicMaxAge31536000Immutable': 'public, max-age=31536000, immutable',
   'server.plugins.connected': 'Connected',
   'server.plugins.thatAccountWasNotConnected': 'The account wasn’t connected',

@@ -99,6 +99,7 @@ const SessionResponseSchema = z.object({
   id: z.string().min(1),
   manifest: z.string().min(1),
   encodesVideo: z.boolean().default(false),
+  encodedForKeyframes: z.boolean().default(false),
   reuse: TranscodeReuseSchema.default('none'),
   dashManifest: z.string().min(1).optional(),
   hardware: PlaybackHardwareSchema.optional(),
@@ -393,6 +394,7 @@ type SessionSpec = {
   sourceRange?: string;
   sourceRangeBase?: string;
   container?: 'fmp4' | 'mpegts';
+  needsIdrKeyframes?: boolean;
 };
 
 type AudioRenditionKbps = 96 | 160 | 320;

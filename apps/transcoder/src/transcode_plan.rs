@@ -429,6 +429,15 @@ pub struct SessionSpec {
     /// [`Self::source_range`] for everything else.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_range_base: Option<VideoRange>,
+    /// Whether the client starts a picture only from an IDR keyframe.
+    ///
+    /// Firefox's Media Source drops everything after a buffer reset until an
+    /// IDR, so a copy whose keyframes are anything else plays its first segment
+    /// and freezes. Asked for, a copy of such a source is encoded instead; see
+    /// [`crate::idr_keyframes`]. Absent means false, which is every client that
+    /// takes any keyframe.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub needs_idr_keyframes: bool,
 }
 
 impl SessionSpec {
@@ -490,6 +499,7 @@ impl SessionSpec {
             source_size: None,
             source_video_codec: None,
             track: Track::Audio,
+            needs_idr_keyframes: false,
             ..self.clone()
         }
     }
@@ -501,6 +511,23 @@ impl SessionSpec {
     fn hash_track(&self, hasher: &mut Sha256) {
         if self.track != Track::Both {
             hasher.update(format!("{:?}", self.track).as_bytes());
+        }
+    }
+
+    /// Adds a client's need for IDR keyframes to an address being worked out.
+    ///
+    /// Such a session may be encoded where any other would be copied, so it
+    /// cannot share their segments. Left out when not asked for, and for every
+    /// codec the need does not change, so those sessions keep sharing one
+    /// address with every other client's.
+    fn hash_idr_keyframes(&self, hasher: &mut Sha256) {
+        if self.needs_idr_keyframes
+            && self
+                .source_video_codec
+                .as_deref()
+                .is_some_and(crate::idr_keyframes::applies_to)
+        {
+            hasher.update(b"idr-keyframes");
         }
     }
 
@@ -625,6 +652,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.container).as_bytes());
         self.hash_track(&mut hasher);
         self.hash_tone_mapping(&mut hasher);
+        self.hash_idr_keyframes(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -675,6 +703,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.container).as_bytes());
         self.hash_track(&mut hasher);
         self.hash_tone_mapping(&mut hasher);
+        self.hash_idr_keyframes(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -3335,6 +3364,7 @@ mod tests {
             track: Track::Both,
             source_range: None,
             source_range_base: None,
+            needs_idr_keyframes: false,
         }
     }
 
@@ -6768,6 +6798,65 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
         assert_eq!(id.len(), 32);
         assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    fn copied_for(codec: &str, needs_idr_keyframes: bool) -> SessionSpec {
+        SessionSpec {
+            source_video_codec: Some(codec.to_owned()),
+            needs_idr_keyframes,
+            ..spec()
+        }
+    }
+
+    #[test]
+    fn a_client_needing_idr_keyframes_gets_its_own_hevc_session() {
+        let needing = copied_for("hevc", true);
+        let anybody = copied_for("hevc", false);
+
+        assert_ne!(needing.session_id(), anybody.session_id());
+        assert_ne!(needing.plan_id(), anybody.plan_id());
+    }
+
+    #[test]
+    fn it_shares_every_other_codec_with_everybody_else() {
+        assert_eq!(
+            copied_for("h264", true).session_id(),
+            copied_for("h264", false).session_id()
+        );
+        assert_eq!(
+            copied_for("h264", true).plan_id(),
+            copied_for("h264", false).plan_id()
+        );
+    }
+
+    #[test]
+    fn its_sound_is_shared_with_everybody_else() {
+        let needing = copied_for("hevc", true);
+
+        assert!(!needing.audio_alone(4).needs_idr_keyframes);
+        assert_eq!(
+            needing.audio_alone(4).plan_id(),
+            copied_for("hevc", false).audio_alone(4).plan_id()
+        );
+    }
+
+    #[test]
+    fn a_spec_that_does_not_ask_reads_and_writes_as_before() {
+        let written = serde_json::to_value(spec()).expect("a spec serialises");
+
+        assert!(written.get("needsIdrKeyframes").is_none());
+
+        let read: SessionSpec = serde_json::from_value(written).expect("and reads back");
+
+        assert!(!read.needs_idr_keyframes);
+
+        let asked = serde_json::to_value(SessionSpec {
+            needs_idr_keyframes: true,
+            ..spec()
+        })
+        .expect("a spec serialises");
+
+        assert_eq!(asked["needsIdrKeyframes"], serde_json::json!(true));
     }
 
     #[test]

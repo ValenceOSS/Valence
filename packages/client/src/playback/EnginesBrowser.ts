@@ -21,6 +21,7 @@ type EnginesBrowser = {
   checkToneMapping: ((codec: string) => Promise<ToneMappingCheck>) | null;
   hasDecoders: () => Promise<boolean>;
   canRunWebAssembly: () => boolean;
+  needsIdrKeyframes?: boolean;
 };
 
 export type { EnginesBrowser };

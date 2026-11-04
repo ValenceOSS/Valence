@@ -1,6 +1,6 @@
 type BrowsersMedia = {
   MediaSource?: { isTypeSupported: (mimeType: string) => boolean } | undefined;
-  navigator: { platform: string };
+  navigator: { platform: string; userAgent?: string };
   screen: { width: number; height: number };
   devicePixelRatio: number;
   matchMedia?: ((query: string) => { matches: boolean }) | undefined;
