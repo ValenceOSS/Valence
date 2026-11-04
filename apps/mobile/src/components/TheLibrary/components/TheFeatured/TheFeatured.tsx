@@ -14,7 +14,6 @@ import { AFeature } from '@ValenceMobile/components/TheLibrary/components/TheFea
 import { TheDots } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/TheDots/TheDots';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
-import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
 const GAP = 12;
@@ -39,6 +38,8 @@ const SETTLES_AFTER = 600;
 
 const MOVE_ON_AFTER = 28_000;
 
+const FILL_STEPS = 48;
+
 const styles = StyleSheet.create({
   cards: { gap: GAP, paddingHorizontal: PEEK + GAP, paddingVertical: ROOM_FOR_THE_SHADOW },
   pager: { marginHorizontal: -SCREEN_EDGE, marginVertical: -ROOM_FOR_THE_SHADOW },
@@ -56,6 +57,26 @@ const roundTo = (position: number, count: number): number =>
   count === 0 ? 0 : ((position % count) + count) % count;
 
 /**
+ * How far a dot's fill has reached a moment through its run, held at each of a few dozen steps so
+ * the screen is drawn again only when the fill has grown by a point or so, not every frame.
+ *
+ * @param from - Where the run began, from nothing to the whole of it.
+ * @param through - How far through the run it is, from nothing to the whole of it.
+ * @returns How far through the run the fill is drawn, from nothing to the whole of it.
+ */
+const steppedFrom = (from: number, through: number): number => {
+  const left = 1 - from;
+
+  if (left <= 0) {
+    return 1;
+  }
+
+  const reached = Math.floor((from + left * through) * FILL_STEPS) / FILL_STEPS;
+
+  return Math.max(reached - from, 0) / left;
+};
+
+/**
  * Runs a dot's fill on from where it has reached to full, evenly, on the native side.
  *
  * @param filled - The fill.
@@ -67,7 +88,7 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
   Animated.timing(filled, {
     toValue: 1,
     duration: Math.max(overMs, 0),
-    easing: EASINGS.linear,
+    easing: (through) => steppedFrom(from, through),
     useNativeDriver: true,
   }).start();
 };

@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
  * It is the same player as the hero's, drawn twice rather than played twice, so nothing more is
  * fetched or decoded, and drawn small and stretched over the page, since the blur leaves nothing of
  * it a full-size picture would show and the small one costs a fraction to draw. The clip sits underneath, blurred all the time it is there, and the lights —
- * on the page's own colour, so nothing shows through them — sit on top: when a clip starts, the
+ * which bring the page's own colour with them, so nothing shows through them — sit on top: when a clip starts, the
  * lights fade away to show it, and when it stops they fade back over it before it is let go. The
  * blur itself never fades, since a blur that is faded draws wrongly until it is fully there, and
  * it never lies over the lights, so it cannot tint them.
@@ -44,9 +44,11 @@ const styles = StyleSheet.create({
  * already finished by the time it appears.
  *
  * @param player - The playing clip, or nothing while none is playing.
+ * @param veil - The colour laid over the clip, as the lights lay it over themselves, so what is
+ *   written over either can be read.
  * @param children - The lights the page has without a clip.
  */
-const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
+const TheClipBehind = ({ player, veil, children }: TheClipBehindProps) => {
   const colours = useTheColours();
   const isDark = colours.surface === theColours.dark.surface;
   const [shown] = useState(() => new Animated.Value(0));
@@ -103,7 +105,7 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
   return (
     <View pointerEvents="none" style={styles.fills}>
       {held === null ? null : (
-        <View style={styles.fills}>
+        <View style={[styles.fills, { backgroundColor: colours.surface }]}>
           <VideoView
             allowsVideoFrameAnalysis={false}
             player={held}
@@ -121,20 +123,11 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
               },
             ]}
           />
+          <View style={[styles.fills, { backgroundColor: veil }]} />
         </View>
       )}
 
-      <Animated.View
-        style={[
-          styles.fills,
-          {
-            backgroundColor: colours.surface,
-            opacity: lightsShown,
-          },
-        ]}
-      >
-        {children}
-      </Animated.View>
+      <Animated.View style={[styles.fills, { opacity: lightsShown }]}>{children}</Animated.View>
     </View>
   );
 };
