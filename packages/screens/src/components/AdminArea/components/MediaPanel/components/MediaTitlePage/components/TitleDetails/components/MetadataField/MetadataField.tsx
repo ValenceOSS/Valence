@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react';
 import { TagField } from '@ValenceUI/TagField';
+import { Link } from '@ValenceUI/Link';
+import { addressOfId } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/addressOfId';
+import { ContentRatingField } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/components/ContentRatingField/ContentRatingField';
 import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
 import { useSavedSetting } from '@ValenceScreens/admin/useSavedSetting';
@@ -57,6 +60,7 @@ const valueOfTyped = (field: TitleField, typed: string): TitleValue => {
  * @param change - Saves a change to the title.
  * @param onShowHistory - Opens the title's history.
  * @param suggestions - The words in use elsewhere, offered as a list field is typed in.
+ * @param region - The server's own country, whose content rating decides ages.
  * @param className - Extra classes for the caller's own layout.
  */
 const MetadataField = ({
@@ -66,6 +70,7 @@ const MetadataField = ({
   change,
   onShowHistory,
   suggestions,
+  region = 'GB',
   className,
 }: MetadataFieldProps) => {
   const label = labelOfField(field, kind);
@@ -115,23 +120,13 @@ const MetadataField = ({
       {...(suggestions === undefined ? {} : { suggestions })}
     />
   ) : field === 'certifications' ? (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {Object.entries(
-        shown !== null && typeof shown === 'object' && !Array.isArray(shown) ? shown : {},
-      ).map(([country, rating]) => (
-        <TextField
-          key={country}
-          label={country}
-          value={rating}
-          onValueChange={(typed) => {
-            const held =
-              shown !== null && typeof shown === 'object' && !Array.isArray(shown) ? shown : {};
-
-            setShown({ ...held, [country]: typed });
-          }}
-        />
-      ))}
-    </div>
+    <ContentRatingField
+      ratings={shown !== null && typeof shown === 'object' && !Array.isArray(shown) ? shown : {}}
+      region={region}
+      onRatingsChange={(ratings) => {
+        setShown(ratings);
+      }}
+    />
   ) : (
     <TextField
       label={label}
@@ -146,6 +141,26 @@ const MetadataField = ({
       }}
     />
   );
+
+  const address =
+    (field === 'imdbId' || field === 'tvdbId') && typeof shown === 'string'
+      ? addressOfId(field, shown, kind === 'show')
+      : null;
+  const shownControl =
+    address === null ? (
+      control
+    ) : (
+      <span className="flex items-center gap-3 [&>:first-child]:min-w-0 [&>:first-child]:flex-1">
+        {control}
+        <Link
+          href={address}
+          label={say('screens.adminArea.titleDetails.openOnSite', { site: label })}
+          className="shrink-0 text-sm"
+        >
+          {say('common.open')}
+        </Link>
+      </span>
+    );
 
   return (
     <SourcedField
@@ -164,7 +179,7 @@ const MetadataField = ({
         act({ set: { [field]: state?.catalogue ?? null } });
       }}
     >
-      {control}
+      {shownControl}
     </SourcedField>
   );
 };

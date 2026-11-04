@@ -7,6 +7,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { FIELDS_OF_KIND } from '@ValenceContracts/schemas/TitleEdit';
 import { TITLE_VALUE_FIELDS } from '@ValenceContracts/schemas/TitleList';
 import { MetadataField } from './components/MetadataField/MetadataField';
+import { CatalogueIdRow } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/components/CatalogueIdRow/CatalogueIdRow';
 import { TITLE_FIELD_CARDS } from './TITLE_FIELD_CARDS';
 import { useTitleChange } from './useTitleChange';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
@@ -30,8 +31,9 @@ const SPANS_BOTH: readonly TitleField[] = [
  * @param mediaId - A file of the title.
  * @param scope - The film or programme, the file's season, or the file's episode.
  * @param onShowHistory - Opens the title's history.
+ * @param onFixMatch - Opens the dialog that fixes what the title is matched to, where it can be.
  */
-const TitleDetails = ({ mediaId, scope, onShowHistory }: TitleDetailsProps) => {
+const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetailsProps) => {
   const metadata = useQuery(adminQueries.titleMetadata(mediaId, scope));
   const { change } = useTitleChange(mediaId, scope);
   const subject = metadata.data?.subject;
@@ -77,6 +79,14 @@ const TitleDetails = ({ mediaId, scope, onShowHistory }: TitleDetailsProps) => {
           : [
               <PanelCard key={card.id} title={card.title}>
                 <div className="grid gap-4 sm:grid-cols-2">
+                  {card.id === 'ids' && (kind === 'film' || kind === 'show') ? (
+                    <CatalogueIdRow
+                      subjectKey={metadata.data.subject.key}
+                      isShow={kind === 'show'}
+                      {...(onFixMatch === undefined ? {} : { onFixMatch })}
+                      className="sm:col-span-2"
+                    />
+                  ) : null}
                   {fields.map((field) => {
                     const suggestions = suggestionsOf(field);
 
@@ -89,6 +99,9 @@ const TitleDetails = ({ mediaId, scope, onShowHistory }: TitleDetailsProps) => {
                         change={change}
                         {...(onShowHistory === undefined ? {} : { onShowHistory })}
                         {...(suggestions === undefined ? {} : { suggestions })}
+                        {...(metadata.data.certificationRegion === undefined
+                          ? {}
+                          : { region: metadata.data.certificationRegion })}
                         className={cn(SPANS_BOTH.includes(field) ? 'sm:col-span-2' : '')}
                       />
                     );

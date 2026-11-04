@@ -334,6 +334,7 @@ const createTitleMetadataService = ({
         isMatched,
       },
       fields,
+      certificationRegion: (await certificationRegion()).trim().toUpperCase(),
     };
   };
 

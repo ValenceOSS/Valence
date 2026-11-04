@@ -13,6 +13,7 @@ type MetadataFieldProps = {
   change: (request: TitleEditRequest) => Promise<{ isSaved: boolean; reason: string }>;
   onShowHistory?: () => void;
   suggestions?: readonly TagSuggestion[];
+  region?: string;
   className?: string;
 };
 

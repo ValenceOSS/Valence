@@ -144,6 +144,7 @@ const TitleSubjectSchema = z.object({
 const TitleMetadataSchema = z.object({
   subject: TitleSubjectSchema,
   fields: z.partialRecord(TitleFieldSchema, TitleFieldStateSchema),
+  certificationRegion: z.string().optional(),
 });
 
 const TitleEditRequestSchema = z.object({

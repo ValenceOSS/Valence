@@ -17001,6 +17001,31 @@
     "context": "Shown after confirming re-encodes awaiting review in the admin area."
   },
   {
+    "handler": "screens.adminArea.contentRatingField.addCountry",
+    "text": "Add country",
+    "context": "The button that adds another country's content rating to a title, in the admin's metadata editor."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.countryCode",
+    "text": "Country code",
+    "context": "The label of the field taking the two-letter code of a country whose content rating to add, such as FR."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.forAgeAndOver",
+    "text": "For {age} and over",
+    "context": "What age a content rating is for, beside it in the admin's content rating picker. {age} is a number of years."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.forEveryone",
+    "text": "For everyone",
+    "context": "Said beside a content rating suitable for any age, in the admin's content rating picker."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.noRating",
+    "text": "No rating",
+    "context": "The choice in the admin's content rating picker that leaves the server's own country unrated."
+  },
+  {
     "handler": "screens.adminArea.coreMap.efficiency",
     "text": "Efficiency cores",
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The power-saving cores of a chip that has both fast and efficient ones."
@@ -24729,6 +24754,16 @@
     "handler": "screens.adminArea.titleDetails.note",
     "text": "Note",
     "context": "A field for a note about a title that only administrators see. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.notMatchedYet",
+    "text": "Not matched yet",
+    "context": "Said in place of a title's TMDB id where it is not matched, in the admin's metadata editor."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.openOnSite",
+    "text": "Open on {site}",
+    "context": "The hidden label of the link beside one of a title's ids that opens its page on that site. {site} is a site such as IMDb."
   },
   {
     "handler": "screens.adminArea.titleDetails.originalTitle",

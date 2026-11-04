@@ -609,6 +609,7 @@ const MediaTitlePage = ({
           <TitleDetails
             mediaId={title.lead.id}
             scope="title"
+            {...(fix === undefined ? {} : { onFixMatch: fix.onChoose })}
             onShowHistory={() => {
               moveTo({ tab: 'history', season: null, episode: null });
             }}

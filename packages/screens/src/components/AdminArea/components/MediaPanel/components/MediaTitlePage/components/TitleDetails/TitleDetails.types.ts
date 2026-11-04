@@ -4,6 +4,7 @@ type TitleDetailsProps = {
   mediaId: string;
   scope: TitleScope;
   onShowHistory?: () => void;
+  onFixMatch?: () => void;
 };
 
 export type { TitleDetailsProps };
