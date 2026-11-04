@@ -756,7 +756,7 @@ const auth = createAuth({
   cookieSecure: persisted.cookieSecure,
   onUserCreated: async (userId) => {
     await insertUnlessPresent(db, userProfile, {
-      values: [{ userId }],
+      values: [{ userId, wayInId: randomUUID() }],
       target: userProfile.userId,
     });
     await giveDefaultRole(userId);

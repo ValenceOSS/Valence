@@ -39,6 +39,18 @@ describe('a household nobody has set up yet', () => {
   });
 });
 
+describe('the way in', () => {
+  it('knows an account by an id of its own there, and the account by that id', async () => {
+    const households = createMemoryHouseholdService();
+    const wayInId = await households.wayInOf(ACCOUNT);
+
+    expect(wayInId).not.toBe(ACCOUNT);
+    await expect(households.wayInOf(ACCOUNT)).resolves.toBe(wayInId);
+    await expect(households.accountOfWayIn(wayInId ?? '')).resolves.toBe(ACCOUNT);
+    await expect(households.accountOfWayIn('nobody')).resolves.toBeNull();
+  });
+});
+
 describe('setting a household up', () => {
   it('takes a new name', async () => {
     const households = createMemoryHouseholdService();

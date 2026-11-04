@@ -421,6 +421,55 @@ describe('profiles over HTTP', () => {
     expect(shownAfter.profiles).toHaveLength(0);
   });
 
+  it('shows an account with a password but no profile yet, and signs in to it from there', async () => {
+    const hidden = { isWaiting: false };
+    const held: { store?: ReturnType<typeof build>['store'] } = {};
+    const { app, auth, settings, store, households } = build(undefined, () =>
+      Promise.resolve(
+        (held.store?.user ?? []).map((one) => ({
+          id: one.id,
+          name: CREDENTIALS.name,
+          email: CREDENTIALS.email,
+          role: null,
+          createdAt: '',
+          canSignIn: !hidden.isWaiting,
+        })),
+      ),
+    );
+
+    held.store = store;
+    await signUpForTest(app, auth, CREDENTIALS);
+    await settings.write({ showsProfilesBeforeSignIn: true });
+    await households.savePhoto(store.user[0]?.id ?? '', {
+      body: await aPicture(),
+      contentType: 'image/png',
+    });
+
+    const shown = ProfileListSchema.parse(
+      await (await app.request(`${BASE}/api/profiles/everyone`)).json(),
+    );
+    const [face] = shown.profiles;
+    const picture = await app.request(`${BASE}/api/profiles/${face?.id ?? ''}/household`);
+    const signIn = await app.request(`${BASE}/api/profiles/${face?.id ?? ''}/sign-in`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: BASE },
+      body: JSON.stringify({ password: CREDENTIALS.password }),
+    });
+
+    hidden.isWaiting = true;
+
+    const whileWaiting = ProfileListSchema.parse(
+      await (await app.request(`${BASE}/api/profiles/everyone`)).json(),
+    );
+
+    expect(shown.profiles).toHaveLength(1);
+    expect(face?.name).toBe(CREDENTIALS.name);
+    expect(face?.id).not.toBe(store.user[0]?.id);
+    expect(picture.status).toBe(200);
+    expect(signIn.status).toBe(200);
+    expect(whileWaiting.profiles).toHaveLength(0);
+  });
+
   it('never says an address to somebody who has not signed in', async () => {
     const { app, auth } = build();
     const cookie = await signUpForTest(app, auth, CREDENTIALS);
