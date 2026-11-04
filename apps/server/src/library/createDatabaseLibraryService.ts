@@ -332,27 +332,22 @@ const searchRank = (search: string) => {
  * @returns The ordering, as the clauses to apply in turn.
  */
 const orderingFor = (options: ListItemsOptions) => {
+  const byTitle = asc(sql`coalesce(${mediaItem.sortTitle}, ${mediaItem.title})`);
+
   if (options.search !== undefined && options.search.trim() !== '') {
     return [
       asc(searchRank(options.search)),
       nullsLast(mediaItem.rating, 'desc'),
-      asc(mediaItem.title),
+      byTitle,
       asc(mediaItem.id),
     ];
   }
 
   if (options.order === 'yourRating' && options.profileId !== undefined) {
-    return [
-      nullsLast(yourStars(options.profileId), 'desc'),
-      asc(mediaItem.title),
-      asc(mediaItem.id),
-    ];
+    return [nullsLast(yourStars(options.profileId), 'desc'), byTitle, asc(mediaItem.id)];
   }
 
-  return [
-    options.order === 'newest' ? desc(mediaItem.addedAt) : asc(mediaItem.title),
-    asc(mediaItem.id),
-  ];
+  return [options.order === 'newest' ? desc(mediaItem.addedAt) : byTitle, asc(mediaItem.id)];
 };
 
 /**
