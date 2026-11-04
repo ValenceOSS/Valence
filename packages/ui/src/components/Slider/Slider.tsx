@@ -25,6 +25,13 @@ const STRETCH_MOST = 1;
 
 const SETTLES_AFTER_MS = 120;
 
+const KEY_DIRECTIONS: Readonly<Partial<Record<string, 1 | -1>>> = {
+  ArrowRight: 1,
+  ArrowUp: 1,
+  ArrowLeft: -1,
+  ArrowDown: -1,
+};
+
 const NOTCH_CLASSES: Record<SliderTone, string> = {
   default: 'bg-surface',
   overlay: 'bg-scrim',
@@ -51,7 +58,9 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  * @param value - Where the handle sits now.
  * @param min - The smallest value the track reaches, nothing unless said.
  * @param max - The largest value the track reaches.
- * @param step - How far each press of an arrow key moves it.
+ * @param step - How far each press of an arrow key moves it, and what a dragged value snaps to.
+ * @param onArrowKey - Takes the arrow keys over, told which way each one points, in place of the
+ *   handle moving a step — as a seek bar hands them to the player's own skip.
  * @param onValueChange - Told the new value as the handle moves.
  * @param onValueCommit - Told the value somebody settled on, once they let go of the handle or
  *   finish with the keys — for a value that is costly to change, such as where a song is.
@@ -78,6 +87,7 @@ const Slider = ({
   min = 0,
   max,
   step = 1,
+  onArrowKey,
   onValueChange,
   onValueCommit,
   renderPreview,
@@ -233,7 +243,19 @@ const Slider = ({
           onValueChange(next[0] ?? 0);
         }}
         onValueCommit={(next) => {
-          onValueCommit?.(next[0] ?? 0);
+          queueMicrotask(() => {
+            onValueCommit?.(next[0] ?? 0);
+          });
+        }}
+        onKeyDown={(event) => {
+          const direction = KEY_DIRECTIONS[event.key];
+
+          if (onArrowKey === undefined || direction === undefined || isDisabled || max <= min) {
+            return;
+          }
+
+          event.preventDefault();
+          onArrowKey(direction);
         }}
         onPointerDown={() => {
           setIsDragging(true);

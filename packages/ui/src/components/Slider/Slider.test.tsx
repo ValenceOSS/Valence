@@ -124,6 +124,80 @@ describe('Slider', () => {
     expect(onSeek).toHaveBeenCalledWith(31);
   });
 
+  it('hands the arrow keys to whoever takes them over, and moves nothing itself', async () => {
+    const onChange = vi.fn();
+    const onCommit = vi.fn();
+    const onArrowKey = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Slider
+        label="Seek"
+        value={30}
+        max={120}
+        onArrowKey={onArrowKey}
+        onValueChange={onChange}
+        onValueCommit={onCommit}
+      />,
+    );
+
+    slider().focus();
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowLeft}{ArrowDown}');
+
+    expect(onArrowKey.mock.calls).toEqual([[1], [1], [-1], [-1]]);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it('takes no arrow keys while it is turned off', () => {
+    const onArrowKey = vi.fn();
+    render(
+      <Slider
+        label="Seek"
+        value={30}
+        max={120}
+        isDisabled
+        onArrowKey={onArrowKey}
+        onValueChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.keyDown(slider(), { key: 'ArrowRight' });
+
+    expect(onArrowKey).not.toHaveBeenCalled();
+  });
+
+  it('takes no arrow keys before it has anywhere to go', () => {
+    const onArrowKey = vi.fn();
+    render(
+      <Slider label="Seek" value={0} max={0} onArrowKey={onArrowKey} onValueChange={vi.fn()} />,
+    );
+
+    fireEvent.keyDown(slider(), { key: 'ArrowRight' });
+
+    expect(onArrowKey).not.toHaveBeenCalled();
+  });
+
+  it('says a value from the keys changed before it says it settled, so a preview of it is let go', async () => {
+    const heard: string[] = [];
+    const user = userEvent.setup();
+    render(
+      <Slider
+        label="Seek"
+        value={30}
+        max={120}
+        onValueChange={(value) => heard.push(`change ${value.toString()}`)}
+        onValueCommit={(value) => heard.push(`commit ${value.toString()}`)}
+      />,
+    );
+
+    slider().focus();
+    await user.keyboard('{End}');
+
+    await waitFor(() => {
+      expect(heard).toEqual(['change 120', 'commit 120']);
+    });
+  });
+
   it('starts its track wherever it is told to, and goes no lower', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();

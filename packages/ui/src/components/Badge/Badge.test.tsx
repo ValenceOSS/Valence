@@ -68,6 +68,16 @@ describe('Badge', () => {
     expect(badgeOf('Two')).toHaveClass('bg-accent/15', 'text-accent');
   });
 
+  it('is small and round as a count pinned to an icon, so the icon still shows', () => {
+    render(
+      <Badge tone="bright" size="count">
+        9+
+      </Badge>,
+    );
+
+    expect(badgeOf('9+')).toHaveClass('h-4', 'min-w-4', 'rounded-full', 'text-[0.625rem]');
+  });
+
   it('sets its text in medium weight', () => {
     render(<Badge>4K</Badge>);
 

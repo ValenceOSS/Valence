@@ -41,6 +41,7 @@ const TONE_ICONS: Partial<Record<BadgeTone, IconGlyph>> = {
 const SIZE_CLASSES: Record<BadgeSize, string> = {
   sm: 'h-6 gap-1 px-2 text-xs',
   md: 'h-7 gap-1.5 px-2.5 text-[0.8125rem]',
+  count: 'h-4 min-w-4 rounded-full px-1 text-[0.625rem]',
 };
 
 /**
@@ -59,7 +60,8 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  *   somebody chose one for. It replaces the tone, tinted the way every tone is: a wash of the colour
  *   behind words in it.
  * @param icon - A mark of its own after the words, in place of the one its tone carries.
- * @param size - Whether it sits inline with text or stands slightly apart.
+ * @param size - Whether it sits inline with text, stands slightly apart, or is a count pinned to the
+ *   corner of an icon.
  * @param className - Extra classes for the caller's own layout.
  */
 const Badge = ({

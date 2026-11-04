@@ -8,6 +8,7 @@ type SliderProps = {
   min?: number;
   max: number;
   step?: number;
+  onArrowKey?: (direction: 1 | -1) => void;
   onValueChange: (value: number) => void;
   onValueCommit?: (value: number) => void;
   renderPreview?: (value: number) => ReactNode;

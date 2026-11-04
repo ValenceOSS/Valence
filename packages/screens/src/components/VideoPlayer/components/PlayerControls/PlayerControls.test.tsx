@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { PlayerControls } from './PlayerControls';
+import { SKIP_SECONDS } from './PlayerControls.types';
 import type { PlayerControlsProps } from './PlayerControls.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -28,55 +29,57 @@ const anEpisode = (id: string, episodeNumber: number, title: string): MediaSumma
 
 const SEASON = [anEpisode('media-1', 1, 'I Was Stolen Away'), anEpisode('media-2', 2, 'I Died')];
 
+const propsOf = (overrides: Partial<PlayerControlsProps> = {}): PlayerControlsProps => ({
+  title: 'Arrival',
+  isPlaying: false,
+  position: 30,
+  duration: 7200,
+  volume: 1,
+  boost: 1,
+  isMuted: false,
+  isFullscreen: false,
+  isShowingStats: false,
+  playbackRate: 1,
+  subtitleTracks: [
+    {
+      id: 'en',
+      language: 'en',
+      label: 'English',
+      format: 'srt',
+      isForced: false,
+      isHearingImpaired: false,
+      delivery: 'text' as const,
+      streamIndex: null,
+    },
+  ],
+  selectedSubtitleId: 'off',
+  audioTracks: [],
+  selectedAudioIndex: null,
+  availableQualitySteps: [],
+  selectedQuality: 'original',
+  onTogglePlay: vi.fn(),
+  onSeek: vi.fn(),
+  onSkip: vi.fn(),
+  onPlaybackRateChange: vi.fn(),
+  onSubtitleChange: vi.fn(),
+  onAudioChange: vi.fn(),
+  onQualityChange: vi.fn(),
+  playingId: 'media-1',
+  isShowingRemaining: false,
+  onToggleTimeDisplay: vi.fn(),
+  captionStyle: DEFAULT_CAPTION_STYLE,
+  onCaptionStyleChange: vi.fn(),
+  onCaptionStyleReset: vi.fn(),
+  onVolumeChange: vi.fn(),
+  onBoostChange: vi.fn(),
+  onToggleMute: vi.fn(),
+  onToggleFullscreen: vi.fn(),
+  onToggleStats: vi.fn(),
+  ...overrides,
+});
+
 const draw = (overrides: Partial<PlayerControlsProps> = {}) => {
-  const props: PlayerControlsProps = {
-    title: 'Arrival',
-    isPlaying: false,
-    position: 30,
-    duration: 7200,
-    volume: 1,
-    boost: 1,
-    isMuted: false,
-    isFullscreen: false,
-    isShowingStats: false,
-    playbackRate: 1,
-    subtitleTracks: [
-      {
-        id: 'en',
-        language: 'en',
-        label: 'English',
-        format: 'srt',
-        isForced: false,
-        isHearingImpaired: false,
-        delivery: 'text' as const,
-        streamIndex: null,
-      },
-    ],
-    selectedSubtitleId: 'off',
-    audioTracks: [],
-    selectedAudioIndex: null,
-    availableQualitySteps: [],
-    selectedQuality: 'original',
-    onTogglePlay: vi.fn(),
-    onSeek: vi.fn(),
-    onSkip: vi.fn(),
-    onPlaybackRateChange: vi.fn(),
-    onSubtitleChange: vi.fn(),
-    onAudioChange: vi.fn(),
-    onQualityChange: vi.fn(),
-    playingId: 'media-1',
-    isShowingRemaining: false,
-    onToggleTimeDisplay: vi.fn(),
-    captionStyle: DEFAULT_CAPTION_STYLE,
-    onCaptionStyleChange: vi.fn(),
-    onCaptionStyleReset: vi.fn(),
-    onVolumeChange: vi.fn(),
-    onBoostChange: vi.fn(),
-    onToggleMute: vi.fn(),
-    onToggleFullscreen: vi.fn(),
-    onToggleStats: vi.fn(),
-    ...overrides,
-  };
+  const props = propsOf(overrides);
 
   render(<PlayerControls {...props} />);
 
@@ -118,14 +121,33 @@ describe('PlayerControls', () => {
     expect(screen.getByRole('slider', { name: 'Seek through Arrival' })).toBeInTheDocument();
   });
 
-  it('reports a seek', async () => {
+  it('skips from the keyboard, as the shortcut does with the bar unfocused', async () => {
     const user = userEvent.setup();
     const props = draw();
 
     screen.getByRole('slider', { name: 'Seek through Arrival' }).focus();
-    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowRight}{ArrowLeft}');
 
-    expect(props.onSeek).toHaveBeenCalledWith(31);
+    expect(vi.mocked(props.onSkip).mock.calls).toEqual([[SKIP_SECONDS], [-SKIP_SECONDS]]);
+    expect(props.onSeek).not.toHaveBeenCalled();
+  });
+
+  it('goes back to showing the time played once a seek from the keyboard has settled', async () => {
+    const user = userEvent.setup();
+    const props = propsOf();
+    const { rerender } = render(<PlayerControls {...props} />);
+
+    screen.getByRole('slider', { name: 'Seek through Arrival' }).focus();
+    await user.keyboard('{Home}');
+    await waitFor(() => {
+      expect(props.onSeek).toHaveBeenCalledWith(0);
+    });
+    rerender(<PlayerControls {...props} position={95} />);
+
+    expect(screen.getByRole('slider', { name: 'Seek through Arrival' })).toHaveAttribute(
+      'aria-valuenow',
+      '95',
+    );
   });
 
   it('shows volume as a percentage of the way up', () => {

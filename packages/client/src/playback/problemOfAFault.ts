@@ -10,6 +10,8 @@ const STREAMING = 5;
 
 const QUOTA_EXCEEDED = 3017;
 
+const CONTENT_UNSUPPORTED_BY_BROWSER = 4032;
+
 const ELEMENT_LOST_THE_NETWORK = 2;
 
 const ELEMENT_COULD_NOT_DECODE = 3;
@@ -23,8 +25,8 @@ type Fault =
 
 /**
  * Which playback problem a fault is, once nothing more can be done about it here: a stream that
- * stopped arriving, one the device could not decode, or a picture that stopped while the sound
- * went on. A stream that played for a while before it would not decode had something wrong part of
+ * stopped arriving, one the device could not decode or would not take at all, or a picture that
+ * stopped while the sound went on. A stream that played for a while before it would not decode had something wrong part of
  * the way in, which is the file rather than the device, so it is called damaged; one that never
  * played is a format the device and the server between them could not manage.
  *
@@ -49,6 +51,10 @@ const problemOfAFault = (fault: Fault, hasPlayed: boolean): PlaybackProblem | 'r
 
   if (fault.code === QUOTA_EXCEEDED) {
     return 'streamLost';
+  }
+
+  if (fault.code === CONTENT_UNSUPPORTED_BY_BROWSER) {
+    return undecodable;
   }
 
   if (fault.category === NETWORK || fault.category === MANIFEST || fault.category === STREAMING) {

@@ -5,12 +5,15 @@ const MEDIA = 3;
 
 const QUOTA_EXCEEDED = 3017;
 
+const CONTENT_UNSUPPORTED_BY_BROWSER = 4032;
+
 /**
  * What to ask the server to convert after a stream failed to decode, the way Jellyfin retries: the
  * picture first, then the sound as well, then nothing more. A copy of a file a device should play
  * can still hold something its decoder refuses, such as a stretch of a download that was never
- * written, which the server's encoder reads past. Only a decoding failure is retried, since
- * converting does nothing for a network that dropped or a buffer that filled.
+ * written, which the server's encoder reads past. Only a decoding failure, or a stream the browser
+ * would not take at all, is retried, since converting does nothing for a network that dropped or a
+ * buffer that filled.
  *
  * @param options - The plan that failed, what was already converted, and the engine's fault, or
  *   nothing where the element itself refused the stream.
@@ -28,7 +31,11 @@ const whatToConvertNext = ({
   converted: Converted | undefined;
   fault: { category: number; code?: number } | null;
 }): Converted | null => {
-  if (fault !== null && (fault.category !== MEDIA || fault.code === QUOTA_EXCEEDED)) {
+  const isUndecodable =
+    (fault?.category === MEDIA && fault.code !== QUOTA_EXCEEDED) ||
+    fault?.code === CONTENT_UNSUPPORTED_BY_BROWSER;
+
+  if (fault !== null && !isUndecodable) {
     return null;
   }
 

@@ -43,7 +43,7 @@ const StartRequest = z
       .boolean()
       .optional()
       .describe(
-        'Whether this client can choose the sound itself from the whole file. Sent with the track it wants: where the file could be handed over whole it is, and the client picks that track from it; otherwise the track is delivered as asked.',
+        'Whether this client can choose the sound itself from the whole file. Sent with the track it wants, or without one to take whichever the server chooses: where the file could be handed over whole it is, whichever track that is, and the client picks it from the file; otherwise the track is delivered as asked.',
       ),
     isReadiedAhead: z
       .boolean()
