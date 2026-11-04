@@ -427,7 +427,10 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
       return undefined;
     }
 
-    Animated.spring(placeIn(places, opened.key), { ...MOVE, toValue: IN_PLACE }).start();
+    setArrivingKey(opened.key);
+    Animated.spring(placeIn(places, opened.key), { ...MOVE, toValue: IN_PLACE }).start(() => {
+      setArrivingKey((still) => (still === opened.key ? null : still));
+    });
     Animated.spring(placeIn(places, gone.key), { ...MOVE, toValue: PUSHED_OFF }).start(() => {
       places.delete(gone.key);
       setLeaving((still) => (still?.key === gone.key ? null : still));

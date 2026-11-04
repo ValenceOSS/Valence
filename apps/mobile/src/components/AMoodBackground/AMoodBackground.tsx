@@ -46,8 +46,17 @@ const styles = StyleSheet.create({
  *
  * @param lights - The colours to light it with, or none for the house colours.
  * @param palette - Colours read from a picture, each with where it belongs, which light it instead.
+ * @param ground - The colour beneath the lights, drawn as part of the same picture, for a page that
+ *   would otherwise lay it under them as a screenful of its own.
+ * @param veil - A colour laid over the lights, drawn as part of the same picture, for the same
+ *   reason.
  */
-const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBackgroundProps) => {
+const AMoodBackground = ({
+  lights = NO_LIGHTS,
+  palette = NO_PALETTE,
+  ground,
+  veil,
+}: AMoodBackgroundProps) => {
   const colours = useTheColours();
   const [lit] = useState(() => new Animated.Value(lights.length === 0 ? 0 : 1));
   const [held, setHeld] = useState(lights[0] ?? null);
@@ -145,7 +154,7 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   return (
     <View
       pointerEvents="none"
-      style={styles.fills}
+      style={[styles.fills, ground === undefined ? null : { backgroundColor: ground }]}
       shouldRasterizeIOS={settledOn === lookingAt}
       renderToHardwareTextureAndroid={settledOn === lookingAt}
     >
@@ -186,6 +195,8 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
           },
         ]}
       />
+
+      {veil === undefined ? null : <View style={[styles.fills, { backgroundColor: veil }]} />}
     </View>
   );
 };

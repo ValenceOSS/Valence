@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
  * freezes on a frame and vanishes; it stops at once where a page or the player covers it. It is let
  * go a moment after, since the page may be drawing the same clip behind itself and fading it out.
  * On mobile data, and on a phone too slight to keep up with a clip, there is no clip at all, only
- * the backdrop.
+ * the backdrop, and whoever asked whether one is being found is told none is coming.
  *
  * Something the library does not hold is given where its clip is instead, such as a trailer the
  * server streams, and has no backdrop of its own drawn, since whatever holds it draws one.
@@ -66,7 +66,8 @@ const APreview = (props: APreviewProps) => {
   const clipAt = 'clip' in props ? props.clip : `/api/media/${props.mediaId}/preview`;
   const isOnTop = useIsOnTop();
   const isOnMobileData = useIsOnMobileData();
-  const isShowing = isAskedToShow && isOnTop && !isOnMobileData && keepsUpWithPreviews();
+  const isRuledOut = isOnMobileData || !keepsUpWithPreviews();
+  const isShowing = isAskedToShow && isOnTop && !isRuledOut;
   const [clip, setClip] = useState<VideoSource | null>(null);
   const [framing, setFraming] = useState<ClipFraming | null>(null);
   const [isNotComing, setIsNotComing] = useState(false);
@@ -196,10 +197,10 @@ const APreview = (props: APreviewProps) => {
   }, [isPlaying]);
 
   useEffect(() => {
-    if (onFinding !== undefined && isShowing) {
-      onFinding(isNotComing ? 'none' : hasPlayed ? 'found' : 'finding');
+    if (onFinding !== undefined && isAskedToShow && isOnTop) {
+      onFinding(isRuledOut || isNotComing ? 'none' : hasPlayed ? 'found' : 'finding');
     }
-  }, [onFinding, isShowing, isNotComing, hasPlayed]);
+  }, [onFinding, isAskedToShow, isOnTop, isRuledOut, isNotComing, hasPlayed]);
 
   const zoom = (() => {
     if (framing === null || held === null) {

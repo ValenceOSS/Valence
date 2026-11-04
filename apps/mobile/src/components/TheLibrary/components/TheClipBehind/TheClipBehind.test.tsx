@@ -5,7 +5,7 @@ import { TheClipBehind } from './TheClipBehind';
 describe('TheClipBehind', () => {
   it('draws what sits in front of it while no clip plays', async () => {
     const drawn = await render(
-      <TheClipBehind player={null}>
+      <TheClipBehind player={null} veil="rgba(0, 0, 0, 0.28)">
         <Text>Home</Text>
       </TheClipBehind>,
     );

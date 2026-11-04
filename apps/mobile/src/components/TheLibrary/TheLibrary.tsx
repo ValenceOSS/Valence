@@ -222,15 +222,21 @@ const TheLibrary = ({
     setSeen((was) => (was.has(side) ? was : new Set([...was, side])));
   }, [side]);
   const [along] = useState(() => new Animated.Value(SIDES.indexOf(side)));
+  const [isSliding, setIsSliding] = useState(false);
 
   useEffect(() => {
     setIsBarAway(false);
+    setIsSliding(true);
     Animated.timing(along, {
       toValue: SIDES.indexOf(side),
       duration: BAR_MOVES_OVER,
       easing: EASINGS.inOutCubic,
       useNativeDriver: true,
-    }).start();
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsSliding(false);
+      }
+    });
   }, [side, along]);
   const turnedAt = useRef(0);
   const isAway = isBarAway && !isAside;
@@ -398,14 +404,13 @@ const TheLibrary = ({
    * @returns It, lit.
    */
   const lit = (drawn: ReactNode) => (
-    <View style={[styles.lit, { backgroundColor: colours.surface }]}>
-      <TheClipBehind player={part === 'home' && !isAside && isOnTop ? clip : null}>
-        <AMoodBackground palette={palette} />
+    <View style={styles.lit}>
+      <TheClipBehind
+        player={part === 'home' && !isAside && isOnTop ? clip : null}
+        veil={theVeilFor(colours)}
+      >
+        <AMoodBackground palette={palette} ground={colours.surface} veil={theVeilFor(colours)} />
       </TheClipBehind>
-      <View
-        style={[StyleSheet.absoluteFill, { backgroundColor: theVeilFor(colours) }]}
-        pointerEvents="none"
-      />
       <ARRIVING.Provider value={arriving}>{drawn}</ARRIVING.Provider>
       {bar}
     </View>
@@ -729,6 +734,7 @@ const TheLibrary = ({
     <>
       <Animated.View
         collapsable={false}
+        renderToHardwareTextureAndroid={isSliding}
         pointerEvents={isAside ? 'none' : 'box-none'}
         style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.home }] }]}
       >
@@ -774,6 +780,7 @@ const TheLibrary = ({
           <Animated.View
             key={which}
             collapsable={false}
+            renderToHardwareTextureAndroid={isSliding}
             pointerEvents={side === which ? 'box-none' : 'none'}
             accessibilityElementsHidden={side !== which}
             importantForAccessibility={side === which ? 'auto' : 'no-hide-descendants'}
