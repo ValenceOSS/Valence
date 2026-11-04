@@ -1,5 +1,10 @@
 import { fetchTitleValues } from '@ValenceClient/admin/fetchTitleValues';
 import { fetchTitleFiles } from '@ValenceClient/admin/fetchTitleFiles';
+import { fetchTitlePage } from '@ValenceClient/admin/fetchTitlePage';
+import { fetchTitleKeys } from '@ValenceClient/admin/fetchTitleKeys';
+import { fetchTitleChoices } from '@ValenceClient/admin/fetchTitleChoices';
+import { fetchLibraryProblems } from '@ValenceClient/admin/fetchLibraryProblems';
+import type { TitleListAsk } from '@ValenceClient/admin/TitleListAsk.types';
 import type { TitleValueField } from '@ValenceContracts/schemas/TitleList';
 import { fetchMatchPreview } from '@ValenceClient/admin/fetchMatchPreview';
 import { fetchTitleHistory, fetchTitleMetadata } from '@ValenceClient/admin/fetchTitleMetadata';
@@ -21,7 +26,7 @@ import { fetchTheirActivity } from '@ValenceClient/admin/fetchTheirActivity';
 import { fetchTheirLibraries } from '@ValenceClient/admin/fetchTheirLibraries';
 import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
 import { fetchBooks } from '@ValenceClient/books/fetchBooks';
-import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import {
   fetchAdminOverview,
   fetchRunningScans,
@@ -698,6 +703,59 @@ const titleValues = (field: TitleValueField, libraryId?: string) =>
   });
 
 /**
+ * A library's titles read a page after another as the list is scrolled, searched, filtered and put
+ * in order on the server.
+ *
+ * @param asked - The library, order, search, quick filter and filter chips.
+ * @returns The query.
+ */
+const titlePages = (asked: TitleListAsk) =>
+  infiniteQueryOptions({
+    queryKey: [...ADMIN, 'title-pages', asked],
+    initialPageParam: '',
+    queryFn: ({ pageParam }) => fetchTitlePage(asked, pageParam === '' ? undefined : pageParam),
+    getNextPageParam: (last) => last.next ?? undefined,
+    enabled: asked.libraryId !== '',
+    placeholderData: keepPreviousData,
+  });
+
+/**
+ * Every title a listing asks for, named, for selecting all of them.
+ *
+ * @param asked - The library, order, search, quick filter and filter chips.
+ * @returns The query options.
+ */
+const titleKeys = (asked: TitleListAsk) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-keys', asked],
+    queryFn: () => fetchTitleKeys(asked),
+  });
+
+/**
+ * What a library's filters can be set to.
+ *
+ * @param libraryId - The library, or nothing where none is chosen.
+ * @returns The query options.
+ */
+const titleChoices = (libraryId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-choices', libraryId],
+    queryFn: () => fetchTitleChoices(libraryId ?? ''),
+    enabled: libraryId !== null && libraryId !== '',
+  });
+
+/**
+ * How many titles in each library need a look.
+ *
+ * @returns The query options.
+ */
+const libraryProblems = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'library-problems'],
+    queryFn: fetchLibraryProblems,
+  });
+
+/**
  * Every file of the title one file belongs to, for opening it straight from an address.
  *
  * @param mediaId - One file of the title, or nothing where none is asked for.
@@ -875,6 +933,10 @@ const adminQueries = {
   titleHistory,
   matchPreview,
   titleValues,
+  titlePages,
+  titleKeys,
+  titleChoices,
+  libraryProblems,
   titleFiles,
   statistics,
   libraryHealth,

@@ -1,4 +1,7 @@
-import type { MediaView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaPanel.types';
+import type {
+  ListPlace,
+  MediaView,
+} from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaPanel.types';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -14,6 +17,8 @@ type MediaTabProps = {
   onTitlePlace?: (place: TitlePlace) => void;
   view?: MediaView;
   onView?: (view: MediaView) => void;
+  listPlace?: ListPlace;
+  onListPlace?: (place: ListPlace) => void;
   folder?: string | null;
   onFolder?: (path: string | null) => void;
   onFilesChanged?: () => void;

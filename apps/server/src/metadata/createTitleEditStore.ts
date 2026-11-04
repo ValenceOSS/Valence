@@ -176,6 +176,8 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
    *   nothing to put the field back to the catalogue's.
    * @param actor - Who made the change.
    * @param action - What kind of change it was.
+   * @param sharedSetId - The change set to add it to, where it is one title of a change made to
+   *   many at once.
    * @returns The change set's id, or nothing where nothing changed.
    */
   const change = async (
@@ -183,9 +185,10 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
     changes: readonly FieldChange[],
     actor: Actor,
     action: z.infer<typeof ActionSchema>,
+    sharedSetId?: string,
   ): Promise<string | null> => {
     const held = await editsFor(subject.libraryId, [subject.key]);
-    const changeSetId = randomUUID();
+    const changeSetId = sharedSetId ?? randomUUID();
     const at = now();
     const kept = changes.flatMap((one) => {
       const before = held.find((edit) => edit.field === one.field);
@@ -315,13 +318,23 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
    * been changed again since.
    *
    * @param changeSetId - The change set.
+   * @param of - The title to undo it for, where the change set was made to many titles at once.
    * @returns The title and each field's state before the change, or why it cannot be undone.
    */
-  const planUndo = async (changeSetId: string): Promise<UndoPlan> => {
+  const planUndo = async (
+    changeSetId: string,
+    of?: { libraryId: string; key: string },
+  ): Promise<UndoPlan> => {
     const rows = await db
       .select()
       .from(titleChange)
-      .where(eq(titleChange.changeSetId, changeSetId));
+      .where(
+        and(
+          eq(titleChange.changeSetId, changeSetId),
+          of === undefined ? undefined : eq(titleChange.libraryId, of.libraryId),
+          of === undefined ? undefined : eq(titleChange.subjectKey, of.key),
+        ),
+      );
     const [first] = rows;
     const kind = SubjectKindSchema.safeParse(first?.subjectKind);
 

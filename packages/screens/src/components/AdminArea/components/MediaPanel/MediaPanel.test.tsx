@@ -1,11 +1,20 @@
 import { render as renderBare, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import type { ReactElement } from 'react';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { MediaPanel } from './MediaPanel';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { TitleRow } from '@ValenceContracts/schemas/TitleList';
+import type { TitleListAsk } from '@ValenceClient/admin/TitleListAsk.types';
+import type { MediaTitle } from './MediaTitle.types';
+import { gatherTitles } from './gatherTitles';
+import { filesOf } from './filesOf';
+import { lengthOf } from './lengthOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
+import { titleFolderOf } from '@ValenceCore/functions/titleFolderOf';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 
 /**
  * Draws the component under the cache the queries it makes need.
@@ -15,9 +24,193 @@ import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
  */
 const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
 
+const server = vi.hoisted(() => ({
+  page: vi.fn(),
+  keys: vi.fn(),
+  problems: vi.fn(),
+  choices: vi.fn(),
+  files: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/admin/fetchTitlePage', () => ({ fetchTitlePage: server.page }));
+vi.mock('@ValenceClient/admin/fetchTitleKeys', () => ({ fetchTitleKeys: server.keys }));
+vi.mock('@ValenceClient/admin/fetchLibraryProblems', () => ({
+  fetchLibraryProblems: server.problems,
+}));
+vi.mock('@ValenceClient/admin/fetchTitleChoices', () => ({ fetchTitleChoices: server.choices }));
+vi.mock('@ValenceClient/admin/fetchTitleFiles', () => ({ fetchTitleFiles: server.files }));
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+beforeEach(() => {
+  served([]);
+});
+
+type Served = {
+  paths?: Readonly<Record<string, string>>;
+  duplicate?: readonly { id: string; path: string; group: string | null }[];
+};
+
+/**
+ * The value every file of a title shares, or that they differ.
+ *
+ * @param values - One a file.
+ * @returns The shared value, and whether they differ.
+ */
+const sharedBy = <Value,>(values: readonly Value[]) => {
+  const [first] = values;
+  const isMixed = values.some((value) => JSON.stringify(value) !== JSON.stringify(first));
+
+  return { value: isMixed || first === undefined ? null : first, isMixed };
+};
+
+/**
+ * A title as the server lists it, worked out here from its files.
+ *
+ * @param title - The title, gathered from its files.
+ * @param served - Where each file is, and which are there twice.
+ * @returns The row.
+ */
+const rowOf = (title: MediaTitle, served: Served): TitleRow => {
+  const files = filesOf(title);
+  const paths = served.paths ?? {};
+  const step = sharedBy(files.map((file) => sharpestStepOf(file)?.label ?? ''));
+  const range = sharedBy(files.map((file) => file.videoRange));
+  const codec = sharedBy(files.map((file) => file.videoCodec));
+  const audio = sharedBy(files.map((file) => file.audio ?? null));
+  const held = files.map((file) => paths[file.id]).filter((path) => path !== undefined);
+  const ids = new Set(files.map((file) => file.id));
+
+  return {
+    id: title.id,
+    key: title.id,
+    kind: title.kind === 'series' ? 'show' : 'film',
+    libraryId: title.libraryId,
+    lead: title.lead,
+    name: title.name,
+    order: title.order,
+    year: title.year,
+    files: files.length,
+    versions: title.kind === 'film' ? Math.max(0, title.parts.length - 1) : 0,
+    seasons: title.seasons,
+    episodes: title.kind === 'series' ? title.episodes.length : 0,
+    sizeBytes: title.sizeBytes,
+    durationSeconds: lengthOf(title),
+    latestAddedAt: title.addedAt,
+    isMatched: title.isMatched,
+    posterFrom: title.posterFrom,
+    folder:
+      title.kind === 'film'
+        ? held[0] === undefined
+          ? null
+          : folderOf(held[0])
+        : titleFolderOf(held),
+    leadPath: paths[title.lead.id] ?? null,
+    looks: {
+      step: step.value === '' ? null : step.value,
+      isStepMixed: step.isMixed,
+      range: range.value,
+      isRangeMixed: range.isMixed,
+      codec: codec.value,
+      isCodecMixed: codec.isMixed,
+      audio: audio.value,
+      isAudioMixed: audio.isMixed,
+    },
+    problemFiles: {
+      duplicate: (served.duplicate ?? []).map((one) => ({ ...one, isOwn: ids.has(one.id) })),
+      unreadable: [],
+    },
+    isEdited: false,
+  };
+};
+
+/**
+ * Answers the list's questions of the server from some files, as the server would: a library's
+ * titles a page at a time, searched, quick-filtered and in order, a title's files, and how many in
+ * each library need a look.
+ *
+ * @param media - Every file the libraries hold.
+ * @param served - Where each file is, and which are there twice.
+ */
+const served = (media: readonly MediaSummary[], given: Served = {}) => {
+  const titles = gatherTitles(media);
+  const needsALook = (title: MediaTitle) =>
+    !title.isMatched || (title.kind === 'film' && title.posterFrom === null);
+
+  const listed = (asked: TitleListAsk) => {
+    const words = asked.search.toLowerCase();
+    const searched = titles.filter(
+      (title) => title.libraryId === asked.libraryId && title.name.toLowerCase().includes(words),
+    );
+    const valueOf = (title: MediaTitle) =>
+      asked.sort === 'size' ? String(title.sizeBytes ?? 0).padStart(15, '0') : title.order;
+    const shown = searched
+      .filter((title) => asked.show !== 'look' || needsALook(title))
+      .sort(
+        (left, right) =>
+          valueOf(left).localeCompare(valueOf(right)) * (asked.isDescending ? -1 : 1),
+      );
+
+    return { searched, shown };
+  };
+
+  server.page.mockImplementation((asked: TitleListAsk) => {
+    const { searched, shown } = listed(asked);
+
+    return Promise.resolve({
+      titles: shown.map((title) => rowOf(title, given)),
+      next: null,
+      total: shown.length,
+      counts: {
+        all: searched.length,
+        look: searched.filter(needsALook).length,
+        twice: 0,
+        unreadable: 0,
+        edited: 0,
+      },
+    });
+  });
+  server.keys.mockImplementation((asked: TitleListAsk) =>
+    Promise.resolve({
+      titles: listed(asked).shown.map((title) => ({
+        id: title.id,
+        leadId: title.lead.id,
+        kind: title.kind === 'series' ? 'show' : 'film',
+        name: title.name,
+      })),
+    }),
+  );
+  server.problems.mockImplementation(() => {
+    const counts = new Map<string, number>();
+
+    for (const title of titles.filter(needsALook)) {
+      counts.set(title.libraryId, (counts.get(title.libraryId) ?? 0) + 1);
+    }
+
+    return Promise.resolve({
+      libraries: [...counts].map(([libraryId, count]) => ({ libraryId, titles: count })),
+    });
+  });
+  server.choices.mockImplementation(() => Promise.resolve({ filters: [] }));
+  server.files.mockImplementation((id: string) => {
+    const title = titles.find((one) => one.id === id || one.lead.id === id);
+
+    return title === undefined
+      ? Promise.reject(new Error('No such item'))
+      : Promise.resolve({
+          files: media.filter((file) =>
+            title.kind === 'series'
+              ? file.libraryId === title.libraryId &&
+                (file.seriesId ?? file.seriesTitle) ===
+                  (title.lead.seriesId ?? title.lead.seriesTitle)
+              : file.id === title.lead.id || file.parentId === title.lead.id,
+          ),
+          paths: given.paths ?? {},
+        });
+  });
+};
 
 const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   id: 'item-1',
@@ -79,7 +272,6 @@ const episode = (id: string, season: number, number: number, title: string): Med
 
 const props = {
   libraries: [library(), SHOWS],
-  media: [],
   onCorrect: vi.fn(),
   onChooseMoment: vi.fn(),
   onRebuildArtefacts: vi.fn().mockResolvedValue(true),
@@ -101,11 +293,24 @@ const chooseFrom = async (
   await user.click(await screen.findByRole('menuitemradio', { name: choice }));
 };
 
+/**
+ * Waits for the list to have read its first page.
+ */
+const loaded = async () => {
+  await waitFor(() => {
+    expect(screen.queryByLabelText('Reading the libraries')).not.toBeInTheDocument();
+  });
+};
+
 const NOWHERE = { tab: 'details', season: null, episode: null, isSeasonPage: false };
 
 describe('MediaPanel', () => {
-  it('lists what the libraries hold', () => {
-    render(<MediaPanel {...props} media={[item()]} />);
+  it('lists what the libraries hold', async () => {
+    served([item()]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     expect(screen.getByText('Parasite')).toBeInTheDocument();
   });
@@ -114,13 +319,19 @@ describe('MediaPanel', () => {
     const user = userEvent.setup();
     const onView = vi.fn();
 
-    const { rerender } = render(<MediaPanel {...props} media={[item()]} onView={onView} />);
+    served([item()]);
+
+    const { rerender } = render(<MediaPanel {...props} onView={onView} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('tab', { name: 'Folders' }));
 
     expect(onView).toHaveBeenCalledWith('folders');
 
-    rerender(<MediaPanel {...props} media={[item()]} view="folders" onView={onView} />);
+    served([item()]);
+
+    rerender(<MediaPanel {...props} view="folders" onView={onView} />);
 
     expect(screen.getByLabelText('Search files and folders')).toBeInTheDocument();
     expect(screen.queryByLabelText('Find a series or film')).not.toBeInTheDocument();
@@ -129,29 +340,43 @@ describe('MediaPanel', () => {
   it('narrows to what was searched for', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item(), item({ id: 'item-2', title: 'Heat' })]} />);
+    served([item(), item({ id: 'item-2', title: 'Heat' })]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.type(screen.getByLabelText('Find a series or film'), 'heat');
 
+    await waitFor(() => {
+      expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
+    });
     expect(screen.getByText('Heat')).toBeInTheDocument();
-    expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
   });
 
   it('says nothing matched, rather than looking like an empty library', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.type(screen.getByLabelText('Find a series or film'), 'zzz');
 
-    expect(screen.getByText(/Nothing matches your search/)).toBeInTheDocument();
+    expect(await screen.findByText(/Nothing matches your search/)).toBeInTheDocument();
   });
 
   it('asks for the item whose match is wrong', async () => {
     const onCorrect = vi.fn();
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onCorrect={onCorrect} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onCorrect={onCorrect} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Wrong match/ }));
@@ -163,7 +388,11 @@ describe('MediaPanel', () => {
     const onChooseArtwork = vi.fn();
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onChooseArtwork={onChooseArtwork} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onChooseArtwork={onChooseArtwork} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Choose artwork/ }));
@@ -176,9 +405,11 @@ describe('MediaPanel', () => {
   it('has no artwork to choose for a title the catalogue never matched', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel {...props} media={[item({ externalId: null })]} onChooseArtwork={vi.fn()} />,
-    );
+    served([item({ externalId: null })]);
+
+    render(<MediaPanel {...props} onChooseArtwork={vi.fn()} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
@@ -189,7 +420,11 @@ describe('MediaPanel', () => {
     const onChooseMoment = vi.fn();
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onChooseMoment={onChooseMoment} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onChooseMoment={onChooseMoment} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: 'Choose the preview frame' }));
@@ -197,28 +432,33 @@ describe('MediaPanel', () => {
     expect(onChooseMoment).toHaveBeenCalledWith(item());
   });
 
-  it('can be sorted by name, so a long list can be read down', async () => {
+  it('is in order by name, and can be turned the other way', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[item({ id: 'z', title: 'Zodiac' }), item({ id: 'a', title: 'Alien' })]}
-      />,
-    );
+    served([item({ id: 'z', title: 'Zodiac' }), item({ id: 'a', title: 'Alien' })]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
+
+    expect(screen.getAllByRole('row')[1]?.textContent).toContain('Alien');
 
     await user.click(screen.getByRole('button', { name: /Title/ }));
 
-    const [, first] = screen.getAllByRole('row');
-
-    expect(first?.textContent).toContain('Alien');
+    await waitFor(() => {
+      expect(screen.getAllByRole('row')[1]?.textContent).toContain('Zodiac');
+    });
   });
 
   it('offers to rebuild one item, for the case where a single preview is wrong', async () => {
     const onRebuildArtefacts = vi.fn().mockResolvedValue(true);
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onRebuildArtefacts={onRebuildArtefacts} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onRebuildArtefacts={onRebuildArtefacts} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
@@ -231,7 +471,11 @@ describe('MediaPanel', () => {
     const onRebuildArtefacts = vi.fn().mockResolvedValue(true);
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onRebuildArtefacts={onRebuildArtefacts} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onRebuildArtefacts={onRebuildArtefacts} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
@@ -249,7 +493,11 @@ describe('MediaPanel', () => {
   it('says it will rebuild rather than that it has, because nothing is made yet', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
@@ -262,13 +510,17 @@ describe('MediaPanel', () => {
   it('leaves the offer standing when the server would not do it', async () => {
     const user = userEvent.setup();
 
+    served([item()]);
+
     render(
       <MediaPanel
         {...props}
-        media={[item()]}
+
         onRebuildArtefacts={vi.fn().mockResolvedValue(false)}
       />,
     );
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
@@ -281,7 +533,11 @@ describe('MediaPanel', () => {
   it('offers no delete to whoever may not delete media', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
@@ -292,7 +548,11 @@ describe('MediaPanel', () => {
     const onDelete = vi.fn().mockResolvedValue(false);
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onDelete={onDelete} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onDelete={onDelete} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Delete file/ }));
@@ -310,7 +570,11 @@ describe('MediaPanel', () => {
   it('offers each library of films or series as its own choice', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item(), episode('e1', 1, 1, 'Pilot')]} />);
+    served([item(), episode('e1', 1, 1, 'Pilot')]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     expect(screen.getByText('Parasite')).toBeInTheDocument();
     expect(screen.queryByText('From')).not.toBeInTheDocument();
@@ -324,12 +588,11 @@ describe('MediaPanel', () => {
   it('says which libraries have titles to fix, so each need not be opened to find them', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[item(), { ...episode('e1', 1, 1, 'Pilot'), externalId: null, hasPoster: false }]}
-      />,
-    );
+    served([item(), { ...episode('e1', 1, 1, 'Pilot'), externalId: null, hasPoster: false }]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: 'Which library' }));
 
@@ -341,12 +604,11 @@ describe('MediaPanel', () => {
   it('lists a series once, sized by all its episodes rather than one', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
-      />,
-    );
+    served([episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
 
@@ -360,16 +622,15 @@ describe('MediaPanel', () => {
   it('opens a series onto its seasons, and a season onto its episodes, in the table’s own columns', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[
-          episode('e3', 2, 1, 'Return'),
-          episode('e1', 1, 1, 'Pilot'),
-          episode('e2', 1, 2, 'Choose Wisely'),
-        ]}
-      />,
-    );
+    served([
+      episode('e3', 2, 1, 'Return'),
+      episode('e1', 1, 1, 'Pilot'),
+      episode('e2', 1, 2, 'Choose Wisely'),
+    ]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
@@ -400,12 +661,11 @@ describe('MediaPanel', () => {
   it('opens a series of one season straight onto its episodes', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
-      />,
-    );
+    served([episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
@@ -418,13 +678,17 @@ describe('MediaPanel', () => {
     const onDelete = vi.fn().mockResolvedValue(true);
     const user = userEvent.setup();
 
+    served([episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]);
+
     render(
       <MediaPanel
         {...props}
-        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
+
         onDelete={onDelete}
       />,
     );
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
@@ -439,7 +703,11 @@ describe('MediaPanel', () => {
     const onDelete = vi.fn().mockResolvedValue(true);
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[episode('e1', 1, 1, 'Pilot')]} onDelete={onDelete} />);
+    served([episode('e1', 1, 1, 'Pilot')]);
+
+    render(<MediaPanel {...props} onDelete={onDelete} />);
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
@@ -462,13 +730,17 @@ describe('MediaPanel', () => {
   it('offers no whole-series delete for episodes that belong to no series', async () => {
     const user = userEvent.setup();
 
+    served([{ ...episode('e1', 1, 1, 'Pilot'), seriesId: null }]);
+
     render(
       <MediaPanel
         {...props}
-        media={[{ ...episode('e1', 1, 1, 'Pilot'), seriesId: null }]}
+
         onDelete={vi.fn().mockResolvedValue(true)}
       />,
     );
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
@@ -480,13 +752,17 @@ describe('MediaPanel', () => {
     const onReencode = vi.fn();
     const user = userEvent.setup();
 
+    served([episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]);
+
     render(
       <MediaPanel
         {...props}
-        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
+
         onReencode={onReencode}
       />,
     );
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
@@ -502,7 +778,11 @@ describe('MediaPanel', () => {
     const onShowCopies = vi.fn();
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onShowCopies={onShowCopies} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onShowCopies={onShowCopies} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: 'Saved copies' }));
@@ -513,13 +793,12 @@ describe('MediaPanel', () => {
     );
   });
 
-  it('shows each title’s poster, and says where there is none', () => {
-    render(
-      <MediaPanel
-        {...props}
-        media={[item(), item({ id: 'item-2', title: 'Heat', hasPoster: false })]}
-      />,
-    );
+  it('shows each title’s poster, and says where there is none', async () => {
+    served([item(), item({ id: 'item-2', title: 'Heat', hasPoster: false })]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     expect(screen.getByLabelText('No artwork')).toBeInTheDocument();
   });
@@ -527,16 +806,15 @@ describe('MediaPanel', () => {
   it('narrows to what is unmatched: no match, or no poster', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[
-          item(),
-          item({ id: 'item-2', title: 'Heat', externalId: null }),
-          item({ id: 'item-3', title: 'Alien', hasPoster: false }),
-        ]}
-      />,
-    );
+    served([
+      item(),
+      item({ id: 'item-2', title: 'Heat', externalId: null }),
+      item({ id: 'item-3', title: 'Alien', hasPoster: false }),
+    ]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     expect(screen.getByText('Unmatched')).toBeInTheDocument();
 
@@ -547,57 +825,38 @@ describe('MediaPanel', () => {
     expect(screen.getByText('Alien')).toBeInTheDocument();
   });
 
-  it('says a matched title is listed for having no poster', () => {
-    render(
-      <MediaPanel {...props} media={[item({ id: 'item-3', title: 'Alien', hasPoster: false })]} />,
-    );
+  it('says a matched title is listed for having no poster', async () => {
+    served([item({ id: 'item-3', title: 'Alien', hasPoster: false })]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     expect(screen.getByText('No poster')).toBeInTheDocument();
     expect(screen.queryByText('Unmatched')).not.toBeInTheDocument();
   });
 
   it('names the files a title shares its match with, under the title', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((path: string) =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify(
-              path.includes('library-health')
-                ? {
-                    checkedAt: '2026-11-03T00:00:00.000Z',
-                    titles: 1,
-                    unmatched: { total: 0, items: [] },
-                    noArtwork: { total: 0, items: [] },
-                    duplicate: {
-                      total: 2,
-                      items: ['item-1', 'item-9'].map((id) => ({
-                        id,
-                        title: 'Parasite',
-                        year: 2019,
-                        libraryId: 'library-1',
-                        libraryName: 'Films',
-                        path: `/films/${id}.mkv`,
-                        group: 'film:tmdb-1',
-                      })),
-                    },
-                    unreadable: { total: 0, items: [] },
-                  }
-                : [],
-            ),
-          ),
-        ),
-      ),
-    );
+    served([item()], {
+      duplicate: ['item-1', 'item-9'].map((id) => ({
+        id,
+        path: `/films/${id}.mkv`,
+        group: 'film:tmdb-1',
+      })),
+    });
 
-    render(<MediaPanel {...props} media={[item()]} />);
+    render(<MediaPanel {...props} />);
 
     expect(await screen.findByText('Matched to the same film as item-9.mkv')).toBeInTheDocument();
     expect(screen.getByText('There twice')).toBeInTheDocument();
   });
 
-  it('says what a film is at a glance: how long, how sharp and how it is encoded', () => {
-    render(<MediaPanel {...props} media={[item()]} />);
+  it('says what a film is at a glance: how long, how sharp and how it is encoded', async () => {
+    served([item()]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     const film = screen.getByRole('row', { name: /Parasite/ });
 
@@ -606,8 +865,10 @@ describe('MediaPanel', () => {
     expect(within(film).getByText('HEVC')).toBeInTheDocument();
   });
 
-  it('tells an empty library apart from one it could not read, and from having none', () => {
+  it('tells an empty library apart from one it could not read, and from having none', async () => {
     const { rerender } = render(<MediaPanel {...props} />);
+
+    await loaded();
 
     expect(screen.getByText(/Nothing has been scanned into this library yet/)).toBeInTheDocument();
 
@@ -624,14 +885,18 @@ describe('MediaPanel', () => {
     const onOpenFolder = vi.fn();
     const user = userEvent.setup();
 
+    served([item()], { paths: { 'item-1': '/media/films/Parasite (2019)/Parasite.mkv' } });
+
     render(
       <MediaPanel
         {...props}
-        media={[item()]}
+
         paths={{ 'item-1': '/media/films/Parasite (2019)/Parasite.mkv' }}
         onOpenFolder={onOpenFolder}
       />,
     );
+
+    await loaded();
 
     expect(screen.getByTitle('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
 
@@ -644,13 +909,17 @@ describe('MediaPanel', () => {
   it('offers to leave a film’s file out of the library, and asks first', async () => {
     const user = userEvent.setup();
 
+    served([item()], { paths: { 'item-1': '/media/films/Parasite (2019)/Parasite.mkv' } });
+
     render(
       <MediaPanel
         {...props}
-        media={[item()]}
+
         paths={{ 'item-1': '/media/films/Parasite (2019)/Parasite.mkv' }}
       />,
     );
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: 'Exclude from library' }));
@@ -663,16 +932,25 @@ describe('MediaPanel', () => {
   it('leaves a whole series out by its folder', async () => {
     const user = userEvent.setup();
 
+    served([episode('e1', 1, 1, 'Pilot'), episode('e2', 2, 1, 'Return')], {
+      paths: {
+        e1: '/media/shows/From/Season 1/From S01E01.mkv',
+        e2: '/media/shows/From/Season 2/From S02E01.mkv',
+      },
+    });
+
     render(
       <MediaPanel
         {...props}
-        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 2, 1, 'Return')]}
+
         paths={{
           e1: '/media/shows/From/Season 1/From S01E01.mkv',
           e2: '/media/shows/From/Season 2/From S02E01.mkv',
         }}
       />,
     );
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
@@ -685,7 +963,11 @@ describe('MediaPanel', () => {
   it('offers no way to leave out a file whose place on the disk is not known', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
@@ -696,10 +978,17 @@ describe('MediaPanel', () => {
     const onOpenFolder = vi.fn();
     const user = userEvent.setup();
 
+    served([episode('e1', 1, 1, 'Pilot'), episode('e2', 2, 1, 'Return')], {
+      paths: {
+        e1: '/media/shows/From/Season 1/From S01E01.mkv',
+        e2: '/media/shows/From/Season 2/From S02E01.mkv',
+      },
+    });
+
     render(
       <MediaPanel
         {...props}
-        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 2, 1, 'Return')]}
+
         paths={{
           e1: '/media/shows/From/Season 1/From S01E01.mkv',
           e2: '/media/shows/From/Season 2/From S02E01.mkv',
@@ -707,6 +996,8 @@ describe('MediaPanel', () => {
         onOpenFolder={onOpenFolder}
       />,
     );
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
 
@@ -749,6 +1040,8 @@ describe('MediaPanel', () => {
         onOpenFolder={vi.fn()}
       />,
     );
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Music');
 
@@ -796,6 +1089,8 @@ describe('MediaPanel', () => {
       />,
     );
 
+    await loaded();
+
     await chooseFrom(user, 'Which library', 'Books');
 
     expect(await screen.findByText('Dune')).toBeInTheDocument();
@@ -812,23 +1107,27 @@ describe('MediaPanel', () => {
     const onDelete = vi.fn().mockResolvedValue(true);
     const user = userEvent.setup();
 
+    served([
+      item(),
+      item({
+        id: 'item-2',
+        parentId: 'item-1',
+        versionLabel: 'Extended Cut',
+        width: 1280,
+        height: 720,
+        sizeBytes: 1_000_000_000,
+      }),
+    ]);
+
     render(
       <MediaPanel
         {...props}
-        media={[
-          item(),
-          item({
-            id: 'item-2',
-            parentId: 'item-1',
-            versionLabel: 'Extended Cut',
-            width: 1280,
-            height: 720,
-            sizeBytes: 1_000_000_000,
-          }),
-        ]}
+
         onDelete={onDelete}
       />,
     );
+
+    await loaded();
 
     expect(screen.getAllByText('Parasite')).toHaveLength(1);
     expect(screen.getByText('2 editions')).toBeInTheDocument();
@@ -851,16 +1150,15 @@ describe('MediaPanel', () => {
   it('opens an episode onto its editions where it has more than one file', async () => {
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel
-        {...props}
-        media={[
-          episode('e1', 1, 1, 'Pilot'),
-          { ...episode('e1b', 1, 1, 'Pilot'), parentId: 'e1', versionLabel: 'Bluray-1080p' },
-          episode('e2', 1, 2, 'Choose Wisely'),
-        ]}
-      />,
-    );
+    served([
+      episode('e1', 1, 1, 'Pilot'),
+      { ...episode('e1b', 1, 1, 'Pilot'), parentId: 'e1', versionLabel: 'Bluray-1080p' },
+      episode('e2', 1, 2, 'Choose Wisely'),
+    ]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
@@ -909,14 +1207,18 @@ describe('MediaPanel', () => {
     expect(screen.queryByLabelText('Reading the libraries')).not.toBeInTheDocument();
   });
 
-  it('says beside its heading when what it shows from last time is being checked', () => {
+  it('says beside its heading when what it shows from last time is being checked', async () => {
+    served([item()]);
+
     render(
       <MediaPanel
         {...props}
-        media={[item()]}
+
         freshness={{ isChecking: true, couldNotCheck: false }}
       />,
     );
+
+    await loaded();
 
     expect(screen.getByText('Checking for changes')).toBeInTheDocument();
     expect(screen.getByText('Parasite')).toBeInTheDocument();
@@ -926,19 +1228,24 @@ describe('MediaPanel', () => {
     const onDelete = vi.fn().mockResolvedValue(true);
     const user = userEvent.setup();
 
+    served([item(), item({ id: 'item-2', title: 'Heat' })]);
+
     render(
       <MediaPanel
         {...props}
-        media={[item(), item({ id: 'item-2', title: 'Heat' })]}
+
         onDelete={onDelete}
       />,
     );
+
+    await loaded();
 
     await user.click(screen.getByRole('checkbox', { name: 'Select every title shown' }));
 
     expect(screen.getByText('2 selected')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
 
     const asking = await screen.findByRole('dialog');
 
@@ -953,7 +1260,11 @@ describe('MediaPanel', () => {
   it('selects one title at a time and clears the selection', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item(), item({ id: 'item-2', title: 'Heat' })]} />);
+    served([item(), item({ id: 'item-2', title: 'Heat' })]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('checkbox', { name: 'Select Heat' }));
 
@@ -968,7 +1279,11 @@ describe('MediaPanel', () => {
     const onOpenTitle = vi.fn();
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onOpenTitle={onOpenTitle} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onOpenTitle={onOpenTitle} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: 'Parasite' }));
     await user.click(screen.getByRole('button', { name: 'Actions for Parasite' }));
@@ -982,7 +1297,11 @@ describe('MediaPanel', () => {
     const onOpenTitle = vi.fn();
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item()]} onOpenTitle={onOpenTitle} />);
+    served([item()]);
+
+    render(<MediaPanel {...props} onOpenTitle={onOpenTitle} />);
+
+    await loaded();
 
     await user.click(
       screen.getByText('Parasite').closest('tr')?.querySelector('td:last-child') ?? document.body,
@@ -995,9 +1314,11 @@ describe('MediaPanel', () => {
     const onOpenTitle = vi.fn();
     const user = userEvent.setup();
 
-    render(
-      <MediaPanel {...props} media={[item()]} openedTitle="item-1" onOpenTitle={onOpenTitle} />,
-    );
+    served([item()]);
+
+    render(<MediaPanel {...props} openedTitle="item-1" onOpenTitle={onOpenTitle} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('button', { name: 'Media' }));
 
@@ -1007,15 +1328,19 @@ describe('MediaPanel', () => {
   it('asks before deleting a file from a title’s own page', async () => {
     const user = userEvent.setup();
 
+    served([item()]);
+
     render(
       <MediaPanel
         {...props}
-        media={[item()]}
+
         openedTitle="item-1"
         onOpenTitle={vi.fn()}
         onDelete={vi.fn().mockResolvedValue(true)}
       />,
     );
+
+    await loaded();
 
     await user.click(screen.getByRole('tab', { name: 'Files' }));
     await user.click(
@@ -1029,7 +1354,11 @@ describe('MediaPanel', () => {
   it('forgets the titles chosen once the library, search or filter changes', async () => {
     const user = userEvent.setup();
 
-    render(<MediaPanel {...props} media={[item(), item({ id: 'item-2', title: 'Heat' })]} />);
+    served([item(), item({ id: 'item-2', title: 'Heat' })]);
+
+    render(<MediaPanel {...props} />);
+
+    await loaded();
 
     await user.click(screen.getByRole('checkbox', { name: 'Select Heat' }));
 

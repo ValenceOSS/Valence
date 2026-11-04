@@ -13,6 +13,7 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import type { TitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import type { TitleListService } from '@ValenceServer/metadata/createTitleListService';
+import type { BulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
 import type { TitleMetadata } from '@ValenceContracts/schemas/TitleEdit';
 
 const BASE = 'http://localhost:8420';
@@ -50,12 +51,37 @@ const build = () => {
     ),
   } satisfies TitleMetadataService;
   const titleList = {
-    list: vi.fn<TitleListService['list']>(() => Promise.resolve({ titles: [], next: null })),
+    list: vi.fn<TitleListService['list']>(() =>
+      Promise.resolve({
+        titles: [],
+        next: null,
+        total: 0,
+        counts: { all: 0, look: 0, twice: 0, unreadable: 0, edited: 0 },
+      }),
+    ),
+    keys: vi.fn<TitleListService['keys']>(() => Promise.resolve({ titles: [] })),
+    choices: vi.fn<TitleListService['choices']>(() => Promise.resolve({ filters: [] })),
+    problems: vi.fn<TitleListService['problems']>(() =>
+      Promise.resolve({ libraries: [{ libraryId: 'lib', titles: 1 }] }),
+    ),
     filesOf: vi.fn<TitleListService['filesOf']>(() => Promise.resolve(null)),
     values: vi.fn<TitleListService['values']>(() =>
       Promise.resolve({ values: [{ value: 'Drama', count: 2 }] }),
     ),
   } satisfies TitleListService;
+  const bulkTitles = {
+    readMany: vi.fn<BulkTitleEditor['readMany']>(() => Promise.resolve({ titles: 2, fields: {} })),
+    editMany: vi.fn<BulkTitleEditor['editMany']>(() =>
+      Promise.resolve({
+        changeSetId: CHANGE,
+        changed: [{ mediaId: FILE, scope: 'title' as const }],
+        unchanged: 0,
+        refused: 0,
+        subjects: ['movie:603'],
+      }),
+    ),
+    undoMany: vi.fn<BulkTitleEditor['undoMany']>(() => Promise.resolve('changedSince' as const)),
+  } satisfies BulkTitleEditor;
   const app = createApp({
     auth,
     settings,
@@ -72,9 +98,10 @@ const build = () => {
     ratings: createMemoryRatingService(),
     titleMetadata,
     titleList,
+    bulkTitles,
   });
 
-  return { app, auth, permissions, store, titleMetadata, titleList };
+  return { app, auth, permissions, store, titleMetadata, titleList, bulkTitles };
 };
 
 let built: ReturnType<typeof build>;
@@ -118,7 +145,7 @@ describe('serveMetadata', () => {
     expect(
       (await ask(`/api/media/${FILE}/metadata`, { method: 'PATCH', body: { set: {} } })).status,
     ).toBe(404);
-    expect((await ask('/api/admin/titles')).status).toBe(404);
+    expect((await ask('/api/admin/titles?libraryId=lib')).status).toBe(404);
     expect(built.titleMetadata.read).not.toHaveBeenCalled();
   });
 
@@ -172,5 +199,60 @@ describe('serveMetadata', () => {
       values: [{ value: 'Drama', count: 2 }],
     });
     expect((await ask(`/api/admin/titles/${FILE}`)).status).toBe(404);
+  });
+
+  it('lists a library’s titles as asked, every title of a listing, its filters and its problems', async () => {
+    const ask = await signedIn(true);
+
+    expect(
+      (await ask('/api/admin/titles?libraryId=lib&sort=size&desc=true&filter=genre:Crime')).status,
+    ).toBe(200);
+    expect(built.titleList.list).toHaveBeenCalledWith(
+      {
+        libraryId: 'lib',
+        sort: 'size',
+        desc: true,
+        show: 'all',
+        filter: ['genre:Crime'],
+      },
+      undefined,
+      100,
+    );
+    expect((await ask('/api/admin/titles/keys?libraryId=lib&show=look')).status).toBe(200);
+    expect((await ask('/api/admin/titles/choices?libraryId=lib')).status).toBe(200);
+    expect(await (await ask('/api/admin/titles/problems')).json()).toEqual({
+      libraries: [{ libraryId: 'lib', titles: 1 }],
+    });
+  });
+
+  it('edits many titles as one change, without saying which subjects it reached', async () => {
+    const ask = await signedIn(true);
+    const edited = await ask('/api/admin/titles/bulk', {
+      method: 'POST',
+      body: { targets: [{ mediaId: FILE, scope: 'title' }], change: { lockAll: true } },
+    });
+
+    expect(await edited.json()).toEqual({
+      changeSetId: CHANGE,
+      changed: [{ mediaId: FILE, scope: 'title' }],
+      unchanged: 0,
+      refused: 0,
+    });
+    expect(
+      (
+        await ask('/api/admin/titles/bulk/read', {
+          method: 'POST',
+          body: { targets: [{ mediaId: FILE, scope: 'title' }] },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await ask('/api/admin/titles/bulk/undo', {
+          method: 'POST',
+          body: { changeSetId: CHANGE, targets: [{ mediaId: FILE, scope: 'title' }] },
+        })
+      ).status,
+    ).toBe(409);
   });
 });

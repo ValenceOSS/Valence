@@ -3,6 +3,7 @@ import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem, series } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createTitleListService } from './createTitleListService';
+import type { TitleListQuery } from '@ValenceContracts/schemas/TitleList';
 
 const STARTING_DATABASE_MS = 60_000;
 
@@ -69,46 +70,101 @@ const aService = async () => {
   return createTitleListService(db);
 };
 
+const QUERY: TitleListQuery = {
+  libraryId: 'lib',
+  sort: 'title',
+  desc: false,
+  show: 'all',
+  filter: [],
+};
+
 describe('createTitleListService', { timeout: STARTING_DATABASE_MS }, () => {
   it('lists each title once, in order by name without a leading article', async () => {
     const service = await aService();
-    const page = await service.list({ sort: 'title', limit: 10 });
+    const page = await service.list(QUERY, undefined, 10);
 
-    expect(page.titles.map((one) => [one.title, one.kind, one.files, one.seasons])).toEqual([
+    expect(page.titles.map((one) => [one.name, one.kind, one.files, one.seasons])).toEqual([
       ['Heat', 'film', 1, 0],
       ['The Matrix', 'film', 2, 0],
       ['Show', 'show', 2, 2],
     ]);
-    expect(page.titles[1]).toMatchObject({ leadId: 'matrix', isMatched: true, sizeBytes: 2000 });
+    expect(page.titles[1]).toMatchObject({
+      id: 'matrix',
+      versions: 1,
+      isMatched: true,
+      sizeBytes: 2000,
+    });
+    expect(page.total).toBe(3);
+    expect(page.counts.all).toBe(3);
     expect(page.next).toBeNull();
   });
 
   it('pages newest first, carrying on from where the last page stopped', async () => {
     const service = await aService();
-    const first = await service.list({ sort: 'added', limit: 2 });
-    const second = await service.list({ sort: 'added', limit: 2, after: first.next ?? '' });
+    const asked: TitleListQuery = { ...QUERY, sort: 'added', desc: true };
+    const first = await service.list(asked, undefined, 2);
+    const second = await service.list(asked, first.next ?? '', 2);
 
-    expect(first.titles.map((one) => one.title)).toEqual(['Show', 'The Matrix']);
-    expect(second.titles.map((one) => one.title)).toEqual(['Heat']);
+    expect(first.titles.map((one) => one.name)).toEqual(['Show', 'The Matrix']);
+    expect(second.titles.map((one) => one.name)).toEqual(['Heat']);
     expect(second.next).toBeNull();
   });
 
-  it('searches by name', async () => {
+  it('searches by name and filters by genre, counting each quick filter of what is left', async () => {
     const service = await aService();
 
-    expect((await service.list({ sort: 'title', limit: 10, search: 'matr' })).titles).toHaveLength(
+    expect((await service.list({ ...QUERY, search: 'matr' }, undefined, 10)).titles).toHaveLength(
       1,
     );
+
+    const crime = await service.list({ ...QUERY, filter: ['genre:Crime'] }, undefined, 10);
+
+    expect(crime.titles.map((one) => one.name)).toEqual(['Heat']);
+    expect(crime.counts).toMatchObject({ all: 1, look: 1 });
   });
 
-  it('reads every file of a title through any one of them', async () => {
+  it('names every title a listing asks for, for choosing them all', async () => {
     const service = await aService();
 
-    expect((await service.filesOf('matrix-4k'))?.map((one) => one.id).sort()).toEqual([
+    const keys = await service.keys({ ...QUERY, filter: ['genre:Action'] });
+
+    expect(keys.titles.map((one) => [one.name, one.kind, one.leadId])).toEqual([
+      ['The Matrix', 'film', 'matrix'],
+      ['Show', 'show', 'pilot'],
+    ]);
+  });
+
+  it('says what the filters can be set to, with how many titles each shows', async () => {
+    const service = await aService();
+    const choices = await service.choices('lib');
+
+    expect(choices.filters.find((one) => one.kind === 'genre')?.values).toEqual([
+      { value: 'Action', count: 2 },
+      { value: 'Crime', count: 1 },
+      { value: 'Science Fiction', count: 1 },
+    ]);
+  });
+
+  it('counts the titles that need a look in each library', async () => {
+    const service = await aService();
+
+    await expect(service.problems()).resolves.toEqual({
+      libraries: [{ libraryId: 'lib', titles: 3 }],
+    });
+  });
+
+  it('reads every file of a title through any one of them, or the list’s id for a programme', async () => {
+    const service = await aService();
+
+    expect((await service.filesOf('matrix-4k'))?.files.map((one) => one.id).sort()).toEqual([
       'matrix',
       'matrix-4k',
     ]);
-    expect((await service.filesOf('pilot'))?.map((one) => one.id).sort()).toEqual([
+    expect((await service.filesOf('pilot'))?.files.map((one) => one.id).sort()).toEqual([
+      'pilot',
+      'second',
+    ]);
+    expect(Object.keys((await service.filesOf('series lib show'))?.paths ?? {}).sort()).toEqual([
       'pilot',
       'second',
     ]);

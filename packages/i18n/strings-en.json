@@ -640,6 +640,16 @@
     "context": "Shown in the admin (from `readRefusal`)."
   },
   {
+    "handler": "client.admin.readTitlesTogether.theTitlesCouldNotBeRead",
+    "text": "The titles could not be read.",
+    "context": "Said when the fields of the titles chosen in the admin's media could not be read, to edit them all at once."
+  },
+  {
+    "handler": "client.admin.undoTitlesTogether.theChangeCouldNotBeUndone",
+    "text": "The change could not be undone.",
+    "context": "Said when undoing a change made to many titles at once in the admin's media failed."
+  },
+  {
     "handler": "client.books.describeLength.hoursHOverMin",
     "text": "{hours} h {over} min",
     "context": "Shown in the books (from `describeLength`). {hours} is filled in by the app; {over} is filled in by the app."
@@ -14921,6 +14931,16 @@
     "context": "The description of a form field in the add library dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.addTagsDialog.count.addTagsToTitles.one",
+    "text": "Add tags to {count} title",
+    "context": "The heading of the dialog that adds tags to every title chosen in the admin's media. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.addTagsDialog.count.addTagsToTitles.other",
+    "text": "Add tags to {count} titles",
+    "context": "The heading of the dialog that adds tags to every title chosen in the admin's media. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.addTriggerDialog.aTimeOfDay",
     "text": "Enter a time of day, such as 03:00.",
     "context": "Shown under the time a scheduled job runs, when what was typed is not a time of day."
@@ -16264,6 +16284,86 @@
     "handler": "screens.adminArea.bucketDialog.wasabi",
     "text": "Wasabi",
     "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.changeAFieldToChangeItOn",
+    "text": "Change a field to change it on every title.",
+    "context": "Shown at the foot of the dialog editing many titles at once while nothing has been touched."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.changesFieldsOnTitles",
+    "text": "Changes {fields} on {titles}",
+    "context": "Shown at the foot of the dialog editing many titles at once, before saving. {fields} is how many fields, such as 3 fields; {titles} is how many titles, such as 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.changingSentOfCount",
+    "text": "Changing {sent} of {count}…",
+    "context": "Shown while a change made to many titles at once is being saved, a part at a time. {sent} is how many are done so far; {count} is how many in all."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.editTitles.one",
+    "text": "Edit {count} title",
+    "context": "The heading of the dialog that edits the metadata of every title chosen in the admin's media at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.editTitles.other",
+    "text": "Edit {count} titles",
+    "context": "The heading of the dialog that edits the metadata of every title chosen in the admin's media at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.fields.one",
+    "text": "{count} field",
+    "context": "How many fields a change made to many titles at once changes, read into a line such as “Changes 3 fields on 12 titles”. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.fields.other",
+    "text": "{count} fields",
+    "context": "How many fields a change made to many titles at once changes, read into a line such as “Changes 3 fields on 12 titles”. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.theirEpisodes",
+    "text": "Their episodes",
+    "context": "A choice in the dialog editing many programmes at once: edit every episode of them instead of the programmes."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.whatToEdit",
+    "text": "What to edit",
+    "context": "The hidden label of the choice, in the dialog editing many programmes at once, between editing the programmes and editing their episodes."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.clearedOnEveryTitle",
+    "text": "Emptied on every title",
+    "context": "Said in place of a field in the dialog editing many titles at once when it is to be emptied on all of them."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.doNotChange",
+    "text": "Don’t change",
+    "context": "A button beside a field touched in the dialog editing many titles at once that lets it alone again."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.filledFromEachTitle",
+    "text": "Filled in from each title, without “The” or “A”",
+    "context": "Said in place of the sort title in the dialog editing many titles at once when each title's sort title is to be its title with a leading article dropped."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.fromTitle",
+    "text": "From title",
+    "context": "In the menu of the sort title in the dialog editing many titles at once: fill each title's sort title in from its title, a leading article dropped."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.noneYet",
+    "text": "None yet",
+    "context": "Shown in an empty list, such as the tags, in the dialog editing many titles at once, where none of them has any."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.putBackOnEveryTitle",
+    "text": "Put back to TMDB’s on every title",
+    "context": "Said in place of a field in the dialog editing many titles at once when every title is to go back to what the catalogue, TMDB, says."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.whatToDoWithTheWords",
+    "text": "What to do with the words",
+    "context": "The hidden label of the choice, beside a list such as the genres in the dialog editing many titles at once, between adding the words, taking them away and putting them in place of the rest."
   },
   {
     "handler": "screens.adminArea.busyHoursGrid.count.plays.one",
@@ -20711,6 +20811,16 @@
     "context": "The label of the search field in the admin's dialog for correcting which series an episode was matched to."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.addTags",
+    "text": "Add tags",
+    "context": "A button beside the titles chosen in the admin's media that adds tags to them all."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.addToACollection",
+    "text": "Add to a collection…",
+    "context": "In the menu of what can be done to the titles chosen in the admin's media: add them all to a collection."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.allTitles",
     "text": "All titles",
     "context": "Media filter showing every title in a library."
@@ -20726,6 +20836,11 @@
     "context": "The label in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.columns",
+    "text": "Columns",
+    "context": "The menu, and its heading, that chooses which columns the admin's media list shows."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.couldNotBeRead",
     "text": "Couldn’t be read",
     "context": "A choice of which titles the admin area’s media page lists: files that could not be read."
@@ -20734,6 +20849,26 @@
     "handler": "screens.adminArea.mediaPanel.couldNotReadFiles",
     "text": "Couldn’t read {files}",
     "context": "Under a title in the media page in the admin area, naming the files that could not be read. {files} is a list of file names."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.allTitles.one",
+    "text": "All titles {count}",
+    "context": "A quick filter above the admin's media list that shows every title, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.allTitles.other",
+    "text": "All titles {count}",
+    "context": "A quick filter above the admin's media list that shows every title, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.changedTitles.one",
+    "text": "Changed {count} title",
+    "context": "Said once a change made to many titles at once in the admin's media is saved, with a way to undo it. {count} is how many it changed."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.changedTitles.other",
+    "text": "Changed {count} titles",
+    "context": "Said once a change made to many titles at once in the admin's media is saved, with a way to undo it. {count} is how many it changed."
   },
   {
     "handler": "screens.adminArea.mediaPanel.count.deleteCountFiles.one",
@@ -20746,6 +20881,26 @@
     "context": "Title of the dialog that deletes the titles selected in Media. {count} is how many files."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.count.duplicates.one",
+    "text": "Duplicates {count}",
+    "context": "A quick filter above the admin's media list that shows the titles held more than once, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.duplicates.other",
+    "text": "Duplicates {count}",
+    "context": "A quick filter above the admin's media list that shows the titles held more than once, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.edited.one",
+    "text": "Edited {count}",
+    "context": "A quick filter above the admin's media list that shows the titles an administrator has edited the metadata of, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.edited.other",
+    "text": "Edited {count}",
+    "context": "A quick filter above the admin's media list that shows the titles an administrator has edited the metadata of, with how many there are. {count} is the number."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.count.nameToFix.one",
     "text": "{name} ({count} to fix)",
     "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
@@ -20754,6 +20909,51 @@
     "handler": "screens.adminArea.mediaPanel.count.nameToFix.other",
     "text": "{name} ({count} to fix)",
     "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.noCover.one",
+    "text": "No cover {count}",
+    "context": "A quick filter above the admin's list of albums or books that shows those with no cover, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.noCover.other",
+    "text": "No cover {count}",
+    "context": "A quick filter above the admin's list of albums or books that shows those with no cover, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.undoneTitles.one",
+    "text": "Put {count} title back",
+    "context": "Said once a change made to many titles at once is undone. {count} is how many it put back."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.undoneTitles.other",
+    "text": "Put {count} titles back",
+    "context": "Said once a change made to many titles at once is undone. {count} is how many it put back."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unmatched.one",
+    "text": "Unmatched {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with no catalogue match or no poster, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unmatched.other",
+    "text": "Unmatched {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with no catalogue match or no poster, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unreadable.one",
+    "text": "Unreadable {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unreadable.other",
+    "text": "Unreadable {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.decade",
+    "text": "{decade}s",
+    "context": "A filter of the admin's media list for titles from one decade. {decade} is its first year, such as 1990, so it reads 1990s."
   },
   {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
@@ -20811,9 +21011,19 @@
     "context": "The label of a data table in the media panel in the admin area. {name} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.filterTheTitles",
+    "text": "Filter the titles",
+    "context": "The hidden label of the menu of filters above the admin's media list, such as by genre or what a title is missing."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.findAProgrammeOrFilm",
     "text": "Find a series or film",
     "context": "The label of a text field in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.hasSubtitles",
+    "text": "Has subtitles",
+    "context": "A filter of the admin's media list for titles with a subtitle track."
   },
   {
     "handler": "screens.adminArea.mediaPanel.hideTheEditionsOfName",
@@ -20871,9 +21081,19 @@
     "context": "A badge on a title in the media page in the admin area that is matched but has no poster."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.noSubtitles",
+    "text": "No subtitles",
+    "context": "A filter of the admin's media list for titles with no subtitle track."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis",
     "text": "Nothing has been scanned into this library yet.",
     "context": "Shown in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.nothingNeededChanging",
+    "text": "Nothing needed changing.",
+    "context": "Said after a change made to many titles at once in the admin's media changed none of them, as they already held it."
   },
   {
     "handler": "screens.adminArea.mediaPanel.numberedMoreThanOnce",
@@ -20919,6 +21139,16 @@
     "handler": "screens.adminArea.mediaPanel.reEncodeThisSeason",
     "text": "Re-encode this season…",
     "context": "The label in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.refreshEllipsis",
+    "text": "Refresh…",
+    "context": "In the menu of a film or programme in the admin's media list: open the choices for asking the catalogue about it again."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.refreshingDoneOfCount",
+    "text": "Refreshed {done} of {count}",
+    "context": "Said while the titles chosen in the admin's media are asked about again, one after another. {done} is how many are done; {count} is how many in all."
   },
   {
     "handler": "screens.adminArea.mediaPanel.selectEveryTitleShown",
@@ -20974,6 +21204,16 @@
     "handler": "screens.adminArea.mediaPanel.thereTwice",
     "text": "There twice",
     "context": "A choice of which titles the admin area’s media page lists: titles that are in a library more than once."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.theTitleCouldNotBeRead",
+    "text": "The title could not be read.",
+    "context": "Said in place of a title's page in the admin's media when its files could not be read from the server."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.unlockAllFields",
+    "text": "Unlock all fields",
+    "context": "In the menu of what can be done to the titles chosen in the admin's media: let every field kept as it stood follow the catalogue again."
   },
   {
     "handler": "screens.adminArea.mediaPanel.unmatched",
@@ -24774,6 +25014,26 @@
     "handler": "screens.adminArea.thePreviewsOfTitleCouldNot",
     "text": "Couldn’t rebuild previews for {title}.",
     "context": "Shown in the admin area. {title} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.inNoCollectionYet",
+    "text": "It isn’t in a collection yet.",
+    "context": "Shown on a film's or programme's page in the admin's media where it is in no collection."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.takeItOutOfName",
+    "text": "Take it out of {name}",
+    "context": "The hidden label of the button beside a collection on a title's page in the admin's media that takes the title out of it. {name} is the collection."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.thatCouldNotBeTakenOut",
+    "text": "That could not be taken out of the collection.",
+    "context": "Said when taking a film or programme out of a collection from its page in the admin's media failed."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.titleIsNoLongerInName",
+    "text": "{title} is no longer in {name}",
+    "context": "Said once a film or programme is taken out of a collection from its page in the admin's media. {title} is the title; {name} is the collection."
   },
   {
     "handler": "screens.adminArea.titleDetails.airDate",
@@ -38801,6 +39061,16 @@
     "handler": "ui.rail.forwardAPageOfTitle",
     "text": "Forward a page of {title}",
     "context": "The label of a button in the rail. {title} is filled in by the app."
+  },
+  {
+    "handler": "ui.selectionBar.count.selectAll.one",
+    "text": "Select all {count}",
+    "context": "A button beside how many rows of a table are ticked that ticks every row there is, those not shown yet too. {count} is how many there are in all."
+  },
+  {
+    "handler": "ui.selectionBar.count.selectAll.other",
+    "text": "Select all {count}",
+    "context": "A button beside how many rows of a table are ticked that ticks every row there is, those not shown yet too. {count} is how many there are in all."
   },
   {
     "handler": "ui.sidebarGroup.labelWaiting",

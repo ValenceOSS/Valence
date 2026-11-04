@@ -1,4 +1,7 @@
-import type { MediaView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaPanel.types';
+import type {
+  ListPlace,
+  MediaView,
+} from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaPanel.types';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
@@ -14,6 +17,8 @@ type AdminAreaProps = {
   folder?: string | null;
   mediaView?: MediaView;
   onMediaView?: (view: MediaView) => void;
+  mediaList?: ListPlace;
+  onMediaList?: (place: ListPlace) => void;
   onMediaFolder?: (path: string | null) => void;
   onOpenFolder?: (path: string) => void;
   catalogue?: CatalogueAddress;

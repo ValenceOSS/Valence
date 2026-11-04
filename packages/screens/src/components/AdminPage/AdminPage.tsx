@@ -22,6 +22,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { AdminArea } from '@ValenceScreens/components/AdminArea/AdminArea';
+import { searchOfList } from './searchOfList';
 import { visibleAdminSections } from '@ValenceScreens/components/AdminArea/visibleAdminSections';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeAcceleration } from '@ValenceScreens/components/AdminArea/describeAcceleration';
@@ -90,6 +91,12 @@ const AdminPage = () => {
     episode,
     part,
     mediaView,
+    library,
+    find,
+    quick,
+    order,
+    desc,
+    filter,
   } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
@@ -111,6 +118,14 @@ const AdminPage = () => {
     items.find(
       (one) => one.id === (panel === 'logs' ? 'jobs' : panel === 'files' ? 'media' : panel),
     )?.id ?? 'overview';
+  const mediaList = {
+    library: library ?? null,
+    search: find ?? '',
+    show: quick ?? 'all',
+    sort: order ?? 'title',
+    isDescending: desc === true,
+    filters: filter ?? [],
+  };
   const shownMediaView =
     panel === 'files' || folder !== undefined ? 'folders' : (mediaView ?? 'titles');
   const showingName = items.find((one) => one.id === showing)?.label ?? '';
@@ -449,10 +464,24 @@ const AdminPage = () => {
                   },
                 });
               }}
+              mediaList={mediaList}
+              onMediaList={(place) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: {
+                    ...(mediaView === undefined ? {} : { mediaView }),
+                    ...(folder === undefined ? {} : { folder }),
+                    ...searchOfList(place),
+                  },
+                  replace: true,
+                });
+              }}
               onMediaTitle={(id, place) => {
                 const underneath = {
                   ...(mediaView === undefined ? {} : { mediaView }),
                   ...(folder === undefined ? {} : { folder }),
+                  ...searchOfList(mediaList),
                 };
 
                 void go({
@@ -490,6 +519,7 @@ const AdminPage = () => {
                   search: {
                     ...(mediaView === undefined ? {} : { mediaView }),
                     ...(folder === undefined ? {} : { folder }),
+                    ...searchOfList(mediaList),
                     ...(media === undefined ? {} : { media }),
                     ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
                     ...(place.season === null ? {} : { season: place.season }),

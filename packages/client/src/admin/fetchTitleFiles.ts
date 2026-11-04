@@ -1,15 +1,15 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { TitleFilesSchema } from '@ValenceContracts/schemas/TitleList';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { TitleFiles } from '@ValenceContracts/schemas/TitleList';
 
 /**
- * Reads every file of the film or programme one file belongs to, for opening a title straight from
- * an address.
+ * Reads every file of a film or programme, with where each is, for opening it or the rows beneath
+ * it in the list.
  *
- * @param mediaId - One file of the title.
- * @returns The title's files.
+ * @param id - One file of the title, or the list's id for a programme.
+ * @returns The title's files and their paths.
  */
-const fetchTitleFiles = async (mediaId: string): Promise<MediaSummary[]> =>
-  (await readFromServer(`/api/admin/titles/${mediaId}`, TitleFilesSchema)).files;
+const fetchTitleFiles = (id: string): Promise<TitleFiles> =>
+  readFromServer(`/api/admin/titles/${encodeURIComponent(id)}`, TitleFilesSchema);
 
 export { fetchTitleFiles };

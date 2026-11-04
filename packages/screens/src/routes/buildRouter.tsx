@@ -7,6 +7,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
+import { TITLE_SHOWS, TITLE_SORTS } from '@ValenceContracts/schemas/TitleList';
 import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { CatalogueTabSchema } from '@ValenceContracts/schemas/AdminCatalogue';
 import { readSearch } from '@ValenceClient/navigation/readSearch';
@@ -115,6 +116,12 @@ const adminSearch = z.object({
   season: z.coerce.number().int().nonnegative().optional().catch(undefined),
   episode: z.string().optional(),
   part: z.enum(['season']).optional().catch(undefined),
+  library: z.string().optional().catch(undefined),
+  find: z.string().optional().catch(undefined),
+  quick: z.enum(TITLE_SHOWS).optional().catch(undefined),
+  order: z.enum(TITLE_SORTS).optional().catch(undefined),
+  desc: z.boolean().optional().catch(undefined),
+  filter: z.array(z.string()).optional().catch(undefined),
   webhook: z.string().optional(),
   server: z.string().optional(),
   ...ObservabilitySearchSchema.shape,

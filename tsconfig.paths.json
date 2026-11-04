@@ -274,6 +274,10 @@
       "@ValenceUI/ScopedField.types": [
         "./packages/ui/src/components/ScopedField/ScopedField.types.ts"
       ],
+      "@ValenceUI/SelectionBar": ["./packages/ui/src/components/SelectionBar/SelectionBar.tsx"],
+      "@ValenceUI/SelectionBar.types": [
+        "./packages/ui/src/components/SelectionBar/SelectionBar.types.ts"
+      ],
       "@ValenceUI/SelectField": ["./packages/ui/src/components/SelectField/SelectField.tsx"],
       "@ValenceUI/SelectField.types": [
         "./packages/ui/src/components/SelectField/SelectField.types.ts"

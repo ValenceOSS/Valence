@@ -211,6 +211,9 @@ const stayStill = (): (() => void) => () => {};
  * @param onOpenFolder - Called with a folder to open in Media's folder view.
  * @param mediaView - Whether Media shows its titles or its folders, as the address says.
  * @param onMediaView - Called with which Media is to show.
+ * @param mediaList - Which library Media lists, and how it is searched, filtered and sorted, as
+ *   the address says.
+ * @param onMediaList - Called with how Media's list has changed.
  * @param onMediaFolder - Called with the folder Media's folder view has open.
  * @param catalogue - The Catalogue's tab and the title open in it, as the address says them.
  * @param onCatalogue - Called with a change to either, to write into the address.
@@ -234,6 +237,8 @@ const AdminArea = ({
   folder = null,
   mediaView,
   onMediaView,
+  mediaList,
+  onMediaList,
   onMediaFolder,
   onOpenFolder,
   catalogue = CATALOGUE_AT_FIRST,
@@ -1197,6 +1202,8 @@ const AdminArea = ({
               {...(onCatalogue === undefined ? {} : { onOpenInCatalogue: onCatalogue })}
               {...(mediaView === undefined ? {} : { view: mediaView })}
               {...(onMediaView === undefined ? {} : { onView: onMediaView })}
+              {...(mediaList === undefined ? {} : { listPlace: mediaList })}
+              {...(onMediaList === undefined ? {} : { onListPlace: onMediaList })}
               folder={folder}
               {...(onMediaFolder === undefined ? {} : { onFolder: onMediaFolder })}
               onFilesChanged={readTheLibraryAgain}

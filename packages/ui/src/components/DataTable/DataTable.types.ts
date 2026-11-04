@@ -27,6 +27,8 @@ type DataTableProps<Row extends RowData> = {
   page?: number;
   onPageChange?: (page: number) => void;
   growsOnScroll?: boolean;
+  onReachEnd?: () => void;
+  canOpen?: (row: Row) => boolean;
   height?: 'compact' | 'fill' | 'parent' | 'fills';
   sorting?: DataTableSorting | null;
   onSortingChange?: (sorting: DataTableSorting | null) => void;

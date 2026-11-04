@@ -13,6 +13,7 @@ import { notify } from '@ValenceUI/notify';
 import { addToCollection } from '@ValenceClient/collections/fetchCollections';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { CollectionEditDialog } from '@ValenceScreens/components/CollectionEditDialog/CollectionEditDialog';
+import type { CollectionSubject } from '@ValenceContracts/schemas/Collection';
 import type { AddToCollectionDialogProps } from './AddToCollectionDialog.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -22,7 +23,7 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * hold nothing yet, or a new one made around it. A collection it is already in is shown but cannot
  * be chosen again.
  *
- * @param subject - The film or programme, or null while nothing is being added.
+ * @param subject - The film or programme, or several of them, or null while nothing is being added.
  * @param title - What it is called, to say where it went.
  * @param onClose - Closes it.
  */
@@ -32,10 +33,13 @@ const AddToCollectionDialog = ({ subject, title, onClose }: AddToCollectionDialo
   const [isAdding, setIsAdding] = useState(false);
   const [isMaking, setIsMaking] = useState(false);
   const isOpen = subject !== null;
+  const subjects: readonly CollectionSubject[] =
+    subject === null ? [] : 'mediaItemId' in subject || 'seriesId' in subject ? [subject] : subject;
+  const [single] = subjects.length === 1 ? subjects : [];
   const every = useQuery({ ...collectionQueries.all(true), enabled: isOpen });
   const holding = useQuery({
-    ...collectionQueries.containing(subject ?? { mediaItemId: '' }),
-    enabled: isOpen,
+    ...collectionQueries.containing(single ?? { mediaItemId: '' }),
+    enabled: isOpen && single !== undefined,
   });
   const already = new Set((holding.data ?? []).map((one) => one.id));
   const collections = (every.data ?? []).filter((one) => !one.isSmart);
@@ -50,13 +54,13 @@ const AddToCollectionDialog = ({ subject, title, onClose }: AddToCollectionDialo
   const add = async () => {
     const into = collections.find((one) => one.id === chosen);
 
-    if (subject === null || into === undefined) {
+    if (subjects.length === 0 || into === undefined) {
       return;
     }
 
     setIsAdding(true);
 
-    const isAdded = await addToCollection(into.id, [subject]);
+    const isAdded = await addToCollection(into.id, subjects);
 
     setIsAdding(false);
     void cache.invalidateQueries({ queryKey: collectionQueries.key });
@@ -135,7 +139,7 @@ const AddToCollectionDialog = ({ subject, title, onClose }: AddToCollectionDialo
 
       <CollectionEditDialog
         isOpen={isOpen && isMaking}
-        startsWith={subject === null ? [] : [subject]}
+        startsWith={subjects}
         onClose={() => {
           setIsMaking(false);
         }}

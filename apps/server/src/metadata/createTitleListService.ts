@@ -1,213 +1,334 @@
-import { and, eq, isNull, or } from 'drizzle-orm';
-import { library, mediaItem } from '#dialect/Schema';
-import { sortKeyOf } from '@ValenceCore/functions/sortKeyOf';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
+import { z } from 'zod';
+import { library, mediaItem, series, titleEdit } from '#dialect/Schema';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
-import { readJson } from '@ValenceCore/functions/readJson';
-import { z } from 'zod';
+import { findDuplicates } from '@ValenceServer/health/findDuplicates';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
+import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import { listedTitlesOf } from './listedTitlesOf';
+import { pageOfTitles } from './pageOfTitles';
+import { titlesAsked } from './titlesAsked';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
+  LibraryProblems,
+  TitleChoices,
+  TitleFiles,
+  TitleKeys,
+  TitleListQuery,
   TitlePage,
-  TitleRow,
   TitleValueField,
   TitleValues,
 } from '@ValenceContracts/schemas/TitleList';
+import type { ListedFile, ListedTitle } from './listedTitlesOf';
 
-type TitleListOptions = {
-  libraryId?: string;
-  sort: 'title' | 'added';
-  search?: string;
-  after?: string;
-  limit: number;
+type TitleListDependencies = {
+  certificationRegion?: () => Promise<string>;
+  now?: () => Date;
 };
 
-const CursorSchema = z.tuple([z.string(), z.string()]);
+const WATCHED_KINDS = ['movies', 'shows', 'anime'];
 
 const WordsSchema = z.array(z.string()).catch([]);
 
+const CertificationsSchema = z.record(z.string(), z.string()).catch({});
+
+const StreamsSchema = z.array(z.unknown()).catch([]);
+
+const SERIES_ID = /^series (\S+) (.+)$/u;
+
 /**
- * Reads where a page left off from the cursor it handed out.
+ * Counts how many titles hold each of some values, most held first.
  *
- * @param after - The cursor.
- * @returns The sort value and key it stopped at, or nothing where it cannot be read.
+ * @param titles - The titles.
+ * @param valuesOf - The values one title holds.
+ * @returns Each value and how many titles hold it.
  */
-const readCursor = (after: string | undefined): [string, string] | null => {
-  if (after === undefined) {
-    return null;
+const countsOf = (
+  titles: readonly ListedTitle[],
+  valuesOf: (title: ListedTitle) => readonly string[],
+): { value: string; count: number }[] => {
+  const counts = new Map<string, number>();
+
+  for (const title of titles) {
+    for (const value of new Set(valuesOf(title))) {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
   }
 
-  const read = CursorSchema.safeParse(readJson(Buffer.from(after, 'base64url').toString('utf8')));
-
-  return read.success ? read.data : null;
+  return [...counts.entries()]
+    .map(([value, count]) => ({ value, count }))
+    .sort((left, right) => right.count - left.count || left.value.localeCompare(right.value));
 };
 
 /**
- * Lists a library's films and programmes for the admin's Media, each as one row however many files
- * it is, a page at a time in the order asked; reads every file of one title; and counts the words
- * in use in a field, for suggesting them.
+ * Lists a library's films and programmes for the admin's Media, one row each however many files it
+ * is, searched, filtered, put in order and read a page at a time on the server; every title a
+ * listing asks for, for selecting them all; the values its filter chips can take; how many titles in
+ * each library need a look; every file of one title; and the words in use in a field.
  *
  * @param db - The database.
+ * @param dependencies - The server's own country, whose content rating the filters read, and the
+ *   time now.
  * @returns The service.
  */
-const createTitleListService = (db: AnyValenceDatabase) => {
+const createTitleListService = (
+  db: AnyValenceDatabase,
+  {
+    certificationRegion = () => Promise.resolve('GB'),
+    now = () => new Date(),
+  }: TitleListDependencies = {},
+) => {
   /**
-   * Reads every file of the libraries asked about, as little of each as a title row needs.
+   * Reads every file of one library or all of them that is not an extra, with what listing it
+   * needs.
    *
-   * @param libraryId - The library, or every one where none is named.
+   * @param libraryId - The library, or every library of films and programmes where none is named.
    * @returns The files.
    */
-  const readFiles = (libraryId: string | undefined) =>
-    db
+  const readFiles = async (libraryId: string | undefined): Promise<ListedFile[]> => {
+    const region = (await certificationRegion()).trim().toUpperCase();
+    const rows = await db
       .select({
-        id: mediaItem.id,
-        libraryId: mediaItem.libraryId,
-        title: mediaItem.title,
-        sortTitle: mediaItem.sortTitle,
-        year: mediaItem.year,
-        seriesId: mediaItem.seriesId,
-        seriesTitle: mediaItem.seriesTitle,
-        seriesSortTitle: mediaItem.seriesSortTitle,
-        seasonNumber: mediaItem.seasonNumber,
-        parentId: mediaItem.parentId,
+        ...SUMMARY_COLUMNS,
         sizeBytes: mediaItem.sizeBytes,
-        addedAt: mediaItem.addedAt,
-        externalId: mediaItem.externalId,
-        posterUrl: mediaItem.posterUrl,
+        parentId: mediaItem.parentId,
+        versionLabel: mediaItem.versionLabel,
+        path: mediaItem.path,
+        originalTitle: mediaItem.originalTitle,
+        overview: mediaItem.overview,
+        tags: mediaItem.tags,
+        certifications: mediaItem.certifications,
+        subtitleStreams: mediaItem.subtitleStreams,
+        catalogueEpisodeId: mediaItem.catalogueEpisodeId,
+        seriesKey: series.key,
       })
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
+      .leftJoin(series, eq(series.id, mediaItem.seriesId))
       .where(
         and(
           isNull(mediaItem.extraKind),
           eq(library.isStreamed, false),
           isStillThere(),
-          libraryId === undefined ? undefined : eq(mediaItem.libraryId, libraryId),
+          libraryId === undefined
+            ? inArray(library.kind, WATCHED_KINDS)
+            : eq(mediaItem.libraryId, libraryId),
         ),
       );
 
-  type File = Awaited<ReturnType<typeof readFiles>>[number];
-
-  /**
-   * Gathers files into the titles they make up: a film with its versions, a programme with its
-   * episodes.
-   *
-   * @param files - The files.
-   * @returns Each title, with what it is put in order by.
-   */
-  const gather = (files: readonly File[]): (TitleRow & { sortKey: string })[] => {
-    const titles = new Map<string, { files: File[]; lead: File }>();
-
-    for (const file of files) {
-      const key =
-        file.seriesTitle === null
-          ? `film:${file.parentId ?? file.id}`
-          : `show:${file.seriesId ?? `${file.libraryId}:${file.seriesTitle}`}`;
-      const held = titles.get(key);
-
-      if (held === undefined) {
-        titles.set(key, { files: [file], lead: file });
-      } else {
-        held.files.push(file);
-
-        if (key.startsWith('film:') ? file.parentId === null : file.addedAt < held.lead.addedAt) {
-          held.lead = file;
-        }
-      }
-    }
-
-    return [...titles.entries()].map(([key, { files: held, lead }]) => {
-      const isShow = lead.seriesTitle !== null;
-      const name = isShow ? (lead.seriesTitle ?? lead.title) : lead.title;
-
-      return {
-        key,
-        kind: isShow ? 'show' : 'film',
-        libraryId: lead.libraryId,
-        leadId: lead.id,
-        title: name,
-        sortKey: sortKeyOf(name, isShow ? lead.seriesSortTitle : lead.sortTitle),
-        year: lead.year,
-        files: held.length,
-        seasons: new Set(
-          held.flatMap((one) => (one.seasonNumber === null ? [] : [one.seasonNumber])),
-        ).size,
-        sizeBytes: held.reduce((sum, one) => sum + one.sizeBytes, 0),
-        latestAddedAt: held
-          .map((one) => one.addedAt)
-          .reduce((latest, one) => (one > latest ? one : latest))
-          .toISOString(),
-        isMatched: held.some((one) => one.externalId !== null && one.externalId !== ''),
-        hasPoster: lead.posterUrl !== null,
-      };
-    });
+    return rows.map(
+      ({
+        path,
+        originalTitle,
+        overview,
+        tags,
+        certifications,
+        subtitleStreams,
+        catalogueEpisodeId,
+        seriesKey,
+        ...row
+      }) => ({
+        summary: summaryOfRow(row),
+        path,
+        sizeBytes: row.sizeBytes,
+        parentId: row.parentId,
+        originalTitle,
+        seriesKey,
+        catalogueEpisodeId,
+        hasOverview: overview !== null && overview.trim() !== '',
+        tags: WordsSchema.parse(tags ?? []),
+        certification: CertificationsSchema.parse(certifications ?? {})[region] ?? null,
+        hasSubtitles: StreamsSchema.parse(subtitleStreams).length > 0,
+      }),
+    );
   };
 
   /**
-   * Lists a page of titles, in order by name or newest first, from where the last page stopped.
+   * Finds every file of the libraries of films and programmes that is there more than once, and
+   * where each is, so a title can say which of its files are and which other copy shares them.
    *
-   * @param options - Which library, the order, what to search for, where to start and how many.
-   * @returns The page, and where the next one starts where there is one.
+   * @returns Each duplicated file's group, and its path.
    */
-  const list = async (options: TitleListOptions): Promise<TitlePage> => {
-    const words = options.search?.trim().toLocaleLowerCase() ?? '';
-    const titles = gather(await readFiles(options.libraryId)).filter(
-      (one) => words === '' || one.title.toLocaleLowerCase().includes(words),
-    );
-    const valueOf = (one: TitleRow & { sortKey: string }) =>
-      options.sort === 'added' ? one.latestAddedAt : one.sortKey;
-    const sorted = titles.sort((left, right) => {
-      const byValue =
-        options.sort === 'added'
-          ? valueOf(right).localeCompare(valueOf(left))
-          : valueOf(left).localeCompare(valueOf(right));
-
-      return byValue === 0 ? left.key.localeCompare(right.key) : byValue;
-    });
-    const cursor = readCursor(options.after);
-    const start =
-      cursor === null
-        ? 0
-        : sorted.findIndex((one) => {
-            const byValue =
-              options.sort === 'added'
-                ? cursor[0].localeCompare(valueOf(one))
-                : valueOf(one).localeCompare(cursor[0]);
-
-            return byValue > 0 || (byValue === 0 && one.key.localeCompare(cursor[1]) > 0);
-          });
-    const page = start < 0 ? [] : sorted.slice(start, start + options.limit);
-    const last = page.at(-1);
-    const hasMore = start >= 0 && start + options.limit < sorted.length;
+  const readDuplicates = async () => {
+    const placed = await db
+      .select({
+        id: mediaItem.id,
+        path: mediaItem.path,
+        externalId: mediaItem.externalId,
+        seriesId: mediaItem.seriesId,
+        seasonNumber: mediaItem.seasonNumber,
+        episodeNumber: mediaItem.episodeNumber,
+      })
+      .from(mediaItem)
+      .innerJoin(library, eq(library.id, mediaItem.libraryId))
+      .where(
+        and(
+          isNull(mediaItem.parentId),
+          isNull(mediaItem.extraKind),
+          inArray(library.kind, WATCHED_KINDS),
+          eq(library.isStreamed, false),
+          isStillThere(),
+        ),
+      );
+    const duplicates = findDuplicates(placed);
 
     return {
-      titles: page.map(({ sortKey: _sortKey, ...row }) => row),
-      next:
-        hasMore && last !== undefined
-          ? Buffer.from(JSON.stringify([valueOf(last), last.key]), 'utf8').toString('base64url')
-          : null,
+      duplicates,
+      duplicatePaths: new Map(
+        placed.filter((one) => duplicates.has(one.id)).map((one) => [one.id, one.path]),
+      ),
     };
   };
 
   /**
-   * Reads every file of the title one file belongs to: a film's versions, or a programme's episodes.
+   * Lists a library's titles with everything listing them needs.
    *
-   * @param mediaId - One file of the title.
-   * @returns The files, or nothing where there is no such file.
+   * @param libraryId - The library, or every library of films and programmes where none is named.
+   * @returns The titles.
    */
-  const filesOf = async (mediaId: string): Promise<MediaSummary[] | null> => {
-    const [file] = await db
-      .select({
-        id: mediaItem.id,
-        libraryId: mediaItem.libraryId,
-        parentId: mediaItem.parentId,
-        seriesId: mediaItem.seriesId,
-        seriesTitle: mediaItem.seriesTitle,
-      })
-      .from(mediaItem)
-      .where(eq(mediaItem.id, mediaId))
-      .limit(1);
+  const listed = async (libraryId: string | undefined): Promise<ListedTitle[]> => {
+    const [files, { duplicates, duplicatePaths }, edits] = await Promise.all([
+      readFiles(libraryId),
+      readDuplicates(),
+      db
+        .selectDistinct({ subjectKey: titleEdit.subjectKey })
+        .from(titleEdit)
+        .where(libraryId === undefined ? undefined : eq(titleEdit.libraryId, libraryId)),
+    ]);
+
+    return listedTitlesOf(files, {
+      duplicates,
+      duplicatePaths,
+      editedKeys: new Set(edits.map((one) => one.subjectKey)),
+    });
+  };
+
+  /**
+   * Lists a page of a library's titles as a listing asks.
+   *
+   * @param query - The library, search, chips, quick filter and order.
+   * @param after - Where the last page stopped.
+   * @param limit - How many to a page.
+   * @returns The page.
+   */
+  const list = async (
+    query: TitleListQuery,
+    after: string | undefined,
+    limit: number,
+  ): Promise<TitlePage> =>
+    pageOfTitles(await listed(query.libraryId), query, after, limit, now().getTime());
+
+  /**
+   * Names every title a listing asks for, for a selection of all of them.
+   *
+   * @param query - The library, search, chips, quick filter and order.
+   * @returns The titles.
+   */
+  const keys = async (query: TitleListQuery): Promise<TitleKeys> => ({
+    titles: titlesAsked(await listed(query.libraryId), query, now().getTime()).shown.map(
+      ({ row }) => ({ id: row.id, leadId: row.lead.id, kind: row.kind, name: row.name }),
+    ),
+  });
+
+  /**
+   * Says what a library's filter chips can be set to, with how many titles each would show.
+   *
+   * @param libraryId - The library.
+   * @returns The values of each kind of chip.
+   */
+  const choices = async (libraryId: string): Promise<TitleChoices> => {
+    const titles = await listed(libraryId);
+
+    return {
+      filters: [
+        {
+          kind: 'resolution',
+          values: countsOf(titles, (title) =>
+            title.files.map((file) => sharpestStepOf(file.summary)?.label ?? ''),
+          )
+            .filter((one) => one.value !== '')
+            .sort(
+              (left, right) =>
+                QUALITY_STEPS.findIndex((step) => step.label === left.value) -
+                QUALITY_STEPS.findIndex((step) => step.label === right.value),
+            ),
+        },
+        {
+          kind: 'range',
+          values: countsOf(titles, (title) => title.files.map((file) => file.summary.videoRange)),
+        },
+        {
+          kind: 'codec',
+          values: countsOf(titles, (title) =>
+            title.files.map((file) => file.summary.videoCodec.toLowerCase()),
+          ),
+        },
+        { kind: 'genre', values: countsOf(titles, (title) => [...title.genres]) },
+        { kind: 'tag', values: countsOf(titles, (title) => [...title.tags]) },
+        {
+          kind: 'rating',
+          values: countsOf(titles, (title) =>
+            title.certification === null ? [] : [title.certification],
+          ),
+        },
+      ],
+    };
+  };
+
+  /**
+   * Counts the titles in each library of films and programmes that need a look: unmatched, with no
+   * poster where a film, there twice, or unreadable.
+   *
+   * @returns The count for each library that has any.
+   */
+  const problems = async (): Promise<LibraryProblems> => {
+    const counts = new Map<string, number>();
+
+    for (const title of await listed(undefined)) {
+      if (title.needsALook || title.isTwice || title.isUnreadable) {
+        counts.set(title.row.libraryId, (counts.get(title.row.libraryId) ?? 0) + 1);
+      }
+    }
+
+    return {
+      libraries: [...counts.entries()].map(([libraryId, titles]) => ({ libraryId, titles })),
+    };
+  };
+
+  /**
+   * Reads every file of a title, with where each is: a film's versions, or a programme's episodes,
+   * found by one file of it or by the programme's own row id in the list.
+   *
+   * @param id - One file of the title, or the list's id for a programme.
+   * @returns The files and their paths, or nothing where there is no such title.
+   */
+  const filesOf = async (id: string): Promise<TitleFiles | null> => {
+    const seriesOf = SERIES_ID.exec(id);
+    const [file] =
+      seriesOf === null
+        ? await db
+            .select({
+              id: mediaItem.id,
+              libraryId: mediaItem.libraryId,
+              parentId: mediaItem.parentId,
+              seriesId: mediaItem.seriesId,
+              seriesTitle: mediaItem.seriesTitle,
+            })
+            .from(mediaItem)
+            .where(eq(mediaItem.id, id))
+            .limit(1)
+        : [
+            {
+              id,
+              libraryId: seriesOf[1] ?? '',
+              parentId: null,
+              seriesId: seriesOf[2] ?? null,
+              seriesTitle: seriesOf[2] ?? null,
+            },
+          ];
 
     if (file === undefined) {
       return null;
@@ -220,6 +341,7 @@ const createTitleListService = (db: AnyValenceDatabase) => {
         sizeBytes: mediaItem.sizeBytes,
         parentId: mediaItem.parentId,
         versionLabel: mediaItem.versionLabel,
+        path: mediaItem.path,
       })
       .from(mediaItem)
       .where(
@@ -229,13 +351,24 @@ const createTitleListService = (db: AnyValenceDatabase) => {
           isStillThere(),
           file.seriesTitle === null
             ? or(eq(mediaItem.id, root), eq(mediaItem.parentId, root))
-            : file.seriesId === null
-              ? eq(mediaItem.seriesTitle, file.seriesTitle)
-              : eq(mediaItem.seriesId, file.seriesId),
+            : seriesOf === null
+              ? file.seriesId === null
+                ? eq(mediaItem.seriesTitle, file.seriesTitle)
+                : eq(mediaItem.seriesId, file.seriesId)
+              : or(
+                  eq(mediaItem.seriesId, file.seriesTitle),
+                  eq(mediaItem.seriesTitle, file.seriesTitle),
+                ),
         ),
       );
 
-    return rows.map(summaryOfRow);
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const files: MediaSummary[] = rows.map(({ path: _path, ...row }) => summaryOfRow(row));
+
+    return { files, paths: Object.fromEntries(rows.map((row) => [row.id, row.path])) };
   };
 
   /**
@@ -282,11 +415,11 @@ const createTitleListService = (db: AnyValenceDatabase) => {
     };
   };
 
-  return { list, filesOf, values };
+  return { list, keys, choices, problems, filesOf, values };
 };
 
 type TitleListService = ReturnType<typeof createTitleListService>;
 
-export type { TitleListOptions, TitleListService };
+export type { TitleListService };
 
 export { createTitleListService };

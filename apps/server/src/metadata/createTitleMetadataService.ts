@@ -435,6 +435,7 @@ const createTitleMetadataService = ({
    * @param scope - The film or programme, the file's season, or the file's episode.
    * @param request - The fields to set, to lock as they stand, and to put back.
    * @param actor - Who is changing it.
+   * @param sharedSetId - The change set to add it to, where it is one title of many changed at once.
    * @returns The change and the title as it now stands, or why nothing changed.
    */
   const edit = async (
@@ -442,6 +443,7 @@ const createTitleMetadataService = ({
     scope: TitleScope,
     request: TitleEditRequest,
     actor: Actor,
+    sharedSetId?: string,
   ): Promise<{ changeSetId: string | null; metadata: TitleMetadata } | Refusal> => {
     const file = await fileOf(mediaId);
     const subject = file === null ? null : subjectOf(file, scope);
@@ -504,6 +506,7 @@ const createTitleMetadataService = ({
         : request.lock !== undefined && request.set === undefined
           ? 'lock'
           : 'set',
+      sharedSetId,
     );
 
     if (changeSetId !== null) {
@@ -542,6 +545,8 @@ const createTitleMetadataService = ({
    * @param scope - The film or programme, the file's season, or the file's episode.
    * @param changeSetId - The change set.
    * @param actor - Who is undoing it.
+   * @param sharedSetId - The change set the undoing joins, where many titles are undone at once.
+   * @param isTrying - Whether only to say if it could be undone, changing nothing.
    * @returns The title as it now stands, or why it could not be undone.
    */
   const undo = async (
@@ -549,10 +554,15 @@ const createTitleMetadataService = ({
     scope: TitleScope,
     changeSetId: string,
     actor: Actor,
+    sharedSetId?: string,
+    isTrying = false,
   ): Promise<{ changeSetId: string | null; metadata: TitleMetadata } | Refusal> => {
     const file = await fileOf(mediaId);
     const subject = file === null ? null : subjectOf(file, scope);
-    const plan = await edits.planUndo(changeSetId);
+    const plan =
+      subject === null
+        ? await edits.planUndo(changeSetId)
+        : await edits.planUndo(changeSetId, subject);
 
     if (file === null || subject === null || plan.kind === 'missing') {
       return 'missing';
@@ -564,6 +574,10 @@ const createTitleMetadataService = ({
 
     if (plan.subject.key !== subject.key || plan.subject.libraryId !== subject.libraryId) {
       return 'missing';
+    }
+
+    if (isTrying) {
+      return { changeSetId: null, metadata: await describe(file, subject) };
     }
 
     const before = await describe(file, subject);
@@ -582,7 +596,7 @@ const createTitleMetadataService = ({
       values[one.field] = one.isEdited ? one.value : under;
     }
 
-    const made = await edits.change(subject, changes, actor, 'undo');
+    const made = await edits.change(subject, changes, actor, 'undo', sharedSetId);
 
     if (made !== null) {
       await writeThrough(file, subject, values, catalogue);

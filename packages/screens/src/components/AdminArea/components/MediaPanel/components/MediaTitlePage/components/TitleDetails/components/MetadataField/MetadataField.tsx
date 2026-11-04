@@ -12,6 +12,7 @@ import { labelOfField } from '@ValenceScreens/components/AdminArea/components/Me
 import type { TitleField, TitleValue } from '@ValenceContracts/schemas/TitleEdit';
 import type { MetadataFieldProps } from './MetadataField.types';
 import { regionName } from '@ValenceScreens/live/regionName';
+import { valueOfTyped } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/valueOfTyped';
 import { say } from '@ValenceI18n/say';
 
 const TYPING_SETTLES_MS = 700;
@@ -21,27 +22,6 @@ const LONG: readonly TitleField[] = ['overview', 'note'];
 const WORDS: readonly TitleField[] = ['genres', 'tags', 'studios', 'networks'];
 
 const NUMBERS: readonly TitleField[] = ['rating', 'rottenTomatoes'];
-
-const CLEARABLE_TO_NOTHING: readonly TitleField[] = ['title'];
-
-/**
- * Reads what was typed into a field as the value it is saved as.
- *
- * @param field - The field.
- * @param typed - What was typed.
- * @returns The value.
- */
-const valueOfTyped = (field: TitleField, typed: string): TitleValue => {
-  const trimmed = typed.trim();
-
-  if (NUMBERS.includes(field)) {
-    const read = Number(trimmed);
-
-    return trimmed === '' || Number.isNaN(read) ? null : read;
-  }
-
-  return trimmed === '' && !CLEARABLE_TO_NOTHING.includes(field) ? null : typed;
-};
 
 /**
  * One field of a title's Details tab: its control, saved as it changes, inside the frame that says

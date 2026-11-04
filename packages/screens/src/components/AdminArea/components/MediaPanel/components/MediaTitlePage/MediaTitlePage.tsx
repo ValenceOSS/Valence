@@ -31,8 +31,9 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHistory } from './components/TitleHistory/TitleHistory';
 import { TitlePartPage } from './components/TitlePartPage/TitlePartPage';
+import { TitleCollections } from './components/TitleCollections/TitleCollections';
 import { EpisodeTable } from '@ValenceScreens/components/AdminArea/components/EpisodeTable/EpisodeTable';
-import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 import { RefreshTitleDialog } from './components/RefreshTitleDialog/RefreshTitleDialog';
 import { useTitleChange } from './components/TitleDetails/useTitleChange';
 import { unmatchTitle } from '@ValenceClient/admin/unmatchTitle';
@@ -331,6 +332,7 @@ const MediaTitlePage = ({
         (one) =>
           one.id !== 'wrong-match' &&
           one.id !== 'artwork' &&
+          one.id !== 'refresh' &&
           !(title.kind === 'film' && FILE_ONLY.includes(one.id)),
       ),
     ),
@@ -946,14 +948,26 @@ const MediaTitlePage = ({
         />
 
         <TabPanel value="details" travel={travel}>
-          <TitleDetails
-            mediaId={title.lead.id}
-            scope="title"
-            {...(fix === undefined ? {} : { onFixMatch: fix.onChoose })}
-            onShowHistory={() => {
-              moveTo({ ...NOWHERE, tab: 'history' });
-            }}
-          />
+          <div className="flex flex-col gap-4">
+            <TitleDetails
+              mediaId={title.lead.id}
+              scope="title"
+              {...(fix === undefined ? {} : { onFixMatch: fix.onChoose })}
+              onShowHistory={() => {
+                moveTo({ ...NOWHERE, tab: 'history' });
+              }}
+            />
+            {title.kind === 'series' && title.lead.seriesId === null ? null : (
+              <TitleCollections
+                subject={
+                  title.kind === 'series' && title.lead.seriesId !== null
+                    ? { seriesId: title.lead.seriesId }
+                    : { mediaItemId: title.lead.id }
+                }
+                name={title.name}
+              />
+            )}
+          </div>
         </TabPanel>
 
         {title.kind === 'series' ? (

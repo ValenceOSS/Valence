@@ -1,5 +1,5 @@
 import { BOOK_FORMATS } from '@ValenceContracts/schemas/Book';
-import { folderOf } from './folderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 
 /**
  * The folder a book lives in. A book is either a folder of chapters or, sitting loose in its

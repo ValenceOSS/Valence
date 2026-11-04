@@ -4,7 +4,7 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
-import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { TitleFile } from '@ValenceContracts/schemas/AdminCatalogue';
 import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';

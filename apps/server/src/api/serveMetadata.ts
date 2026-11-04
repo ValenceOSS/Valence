@@ -1,5 +1,11 @@
 import {
+  readTitlesTogetherRoute,
+  editTitlesTogetherRoute,
+  undoTitlesTogetherRoute,
   listTitlesRoute,
+  listTitleKeysRoute,
+  listTitleChoicesRoute,
+  countLibraryProblemsRoute,
   listTitleValuesRoute,
   findTitleCandidatesRoute,
   readTitleFilesRoute,
@@ -27,8 +33,16 @@ const NO_SUCH_ITEM = refuse('error.common.noSuchItem');
  * @param context - What they are answered with.
  */
 const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
-  const { titleMetadata, titleList, findCandidates, library, requires, readAccount, recordAudit } =
-    context;
+  const {
+    titleMetadata,
+    titleList,
+    bulkTitles,
+    findCandidates,
+    library,
+    requires,
+    readAccount,
+    recordAudit,
+  } = context;
 
   /**
    * Reads who is changing a title, for the history.
@@ -93,23 +107,88 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     return context.json(edited, 200);
   });
 
+  app.openapi(readTitlesTogetherRoute, async (context) => {
+    if (bulkTitles === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(await bulkTitles.readMany(context.req.valid('json')), 200);
+  });
+
+  app.openapi(editTitlesTogetherRoute, async (context) => {
+    if (bulkTitles === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { subjects, ...outcome } = await bulkTitles.editMany(
+      context.req.valid('json'),
+      await actorOf(context.req.raw.headers),
+    );
+
+    for (const subject of subjects) {
+      await recordAudit(context, 'media.metadataChanged', subject, {
+        fields: Object.keys(context.req.valid('json').change).join(', '),
+        changeSet: outcome.changeSetId,
+      });
+    }
+
+    return context.json(outcome, 200);
+  });
+
+  app.openapi(undoTitlesTogetherRoute, async (context) => {
+    if (bulkTitles === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const undone = await bulkTitles.undoMany(
+      context.req.valid('json'),
+      await actorOf(context.req.raw.headers),
+    );
+
+    if (undone === 'changedSince') {
+      return context.json(refuse('error.metadata.thatChangeWasChangedSince'), 409);
+    }
+
+    await recordAudit(context, 'media.metadataUndone', context.req.valid('json').changeSetId, {
+      changeSet: undone.changeSetId,
+      titles: undone.undone.toString(),
+    });
+
+    return context.json(undone, 200);
+  });
+
   app.openapi(listTitlesRoute, async (context) => {
     if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
-    const { libraryId, sort, search, after, limit } = context.req.valid('query');
+    const { after, limit, ...query } = context.req.valid('query');
 
-    return context.json(
-      await titleList.list({
-        sort,
-        limit,
-        ...(libraryId === undefined ? {} : { libraryId }),
-        ...(search === undefined ? {} : { search }),
-        ...(after === undefined ? {} : { after }),
-      }),
-      200,
-    );
+    return context.json(await titleList.list(query, after, limit), 200);
+  });
+
+  app.openapi(listTitleKeysRoute, async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(await titleList.keys(context.req.valid('query')), 200);
+  });
+
+  app.openapi(listTitleChoicesRoute, async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(await titleList.choices(context.req.valid('query').libraryId), 200);
+  });
+
+  app.openapi(countLibraryProblemsRoute, async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(await titleList.problems(), 200);
   });
 
   app.openapi(listTitleValuesRoute, async (context) => {
@@ -140,9 +219,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
 
     const files = await titleList.filesOf(context.req.valid('param').id);
 
-    return files === null || files.length === 0
-      ? context.json(NO_SUCH_ITEM, 404)
-      : context.json({ files }, 200);
+    return files === null ? context.json(NO_SUCH_ITEM, 404) : context.json(files, 200);
   });
 
   app.openapi(previewMatchRoute, async (context) => {

@@ -1,4 +1,4 @@
-import { folderOf } from './folderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 
 const PART_FOLDER = /^(?:(?:season|series|cd|disc|disk)\s*\d+|specials|s\d+)$/i;
 

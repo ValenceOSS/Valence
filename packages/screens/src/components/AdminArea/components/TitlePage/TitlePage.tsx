@@ -52,7 +52,7 @@ import { ItemList } from './components/ItemList/ItemList';
 import { AskerStrip } from './components/AskerStrip/AskerStrip';
 import { TrackTable } from './components/TrackTable/TrackTable';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
-import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 import { RemoveTitleDialog } from './components/RemoveTitleDialog/RemoveTitleDialog';
 import { SeasonList } from '@ValenceScreens/components/AdminArea/components/SeasonList/SeasonList';
 import { StopDownloadDialog } from './components/StopDownloadDialog/StopDownloadDialog';

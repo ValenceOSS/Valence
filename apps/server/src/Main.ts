@@ -44,6 +44,7 @@ import { dirname, join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import { createTitleListService } from '@ValenceServer/metadata/createTitleListService';
+import { createBulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
 import { findCandidates } from '@ValenceServer/metadata/findCandidates';
 import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import { existsSync, readFileSync } from 'node:fs';
@@ -5092,6 +5093,22 @@ const streamService = createStreamService({
 
 const signedInSockets = createSignedInSockets();
 
+const titleMetadataService = createTitleMetadataService({
+  db,
+  edits: createTitleEditStore(db),
+  certificationRegion: async () => (await settings.read()).certificationRegion,
+  seriesShape: (externalId) =>
+    catalogueProvider.describeSeries?.(externalId) ?? Promise.resolve(null),
+  describeCandidate: (externalId, kind) =>
+    catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
+  forgetCatalogue: (externalId, kind) => {
+    catalogueProvider.forgetAnswersAbout?.(externalId, kind);
+  },
+  onChanged: (mediaIds) => {
+    realtime.publish('media', { event: 'metadata', mediaIds }, { kind: 'everyone' });
+  },
+});
+
 const app = createApp({
   callerOf,
   imports: importService,
@@ -5275,7 +5292,9 @@ const app = createApp({
   brandLogo,
   unlockSecret: `${env.BETTER_AUTH_SECRET}:library-locks`,
   books: createLinkedBooks(bookService, db, linkedAsker),
-  titleList: createTitleListService(db),
+  titleList: createTitleListService(db, {
+    certificationRegion: async () => (await settings.read()).certificationRegion,
+  }),
   findCandidates: (asked) =>
     findCandidates(asked, {
       searchPages: (searching) =>
@@ -5286,20 +5305,12 @@ const app = createApp({
       findByImdbId: (imdbId, kind) =>
         catalogueProvider.findByImdbId?.(imdbId, kind) ?? Promise.resolve(null),
     }),
-  titleMetadata: createTitleMetadataService({
+  titleMetadata: titleMetadataService,
+  bulkTitles: createBulkTitleEditor({
     db,
-    edits: createTitleEditStore(db),
-    certificationRegion: async () => (await settings.read()).certificationRegion,
-    seriesShape: (externalId) =>
-      catalogueProvider.describeSeries?.(externalId) ?? Promise.resolve(null),
-    describeCandidate: (externalId, kind) =>
-      catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
-    forgetCatalogue: (externalId, kind) => {
-      catalogueProvider.forgetAnswersAbout?.(externalId, kind);
-    },
-    onChanged: (mediaIds) => {
-      realtime.publish('media', { event: 'metadata', mediaIds }, { kind: 'everyone' });
-    },
+    read: titleMetadataService.read,
+    edit: titleMetadataService.edit,
+    undo: titleMetadataService.undo,
   }),
   music: musicServices,
   collections: collectionService,

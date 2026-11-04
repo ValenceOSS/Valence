@@ -2,11 +2,23 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   TITLE_VALUE_FIELDS,
+  LibraryProblemsSchema,
+  TitleChoicesSchema,
   TitleFilesSchema,
+  TitleKeysSchema,
+  TitleListQuerySchema,
   TitlePageSchema,
   TitleValuesSchema,
   TitleCandidatesSchema,
 } from '@ValenceContracts/schemas/TitleList';
+import {
+  BulkTitleEditOutcomeSchema,
+  BulkTitleEditRequestSchema,
+  BulkTitleFieldsSchema,
+  BulkTitleReadRequestSchema,
+  BulkTitleUndoOutcomeSchema,
+  BulkTitleUndoRequestSchema,
+} from '@ValenceContracts/schemas/BulkTitleEdit';
 import {
   TitleFieldSchema,
   MatchPreviewSchema,
@@ -183,20 +195,74 @@ const listTitlesRoute = createRoute({
   method: 'get',
   path: '/api/admin/titles',
   tags: ['Library'],
-  summary: 'List films and programmes, one row each however many files they are, a page at a time',
+  summary:
+    'List a library’s films and programmes, one row each however many files they are, searched, filtered and put in order on the server, a page at a time',
   request: {
-    query: z.object({
-      libraryId: z.string().optional(),
-      sort: z.enum(['title', 'added']).default('title'),
-      search: z.string().optional(),
+    query: TitleListQuerySchema.extend({
       after: z.string().optional(),
       limit: z.coerce.number().int().min(1).max(500).default(100),
     }),
   },
   responses: {
     200: {
-      description: 'A page of titles, and where the next one starts',
+      description:
+        'A page of titles, where the next one starts, and how many each quick filter shows',
       content: { 'application/json': { schema: TitlePageSchema.openapi('TitlePage') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const listTitleKeysRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/keys',
+  tags: ['Library'],
+  summary: 'Name every title a listing asks for, for selecting all of them',
+  request: { query: TitleListQuerySchema },
+  responses: {
+    200: {
+      description: 'Every title the listing asks for',
+      content: { 'application/json': { schema: TitleKeysSchema.openapi('TitleKeys') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const listTitleChoicesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/choices',
+  tags: ['Library'],
+  summary: 'Say what a library’s filters can be set to, with how many titles each shows',
+  request: { query: z.object({ libraryId: z.string().min(1) }) },
+  responses: {
+    200: {
+      description: 'The values of each filter',
+      content: { 'application/json': { schema: TitleChoicesSchema.openapi('TitleChoices') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const countLibraryProblemsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/problems',
+  tags: ['Library'],
+  summary: 'Count the titles in each library that need a look',
+  responses: {
+    200: {
+      description: 'How many titles in each library need a look',
+      content: {
+        'application/json': { schema: LibraryProblemsSchema.openapi('LibraryProblems') },
+      },
     },
     404: {
       description: 'Not for this account',
@@ -255,8 +321,8 @@ const readTitleFilesRoute = createRoute({
   method: 'get',
   path: '/api/admin/titles/{id}',
   tags: ['Library'],
-  summary: 'Read every file of the film or programme one file belongs to',
-  request: { params: Params },
+  summary: 'Read every file of the film or programme one file belongs to, with where each is',
+  request: { params: z.object({ id: z.string().min(1) }) },
   responses: {
     200: {
       description: 'The title’s files',
@@ -266,8 +332,94 @@ const readTitleFilesRoute = createRoute({
   },
 });
 
+const readTitlesTogetherRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/titles/bulk/read',
+  tags: ['Library'],
+  summary: 'Read how the fields of many titles stand together, saying where they differ',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: BulkTitleReadRequestSchema.openapi('BulkTitleReadRequest') },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'How many titles, and each field’s shared value or that it differs',
+      content: { 'application/json': { schema: BulkTitleFieldsSchema.openapi('BulkTitleFields') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const editTitlesTogetherRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/titles/bulk',
+  tags: ['Library'],
+  summary: 'Make one change to the metadata of many titles, kept as one change set',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: BulkTitleEditRequestSchema.openapi('BulkTitleEditRequest') },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'The change set, and which titles it changed',
+      content: {
+        'application/json': { schema: BulkTitleEditOutcomeSchema.openapi('BulkTitleEditOutcome') },
+      },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const undoTitlesTogetherRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/titles/bulk/undo',
+  tags: ['Library'],
+  summary: 'Undo a change made to many titles, every one of them or none',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: BulkTitleUndoRequestSchema.openapi('BulkTitleUndoRequest') },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'The undoing’s change set, and how many titles it put back',
+      content: {
+        'application/json': { schema: BulkTitleUndoOutcomeSchema.openapi('BulkTitleUndoOutcome') },
+      },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+    409: {
+      description: 'A title was changed again since',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
 export {
+  readTitlesTogetherRoute,
+  editTitlesTogetherRoute,
+  undoTitlesTogetherRoute,
   listTitlesRoute,
+  listTitleKeysRoute,
+  listTitleChoicesRoute,
+  countLibraryProblemsRoute,
   listTitleValuesRoute,
   findTitleCandidatesRoute,
   readTitleFilesRoute,

@@ -5,7 +5,7 @@ import { Tooltip } from '@ValenceUI/Tooltip';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { SearchButtons } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/SearchButtons/SearchButtons';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
-import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
+import { folderOf } from '@ValenceCore/functions/folderOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { TitleEpisode } from '@ValenceClient/requests/seasonsOfTitle';
 import type { EpisodeTableProps } from './EpisodeTable.types';
