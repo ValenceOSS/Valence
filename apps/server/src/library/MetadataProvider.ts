@@ -117,6 +117,10 @@ type SeriesShape = {
   seasons: {
     seasonNumber: number;
     episodeCount: number;
+    name?: string | null;
+    overview?: string | null;
+    posterUrl?: string | null;
+    airDate?: string | null;
     episodes: {
       episodeNumber: number;
       title: string;

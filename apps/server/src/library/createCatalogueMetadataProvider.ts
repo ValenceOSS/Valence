@@ -247,6 +247,9 @@ const DetailResponseSchema = z.object({
         season_number: z.number().int(),
         episode_count: z.number().int().nonnegative(),
         air_date: z.string().nullish(),
+        name: z.string().nullish(),
+        overview: z.string().nullish(),
+        poster_path: z.string().nullish(),
       }),
     )
     .default([]),
@@ -1679,6 +1682,11 @@ const createCatalogueMetadataProvider = ({
           return {
             seasonNumber: season.season_number,
             episodeCount: season.episode_count,
+            name: season.name === undefined || season.name === '' ? null : season.name,
+            overview:
+              season.overview === undefined || season.overview === '' ? null : season.overview,
+            posterUrl: imageUrl(imageBaseUrl, season.poster_path, 'w342'),
+            airDate: season.air_date ?? null,
             episodes: !listed.success
               ? []
               : listed.data.episodes.map((episode) => ({

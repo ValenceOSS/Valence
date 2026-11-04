@@ -1138,6 +1138,10 @@ describe('reading the shape of a series', () => {
         {
           seasonNumber: 1,
           episodeCount: 2,
+          name: null,
+          overview: null,
+          posterUrl: null,
+          airDate: null,
           episodes: [
             {
               episodeNumber: 1,

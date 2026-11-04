@@ -243,9 +243,16 @@ const createTitleMetadataService = ({
 
     if (seasonNumber !== null) {
       const season = shape?.seasons.find((one) => one.seasonNumber === seasonNumber);
-      const aired = season?.episodes.find((one) => (one.airDate ?? null) !== null)?.airDate ?? null;
+      const aired =
+        season?.airDate ??
+        season?.episodes.find((one) => (one.airDate ?? null) !== null)?.airDate ??
+        null;
 
-      return { title: null, overview: null, releaseDate: aired };
+      return {
+        title: season?.name ?? null,
+        overview: season?.overview ?? null,
+        releaseDate: aired,
+      };
     }
 
     const firstAired =

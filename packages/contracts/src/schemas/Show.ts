@@ -40,6 +40,10 @@ const NextEpisodeSchema = z.object({
 const SeasonShapeSchema = z.object({
   seasonNumber: z.number().int().nonnegative(),
   episodeCount: z.number().int().nonnegative(),
+  name: z.string().nullish(),
+  overview: z.string().nullish(),
+  posterUrl: z.string().nullish(),
+  airDate: z.string().nullish(),
   episodes: z.array(CatalogueEpisodeSchema).default([]),
 });
 

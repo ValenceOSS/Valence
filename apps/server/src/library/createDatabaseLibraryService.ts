@@ -12,6 +12,8 @@ import { artworkRevisionOf } from '@ValenceServer/library/artworkRevisionOf';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
 import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
+import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
+import { overlayShowEdits } from '@ValenceServer/metadata/overlayShowEdits';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
@@ -421,6 +423,7 @@ const createDatabaseLibraryService = ({
   });
 
   const shapes = createAnswerKeeper<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const titleEdits = createTitleEditStore(db);
 
   const nextEpisodes = createAnswerKeeper<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
@@ -3199,6 +3202,33 @@ const createDatabaseLibraryService = ({
         .limit(1);
       const externalId = cover?.externalId ?? '';
       const region = (await certificationRegion()).trim().toUpperCase();
+      const [placed] =
+        detail.seriesId === null
+          ? []
+          : await db
+              .select({ key: series.key })
+              .from(series)
+              .where(eq(series.id, detail.seriesId))
+              .limit(1);
+      const showKey =
+        externalId !== ''
+          ? `tv:${externalId}`
+          : placed === undefined
+            ? null
+            : `series:${placed.key}`;
+      const laid =
+        showKey === null
+          ? shape
+          : overlayShowEdits(
+              shape,
+              showKey,
+              await titleEdits.editsFor(libraryId, [
+                showKey,
+                ...(shape?.seasons ?? []).map(
+                  (season) => `${showKey}:s${season.seasonNumber.toString()}`,
+                ),
+              ]),
+            );
 
       const whole = {
         ...detail,
@@ -3213,14 +3243,18 @@ const createDatabaseLibraryService = ({
         tmdbId: /^\d+$/.test(externalId) ? Number(externalId) : null,
       };
 
+      if (laid === null) {
+        return whole;
+      }
+
       return shape === null
-        ? whole
+        ? { ...whole, status: laid.status ?? null, overview: laid.overview ?? null }
         : {
             ...whole,
-            shape: shape.seasons,
-            status: shape.status ?? null,
-            overview: shape.overview ?? null,
-            nextEpisode: nextEpisodeOf(shape.seasons, new Date().toISOString().slice(0, 10)),
+            shape: laid.seasons,
+            status: laid.status ?? null,
+            overview: laid.overview ?? null,
+            nextEpisode: nextEpisodeOf(laid.seasons, new Date().toISOString().slice(0, 10)),
           };
     },
   };
