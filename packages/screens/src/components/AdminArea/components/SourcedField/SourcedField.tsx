@@ -4,6 +4,7 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { FormField } from '@ValenceUI/FormField';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { Icon } from '@ValenceUI/Icon';
 import { describeTitleValue } from './describeTitleValue';
 import type { SourcedFieldProps } from './SourcedField.types';
@@ -22,6 +23,8 @@ import { say } from '@ValenceI18n/say';
  * @param onUseCatalogue - Takes up a value the catalogue has changed to since the field was edited.
  * @param onShowHistory - Opens the title's history, where there is one to open.
  * @param isBusy - Whether a change to the field is being saved.
+ * @param isCard - Whether it stands as a card of its own, named by its label, its badge and menu in
+ *   the card's head, for a field with nothing else beside it.
  * @param children - The control the field is edited with.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -33,6 +36,7 @@ const SourcedField = ({
   onUseCatalogue,
   onShowHistory,
   isBusy = false,
+  isCard = false,
   children,
   className,
 }: SourcedFieldProps) => {
@@ -43,94 +47,113 @@ const SourcedField = ({
     (state?.catalogueChangedAt ?? null) !== null &&
     !isSameTitleValue(state?.catalogue ?? null, state?.value ?? null);
 
+  const badge = (
+    <>
+      {source === 'catalogue' ? null : (
+        <Badge size="sm" tone={isEdited ? 'accent' : 'quiet'}>
+          {source === 'edited'
+            ? say('screens.adminArea.sourcedField.edited')
+            : source === 'locked'
+              ? say('screens.adminArea.sourcedField.locked')
+              : say('screens.adminArea.titlePage.episodeTable.fileName')}
+        </Badge>
+      )}
+
+      <span className="ml-auto">
+        <ActionMenu
+          label={say('common.moreForName', { name: label })}
+          size="sm"
+          align="end"
+          groups={[
+            {
+              items: [
+                ...(isEdited
+                  ? [
+                      {
+                        id: 'reset',
+                        label: say('screens.jobRunner.describeJobGroup.reset'),
+                        icon: <Icon of={RotateCcw} size={15} />,
+                        isDisabled: isBusy,
+                        onChoose: onReset,
+                      },
+                    ]
+                  : [
+                      {
+                        id: 'lock',
+                        label: say('screens.adminArea.libraryLockRow.lock'),
+                        icon: <Icon of={Lock} size={15} />,
+                        isDisabled: isBusy,
+                        onChoose: onLock,
+                      },
+                    ]),
+                ...(onShowHistory === undefined
+                  ? []
+                  : [
+                      {
+                        id: 'history',
+                        label: say('common.history'),
+                        icon: <Icon of={History} size={15} />,
+                        onChoose: onShowHistory,
+                      },
+                    ]),
+              ],
+            },
+          ]}
+        />
+      </span>
+    </>
+  );
+  const hint =
+    source !== 'edited' ? null : (
+      <>
+        <span>
+          {hasCatalogueMoved
+            ? say('screens.adminArea.sourcedField.tmdbChangedTo', {
+                value: describeTitleValue(state?.catalogue ?? null),
+              })
+            : say('screens.adminArea.sourcedField.tmdbSays', {
+                value: describeTitleValue(state?.catalogue ?? null),
+              })}
+        </span>
+
+        <Button
+          variant="ghost"
+          size="xs"
+          disabled={isBusy}
+          onClick={hasCatalogueMoved ? onUseCatalogue : onReset}
+        >
+          {hasCatalogueMoved
+            ? say('screens.adminArea.sourcedField.useThis')
+            : say('screens.jobRunner.describeJobGroup.reset')}
+        </Button>
+      </>
+    );
+
+  if (isCard) {
+    return (
+      <PanelCard
+        title={label}
+        actions={<span className="flex items-center gap-2">{badge}</span>}
+        {...(className === undefined ? {} : { className })}
+      >
+        <div className="flex flex-col gap-2">
+          {children}
+          {hint === null ? null : (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-xs leading-snug text-text-muted">
+              {hint}
+            </div>
+          )}
+        </div>
+      </PanelCard>
+    );
+  }
+
   return (
     <FormField
       label={label}
       {...(className === undefined ? {} : { className })}
-      aside={
-        <>
-          {source === 'catalogue' ? null : (
-            <Badge size="sm" tone={isEdited ? 'accent' : 'quiet'}>
-              {source === 'edited'
-                ? say('screens.adminArea.sourcedField.edited')
-                : source === 'locked'
-                  ? say('screens.adminArea.sourcedField.locked')
-                  : say('screens.adminArea.titlePage.episodeTable.fileName')}
-            </Badge>
-          )}
-
-          <span className="ml-auto">
-            <ActionMenu
-              label={say('common.moreForName', { name: label })}
-              size="sm"
-              align="end"
-              groups={[
-                {
-                  items: [
-                    ...(isEdited
-                      ? [
-                          {
-                            id: 'reset',
-                            label: say('screens.jobRunner.describeJobGroup.reset'),
-                            icon: <Icon of={RotateCcw} size={15} />,
-                            isDisabled: isBusy,
-                            onChoose: onReset,
-                          },
-                        ]
-                      : [
-                          {
-                            id: 'lock',
-                            label: say('screens.adminArea.libraryLockRow.lock'),
-                            icon: <Icon of={Lock} size={15} />,
-                            isDisabled: isBusy,
-                            onChoose: onLock,
-                          },
-                        ]),
-                    ...(onShowHistory === undefined
-                      ? []
-                      : [
-                          {
-                            id: 'history',
-                            label: say('common.history'),
-                            icon: <Icon of={History} size={15} />,
-                            onChoose: onShowHistory,
-                          },
-                        ]),
-                  ],
-                },
-              ]}
-            />
-          </span>
-        </>
-      }
-      {...(source !== 'edited'
-        ? {}
-        : {
-            hint: (
-              <>
-                <span>
-                  {hasCatalogueMoved
-                    ? say('screens.adminArea.sourcedField.tmdbChangedTo', {
-                        value: describeTitleValue(state?.catalogue ?? null),
-                      })
-                    : say('screens.adminArea.sourcedField.tmdbSays', {
-                        value: describeTitleValue(state?.catalogue ?? null),
-                      })}
-                </span>
-
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  disabled={isBusy}
-                  onClick={hasCatalogueMoved ? onUseCatalogue : onReset}
-                >
-                  {hasCatalogueMoved
-                    ? say('screens.adminArea.sourcedField.useThis')
-                    : say('screens.jobRunner.describeJobGroup.reset')}
-                </Button>
-              </>
-            ),
-          })}
+      aside={badge}
+      {...(hint === null ? {} : { hint })}
     >
       {children}
     </FormField>

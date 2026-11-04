@@ -30,6 +30,8 @@ import type { TextFieldProps } from './TextField.types';
  * @param isPill - Whether to round it fully, for a field sitting in a bar rather than a form.
  * @param size - How large to draw it.
  * @param isBare - Whether to paint no box at all, for a field that supplies its own surface.
+ * @param isInset - Whether it sits inside a box something else draws, such as beside a tag field's
+ *   chips, so it paints nothing of its own and leaves the focus ring to that box.
  * @param icon - Something to draw inside the field, such as a magnifying glass.
  * @param trailing - A control to set after the field on the same line, such as a way to browse for
  *   what it asks, kept level with the field however the notes beneath it grow.
@@ -64,6 +66,7 @@ const TextField = ({
   isPill = false,
   size = 'md',
   isBare = false,
+  isInset = false,
   isLabelHidden = false,
   icon,
   trailing,
@@ -157,13 +160,15 @@ const TextField = ({
               'valence-field text-text outline-none',
               'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
               'motion-reduce:transition-none placeholder:text-text-muted',
-              'focus-visible:focus-ring',
+              isInset ? 'h-6 bg-transparent px-1 text-[0.8125rem]' : 'focus-visible:focus-ring',
               'disabled:cursor-not-allowed disabled:opacity-50',
               'w-full',
-              isBare
-                ? 'bg-transparent outline-none'
-                : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
-              isBare
+              isInset
+                ? ''
+                : isBare
+                  ? 'bg-transparent outline-none'
+                  : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
+              isBare || isInset
                 ? ''
                 : size === 'sm'
                   ? 'h-7 px-2.5 text-[0.8125rem]'
@@ -174,7 +179,7 @@ const TextField = ({
                       : 'h-8 px-3 text-[0.8125rem]',
               isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
               isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
-              isBare ? '' : isPill ? 'rounded-full' : 'rounded-lg',
+              isBare || isInset ? '' : isPill ? 'rounded-full' : 'rounded-lg',
               joins === 'next' ? 'rounded-r-none border-r-0' : '',
               error === undefined ? '' : 'border-destructive',
             )}

@@ -9,15 +9,14 @@ const TITLE_FIELD_CARDS: readonly {
 }[] = [
   {
     id: 'names',
-    title: say('screens.adminArea.titleDetails.names'),
-    fields: ['title', 'sortTitle', 'originalTitle'],
+    title: say('screens.adminArea.titleDetails.titleAndRelease'),
+    fields: ['title', 'originalTitle', 'sortTitle', 'releaseDate', 'status'],
   },
   {
     id: 'story',
     title: say('screens.adminArea.titleDetails.story'),
     fields: ['tagline', 'overview'],
   },
-  { id: 'release', title: say('common.release'), fields: ['releaseDate', 'status'] },
   {
     id: 'classification',
     title: say('screens.adminArea.titleDetails.classification'),

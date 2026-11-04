@@ -21,6 +21,7 @@ type TextFieldProps = {
   isPill?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isBare?: boolean;
+  isInset?: boolean;
   isLabelHidden?: boolean;
   icon?: ReactNode;
   trailing?: ReactNode;

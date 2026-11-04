@@ -21,6 +21,7 @@ type HeldFile = {
 type EntryFacts = {
   media: Readonly<Record<string, HeldFile>>;
   shows: Readonly<Record<string, { seriesId: string; title: string }>>;
+  films: Readonly<Record<string, { rootId: string; title: string }>>;
   leftOut: readonly { path: string; isFolder: boolean }[];
   issues: Readonly<Record<string, Said>>;
 };
@@ -46,7 +47,8 @@ const SAMPLE = /(?:^|\/)(?:sample|minta)(?:\/|\.|$)|\.(?:sample|minta)\.[^.]+$/i
  *
  * @param entries - What was listed.
  * @param library - The library they are in.
- * @param facts - What the library holds of them, which of them are left out, and what scans said.
+ * @param facts - What the library holds of them, the programme or the one film each folder holds,
+ *   which of them are left out, and what scans said.
  * @returns Each entry's description, by its path.
  */
 const describeLibraryEntries = (
@@ -73,14 +75,17 @@ const describeLibraryEntries = (
 
       if (entry.isFolder) {
         const show = facts.shows[entry.path];
+        const film = facts.films[entry.path];
 
         return [
           entry.path,
           {
             ...nothing,
-            ...(show === undefined
-              ? {}
-              : { title: show.title, titleId: [SHOW, library.id, show.seriesId].join(' ') }),
+            ...(show !== undefined
+              ? { title: show.title, titleId: [SHOW, library.id, show.seriesId].join(' ') }
+              : film !== undefined
+                ? { title: film.title, titleId: film.rootId }
+                : {}),
             status: isLeftOut(entry.path) ? 'leftOut' : null,
           },
         ];

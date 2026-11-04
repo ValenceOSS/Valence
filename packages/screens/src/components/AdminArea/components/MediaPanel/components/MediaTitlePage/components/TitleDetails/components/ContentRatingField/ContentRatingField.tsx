@@ -111,9 +111,11 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
       >
         <TextField
           label={say('screens.adminArea.contentRatingField.countryCode')}
+          isLabelHidden
+          placeholder={say('screens.adminArea.contentRatingField.countryCode')}
           value={typed}
           onValueChange={setTyped}
-          className="w-32"
+          className="w-36"
         />
         <Button type="submit" variant="secondary" disabled={!canAdd}>
           {say('screens.adminArea.contentRatingField.addCountry')}

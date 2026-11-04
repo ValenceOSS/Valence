@@ -32,6 +32,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  like,
   lte,
   ne,
   or,
@@ -351,6 +352,8 @@ const orderingFor = (options: ListItemsOptions) => {
 
   return [options.order === 'newest' ? desc(mediaItem.addedAt) : byTitle, asc(mediaItem.id)];
 };
+
+const FOLDERS_ASKED_AT_ONCE = 200;
 
 /**
  * The library as Postgres holds it, and the work the job queue runs against it — scanning, probing,
@@ -2650,7 +2653,40 @@ const createDatabaseLibraryService = ({
         externalId: mediaItem.externalId,
         extraKind: mediaItem.extraKind,
       };
-      const [items, parts, shows, leftOut, issues] = await Promise.all([
+      const filmsUnder = async () => {
+        const found: { id: string; title: string; path: string }[] = [];
+
+        for (let at = 0; at < folders.length; at += FOLDERS_ASKED_AT_ONCE) {
+          const asked = folders.slice(at, at + FOLDERS_ASKED_AT_ONCE);
+
+          found.push(
+            ...(await db
+              .select({ id: mediaItem.id, title: mediaItem.title, path: mediaItem.path })
+              .from(mediaItem)
+              .where(
+                and(
+                  eq(mediaItem.libraryId, libraryId),
+                  isNull(mediaItem.seriesTitle),
+                  isNull(mediaItem.extraKind),
+                  isNull(mediaItem.parentId),
+                  or(...asked.map((folder) => like(mediaItem.path, `${likeLiterally(folder)}/%`))),
+                ),
+              )),
+          );
+        }
+
+        return Object.fromEntries(
+          folders.flatMap((folder) => {
+            const held = found.filter((one) => one.path.startsWith(`${folder}/`));
+            const [only] = held;
+
+            return only === undefined || held.some((one) => one.id !== only.id)
+              ? []
+              : [[folder, { rootId: only.id, title: only.title }]];
+          }),
+        );
+      };
+      const [items, parts, shows, leftOut, issues, films] = await Promise.all([
         files.length === 0
           ? []
           : db
@@ -2690,6 +2726,7 @@ const createDatabaseLibraryService = ({
               .from(jobRunIssue)
               .where(inArray(jobRunIssue.path, [...files]))
               .orderBy(asc(jobRunIssue.atMs)),
+        folders.length === 0 ? {} : filmsUnder(),
       ]);
 
       return {
@@ -2713,6 +2750,7 @@ const createDatabaseLibraryService = ({
             { seriesId: one.id, title: one.title },
           ]),
         ),
+        films,
         leftOut: leftOut.map((one) => ({ path: one.path, isFolder: one.isFolder })),
         issues: Object.fromEntries(
           issues.flatMap((one) => {

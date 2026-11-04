@@ -304,7 +304,7 @@ const FolderView = ({
                 <Button
                   variant="subtle"
                   size="none"
-                  className="self-start truncate font-medium text-text hover:underline"
+                  className="block max-w-full self-start truncate text-left font-medium text-text hover:underline"
                   onClick={(event) => {
                     event.stopPropagation();
                     open(row.original.path);
@@ -322,29 +322,6 @@ const FolderView = ({
                 </span>
               ) : null}
             </span>
-          </span>
-        ),
-      },
-      ...moreColumns,
-      {
-        id: 'size',
-        header: say('common.size'),
-        accessorFn: (entry) => entry.sizeBytes ?? -1,
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text-muted">
-            {row.original.sizeBytes === null ? '—' : formatBytes(row.original.sizeBytes)}
-          </span>
-        ),
-      },
-      {
-        id: 'modified',
-        header: say('screens.adminArea.filesPanel.changed'),
-        accessorFn: (entry) => entry.modifiedAt ?? '',
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text-muted">
-            {row.original.modifiedAt === null
-              ? '—'
-              : new Date(row.original.modifiedAt).toLocaleDateString()}
           </span>
         ),
       },
@@ -392,6 +369,29 @@ const FolderView = ({
             </Badge>
           );
         },
+      },
+      ...moreColumns,
+      {
+        id: 'size',
+        header: say('common.size'),
+        accessorFn: (entry) => entry.sizeBytes ?? -1,
+        cell: ({ row }) => (
+          <span className="tabular-nums text-text-muted">
+            {row.original.sizeBytes === null ? '—' : formatBytes(row.original.sizeBytes)}
+          </span>
+        ),
+      },
+      {
+        id: 'modified',
+        header: say('screens.adminArea.filesPanel.changed'),
+        accessorFn: (entry) => entry.modifiedAt ?? '',
+        cell: ({ row }) => (
+          <span className="tabular-nums text-text-muted">
+            {row.original.modifiedAt === null
+              ? '—'
+              : new Date(row.original.modifiedAt).toLocaleDateString()}
+          </span>
+        ),
       },
       {
         id: 'actions',

@@ -15,6 +15,7 @@ type MetadataFieldProps = {
   suggestions?: readonly TagSuggestion[];
   region?: string;
   placeholder?: string;
+  isCard?: boolean;
   className?: string;
 };
 

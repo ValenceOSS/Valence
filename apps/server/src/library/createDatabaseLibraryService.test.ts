@@ -824,10 +824,15 @@ describe('what the folder view says of files', { timeout: STARTING_POSTGRES_MS }
     });
     await service.leaveOut(FILMS_ID, { path: '/films/brazil.mkv', note: null }, null);
 
+    await db
+      .update(mediaItem)
+      .set({ path: '/films/Arrival (2016)/arrival.mkv' })
+      .where(eq(mediaItem.id, 'arrival'));
+
     const facts = await service.readEntryFacts(
       FILMS_ID,
       ['/films/alien-cut.mkv', '/films/nothing.mkv'],
-      ['/films/A Show', '/films/Elsewhere'],
+      ['/films/A Show', '/films/Elsewhere', '/films/Arrival (2016)', '/films'],
     );
 
     expect(facts.media).toEqual({
@@ -843,6 +848,9 @@ describe('what the folder view says of files', { timeout: STARTING_POSTGRES_MS }
     });
     expect(facts.shows).toEqual({
       '/films/A Show': { seriesId: 'folder-show', title: 'A Show' },
+    });
+    expect(facts.films).toEqual({
+      '/films/Arrival (2016)': { rootId: 'arrival', title: 'Arrival' },
     });
     expect(facts.leftOut).toEqual([{ path: '/films/brazil.mkv', isFolder: false }]);
     expect(facts.issues).toEqual({});

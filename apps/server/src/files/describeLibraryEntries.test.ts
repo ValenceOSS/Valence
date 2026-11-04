@@ -44,6 +44,7 @@ const FACTS: EntryFacts = {
     },
   },
   shows: { '/media/films/Show': { seriesId: 'show', title: 'Show' } },
+  films: { '/media/films/Arrival': { rootId: 'arrival', title: 'Arrival' } },
   leftOut: [{ path: '/media/films/Junk', isFolder: true }],
   issues: {
     '/media/films/Broken.mkv': { code: 'x', message: 'No video stream', values: {} },
@@ -70,10 +71,16 @@ describe('describeLibraryEntries', () => {
         at('/media/films/Arrival/Arrival 4K.mkv'),
         at('/media/films/Show/S01E01.mkv'),
         at('/media/films/Show', true),
+        at('/media/films/Arrival', true),
       ],
       LIBRARY,
       FACTS,
     );
+
+    expect(described['/media/films/Arrival']).toMatchObject({
+      title: 'Arrival',
+      titleId: 'arrival',
+    });
 
     expect(described['/media/films/Arrival/Arrival 4K.mkv']).toMatchObject({
       mediaId: 'arrival-4k',

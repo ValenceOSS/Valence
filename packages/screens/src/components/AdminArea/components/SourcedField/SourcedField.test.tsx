@@ -78,4 +78,24 @@ describe('SourcedField', () => {
     expect(screen.getByText('Locked')).toBeInTheDocument();
     expect(screen.queryByText(/^TMDB:/)).not.toBeInTheDocument();
   });
+
+  it('stands as a card of its own, named by its label, its menu in the card’s head', () => {
+    render(
+      <SourcedField
+        label="Note"
+        state={EDITED}
+        isCard
+        onReset={vi.fn()}
+        onLock={vi.fn()}
+        onUseCatalogue={vi.fn()}
+      >
+        <span>The control</span>
+      </SourcedField>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Note' })).toBeInTheDocument();
+    expect(screen.getByText('Edited')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More for Note' })).toBeInTheDocument();
+    expect(screen.getByText('TMDB: A film')).toBeInTheDocument();
+  });
 });

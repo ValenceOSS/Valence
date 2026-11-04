@@ -16,15 +16,7 @@ import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 import type { TitleDetailsProps } from './TitleDetails.types';
 import { say } from '@ValenceI18n/say';
 
-const SPANS_BOTH: readonly TitleField[] = [
-  'overview',
-  'note',
-  'genres',
-  'tags',
-  'studios',
-  'networks',
-  'certifications',
-];
+const SPANS_BOTH: readonly TitleField[] = ['tagline', 'overview', 'note', 'certifications'];
 
 /**
  * A title's Details tab: every field of its metadata, grouped into cards, each saved as it changes
@@ -80,6 +72,25 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
   const cardOf = (card: (typeof TITLE_FIELD_CARDS)[number]) => {
     const fields = card.fields.filter((field) => has.includes(field));
     const isSideBySide = card.isAside !== true;
+
+    const [only] = fields;
+
+    if (fields.length === 1 && only !== undefined && card.id !== 'ids') {
+      return (
+        <MetadataField
+          key={card.id}
+          field={only}
+          kind={kind}
+          state={metadata.data.fields[only]}
+          change={change}
+          isCard
+          {...(onShowHistory === undefined ? {} : { onShowHistory })}
+          {...(metadata.data.certificationRegion === undefined
+            ? {}
+            : { region: metadata.data.certificationRegion })}
+        />
+      );
+    }
 
     return fields.length === 0 ? null : (
       <PanelCard key={card.id} title={card.title}>

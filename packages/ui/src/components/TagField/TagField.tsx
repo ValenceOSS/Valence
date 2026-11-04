@@ -1,9 +1,10 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { TextField } from '@ValenceUI/TextField';
 import { MENU } from '@ValenceUI/tokens/menu';
+import { FIELD_TEXT } from '@ValenceUI/tokens/FIELD_TEXT';
 import { cn } from '@ValenceUI/cn';
 import { sameWord } from './sameWord';
 import type { KeyboardEvent } from 'react';
@@ -42,6 +43,7 @@ const TagField = ({
   const [isOpen, setOpen] = useState(false);
   const [at, setAt] = useState(0);
   const listId = useId();
+  const field = useRef<HTMLInputElement>(null);
   const taken = new Set(values.map(sameWord));
   const typed = sameWord(draft);
   const offered =
@@ -103,56 +105,75 @@ const TagField = ({
 
   return (
     <div data-slot="tag-field" className={cn('relative flex flex-col gap-2', className)}>
-      {values.length === 0 ? null : (
-        <ul className="flex flex-wrap items-center gap-2">
-          {values.map((value) => (
-            <li key={value} className="flex h-7 items-center">
-              <Button
-                variant="glossy"
-                size="xs"
-                label={say('ui.appliedFilters.removeSaid', { said: value })}
-                hasTooltip={false}
-                disabled={disabled}
-                onClick={() => {
-                  onValuesChange(values.filter((one) => one !== value));
-                }}
-              >
-                {value}
-                <Icon of={XIcon} size={13} />
-              </Button>
-            </li>
-          ))}
-        </ul>
+      {isLabelHidden ? null : (
+        <span aria-hidden className={FIELD_TEXT.label}>
+          {label}
+        </span>
       )}
 
-      <TextField
-        label={label}
-        isLabelHidden={isLabelHidden || values.length > 0}
-        value={draft}
-        {...(placeholder === undefined ? {} : { placeholder })}
-        disabled={disabled}
-        autoComplete="off"
-        onValueChange={(next) => {
-          const parts = next.split(',');
-
-          if (parts.length > 1) {
-            add(parts.slice(0, -1));
-            setDraft(parts.at(-1) ?? '');
-          } else {
-            setDraft(next);
-            setAt(0);
+      <div
+        className={cn(
+          'flex min-h-8 flex-wrap items-center gap-1.5 rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-1.5 py-1 backdrop-blur-xl',
+          'transition-[border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
+          'hover:border-[var(--surface-divider)] focus-within:focus-ring',
+          disabled ? 'opacity-50' : '',
+        )}
+        onPointerDown={(event) => {
+          if (event.target === event.currentTarget) {
+            event.preventDefault();
+            field.current?.focus();
           }
+        }}
+      >
+        {values.map((value) => (
+          <Button
+            key={value}
+            variant="glossy"
+            size="xs"
+            label={say('ui.appliedFilters.removeSaid', { said: value })}
+            hasTooltip={false}
+            disabled={disabled}
+            onClick={() => {
+              onValuesChange(values.filter((one) => one !== value));
+            }}
+          >
+            {value}
+            <Icon of={XIcon} size={13} />
+          </Button>
+        ))}
 
-          setOpen(true);
-        }}
-        onKeyDown={onKeyDown}
-        onFocus={() => {
-          setOpen(true);
-        }}
-        onBlur={() => {
-          setOpen(false);
-        }}
-      />
+        <TextField
+          ref={field}
+          label={label}
+          isLabelHidden
+          isInset
+          value={draft}
+          {...(placeholder === undefined || values.length > 0 ? {} : { placeholder })}
+          disabled={disabled}
+          autoComplete="off"
+          className="min-w-24 flex-1"
+          onValueChange={(next) => {
+            const parts = next.split(',');
+
+            if (parts.length > 1) {
+              add(parts.slice(0, -1));
+              setDraft(parts.at(-1) ?? '');
+            } else {
+              setDraft(next);
+              setAt(0);
+            }
+
+            setOpen(true);
+          }}
+          onKeyDown={onKeyDown}
+          onFocus={() => {
+            setOpen(true);
+          }}
+          onBlur={() => {
+            setOpen(false);
+          }}
+        />
+      </div>
 
       {!isOpen || offered.length === 0 ? null : (
         <div

@@ -17,6 +17,8 @@ import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';
 import type { SeasonListProps } from './SeasonList.types';
 import { say } from '@ValenceI18n/say';
 
+const EPISODES_SPACED_OUT = 60;
+
 const WORST_FIRST: readonly (TitlePart | 'notAsked')[] = [
   'failed',
   'downloading',
@@ -75,6 +77,12 @@ const SeasonList = ({
   const open = openSeason === undefined ? localOpen : openSeason;
   const setOpen = onOpenSeason ?? setLocalOpen;
   const isCoursed = seasons.some((season) => season.span !== undefined);
+  const isNamed = seasons.some(
+    (season) =>
+      season.name !== null &&
+      season.name !== undefined &&
+      season.name !== nameSeason(season.season),
+  );
 
   return (
     <PanelCard
@@ -133,7 +141,7 @@ const SeasonList = ({
                   }}
                   className={cn(
                     'flex shrink-0 items-center gap-2 text-left',
-                    isCoursed ? 'w-56' : 'w-28',
+                    isCoursed || isNamed ? 'w-56' : 'w-28',
                   )}
                 >
                   <Icon
@@ -154,7 +162,10 @@ const SeasonList = ({
 
                 <span
                   aria-hidden
-                  className="flex min-w-24 flex-1 gap-[3px] overflow-hidden rounded-full"
+                  className={cn(
+                    'flex min-w-24 flex-1 overflow-hidden rounded-full',
+                    season.episodes.length > EPISODES_SPACED_OUT ? '' : 'gap-[3px]',
+                  )}
                 >
                   {season.episodes.map((episode) => (
                     <span

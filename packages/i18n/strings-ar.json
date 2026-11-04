@@ -24811,11 +24811,6 @@
     "context": "A field for a title’s IMDb id. On the Details tab of a title in the admin area (from `TitleDetails`)."
   },
   {
-    "handler": "screens.adminArea.titleDetails.names",
-    "text": "Names",
-    "context": "The heading of the card holding a title’s names. On the Details tab of a title in the admin area (from `TitleDetails`)."
-  },
-  {
     "handler": "screens.adminArea.titleDetails.networks",
     "text": "Networks",
     "context": "A field for the channels a programme was shown on. On the Details tab of a title in the admin area (from `TitleDetails`)."
@@ -24869,6 +24864,11 @@
     "handler": "screens.adminArea.titleDetails.theDetailsCouldNotBeRead",
     "text": "Couldn’t read this title’s details.",
     "context": "Shown on the Details tab of a title in the admin area when its metadata couldn’t be read (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.titleAndRelease",
+    "text": "Title and release",
+    "context": "The heading of the card on a title's Details tab holding its names and when it came out."
   },
   {
     "handler": "screens.adminArea.titleDetails.tvdb",

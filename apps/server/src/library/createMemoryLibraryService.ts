@@ -978,7 +978,8 @@ const createMemoryLibraryService = (
 
   mediaIdsAt: () => Promise.resolve({}),
 
-  readEntryFacts: () => Promise.resolve({ media: {}, shows: {}, leftOut: [], issues: {} }),
+  readEntryFacts: () =>
+    Promise.resolve({ media: {}, shows: {}, films: {}, leftOut: [], issues: {} }),
 
   mediaPathsIn: () => Promise.resolve({}),
 

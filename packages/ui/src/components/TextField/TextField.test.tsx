@@ -400,4 +400,11 @@ describe('a control after the field', () => {
 
     expect(onValueChange).toHaveBeenCalledWith('a');
   });
+
+  it('paints no box of its own where it sits inside another', () => {
+    render(<TextField label="Genres" isInset value="" onValueChange={() => undefined} />);
+
+    expect(screen.getByLabelText('Genres')).toHaveClass('bg-transparent');
+    expect(screen.getByLabelText('Genres')).not.toHaveClass('rounded-lg');
+  });
 });
