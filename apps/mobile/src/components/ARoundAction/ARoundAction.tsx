@@ -9,7 +9,7 @@ import type { ARoundActionProps } from './ARoundAction.types';
 const ROUND = 54;
 
 const styles = StyleSheet.create({
-  action: { alignItems: 'center', gap: 7, width: 74 },
+  action: { alignItems: 'center', gap: 7, width: 64 },
   circle: {
     alignItems: 'center',
     borderRadius: ROUND / 2,
