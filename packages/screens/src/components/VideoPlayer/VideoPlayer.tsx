@@ -1170,7 +1170,7 @@ const VideoPlayer = ({
         startedId !== null &&
         engine !== null &&
         film !== null &&
-        !isStreamedNatively(deviceProfile, outcome.session.plan, film)
+        !isStreamedNatively(deviceProfile, outcome.session.plan, film, audioStreamIndex)
       ) {
         abandonStartedSession(startedId, clientId);
         engineRefusedRef.current = true;

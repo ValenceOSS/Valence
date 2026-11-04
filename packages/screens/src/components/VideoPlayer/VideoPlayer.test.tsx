@@ -4235,6 +4235,27 @@ describe('VideoPlayer, as an episode ends', () => {
 });
 
 describe('VideoPlayer, playing in the browser with a sound language remembered', () => {
+  beforeEach(() => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        plan: {
+          ...transcodingPlan,
+          mediaId: 'media-1',
+          audio: {
+            kind: 'transcode',
+            streamIndex: 2,
+            codec: 'aac',
+            channels: 2,
+            maxBitrateKbps: 384,
+            reason,
+          },
+        },
+      },
+    });
+  });
+
   afterEach(() => {
     writePlaybackPreferences({ playsInTheBrowser: false, audioLanguage: null });
     detectMock.mockReturnValue({ name: 'Browser' });
@@ -4244,7 +4265,7 @@ describe('VideoPlayer, playing in the browser with a sound language remembered',
     writePlaybackPreferences({ playsInTheBrowser: true, audioLanguage: 'eng' });
     detectMock.mockReturnValue({
       name: 'Browser',
-      directPlayProfiles: [],
+      directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac'] }],
       supportedVideoRanges: ['SDR'],
       tenBitVideoCodecs: [],
     });
@@ -4262,7 +4283,7 @@ describe('VideoPlayer, playing in the browser with a sound language remembered',
     writePlaybackPreferences({ playsInTheBrowser: true, audioLanguage: null });
     detectMock.mockReturnValue({
       name: 'Browser',
-      directPlayProfiles: [],
+      directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac'] }],
       supportedVideoRanges: ['SDR'],
       tenBitVideoCodecs: [],
     });

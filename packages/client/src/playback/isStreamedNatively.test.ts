@@ -93,13 +93,22 @@ describe('isStreamedNatively', () => {
     expect(isStreamedNatively(BROWSER, COPIED, silent)).toBe(true);
   });
 
-  it('leaves alone a plan made for another copy of the film', () => {
+  it('says no to a plan made for another copy of the film, whose codecs it cannot know', () => {
+    const english: PlaybackPlan = { ...COPIED, audio: { ...COPIED.audio, streamIndex: 2 } };
+
     expect(
       isStreamedNatively(
         BROWSER,
-        { ...COPIED, mediaId: '9b2504e0-4f89-41d3-9a0c-0305e82c3302' },
+        { ...english, mediaId: '9b2504e0-4f89-41d3-9a0c-0305e82c3302' },
         FILM,
       ),
-    ).toBe(true);
+    ).toBe(false);
+  });
+
+  it('judges the track asked for, which a stream copies in place of the plan’s', () => {
+    const english: PlaybackPlan = { ...COPIED, audio: { ...COPIED.audio, streamIndex: 2 } };
+
+    expect(isStreamedNatively(BROWSER, english, FILM, 1)).toBe(false);
+    expect(isStreamedNatively(BROWSER, COPIED, FILM, 2)).toBe(true);
   });
 });

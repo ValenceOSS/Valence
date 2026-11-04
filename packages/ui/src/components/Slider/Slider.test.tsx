@@ -124,47 +124,57 @@ describe('Slider', () => {
     expect(onSeek).toHaveBeenCalledWith(31);
   });
 
-  it('moves an arrow key’s own distance and settles there at once, where it has one', async () => {
+  it('hands the arrow keys to whoever takes them over, and moves nothing itself', async () => {
     const onChange = vi.fn();
     const onCommit = vi.fn();
+    const onArrowKey = vi.fn();
     const user = userEvent.setup();
     render(
       <Slider
         label="Seek"
         value={30}
         max={120}
-        keyStep={10}
+        onArrowKey={onArrowKey}
         onValueChange={onChange}
         onValueCommit={onCommit}
       />,
     );
 
     slider().focus();
-    await user.keyboard('{ArrowRight}');
-    await user.keyboard('{ArrowLeft}');
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowLeft}{ArrowDown}');
 
-    expect(onCommit.mock.calls).toEqual([[40], [20]]);
+    expect(onArrowKey.mock.calls).toEqual([[1], [1], [-1], [-1]]);
     expect(onChange).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it('goes no further than either end by an arrow key’s own distance', async () => {
-    const onCommit = vi.fn();
-    const user = userEvent.setup();
+  it('takes no arrow keys while it is turned off', () => {
+    const onArrowKey = vi.fn();
     render(
       <Slider
         label="Seek"
-        value={115}
+        value={30}
         max={120}
-        keyStep={10}
+        isDisabled
+        onArrowKey={onArrowKey}
         onValueChange={vi.fn()}
-        onValueCommit={onCommit}
       />,
     );
 
-    slider().focus();
-    await user.keyboard('{ArrowRight}');
+    fireEvent.keyDown(slider(), { key: 'ArrowRight' });
 
-    expect(onCommit).toHaveBeenCalledWith(120);
+    expect(onArrowKey).not.toHaveBeenCalled();
+  });
+
+  it('takes no arrow keys before it has anywhere to go', () => {
+    const onArrowKey = vi.fn();
+    render(
+      <Slider label="Seek" value={0} max={0} onArrowKey={onArrowKey} onValueChange={vi.fn()} />,
+    );
+
+    fireEvent.keyDown(slider(), { key: 'ArrowRight' });
+
+    expect(onArrowKey).not.toHaveBeenCalled();
   });
 
   it('says a value from the keys changed before it says it settled, so a preview of it is let go', async () => {

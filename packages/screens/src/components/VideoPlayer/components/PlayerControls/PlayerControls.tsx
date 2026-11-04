@@ -276,7 +276,9 @@ const PlayerControls = ({
             label={say('common.moveThroughTitle', { title })}
             value={shownPosition}
             max={duration}
-            keyStep={SKIP_SECONDS}
+            onArrowKey={(direction) => {
+              onSkip(direction * SKIP_SECONDS);
+            }}
             onValueChange={setScrubbedTo}
             onValueCommit={(seconds) => {
               setScrubbedTo(null);

@@ -13,22 +13,25 @@ const STREAMED_IN = 'mp4';
  * @param profile - What the media element plays by itself.
  * @param plan - What the server decided to send.
  * @param film - The file the plan was made for.
- * @returns Whether the element takes it, and yes where the plan was made for another copy of the film.
+ * @param askedTrack - The sound track asked for, which a stream carries in place of the plan's.
+ * @returns Whether the element takes it, and no where the plan was made for another copy of the
+ *   film, whose codecs are not known here.
  */
 const isStreamedNatively = (
   profile: DeviceProfile,
   plan: PlaybackPlan,
   film: Pick<MediaItem, 'id' | 'videoCodec' | 'audioStreams'>,
+  askedTrack?: number,
 ): boolean => {
   if (plan.mediaId !== film.id) {
-    return true;
+    return false;
   }
 
   const videoCodec = plan.video.kind === 'transcode' ? plan.video.codec : film.videoCodec;
   const heard =
     plan.audio.kind === 'transcode'
       ? null
-      : (plan.audio.streamIndex ?? naturalAudioStreamIndex(film.audioStreams));
+      : (askedTrack ?? plan.audio.streamIndex ?? naturalAudioStreamIndex(film.audioStreams));
   const audioCodec =
     plan.audio.kind === 'transcode'
       ? plan.audio.codec

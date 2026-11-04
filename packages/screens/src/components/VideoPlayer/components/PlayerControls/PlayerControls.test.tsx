@@ -121,14 +121,15 @@ describe('PlayerControls', () => {
     expect(screen.getByRole('slider', { name: 'Seek through Arrival' })).toBeInTheDocument();
   });
 
-  it('seeks as far as a skip from the keyboard, as the shortcut does with the bar unfocused', async () => {
+  it('skips from the keyboard, as the shortcut does with the bar unfocused', async () => {
     const user = userEvent.setup();
     const props = draw();
 
     screen.getByRole('slider', { name: 'Seek through Arrival' }).focus();
-    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowRight}{ArrowLeft}');
 
-    expect(props.onSeek).toHaveBeenCalledWith(30 + SKIP_SECONDS);
+    expect(vi.mocked(props.onSkip).mock.calls).toEqual([[SKIP_SECONDS], [-SKIP_SECONDS]]);
+    expect(props.onSeek).not.toHaveBeenCalled();
   });
 
   it('goes back to showing the time played once a seek from the keyboard has settled', async () => {
