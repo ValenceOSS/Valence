@@ -627,7 +627,9 @@ const FolderView = ({
                 at === null
                   ? columns.filter(
                       (column) =>
-                        !['choose', 'size', 'modified', 'catalogue'].includes(column.id ?? ''),
+                        !['choose', 'size', 'modified', 'title', 'status'].includes(
+                          column.id ?? '',
+                        ),
                     )
                   : columns
               }

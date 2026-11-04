@@ -1244,13 +1244,15 @@ const MediaPanel = ({
               isLabelHidden
               placeholder={
                 view === 'folders'
-                  ? say('screens.adminArea.filesPanel.findInThisFolder')
+                  ? folder === null
+                    ? say('screens.adminArea.filesPanel.findInEveryLibrary')
+                    : say('screens.adminArea.filesPanel.findInThisFolder')
                   : say('common.findATitle')
               }
               value={search}
               onValueChange={setSearch}
               choices={
-                tabs.length < 2
+                tabs.length < 2 || view === 'folders'
                   ? []
                   : [
                       {
@@ -1270,13 +1272,7 @@ const MediaPanel = ({
                           };
                         }),
                         value: libraryId,
-                        onChange: (chosenId) => {
-                          setChosenLibrary(chosenId);
-
-                          if (view === 'folders') {
-                            onFolder?.(null);
-                          }
-                        },
+                        onChange: setChosenLibrary,
                       },
                     ]
               }
@@ -1287,10 +1283,8 @@ const MediaPanel = ({
       >
         <TabPanel value="folders" travel={travel}>
           <FolderView
-            key={chosen?.path ?? 'none'}
             libraries={libraries}
             mayDelete={mayManageFiles}
-            root={chosen?.path ?? null}
             openAt={folder}
             search={search}
             onChanged={() => {
