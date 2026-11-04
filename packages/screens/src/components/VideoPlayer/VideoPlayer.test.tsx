@@ -1562,7 +1562,7 @@ describe('VideoPlayer', () => {
     fireEvent.keyDown(bar, { key: 'ArrowRight' });
 
     await waitFor(() => {
-      expect(element).toHaveProperty('currentTime', 1);
+      expect(element).toHaveProperty('currentTime', SKIP_SECONDS);
     });
 
     expect(startMock).toHaveBeenCalledTimes(1);

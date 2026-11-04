@@ -124,6 +124,70 @@ describe('Slider', () => {
     expect(onSeek).toHaveBeenCalledWith(31);
   });
 
+  it('moves an arrow key’s own distance and settles there at once, where it has one', async () => {
+    const onChange = vi.fn();
+    const onCommit = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Slider
+        label="Seek"
+        value={30}
+        max={120}
+        keyStep={10}
+        onValueChange={onChange}
+        onValueCommit={onCommit}
+      />,
+    );
+
+    slider().focus();
+    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowLeft}');
+
+    expect(onCommit.mock.calls).toEqual([[40], [20]]);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('goes no further than either end by an arrow key’s own distance', async () => {
+    const onCommit = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Slider
+        label="Seek"
+        value={115}
+        max={120}
+        keyStep={10}
+        onValueChange={vi.fn()}
+        onValueCommit={onCommit}
+      />,
+    );
+
+    slider().focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(onCommit).toHaveBeenCalledWith(120);
+  });
+
+  it('says a value from the keys changed before it says it settled, so a preview of it is let go', async () => {
+    const heard: string[] = [];
+    const user = userEvent.setup();
+    render(
+      <Slider
+        label="Seek"
+        value={30}
+        max={120}
+        onValueChange={(value) => heard.push(`change ${value.toString()}`)}
+        onValueCommit={(value) => heard.push(`commit ${value.toString()}`)}
+      />,
+    );
+
+    slider().focus();
+    await user.keyboard('{End}');
+
+    await waitFor(() => {
+      expect(heard).toEqual(['change 120', 'commit 120']);
+    });
+  });
+
   it('starts its track wherever it is told to, and goes no lower', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
