@@ -2442,19 +2442,19 @@ const VideoPlayer = ({
         return;
       }
 
-      if (pressClosesAMenuRef.current) {
-        pressClosesAMenuRef.current = false;
-        lastTapRef.current = null;
-
-        return;
-      }
-
       const stage = stageRef.current;
       const now = Date.now();
       const last = lastTapRef.current;
 
       setIsIdle(false);
       setActivity((count) => count + 1);
+
+      if (pressClosesAMenuRef.current) {
+        pressClosesAMenuRef.current = false;
+        lastTapRef.current = null;
+
+        return;
+      }
 
       if (
         stage === null ||

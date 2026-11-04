@@ -2522,6 +2522,41 @@ describe('VideoPlayer', () => {
     }
   });
 
+  it('keeps the controls up after a tap that only closed a menu', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      const actor = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      const element = await screen.findByLabelText('Arrival');
+      const stage = stageOf(element);
+      const tap = { clientX: 500, clientY: 250, pointerType: 'touch' };
+
+      stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
+      fireEvent.play(element);
+      await actor.click(screen.getByRole('button', { name: 'Settings' }));
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      fireEvent.pointerDown(element, tap);
+      fireEvent.pointerUp(element, tap);
+      fireEvent.click(element);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toHaveAttribute(
+          'aria-expanded',
+          'false',
+        );
+      });
+      expect(stage.className).toContain('cursor-default');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('brings the controls back on a tap, which no pointer movement ever reports', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
