@@ -1,21 +1,10 @@
-import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { findProseComments } from './findProseComments';
 import type { Language, ProseComment } from './findProseComments';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
-
-const SKIPPED = new Set([
-  'node_modules',
-  'target',
-  'dist',
-  'build',
-  '.git',
-  '.turbo',
-  '.astro',
-  '.next',
-  'coverage',
-]);
 
 const LANGUAGES: Record<string, Language> = {
   '.rs': 'rust',
@@ -23,33 +12,20 @@ const LANGUAGES: Record<string, Language> = {
 };
 
 /**
- * Walks a directory and every directory below it, gathering the files worth checking and stepping
- * over the ones nothing is ever written in — dependencies, build output and version control.
+ * Lists the files git would take into the repository, committed or not yet added.
  *
- * @param directory - Where to start walking.
- * @returns Every file found, as paths.
+ * @returns Every such file that is still on disk, as paths.
  */
-const filesUnder = (directory: string): string[] => {
-  const found: string[] = [];
-
-  for (const entry of readdirSync(directory)) {
-    if (SKIPPED.has(entry)) {
-      continue;
-    }
-
-    const path = join(directory, entry);
-
-    if (statSync(path).isDirectory()) {
-      found.push(...filesUnder(path));
-
-      continue;
-    }
-
-    found.push(path);
-  }
-
-  return found;
-};
+const filesToCheck = (): string[] =>
+  execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  })
+    .split('\0')
+    .filter((file) => file !== '')
+    .map((file) => join(ROOT, file))
+    .filter((path) => existsSync(path));
 
 /**
  * Decides which language a file is in, by extension, and answers with nothing for the ones this
@@ -91,7 +67,7 @@ const withoutComments = (source: string, comments: ProseComment[]): string => {
 
 let count = 0;
 
-for (const path of filesUnder(ROOT)) {
+for (const path of filesToCheck()) {
   const language = languageOf(path);
 
   if (language === null) {
