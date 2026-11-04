@@ -876,6 +876,58 @@ const mediaArtworkChoice = pgTable(
   ],
 );
 
+const titleEdit = pgTable(
+  'title_edit',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    subjectKey: text('subjectKey').notNull(),
+    subjectKind: text('subjectKind').notNull(),
+    field: text('field').notNull(),
+    value: jsonb('value'),
+    providerValue: jsonb('providerValue'),
+    providerChangedAt: timestamp('providerChangedAt'),
+    source: text('source').notNull().default('admin'),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+    setBy: text('setBy').references(() => user.id, { onDelete: 'set null' }),
+  },
+  (table) => [
+    uniqueIndex('title_edit_field_idx').on(
+      table.libraryId,
+      table.subjectKey,
+      table.field,
+      table.source,
+    ),
+    index('title_edit_subject_idx').on(table.libraryId, table.subjectKey),
+  ],
+);
+
+const titleChange = pgTable(
+  'title_change',
+  {
+    id: text('id').primaryKey(),
+    changeSetId: text('changeSetId').notNull(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    subjectKey: text('subjectKey').notNull(),
+    subjectKind: text('subjectKind').notNull(),
+    field: text('field').notNull(),
+    before: jsonb('before').notNull(),
+    after: jsonb('after').notNull(),
+    action: text('action').notNull(),
+    at: timestamp('at').notNull().defaultNow(),
+    actorId: text('actorId').references(() => user.id, { onDelete: 'set null' }),
+    actorName: text('actorName'),
+  },
+  (table) => [
+    index('title_change_subject_idx').on(table.libraryId, table.subjectKey, table.at),
+    index('title_change_set_idx').on(table.changeSetId),
+  ],
+);
+
 const series = pgTable(
   'series',
   {
@@ -907,6 +959,8 @@ const mediaItem = pgTable(
       .references(() => library.id, { onDelete: 'cascade' }),
     path: text('path').notNull(),
     title: text('title').notNull(),
+    sortTitle: text('sortTitle'),
+    originalTitle: text('originalTitle'),
     year: integer('year'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
     modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
@@ -945,6 +999,7 @@ const mediaItem = pgTable(
     rottenTomatoes: integer('rottenTomatoes'),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: text('seriesTitle'),
+    seriesSortTitle: text('seriesSortTitle'),
     certifications: jsonb('certifications'),
     contentAdvice: jsonb('contentAdvice'),
     certificationAge: integer('certificationAge'),
@@ -954,6 +1009,9 @@ const mediaItem = pgTable(
     overview: text('overview'),
     tagline: text('tagline'),
     genres: jsonb('genres'),
+    tags: jsonb('tags'),
+    studios: jsonb('studios'),
+    networks: jsonb('networks'),
     castMembers: jsonb('castMembers'),
     rating: real('rating'),
     posterUrl: text('posterUrl'),
@@ -961,6 +1019,9 @@ const mediaItem = pgTable(
     logoUrl: text('logoUrl'),
     artworkChangedAt: timestamp('artworkChangedAt'),
     externalId: text('externalId'),
+    externalKind: text('externalKind'),
+    catalogueEpisodeId: text('catalogueEpisodeId'),
+    tvdbId: text('tvdbId'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
     missingSince: timestamp('missingSince'),
@@ -2243,6 +2304,8 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  titleEdit,
+  titleChange,
   mediaItem,
   titleLikeness,
   mediaPart,

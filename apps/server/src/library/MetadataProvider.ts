@@ -69,6 +69,11 @@ type Metadata = {
   status?: string;
   imdbId?: string;
   rottenTomatoes?: number;
+  originalTitle?: string;
+  studios?: string[];
+  networks?: string[];
+  tvdbId?: string;
+  catalogueEpisodeId?: string;
   seasonNumber?: number;
   episodeNumber?: number;
 };

@@ -16,6 +16,7 @@ import {
   watchProgress,
 } from '#dialect/Schema';
 import { createMediaStore, listOutstandingFor, markJobComplete } from './createMediaStore';
+import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { MediaRow } from './scanLibrary';
 
@@ -101,6 +102,42 @@ const aStore = async () => {
 };
 
 describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('lays a programme’s and an episode’s edits over every scan, and keeps what the catalogue says', async () => {
+    const { db, store } = await aStore();
+    const edits = createTitleEditStore(db);
+    const nobody = { id: null, name: null };
+
+    await edits.change(
+      { libraryId: SHOWS_ID, key: 'tv:1', kind: 'show' },
+      [{ field: 'title', edit: { value: 'My show', catalogue: 'Show' } }],
+      nobody,
+      'set',
+    );
+    await edits.change(
+      { libraryId: SHOWS_ID, key: 'tv:1:e77', kind: 'episode' },
+      [{ field: 'title', edit: { value: 'My pilot', catalogue: 'Pilot' } }],
+      nobody,
+      'set',
+    );
+
+    const episode = anEpisode('/shows/Show/1.mkv', 'Show Renamed', '1');
+
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, catalogueEpisodeId: '77' },
+    });
+
+    const [stored] = await db
+      .select({ title: mediaItem.title, seriesTitle: mediaItem.seriesTitle })
+      .from(mediaItem);
+    const [placed] = await db.select({ title: series.title }).from(series);
+    const [showEdit] = await edits.editsFor(SHOWS_ID, ['tv:1']);
+
+    expect(stored).toEqual({ title: 'My pilot', seriesTitle: 'My show' });
+    expect(placed?.title).toBe('My show');
+    expect(showEdit?.catalogue).toBe('Show Renamed');
+  });
+
   it('keeps what is left out of a library once per path, and brings it back', async () => {
     const { store } = await aStore();
     const asked = {

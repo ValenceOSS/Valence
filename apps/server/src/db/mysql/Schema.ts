@@ -854,6 +854,60 @@ const mediaArtworkChoice = mysqlTable(
   ],
 );
 
+const titleEdit = mysqlTable(
+  'title_edit',
+  {
+    id: identifier('id').primaryKey(),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    subjectKey: varchar('subjectKey', { length: 4096 }).notNull(),
+    subjectKeyHash: hashOf('subjectKeyHash', 'subjectKey'),
+    subjectKind: varchar('subjectKind', { length: 32 }).notNull(),
+    field: varchar('field', { length: 64 }).notNull(),
+    value: jsonColumn('value'),
+    providerValue: jsonColumn('providerValue'),
+    providerChangedAt: moment('providerChangedAt'),
+    source: varchar('source', { length: 128 }).notNull().default('admin'),
+    setAt: momentNow('setAt').notNull(),
+    setBy: identifier('setBy').references(() => user.id, { onDelete: 'set null' }),
+  },
+  (table) => [
+    uniqueIndex('title_edit_field_idx').on(
+      table.libraryId,
+      table.subjectKeyHash,
+      table.field,
+      table.source,
+    ),
+    index('title_edit_subject_idx').on(table.libraryId, table.subjectKeyHash),
+  ],
+);
+
+const titleChange = mysqlTable(
+  'title_change',
+  {
+    id: identifier('id').primaryKey(),
+    changeSetId: identifier('changeSetId').notNull(),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    subjectKey: varchar('subjectKey', { length: 4096 }).notNull(),
+    subjectKeyHash: hashOf('subjectKeyHash', 'subjectKey'),
+    subjectKind: varchar('subjectKind', { length: 32 }).notNull(),
+    field: varchar('field', { length: 64 }).notNull(),
+    before: jsonColumn('before').notNull(),
+    after: jsonColumn('after').notNull(),
+    action: varchar('action', { length: 32 }).notNull(),
+    at: momentNow('at').notNull(),
+    actorId: identifier('actorId').references(() => user.id, { onDelete: 'set null' }),
+    actorName: mediumtext('actorName'),
+  },
+  (table) => [
+    index('title_change_subject_idx').on(table.libraryId, table.subjectKeyHash, table.at),
+    index('title_change_set_idx').on(table.changeSetId),
+  ],
+);
+
 const series = mysqlTable(
   'series',
   {
@@ -887,6 +941,8 @@ const mediaItem = mysqlTable(
     path: varchar('path', { length: 4096 }).notNull(),
     pathHash: hashOf('pathHash', 'path'),
     title: varchar('title', { length: 768 }).notNull(),
+    sortTitle: varchar('sortTitle', { length: 768 }),
+    originalTitle: mediumtext('originalTitle'),
     year: int('year'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
     modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
@@ -925,6 +981,7 @@ const mediaItem = mysqlTable(
     rottenTomatoes: int('rottenTomatoes'),
     seriesId: identifier('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: varchar('seriesTitle', { length: 512 }),
+    seriesSortTitle: varchar('seriesSortTitle', { length: 512 }),
     certifications: jsonColumn('certifications'),
     contentAdvice: jsonColumn('contentAdvice'),
     certificationAge: int('certificationAge'),
@@ -934,6 +991,9 @@ const mediaItem = mysqlTable(
     overview: mediumtext('overview'),
     tagline: mediumtext('tagline'),
     genres: jsonColumn('genres'),
+    tags: jsonColumn('tags'),
+    studios: jsonColumn('studios'),
+    networks: jsonColumn('networks'),
     castMembers: jsonColumn('castMembers'),
     rating: float('rating'),
     posterUrl: mediumtext('posterUrl'),
@@ -941,6 +1001,9 @@ const mediaItem = mysqlTable(
     logoUrl: mediumtext('logoUrl'),
     artworkChangedAt: moment('artworkChangedAt'),
     externalId: mediumtext('externalId'),
+    externalKind: varchar('externalKind', { length: 32 }),
+    catalogueEpisodeId: varchar('catalogueEpisodeId', { length: 64 }),
+    tvdbId: varchar('tvdbId', { length: 64 }),
     addedAt: momentNow('addedAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
     missingSince: moment('missingSince'),
@@ -2234,6 +2297,8 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  titleEdit,
+  titleChange,
   mediaItem,
   titleLikeness,
   mediaPart,

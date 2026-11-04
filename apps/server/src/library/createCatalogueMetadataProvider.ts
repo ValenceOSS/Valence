@@ -147,6 +147,7 @@ const SeasonResponseSchema = z.object({
   episodes: z
     .array(
       z.object({
+        id: z.number().int().positive().optional(),
         episode_number: z.number().int(),
         name: z.string().optional(),
         overview: z.string().optional(),
@@ -228,8 +229,18 @@ const DetailResponseSchema = z.object({
       name: z.string().optional(),
     })
     .nullish(),
-  external_ids: z.object({ imdb_id: z.string().nullish() }).optional(),
+  external_ids: z
+    .object({ imdb_id: z.string().nullish(), tvdb_id: z.number().int().positive().nullish() })
+    .optional(),
   genres: z.array(z.object({ name: z.string() })).default([]),
+  production_companies: z
+    .array(z.object({ name: z.string() }))
+    .catch([])
+    .default([]),
+  networks: z
+    .array(z.object({ name: z.string() }))
+    .catch([])
+    .default([]),
   seasons: z
     .array(
       z.object({
@@ -991,12 +1002,21 @@ const createCatalogueMetadataProvider = ({
         const episodeName = catalogueEpisodeName ?? knownEpisodeTitle;
 
         const overview = joined(covered.map((one) => one.overview)) ?? detail.overview;
+        const originalTitle = detail.original_title ?? detail.original_name;
+        const studios = detail.production_companies.map((company) => company.name);
+        const networks = detail.networks.map((network) => network.name);
+        const tvdbId = detail.external_ids?.tvdb_id ?? null;
 
         return {
           title: isEpisode ? (episodeName ?? facts.title ?? seriesName) : seriesName,
           ...(isEpisode ? { seriesTitle: seriesName } : {}),
           year: readYear(detail.release_date ?? detail.first_air_date),
           externalId: detail.id.toString(),
+          ...(originalTitle === undefined || originalTitle === '' ? {} : { originalTitle }),
+          ...(studios.length === 0 ? {} : { studios }),
+          ...(networks.length === 0 ? {} : { networks }),
+          ...(tvdbId === null ? {} : { tvdbId: tvdbId.toString() }),
+          ...(episode?.id === undefined ? {} : { catalogueEpisodeId: episode.id.toString() }),
           ...(overview === undefined || overview === '' ? {} : { overview }),
           ...(detail.tagline === undefined || detail.tagline === ''
             ? {}
