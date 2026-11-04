@@ -162,6 +162,48 @@ describe('MediaTitlePage', () => {
     expect(onBack).toHaveBeenCalled();
   });
 
+  it('steps to the title before and after it, by button and by J and K', async () => {
+    const user = userEvent.setup();
+    const onPrevious = vi.fn();
+    const onNext = vi.fn();
+
+    drawn(titleOf({ id: 'film' }), { onPrevious, onNext });
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+    await user.keyboard('j');
+
+    expect(onPrevious).toHaveBeenCalledTimes(1);
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers no stepping at the ends of the list', () => {
+    drawn(titleOf({ id: 'film' }), { onNext: vi.fn() });
+
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+  });
+
+  it('opens on the tab its address names, and says where it moved to', async () => {
+    const user = userEvent.setup();
+    const onTitlePlace = vi.fn();
+
+    drawn(titleOf({ id: 'film' }), {
+      titlePlace: { tab: 'files', season: null, episode: null },
+      onTitlePlace,
+    });
+
+    expect(screen.getByRole('tab', { name: 'Files' })).toHaveAttribute('aria-selected', 'true');
+
+    await user.click(screen.getByRole('tab', { name: 'History' }));
+
+    expect(onTitlePlace).toHaveBeenCalledWith({ tab: 'history', season: null, episode: null });
+  });
+
+  it('keeps a film off the Seasons tab its address names', () => {
+    drawn(titleOf({ id: 'film' }), { titlePlace: { tab: 'seasons', season: null, episode: null } });
+
+    expect(screen.queryByRole('tab', { name: 'Seasons' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaTitlePage.displayName).toBe('MediaTitlePage');
   });

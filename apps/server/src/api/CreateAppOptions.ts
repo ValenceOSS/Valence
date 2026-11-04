@@ -1,3 +1,4 @@
+import type { TitleListService } from '@ValenceServer/metadata/createTitleListService';
 import type { TitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
 import type { DeviceNotes } from '@ValenceServer/devices/DeviceNotes';
@@ -228,6 +229,7 @@ type CreateAppOptions = {
   buckets?: BucketMounts;
   books?: BookService;
   titleMetadata?: TitleMetadataService;
+  titleList?: TitleListService;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
   collections?: CollectionService;

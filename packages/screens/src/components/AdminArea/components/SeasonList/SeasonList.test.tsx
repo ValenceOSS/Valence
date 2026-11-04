@@ -156,6 +156,20 @@ describe('SeasonList', () => {
     expect(onOpenEpisode).toHaveBeenCalledWith(SEASONS[1], SEASONS[1]?.episodes[1]);
   });
 
+  it('opens the season it is told to, and says which is opened where somebody else keeps it', async () => {
+    const onOpenSeason = vi.fn();
+
+    render(<SeasonList seasons={SEASONS} openSeason={2} onOpenSeason={onOpenSeason} />);
+
+    expect(screen.getByRole('table', { name: 'Season 2' })).toBeInTheDocument();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: /Show the episodes in Season 1/ }));
+
+    expect(onOpenSeason).toHaveBeenCalledWith(1);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(SeasonList.displayName).toBe('SeasonList');
   });

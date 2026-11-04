@@ -1,4 +1,4 @@
-import { sortKeyOf } from '@ValenceClient/library/sortKeyOf';
+import { sortKeyOf } from '@ValenceCore/functions/sortKeyOf';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from './MediaTitle.types';
 import { say } from '@ValenceI18n/say';

@@ -35,6 +35,8 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
  *
  * @param openedTitle - The title open, where one is.
  * @param onOpenTitle - Called with the title to open, or null to go back to every title.
+ * @param titlePlace - Which tab, season and episode of the open title to show.
+ * @param onTitlePlace - Called with where the open title has moved to.
  * @param libraries - The libraries there are.
  * @param mayDelete - Whether whoever is looking may delete and move media.
  * @param onOpenFolder - Told a folder to open in Files.
@@ -50,6 +52,8 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
 const MediaTabContents = ({
   openedTitle = null,
   onOpenTitle,
+  titlePlace,
+  onTitlePlace,
   libraries,
   mayDelete,
   onOpenFolder,
@@ -103,6 +107,8 @@ const MediaTabContents = ({
     <MediaPanel
       openedTitle={openedTitle}
       {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
+      {...(titlePlace === undefined ? {} : { titlePlace })}
+      {...(onTitlePlace === undefined ? {} : { onTitlePlace })}
       {...(onOpenInCatalogue === undefined ? {} : { onOpenInCatalogue })}
       isUnreachable={askedEveryFile.isLoadingError || askedLibraries.isLoadingError}
       freshness={freshnessOf(

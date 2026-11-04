@@ -54,6 +54,8 @@ const badgeOf = (season: TitleSeason): TitlePart | 'notAsked' | null => {
  * @param onInteractiveSearch - Called to search by hand for a season, in its packs, or an episode.
  * @param actionsOf - What can be done to a season, in a menu at the end of its row.
  * @param onOpenEpisode - Called with an episode pressed in a season's table, where episodes open.
+ * @param openSeason - The season open, where somebody else keeps which one is.
+ * @param onOpenSeason - Told a season was opened, or shut with nothing, where somebody else keeps it.
  */
 const SeasonList = ({
   seasons,
@@ -66,8 +68,12 @@ const SeasonList = ({
   onInteractiveSearch,
   actionsOf,
   onOpenEpisode,
+  openSeason,
+  onOpenSeason,
 }: SeasonListProps) => {
-  const [open, setOpen] = useState<number | null>(null);
+  const [localOpen, setLocalOpen] = useState<number | null>(null);
+  const open = openSeason === undefined ? localOpen : openSeason;
+  const setOpen = onOpenSeason ?? setLocalOpen;
   const isCoursed = seasons.some((season) => season.span !== undefined);
 
   return (

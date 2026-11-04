@@ -1,6 +1,12 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  TITLE_VALUE_FIELDS,
+  TitleFilesSchema,
+  TitlePageSchema,
+  TitleValuesSchema,
+} from '@ValenceContracts/schemas/TitleList';
+import {
   TitleFieldSchema,
   MatchPreviewSchema,
   TitleEditOutcomeSchema,
@@ -172,7 +178,71 @@ const unmatchTitleRoute = createRoute({
   },
 });
 
+const listTitlesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles',
+  tags: ['Library'],
+  summary: 'List films and programmes, one row each however many files they are, a page at a time',
+  request: {
+    query: z.object({
+      libraryId: z.string().optional(),
+      sort: z.enum(['title', 'added']).default('title'),
+      search: z.string().optional(),
+      after: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(500).default(100),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'A page of titles, and where the next one starts',
+      content: { 'application/json': { schema: TitlePageSchema.openapi('TitlePage') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const listTitleValuesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/values',
+  tags: ['Library'],
+  summary: 'Count the genres, tags, studios or networks in use, for suggesting them',
+  request: {
+    query: z.object({ field: z.enum(TITLE_VALUE_FIELDS), libraryId: z.string().optional() }),
+  },
+  responses: {
+    200: {
+      description: 'Each word in use, and how many titles use it',
+      content: { 'application/json': { schema: TitleValuesSchema.openapi('TitleValues') } },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
+const readTitleFilesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/{id}',
+  tags: ['Library'],
+  summary: 'Read every file of the film or programme one file belongs to',
+  request: { params: Params },
+  responses: {
+    200: {
+      description: 'The title’s files',
+      content: { 'application/json': { schema: TitleFilesSchema.openapi('TitleFiles') } },
+    },
+    404: { description: 'No such file', content: { 'application/json': { schema: Refusal } } },
+  },
+});
+
 export {
+  listTitlesRoute,
+  listTitleValuesRoute,
+  readTitleFilesRoute,
   refreshTitleRoute,
   unmatchTitleRoute,
   previewMatchRoute,

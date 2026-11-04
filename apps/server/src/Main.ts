@@ -43,6 +43,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
+import { createTitleListService } from '@ValenceServer/metadata/createTitleListService';
 import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
@@ -5273,6 +5274,7 @@ const app = createApp({
   brandLogo,
   unlockSecret: `${env.BETTER_AUTH_SECRET}:library-locks`,
   books: createLinkedBooks(bookService, db, linkedAsker),
+  titleList: createTitleListService(db),
   titleMetadata: createTitleMetadataService({
     db,
     edits: createTitleEditStore(db),

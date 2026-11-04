@@ -198,6 +198,8 @@ const stayStill = (): (() => void) => () => {};
  * @param onPanel - Told which panel to open, and what to narrow it to where that was said.
  * @param mediaTitle - The title the address says to open in Media.
  * @param onMediaTitle - Called with the title opened in Media, or null on going back.
+ * @param mediaPlace - Which tab, season and episode of the title open in Media the address says.
+ * @param onMediaPlace - Called with where the title open in Media has moved to.
  * @param webhook - The webhook the address says to open.
  * @param onWebhook - Called with the webhook opened, or null on going back.
  * @param linkedServer - The linked server the address says to open.
@@ -217,6 +219,8 @@ const AdminArea = ({
   onPanel,
   mediaTitle = null,
   onMediaTitle,
+  mediaPlace,
+  onMediaPlace,
   webhook = null,
   onWebhook,
   linkedServer = null,
@@ -1173,6 +1177,8 @@ const AdminArea = ({
             <MediaTab
               openedTitle={mediaTitle}
               {...(onMediaTitle === undefined ? {} : { onOpenTitle: onMediaTitle })}
+              {...(mediaPlace === undefined ? {} : { titlePlace: mediaPlace })}
+              {...(onMediaPlace === undefined ? {} : { onTitlePlace: onMediaPlace })}
               libraries={libraries}
               mayDelete={mayDeleteMedia}
               {...(onOpenFolder === undefined ? {} : { onOpenFolder })}

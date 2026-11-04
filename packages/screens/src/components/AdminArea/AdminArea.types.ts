@@ -1,3 +1,4 @@
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 
@@ -14,6 +15,8 @@ type AdminAreaProps = {
   catalogue?: CatalogueAddress;
   mediaTitle?: string | null;
   onMediaTitle?: (id: string | null) => void;
+  mediaPlace?: TitlePlace;
+  onMediaPlace?: (place: TitlePlace) => void;
   webhook?: string | null;
   onWebhook?: (id: string | null) => void;
   linkedServer?: string | null;

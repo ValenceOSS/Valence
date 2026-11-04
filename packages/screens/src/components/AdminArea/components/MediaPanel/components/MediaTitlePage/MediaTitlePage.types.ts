@@ -1,3 +1,4 @@
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -12,6 +13,10 @@ type MediaTitlePageProps = {
   onOpenFolder?: (path: string) => void;
   onOpenInCatalogue?: (address: CatalogueAddress) => void;
   onBack: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  titlePlace?: TitlePlace;
+  onTitlePlace?: (place: TitlePlace) => void;
 };
 
 export type { MediaTitlePageProps };

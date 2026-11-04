@@ -1,3 +1,4 @@
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
@@ -8,6 +9,8 @@ type MediaTabProps = {
   libraries: readonly Library[];
   openedTitle?: string | null;
   onOpenTitle?: (id: string | null) => void;
+  titlePlace?: TitlePlace;
+  onTitlePlace?: (place: TitlePlace) => void;
   mayDelete: boolean;
   onOpenFolder?: (path: string) => void;
   onCorrect: (media: MediaSummary) => void;

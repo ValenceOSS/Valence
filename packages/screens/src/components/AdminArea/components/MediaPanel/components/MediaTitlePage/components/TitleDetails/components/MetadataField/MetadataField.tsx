@@ -56,6 +56,7 @@ const valueOfTyped = (field: TitleField, typed: string): TitleValue => {
  * @param state - The field as the server has it.
  * @param change - Saves a change to the title.
  * @param onShowHistory - Opens the title's history.
+ * @param suggestions - The words in use elsewhere, offered as a list field is typed in.
  * @param className - Extra classes for the caller's own layout.
  */
 const MetadataField = ({
@@ -64,6 +65,7 @@ const MetadataField = ({
   state,
   change,
   onShowHistory,
+  suggestions,
   className,
 }: MetadataFieldProps) => {
   const label = labelOfField(field, kind);
@@ -110,6 +112,7 @@ const MetadataField = ({
       onValuesChange={(values) => {
         setShown(values);
       }}
+      {...(suggestions === undefined ? {} : { suggestions })}
     />
   ) : field === 'certifications' ? (
     <div className="grid gap-2 sm:grid-cols-2">

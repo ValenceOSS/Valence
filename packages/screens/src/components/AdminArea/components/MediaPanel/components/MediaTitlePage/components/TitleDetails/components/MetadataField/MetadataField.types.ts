@@ -1,3 +1,4 @@
+import type { TagSuggestion } from '@ValenceUI/TagField.types';
 import type {
   TitleEditRequest,
   TitleField,
@@ -11,6 +12,7 @@ type MetadataFieldProps = {
   state: TitleFieldState | undefined;
   change: (request: TitleEditRequest) => Promise<{ isSaved: boolean; reason: string }>;
   onShowHistory?: () => void;
+  suggestions?: readonly TagSuggestion[];
   className?: string;
 };
 

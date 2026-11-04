@@ -1,3 +1,4 @@
+import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
 import {
   createRootRoute,
   createRoute,
@@ -109,6 +110,9 @@ const adminSearch = z.object({
   tab: CatalogueTabSchema.optional().catch(undefined),
   title: z.string().optional(),
   media: z.string().optional(),
+  titleTab: z.enum(TITLE_TABS).optional().catch(undefined),
+  season: z.coerce.number().int().nonnegative().optional().catch(undefined),
+  episode: z.string().optional(),
   webhook: z.string().optional(),
   server: z.string().optional(),
   ...ObservabilitySearchSchema.shape,

@@ -77,7 +77,7 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job, folder, tab, title, media, webhook, server } = search;
+  const { job, folder, tab, title, media, webhook, server, titleTab, season, episode } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -436,7 +436,28 @@ const AdminPage = () => {
                 void go({
                   to: '/admin/$panel',
                   params: { panel: 'media' },
-                  search: id === null ? {} : { media: id },
+                  search:
+                    id === null
+                      ? {}
+                      : { media: id, ...(titleTab === undefined ? {} : { titleTab }) },
+                });
+              }}
+              mediaPlace={{
+                tab: titleTab ?? 'details',
+                season: season ?? null,
+                episode: episode ?? null,
+              }}
+              onMediaPlace={(place) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: {
+                    ...(media === undefined ? {} : { media }),
+                    ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
+                    ...(place.season === null ? {} : { season: place.season }),
+                    ...(place.episode === null ? {} : { episode: place.episode }),
+                  },
+                  replace: true,
                 });
               }}
               onLinkedServer={(id) => {

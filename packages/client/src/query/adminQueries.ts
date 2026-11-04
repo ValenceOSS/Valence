@@ -1,3 +1,6 @@
+import { fetchTitleValues } from '@ValenceClient/admin/fetchTitleValues';
+import { fetchTitleFiles } from '@ValenceClient/admin/fetchTitleFiles';
+import type { TitleValueField } from '@ValenceContracts/schemas/TitleList';
 import { fetchMatchPreview } from '@ValenceClient/admin/fetchMatchPreview';
 import { fetchTitleHistory, fetchTitleMetadata } from '@ValenceClient/admin/fetchTitleMetadata';
 import type { TitleScope } from '@ValenceClient/admin/fetchTitleMetadata';
@@ -66,6 +69,8 @@ import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetc
 
 const MOST_ALBUMS_LISTED = 500;
 const EVERY_FILE_KEPT_FOR_MS = 5 * 60_000;
+
+const TITLE_VALUES_KEPT_FOR_MS = 60_000;
 
 const ADMIN = ['admin'] as const;
 
@@ -679,6 +684,33 @@ const matchPreview = (mediaId: string, externalId: string, kind: 'tv' | 'movie')
   });
 
 /**
+ * The words in use in one field of a library's titles, for suggesting them.
+ *
+ * @param field - The field, such as the tags.
+ * @param libraryId - The library, or every one where none is named.
+ * @returns The query options.
+ */
+const titleValues = (field: TitleValueField, libraryId?: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-values', field, libraryId ?? null],
+    queryFn: () => fetchTitleValues(field, libraryId),
+    staleTime: TITLE_VALUES_KEPT_FOR_MS,
+  });
+
+/**
+ * Every file of the title one file belongs to, for opening it straight from an address.
+ *
+ * @param mediaId - One file of the title, or nothing where none is asked for.
+ * @returns The query options.
+ */
+const titleFiles = (mediaId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-files', mediaId],
+    queryFn: () => fetchTitleFiles(mediaId ?? ''),
+    enabled: mediaId !== null,
+  });
+
+/**
  * Every re-encode, including the ones waiting for somebody to judge them.
  *
  * Asked for again while anything is still being written, because an encode reports its progress by
@@ -842,6 +874,8 @@ const adminQueries = {
   titleMetadata,
   titleHistory,
   matchPreview,
+  titleValues,
+  titleFiles,
   statistics,
   libraryHealth,
   updateCheck,

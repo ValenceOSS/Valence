@@ -1,4 +1,7 @@
 import {
+  listTitlesRoute,
+  listTitleValuesRoute,
+  readTitleFilesRoute,
   refreshTitleRoute,
   unmatchTitleRoute,
   previewMatchRoute,
@@ -23,7 +26,7 @@ const NO_SUCH_ITEM = refuse('error.common.noSuchItem');
  * @param context - What they are answered with.
  */
 const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
-  const { titleMetadata, library, requires, readAccount, recordAudit } = context;
+  const { titleMetadata, titleList, library, requires, readAccount, recordAudit } = context;
 
   /**
    * Reads who is changing a title, for the history.
@@ -86,6 +89,47 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(edited, 200);
+  });
+
+  app.openapi(listTitlesRoute, async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { libraryId, sort, search, after, limit } = context.req.valid('query');
+
+    return context.json(
+      await titleList.list({
+        sort,
+        limit,
+        ...(libraryId === undefined ? {} : { libraryId }),
+        ...(search === undefined ? {} : { search }),
+        ...(after === undefined ? {} : { after }),
+      }),
+      200,
+    );
+  });
+
+  app.openapi(listTitleValuesRoute, async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const { field, libraryId } = context.req.valid('query');
+
+    return context.json(await titleList.values(field, libraryId), 200);
+  });
+
+  app.openapi(readTitleFilesRoute, async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const files = await titleList.filesOf(context.req.valid('param').id);
+
+    return files === null || files.length === 0
+      ? context.json(NO_SUCH_ITEM, 404)
+      : context.json({ files }, 200);
   });
 
   app.openapi(previewMatchRoute, async (context) => {

@@ -13,6 +13,8 @@ type SeasonListProps = {
   onInteractiveSearch?: (scope: SearchScope) => void;
   actionsOf?: (season: TitleSeason) => ActionMenuItem[];
   onOpenEpisode?: (season: TitleSeason, episode: TitleEpisode) => void;
+  openSeason?: number | null;
+  onOpenSeason?: (season: number | null) => void;
 };
 
 export type { SeasonListProps };

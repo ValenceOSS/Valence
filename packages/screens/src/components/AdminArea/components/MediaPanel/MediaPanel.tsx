@@ -71,6 +71,8 @@ import { say } from '@ValenceI18n/say';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { sayCount } from '@ValenceI18n/sayCount';
 
+const MEDIA_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
 const NO_PATHS: Readonly<Record<string, string>> = {};
 
 const TAB_ORDER: readonly string[] = ['movies', 'shows', 'anime', 'music', 'books'];
@@ -153,6 +155,9 @@ const INDENTS: readonly string[] = ['', 'pl-9', 'pl-[4.5rem]'];
  * @param openedTitle - The title open on a page of its own, where one is.
  * @param onOpenTitle - Called with the title to open, or null to go back; where it is not given, the
  *   page keeps which title is open itself.
+ * @param titlePlace - Which tab, season and episode of the open title to show, where the address
+ *   keeps them.
+ * @param onTitlePlace - Called with where the open title has moved to.
  * @param onReencode - Called with the files to be re-encoded, where re-encoding is offered at all.
  * @param onShowCopies - Called with the file whose kept copies are to be shown, where offered.
  * @param onDelete - Called with the file to delete, and whether its whole series goes with it, where
@@ -179,6 +184,8 @@ const MediaPanel = ({
   onRebuildArtefacts,
   openedTitle = null,
   onOpenTitle,
+  titlePlace,
+  onTitlePlace,
   onReencode,
   onShowCopies,
   onDelete,
@@ -955,7 +962,18 @@ const MediaPanel = ({
           : say('screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas')
         : say('common.nothingHereMatchesThat');
 
-  const opened = openedId === null ? null : (titles.find((one) => one.id === openedId) ?? null);
+  const found = openedId === null ? null : (titles.find((one) => one.id === openedId) ?? null);
+  const fetched = useQuery(
+    adminQueries.titleFiles(
+      found === null && openedId !== null && MEDIA_ID.test(openedId) ? openedId : null,
+    ),
+  );
+  const opened =
+    found ?? (fetched.data === undefined ? null : (gatherTitles(fetched.data)[0] ?? null));
+  const inOrder = [...shown].sort((left, right) => left.order.localeCompare(right.order));
+  const openedAt = opened === null ? -1 : inOrder.findIndex((one) => one.id === opened.id);
+  const before = openedAt > 0 ? inOrder[openedAt - 1] : undefined;
+  const after = openedAt >= 0 ? inOrder[openedAt + 1] : undefined;
 
   const dialogs = (
     <>
@@ -1073,6 +1091,22 @@ const MediaPanel = ({
           onBack={() => {
             setOpenedId(null);
           }}
+          {...(before === undefined
+            ? {}
+            : {
+                onPrevious: () => {
+                  setOpenedId(before.id);
+                },
+              })}
+          {...(after === undefined
+            ? {}
+            : {
+                onNext: () => {
+                  setOpenedId(after.id);
+                },
+              })}
+          {...(titlePlace === undefined ? {} : { titlePlace })}
+          {...(onTitlePlace === undefined ? {} : { onTitlePlace })}
         />
         {dialogs}
       </>

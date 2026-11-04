@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft as ChevronLeftIcon } from '@keyline-icons/react';
+import {
+  ChevronLeft as ChevronLeftIcon,
+  MoveLeft as MoveLeftIcon,
+  MoveRight as MoveRightIcon,
+} from '@keyline-icons/react';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -44,10 +48,13 @@ import { say } from '@ValenceI18n/say';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 import type { MediaTitlePageProps } from './MediaTitlePage.types';
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
+import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
+import { useShortcut } from '@ValenceUI/useShortcut';
 import type { OpenPart } from './components/TitlePartDialog/TitlePartDialog.types';
 import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
 
-const TITLE_TABS = ['details', 'seasons', 'files', 'history'] as const;
+const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null };
 
 /**
  * Every file a title is made of, down to the versions of each.
@@ -93,6 +100,10 @@ const describeMatch = (title: MediaTitle): string | null => {
  * @param onOpenFolder - Called with a folder to open in Files, where the file manager is offered.
  * @param onOpenInCatalogue - Called with where the title is in the Catalogue, where it can be opened.
  * @param onBack - Called to go back to every title.
+ * @param onPrevious - Opens the title before this one in the list, where there is one.
+ * @param onNext - Opens the title after this one in the list, where there is one.
+ * @param titlePlace - Which tab, season and episode to show, where the address keeps them.
+ * @param onTitlePlace - Told where the page has moved to, where the address keeps it.
  */
 const MediaTitlePage = ({
   title,
@@ -103,16 +114,27 @@ const MediaTitlePage = ({
   onOpenFolder,
   onOpenInCatalogue,
   onBack,
+  onPrevious,
+  onNext,
+  titlePlace,
+  onTitlePlace,
 }: MediaTitlePageProps) => {
-  const [tab, setTab] = useState<(typeof TITLE_TABS)[number]>('details');
-  const [opened, setOpened] = useState<{ part: OpenPart; season: number } | null>(null);
-  const [isPartOpen, setIsPartOpen] = useState(false);
+  const [localPlace, setLocalPlace] = useState<TitlePlace>(NOWHERE);
+  const at = titlePlace ?? localPlace;
+  const moveTo = onTitlePlace ?? setLocalPlace;
+  const [editingSeason, setEditingSeason] = useState<OpenPart | null>(null);
+  const [isSeasonOpen, setIsSeasonOpen] = useState(false);
+  const [lastEpisode, setLastEpisode] = useState<OpenPart | null>(null);
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
   const { change } = useTitleChange(title.lead.id, 'title');
   const tabs = TITLE_TABS.filter((one) => one !== 'seasons' || title.kind === 'series');
+  const tab = tabs.includes(at.tab) ? at.tab : 'details';
   const travel = useTravelDirection([...tabs], tab);
+
+  useShortcut('K', onPrevious);
+  useShortcut('J', onNext);
   const prefersReducedMotion = useReducedMotionConfig();
   const detail = useQuery({
     ...libraryQueries.detail(title.kind === 'film' ? title.lead.id : null),
@@ -141,6 +163,29 @@ const MediaTitlePage = ({
   );
 
   /**
+   * Describes an episode for its editor.
+   *
+   * @param season - The season it is in.
+   * @param episode - The episode, which has a file.
+   * @param mediaId - Its file.
+   * @returns What the editor shows of it.
+   */
+  const partOf = (season: TitleSeason, episode: TitleEpisode, mediaId: string): OpenPart => {
+    const code = say('common.searchWhatEpisode', {
+      season: season.season.toString().padStart(2, '0'),
+      episode: episode.episode.toString().padStart(2, '0'),
+    });
+
+    return {
+      scope: 'episode',
+      mediaId,
+      title: episode.title === '' ? code : episode.title,
+      detail: code,
+      path: episode.path,
+    };
+  };
+
+  /**
    * Opens an episode's editor.
    *
    * @param season - The season it is in.
@@ -151,33 +196,23 @@ const MediaTitlePage = ({
       return;
     }
 
-    const code = say('common.searchWhatEpisode', {
-      season: season.season.toString().padStart(2, '0'),
-      episode: episode.episode.toString().padStart(2, '0'),
-    });
-
-    setOpened({
-      season: season.season,
-      part: {
-        scope: 'episode',
-        mediaId: episode.mediaId,
-        title: episode.title === '' ? code : episode.title,
-        detail: code,
-        path: episode.path,
-      },
-    });
-    setIsPartOpen(true);
+    moveTo({ tab: 'seasons', season: season.season, episode: episode.mediaId });
   };
 
-  const openSeason =
-    opened === null ? undefined : seasons.find((one) => one.season === opened.season);
+  const openSeason = seasons.find((one) =>
+    one.episodes.some((episode) => at.episode !== null && episode.mediaId === at.episode),
+  );
   const editable = (openSeason?.episodes ?? []).filter(
     (episode) => episode.mediaId !== null && episode.mediaId !== undefined,
   );
-  const openAt =
-    opened === null ? -1 : editable.findIndex((episode) => episode.mediaId === opened.part.mediaId);
-  const before = opened?.part.scope === 'episode' && openAt > 0 ? editable[openAt - 1] : undefined;
-  const after = opened?.part.scope === 'episode' && openAt >= 0 ? editable[openAt + 1] : undefined;
+  const openAt = editable.findIndex((episode) => episode.mediaId === at.episode);
+  const openEpisodeOf = openAt < 0 ? undefined : editable[openAt];
+  const episodePart =
+    openSeason === undefined || openEpisodeOf === undefined || at.episode === null
+      ? null
+      : partOf(openSeason, openEpisodeOf, at.episode);
+  const before = openAt > 0 ? editable[openAt - 1] : undefined;
+  const after = openAt >= 0 ? editable[openAt + 1] : undefined;
 
   const leaves = leavesOf(title);
   const leafIds = new Set(leaves.map((leaf) => leaf.lead.id));
@@ -380,7 +415,7 @@ const MediaTitlePage = ({
         const chosen = tabs.find((one) => one === next);
 
         if (chosen !== undefined) {
-          setTab(chosen);
+          moveTo({ tab: chosen, season: null, episode: null });
         }
       }}
     >
@@ -391,10 +426,39 @@ const MediaTitlePage = ({
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'heavy')}
       >
-        <Button variant="ghost" size="sm" onClick={onBack} className="self-start">
-          <Icon of={ChevronLeftIcon} size={15} />
-          {say('common.media')}
-        </Button>
+        <div className="flex items-center justify-between gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            <Icon of={ChevronLeftIcon} size={15} />
+            {say('common.media')}
+          </Button>
+
+          {onPrevious === undefined && onNext === undefined ? null : (
+            <span className="flex items-center gap-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                isIconOnly
+                label={say('common.previous')}
+                shortcut={['K']}
+                disabled={onPrevious === undefined}
+                {...(onPrevious === undefined ? {} : { onClick: onPrevious })}
+              >
+                <Icon of={MoveLeftIcon} size={15} />
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                isIconOnly
+                label={say('common.next')}
+                shortcut={['J']}
+                disabled={onNext === undefined}
+                {...(onNext === undefined ? {} : { onClick: onNext })}
+              >
+                <Icon of={MoveRightIcon} size={15} />
+              </Button>
+            </span>
+          )}
+        </div>
 
         <PanelCard
           title={library?.name ?? say('common.media')}
@@ -546,7 +610,7 @@ const MediaTitlePage = ({
             mediaId={title.lead.id}
             scope="title"
             onShowHistory={() => {
-              setTab('history');
+              moveTo({ tab: 'history', season: null, episode: null });
             }}
           />
         </TabPanel>
@@ -568,22 +632,23 @@ const MediaTitlePage = ({
                         id: 'edit',
                         label: say('common.editDetails'),
                         onChoose: () => {
-                          setOpened({
-                            season: season.season,
-                            part: {
-                              scope: 'season',
-                              mediaId,
-                              title: season.name ?? nameSeason(season.season),
-                              detail: title.name,
-                              path: null,
-                            },
+                          setEditingSeason({
+                            scope: 'season',
+                            mediaId,
+                            title: season.name ?? nameSeason(season.season),
+                            detail: title.name,
+                            path: null,
                           });
-                          setIsPartOpen(true);
+                          setIsSeasonOpen(true);
                         },
                       },
                     ];
               }}
               onOpenEpisode={openEpisode}
+              openSeason={at.season}
+              onOpenSeason={(season) => {
+                moveTo({ tab: 'seasons', season, episode: null });
+              }}
             />
           </TabPanel>
         ) : null}
@@ -657,10 +722,18 @@ const MediaTitlePage = ({
       />
 
       <TitlePartDialog
-        part={opened?.part ?? null}
-        isOpen={isPartOpen}
+        part={episodePart ?? (isSeasonOpen ? editingSeason : null) ?? lastEpisode ?? editingSeason}
+        isOpen={episodePart !== null || isSeasonOpen}
         onClose={() => {
-          setIsPartOpen(false);
+          if (episodePart === null) {
+            setIsSeasonOpen(false);
+
+            return;
+          }
+
+          setLastEpisode(episodePart);
+          setEditingSeason(null);
+          moveTo({ ...at, episode: null });
         }}
         onPrevious={
           before === undefined || openSeason === undefined

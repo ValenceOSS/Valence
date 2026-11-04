@@ -1,3 +1,4 @@
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { Freshness } from '@ValenceClient/query/Freshness';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -28,6 +29,8 @@ type MediaPanelProps = {
   onRebuildArtefacts: (media: MediaSummary) => Promise<boolean>;
   openedTitle?: string | null;
   onOpenTitle?: (id: string | null) => void;
+  titlePlace?: TitlePlace;
+  onTitlePlace?: (place: TitlePlace) => void;
   onReencode?: (media: readonly MediaSummary[]) => void;
   onShowCopies?: (media: MediaSummary, name: string) => void;
   onDelete?: (media: MediaSummary, isWholeSeries: boolean) => Promise<boolean>;
