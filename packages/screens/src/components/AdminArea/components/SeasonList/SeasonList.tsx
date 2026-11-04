@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -10,8 +11,8 @@ import { describeCourSpan } from '@ValenceClient/requests/describeCourSpan';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { SearchButtons } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/SearchButtons/SearchButtons';
-import { EpisodeTable } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/EpisodeTable/EpisodeTable';
-import type { TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
+import { EpisodeTable } from '@ValenceScreens/components/AdminArea/components/EpisodeTable/EpisodeTable';
+import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
 import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';
 import type { SeasonListProps } from './SeasonList.types';
 import { say } from '@ValenceI18n/say';
@@ -51,16 +52,20 @@ const badgeOf = (season: TitleSeason): TitlePart | 'notAsked' | null => {
  * @param onOpenFolder - Called with a folder to open in Files, from an episode's file.
  * @param onSearch - Called to search automatically for a season or one episode of it.
  * @param onInteractiveSearch - Called to search by hand for a season, in its packs, or an episode.
+ * @param actionsOf - What can be done to a season, in a menu at the end of its row.
+ * @param onOpenEpisode - Called with an episode pressed in a season's table, where episodes open.
  */
 const SeasonList = ({
   seasons,
-  isFollowing,
+  isFollowing = false,
   onFollow,
   followsNew = null,
   onFollowsNew,
   onOpenFolder,
   onSearch,
   onInteractiveSearch,
+  actionsOf,
+  onOpenEpisode,
 }: SeasonListProps) => {
   const [open, setOpen] = useState<number | null>(null);
   const isCoursed = seasons.some((season) => season.span !== undefined);
@@ -102,6 +107,7 @@ const SeasonList = ({
           const isOpen = open === season.season;
           const held = season.episodes.filter((episode) => episode.part === 'library').length;
           const badge = badgeOf(season);
+          const actions = actionsOf?.(season) ?? [];
 
           return (
             <li key={season.season} className="flex flex-col">
@@ -173,15 +179,24 @@ const SeasonList = ({
                   onInteractiveSearch={onInteractiveSearch}
                 />
 
-                <Switch
-                  label={say('screens.adminArea.titlePage.seasonList.followName', { name })}
-                  isLabelHidden
-                  isOn={season.isFollowed}
-                  disabled={isFollowing}
-                  onToggle={() => {
-                    onFollow(season, !season.isFollowed);
-                  }}
-                />
+                {onFollow === undefined ? null : (
+                  <Switch
+                    label={say('screens.adminArea.titlePage.seasonList.followName', { name })}
+                    isLabelHidden
+                    isOn={season.isFollowed}
+                    disabled={isFollowing}
+                    onToggle={() => {
+                      onFollow(season, !season.isFollowed);
+                    }}
+                  />
+                )}
+
+                {actions.length === 0 ? null : (
+                  <ActionMenu
+                    label={say('common.actionsForName', { name })}
+                    groups={[{ items: actions }]}
+                  />
+                )}
               </span>
 
               {isOpen && season.episodes.length > 0 ? (
@@ -193,6 +208,13 @@ const SeasonList = ({
                     {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
                     {...(onSearch === undefined ? {} : { onSearch })}
                     {...(onInteractiveSearch === undefined ? {} : { onInteractiveSearch })}
+                    {...(onOpenEpisode === undefined
+                      ? {}
+                      : {
+                          onOpenEpisode: (episode: TitleEpisode) => {
+                            onOpenEpisode(season, episode);
+                          },
+                        })}
                   />
                 </div>
               ) : null}

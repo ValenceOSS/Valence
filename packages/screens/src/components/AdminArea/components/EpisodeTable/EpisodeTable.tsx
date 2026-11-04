@@ -23,6 +23,7 @@ import { say } from '@ValenceI18n/say';
  * @param onOpenFolder - Called with a folder to open in Files, from an episode's file.
  * @param onSearch - Called to search automatically for one episode.
  * @param onInteractiveSearch - Called to search by hand for one episode.
+ * @param onOpenEpisode - Called with an episode whose row was pressed, where episodes open.
  */
 const EpisodeTable = ({
   label,
@@ -31,6 +32,7 @@ const EpisodeTable = ({
   onOpenFolder,
   onSearch,
   onInteractiveSearch,
+  onOpenEpisode,
 }: EpisodeTableProps) => {
   const columns = useMemo<DataTableColumn<TitleEpisode>[]>(
     () => [
@@ -157,6 +159,7 @@ const EpisodeTable = ({
       rows={[...episodes]}
       getRowId={(episode) => episode.episode.toString()}
       height="compact"
+      {...(onOpenEpisode === undefined ? {} : { onChooseRow: onOpenEpisode })}
     />
   );
 };

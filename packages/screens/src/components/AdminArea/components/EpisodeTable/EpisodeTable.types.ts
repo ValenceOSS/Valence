@@ -8,6 +8,7 @@ type EpisodeTableProps = {
   onOpenFolder?: (path: string) => void;
   onSearch?: (scope: SearchScope) => void;
   onInteractiveSearch?: (scope: SearchScope) => void;
+  onOpenEpisode?: (episode: TitleEpisode) => void;
 };
 
 export type { EpisodeTableProps };

@@ -13,6 +13,7 @@ type TitleEpisode = {
   problem: string | null;
   path: string | null;
   itemId: string | null;
+  mediaId?: string | null;
 };
 
 type CourSpan = {

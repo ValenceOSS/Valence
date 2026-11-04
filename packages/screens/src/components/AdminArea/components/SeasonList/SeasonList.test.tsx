@@ -127,6 +127,35 @@ describe('SeasonList', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('offers what can be done to a season, opens an episode, and has no follow switch unasked', async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn();
+    const onOpenEpisode = vi.fn();
+
+    render(
+      <SeasonList
+        seasons={SEASONS}
+        actionsOf={(season) =>
+          season.season === 1 ? [{ id: 'edit', label: 'Edit details', onChoose: onEdit }] : []
+        }
+        onOpenEpisode={onOpenEpisode}
+      />,
+    );
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Actions for Season 2' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Season 1' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit details' }));
+
+    expect(onEdit).toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /Show the episodes in Season 2/ }));
+    await user.click(screen.getAllByText('Episode 2')[0] ?? document.body);
+
+    expect(onOpenEpisode).toHaveBeenCalledWith(SEASONS[1], SEASONS[1]?.episodes[1]);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(SeasonList.displayName).toBe('SeasonList');
   });

@@ -54,7 +54,7 @@ import { TrackTable } from './components/TrackTable/TrackTable';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
 import { RemoveTitleDialog } from './components/RemoveTitleDialog/RemoveTitleDialog';
-import { SeasonList } from './components/SeasonList/SeasonList';
+import { SeasonList } from '@ValenceScreens/components/AdminArea/components/SeasonList/SeasonList';
 import { StopDownloadDialog } from './components/StopDownloadDialog/StopDownloadDialog';
 import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHero } from './components/TitleHero/TitleHero';
