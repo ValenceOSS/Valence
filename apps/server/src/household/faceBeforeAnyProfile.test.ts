@@ -30,6 +30,16 @@ describe('faceBeforeAnyProfile', () => {
     });
   });
 
+  it('cuts an account name longer than a profile may hold, so the apps can still read it', () => {
+    const face = faceBeforeAnyProfile(
+      '8d0c2f3e-6f5b-4c0e-9a51-3f1e2d4c5b6a',
+      { ...FACE, name: 'The household at the end of the long road' },
+      '2026-11-01T09:00:00.000Z',
+    );
+
+    expect(ViewerProfileSchema.safeParse(face).success).toBe(true);
+  });
+
   it('is a profile the apps can read', () => {
     expect(
       ViewerProfileSchema.safeParse(

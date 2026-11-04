@@ -1,5 +1,6 @@
 import { STILL_WATCHING_DEFAULT } from '@ValenceContracts/schemas/StillWatching';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { fitProfileName } from './fitProfileName';
 import type { Household } from '@ValenceContracts/schemas/Household';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
@@ -10,7 +11,8 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
  * @param wayInId - The id the account is known by on the way in, never the account's own.
  * @param face - The account's own name, colour and picture.
  * @param createdAt - When the account was made.
- * @returns The face, with the address its picture is read from.
+ * @returns The face, its name cut to what a profile may hold, with the address its picture is
+ *   read from.
  */
 const faceBeforeAnyProfile = (
   wayInId: string,
@@ -18,7 +20,7 @@ const faceBeforeAnyProfile = (
   createdAt: string,
 ): ViewerProfile & { pictureUrl: string } => ({
   id: wayInId,
-  name: face.name,
+  name: fitProfileName(face.name),
   colour: face.colour,
   avatar: face.avatar,
   askStillWatchingAfter: STILL_WATCHING_DEFAULT,

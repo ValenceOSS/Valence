@@ -14,6 +14,7 @@ import { createMemoryProfileService } from './createMemoryProfileService';
 import { createMemoryHouseholdService } from '@ValenceServer/household/createMemoryHouseholdService';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { makeAdministrator, signUpForTest } from '@ValenceServer/auth/signUpForTest';
+import { WayInSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 import {
@@ -353,6 +354,26 @@ describe('profiles over HTTP', () => {
     expect(shown?.pictureUrl.startsWith(`/api/profiles/${owner?.id ?? ''}/household?v=`)).toBe(
       true,
     );
+  });
+
+  it('fits a household name longer than a profile may hold, so the apps still read the way in', async () => {
+    const { app, auth, settings, profiles, households } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    await read(app, cookie);
+
+    const accountId = profiles.state[0]?.userId ?? '';
+
+    await profiles.create(accountId, { name: 'Kid', colour: '#e8503a' });
+    await households.change(accountId, { name: 'The household at the end of the long road' });
+    await settings.write({ showsProfilesBeforeSignIn: true });
+
+    const wayIn = WayInSchema.safeParse(
+      await (await app.request(`${BASE}/api/profiles/everyone`)).json(),
+    );
+
+    expect(wayIn.success).toBe(true);
+    expect(wayIn.data?.profiles[0]?.name.endsWith('…')).toBe(true);
   });
 
   it('serves a household’s picture on the way in, by its owner’s face', async () => {

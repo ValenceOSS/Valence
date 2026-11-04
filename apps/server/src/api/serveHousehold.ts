@@ -19,6 +19,7 @@ import { refuse } from '@ValenceI18n/refuse';
 import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
 import { isDemoAccount } from '@ValenceServer/demo/isDemoAccount';
 import { faceBeforeAnyProfile } from '@ValenceServer/household/faceBeforeAnyProfile';
+import { fitProfileName } from '@ValenceServer/household/fitProfileName';
 
 /**
  * Registers the household endpoints.
@@ -294,7 +295,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
         return {
           ...profile,
-          name: household.name,
+          name: fitProfileName(household.name),
           colour: household.colour,
           avatar: household.avatar,
           updatedAt: household.updatedAt,
