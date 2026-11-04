@@ -801,6 +801,7 @@ const createDatabaseLibraryService = ({
       providers: providers ?? [],
       force: true,
       keepsMatches,
+      reusesProbes: keepsMatches,
       isPartial: true,
       ...(onProblem === undefined ? {} : { onProblem }),
       ...(onProgress === undefined ? {} : { onProgress }),

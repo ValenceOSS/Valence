@@ -42,6 +42,7 @@ import { upsert } from '@ValenceDatabase/upsert';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import { layTitleEdits } from '@ValenceServer/metadata/layTitleEdits';
 import { movesBetween } from '@ValenceServer/metadata/movesBetween';
+import { MediaProbeSchema } from '@ValenceServer/transcoder/TranscoderClient';
 import { subjectKeysOf } from '@ValenceServer/metadata/subjectKeysOf';
 
 const LEFT_OUT_COLUMNS = {
@@ -868,6 +869,69 @@ const createMediaStore = (
           .set({ parentId: link.parentId, versionLabel: link.versionLabel })
           .where(eq(mediaItem.id, link.id));
       }
+    },
+
+    readProbe: async (libraryId, path) => {
+      const [row] = await db
+        .select({
+          container: mediaItem.container,
+          durationSeconds: mediaItem.durationSeconds,
+          bitrateKbps: mediaItem.bitrateKbps,
+          videoCodec: mediaItem.videoCodec,
+          videoCodecTag: mediaItem.videoCodecTag,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          videoRange: mediaItem.videoRange,
+          videoRangeBase: mediaItem.videoRangeBase,
+          videoBitDepth: mediaItem.videoBitDepth,
+          videoLevel: mediaItem.videoLevel,
+          videoFrameRate: mediaItem.videoFrameRate,
+          videoIsInterlaced: mediaItem.videoIsInterlaced,
+          videoRefFrames: mediaItem.videoRefFrames,
+          videoPixelAspect: mediaItem.videoPixelAspect,
+          videoRotationDegrees: mediaItem.videoRotationDegrees,
+          audioStreams: mediaItem.audioStreams,
+          subtitleStreams: mediaItem.subtitleStreams,
+          chapters: mediaItem.chapters,
+          canCopySegments: mediaItem.canCopySegments,
+          probeVersion: mediaItem.probeVersion,
+        })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, path)))
+        .limit(1);
+
+      if (row === undefined) {
+        return null;
+      }
+
+      const read = MediaProbeSchema.safeParse({
+        container: row.container,
+        durationSeconds: row.durationSeconds,
+        bitrateKbps: row.bitrateKbps,
+        video: {
+          index: 0,
+          codec: row.videoCodec,
+          codecTag: row.videoCodecTag,
+          width: row.width,
+          height: row.height,
+          range: row.videoRange,
+          rangeBase: row.videoRangeBase,
+          bitrateKbps: null,
+          bitDepth: row.videoBitDepth,
+          level: row.videoLevel,
+          frameRate: row.videoFrameRate,
+          isInterlaced: row.videoIsInterlaced ?? false,
+          refFrames: row.videoRefFrames,
+          pixelAspect: row.videoPixelAspect,
+          rotationDegrees: row.videoRotationDegrees,
+        },
+        audioStreams: row.audioStreams,
+        subtitleStreams: row.subtitleStreams,
+        chapters: row.chapters ?? [],
+        ...(row.canCopySegments === null ? {} : { canCopySegments: row.canCopySegments }),
+      });
+
+      return read.success ? { probe: read.data, probeVersion: row.probeVersion } : null;
     },
 
     listOverrides: async (libraryId) => {

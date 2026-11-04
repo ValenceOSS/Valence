@@ -182,6 +182,23 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(await edits.history(SHOWS_ID, 'tv:1')).toHaveLength(1);
   });
 
+  it('reads back what it stored of a file’s probe, for a re-read that need not probe it again', async () => {
+    const { store } = await aStore();
+
+    await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', '1'));
+
+    await expect(store.readProbe?.(SHOWS_ID, '/shows/Show/1.mkv')).resolves.toMatchObject({
+      probeVersion: 1,
+      probe: {
+        container: 'mkv',
+        durationSeconds: 1800,
+        video: { codec: 'h264', width: 1920, height: 1080, range: 'SDR', level: 41 },
+        audioStreams: [],
+      },
+    });
+    await expect(store.readProbe?.(SHOWS_ID, '/shows/Show/2.mkv')).resolves.toBeNull();
+  });
+
   it('keeps what is left out of a library once per path, and brings it back', async () => {
     const { store } = await aStore();
     const asked = {

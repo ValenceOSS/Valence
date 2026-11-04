@@ -110,6 +110,10 @@ type MediaStore = {
   markFound?: (libraryId: string, paths: string[]) => Promise<void>;
   listMissingSince?: (libraryId: string, before: Date) => Promise<string[]>;
   listOverrides?: (libraryId: string) => Promise<MediaOverride[]>;
+  readProbe?: (
+    libraryId: string,
+    path: string,
+  ) => Promise<{ probe: MediaProbe; probeVersion: number | null } | null>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   linkSameFilms?: (libraryId: string) => Promise<void>;
@@ -129,6 +133,7 @@ type ScanLibraryOptions = {
   providers?: MetadataProvider[];
   force?: boolean;
   keepsMatches?: boolean;
+  reusesProbes?: boolean;
   isPartial?: boolean;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
@@ -457,6 +462,7 @@ const scanLibrary = async ({
   providers = [createFilenameMetadataProvider()],
   force = false,
   keepsMatches = false,
+  reusesProbes = false,
   isPartial: askedPartial = false,
   atOnce = 1,
   onProblem,
@@ -677,7 +683,15 @@ const scanLibrary = async ({
         return false;
       }
 
-      const probe = read?.probe ?? (await transcoder.probe(file.path));
+      const kept =
+        reusesProbes && read === null && probeVersion !== null
+          ? await store.readProbe?.(libraryId, file.path)
+          : null;
+      const probe =
+        read?.probe ??
+        (kept !== null && kept !== undefined && kept.probeVersion === probeVersion
+          ? kept.probe
+          : await transcoder.probe(file.path));
 
       if (probe.video === null) {
         failed += 1;

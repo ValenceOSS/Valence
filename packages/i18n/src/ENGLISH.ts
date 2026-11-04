@@ -5695,7 +5695,7 @@ const ENGLISH = {
   'screens.adminArea.refreshTitleDialog.refreshName': 'Refresh {name}',
   'screens.adminArea.refreshTitleDialog.updateDetails': 'Update details',
   'screens.adminArea.refreshTitleDialog.updateDetailsDetail':
-    'Reads its files and asks TMDB again, keeping its match and every edit.',
+    'Asks TMDB again, keeping its match and every edit.',
   'screens.adminArea.refreshTitleDialog.updateSomeFields': 'Update some fields',
   'screens.adminArea.refreshTitleDialog.updateSomeFieldsDetail':
     'Asks TMDB again for only the fields you tick, such as the ratings.',

@@ -22427,7 +22427,7 @@
   },
   {
     "handler": "screens.adminArea.refreshTitleDialog.updateDetailsDetail",
-    "text": "Reads its files and asks TMDB again, keeping its match and every edit.",
+    "text": "Asks TMDB again, keeping its match and every edit.",
     "context": "What the Update details choice does, in the admin's dialog for asking the catalogue again about one title."
   },
   {

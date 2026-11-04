@@ -94,6 +94,8 @@ const harness = (options: {
   providers?: MetadataProvider[];
   force?: boolean;
   keepsMatches?: boolean;
+  reusesProbes?: boolean;
+  readProbe?: (path: string) => Promise<{ probe: MediaProbe; probeVersion: number | null } | null>;
   isPartial?: boolean;
   isCancelled?: () => boolean;
   onProblem?: (path: string, reason: Said) => void;
@@ -226,6 +228,12 @@ const harness = (options: {
           return Promise.resolve(paths.map((path) => departed(path)));
         },
         listOverrides: () => Promise.resolve(options.overrides ?? []),
+        ...(options.readProbe === undefined
+          ? {}
+          : {
+              readProbe: (_libraryId: string, path: string) =>
+                options.readProbe?.(path) ?? Promise.resolve(null),
+            }),
         ...(options.linkExtras === undefined ? {} : { linkExtras: options.linkExtras }),
         ...(options.regroupSeries === undefined ? {} : { regroupSeries: options.regroupSeries }),
         ...(options.setAside === undefined ? {} : { setAside: options.setAside }),
@@ -245,6 +253,7 @@ const harness = (options: {
       ...(options.providers === undefined ? {} : { providers: options.providers }),
       ...(options.force === undefined ? {} : { force: options.force }),
       ...(options.keepsMatches === undefined ? {} : { keepsMatches: options.keepsMatches }),
+      ...(options.reusesProbes === undefined ? {} : { reusesProbes: options.reusesProbes }),
       ...(options.isPartial === undefined ? {} : { isPartial: options.isPartial }),
       ...(options.isCancelled === undefined ? {} : { isCancelled: options.isCancelled }),
       ...(options.onProblem === undefined ? {} : { onProblem: options.onProblem }),
@@ -1620,6 +1629,29 @@ describe('a re-read that keeps each match', () => {
     await run();
 
     expect(asked).toEqual({ known: '777', kind: 'movie' });
+  });
+});
+
+describe('a re-read that reuses what it stored of each file', () => {
+  it('takes the stored probe where it was made under the same rules, and probes otherwise', async () => {
+    const probed: string[] = [];
+    const { run } = harness({
+      found: [file('/media/films/a.mkv'), file('/media/films/b.mkv')],
+      existing: [stored('/media/films/a.mkv'), stored('/media/films/b.mkv')],
+      force: true,
+      reusesProbes: true,
+      readProbe: (path) =>
+        Promise.resolve({ probe: probe(), probeVersion: path.endsWith('a.mkv') ? 1 : 0 }),
+      probeImpl: (path) => {
+        probed.push(path);
+
+        return Promise.resolve(probe());
+      },
+    });
+
+    await run();
+
+    expect(probed).toEqual(['/media/films/b.mkv']);
   });
 });
 
