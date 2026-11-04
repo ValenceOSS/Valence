@@ -30,7 +30,7 @@ type MediaPanelProps = {
   onChooseMoment: (media: MediaSummary) => void;
   onRebuildArtefacts: (media: MediaSummary) => Promise<boolean>;
   openedTitle?: string | null;
-  onOpenTitle?: (id: string | null) => void;
+  onOpenTitle?: (id: string | null, place?: TitlePlace) => void;
   titlePlace?: TitlePlace;
   onTitlePlace?: (place: TitlePlace) => void;
   onReencode?: (media: readonly MediaSummary[]) => void;

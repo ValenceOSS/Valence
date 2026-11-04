@@ -18,7 +18,7 @@ type AdminAreaProps = {
   onOpenFolder?: (path: string) => void;
   catalogue?: CatalogueAddress;
   mediaTitle?: string | null;
-  onMediaTitle?: (id: string | null) => void;
+  onMediaTitle?: (id: string | null, place?: TitlePlace) => void;
   mediaPlace?: TitlePlace;
   onMediaPlace?: (place: TitlePlace) => void;
   webhook?: string | null;

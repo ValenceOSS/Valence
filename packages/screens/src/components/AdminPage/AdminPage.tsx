@@ -437,14 +437,31 @@ const AdminPage = () => {
                   },
                 });
               }}
-              onMediaTitle={(id) => {
+              onMediaTitle={(id, place) => {
+                const underneath = {
+                  ...(mediaView === undefined ? {} : { mediaView }),
+                  ...(folder === undefined ? {} : { folder }),
+                };
+
                 void go({
                   to: '/admin/$panel',
                   params: { panel: 'media' },
                   search:
                     id === null
-                      ? {}
-                      : { media: id, ...(titleTab === undefined ? {} : { titleTab }) },
+                      ? underneath
+                      : {
+                          ...underneath,
+                          media: id,
+                          ...(place === undefined || place.tab === 'details'
+                            ? {}
+                            : { titleTab: place.tab }),
+                          ...(place?.season === null || place?.season === undefined
+                            ? {}
+                            : { season: place.season }),
+                          ...(place?.episode === null || place?.episode === undefined
+                            ? {}
+                            : { episode: place.episode }),
+                        },
                 });
               }}
               mediaPlace={{
@@ -457,6 +474,8 @@ const AdminPage = () => {
                   to: '/admin/$panel',
                   params: { panel: 'media' },
                   search: {
+                    ...(mediaView === undefined ? {} : { mediaView }),
+                    ...(folder === undefined ? {} : { folder }),
                     ...(media === undefined ? {} : { media }),
                     ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
                     ...(place.season === null ? {} : { season: place.season }),

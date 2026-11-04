@@ -48,6 +48,11 @@ import { say } from '@ValenceI18n/say';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 import type { MediaTitlePageProps } from './MediaTitlePage.types';
+import type { ReactNode } from 'react';
+import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
+import type { Library } from '@ValenceContracts/schemas/Library';
+import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
+import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
 import { useShortcut } from '@ValenceUI/useShortcut';
@@ -55,6 +60,10 @@ import type { OpenPart } from './components/TitlePartDialog/TitlePartDialog.type
 import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
 
 const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null };
+
+const NO_LIBRARIES: readonly Library[] = [];
+
+const ALREADY_A_FILE_ACTION: readonly string[] = ['leave-out', 'show-in-files', 'delete'];
 
 /**
  * Every file a title is made of, down to the versions of each.
@@ -104,6 +113,10 @@ const describeMatch = (title: MediaTitle): string | null => {
  * @param onNext - Opens the title after this one in the list, where there is one.
  * @param titlePlace - Which tab, season and episode to show, where the address keeps them.
  * @param onTitlePlace - Told where the page has moved to, where the address keeps it.
+ * @param libraries - Every library, for the file manager on the Files tab.
+ * @param mayManageFiles - Whether whoever is looking may delete and move the title's files.
+ * @param onFilesChanged - Told that something on the disk changed on the Files tab.
+ * @param onScan - Asked to scan a library once something is uploaded into the title's folder.
  */
 const MediaTitlePage = ({
   title,
@@ -118,6 +131,10 @@ const MediaTitlePage = ({
   onNext,
   titlePlace,
   onTitlePlace,
+  libraries = NO_LIBRARIES,
+  mayManageFiles = false,
+  onFilesChanged,
+  onScan,
 }: MediaTitlePageProps) => {
   const [localPlace, setLocalPlace] = useState<TitlePlace>(NOWHERE);
   const at = titlePlace ?? localPlace;
@@ -329,6 +346,117 @@ const MediaTitlePage = ({
       : leaf.kind === 'version'
         ? leaf.name
         : (paths[leaf.lead.id]?.split('/').pop() ?? leaf.name);
+
+  const leafById = new Map(leaves.map((leaf) => [leaf.lead.id, leaf]));
+  const leafNames = new Set(
+    leaves.flatMap((leaf) => {
+      const file = paths[leaf.lead.id];
+
+      return file === undefined ? [] : [file.split('/').at(-1) ?? file];
+    }),
+  );
+  const isLooseInLibrary = place !== null && place.folder === library?.path;
+
+  /**
+   * Whether an entry of the title's folder belongs on its Files tab: none of another title's, and
+   * in a library's own folder, only this title's files and what belongs with them.
+   *
+   * @param entry - The entry.
+   * @returns Whether to show it.
+   */
+  const keepsHere = (entry: LibraryEntry): boolean => {
+    const isOurs =
+      entry.titleId === title.id ||
+      (entry.belongsTo !== null && entry.belongsTo !== undefined && leafNames.has(entry.belongsTo));
+
+    if (isLooseInLibrary) {
+      return isOurs;
+    }
+
+    return (
+      isOurs ||
+      ((entry.titleId === null || entry.titleId === undefined) &&
+        (entry.belongsTo === null || entry.belongsTo === undefined))
+    );
+  };
+
+  /**
+   * What can be done to the file an entry is, as Media offers it, less what the file manager
+   * already does to any file.
+   *
+   * @param entry - The entry.
+   * @returns The groups of actions.
+   */
+  const mediaActionsOf = (entry: LibraryEntry): ActionMenuItem[][] => {
+    const leaf = entry.mediaId === null ? undefined : leafById.get(entry.mediaId);
+
+    return leaf === undefined
+      ? []
+      : actionsFor(leaf)
+          .map((group) => group.filter((one) => !ALREADY_A_FILE_ACTION.includes(one.id)))
+          .filter((group) => group.length > 0);
+  };
+
+  /**
+   * Draws something of the video an entry is, or a dash for anything else.
+   *
+   * @param entry - The entry.
+   * @param draw - What to draw of the video.
+   * @returns What to show.
+   */
+  const ofVideo = (entry: LibraryEntry, draw: (leaf: MediaTitle) => ReactNode): ReactNode => {
+    const leaf = entry.mediaId === null ? undefined : leafById.get(entry.mediaId);
+
+    return leaf === undefined ? <span className="text-text-muted">—</span> : draw(leaf);
+  };
+
+  const mediaColumns: DataTableColumn<LibraryEntry>[] = [
+    {
+      id: 'quality',
+      header: say('common.quality'),
+      enableSorting: false,
+      cell: ({ row }) =>
+        ofVideo(row.original, (leaf) => {
+          const range = describeRange(leaf.lead.videoRange);
+
+          return (
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              <span className="text-text">{sharpestStepOf(leaf.lead)?.label ?? '—'}</span>
+              {range === null ? null : <Badge size="sm">{range}</Badge>}
+            </span>
+          );
+        }),
+    },
+    {
+      id: 'video',
+      header: say('common.video'),
+      enableSorting: false,
+      cell: ({ row }) =>
+        ofVideo(row.original, (leaf) => (
+          <span className="text-text-muted">{leaf.lead.videoCodec.toUpperCase()}</span>
+        )),
+    },
+    {
+      id: 'audio',
+      header: say('common.audio'),
+      enableSorting: false,
+      cell: ({ row }) =>
+        ofVideo(row.original, (leaf) => (
+          <span className="whitespace-nowrap text-text-muted">{describeAudio(leaf.lead)}</span>
+        )),
+    },
+    {
+      id: 'length',
+      header: say('screens.adminArea.titlePage.trackTable.length'),
+      enableSorting: false,
+      cell: ({ row }) =>
+        ofVideo(row.original, (leaf) => (
+          <span className="tabular-nums text-text-muted">
+            {formatDuration(leaf.lead.durationSeconds)}
+          </span>
+        )),
+    },
+  ];
 
   const fileColumns: DataTableColumn<MediaTitle>[] = [
     {
@@ -657,13 +785,32 @@ const MediaTitlePage = ({
         <TabPanel value="files" travel={travel}>
           <div className="flex flex-col gap-4">
             <PanelCard title={filesWord} isFlush>
-              <DataTable
-                label={filesWord}
-                columns={fileColumns}
-                rows={leaves}
-                getRowId={(leaf) => leaf.id}
-                pageSize={25}
-              />
+              {place === null ? (
+                <DataTable
+                  label={filesWord}
+                  columns={fileColumns}
+                  rows={leaves}
+                  getRowId={(leaf) => leaf.id}
+                  pageSize={25}
+                />
+              ) : (
+                <FolderView
+                  key={place.folder}
+                  libraries={libraries}
+                  mayDelete={mayManageFiles}
+                  root={place.folder}
+                  onChanged={() => {
+                    onFilesChanged?.();
+                  }}
+                  onScan={(scanned) => {
+                    onScan?.(scanned);
+                  }}
+                  hidesTitles
+                  keeps={keepsHere}
+                  columns={mediaColumns}
+                  actionsOf={mediaActionsOf}
+                />
+              )}
             </PanelCard>
 
             {pastReencodes.length === 0 ? null : (

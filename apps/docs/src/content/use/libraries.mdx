@@ -269,30 +269,45 @@ Nothing a file already carries is replaced by fetched music details, and each al
 
 ## The Media page
 
-**Media**, under **Content**, lists what each library holds. Choose the library from **Which library** in the search field's menu, where a library with titles to fix says how many. Type in **Find a title** to narrow the list.
+**Media**, under **Content**, is where a library's titles and its files are managed together. It has two tabs, **Titles** and **Folders**, which share one search field and one library. Choose the library from **Which library** in the search field's menu, where a library with titles to fix says how many.
 
-- **The table.** Each film shows its poster, name and year, then its **Quality**, **Video** and **Audio**, how long it runs, its **Size** and how long ago it was **Added**. A series shows how many seasons and episodes are on the disk and folds open to its seasons and episodes; a film held more than once folds open to each version. Where the files of a title differ, a column says **Mixed**. Resting on a title shows where it is on the disk.
+### Titles
+
+- **The table.** Each film shows its poster, name and year, then its **Quality**, **Video** and **Audio**, how long it runs, its **Size** and how long ago it was **Added**. A series shows how many seasons and episodes are on the disk and folds open to its seasons and episodes; a film held more than once folds open to each version. Where the files of a title differ, a column says **Mixed**.
+- **Opening a title.** Pressing a row opens the title's own page. Pressing a season opens the page on its **Seasons** tab, an episode opens its editor there, and a version opens the **Files** tab.
 - **What needs a look.** A title missing something is marked **Unmatched**, **No poster**, **There twice** or **Couldn’t be read**. The row above the table narrows it to **All titles**, **Unmatched**, **Duplicates** or **Unreadable**, each with how many. A music or book library offers **No cover** instead.
-- **Doing several at once.** Tick titles, or the box in the heading for every one shown, and the row says how many are selected, with **Re-encode**, **Rebuild previews**, **Delete** (which asks first) and **Clear**. Changing the library, the search or what's shown clears the selection.
-- **A title's menu** holds **Open**, **Wrong match?**, **Choose artwork…**, **Show in Files**, **Rebuild previews**, **Find subtitles…**, **Choose the preview frame**, **Re-encode…**, **Saved copies**, **Move to another library…**, **Exclude from library** and **Delete file…** or **Delete series…**, as far as each applies and you're allowed.
+- **Doing several at once.** Tick titles, or the box in the heading for every one shown, and the row says how many are selected, with **Re-encode**, **Rebuild previews**, **Delete** (which asks first) and **Clear**.
+- **A title's menu** holds **Open**, **Wrong match?**, **Choose artwork…**, **Show in Folders**, **Rebuild previews**, **Find subtitles…**, **Choose the preview frame**, **Re-encode…**, **Saved copies**, **Move to another library…**, **Exclude from library** and **Delete file…** or **Delete series…**, as far as each applies and you're allowed.
+
+### Folders
+
+**Folders** shows the chosen library as it sits on the disk. The trail along the top steps back up, and **New folder** and **Upload here** add to the folder you're in. Each file's menu renames, moves, excludes or deletes it, and ticking several does the same to all of them.
+
+Every file says which title it belongs to, which opens that title's page, and has a status: **In the library**, **Unmatched**, **Extra**, **Excluded**, **Sample**, **Skipped**, **Unreadable**, **Not read yet**, **With its video** for subtitles, NFO files and pictures, **Its video is gone** when their video no longer exists, or **Not a video**. Choosing a file shows its details, with the video a subtitle belongs with, and for a video not in the library, why: what the last scan said of it, or that it was excluded, looks like a sample, sits in a folder scans skip, or hasn't been read yet. A programme's folder shows the programme's name.
+
+Opening a title from **Folders** and pressing **Media** at the top of its page brings you back to the same folder. The address keeps the folder (`?mediaView=folders&folder=`), and links to the old Files page open here.
 
 ### A title's own page
 
-Pressing a title's name, or **Open** in its menu, opens it on a page of its own; **Back to Media** returns to the list. The page's address names the title (`?media=`). It shows the title's backdrop, poster and overview, its library and how it is matched, such as "Matched · TMDB 603", with **Unmatched** where it isn't. Its buttons are **Open in Catalogue** where requesting is set up and the title is in the catalogue, **Fix match**, **Artwork** and **Open folder**. Beneath them are when it was added, how many files it has, their size, its genres and its rating.
+A title's page shows its backdrop, poster, name and year, its library and how it is matched, such as "Matched · TMDB 603", with **Unmatched** where it isn't. **Previous** and **Next** at the top step through the list as it is shown, and **K** and **J** do the same. Its buttons are **Fix match**, **Refresh** and **Open in Catalogue** where requesting is set up, with **Artwork**, **Keep everything as it is**, **Unmatch**, **Open folder** and the title's other actions in its menu.
 
-The **Files** card, or **Episodes** for a series, lists every file with its quality, video, audio, length and size, and the same menu as in the list. A **Re-encodes** card lists any re-encodes asked of its files, with when they were asked, the size before and after, and where each stands.
+- **Details** holds every field of the title's metadata, grouped into cards. Each field saves as you type and says where its value came from: **TMDB**, **File name**, **Edited** or **Locked**. An edited field shows what TMDB says beneath it, with **Reset**. Edits are kept through every scan and refresh.
+- **Seasons**, for a series, lists each season and its episodes. A season's menu edits its name, overview and air date, and pressing an episode opens its editor, with **Previous** and **Next** through the season.
+- **Files**, or **Episodes** for a series, is the file manager for the title's own folder: every file with its status and, for a video, its quality, video, audio and length, subtitles and pictures beside their video, and the tools to upload, rename, move, exclude or delete, alongside the title's own file actions. A **Re-encodes** card lists any re-encodes asked of its files.
+- **History** lists every change to the title's metadata, who made it and what each field went from and to, with **Undo**.
+
+The page's address names the title and where you are on it (`?media=`, `&titleTab=`, `&season=`, `&episode=`).
 
 ## Correcting a wrong match
 
 Sometimes the catalogue matches a file to the wrong film or series, usually because the name was ambiguous. Fix it once and the fix sticks across future scans.
 
-1. Open **Media** under **Content** and find the title with the search box, or open the film's actions menu wherever it is offered. On a title's own page, **Fix match** does the same.
-2. Choose **Wrong match?**. The match picker opens, titled with the item's name.
-3. The search box is filled with the current title. Edit it if needed and press **Search**. The picker asks the catalogue and lists matches.
-4. Choose the correct entry. For a film the correction applies to that film. For an episode it applies to every episode of the series.
-5. Valence records the correction and reads the file again. The correction is used by every later scan instead of guessing from the file name again.
+1. Open the title's page and press **Fix match**, or choose **Wrong match?** from its menu in the list.
+2. Fix match searches under the title's name as soon as it opens. Change the name, choose **Film** or **Show**, or paste a TMDB address or number or an IMDb id. Each result says how well it fits, and **Show more** lists the next page.
+3. Choose the right entry. Fix match then compares the title with it field by field. Fields that would change are ticked to take the new value, and fields you edited or locked are left as they are unless you tick them.
+4. Press **Apply**. Valence records the correction and reads the files again, and every later scan uses it. For an episode the correction applies to every episode of the series.
 
-To undo a correction, open the picker again and press **Remove correction**. The file is read as the catalogue finds it. You need the media override permission.
+**Refresh** on the title's page asks TMDB again: **Update details** keeps the match and every edit, **Update some fields** asks only for the fields you tick, **Match again** forgets the match and finds it again from the file names, and **Fetch artwork** fetches the pictures again. **Unmatch** takes the title back to what its file names say and keeps it unmatched. You need the media override permission.
 
 ## Previews and artwork
 

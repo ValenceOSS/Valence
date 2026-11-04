@@ -9,9 +9,10 @@ import type { ReactElement } from 'react';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 
-const { unmatch } = vi.hoisted(() => ({ unmatch: vi.fn() }));
+const { unmatch, listFolder } = vi.hoisted(() => ({ unmatch: vi.fn(), listFolder: vi.fn() }));
 
 vi.mock('@ValenceClient/admin/unmatchTitle', () => ({ unmatchTitle: unmatch }));
+vi.mock('@ValenceClient/admin/fetchLibraryFolder', () => ({ fetchLibraryFolder: listFolder }));
 
 const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
 
@@ -143,6 +144,7 @@ describe('MediaTitlePage', () => {
         { id: 'film', title: 'Film' },
         { id: 'cut', title: 'Film', parentId: 'film', versionLabel: 'Long cut' },
       ),
+      { place: null },
     );
 
     await user.click(screen.getByRole('tab', { name: 'Files' }));
@@ -151,6 +153,46 @@ describe('MediaTitlePage', () => {
 
     expect(within(files).getByText('Long cut')).toBeInTheDocument();
     expect(within(files).getAllByRole('row')).toHaveLength(3);
+  });
+
+  it('manages the title’s own folder on its Files tab, its videos’ quality beside them', async () => {
+    const user = userEvent.setup();
+    const at = '/media/films/Film (2020)';
+    const anEntry = (name: string, extra: object) => ({
+      name,
+      path: `${at}/${name}`,
+      isFolder: false,
+      sizeBytes: 1,
+      modifiedAt: null,
+      mediaId: null,
+      ...extra,
+    });
+
+    listFolder.mockResolvedValue({
+      path: at,
+      parent: '/media/films',
+      libraryId: FILMS.id,
+      libraryPath: FILMS.path,
+      isTruncated: false,
+      entries: [
+        anEntry('Film.mkv', { mediaId: 'film', titleId: 'film', status: 'inLibrary' }),
+        anEntry('Film.en.srt', { status: 'sidecar', belongsTo: 'Film.mkv' }),
+        anEntry('Other.mkv', { mediaId: 'other', titleId: 'other', status: 'inLibrary' }),
+      ],
+    });
+
+    drawn(titleOf({ id: 'film', title: 'Film', videoCodec: 'hevc' }), {
+      libraries: [FILMS],
+      paths: { film: `${at}/Film.mkv` },
+    });
+    await user.click(screen.getByRole('tab', { name: 'Files' }));
+
+    expect(await screen.findByText('Film.en.srt')).toBeInTheDocument();
+    expect(screen.getByText('HEVC')).toBeInTheDocument();
+    expect(screen.queryByText('Other.mkv')).not.toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Current folder' })).toHaveTextContent(
+      'Film (2020)',
+    );
   });
 
   it('goes back to every title', async () => {

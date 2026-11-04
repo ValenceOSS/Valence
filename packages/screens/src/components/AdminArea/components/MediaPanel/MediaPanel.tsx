@@ -66,6 +66,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { MediaPanelProps, MediaView, MediaReading } from './MediaPanel.types';
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { MediaTitle } from './MediaTitle.types';
 import { describeTitleProblems } from './describeTitleProblems';
 import type { TitleProblem } from './describeTitleProblems';
@@ -75,6 +76,8 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const MEDIA_VIEWS = ['titles', 'folders'] as const;
+
+const NOWHERE: TitlePlace = { tab: 'details', season: null, episode: null };
 
 const MEDIA_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
@@ -224,9 +227,17 @@ const MediaPanel = ({
   );
   const faces = useQuery(linkingQueries.faces());
   const [chosenLibrary, setChosenLibrary] = useState<string | null>(null);
-  const libraryId = tabs.some((library) => library.id === chosenLibrary)
-    ? (chosenLibrary ?? '')
-    : (tabs[0]?.id ?? '');
+  const holdingFolder =
+    folder === null
+      ? undefined
+      : tabs
+          .filter((one) => folder === one.path || folder.startsWith(`${one.path}/`))
+          .sort((one, other) => other.path.length - one.path.length)[0];
+  const libraryId =
+    holdingFolder?.id ??
+    (tabs.some((library) => library.id === chosenLibrary)
+      ? (chosenLibrary ?? '')
+      : (tabs[0]?.id ?? ''));
   const [search, setSearch] = useState('');
   const [showing, setShowing] = useState<string>('all');
   const narrowing = `${libraryId}\n${search}\n${showing}`;
@@ -245,8 +256,21 @@ const MediaPanel = ({
   const view = givenView ?? localView;
   const travel = useTravelDirection([...MEDIA_VIEWS], view);
   const [localOpenedId, setLocalOpenedId] = useState<string | null>(null);
+  const [localPlace, setLocalPlace] = useState<TitlePlace>(NOWHERE);
   const openedId = onOpenTitle === undefined ? localOpenedId : openedTitle;
-  const setOpenedId = onOpenTitle ?? setLocalOpenedId;
+  const place = titlePlace ?? localPlace;
+  const moveTo = onTitlePlace ?? setLocalPlace;
+  const setOpenedId = useCallback(
+    (id: string | null, at: TitlePlace = NOWHERE) => {
+      if (onOpenTitle === undefined) {
+        setLocalOpenedId(id);
+        setLocalPlace(at);
+      } else {
+        onOpenTitle(id, at);
+      }
+    },
+    [onOpenTitle],
+  );
   const [isDeletingPicked, setIsDeletingPicked] = useState(false);
   const [rebuilding, setRebuilding] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<MediaSummary | null>(null);
@@ -279,6 +303,21 @@ const MediaPanel = ({
   );
 
   const titles = useMemo(() => gatherTitles(media), [media]);
+  const topOf = useMemo(() => {
+    const tops = new Map<string, MediaTitle>();
+    const walk = (top: MediaTitle, below: readonly MediaTitle[]) => {
+      for (const part of below) {
+        tops.set(part.id, top);
+        walk(top, part.parts);
+      }
+    };
+
+    for (const title of titles) {
+      walk(title, title.parts);
+    }
+
+    return tops;
+  }, [titles]);
   const health = useQuery(adminQueries.libraryHealth());
   const twice = useMemo(
     () => new Set(health.data?.duplicate.items.map((item) => item.id) ?? NO_IDS),
@@ -984,6 +1023,30 @@ const MediaPanel = ({
           : say('screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas')
         : say('common.nothingHereMatchesThat');
 
+  /**
+   * Opens the title a row of the list belongs to: a film or programme on its page, a season on its
+   * Seasons tab, an episode in its editor there, and a version on the Files tab.
+   *
+   * @param row - The row pressed.
+   */
+  const openRow = (row: MediaTitle) => {
+    const top = topOf.get(row.id) ?? row;
+
+    if (row.kind === 'episode') {
+      setOpenedId(top.id, {
+        tab: 'seasons',
+        season: row.lead.seasonNumber ?? null,
+        episode: row.lead.id,
+      });
+    } else if (row.kind === 'season') {
+      setOpenedId(top.id, { ...NOWHERE, tab: 'seasons', season: row.lead.seasonNumber ?? null });
+    } else if (row.kind === 'version') {
+      setOpenedId(top.id, { ...NOWHERE, tab: 'files' });
+    } else {
+      setOpenedId(top.id);
+    }
+  };
+
   const found = openedId === null ? null : (titles.find((one) => one.id === openedId) ?? null);
   const fetched = useQuery(
     adminQueries.titleFiles(
@@ -1117,18 +1180,22 @@ const MediaPanel = ({
             ? {}
             : {
                 onPrevious: () => {
-                  setOpenedId(before.id);
+                  setOpenedId(before.id, { ...NOWHERE, tab: place.tab });
                 },
               })}
           {...(after === undefined
             ? {}
             : {
                 onNext: () => {
-                  setOpenedId(after.id);
+                  setOpenedId(after.id, { ...NOWHERE, tab: place.tab });
                 },
               })}
-          {...(titlePlace === undefined ? {} : { titlePlace })}
-          {...(onTitlePlace === undefined ? {} : { onTitlePlace })}
+          titlePlace={place}
+          onTitlePlace={moveTo}
+          libraries={libraries}
+          mayManageFiles={mayManageFiles}
+          {...(onFilesChanged === undefined ? {} : { onFilesChanged })}
+          {...(onScan === undefined ? {} : { onScan })}
         />
         {dialogs}
       </>
@@ -1167,54 +1234,65 @@ const MediaPanel = ({
           />
         }
         actions={
-          view === 'folders' ? null : (
-            <>
-              <ScopedField
-                label={say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')}
-                isLabelHidden
-                placeholder={say('common.findATitle')}
-                value={search}
-                onValueChange={setSearch}
-                choices={
-                  tabs.length < 2
-                    ? []
-                    : [
-                        {
-                          label: say('common.whichLibrary'),
-                          options: librariesByPlace(tabs, faces.data ?? []).map((one) => {
-                            const count = toFix.get(one.library.id) ?? 0;
+          <>
+            <ScopedField
+              label={
+                view === 'folders'
+                  ? say('screens.adminArea.filesPanel.findAFileOrFolder')
+                  : say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')
+              }
+              isLabelHidden
+              placeholder={
+                view === 'folders'
+                  ? say('screens.adminArea.filesPanel.findInThisFolder')
+                  : say('common.findATitle')
+              }
+              value={search}
+              onValueChange={setSearch}
+              choices={
+                tabs.length < 2
+                  ? []
+                  : [
+                      {
+                        label: say('common.whichLibrary'),
+                        options: librariesByPlace(tabs, faces.data ?? []).map((one) => {
+                          const count = toFix.get(one.library.id) ?? 0;
 
-                            return {
-                              id: one.library.id,
-                              label:
-                                count === 0
-                                  ? one.library.name
-                                  : sayCount(
-                                      'screens.adminArea.mediaPanel.count.nameToFix',
-                                      count,
-                                      {
-                                        name: one.library.name,
-                                      },
-                                    ),
-                              group: one.group,
-                            };
-                          }),
-                          value: libraryId,
-                          onChange: setChosenLibrary,
+                          return {
+                            id: one.library.id,
+                            label:
+                              count === 0
+                                ? one.library.name
+                                : sayCount('screens.adminArea.mediaPanel.count.nameToFix', count, {
+                                    name: one.library.name,
+                                  }),
+                            group: one.group,
+                          };
+                        }),
+                        value: libraryId,
+                        onChange: (chosenId) => {
+                          setChosenLibrary(chosenId);
+
+                          if (view === 'folders') {
+                            onFolder?.(null);
+                          }
                         },
-                      ]
-                }
-                className="w-[28rem] max-w-full"
-              />
-            </>
-          )
+                      },
+                    ]
+              }
+              className="w-[28rem] max-w-full"
+            />
+          </>
         }
       >
         <TabPanel value="folders" travel={travel}>
           <FolderView
+            key={chosen?.path ?? 'none'}
             libraries={libraries}
             mayDelete={mayManageFiles}
+            root={chosen?.path ?? null}
             openAt={folder}
+            search={search}
             onChanged={() => {
               onFilesChanged?.();
             }}
@@ -1360,18 +1438,7 @@ const MediaPanel = ({
                         columns={columns}
                         rows={library.id === libraryId ? shown : []}
                         getRowId={(title) => title.id}
-                        {...(onOpenFolder === undefined
-                          ? {}
-                          : {
-                              expandsOnChoose: true,
-                              onChooseRow: (title: MediaTitle) => {
-                                const file = paths[title.lead.id];
-
-                                if (title.parts.length === 0 && file !== undefined) {
-                                  onOpenFolder(folderOf(file));
-                                }
-                              },
-                            })}
+                        onChooseRow={openRow}
                         pageSize={25}
                         height="fills"
                         getSubRows={(title) => (title.parts.length === 0 ? undefined : title.parts)}

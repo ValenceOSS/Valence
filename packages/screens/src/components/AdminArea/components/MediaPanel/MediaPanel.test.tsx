@@ -101,6 +101,8 @@ const chooseFrom = async (
   await user.click(await screen.findByRole('menuitemradio', { name: choice }));
 };
 
+const NOWHERE = { tab: 'details', season: null, episode: null };
+
 describe('MediaPanel', () => {
   it('lists what the libraries hold', () => {
     render(<MediaPanel {...props} media={[item()]} />);
@@ -972,8 +974,21 @@ describe('MediaPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Actions for Parasite' }));
     await user.click(screen.getByRole('menuitem', { name: 'Open' }));
 
-    expect(onOpenTitle).toHaveBeenNthCalledWith(1, 'item-1');
-    expect(onOpenTitle).toHaveBeenNthCalledWith(2, 'item-1');
+    expect(onOpenTitle).toHaveBeenNthCalledWith(1, 'item-1', NOWHERE);
+    expect(onOpenTitle).toHaveBeenNthCalledWith(2, 'item-1', NOWHERE);
+  });
+
+  it('opens a title from anywhere on its row, as its name does', async () => {
+    const onOpenTitle = vi.fn();
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onOpenTitle={onOpenTitle} />);
+
+    await user.click(
+      screen.getByText('Parasite').closest('tr')?.querySelector('td:last-child') ?? document.body,
+    );
+
+    expect(onOpenTitle).toHaveBeenCalledWith('item-1', NOWHERE);
   });
 
   it('draws the open title’s page, and goes back to every title', async () => {
@@ -986,7 +1001,7 @@ describe('MediaPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Media' }));
 
-    expect(onOpenTitle).toHaveBeenCalledWith(null);
+    expect(onOpenTitle).toHaveBeenCalledWith(null, NOWHERE);
   });
 
   it('asks before deleting a file from a title’s own page', async () => {

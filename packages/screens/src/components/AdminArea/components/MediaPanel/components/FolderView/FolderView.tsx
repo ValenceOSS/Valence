@@ -45,6 +45,8 @@ import type { FolderViewProps } from './FolderView.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
+const NO_COLUMNS: readonly DataTableColumn<LibraryEntry>[] = [];
+
 /**
  * Media's folder view, the file manager: what is in each library's folders, as it sits on the disk, with everything an
  * administrator does to files without a terminal — find something by name, open a folder, rename,
@@ -64,6 +66,13 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * @param onScan - Asked to scan a library once something is uploaded into it.
  * @param onOpen - Told which folder is open, or nothing for the libraries, so the address can keep it.
  * @param onOpenTitle - Opens the title a file or folder belongs to, by its id in Media.
+ * @param root - The highest folder it shows, such as a library's or a title's own, where it may not
+ *   go above one.
+ * @param search - What to search for, where the search box is somebody else's.
+ * @param keeps - Which entries to show, where only some of a folder belong here.
+ * @param columns - More columns to show after each entry's name, such as a video's quality.
+ * @param actionsOf - More of what can be done to an entry, offered in its menu.
+ * @param hidesTitles - Whether to leave out the title column, where every entry is the same title's.
  */
 const FolderView = ({
   libraries,
@@ -73,10 +82,17 @@ const FolderView = ({
   onScan,
   onOpen,
   onOpenTitle,
+  root = null,
+  search,
+  keeps,
+  columns: moreColumns = NO_COLUMNS,
+  actionsOf,
+  hidesTitles = false,
 }: FolderViewProps) => {
-  const [at, setAt] = useState<string | null>(openAt);
+  const [at, setAt] = useState<string | null>(openAt ?? root);
   const [wasHanded, setWasHanded] = useState(openAt);
-  const [typed, setTyped] = useState('');
+  const [ownTyped, setTyped] = useState('');
+  const typed = search ?? ownTyped;
   const words = useDeferredValue(typed.trim());
   const isSearching = words.length >= 2;
   const [renaming, setRenaming] = useState<LibraryEntry | null>(null);
@@ -96,9 +112,13 @@ const FolderView = ({
   const library = libraries.find((one) => one.id === folder?.libraryId) ?? null;
   const status = asked.error instanceof RequestFailed ? asked.error.status : null;
   const rows = useMemo(
-    () => (isSearching ? (searched.data?.entries ?? []) : (folder?.entries ?? [])),
-    [isSearching, searched.data, folder],
+    () =>
+      (isSearching ? (searched.data?.entries ?? []) : (folder?.entries ?? [])).filter(
+        (entry) => keeps === undefined || keeps(entry),
+      ),
+    [isSearching, searched.data, folder, keeps],
   );
+  const isAtRoot = at === null || (root !== null && at === root);
   const isInLibrary =
     at !== null && folder?.libraryPath !== null && folder?.libraryPath !== undefined;
   const inLibrary =
@@ -133,8 +153,8 @@ const FolderView = ({
   if (wasHanded !== openAt) {
     setWasHanded(openAt);
 
-    if (openAt !== null) {
-      show(openAt);
+    if (openAt !== null || root !== null) {
+      show(openAt ?? root);
     }
   }
 
@@ -305,6 +325,7 @@ const FolderView = ({
           </span>
         ),
       },
+      ...moreColumns,
       {
         id: 'size',
         header: say('common.size'),
@@ -327,33 +348,37 @@ const FolderView = ({
           </span>
         ),
       },
-      {
-        id: 'title',
-        header: say('common.title'),
-        enableSorting: false,
-        cell: ({ row }) => {
-          const { title, titleId } = row.original;
+      ...(hidesTitles
+        ? []
+        : ([
+            {
+              id: 'title',
+              header: say('common.title'),
+              enableSorting: false,
+              cell: ({ row }) => {
+                const { title, titleId } = row.original;
 
-          return title === null || title === undefined ? (
-            <span className="text-text-muted">—</span>
-          ) : titleId === null || titleId === undefined || onOpenTitle === undefined ? (
-            <span className="block max-w-56 truncate text-text">{title}</span>
-          ) : (
-            <Button
-              variant="subtle"
-              size="none"
-              label={say('common.openTitle', { title })}
-              className="max-w-56 justify-start underline-offset-4 hover:underline"
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpenTitle(titleId);
-              }}
-            >
-              <span className="truncate">{title}</span>
-            </Button>
-          );
-        },
-      },
+                return title === null || title === undefined ? (
+                  <span className="text-text-muted">—</span>
+                ) : titleId === null || titleId === undefined || onOpenTitle === undefined ? (
+                  <span className="block max-w-56 truncate text-text">{title}</span>
+                ) : (
+                  <Button
+                    variant="subtle"
+                    size="none"
+                    label={say('common.openTitle', { title })}
+                    className="max-w-56 justify-start underline-offset-4 hover:underline"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenTitle(titleId);
+                    }}
+                  >
+                    <span className="truncate">{title}</span>
+                  </Button>
+                );
+              },
+            },
+          ] satisfies DataTableColumn<LibraryEntry>[])),
       {
         id: 'status',
         header: say('common.status'),
@@ -410,6 +435,7 @@ const FolderView = ({
                       },
                     ],
                   },
+                  ...(actionsOf?.(row.original) ?? []).map((items) => ({ items })),
                   {
                     items: [
                       ...leaveOutItemsFor(row.original),
@@ -434,7 +460,19 @@ const FolderView = ({
           ),
       },
     ],
-    [at, chosenPaths, isSearching, leaveOutItemsFor, mayDelete, onOpenTitle, open, rows],
+    [
+      actionsOf,
+      at,
+      chosenPaths,
+      hidesTitles,
+      isSearching,
+      leaveOutItemsFor,
+      mayDelete,
+      moreColumns,
+      onOpenTitle,
+      open,
+      rows,
+    ],
   );
 
   return (
@@ -445,7 +483,7 @@ const FolderView = ({
           variant="secondary"
           size="xs"
           label={say('common.upAFolder')}
-          disabled={at === null}
+          disabled={isAtRoot}
           onClick={() => {
             open(folder?.parent ?? null);
           }}
@@ -456,16 +494,18 @@ const FolderView = ({
         <Breadcrumbs
           label={say('common.whereYouAre')}
           crumbs={[
-            { id: '', label: say('common.libraries') },
+            ...(root === null ? [{ id: '', label: say('common.libraries') }] : []),
             ...(at === null ||
             folder?.path === null ||
             folder?.path === undefined ||
             library === null
               ? []
-              : trailInLibrary(folder.path, library.path, library.name).map((segment) => ({
-                  id: segment.path,
-                  label: segment.label,
-                }))),
+              : trailInLibrary(folder.path, library.path, library.name)
+                  .filter(
+                    (segment) =>
+                      root === null || segment.path === root || segment.path.startsWith(`${root}/`),
+                  )
+                  .map((segment) => ({ id: segment.path, label: segment.label }))),
           ]}
           onChoose={(id) => {
             open(id === '' ? null : id);
@@ -527,20 +567,22 @@ const FolderView = ({
           </span>
         ) : null}
 
-        <TextField
-          label={say('screens.adminArea.filesPanel.findAFileOrFolder')}
-          isLabelHidden
-          type="search"
-          size="sm"
-          placeholder={
-            at === null
-              ? say('screens.adminArea.filesPanel.findInEveryLibrary')
-              : say('screens.adminArea.filesPanel.findInThisFolder')
-          }
-          value={typed}
-          onValueChange={setTyped}
-          className="w-64 max-w-full"
-        />
+        {search === undefined ? (
+          <TextField
+            label={say('screens.adminArea.filesPanel.findAFileOrFolder')}
+            isLabelHidden
+            type="search"
+            size="sm"
+            placeholder={
+              at === null
+                ? say('screens.adminArea.filesPanel.findInEveryLibrary')
+                : say('screens.adminArea.filesPanel.findInThisFolder')
+            }
+            value={typed}
+            onValueChange={setTyped}
+            className="w-64 max-w-full"
+          />
+        ) : null}
       </div>
 
       {(isSearching ? searched.isPending : asked.isPending) ? (

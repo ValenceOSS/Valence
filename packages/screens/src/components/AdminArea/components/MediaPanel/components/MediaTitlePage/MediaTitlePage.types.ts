@@ -17,6 +17,10 @@ type MediaTitlePageProps = {
   onNext?: () => void;
   titlePlace?: TitlePlace;
   onTitlePlace?: (place: TitlePlace) => void;
+  libraries?: readonly Library[];
+  mayManageFiles?: boolean;
+  onFilesChanged?: () => void;
+  onScan?: (libraryId: string) => void;
 };
 
 export type { MediaTitlePageProps };

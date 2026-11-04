@@ -364,6 +364,29 @@ describe('FolderView', () => {
     expect(screen.getByText('Why it isn’t in the library')).toBeInTheDocument();
   });
 
+  it('stays within the folder it is rooted at, and takes its search from outside', async () => {
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <FolderView
+          libraries={[FILMS]}
+          mayDelete
+          root="/media/films"
+          search=""
+          onChanged={vi.fn()}
+          onScan={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Arrival (2016)')).toBeInTheDocument();
+    expect(fetchLibraryFolderMock).toHaveBeenCalledWith('/media/films');
+    expect(screen.getByRole('button', { name: 'Parent folder' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Libraries' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Search files and folders')).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(FolderView.displayName).toBe('FolderView');
   });

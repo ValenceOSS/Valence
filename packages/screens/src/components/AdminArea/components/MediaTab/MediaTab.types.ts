@@ -9,7 +9,7 @@ import type { ArtworkSubject } from '@ValenceScreens/components/AdminArea/compon
 type MediaTabProps = {
   libraries: readonly Library[];
   openedTitle?: string | null;
-  onOpenTitle?: (id: string | null) => void;
+  onOpenTitle?: (id: string | null, place?: TitlePlace) => void;
   titlePlace?: TitlePlace;
   onTitlePlace?: (place: TitlePlace) => void;
   view?: MediaView;
