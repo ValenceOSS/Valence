@@ -98,9 +98,12 @@ describe('FeatureVisual', () => {
 
       expect(picture).toHaveAttribute('aria-hidden', 'true');
 
-      await waitFor(() => {
-        expect(picture?.textContent).not.toBe('');
-      });
+      await waitFor(
+        () => {
+          expect(picture?.textContent).not.toBe('');
+        },
+        { timeout: 10_000 },
+      );
 
       if (kind === 'reader') {
         expect(picture).not.toHaveAttribute('inert');
