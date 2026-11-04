@@ -25,14 +25,14 @@ const DialogCompanionDemo = () => {
       </Button>
 
       <Dialog
-        label="Arrival"
+        label="A film"
         isOpen={isOpen}
         onClose={() => {
           setIsCompanionOpen(false);
           setIsOpen(false);
         }}
       >
-        <DialogTitle title="Arrival" detail="2016 · 1 h 56 min" />
+        <DialogTitle title="A film" detail="2016 · 1 h 56 min" />
         <DialogContent>
           <Button
             variant="secondary"
@@ -46,13 +46,13 @@ const DialogCompanionDemo = () => {
       </Dialog>
 
       <DialogCompanion
-        label="Amy Adams"
+        label="Its lead actor"
         isOpen={isCompanionOpen}
         onClose={() => {
           setIsCompanionOpen(false);
         }}
       >
-        <DialogTitle title="Amy Adams" detail="Louise Banks" />
+        <DialogTitle title="Its lead actor" detail="The character they play" />
         <DialogContent>
           <p className="text-sm text-text-muted">A companion opens over the dialog it came from.</p>
         </DialogContent>

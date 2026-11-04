@@ -6,7 +6,7 @@ describe('HoverHighlightDemo', () => {
   it('lists its rows', () => {
     render(<HoverHighlightDemo />);
 
-    expect(screen.getByText('Arrival')).toBeInTheDocument();
+    expect(screen.getByText('Film A')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

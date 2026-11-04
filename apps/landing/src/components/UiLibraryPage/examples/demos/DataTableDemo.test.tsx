@@ -6,7 +6,7 @@ describe('DataTableDemo', () => {
   it('lists the films', () => {
     render(<DataTableDemo />);
 
-    expect(screen.getByText('Blade Runner 2049')).toBeInTheDocument();
+    expect(screen.getByText('Film D')).toBeInTheDocument();
     expect(screen.getByText('58.1 GB')).toBeInTheDocument();
   });
 

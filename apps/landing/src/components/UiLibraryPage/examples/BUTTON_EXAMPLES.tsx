@@ -2,6 +2,8 @@ import { Download, Heart, Play, Share } from '@keyline-icons/react';
 import { ActionBar } from '@ValenceUI/ActionBar';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { Button } from '@ValenceUI/Button';
+import { HistoryArrows } from '@ValenceUI/HistoryArrows';
+import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { Icon } from '@ValenceUI/Icon';
 import { Link } from '@ValenceUI/Link';
@@ -154,6 +156,34 @@ const BUTTON_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
         <FilePicker label="Upload a poster" accept="image/*" onPick={nothing} variant="secondary">
           Upload a poster
         </FilePicker>
+      ),
+    },
+  ],
+  HistoryArrows: [
+    {
+      title: 'Back and forward, each with its keys',
+      render: () => (
+        <HistoryArrows
+          canGoBack
+          canGoForward={false}
+          onBack={nothing}
+          onForward={nothing}
+          backLabel="Back"
+          forwardLabel="Forward"
+          backKeys={['⌘', '[']}
+          forwardKeys={['⌘', ']']}
+        />
+      ),
+    },
+  ],
+  SidebarToggle: [
+    {
+      title: 'Open and closed',
+      render: () => (
+        <div className="flex items-center gap-3">
+          <SidebarToggle isOpen label="Close the sidebar" onToggle={nothing} />
+          <SidebarToggle isOpen={false} label="Open the sidebar" onToggle={nothing} />
+        </div>
       ),
     },
   ],

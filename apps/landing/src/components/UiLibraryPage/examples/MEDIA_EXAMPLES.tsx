@@ -1,6 +1,12 @@
 import { Bell, Check, Film, Heart, Search, Star } from '@keyline-icons/react';
 import { ArtCard } from '@ValenceUI/ArtCard';
+import { createRef } from 'react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { DiscordStatusCard } from '@ValenceUI/DiscordStatusCard';
+import { OriginMark } from '@ValenceUI/OriginMark';
+import { PictureCanvas } from '@ValenceUI/PictureCanvas';
+import { ROLE_COLOURS } from '@ValenceUI/tokens/roleColours';
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
 import { MediaCard } from '@ValenceUI/MediaCard';
@@ -27,7 +33,7 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
           <MediaCard title="Poster" subtitle="2026" imageUrl={ART} onSelect={nothing} />
           <MediaCard
             title="Book"
-            subtitle="Pierce Brown"
+            subtitle="Its author"
             imageUrl={ART}
             shape="book"
             onSelect={nothing}
@@ -225,6 +231,78 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
         <div className="w-full max-w-md">
           <ReaderVignette />
         </div>
+      ),
+    },
+  ],
+  BrandGlyph: [
+    {
+      title: 'Platforms and browsers',
+      render: () => (
+        <div className="flex flex-wrap items-center gap-3 text-text">
+          {(
+            [
+              'apple',
+              'android',
+              'windows',
+              'linux',
+              'chrome',
+              'firefox',
+              'safari',
+              'valence',
+            ] as const
+          ).map((name) => (
+            <BrandGlyph key={name} of={name} size={22} label={name} />
+          ))}
+        </div>
+      ),
+    },
+  ],
+  OriginMark: [
+    {
+      title: 'Where a title comes from',
+      render: () => (
+        <div className="flex items-center gap-3">
+          <OriginMark
+            initial="L"
+            colour={ROLE_COLOURS[2]}
+            ink="light"
+            label="From the loft server"
+          />
+          <OriginMark
+            initial="C"
+            colour={ROLE_COLOURS[6]}
+            ink="dark"
+            label="From the cabin server"
+          />
+        </div>
+      ),
+    },
+  ],
+  PictureCanvas: [
+    {
+      title: 'The surface a player draws frames onto, empty here',
+      render: () => (
+        <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-xl bg-[var(--surface-hover)] [container-type:size]">
+          <PictureCanvas canvasRef={createRef<HTMLCanvasElement>()} isShown aspectRatio={16 / 9} />
+        </div>
+      ),
+    },
+  ],
+  DiscordStatusCard: [
+    {
+      title: 'What Discord shows while something plays',
+      render: () => (
+        <DiscordStatusCard
+          heading="Valence"
+          details="Watching a film"
+          state="Part of a series"
+          largeImage={ART}
+          largeImageLabel="Its poster"
+          smallImage="/valence-icon.png"
+          smallImageLabel="Valence"
+          time={{ kind: 'progress', elapsed: '42:10', total: '1:58:00', fraction: 0.36 }}
+          buttons={['Watch on Valence']}
+        />
       ),
     },
   ],

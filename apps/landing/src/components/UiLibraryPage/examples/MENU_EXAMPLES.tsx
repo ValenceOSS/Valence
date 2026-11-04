@@ -7,6 +7,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
+import { MenuItemFace } from '@ValenceUI/MenuItemFace';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
@@ -319,6 +320,39 @@ const MENU_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
                 <Icon of={Download} size={16} />
               </Button>
             </Tooltip>
+          </div>
+        </TooltipScope>
+      ),
+    },
+  ],
+  MenuItemFace: [
+    {
+      title: 'What a menu item draws inside its row',
+      render: () => (
+        <TooltipScope>
+          <div className="flex w-64 flex-col gap-1 rounded-xl border border-[var(--surface-line)] p-1">
+            <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+              <MenuItemFace
+                item={{
+                  id: 'copy',
+                  label: 'Copy link',
+                  icon: <Icon of={Copy} size={15} />,
+                  onChoose: nothing,
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+              <MenuItemFace
+                item={{
+                  id: 'download',
+                  label: 'Download',
+                  icon: <Icon of={Download} size={15} />,
+                  detail: '4.2 GB',
+                  isCurrent: true,
+                  onChoose: nothing,
+                }}
+              />
+            </div>
           </div>
         </TooltipScope>
       ),

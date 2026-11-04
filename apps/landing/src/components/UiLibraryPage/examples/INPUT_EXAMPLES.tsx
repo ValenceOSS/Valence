@@ -1,9 +1,18 @@
-import { Search } from '@keyline-icons/react';
+import { ArrowRight, Search } from '@keyline-icons/react';
 import { CAPTION_COLOURS } from '@ValenceCore/tokens/CAPTION_COLOURS';
+import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { ChoiceList } from '@ValenceUI/ChoiceList';
 import { ColourPicker } from '@ValenceUI/ColourPicker';
+import { FilterBar } from '@ValenceUI/FilterBar';
+import { FilterSplit } from '@ValenceUI/FilterSplit';
+import { Form } from '@ValenceUI/Form';
 import { FormField } from '@ValenceUI/FormField';
+import { Kbd } from '@ValenceUI/Kbd';
+import { MultiSelectField } from '@ValenceUI/MultiSelectField';
+import { PinField } from '@ValenceUI/PinField';
+import { ScopedField } from '@ValenceUI/ScopedField';
+import { SelectField } from '@ValenceUI/SelectField';
 import { Icon } from '@ValenceUI/Icon';
 import { RangeSlider } from '@ValenceUI/RangeSlider';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
@@ -17,6 +26,35 @@ import { AppliedFiltersDemo } from '@ValenceLanding/components/UiLibraryPage/exa
 import type { UiExample } from './UiExample.types';
 
 const nothing = () => undefined;
+
+const LIBRARIES = [
+  { id: 'films', label: 'Films' },
+  { id: 'shows', label: 'Shows' },
+  { id: 'music', label: 'Music' },
+];
+
+const FILTERS = [
+  {
+    name: 'Kind',
+    isSingle: true,
+    options: [
+      { id: 'kind:film', label: 'Films' },
+      { id: 'kind:show', label: 'Shows' },
+    ],
+  },
+  {
+    name: 'Status',
+    options: [
+      { id: 'status:unwatched', label: 'Unwatched' },
+      { id: 'status:favourite', label: 'Favourites' },
+    ],
+  },
+];
+
+const TEMPLATE = `{
+  "title": "{{title}}",
+  "message": "{{summary}}"
+}`;
 
 const INPUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
   TextField: [
@@ -56,6 +94,20 @@ const INPUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
           value=""
           onValueChange={nothing}
         />
+      ),
+    },
+    {
+      title: 'Several lines, and code',
+      render: () => (
+        <div className="flex w-full max-w-md flex-col gap-4">
+          <TextField
+            label="Message"
+            rows={3}
+            value="The server restarts at midnight for an update."
+            onValueChange={nothing}
+          />
+          <TextField label="Template" rows={5} isCode value={TEMPLATE} onValueChange={nothing} />
+        </div>
       ),
     },
     {
@@ -241,6 +293,136 @@ const INPUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
     {
       title: 'Remove one or clear them all',
       render: () => <AppliedFiltersDemo />,
+    },
+  ],
+  SelectField: [
+    {
+      title: 'One choice from a list',
+      render: () => (
+        <SelectField
+          label="Library"
+          options={LIBRARIES}
+          value="shows"
+          description="Where new titles are added."
+          onSelect={nothing}
+          className="w-64"
+        />
+      ),
+    },
+  ],
+  MultiSelectField: [
+    {
+      title: 'Several choices, one locked',
+      render: () => (
+        <MultiSelectField
+          label="Libraries"
+          options={[...LIBRARIES.slice(0, 2), { id: 'music', label: 'Music', isLocked: true }]}
+          value={['films', 'music']}
+          placeholder="Every library"
+          onChange={nothing}
+          className="w-64"
+        />
+      ),
+    },
+  ],
+  ScopedField: [
+    {
+      title: 'A search narrowed by a choice, with a submit',
+      render: () => (
+        <ScopedField
+          label="Search"
+          isLabelHidden
+          placeholder="Find a title"
+          value=""
+          onValueChange={nothing}
+          choices={[
+            { label: 'Which library', options: LIBRARIES, value: 'films', onChange: nothing },
+          ]}
+          submit={{ label: 'Search', icon: ArrowRight }}
+          className="w-full max-w-md"
+        />
+      ),
+    },
+  ],
+  PinField: [
+    {
+      title: 'A new PIN',
+      render: () => (
+        <PinField
+          label="PIN"
+          value="12"
+          isNew
+          description="Four digits, asked for when this profile is opened."
+          onValueChange={nothing}
+        />
+      ),
+    },
+    {
+      title: 'With an error',
+      render: () => (
+        <PinField label="PIN" value="1234" error="That PIN is not right." onValueChange={nothing} />
+      ),
+    },
+  ],
+  FilterBar: [
+    {
+      title: 'Each filter as its own chip',
+      render: () => (
+        <FilterBar
+          label="Filter the library"
+          groups={FILTERS}
+          selected={new Set(['kind:film'])}
+          onChange={nothing}
+        />
+      ),
+    },
+  ],
+  FilterSplit: [
+    {
+      title: 'A scope and its filters, joined',
+      render: () => (
+        <FilterSplit
+          label="Filter the library"
+          scope={{ label: 'Which library', options: LIBRARIES, value: 'films', onChange: nothing }}
+          groups={FILTERS}
+          selected={new Set(['status:unwatched'])}
+          onChange={nothing}
+        />
+      ),
+    },
+  ],
+  Form: [
+    {
+      title: 'Fields sent together',
+      render: () => (
+        <Form
+          label="Sign in"
+          onSubmit={(event) => {
+            event.preventDefault();
+          }}
+          className="flex w-full max-w-sm flex-col gap-3"
+        >
+          <TextField label="Email" type="email" value="" onValueChange={nothing} />
+          <TextField label="Password" type="password" value="" onValueChange={nothing} />
+          <Button variant="confirm" type="submit">
+            Sign in
+          </Button>
+        </Form>
+      ),
+    },
+  ],
+  Kbd: [
+    {
+      title: 'Keys, on a field and inverted',
+      render: () => (
+        <div className="flex flex-wrap items-center gap-3">
+          <Kbd keys={['⌘', 'K']} />
+          <Kbd keys={['Esc']} size="sm" />
+          <span className="rounded-lg bg-text px-2 py-1">
+            <Kbd keys={['⇧', '?']} tone="inverse" />
+          </span>
+        </div>
+      ),
     },
   ],
 };
