@@ -87,6 +87,25 @@ const aService = async () => {
         overview: 'What the catalogue says of the show.',
         status: 'Ended',
       }),
+    describeCandidate: (externalId) =>
+      Promise.resolve(
+        externalId === '999'
+          ? null
+          : {
+              title: 'The right film',
+              year: 1999,
+              overview: 'What the right film is about.',
+              posterUrl: 'https://images.example/right.jpg',
+              backdropUrl: null,
+              genres: ['Drama'],
+              runtimeMinutes: 120,
+              cast: [],
+              trailerKey: null,
+              rating: 7.5,
+              certifications: { US: 'PG-13', GB: '12A' },
+              releaseDate: '1999-03-31',
+            },
+      ),
     onChanged: (ids) => {
       changed.push(ids);
     },
@@ -206,6 +225,72 @@ describe('createTitleMetadataService', { timeout: STARTING_DATABASE_MS }, () => 
       { title: 'Pilot' },
       { title: 'My second' },
     ]);
+  });
+
+  it('compares a film with the entry it would be matched to, field by field', async () => {
+    const { service } = await aService();
+
+    await service.edit('cut', 'title', { set: { tagline: 'My tagline' } }, ADA);
+
+    const preview = await service.preview('cut', { externalId: '604', kind: 'movie' });
+
+    expect(preview).toMatchObject({
+      kind: 'film',
+      posterUrl: 'https://images.example/right.jpg',
+    });
+    const rows = typeof preview === 'string' ? [] : preview.rows;
+    const rowOf = (field: string) => rows.find((row) => row.field === field);
+
+    expect(rowOf('title')).toMatchObject({
+      current: { value: 'A film', source: 'catalogue' },
+      next: 'The right film',
+    });
+    expect(rowOf('tagline')).toMatchObject({
+      current: { value: 'My tagline', source: 'edited' },
+      next: null,
+    });
+    expect(rowOf('certifications')).toMatchObject({ next: { US: 'PG-13', GB: '12A' } });
+    expect(rowOf('note')).toBeUndefined();
+    await expect(service.preview('cut', { externalId: '999', kind: 'movie' })).resolves.toBe(
+      'notInCatalogue',
+    );
+    await expect(service.preview('nothing', { externalId: '604', kind: 'movie' })).resolves.toBe(
+      'missing',
+    );
+  });
+
+  it('carries the fields kept, and every edit the catalogue does not fill, to the new entry', async () => {
+    const { db, service } = await aService();
+
+    await service.edit('cut', 'title', { set: { tagline: 'My tagline', note: 'Mine' } }, ADA);
+
+    const carried = await service.carry(
+      'cut',
+      { externalId: '604', kind: 'movie' },
+      ['title'],
+      ADA,
+    );
+    const kept = await createTitleEditStore(db).editsFor('lib', ['movie:604']);
+
+    expect(typeof carried === 'string' ? null : carried.changeSetId).not.toBeNull();
+    expect(
+      kept.map((edit) => ({ field: edit.field, value: edit.value, catalogue: edit.catalogue })),
+    ).toEqual(
+      expect.arrayContaining([
+        { field: 'title', value: 'A film', catalogue: 'The right film' },
+        { field: 'note', value: 'Mine', catalogue: null },
+      ]),
+    );
+    expect(kept.map((edit) => edit.field)).not.toContain('tagline');
+    expect(kept).toHaveLength(2);
+  });
+
+  it('carries nothing where nothing is kept or edited', async () => {
+    const { service } = await aService();
+
+    await expect(
+      service.carry('cut', { externalId: '604', kind: 'movie' }, [], ADA),
+    ).resolves.toEqual({ changeSetId: null });
   });
 
   it('refuses a field the title does not have, a value its rule refuses, and a file that is not there', async () => {

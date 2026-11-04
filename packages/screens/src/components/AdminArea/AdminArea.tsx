@@ -35,7 +35,7 @@ import {
   rejectReencode,
   startReencodes,
 } from '@ValenceClient/admin/fetchReencodes';
-import { MatchPicker } from './components/MatchPicker/MatchPicker';
+import { FixMatchDialog } from '@ValenceScreens/components/AdminArea/components/FixMatchDialog/FixMatchDialog';
 import { ArtworkPicker } from './components/ArtworkPicker/ArtworkPicker';
 import type { ArtworkSubject } from './components/ArtworkPicker/ArtworkPicker.types';
 import { CorrectionPicker } from '@ValenceScreens/components/AdminArea/components/CorrectionPicker/CorrectionPicker';
@@ -1491,7 +1491,7 @@ const AdminArea = ({
         onChanged={readTheLibraryAgain}
       />
 
-      <MatchPicker
+      <FixMatchDialog
         media={correcting}
         isInShows={
           libraries.find((library) => library.id === correcting?.libraryId)?.kind === 'shows'

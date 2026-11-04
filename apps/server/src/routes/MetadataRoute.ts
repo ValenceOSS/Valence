@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  MatchPreviewSchema,
   TitleEditOutcomeSchema,
   TitleEditRequestSchema,
   TitleHistorySchema,
@@ -97,7 +98,29 @@ const undoTitleChangeRoute = createRoute({
   },
 });
 
+const previewMatchRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{id}/match/preview',
+  tags: ['Library'],
+  summary: 'Compare a title, field by field, with the catalogue entry it would be matched to',
+  request: {
+    params: Params,
+    query: z.object({ externalId: z.string().regex(/^\d+$/u), kind: z.enum(['tv', 'movie']) }),
+  },
+  responses: {
+    200: {
+      description: 'Each field the entry fills, as it stands and as it would be',
+      content: { 'application/json': { schema: MatchPreviewSchema.openapi('MatchPreview') } },
+    },
+    404: {
+      description: 'No such file, or no such entry in the catalogue',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
 export {
+  previewMatchRoute,
   readTitleMetadataRoute,
   editTitleMetadataRoute,
   readTitleHistoryRoute,

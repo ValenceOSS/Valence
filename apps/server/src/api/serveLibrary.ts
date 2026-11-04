@@ -59,6 +59,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     requestsClient,
     settings,
     recordAudit,
+    titleMetadata,
   } = context;
 
   /**
@@ -356,7 +357,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
-    const { reference, kind } = context.req.valid('json');
+    const { reference, kind, keep } = context.req.valid('json');
     const read = readCatalogueReference(reference);
 
     if (read === null) {
@@ -370,10 +371,19 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const before = await auditedMedia(context.req.valid('param').id);
+    const account = await readAccount(context.req.raw.headers);
+
+    await titleMetadata?.carry(
+      context.req.valid('param').id,
+      { externalId: read.id, kind: externalKind },
+      keep ?? [],
+      { id: account?.id ?? null, name: account?.name ?? null },
+    );
+
     const corrected = await library.correctMatch(
       context.req.valid('param').id,
       { externalId: read.id, externalKind },
-      (await readAccount(context.req.raw.headers))?.id ?? null,
+      account?.id ?? null,
     );
 
     if (corrected !== null) {

@@ -1,3 +1,4 @@
+import { isSameTitleValue } from '@ValenceCore/functions/isSameTitleValue';
 import { randomUUID } from 'node:crypto';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { titleChange, titleEdit } from '#dialect/Schema';
@@ -54,16 +55,6 @@ type UndoPlan =
 const StoredValueSchema = TitleValueSchema.catch(null);
 
 const StoredStateSchema = StateSchema.catch({ isEdited: false, value: null });
-
-/**
- * Says whether two values are the same, whatever order a list of words or a map's keys came in.
- *
- * @param one - A value.
- * @param other - Another.
- * @returns Whether they say the same.
- */
-const isSame = (one: TitleValue, other: TitleValue): boolean =>
-  JSON.stringify(one) === JSON.stringify(other);
 
 /**
  * Keeps an administrator's edits to a title's metadata, field by field, apart from what a scan
@@ -158,7 +149,7 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
         (candidate) => candidate.subjectKey === one.subjectKey && candidate.field === one.field,
       );
 
-      if (edit === undefined || isSame(edit.catalogue, one.value)) {
+      if (edit === undefined || isSameTitleValue(edit.catalogue, one.value)) {
         continue;
       }
 
@@ -201,7 +192,7 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
       const afterState = { isEdited: one.edit !== null, value: one.edit?.value ?? null };
 
       return beforeState.isEdited === afterState.isEdited &&
-        isSame(beforeState.value, afterState.value)
+        isSameTitleValue(beforeState.value, afterState.value)
         ? []
         : [{ ...one, beforeState, afterState }];
     });
@@ -347,7 +338,7 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
 
       if (
         (standing !== undefined) !== after.isEdited ||
-        !isSame(standing?.value ?? null, after.value)
+        !isSameTitleValue(standing?.value ?? null, after.value)
       ) {
         return { kind: 'changedSince' };
       }

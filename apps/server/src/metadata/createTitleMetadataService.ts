@@ -1,3 +1,4 @@
+import { isSameTitleValue } from '@ValenceCore/functions/isSameTitleValue';
 import { and, eq, inArray, isNull, isNotNull, or } from 'drizzle-orm';
 import { mediaItem, series } from '#dialect/Schema';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
@@ -10,10 +11,12 @@ import {
 } from '@ValenceContracts/schemas/TitleEdit';
 import { columnOfField } from './columnOfField';
 import { subjectKeysOf } from './subjectKeysOf';
+import { valuesOfCandidate } from './valuesOfCandidate';
 import { z } from 'zod';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
-import type { SeriesShape } from '@ValenceServer/library/MetadataProvider';
+import type { CatalogueDescription, SeriesShape } from '@ValenceServer/library/MetadataProvider';
 import type {
+  MatchPreview,
   TitleEditRequest,
   TitleField,
   TitleFieldState,
@@ -27,13 +30,19 @@ import type { EditableColumns, EditScope } from './EditableColumns';
 
 type TitleScope = 'title' | 'season' | 'episode';
 
-type Refusal = 'missing' | 'notThisKind' | 'invalid' | 'changedSince';
+type Refusal = 'missing' | 'notThisKind' | 'invalid' | 'changedSince' | 'notInCatalogue';
+
+type MatchCandidate = { externalId: string; kind: 'tv' | 'movie' };
 
 type MetadataServiceOptions = {
   db: AnyValenceDatabase;
   edits: TitleEditStore;
   certificationRegion: () => Promise<string>;
   seriesShape: (externalId: string) => Promise<SeriesShape | null>;
+  describeCandidate?: (
+    externalId: string,
+    kind: 'tv' | 'movie',
+  ) => Promise<CatalogueDescription | null>;
   onChanged?: (mediaIds: string[]) => void;
 };
 
@@ -75,23 +84,14 @@ const ROW = {
 };
 
 /**
- * Says whether two values are the same, whatever order a map's keys came in.
- *
- * @param one - A value.
- * @param other - Another.
- * @returns Whether they say the same.
- */
-const isSame = (one: TitleValue, other: TitleValue): boolean =>
-  JSON.stringify(one) === JSON.stringify(other);
-
-/**
  * Edits the metadata of a film, a programme, a season or an episode on an administrator's word:
  * reads each field with where its value came from, keeps an edit for each change, and writes the
  * result straight onto every file of the title, so every list, search and app sees it at once
  * without waiting for a scan.
  *
  * @param options - The database, the kept edits, whose age certificates to read, how to read a
- *   programme's shape from the catalogue, and who to tell when files change.
+ *   programme's shape and another entry's description from the catalogue, and who to tell when
+ *   files change.
  * @returns The service.
  */
 const createTitleMetadataService = ({
@@ -99,6 +99,7 @@ const createTitleMetadataService = ({
   edits,
   certificationRegion,
   seriesShape,
+  describeCandidate,
   onChanged,
 }: MetadataServiceOptions) => {
   /**
@@ -312,7 +313,7 @@ const createTitleMetadataService = ({
             ? isMatched
               ? 'catalogue'
               : 'file'
-            : isSame(edit.value, edit.catalogue)
+            : isSameTitleValue(edit.value, edit.catalogue)
               ? 'locked'
               : 'edited',
         catalogue,
@@ -586,11 +587,131 @@ const createTitleMetadataService = ({
     return { changeSetId: made, metadata: await describe(fresh ?? file, subject) };
   };
 
-  return { read, edit, history, undo };
+  /**
+   * Reads a title as it stands beside what the catalogue entry it is about to be matched to says.
+   *
+   * @param mediaId - A file of the title.
+   * @param candidate - The entry it would be matched to.
+   * @returns The title's present metadata and the entry's, or why it cannot be compared.
+   */
+  const lookAhead = async (mediaId: string, candidate: MatchCandidate) => {
+    const file = await fileOf(mediaId);
+    const subject = file === null ? null : subjectOf(file, 'title');
+
+    if (file === null) {
+      return 'missing';
+    }
+
+    if (subject === null) {
+      return 'notThisKind';
+    }
+
+    const described = await (
+      describeCandidate?.(candidate.externalId, candidate.kind) ?? Promise.resolve(null)
+    ).catch(() => null);
+
+    if (described === null) {
+      return 'notInCatalogue';
+    }
+
+    const kind: TitleSubjectKind = candidate.kind === 'tv' ? 'show' : 'film';
+
+    return {
+      file,
+      subject,
+      kind,
+      described,
+      current: await describe(file, subject),
+      next: valuesOfCandidate(described),
+    };
+  };
+
+  /**
+   * Compares a title, field by field, with the catalogue entry it is about to be matched to.
+   *
+   * @param mediaId - A file of the title.
+   * @param candidate - The entry it would be matched to.
+   * @returns Each field the entry fills, as it stands and as it would be, or why there is nothing.
+   */
+  const preview = async (
+    mediaId: string,
+    candidate: MatchCandidate,
+  ): Promise<MatchPreview | Refusal> => {
+    const ahead = await lookAhead(mediaId, candidate);
+
+    if (typeof ahead === 'string') {
+      return ahead;
+    }
+
+    return {
+      kind: ahead.kind,
+      rows: FIELDS_OF_KIND[ahead.kind].flatMap((field) => {
+        const next = ahead.next[field];
+        const current = ahead.current.fields[field];
+
+        return next === undefined || current === undefined ? [] : [{ field, current, next }];
+      }),
+      posterUrl: ahead.described.posterUrl,
+      backdropUrl: ahead.described.backdropUrl,
+    };
+  };
+
+  /**
+   * Carries what a title is to keep over to the catalogue entry it is being matched to, before the
+   * match is made: the fields chosen to keep as they stand, and every edit to a field the catalogue
+   * does not fill, such as a note.
+   *
+   * @param mediaId - A file of the title.
+   * @param candidate - The entry it is being matched to.
+   * @param keep - The fields to keep as they stand rather than take from the entry.
+   * @param actor - Who is matching it.
+   * @returns The change carried over, which is nothing where there was nothing to carry, or why
+   *   it could not be.
+   */
+  const carry = async (
+    mediaId: string,
+    candidate: MatchCandidate,
+    keep: readonly TitleField[],
+    actor: Actor,
+  ): Promise<{ changeSetId: string | null } | Refusal> => {
+    const ahead = await lookAhead(mediaId, candidate);
+
+    if (typeof ahead === 'string') {
+      return ahead;
+    }
+
+    const changes = FIELDS_OF_KIND[ahead.kind].flatMap((field): FieldChange[] => {
+      const state = ahead.current.fields[field];
+      const next = ahead.next[field];
+      const isEdited = state?.source === 'edited' || state?.source === 'locked';
+
+      return state === undefined || !(next === undefined ? isEdited : keep.includes(field))
+        ? []
+        : [{ field, edit: { value: state.value, catalogue: next ?? state.catalogue ?? null } }];
+    });
+
+    return {
+      changeSetId:
+        changes.length === 0
+          ? null
+          : await edits.change(
+              {
+                libraryId: ahead.subject.libraryId,
+                kind: ahead.kind,
+                key: `${candidate.kind}:${candidate.externalId}`,
+              },
+              changes,
+              actor,
+              'rematch',
+            ),
+    };
+  };
+
+  return { read, edit, history, undo, preview, carry };
 };
 
 type TitleMetadataService = ReturnType<typeof createTitleMetadataService>;
 
-export type { TitleScope, TitleMetadataService };
+export type { TitleScope, MatchCandidate, TitleMetadataService };
 
 export { createTitleMetadataService };

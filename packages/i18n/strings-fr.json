@@ -18536,6 +18536,46 @@
     "context": "The label of a button in the files panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.fixMatchDialog.apply",
+    "text": "Apply",
+    "context": "The button that matches a title to the chosen catalogue entry, taking the ticked fields from it."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.current",
+    "text": "Current",
+    "context": "The heading of the column holding each field's value as it is now, in the table comparing a title with a new catalogue entry."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.field",
+    "text": "Field",
+    "context": "The heading of the column naming each field, in the table comparing a title with the catalogue entry it is about to be matched to."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.nothingWouldChange",
+    "text": "Nothing would change but the match.",
+    "context": "Said in the admin's Fix match dialog when the chosen catalogue entry gives every field the value it already has."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.showUnchanged",
+    "text": "Show unchanged",
+    "context": "A switch showing the fields that would stay the same, in the table comparing a title with a new catalogue entry."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.stepCompare",
+    "text": "Step 2 of 2: Compare",
+    "context": "The step the admin's Fix match dialog is on, while comparing a title's fields with the catalogue entry chosen for it."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.stepFind",
+    "text": "Step 1 of 2: Find",
+    "context": "The step the admin's Fix match dialog is on, while searching the catalogue for what a title really is."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.takeTheNewField",
+    "text": "Take the new {field}",
+    "context": "The hidden label of the tick box choosing whether a field takes the new catalogue entry's value. {field} is the field's name, such as Title."
+  },
+  {
     "handler": "screens.adminArea.folderBrowser.anime",
     "text": "anime",
     "context": "Shown in an empty text field until something is typed in the folder browser in the admin area."
@@ -20549,16 +20589,6 @@
     "handler": "screens.adminArea.liveTvPanel.whatToAdd",
     "text": "What to add",
     "context": "Label of the choice between kinds of live TV source in the add dialog."
-  },
-  {
-    "handler": "screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf",
-    "text": "Your choice applies to every episode of this series and to future scans.",
-    "context": "Shown in the match picker in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd",
-    "text": "Your choice applies to this film and to future scans.",
-    "context": "Shown in the match picker in the admin area."
   },
   {
     "handler": "screens.adminArea.matchPicker.forgetTheCorrection",

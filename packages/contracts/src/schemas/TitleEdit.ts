@@ -173,6 +173,19 @@ const TitleEditOutcomeSchema = z.object({
   metadata: TitleMetadataSchema,
 });
 
+const MatchPreviewSchema = z.object({
+  kind: TitleSubjectKindSchema,
+  rows: z.array(
+    z.object({
+      field: TitleFieldSchema,
+      current: TitleFieldStateSchema,
+      next: TitleValueSchema,
+    }),
+  ),
+  posterUrl: z.string().nullable(),
+  backdropUrl: z.string().nullable(),
+});
+
 type TitleSubjectKind = z.infer<typeof TitleSubjectKindSchema>;
 type TitleField = z.infer<typeof TitleFieldSchema>;
 type TitleValue = z.infer<typeof TitleValueSchema>;
@@ -184,6 +197,7 @@ type TitleEditRequest = z.infer<typeof TitleEditRequestSchema>;
 type TitleChange = z.infer<typeof TitleChangeSchema>;
 type TitleHistory = z.infer<typeof TitleHistorySchema>;
 type TitleEditOutcome = z.infer<typeof TitleEditOutcomeSchema>;
+type MatchPreview = z.infer<typeof MatchPreviewSchema>;
 
 export type {
   TitleSubjectKind,
@@ -197,6 +211,7 @@ export type {
   TitleChange,
   TitleHistory,
   TitleEditOutcome,
+  MatchPreview,
 };
 
 export {
@@ -215,4 +230,5 @@ export {
   TitleChangeSchema,
   TitleHistorySchema,
   TitleEditOutcomeSchema,
+  MatchPreviewSchema,
 };

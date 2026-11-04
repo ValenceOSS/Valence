@@ -1,4 +1,5 @@
 import {
+  previewMatchRoute,
   editTitleMetadataRoute,
   readTitleHistoryRoute,
   readTitleMetadataRoute,
@@ -83,6 +84,28 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(edited, 200);
+  });
+
+  app.openapi(previewMatchRoute, async (context) => {
+    if (
+      titleMetadata === undefined ||
+      !(await requires(context.req.raw.headers, 'media.override'))
+    ) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const previewed = await titleMetadata.preview(
+      context.req.valid('param').id,
+      context.req.valid('query'),
+    );
+
+    if (previewed === 'notInCatalogue') {
+      return context.json(refuse('error.common.theCatalogueDoesNotKnowThat'), 404);
+    }
+
+    return typeof previewed === 'string'
+      ? context.json(NO_SUCH_ITEM, 404)
+      : context.json(previewed, 200);
   });
 
   app.openapi(readTitleHistoryRoute, async (context) => {

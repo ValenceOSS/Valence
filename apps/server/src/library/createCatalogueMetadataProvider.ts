@@ -1467,7 +1467,7 @@ const createCatalogueMetadataProvider = ({
 
       const wantsTrailers = await readWantsTrailers();
       const answer = await request(`/${kind}/${externalId}`, key, {
-        append_to_response: `credits,${kind === 'movie' ? 'release_dates' : 'content_ratings'}${
+        append_to_response: `credits,external_ids,${kind === 'movie' ? 'release_dates' : 'content_ratings'}${
           wantsTrailers ? ',videos' : ''
         }`,
       });
@@ -1480,6 +1480,7 @@ const createCatalogueMetadataProvider = ({
       const filmed = DetailResponseSchema.pick({ videos: true }).safeParse(answer);
       const found = detail.data;
       const runtime = found.runtime ?? found.episode_run_time[0] ?? 0;
+      const released = releaseFactsOf(found, null);
 
       return {
         title: found.title ?? found.name ?? '',
@@ -1500,6 +1501,14 @@ const createCatalogueMetadataProvider = ({
         rating:
           found.vote_average === undefined || found.vote_average <= 0 ? null : found.vote_average,
         certifications: readCertifications(found),
+        originalTitle: found.original_title ?? found.original_name ?? null,
+        tagline: found.tagline === undefined || found.tagline === '' ? null : found.tagline,
+        releaseDate: released.releaseDate ?? null,
+        status: released.status ?? null,
+        studios: found.production_companies.map((company) => company.name),
+        networks: found.networks.map((network) => network.name),
+        imdbId: released.imdbId ?? null,
+        tvdbId: found.external_ids?.tvdb_id?.toString() ?? null,
       };
     },
 

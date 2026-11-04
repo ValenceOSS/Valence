@@ -111,6 +111,14 @@ type CatalogueDescription = {
   trailerKey: string | null;
   rating?: number | null;
   certifications?: Record<string, string>;
+  originalTitle?: string | null;
+  tagline?: string | null;
+  releaseDate?: string | null;
+  status?: string | null;
+  studios?: string[];
+  networks?: string[];
+  imdbId?: string | null;
+  tvdbId?: string | null;
 };
 
 type SeriesShape = {

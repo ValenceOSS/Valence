@@ -1,3 +1,4 @@
+import { fetchMatchPreview } from '@ValenceClient/admin/fetchMatchPreview';
 import { fetchTitleHistory, fetchTitleMetadata } from '@ValenceClient/admin/fetchTitleMetadata';
 import type { TitleScope } from '@ValenceClient/admin/fetchTitleMetadata';
 import { fetchRecentViewings } from '@ValenceClient/admin/fetchRecentViewings';
@@ -664,6 +665,20 @@ const titleHistory = (mediaId: string, scope: TitleScope) =>
   });
 
 /**
+ * A title compared, field by field, with the catalogue entry it is about to be matched to.
+ *
+ * @param mediaId - A file of the title.
+ * @param externalId - The entry's catalogue number.
+ * @param kind - Whether the entry is a film or a programme.
+ * @returns The query options.
+ */
+const matchPreview = (mediaId: string, externalId: string, kind: 'tv' | 'movie') =>
+  queryOptions({
+    queryKey: [...ADMIN, 'match-preview', mediaId, kind, externalId],
+    queryFn: () => fetchMatchPreview(mediaId, externalId, kind),
+  });
+
+/**
  * Every re-encode, including the ones waiting for somebody to judge them.
  *
  * Asked for again while anything is still being written, because an encode reports its progress by
@@ -826,6 +841,7 @@ const backups = () =>
 const adminQueries = {
   titleMetadata,
   titleHistory,
+  matchPreview,
   statistics,
   libraryHealth,
   updateCheck,

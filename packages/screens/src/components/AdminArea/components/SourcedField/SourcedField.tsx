@@ -1,3 +1,4 @@
+import { isSameTitleValue } from '@ValenceCore/functions/isSameTitleValue';
 import { History, Lock, RotateCcw } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -6,18 +7,7 @@ import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
 import { describeTitleValue } from './describeTitleValue';
 import type { SourcedFieldProps } from './SourcedField.types';
-import type { TitleValue } from '@ValenceContracts/schemas/TitleEdit';
 import { say } from '@ValenceI18n/say';
-
-/**
- * Says whether two values are the same, whatever order a map's keys came in.
- *
- * @param one - A value.
- * @param other - Another.
- * @returns Whether they say the same.
- */
-const isSame = (one: TitleValue, other: TitleValue): boolean =>
-  JSON.stringify(one) === JSON.stringify(other);
 
 /**
  * One field of a title's metadata, with where its value came from: a badge beside the label says
@@ -51,7 +41,7 @@ const SourcedField = ({
   const hasCatalogueMoved =
     isEdited &&
     (state?.catalogueChangedAt ?? null) !== null &&
-    !isSame(state?.catalogue ?? null, state?.value ?? null);
+    !isSameTitleValue(state?.catalogue ?? null, state?.value ?? null);
 
   return (
     <FormField

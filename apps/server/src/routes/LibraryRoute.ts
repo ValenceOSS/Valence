@@ -1,3 +1,4 @@
+import { TitleFieldSchema } from '@ValenceContracts/schemas/TitleEdit';
 import {
   ArtworkChoicesSchema,
   ArtworkKindSchema,
@@ -250,6 +251,7 @@ const CorrectionRequest = z
   .object({
     reference: z.string().min(1),
     kind: z.enum(['tv', 'movie']).optional(),
+    keep: z.array(TitleFieldSchema).optional(),
   })
   .openapi('CorrectionRequest');
 

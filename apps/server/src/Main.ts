@@ -5279,6 +5279,8 @@ const app = createApp({
     certificationRegion: async () => (await settings.read()).certificationRegion,
     seriesShape: (externalId) =>
       catalogueProvider.describeSeries?.(externalId) ?? Promise.resolve(null),
+    describeCandidate: (externalId, kind) =>
+      catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
     onChanged: (mediaIds) => {
       realtime.publish('media', { event: 'metadata', mediaIds }, { kind: 'everyone' });
     },
