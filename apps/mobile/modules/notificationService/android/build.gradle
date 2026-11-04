@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'app.valence'
+version = '1.0.0'
+
+android {
+  namespace "app.valence.modules.notificationservice"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  compileOnly 'host.exp.exponent:expo.modules.notifications:+'
+  compileOnly 'com.google.firebase:firebase-messaging:25.0.1'
+  compileOnly 'androidx.core:core:1.16.0'
+}

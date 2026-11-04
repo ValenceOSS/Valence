@@ -11151,6 +11151,11 @@
     "context": "The up button down the side of the phone's live TV player, which moves to the channel before in the list."
   },
   {
+    "handler": "phone.makeTheNotificationChannel.fromYourServer",
+    "text": "From your server",
+    "context": "The name Android shows, in its settings for the phone app's notifications, for the kind of notification Valence sends: a request being ready, something new arriving or an invitation to watch, each sent by the server the phone is signed in to."
+  },
+  {
     "handler": "phone.platform.describeThisPhone.anEmulator",
     "text": "Emulator",
     "context": "The name an Android emulator is given in the sessions list on the admin page, in place of the build code it reports for a model."

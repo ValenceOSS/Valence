@@ -5,6 +5,7 @@ import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { registerThisPhone } from '@ValenceClient/notifications/registerThisPhone';
 import { askToNotifyThisPhone } from './askToNotifyThisPhone';
+import { makeTheNotificationChannel } from './makeTheNotificationChannel';
 import { shareTheSignIn } from './shareTheSignIn';
 import { stopWakingThisPhone } from './stopWakingThisPhone';
 import { thisPhonesPushAddress } from './thisPhonesPushAddress';
@@ -12,13 +13,15 @@ import { WAKES_THIS_PHONE } from './WAKES_THIS_PHONE';
 
 /**
  * Registers this phone to be woken for notifications, where the server offers it and notifications
- * are allowed and not turned off here. Registering takes the push token, which Apple can change, so
- * it is done every time the app starts; the sign-in the notification service extension reads with is
- * handed over again whenever the app comes back.
+ * are allowed and not turned off here. Registering takes the push token, which Apple and Google can
+ * change, so it is done every time the app starts, with Android's channel made or named again first;
+ * the sign-in the notification service reads with is handed over again whenever the app comes back.
  *
  * @returns Whether it is registered.
  */
 const wakeThisPhone = async (): Promise<boolean> => {
+  await makeTheNotificationChannel();
+
   const address = await thisPhonesPushAddress();
 
   if (address === null || !(await registerThisPhone(address))) {
