@@ -900,8 +900,23 @@ const createDatabaseLibraryService = ({
 
   const artworkChoices = createArtworkChoices({
     db,
-    readOptions: (providers ?? []).find((provider) => provider.readArtworkOptions !== undefined)
-      ?.readArtworkOptions,
+    readOptions: async (asked) => {
+      const answers = await Promise.all(
+        (providers ?? []).map(
+          async (provider) =>
+            (await provider.readArtworkOptions?.(asked).catch(() => null)) ?? null,
+        ),
+      );
+      const [first, ...rest] = answers.filter((answer) => answer !== null);
+
+      return first === undefined
+        ? null
+        : {
+            poster: [...first.poster, ...rest.flatMap((one) => one.poster)],
+            backdrop: [...first.backdrop, ...rest.flatMap((one) => one.backdrop)],
+            logo: [...first.logo, ...rest.flatMap((one) => one.logo)],
+          };
+    },
     readOwn: (providers ?? []).find((provider) => provider.readOwnArtwork !== undefined)
       ?.readOwnArtwork,
     readPartOptions: (providers ?? []).find((provider) => provider.readPartArtwork !== undefined)

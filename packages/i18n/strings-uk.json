@@ -21906,6 +21906,21 @@
     "context": "At the top of the online services card."
   },
   {
+    "handler": "screens.adminArea.onlineServicesCard.fanartTv",
+    "text": "fanart.tv",
+    "context": "Name of the fanart.tv service in the admin's online services card, and of its key in the audit log."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.fanartTvAbout",
+    "text": "More posters, backgrounds and logos to choose from",
+    "context": "What the fanart.tv key adds, in the online services card."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.fanartTvDetail",
+    "text": "With a personal key from fanart.tv, a title's Artwork tab also offers fanart.tv's posters, backgrounds and logos beside TMDB's. Without one, it offers TMDB's alone.",
+    "context": "Description of the fanart.tv key in the online services card."
+  },
+  {
     "handler": "screens.adminArea.onlineServicesCard.musicDetails",
     "text": "Music details",
     "context": "An online feature: filling in album covers, artist photos and lyrics."
@@ -24446,6 +24461,11 @@
     "context": "The description of a setting row in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.fanartTvKeySaved",
+    "text": "fanart.tv key saved",
+    "context": "Notice after the fanart.tv key was saved."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb",
     "text": "Download music metadata from the web",
     "context": "The label of a switch in the settings panel in the admin area."
@@ -24724,6 +24744,11 @@
     "handler": "screens.adminArea.settingsPanel.theDesktopApp",
     "text": "Desktop app",
     "context": "An admin setting's title: whether the Valence desktop app may connect to this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.theFanartTvKeyCouldNotBe",
+    "text": "The fanart.tv key couldn’t be saved.",
+    "context": "Notice when the fanart.tv key couldn't be saved."
   },
   {
     "handler": "screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot",

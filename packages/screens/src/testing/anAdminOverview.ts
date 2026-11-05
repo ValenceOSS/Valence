@@ -13,6 +13,7 @@ const anAdminOverview = (overrides: Partial<AdminOverview['settings']> = {}): Ad
     hasCatalogueKey: false,
     hasAudioDbKey: false,
     hasOmdbKey: false,
+    hasFanartKey: false,
     cookieSecure: false,
     trustedOrigins: ['http://localhost:8420'],
     hardwareAccel: '',

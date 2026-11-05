@@ -179,6 +179,7 @@ type MetadataProvider = {
   readArtworkOptions?: (options: {
     externalId: string;
     isSeries: boolean;
+    tvdbId?: string | null;
   }) => Promise<ArtworkChoices['options'] | null>;
   readPartArtwork?: (options: {
     externalId: string;

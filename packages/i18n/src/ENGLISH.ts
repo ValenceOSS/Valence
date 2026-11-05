@@ -5525,6 +5525,11 @@ const ENGLISH = {
   'screens.adminArea.ofTotalValenceUses': 'of {total} · Valence {used}',
   'screens.adminArea.onlineServicesCard.everythingValenceConnectsTo':
     'Everything Valence connects to outside this server. Nothing else leaves it.',
+  'screens.adminArea.onlineServicesCard.fanartTv': 'fanart.tv',
+  'screens.adminArea.onlineServicesCard.fanartTvAbout':
+    'More posters, backgrounds and logos to choose from',
+  'screens.adminArea.onlineServicesCard.fanartTvDetail':
+    "With a personal key from fanart.tv, a title's Artwork tab also offers fanart.tv's posters, backgrounds and logos beside TMDB's. Without one, it offers TMDB's alone.",
   'screens.adminArea.onlineServicesCard.musicDetails': 'Music details',
   'screens.adminArea.onlineServicesCard.musicDetailsAbout':
     'Album covers come from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced.',
@@ -6199,6 +6204,7 @@ const ENGLISH = {
     'Shown behind the profiles on the sign-in screen, tinted with the colour of the selected profile. It’s only visible while Show profiles on sign-in is on. JPEG, PNG, WebP, AVIF or GIF, up to 16 MB.',
   'screens.adminArea.settingsPanel.drawsTheHouseholdsFacesOnThe':
     'Shows every profile on the sign-in screen, so people sign in by choosing theirs. When off, the sign-in screen asks for a username or email and a password, and no one who isn’t signed in can see the names, pictures or IDs of people on this server.',
+  'screens.adminArea.settingsPanel.fanartTvKeySaved': 'fanart.tv key saved',
   'screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb':
     'Download music metadata from the web',
   'screens.adminArea.settingsPanel.fetchTrailersFromTheCatalogue':
@@ -6273,6 +6279,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theCertificationRegionCouldNotBe':
     'Couldn’t save the certification region.',
   'screens.adminArea.settingsPanel.theDesktopApp': 'Desktop app',
+  'screens.adminArea.settingsPanel.theFanartTvKeyCouldNotBe':
+    'The fanart.tv key couldn’t be saved.',
   'screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot':
     'Couldn’t save the music metadata setting.',
   'screens.adminArea.settingsPanel.theNextEpisodeIsMadeReady':

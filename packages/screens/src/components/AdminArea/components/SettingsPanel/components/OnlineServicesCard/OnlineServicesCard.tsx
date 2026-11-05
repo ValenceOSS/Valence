@@ -1,3 +1,4 @@
+import { saveFanartKey } from '@ValenceClient/admin/saveFanartKey';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
@@ -24,6 +25,8 @@ import type { ReactNode } from 'react';
 import type { OnlineServicesCardProps } from './OnlineServicesCard.types';
 
 const OMDB_FREE_KEY = 'https://www.omdbapi.com/apikey.aspx';
+
+const FANART_FREE_KEY = 'https://fanart.tv/get-an-api-key/';
 
 /**
  * Everything Valence reaches outside this server, in two groups: the services that need a key, each
@@ -134,6 +137,18 @@ const OnlineServicesCard = ({ overview }: OnlineServicesCardProps) => {
           save={saveOmdbKey}
           done={say('screens.adminArea.settingsPanel.oMDbKeySaved')}
           failed={say('screens.adminArea.settingsPanel.theOMDbKeyCouldNotBe')}
+          onSaved={reread}
+        />
+
+        <ServiceKeyRow
+          title={say('screens.adminArea.onlineServicesCard.fanartTv')}
+          about={say('screens.adminArea.onlineServicesCard.fanartTvAbout')}
+          description={say('screens.adminArea.onlineServicesCard.fanartTvDetail')}
+          isSet={settings?.hasFanartKey ?? false}
+          freeKeyAt={FANART_FREE_KEY}
+          save={saveFanartKey}
+          done={say('screens.adminArea.settingsPanel.fanartTvKeySaved')}
+          failed={say('screens.adminArea.settingsPanel.theFanartTvKeyCouldNotBe')}
           onSaved={reread}
         />
 

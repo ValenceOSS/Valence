@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { createFanartProvider } from '@ValenceServer/fanart/createFanartProvider';
 import { createNfoWriter } from '@ValenceServer/nfo/createNfoWriter';
 import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
@@ -643,6 +644,7 @@ const settings = createDatabaseSettingsStore({
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',
+    fanartKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
     libraryLocks: {},
@@ -3610,6 +3612,7 @@ const libraryService = createDatabaseLibraryService({
       },
     }),
     createFilenameMetadataProvider(),
+    createFanartProvider({ readApiKey: async () => (await settings.read()).fanartKey }),
   ],
   books: bookService,
   nameChapters: createChapterNamer(bookService, (series) =>

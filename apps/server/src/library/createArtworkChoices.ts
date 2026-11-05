@@ -42,6 +42,7 @@ type Title = {
   libraryId: string;
   externalId: string;
   externalKind: 'movie' | 'tv';
+  tvdbId: string | null;
 };
 
 /**
@@ -86,6 +87,7 @@ const createArtworkChoices = ({
         libraryId: mediaItem.libraryId,
         externalId: mediaItem.externalId,
         seriesTitle: mediaItem.seriesTitle,
+        tvdbId: mediaItem.tvdbId,
       })
       .from(mediaItem)
       .where(eq(mediaItem.id, mediaId))
@@ -103,6 +105,7 @@ const createArtworkChoices = ({
       libraryId: row.libraryId,
       externalId: row.externalId,
       externalKind: row.seriesTitle === null ? 'movie' : 'tv',
+      tvdbId: row.tvdbId,
     };
   };
 
@@ -193,7 +196,11 @@ const createArtworkChoices = ({
       return title;
     }
 
-    const asked = { externalId: title.externalId, isSeries: title.externalKind === 'tv' };
+    const asked = {
+      externalId: title.externalId,
+      isSeries: title.externalKind === 'tv',
+      tvdbId: title.tvdbId,
+    };
     const [options, own] = await Promise.all([
       readOptions?.(asked).catch(() => null),
       readOwn?.(asked).catch(() => null),
@@ -323,6 +330,7 @@ const createArtworkChoices = ({
       const options = await readOptions?.({
         externalId: title.externalId,
         isSeries: title.externalKind === 'tv',
+        tvdbId: title.tvdbId,
       }).catch(() => null);
 
       if (options === undefined || options === null) {
@@ -444,6 +452,7 @@ const createArtworkChoices = ({
     const options = await readOptions?.({
       externalId: title.externalId,
       isSeries: title.externalKind === 'tv',
+      tvdbId: title.tvdbId,
     }).catch(() => null);
 
     if (options === undefined || options === null) {

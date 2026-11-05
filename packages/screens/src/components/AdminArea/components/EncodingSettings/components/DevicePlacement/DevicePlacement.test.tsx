@@ -31,6 +31,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     hasCatalogueKey: false,
     hasAudioDbKey: false,
     hasOmdbKey: false,
+    hasFanartKey: false,
     cookieSecure: false,
     trustedOrigins: [],
     hardwareAccel: '',
