@@ -4691,6 +4691,8 @@ const ENGLISH = {
   'screens.adminArea.filesPanel.changed': 'Changed',
   'screens.adminArea.filesPanel.chooseEverythingHere': 'Choose everything here',
   'screens.adminArea.filesPanel.chooseName': 'Choose {name}',
+  'screens.adminArea.filesPanel.count.orphanedFiles.one': '{count} orphaned file',
+  'screens.adminArea.filesPanel.count.orphanedFiles.other': '{count} orphaned files',
   'screens.adminArea.filesPanel.delete': 'Delete…',
   'screens.adminArea.filesPanel.deleteThis': 'Delete this?',
   'screens.adminArea.filesPanel.filesFound': 'Files found',

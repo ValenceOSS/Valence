@@ -18661,6 +18661,16 @@
     "context": "The box beside a file or folder in the admin’s file manager. {name} is the file or folder."
   },
   {
+    "handler": "screens.adminArea.filesPanel.count.orphanedFiles.one",
+    "text": "{count} orphaned file",
+    "context": "Button in the media list's Folders view that shows only the subtitle, NFO and picture files whose video has gone. Pressed again it shows every file."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.count.orphanedFiles.other",
+    "text": "{count} orphaned files",
+    "context": "Button in the media list's Folders view that shows only the subtitle, NFO and picture files whose video has gone. Pressed again it shows every file."
+  },
+  {
     "handler": "screens.adminArea.filesPanel.delete",
     "text": "Delete…",
     "context": "The label in the files panel in the admin area."

@@ -119,6 +119,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.encodingPanel.deleteCountOriginals',
   'screens.adminArea.fileDetails.count.folders',
   'screens.adminArea.fileDetails.count.selected',
+  'screens.adminArea.filesPanel.count.orphanedFiles',
   'screens.adminArea.folderBrowser.showingTheFirstFolders',
   'screens.adminArea.mediaPanel.count.allTitles',
   'screens.adminArea.mediaPanel.count.changedTitles',

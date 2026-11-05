@@ -364,6 +364,26 @@ describe('FolderView', () => {
     expect(screen.getByText('Why it isn’t in the library')).toBeInTheDocument();
   });
 
+  it('shows only the files whose video has gone, when asked', async () => {
+    const user = userEvent.setup();
+
+    fetchLibraryFolderMock.mockImplementation(() =>
+      Promise.resolve({
+        ...FOLDERS['/media/films'],
+        entries: [
+          entry({ name: 'Kept.mkv', path: '/media/films/Kept.mkv', status: 'inLibrary' }),
+          entry({ name: 'Gone.en.srt', path: '/media/films/Gone.en.srt', status: 'orphaned' }),
+        ],
+      }),
+    );
+
+    draw(true, '/media/films');
+    await user.click(await screen.findByRole('button', { name: '1 orphaned file' }));
+
+    expect(screen.getByText('Gone.en.srt')).toBeInTheDocument();
+    expect(screen.queryByText('Kept.mkv')).not.toBeInTheDocument();
+  });
+
   it('stays within the folder it is rooted at, and takes its search from outside', async () => {
     render(
       <QueryClientProvider

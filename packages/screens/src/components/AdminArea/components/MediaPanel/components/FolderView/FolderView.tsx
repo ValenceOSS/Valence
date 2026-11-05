@@ -1,3 +1,4 @@
+import { SelectionBar } from '@ValenceUI/SelectionBar';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -103,6 +104,7 @@ const FolderView = ({
   const [isNamingFolder, setIsNamingFolder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [leaving, setLeaving] = useState<LeaveOutTarget | null>(null);
+  const [isOnlyOrphans, setIsOnlyOrphans] = useState(false);
   const cache = useQueryClient();
 
   const asked = useQuery(adminQueries.libraryFolder(at));
@@ -111,13 +113,15 @@ const FolderView = ({
   const folder = asked.data ?? null;
   const library = libraries.find((one) => one.id === folder?.libraryId) ?? null;
   const status = asked.error instanceof RequestFailed ? asked.error.status : null;
-  const rows = useMemo(
+  const listed = useMemo(
     () =>
       (isSearching ? (searched.data?.entries ?? []) : (folder?.entries ?? [])).filter(
         (entry) => keeps === undefined || keeps(entry),
       ),
     [isSearching, searched.data, folder, keeps],
   );
+  const orphanCount = listed.filter((entry) => entry.status === 'orphaned').length;
+  const rows = isOnlyOrphans ? listed.filter((entry) => entry.status === 'orphaned') : listed;
   const isAtRoot = at === null || (root !== null && at === root);
   const isInLibrary =
     at !== null && folder?.libraryPath !== null && folder?.libraryPath !== undefined;
@@ -513,8 +517,27 @@ const FolderView = ({
           className="flex-1"
         />
 
+        {orphanCount > 0 || isOnlyOrphans ? (
+          <Button
+            variant="secondary"
+            size="xs"
+            isActive={isOnlyOrphans}
+            onClick={() => {
+              setIsOnlyOrphans(!isOnlyOrphans);
+            }}
+          >
+            {sayCount('screens.adminArea.filesPanel.count.orphanedFiles', orphanCount)}
+          </Button>
+        ) : null}
+
         {chosen.length > 1 && (at !== null || isSearching) ? (
-          <span className="flex shrink-0 gap-2">
+          <SelectionBar
+            count={chosen.length}
+            onClear={() => {
+              setChosenPaths(new Set());
+            }}
+            className="shrink-0"
+          >
             <Button
               variant="secondary"
               size="xs"
@@ -538,7 +561,7 @@ const FolderView = ({
                 {say('screens.adminArea.filesPanel.delete')}
               </Button>
             ) : null}
-          </span>
+          </SelectionBar>
         ) : null}
 
         {isInLibrary ? (

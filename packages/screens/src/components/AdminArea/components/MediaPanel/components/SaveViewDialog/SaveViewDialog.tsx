@@ -40,11 +40,6 @@ const SaveViewDialog = ({ isOpen, onClose, onSave }: SaveViewDialogProps) => {
           label={say('screens.adminArea.savedViews.viewName')}
           value={name}
           onValueChange={setName}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              save();
-            }
-          }}
         />
       </DialogContent>
       <DialogFooter
