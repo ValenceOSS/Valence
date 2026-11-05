@@ -524,13 +524,14 @@ const createTitleMetadataService = ({
         changes.push({
           field,
           edit: isBackToCatalogue ? null : { value: checked.data, catalogue: under },
+          catalogue: under,
         });
         values[field] = checked.data;
       } else if (request.lock?.includes(field) === true) {
         changes.push({ field, edit: { value: state?.value ?? null, catalogue: under } });
         values[field] = state?.value ?? null;
       } else if (request.reset?.includes(field) === true) {
-        changes.push({ field, edit: null });
+        changes.push({ field, edit: null, catalogue: under });
         values[field] = under;
       }
     }

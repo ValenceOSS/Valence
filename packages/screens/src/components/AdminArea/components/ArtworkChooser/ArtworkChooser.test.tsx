@@ -155,6 +155,16 @@ describe('ArtworkChooser', () => {
     });
   });
 
+  it('shows the picture in use beside the catalogue’s pick', async () => {
+    inAQueryClient(<ArtworkChooser subject={SUBJECT} onChanged={vi.fn()} />);
+
+    const inUse = await screen.findByRole('button', {
+      name: 'In use: one chosen from the catalogue',
+    });
+
+    expect(inUse.querySelector('img')).toHaveAttribute('src', `${BASE}/w342/ja.jpg`);
+  });
+
   it('offers the pictures beside the title’s files, drawn through the server', async () => {
     inAQueryClient(<ArtworkChooser subject={SUBJECT} onChanged={vi.fn()} />);
 

@@ -15801,11 +15801,6 @@
     "context": "What pressing a picture found beside the title's files does, for a screen reader. {name} is its file name."
   },
   {
-    "handler": "screens.adminArea.artworkChooser.useTheUploadedPicture",
-    "text": "Use the uploaded picture",
-    "context": "What pressing the uploaded picture's tile does, for a screen reader."
-  },
-  {
     "handler": "screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas",
     "text": "Loading artwork",
     "context": "The label of a spinner in the artwork picker in the admin area."
@@ -24754,6 +24749,11 @@
     "handler": "screens.adminArea.sourcedField.tmdbSays",
     "text": "TMDB: {value}",
     "context": "Beneath an edited field, what TMDB says instead. {value} is TMDB’s value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.unlockTheField",
+    "text": "Unlock the field",
+    "context": "Item in a locked metadata field's menu that lets it follow TMDB again."
   },
   {
     "handler": "screens.adminArea.sourcedField.useThis",

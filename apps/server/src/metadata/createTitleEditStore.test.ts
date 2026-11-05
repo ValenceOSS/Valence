@@ -50,7 +50,7 @@ describe('createTitleEditStore', () => {
           action: 'set',
           fields: [
             { field: 'tags', before: null, after: ['Kept'] },
-            { field: 'title', before: null, after: 'My title' },
+            { field: 'title', before: 'A film', after: 'My title' },
           ],
         },
       ]);
@@ -109,7 +109,7 @@ describe('createTitleEditStore', () => {
       await expect(store.planUndo(first ?? '')).resolves.toEqual({
         kind: 'undoable',
         subject: FILM,
-        restore: [{ field: 'title', isEdited: false, value: null }],
+        restore: [{ field: 'title', isEdited: false, value: 'A film' }],
       });
 
       await store.change(

@@ -69,7 +69,10 @@ const SourcedField = ({
                   ? [
                       {
                         id: 'reset',
-                        label: say('screens.jobRunner.describeJobGroup.reset'),
+                        label:
+                          source === 'locked'
+                            ? say('screens.adminArea.sourcedField.unlockTheField')
+                            : say('screens.jobRunner.describeJobGroup.reset'),
                         icon: <Icon of={RotateCcw} size={15} />,
                         isDisabled: isBusy,
                         onChoose: onReset,

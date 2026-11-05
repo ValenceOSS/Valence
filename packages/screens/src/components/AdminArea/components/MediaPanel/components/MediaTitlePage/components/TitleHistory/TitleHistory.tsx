@@ -63,13 +63,13 @@ const TitleHistory = ({ mediaId, scope, kind }: TitleHistoryProps) => {
     {
       id: 'who',
       header: say('screens.webhookFields.webhookPanes.who'),
-      meta: { shrinks: true },
+      meta: { shrinks: true, hidesOnPhones: true },
       cell: ({ row }) => <span className="whitespace-nowrap">{row.original.by ?? '—'}</span>,
     },
     {
       id: 'change',
       header: say('common.change'),
-      meta: { shrinks: true },
+      meta: { shrinks: true, hidesOnPhones: true },
       cell: ({ row }) => nameOfAction(row.original.action),
     },
     {

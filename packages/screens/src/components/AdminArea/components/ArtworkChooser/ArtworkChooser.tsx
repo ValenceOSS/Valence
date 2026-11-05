@@ -161,6 +161,7 @@ const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
   const chosen = readOk?.chosen[kind] ?? null;
   const byDefault = readOk?.defaults[kind] ?? null;
   const chosenOnDisk = onDisk.find((one) => one.url === chosen);
+  const chosenOption = offered.find(({ option }) => option.url === chosen);
   const inUse =
     chosen === null
       ? say('screens.adminArea.artworkChooser.inUseTheCataloguesPick')
@@ -252,19 +253,27 @@ const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
                 }}
               />
             </li>
-            {chosen !== null && UPLOADED.test(chosen) ? (
+            {chosen === null ? null : (
               <li>
                 <ArtworkTile
                   kind={kind}
-                  label={say('screens.adminArea.artworkChooser.useTheUploadedPicture')}
-                  previewUrl={ownArtworkUrl(mediaId, chosen)}
-                  note={say('screens.adminArea.artworkChooser.uploaded')}
+                  label={inUse}
+                  previewUrl={
+                    chosenOption === undefined
+                      ? ownArtworkUrl(mediaId, chosen)
+                      : chosenOption.option.previewUrl
+                  }
+                  note={
+                    UPLOADED.test(chosen)
+                      ? say('screens.adminArea.artworkChooser.uploaded')
+                      : (chosenOnDisk?.name ?? languageOf(chosenOption?.option.language ?? null))
+                  }
                   isChosen
                   isBusy={false}
                   onChoose={() => {}}
                 />
               </li>
-            ) : null}
+            )}
           </ul>
 
           {onDisk.length === 0 ? null : (

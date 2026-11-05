@@ -38,6 +38,7 @@ type StoredTitleEdit = {
 type FieldChange = {
   field: TitleField;
   edit: { value: TitleValue; catalogue: TitleValue } | null;
+  catalogue?: TitleValue;
 };
 
 type Actor = { id: string | null; name: string | null };
@@ -192,8 +193,9 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
     const at = now();
     const kept = changes.flatMap((one) => {
       const before = held.find((edit) => edit.field === one.field);
-      const beforeState = { isEdited: before !== undefined, value: before?.value ?? null };
-      const afterState = { isEdited: one.edit !== null, value: one.edit?.value ?? null };
+      const shown = one.edit?.catalogue ?? one.catalogue ?? null;
+      const beforeState = { isEdited: before !== undefined, value: before?.value ?? shown };
+      const afterState = { isEdited: one.edit !== null, value: one.edit?.value ?? shown };
 
       return beforeState.isEdited === afterState.isEdited &&
         isSameTitleValue(beforeState.value, afterState.value)
@@ -359,7 +361,7 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
 
       if (
         (standing !== undefined) !== after.isEdited ||
-        !isSameTitleValue(standing?.value ?? null, after.value)
+        (after.isEdited && !isSameTitleValue(standing?.value ?? null, after.value))
       ) {
         return { kind: 'changedSince' };
       }

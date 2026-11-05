@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import {
   ChevronLeft as ChevronLeftIcon,
   Star as StarIcon,
@@ -156,6 +157,7 @@ const MediaTitlePage = ({
   const moveTo = onTitlePlace ?? setLocalPlace;
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const cache = useQueryClient();
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
   const { change } = useTitleChange(title.lead.id, 'title');
   const tabs = TITLE_TABS.filter(
@@ -271,6 +273,9 @@ const MediaTitlePage = ({
     setIsRefreshing(true);
     void watchJob(title.libraryId, 'library.readAgain', jobId).finally(() => {
       setIsRefreshing(false);
+      artworkRevisions.bump([...leafIds]);
+      void cache.invalidateQueries({ queryKey: libraryQueries.key });
+      void cache.invalidateQueries({ queryKey: adminQueries.key });
     });
   };
 
@@ -344,7 +349,7 @@ const MediaTitlePage = ({
   const match = describeMatch(title);
   const range = describeRange(title.lead.videoRange);
   const totalBytes = leaves.reduce((sum, leaf) => sum + (leaf.lead.sizeBytes ?? 0), 0);
-  const filesWord = title.kind === 'series' ? say('common.episodes') : say('common.files');
+  const filesWord = say('common.files');
   const nameOfLeaf = (leaf: MediaTitle) =>
     leaf.kind === 'episode'
       ? `S${(leaf.lead.seasonNumber ?? 0).toString()} ${describeNumber(leaf.lead)} · ${leaf.name}`
