@@ -23156,6 +23156,21 @@
     "context": "Shown in the quality names in the admin area."
   },
   {
+    "handler": "screens.adminArea.quickMatch.acceptTheBestFitForTheRest",
+    "text": "Accept the best fit for the rest",
+    "context": "Matches this title and every title after it to the entry that fits it best."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.atOfCount",
+    "text": "{at} of {count}",
+    "context": "Which title is being reviewed, out of how many, while reviewing matches one by one."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.chooseWhatItIs",
+    "text": "Choose what it is from TMDB’s entries, best fit first, or skip it.",
+    "context": "Instruction while reviewing matches one by one."
+  },
+  {
     "handler": "screens.adminArea.quickMatch.count.matchTitles.one",
     "text": "Match {count} title",
     "context": "Title of the quick match dialog, and its start button. {count} is how many unmatched titles are chosen."
@@ -23199,6 +23214,16 @@
     "handler": "screens.adminArea.quickMatch.needsALook",
     "text": "Needs a look",
     "context": "Status of a title the quick match dialog left alone, because no entry clearly fitted it."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.reviewTheRestOneByOne",
+    "text": "Review the rest one by one",
+    "context": "Button once quick match is done: steps through the titles it left, one at a time."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.skipTheRest",
+    "text": "Skip the rest",
+    "context": "Ends the one-by-one review, leaving the titles not yet reviewed unmatched."
   },
   {
     "handler": "screens.adminArea.rankedChoices.moveIdDown",

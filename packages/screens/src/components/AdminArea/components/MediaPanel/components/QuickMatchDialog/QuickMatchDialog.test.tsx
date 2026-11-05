@@ -80,4 +80,37 @@ describe('QuickMatchDialog', () => {
 
     expect(onFixMatch).toHaveBeenCalledWith('b');
   });
+
+  it('steps through the titles it left, matching each to the entry chosen', async () => {
+    const onMatched = vi.fn();
+    const user = userEvent.setup();
+
+    correcting.mockClear();
+    render(
+      <QuickMatchDialog
+        titles={[
+          { mediaId: 'b', name: 'Twin', year: null, kind: 'movie' },
+          { mediaId: 'c', name: 'Twin', year: null, kind: 'movie' },
+        ]}
+        onClose={vi.fn()}
+        onFixMatch={vi.fn()}
+        onMatched={onMatched}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Match 2 titles' }));
+    await user.click(await screen.findByRole('button', { name: 'Review the rest one by one' }));
+
+    expect(await screen.findByText('1 of 2')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /Twin \(2005\)/u }));
+
+    expect(await screen.findByText('2 of 2')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Skip' }));
+
+    expect(await screen.findByText('Matched to Twin (2005)')).toBeInTheDocument();
+    expect(correcting.mock.calls).toEqual([['b', '3', 'movie']]);
+    expect(onMatched).toHaveBeenCalledTimes(1);
+  });
 });

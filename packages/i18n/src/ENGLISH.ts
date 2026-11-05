@@ -5872,6 +5872,10 @@ const ENGLISH = {
   'screens.adminArea.putTheOriginalBack': 'Restored the original.',
   'screens.adminArea.qualityNames.cam': 'Cam',
   'screens.adminArea.qualityNames.telesync': 'Telesync',
+  'screens.adminArea.quickMatch.acceptTheBestFitForTheRest': 'Accept the best fit for the rest',
+  'screens.adminArea.quickMatch.atOfCount': '{at} of {count}',
+  'screens.adminArea.quickMatch.chooseWhatItIs':
+    'Choose what it is from TMDB’s entries, best fit first, or skip it.',
   'screens.adminArea.quickMatch.count.matchTitles.one': 'Match {count} title',
   'screens.adminArea.quickMatch.count.matchTitles.other': 'Match {count} titles',
   'screens.adminArea.quickMatch.fixMatchFor': 'Fix match for {name}',
@@ -5882,6 +5886,8 @@ const ENGLISH = {
   'screens.adminArea.quickMatch.matchedCountOfTotal': 'Matched {matched} of {total}',
   'screens.adminArea.quickMatch.matchedToName': 'Matched to {name}',
   'screens.adminArea.quickMatch.needsALook': 'Needs a look',
+  'screens.adminArea.quickMatch.reviewTheRestOneByOne': 'Review the rest one by one',
+  'screens.adminArea.quickMatch.skipTheRest': 'Skip the rest',
   'screens.adminArea.rankedChoices.moveIdDown': 'Move {id} down',
   'screens.adminArea.rankedChoices.moveIdUp': 'Move {id} up',
   'screens.adminArea.readEveryFileOfEveryLibrary':

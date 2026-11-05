@@ -8,7 +8,8 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { bestMatchOf } from '@ValenceClient/admin/bestMatchOf';
 import { fetchTitleCandidates } from '@ValenceClient/admin/fetchTitleCandidates';
 import { correctMatch } from '@ValenceClient/library/fetchLibrary';
-import type { QuickMatchDialogProps } from './QuickMatchDialog.types';
+import { MatchReview } from './components/MatchReview/MatchReview';
+import type { QuickMatchDialogProps, QuickMatchTitle } from './QuickMatchDialog.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
@@ -27,9 +28,12 @@ type Outcome = { kind: 'looking' } | { kind: 'matched'; to: string } | { kind: '
 const QuickMatchDialog = ({ titles, onClose, onFixMatch, onMatched }: QuickMatchDialogProps) => {
   const [outcomes, setOutcomes] = useState<ReadonlyMap<string, Outcome>>(new Map());
   const [isRunning, setIsRunning] = useState(false);
+  const [reviewing, setReviewing] = useState<readonly QuickMatchTitle[] | null>(null);
+  const [hasReviewMatched, setHasReviewMatched] = useState(false);
   const list = titles ?? [];
   const isDone = !isRunning && outcomes.size === list.length && list.length > 0;
   const matched = [...outcomes.values()].filter((one) => one.kind === 'matched').length;
+  const left = list.filter((title) => outcomes.get(title.mediaId)?.kind === 'left');
 
   const run = async () => {
     setIsRunning(true);
@@ -74,7 +78,17 @@ const QuickMatchDialog = ({ titles, onClose, onFixMatch, onMatched }: QuickMatch
 
   const close = () => {
     setOutcomes(new Map());
+    setReviewing(null);
     onClose();
+  };
+
+  const endReview = () => {
+    setReviewing(null);
+
+    if (hasReviewMatched) {
+      setHasReviewMatched(false);
+      onMatched();
+    }
   };
 
   return (
@@ -82,56 +96,74 @@ const QuickMatchDialog = ({ titles, onClose, onFixMatch, onMatched }: QuickMatch
       label={sayCount('screens.adminArea.quickMatch.count.matchTitles', list.length)}
       isOpen={titles !== null}
       onClose={close}
-      holdsOutsideClicks={isRunning}
+      holdsOutsideClicks={isRunning || reviewing !== null}
+      {...(reviewing === null ? {} : { size: 'stage' as const })}
     >
       <DialogTitle
         size="compact"
         title={sayCount('screens.adminArea.quickMatch.count.matchTitles', list.length)}
       />
       <DialogContent className="flex flex-col gap-3">
-        <p className="font-body text-sm text-text-muted">
-          {say('screens.adminArea.quickMatch.howItDecides')}
-        </p>
-        <ul className="flex flex-col divide-y divide-line">
-          {list.map((title) => {
-            const outcome = outcomes.get(title.mediaId);
+        {reviewing !== null ? (
+          <MatchReview
+            titles={reviewing}
+            onMatched={(mediaId, to) => {
+              setOutcomes((held) => new Map(held).set(mediaId, { kind: 'matched', to }));
+              setHasReviewMatched(true);
+            }}
+            onDone={endReview}
+          />
+        ) : (
+          <>
+            <p className="font-body text-sm text-text-muted">
+              {say('screens.adminArea.quickMatch.howItDecides')}
+            </p>
+            <ul className="flex flex-col divide-y divide-line">
+              {list.map((title) => {
+                const outcome = outcomes.get(title.mediaId);
 
-            return (
-              <li key={title.mediaId} className="flex flex-wrap items-center gap-3 py-2">
-                <span className="min-w-0 flex-1 truncate font-body text-sm text-text">
-                  {title.year === null ? title.name : `${title.name} (${title.year.toString()})`}
-                </span>
-                {outcome === undefined ? (
-                  <Badge size="sm">{say('common.waiting')}</Badge>
-                ) : outcome.kind === 'looking' ? (
-                  <Badge size="sm" tone="busy">
-                    {say('screens.adminArea.quickMatch.lookingNow')}
-                  </Badge>
-                ) : outcome.kind === 'matched' ? (
-                  <Badge size="sm" tone="success">
-                    {say('screens.adminArea.quickMatch.matchedToName', { name: outcome.to })}
-                  </Badge>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Badge size="sm" tone="warning">
-                      {say('screens.adminArea.quickMatch.needsALook')}
-                    </Badge>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      label={say('screens.adminArea.quickMatch.fixMatchFor', { name: title.name })}
-                      onClick={() => {
-                        onFixMatch(title.mediaId);
-                      }}
-                    >
-                      {say('screens.adminArea.mediaTitlePage.fixMatch')}
-                    </Button>
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                return (
+                  <li key={title.mediaId} className="flex flex-wrap items-center gap-3 py-2">
+                    <span className="min-w-0 flex-1 truncate font-body text-sm text-text">
+                      {title.year === null
+                        ? title.name
+                        : `${title.name} (${title.year.toString()})`}
+                    </span>
+                    {outcome === undefined ? (
+                      <Badge size="sm">{say('common.waiting')}</Badge>
+                    ) : outcome.kind === 'looking' ? (
+                      <Badge size="sm" tone="busy">
+                        {say('screens.adminArea.quickMatch.lookingNow')}
+                      </Badge>
+                    ) : outcome.kind === 'matched' ? (
+                      <Badge size="sm" tone="success">
+                        {say('screens.adminArea.quickMatch.matchedToName', { name: outcome.to })}
+                      </Badge>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Badge size="sm" tone="warning">
+                          {say('screens.adminArea.quickMatch.needsALook')}
+                        </Badge>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          label={say('screens.adminArea.quickMatch.fixMatchFor', {
+                            name: title.name,
+                          })}
+                          onClick={() => {
+                            onFixMatch(title.mediaId);
+                          }}
+                        >
+                          {say('screens.adminArea.mediaTitlePage.fixMatch')}
+                        </Button>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
       </DialogContent>
       <DialogFooter
         lead={
@@ -145,18 +177,29 @@ const QuickMatchDialog = ({ titles, onClose, onFixMatch, onMatched }: QuickMatch
           ) : null
         }
         dismiss={{ onChoose: close }}
-        {...(isDone
+        {...(reviewing !== null
           ? {}
-          : {
-              confirm: {
-                label: sayCount('screens.adminArea.quickMatch.count.matchTitles', list.length),
-                onChoose: () => {
-                  void run();
+          : isDone
+            ? left.length === 0
+              ? {}
+              : {
+                  confirm: {
+                    label: say('screens.adminArea.quickMatch.reviewTheRestOneByOne'),
+                    onChoose: () => {
+                      setReviewing(left);
+                    },
+                  },
+                }
+            : {
+                confirm: {
+                  label: sayCount('screens.adminArea.quickMatch.count.matchTitles', list.length),
+                  onChoose: () => {
+                    void run();
+                  },
+                  isLoading: isRunning,
+                  isDisabled: list.length === 0,
                 },
-                isLoading: isRunning,
-                isDisabled: list.length === 0,
-              },
-            })}
+              })}
       />
     </Dialog>
   );
