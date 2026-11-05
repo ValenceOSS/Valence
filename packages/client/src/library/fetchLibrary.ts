@@ -80,6 +80,7 @@ type UpdateLibraryInput = {
   keepsShowsTogether?: boolean;
   metadataLanguage?: string | null;
   usesOriginalTitle?: boolean;
+  writesNfo?: boolean;
   higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };

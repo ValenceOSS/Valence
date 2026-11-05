@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { createNfoWriter } from '@ValenceServer/nfo/createNfoWriter';
 import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
@@ -5118,6 +5119,10 @@ const titleListService = createTitleListService(db, {
   certificationRegion: async () => (await settings.read()).certificationRegion,
 });
 
+const nfoWriter = createNfoWriter(db, undefined, (path, reason) => {
+  log.warn('scanner', `could not write ${path}: ${reason}`);
+});
+
 const titleMetadataService = createTitleMetadataService({
   db,
   edits: titleEdits,
@@ -5131,6 +5136,7 @@ const titleMetadataService = createTitleMetadataService({
   },
   onChanged: (mediaIds) => {
     realtime.publish('media', { event: 'metadata', mediaIds }, { kind: 'everyone' });
+    void nfoWriter.writeFor(mediaIds);
   },
 });
 

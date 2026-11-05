@@ -419,6 +419,10 @@ const createMemoryLibraryService = (
       found.usesOriginalTitle = input.usesOriginalTitle;
     }
 
+    if (input.writesNfo !== undefined) {
+      found.writesNfo = input.writesNfo;
+    }
+
     if (input.keepsShowsTogether !== undefined) {
       found.keepsShowsTogether = input.keepsShowsTogether;
     }

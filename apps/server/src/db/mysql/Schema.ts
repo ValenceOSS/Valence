@@ -220,6 +220,7 @@ const library = mysqlTable('library', {
   isStreamed: boolean('isStreamed').notNull().default(false),
   metadataLanguage: mediumtext('metadataLanguage'),
   usesOriginalTitle: boolean('usesOriginalTitle').notNull().default(false),
+  writesNfo: boolean('writesNfo').notNull().default(false),
 });
 
 const viewerProfile = mysqlTable(

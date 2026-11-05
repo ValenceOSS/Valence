@@ -1,0 +1,1 @@
+ALTER TABLE "library" ADD COLUMN "writesNfo" boolean DEFAULT false NOT NULL;

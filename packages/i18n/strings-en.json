@@ -20346,6 +20346,16 @@
     "context": "Shown in the admin area: the label of the choice between Valence and a connected app for a library's requests."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.writeNfoFiles",
+    "text": "Write NFO files",
+    "context": "Switch in a library's settings: keep an NFO file beside each film and episode, in Kodi's format, with what was edited in Valence."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.writesWhatYouEditBeside",
+    "text": "Each time you edit a title, Valence writes its NFO beside the file (and a show’s tvshow.nfo in its folder) in Kodi’s format, which Jellyfin and Emby read too. An NFO already there is replaced.",
+    "context": "Description under a library's Write NFO files switch."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.yourBrowser",
     "text": "Your browser",
     "context": "The detail in the library settings dialog in the admin area."

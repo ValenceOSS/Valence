@@ -174,6 +174,7 @@ describe('LibrarySettingsDialog', () => {
         keepsShowsTogether: true,
         metadataLanguage: null,
         usesOriginalTitle: false,
+        writesNfo: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       });
@@ -526,6 +527,7 @@ describe('LibrarySettingsDialog', () => {
         keepsShowsTogether: true,
         metadataLanguage: null,
         usesOriginalTitle: false,
+        writesNfo: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       });

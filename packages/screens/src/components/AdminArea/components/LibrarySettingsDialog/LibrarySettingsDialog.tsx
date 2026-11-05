@@ -114,6 +114,8 @@ const LibrarySettingsDialog = ({
   const [metadataLanguage, setMetadataLanguage] = useState(library?.metadataLanguage ?? NONE_ID);
   const [usesOriginalTitle, setUsesOriginalTitle] = useState(library?.usesOriginalTitle ?? false);
   const originalTitleId = useId();
+  const [writesNfo, setWritesNfo] = useState(library?.writesNfo ?? false);
+  const nfoId = useId();
   const [higherProfileAsks, setHigherProfileAsks] = useState<HigherProfileAsks>(
     library?.higherProfileAsks ?? 'ask',
   );
@@ -132,6 +134,7 @@ const LibrarySettingsDialog = ({
     setKeepsShowsTogether(library?.keepsShowsTogether ?? true);
     setMetadataLanguage(library?.metadataLanguage ?? NONE_ID);
     setUsesOriginalTitle(library?.usesOriginalTitle ?? false);
+    setWritesNfo(library?.writesNfo ?? false);
     setHigherProfileAsks(library?.higherProfileAsks ?? 'ask');
     setFulfilment(fulfilmentFormOf(library));
     setError(null);
@@ -183,6 +186,7 @@ const LibrarySettingsDialog = ({
         keepsShowsTogether,
         metadataLanguage: metadataLanguage === NONE_ID ? null : metadataLanguage,
         usesOriginalTitle,
+        writesNfo,
         higherProfileAsks,
         fulfilment: handedTo.fulfilment,
       });
@@ -343,6 +347,20 @@ const LibrarySettingsDialog = ({
                   />
                   <p id={originalTitleId} className="text-xs text-text-muted">
                     {say('screens.adminArea.librarySettingsDialog.namesEachTitleByItsOriginal')}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1 pt-1">
+                  <Switch
+                    label={say('screens.adminArea.librarySettingsDialog.writeNfoFiles')}
+                    isOn={writesNfo}
+                    onToggle={() => {
+                      setWritesNfo(!writesNfo);
+                    }}
+                    describedBy={nfoId}
+                  />
+                  <p id={nfoId} className="text-xs text-text-muted">
+                    {say('screens.adminArea.librarySettingsDialog.writesWhatYouEditBeside')}
                   </p>
                 </div>
               </fieldset>

@@ -5133,6 +5133,9 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary':
     'The profile assigned to this library',
   'screens.adminArea.librarySettingsDialog.whoFulfilsRequests': 'Download requests with',
+  'screens.adminArea.librarySettingsDialog.writeNfoFiles': 'Write NFO files',
+  'screens.adminArea.librarySettingsDialog.writesWhatYouEditBeside':
+    'Each time you edit a title, Valence writes its NFO beside the file (and a show’s tvshow.nfo in its folder) in Kodi’s format, which Jellyfin and Emby read too. An NFO already there is replaced.',
   'screens.adminArea.librarySettingsDialog.yourBrowser': 'Your browser',
   'screens.adminArea.linkedServersPanel.aboutTheFingerprint': 'About the fingerprint',
   'screens.adminArea.linkedServersPanel.aboutThisServer': 'About this server',

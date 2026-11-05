@@ -214,6 +214,7 @@ const library = pgTable('library', {
   isStreamed: boolean('isStreamed').notNull().default(false),
   metadataLanguage: text('metadataLanguage'),
   usesOriginalTitle: boolean('usesOriginalTitle').notNull().default(false),
+  writesNfo: boolean('writesNfo').notNull().default(false),
 });
 
 const viewerProfile = pgTable(

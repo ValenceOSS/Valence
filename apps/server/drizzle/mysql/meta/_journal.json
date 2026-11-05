@@ -435,6 +435,13 @@
       "when": 1793845830580,
       "tag": "0061_files_keep_whether_they_are_extras",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "5",
+      "when": 1793846481787,
+      "tag": "0062_libraries_can_write_nfo_files",
+      "breakpoints": true
     }
   ]
 }

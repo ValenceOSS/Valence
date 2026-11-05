@@ -232,6 +232,7 @@ const LIBRARY_COLUMNS = {
   keepsShowsTogether: library.keepsShowsTogether,
   metadataLanguage: library.metadataLanguage,
   usesOriginalTitle: library.usesOriginalTitle,
+  writesNfo: library.writesNfo,
   higherProfileAsks: library.higherProfileAsks,
   requestFulfilment: library.requestFulfilment,
   linkedServerId: library.linkedServerId,
@@ -1503,6 +1504,7 @@ const createDatabaseLibraryService = ({
         keepsShowsTogether: row.keepsShowsTogether,
         metadataLanguage: row.metadataLanguage,
         usesOriginalTitle: row.usesOriginalTitle,
+        writesNfo: row.writesNfo,
         higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
@@ -1538,6 +1540,7 @@ const createDatabaseLibraryService = ({
         keepsShowsTogether: true,
         metadataLanguage: null,
         usesOriginalTitle: false,
+        writesNfo: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       };
@@ -1581,6 +1584,7 @@ const createDatabaseLibraryService = ({
           ...(input.usesOriginalTitle === undefined
             ? {}
             : { usesOriginalTitle: input.usesOriginalTitle }),
+          ...(input.writesNfo === undefined ? {} : { writesNfo: input.writesNfo }),
           ...(input.fulfilment === undefined ? {} : { requestFulfilment: input.fulfilment }),
         })
         .where(eq(library.id, libraryId));
@@ -1627,6 +1631,7 @@ const createDatabaseLibraryService = ({
         keepsShowsTogether: row.keepsShowsTogether,
         metadataLanguage: row.metadataLanguage,
         usesOriginalTitle: row.usesOriginalTitle,
+        writesNfo: row.writesNfo,
         higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
