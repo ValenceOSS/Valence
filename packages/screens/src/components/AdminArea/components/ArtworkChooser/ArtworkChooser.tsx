@@ -90,16 +90,20 @@ const languageOf = (language: string | null): string => {
  * @param subject - The title being dressed.
  * @param onChanged - Told a choice was made, with the job restoring the catalogue's pick where one was
  *   needed.
+ * @param part - A season, or an episode, whose own picture is chosen rather than the title's: a
+ *   season's poster or an episode's still, from the catalogue's alone.
  */
-const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
+const ArtworkChooser = ({ subject, onChanged, part }: ArtworkChooserProps) => {
   const cache = useQueryClient();
-  const [kind, setKind] = useState<ArtworkKind>('poster');
+  const [kind, setKind] = useState<ArtworkKind>(
+    part === undefined || part.episode === null ? 'poster' : 'backdrop',
+  );
   const [order, setOrder] = useState<(typeof ARTWORK_ORDERS)[number]>('catalogue');
   const [busy, setBusy] = useState<string | null>(null);
   const { mediaId } = subject;
   const choices = useQuery({
-    queryKey: ['artwork-choices', mediaId],
-    queryFn: () => fetchArtworkChoices(mediaId),
+    queryKey: ['artwork-choices', mediaId, part ?? null],
+    queryFn: () => fetchArtworkChoices(mediaId, part),
     staleTime: 60_000,
   });
 
@@ -111,7 +115,7 @@ const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
    */
   const changed = async (said: string, jobId: string | null) => {
     artworkRevisions.bump([mediaId, ...subject.mediaIds]);
-    await cache.invalidateQueries({ queryKey: ['artwork-choices', mediaId] });
+    await cache.invalidateQueries({ queryKey: ['artwork-choices', mediaId, part ?? null] });
     await cache.invalidateQueries({ queryKey: libraryQueries.key });
     notify.worked(said);
     onChanged(jobId);
@@ -120,7 +124,7 @@ const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
   const choose = async (url: string | null, key: string) => {
     setBusy(key);
 
-    const outcome = await chooseArtwork(mediaId, kind, url);
+    const outcome = await chooseArtwork(mediaId, kind, url, part);
 
     setBusy(null);
 
@@ -178,7 +182,13 @@ const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <SegmentedRow
           label={say('screens.adminArea.artworkPicker.whichPicture')}
-          items={KINDS}
+          items={
+            part === undefined
+              ? KINDS
+              : part.episode === null
+                ? [{ id: 'poster', label: say('screens.adminArea.artworkChooser.seasonPoster') }]
+                : [{ id: 'backdrop', label: say('screens.adminArea.artworkChooser.episodeStill') }]
+          }
           value={kind}
           onSelect={(next) => {
             setKind(next === 'backdrop' ? 'backdrop' : next === 'logo' ? 'logo' : 'poster');
@@ -195,18 +205,20 @@ const ArtworkChooser = ({ subject, onChanged }: ArtworkChooserProps) => {
               setOrder(ARTWORK_ORDERS.find((one) => one === next) ?? 'catalogue');
             }}
           />
-          <FilePicker
-            label={say('screens.adminArea.artworkChooser.uploadAPicture')}
-            accept="image/jpeg,image/png,image/webp"
-            variant="secondary"
-            size="sm"
-            isLoading={busy === 'upload'}
-            onPick={(file) => {
-              void upload(file);
-            }}
-          >
-            {say('screens.adminArea.artworkChooser.uploadAPicture')}
-          </FilePicker>
+          {part === undefined ? (
+            <FilePicker
+              label={say('screens.adminArea.artworkChooser.uploadAPicture')}
+              accept="image/jpeg,image/png,image/webp"
+              variant="secondary"
+              size="sm"
+              isLoading={busy === 'upload'}
+              onPick={(file) => {
+                void upload(file);
+              }}
+            >
+              {say('screens.adminArea.artworkChooser.uploadAPicture')}
+            </FilePicker>
+          ) : null}
         </div>
       </div>
 

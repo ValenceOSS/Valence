@@ -229,6 +229,16 @@ type LibraryService = ShowService & {
     isOfTitle?: boolean,
   ) => Promise<string | null>;
   readBarePosterUrl: (mediaId: string) => Promise<string | null>;
+  readArtworkPart?: (
+    mediaId: string,
+    part: { season: number; episode: number | null },
+  ) => Promise<ArtworkChoices | 'missing' | 'unmatched' | 'unavailable'>;
+  chooseArtworkPart?: (
+    mediaId: string,
+    part: { season: number; episode: number | null },
+    url: string | null,
+    by: string | null,
+  ) => Promise<{ jobId: string | null } | 'missing' | 'unmatched' | 'unavailable' | 'refused'>;
   readArtworkChoices: (
     mediaId: string,
   ) => Promise<ArtworkChoices | 'missing' | 'unmatched' | 'unavailable'>;

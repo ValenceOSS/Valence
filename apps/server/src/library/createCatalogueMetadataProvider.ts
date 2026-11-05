@@ -157,6 +157,7 @@ const ImagesResponseSchema = z.object({
   logos: z.array(PictureSchema).default([]),
   posters: z.array(PictureSchema).default([]),
   backdrops: z.array(PictureSchema).default([]),
+  stills: z.array(PictureSchema).default([]),
 });
 
 type SearchResult = z.infer<typeof SearchResultSchema>;
@@ -1539,6 +1540,32 @@ const createCatalogueMetadataProvider = ({
         backdrop: artworkOptionsOf(images.data.backdrops, 'backdrop', imageBaseUrl),
         logo: artworkOptionsOf(images.data.logos, 'logo', imageBaseUrl),
       };
+    },
+
+    readPartArtwork: async ({ externalId, season, episode }) => {
+      const key = await readKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const images = ImagesResponseSchema.safeParse(
+        await request(
+          episode === null
+            ? `/tv/${externalId}/season/${season.toString()}/images`
+            : `/tv/${externalId}/season/${season.toString()}/episode/${episode.toString()}/images`,
+          key,
+          {},
+        ),
+      );
+
+      if (!images.success) {
+        return null;
+      }
+
+      return episode === null
+        ? artworkOptionsOf(images.data.posters, 'poster', imageBaseUrl)
+        : artworkOptionsOf(images.data.stills, 'backdrop', imageBaseUrl);
     },
 
     search: async (query, kind) => (await searchPages({ query, kind, page: 1 })).matches,

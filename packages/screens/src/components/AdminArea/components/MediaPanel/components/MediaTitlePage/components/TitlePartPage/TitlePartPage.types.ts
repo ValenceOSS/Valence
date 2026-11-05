@@ -1,3 +1,4 @@
+import type { ArtworkPart } from '@ValenceClient/library/queryOfPart';
 import type { ReactNode } from 'react';
 import type { Crumb } from '@ValenceUI/Breadcrumbs.types';
 import type { TitleTab } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
@@ -19,6 +20,7 @@ type TitlePartPageProps = {
   files: ReactNode;
   onPrevious?: (() => void) | undefined;
   onNext?: (() => void) | undefined;
+  artworkPart?: ArtworkPart;
 };
 
 export type { TitlePartPageProps };

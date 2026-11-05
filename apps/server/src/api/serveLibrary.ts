@@ -480,7 +480,14 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
-    const read = await library.readArtworkChoices(context.req.valid('param').id);
+    const { season, episode } = context.req.valid('query');
+    const read =
+      season === undefined
+        ? await library.readArtworkChoices(context.req.valid('param').id)
+        : ((await library.readArtworkPart?.(context.req.valid('param').id, {
+            season,
+            episode: episode ?? null,
+          })) ?? 'unavailable');
 
     if (read === 'missing') {
       return context.json(refuse('error.common.noSuchItem'), 404);
@@ -503,12 +510,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { id, kind } = context.req.valid('param');
-    const chosen = await library.chooseArtwork(
-      id,
-      kind,
-      context.req.valid('json').url,
-      (await readAccount(context.req.raw.headers))?.id ?? null,
-    );
+    const { season, episode } = context.req.valid('query');
+    const by = (await readAccount(context.req.raw.headers))?.id ?? null;
+    const chosen =
+      season === undefined
+        ? await library.chooseArtwork(id, kind, context.req.valid('json').url, by)
+        : ((await library.chooseArtworkPart?.(
+            id,
+            { season, episode: episode ?? null },
+            context.req.valid('json').url,
+            by,
+          )) ?? 'unavailable');
 
     if (chosen === 'missing' || chosen === 'unmatched') {
       return context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
@@ -535,12 +547,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { id, kind } = context.req.valid('param');
-    const forgotten = await library.chooseArtwork(
-      id,
-      kind,
-      null,
-      (await readAccount(context.req.raw.headers))?.id ?? null,
-    );
+    const { season, episode } = context.req.valid('query');
+    const by = (await readAccount(context.req.raw.headers))?.id ?? null;
+    const forgotten =
+      season === undefined
+        ? await library.chooseArtwork(id, kind, null, by)
+        : ((await library.chooseArtworkPart?.(
+            id,
+            { season, episode: episode ?? null },
+            null,
+            by,
+          )) ?? 'unavailable');
 
     if (typeof forgotten === 'string') {
       return context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);

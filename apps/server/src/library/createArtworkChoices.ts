@@ -28,12 +28,15 @@ type ArtworkChoicesOptions = {
   db: AnyValenceDatabase;
   readOptions?: MetadataProvider['readArtworkOptions'];
   readOwn?: MetadataProvider['readOwnArtwork'];
+  readPartOptions?: MetadataProvider['readPartArtwork'];
   readAgain: (libraryId: string, paths: string[]) => Promise<string | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string } | null>;
   onChanged?: (mediaIds: string[]) => void;
   uploads?: string;
   now?: () => Date;
 };
+
+type ArtworkPart = { season: number; episode: number | null };
 
 type Title = {
   libraryId: string;
@@ -66,6 +69,7 @@ const createArtworkChoices = ({
   readOwn,
   readAgain,
   fetchLogos,
+  readPartOptions,
   onChanged,
   uploads,
   now = () => new Date(),
@@ -392,7 +396,31 @@ const createArtworkChoices = ({
     }
 
     if (kind === 'backdrop' && title.externalKind === 'tv' && !isOfTitle) {
-      return null;
+      const [file] = await db
+        .select({ season: mediaItem.seasonNumber, episode: mediaItem.episodeNumber })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (file?.season === null || file?.season === undefined || file.episode === null) {
+        return null;
+      }
+
+      const [still] = await db
+        .select({ url: mediaArtworkChoice.url })
+        .from(mediaArtworkChoice)
+        .where(
+          and(
+            choicesOf(title),
+            eq(
+              mediaArtworkChoice.kind,
+              `still:s${file.season.toString()}e${file.episode.toString()}`,
+            ),
+          ),
+        )
+        .limit(1);
+
+      return still?.url ?? null;
     }
 
     const [row] = await db
@@ -503,7 +531,213 @@ const createArtworkChoices = ({
     );
   };
 
-  return { read, choose, urlFor, barePosterFor, upload, isOwnPicture };
+  /**
+   * Names the choice kept for a season's poster or an episode's still.
+   *
+   * @param part - The season, and the episode where it is an episode's.
+   * @returns The kind the choice is kept under.
+   */
+  const kindOfPart = (part: ArtworkPart): string =>
+    part.episode === null
+      ? `poster:s${part.season.toString()}`
+      : `still:s${part.season.toString()}e${part.episode.toString()}`;
+
+  /**
+   * Narrows to the files of one episode of a programme.
+   *
+   * @param title - The programme.
+   * @param part - The season and episode.
+   * @returns The condition that finds them.
+   */
+  const filesOfPart = (title: Title, part: ArtworkPart) =>
+    and(
+      filesOf(title),
+      eq(mediaItem.seasonNumber, part.season),
+      part.episode === null ? undefined : eq(mediaItem.episodeNumber, part.episode),
+    );
+
+  /**
+   * Lists what the catalogue has for one season's poster or one episode's still, with the one
+   * chosen now.
+   *
+   * @param mediaId - Any file of the programme.
+   * @param part - The season, and the episode where it is an episode's still.
+   * @returns The choices, or why there are none.
+   */
+  const readPart = async (
+    mediaId: string,
+    part: ArtworkPart,
+  ): Promise<ArtworkChoices | Exclude<ArtworkRefusal, 'refused'>> => {
+    const title = await titleOf(mediaId);
+
+    if (typeof title === 'string') {
+      return title;
+    }
+
+    if (title.externalKind !== 'tv') {
+      return 'missing';
+    }
+
+    const options = await readPartOptions?.({
+      externalId: title.externalId,
+      season: part.season,
+      episode: part.episode,
+    }).catch(() => null);
+
+    if (options === undefined || options === null) {
+      return 'unavailable';
+    }
+
+    const [row] = await db
+      .select({ url: mediaArtworkChoice.url })
+      .from(mediaArtworkChoice)
+      .where(and(choicesOf(title), eq(mediaArtworkChoice.kind, kindOfPart(part))))
+      .limit(1);
+    const chosen = row?.url ?? null;
+    const isStill = part.episode !== null;
+
+    return {
+      kind: 'tv',
+      options: { poster: isStill ? [] : options, backdrop: isStill ? options : [], logo: [] },
+      onDisk: [],
+      chosen: { poster: isStill ? null : chosen, backdrop: isStill ? chosen : null, logo: null },
+      defaults: { poster: null, backdrop: null, logo: null },
+    };
+  };
+
+  /**
+   * Chooses one of the catalogue's pictures for a season's poster or an episode's still, or with
+   * none goes back to the catalogue's own.
+   *
+   * @param mediaId - Any file of the programme.
+   * @param part - The season, and the episode where it is an episode's still.
+   * @param url - The picture, which must be one the catalogue offers, or null to undo.
+   * @param by - Who chose it.
+   * @returns The job putting the catalogue's back where one was needed, or why nothing changed.
+   */
+  const choosePart = async (
+    mediaId: string,
+    part: ArtworkPart,
+    url: string | null,
+    by: string | null,
+  ): Promise<{ jobId: string | null } | ArtworkRefusal> => {
+    const title = await titleOf(mediaId);
+
+    if (typeof title === 'string') {
+      return title;
+    }
+
+    if (title.externalKind !== 'tv') {
+      return 'missing';
+    }
+
+    const kind = kindOfPart(part);
+
+    if (url === null) {
+      await db
+        .delete(mediaArtworkChoice)
+        .where(and(choicesOf(title), eq(mediaArtworkChoice.kind, kind)));
+
+      const files =
+        part.episode === null
+          ? []
+          : await db
+              .select({ path: mediaItem.path })
+              .from(mediaItem)
+              .where(filesOfPart(title, part));
+      const jobId =
+        files.length === 0
+          ? null
+          : await readAgain(
+              title.libraryId,
+              files.map((file) => file.path),
+            );
+
+      await markChanged(title);
+
+      return { jobId };
+    }
+
+    const options = await readPartOptions?.({
+      externalId: title.externalId,
+      season: part.season,
+      episode: part.episode,
+    }).catch(() => null);
+
+    if (options === undefined || options === null) {
+      return 'unavailable';
+    }
+
+    if (!options.some((option) => option.url === url)) {
+      return 'refused';
+    }
+
+    await upsert(db, mediaArtworkChoice, {
+      values: [
+        {
+          id: randomUUID(),
+          libraryId: title.libraryId,
+          externalKind: title.externalKind,
+          externalId: title.externalId,
+          kind,
+          url,
+          updatedBy: by,
+        },
+      ],
+      target: [
+        mediaArtworkChoice.libraryId,
+        mediaArtworkChoice.externalKind,
+        mediaArtworkChoice.externalId,
+        mediaArtworkChoice.kind,
+      ],
+      set: { url, updatedBy: by, updatedAt: new Date() },
+    });
+
+    if (part.episode !== null) {
+      await db.update(mediaItem).set({ backdropUrl: url }).where(filesOfPart(title, part));
+    }
+
+    await markChanged(title);
+
+    return { jobId: null };
+  };
+
+  /**
+   * Reads the season posters and episode stills chosen for a programme, for laying over what the
+   * catalogue says of its seasons.
+   *
+   * @param libraryId - Its library.
+   * @param externalId - The programme.
+   * @returns Each chosen picture by the kind it is kept under, such as `poster:s1`.
+   */
+  const partsChosen = async (libraryId: string, externalId: string) =>
+    new Map(
+      (
+        await db
+          .select({ kind: mediaArtworkChoice.kind, url: mediaArtworkChoice.url })
+          .from(mediaArtworkChoice)
+          .where(
+            and(
+              eq(mediaArtworkChoice.libraryId, libraryId),
+              eq(mediaArtworkChoice.externalKind, 'tv'),
+              eq(mediaArtworkChoice.externalId, externalId),
+            ),
+          )
+      ).map((row) => [row.kind, row.url] as const),
+    );
+
+  return {
+    read,
+    choose,
+    urlFor,
+    barePosterFor,
+    upload,
+    isOwnPicture,
+    readPart,
+    choosePart,
+    partsChosen,
+    kindOfPart,
+  };
 };
 
 export type { ArtworkRefusal };

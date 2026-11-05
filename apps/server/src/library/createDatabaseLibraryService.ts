@@ -904,6 +904,8 @@ const createDatabaseLibraryService = ({
       ?.readArtworkOptions,
     readOwn: (providers ?? []).find((provider) => provider.readOwnArtwork !== undefined)
       ?.readOwnArtwork,
+    readPartOptions: (providers ?? []).find((provider) => provider.readPartArtwork !== undefined)
+      ?.readPartArtwork,
     readAgain: queueReadAgain,
     fetchLogos: (libraryId) => askForLibraryWork(jobs, FETCH_LOGOS_JOB, libraryId, { libraryId }),
     ...(onArtworkChanged === undefined ? {} : { onChanged: onArtworkChanged }),
@@ -2482,6 +2484,9 @@ const createDatabaseLibraryService = ({
     readBarePosterUrl: (mediaId) => artworkChoices.barePosterFor(mediaId),
 
     readArtworkChoices: (mediaId) => artworkChoices.read(mediaId),
+    readArtworkPart: (mediaId, part) => artworkChoices.readPart(mediaId, part),
+    chooseArtworkPart: (mediaId, part, url, by) =>
+      artworkChoices.choosePart(mediaId, part, url, by),
 
     chooseArtwork: (mediaId, kind, url, by) => artworkChoices.choose(mediaId, kind, url, by),
     uploadArtwork: (mediaId, kind, artwork, by) =>
@@ -3693,14 +3698,36 @@ const createDatabaseLibraryService = ({
         return whole;
       }
 
+      const pictured =
+        externalId === ''
+          ? new Map<string, string>()
+          : await artworkChoices.partsChosen(libraryId, externalId);
+      const seasons = laid.seasons.map((season) => ({
+        ...season,
+        posterUrl:
+          pictured.get(artworkChoices.kindOfPart({ season: season.seasonNumber, episode: null })) ??
+          season.posterUrl ??
+          null,
+        episodes: season.episodes.map((episode) => ({
+          ...episode,
+          stillUrl:
+            pictured.get(
+              artworkChoices.kindOfPart({
+                season: season.seasonNumber,
+                episode: episode.episodeNumber,
+              }),
+            ) ?? episode.stillUrl,
+        })),
+      }));
+
       return shape === null
         ? { ...whole, status: laid.status ?? null, overview: laid.overview ?? null }
         : {
             ...whole,
-            shape: laid.seasons,
+            shape: seasons,
             status: laid.status ?? null,
             overview: laid.overview ?? null,
-            nextEpisode: nextEpisodeOf(laid.seasons, new Date().toISOString().slice(0, 10)),
+            nextEpisode: nextEpisodeOf(seasons, new Date().toISOString().slice(0, 10)),
           };
     },
   };

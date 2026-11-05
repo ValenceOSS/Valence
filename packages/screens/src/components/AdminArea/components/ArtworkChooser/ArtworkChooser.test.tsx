@@ -100,7 +100,12 @@ describe('ArtworkChooser', () => {
     await waitFor(() => {
       expect(onChanged).toHaveBeenCalledWith(null);
     });
-    expect(chooseArtworkMock).toHaveBeenCalledWith('ep-1', 'poster', `${BASE}/original/en.jpg`);
+    expect(chooseArtworkMock).toHaveBeenCalledWith(
+      'ep-1',
+      'poster',
+      `${BASE}/original/en.jpg`,
+      undefined,
+    );
     expect(bumpMock).toHaveBeenCalledWith(['ep-1', 'ep-1', 'ep-2']);
   });
 
@@ -110,7 +115,7 @@ describe('ArtworkChooser', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Use the default poster' }));
 
     await waitFor(() => {
-      expect(chooseArtworkMock).toHaveBeenCalledWith('ep-1', 'poster', null);
+      expect(chooseArtworkMock).toHaveBeenCalledWith('ep-1', 'poster', null, undefined);
     });
   });
 
@@ -151,7 +156,7 @@ describe('ArtworkChooser', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Go back to the catalogue’s pick' }));
 
     await waitFor(() => {
-      expect(chooseArtworkMock).toHaveBeenCalledWith('ep-1', 'poster', null);
+      expect(chooseArtworkMock).toHaveBeenCalledWith('ep-1', 'poster', null, undefined);
     });
   });
 
@@ -182,6 +187,7 @@ describe('ArtworkChooser', () => {
         'ep-1',
         'poster',
         'valence-disk:cG9zdGVyLmpwZw',
+        undefined,
       );
     });
   });

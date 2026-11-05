@@ -15761,6 +15761,11 @@
     "context": "Heading over the pictures found in the title's folders on the disk, in the artwork chooser."
   },
   {
+    "handler": "screens.adminArea.artworkChooser.episodeStill",
+    "text": "Episode still",
+    "context": "The only kind of picture on an episode's Artwork tab: the frame shown for it in the episode list."
+  },
+  {
     "handler": "screens.adminArea.artworkChooser.fromTheCatalogue",
     "text": "From the catalogue",
     "context": "Heading over the pictures the catalogue offers, in the artwork chooser."
@@ -15814,6 +15819,11 @@
     "handler": "screens.adminArea.artworkChooser.picturesOfTheTitle",
     "text": "Pictures of the title",
     "context": "Heading of the Artwork tab on a title's page in the admin media list."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.seasonPoster",
+    "text": "Season poster",
+    "context": "The only kind of picture on a season's Artwork tab."
   },
   {
     "handler": "screens.adminArea.artworkChooser.uploadAPicture",

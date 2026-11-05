@@ -1,3 +1,5 @@
+import { ArtworkChooser } from '@ValenceScreens/components/AdminArea/components/ArtworkChooser/ArtworkChooser';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { TitlePeople } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitlePeople/TitlePeople';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { MoveLeft as MoveLeftIcon, MoveRight as MoveRightIcon } from '@keyline-icons/react';
@@ -17,7 +19,7 @@ import type { TitleTab } from '@ValenceScreens/components/AdminArea/components/M
 import type { TitlePartPageProps } from './TitlePartPage.types';
 import { say } from '@ValenceI18n/say';
 
-const PART_TABS: readonly TitleTab[] = ['details', 'people', 'files', 'history'];
+const PART_TABS: readonly TitleTab[] = ['details', 'people', 'artwork', 'files', 'history'];
 
 /**
  * One season or one episode of a programme as a page of its own, laid out as the programme's is:
@@ -41,6 +43,7 @@ const PART_TABS: readonly TitleTab[] = ['details', 'people', 'files', 'history']
  * @param files - What the files tab shows.
  * @param onPrevious - Opens the one before, where there is one.
  * @param onNext - Opens the one after, where there is one.
+ * @param artworkPart - Its season and episode, where its own picture can be chosen.
  */
 const TitlePartPage = ({
   scope,
@@ -59,9 +62,14 @@ const TitlePartPage = ({
   files,
   onPrevious,
   onNext,
+  artworkPart,
 }: TitlePartPageProps) => {
   const shown =
-    PART_TABS.includes(tab) && (tab !== 'people' || scope === 'episode') ? tab : 'details';
+    PART_TABS.includes(tab) &&
+    (tab !== 'people' || scope === 'episode') &&
+    (tab !== 'artwork' || artworkPart !== undefined)
+      ? tab
+      : 'details';
   const travel = useTravelDirection([...PART_TABS], shown);
   const prefersReducedMotion = useReducedMotionConfig();
 
@@ -141,6 +149,9 @@ const TitlePartPage = ({
                   items: [
                     { id: 'details', label: say('common.details') },
                     ...(scope === 'episode' ? [{ id: 'people', label: say('common.people') }] : []),
+                    ...(artworkPart === undefined
+                      ? []
+                      : [{ id: 'artwork', label: say('common.artwork') }]),
                     { id: 'files', label: filesLabel },
                     { id: 'history', label: say('common.history') },
                   ],
@@ -174,6 +185,19 @@ const TitlePartPage = ({
             />
           </TabPanel>
         ) : null}
+
+        {artworkPart === undefined ? null : (
+          <TabPanel value="artwork" travel={travel}>
+            <PanelCard title={say('screens.adminArea.artworkChooser.picturesOfTheTitle')}>
+              <ArtworkChooser
+                key={mediaId}
+                subject={{ mediaId, name, isSeries: true, mediaIds: [mediaId] }}
+                part={artworkPart}
+                onChanged={() => {}}
+              />
+            </PanelCard>
+          </TabPanel>
+        )}
 
         <TabPanel value="files" travel={travel}>
           {files}

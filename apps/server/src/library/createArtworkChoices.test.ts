@@ -155,6 +155,56 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     ).resolves.toBe(false);
   });
 
+  it('chooses an episode’s still and a season’s poster from the catalogue’s, and goes back', async () => {
+    const db = await aScratchDatabase();
+
+    await db
+      .update(mediaItem)
+      .set({ seasonNumber: 1, episodeNumber: 1 })
+      .where(eq(mediaItem.id, 'ep-1'));
+    await db
+      .update(mediaItem)
+      .set({ seasonNumber: 1, episodeNumber: 2 })
+      .where(eq(mediaItem.id, 'ep-2'));
+
+    const stills = [option('/still-a.jpg'), option('/still-b.jpg')];
+    const readAgain = vi.fn(() => Promise.resolve('job'));
+    const choices = createArtworkChoices({
+      db,
+      readOptions: () => Promise.resolve(OFFERED),
+      readPartOptions: () => Promise.resolve(stills),
+      readAgain,
+      fetchLogos: () => Promise.resolve(null),
+    });
+    const still = stills[1]?.url ?? '';
+    const column = async (id: string) =>
+      (await db.select().from(mediaItem).where(eq(mediaItem.id, id)))[0]?.backdropUrl ?? null;
+
+    await expect(
+      choices.choosePart('ep-1', { season: 1, episode: 1 }, `${BASE}/elsewhere.jpg`, null),
+    ).resolves.toBe('refused');
+    await expect(
+      choices.choosePart('ep-1', { season: 1, episode: 1 }, still, null),
+    ).resolves.toEqual({
+      jobId: null,
+    });
+
+    expect(await column('ep-1')).toBe(still);
+    expect(await column('ep-2')).toBe('still-2.jpg');
+    await expect(choices.urlFor('ep-1', 'backdrop', false)).resolves.toBe(still);
+
+    await choices.choosePart('ep-1', { season: 1, episode: null }, still, null);
+
+    expect((await choices.partsChosen('shows', '100')).get('poster:s1')).toBe(still);
+
+    await expect(
+      choices.choosePart('ep-1', { season: 1, episode: 1 }, null, null),
+    ).resolves.toEqual({
+      jobId: 'job',
+    });
+    await expect(choices.urlFor('ep-1', 'backdrop', false)).resolves.toBeNull();
+  });
+
   it('keeps an uploaded picture and chooses it, turning away what is not a picture', async () => {
     const uploads = await mkdtemp(join(tmpdir(), 'valence-uploads-'));
     const choices = createArtworkChoices({

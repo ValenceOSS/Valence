@@ -1,5 +1,9 @@
 import type { CataloguePerson } from '@ValenceContracts/schemas/CataloguePeople';
-import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
+import type {
+  ArtworkOption,
+  ArtworkChoices,
+  ArtworkKind,
+} from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -176,6 +180,11 @@ type MetadataProvider = {
     externalId: string;
     isSeries: boolean;
   }) => Promise<ArtworkChoices['options'] | null>;
+  readPartArtwork?: (options: {
+    externalId: string;
+    season: number;
+    episode: number | null;
+  }) => Promise<ArtworkOption[] | null>;
   readOwnArtwork?: (options: {
     externalId: string;
     isSeries: boolean;

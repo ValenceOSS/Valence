@@ -640,6 +640,9 @@ const MediaTitlePage = ({
         key={episodeId}
         scope="episode"
         mediaId={episodeId}
+        {...(title.isMatched
+          ? { artworkPart: { season: episodeSeason.season, episode: openEpisodeOf.episode } }
+          : {})}
         name={name}
         aside={code}
         imageUrl={artworkUrl(episodeId, 'backdrop', { size: 'medium' })}
@@ -797,6 +800,7 @@ const MediaTitlePage = ({
         key={`season:${seasonPage.season.toString()}`}
         scope="season"
         mediaId={seasonFile}
+        {...(title.isMatched ? { artworkPart: { season: seasonPage.season, episode: null } } : {})}
         name={seasonName}
         aside={aired === null ? null : (firstAired?.slice(0, 4) ?? null)}
         imageUrl={
