@@ -113,7 +113,7 @@ const Rail = ({
         transition={prefersReducedMotion === true ? stillTransition : bounceSpring}
         className={cn(
           'relative z-10 flex items-end justify-between gap-4',
-          sizesCards ? (hasArrows ? 'px-[var(--rail-lane)]' : 'pr-2') : 'px-1',
+          sizesCards ? (hasArrows ? 'px-[var(--rail-lane)]' : '') : 'px-1',
         )}
       >
         <h2

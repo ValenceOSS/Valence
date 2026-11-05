@@ -53,10 +53,10 @@ const DevicesPanel = () => {
   const isHere = remote === null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-2">
       <div
         className={cn(
-          'flex items-center gap-3 rounded-lg p-3',
+          'flex items-center gap-3 rounded-[0.875rem] p-3',
           isHere ? 'bg-hover font-semibold text-text' : 'text-text',
         )}
       >
@@ -85,12 +85,12 @@ const DevicesPanel = () => {
       </div>
 
       <section aria-label={say('common.yourOtherDevices')} className="flex flex-col gap-1">
-        <h3 className="px-1 text-xs font-semibold text-text-muted">
+        <h3 className="px-3 text-xs font-semibold text-text-muted">
           {say('common.yourOtherDevices')}
         </h3>
 
         {others.length === 0 ? (
-          <p className="px-1 text-sm text-text-muted">
+          <p className="px-3 text-sm text-text-muted">
             {say('common.openValenceOnAnotherDeviceSigned')}
           </p>
         ) : (
@@ -107,7 +107,7 @@ const DevicesPanel = () => {
                     label={say('common.playOnLabel', { label: device.label })}
                     disabled={state.current === null && device.nowPlaying === null}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-hover',
+                      'flex w-full items-center gap-3 rounded-[0.875rem] p-3 text-left transition-colors duration-[var(--duration-fast)] hover-hover:hover:bg-hover',
                       isChosen ? 'bg-hover font-semibold text-text' : 'text-text',
                     )}
                     onClick={() => {

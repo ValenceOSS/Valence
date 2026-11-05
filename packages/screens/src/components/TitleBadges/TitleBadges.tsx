@@ -12,9 +12,10 @@ import type { TitleBadgesProps } from './TitleBadges.types';
  * says.
  *
  * @param detail - Everything known about the title, or nothing while it is still being read.
+ * @param isBrief - Whether to leave out the sentence of what it contains, where room is short.
  * @param className - Extra classes for the caller's own layout.
  */
-const TitleBadges = ({ detail, className }: TitleBadgesProps) => {
+const TitleBadges = ({ detail, isBrief = false, className }: TitleBadgesProps) => {
   if (detail === null) {
     return null;
   }
@@ -22,7 +23,7 @@ const TitleBadges = ({ detail, className }: TitleBadgesProps) => {
   const certification = detail.metadata.certification ?? null;
   const region = detail.metadata.certificationRegion ?? null;
   const badges = qualityBadges(detail);
-  const contains = sayContains(detail.metadata.advisories);
+  const contains = isBrief ? null : sayContains(detail.metadata.advisories);
 
   if ((certification === null || region === null) && badges.length === 0 && contains === null) {
     return null;

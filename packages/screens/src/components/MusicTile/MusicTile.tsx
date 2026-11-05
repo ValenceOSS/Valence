@@ -33,6 +33,7 @@ const PLAY = [
  * @param artwork - Its picture.
  * @param onOpen - Opens it.
  * @param onPlay - Plays it, where it can be played from here.
+ * @param onPointingAt - Told when the pointer reaches it, so what it opens can be read ahead.
  * @param menu - What can be done to it, from a menu that opens where it is right-clicked.
  * @param shape - Square for a record, round for a person, which the shadow under it follows.
  */
@@ -42,11 +43,12 @@ const MusicTile = ({
   artwork,
   onOpen,
   onPlay,
+  onPointingAt,
   menu,
   shape = 'square',
 }: MusicTileProps) => {
   const tile = (
-    <div className="group/tile relative min-w-0">
+    <div className="group/tile relative min-w-0" onPointerEnter={onPointingAt}>
       <Button
         variant="bare"
         size="none"
@@ -55,7 +57,7 @@ const MusicTile = ({
         onClick={onOpen}
       >
         <span
-          className={`block shadow-[var(--shadow-lifted)] ${shape === 'round' ? 'rounded-full' : 'rounded-md'} ${LIFTS}`}
+          className={`block shadow-[var(--shadow-lifted)] ${shape === 'round' ? 'rounded-full' : 'rounded-xl'} ${LIFTS}`}
         >
           {artwork}
         </span>

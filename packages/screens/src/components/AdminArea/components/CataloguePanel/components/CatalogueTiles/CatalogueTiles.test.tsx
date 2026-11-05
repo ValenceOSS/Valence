@@ -6,6 +6,7 @@ import { CatalogueTiles } from './CatalogueTiles';
 const COUNTS = {
   library: 4,
   downloading: 1,
+  queued: 0,
   missing: 0,
   toApprove: 2,
   failed: 0,

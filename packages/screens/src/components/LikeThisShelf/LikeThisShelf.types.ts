@@ -5,6 +5,9 @@ type LikeThisShelfProps = {
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect: (media: MediaSummary) => void;
   onOpenShow: (media: MediaSummary) => void;
+  kind?: 'film' | 'series';
+  externalId?: string | null | undefined;
+  onAsk?: ((asking: string) => void) | undefined;
 };
 
 export type { LikeThisShelfProps };

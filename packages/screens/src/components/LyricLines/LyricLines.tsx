@@ -125,18 +125,21 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
     <>
       <ol
         ref={listRef}
-        className={cn('flex flex-col', look === 'panel' ? 'gap-3' : 'gap-4 sm:gap-6')}
+        className={cn('flex flex-col', look === 'panel' ? 'gap-2.5' : 'gap-4 sm:gap-6')}
       >
         {lyrics.lines.map((line, index) => {
           const { atMs } = line;
           const standing = lyricStanding(index, at, lyrics.isSynced, look === 'immersive');
           const words = line.text === '' ? '♪' : line.text;
           const drawn = cn(
-            'origin-left text-left font-bold leading-[1.12] tracking-[-0.025em]',
+            'origin-left text-left',
+            look === 'panel'
+              ? 'text-[1.0625rem] font-semibold leading-snug tracking-[-0.01em]'
+              : 'font-bold leading-[1.12] tracking-[-0.025em]',
             look === 'immersive'
               ? 'text-[clamp(1.75rem,4vw,3.5rem)]'
               : look === 'panel'
-                ? 'text-xl'
+                ? ''
                 : 'text-[clamp(1.5rem,3.6vw,3rem)]',
           );
 

@@ -8,7 +8,7 @@ import type {
 } from '@ValenceContracts/schemas/Music';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
-type AlbumOrder = 'recent' | 'title' | 'year';
+type AlbumOrder = 'recent' | 'title' | 'year' | 'played';
 
 type ListAlbumsOptions = {
   order?: AlbumOrder;

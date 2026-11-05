@@ -38,7 +38,7 @@ const splitPersonCredits = (items: MediaSummary[]): PersonCredits => {
     return first === undefined ? [] : [first];
   });
 
-  return { films, shows, episodes };
+  return { films, shows, episodes: [...episodes].sort(inBroadcastOrder) };
 };
 
 export { splitPersonCredits };

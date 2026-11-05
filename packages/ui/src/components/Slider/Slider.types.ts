@@ -14,6 +14,7 @@ type SliderProps = {
   renderPreview?: (value: number) => ReactNode;
   valueLabel?: (value: number) => string;
   tone?: SliderTone;
+  isSlim?: boolean;
   isDisabled?: boolean;
   revealsThumb?: boolean;
   stretches?: readonly { from: number; to: number }[];

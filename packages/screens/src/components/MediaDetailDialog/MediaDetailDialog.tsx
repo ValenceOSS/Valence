@@ -68,7 +68,7 @@ import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
-import { SeasonMate } from './components/SeasonMate/SeasonMate';
+import { SeasonMate } from '@ValenceScreens/components/SeasonMate/SeasonMate';
 import { PartOfCollections } from '@ValenceScreens/components/PartOfCollections/PartOfCollections';
 import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectionDialog/AddToCollectionDialog';
 import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
@@ -100,6 +100,7 @@ const LOGO_BOX = 'max-h-[20svh] w-auto max-w-[min(70vw,30rem)] object-contain ob
  * @param onOpenShow - Told to open the page of a programme like this one, where that is offered.
  * @param onBack - Told to go back to whatever opened this.
  * @param backLabel - What going back is called.
+ * @param onAsk - Told to open a title from the catalogue, as its address names it.
  * @param isKept - Whether it is kept.
  * @param onToggleKept - Told to keep it, or stop.
  * @param isWatched - Whether this viewer has watched it through.
@@ -123,6 +124,7 @@ const MediaDetailDialog = ({
   onOpenShow,
   onBack,
   backLabel,
+  onAsk,
   isKept = false,
   onToggleKept,
   isWatched = false,
@@ -434,16 +436,23 @@ const MediaDetailDialog = ({
   ];
 
   return (
-    <Dialog label={shown.title} isOpen={media !== null} onClose={onClose} size="stage">
+    <Dialog label={shown.title} isOpen={media !== null} onClose={onClose} size="stage" edge={tint}>
       <DialogContent className="p-3 sm:p-4">
         <ScrolledTitle
           title={shown.title}
           artwork={shown.hasPoster ? artworkUrl(shown.id, 'poster', { size: 'small' }) : null}
+          detail={
+            <>
+              <MediaFacts media={shown} hasRuntime size="xs" tone="muted" />
+              <TitleBadges detail={detail} isBrief className="hidden flex-nowrap sm:flex" />
+            </>
+          }
           isShowing={hasScrolledPast}
+          tint={tint}
         >
           <Button
             isIconOnly
-            variant="ghost"
+            variant="confirm"
             size="sm"
             label={say('common.close')}
             onClick={onClose}
@@ -463,19 +472,10 @@ const MediaDetailDialog = ({
                   durationSeconds={shown.durationSeconds}
                   hasSound
                   controlsAtTop
-                  leavesTheTopLeft={onBack !== undefined}
-                  {...(onBack === undefined
-                    ? { closing: <ArtworkCloseButton onClose={onClose} /> }
-                    : {})}
-                  isRoomy
-                  repeats={false}
-                  fills
-                />
-              }
-              {...(onBack === undefined
-                ? {}
-                : {
-                    lead: (
+                  closing={
+                    onBack === undefined ? (
+                      <ArtworkCloseButton onClose={onClose} />
+                    ) : (
                       <ArtworkBackButton
                         label={
                           backLabel === undefined
@@ -484,8 +484,13 @@ const MediaDetailDialog = ({
                         }
                         onBack={onBack}
                       />
-                    ),
-                  })}
+                    )
+                  }
+                  isRoomy
+                  repeats={false}
+                  fills
+                />
+              }
             >
               <DialogHeadline className="flex flex-col items-start gap-8">
                 <DialogHeadlinePart
@@ -512,17 +517,19 @@ const MediaDetailDialog = ({
                 </DialogHeadlinePart>
 
                 <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
-                  <div className="w-full sm:w-[21rem]">{play}</div>
+                  <div className="w-full md:w-[21rem]">{play}</div>
 
                   <RoundActions
                     label={say('screens.mediaDetailDialog.moreToDoWithThis')}
                     actions={actions}
                     isCompact
-                    className="sm:ml-auto"
+                    className="md:ml-auto"
                   />
                 </DialogHeadlinePart>
               </DialogHeadline>
             </TitleHero>
+
+            <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
             <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
               <div className="flex min-w-0 flex-col gap-4">
@@ -601,8 +608,6 @@ const MediaDetailDialog = ({
                 )}
               </DialogHeadlinePart>
             </DialogHeadline>
-
-            <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
             <DialogSections isOpen className="flex flex-col gap-10 px-1 pb-8 pt-10 sm:px-2">
               {origin === null || origin.isReachable ? null : (
@@ -725,6 +730,9 @@ const MediaDetailDialog = ({
               {onInspect === undefined || onOpenShow === undefined || !isAFilm ? null : (
                 <LikeThisShelf
                   mediaId={shown.id}
+                  kind="film"
+                  externalId={shown.externalId}
+                  {...(onAsk === undefined ? {} : { onAsk })}
                   onPlay={onPlay}
                   onInspect={onInspect}
                   onOpenShow={onOpenShow}

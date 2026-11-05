@@ -139,7 +139,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
         }
       />
 
-      <div className={`pb-8 ${MUSIC_LANES.tracks}`}>
+      <div className={`min-w-0 pb-8 ${MUSIC_LANES.tracks}`}>
         {tracks.length === 0 ? (
           <NothingHere
             of={RecordIcon}
@@ -147,6 +147,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
           />
         ) : (
           <TrackList
+            hasHeading
             label={album.title}
             tracks={tracks}
             numbering="track"

@@ -2030,6 +2030,16 @@
     "context": "A status of a title in the admin Catalogue: it's in the library but nothing new is fetched for it."
   },
   {
+    "handler": "client.requests.titleStatusNames.nothingFound",
+    "text": "Nothing found",
+    "context": "A status in the admin catalogue: every search for this title's missing parts has finished and none found a release it could take."
+  },
+  {
+    "handler": "client.requests.titleStatusNames.queued",
+    "text": "Waiting to search",
+    "context": "A status in the admin catalogue: this title has been asked for, and is waiting its turn to be searched for or to come out."
+  },
+  {
     "handler": "client.requests.titleStatusNames.toApprove",
     "text": "To approve",
     "context": "A status of a title in the admin Catalogue: someone asked for it and it's waiting for an admin to approve it."
@@ -16276,14 +16286,44 @@
     "context": "Shown in the cache breakdown in the admin area."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.estimatedOnceDownloadsFinish",
+    "text": "Estimated once downloads finish",
+    "context": "On the admin overview's storage card, the label of the estimate of total storage after the downloads in the queue have finished."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.keptByValence",
     "text": "Kept by Valence, not counting the library",
     "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.stillToDownload.one",
+    "text": "{left} still to download, {count} download",
+    "context": "On the admin overview's storage card, under the estimate. {left} is a size such as 1.2 TB, {count} how many downloads are unfinished."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.stillToDownload.other",
+    "text": "{left} still to download, {count} downloads",
+    "context": "On the admin overview's storage card, under the estimate. {left} is a size such as 1.2 TB, {count} how many downloads are unfinished."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.whatLabelMeans",
     "text": "What {label} means",
     "context": "The label of a button in the cache breakdown in the admin area. {label} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.whatTheEstimateCounts",
+    "text": "What Valence keeps, plus the library, plus the full size of every unfinished download sent through Valence. Downloads without a size yet aren’t included, so the real figure may be higher.",
+    "context": "The hint explaining the estimate on the admin overview's storage card."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.withoutASizeYet.one",
+    "text": "{count} has no size yet, so it isn’t included",
+    "context": "On the admin overview's storage card, under the estimate: a download whose client has not reported its size."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.withoutASizeYet.other",
+    "text": "{count} have no size yet, so they aren’t included",
+    "context": "On the admin overview's storage card, under the estimate: downloads whose client has not reported their size."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.addATitle",
@@ -29817,9 +29857,44 @@
     "context": "Shown where your liked songs could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.musicPage.musicHome.afternoon",
+    "text": "Good afternoon",
+    "context": "The greeting at the top of the music home after midday, where the listener’s name is not known."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.afternoonName",
+    "text": "Good afternoon, {name}",
+    "context": "The greeting at the top of the music home after midday. {name} is the listener’s name."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.evening",
+    "text": "Good evening",
+    "context": "The greeting at the top of the music home in the evening, where the listener’s name is not known."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.eveningName",
+    "text": "Good evening, {name}",
+    "context": "The greeting at the top of the music home in the evening. {name} is the listener’s name."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.morning",
+    "text": "Good morning",
+    "context": "The greeting at the top of the music home before midday, where the listener’s name is not known."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.morningName",
+    "text": "Good morning, {name}",
+    "context": "The greeting at the top of the music home before midday. {name} is the listener’s name."
+  },
+  {
     "handler": "screens.musicPage.musicHome.readingYourMusic",
     "text": "Loading your music",
     "context": "The label of a skeleton in the music home in the music page."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.recentlyPlayed",
+    "text": "Recently played",
+    "context": "What the grid of small tiles at the top of the music home is called, for screen readers."
   },
   {
     "handler": "screens.musicPage.musicHome.seeAllWhat",
@@ -30992,6 +31067,16 @@
     "context": "Shown in the passkey setup."
   },
   {
+    "handler": "screens.personDialog.age",
+    "text": "{date} ({age} years old)",
+    "context": "A birth date with the person's age, in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.alsoKnownAs",
+    "text": "Also known as",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
     "handler": "screens.personDialog.asRole",
     "text": "as {role}",
     "context": "Text shown in the person dialog. {role} is filled in by the app."
@@ -31002,14 +31087,104 @@
     "context": "The heading of a dialog section in the person dialog."
   },
   {
+    "handler": "screens.personDialog.birthdate",
+    "text": "Birthdate",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.creditEpisodes",
+    "text": "{episodes} as {role}",
+    "context": "A credit in the person dialog's timeline. {episodes} is how many episodes, {role} who they played."
+  },
+  {
+    "handler": "screens.personDialog.creditRole",
+    "text": "as {role}",
+    "context": "A credit in the person dialog's timeline."
+  },
+  {
+    "handler": "screens.personDialog.diedOn",
+    "text": "Died",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.gender",
+    "text": "Gender",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.genderFemale",
+    "text": "Female",
+    "context": "A person's gender in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.genderMale",
+    "text": "Male",
+    "context": "A person's gender in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.genderNonBinary",
+    "text": "Non-binary",
+    "context": "A person's gender in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.instagram",
+    "text": "Instagram",
+    "context": "The label of a link to a person's Instagram page."
+  },
+  {
+    "handler": "screens.personDialog.knownCredits",
+    "text": "Known credits",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.knownFor",
+    "text": "Known for",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.moreFilms",
+    "text": "More films",
+    "context": "The heading of a row in the person dialog: films of theirs that are not on this server."
+  },
+  {
+    "handler": "screens.personDialog.moreShows",
+    "text": "More shows",
+    "context": "The heading of a row in the person dialog: shows of theirs that are not on this server."
+  },
+  {
+    "handler": "screens.personDialog.noBiographyProvided",
+    "text": "No biography provided",
+    "context": "Shown in the person dialog where the catalogue has no biography for them."
+  },
+  {
     "handler": "screens.personDialog.nothingIsKnownAboutThemAnd",
     "text": "No details are available for this person, and none of their work is on this server.",
     "context": "Text shown in the person dialog."
   },
   {
+    "handler": "screens.personDialog.personalInfo",
+    "text": "Personal info",
+    "context": "The heading of the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.pictures",
+    "text": "Pictures of this person",
+    "context": "What the dots under a person's pictures are for, read out by assistive technology."
+  },
+  {
+    "handler": "screens.personDialog.placeOfBirth",
+    "text": "Place of birth",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
     "handler": "screens.personDialog.somebodyInTheCast",
     "text": "Cast member",
     "context": "Shown in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.timeline",
+    "text": "Timeline",
+    "context": "The heading of a person's list of credits by year, in the person dialog."
   },
   {
     "handler": "screens.phoneSignIn.onlyContinueIfYouOpenedThis",

@@ -110,6 +110,7 @@ const MusicTransport = ({
       valueLabel={(value) => formatDuration(value)}
       isDisabled={!maySeek}
       revealsThumb
+      isSlim={!isImmersive}
       className="min-w-0 flex-1"
       onValueChange={setScrubbedTo}
       onValueCommit={seek}
@@ -160,11 +161,14 @@ const MusicTransport = ({
       />
 
       <Button
-        variant={isImmersive ? 'ghost' : 'confirm'}
+        variant="confirm"
         size={isImmersive ? 'md' : 'sm'}
         isIconOnly
         label={shown.isPlaying ? say('common.pause') : say('common.play')}
-        className={cn('relative', isImmersive ? 'size-14' : 'size-8')}
+        className={cn(
+          'relative active:scale-[0.95] motion-reduce:active:scale-100',
+          isImmersive ? 'size-16 rounded-[1.25rem]' : 'size-9 rounded-full',
+        )}
         disabled={!mayPlayPause}
         onClick={controls.playPause}
       >
@@ -185,7 +189,7 @@ const MusicTransport = ({
             ) : (
               <Icon
                 of={shown.isPlaying ? PauseFilledIcon : PlayFilledIcon}
-                size={isImmersive ? 36 : 18}
+                size={isImmersive ? 30 : 18}
               />
             )}
           </motion.span>

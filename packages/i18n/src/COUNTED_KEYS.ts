@@ -84,6 +84,8 @@ const COUNTED_KEYS = [
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned',
   'screens.admin.describeAuditDetail.attempts',
   'screens.adminArea.busyHoursGrid.count.plays',
+  'screens.adminArea.cacheBreakdown.stillToDownload',
+  'screens.adminArea.cacheBreakdown.withoutASizeYet',
   'screens.adminArea.cataloguePanel.count.nameFailed',
   'screens.adminArea.cataloguePanel.countApproved',
   'screens.adminArea.cataloguePanel.countDeclined',

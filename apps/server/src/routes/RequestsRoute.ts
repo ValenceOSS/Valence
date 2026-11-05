@@ -77,6 +77,8 @@ import {
   CatalogueDiscoverySchema,
   CatalogueGenreSchema,
   CataloguePageSchema,
+  PersonWorkSchema,
+  SimilarTitlesSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
   RequestProgressSchema,
@@ -1030,6 +1032,45 @@ const catalogueBrowseRoute = createRoute({
   }),
 });
 
+const personWorkRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/person/{personId}',
+  tags: ['Requests'],
+  summary:
+    'List the films and series the catalogue credits somebody with, each saying where it stands',
+  request: {
+    params: z.object({
+      personId: z.coerce.number().int().positive(),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'Their work, most popular first',
+      content: { 'application/json': { schema: PersonWorkSchema } },
+    },
+  }),
+});
+
+const similarTitlesRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/similar/{kind}/{id}',
+  tags: ['Requests'],
+  summary:
+    'List the films or series the catalogue recommends after a title, each saying where it stands',
+  request: {
+    params: z.object({
+      kind: z.enum(CATALOGUE_BROWSE_KINDS),
+      id: z.string().regex(/^\d{1,12}$/),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The titles most like it',
+      content: { 'application/json': { schema: SimilarTitlesSchema } },
+    },
+  }),
+});
+
 const catalogueGenresRoute = createRoute({
   method: 'get',
   path: '/api/requests/catalogue/genres',
@@ -1525,6 +1566,8 @@ export {
   discoverRoute,
   catalogueGenresRoute,
   catalogueBrowseRoute,
+  personWorkRoute,
+  similarTitlesRoute,
   catalogueSearchRoute,
   catalogueSearchPagesRoute,
   missingAlbumsRoute,

@@ -5,6 +5,7 @@ type ScrolledTitleProps = {
   artwork?: string | null;
   detail?: ReactNode;
   isShowing: boolean;
+  tint?: string | null;
   children?: ReactNode;
 };
 

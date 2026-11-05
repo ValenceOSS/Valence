@@ -8,7 +8,11 @@ type ASeasonRow = {
   key: string;
   at: number;
   episode: MediaSummary | null;
-  listed: { title: string; stillUrl?: string | null | undefined } | null;
+  listed: {
+    title: string;
+    stillUrl?: string | null | undefined;
+    overview?: string | null | undefined;
+  } | null;
   airs: string;
 };
 

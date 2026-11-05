@@ -83,6 +83,7 @@ const MixView = ({ mixId }: MixViewProps) => {
           <Skeleton label={say('common.madeForYou')} className="h-40 w-full" />
         ) : (
           <TrackList
+            hasHeading
             label={title}
             tracks={tracks}
             showsArtwork

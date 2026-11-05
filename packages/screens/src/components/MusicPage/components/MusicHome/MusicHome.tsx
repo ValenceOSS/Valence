@@ -4,6 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MixShelf } from '@ValenceScreens/components/MixShelf/MixShelf';
@@ -12,6 +13,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { MusicFeature } from './components/MusicFeature/MusicFeature';
+import { RecentlyPlayedGrid } from './components/RecentlyPlayedGrid/RecentlyPlayedGrid';
 import type { MusicView } from '@ValenceClient/music/musicView';
 import { say } from '@ValenceI18n/say';
 
@@ -20,8 +22,23 @@ const RECENT = 18;
 const ARTISTS = 18;
 
 /**
- * The front of the music section: whatever is playing, large, then rails of what somebody goes back
- * to — the mixes Valence made for them today, their playlists with their liked songs at the front, what was added lately, the artists in
+ * Greets somebody for the time of day, by name where it is known.
+ *
+ * @param hour - The hour, on their clock.
+ * @param name - What they are called.
+ * @returns The words.
+ */
+const greetingOf = (hour: number, name: string | null): string => {
+  const part = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+
+  return name === null
+    ? say(`screens.musicPage.musicHome.${part}`)
+    : say(`screens.musicPage.musicHome.${part}Name`, { name });
+};
+
+/**
+ * The front of the music section: a greeting, whatever is playing as the largest thing in a bento
+ * with the quick way back to what was played lately beside it, then rails of what somebody goes back to — the mixes Valence made for them today, their playlists with their liked songs at the front, what was added lately, the artists in
  * the library, and what the rest of the household has shared — each paging sideways the way the
  * film rows do, and each with a way through to the whole of it.
  */
@@ -29,6 +46,8 @@ const MusicHome = () => {
   const { open } = useMusicNavigation();
   const liked = useLikedSongsTile();
   const albums = useQuery(musicQueries.albums('recent'));
+  const played = useQuery(musicQueries.albums('played'));
+  const watching = useQuery(profileQueries.watching());
   const artists = useQuery(musicQueries.artists());
   const playlists = useQuery(musicQueries.playlists());
   const mixes = useQuery(musicQueries.mixes());
@@ -77,7 +96,16 @@ const MusicHome = () => {
 
   return (
     <div className="flex flex-col gap-12 pb-12">
-      <MusicFeature newest={recent[0] ?? null} />
+      <header className={`flex flex-col gap-5 pt-6 ${MUSIC_LANES.page}`}>
+        <h2 className="text-[clamp(1.75rem,4cqi,3rem)] font-bold tracking-[-0.03em] text-text">
+          {greetingOf(new Date().getHours(), watching.data?.name ?? null)}
+        </h2>
+
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
+          <MusicFeature newest={recent[0] ?? null} />
+          <RecentlyPlayedGrid albums={played.data ?? []} newest={recent} />
+        </div>
+      </header>
 
       <MixShelf mixes={mixes.data ?? []} />
 

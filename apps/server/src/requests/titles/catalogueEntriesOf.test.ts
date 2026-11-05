@@ -67,8 +67,17 @@ describe('catalogueEntriesOf', () => {
       [aShownRequest({ approval: 'awaiting' }), 'toApprove'],
       [aShownRequest({ items: [aShownRequestItem({ state: 'failed' })] }), 'failed'],
       [aShownRequest({ items: [aShownRequestItem({ state: 'downloading' })] }), 'downloading'],
-      [aShownRequest({ items: [aShownRequestItem({ state: 'wanted' })] }), 'missing'],
-      [aShownRequest({ items: [aShownRequestItem({ state: 'waiting' })] }), 'missing'],
+      [aShownRequest({ items: [aShownRequestItem({ state: 'wanted' })] }), 'queued'],
+      [aShownRequest({ items: [aShownRequestItem({ state: 'searching' })] }), 'queued'],
+      [aShownRequest({ items: [aShownRequestItem({ state: 'waiting' })] }), 'queued'],
+      [
+        aShownRequest({
+          items: [
+            aShownRequestItem({ state: 'wanted', lastSearchedAt: '2026-11-05T12:00:00.000Z' }),
+          ],
+        }),
+        'missing',
+      ],
     ] as const;
 
     for (const [request, status] of states) {
@@ -116,6 +125,26 @@ describe('catalogueEntriesOf', () => {
 
     expect(catalogueEntriesOf([], [request])).toEqual([
       expect.objectContaining({ status: 'library', held: 1, total: 2 }),
+    ]);
+  });
+
+  it('waits its turn while any of it has still to be searched for', () => {
+    const request = aShownRequest({
+      kind: 'series',
+      tmdbId: 1399,
+      items: [
+        aShownRequestItem({
+          season: 1,
+          episode: 1,
+          state: 'wanted',
+          lastSearchedAt: '2026-11-05T12:00:00.000Z',
+        }),
+        aShownRequestItem({ season: 1, episode: 2, state: 'wanted' }),
+      ],
+    });
+
+    expect(catalogueEntriesOf([], [request])).toEqual([
+      expect.objectContaining({ status: 'queued' }),
     ]);
   });
 
@@ -207,7 +236,7 @@ describe('catalogueEntriesOf', () => {
         catalogueId: 'B006K1RP8I',
         held: 1,
         total: 2,
-        status: 'missing',
+        status: 'queued',
       }),
     ]);
   });

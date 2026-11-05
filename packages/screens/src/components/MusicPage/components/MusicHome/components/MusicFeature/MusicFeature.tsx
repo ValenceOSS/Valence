@@ -5,9 +5,9 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import { albumArtworkUrl, fetchAlbum } from '@ValenceClient/music/fetchMusic';
-import { upcomingIn } from '@ValenceClient/music/playQueue';
+import { MusicBackdrop } from '@ValenceScreens/components/MusicBackdrop/MusicBackdrop';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
-import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { PLAY_ON_ARTWORK } from '@ValenceScreens/music/PLAY_ON_ARTWORK';
 import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
@@ -16,13 +16,11 @@ import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicFeatureProps } from './MusicFeature.types';
 import { say } from '@ValenceI18n/say';
 
-const UP_NEXT_SHOWN = 4;
-
 const SETTLING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
 
 /**
- * The top of the music section: whatever is playing, large, with what comes after it beside it —
- * or, when nothing is, the newest record in the library, ready to start.
+ * The large card at the front of the music home: whatever is playing, or, when nothing is, the newest
+ * record in the library, ready to start.
  *
  * It lights the room in the colours of its cover. When the song changes the feature dissolves
  * into the next one through a moment of blur rather than cutting, so the page keeps time with the
@@ -38,7 +36,6 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
   const song = state.current;
   const album = song?.album ?? newest;
   const cover = album !== null && album.hasArtwork ? albumArtworkUrl(album.id) : null;
-  const upNext = state.queue === null ? [] : upcomingIn(state.queue).slice(0, UP_NEXT_SHOWN);
   const rises = revealVariants(prefersReducedMotion);
   const moves = revealTransition(prefersReducedMotion);
 
@@ -64,21 +61,23 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
           ? say('screens.musicHome.musicFeature.newestInYourLibrary')
           : say('common.nowPlaying')
       }
-      className={`relative grid items-end gap-8 pt-6 pb-4 lg:grid-cols-[minmax(0,1fr)_20rem] ${MUSIC_LANES.page}`}
+      className="relative flex min-h-[20rem] items-end overflow-hidden rounded-[1.5rem] bg-surface-raised p-6 lg:p-8"
     >
+      <MusicBackdrop src={cover} />
+
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
           key={song?.id ?? album.id}
           {...dissolves}
           transition={SETTLING}
-          className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8"
+          className="relative flex w-full flex-col gap-6 sm:flex-row sm:items-end sm:gap-8"
         >
           <Button
             variant="bare"
             size="none"
             label={say('common.openTitle', { title: album.title })}
             hasTooltip={false}
-            className="block w-48 shrink-0 sm:w-60 lg:w-72"
+            className="block w-36 shrink-0 sm:w-44 lg:w-52"
             onClick={() => {
               open({ kind: 'album', id: album.id });
             }}
@@ -90,12 +89,12 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             variants={staggerVariants}
             initial="hidden"
             animate="shown"
-            className="@container flex min-w-0 flex-1 flex-col gap-3"
+            className="@container flex min-w-0 flex-1 flex-col gap-2"
           >
             <motion.span
               variants={rises}
               transition={moves}
-              className="text-xs font-semibold text-text-muted"
+              className="text-xs font-semibold text-on-scrim"
             >
               {song === null
                 ? say('screens.musicHome.musicFeature.newestInYourLibrary')
@@ -107,12 +106,12 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             <motion.h2
               variants={rises}
               transition={moves}
-              className="text-[clamp(1.5rem,11cqi,4.25rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
+              className="text-[clamp(1.5rem,11cqi,4.25rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-on-scrim"
             >
               {song?.title ?? album.title}
             </motion.h2>
 
-            <motion.p variants={rises} transition={moves} className="text-sm text-text-muted">
+            <motion.p variants={rises} transition={moves} className="text-sm text-on-scrim">
               {song === null
                 ? newest?.artist.name
                 : `${song.artists.map((artist) => artist.name).join(', ')} · ${song.album.title}`}
@@ -125,7 +124,8 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             >
               <Button
                 variant="confirm"
-                size="lg"
+                size="none"
+                className={`${PLAY_ON_ARTWORK} sm:w-64`}
                 onClick={() => {
                   if (song !== null) {
                     player.toggle();
@@ -170,40 +170,6 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
           </motion.div>
         </motion.div>
       </AnimatePresence>
-
-      {upNext.length === 0 ? null : (
-        <section aria-label={say('common.upNext')} className="hidden flex-col gap-2 lg:flex">
-          <h3 className="px-2 text-xs font-semibold text-text-muted">{say('common.upNext')}</h3>
-          <ol className="flex flex-col">
-            {upNext.map(({ at, track }) => (
-              <li key={`${track.id}-${at.toString()}`}>
-                <Button
-                  variant="row"
-                  size="none"
-                  hasTooltip={false}
-                  label={say('common.playTitleNow', { title: track.title })}
-                  className="items-center gap-3 p-2"
-                  onClick={() => {
-                    player.jumpTo(at);
-                  }}
-                >
-                  <MusicArtwork
-                    src={track.album.hasArtwork ? albumArtworkUrl(track.album.id) : null}
-                    label={track.album.title}
-                    className="size-10"
-                  />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium text-text">{track.title}</span>
-                    <span className="truncate text-xs text-text-muted">
-                      {track.artists.map((artist) => artist.name).join(', ')}
-                    </span>
-                  </span>
-                </Button>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
     </section>
   );
 };

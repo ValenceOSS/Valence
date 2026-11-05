@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
+import { Clock as ClockIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -44,6 +45,7 @@ import { say } from '@ValenceI18n/say';
  *   yours; the rows can only be dragged where it is given, and while no song is missing from it.
  * @param missing - Songs the list holds that the library does not have yet, each drawn in its place
  *   before the song it comes before.
+ * @param hasHeading - Whether to name the columns above the songs, for a page that is the list.
  */
 const TrackList = ({
   label,
@@ -56,6 +58,7 @@ const TrackList = ({
   onMove,
   onReorder,
   missing = [],
+  hasHeading = false,
 }: TrackListProps) => {
   const { state, player } = useMusicPlayer();
   const { open } = useMusicNavigation();
@@ -88,6 +91,25 @@ const TrackList = ({
 
   return (
     <div ref={containerRef} className="relative" onPointerMove={follow} onPointerLeave={clear}>
+      {hasHeading ? (
+        <div
+          aria-hidden
+          className={cn(
+            'mb-2 grid items-center gap-3 border-b border-border/50 px-3 pb-2 text-xs font-medium text-text-muted',
+            trackRowColumns(showsAlbum),
+          )}
+        >
+          <span className="flex size-8 items-center justify-center">#</span>
+          <span>{say('common.title')}</span>
+          {showsAlbum ? <span className="hidden md:block">{say('common.album')}</span> : null}
+          <span className="w-4" />
+          <span className="flex justify-end">
+            <Icon of={ClockIcon} size={14} />
+          </span>
+          <span className="w-8" />
+        </div>
+      ) : null}
+
       <HoverHighlight rect={rect} radius="md" />
 
       <Reorder.Group
@@ -134,7 +156,7 @@ const TrackList = ({
                   }
                 }}
                 className={cn(
-                  'group relative grid items-center gap-3 rounded-md px-3 py-1.5',
+                  'group relative grid items-center gap-3 rounded-[0.875rem] px-3 py-2',
                   isDraggable ? 'cursor-grab active:cursor-grabbing' : '',
                   trackRowColumns(showsAlbum),
                 )}
@@ -283,7 +305,7 @@ const TrackList = ({
 
                 <TrackMenu
                   track={track}
-                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                  className="opacity-0 transition-opacity duration-[var(--duration-fast)] group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
                   {...(onRemove === undefined
                     ? {}
                     : {

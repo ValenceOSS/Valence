@@ -30,6 +30,8 @@ import {
 import {
   fetchAskable,
   fetchCatalogueBrowse,
+  fetchPersonWork,
+  fetchSimilarTitles,
   fetchCatalogueGenres,
   fetchCatalogueSearch,
   fetchDiscover,
@@ -482,6 +484,35 @@ const missingAlbums = (playlistId: string, isEnabled = true) =>
   });
 
 /**
+ * What the catalogue recommends after a title, to offer what of it this server does not have.
+ *
+ * @param kind - Whether the title is a film or a series.
+ * @param id - The catalogue's identifier for it, or null where it has none.
+ * @param isEnabled - Whether whoever is asking may request anything.
+ * @returns The query.
+ */
+const similarTitles = (kind: 'film' | 'series', id: string | null, isEnabled: boolean) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'similarTitles', kind, id],
+    queryFn: () => fetchSimilarTitles(kind, id ?? ''),
+    enabled: id !== null && isEnabled,
+  });
+
+/**
+ * What the catalogue credits somebody with, to offer what of it this server does not have.
+ *
+ * @param personId - Who, or null where nobody is open.
+ * @param isEnabled - Whether whoever is asking may request anything.
+ * @returns The query.
+ */
+const personWork = (personId: number | null, isEnabled: boolean) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'personWork', personId],
+    queryFn: () => fetchPersonWork(personId ?? 0),
+    enabled: personId !== null && isEnabled,
+  });
+
+/**
  * One title that can be asked for, as its page shows it.
  *
  * @param kind - What kind of title it is.
@@ -588,6 +619,8 @@ const requestsQueries = {
   seriesSeasons,
   discover,
   catalogueBrowse,
+  personWork,
+  similarTitles,
   catalogueGenres,
   askableSearch,
   missingAlbums,

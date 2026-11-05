@@ -3836,6 +3836,10 @@ const discovery: Discovery = {
   search: (searching) =>
     catalogueProvider.searchPages?.(searching) ?? Promise.resolve({ matches: [], hasMore: false }),
   genres: (kind) => catalogueProvider.genres?.(kind) ?? Promise.resolve([]),
+  personWork: (personId) =>
+    catalogueProvider.readPersonWork?.(personId) ?? Promise.resolve({ titles: [], timeline: [] }),
+  similarTitles: (externalId, kind) =>
+    catalogueProvider.readSimilarTitles?.(externalId, kind) ?? Promise.resolve([]),
   studios: () =>
     studioed.keep('studios', () => catalogueProvider.studios?.() ?? Promise.resolve([])),
   charts: () => charted.keep('charts', () => readDeezerCharts(musicWeb)),

@@ -7,6 +7,7 @@ type MusicTileProps = {
   artwork: ReactNode;
   onOpen: () => void;
   onPlay?: () => void;
+  onPointingAt?: () => void;
   menu?: ActionMenuGroup[];
   shape?: 'square' | 'round';
 };

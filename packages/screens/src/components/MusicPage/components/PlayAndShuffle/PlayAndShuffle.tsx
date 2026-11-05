@@ -3,6 +3,7 @@ import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { PLAY_ON_ARTWORK } from '@ValenceScreens/music/PLAY_ON_ARTWORK';
 import type { PlayAndShuffleProps } from './PlayAndShuffle.types';
 
 /**
@@ -30,16 +31,16 @@ const PlayAndShuffle = ({
     <>
       <Button
         variant="confirm"
-        size="lg"
-        isIconOnly
-        label={playLabel}
-        className="size-14"
+        size="none"
+        data-music-play
+        className={PLAY_ON_ARTWORK}
         disabled={tracks.length === 0}
         onClick={() => {
           player.play(tracks, 0, { source, isOrdered });
         }}
       >
-        <Icon of={PlayFilledIcon} size={24} />
+        <Icon of={PlayFilledIcon} size={20} />
+        {playLabel}
       </Button>
 
       <Button

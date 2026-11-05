@@ -102,6 +102,7 @@ const LikedView = () => {
           />
         ) : (
           <TrackList
+            hasHeading
             label={say('common.likedSongs2')}
             tracks={tracks}
             showsArtwork

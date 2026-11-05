@@ -8,6 +8,7 @@ const CatalogueTabSchema = z.enum(CATALOGUE_TABS);
 const TITLE_STATUSES = [
   'library',
   'downloading',
+  'queued',
   'missing',
   'toApprove',
   'failed',

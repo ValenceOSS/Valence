@@ -7,6 +7,7 @@ type PersonDialogProps = {
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect: (media: MediaSummary) => void;
   onOpenShow?: (media: MediaSummary) => void;
+  onAsk?: (asking: string) => void;
   onBack?: () => void;
   backLabel?: string;
 };

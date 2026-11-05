@@ -17,6 +17,10 @@ import { scrollerAbove } from '@ValenceUI/scrollerAbove';
  * top and never passes it however far down the page somebody goes. The top of the window stays where
  * it is, which is the whole point of it.
  *
+ * Nothing has passed until something has actually been scrolled. A mark at the foot of artwork still
+ * loading sits at the very top of the scroller, and a dialog growing into place can put it a fraction
+ * above that, which would bring the bar up on a dialog nobody has touched.
+ *
  * Hands back something to attach rather than taking a ref, because a dialog's contents are not
  * there until it opens. A ref object is the same object before and after that, so an effect
  * watching one runs once against nothing and never runs again; this is told the moment the element
@@ -49,7 +53,7 @@ const useHasScrolledPast = (): {
 
       const above = listensOn === window ? 0 : scroller.getBoundingClientRect().top;
 
-      setHasPassed(watched.getBoundingClientRect().top < above);
+      setHasPassed(scroller.scrollTop > 0 && watched.getBoundingClientRect().top < above);
     };
 
     const ask = () => {

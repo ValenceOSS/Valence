@@ -370,6 +370,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
           />
         ) : (
           <TrackList
+            hasHeading
             label={playlist.name}
             tracks={tracks}
             missing={missing}

@@ -12,7 +12,9 @@ import { say } from '@ValenceI18n/say';
  * @returns The bar.
  */
 const meterOf = (entry: CatalogueEntry): MediaCardMeter => {
-  const isPart = (entry.status === 'downloading' || entry.status === 'missing') && entry.total > 0;
+  const isPart =
+    (entry.status === 'downloading' || entry.status === 'queued' || entry.status === 'missing') &&
+    entry.total > 0;
   const status = TITLE_STATUS_NAMES[entry.status];
 
   return {

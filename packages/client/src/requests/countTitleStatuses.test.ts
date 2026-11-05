@@ -13,6 +13,7 @@ describe('countTitleStatuses', () => {
     ).toEqual({
       library: 1,
       downloading: 0,
+      queued: 0,
       missing: 0,
       toApprove: 0,
       failed: 2,

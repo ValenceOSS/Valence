@@ -37,7 +37,7 @@ const QueuedSong = ({
     <MusicArtwork
       src={track.album.hasArtwork ? albumArtworkUrl(track.album.id) : null}
       label={track.album.title}
-      className="size-10"
+      className="size-11"
     />
     <span className="flex min-w-0 flex-col text-left">
       <span
@@ -92,14 +92,14 @@ const QueuePanel = () => {
   return (
     <div className="flex flex-col gap-5">
       <section aria-label={say('common.nowPlaying')} className="flex flex-col gap-2">
-        <h3 className="px-2 text-sm font-semibold text-text">{say('common.nowPlaying')}</h3>
-        <div className="rounded-md px-2 py-1.5">
+        <h3 className="px-2 text-xs font-semibold text-text-muted">{say('common.nowPlaying')}</h3>
+        <div className="rounded-[0.875rem] bg-hover p-2">
           <QueuedSong track={current} isCurrent isPick={queue.picks.includes(current.id)} />
         </div>
       </section>
 
       <section aria-label={say('common.nextUp')} className="flex flex-col gap-2">
-        <h3 className="px-2 text-sm font-semibold text-text">
+        <h3 className="px-2 text-xs font-semibold text-text-muted">
           {queue.source === null
             ? say('common.nextUp')
             : say('common.nextFromName', { name: queue.source.name })}
@@ -140,7 +140,7 @@ const QueuePanel = () => {
                     as="li"
                     value={at}
                     data-highlight
-                    className="group flex cursor-grab items-center justify-between gap-2 rounded-md px-2 py-1.5 active:cursor-grabbing"
+                    className="group flex cursor-grab items-center justify-between gap-2 rounded-md p-2 active:cursor-grabbing"
                     onDragStart={() => {
                       draggedRef.current = at;
                     }}

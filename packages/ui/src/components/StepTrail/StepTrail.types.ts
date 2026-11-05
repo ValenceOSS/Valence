@@ -21,6 +21,8 @@ type StepTrailAside =
 type StepTrailStep = {
   id: string;
   label: string;
+  detail?: string | undefined;
+  onSelect?: (() => void) | undefined;
   mark: StepTrailMarkKind;
   aside?: StepTrailAside | undefined;
   lines?: readonly StepTrailLine[];
@@ -30,6 +32,7 @@ type StepTrailStep = {
 type StepTrailProps = {
   label: string;
   steps: readonly StepTrailStep[];
+  isNewestFirst?: boolean;
   className?: string;
 };
 

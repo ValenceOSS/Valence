@@ -21,6 +21,7 @@ type RailCardProps = {
   drawsLarge?: boolean;
   growsOnHover?: boolean;
   flag?: string;
+  badges?: string[];
 };
 
 export type { RailCardProps };

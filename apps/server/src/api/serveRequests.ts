@@ -35,6 +35,8 @@ import {
   musicCatalogueRoute,
   discoverRoute,
   catalogueBrowseRoute,
+  personWorkRoute,
+  similarTitlesRoute,
   catalogueGenresRoute,
   decideMediaRequestsRoute,
   liftMediaBlockRoute,
@@ -105,6 +107,7 @@ import { courSeasonsOf } from '@ValenceContracts/functions/courSeasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
 import { progressOf } from '@ValenceServer/requests/progressOf';
 import { withOfferedProtocol } from '@ValenceServer/plugins/downloadClients/withOfferedProtocol';
@@ -563,6 +566,99 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         titles: await standTitles(titles, discovery.lookup, await everyRequest()),
         page,
         hasMore: browsed.hasMore,
+      },
+      200,
+    );
+  });
+
+  app.openapi(personWorkRoute, async (context) => {
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const [work, kinds] = await Promise.all([
+      discovery.personWork(context.req.valid('param').personId),
+      requestableKinds(),
+    ]);
+
+    const asTitles = (matches: readonly CatalogueMatch[]) =>
+      matches.flatMap((match) => {
+        const kind = match.kind === 'movie' ? ('film' as const) : ('series' as const);
+
+        return kinds.has(kind)
+          ? [
+              {
+                kind,
+                id: match.externalId,
+                title: match.title,
+                subtitle: null,
+                year: match.year,
+                overview: match.overview,
+                posterUrl: match.posterUrl,
+              },
+            ]
+          : [];
+      });
+    const requests = await everyRequest();
+    const [titles, stoodCredits] = await Promise.all([
+      standTitles(asTitles(work.titles), discovery.lookup, requests),
+      standTitles(asTitles(work.timeline), discovery.lookup, requests),
+    ]);
+    const creditOf = new Map(work.timeline.map((credit) => [credit.externalId, credit]));
+
+    return context.json(
+      {
+        titles,
+        timeline: stoodCredits.map((title) => ({
+          ...title,
+          role: creditOf.get(title.id)?.role ?? null,
+          episodeCount: creditOf.get(title.id)?.episodeCount ?? null,
+        })),
+      },
+      200,
+    );
+  });
+
+  app.openapi(similarTitlesRoute, async (context) => {
+    const { kind, id } = context.req.valid('param');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json({ titles: [] }, 200);
+    }
+
+    const matches = await discovery.similarTitles(id, kind === 'film' ? 'movie' : 'tv');
+
+    return context.json(
+      {
+        titles: await standTitles(
+          matches.map((match) => ({
+            kind,
+            id: match.externalId,
+            title: match.title,
+            subtitle: null,
+            year: match.year,
+            overview: match.overview,
+            posterUrl: match.posterUrl,
+          })),
+          discovery.lookup,
+          await everyRequest(),
+        ),
       },
       200,
     );

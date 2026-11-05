@@ -13,9 +13,10 @@ import { say } from '@ValenceI18n/say';
  *
  * @param episode - The episode.
  * @param watched - How much of it has been watched, where any has.
+ * @param namesItsShow - Whether to say which show it is from, where nothing around it does.
  * @param onSelect - Told the episode was chosen.
  */
-const SeasonMate = ({ episode, watched, onSelect }: SeasonMateProps) => {
+const SeasonMate = ({ episode, watched, namesItsShow = false, onSelect }: SeasonMateProps) => {
   const number =
     episode.episodeNumber === null || episode.episodeNumber === undefined
       ? null
@@ -55,6 +56,12 @@ const SeasonMate = ({ episode, watched, onSelect }: SeasonMateProps) => {
         )}
 
         <span className="flex min-w-0 flex-col gap-0.5">
+          {!namesItsShow ||
+          episode.seriesTitle === null ||
+          episode.seriesTitle === undefined ? null : (
+            <span className="truncate text-xs text-text-muted">{episode.seriesTitle}</span>
+          )}
+
           <span className="truncate text-sm font-medium text-text">
             {number === null ? episode.title : `${number}. ${episode.title}`}
           </span>

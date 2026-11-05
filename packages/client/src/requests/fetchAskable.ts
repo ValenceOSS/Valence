@@ -4,6 +4,8 @@ import {
   CatalogueDiscoverySchema,
   CatalogueGenreSchema,
   CataloguePageSchema,
+  PersonWorkSchema,
+  SimilarTitlesSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
   RequestProgressSchema,
@@ -14,6 +16,8 @@ import type {
   CatalogueFilters,
   CatalogueGenre,
   CataloguePage,
+  PersonWork,
+  SimilarTitles,
   CatalogueSearch,
   CatalogueTitle,
   CatalogueTitleDetail,
@@ -60,6 +64,28 @@ const fetchCatalogueBrowse = (
     }).toString()}`,
     CataloguePageSchema,
   );
+
+/**
+ * Reads what the catalogue recommends after a title, whether or not this server holds it.
+ *
+ * @param kind - Whether the title is a film or a series.
+ * @param id - The catalogue's identifier for it.
+ * @returns The titles most like it, each saying where it stands.
+ */
+const fetchSimilarTitles = (kind: 'film' | 'series', id: string): Promise<SimilarTitles> =>
+  readFromServer(
+    `/api/requests/catalogue/similar/${kind}/${encodeURIComponent(id)}`,
+    SimilarTitlesSchema,
+  );
+
+/**
+ * Reads what the catalogue credits somebody with, whether or not this server holds it.
+ *
+ * @param personId - The catalogue's identifier for them.
+ * @returns Their films and series, most popular first, each saying where it stands.
+ */
+const fetchPersonWork = (personId: number): Promise<PersonWork> =>
+  readFromServer(`/api/requests/catalogue/person/${personId.toString()}`, PersonWorkSchema);
 
 /**
  * Reads a page of the films or series a search finds to ask for, past the shelf's worth of them,
@@ -156,6 +182,8 @@ const findMissingAlbums = async (playlistId: string): Promise<MissingAlbums> => 
 export {
   fetchAskable,
   fetchCatalogueBrowse,
+  fetchPersonWork,
+  fetchSimilarTitles,
   fetchCatalogueGenres,
   fetchCatalogueSearch,
   fetchDiscover,
