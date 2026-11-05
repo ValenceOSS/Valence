@@ -25,6 +25,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceUI/PanelCard';
@@ -65,7 +66,10 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
 import { MediaTitleHero } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/MediaTitleHero/MediaTitleHero';
 import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
-import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
+import type {
+  TitlePlace,
+  TitleTab,
+} from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import { ArtworkChooser } from '@ValenceScreens/components/AdminArea/components/ArtworkChooser/ArtworkChooser';
 import { TitlePeople } from './components/TitlePeople/TitlePeople';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
@@ -163,6 +167,7 @@ const MediaTitlePage = ({
   const at = titlePlace ?? localPlace;
   const moveTo = onTitlePlace ?? setLocalPlace;
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
+  const [isUnmatching, setIsUnmatching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isNumbering, setIsNumbering] = useState(false);
   const [markingExtra, setMarkingExtra] = useState<{
@@ -208,13 +213,14 @@ const MediaTitlePage = ({
    *
    * @param season - The season it is in.
    * @param episode - The episode.
+   * @param tab - The tab to open it on, where stepping from one episode to the next keeps it.
    */
-  const openEpisode = (season: TitleSeason, episode: TitleEpisode) => {
+  const openEpisode = (season: TitleSeason, episode: TitleEpisode, tab: TitleTab = NOWHERE.tab) => {
     if (episode.mediaId === null || episode.mediaId === undefined) {
       return;
     }
 
-    moveTo({ ...NOWHERE, season: season.season, episode: episode.mediaId });
+    moveTo({ ...NOWHERE, tab, season: season.season, episode: episode.mediaId });
   };
 
   /**
@@ -231,9 +237,10 @@ const MediaTitlePage = ({
    * Opens a season's page.
    *
    * @param season - The season.
+   * @param tab - The tab to open it on, where stepping from one season to the next keeps it.
    */
-  const openSeasonPage = (season: number) => {
-    moveTo({ ...NOWHERE, season, isSeasonPage: true });
+  const openSeasonPage = (season: number, tab: TitleTab = NOWHERE.tab) => {
+    moveTo({ ...NOWHERE, tab, season, isSeasonPage: true });
   };
 
   const episodeSeason = seasons.find((one) =>
@@ -333,16 +340,7 @@ const MediaTitlePage = ({
               label: say('screens.adminArea.mediaTitlePage.unmatch'),
               icon: <Icon of={UnlinkFilledIcon} size={15} />,
               onChoose: () => {
-                void unmatchTitle(title.lead.id).then((answer) => {
-                  if (answer.kind === 'refused') {
-                    notify.failed(answer.reason);
-
-                    return;
-                  }
-
-                  notify.worked(say('screens.adminArea.correctionPicker.itWillSayWhatItsFiles'));
-                  follow(answer.jobId);
-                });
+                setIsUnmatching(true);
               },
             },
           ]
@@ -771,14 +769,14 @@ const MediaTitlePage = ({
           before === undefined
             ? undefined
             : () => {
-                openEpisode(episodeSeason, before);
+                openEpisode(episodeSeason, before, at.tab);
               }
         }
         onNext={
           after === undefined
             ? undefined
             : () => {
-                openEpisode(episodeSeason, after);
+                openEpisode(episodeSeason, after, at.tab);
               }
         }
       />
@@ -855,14 +853,14 @@ const MediaTitlePage = ({
           previousSeason === undefined
             ? undefined
             : () => {
-                openSeasonPage(previousSeason.season);
+                openSeasonPage(previousSeason.season, at.tab);
               }
         }
         onNext={
           nextSeason === undefined
             ? undefined
             : () => {
-                openSeasonPage(nextSeason.season);
+                openSeasonPage(nextSeason.season, at.tab);
               }
         }
       />
@@ -1060,7 +1058,7 @@ const MediaTitlePage = ({
                     : [
                         {
                           id: 'edit',
-                          label: say('common.editDetails'),
+                          label: say('screens.adminArea.mediaTitlePage.openTheSeasonsPage'),
                           onChoose: () => {
                             openSeasonPage(season.season);
                           },
@@ -1202,6 +1200,29 @@ const MediaTitlePage = ({
           />
         </TabPanel>
       </motion.div>
+
+      <ConfirmDialog
+        isOpen={isUnmatching}
+        title={say('screens.adminArea.mediaTitlePage.unmatchName', { name: title.name })}
+        detail={say('screens.adminArea.mediaTitlePage.itGoesBackToItsFileName')}
+        confirmLabel={say('screens.adminArea.mediaTitlePage.unmatch')}
+        onClose={() => {
+          setIsUnmatching(false);
+        }}
+        onConfirm={() => {
+          setIsUnmatching(false);
+          void unmatchTitle(title.lead.id).then((answer) => {
+            if (answer.kind === 'refused') {
+              notify.failed(answer.reason);
+
+              return;
+            }
+
+            notify.worked(say('screens.adminArea.correctionPicker.itWillSayWhatItsFiles'));
+            follow(answer.jobId);
+          });
+        }}
+      />
 
       <RefreshTitleDialog
         mediaId={title.lead.id}

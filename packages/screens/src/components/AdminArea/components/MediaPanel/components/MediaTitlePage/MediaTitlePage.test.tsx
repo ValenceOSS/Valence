@@ -153,13 +153,19 @@ describe('MediaTitlePage', () => {
     expect(screen.queryByRole('menuitem', { name: 'Open folder' })).not.toBeInTheDocument();
   });
 
-  it('unmatches a matched title, and offers it only where it is matched', async () => {
+  it('unmatches a matched title once asked, and offers it only where it is matched', async () => {
     const user = userEvent.setup();
 
     unmatch.mockResolvedValue({ kind: 'reached', count: 1, jobId: null });
     drawn(titleOf({ id: 'film', externalId: '603' }));
     await user.click(screen.getByRole('button', { name: /^More for /u }));
     await user.click(await screen.findByRole('menuitem', { name: 'Unmatch' }));
+
+    expect(unmatch).not.toHaveBeenCalled();
+
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Unmatch' }),
+    );
 
     expect(unmatch).toHaveBeenCalledWith('film');
   });

@@ -172,7 +172,7 @@ type OwnArtwork = Record<ArtworkKind, OwnPicture | null>;
 type MetadataProvider = {
   name: string;
   describe: (facts: MediaFacts) => Promise<Metadata | null>;
-  describeSeries?: (externalId: string) => Promise<SeriesShape | null>;
+  describeSeries?: (externalId: string, order?: string) => Promise<SeriesShape | null>;
   describeNextEpisode?: (externalId: string) => Promise<NextEpisode | null>;
   describeAiringSeason?: (externalId: string) => Promise<AiringSeason | null>;
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
@@ -254,14 +254,17 @@ const resolveAiringSeason = (
  * @param providers - The providers to ask, in order of preference.
  * @param externalId - The catalogue's identifier for the programme.
  * @param onProblem - Told when a provider fails, so a scan can report it without stopping.
+ * @param order - Another of the catalogue's orders the programme's files are numbered in, where one
+ *   was chosen, so its seasons and episodes are laid out as the files are.
  * @returns The shape of the series, or null where nobody could say.
  */
 const resolveSeriesShape = (
   providers: MetadataProvider[],
   externalId: string,
   onProblem?: (provider: string, reason: Said) => void,
+  order?: string,
 ): Promise<SeriesShape | null> =>
-  firstAnswerOf(providers, (provider) => provider.describeSeries?.(externalId), onProblem);
+  firstAnswerOf(providers, (provider) => provider.describeSeries?.(externalId, order), onProblem);
 
 /**
  * Asks each metadata provider in turn about one file and takes the first real answer, so a plugin's

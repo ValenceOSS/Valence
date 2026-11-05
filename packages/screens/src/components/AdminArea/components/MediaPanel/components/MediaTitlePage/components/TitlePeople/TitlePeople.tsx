@@ -130,6 +130,11 @@ const TitlePeople = ({
                 label={say('screens.adminArea.titlePeople.addAPerson')}
                 value={typed}
                 onValueChange={setTyped}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    setTyped('');
+                  }
+                }}
               />
               {looking.length < 2 ? null : (
                 <ul className="flex flex-col divide-y divide-line rounded-lg ring-1 ring-line">
@@ -187,7 +192,7 @@ const TitlePeople = ({
                       </Button>
                     </li>
                   ))}
-                  <li className="p-2">
+                  <li className="flex flex-wrap items-center justify-between gap-2 p-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -196,6 +201,15 @@ const TitlePeople = ({
                       }}
                     >
                       {say('screens.adminArea.titlePeople.addNameByNameOnly', { name: looking })}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setTyped('');
+                      }}
+                    >
+                      {say('common.cancel')}
                     </Button>
                   </li>
                 </ul>

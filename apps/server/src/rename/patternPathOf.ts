@@ -24,7 +24,7 @@ const namedWithYear = (title: string, year: number | null): string =>
 /**
  * Where a file belongs under the library's naming pattern, the one Valence files requests by and
  * Jellyfin, Plex and Emby read: a film as its title and year inside a folder of the same name, a
- * further version of it with its name after a dash, and an episode inside its show's folder and its
+ * further version of it with its name after a dash, a film's quality after a space, and an episode inside its show's folder and its
  * season's, named for its show, its season and episode, and its title. The catalogue number a
  * folder carries goes on the folder again, never on the file.
  *
@@ -37,12 +37,10 @@ const patternPathOf = (file: PatternFile): string => {
   if (file.series === null) {
     const named = namedWithYear(file.title, file.year);
     const label = file.versionLabel === null ? '' : safeFileName(file.versionLabel);
+    const quality = file.quality === null ? '' : safeFileName(file.quality);
+    const after = label !== '' ? ` - ${label}` : quality !== '' ? ` ${quality}` : '';
 
-    return join(
-      file.libraryPath,
-      tagged(named),
-      `${named}${label === '' ? '' : ` - ${label}`}.${file.extension}`,
-    );
+    return join(file.libraryPath, tagged(named), `${named}${after}.${file.extension}`);
   }
 
   const { series } = file;

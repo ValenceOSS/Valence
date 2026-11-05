@@ -345,7 +345,9 @@ const ArtworkChooser = ({ subject, onChanged, part }: ArtworkChooserProps) => {
                         height: option.height.toString(),
                       })}
                       {' · '}
-                      {sayCount('common.count.votes', option.votes)}
+                      {option.source === 'fanart'
+                        ? say('screens.adminArea.artworkChooser.fromFanartTv')
+                        : sayCount('common.count.votes', option.votes)}
                     </span>
                   </li>
                 ))}

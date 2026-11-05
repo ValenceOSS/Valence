@@ -121,4 +121,20 @@ describe('TitlePeople', () => {
       });
     });
   });
+
+  it('puts the search away with Escape or Cancel', async () => {
+    const user = userEvent.setup();
+
+    render(<TitlePeople mediaId="a" />, { wrapper: CacheScope });
+    await user.type(await screen.findByLabelText('Add a person'), 'Third');
+    await screen.findByRole('button', { name: 'Add Third Person to the cast' });
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByLabelText('Add a person')).toHaveValue('');
+
+    await user.type(screen.getByLabelText('Add a person'), 'Third');
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(screen.getByLabelText('Add a person')).toHaveValue('');
+  });
 });

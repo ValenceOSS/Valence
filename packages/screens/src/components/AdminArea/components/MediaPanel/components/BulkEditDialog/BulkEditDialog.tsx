@@ -66,9 +66,10 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
   const [sent, setSent] = useState(0);
   const sample = (targets ?? []).slice(0, BULK_TITLES_AT_ONCE);
   const fields = useQuery({
-    queryKey: ['bulk-title-fields', sample, appliesTo],
+    queryKey: [...adminQueries.key, 'bulk-title-fields', sample, appliesTo],
     queryFn: () => readTitlesTogether({ targets: sample, appliesTo }),
     enabled: sample.length > 0,
+    staleTime: 0,
   });
   const words = useQueries({
     queries: TITLE_VALUE_FIELDS.map((field) => adminQueries.titleValues(field, libraryId)),

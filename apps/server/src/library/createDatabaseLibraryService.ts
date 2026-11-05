@@ -514,26 +514,36 @@ const createDatabaseLibraryService = ({
    * Shortening this alone would buy nothing: the question would be asked again and served from the
    * cache underneath. See VAL-221.
    *
+   * A programme whose files follow another of the catalogue's orders is laid out in that order,
+   * as its files are numbered.
+   *
    * @param detail - The show being drawn.
    * @returns Its shape, or null where nothing identifies the programme.
    */
   const shapeOf = async (detail: ShowDetail): Promise<SeriesShape | null> => {
     const [row] = await db
-      .select({ externalId: mediaItem.externalId })
+      .select({ externalId: mediaItem.externalId, episodeOrder: series.episodeOrder })
       .from(mediaItem)
+      .leftJoin(series, eq(series.id, mediaItem.seriesId))
       .where(eq(mediaItem.id, detail.coverMediaId))
       .limit(1);
 
     const externalId = row?.externalId ?? null;
+    const order = row?.episodeOrder ?? null;
 
     if (externalId === null || externalId === '') {
       return null;
     }
 
-    return shapes.keep(externalId, () =>
-      resolveSeriesShape(providers ?? [], externalId, (provider, reason) => {
-        onProblem?.(provider, reason);
-      }),
+    return shapes.keep(order === null ? externalId : `${externalId}?order=${order}`, () =>
+      resolveSeriesShape(
+        providers ?? [],
+        externalId,
+        (provider, reason) => {
+          onProblem?.(provider, reason);
+        },
+        order ?? undefined,
+      ),
     );
   };
 
@@ -1951,7 +1961,7 @@ const createDatabaseLibraryService = ({
         if (held?.externalId !== null && held?.externalId !== undefined) {
           const { externalId } = held;
 
-          shapes.forgetWhere((key) => key === externalId);
+          shapes.forgetWhere((key) => key === externalId || key.startsWith(`${externalId}?`));
 
           for (const provider of providers ?? []) {
             provider.forgetAnswersAbout?.(externalId, held.seriesTitle === null ? 'movie' : 'tv');

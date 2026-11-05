@@ -11,6 +11,7 @@ const ArtworkOptionSchema = z.object({
   width: z.number().int().nonnegative(),
   height: z.number().int().nonnegative(),
   votes: z.number().int().nonnegative(),
+  source: z.enum(['catalogue', 'fanart']).optional(),
 });
 
 const ArtworkChoicesSchema = z.object({

@@ -155,10 +155,12 @@ const RenameToPatternDialog = ({ mediaIds, onClose }: RenameToPatternDialogProps
                           }}
                         />
                         <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="break-all font-body text-xs text-text-muted line-through">
+                          <span className="break-words font-body text-xs text-text-muted line-through">
                             {tails.from}
                           </span>
-                          <span className="break-all font-body text-sm text-text">{tails.to}</span>
+                          <span className="break-words font-body text-sm text-text">
+                            {tails.to}
+                          </span>
                           <span className="flex flex-wrap items-center gap-2">
                             {file.state === 'taken' ? (
                               <Badge size="sm" tone="warning">

@@ -19,6 +19,7 @@ import { isSidecarOf } from '@ValenceServer/library/isSidecarOf';
 import { removeEmptyFoldersUpTo } from '@ValenceServer/library/removeEmptyFoldersUpTo';
 import { idTagOf } from '@ValenceServer/rename/idTagOf';
 import { patternPathOf } from '@ValenceServer/rename/patternPathOf';
+import { tailAfterYearOf } from '@ValenceServer/rename/tailAfterYearOf';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
   PatternRenamePlan,
@@ -84,7 +85,8 @@ const numberedPathOf = async (to: string, claimed: ReadonlySet<string>): Promise
  * everything viewers have of them goes with them.
  *
  * A folder that holds only what is being renamed is renamed whole, so artwork, an `.nfo` and extras
- * kept in it go along; otherwise each file moves out of it alone. A file already where it belongs
+ * kept in it go along; otherwise each file moves out of it alone. A lone film keeps what its name
+ * said after its year, its quality or edition, as Valence's requests name a film. A file already where it belongs
  * is left, as is an extra, which goes only with its film's folder, one not matched to the
  * catalogue, whose name would only be guessed, and a film kept as several files.
  *
@@ -261,15 +263,23 @@ const createPatternRenames = ({ db, queueReadAgain }: PatternRenameDependencies)
       const folders = relative(root, row.path).split(sep);
       const isEpisode =
         row.seriesId !== null && row.seasonNumber !== null && row.episodeNumber !== null;
+      const isVersioned = row.parentId !== null || hasVersions.has(row.id);
+      const tail = isEpisode
+        ? null
+        : tailAfterYearOf(basename(row.path, extname(row.path)), row.year);
       const to = patternPathOf({
         libraryPath: root,
         extension: extname(row.path).slice(1),
         title: row.title,
         year: row.year,
-        versionLabel:
-          !isEpisode && (row.parentId !== null || hasVersions.has(row.id))
+        versionLabel: isEpisode
+          ? null
+          : isVersioned
             ? row.versionLabel
-            : null,
+            : tail?.isDashed === true
+              ? tail.text
+              : null,
+        quality: isEpisode || isVersioned || tail === null || tail.isDashed ? null : tail.text,
         idTag: folders.length > 1 ? idTagOf(folders[0] ?? '') : null,
         series:
           isEpisode && row.seasonNumber !== null && row.episodeNumber !== null

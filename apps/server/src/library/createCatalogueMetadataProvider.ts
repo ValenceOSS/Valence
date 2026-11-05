@@ -218,6 +218,10 @@ const EpisodeGroupSchema = z.object({
               season_number: z.number().int().nonnegative(),
               episode_number: z.number().int().nonnegative(),
               order: z.number().int().catch(0),
+              name: z.string().optional().catch(undefined),
+              overview: z.string().optional().catch(undefined),
+              air_date: z.string().nullable().optional().catch(undefined),
+              still_path: z.string().nullable().optional().catch(undefined),
             }),
           )
           .catch([]),
@@ -1937,7 +1941,7 @@ const createCatalogueMetadataProvider = ({
           };
     },
 
-    describeSeries: async (externalId) => {
+    describeSeries: async (externalId, order) => {
       const key = await readKey();
 
       if (key === null || key === '') {
@@ -1951,40 +1955,84 @@ const createCatalogueMetadataProvider = ({
         return null;
       }
 
-      const seasons = await Promise.all(
-        detail.data.seasons.map(async (season) => {
-          const listed = SeasonResponseSchema.safeParse(
-            await request(`/tv/${externalId}/season/${season.season_number.toString()}`, key, {}),
-          );
+      const posterOf = (seasonNumber: number) =>
+        imageUrl(
+          imageBaseUrl,
+          detail.data.seasons.find((season) => season.season_number === seasonNumber)?.poster_path,
+          'w342',
+        );
+      const grouped =
+        order === undefined
+          ? null
+          : EpisodeGroupSchema.safeParse(await request(`/tv/episode_group/${order}`, key, {}));
+      const ordered =
+        grouped === null || !grouped.success || grouped.data.groups.length === 0
+          ? null
+          : grouped.data.groups
+              .toSorted((left, right) => left.order - right.order)
+              .map((group) => {
+                const episodes = group.episodes.toSorted((left, right) => left.order - right.order);
 
-          return {
-            seasonNumber: season.season_number,
-            episodeCount: season.episode_count,
-            name: season.name === undefined || season.name === '' ? null : season.name,
-            overview:
-              season.overview === undefined || season.overview === '' ? null : season.overview,
-            posterUrl: imageUrl(imageBaseUrl, season.poster_path, 'w342'),
-            airDate: season.air_date ?? null,
-            episodes: !listed.success
-              ? []
-              : listed.data.episodes.map((episode) => ({
-                  episodeNumber: episode.episode_number,
-                  title:
-                    episode.name === undefined || episode.name === ''
-                      ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
-                          episode_number: episode.episode_number.toString(),
-                        })
-                      : episode.name,
-                  stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
-                  overview:
-                    episode.overview === undefined || episode.overview === ''
-                      ? null
-                      : episode.overview,
-                  airDate: episode.air_date ?? null,
-                })),
-          };
-        }),
-      );
+                return {
+                  seasonNumber: group.order,
+                  episodeCount: episodes.length,
+                  name: group.name === '' ? null : group.name,
+                  overview: null,
+                  posterUrl: posterOf(episodes[0]?.season_number ?? group.order),
+                  airDate: episodes[0]?.air_date ?? null,
+                  episodes: episodes.map((episode, at) => ({
+                    episodeNumber: at + 1,
+                    title:
+                      episode.name === undefined || episode.name === ''
+                        ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
+                            episode_number: (at + 1).toString(),
+                          })
+                        : episode.name,
+                    stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
+                    overview:
+                      episode.overview === undefined || episode.overview === ''
+                        ? null
+                        : episode.overview,
+                    airDate: episode.air_date ?? null,
+                  })),
+                };
+              });
+      const seasons =
+        ordered ??
+        (await Promise.all(
+          detail.data.seasons.map(async (season) => {
+            const listed = SeasonResponseSchema.safeParse(
+              await request(`/tv/${externalId}/season/${season.season_number.toString()}`, key, {}),
+            );
+
+            return {
+              seasonNumber: season.season_number,
+              episodeCount: season.episode_count,
+              name: season.name === undefined || season.name === '' ? null : season.name,
+              overview:
+                season.overview === undefined || season.overview === '' ? null : season.overview,
+              posterUrl: imageUrl(imageBaseUrl, season.poster_path, 'w342'),
+              airDate: season.air_date ?? null,
+              episodes: !listed.success
+                ? []
+                : listed.data.episodes.map((episode) => ({
+                    episodeNumber: episode.episode_number,
+                    title:
+                      episode.name === undefined || episode.name === ''
+                        ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
+                            episode_number: episode.episode_number.toString(),
+                          })
+                        : episode.name,
+                    stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
+                    overview:
+                      episode.overview === undefined || episode.overview === ''
+                        ? null
+                        : episode.overview,
+                    airDate: episode.air_date ?? null,
+                  })),
+            };
+          }),
+        ));
 
       return {
         seasons,

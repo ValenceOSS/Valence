@@ -54,6 +54,7 @@ const optionsOf = (
       language: image.lang === '' || image.lang === '00' ? null : image.lang,
       ...SIZES[kind],
       votes: image.likes,
+      source: 'fanart' as const,
     }));
 
 /**

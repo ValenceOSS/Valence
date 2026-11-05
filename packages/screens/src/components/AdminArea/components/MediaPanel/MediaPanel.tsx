@@ -409,11 +409,12 @@ const MediaPanel = ({
   const [merging, setMerging] = useState<readonly MergeFilm[] | null>(null);
   const [quickMatching, setQuickMatching] = useState<readonly QuickMatchTitle[] | null>(null);
   const [renaming, setRenaming] = useState<readonly string[] | null>(null);
+  const [askingOfPicked, setAskingOfPicked] = useState<'refresh' | 'rebuild' | null>(null);
 
   const renameAction = useCallback(
     (title: MediaTitle): ActionMenuItem => ({
       id: 'rename-to-pattern',
-      label: say('screens.adminArea.renameToPattern.renameToTheNamingPattern'),
+      label: say('screens.adminArea.renameToPattern.renameToTheNamingPatternEllipsis'),
       icon: <Icon of={CursorTextFilledIcon} size={15} />,
       onChoose: () => {
         void withFiles(title).then((full) => {
@@ -1689,16 +1690,12 @@ const MediaPanel = ({
         label: say('screens.adminArea.mediaPanel.rebuildPreviews'),
         icon: <Icon of={RefreshCwFilledIcon} size={15} />,
         onChoose: () => {
-          void filesOfPicked().then((files) => {
-            for (const file of files) {
-              void rebuild(file);
-            }
-          });
+          setAskingOfPicked('rebuild');
         },
       },
       {
         id: 'rename-to-pattern',
-        label: say('screens.adminArea.renameToPattern.renameToTheNamingPattern'),
+        label: say('screens.adminArea.renameToPattern.renameToTheNamingPatternEllipsis'),
         icon: <Icon of={CursorTextFilledIcon} size={15} />,
         onChoose: () => {
           void filesOfPicked().then((files) => {
@@ -1752,7 +1749,13 @@ const MediaPanel = ({
         <Icon of={PenFilledIcon} size={14} />
         {say('common.edit')}
       </Button>
-      <Button variant="secondary" size="xs" onClick={refreshPicked}>
+      <Button
+        variant="secondary"
+        size="xs"
+        onClick={() => {
+          setAskingOfPicked('refresh');
+        }}
+      >
         <Icon of={RefreshCwFilledIcon} size={14} />
         {say('screens.adminArea.refreshTitleDialog.refresh')}
       </Button>
@@ -1777,7 +1780,7 @@ const MediaPanel = ({
     </>
   );
 
-  const filterGroups = filterGroupsOf(choices.data);
+  const filterGroups = filterGroupsOf(choices.data, chosen?.kind !== 'movies');
   const chosenFilters = new Set(list.filters);
 
   /**
@@ -1896,7 +1899,7 @@ const MediaPanel = ({
       />
 
       <RenameToPatternDialog
-        key={renaming === null ? 'closed' : renaming.join()}
+        key={renaming === null ? 'rename-closed' : `rename-${renaming.join()}`}
         mediaIds={renaming}
         onClose={() => {
           setRenaming(null);
@@ -1904,7 +1907,9 @@ const MediaPanel = ({
       />
 
       <MergeTitlesDialog
-        key={merging === null ? 'closed' : merging.map((one) => one.mediaId).join()}
+        key={
+          merging === null ? 'merge-closed' : `merge-${merging.map((one) => one.mediaId).join()}`
+        }
         films={merging}
         onClose={() => {
           setMerging(null);
@@ -2017,6 +2022,41 @@ const MediaPanel = ({
         target={leaving}
         onClose={() => {
           setLeaving(null);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={askingOfPicked !== null}
+        title={
+          askingOfPicked === 'rebuild'
+            ? sayCount('screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles', picked.size)
+            : sayCount('screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles', picked.size)
+        }
+        detail={
+          askingOfPicked === 'rebuild'
+            ? say('screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown')
+            : say('screens.adminArea.refreshTitleDialog.updateDetailsDetail')
+        }
+        confirmLabel={
+          askingOfPicked === 'rebuild'
+            ? say('screens.adminArea.mediaPanel.rebuildPreviews')
+            : say('screens.adminArea.refreshTitleDialog.updateDetails')
+        }
+        onClose={() => {
+          setAskingOfPicked(null);
+        }}
+        onConfirm={() => {
+          if (askingOfPicked === 'rebuild') {
+            void filesOfPicked().then((files) => {
+              for (const file of files) {
+                void rebuild(file);
+              }
+            });
+          } else {
+            refreshPicked();
+          }
+
+          setAskingOfPicked(null);
         }}
       />
 

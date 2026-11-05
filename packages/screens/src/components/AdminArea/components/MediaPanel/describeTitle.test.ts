@@ -62,7 +62,7 @@ describe('describeTitle', () => {
               isEdited: false,
             },
           }),
-    ).toBe('1 season · 2 of 10 episodes');
+    ).toBe('1 season · 2 of TMDB’s 10 episodes');
   });
 
   it('counts the editions of a film held more than once', () => {

@@ -27,6 +27,7 @@ describe('createFanartProvider', () => {
     expect(fetchImpl.mock.calls[0]?.[0]).toBe(
       'https://webservice.fanart.tv/v3/movies/1?api_key=a-key',
     );
+    expect(options?.poster.every((one) => one.source === 'fanart')).toBe(true);
     expect(options?.poster.map((one) => [one.votes, one.language])).toEqual([
       [9, null],
       [1, 'en'],

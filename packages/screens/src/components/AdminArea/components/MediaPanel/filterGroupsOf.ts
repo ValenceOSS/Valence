@@ -12,9 +12,10 @@ const DECADES = [2020, 2010, 2000, 1990, 1980, 1970, 1960, 1950, 1940, 1930];
  * carries subtitles. A filter the library has no values for is left out.
  *
  * @param choices - The values the library's titles have, or nothing before the server has said.
+ * @param hasShows - Whether the library can hold shows, without which no title misses episodes.
  * @returns The groups of filters.
  */
-const filterGroupsOf = (choices: TitleChoices | undefined): FilterGroup[] => {
+const filterGroupsOf = (choices: TitleChoices | undefined, hasShows = true): FilterGroup[] => {
   const valuesOf = (kind: TitleFilterKind) =>
     choices?.filters.find((one) => one.kind === kind)?.values.map((one) => one.value) ?? [];
   const optionsOf = (
@@ -30,7 +31,7 @@ const filterGroupsOf = (choices: TitleChoices | undefined): FilterGroup[] => {
         { id: 'missing:poster', label: say('screens.adminArea.artworkPicker.poster') },
         { id: 'missing:backdrop', label: say('screens.adminArea.artworkPicker.backdrop') },
         { id: 'missing:logo', label: say('screens.adminArea.artworkPicker.logo') },
-        { id: 'missing:episodes', label: say('common.episodes') },
+        ...(hasShows ? [{ id: 'missing:episodes', label: say('common.episodes') }] : []),
       ],
     },
     { name: say('common.resolution'), options: optionsOf('resolution') },

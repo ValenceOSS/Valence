@@ -1233,6 +1233,54 @@ describe('reading the shape of a series', () => {
     });
   });
 
+  it('lays the seasons out in another of the catalogue’s orders, where the files follow one', async () => {
+    const { instance } = provider({
+      '/tv/episode_group/g1': {
+        groups: [
+          {
+            name: 'Volume 1',
+            order: 1,
+            episodes: [
+              {
+                season_number: 1,
+                episode_number: 2,
+                order: 1,
+                name: 'Second',
+                air_date: '2001-01-08',
+              },
+              {
+                season_number: 1,
+                episode_number: 1,
+                order: 0,
+                name: 'First',
+                air_date: '2001-01-01',
+              },
+            ],
+          },
+        ],
+      },
+      '/tv/5': {
+        ...SERIES,
+        seasons: [{ season_number: 1, episode_count: 2, poster_path: '/s1.jpg' }],
+      },
+    });
+
+    await expect(instance.describeSeries?.('5', 'g1')).resolves.toMatchObject({
+      seasons: [
+        {
+          seasonNumber: 1,
+          name: 'Volume 1',
+          posterUrl: 'https://image.tmdb.org/t/p/w342/s1.jpg',
+          airDate: '2001-01-01',
+          episodes: [
+            { episodeNumber: 1, title: 'First', airDate: '2001-01-01' },
+            { episodeNumber: 2, title: 'Second', airDate: '2001-01-08' },
+          ],
+        },
+      ],
+    });
+  });
+
   it('keeps the day each episode aired, and whether the series is still running', async () => {
     const { instance } = provider({
       '/tv/5/season/1': {

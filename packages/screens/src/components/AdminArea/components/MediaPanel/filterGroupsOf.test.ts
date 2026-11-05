@@ -30,4 +30,12 @@ describe('filterGroupsOf', () => {
       false,
     );
   });
+
+  it('offers missing episodes only where the library can hold shows', () => {
+    const idsOf = (hasShows: boolean) =>
+      filterGroupsOf({ filters: [] }, hasShows)[0]?.options.map((one) => one.id) ?? [];
+
+    expect(idsOf(true)).toContain('missing:episodes');
+    expect(idsOf(false)).not.toContain('missing:episodes');
+  });
 });

@@ -644,6 +644,7 @@ const createTitleMetadataService = ({
       changes.push({
         field: one.field,
         edit: one.isEdited ? { value: one.value, catalogue: under } : null,
+        catalogue: under,
       });
       values[one.field] = one.isEdited ? one.value : under;
     }

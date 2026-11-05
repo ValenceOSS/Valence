@@ -15771,6 +15771,11 @@
     "context": "The only kind of picture on an episode's Artwork tab: the frame shown for it in the episode list."
   },
   {
+    "handler": "screens.adminArea.artworkChooser.fromFanartTv",
+    "text": "From fanart.tv",
+    "context": "Under a picture offered in the artwork chooser that comes from fanart.tv rather than TMDB."
+  },
+  {
     "handler": "screens.adminArea.artworkChooser.fromTheCatalogue",
     "text": "From the catalogue",
     "context": "Heading over the pictures the catalogue offers, in the artwork chooser."
@@ -21316,6 +21321,16 @@
     "context": "A quick filter above the admin's list of albums or books that shows those with no cover, with how many there are. {count} is the number."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles.one",
+    "text": "Rebuild the previews of {count} title?",
+    "context": "Confirm before rebuilding the previews and thumbnails of the titles ticked in the media list."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles.other",
+    "text": "Rebuild the previews of {count} titles?",
+    "context": "Confirm before rebuilding the previews and thumbnails of the titles ticked in the media list."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.count.undoneTitles.one",
     "text": "Put {count} title back",
     "context": "Said once a change made to many titles at once is undone. {count} is how many it put back."
@@ -21344,6 +21359,16 @@
     "handler": "screens.adminArea.mediaPanel.count.unreadable.other",
     "text": "Unreadable {count}",
     "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles.one",
+    "text": "Update the details of {count} title?",
+    "context": "Confirm before asking TMDB again about every title ticked in the media list."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles.other",
+    "text": "Update the details of {count} titles?",
+    "context": "Confirm before asking TMDB again about every title ticked in the media list."
   },
   {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
@@ -21676,6 +21701,11 @@
     "context": "Button on a title's page in Media that corrects which catalogue entry it is matched to."
   },
   {
+    "handler": "screens.adminArea.mediaTitlePage.itGoesBackToItsFileName",
+    "text": "It goes back to the name its files give it, without TMDB’s details, until it is matched again. Your edits are kept for when it is.",
+    "context": "What unmatching a title does, in its confirm."
+  },
+  {
     "handler": "screens.adminArea.mediaTitlePage.lockAllFields",
     "text": "Lock all fields",
     "context": "A menu item on a title's page in the admin's Media that locks every field, so TMDB never changes them."
@@ -21696,6 +21726,11 @@
     "context": "Button on a title's page in Media that opens the title in the Catalogue page."
   },
   {
+    "handler": "screens.adminArea.mediaTitlePage.openTheSeasonsPage",
+    "text": "Open the season’s page",
+    "context": "Item in a season's menu on a series' Seasons tab, opening that season's own page."
+  },
+  {
     "handler": "screens.adminArea.mediaTitlePage.reEncodes",
     "text": "Re-encodes",
     "context": "Heading of the card listing the re-encodes asked of a title's files."
@@ -21709,6 +21744,11 @@
     "handler": "screens.adminArea.mediaTitlePage.unmatch",
     "text": "Unmatch",
     "context": "A menu item on a title's page in the admin's Media that takes it back to what its file names say."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.unmatchName",
+    "text": "Unmatch {name}?",
+    "context": "Confirm before taking a title's match to TMDB away."
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.whatToShowOfTheTitle",
@@ -23764,6 +23804,11 @@
     "handler": "screens.adminArea.renameToPattern.renameToTheNamingPattern",
     "text": "Rename to the naming pattern",
     "context": "Menu item and dialog title: renames the chosen files and folders to the pattern Jellyfin, Plex and Valence's requests use."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.renameToTheNamingPatternEllipsis",
+    "text": "Rename to the naming pattern…",
+    "context": "Menu item on a title or the selection that opens the rename-to-pattern dialog."
   },
   {
     "handler": "screens.adminArea.renameToPattern.whenTheNameIsTaken",

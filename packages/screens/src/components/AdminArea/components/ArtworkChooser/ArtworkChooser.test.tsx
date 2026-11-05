@@ -198,6 +198,19 @@ describe('ArtworkChooser', () => {
     expect((await screen.findAllByText('1000 × 1500 · 2 votes')).length).toBeGreaterThan(0);
   });
 
+  it('says which pictures come from fanart.tv', async () => {
+    fetchArtworkChoicesMock.mockResolvedValue({
+      ...CHOICES,
+      options: {
+        ...CHOICES.options,
+        poster: [{ ...option('/fan.jpg', null), source: 'fanart' }],
+      },
+    });
+    inAQueryClient(<ArtworkChooser subject={SUBJECT} onChanged={vi.fn()} />);
+
+    expect(await screen.findByText('1000 × 1500 · From fanart.tv')).toBeInTheDocument();
+  });
+
   it('uploads a picture for the kind shown and uses it', async () => {
     const onChanged = vi.fn();
     const picture = new File(['x'], 'mine.png', { type: 'image/png' });

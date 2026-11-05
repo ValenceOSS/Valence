@@ -235,6 +235,13 @@ describe('createTitleMetadataService', { timeout: STARTING_DATABASE_MS }, () => 
       metadata: { fields: { title: { value: 'A film', source: 'catalogue' } } },
     });
     await expect(readFiles(db, ['cut'])).resolves.toMatchObject([{ title: 'A film' }]);
+
+    const after = await service.history('cut', 'title');
+
+    expect(typeof after === 'string' ? null : after.changes[0]).toMatchObject({
+      action: 'undo',
+      fields: [{ field: 'title', before: 'Again', after: 'A film' }],
+    });
   });
 
   it('forgets an edit set back to what the catalogue says, an empty list the same as none', async () => {

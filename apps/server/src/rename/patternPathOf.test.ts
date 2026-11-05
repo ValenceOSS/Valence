@@ -7,6 +7,7 @@ const FILM = {
   title: 'A Film: Part 2?',
   year: 2001,
   versionLabel: null,
+  quality: null,
   idTag: null,
   series: null,
 };
@@ -16,6 +17,9 @@ describe('patternPathOf', () => {
     expect(patternPathOf(FILM)).toBe('/films/A Film - Part 2 (2001)/A Film - Part 2 (2001).mkv');
     expect(patternPathOf({ ...FILM, versionLabel: 'Extended Cut', idTag: '[tmdbid-1]' })).toBe(
       '/films/A Film - Part 2 (2001) [tmdbid-1]/A Film - Part 2 (2001) - Extended Cut.mkv',
+    );
+    expect(patternPathOf({ ...FILM, quality: 'Remux-2160p' })).toBe(
+      '/films/A Film - Part 2 (2001)/A Film - Part 2 (2001) Remux-2160p.mkv',
     );
   });
 

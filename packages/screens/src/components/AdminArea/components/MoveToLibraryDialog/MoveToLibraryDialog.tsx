@@ -18,15 +18,19 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * what it holds, a programme there and a film here.
  *
  * @param target - What to move, what it is called and the library it is in, or nothing while shut.
- * @param libraries - Every library, of which those of films or shows other than its own are offered.
+ * @param libraries - Every library, of which those of films or shows other than its own are offered,
+ *   those of its own kind first, so the one chosen to begin with holds the same kind of thing.
  * @param onClose - Called when it is dismissed.
  * @param onMoved - Told the library they went to and the job reading them there, once they have.
  */
 const MoveToLibraryDialog = ({ target, libraries, onClose, onMoved }: MoveToLibraryDialogProps) => {
-  const offered = libraries.filter(
-    (library) =>
-      library.id !== target?.libraryId && (library.kind === 'movies' || library.kind === 'shows'),
-  );
+  const kind = libraries.find((library) => library.id === target?.libraryId)?.kind;
+  const offered = libraries
+    .filter(
+      (library) =>
+        library.id !== target?.libraryId && (library.kind === 'movies' || library.kind === 'shows'),
+    )
+    .sort((one, other) => Number(other.kind === kind) - Number(one.kind === kind));
   const [chosen, setChosen] = useState<string | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
