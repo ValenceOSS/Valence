@@ -27,6 +27,7 @@ const COLUMNS: EditableColumns = {
   anilistId: null,
   malId: null,
   castMembers: null,
+  trailerKey: null,
   seriesTitle: 'Show',
   seriesSortTitle: null,
 };

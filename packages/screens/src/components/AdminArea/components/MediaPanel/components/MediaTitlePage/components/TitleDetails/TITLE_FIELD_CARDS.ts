@@ -14,7 +14,7 @@ const TITLE_FIELD_CARDS: readonly {
   {
     id: 'story',
     title: say('screens.adminArea.titleDetails.story'),
-    fields: ['tagline', 'overview'],
+    fields: ['tagline', 'overview', 'trailer'],
   },
   {
     id: 'classification',

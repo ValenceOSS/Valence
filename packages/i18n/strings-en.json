@@ -25226,6 +25226,11 @@
     "context": "The field holding an anime programme's AniList id, with a link to its page there. On the Details tab of a title in the admin area (from `TitleDetails`)."
   },
   {
+    "handler": "screens.adminArea.titleDetails.aYouTubeLinkOrVideoId",
+    "text": "A YouTube link or video ID",
+    "context": "What the empty Trailer field on a title's Details tab shows, saying what to paste into it."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.classification",
     "text": "Classification",
     "context": "The heading of the card holding a title’s genres, tags, studios and networks. On the Details tab of a title in the admin area (from `TitleDetails`)."

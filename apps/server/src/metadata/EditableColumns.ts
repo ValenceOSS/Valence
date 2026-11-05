@@ -21,6 +21,7 @@ type EditableColumns = {
   anilistId: string | null;
   malId: string | null;
   castMembers: CastEntry[] | null;
+  trailerKey: string | null;
   seriesTitle: string | null;
   seriesSortTitle: string | null;
 };

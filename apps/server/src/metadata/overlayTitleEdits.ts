@@ -79,6 +79,7 @@ const WRITERS: {
   anilistId: (columns, value) => ({ ...columns, anilistId: textOf(value) }),
   malId: (columns, value) => ({ ...columns, malId: textOf(value) }),
   castMembers: (columns, value) => ({ ...columns, castMembers: castOf(value) }),
+  trailerKey: (columns, value) => ({ ...columns, trailerKey: textOf(value) }),
   seriesTitle: (columns, value) => ({
     ...columns,
     seriesTitle: textOf(value) ?? columns.seriesTitle,

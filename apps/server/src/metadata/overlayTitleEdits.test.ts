@@ -23,6 +23,7 @@ const SCANNED: EditableColumns = {
   anilistId: null,
   malId: null,
   castMembers: null,
+  trailerKey: null,
   seriesTitle: null,
   seriesSortTitle: null,
 };

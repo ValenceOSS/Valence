@@ -65,6 +65,10 @@ const TITLE_FIELD_SCHEMAS = {
     .string()
     .regex(/^\d{1,10}$/)
     .nullable(),
+  trailer: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{11}$/)
+    .nullable(),
   cast: z.array(CastEntrySchema).max(200),
   note: z.string().trim().max(2000).nullable(),
 };
@@ -89,6 +93,7 @@ const TitleFieldSchema = z.enum([
   'tvdbId',
   'anilistId',
   'malId',
+  'trailer',
   'cast',
   'note',
 ]);
@@ -113,6 +118,7 @@ const FIELDS_OF_KIND: Record<
     'rottenTomatoes',
     'imdbId',
     'tvdbId',
+    'trailer',
     'cast',
     'note',
   ],
@@ -134,6 +140,7 @@ const FIELDS_OF_KIND: Record<
     'tvdbId',
     'anilistId',
     'malId',
+    'trailer',
     'cast',
     'note',
   ],

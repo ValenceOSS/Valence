@@ -23,6 +23,8 @@ const WORDS: readonly TitleField[] = ['genres', 'tags', 'studios', 'networks'];
 
 const NUMBERS: readonly TitleField[] = ['rating', 'rottenTomatoes'];
 
+const TRAILER = /^[A-Za-z0-9_-]{11}$/u;
+
 /**
  * One field of a title's Details tab: its control, saved as it changes, inside the frame that says
  * where its value came from and offers to put it back or lock it.
@@ -88,10 +90,13 @@ const MetadataField = ({
   };
 
   const address =
-    (field === 'imdbId' || field === 'tvdbId' || field === 'anilistId' || field === 'malId') &&
-    typeof shown === 'string'
-      ? addressOfId(field, shown, kind === 'show')
-      : null;
+    typeof shown !== 'string'
+      ? null
+      : field === 'imdbId' || field === 'tvdbId' || field === 'anilistId' || field === 'malId'
+        ? addressOfId(field, shown, kind === 'show')
+        : field === 'trailer' && TRAILER.test(shown)
+          ? `https://www.youtube.com/watch?v=${shown}`
+          : null;
   const control = isWords ? (
     <TagField
       label={label}

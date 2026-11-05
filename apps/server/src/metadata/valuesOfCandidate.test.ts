@@ -23,6 +23,8 @@ describe('valuesOfCandidate', () => {
         certifications: { GB: '15' },
         rating: 7,
         imdbId: 'tt0000001',
+        trailerKey: 'abcdefghijk',
+        cast: [{ personId: 4, name: 'Someone', role: null, photoUrl: null }],
       }),
     ).toEqual({
       title: 'A film',
@@ -38,6 +40,8 @@ describe('valuesOfCandidate', () => {
       rating: 7,
       imdbId: 'tt0000001',
       tvdbId: null,
+      trailer: 'abcdefghijk',
+      cast: [{ personId: 4, name: 'Someone', role: '', imageUrl: null }],
     });
   });
 

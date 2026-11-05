@@ -89,6 +89,7 @@ const ROW = {
   anilistId: series.anilistId,
   malId: series.malId,
   castMembers: mediaItem.castMembers,
+  trailerKey: mediaItem.trailerKey,
   seriesTitle: mediaItem.seriesTitle,
   seriesSortTitle: mediaItem.seriesSortTitle,
 };
@@ -159,6 +160,7 @@ const createTitleMetadataService = ({
     anilistId: file.anilistId?.toString() ?? null,
     malId: file.malId?.toString() ?? null,
     castMembers: CastSchema.parse(file.castMembers ?? null),
+    trailerKey: file.trailerKey,
     seriesTitle: file.seriesTitle,
     seriesSortTitle: file.seriesSortTitle,
   });

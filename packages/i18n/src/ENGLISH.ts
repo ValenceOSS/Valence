@@ -6402,6 +6402,7 @@ const ENGLISH = {
   'screens.adminArea.titleCollections.titleIsNoLongerInName': '{title} is no longer in {name}',
   'screens.adminArea.titleDetails.airDate': 'Air date',
   'screens.adminArea.titleDetails.aniList': 'AniList',
+  'screens.adminArea.titleDetails.aYouTubeLinkOrVideoId': 'A YouTube link or video ID',
   'screens.adminArea.titleDetails.classification': 'Classification',
   'screens.adminArea.titleDetails.contentRating': 'Content rating',
   'screens.adminArea.titleDetails.contentRatingIn': 'Content rating ({country})',

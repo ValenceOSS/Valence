@@ -29,6 +29,7 @@ const HALF_WIDTH: readonly TitleField[] = [
   'tags',
   'studios',
   'networks',
+  'trailer',
 ];
 
 /**
@@ -124,7 +125,9 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
             : { region: metadata.data.certificationRegion })}
           {...(field === 'sortTitle'
             ? { placeholder: sortKeyOf(textOfValue(metadata.data.fields.title?.value ?? null)) }
-            : {})}
+            : field === 'trailer'
+              ? { placeholder: say('screens.adminArea.titleDetails.aYouTubeLinkOrVideoId') }
+              : {})}
           className={widthOf(field, fields)}
         />
       );

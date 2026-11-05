@@ -33,6 +33,16 @@ const valuesOfCandidate = (
     rating: description.rating ?? null,
     imdbId: description.imdbId ?? null,
     tvdbId: description.tvdbId ?? null,
+    trailer: description.trailerKey,
+    cast:
+      description.cast.length === 0
+        ? null
+        : description.cast.map((member) => ({
+            personId: member.personId,
+            name: member.name,
+            role: member.role ?? '',
+            imageUrl: member.photoUrl,
+          })),
   };
 };
 

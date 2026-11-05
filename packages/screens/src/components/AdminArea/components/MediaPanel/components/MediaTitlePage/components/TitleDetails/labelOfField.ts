@@ -53,6 +53,8 @@ const labelOfField = (field: TitleField, kind: TitleSubjectKind): string => {
       return say('screens.adminArea.titleDetails.myAnimeList');
     case 'tvdbId':
       return say('screens.adminArea.titleDetails.tvdb');
+    case 'trailer':
+      return say('common.trailer');
     case 'cast':
       return say('common.cast');
     case 'note':

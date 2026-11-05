@@ -402,6 +402,7 @@ const createMediaStore = (
         anilistId: null,
         malId: null,
         castMembers: row.metadata.cast ?? null,
+        trailerKey: row.metadata.trailerKey ?? null,
         seriesTitle,
         seriesSortTitle: null,
       });
@@ -477,7 +478,7 @@ const createMediaStore = (
           row.metadata.externalId === undefined ? null : seriesTitle === null ? 'movie' : 'tv',
         catalogueEpisodeId: row.metadata.catalogueEpisodeId ?? null,
         tvdbId: edited.tvdbId,
-        trailerKey: row.metadata.trailerKey ?? null,
+        trailerKey: edited.trailerKey,
         releaseDate: edited.releaseDate,
         budget: row.metadata.budget ?? null,
         revenue: row.metadata.revenue ?? null,
