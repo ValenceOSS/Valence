@@ -1,3 +1,4 @@
+import { inOriginalTitle } from './inOriginalTitle';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { joinedProbe } from '@ValenceServer/library/joinedProbe';
 import { discFolderOf } from '@ValenceServer/library/naming/discFolderOf';
@@ -135,6 +136,8 @@ type ScanLibraryOptions = {
   keepsMatches?: boolean;
   reusesProbes?: boolean;
   isPartial?: boolean;
+  metadataLanguage?: string | null;
+  usesOriginalTitle?: boolean;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: ScanPhase, processed: number, total: number, item?: string) => void;
@@ -464,6 +467,8 @@ const scanLibrary = async ({
   keepsMatches = false,
   reusesProbes = false,
   isPartial: askedPartial = false,
+  metadataLanguage = null,
+  usesOriginalTitle = false,
   atOnce = 1,
   onProblem,
   onProgress,
@@ -750,7 +755,7 @@ const scanLibrary = async ({
         ? providers.filter((provider) => provider.name === FILE_NAMES_ONLY.name)
         : providers;
 
-      const metadata =
+      const described =
         extra === null
           ? await resolveMetadata(
               asked.length === 0 ? [FILE_NAMES_ONLY] : asked,
@@ -764,6 +769,7 @@ const scanLibrary = async ({
                 year: placement?.year ?? null,
                 ids,
                 rememberedExternalId: remembered,
+                ...(metadataLanguage === null ? {} : { language: metadataLanguage }),
               },
               (name, reason) =>
                 onProblem?.(
@@ -775,6 +781,7 @@ const scanLibrary = async ({
                 ),
             )
           : { title: placement?.title ?? nameOfFile(file.path), year: placement?.year ?? null };
+      const metadata = usesOriginalTitle ? inOriginalTitle(described) : described;
 
       if (metadata === null) {
         failed += 1;

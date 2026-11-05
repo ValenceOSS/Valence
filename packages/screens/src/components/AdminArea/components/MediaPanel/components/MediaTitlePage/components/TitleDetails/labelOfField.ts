@@ -57,6 +57,18 @@ const labelOfField = (field: TitleField, kind: TitleSubjectKind): string => {
       return say('common.trailer');
     case 'cast':
       return say('common.cast');
+    case 'guestStars':
+      return say('screens.adminArea.titleDetails.guestStars');
+    case 'originalLanguage':
+      return say('screens.adminArea.titleDetails.originalLanguage');
+    case 'countries':
+      return say('screens.adminArea.titleDetails.countries');
+    case 'creators':
+      return say('screens.adminArea.titleDetails.createdBy');
+    case 'directors':
+      return say('screens.adminArea.titleDetails.directedBy');
+    case 'writers':
+      return say('screens.adminArea.titleDetails.writtenBy');
     case 'note':
       return say('screens.adminArea.titleDetails.note');
   }

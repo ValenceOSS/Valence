@@ -172,6 +172,8 @@ describe('LibrarySettingsDialog', () => {
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        metadataLanguage: null,
+        usesOriginalTitle: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       });
@@ -522,6 +524,8 @@ describe('LibrarySettingsDialog', () => {
         requestProfileId: null,
         requestPath: '/media/asked-for',
         keepsShowsTogether: true,
+        metadataLanguage: null,
+        usesOriginalTitle: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       });

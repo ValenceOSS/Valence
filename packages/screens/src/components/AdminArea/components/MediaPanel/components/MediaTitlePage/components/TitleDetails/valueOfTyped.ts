@@ -23,6 +23,10 @@ const valueOfTyped = (field: TitleField, typed: string): TitleValue => {
     return trimmed === '' || Number.isNaN(read) ? null : read;
   }
 
+  if (field === 'originalLanguage') {
+    return trimmed === '' ? null : trimmed.toLowerCase();
+  }
+
   if (field === 'trailer') {
     return trimmed === '' ? null : (YOUTUBE.exec(trimmed)?.[1] ?? trimmed);
   }

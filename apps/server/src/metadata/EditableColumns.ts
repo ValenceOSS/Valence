@@ -22,6 +22,12 @@ type EditableColumns = {
   malId: string | null;
   castMembers: CastEntry[] | null;
   trailerKey: string | null;
+  guestStars: CastEntry[] | null;
+  originalLanguage: string | null;
+  countries: string[] | null;
+  creators: string[] | null;
+  directors: string[] | null;
+  writers: string[] | null;
   seriesTitle: string | null;
   seriesSortTitle: string | null;
 };

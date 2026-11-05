@@ -70,6 +70,15 @@ const TITLE_FIELD_SCHEMAS = {
     .regex(/^[A-Za-z0-9_-]{11}$/)
     .nullable(),
   cast: z.array(CastEntrySchema).max(200),
+  guestStars: z.array(CastEntrySchema).max(200),
+  originalLanguage: z
+    .string()
+    .regex(/^[a-z]{2,3}$/)
+    .nullable(),
+  countries: z.array(z.string().regex(/^[A-Z]{2}$/)).max(64),
+  creators: WordsSchema,
+  directors: WordsSchema,
+  writers: WordsSchema,
   note: z.string().trim().max(2000).nullable(),
 };
 
@@ -95,6 +104,12 @@ const TitleFieldSchema = z.enum([
   'malId',
   'trailer',
   'cast',
+  'guestStars',
+  'originalLanguage',
+  'countries',
+  'creators',
+  'directors',
+  'writers',
   'note',
 ]);
 
@@ -119,6 +134,10 @@ const FIELDS_OF_KIND: Record<
     'imdbId',
     'tvdbId',
     'trailer',
+    'originalLanguage',
+    'countries',
+    'directors',
+    'writers',
     'cast',
     'note',
   ],
@@ -141,11 +160,23 @@ const FIELDS_OF_KIND: Record<
     'anilistId',
     'malId',
     'trailer',
+    'originalLanguage',
+    'countries',
+    'creators',
     'cast',
     'note',
   ],
   season: ['title', 'overview', 'releaseDate', 'note'],
-  episode: ['title', 'overview', 'releaseDate', 'addedAt', 'note'],
+  episode: [
+    'title',
+    'overview',
+    'releaseDate',
+    'addedAt',
+    'directors',
+    'writers',
+    'guestStars',
+    'note',
+  ],
 };
 
 const TitleValueSchema = z.union([

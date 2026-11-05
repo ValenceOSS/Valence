@@ -225,6 +225,8 @@ const LIBRARY_COLUMNS = {
   requestProfileId: library.requestProfileId,
   requestPath: library.requestPath,
   keepsShowsTogether: library.keepsShowsTogether,
+  metadataLanguage: library.metadataLanguage,
+  usesOriginalTitle: library.usesOriginalTitle,
   higherProfileAsks: library.higherProfileAsks,
   requestFulfilment: library.requestFulfilment,
   linkedServerId: library.linkedServerId,
@@ -797,6 +799,8 @@ const createDatabaseLibraryService = ({
 
     await scanLibrary({
       libraryId,
+      metadataLanguage: found.metadataLanguage ?? null,
+      usesOriginalTitle: found.usesOriginalTitle,
       kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: {
@@ -1088,12 +1092,20 @@ const createDatabaseLibraryService = ({
    * @returns What the scan changed.
    */
   const scanFilms = async (
-    found: { id: string; path: string; kind: string },
+    found: {
+      id: string;
+      path: string;
+      kind: string;
+      metadataLanguage?: string | null;
+      usesOriginalTitle?: boolean;
+    },
     force: boolean,
     jobId: string | undefined,
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
+      metadataLanguage: found.metadataLanguage ?? null,
+      usesOriginalTitle: found.usesOriginalTitle ?? false,
       kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: filesFor(found.id),
@@ -1482,6 +1494,8 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         keepsShowsTogether: row.keepsShowsTogether,
+        metadataLanguage: row.metadataLanguage,
+        usesOriginalTitle: row.usesOriginalTitle,
         higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
@@ -1515,6 +1529,8 @@ const createDatabaseLibraryService = ({
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        metadataLanguage: null,
+        usesOriginalTitle: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       };
@@ -1552,6 +1568,12 @@ const createDatabaseLibraryService = ({
           ...(input.higherProfileAsks === undefined
             ? {}
             : { higherProfileAsks: input.higherProfileAsks }),
+          ...(input.metadataLanguage === undefined
+            ? {}
+            : { metadataLanguage: input.metadataLanguage }),
+          ...(input.usesOriginalTitle === undefined
+            ? {}
+            : { usesOriginalTitle: input.usesOriginalTitle }),
           ...(input.fulfilment === undefined ? {} : { requestFulfilment: input.fulfilment }),
         })
         .where(eq(library.id, libraryId));
@@ -1596,6 +1618,8 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         keepsShowsTogether: row.keepsShowsTogether,
+        metadataLanguage: row.metadataLanguage,
+        usesOriginalTitle: row.usesOriginalTitle,
         higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
@@ -3003,6 +3027,8 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
+        metadataLanguage: found.metadataLanguage ?? null,
+        usesOriginalTitle: found.usesOriginalTitle,
         kind: found.kind === 'movies' ? 'movies' : found.kind === 'anime' ? 'anime' : 'shows',
         root: found.path,
         within: folder,

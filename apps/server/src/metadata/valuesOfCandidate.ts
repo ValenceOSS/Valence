@@ -34,6 +34,11 @@ const valuesOfCandidate = (
     imdbId: description.imdbId ?? null,
     tvdbId: description.tvdbId ?? null,
     trailer: description.trailerKey,
+    originalLanguage: description.originalLanguage ?? null,
+    countries: listed(description.countries),
+    creators: listed(description.creators),
+    directors: listed(description.directors),
+    writers: listed(description.writers),
     cast:
       description.cast.length === 0
         ? null

@@ -212,6 +212,8 @@ const library = pgTable('library', {
     onDelete: 'cascade',
   }),
   isStreamed: boolean('isStreamed').notNull().default(false),
+  metadataLanguage: text('metadataLanguage'),
+  usesOriginalTitle: boolean('usesOriginalTitle').notNull().default(false),
 });
 
 const viewerProfile = pgTable(
@@ -991,6 +993,12 @@ const mediaItem = pgTable(
     extraKind: text('extraKind'),
     versionLabel: text('versionLabel'),
     trailerKey: text('trailerKey'),
+    originalLanguage: text('originalLanguage'),
+    countries: jsonb('countries'),
+    creators: jsonb('creators'),
+    directors: jsonb('directors'),
+    writers: jsonb('writers'),
+    guestStars: jsonb('guestStars'),
     releaseDate: text('releaseDate'),
     budget: bigint('budget', { mode: 'number' }),
     revenue: bigint('revenue', { mode: 'number' }),

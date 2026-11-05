@@ -19,6 +19,10 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['imdbId', 'imdbId'],
     ['tvdbId', 'tvdbId'],
     ['trailer', 'trailerKey'],
+    ['originalLanguage', 'originalLanguage'],
+    ['countries', 'countries'],
+    ['directors', 'directors'],
+    ['writers', 'writers'],
     ['cast', 'castMembers'],
   ],
   show: [
@@ -37,6 +41,9 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['anilistId', 'anilistId'],
     ['malId', 'malId'],
     ['trailer', 'trailerKey'],
+    ['originalLanguage', 'originalLanguage'],
+    ['countries', 'countries'],
+    ['creators', 'creators'],
     ['cast', 'castMembers'],
   ],
   episode: [
@@ -44,6 +51,9 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['overview', 'overview'],
     ['releaseDate', 'releaseDate'],
     ['addedAt', 'addedAt'],
+    ['directors', 'directors'],
+    ['writers', 'writers'],
+    ['guestStars', 'guestStars'],
   ],
 };
 

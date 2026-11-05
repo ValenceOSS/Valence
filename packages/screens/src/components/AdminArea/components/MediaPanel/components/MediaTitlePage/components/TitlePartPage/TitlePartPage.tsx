@@ -1,3 +1,4 @@
+import { TitlePeople } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitlePeople/TitlePeople';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { MoveLeft as MoveLeftIcon, MoveRight as MoveRightIcon } from '@keyline-icons/react';
 import { Breadcrumbs } from '@ValenceUI/Breadcrumbs';
@@ -16,12 +17,13 @@ import type { TitleTab } from '@ValenceScreens/components/AdminArea/components/M
 import type { TitlePartPageProps } from './TitlePartPage.types';
 import { say } from '@ValenceI18n/say';
 
-const PART_TABS: readonly TitleTab[] = ['details', 'files', 'history'];
+const PART_TABS: readonly TitleTab[] = ['details', 'people', 'files', 'history'];
 
 /**
  * One season or one episode of a programme as a page of its own, laid out as the programme's is:
  * the trail back up to the programme above it, with the way to the one before and after, its
- * picture, name and facts, and its details, its files and its history on tabs.
+ * picture, name and facts, and its details, an episode's guest stars, its files and its history on
+ * tabs.
  *
  * @param scope - Whether it is a season or an episode.
  * @param mediaId - A file of it.
@@ -58,7 +60,8 @@ const TitlePartPage = ({
   onPrevious,
   onNext,
 }: TitlePartPageProps) => {
-  const shown = PART_TABS.includes(tab) ? tab : 'details';
+  const shown =
+    PART_TABS.includes(tab) && (tab !== 'people' || scope === 'episode') ? tab : 'details';
   const travel = useTravelDirection([...PART_TABS], shown);
   const prefersReducedMotion = useReducedMotionConfig();
 
@@ -137,6 +140,7 @@ const TitlePartPage = ({
                 {
                   items: [
                     { id: 'details', label: say('common.details') },
+                    ...(scope === 'episode' ? [{ id: 'people', label: say('common.people') }] : []),
                     { id: 'files', label: filesLabel },
                     { id: 'history', label: say('common.history') },
                   ],
@@ -156,6 +160,20 @@ const TitlePartPage = ({
             }}
           />
         </TabPanel>
+
+        {scope === 'episode' ? (
+          <TabPanel value="people" travel={travel}>
+            <TitlePeople
+              key={mediaId}
+              mediaId={mediaId}
+              scope="episode"
+              field="guestStars"
+              onShowHistory={() => {
+                onTab('history');
+              }}
+            />
+          </TabPanel>
+        ) : null}
 
         <TabPanel value="files" travel={travel}>
           {files}

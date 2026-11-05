@@ -19,7 +19,16 @@ const TYPING_SETTLES_MS = 700;
 
 const LONG: readonly TitleField[] = ['overview', 'note'];
 
-const WORDS: readonly TitleField[] = ['genres', 'tags', 'studios', 'networks'];
+const WORDS: readonly TitleField[] = [
+  'genres',
+  'tags',
+  'studios',
+  'networks',
+  'countries',
+  'creators',
+  'directors',
+  'writers',
+];
 
 const NUMBERS: readonly TitleField[] = ['rating', 'rottenTomatoes'];
 
@@ -103,7 +112,7 @@ const MetadataField = ({
       isLabelHidden
       values={Array.isArray(shown) ? shown.filter((one) => typeof one === 'string') : []}
       onValuesChange={(values) => {
-        setShown(values);
+        setShown(field === 'countries' ? values.map((one) => one.trim().toUpperCase()) : values);
       }}
       {...(suggestions === undefined ? {} : { suggestions })}
     />

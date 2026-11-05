@@ -1,3 +1,4 @@
+import { namesOfJobs } from './namesOfJobs';
 import { wait } from '@ValenceCore/functions/wait';
 import { readContentAdvice } from '@ValenceServer/library/readContentAdvice';
 import { CATALOGUE_IMAGES } from '@ValenceServer/images/CATALOGUE_IMAGES';
@@ -171,6 +172,21 @@ const SeasonResponseSchema = z.object({
         overview: z.string().optional(),
         still_path: z.string().nullish(),
         air_date: z.string().nullish(),
+        crew: z
+          .array(z.object({ name: z.string(), job: z.string().optional() }))
+          .catch([])
+          .default([]),
+        guest_stars: z
+          .array(
+            z.object({
+              id: z.number().int().positive().nullish(),
+              name: z.string(),
+              character: z.string().optional(),
+              profile_path: z.string().nullish(),
+            }),
+          )
+          .catch([])
+          .default([]),
       }),
     )
     .default([]),
@@ -210,6 +226,28 @@ const EpisodeGroupSchema = z.object({
 
 const MOST_EPISODE_GROUPS = 10;
 
+/**
+ * Whether a catalogue's crew job is directing.
+ *
+ * @param job - The job, as the catalogue names it.
+ * @returns Whether it is.
+ */
+const DIRECTING = (job: string): boolean => job === 'Director';
+
+/**
+ * Whether a catalogue's crew job is writing, for the screen or the book it came from.
+ *
+ * @param job - The job, as the catalogue names it.
+ * @returns Whether it is.
+ */
+const WRITING = (job: string): boolean =>
+  job === 'Writer' ||
+  job === 'Screenplay' ||
+  job === 'Story' ||
+  job === 'Teleplay' ||
+  job === 'Novel' ||
+  job === 'Author';
+
 const APPENDED = 'credits,release_dates,content_ratings,external_ids,keywords,recommendations';
 
 const APPENDED_WITH_VIDEOS = `${APPENDED},videos`;
@@ -220,6 +258,16 @@ const DetailResponseSchema = z.object({
   name: z.string().optional(),
   original_title: z.string().optional(),
   original_name: z.string().optional(),
+  original_language: z.string().optional(),
+  origin_country: z.array(z.string()).catch([]).default([]),
+  production_countries: z
+    .array(z.object({ iso_3166_1: z.string() }))
+    .catch([])
+    .default([]),
+  created_by: z
+    .array(z.object({ name: z.string() }))
+    .catch([])
+    .default([]),
   tagline: z.string().optional(),
   overview: z.string().optional(),
   release_date: z.string().optional(),
@@ -314,6 +362,10 @@ const DetailResponseSchema = z.object({
             profile_path: z.string().nullish(),
           }),
         )
+        .default([]),
+      crew: z
+        .array(z.object({ name: z.string(), job: z.string().optional() }))
+        .catch([])
         .default([]),
     })
     .optional(),
@@ -792,6 +844,7 @@ const createCatalogueMetadataProvider = ({
     externalId: string,
     isSeries: boolean,
     key: string,
+    language = 'en',
   ): Promise<string | null> => {
     const path = `/${isSeries ? 'tv' : 'movie'}/${externalId}/images`;
 
@@ -809,7 +862,10 @@ const createCatalogueMetadataProvider = ({
       return images.success ? images.data.logos : [];
     };
 
-    const found = await readLogos({ include_image_language: 'en,null' });
+    const spoken = language.slice(0, 2);
+    const found = await readLogos({
+      include_image_language: spoken === 'en' ? 'en,null' : `${spoken},en,null`,
+    });
     const logos = found.length > 0 ? found : await readLogos({});
 
     return (
@@ -876,6 +932,15 @@ const createCatalogueMetadataProvider = ({
     },
 
     describe: async (facts) => {
+      const inLanguage = (path: string, key: string, query: Record<string, string>) =>
+        request(
+          path,
+          key,
+          facts.language === undefined || path.startsWith('/search') || path.startsWith('/find')
+            ? query
+            : { ...query, language: facts.language },
+        );
+
       const key = await readKey();
 
       if (key === null || key === '') {
@@ -943,7 +1008,7 @@ const createCatalogueMetadataProvider = ({
 
         for (const candidate of begun) {
           const read = SeasonResponseSchema.safeParse(
-            await request(
+            await inLanguage(
               `/tv/${detail.id.toString()}/season/${candidate.season_number.toString()}`,
               key,
               {},
@@ -989,13 +1054,13 @@ const createCatalogueMetadataProvider = ({
 
         const [season, lettering] = await Promise.all([
           episodeNumber !== null
-            ? request(
+            ? inLanguage(
                 `/tv/${detail.id.toString()}/season/${(facts.episode?.seasonNumber ?? 1).toString()}`,
                 key,
                 {},
               ).then((answer) => SeasonResponseSchema.safeParse(answer))
             : null,
-          pickTheLogo(detail.id.toString(), isEpisode, key).catch(() => null),
+          pickTheLogo(detail.id.toString(), isEpisode, key, facts.language).catch(() => null),
         ]);
         const logo = lettering === null ? null : imageUrl(imageBaseUrl, lettering, 'original');
 
@@ -1036,6 +1101,25 @@ const createCatalogueMetadataProvider = ({
         const studios = detail.production_companies.map((company) => company.name);
         const networks = detail.networks.map((network) => network.name);
         const tvdbId = detail.external_ids?.tvdb_id ?? null;
+        const crew = isEpisode ? covered.flatMap((one) => one.crew) : (detail.credits?.crew ?? []);
+        const directors = namesOfJobs(crew, DIRECTING);
+        const writers = namesOfJobs(crew, WRITING);
+        const creators = isEpisode ? [] : detail.created_by.map((one) => one.name);
+        const countries = [
+          ...new Set([
+            ...detail.production_countries.map((one) => one.iso_3166_1),
+            ...detail.origin_country,
+          ]),
+        ];
+        const guestStars: CastMember[] = covered
+          .flatMap((one) => one.guest_stars)
+          .slice(0, CAST_STORED)
+          .map((member) => ({
+            personId: member.id ?? null,
+            name: member.name,
+            role: member.character ?? '',
+            imageUrl: imageUrl(imageBaseUrl, member.profile_path, 'w185'),
+          }));
 
         return {
           title: isEpisode ? (episodeName ?? facts.title ?? seriesName) : seriesName,
@@ -1055,6 +1139,14 @@ const createCatalogueMetadataProvider = ({
             ? {}
             : { genres: detail.genres.map((genre) => genre.name) }),
           ...(cast.length === 0 ? {} : { cast }),
+          ...(guestStars.length === 0 ? {} : { guestStars }),
+          ...(directors.length === 0 ? {} : { directors }),
+          ...(writers.length === 0 ? {} : { writers }),
+          ...(creators.length === 0 ? {} : { creators }),
+          ...(countries.length === 0 ? {} : { countries }),
+          ...(detail.original_language === undefined || detail.original_language === ''
+            ? {}
+            : { originalLanguage: detail.original_language }),
           ...(detail.vote_average === undefined ? {} : { rating: detail.vote_average }),
           ...(Object.keys(certificates).length === 0 ? {} : { certifications: certificates }),
           ...(Object.keys(advice).length === 0 ? {} : { contentAdvice: advice }),
@@ -1084,7 +1176,7 @@ const createCatalogueMetadataProvider = ({
         mustAgree = false,
       ): Promise<Metadata | null> => {
         const detail = DetailResponseSchema.safeParse(
-          await request(`/${asKind}/${id}`, key, { append_to_response: appended }),
+          await inLanguage(`/${asKind}/${id}`, key, { append_to_response: appended }),
         );
 
         if (!detail.success) {
@@ -1115,7 +1207,7 @@ const createCatalogueMetadataProvider = ({
         source: 'imdb_id' | 'tvdb_id',
       ): Promise<string | null> => {
         const found = FindResponseSchema.safeParse(
-          await request(`/find/${id}`, key, { external_source: source }),
+          await inLanguage(`/find/${id}`, key, { external_source: source }),
         );
         const results = found.success
           ? isEpisode
@@ -1163,7 +1255,7 @@ const createCatalogueMetadataProvider = ({
        * @returns What the catalogue offered, or nothing where it would not answer.
        */
       const search = async (withYear: boolean): Promise<SearchResult[] | null> => {
-        const searched = await request(isEpisode ? '/search/tv' : '/search/movie', key, {
+        const searched = await inLanguage(isEpisode ? '/search/tv' : '/search/movie', key, {
           query: searchNameOf(searchTitle),
           ...(withYear && searchYear !== null
             ? isEpisode
@@ -1206,7 +1298,7 @@ const createCatalogueMetadataProvider = ({
       ): Promise<SearchResult | undefined> => {
         const timed = await Promise.all(
           entries.map(async (entry) => {
-            const asked = await request(`/movie/${entry.id.toString()}`, key, {
+            const asked = await inLanguage(`/movie/${entry.id.toString()}`, key, {
               append_to_response: appended,
             });
             const parsed = TitleResponseSchema.safeParse(asked);
@@ -1247,7 +1339,7 @@ const createCatalogueMetadataProvider = ({
 
         for (const entry of inDoubt) {
           const detail = DetailResponseSchema.safeParse(
-            await request(`/tv/${entry.id.toString()}`, key, { append_to_response: appended }),
+            await inLanguage(`/tv/${entry.id.toString()}`, key, { append_to_response: appended }),
           );
 
           if (detail.success && reachesEpisode(detail.data.seasons, reach)) {
@@ -1269,7 +1361,7 @@ const createCatalogueMetadataProvider = ({
         return null;
       }
 
-      const detailed = await request(
+      const detailed = await inLanguage(
         `${isEpisode ? '/tv' : '/movie'}/${first.id.toString()}`,
         key,
         { append_to_response: appended },
@@ -1600,6 +1692,16 @@ const createCatalogueMetadataProvider = ({
         networks: found.networks.map((network) => network.name),
         imdbId: released.imdbId ?? null,
         tvdbId: found.external_ids?.tvdb_id?.toString() ?? null,
+        originalLanguage: found.original_language ?? null,
+        countries: [
+          ...new Set([
+            ...found.production_countries.map((one) => one.iso_3166_1),
+            ...found.origin_country,
+          ]),
+        ],
+        creators: found.created_by.map((one) => one.name),
+        directors: namesOfJobs(found.credits?.crew ?? [], DIRECTING),
+        writers: namesOfJobs(found.credits?.crew ?? [], WRITING),
       };
     },
 

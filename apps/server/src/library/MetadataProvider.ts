@@ -39,6 +39,7 @@ type MediaFacts = {
   year?: number | null;
   ids?: ExternalIds;
   rememberedExternalId?: string | null;
+  language?: string;
 };
 
 type CastMember = {
@@ -55,6 +56,12 @@ type Metadata = {
   tagline?: string;
   genres?: string[];
   cast?: CastMember[];
+  guestStars?: CastMember[];
+  directors?: string[];
+  writers?: string[];
+  creators?: string[];
+  countries?: string[];
+  originalLanguage?: string;
   rating?: number;
   certifications?: Record<string, string>;
   contentAdvice?: ContentAdvice;
@@ -120,6 +127,11 @@ type CatalogueDescription = {
   networks?: string[];
   imdbId?: string | null;
   tvdbId?: string | null;
+  originalLanguage?: string | null;
+  countries?: string[];
+  creators?: string[];
+  directors?: string[];
+  writers?: string[];
 };
 
 type SeriesShape = {

@@ -28,6 +28,12 @@ const COLUMNS: EditableColumns = {
   malId: null,
   castMembers: null,
   trailerKey: null,
+  guestStars: null,
+  originalLanguage: null,
+  countries: null,
+  creators: null,
+  directors: null,
+  writers: null,
   seriesTitle: 'Show',
   seriesSortTitle: null,
 };

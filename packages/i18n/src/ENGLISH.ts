@@ -5031,7 +5031,10 @@ const ENGLISH = {
     'Keep the profile asked first',
   'screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports':
     '{kind} searches, downloads and imports it.',
+  'screens.adminArea.librarySettingsDialog.metadataLanguage': 'Metadata language',
   'screens.adminArea.librarySettingsDialog.metadataProfile': 'Metadata profile',
+  'screens.adminArea.librarySettingsDialog.namesEachTitleByItsOriginal':
+    'Names each film and show by the title it was released under, such as a Japanese film by its Japanese name, from the next scan or refresh.',
   'screens.adminArea.librarySettingsDialog.oneAtATime': 'One at a time',
   'screens.adminArea.librarySettingsDialog.previewsAndPlaybackPreferThisLanguage':
     'Previews and playback use this audio language when a file has it. Files without a matching track use their own default.',
@@ -5061,7 +5064,11 @@ const ENGLISH = {
     'This library was added as {flavour}. Choose Anime to make it an anime library.',
   'screens.adminArea.librarySettingsDialog.thisWillStartAPreviewGeneration':
     'This starts generating previews for {name}’s existing media to match {label}. Progress is shown next to the library. Continue?',
+  'screens.adminArea.librarySettingsDialog.tmdbIsAskedInThisLanguage':
+    'TMDB is asked for titles, overviews and logos in this language, from the next scan or refresh. A title it has no translation for stays in English.',
+  'screens.adminArea.librarySettingsDialog.tmdbsDefault': 'TMDB’s default, English',
   'screens.adminArea.librarySettingsDialog.twoAtATime': 'Two at a time',
+  'screens.adminArea.librarySettingsDialog.useOriginalTitles': 'Use original titles',
   'screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt':
     'Valence searches for, downloads and imports it.',
   'screens.adminArea.librarySettingsDialog.whenSomebodyAsksForATitle':
@@ -6431,8 +6438,12 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.contentRatingIn': 'Content rating ({country})',
   'screens.adminArea.titleDetails.count.savedChanges.one': 'Saved {count} change',
   'screens.adminArea.titleDetails.count.savedChanges.other': 'Saved {count} changes',
+  'screens.adminArea.titleDetails.countries': 'Countries',
+  'screens.adminArea.titleDetails.createdBy': 'Creators',
   'screens.adminArea.titleDetails.dateAdded': 'Date added',
+  'screens.adminArea.titleDetails.directedBy': 'Directed by',
   'screens.adminArea.titleDetails.firstAired': 'First aired',
+  'screens.adminArea.titleDetails.guestStars': 'Guest stars',
   'screens.adminArea.titleDetails.ids': 'IDs',
   'screens.adminArea.titleDetails.imdb': 'IMDb',
   'screens.adminArea.titleDetails.myAnimeList': 'MyAnimeList',
@@ -6440,7 +6451,9 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.note': 'Note',
   'screens.adminArea.titleDetails.notMatchedYet': 'Not matched yet',
   'screens.adminArea.titleDetails.openOnSite': 'Open on {site}',
+  'screens.adminArea.titleDetails.originalLanguage': 'Original language',
   'screens.adminArea.titleDetails.originalTitle': 'Original title',
+  'screens.adminArea.titleDetails.originAndCrew': 'Origin and crew',
   'screens.adminArea.titleDetails.saved': 'Change saved',
   'screens.adminArea.titleDetails.sortTitle': 'Sort title',
   'screens.adminArea.titleDetails.story': 'Story',
@@ -6450,6 +6463,7 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.titleAndRelease': 'Title and release',
   'screens.adminArea.titleDetails.tvdb': 'TVDB',
   'screens.adminArea.titleDetails.undone': 'Change undone',
+  'screens.adminArea.titleDetails.writtenBy': 'Written by',
   'screens.adminArea.titleHistory.fields': 'Fields',
   'screens.adminArea.titleHistory.fieldWentFromTo': '{field}: {before} → {after}',
   'screens.adminArea.titleHistory.nothingChangedYet': 'Nothing has been changed on this title yet.',

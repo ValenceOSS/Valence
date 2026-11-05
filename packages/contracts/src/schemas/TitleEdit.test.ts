@@ -21,6 +21,15 @@ describe('TitleEdit', () => {
   });
 
   it('gives an episode only what an episode has', () => {
-    expect(FIELDS_OF_KIND.episode).toEqual(['title', 'overview', 'releaseDate', 'addedAt', 'note']);
+    expect(FIELDS_OF_KIND.episode).toEqual([
+      'title',
+      'overview',
+      'releaseDate',
+      'addedAt',
+      'directors',
+      'writers',
+      'guestStars',
+      'note',
+    ]);
   });
 });

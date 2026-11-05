@@ -30,6 +30,10 @@ const HALF_WIDTH: readonly TitleField[] = [
   'studios',
   'networks',
   'trailer',
+  'countries',
+  'creators',
+  'directors',
+  'writers',
 ];
 
 /**

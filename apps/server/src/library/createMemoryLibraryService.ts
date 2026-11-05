@@ -373,6 +373,8 @@ const createMemoryLibraryService = (
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      metadataLanguage: null,
+      usesOriginalTitle: false,
       higherProfileAsks: 'ask',
       fulfilment: null,
     };
@@ -407,6 +409,14 @@ const createMemoryLibraryService = (
 
     if (input.requestPath !== undefined) {
       found.requestPath = input.requestPath;
+    }
+
+    if (input.metadataLanguage !== undefined) {
+      found.metadataLanguage = input.metadataLanguage;
+    }
+
+    if (input.usesOriginalTitle !== undefined) {
+      found.usesOriginalTitle = input.usesOriginalTitle;
     }
 
     if (input.keepsShowsTogether !== undefined) {

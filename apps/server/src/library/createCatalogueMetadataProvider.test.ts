@@ -161,6 +161,44 @@ describe('createCatalogueMetadataProvider', () => {
     });
   });
 
+  it('reads who directed and wrote a film, where it was made and in what language', async () => {
+    const { instance } = provider({
+      '/search/movie': SEARCH,
+      '/movie/329': {
+        ...DETAIL,
+        original_language: 'en',
+        production_countries: [{ iso_3166_1: 'US' }],
+        credits: {
+          ...DETAIL.credits,
+          crew: [
+            { name: 'A director', job: 'Director' },
+            { name: 'A writer', job: 'Screenplay' },
+            { name: 'A composer', job: 'Original Music Composer' },
+          ],
+        },
+      },
+    });
+
+    await expect(instance.describe(facts('/media/Arrival (2016).mkv'))).resolves.toMatchObject({
+      directors: ['A director'],
+      writers: ['A writer'],
+      countries: ['US'],
+      originalLanguage: 'en',
+    });
+  });
+
+  it('asks in the library’s language, with its logos in that language first', async () => {
+    const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
+
+    await instance.describe({ ...facts('/media/Arrival (2016).mkv'), language: 'fr-FR' });
+
+    expect(calls.find((url) => url.includes('/search/movie'))).not.toContain('language=fr');
+    expect(calls.find((url) => url.includes('/movie/329?'))).toContain('language=fr-FR');
+    expect(calls.find((url) => url.includes('/images'))).toContain(
+      'include_image_language=fr%2Cen%2Cnull',
+    );
+  });
+
   it('asks for no videos at all unless somebody turned trailers on', async () => {
     const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': WITH_VIDEOS });
 
@@ -1472,6 +1510,11 @@ describe('discovering and describing titles to ask for', () => {
       networks: ['A network'],
       imdbId: 'tt11280740',
       tvdbId: '371980',
+      originalLanguage: null,
+      countries: [],
+      creators: [],
+      directors: [],
+      writers: [],
     });
     expect(calls[0]).toContain('append_to_response=credits%2Cexternal_ids%2Ccontent_ratings');
     expect(calls[0]).not.toContain('videos');

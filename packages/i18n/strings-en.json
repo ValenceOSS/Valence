@@ -19991,9 +19991,19 @@
     "context": "Shown in the admin area: the detail of choosing a connected app to fulfil a library's requests. {kind} is Radarr, Sonarr or Lidarr."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.metadataLanguage",
+    "text": "Metadata language",
+    "context": "Setting of a library: which language TMDB is asked for its titles, overviews and logos in."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.metadataProfile",
     "text": "Metadata profile",
     "context": "Shown in the admin area: the label of the Lidarr metadata profile a music library's requests use."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.namesEachTitleByItsOriginal",
+    "text": "Names each film and show by the title it was released under, such as a Japanese film by its Japanese name, from the next scan or refresh.",
+    "context": "Description under a library's Use original titles switch."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.oneAtATime",
@@ -20091,9 +20101,24 @@
     "context": "Text shown in the library settings dialog in the admin area. {name} is filled in by the app; {label} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.tmdbIsAskedInThisLanguage",
+    "text": "TMDB is asked for titles, overviews and logos in this language, from the next scan or refresh. A title it has no translation for stays in English.",
+    "context": "Description of a library's metadata language setting."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.tmdbsDefault",
+    "text": "TMDB’s default, English",
+    "context": "The first choice of a library's metadata language: ask TMDB in no language in particular."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.twoAtATime",
     "text": "Two at a time",
     "context": "The label in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.useOriginalTitles",
+    "text": "Use original titles",
+    "context": "Switch in a library's settings: name films and shows by their original title rather than a translated one."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt",
@@ -25346,14 +25371,34 @@
     "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
   },
   {
+    "handler": "screens.adminArea.titleDetails.countries",
+    "text": "Countries",
+    "context": "Field on a title's Details tab: the countries it was made in, as two-letter codes such as GB."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.createdBy",
+    "text": "Creators",
+    "context": "Field on a show's Details tab: the people who created it."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.dateAdded",
     "text": "Date added",
     "context": "A field for the day a film or an episode was added to the library, which decides where it sits in Recently added. On the Details tab of a title in the admin area (from `TitleDetails`)."
   },
   {
+    "handler": "screens.adminArea.titleDetails.directedBy",
+    "text": "Directed by",
+    "context": "Field on a film's or an episode's Details tab: who directed it."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.firstAired",
     "text": "First aired",
     "context": "A field for the day a programme was first shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.guestStars",
+    "text": "Guest stars",
+    "context": "An episode's guest cast, on its People tab."
   },
   {
     "handler": "screens.adminArea.titleDetails.ids",
@@ -25391,9 +25436,19 @@
     "context": "The hidden label of the link beside one of a title's ids that opens its page on that site. {site} is a site such as IMDb."
   },
   {
+    "handler": "screens.adminArea.titleDetails.originalLanguage",
+    "text": "Original language",
+    "context": "Field on a title's Details tab: the language it was made in, as a two-letter code such as ja."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.originalTitle",
     "text": "Original title",
     "context": "A field for a title’s title in its own language. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.originAndCrew",
+    "text": "Origin and crew",
+    "context": "Section of a title's Details tab holding its original language, countries, creators, directors and writers."
   },
   {
     "handler": "screens.adminArea.titleDetails.saved",
@@ -25439,6 +25494,11 @@
     "handler": "screens.adminArea.titleDetails.undone",
     "text": "Change undone",
     "context": "A toast once a change to a title’s metadata has been undone. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.writtenBy",
+    "text": "Written by",
+    "context": "Field on a film's or an episode's Details tab: who wrote it."
   },
   {
     "handler": "screens.adminArea.titleHistory.fields",

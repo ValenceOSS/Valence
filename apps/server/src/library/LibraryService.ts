@@ -99,6 +99,8 @@ type UpdateLibraryInput = {
   requestProfileId?: string | null;
   requestPath?: string | null;
   keepsShowsTogether?: boolean;
+  metadataLanguage?: string | null;
+  usesOriginalTitle?: boolean;
   higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };

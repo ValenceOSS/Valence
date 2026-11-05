@@ -1,3 +1,4 @@
+import { labelOfField } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/TitleDetails/labelOfField';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { User as UserIcon } from '@keyline-icons/react';
@@ -27,11 +28,18 @@ const TYPING_SETTLES_MS = 400;
  * once, and the cast says where it came from and goes back to the catalogue's in one press.
  *
  * @param mediaId - A file of the title.
+ * @param scope - The film or programme, or one of its episodes.
+ * @param field - Whose people: the title's cast, or an episode's guest stars.
  * @param onShowHistory - Opens the title's history.
  */
-const TitlePeople = ({ mediaId, onShowHistory }: TitlePeopleProps) => {
-  const metadata = useQuery(adminQueries.titleMetadata(mediaId, 'title'));
-  const { change } = useTitleChange(mediaId, 'title');
+const TitlePeople = ({
+  mediaId,
+  scope = 'title',
+  field = 'cast',
+  onShowHistory,
+}: TitlePeopleProps) => {
+  const metadata = useQuery(adminQueries.titleMetadata(mediaId, scope));
+  const { change } = useTitleChange(mediaId, scope);
   const [typed, setTyped] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const looking = useSettled(typed.trim(), TYPING_SETTLES_MS);
@@ -59,7 +67,7 @@ const TitlePeople = ({ mediaId, onShowHistory }: TitlePeopleProps) => {
     );
   }
 
-  const state = metadata.data.fields.cast;
+  const state = metadata.data.fields[field];
   const cast = castOfValue(state?.value);
 
   const act = (request: TitleEditRequest) => {
@@ -75,7 +83,7 @@ const TitlePeople = ({ mediaId, onShowHistory }: TitlePeopleProps) => {
   };
 
   const save = (next: CastEntry[]) => {
-    act({ set: { cast: next } });
+    act({ set: { [field]: next } });
   };
 
   const add = (member: CastEntry) => {
@@ -102,18 +110,18 @@ const TitlePeople = ({ mediaId, onShowHistory }: TitlePeopleProps) => {
     <div className="@container min-w-0">
       <PanelCard title={say('common.people')}>
         <SourcedField
-          label={say('common.cast')}
+          label={field === 'cast' ? say('common.cast') : labelOfField(field, 'episode')}
           state={state}
           isBusy={isBusy}
           {...(onShowHistory === undefined ? {} : { onShowHistory })}
           onReset={() => {
-            act({ reset: ['cast'] });
+            act({ reset: [field] });
           }}
           onLock={() => {
-            act({ lock: ['cast'] });
+            act({ lock: [field] });
           }}
           onUseCatalogue={() => {
-            act({ set: { cast: castOfValue(state?.catalogue ?? null) } });
+            act({ set: { [field]: castOfValue(state?.catalogue ?? null) } });
           }}
         >
           <div className="flex flex-col gap-4">

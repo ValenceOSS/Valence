@@ -40,6 +40,11 @@ describe('valuesOfCandidate', () => {
       rating: 7,
       imdbId: 'tt0000001',
       tvdbId: null,
+      originalLanguage: null,
+      countries: null,
+      creators: null,
+      directors: null,
+      writers: null,
       trailer: 'abcdefghijk',
       cast: [{ personId: 4, name: 'Someone', role: '', imageUrl: null }],
     });

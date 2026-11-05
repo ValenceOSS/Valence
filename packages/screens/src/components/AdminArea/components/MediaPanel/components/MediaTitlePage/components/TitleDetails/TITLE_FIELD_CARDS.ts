@@ -22,6 +22,11 @@ const TITLE_FIELD_CARDS: readonly {
     fields: ['genres', 'tags', 'studios', 'networks'],
   },
   {
+    id: 'crew',
+    title: say('screens.adminArea.titleDetails.originAndCrew'),
+    fields: ['originalLanguage', 'countries', 'creators', 'directors', 'writers'],
+  },
+  {
     id: 'ratings',
     title: say('screens.ratingPanel.ratings'),
     fields: ['rating', 'rottenTomatoes', 'certifications'],

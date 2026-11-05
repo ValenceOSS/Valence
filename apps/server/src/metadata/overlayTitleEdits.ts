@@ -80,6 +80,12 @@ const WRITERS: {
   malId: (columns, value) => ({ ...columns, malId: textOf(value) }),
   castMembers: (columns, value) => ({ ...columns, castMembers: castOf(value) }),
   trailerKey: (columns, value) => ({ ...columns, trailerKey: textOf(value) }),
+  guestStars: (columns, value) => ({ ...columns, guestStars: castOf(value) }),
+  originalLanguage: (columns, value) => ({ ...columns, originalLanguage: textOf(value) }),
+  countries: (columns, value) => ({ ...columns, countries: wordsOf(value) }),
+  creators: (columns, value) => ({ ...columns, creators: wordsOf(value) }),
+  directors: (columns, value) => ({ ...columns, directors: wordsOf(value) }),
+  writers: (columns, value) => ({ ...columns, writers: wordsOf(value) }),
   seriesTitle: (columns, value) => ({
     ...columns,
     seriesTitle: textOf(value) ?? columns.seriesTitle,

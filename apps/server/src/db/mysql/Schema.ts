@@ -218,6 +218,8 @@ const library = mysqlTable('library', {
     onDelete: 'cascade',
   }),
   isStreamed: boolean('isStreamed').notNull().default(false),
+  metadataLanguage: mediumtext('metadataLanguage'),
+  usesOriginalTitle: boolean('usesOriginalTitle').notNull().default(false),
 });
 
 const viewerProfile = mysqlTable(
@@ -973,6 +975,12 @@ const mediaItem = mysqlTable(
     extraKind: mediumtext('extraKind'),
     versionLabel: mediumtext('versionLabel'),
     trailerKey: mediumtext('trailerKey'),
+    originalLanguage: mediumtext('originalLanguage'),
+    countries: jsonColumn('countries'),
+    creators: jsonColumn('creators'),
+    directors: jsonColumn('directors'),
+    writers: jsonColumn('writers'),
+    guestStars: jsonColumn('guestStars'),
     releaseDate: mediumtext('releaseDate'),
     budget: bigint('budget', { mode: 'number' }),
     revenue: bigint('revenue', { mode: 'number' }),

@@ -111,6 +111,9 @@ const LibrarySettingsDialog = ({
   const [requestProfileId, setRequestProfileId] = useState(library?.requestProfileId ?? THE_BEST);
   const [requestPath, setRequestPath] = useState(library?.requestPath ?? '');
   const [keepsShowsTogether, setKeepsShowsTogether] = useState(library?.keepsShowsTogether ?? true);
+  const [metadataLanguage, setMetadataLanguage] = useState(library?.metadataLanguage ?? NONE_ID);
+  const [usesOriginalTitle, setUsesOriginalTitle] = useState(library?.usesOriginalTitle ?? false);
+  const originalTitleId = useId();
   const [higherProfileAsks, setHigherProfileAsks] = useState<HigherProfileAsks>(
     library?.higherProfileAsks ?? 'ask',
   );
@@ -127,6 +130,8 @@ const LibrarySettingsDialog = ({
     setRequestProfileId(library?.requestProfileId ?? THE_BEST);
     setRequestPath(library?.requestPath ?? '');
     setKeepsShowsTogether(library?.keepsShowsTogether ?? true);
+    setMetadataLanguage(library?.metadataLanguage ?? NONE_ID);
+    setUsesOriginalTitle(library?.usesOriginalTitle ?? false);
     setHigherProfileAsks(library?.higherProfileAsks ?? 'ask');
     setFulfilment(fulfilmentFormOf(library));
     setError(null);
@@ -176,6 +181,8 @@ const LibrarySettingsDialog = ({
         requestProfileId: requestProfileId === THE_BEST ? null : requestProfileId,
         requestPath: requestPath.trim() === '' ? null : requestPath.trim(),
         keepsShowsTogether,
+        metadataLanguage: metadataLanguage === NONE_ID ? null : metadataLanguage,
+        usesOriginalTitle,
         higherProfileAsks,
         fulfilment: handedTo.fulfilment,
       });
@@ -217,6 +224,12 @@ const LibrarySettingsDialog = ({
   const canHandOff = arrApps.some((app) => app.kind === arrKind);
   const isHandedOff = arrKind !== null && fulfilment.appId !== VALENCE;
   const selectedLabel = languageOptions.find((option) => option.id === selected)?.label ?? selected;
+  const metadataOptions = [
+    { id: NONE_ID, label: say('screens.adminArea.librarySettingsDialog.tmdbsDefault') },
+    ...languageOptions.filter((option) => option.id !== NONE_ID),
+  ];
+  const metadataLabel =
+    metadataOptions.find((option) => option.id === metadataLanguage)?.label ?? metadataLanguage;
   const atOnceLabel = AT_ONCE_OPTIONS.find((option) => option.id === atOnce)?.label ?? atOnce;
   const profileLabel =
     requestProfileId === THE_BEST
@@ -287,6 +300,53 @@ const LibrarySettingsDialog = ({
                 />
               </fieldset>
             ) : null}
+
+            {library.kind === 'music' || library.kind === 'books' ? null : (
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-medium text-text">
+                  {say('screens.adminArea.librarySettingsDialog.metadataLanguage')}
+                </legend>
+
+                <p className="text-xs text-text-muted">
+                  {say('screens.adminArea.librarySettingsDialog.tmdbIsAskedInThisLanguage')}
+                </p>
+
+                <OptionMenu
+                  label={say('screens.adminArea.librarySettingsDialog.metadataLanguage')}
+                  groups={[
+                    {
+                      name: say('common.language'),
+                      selectedId: metadataLanguage,
+                      onSelect: setMetadataLanguage,
+                      options: metadataOptions,
+                    },
+                  ]}
+                  trigger={
+                    <>
+                      <span className="truncate">{metadataLabel}</span>
+                      <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
+                    </>
+                  }
+                  triggerShape="field"
+                  align="start"
+                  matchTriggerWidth
+                />
+
+                <div className="flex flex-col gap-1 pt-1">
+                  <Switch
+                    label={say('screens.adminArea.librarySettingsDialog.useOriginalTitles')}
+                    isOn={usesOriginalTitle}
+                    onToggle={() => {
+                      setUsesOriginalTitle(!usesOriginalTitle);
+                    }}
+                    describedBy={originalTitleId}
+                  />
+                  <p id={originalTitleId} className="text-xs text-text-muted">
+                    {say('screens.adminArea.librarySettingsDialog.namesEachTitleByItsOriginal')}
+                  </p>
+                </div>
+              </fieldset>
+            )}
 
             <fieldset className="flex flex-col gap-2">
               <legend className="text-sm font-medium text-text">
