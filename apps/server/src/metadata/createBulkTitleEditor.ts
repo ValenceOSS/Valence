@@ -1,3 +1,4 @@
+import { replaceInTitleValue } from '@ValenceCore/functions/replaceInTitleValue';
 import { randomUUID } from 'node:crypto';
 import { and, inArray, isNull } from 'drizzle-orm';
 import { mediaItem } from '#dialect/Schema';
@@ -64,8 +65,8 @@ const emptyOf = (field: TitleField): TitleValue =>
 
 /**
  * Works out the edit a change made to many titles comes to for one of them, from what it holds
- * now: words added to or taken from its lists, fields emptied, its sort title filled from its title,
- * and fields set, locked or put back, each only where the title has the field.
+ * now: words added to or taken from its lists, fields emptied, words found and replaced, its sort
+ * title filled from its title, and fields set, locked or put back, each only where the title has the field.
  *
  * @param metadata - The title as it stands.
  * @param change - The change asked of every title.
@@ -125,6 +126,17 @@ const editOf = (metadata: TitleMetadata, change: BulkTitleChange): TitleEditRequ
 
     if (!isSameTitleValue(next, current)) {
       set.certifications = next;
+    }
+  }
+
+  const swap = change.replace;
+
+  if (swap !== undefined && has(swap.field)) {
+    const current = set[swap.field] ?? metadata.fields[swap.field]?.value ?? null;
+    const next = replaceInTitleValue(current, swap);
+
+    if (!isSameTitleValue(next, current)) {
+      set[swap.field] = next;
     }
   }
 

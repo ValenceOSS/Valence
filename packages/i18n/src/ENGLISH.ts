@@ -4717,6 +4717,13 @@ const ENGLISH = {
     'Deletes the folder and everything in it from disk, then rescans the library to remove its contents. This can’t be undone.',
   'screens.adminArea.filesPanel.thisFolderIsEmpty': 'This folder is empty.',
   'screens.adminArea.filesPanel.uploadHere': 'Upload here',
+  'screens.adminArea.findAndReplace.find': 'Find',
+  'screens.adminArea.findAndReplace.findAndReplace': 'Find and replace',
+  'screens.adminArea.findAndReplace.inAListOnlyWholeWords':
+    'In a list, only a whole entry is replaced, and an emptied one is taken out. Elsewhere, every place the words appear.',
+  'screens.adminArea.findAndReplace.inWhichField': 'In which field',
+  'screens.adminArea.findAndReplace.matchCase': 'Match case',
+  'screens.adminArea.findAndReplace.replaceWith': 'Replace with',
   'screens.adminArea.fixMatchDialog.apply': 'Apply',
   'screens.adminArea.fixMatchDialog.current': 'Current',
   'screens.adminArea.fixMatchDialog.field': 'Field',

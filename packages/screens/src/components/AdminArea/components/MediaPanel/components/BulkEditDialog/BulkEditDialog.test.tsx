@@ -86,6 +86,46 @@ describe('BulkEditDialog', () => {
     expect(screen.getByRole('button', { name: 'Their episodes' })).toBeInTheDocument();
   });
 
+  it('finds and replaces words in a field of every title', async () => {
+    reading.mockResolvedValue({
+      titles: 2,
+      fields: {
+        tagline: { value: null, isMixed: true, titles: 2 },
+        genres: { value: [], isMixed: true, titles: 2 },
+      },
+    });
+    editing.mockResolvedValue({ changeSetId: 'set', changed: TARGETS, unchanged: 0, refused: 0 });
+    const user = userEvent.setup();
+
+    render(
+      <BulkEditDialog
+        targets={TARGETS}
+        hasShows={false}
+        libraryId="lib"
+        onClose={vi.fn()}
+        onDone={vi.fn()}
+      />,
+    );
+
+    await user.type(await screen.findByLabelText('Find'), 'Sci-Fi');
+    await user.type(screen.getByLabelText('Replace with'), 'Science Fiction');
+
+    expect(screen.getByText('Changes 1 field on 2 titles')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => {
+      expect(editing).toHaveBeenCalledWith(
+        TARGETS,
+        {
+          replace: { field: 'tagline', find: 'Sci-Fi', with: 'Science Fiction', matchCase: false },
+        },
+        'titles',
+        expect.any(Function),
+      );
+    });
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(BulkEditDialog.displayName).toBe('BulkEditDialog');
   });

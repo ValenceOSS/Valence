@@ -123,6 +123,23 @@ describe('createBulkTitleEditor', { timeout: STARTING_DATABASE_MS }, () => {
     expect(outcome.changed).toHaveLength(2);
   });
 
+  it('finds and replaces in a field of every title, leaving one it is not found in alone', async () => {
+    const { editor, edit } = await anEditor();
+
+    await editor.editMany(
+      {
+        targets: [...BOTH],
+        appliesTo: 'titles',
+        change: { replace: { field: 'tagline', find: 'line', with: 'verse', matchCase: false } },
+      },
+      ACTOR,
+    );
+
+    expect(edit.mock.calls.map(([mediaId, , request]) => ({ mediaId, request }))).toEqual([
+      { mediaId: 'heat', request: { set: { tagline: 'A verse' } } },
+    ]);
+  });
+
   it('locks every field, or lets the locked ones follow the catalogue again', async () => {
     const { editor, edit } = await anEditor();
 

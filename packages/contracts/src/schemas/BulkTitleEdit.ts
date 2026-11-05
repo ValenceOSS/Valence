@@ -7,6 +7,23 @@ const LIST_FIELDS = ['genres', 'tags', 'studios', 'networks'] as const;
 
 const ListFieldSchema = z.enum(LIST_FIELDS);
 
+const REPLACEABLE_FIELDS = [
+  'title',
+  'sortTitle',
+  'originalTitle',
+  'tagline',
+  'overview',
+  'note',
+  ...LIST_FIELDS,
+] as const;
+
+const BulkReplaceSchema = z.object({
+  field: z.enum(REPLACEABLE_FIELDS),
+  find: z.string().min(1).max(512),
+  with: z.string().max(512),
+  matchCase: z.boolean().default(false),
+});
+
 const BulkTargetSchema = z.object({
   mediaId: z.string().uuid(),
   scope: z.enum(['title', 'season', 'episode']),
@@ -22,6 +39,7 @@ const BulkTitleChangeSchema = z.object({
   lockAll: z.boolean().optional(),
   unlockAll: z.boolean().optional(),
   sortTitleFromTitle: z.boolean().optional(),
+  replace: BulkReplaceSchema.optional(),
   contentRating: z
     .object({
       region: z.string().regex(/^[A-Z]{2}$/u),
@@ -73,6 +91,7 @@ const BulkTitleUndoOutcomeSchema = z.object({
 });
 
 type ListField = z.infer<typeof ListFieldSchema>;
+type BulkReplace = z.infer<typeof BulkReplaceSchema>;
 type BulkTarget = z.infer<typeof BulkTargetSchema>;
 type BulkTitleChange = z.infer<typeof BulkTitleChangeSchema>;
 type BulkTitleEditRequest = z.infer<typeof BulkTitleEditRequestSchema>;
@@ -85,6 +104,7 @@ type BulkTitleUndoOutcome = z.infer<typeof BulkTitleUndoOutcomeSchema>;
 
 export type {
   ListField,
+  BulkReplace,
   BulkTarget,
   BulkTitleChange,
   BulkTitleEditRequest,
@@ -99,7 +119,9 @@ export type {
 export {
   BULK_TITLES_AT_ONCE,
   LIST_FIELDS,
+  REPLACEABLE_FIELDS,
   ListFieldSchema,
+  BulkReplaceSchema,
   BulkTargetSchema,
   BulkTitleChangeSchema,
   BulkTitleEditRequestSchema,

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { BULK_TITLES_AT_ONCE } from '@ValenceContracts/schemas/BulkTitleEdit';
+import { BULK_TITLES_AT_ONCE, REPLACEABLE_FIELDS } from '@ValenceContracts/schemas/BulkTitleEdit';
+import type { BulkReplace } from '@ValenceContracts/schemas/BulkTitleEdit';
+import { FindReplace } from './components/FindReplace/FindReplace';
 import { TITLE_VALUE_FIELDS } from '@ValenceContracts/schemas/TitleList';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { readTitlesTogether } from '@ValenceClient/admin/readTitlesTogether';
@@ -45,9 +47,10 @@ const WIDE: readonly TitleField[] = ['overview', 'note', 'genres', 'tags', 'stud
 /**
  * Edits the metadata of every title chosen at once: each field says what they all hold or that they
  * differ, only the fields touched are changed, lists of words are added to, taken from or replaced,
- * and the whole is saved as one change that is undone in one step. A choice of programmes can edit
- * their episodes instead. Before saving it says how many fields it changes on how many titles, and a
- * click outside does not close it once anything is touched.
+ * words can be found and replaced in one field, and the whole is saved as one change that is undone
+ * in one step. A choice of programmes can edit their episodes instead. Before saving it says how
+ * many fields it changes on how many titles, and a click outside does not close it once anything is
+ * touched.
  *
  * @param targets - The titles chosen, or nothing while it is closed.
  * @param hasShows - Whether any of them is a programme, so their episodes can be edited instead.
@@ -58,6 +61,7 @@ const WIDE: readonly TitleField[] = ['overview', 'note', 'genres', 'tags', 'stud
 const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkEditDialogProps) => {
   const [appliesTo, setAppliesTo] = useState<'titles' | 'episodes'>('titles');
   const [touches, setTouches] = useState<ReadonlyMap<TitleField, BulkTouch>>(new Map());
+  const [replace, setReplace] = useState<BulkReplace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [sent, setSent] = useState(0);
   const sample = (targets ?? []).slice(0, BULK_TITLES_AT_ONCE);
@@ -77,6 +81,10 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
         ? 'show'
         : 'film';
   const count = targets?.length ?? 0;
+  const replaceable = REPLACEABLE_FIELDS.filter(
+    (field) => fields.data !== undefined && Object.hasOwn(fields.data.fields, field),
+  );
+  const changing = touches.size + (replace === null || touches.has(replace.field) ? 0 : 1);
 
   /**
    * Notes what is now to be done to a field, or that it is let alone again.
@@ -101,6 +109,7 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
    */
   const close = () => {
     setTouches(new Map());
+    setReplace(null);
     setAppliesTo('titles');
     onClose();
   };
@@ -116,7 +125,12 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
     setIsSaving(true);
     setSent(0);
 
-    void editTitlesInParts(targets, changeOfTouches(touches, region), appliesTo, setSent)
+    void editTitlesInParts(
+      targets,
+      { ...changeOfTouches(touches, region), ...(replace === null ? {} : { replace }) },
+      appliesTo,
+      setSent,
+    )
       .then((outcome) => {
         onDone(outcome, appliesTo);
         close();
@@ -135,7 +149,7 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
       isOpen={targets !== null}
       onClose={close}
       size="stage"
-      holdsOutsideClicks={touches.size > 0}
+      holdsOutsideClicks={changing > 0}
     >
       <DialogTitle
         size="compact"
@@ -157,6 +171,7 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
                   onSelect={(next) => {
                     setAppliesTo(next === 'episodes' ? 'episodes' : 'titles');
                     setTouches(new Map());
+                    setReplace(null);
                   }}
                 />
               ),
@@ -210,6 +225,15 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
                 </SettingGroup>
               );
             })}
+            {replaceable.length === 0 ? null : (
+              <FindReplace
+                key={appliesTo}
+                fields={replaceable}
+                kind={kind}
+                replace={replace}
+                onReplace={setReplace}
+              />
+            )}
           </SettingList>
         )}
       </DialogContent>
@@ -222,10 +246,10 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
                   sent: sent.toLocaleString(),
                   count: count.toLocaleString(),
                 })
-              : touches.size === 0
+              : changing === 0
                 ? say('screens.adminArea.bulkEditDialog.changeAFieldToChangeItOn')
                 : say('screens.adminArea.bulkEditDialog.changesFieldsOnTitles', {
-                    fields: sayCount('screens.adminArea.bulkEditDialog.count.fields', touches.size),
+                    fields: sayCount('screens.adminArea.bulkEditDialog.count.fields', changing),
                     titles: sayCount('common.count.titles', count),
                   })}
           </span>
@@ -234,7 +258,7 @@ const BulkEditDialog = ({ targets, hasShows, libraryId, onClose, onDone }: BulkE
         confirm={{
           label: say('screens.adminArea.fixMatchDialog.apply'),
           onChoose: apply,
-          isDisabled: touches.size === 0,
+          isDisabled: changing === 0,
           isLoading: isSaving,
         }}
       />

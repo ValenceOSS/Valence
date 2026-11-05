@@ -18776,6 +18776,36 @@
     "context": "The label of a button in the files panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.findAndReplace.find",
+    "text": "Find",
+    "context": "Field holding the words to look for, in the bulk edit dialog's find and replace."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.findAndReplace",
+    "text": "Find and replace",
+    "context": "Section of the bulk edit dialog that replaces some words with others in one field of every title chosen."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.inAListOnlyWholeWords",
+    "text": "In a list, only a whole entry is replaced, and an emptied one is taken out. Elsewhere, every place the words appear.",
+    "context": "Note under the bulk edit dialog's find and replace, saying how it works on lists such as genres and on text such as an overview."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.inWhichField",
+    "text": "In which field",
+    "context": "Choice of the field to find and replace in, in the bulk edit dialog."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.matchCase",
+    "text": "Match case",
+    "context": "Checkbox in the bulk edit dialog's find and replace: only find the words with the same capitals."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.replaceWith",
+    "text": "Replace with",
+    "context": "Field holding the words to put in their place, in the bulk edit dialog's find and replace. Left empty, what is found is taken out."
+  },
+  {
     "handler": "screens.adminArea.fixMatchDialog.apply",
     "text": "Apply",
     "context": "The button that matches a title to the chosen catalogue entry, taking the ticked fields from it."
