@@ -23651,6 +23651,41 @@
     "context": "The label of a dialog in the running work dialog in the admin area. {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.savedViews.forgetName",
+    "text": "Forget {name}",
+    "context": "Item in the media list's saved views menu that deletes a saved view. {name} is the view's name."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.keptOnThisDeviceForThisLibrary",
+    "text": "It keeps this library’s filters, search and order, on this device.",
+    "context": "Description in the dialog that saves a view of the media list."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.nameThisView",
+    "text": "Name this view",
+    "context": "Title of the dialog that saves the media list's filters, search and order under a name."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.savedViews",
+    "text": "Saved views",
+    "context": "Menu in the media list's toolbar holding filters, searches and orders saved under a name, on this device."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.saveThisView",
+    "text": "Save this view…",
+    "context": "Item in the media list's saved views menu that saves the filters, search and order shown now under a name."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.saveView",
+    "text": "Save view",
+    "context": "Button that saves a view of the media list under the name typed."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.viewName",
+    "text": "Name",
+    "context": "Field holding a saved view's name. Unused elsewhere."
+  },
+  {
     "handler": "screens.adminArea.scannedName",
     "text": "Scanned {name}.",
     "context": "Shown in the admin area. {name} is filled in by the app."

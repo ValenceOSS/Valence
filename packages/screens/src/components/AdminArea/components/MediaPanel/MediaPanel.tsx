@@ -1,7 +1,12 @@
+import { SaveViewDialog } from './components/SaveViewDialog/SaveViewDialog';
+import { readSavedViews } from './readSavedViews';
+import { saveSavedViews } from './saveSavedViews';
+import type { SavedView } from './SavedView.types';
 import { WordsManagerDialog } from './components/WordsManagerDialog/WordsManagerDialog';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinFilledIcon,
+  Bookmark as BookmarkIcon,
   Copy as CopyFilledIcon,
   EyeOff as EyeOffFilledIcon,
   Film as FilmFilledIcon,
@@ -524,6 +529,8 @@ const MediaPanel = ({
     adminQueries.titleChoices(asked.libraryId === '' ? null : asked.libraryId),
   );
   const [hiddenColumns, setHiddenColumns] = useState<readonly string[]>(readHiddenColumns);
+  const [savedViews, setSavedViews] = useState<readonly SavedView[]>(readSavedViews);
+  const [isSavingView, setIsSavingView] = useState(false);
   const columnNames: Readonly<Record<string, string>> = {
     quality: say('common.quality'),
     codec: say('common.video'),
@@ -1667,8 +1674,64 @@ const MediaPanel = ({
     setList({ ...list, filters: [...next] });
   };
 
+  const viewsHere = savedViews.filter((view) => view.place.library === libraryId);
+
+  /**
+   * Keeps a new list of saved views, on this device.
+   *
+   * @param next - The views.
+   */
+  const keepViews = (next: readonly SavedView[]) => {
+    setSavedViews(next);
+    saveSavedViews(next);
+  };
+
   const listTools = (
     <span className="flex items-center gap-2">
+      <ActionMenu
+        label={say('screens.adminArea.savedViews.savedViews')}
+        size="sm"
+        trigger={<Icon of={BookmarkIcon} size={15} />}
+        groups={[
+          ...(viewsHere.length === 0
+            ? []
+            : [
+                {
+                  items: viewsHere.map((view) => ({
+                    id: `view:${view.name}`,
+                    label: view.name,
+                    onChoose: () => {
+                      setList({ ...view.place, library: libraryId });
+                    },
+                  })),
+                },
+              ]),
+          {
+            items: [
+              {
+                id: 'save',
+                label: say('screens.adminArea.savedViews.saveThisView'),
+                onChoose: () => {
+                  setIsSavingView(true);
+                },
+              },
+            ],
+          },
+          ...(viewsHere.length === 0
+            ? []
+            : [
+                {
+                  items: viewsHere.map((view) => ({
+                    id: `forget:${view.name}`,
+                    label: say('screens.adminArea.savedViews.forgetName', { name: view.name }),
+                    onChoose: () => {
+                      keepViews(savedViews.filter((one) => one !== view));
+                    },
+                  })),
+                },
+              ]),
+        ]}
+      />
       <FilterMenu
         label={say('screens.adminArea.mediaPanel.filterTheTitles')}
         hasLabel
@@ -1714,6 +1777,20 @@ const MediaPanel = ({
         }}
         onStarted={() => {
           void cache.invalidateQueries({ queryKey: adminQueries.key });
+        }}
+      />
+
+      <SaveViewDialog
+        isOpen={isSavingView}
+        onClose={() => {
+          setIsSavingView(false);
+        }}
+        onSave={(name) => {
+          setIsSavingView(false);
+          keepViews([
+            ...savedViews.filter((one) => one.name !== name || one.place.library !== libraryId),
+            { name, place: { ...list, library: libraryId } },
+          ]);
         }}
       />
 
