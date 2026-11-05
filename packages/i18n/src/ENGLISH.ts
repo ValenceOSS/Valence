@@ -5822,6 +5822,16 @@ const ENGLISH = {
   'screens.adminArea.putTheOriginalBack': 'Restored the original.',
   'screens.adminArea.qualityNames.cam': 'Cam',
   'screens.adminArea.qualityNames.telesync': 'Telesync',
+  'screens.adminArea.quickMatch.count.matchTitles.one': 'Match {count} title',
+  'screens.adminArea.quickMatch.count.matchTitles.other': 'Match {count} titles',
+  'screens.adminArea.quickMatch.fixMatchFor': 'Fix match for {name}',
+  'screens.adminArea.quickMatch.howItDecides':
+    'Each is searched for on TMDB by its name. One is matched only where an entry fits it at least 90 out of 100 and clearly better than any other; the rest are left for you, with Fix match beside each.',
+  'screens.adminArea.quickMatch.lookingNow': 'Looking',
+  'screens.adminArea.quickMatch.matchAutomatically': 'Match automatically…',
+  'screens.adminArea.quickMatch.matchedCountOfTotal': 'Matched {matched} of {total}',
+  'screens.adminArea.quickMatch.matchedToName': 'Matched to {name}',
+  'screens.adminArea.quickMatch.needsALook': 'Needs a look',
   'screens.adminArea.rankedChoices.moveIdDown': 'Move {id} down',
   'screens.adminArea.rankedChoices.moveIdUp': 'Move {id} up',
   'screens.adminArea.readEveryFileOfEveryLibrary':

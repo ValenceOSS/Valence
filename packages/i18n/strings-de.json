@@ -22981,6 +22981,51 @@
     "context": "Shown in the quality names in the admin area."
   },
   {
+    "handler": "screens.adminArea.quickMatch.count.matchTitles.one",
+    "text": "Match {count} title",
+    "context": "Title of the quick match dialog, and its start button. {count} is how many unmatched titles are chosen."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.count.matchTitles.other",
+    "text": "Match {count} titles",
+    "context": "Title of the quick match dialog, and its start button. {count} is how many unmatched titles are chosen."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.fixMatchFor",
+    "text": "Fix match for {name}",
+    "context": "Button beside a title the quick match dialog left alone, opening Fix match for it."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.howItDecides",
+    "text": "Each is searched for on TMDB by its name. One is matched only where an entry fits it at least 90 out of 100 and clearly better than any other; the rest are left for you, with Fix match beside each.",
+    "context": "Description in the quick match dialog."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.lookingNow",
+    "text": "Looking",
+    "context": "Status of a title in the quick match dialog being searched for now."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.matchAutomatically",
+    "text": "Match automatically…",
+    "context": "Item in the media list's selection menu that matches the unmatched titles chosen to TMDB where one entry clearly fits."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.matchedCountOfTotal",
+    "text": "Matched {matched} of {total}",
+    "context": "Summary in the quick match dialog's footer once it is done."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.matchedToName",
+    "text": "Matched to {name}",
+    "context": "Status of a title the quick match dialog matched. {name} is the TMDB entry, with its year."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.needsALook",
+    "text": "Needs a look",
+    "context": "Status of a title the quick match dialog left alone, because no entry clearly fitted it."
+  },
+  {
     "handler": "screens.adminArea.rankedChoices.moveIdDown",
     "text": "Move {id} down",
     "context": "The label of a button in the ranked choices in the admin area. {id} is filled in by the app."

@@ -1,3 +1,5 @@
+import { QuickMatchDialog } from './components/QuickMatchDialog/QuickMatchDialog';
+import type { QuickMatchTitle } from './components/QuickMatchDialog/QuickMatchDialog.types';
 import { searchOfTitleList } from '@ValenceClient/admin/searchOfTitleList';
 import { SaveViewDialog } from './components/SaveViewDialog/SaveViewDialog';
 import { readSavedViews } from './readSavedViews';
@@ -398,6 +400,7 @@ const MediaPanel = ({
   const [refreshingTitle, setRefreshingTitle] = useState<MediaTitle | null>(null);
   const [isSeeingOrphans, setIsSeeingOrphans] = useState(false);
   const [isManagingWords, setIsManagingWords] = useState(false);
+  const [quickMatching, setQuickMatching] = useState<readonly QuickMatchTitle[] | null>(null);
 
   const moveAll = useCallback(
     (title: MediaTitle): ActionMenuItem[] =>
@@ -1529,6 +1532,20 @@ const MediaPanel = ({
     })();
   };
 
+  const unmatchedPicked: QuickMatchTitle[] = [...picked].flatMap((id) => {
+    const held = visible.get(id);
+
+    return held === undefined || held.isMatched || (held.kind !== 'film' && held.kind !== 'series')
+      ? []
+      : [
+          {
+            mediaId: held.lead.id,
+            name: held.name,
+            year: held.year,
+            kind: held.kind === 'series' ? ('tv' as const) : ('movie' as const),
+          },
+        ];
+  });
   const moreForPicked: ActionMenuItem[][] = [
     [
       {
@@ -1559,6 +1576,18 @@ const MediaPanel = ({
           );
         },
       },
+      ...(unmatchedPicked.length === 0
+        ? []
+        : [
+            {
+              id: 'quick-match',
+              label: say('screens.adminArea.quickMatch.matchAutomatically'),
+              icon: <Icon of={SearchFilledIcon} size={15} />,
+              onChoose: () => {
+                setQuickMatching(unmatchedPicked);
+              },
+            },
+          ]),
       {
         id: 'lock',
         label: say('screens.adminArea.mediaTitlePage.lockAllFields'),
@@ -1786,6 +1815,23 @@ const MediaPanel = ({
           setRefreshingTitle(null);
         }}
         onStarted={() => {
+          void cache.invalidateQueries({ queryKey: adminQueries.key });
+        }}
+      />
+
+      <QuickMatchDialog
+        titles={quickMatching}
+        onClose={() => {
+          setQuickMatching(null);
+        }}
+        onFixMatch={(mediaId) => {
+          const lead = [...visible.values()].find((one) => one.lead.id === mediaId)?.lead;
+
+          if (lead !== undefined) {
+            onCorrect(lead);
+          }
+        }}
+        onMatched={() => {
           void cache.invalidateQueries({ queryKey: adminQueries.key });
         }}
       />

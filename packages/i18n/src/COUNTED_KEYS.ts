@@ -136,6 +136,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.orphanedEditsDialog.count.movedEditsToName',
   'screens.adminArea.orphanedEditsDialog.count.threwAwayEdits',
   'screens.adminArea.preRollCard.countClips',
+  'screens.adminArea.quickMatch.count.matchTitles',
   'screens.adminArea.refuseRequestDialog.refuseCountRequests',
   'screens.adminArea.removeDownloadDialog.removeCountDownloads',
   'screens.adminArea.requestsPanel.countFailing',
