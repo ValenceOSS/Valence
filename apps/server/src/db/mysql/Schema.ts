@@ -856,6 +856,21 @@ const mediaArtworkChoice = mysqlTable(
   ],
 );
 
+const versionChoice = mysqlTable(
+  'version_choice',
+  {
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    label: mediumtext('label'),
+    isStanding: boolean('isStanding').notNull().default(false),
+    setAt: momentNow('setAt').notNull(),
+  },
+  (table) => [uniqueIndex('version_choice_path_idx').on(table.libraryId, table.pathHash)],
+);
+
 const titleEdit = mysqlTable(
   'title_edit',
   {
@@ -2305,6 +2320,7 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  versionChoice,
   titleEdit,
   titleChange,
   mediaItem,

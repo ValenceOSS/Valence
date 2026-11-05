@@ -248,6 +248,10 @@ type LibraryService = ShowService & {
     | { fault: NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>> }
   >;
   isOwnArtwork?: (mediaId: string, url: string) => Promise<boolean>;
+  chooseVersion?: (
+    mediaId: string,
+    choice: { label?: string | null; isStanding?: boolean },
+  ) => Promise<boolean>;
 };
 
 const DEFAULT_LIMIT = 60;

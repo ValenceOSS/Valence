@@ -32,6 +32,10 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
     (_mediaId: string, _kind: ArtworkKind, _artwork: { body: Uint8Array; contentType: string }) =>
       Promise.resolve(answer),
   );
+  const chooseVersion = vi.fn(
+    (mediaId: string, _choice: { label?: string | null; isStanding?: boolean }) =>
+      Promise.resolve(mediaId === MEDIA_ID),
+  );
   const readImage = vi.fn((_url: string, _width?: number) =>
     Promise.resolve({ body: new TextEncoder().encode('picture').buffer, contentType: 'image/png' }),
   );
@@ -48,6 +52,7 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       ...createMemoryLibraryService({ libraries: [], media: [] }),
       uploadArtwork,
       isOwnArtwork: (_mediaId, url) => Promise.resolve(url === ON_DISK),
+      chooseVersion,
     },
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
@@ -68,7 +73,7 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       headers: { cookie, origin: TEST_ORIGIN, ...init.headers },
     });
 
-  return { ask, uploadArtwork, readImage };
+  return { ask, uploadArtwork, readImage, chooseVersion };
 };
 
 describe('serveLibrary', () => {
@@ -118,5 +123,20 @@ describe('serveLibrary', () => {
     expect(own.status).toBe(200);
     expect(other.status).toBe(404);
     expect(readImage).toHaveBeenCalledTimes(1);
+  });
+
+  it('names a version, or makes it play by default, and says when there is no such version', async () => {
+    const { ask, chooseVersion } = await build();
+    const put = (id: string, body: object) =>
+      ask(`/api/media/${id}/version`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    expect((await put(MEDIA_ID, { label: 'Extended', isStanding: true })).status).toBe(204);
+    expect(chooseVersion).toHaveBeenCalledWith(MEDIA_ID, { label: 'Extended', isStanding: true });
+    expect((await put('another', { label: 'x' })).status).toBe(404);
+    expect((await put(MEDIA_ID, { label: 'x'.repeat(65) })).status).toBe(400);
   });
 });

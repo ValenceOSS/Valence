@@ -1,3 +1,4 @@
+import { createVersionChoices } from './createVersionChoices';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -889,6 +890,8 @@ const createDatabaseLibraryService = ({
       await db.update(mediaItem).set({ logoUrl }).where(inArray(mediaItem.id, title.ids));
     }
   };
+
+  const versionChoices = createVersionChoices(db);
 
   const artworkChoices = createArtworkChoices({
     db,
@@ -2474,6 +2477,7 @@ const createDatabaseLibraryService = ({
     chooseArtwork: (mediaId, kind, url, by) => artworkChoices.choose(mediaId, kind, url, by),
     uploadArtwork: (mediaId, kind, artwork, by) =>
       artworkChoices.upload(mediaId, kind, artwork, by),
+    chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
     isOwnArtwork: (mediaId, url) => artworkChoices.isOwnPicture(mediaId, url),
 
     readArtworkUrl: async (mediaId, kind, isOfTitle = false) => {

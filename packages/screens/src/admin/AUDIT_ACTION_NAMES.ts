@@ -40,6 +40,7 @@ const AUDIT_ACTION_NAMES: Readonly<Record<AuditAction, string>> = {
   'media.removed': say('screens.admin.auditActionNames.mediaRemoved'),
   'media.moved': say('screens.admin.auditActionNames.mediaMoved'),
   'media.artworkChosen': say('screens.admin.auditActionNames.mediaArtworkChosen'),
+  'media.versionChosen': say('screens.admin.auditActionNames.mediaVersionChosen'),
   'media.artworkReset': say('screens.admin.auditActionNames.mediaArtworkReset'),
   'media.matchFixed': say('screens.admin.auditActionNames.mediaMatchFixed'),
   'media.matchReset': say('screens.admin.auditActionNames.mediaMatchReset'),

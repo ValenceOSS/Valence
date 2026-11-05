@@ -878,6 +878,20 @@ const mediaArtworkChoice = pgTable(
   ],
 );
 
+const versionChoice = pgTable(
+  'version_choice',
+  {
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    label: text('label'),
+    isStanding: boolean('isStanding').notNull().default(false),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.libraryId, table.path] })],
+);
+
 const titleEdit = pgTable(
   'title_edit',
   {
@@ -2312,6 +2326,7 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  versionChoice,
   titleEdit,
   titleChange,
   mediaItem,

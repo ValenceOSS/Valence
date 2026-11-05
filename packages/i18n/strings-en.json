@@ -9756,6 +9756,11 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.thatVersionChoiceCouldNotBeRead",
+    "text": "That choice for the version couldn’t be read: a name is at most 64 characters.",
+    "context": "Refusal when renaming a film's version, or choosing which stands for it, is asked with a body the server can't read."
+  },
+  {
     "handler": "error.library.theFileCouldNotBeMoved",
     "text": "Couldn’t move the file.",
     "context": "An error the server answers with (HTTP 500) in the library, when an admin moves media into another library."
@@ -14029,6 +14034,11 @@
     "handler": "screens.admin.auditActionNames.mediaUnmatched",
     "text": "Title unmatched",
     "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaVersionChosen",
+    "text": "Version chosen",
+    "context": "A kind of change in the admin area’s audit log: one of a film's versions renamed, or chosen to stand for the film."
   },
   {
     "handler": "screens.admin.auditActionNames.pluginAppPasswordMade",
@@ -26164,6 +26174,36 @@
     "handler": "screens.adminArea.titlePeople.takeNameOff",
     "text": "Take {name} off the cast",
     "context": "Button that removes a person from the title's cast."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.nameOfVersion",
+    "text": "Name of {file}",
+    "context": "The field naming one version of a film, for a screen reader. {file} is its file name."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.namesAndTheDefaultAreKept",
+    "text": "Names and the default are kept through every scan.",
+    "context": "Note under the Versions card on a film's Files tab."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.noName",
+    "text": "No name, as the original",
+    "context": "Placeholder of a version's name field when it has none, so it reads as the original."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.playsByDefault",
+    "text": "Plays by default",
+    "context": "Badge on the version of a film every app plays unless another is chosen."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.playThisByDefault",
+    "text": "Play this by default",
+    "context": "Button that makes one version of a film the one every app plays unless another is chosen."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.versions",
+    "text": "Versions of this film",
+    "context": "Card on a film's Files tab listing each version of it, such as a theatrical and an extended cut."
   },
   {
     "handler": "screens.adminArea.transcoder",

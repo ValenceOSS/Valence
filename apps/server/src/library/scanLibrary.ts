@@ -118,6 +118,7 @@ type MediaStore = {
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   linkSameFilms?: (libraryId: string) => Promise<void>;
+  applyVersionChoices?: (libraryId: string) => Promise<void>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
@@ -966,6 +967,7 @@ const scanLibrary = async ({
   }
 
   await store.linkSameFilms?.(libraryId);
+  await store.applyVersionChoices?.(libraryId);
 
   await store.forgetEmptySeries?.(libraryId);
 

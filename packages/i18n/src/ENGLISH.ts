@@ -2299,6 +2299,8 @@ const ENGLISH = {
   'error.library.thatIsPastTheEndThe':
     'That’s past the end — the file is {durationSeconds} seconds long.',
   'error.library.thatPathIsNotAReadable': 'That path isn’t a readable folder.',
+  'error.library.thatVersionChoiceCouldNotBeRead':
+    'That choice for the version couldn’t be read: a name is at most 64 characters.',
   'error.library.theFileCouldNotBeMoved': 'Couldn’t move the file.',
   'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
   'error.library.valenceMayNotMoveFilesThere':
@@ -3475,6 +3477,7 @@ const ENGLISH = {
   'screens.admin.auditActionNames.mediaRefreshed': 'Title refreshed',
   'screens.admin.auditActionNames.mediaRemoved': 'Title deleted',
   'screens.admin.auditActionNames.mediaUnmatched': 'Title unmatched',
+  'screens.admin.auditActionNames.mediaVersionChosen': 'Version chosen',
   'screens.admin.auditActionNames.pluginAppPasswordMade': 'App password made',
   'screens.admin.auditActionNames.pluginAppPasswordRemoved': 'App password removed',
   'screens.admin.auditActionNames.pluginChanged': 'Plugin changed',
@@ -6634,6 +6637,13 @@ const ENGLISH = {
   'screens.adminArea.titlePeople.noOneInTheCatalogue': 'Nobody by that name is in the catalogue.',
   'screens.adminArea.titlePeople.roleOfName': '{name}’s role',
   'screens.adminArea.titlePeople.takeNameOff': 'Take {name} off the cast',
+  'screens.adminArea.titleVersions.nameOfVersion': 'Name of {file}',
+  'screens.adminArea.titleVersions.namesAndTheDefaultAreKept':
+    'Names and the default are kept through every scan.',
+  'screens.adminArea.titleVersions.noName': 'No name, as the original',
+  'screens.adminArea.titleVersions.playsByDefault': 'Plays by default',
+  'screens.adminArea.titleVersions.playThisByDefault': 'Play this by default',
+  'screens.adminArea.titleVersions.versions': 'Versions of this film',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges':
     'A backup is taken before the update changes the database, so you can go back.',

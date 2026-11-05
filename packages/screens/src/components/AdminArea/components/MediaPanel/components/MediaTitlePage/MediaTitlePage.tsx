@@ -1,3 +1,4 @@
+import { TitleVersions } from './components/TitleVersions/TitleVersions';
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1042,6 +1043,9 @@ const MediaTitlePage = ({
 
         <TabPanel value="files" travel={travel}>
           <div className="flex flex-col gap-4">
+            {title.kind === 'film' && title.parts.length > 1 ? (
+              <TitleVersions versions={title.parts} paths={paths} />
+            ) : null}
             <PanelCard title={filesWord} isFlush>
               {place === null ? (
                 <DataTable

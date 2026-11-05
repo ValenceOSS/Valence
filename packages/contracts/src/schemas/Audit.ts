@@ -57,6 +57,7 @@ const AUDIT_ACTIONS = [
   'media.removed',
   'media.moved',
   'media.artworkChosen',
+  'media.versionChosen',
   'media.artworkReset',
   'media.matchFixed',
   'media.matchReset',

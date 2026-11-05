@@ -1,3 +1,5 @@
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { VersionChoiceSchema } from '@ValenceContracts/schemas/VersionChoice';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
@@ -584,6 +586,37 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     return context.json(uploaded, 200);
+  });
+
+  app.put('/api/media/:id/version', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const choice = VersionChoiceSchema.safeParse(body.success ? body.data : null);
+
+    if (!choice.success) {
+      return context.json(refuse('error.library.thatVersionChoiceCouldNotBeRead'), 400);
+    }
+
+    const { label, isStanding } = choice.data;
+    const chosen =
+      (await library.chooseVersion?.(id, {
+        ...(label === undefined ? {} : { label }),
+        ...(isStanding === undefined ? {} : { isStanding }),
+      })) ?? false;
+
+    if (!chosen) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.versionChosen', named.target, named.detail);
+
+    return context.body(null, 204);
   });
 
   app.get('/api/media/:id/artwork/picture', async (context) => {

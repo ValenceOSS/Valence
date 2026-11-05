@@ -1,3 +1,4 @@
+import { createVersionChoices } from './createVersionChoices';
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
@@ -273,6 +274,7 @@ const createMediaStore = (
   readPreviewMoment: (libraryId: string, path: string) => Promise<PreviewMoment | null>;
   removePreviewMoment: (libraryId: string, path: string) => Promise<boolean>;
 } => {
+  const versionChoices = createVersionChoices(db);
   const titleEdits = createTitleEditStore(db);
 
   return {
@@ -861,6 +863,8 @@ const createMediaStore = (
           );
       }
     },
+
+    applyVersionChoices: (libraryId) => versionChoices.apply(libraryId),
 
     linkSameFilms: async (libraryId) => {
       const films = await db
