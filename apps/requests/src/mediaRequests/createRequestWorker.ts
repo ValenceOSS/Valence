@@ -1001,6 +1001,7 @@ const createRequestWorker = ({
         }
       } else if (
         !isFetched &&
+        plan.search.season !== undefined &&
         plan.search.episode === undefined &&
         found.request.kind === 'series'
       ) {
