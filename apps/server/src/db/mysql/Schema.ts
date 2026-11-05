@@ -871,6 +871,21 @@ const wordRule = mysqlTable(
   (table) => [index('word_rule_library_idx').on(table.libraryId)],
 );
 
+const extraChoice = mysqlTable(
+  'extra_choice',
+  {
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    extraKind: varchar('extraKind', { length: 32 }),
+    parentPath: varchar('parentPath', { length: 4096 }),
+    setAt: momentNow('setAt').notNull(),
+  },
+  (table) => [uniqueIndex('extra_choice_path_idx').on(table.libraryId, table.pathHash)],
+);
+
 const episodePin = mysqlTable(
   'episode_pin',
   {
@@ -2354,6 +2369,7 @@ export {
   mediaPreviewOverride,
   mediaArtworkChoice,
   wordRule,
+  extraChoice,
   episodePin,
   versionChoice,
   titleEdit,

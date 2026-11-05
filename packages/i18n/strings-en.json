@@ -9741,6 +9741,11 @@
     "context": "Refusal when a show's episode order is chosen with a body the server can't read."
   },
   {
+    "handler": "error.library.thatExtraChoiceCouldNotBeRead",
+    "text": "That couldn’t be read: say what kind of extra the file is and which title it belongs to, or that it is not an extra.",
+    "context": "Refusal when a file is marked as an extra, or as not one, with a body the server can't read."
+  },
+  {
     "handler": "error.library.thatFileIsNotInsideItsLibrary",
     "text": "That file isn’t inside its library, so Valence won’t move it.",
     "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
@@ -18694,6 +18699,36 @@
     "handler": "screens.adminArea.episodeOrderPicker.whichOrderTheFilesFollow",
     "text": "Which order your files are numbered in. Each episode’s title, overview and still follow the order you choose.",
     "context": "Description of a show's episode order setting."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.asItsNameAndFolderSay",
+    "text": "As its name and folder say",
+    "context": "First choice in the dialog marking a file as an extra: forget any choice made, so its file name and folder decide again."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.keptThroughEveryScan",
+    "text": "An extra of {title} shows with it rather than as a film of its own. What you choose here is kept through every scan, whatever the file’s name or folder says.",
+    "context": "Description in the dialog marking a file as an extra of a film. {title} is the film."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.markAsAnExtra",
+    "text": "Mark as an extra…",
+    "context": "Item in a file's menu on a film's Files tab: say the file is one of the film's extras, such as its trailer, or that it is not an extra."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.notAnExtra",
+    "text": "Not an extra: a film of its own",
+    "context": "First choice in the dialog marking a file as an extra: the file is a film, not an extra."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.whatIsThisFile",
+    "text": "What is {file}?",
+    "context": "Title of the dialog marking a file as an extra or not. {file} is the file's name."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.whatItIs",
+    "text": "What it is",
+    "context": "Field in the dialog marking a file as an extra: which kind of extra, or not one."
   },
   {
     "handler": "screens.adminArea.fileDetails.addingUp",

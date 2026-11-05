@@ -1,3 +1,5 @@
+import { withExtraChoices } from './withExtraChoices';
+import type { ExtraChoice } from './withExtraChoices';
 import { orderOf } from './orderOf';
 import type { EpisodePin } from './EpisodePin.types';
 import { inOriginalTitle } from './inOriginalTitle';
@@ -122,6 +124,7 @@ type MediaStore = {
   linkSameFilms?: (libraryId: string) => Promise<void>;
   applyVersionChoices?: (libraryId: string) => Promise<void>;
   listEpisodePins?: (libraryId: string) => Promise<EpisodePin[]>;
+  listExtraChoices?: (libraryId: string) => Promise<ExtraChoice[]>;
   listEpisodeOrders?: (libraryId: string) => Promise<ReadonlyMap<string, string>>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
@@ -570,8 +573,10 @@ const scanLibrary = async ({
     joined.set(first, read);
   }
 
-  const placed =
-    unjoined.size === 0 ? firstPlaced : placeInLibrary(kind, placeable, root, unjoined);
+  const placed = withExtraChoices(
+    unjoined.size === 0 ? firstPlaced : placeInLibrary(kind, placeable, root, unjoined),
+    (await store.listExtraChoices?.(libraryId)) ?? [],
+  );
   const laterParts = new Set(
     [...placed.values()].flatMap((placement) => placement.parts?.slice(1) ?? []),
   );
@@ -815,7 +820,12 @@ const scanLibrary = async ({
 
       const heldBefore = knownExternalId ?? storedByPath.get(file.path)?.externalId ?? null;
 
-      if (!isLeftUnmatched && heldBefore !== null && (metadata.externalId ?? null) === null) {
+      if (
+        extra === null &&
+        !isLeftUnmatched &&
+        heldBefore !== null &&
+        (metadata.externalId ?? null) === null
+      ) {
         failed += 1;
         onProblem?.(
           file.path,

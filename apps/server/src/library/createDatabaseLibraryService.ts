@@ -72,6 +72,7 @@ import {
   series,
   episodePin,
   wordRule,
+  extraChoice,
   jobRunIssue,
 } from '#dialect/Schema';
 import {
@@ -2481,6 +2482,55 @@ const createDatabaseLibraryService = ({
     uploadArtwork: (mediaId, kind, artwork, by) =>
       artworkChoices.upload(mediaId, kind, artwork, by),
     chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
+
+    chooseExtra: async (mediaId, choice) => {
+      const [file] = await db
+        .select({ libraryId: mediaItem.libraryId, path: mediaItem.path })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+      const [parent] =
+        choice.parentId === null
+          ? []
+          : await db
+              .select({ path: mediaItem.path, libraryId: mediaItem.libraryId })
+              .from(mediaItem)
+              .where(eq(mediaItem.id, choice.parentId))
+              .limit(1);
+
+      if (
+        file === undefined ||
+        (choice.extraKind !== null && (parent === undefined || parent.libraryId !== file.libraryId))
+      ) {
+        return null;
+      }
+
+      const where = and(eq(extraChoice.libraryId, file.libraryId), eq(extraChoice.path, file.path));
+
+      await db.transaction(async (tx) => {
+        await tx.delete(extraChoice).where(where);
+
+        if (choice.isForgotten === true) {
+          return;
+        }
+
+        await tx.insert(extraChoice).values({
+          libraryId: file.libraryId,
+          path: file.path,
+          extraKind: choice.extraKind,
+          parentPath: choice.extraKind === null ? null : (parent?.path ?? null),
+        });
+      });
+
+      if (choice.extraKind === null) {
+        await db
+          .update(mediaItem)
+          .set({ extraKind: null, parentId: null })
+          .where(eq(mediaItem.id, mediaId));
+      }
+
+      return { corrected: 1, jobId: await queueReadAgain(file.libraryId, [file.path], true) };
+    },
 
     readWordRules: async (libraryId) =>
       (

@@ -2294,6 +2294,8 @@ const ENGLISH = {
     'One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.',
   'error.library.thatDoesNotLookLikeA': 'That doesn’t look like a catalogue URL or ID.',
   'error.library.thatEpisodeOrderCouldNotBeRead': 'That episode order couldn’t be read.',
+  'error.library.thatExtraChoiceCouldNotBeRead':
+    'That couldn’t be read: say what kind of extra the file is and which title it belongs to, or that it is not an extra.',
   'error.library.thatFileIsNotInsideItsLibrary':
     'That file isn’t inside its library, so Valence won’t move it.',
   'error.library.thatIsNotInsideThisLibrary': 'That isn’t inside this library.',
@@ -4704,6 +4706,13 @@ const ENGLISH = {
   'screens.adminArea.episodeOrderPicker.useThisOrder': 'Use this order',
   'screens.adminArea.episodeOrderPicker.whichOrderTheFilesFollow':
     'Which order your files are numbered in. Each episode’s title, overview and still follow the order you choose.',
+  'screens.adminArea.extraChoice.asItsNameAndFolderSay': 'As its name and folder say',
+  'screens.adminArea.extraChoice.keptThroughEveryScan':
+    'An extra of {title} shows with it rather than as a film of its own. What you choose here is kept through every scan, whatever the file’s name or folder says.',
+  'screens.adminArea.extraChoice.markAsAnExtra': 'Mark as an extra…',
+  'screens.adminArea.extraChoice.notAnExtra': 'Not an extra: a film of its own',
+  'screens.adminArea.extraChoice.whatIsThisFile': 'What is {file}?',
+  'screens.adminArea.extraChoice.whatItIs': 'What it is',
   'screens.adminArea.fileDetails.addingUp': 'Adding up…',
   'screens.adminArea.fileDetails.atLeastSize': 'At least {size}',
   'screens.adminArea.fileDetails.chooseSomethingToSeeIt':

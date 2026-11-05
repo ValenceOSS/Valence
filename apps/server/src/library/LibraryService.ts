@@ -10,6 +10,7 @@ import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/Artw
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type {
+  ExtraKind,
   Library,
   LibraryFacets,
   MediaDetail,
@@ -250,6 +251,10 @@ type LibraryService = ShowService & {
     | { fault: NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>> }
   >;
   isOwnArtwork?: (mediaId: string, url: string) => Promise<boolean>;
+  chooseExtra?: (
+    mediaId: string,
+    choice: { extraKind: ExtraKind | null; parentId: string | null; isForgotten?: boolean },
+  ) => Promise<Correction | null>;
   readWordRules?: (libraryId: string) => Promise<WordRule[]>;
   saveWordRules?: (libraryId: string, rules: readonly WordRule[]) => Promise<WordRule[]>;
   pinEpisode?: (

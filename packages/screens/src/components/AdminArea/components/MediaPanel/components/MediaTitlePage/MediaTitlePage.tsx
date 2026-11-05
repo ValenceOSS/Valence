@@ -1,3 +1,4 @@
+import { ExtraChoiceDialog } from './components/ExtraChoiceDialog/ExtraChoiceDialog';
 import { SkipMarkers } from './components/SkipMarkers/SkipMarkers';
 import { EpisodeNumberDialog } from './components/EpisodeNumberDialog/EpisodeNumberDialog';
 import { EpisodeOrderPicker } from './components/EpisodeOrderPicker/EpisodeOrderPicker';
@@ -162,6 +163,11 @@ const MediaTitlePage = ({
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isNumbering, setIsNumbering] = useState(false);
+  const [markingExtra, setMarkingExtra] = useState<{
+    mediaId: string;
+    name: string;
+    isExtra: boolean;
+  } | null>(null);
   const cache = useQueryClient();
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
   const { change } = useTitleChange(title.lead.id, 'title');
@@ -404,12 +410,30 @@ const MediaTitlePage = ({
    */
   const mediaActionsOf = (entry: LibraryEntry): ActionMenuItem[][] => {
     const leaf = entry.mediaId === null ? undefined : leafById.get(entry.mediaId);
+    const { mediaId } = entry;
+    const extraItems: ActionMenuItem[][] =
+      title.kind !== 'film' || mediaId === null || mediaId === title.lead.id || entry.isFolder
+        ? []
+        : [
+            [
+              {
+                id: 'extra',
+                label: say('screens.adminArea.extraChoice.markAsAnExtra'),
+                onChoose: () => {
+                  setMarkingExtra({ mediaId, name: entry.name, isExtra: entry.status === 'extra' });
+                },
+              },
+            ],
+          ];
 
-    return leaf === undefined
-      ? []
-      : actionsFor(leaf)
-          .map((group) => group.filter((one) => !ALREADY_A_FILE_ACTION.includes(one.id)))
-          .filter((group) => group.length > 0);
+    return [
+      ...(leaf === undefined
+        ? []
+        : actionsFor(leaf)
+            .map((group) => group.filter((one) => !ALREADY_A_FILE_ACTION.includes(one.id)))
+            .filter((group) => group.length > 0)),
+      ...extraItems,
+    ];
   };
 
   /**
@@ -1078,6 +1102,18 @@ const MediaTitlePage = ({
               <TitleVersions versions={title.parts} paths={paths} />
             ) : null}
             {title.kind === 'film' ? <SkipMarkers mediaId={title.lead.id} /> : null}
+            <ExtraChoiceDialog
+              key={markingExtra?.mediaId ?? 'none'}
+              file={markingExtra}
+              title={{ mediaId: title.lead.id, name: title.name }}
+              onClose={() => {
+                setMarkingExtra(null);
+              }}
+              onChanged={(jobId) => {
+                follow(jobId);
+                onFilesChanged?.();
+              }}
+            />
             <PanelCard title={filesWord} isFlush>
               {place === null ? (
                 <DataTable

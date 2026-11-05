@@ -1079,6 +1079,13 @@
       "when": 1793845492972,
       "tag": "0153_libraries_keep_rules_for_their_words",
       "breakpoints": true
+    },
+    {
+      "idx": 154,
+      "version": "7",
+      "when": 1793845829954,
+      "tag": "0154_files_keep_whether_they_are_extras",
+      "breakpoints": true
     }
   ]
 }

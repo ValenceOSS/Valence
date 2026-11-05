@@ -60,6 +60,12 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       isOwnArtwork: (_mediaId, url) => Promise.resolve(url === ON_DISK),
       chooseVersion,
       pinEpisode,
+      chooseExtra: (_mediaId, choice) =>
+        Promise.resolve(
+          choice.extraKind !== null && choice.parentId === null
+            ? null
+            : { corrected: 1, jobId: 'job' },
+        ),
       chooseEpisodeOrder: (mediaId, order) =>
         Promise.resolve(
           mediaId === MEDIA_ID && order !== 'gone' ? { corrected: 4, jobId: 'job' } : null,
@@ -184,5 +190,20 @@ describe('serveLibrary', () => {
       chosen: null,
     });
     expect(await chosen.json()).toEqual({ corrected: 4, jobId: 'job' });
+  });
+
+  it('marks a file an extra of a title, or not an extra, refusing a kind it does not know', async () => {
+    const { ask } = await build();
+    const put = (body: object) =>
+      ask(`/api/media/${MEDIA_ID}/extra`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    expect((await put({ extraKind: 'trailer', parentId: 'film' })).status).toBe(200);
+    expect((await put({ extraKind: null, parentId: null, isForgotten: true })).status).toBe(200);
+    expect((await put({ extraKind: 'trailer', parentId: null })).status).toBe(404);
+    expect((await put({ extraKind: 'blooper', parentId: 'film' })).status).toBe(400);
   });
 });

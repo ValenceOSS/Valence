@@ -1,3 +1,4 @@
+import { ExtraChoiceRequestSchema } from '@ValenceContracts/schemas/ExtraChoice';
 import { WordRulesSchema } from '@ValenceContracts/schemas/WordRule';
 import {
   ChooseEpisodeOrderSchema,
@@ -592,6 +593,38 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     return context.json(uploaded, 200);
+  });
+
+  app.put('/api/media/:id/extra', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = ExtraChoiceRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thatExtraChoiceCouldNotBeRead'), 400);
+    }
+
+    const { extraKind, parentId, isForgotten } = asked.data;
+    const chosen =
+      (await library.chooseExtra?.(id, {
+        extraKind,
+        parentId,
+        ...(isForgotten === undefined ? {} : { isForgotten }),
+      })) ?? null;
+
+    if (chosen === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.metadataChanged', named.target, named.detail);
+
+    return context.json(chosen, 200);
   });
 
   app.get('/api/libraries/:id/word-rules', async (context) => {

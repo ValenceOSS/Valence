@@ -1,3 +1,4 @@
+import { ExtraKindSchema } from '@ValenceContracts/schemas/Library';
 import { applyWordRules } from './applyWordRules';
 import { createVersionChoices } from './createVersionChoices';
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
@@ -9,6 +10,7 @@ import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   episodePin,
   wordRule,
+  extraChoice,
   mediaItem,
   mediaItemJob,
   mediaLeftOut,
@@ -901,6 +903,21 @@ const createMediaStore = (
     },
 
     applyVersionChoices: (libraryId) => versionChoices.apply(libraryId),
+
+    listExtraChoices: async (libraryId) =>
+      (
+        await db
+          .select({
+            path: extraChoice.path,
+            extraKind: extraChoice.extraKind,
+            parentPath: extraChoice.parentPath,
+          })
+          .from(extraChoice)
+          .where(eq(extraChoice.libraryId, libraryId))
+      ).map((choice) => ({
+        ...choice,
+        extraKind: ExtraKindSchema.nullable().catch(null).parse(choice.extraKind),
+      })),
 
     listEpisodePins: async (libraryId) =>
       db
