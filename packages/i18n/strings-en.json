@@ -26971,6 +26971,46 @@
     "context": "Text shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.wordsManager.genresAndTags",
+    "text": "Genres and tags",
+    "context": "Item in the media list's menu, and the title of the dialog that renames, merges and removes a library's genres and tags."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.noneInThisLibrary",
+    "text": "None in this library yet.",
+    "context": "What the genres and tags dialog shows when the library has no genres, or no tags."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.removeWordFromEveryTitle",
+    "text": "Remove {word} from every title",
+    "context": "Button in the genres and tags dialog that takes a genre or tag off every title in the library. {word} is the genre or tag."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.rename",
+    "text": "Rename",
+    "context": "Button in the genres and tags dialog that renames a genre or tag on every title."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary",
+    "text": "Rename one to change it on every title in this library. Renaming one to another already in use merges the two.",
+    "context": "Description under the title of the genres and tags dialog."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.renameWord",
+    "text": "Rename {word}",
+    "context": "Field holding the new name for a genre or tag in the genres and tags dialog, for a screen reader. {word} is the genre or tag."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.wordRemovedFromTitles",
+    "text": "{word} removed from {titles}",
+    "context": "Notice after a genre or tag was taken off titles. {titles} is how many titles, as in 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.wordRenamedOnTitles",
+    "text": "{word} renamed on {titles}",
+    "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
+  },
+  {
     "handler": "screens.adminPage.adminSearch.findAPage",
     "text": "Find a page",
     "context": "The search at the head of the admin area's sidebar, which opens a command palette of its pages."

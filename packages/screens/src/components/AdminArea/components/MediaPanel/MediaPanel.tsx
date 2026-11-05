@@ -1,3 +1,4 @@
+import { WordsManagerDialog } from './components/WordsManagerDialog/WordsManagerDialog';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinFilledIcon,
@@ -390,6 +391,7 @@ const MediaPanel = ({
   const [subtitling, setSubtitling] = useState<{ id: string; name: string } | null>(null);
   const [refreshingTitle, setRefreshingTitle] = useState<MediaTitle | null>(null);
   const [isSeeingOrphans, setIsSeeingOrphans] = useState(false);
+  const [isManagingWords, setIsManagingWords] = useState(false);
 
   const moveAll = useCallback(
     (title: MediaTitle): ActionMenuItem[] =>
@@ -1715,6 +1717,12 @@ const MediaPanel = ({
         }}
       />
 
+      <WordsManagerDialog
+        libraryId={isManagingWords ? asked.libraryId : null}
+        onClose={() => {
+          setIsManagingWords(false);
+        }}
+      />
       <OrphanedEditsDialog
         libraryId={libraryId}
         isOpen={isSeeingOrphans}
@@ -1985,7 +1993,7 @@ const MediaPanel = ({
                   }
                   className="w-[28rem] max-w-full"
                 />
-                {view === 'titles' && orphanCount > 0 ? (
+                {view === 'titles' && asked.libraryId !== '' ? (
                   <ActionMenu
                     label={say('screens.adminArea.mediaPanel.moreForTheMedia')}
                     size="sm"
@@ -1993,15 +2001,26 @@ const MediaPanel = ({
                       {
                         items: [
                           {
-                            id: 'orphans',
-                            label: sayCount(
-                              'screens.adminArea.mediaPanel.count.editsWithoutATitle',
-                              orphanCount,
-                            ),
+                            id: 'words',
+                            label: say('screens.adminArea.wordsManager.genresAndTags'),
                             onChoose: () => {
-                              setIsSeeingOrphans(true);
+                              setIsManagingWords(true);
                             },
                           },
+                          ...(orphanCount === 0
+                            ? []
+                            : [
+                                {
+                                  id: 'orphans',
+                                  label: sayCount(
+                                    'screens.adminArea.mediaPanel.count.editsWithoutATitle',
+                                    orphanCount,
+                                  ),
+                                  onChoose: () => {
+                                    setIsSeeingOrphans(true);
+                                  },
+                                },
+                              ]),
                         ],
                       },
                     ]}
