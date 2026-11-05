@@ -17,6 +17,15 @@ const CLEANED: [string, string][] = [
   ['Crouching.Tiger.Hidden.Dragon.BDrip-HDC.mkv', 'Crouching.Tiger.Hidden.Dragon'],
   ['Crouching.Tiger.Hidden.Dragon.4K.UltraHD.HDR.BDrip-HDC.mkv', 'Crouching.Tiger.Hidden.Dragon'],
   ['Last.Call.for.Nowhere.WEB-DL.1080p', 'Last.Call.for.Nowhere'],
+  ['Super movie WEBDL-1080p.mkv', 'Super movie'],
+  ['Super movie WEBRip-2160p.mkv', 'Super movie'],
+  ['Super movie Remux-1080p.mkv', 'Super movie'],
+  ['Super movie Bluray-2160p Remux.mkv', 'Super movie'],
+  ['Super movie SDTV.mkv', 'Super movie'],
+  ['Super movie Raw-HD.mkv', 'Super movie'],
+  ['Super movie BR-DISK.mkv', 'Super movie'],
+  ['Super movie WORKPRINT.mkv', 'Super movie'],
+  ['Super movie [1080p][WEBDL][x264][EAC3 5.1].mkv', 'Super movie'],
   ['[OldFansubs] Made in Abyss - 13 [720p].mkv', 'Made in Abyss'],
   [
     '[Tsundere] Kore wa Zombie Desu ka of the Dead [BDRip h264 1920x1080 FLAC]',
@@ -38,6 +47,7 @@ const LEFT_ALONE: [string][] = [
   ['[rec].mkv'],
   ['American.Psycho.mkv'],
   ['American Psycho.mkv'],
+  ['The Unknown.mkv'],
   ['Run lola run (lola rennt) (2009).mp4'],
   ['2026年01月05日00時55分00秒-[新]違国日記【ＡＮｉＭｉＤＮｉＧＨＴ！！！】＃１.mp4'],
 ];
