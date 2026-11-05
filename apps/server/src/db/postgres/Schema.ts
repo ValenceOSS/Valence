@@ -905,7 +905,7 @@ const extraChoice = pgTable(
     parentPath: text('parentPath'),
     setAt: timestamp('setAt').notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.libraryId, table.path] })],
+  (table) => [uniqueIndex('extra_choice_path_idx').on(table.libraryId, table.path)],
 );
 
 const episodePin = pgTable(
@@ -920,7 +920,7 @@ const episodePin = pgTable(
     episodeNumberEnd: integer('episodeNumberEnd'),
     setAt: timestamp('setAt').notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.libraryId, table.path] })],
+  (table) => [uniqueIndex('episode_pin_path_idx').on(table.libraryId, table.path)],
 );
 
 const versionChoice = pgTable(
@@ -934,7 +934,7 @@ const versionChoice = pgTable(
     isStanding: boolean('isStanding').notNull().default(false),
     setAt: timestamp('setAt').notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.libraryId, table.path] })],
+  (table) => [uniqueIndex('version_choice_path_idx').on(table.libraryId, table.path)],
 );
 
 const titleEdit = pgTable(

@@ -1,5 +1,7 @@
+import { dirname } from 'node:path';
 import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { mediaItem, versionChoice } from '#dialect/Schema';
+import { labelOfVersion } from '@ValenceServer/library/placement/labelOfVersion';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 
 type VersionChoice = { label?: string | null; isStanding?: boolean };
@@ -134,9 +136,16 @@ const createVersionChoices = (db: AnyValenceDatabase) => {
     });
 
     if (choice.label !== undefined) {
+      const folder = dirname(file.path);
+
       await db
         .update(mediaItem)
-        .set({ versionLabel: label === null || label === '' ? null : label })
+        .set({
+          versionLabel:
+            label === null || label === ''
+              ? labelOfVersion(file.path, folder.slice(folder.lastIndexOf('/') + 1))
+              : label,
+        })
         .where(eq(mediaItem.id, mediaId));
     }
 

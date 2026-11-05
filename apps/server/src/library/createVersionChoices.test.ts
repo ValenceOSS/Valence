@@ -78,7 +78,7 @@ describe('createVersionChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     await choices.choose('second', { label: 'Mine' });
     await choices.choose('second', { label: null });
 
-    expect(await read('second')).toMatchObject({ versionLabel: null });
+    expect(await read('second')).toMatchObject({ versionLabel: 'second' });
     await expect(choices.choose('trailer', { label: 'x' })).resolves.toBe(false);
   });
 });
