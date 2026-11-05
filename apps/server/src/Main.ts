@@ -1,3 +1,4 @@
+import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
 import { z } from '@hono/zod-openapi';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
@@ -3587,6 +3588,8 @@ const scanRuns = collectScanRuns({
   },
 });
 
+const artworkUploads = join(dirname(env.PROFILE_IMAGE_DIR), 'artwork');
+
 const libraryService = createDatabaseLibraryService({
   db,
   files: createMediaFileSystem(),
@@ -3620,6 +3623,7 @@ const libraryService = createDatabaseLibraryService({
     ),
   ),
   images: { forget: (url) => images.forget(url) },
+  artworkUploads,
   music: {
     store: musicStore,
     artwork: musicArtwork,
@@ -4449,9 +4453,10 @@ const creditProviders = [
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
   fetchImpl: async (url) =>
-    readLinkedAddress(url) === null
+    (await readLocalPicture(url, artworkUploads)) ??
+    (readLinkedAddress(url) === null
       ? fetch(url)
-      : ((await linkedAsker.askAt(url)) ?? new Response(null, { status: 502 })),
+      : ((await linkedAsker.askAt(url)) ?? new Response(null, { status: 502 }))),
   onProblem: (url, reason) => {
     log.warn('scanner', `artwork ${url}: ${reason.message}`);
 

@@ -103,16 +103,20 @@ describe('MediaTitlePage', () => {
     expect(screen.getByText('Unmatched')).toBeInTheDocument();
   });
 
-  it('fixes the match and chooses artwork through the title’s own actions', async () => {
+  it('fixes the match through the title’s own actions, and chooses artwork on its own tab', async () => {
     const user = userEvent.setup();
-    const { fix, artwork } = drawn(titleOf({ id: 'film' }));
+    const { fix } = drawn(titleOf({ id: 'film', externalId: '603' }));
 
     await user.click(screen.getByRole('button', { name: 'Fix match' }));
-    await user.click(screen.getByRole('button', { name: /^More for /u }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Choose artwork' }));
 
     expect(fix).toHaveBeenCalled();
-    expect(artwork).toHaveBeenCalled();
+    expect(screen.getByRole('tab', { name: 'Artwork' })).toBeInTheDocument();
+  });
+
+  it('offers no Artwork tab until the title is matched', () => {
+    drawn(titleOf({ id: 'film' }));
+
+    expect(screen.queryByRole('tab', { name: 'Artwork' })).not.toBeInTheDocument();
   });
 
   it('keeps a film’s file actions to its Files tab, and its title’s in the head', async () => {
@@ -142,10 +146,10 @@ describe('MediaTitlePage', () => {
   it('offers no folder without Files', async () => {
     const user = userEvent.setup();
 
-    drawn(titleOf({ id: 'film' }));
+    drawn(titleOf({ id: 'film', externalId: '603' }));
     await user.click(screen.getByRole('button', { name: /^More for /u }));
 
-    expect(await screen.findByRole('menuitem', { name: 'Choose artwork' })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'Unmatch' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Open folder' })).not.toBeInTheDocument();
   });
 

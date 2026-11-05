@@ -1,3 +1,4 @@
+import type { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { EntryFacts } from '@ValenceServer/files/describeLibraryEntries';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
@@ -231,6 +232,20 @@ type LibraryService = ShowService & {
     url: string | null,
     by: string | null,
   ) => Promise<{ jobId: string | null } | 'missing' | 'unmatched' | 'unavailable' | 'refused'>;
+  uploadArtwork?: (
+    mediaId: string,
+    kind: ArtworkKind,
+    artwork: { body: Uint8Array; contentType: string },
+    by: string | null,
+  ) => Promise<
+    | { jobId: string | null }
+    | 'missing'
+    | 'unmatched'
+    | 'unavailable'
+    | 'refused'
+    | { fault: NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>> }
+  >;
+  isOwnArtwork?: (mediaId: string, url: string) => Promise<boolean>;
 };
 
 const DEFAULT_LIMIT = 60;

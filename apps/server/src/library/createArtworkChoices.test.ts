@@ -1,4 +1,9 @@
 import { eq } from 'drizzle-orm';
+import sharp from 'sharp';
+import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { diskPictureAddress } from './diskPictureAddress';
 import { describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem } from '#dialect/Schema';
@@ -106,9 +111,74 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     expect(read).toEqual({
       kind: 'tv',
       options: OFFERED,
+      onDisk: [],
       chosen: { poster: null, backdrop: null, logo: null },
       defaults: { poster: null, backdrop: null, logo: null },
     });
+  });
+
+  it('offers the pictures beside a film’s file, and chooses one without asking the catalogue', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'valence-artwork-'));
+    const db = await aScratchDatabase();
+
+    await writeFile(join(folder, 'poster.jpg'), 'a');
+    await writeFile(join(folder, 'notes.txt'), 'b');
+    await db
+      .update(mediaItem)
+      .set({ path: join(folder, 'f.mkv') })
+      .where(eq(mediaItem.id, 'film'));
+
+    const readOptions = vi.fn(() => Promise.resolve(OFFERED));
+    const choices = createArtworkChoices({ db, readOptions });
+    const read = await choices.read('film');
+    const [onDisk] = typeof read === 'string' ? [] : read.onDisk;
+
+    expect(onDisk).toEqual({
+      url: diskPictureAddress(join(folder, 'poster.jpg')),
+      name: 'poster.jpg',
+    });
+
+    readOptions.mockClear();
+
+    await expect(choices.choose('film', 'poster', onDisk?.url ?? '', null)).resolves.toEqual({
+      jobId: null,
+    });
+    expect(readOptions).not.toHaveBeenCalled();
+    await expect(choices.isOwnPicture('film', onDisk?.url ?? '')).resolves.toBe(true);
+    await expect(
+      choices.isOwnPicture('film', diskPictureAddress(join(folder, 'notes.txt'))),
+    ).resolves.toBe(false);
+  });
+
+  it('keeps an uploaded picture and chooses it, turning away what is not a picture', async () => {
+    const uploads = await mkdtemp(join(tmpdir(), 'valence-uploads-'));
+    const choices = createArtworkChoices({
+      db: await aScratchDatabase(),
+      readOptions: () => Promise.resolve(OFFERED),
+      uploads,
+    });
+
+    await expect(
+      choices.upload(
+        'film',
+        'poster',
+        { body: new Uint8Array([1, 2]), contentType: 'text/plain' },
+        null,
+      ),
+    ).resolves.toEqual({ fault: 'notAPicture' });
+
+    const png = new Uint8Array(
+      await sharp({
+        create: { width: 4, height: 6, channels: 3, background: { r: 0, g: 0, b: 0 } },
+      })
+        .png()
+        .toBuffer(),
+    );
+
+    await expect(
+      choices.upload('film', 'poster', { body: png, contentType: 'image/png' }, null),
+    ).resolves.toEqual({ jobId: null });
+    expect((await readdir(uploads)).filter((name) => name.endsWith('.type'))).toHaveLength(1);
   });
 
   it('shows the pictures the catalogue would pick itself, beside the ones to choose from', async () => {

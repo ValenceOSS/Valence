@@ -3,6 +3,11 @@ import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
+import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
+import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
+import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
+import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
+import { ArtworkKindSchema } from '@ValenceContracts/schemas/ArtworkChoice';
 import {
   listLibrariesRoute,
   createLibraryRoute,
@@ -60,6 +65,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     settings,
     recordAudit,
     titleMetadata,
+    readImage,
   } = context;
 
   /**
@@ -530,6 +536,70 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     await recordAudit(context, 'media.artworkReset', named.target, { ...named.detail, kind });
 
     return context.json(forgotten, 200);
+  });
+
+  app.put('/api/media/:id/artwork/:kind/upload', tooBigToRead(ARTWORK_LIMITS), async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const kind = ArtworkKindSchema.safeParse(context.req.param('kind'));
+
+    if (!kind.success || library.uploadArtwork === undefined) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const uploaded = await library.uploadArtwork(
+      id,
+      kind.data,
+      {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      },
+      (await readAccount(context.req.raw.headers))?.id ?? null,
+    );
+
+    if (typeof uploaded === 'string') {
+      return uploaded === 'unavailable'
+        ? context.json(refuse('error.library.catalogueCouldNotBeAsked'), 503)
+        : context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
+    }
+
+    if ('fault' in uploaded) {
+      const said = describePictureFault(uploaded.fault, ARTWORK_LIMITS);
+
+      return context.json(bodyOf(said), said.status);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.artworkChosen', named.target, {
+      ...named.detail,
+      kind: kind.data,
+    });
+
+    return context.json(uploaded, 200);
+  });
+
+  app.get('/api/media/:id/artwork/picture', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const url = context.req.query('url') ?? '';
+    const isOwn = (await library.isOwnArtwork?.(context.req.param('id'), url)) ?? false;
+    const image =
+      isOwn && readImage !== undefined ? await readImage(url, ARTWORK_WIDTHS.small) : null;
+
+    if (image === null) {
+      return context.json(refuse('error.image.thatArtworkCouldNotBeRead'), 404);
+    }
+
+    return context.body(image.body, 200, {
+      'content-type': image.contentType,
+      'cache-control': 'private, max-age=3600',
+    });
   });
 
   app.openapi(forgetCorrectionRoute, async (context) => {

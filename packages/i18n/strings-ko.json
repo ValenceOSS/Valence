@@ -3546,6 +3546,16 @@
     "context": "How many files a library scan found changed."
   },
   {
+    "handler": "common.count.votes.one",
+    "text": "{count} vote",
+    "context": "How many people on the catalogue voted for a picture, under it in the artwork chooser."
+  },
+  {
+    "handler": "common.count.votes.other",
+    "text": "{count} votes",
+    "context": "How many people on the catalogue voted for a picture, under it in the artwork chooser."
+  },
+  {
     "handler": "common.count.years.one",
     "text": "{count} year",
     "context": "A length of time in whole years, such as how long ago a release was posted."
@@ -15699,6 +15709,96 @@
     "handler": "screens.adminArea.artistRequestsCard.artistRequests",
     "text": "Artist requests",
     "context": "Heading of the card for what a request for an artist downloads."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.asTheCatalogueRanksThem",
+    "text": "As the catalogue ranks them",
+    "context": "An order for the pictures in the artwork chooser: the catalogue's own."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.besideItsFiles",
+    "text": "Beside its files",
+    "context": "Heading over the pictures found in the title's folders on the disk, in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.fromTheCatalogue",
+    "text": "From the catalogue",
+    "context": "Heading over the pictures the catalogue offers, in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.goBackToTheCataloguesPick",
+    "text": "Go back to the catalogue’s pick",
+    "context": "Button that forgets the chosen picture so the catalogue's own is used again."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseAnUploadedPicture",
+    "text": "In use: an uploaded picture",
+    "context": "Line over the pictures saying the title is drawn with a picture an administrator uploaded."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseNameFromTheDisk",
+    "text": "In use: {name}, from beside its files",
+    "context": "Line over the pictures saying the title is drawn with a picture found on the disk. {name} is its file name."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseOneFromTheCatalogue",
+    "text": "In use: one chosen from the catalogue",
+    "context": "Line over the pictures saying an administrator chose one of the catalogue's pictures."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseTheCataloguesPick",
+    "text": "In use: the catalogue’s pick",
+    "context": "Line over the pictures saying the title is drawn with the picture the catalogue picks itself."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.largestFirst",
+    "text": "Largest first",
+    "context": "An order for the pictures in the artwork chooser: the most pixels first."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.mostVotesFirst",
+    "text": "Most votes first",
+    "context": "An order for the pictures in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.noLetteringFirst",
+    "text": "No lettering first",
+    "context": "An order for the pictures in the artwork chooser: pictures without any title written on them first."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.pictureSize",
+    "text": "{width} × {height}",
+    "context": "A picture's size in pixels, under it in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.picturesOfTheTitle",
+    "text": "Pictures of the title",
+    "context": "Heading of the Artwork tab on a title's page in the admin media list."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.uploadAPicture",
+    "text": "Upload a picture",
+    "context": "Button in the artwork chooser that picks a picture from this computer to use for the title."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.uploaded",
+    "text": "Uploaded",
+    "context": "Note on a picture that an administrator uploaded, in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.uploadedAndChosen",
+    "text": "Uploaded, and in use",
+    "context": "Notice after a picture was uploaded for a title and chosen."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.useNameFromTheDisk",
+    "text": "Use {name} from the disk",
+    "context": "What pressing a picture found beside the title's files does, for a screen reader. {name} is its file name."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.useTheUploadedPicture",
+    "text": "Use the uploaded picture",
+    "context": "What pressing the uploaded picture's tile does, for a screen reader."
   },
   {
     "handler": "screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas",

@@ -58,6 +58,7 @@ const COUNTED_KEYS = [
   'common.count.tracks',
   'common.count.unreadable',
   'common.count.updated',
+  'common.count.votes',
   'common.count.years',
   'common.countEpisodesLeft',
   'common.countNewNotifications',

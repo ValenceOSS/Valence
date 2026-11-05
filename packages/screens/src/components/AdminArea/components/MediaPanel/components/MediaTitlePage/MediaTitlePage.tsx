@@ -60,6 +60,7 @@ import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
 import { MediaTitleHero } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/MediaTitleHero/MediaTitleHero';
 import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
+import { ArtworkChooser } from '@ValenceScreens/components/AdminArea/components/ArtworkChooser/ArtworkChooser';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
 import { useShortcut } from '@ValenceUI/useShortcut';
 import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
@@ -156,7 +157,10 @@ const MediaTitlePage = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
   const { change } = useTitleChange(title.lead.id, 'title');
-  const tabs = TITLE_TABS.filter((one) => one !== 'seasons' || title.kind === 'series');
+  const tabs = TITLE_TABS.filter(
+    (one) =>
+      (one !== 'seasons' || title.kind === 'series') && (one !== 'artwork' || title.isMatched),
+  );
   const tab = tabs.includes(at.tab) ? at.tab : 'details';
   const travel = useTravelDirection([...tabs], tab);
 
@@ -252,7 +256,6 @@ const MediaTitlePage = ({
   const titleActions = actionsFor(title);
   const everyAction = titleActions.flat();
   const fix = everyAction.find((one) => one.id === 'wrong-match');
-  const artwork = everyAction.find((one) => one.id === 'artwork');
 
   /**
    * Follows a job reading the title again, showing that it is being refreshed until it is done.
@@ -285,7 +288,6 @@ const MediaTitlePage = ({
         });
   const moreActions = [
     [
-      ...(artwork === undefined ? [] : [artwork]),
       ...(unlocked.length === 0
         ? []
         : [
@@ -938,6 +940,7 @@ const MediaTitlePage = ({
                     ...(title.kind === 'series'
                       ? [{ id: 'seasons', label: say('screens.seasonChooser.seasons') }]
                       : []),
+                    ...(title.isMatched ? [{ id: 'artwork', label: say('common.artwork') }] : []),
                     { id: 'files', label: filesWord },
                     { id: 'history', label: say('common.history') },
                   ],
@@ -994,6 +997,22 @@ const MediaTitlePage = ({
                 moveTo({ ...NOWHERE, tab: 'seasons', season });
               }}
             />
+          </TabPanel>
+        ) : null}
+
+        {title.isMatched ? (
+          <TabPanel value="artwork" travel={travel}>
+            <PanelCard title={say('screens.adminArea.artworkChooser.picturesOfTheTitle')}>
+              <ArtworkChooser
+                subject={{
+                  mediaId: title.lead.id,
+                  name: title.name,
+                  isSeries: title.kind === 'series',
+                  mediaIds: [...leafIds],
+                }}
+                onChanged={follow}
+              />
+            </PanelCard>
           </TabPanel>
         ) : null}
 

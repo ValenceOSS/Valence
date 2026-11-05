@@ -1,4 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { folderOf } from '@ValenceCore/functions/folderOf';
+import { titleFolderOf } from '@ValenceCore/functions/titleFolderOf';
+import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
+import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import { diskPictureAddress } from './diskPictureAddress';
+import { uploadPictureAddress } from './uploadPictureAddress';
 import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm';
 import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -8,6 +16,14 @@ import type { MetadataProvider } from './MetadataProvider';
 
 type ArtworkRefusal = 'missing' | 'unmatched' | 'unavailable' | 'refused';
 
+type PictureFault = NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>>;
+
+const PICTURE_FILE = /\.(?:jpe?g|png|webp)$/iu;
+
+const MOST_ON_DISK = 60;
+
+const UPLOADED = /^valence-upload:[0-9a-f-]{36}$/u;
+
 type ArtworkChoicesOptions = {
   db: AnyValenceDatabase;
   readOptions?: MetadataProvider['readArtworkOptions'];
@@ -15,6 +31,7 @@ type ArtworkChoicesOptions = {
   readAgain: (libraryId: string, paths: string[]) => Promise<string | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string } | null>;
   onChanged?: (mediaIds: string[]) => void;
+  uploads?: string;
   now?: () => Date;
 };
 
@@ -50,6 +67,7 @@ const createArtworkChoices = ({
   readAgain,
   fetchLogos,
   onChanged,
+  uploads,
   now = () => new Date(),
 }: ArtworkChoicesOptions) => {
   /**
@@ -134,6 +152,34 @@ const createArtworkChoices = ({
    * @param mediaId - Any file of the title.
    * @returns The choices, or why there are none to offer.
    */
+  /**
+   * Finds the pictures kept beside a title's files on the disk, such as a poster.jpg or a
+   * fanart.jpg, in a film's folder or a programme's and its seasons'.
+   *
+   * @param title - The title.
+   * @returns Each picture's address and file name.
+   */
+  const picturesOnDisk = async (title: Title): Promise<{ url: string; name: string }[]> => {
+    const files = await db.select({ path: mediaItem.path }).from(mediaItem).where(filesOf(title));
+    const paths = files.map((file) => file.path);
+    const folders = new Set(
+      title.externalKind === 'tv'
+        ? [titleFolderOf(paths), ...paths.map(folderOf)].filter((one) => one !== null)
+        : paths.map(folderOf),
+    );
+    const found: { url: string; name: string }[] = [];
+
+    for (const folder of folders) {
+      const names = await readdir(folder).catch(() => []);
+
+      for (const name of names.filter((one) => PICTURE_FILE.test(one)).sort()) {
+        found.push({ url: diskPictureAddress(join(folder, name)), name });
+      }
+    }
+
+    return found.slice(0, MOST_ON_DISK);
+  };
+
   const read = async (
     mediaId: string,
   ): Promise<ArtworkChoices | Exclude<ArtworkRefusal, 'refused'>> => {
@@ -156,6 +202,7 @@ const createArtworkChoices = ({
     return {
       kind: title.externalKind,
       options,
+      onDisk: await picturesOnDisk(title),
       chosen: await chosenFor(title),
       defaults: {
         poster: own?.poster?.previewUrl ?? null,
@@ -265,17 +312,22 @@ const createArtworkChoices = ({
       return { jobId };
     }
 
-    const options = await readOptions?.({
-      externalId: title.externalId,
-      isSeries: title.externalKind === 'tv',
-    }).catch(() => null);
+    const isKeptHere =
+      UPLOADED.test(url) || (await picturesOnDisk(title)).some((one) => one.url === url);
 
-    if (options === undefined || options === null) {
-      return 'unavailable';
-    }
+    if (!isKeptHere) {
+      const options = await readOptions?.({
+        externalId: title.externalId,
+        isSeries: title.externalKind === 'tv',
+      }).catch(() => null);
 
-    if (!options[kind].some((option) => option.url === url)) {
-      return 'refused';
+      if (options === undefined || options === null) {
+        return 'unavailable';
+      }
+
+      if (!options[kind].some((option) => option.url === url)) {
+        return 'refused';
+      }
     }
 
     await upsert(db, mediaArtworkChoice, {
@@ -400,7 +452,58 @@ const createArtworkChoices = ({
     return bare.find((url) => url === poster) ?? bare[0] ?? null;
   };
 
-  return { read, choose, urlFor, barePosterFor };
+  /**
+   * Keeps a picture an administrator uploaded for a title and chooses it, for every file of it.
+   *
+   * @param mediaId - Any file of the title.
+   * @param kind - Which picture.
+   * @param artwork - The picture, and what kind of image it is.
+   * @param by - Who uploaded it.
+   * @returns The choice, why the picture was turned away, or why nothing changed.
+   */
+  const upload = async (
+    mediaId: string,
+    kind: ArtworkKind,
+    artwork: { body: Uint8Array; contentType: string },
+    by: string | null,
+  ): Promise<{ jobId: string | null } | ArtworkRefusal | { fault: PictureFault }> => {
+    if (uploads === undefined) {
+      return 'unavailable';
+    }
+
+    const wrong = await whatIsWrongWithThePicture(artwork, ARTWORK_LIMITS);
+
+    if (wrong !== null) {
+      return { fault: wrong };
+    }
+
+    const id = randomUUID();
+
+    await mkdir(uploads, { recursive: true });
+    await writeFile(join(uploads, id), artwork.body);
+    await writeFile(join(uploads, `${id}.type`), artwork.contentType);
+
+    return choose(mediaId, kind, uploadPictureAddress(id), by);
+  };
+
+  /**
+   * Whether a picture kept on this server is one a title may be drawn with: one beside its files,
+   * or one uploaded.
+   *
+   * @param mediaId - Any file of the title.
+   * @param url - The picture's address.
+   * @returns Whether it may be shown.
+   */
+  const isOwnPicture = async (mediaId: string, url: string): Promise<boolean> => {
+    const title = await titleOf(mediaId);
+
+    return (
+      typeof title !== 'string' &&
+      (UPLOADED.test(url) || (await picturesOnDisk(title)).some((one) => one.url === url))
+    );
+  };
+
+  return { read, choose, urlFor, barePosterFor, upload, isOwnPicture };
 };
 
 export type { ArtworkRefusal };
