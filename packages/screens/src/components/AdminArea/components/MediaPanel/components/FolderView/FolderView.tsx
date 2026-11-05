@@ -301,7 +301,12 @@ const FolderView = ({
         meta: { fills: true },
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-2.5">
-            <Icon of={row.original.isFolder ? FolderIcon : FileIcon} size={16} tone="muted" />
+            <Icon
+              of={row.original.isFolder ? FolderIcon : FileIcon}
+              size={16}
+              tone="muted"
+              className="shrink-0"
+            />
 
             <span className="flex min-w-0 flex-col">
               {row.original.isFolder ? (
@@ -382,7 +387,7 @@ const FolderView = ({
         meta: { hidesOnPhones: true },
         accessorFn: (entry) => entry.sizeBytes ?? -1,
         cell: ({ row }) => (
-          <span className="tabular-nums text-text-muted">
+          <span className="whitespace-nowrap tabular-nums text-text-muted">
             {row.original.sizeBytes === null ? '—' : formatBytes(row.original.sizeBytes)}
           </span>
         ),
@@ -517,7 +522,7 @@ const FolderView = ({
           onChoose={(id) => {
             open(id === '' ? null : id);
           }}
-          className="flex-1"
+          className="min-w-0 flex-1 max-sm:basis-[calc(100%-2.5rem)]"
         />
 
         {orphanCount > 0 || isOnlyOrphans ? (

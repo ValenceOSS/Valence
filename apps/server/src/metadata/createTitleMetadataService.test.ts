@@ -215,6 +215,20 @@ describe('createTitleMetadataService', { timeout: STARTING_DATABASE_MS }, () => 
     await expect(readFiles(db, ['cut'])).resolves.toMatchObject([{ title: 'A film' }]);
   });
 
+  it('forgets an edit set back to what the catalogue says, an empty list the same as none', async () => {
+    const { service } = await aService();
+
+    await service.edit('cut', 'title', { set: { title: 'My title', tags: ['mine'] } }, ADA);
+
+    await expect(
+      service.edit('cut', 'title', { set: { title: 'A film', tags: [] } }, ADA),
+    ).resolves.toMatchObject({
+      metadata: {
+        fields: { title: { source: 'catalogue' }, tags: { source: 'catalogue' } },
+      },
+    });
+  });
+
   it('locks a field as it stands', async () => {
     const { service } = await aService();
 

@@ -4085,7 +4085,7 @@ const ENGLISH = {
   'screens.adminArea.bulkEditDialog.theirEpisodes': 'Their episodes',
   'screens.adminArea.bulkEditDialog.whatToEdit': 'What to edit',
   'screens.adminArea.bulkField.clearedOnEveryTitle': 'Emptied on every title',
-  'screens.adminArea.bulkField.doNotChange': 'Keep as is',
+  'screens.adminArea.bulkField.doNotChange': 'Undo this change',
   'screens.adminArea.bulkField.filledFromEachTitle':
     'Filled in from each title, without “The” or “A”',
   'screens.adminArea.bulkField.fromTitle': 'From title',
@@ -4724,7 +4724,7 @@ const ENGLISH = {
   'screens.adminArea.findAndReplace.find': 'Find',
   'screens.adminArea.findAndReplace.findAndReplace': 'Find and replace',
   'screens.adminArea.findAndReplace.inAListOnlyWholeWords':
-    'In a list, only a whole entry is replaced, and an emptied one is taken out. Elsewhere, every place the words appear.',
+    'In text, every match is replaced. In a list such as genres, only an entry that matches in full is replaced, and leaving Replace with empty removes it.',
   'screens.adminArea.findAndReplace.inWhichField': 'In which field',
   'screens.adminArea.findAndReplace.matchCase': 'Match case',
   'screens.adminArea.findAndReplace.replaceWith': 'Replace with',
@@ -5337,6 +5337,8 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.duplicates': 'Duplicates',
   'screens.adminArea.mediaPanel.everyEpisodesFileIsDeletedFrom':
     'Deletes every episode file from disk, along with its subtitles and artwork, and removes the series from the library. This can’t be undone.',
+  'screens.adminArea.mediaPanel.everyFileHereCouldBeRead':
+    'Every file in this library could be read.',
   'screens.adminArea.mediaPanel.everythingHereHasACover': 'Everything here has a cover.',
   'screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas':
     'Everything here is matched and has a poster.',
@@ -5362,6 +5364,9 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis':
     'Nothing has been scanned into this library yet.',
   'screens.adminArea.mediaPanel.nothingNeededChanging': 'Nothing needed changing.',
+  'screens.adminArea.mediaPanel.noTitleHereHasBeenEdited':
+    'No title in this library has been edited yet.',
+  'screens.adminArea.mediaPanel.noTitleIsHereTwice': 'No title in this library is here twice.',
   'screens.adminArea.mediaPanel.numberedMoreThanOnce':
     'Numbered S{season} E{episode} more than once: {files}',
   'screens.adminArea.mediaPanel.rebuilding': 'Rebuilding…',
@@ -6858,13 +6863,18 @@ const ENGLISH = {
   'screens.adminArea.whatsNewCard.nothingHasArrivedYet': 'Nothing has arrived yet.',
   'screens.adminArea.whyThereIsNoFigure': 'Why there is no figure',
   'screens.adminArea.wordsManager.genresAndTags': 'Genres and tags',
+  'screens.adminArea.wordsManager.itIsTakenOffEveryTitle':
+    'It’s taken off every title in this library that carries it. Undo in the message that follows puts it back.',
   'screens.adminArea.wordsManager.noneInThisLibrary': 'None in this library yet.',
+  'screens.adminArea.wordsManager.remove': 'Remove from every title',
   'screens.adminArea.wordsManager.removeWordFromEveryTitle': 'Remove {word} from every title',
+  'screens.adminArea.wordsManager.removeWordQuestion': 'Remove {word} from {titles}?',
   'screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary':
     'Rename one to change it on every title in this library. Renaming one to another already in use merges the two.',
   'screens.adminArea.wordsManager.renameWord': 'Rename {word}',
   'screens.adminArea.wordsManager.wordRemovedFromTitles': '{word} removed from {titles}',
-  'screens.adminArea.wordsManager.wordRenamedOnTitles': '{word} renamed on {titles}',
+  'screens.adminArea.wordsManager.wordRenamedToNextOnTitles':
+    '{word} renamed to {next} on {titles}',
   'screens.adminPage.adminSearch.findAPage': 'Find a page',
   'screens.adminPage.adminSearch.general': 'General',
   'screens.adminPage.adminSearch.searchTheAdminArea': 'Search the admin area',

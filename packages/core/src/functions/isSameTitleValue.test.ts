@@ -16,6 +16,12 @@ describe('isSameTitleValue', () => {
     expect(isSameTitleValue(['Drama'], 'Drama')).toBe(false);
   });
 
+  it('takes an empty list, or no content ratings, for nothing', () => {
+    expect(isSameTitleValue([], null)).toBe(true);
+    expect(isSameTitleValue(null, {})).toBe(true);
+    expect(isSameTitleValue(['a'], null)).toBe(false);
+  });
+
   it('compares a cast person by person, in order', () => {
     const one = { personId: 1, name: 'One', role: 'Lead', imageUrl: null };
     const two = { personId: 2, name: 'Two', role: '', imageUrl: null };

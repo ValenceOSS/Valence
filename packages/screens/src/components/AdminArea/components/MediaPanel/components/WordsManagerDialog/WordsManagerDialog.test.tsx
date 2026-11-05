@@ -52,12 +52,17 @@ describe('WordsManagerDialog', () => {
     );
   });
 
-  it('takes a tag off every title', async () => {
+  it('takes a tag off every title once asked to, never at the first press', async () => {
     const user = userEvent.setup();
 
     render(<WordsManagerDialog libraryId="lib" onClose={vi.fn()} />, { wrapper: CacheScope });
     await user.click(await screen.findByRole('button', { name: 'Tags' }));
     await user.click(await screen.findByRole('button', { name: 'Remove Sci-Fi from every title' }));
+
+    expect(editing).not.toHaveBeenCalled();
+    expect(await screen.findByText('Remove Sci-Fi from 3 titles?')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Remove from every title' }));
 
     await waitFor(() => {
       expect(editing).toHaveBeenCalledWith(

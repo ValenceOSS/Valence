@@ -72,7 +72,7 @@ const FindReplace = ({ fields, kind, replace, onReplace }: FindReplaceProps) => 
             setMatchCase(checked);
             tell({ matchCase: checked });
           }}
-          className="pb-2"
+          className="pb-2 text-sm"
         />
       </div>
     </SettingGroup>

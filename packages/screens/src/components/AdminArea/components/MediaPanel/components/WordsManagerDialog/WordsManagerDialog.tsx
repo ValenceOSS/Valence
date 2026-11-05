@@ -10,6 +10,8 @@ import { notify } from '@ValenceUI/notify';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { editTitlesInParts } from '@ValenceClient/admin/editTitlesInParts';
 import { fetchTitleKeys } from '@ValenceClient/admin/fetchTitleKeys';
+import { undoTitlesInParts } from '@ValenceClient/admin/undoTitlesInParts';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { WordRow } from './components/WordRow/WordRow';
 import type { WordsManagerDialogProps } from './WordsManagerDialog.types';
 import { say } from '@ValenceI18n/say';
@@ -23,7 +25,8 @@ const KINDS = [
 /**
  * Renames and removes a library's genres and tags on every title that carries them, so a library
  * read from several catalogues can be tidied in one place: renaming one to a name already in use
- * merges the two. Each change is one change set, undone from the title's history.
+ * merges the two. Removing asks first, and each change is one change set, undone from the message
+ * that follows or from a title's history.
  *
  * @param libraryId - The library, or nothing while it is closed.
  * @param onClose - Closes it.
@@ -32,6 +35,7 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
   const cache = useQueryClient();
   const [kind, setKind] = useState<(typeof KINDS)[number]>(KINDS[0]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<{ word: string; count: number } | null>(null);
   const words = useQuery({
     ...adminQueries.titleValues(kind.id, libraryId ?? undefined),
     enabled: libraryId !== null,
@@ -66,12 +70,25 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
       );
       const titles = sayCount('common.count.titles', outcome.changed.length);
 
+      await cache.invalidateQueries({ queryKey: adminQueries.key });
       notify.worked(
         next === ''
           ? say('screens.adminArea.wordsManager.wordRemovedFromTitles', { word, titles })
-          : say('screens.adminArea.wordsManager.wordRenamedOnTitles', { word, titles }),
+          : say('screens.adminArea.wordsManager.wordRenamedToNextOnTitles', { word, next, titles }),
+        {
+          id: `words-${outcome.changeSetId}`,
+          action: {
+            label: say('common.undo'),
+            onPress: () => {
+              void undoTitlesInParts(outcome.changeSetId, outcome.changed)
+                .then(async () => cache.invalidateQueries({ queryKey: adminQueries.key }))
+                .catch((error: Error) => {
+                  notify.failed(error.message);
+                });
+            },
+          },
+        },
       );
-      await cache.invalidateQueries({ queryKey: adminQueries.key });
     } catch (error) {
       notify.failed(error instanceof Error ? error.message : String(error));
     } finally {
@@ -90,7 +107,6 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
       <DialogTitle
         size="compact"
         title={say('screens.adminArea.wordsManager.genresAndTags')}
-        detail={say('screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary')}
         below={
           <SegmentedRow
             label={say('screens.adminArea.wordsManager.genresAndTags')}
@@ -104,7 +120,10 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
         }
       />
 
-      <DialogContent>
+      <DialogContent className="flex flex-col gap-3">
+        <p className="font-body text-sm text-text-muted">
+          {say('screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary')}
+        </p>
         {words.isPending ? (
           <Spinner isCentered size="sm" label={say('common.loading')} />
         ) : values.length === 0 ? (
@@ -123,7 +142,7 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
                   void change(one.value, next);
                 }}
                 onRemove={() => {
-                  void change(one.value, '');
+                  setRemoving({ word: one.value, count: one.count });
                 }}
               />
             ))}
@@ -132,6 +151,27 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
       </DialogContent>
 
       <DialogFooter dismiss={{ onChoose: onClose }} />
+
+      <ConfirmDialog
+        title={say('screens.adminArea.wordsManager.removeWordQuestion', {
+          word: removing?.word ?? '',
+          titles: sayCount('common.count.titles', removing?.count ?? 0),
+        })}
+        detail={say('screens.adminArea.wordsManager.itIsTakenOffEveryTitle')}
+        confirmLabel={say('screens.adminArea.wordsManager.remove')}
+        isDestructive
+        isOpen={removing !== null}
+        onClose={() => {
+          setRemoving(null);
+        }}
+        onConfirm={() => {
+          if (removing !== null) {
+            void change(removing.word, '');
+          }
+
+          setRemoving(null);
+        }}
+      />
     </Dialog>
   );
 };

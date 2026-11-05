@@ -1309,6 +1309,7 @@ const MediaPanel = ({
       {
         id: 'size',
         header: say('common.size'),
+        meta: { hidesOnPhones: true },
         accessorFn: (title) => title.sizeBytes ?? 0,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -1379,7 +1380,15 @@ const MediaPanel = ({
         ? isShelf
           ? say('screens.adminArea.mediaPanel.everythingHereHasACover')
           : say('screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas')
-        : say('common.nothingHereMatchesThat');
+        : search.trim() !== '' || list.filters.length > 0
+          ? say('common.nothingHereMatchesThat')
+          : showing === 'twice'
+            ? say('screens.adminArea.mediaPanel.noTitleIsHereTwice')
+            : showing === 'unreadable'
+              ? say('screens.adminArea.mediaPanel.everyFileHereCouldBeRead')
+              : showing === 'edited'
+                ? say('screens.adminArea.mediaPanel.noTitleHereHasBeenEdited')
+                : say('common.nothingHereMatchesThat');
 
   /**
    * Opens the title a row of the list belongs to: a film or programme on its page, a season on its

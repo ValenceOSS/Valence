@@ -557,7 +557,10 @@ const AdminPage = () => {
                 void go({
                   to: '/admin/$panel',
                   params: { panel: 'media' },
-                  search: view === 'titles' ? {} : { mediaView: view },
+                  search: {
+                    ...searchOfList(mediaList),
+                    ...(view === 'titles' ? {} : { mediaView: view }),
+                  },
                   replace: true,
                 });
               }}
@@ -565,7 +568,11 @@ const AdminPage = () => {
                 void go({
                   to: '/admin/$panel',
                   params: { panel: 'media' },
-                  search: { mediaView: 'folders', ...(path === null ? {} : { folder: path }) },
+                  search: {
+                    ...searchOfList(mediaList),
+                    mediaView: 'folders',
+                    ...(path === null ? {} : { folder: path }),
+                  },
                   replace: true,
                 });
               }}

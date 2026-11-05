@@ -518,7 +518,13 @@ const createTitleMetadataService = ({
           return 'invalid';
         }
 
-        changes.push({ field, edit: { value: checked.data, catalogue: under } });
+        const isBackToCatalogue =
+          state?.source !== 'locked' && isSameTitleValue(checked.data, under);
+
+        changes.push({
+          field,
+          edit: isBackToCatalogue ? null : { value: checked.data, catalogue: under },
+        });
         values[field] = checked.data;
       } else if (request.lock?.includes(field) === true) {
         changes.push({ field, edit: { value: state?.value ?? null, catalogue: under } });

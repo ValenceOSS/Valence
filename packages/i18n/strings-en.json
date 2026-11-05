@@ -16442,7 +16442,7 @@
   },
   {
     "handler": "screens.adminArea.bulkField.doNotChange",
-    "text": "Keep as is",
+    "text": "Undo this change",
     "context": "A button beside a field touched in the dialog editing many titles at once that lets it alone again."
   },
   {
@@ -18802,7 +18802,7 @@
   },
   {
     "handler": "screens.adminArea.findAndReplace.inAListOnlyWholeWords",
-    "text": "In a list, only a whole entry is replaced, and an emptied one is taken out. Elsewhere, every place the words appear.",
+    "text": "In text, every match is replaced. In a list such as genres, only an entry that matches in full is replaced, and leaving Replace with empty removes it.",
     "context": "Note under the bulk edit dialog's find and replace, saying how it works on lists such as genres and on text such as an overview."
   },
   {
@@ -21146,6 +21146,11 @@
     "context": "Shown in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.everyFileHereCouldBeRead",
+    "text": "Every file in this library could be read.",
+    "context": "What the media list says under the Unreadable quick filter when there are none."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.everythingHereHasACover",
     "text": "Everything here has a cover.",
     "context": "Shown in the media panel in the admin area."
@@ -21254,6 +21259,16 @@
     "handler": "screens.adminArea.mediaPanel.nothingNeededChanging",
     "text": "Nothing needed changing.",
     "context": "Said after a change made to many titles at once in the admin's media changed none of them, as they already held it."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.noTitleHereHasBeenEdited",
+    "text": "No title in this library has been edited yet.",
+    "context": "What the media list says under the Edited quick filter when no title has an edit."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.noTitleIsHereTwice",
+    "text": "No title in this library is here twice.",
+    "context": "What the media list says under the Duplicates quick filter when there are none."
   },
   {
     "handler": "screens.adminArea.mediaPanel.numberedMoreThanOnce",
@@ -27011,14 +27026,29 @@
     "context": "Item in the media list's menu, and the title of the dialog that renames, merges and removes a library's genres and tags."
   },
   {
+    "handler": "screens.adminArea.wordsManager.itIsTakenOffEveryTitle",
+    "text": "It’s taken off every title in this library that carries it. Undo in the message that follows puts it back.",
+    "context": "Detail of the confirmation before a genre or tag is removed from a library."
+  },
+  {
     "handler": "screens.adminArea.wordsManager.noneInThisLibrary",
     "text": "None in this library yet.",
     "context": "What the genres and tags dialog shows when the library has no genres, or no tags."
   },
   {
+    "handler": "screens.adminArea.wordsManager.remove",
+    "text": "Remove from every title",
+    "context": "Confirm button of the dialog that takes a genre or tag off every title in the library."
+  },
+  {
     "handler": "screens.adminArea.wordsManager.removeWordFromEveryTitle",
     "text": "Remove {word} from every title",
     "context": "Button in the genres and tags dialog that takes a genre or tag off every title in the library. {word} is the genre or tag."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.removeWordQuestion",
+    "text": "Remove {word} from {titles}?",
+    "context": "Title of the confirmation before a genre or tag is taken off every title that carries it. {titles} is how many, as in 35 titles."
   },
   {
     "handler": "screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary",
@@ -27036,8 +27066,8 @@
     "context": "Notice after a genre or tag was taken off titles. {titles} is how many titles, as in 12 titles."
   },
   {
-    "handler": "screens.adminArea.wordsManager.wordRenamedOnTitles",
-    "text": "{word} renamed on {titles}",
+    "handler": "screens.adminArea.wordsManager.wordRenamedToNextOnTitles",
+    "text": "{word} renamed to {next} on {titles}",
     "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
   },
   {
