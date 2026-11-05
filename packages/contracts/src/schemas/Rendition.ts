@@ -37,7 +37,7 @@ const RenditionSchema = z.object({
   videoRotationDegrees: z.number().int().nullish(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
-  audioStreams: z.array(AudioStreamSchema).min(1),
+  audioStreams: z.array(AudioStreamSchema).describe('Every audio track. A silent video has none.'),
   subtitleStreams: z.array(SubtitleStreamSchema),
   createdAt: z.string().datetime(),
 });

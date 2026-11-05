@@ -50,8 +50,8 @@ describe('RenditionSchema', () => {
     ).toBe('Arrival - 1080p H264.valence.mp4');
   });
 
-  it('refuses a rendition with no audio at all', () => {
-    expect(() => RenditionSchema.parse({ ...validRendition, audioStreams: [] })).toThrow();
+  it('accepts a rendition of a silent video, with no audio at all', () => {
+    expect(RenditionSchema.parse({ ...validRendition, audioStreams: [] }).audioStreams).toEqual([]);
   });
 
   it('reads a list of them', () => {
