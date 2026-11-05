@@ -21,7 +21,7 @@ const describeTitleValue = (value: TitleValue): string => {
   }
 
   if (Array.isArray(value)) {
-    return value.join(', ');
+    return value.map((one) => (typeof one === 'string' ? one : one.name)).join(', ');
   }
 
   return Object.entries(value)

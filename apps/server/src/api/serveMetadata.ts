@@ -11,6 +11,7 @@ import {
   countLibraryProblemsRoute,
   listTitleValuesRoute,
   findTitleCandidatesRoute,
+  findCataloguePeopleRoute,
   readTitleFilesRoute,
   refreshTitleRoute,
   unmatchTitleRoute,
@@ -42,6 +43,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     bulkTitles,
     orphanedEdits,
     findCandidates,
+    findCataloguePeople,
     library,
     requires,
     readAccount,
@@ -261,6 +263,20 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(await findCandidates(context.req.valid('query')), 200);
+  });
+
+  app.openapi(findCataloguePeopleRoute, async (context) => {
+    if (
+      findCataloguePeople === undefined ||
+      !(await requires(context.req.raw.headers, 'media.override'))
+    ) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    return context.json(
+      { people: await findCataloguePeople(context.req.valid('query').name) },
+      200,
+    );
   });
 
   app.openapi(readTitleFilesRoute, async (context) => {

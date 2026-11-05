@@ -1,8 +1,9 @@
 import type { TitleValue } from '@ValenceContracts/schemas/TitleEdit';
 
 /**
- * Says whether two values of a title's field say the same: lists word for word in order, and a
- * map of content ratings by country whatever order its countries came in.
+ * Says whether two values of a title's field say the same: lists word for word in order, a cast
+ * person by person in order, and a map of content ratings by country whatever order its countries
+ * came in.
  *
  * @param one - A value.
  * @param other - Another.
@@ -18,7 +19,16 @@ const isSameTitleValue = (one: TitleValue, other: TitleValue): boolean => {
       Array.isArray(one) &&
       Array.isArray(other) &&
       one.length === other.length &&
-      one.every((word, at) => word === other[at])
+      one.every((entry, at) => {
+        const twin = other[at];
+
+        return typeof entry === 'string' || typeof twin === 'string' || twin === undefined
+          ? entry === twin
+          : entry.personId === twin.personId &&
+              entry.name === twin.name &&
+              entry.role === twin.role &&
+              entry.imageUrl === twin.imageUrl;
+      })
     );
   }
 

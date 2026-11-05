@@ -5336,6 +5336,7 @@ const app = createApp({
       findByTvdbId: (tvdbId, kind) =>
         catalogueProvider.findByTvdbId?.(tvdbId, kind) ?? Promise.resolve(null),
     }),
+  findCataloguePeople: (name) => catalogueProvider.searchPeople?.(name) ?? Promise.resolve([]),
   titleMetadata: titleMetadataService,
   bulkTitles: createBulkTitleEditor({
     db,

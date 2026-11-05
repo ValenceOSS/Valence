@@ -61,6 +61,7 @@ import { MediaTitleHero } from '@ValenceScreens/components/AdminArea/components/
 import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
 import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import { ArtworkChooser } from '@ValenceScreens/components/AdminArea/components/ArtworkChooser/ArtworkChooser';
+import { TitlePeople } from './components/TitlePeople/TitlePeople';
 import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
 import { useShortcut } from '@ValenceUI/useShortcut';
 import type { TitleEpisode, TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
@@ -940,6 +941,7 @@ const MediaTitlePage = ({
                     ...(title.kind === 'series'
                       ? [{ id: 'seasons', label: say('screens.seasonChooser.seasons') }]
                       : []),
+                    { id: 'people', label: say('screens.adminArea.titlePeople.people') },
                     ...(title.isMatched ? [{ id: 'artwork', label: say('common.artwork') }] : []),
                     { id: 'files', label: filesWord },
                     { id: 'history', label: say('common.history') },
@@ -999,6 +1001,15 @@ const MediaTitlePage = ({
             />
           </TabPanel>
         ) : null}
+
+        <TabPanel value="people" travel={travel}>
+          <TitlePeople
+            mediaId={title.lead.id}
+            onShowHistory={() => {
+              moveTo({ ...NOWHERE, tab: 'history' });
+            }}
+          />
+        </TabPanel>
 
         {title.isMatched ? (
           <TabPanel value="artwork" travel={travel}>

@@ -18,6 +18,7 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['rottenTomatoes', 'rottenTomatoes'],
     ['imdbId', 'imdbId'],
     ['tvdbId', 'tvdbId'],
+    ['cast', 'castMembers'],
   ],
   show: [
     ['title', 'seriesTitle'],
@@ -34,6 +35,7 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['tvdbId', 'tvdbId'],
     ['anilistId', 'anilistId'],
     ['malId', 'malId'],
+    ['cast', 'castMembers'],
   ],
   episode: [
     ['title', 'title'],

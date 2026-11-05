@@ -1,3 +1,4 @@
+import type { CataloguePerson } from '@ValenceContracts/schemas/CataloguePeople';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -184,6 +185,7 @@ type MetadataProvider = {
   findByImdbId?: (imdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
   findByTvdbId?: (tvdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
   readEpisodeGroups?: (externalId: string) => Promise<EpisodeGroup[]>;
+  searchPeople?: (name: string) => Promise<CataloguePerson[]>;
   forgetAnswers?: () => void;
   forgetAnswersAbout?: (externalId: string, kind: 'tv' | 'movie') => void;
 };

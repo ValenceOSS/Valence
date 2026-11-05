@@ -1,3 +1,4 @@
+import { CataloguePeopleSchema } from '@ValenceContracts/schemas/CataloguePeople';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
@@ -323,6 +324,26 @@ const findTitleCandidatesRoute = createRoute({
   },
 });
 
+const findCataloguePeopleRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/titles/people',
+  tags: ['Library'],
+  summary: 'Find people in the catalogue by name, to add to a title’s cast',
+  request: { query: z.object({ name: z.string().trim().min(1).max(128) }) },
+  responses: {
+    200: {
+      description: 'The people found, best first',
+      content: {
+        'application/json': { schema: CataloguePeopleSchema.openapi('CataloguePeople') },
+      },
+    },
+    404: {
+      description: 'Not for this account',
+      content: { 'application/json': { schema: Refusal } },
+    },
+  },
+});
+
 const readTitleFilesRoute = createRoute({
   method: 'get',
   path: '/api/admin/titles/{id}',
@@ -497,6 +518,7 @@ export {
   countLibraryProblemsRoute,
   listTitleValuesRoute,
   findTitleCandidatesRoute,
+  findCataloguePeopleRoute,
   readTitleFilesRoute,
   refreshTitleRoute,
   unmatchTitleRoute,

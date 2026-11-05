@@ -401,6 +401,7 @@ const createMediaStore = (
         tvdbId: row.metadata.tvdbId ?? null,
         anilistId: null,
         malId: null,
+        castMembers: row.metadata.cast ?? null,
         seriesTitle,
         seriesSortTitle: null,
       });
@@ -463,7 +464,7 @@ const createMediaStore = (
         tags: edited.tags,
         studios: edited.studios,
         networks: edited.networks,
-        castMembers: row.metadata.cast ?? null,
+        castMembers: edited.castMembers,
         rating: edited.rating,
         certifications: edited.certifications,
         contentAdvice: row.metadata.contentAdvice ?? null,

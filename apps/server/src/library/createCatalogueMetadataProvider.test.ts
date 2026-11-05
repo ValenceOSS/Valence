@@ -888,6 +888,32 @@ describe('searching the catalogue by name', () => {
     expect(calls[1]).toContain('external_source=tvdb_id');
   });
 
+  it('finds people by name, with a picture and what they are known for', async () => {
+    const { instance } = provider({
+      '/search/person': {
+        results: [
+          {
+            id: 7,
+            name: 'An actor',
+            profile_path: '/face.jpg',
+            known_for: [{ title: 'A film' }, { name: 'A show' }, { title: 'Another' }],
+          },
+          { id: 8, name: 'Nobody known', known_for: [] },
+        ],
+      },
+    });
+
+    await expect(instance.searchPeople?.('actor')).resolves.toEqual([
+      {
+        personId: 7,
+        name: 'An actor',
+        imageUrl: expect.stringContaining('/w185/face.jpg'),
+        knownFor: 'A film, A show',
+      },
+      { personId: 8, name: 'Nobody known', imageUrl: null, knownFor: null },
+    ]);
+  });
+
   it('offers nothing rather than guessing when the catalogue answers with nonsense', async () => {
     const { instance } = provider({ '/search/movie': { unexpected: true } });
 

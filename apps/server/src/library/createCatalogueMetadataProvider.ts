@@ -94,6 +94,23 @@ const FindResponseSchema = z.object({
   tv_results: z.array(z.object({ id: z.number() })).default([]),
 });
 
+const PeopleResponseSchema = z.object({
+  results: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        name: z.string(),
+        profile_path: z.string().nullish(),
+        known_for: z
+          .array(z.object({ title: z.string().optional(), name: z.string().optional() }))
+          .default([]),
+      }),
+    )
+    .default([]),
+});
+
+const MOST_PEOPLE_FOUND = 12;
+
 const SearchResponseSchema = z.object({
   results: z.array(SearchResultSchema).default([]),
   total_pages: z.number().int().nonnegative().default(1),
@@ -1404,6 +1421,32 @@ const createCatalogueMetadataProvider = ({
         : [];
 
       return results[0]?.id.toString() ?? null;
+    },
+
+    searchPeople: async (name) => {
+      const key = await readKey();
+
+      if (key === null || key === '' || name.trim() === '') {
+        return [];
+      }
+
+      const found = PeopleResponseSchema.safeParse(
+        await request('/search/person', key, { query: name.trim(), include_adult: 'false' }),
+      );
+
+      return found.success
+        ? found.data.results.slice(0, MOST_PEOPLE_FOUND).map((person) => ({
+            personId: person.id,
+            name: person.name,
+            imageUrl: imageUrl(imageBaseUrl, person.profile_path, 'w185'),
+            knownFor:
+              person.known_for
+                .map((work) => work.title ?? work.name)
+                .filter((work) => work !== undefined)
+                .slice(0, 2)
+                .join(', ') || null,
+          }))
+        : [];
     },
 
     findByTvdbId: async (tvdbId, kind) => {

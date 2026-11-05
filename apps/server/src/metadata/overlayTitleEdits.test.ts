@@ -22,6 +22,7 @@ const SCANNED: EditableColumns = {
   tvdbId: null,
   anilistId: null,
   malId: null,
+  castMembers: null,
   seriesTitle: null,
   seriesSortTitle: null,
 };
@@ -56,6 +57,17 @@ describe('overlayTitleEdits', () => {
     });
 
     expect(columns.addedAt).toBe('2020-01-02');
+  });
+
+  it('lays an edited cast over the one the catalogue gave', () => {
+    const cast = [{ personId: null, name: 'Someone', role: 'A part', imageUrl: null }];
+    const { columns, catalogue } = overlayTitleEdits(
+      { ...SCANNED, castMembers: [{ personId: 1, name: 'Other', role: '', imageUrl: null }] },
+      { film: [{ field: 'cast', value: cast }] },
+    );
+
+    expect(columns.castMembers).toEqual(cast);
+    expect(catalogue[0]?.field).toBe('cast');
   });
 
   it('replaces only the countries a content rating was edited for', () => {

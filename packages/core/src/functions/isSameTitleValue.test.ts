@@ -16,6 +16,15 @@ describe('isSameTitleValue', () => {
     expect(isSameTitleValue(['Drama'], 'Drama')).toBe(false);
   });
 
+  it('compares a cast person by person, in order', () => {
+    const one = { personId: 1, name: 'One', role: 'Lead', imageUrl: null };
+    const two = { personId: 2, name: 'Two', role: '', imageUrl: null };
+
+    expect(isSameTitleValue([one, two], [{ ...one }, { ...two }])).toBe(true);
+    expect(isSameTitleValue([one, two], [two, one])).toBe(false);
+    expect(isSameTitleValue([one], [{ ...one, role: 'Other' }])).toBe(false);
+  });
+
   it('compares content ratings whatever order their countries came in', () => {
     expect(isSameTitleValue({ GB: '15', US: 'R' }, { US: 'R', GB: '15' })).toBe(true);
     expect(isSameTitleValue({ GB: '15' }, { GB: '12' })).toBe(false);

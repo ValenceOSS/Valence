@@ -26,6 +26,7 @@ const COLUMNS: EditableColumns = {
   tvdbId: null,
   anilistId: null,
   malId: null,
+  castMembers: null,
   seriesTitle: 'Show',
   seriesSortTitle: null,
 };

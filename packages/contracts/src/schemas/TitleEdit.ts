@@ -26,6 +26,13 @@ const DaySchema = z
 
 const WordsSchema = z.array(z.string().trim().min(1).max(64)).max(64);
 
+const CastEntrySchema = z.object({
+  personId: z.number().int().positive().nullable(),
+  name: z.string().trim().min(1).max(128),
+  role: z.string().trim().max(128),
+  imageUrl: z.string().max(2048).nullable(),
+});
+
 const TITLE_FIELD_SCHEMAS = {
   title: z.string().trim().min(1).max(512),
   sortTitle: z.string().trim().min(1).max(512).nullable(),
@@ -58,6 +65,7 @@ const TITLE_FIELD_SCHEMAS = {
     .string()
     .regex(/^\d{1,10}$/)
     .nullable(),
+  cast: z.array(CastEntrySchema).max(200),
   note: z.string().trim().max(2000).nullable(),
 };
 
@@ -81,6 +89,7 @@ const TitleFieldSchema = z.enum([
   'tvdbId',
   'anilistId',
   'malId',
+  'cast',
   'note',
 ]);
 
@@ -104,6 +113,7 @@ const FIELDS_OF_KIND: Record<
     'rottenTomatoes',
     'imdbId',
     'tvdbId',
+    'cast',
     'note',
   ],
   show: [
@@ -124,6 +134,7 @@ const FIELDS_OF_KIND: Record<
     'tvdbId',
     'anilistId',
     'malId',
+    'cast',
     'note',
   ],
   season: ['title', 'overview', 'releaseDate', 'note'],
@@ -134,6 +145,7 @@ const TitleValueSchema = z.union([
   z.string(),
   z.number(),
   z.array(z.string()),
+  z.array(CastEntrySchema),
   z.record(z.string(), z.string()),
   z.null(),
 ]);
@@ -204,6 +216,7 @@ const MatchPreviewSchema = z.object({
 
 type TitleSubjectKind = z.infer<typeof TitleSubjectKindSchema>;
 type TitleField = z.infer<typeof TitleFieldSchema>;
+type CastEntry = z.infer<typeof CastEntrySchema>;
 type TitleValue = z.infer<typeof TitleValueSchema>;
 type FieldSource = z.infer<typeof FieldSourceSchema>;
 type TitleFieldState = z.infer<typeof TitleFieldStateSchema>;
@@ -216,6 +229,7 @@ type TitleEditOutcome = z.infer<typeof TitleEditOutcomeSchema>;
 type MatchPreview = z.infer<typeof MatchPreviewSchema>;
 
 export type {
+  CastEntry,
   TitleSubjectKind,
   TitleField,
   TitleValue,
@@ -231,6 +245,7 @@ export type {
 };
 
 export {
+  CastEntrySchema,
   TITLE_SUBJECT_KINDS,
   TITLE_FIELD_SCHEMAS,
   FIELDS_OF_KIND,

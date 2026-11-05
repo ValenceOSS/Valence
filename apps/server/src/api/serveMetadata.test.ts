@@ -110,6 +110,8 @@ const build = () => {
     titleList,
     bulkTitles,
     orphanedEdits,
+    findCataloguePeople: (name) =>
+      Promise.resolve([{ personId: 7, name, imageUrl: null, knownFor: null }]),
   });
 
   return { app, auth, permissions, store, titleMetadata, titleList, bulkTitles };
@@ -158,6 +160,16 @@ describe('serveMetadata', () => {
     ).toBe(404);
     expect((await ask('/api/admin/titles?libraryId=lib')).status).toBe(404);
     expect(built.titleMetadata.read).not.toHaveBeenCalled();
+  });
+
+  it('finds people in the catalogue by name, for somebody given leave', async () => {
+    const ask = await signedIn(true);
+    const found = await ask('/api/admin/titles/people?name=An%20actor');
+
+    expect(found.status).toBe(200);
+    expect(await found.json()).toEqual({
+      people: [{ personId: 7, name: 'An actor', imageUrl: null, knownFor: null }],
+    });
   });
 
   it('reads and edits a title, by the scope asked', async () => {

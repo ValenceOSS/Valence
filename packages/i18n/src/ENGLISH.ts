@@ -6582,6 +6582,22 @@ const ENGLISH = {
   'screens.adminArea.titlePage.trackTable.length': 'Length',
   'screens.adminArea.titlePage.trackTable.track': 'Track',
   'screens.adminArea.titlePage.trackTable.tracks': 'Tracks',
+  'screens.adminArea.titlePeople.addAPerson': 'Add a person',
+  'screens.adminArea.titlePeople.addName': 'Add {name}',
+  'screens.adminArea.titlePeople.addNameByNameOnly': 'Add “{name}” by name only',
+  'screens.adminArea.titlePeople.castOrderSaysWhoIsBilledFirst':
+    'The order here is the order every app shows them in.',
+  'screens.adminArea.titlePeople.knownForWorks': 'Known for {works}',
+  'screens.adminArea.titlePeople.lookingInTheCatalogue': 'Looking in the catalogue',
+  'screens.adminArea.titlePeople.moveNameDown': 'Move {name} down',
+  'screens.adminArea.titlePeople.moveNameUp': 'Move {name} up',
+  'screens.adminArea.titlePeople.nobodyIsInTheCast':
+    'Nobody is in the cast yet. Add somebody above.',
+  'screens.adminArea.titlePeople.noOneInTheCatalogue': 'Nobody by that name is in the catalogue.',
+  'screens.adminArea.titlePeople.people': 'People',
+  'screens.adminArea.titlePeople.role': 'Role',
+  'screens.adminArea.titlePeople.roleOfName': '{name}’s role',
+  'screens.adminArea.titlePeople.takeNameOff': 'Take {name} off the cast',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges':
     'A backup is taken before the update changes the database, so you can go back.',

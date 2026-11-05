@@ -1,6 +1,6 @@
 import { TITLE_FIELD_SCHEMAS } from '@ValenceContracts/schemas/TitleEdit';
 import { columnOfField } from './columnOfField';
-import type { TitleField, TitleValue } from '@ValenceContracts/schemas/TitleEdit';
+import type { CastEntry, TitleField, TitleValue } from '@ValenceContracts/schemas/TitleEdit';
 import type { EditableColumns, EditScope } from './EditableColumns';
 
 type HeldEdit = { field: TitleField; value: TitleValue };
@@ -30,7 +30,17 @@ const textOf = (value: TitleValue): string | null => (typeof value === 'string' 
  * @param value - The value.
  * @returns The words, or nothing.
  */
-const wordsOf = (value: TitleValue): string[] | null => (Array.isArray(value) ? value : null);
+const wordsOf = (value: TitleValue): string[] | null =>
+  Array.isArray(value) ? value.filter((one) => typeof one === 'string') : null;
+
+/**
+ * Reads a value as a cast, where it is one.
+ *
+ * @param value - The value.
+ * @returns The cast, or nothing.
+ */
+const castOf = (value: TitleValue): CastEntry[] | null =>
+  Array.isArray(value) ? value.filter((one) => typeof one !== 'string') : null;
 
 /**
  * Reads a value as a number, where it is one.
@@ -68,6 +78,7 @@ const WRITERS: {
   tvdbId: (columns, value) => ({ ...columns, tvdbId: textOf(value) }),
   anilistId: (columns, value) => ({ ...columns, anilistId: textOf(value) }),
   malId: (columns, value) => ({ ...columns, malId: textOf(value) }),
+  castMembers: (columns, value) => ({ ...columns, castMembers: castOf(value) }),
   seriesTitle: (columns, value) => ({
     ...columns,
     seriesTitle: textOf(value) ?? columns.seriesTitle,

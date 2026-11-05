@@ -1,3 +1,5 @@
+import type { CastEntry } from '@ValenceContracts/schemas/TitleEdit';
+
 type EditableColumns = {
   title: string;
   sortTitle: string | null;
@@ -18,6 +20,7 @@ type EditableColumns = {
   tvdbId: string | null;
   anilistId: string | null;
   malId: string | null;
+  castMembers: CastEntry[] | null;
   seriesTitle: string | null;
   seriesSortTitle: string | null;
 };

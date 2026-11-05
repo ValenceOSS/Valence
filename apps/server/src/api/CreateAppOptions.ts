@@ -1,3 +1,4 @@
+import type { CataloguePerson } from '@ValenceContracts/schemas/CataloguePeople';
 import type { Candidates } from '@ValenceServer/metadata/findCandidates';
 import type { CatalogueSearching, CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import type { TitleListService } from '@ValenceServer/metadata/createTitleListService';
@@ -236,6 +237,7 @@ type CreateAppOptions = {
   bulkTitles?: BulkTitleEditor;
   orphanedEdits?: OrphanedEditsService;
   findCandidates?: (asked: CatalogueSearching) => Promise<Candidates>;
+  findCataloguePeople?: (name: string) => Promise<CataloguePerson[]>;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
   collections?: CollectionService;

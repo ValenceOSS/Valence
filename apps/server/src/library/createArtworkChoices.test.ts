@@ -129,7 +129,12 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
       .where(eq(mediaItem.id, 'film'));
 
     const readOptions = vi.fn(() => Promise.resolve(OFFERED));
-    const choices = createArtworkChoices({ db, readOptions });
+    const choices = createArtworkChoices({
+      db,
+      readOptions,
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
+    });
     const read = await choices.read('film');
     const [onDisk] = typeof read === 'string' ? [] : read.onDisk;
 
@@ -155,6 +160,8 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     const choices = createArtworkChoices({
       db: await aScratchDatabase(),
       readOptions: () => Promise.resolve(OFFERED),
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
       uploads,
     });
 

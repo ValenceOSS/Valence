@@ -5,6 +5,7 @@ import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import {
+  CastEntrySchema,
   FIELDS_OF_KIND,
   TITLE_FIELD_SCHEMAS,
   TitleFieldSchema,
@@ -53,6 +54,8 @@ const WordsSchema = z.array(z.string()).nullable().catch(null);
 
 const NumberSchema = z.number().nullable().catch(null);
 
+const CastSchema = z.array(CastEntrySchema).nullable().catch(null);
+
 const SHOW_FROM_SHAPE: readonly TitleField[] = ['overview', 'status', 'releaseDate'];
 
 const ROW = {
@@ -85,6 +88,7 @@ const ROW = {
   tvdbId: mediaItem.tvdbId,
   anilistId: series.anilistId,
   malId: series.malId,
+  castMembers: mediaItem.castMembers,
   seriesTitle: mediaItem.seriesTitle,
   seriesSortTitle: mediaItem.seriesSortTitle,
 };
@@ -154,6 +158,7 @@ const createTitleMetadataService = ({
     tvdbId: file.tvdbId,
     anilistId: file.anilistId?.toString() ?? null,
     malId: file.malId?.toString() ?? null,
+    castMembers: CastSchema.parse(file.castMembers ?? null),
     seriesTitle: file.seriesTitle,
     seriesSortTitle: file.seriesSortTitle,
   });

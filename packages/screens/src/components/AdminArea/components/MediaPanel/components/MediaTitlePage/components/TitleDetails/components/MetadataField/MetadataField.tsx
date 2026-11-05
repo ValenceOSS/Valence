@@ -96,7 +96,7 @@ const MetadataField = ({
     <TagField
       label={label}
       isLabelHidden
-      values={Array.isArray(shown) ? shown : []}
+      values={Array.isArray(shown) ? shown.filter((one) => typeof one === 'string') : []}
       onValuesChange={(values) => {
         setShown(values);
       }}

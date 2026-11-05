@@ -25951,6 +25951,76 @@
     "context": "The heading of the list of an album's tracks on its page in the admin area."
   },
   {
+    "handler": "screens.adminArea.titlePeople.addAPerson",
+    "text": "Add a person",
+    "context": "Field for finding somebody to add to the title's cast, by name."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.addName",
+    "text": "Add {name}",
+    "context": "Button that adds a person found in the catalogue to the cast. {name} is the person."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.addNameByNameOnly",
+    "text": "Add “{name}” by name only",
+    "context": "Button that adds somebody to the cast who is not in the catalogue, with only the name typed."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.castOrderSaysWhoIsBilledFirst",
+    "text": "The order here is the order every app shows them in.",
+    "context": "Note on the People tab's cast list."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.knownForWorks",
+    "text": "Known for {works}",
+    "context": "Under a person found in the catalogue: the titles they are best known for."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.lookingInTheCatalogue",
+    "text": "Looking in the catalogue",
+    "context": "Spinner while people are searched for in the catalogue, on the People tab."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.moveNameDown",
+    "text": "Move {name} down",
+    "context": "Button that moves a cast member one place later in the cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.moveNameUp",
+    "text": "Move {name} up",
+    "context": "Button that moves a cast member one place earlier in the cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.nobodyIsInTheCast",
+    "text": "Nobody is in the cast yet. Add somebody above.",
+    "context": "What the People tab says when the title has no cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.noOneInTheCatalogue",
+    "text": "Nobody by that name is in the catalogue.",
+    "context": "What the People tab says when a search for a person finds nobody."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.people",
+    "text": "People",
+    "context": "Tab on a title's page in the admin media list that holds its cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.role",
+    "text": "Role",
+    "context": "Field holding the part a person plays in the title, on the People tab."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.roleOfName",
+    "text": "{name}’s role",
+    "context": "The role field of one cast member, for a screen reader. {name} is the person."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.takeNameOff",
+    "text": "Take {name} off the cast",
+    "context": "Button that removes a person from the title's cast."
+  },
+  {
     "handler": "screens.adminArea.transcoder",
     "text": "Transcoder",
     "context": "Text shown in the admin area."
