@@ -335,6 +335,7 @@ const FolderView = ({
             {
               id: 'title',
               header: say('common.title'),
+              meta: { hidesOnPhones: true },
               enableSorting: false,
               cell: ({ row }) => {
                 const { title, titleId } = row.original;
@@ -378,6 +379,7 @@ const FolderView = ({
       {
         id: 'size',
         header: say('common.size'),
+        meta: { hidesOnPhones: true },
         accessorFn: (entry) => entry.sizeBytes ?? -1,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
@@ -388,6 +390,7 @@ const FolderView = ({
       {
         id: 'modified',
         header: say('screens.adminArea.filesPanel.changed'),
+        meta: { hidesOnPhones: true },
         accessorFn: (entry) => entry.modifiedAt ?? '',
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
@@ -639,8 +642,8 @@ const FolderView = ({
           }}
         />
       ) : (
-        <div className="flex min-h-0 flex-1">
-          <div className="min-w-0 flex-1">
+        <div className="flex min-h-0 flex-1 max-lg:flex-col">
+          <div className="min-h-0 min-w-0 flex-1">
             <DataTable
               height="fills"
               label={

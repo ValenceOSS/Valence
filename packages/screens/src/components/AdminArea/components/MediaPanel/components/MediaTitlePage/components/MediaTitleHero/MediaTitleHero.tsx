@@ -31,24 +31,24 @@ const MediaTitleHero = ({
 }: MediaTitleHeroProps) => (
   <section className="valence-card-shell @container flex flex-col overflow-hidden">
     <div className="valence-card-face flex flex-col p-0">
-      <div className="flex flex-col gap-6 p-5 sm:flex-row sm:gap-7 sm:p-7">
+      <div className="flex flex-col gap-6 p-5 @xl:flex-row @xl:gap-7 @xl:p-7">
         <MediaPoster
           src={posterUrl}
           isWide={isWide}
           className={cn(
             'shrink-0 self-start shadow-[var(--shadow-lifted)]',
-            isWide ? 'w-full max-w-xs sm:w-72' : 'w-32',
+            isWide ? 'w-full max-w-xs @xl:w-72' : 'w-32',
           )}
         />
 
         <div className="flex min-w-0 flex-1 flex-col gap-5">
           <div className="flex flex-col gap-3">
             <h1 className="flex flex-wrap items-baseline gap-3">
-              <span className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+              <span className="text-3xl font-semibold tracking-tight text-text @xl:text-4xl">
                 {name}
               </span>
               {aside === null ? null : (
-                <span className="text-xl font-medium tabular-nums text-text-muted sm:text-2xl">
+                <span className="text-xl font-medium tabular-nums text-text-muted @xl:text-2xl">
                   {aside}
                 </span>
               )}
@@ -56,13 +56,18 @@ const MediaTitleHero = ({
 
             <span className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
               {badges}
-              {facts.map((fact) => (
-                <span key={fact.label} className="flex items-center gap-2 @4xl:hidden">
-                  <span aria-hidden>·</span>
-                  {fact.value}
-                </span>
-              ))}
             </span>
+
+            {facts.length === 0 ? null : (
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[0.8125rem] @4xl:hidden">
+                {facts.map((fact) => (
+                  <div key={fact.label} className="contents">
+                    <dt className="text-text-muted">{fact.label}</dt>
+                    <dd className="min-w-0 truncate text-text">{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </div>
 
           <span className="mt-auto flex flex-wrap items-center gap-2">{actions}</span>
@@ -79,7 +84,7 @@ const MediaTitleHero = ({
         )}
       </div>
 
-      <div className="border-t border-[var(--surface-line)] px-5 sm:px-7">{tabs}</div>
+      <div className="border-t border-[var(--surface-line)] px-5 @xl:px-7">{tabs}</div>
     </div>
   </section>
 );

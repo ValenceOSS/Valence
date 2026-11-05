@@ -419,6 +419,7 @@ const MediaTitlePage = ({
     {
       id: 'quality',
       header: say('common.quality'),
+      meta: { hidesOnPhones: true },
       enableSorting: false,
       cell: ({ row }) =>
         ofVideo(row.original, (leaf) => {
@@ -435,6 +436,7 @@ const MediaTitlePage = ({
     {
       id: 'video',
       header: say('common.video'),
+      meta: { hidesOnPhones: true },
       enableSorting: false,
       cell: ({ row }) =>
         ofVideo(row.original, (leaf) => (
@@ -444,6 +446,7 @@ const MediaTitlePage = ({
     {
       id: 'audio',
       header: say('common.audio'),
+      meta: { hidesOnPhones: true },
       enableSorting: false,
       cell: ({ row }) =>
         ofVideo(row.original, (leaf) => (
@@ -453,6 +456,7 @@ const MediaTitlePage = ({
     {
       id: 'length',
       header: say('screens.adminArea.titlePage.trackTable.length'),
+      meta: { hidesOnPhones: true },
       enableSorting: false,
       cell: ({ row }) =>
         ofVideo(row.original, (leaf) => (
@@ -476,6 +480,7 @@ const MediaTitlePage = ({
     {
       id: 'quality',
       header: say('common.quality'),
+      meta: { hidesOnPhones: true },
       cell: ({ row }) => {
         const range = describeRange(row.original.lead.videoRange);
 
@@ -490,6 +495,7 @@ const MediaTitlePage = ({
     {
       id: 'video',
       header: say('common.video'),
+      meta: { hidesOnPhones: true },
       cell: ({ row }) => (
         <span className="text-text-muted">{row.original.lead.videoCodec.toUpperCase()}</span>
       ),
@@ -497,6 +503,7 @@ const MediaTitlePage = ({
     {
       id: 'audio',
       header: say('common.audio'),
+      meta: { hidesOnPhones: true },
       cell: ({ row }) => (
         <span className="whitespace-nowrap text-text-muted">
           {describeAudio(row.original.lead)}
@@ -506,6 +513,7 @@ const MediaTitlePage = ({
     {
       id: 'length',
       header: say('screens.adminArea.titlePage.trackTable.length'),
+      meta: { hidesOnPhones: true },
       cell: ({ row }) => (
         <span className="tabular-nums text-text-muted">
           {formatDuration(row.original.lead.durationSeconds)}

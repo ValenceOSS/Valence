@@ -21,7 +21,7 @@ describe('MediaTitleHero', () => {
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Arrival2016');
     expect(screen.getByText('4K')).toBeInTheDocument();
-    expect(screen.getByText('Library')).toBeInTheDocument();
+    expect(screen.getAllByText('Library')).toHaveLength(2);
     expect(screen.getAllByText('Films')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Fix match' })).toBeInTheDocument();
     expect(screen.getByText('The tabs')).toBeInTheDocument();
