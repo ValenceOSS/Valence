@@ -34,8 +34,12 @@ describe('readLocalPicture', () => {
   it('leaves an address kept elsewhere to be fetched, and says a missing one is missing', async () => {
     await expect(readLocalPicture('https://images.example/a.jpg', '/nowhere')).resolves.toBeNull();
     expect(
-      (await readLocalPicture(uploadPictureAddress('00000000-0000-4000-8000-000000000009'), '/nowhere'))
-        ?.status,
+      (
+        await readLocalPicture(
+          uploadPictureAddress('00000000-0000-4000-8000-000000000009'),
+          '/nowhere',
+        )
+      )?.status,
     ).toBe(404);
   });
 });

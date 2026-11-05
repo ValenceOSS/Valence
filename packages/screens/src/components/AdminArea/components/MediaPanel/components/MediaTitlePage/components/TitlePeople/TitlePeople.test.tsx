@@ -90,7 +90,7 @@ describe('TitlePeople', () => {
 
     render(<TitlePeople mediaId="a" />, { wrapper: CacheScope });
     await user.type(await screen.findByLabelText('Add a person'), 'Third');
-    await user.click(await screen.findByRole('button', { name: 'Add Third Person' }));
+    await user.click(await screen.findByRole('button', { name: 'Add Third Person to the cast' }));
 
     await waitFor(() => {
       expect(savedCast()).toEqual({

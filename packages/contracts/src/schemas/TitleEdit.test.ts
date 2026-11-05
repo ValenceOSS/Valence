@@ -21,6 +21,6 @@ describe('TitleEdit', () => {
   });
 
   it('gives an episode only what an episode has', () => {
-    expect(FIELDS_OF_KIND.episode).toEqual(['title', 'overview', 'releaseDate', 'note']);
+    expect(FIELDS_OF_KIND.episode).toEqual(['title', 'overview', 'releaseDate', 'addedAt', 'note']);
   });
 });

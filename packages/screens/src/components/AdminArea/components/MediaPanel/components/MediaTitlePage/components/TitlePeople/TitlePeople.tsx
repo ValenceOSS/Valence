@@ -100,7 +100,7 @@ const TitlePeople = ({ mediaId, onShowHistory }: TitlePeopleProps) => {
 
   return (
     <div className="@container min-w-0">
-      <PanelCard title={say('screens.adminArea.titlePeople.people')}>
+      <PanelCard title={say('common.people')}>
         <SourcedField
           label={say('common.cast')}
           state={state}

@@ -47,7 +47,7 @@ const filterGroupsOf = (choices: TitleChoices | undefined): FilterGroup[] => {
       name: say('common.year'),
       options: DECADES.map((decade) => ({
         id: `year:${decade.toString()}-${(decade + 9).toString()}`,
-        label: say('screens.adminArea.mediaPanel.decade', { decade: decade.toString() }),
+        label: say('client.library.buildFilterOptions.decadeS', { decade: decade.toString() }),
       })),
     },
     { name: say('screens.adminArea.titleDetails.contentRating'), options: optionsOf('rating') },

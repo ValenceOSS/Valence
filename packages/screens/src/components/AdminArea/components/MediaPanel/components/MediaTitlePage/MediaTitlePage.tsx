@@ -949,7 +949,7 @@ const MediaTitlePage = ({
                     ...(title.kind === 'series'
                       ? [{ id: 'seasons', label: say('screens.seasonChooser.seasons') }]
                       : []),
-                    { id: 'people', label: say('screens.adminArea.titlePeople.people') },
+                    { id: 'people', label: say('common.people') },
                     ...(title.isMatched ? [{ id: 'artwork', label: say('common.artwork') }] : []),
                     { id: 'files', label: filesWord },
                     { id: 'history', label: say('common.history') },

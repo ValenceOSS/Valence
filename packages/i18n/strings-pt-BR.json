@@ -21106,11 +21106,6 @@
     "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
   },
   {
-    "handler": "screens.adminArea.mediaPanel.decade",
-    "text": "{decade}s",
-    "context": "A filter of the admin's media list for titles from one decade. {decade} is its first year, such as 1990, so it reads 1990s."
-  },
-  {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
     "text": "Delete every episode of {name}?",
     "context": "Shown in the media panel in the admin area. {name} is filled in by the app."
@@ -23701,11 +23696,6 @@
     "context": "Button that saves a view of the media list under the name typed."
   },
   {
-    "handler": "screens.adminArea.savedViews.viewName",
-    "text": "Name",
-    "context": "Field holding a saved view's name. Unused elsewhere."
-  },
-  {
     "handler": "screens.adminArea.scannedName",
     "text": "Scanned {name}.",
     "context": "Shown in the admin area. {name} is filled in by the app."
@@ -26091,16 +26081,6 @@
     "context": "What the People tab says when a search for a person finds nobody."
   },
   {
-    "handler": "screens.adminArea.titlePeople.people",
-    "text": "People",
-    "context": "Tab on a title's page in the admin media list that holds its cast."
-  },
-  {
-    "handler": "screens.adminArea.titlePeople.role",
-    "text": "Role",
-    "context": "Field holding the part a person plays in the title, on the People tab."
-  },
-  {
     "handler": "screens.adminArea.titlePeople.roleOfName",
     "text": "{name}’s role",
     "context": "The role field of one cast member, for a screen reader. {name} is the person."
@@ -27039,11 +27019,6 @@
     "handler": "screens.adminArea.wordsManager.removeWordFromEveryTitle",
     "text": "Remove {word} from every title",
     "context": "Button in the genres and tags dialog that takes a genre or tag off every title in the library. {word} is the genre or tag."
-  },
-  {
-    "handler": "screens.adminArea.wordsManager.rename",
-    "text": "Rename",
-    "context": "Button in the genres and tags dialog that renames a genre or tag on every title."
   },
   {
     "handler": "screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary",

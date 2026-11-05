@@ -4,7 +4,8 @@ import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { FileDetails } from './FileDetails';
 
 vi.mock('@ValenceClient/admin/fetchFolderMeasure', () => ({
-  fetchFolderMeasure: () => Promise.resolve({ sizeBytes: 0, files: 0, folders: 0, isPartial: false }),
+  fetchFolderMeasure: () =>
+    Promise.resolve({ sizeBytes: 0, files: 0, folders: 0, isPartial: false }),
 }));
 
 const FILE = {

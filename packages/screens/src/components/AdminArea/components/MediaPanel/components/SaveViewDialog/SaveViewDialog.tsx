@@ -36,11 +36,7 @@ const SaveViewDialog = ({ isOpen, onClose, onSave }: SaveViewDialogProps) => {
         detail={say('screens.adminArea.savedViews.keptOnThisDeviceForThisLibrary')}
       />
       <DialogContent>
-        <TextField
-          label={say('screens.adminArea.savedViews.viewName')}
-          value={name}
-          onValueChange={setName}
-        />
+        <TextField label={say('common.name')} value={name} onValueChange={setName} />
       </DialogContent>
       <DialogFooter
         dismiss={{ onChoose: onClose }}

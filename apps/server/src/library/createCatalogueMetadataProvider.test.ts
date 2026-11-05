@@ -903,15 +903,14 @@ describe('searching the catalogue by name', () => {
       },
     });
 
-    await expect(instance.searchPeople?.('actor')).resolves.toEqual([
-      {
-        personId: 7,
-        name: 'An actor',
-        imageUrl: expect.stringContaining('/w185/face.jpg'),
-        knownFor: 'A film, A show',
-      },
-      { personId: 8, name: 'Nobody known', imageUrl: null, knownFor: null },
+    const found = (await instance.searchPeople?.('actor')) ?? [];
+
+    expect(found.map(({ personId, name, knownFor }) => ({ personId, name, knownFor }))).toEqual([
+      { personId: 7, name: 'An actor', knownFor: 'A film, A show' },
+      { personId: 8, name: 'Nobody known', knownFor: null },
     ]);
+    expect(found[0]?.imageUrl?.endsWith('/w185/face.jpg')).toBe(true);
+    expect(found[1]?.imageUrl).toBeNull();
   });
 
   it('offers nothing rather than guessing when the catalogue answers with nonsense', async () => {

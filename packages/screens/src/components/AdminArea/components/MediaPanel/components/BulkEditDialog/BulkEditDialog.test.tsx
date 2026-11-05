@@ -80,7 +80,7 @@ describe('BulkEditDialog', () => {
     );
 
     await user.type(await screen.findByLabelText('Tagline'), '!');
-    await user.click(screen.getByRole('button', { name: 'Don’t change' }));
+    await user.click(screen.getByRole('button', { name: 'Keep as is' }));
 
     expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Their episodes' })).toBeInTheDocument();

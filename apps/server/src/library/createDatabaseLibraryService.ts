@@ -2448,7 +2448,8 @@ const createDatabaseLibraryService = ({
     readArtworkChoices: (mediaId) => artworkChoices.read(mediaId),
 
     chooseArtwork: (mediaId, kind, url, by) => artworkChoices.choose(mediaId, kind, url, by),
-    uploadArtwork: (mediaId, kind, artwork, by) => artworkChoices.upload(mediaId, kind, artwork, by),
+    uploadArtwork: (mediaId, kind, artwork, by) =>
+      artworkChoices.upload(mediaId, kind, artwork, by),
     isOwnArtwork: (mediaId, url) => artworkChoices.isOwnPicture(mediaId, url),
 
     readArtworkUrl: async (mediaId, kind, isOfTitle = false) => {

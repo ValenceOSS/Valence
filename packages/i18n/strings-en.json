@@ -15782,12 +15782,12 @@
   },
   {
     "handler": "screens.adminArea.artworkChooser.uploadAPicture",
-    "text": "Upload a picture",
+    "text": "Upload from this computer",
     "context": "Button in the artwork chooser that picks a picture from this computer to use for the title."
   },
   {
     "handler": "screens.adminArea.artworkChooser.uploaded",
-    "text": "Uploaded",
+    "text": "Your upload",
     "context": "Note on a picture that an administrator uploaded, in the artwork chooser."
   },
   {
@@ -16442,7 +16442,7 @@
   },
   {
     "handler": "screens.adminArea.bulkField.doNotChange",
-    "text": "Don’t change",
+    "text": "Keep as is",
     "context": "A button beside a field touched in the dialog editing many titles at once that lets it alone again."
   },
   {
@@ -16457,7 +16457,7 @@
   },
   {
     "handler": "screens.adminArea.bulkField.noneYet",
-    "text": "None yet",
+    "text": "None on any title",
     "context": "Shown in an empty list, such as the tags, in the dialog editing many titles at once, where none of them has any."
   },
   {
@@ -21106,11 +21106,6 @@
     "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
   },
   {
-    "handler": "screens.adminArea.mediaPanel.decade",
-    "text": "{decade}s",
-    "context": "A filter of the admin's media list for titles from one decade. {decade} is its first year, such as 1990, so it reads 1990s."
-  },
-  {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
     "text": "Delete every episode of {name}?",
     "context": "Shown in the media panel in the admin area. {name} is filled in by the app."
@@ -23701,11 +23696,6 @@
     "context": "Button that saves a view of the media list under the name typed."
   },
   {
-    "handler": "screens.adminArea.savedViews.viewName",
-    "text": "Name",
-    "context": "Field holding a saved view's name. Unused elsewhere."
-  },
-  {
     "handler": "screens.adminArea.scannedName",
     "text": "Scanned {name}.",
     "context": "Shown in the admin area. {name} is filled in by the app."
@@ -26047,7 +26037,7 @@
   },
   {
     "handler": "screens.adminArea.titlePeople.addName",
-    "text": "Add {name}",
+    "text": "Add {name} to the cast",
     "context": "Button that adds a person found in the catalogue to the cast. {name} is the person."
   },
   {
@@ -26089,16 +26079,6 @@
     "handler": "screens.adminArea.titlePeople.noOneInTheCatalogue",
     "text": "Nobody by that name is in the catalogue.",
     "context": "What the People tab says when a search for a person finds nobody."
-  },
-  {
-    "handler": "screens.adminArea.titlePeople.people",
-    "text": "People",
-    "context": "Tab on a title's page in the admin media list that holds its cast."
-  },
-  {
-    "handler": "screens.adminArea.titlePeople.role",
-    "text": "Role",
-    "context": "Field holding the part a person plays in the title, on the People tab."
   },
   {
     "handler": "screens.adminArea.titlePeople.roleOfName",
@@ -27039,11 +27019,6 @@
     "handler": "screens.adminArea.wordsManager.removeWordFromEveryTitle",
     "text": "Remove {word} from every title",
     "context": "Button in the genres and tags dialog that takes a genre or tag off every title in the library. {word} is the genre or tag."
-  },
-  {
-    "handler": "screens.adminArea.wordsManager.rename",
-    "text": "Rename",
-    "context": "Button in the genres and tags dialog that renames a genre or tag on every title."
   },
   {
     "handler": "screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary",

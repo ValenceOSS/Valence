@@ -45,7 +45,7 @@ const CastRow = ({ member, onRole, onMoveUp, onMoveDown, onRemove }: CastRowProp
         label={say('screens.adminArea.titlePeople.roleOfName', { name: member.name })}
         isLabelHidden
         size="sm"
-        placeholder={say('screens.adminArea.titlePeople.role')}
+        placeholder={say('common.role')}
         value={role}
         onValueChange={setRole}
         onBlur={settle}

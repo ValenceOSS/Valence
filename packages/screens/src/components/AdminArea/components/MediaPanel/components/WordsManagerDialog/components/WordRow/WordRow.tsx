@@ -51,7 +51,7 @@ const WordRow = ({ word, count, isBusy, onRename, onRemove }: WordRowProps) => {
         isLoading={isBusy}
         onClick={rename}
       >
-        {say('screens.adminArea.wordsManager.rename')}
+        {say('common.rename')}
       </Button>
       <Button
         variant="ghost"

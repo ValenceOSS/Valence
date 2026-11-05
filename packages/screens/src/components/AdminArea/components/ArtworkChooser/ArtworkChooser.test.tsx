@@ -190,7 +190,7 @@ describe('ArtworkChooser', () => {
 
     await screen.findByRole('button', { name: 'Use poster 1, English' });
     await userEvent.click(screen.getByRole('button', { name: 'Backdrop' }));
-    await userEvent.upload(await screen.findByLabelText(/Upload a picture/u), picture);
+    await userEvent.upload(await screen.findByLabelText(/Upload from this computer/u), picture);
 
     await waitFor(() => {
       expect(onChanged).toHaveBeenCalledWith(null);
