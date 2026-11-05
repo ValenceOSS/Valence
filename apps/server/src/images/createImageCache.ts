@@ -5,6 +5,7 @@ import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { narrowPicture } from '@ValenceServer/images/narrowPicture';
+import { rasterOfCataloguePicture } from '@ValenceServer/images/rasterOfCataloguePicture';
 import { saying } from '@ValenceI18n/saying';
 import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
 import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
@@ -38,6 +39,9 @@ const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avi
  * never talks to the catalogue — which is the point of self-hosting, and why covers do not vanish
  * when a third party reorganises its addresses.
  *
+ * A catalogue logo kept as an SVG drawing is fetched as the PNG the catalogue serves beside it, and
+ * kept under the drawing's address, so a title whose best logo is a drawing still has one.
+ *
  * A picture can also be asked for narrower, for a grid that draws it a few hundred pixels wide: the
  * narrower copy is made once from the whole one and kept beside it, so a phone scrolling a library
  * neither downloads nor decodes posters several times the size it shows them.
@@ -50,7 +54,7 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
 
   const call: ImageFetcher = async (url) => {
     try {
-      return await fetchOut(url);
+      return await fetchOut(rasterOfCataloguePicture(url));
     } catch (error) {
       troubleWatch.report({ source: nameOfSource(url), reason: 'unreachable' });
 
