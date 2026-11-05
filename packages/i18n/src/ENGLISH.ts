@@ -6487,10 +6487,15 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.tvdb': 'TVDB',
   'screens.adminArea.titleDetails.undone': 'Change undone',
   'screens.adminArea.titleDetails.writtenBy': 'Written by',
+  'screens.adminArea.titleHistory.addedNames': 'added {names}',
+  'screens.adminArea.titleHistory.changedTheBilling': 'changed the order',
+  'screens.adminArea.titleHistory.changedThePartsOf': 'changed the part of {names}',
+  'screens.adminArea.titleHistory.fieldChanged': '{field}: {change}',
   'screens.adminArea.titleHistory.fields': 'Fields',
   'screens.adminArea.titleHistory.fieldWentFromTo': '{field}: {before} → {after}',
   'screens.adminArea.titleHistory.nothingChangedYet': 'Nothing has been changed on this title yet.',
   'screens.adminArea.titleHistory.theHistoryCouldNotBeRead': 'Couldn’t read this title’s history.',
+  'screens.adminArea.titleHistory.tookOffNames': 'took off {names}',
   'screens.adminArea.titlePage.animeQuestionCard.answered': 'Fetching it',
   'screens.adminArea.titlePage.animeQuestionCard.bestGuess': 'Best guess',
   'screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither':
@@ -6651,6 +6656,7 @@ const ENGLISH = {
   'screens.adminArea.titlePeople.knownForWorks': 'Known for {works}',
   'screens.adminArea.titlePeople.lookingInTheCatalogue': 'Looking in the catalogue',
   'screens.adminArea.titlePeople.moveNameDown': 'Move {name} down',
+  'screens.adminArea.titlePeople.moveNameToTheTop': 'Move {name} to the top',
   'screens.adminArea.titlePeople.moveNameUp': 'Move {name} up',
   'screens.adminArea.titlePeople.nobodyIsInTheCast':
     'Nobody is in the cast yet. Add somebody above.',

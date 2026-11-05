@@ -222,6 +222,13 @@ const TitlePeople = ({
                       {...(at === 0
                         ? {}
                         : {
+                            onMoveToTop: () => {
+                              swap(at, 0);
+                            },
+                          })}
+                      {...(at === 0
+                        ? {}
+                        : {
                             onMoveUp: () => {
                               swap(at, at - 1);
                             },

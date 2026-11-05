@@ -1,3 +1,4 @@
+import { describeCastChange } from './describeCastChange';
 import { useQuery } from '@tanstack/react-query';
 import { History as HistoryIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -78,15 +79,27 @@ const TitleHistory = ({ mediaId, scope, kind }: TitleHistoryProps) => {
       meta: { fills: true },
       cell: ({ row }) => (
         <ul className="flex flex-col gap-1">
-          {row.original.fields.map((one) => (
-            <li key={one.field} className="text-sm">
-              {say('screens.adminArea.titleHistory.fieldWentFromTo', {
-                field: labelOfField(one.field, kind),
-                before: describeTitleValue(one.before),
-                after: describeTitleValue(one.after),
-              })}
-            </li>
-          ))}
+          {row.original.fields.map((one) => {
+            const change =
+              one.field === 'cast' || one.field === 'guestStars'
+                ? describeCastChange(one.before, one.after)
+                : null;
+
+            return (
+              <li key={one.field} className="text-sm">
+                {change === null
+                  ? say('screens.adminArea.titleHistory.fieldWentFromTo', {
+                      field: labelOfField(one.field, kind),
+                      before: describeTitleValue(one.before),
+                      after: describeTitleValue(one.after),
+                    })
+                  : say('screens.adminArea.titleHistory.fieldChanged', {
+                      field: labelOfField(one.field, kind),
+                      change,
+                    })}
+              </li>
+            );
+          })}
         </ul>
       ),
     },

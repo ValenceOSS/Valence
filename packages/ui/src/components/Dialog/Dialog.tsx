@@ -158,8 +158,8 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  *   fading in — see `Drawer`, the component that composes this size.
  * @param isInstant - Whether it appears and goes at once rather than fading and growing, for a
  *   dialog opened from the keyboard many times a day, where any animation is only a delay.
- * @param holdsOutsideClicks - Whether a click outside it leaves it open, for a dialog holding
- *   choices not yet saved, which a stray click would otherwise throw away.
+ * @param holdsOutsideClicks - Whether a click outside it, or Escape, leaves it open, for a dialog
+ *   holding choices not yet saved, which a stray click or key would otherwise throw away.
  * @param className - Extra classes for the caller's own layout.
  */
 const Dialog = ({
@@ -246,6 +246,11 @@ const Dialog = ({
           }}
           onInteractOutside={(event) => {
             if (holdsOutsideClicks || isOverDialogs(event.target)) {
+              event.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(event) => {
+            if (holdsOutsideClicks) {
               event.preventDefault();
             }
           }}

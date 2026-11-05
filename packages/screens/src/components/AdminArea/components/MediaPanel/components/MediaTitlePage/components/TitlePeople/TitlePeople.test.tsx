@@ -70,6 +70,18 @@ describe('TitlePeople', () => {
     });
   });
 
+  it('moves somebody to the top of the billing', async () => {
+    const user = userEvent.setup();
+
+    render(<TitlePeople mediaId="a" />, { wrapper: CacheScope });
+    await user.click(await screen.findByRole('button', { name: 'Move Second Person to the top' }));
+
+    await waitFor(() => {
+      expect(savedCast()).toEqual({ cast: [SECOND, FIRST] });
+    });
+    expect(screen.getByRole('button', { name: 'Move First Person to the top' })).toBeDisabled();
+  });
+
   it('changes a part once typing is done', async () => {
     const user = userEvent.setup();
 

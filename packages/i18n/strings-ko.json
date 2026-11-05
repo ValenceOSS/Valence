@@ -25591,6 +25591,26 @@
     "context": "Field on a film's or an episode's Details tab: who wrote it."
   },
   {
+    "handler": "screens.adminArea.titleHistory.addedNames",
+    "text": "added {names}",
+    "context": "Part of a cast change in a title's history: who was added. {names} lists them."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.changedTheBilling",
+    "text": "changed the order",
+    "context": "Part of a cast change in a title's history: people were moved up or down."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.changedThePartsOf",
+    "text": "changed the part of {names}",
+    "context": "Part of a cast change in a title's history: whose role changed. {names} lists them."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.fieldChanged",
+    "text": "{field}: {change}",
+    "context": "One field of a change in a title's history, for a list such as the cast where what changed is described rather than quoted. {change} says what, such as Added Someone."
+  },
+  {
     "handler": "screens.adminArea.titleHistory.fields",
     "text": "Fields",
     "context": "The header of the column saying which fields a change changed. On the History tab of a title in the admin area (from `TitleHistory`)."
@@ -25609,6 +25629,11 @@
     "handler": "screens.adminArea.titleHistory.theHistoryCouldNotBeRead",
     "text": "Couldn’t read this title’s history.",
     "context": "Shown when a title’s history couldn’t be read. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.tookOffNames",
+    "text": "took off {names}",
+    "context": "Part of a cast change in a title's history: who was taken off. {names} lists them."
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.answered",
@@ -26229,6 +26254,11 @@
     "handler": "screens.adminArea.titlePeople.moveNameDown",
     "text": "Move {name} down",
     "context": "Button that moves a cast member one place later in the cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.moveNameToTheTop",
+    "text": "Move {name} to the top",
+    "context": "Button that moves a cast member to the top of the billing."
   },
   {
     "handler": "screens.adminArea.titlePeople.moveNameUp",

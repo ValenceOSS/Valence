@@ -89,7 +89,7 @@ describe('Dialog', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('stays open for a press anywhere outside it while it holds unsaved choices', async () => {
+  it('stays open for a press anywhere outside it, or Escape, while it holds unsaved choices', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
@@ -106,6 +106,7 @@ describe('Dialog', () => {
       setTimeout(settled, 0);
     });
     await user.click(screen.getByText('Elsewhere'));
+    await user.keyboard('{Escape}');
 
     expect(onClose).not.toHaveBeenCalled();
   });
