@@ -116,6 +116,8 @@ const SEND_TELEMETRY_JOB = 'server.sendTelemetry';
 
 const READ_ANIME_IDS_JOB = 'library.readAnimeIds';
 
+const CHECK_EDITED_METADATA_JOB = 'library.checkEditedMetadata';
+
 const READ_LIKENESS_JOB = 'library.readLikeness';
 
 const MEASURE_LOUDNESS_JOB = 'library.measureLoudness';
@@ -236,6 +238,7 @@ type JobQueue = {
 export type { JobProgress, JobQueue, JobState, RunningJob };
 
 export {
+  CHECK_EDITED_METADATA_JOB,
   SCAN_LIBRARY_JOB,
   ScanLibraryJobSchema,
   READ_AGAIN_JOB,

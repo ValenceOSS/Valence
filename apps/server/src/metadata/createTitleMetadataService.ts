@@ -805,7 +805,51 @@ const createTitleMetadataService = ({
     };
   };
 
-  return { read, edit, history, undo, preview, carry, refreshFields };
+  /**
+   * Asks the catalogue what it says now of every matched film and programme an administrator has
+   * edited, and notes where that has changed under an edit, so the edit can say so and offer the
+   * catalogue's new value. Nothing on the files changes.
+   *
+   * @param onProgress - Told how many have been asked of how many.
+   * @returns How many were asked.
+   */
+  const noteCatalogueChanges = async (
+    onProgress?: (done: number, total: number) => void,
+  ): Promise<number> => {
+    const titles = await edits.matchedTitles();
+    let done = 0;
+
+    for (const title of titles) {
+      onProgress?.(done, titles.length);
+
+      const isShow = title.subjectKind === 'show';
+      const externalId = title.subjectKey.slice(isShow ? 'tv:'.length : 'movie:'.length);
+      const described = await (
+        describeCandidate?.(externalId, isShow ? 'tv' : 'movie') ?? Promise.resolve(null)
+      ).catch(() => null);
+
+      if (described !== null) {
+        await edits.noteCatalogue(
+          title.libraryId,
+          Object.entries(valuesOfCandidate(described)).flatMap(([name, value]) => {
+            const field = TitleFieldSchema.safeParse(name);
+
+            return field.success
+              ? [{ subjectKey: title.subjectKey, field: field.data, value }]
+              : [];
+          }),
+        );
+      }
+
+      done += 1;
+    }
+
+    onProgress?.(done, titles.length);
+
+    return done;
+  };
+
+  return { read, edit, history, undo, preview, carry, refreshFields, noteCatalogueChanges };
 };
 
 type TitleMetadataService = ReturnType<typeof createTitleMetadataService>;

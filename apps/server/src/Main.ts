@@ -375,6 +375,7 @@ import {
   ScanRequestFolderJobSchema,
   REFRESH_REQUESTS_JOB,
   READ_ANIME_IDS_JOB,
+  CHECK_EDITED_METADATA_JOB,
   READ_LIKENESS_JOB,
   MEASURE_LOUDNESS_JOB,
   READ_KEYFRAMES_AHEAD_JOB,
@@ -2534,6 +2535,18 @@ const jobs = createJobQueue({
           await sayARequestArrived({ ...request, title: filed.title }, mediaId);
           await matchArrivedRequests();
         });
+      },
+      [CHECK_EDITED_METADATA_JOB]: async (jobId) => {
+        const asked = await titleMetadataService.noteCatalogueChanges((done, total) => {
+          jobs.reportProgress(jobId, saying('server.main.askingTheCatalogue'), done, total);
+        });
+
+        jobs.reportProgress(
+          jobId,
+          sayingCount('server.main.editedTitlesChecked', asked),
+          asked,
+          asked,
+        );
       },
       [READ_ANIME_IDS_JOB]: async (jobId) => {
         const waiting = await animeIds.unchecked(

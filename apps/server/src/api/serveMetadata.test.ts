@@ -50,6 +50,9 @@ const build = () => {
     refreshFields: vi.fn<TitleMetadataService['refreshFields']>(() =>
       Promise.resolve({ updated: 2, metadata: METADATA }),
     ),
+    noteCatalogueChanges: vi.fn<TitleMetadataService['noteCatalogueChanges']>(() =>
+      Promise.resolve(0),
+    ),
   } satisfies TitleMetadataService;
   const titleList = {
     list: vi.fn<TitleListService['list']>(() =>

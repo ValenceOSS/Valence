@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem, series, user } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
@@ -162,6 +162,37 @@ describe('createTitleMetadataService', { timeout: STARTING_DATABASE_MS }, () => 
       { title: 'My title', seriesTitle: null, year: 1999, certificationAge: 15 },
     ]);
     expect(changed).toEqual([['cut', 'extended']]);
+  });
+
+  it('writes the day a film was added onto every version of it', async () => {
+    const { db, service } = await aService();
+
+    await service.edit('cut', 'title', { set: { addedAt: '2020-01-02' } }, ADA);
+
+    const rows = await db
+      .select({ addedAt: mediaItem.addedAt })
+      .from(mediaItem)
+      .where(inArray(mediaItem.id, ['cut', 'extended']));
+
+    expect(rows.map((row) => row.addedAt.toISOString())).toEqual([
+      '2020-01-02T12:00:00.000Z',
+      '2020-01-02T12:00:00.000Z',
+    ]);
+  });
+
+  it('notes what the catalogue now says under an edit, changing nothing on the files', async () => {
+    const { db, service } = await aService();
+
+    await service.edit('cut', 'title', { set: { title: 'My title' } }, ADA);
+
+    await expect(service.noteCatalogueChanges()).resolves.toBe(1);
+
+    const read = await service.read('cut', 'title');
+
+    expect(read).toMatchObject({
+      fields: { title: { value: 'My title', catalogue: 'The right film' } },
+    });
+    await expect(readFiles(db, ['cut'])).resolves.toMatchObject([{ title: 'My title' }]);
   });
 
   it('puts a field back to the catalogue’s, and undoes a change as a whole', async () => {

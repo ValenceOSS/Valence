@@ -9106,6 +9106,8 @@ const ENGLISH = {
     '{name} rejected the API key. Check you copied all of it.',
   'server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs':
     'Asks every live TV channel’s stream for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.',
+  'server.jobs.jobDefinitions.asksTheCatalogueAboutEveryEditedTitle':
+    'Asks the catalogue what it now says of every edited film and programme, so an edit can say when the catalogue has changed under it. Nothing on the files changes.',
   'server.jobs.jobDefinitions.backUpTheDatabase': 'Back up the database',
   'server.jobs.jobDefinitions.bringEverythingAcross': 'Import from Jellyfin, Emby or Plex',
   'server.jobs.jobDefinitions.bringRequestsUpToDateWith': 'Sync requests with the catalogue',
@@ -9113,6 +9115,8 @@ const ENGLISH = {
     'Imports users, watch history, collections and playlists from Jellyfin, Emby or Plex.',
   'server.jobs.jobDefinitions.checkCatalogueConnectivity': 'Check catalogue connectivity',
   'server.jobs.jobDefinitions.checkDiskSpace': 'Check disk space',
+  'server.jobs.jobDefinitions.checkEditedTitlesWithTheCatalogue':
+    'Check edited titles with the catalogue',
   'server.jobs.jobDefinitions.checksTheRequestsServiceAndIts':
     'Checks the requests service and its VPN are running.',
   'server.jobs.jobDefinitions.checksTheTMDBKeyStillWorks': 'Checks the TMDB key still works.',
@@ -9301,6 +9305,8 @@ const ENGLISH = {
   'server.main.doneBroughtUpToDate': '{done} updated',
   'server.main.doneOfTotalLookedUp': '{done} of {total} looked up',
   'server.main.doneOfTotalSongsMeasured': '{done} of {total} songs measured',
+  'server.main.editedTitlesChecked.one': '{count} edited title checked',
+  'server.main.editedTitlesChecked.other': '{count} edited titles checked',
   'server.main.nameHasItAlready': '{name} already has it.',
   'server.main.nameIsNoLongerConnected': '{name} is no longer connected',
   'server.main.notFound': 'not found',

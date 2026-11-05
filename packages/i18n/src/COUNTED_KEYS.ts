@@ -200,6 +200,7 @@ const COUNTED_KEYS = [
   'server.jobs.phase.subtitlesFetched',
   'server.main.animeLookedUp',
   'server.main.count.foundAlbumsOfAll',
+  'server.main.editedTitlesChecked',
   'server.main.titlesRead',
   'server.notifications.noticesOfNewMedia.episodesOfShowAdded',
   'server.webhooks.notice.librariesScanned',

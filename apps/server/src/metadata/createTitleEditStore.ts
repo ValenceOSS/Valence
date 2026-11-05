@@ -484,7 +484,38 @@ const createTitleEditStore = (db: AnyValenceDatabase, now: () => Date = () => ne
     return gone.length;
   };
 
-  return { editsFor, noteCatalogue, change, history, planUndo, move, subjects, forget };
+  /**
+   * Reads every matched film and programme edits are kept for, in every library, for asking the
+   * catalogue what it says of them now.
+   *
+   * @returns Each one's library, key and kind.
+   */
+  const matchedTitles = async () =>
+    (
+      await db
+        .selectDistinct({
+          libraryId: titleEdit.libraryId,
+          subjectKey: titleEdit.subjectKey,
+          subjectKind: titleEdit.subjectKind,
+        })
+        .from(titleEdit)
+    ).filter(
+      (one) =>
+        (one.subjectKind === 'film' && one.subjectKey.startsWith('movie:')) ||
+        (one.subjectKind === 'show' && one.subjectKey.startsWith('tv:')),
+    );
+
+  return {
+    editsFor,
+    noteCatalogue,
+    change,
+    history,
+    planUndo,
+    move,
+    subjects,
+    forget,
+    matchedTitles,
+  };
 };
 
 type TitleEditStore = ReturnType<typeof createTitleEditStore>;

@@ -35937,6 +35937,11 @@
     "context": "Description of the scheduled job that checks every live TV channel."
   },
   {
+    "handler": "server.jobs.jobDefinitions.asksTheCatalogueAboutEveryEditedTitle",
+    "text": "Asks the catalogue what it now says of every edited film and programme, so an edit can say when the catalogue has changed under it. Nothing on the files changes.",
+    "context": "Describes the job that checks edited titles with the catalogue, on the admin's Jobs page."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.backUpTheDatabase",
     "text": "Back up the database",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
@@ -35965,6 +35970,11 @@
     "handler": "server.jobs.jobDefinitions.checkDiskSpace",
     "text": "Check disk space",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.checkEditedTitlesWithTheCatalogue",
+    "text": "Check edited titles with the catalogue",
+    "context": "The name of the job that asks the catalogue what it now says of every film and programme an administrator has edited."
   },
   {
     "handler": "server.jobs.jobDefinitions.checksTheRequestsServiceAndIts",
@@ -36665,6 +36675,16 @@
     "handler": "server.main.doneOfTotalSongsMeasured",
     "text": "{done} of {total} songs measured",
     "context": "Progress of the loudness measuring job."
+  },
+  {
+    "handler": "server.main.editedTitlesChecked.one",
+    "text": "{count} edited title checked",
+    "context": "Said when the job checking edited titles with the catalogue finishes. {count} is how many it asked about."
+  },
+  {
+    "handler": "server.main.editedTitlesChecked.other",
+    "text": "{count} edited titles checked",
+    "context": "Said when the job checking edited titles with the catalogue finishes. {count} is how many it asked about."
   },
   {
     "handler": "server.main.nameHasItAlready",
