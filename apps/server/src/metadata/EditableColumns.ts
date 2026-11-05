@@ -6,6 +6,7 @@ type EditableColumns = {
   tagline: string | null;
   overview: string | null;
   releaseDate: string | null;
+  addedAt: string | null;
   genres: string[] | null;
   tags: string[] | null;
   studios: string[] | null;

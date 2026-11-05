@@ -152,7 +152,13 @@ const BulkField = ({
         isLabelHidden
         value={touch?.kind === 'set' ? textOfValue(touch.value) : textOfValue(shared)}
         placeholder={isMixed ? mixedWord : ''}
-        type={field === 'releaseDate' ? 'date' : NUMBERS.includes(field) ? 'number' : 'text'}
+        type={
+          field === 'releaseDate' || field === 'addedAt'
+            ? 'date'
+            : NUMBERS.includes(field)
+              ? 'number'
+              : 'text'
+        }
         {...(LONG.includes(field) ? { rows: 1, isGrowing: true } : {})}
         {...(field === 'rating' ? { unit: '/ 10', min: 0, max: 10 } : {})}
         {...(field === 'rottenTomatoes' ? { unit: '%', min: 0, max: 100 } : {})}

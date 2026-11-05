@@ -50,6 +50,7 @@ const WRITERS: {
   tagline: (columns, value) => ({ ...columns, tagline: textOf(value) }),
   overview: (columns, value) => ({ ...columns, overview: textOf(value) }),
   releaseDate: (columns, value) => ({ ...columns, releaseDate: textOf(value) }),
+  addedAt: (columns, value) => ({ ...columns, addedAt: textOf(value) ?? columns.addedAt }),
   genres: (columns, value) => ({ ...columns, genres: wordsOf(value) }),
   tags: (columns, value) => ({ ...columns, tags: wordsOf(value) }),
   studios: (columns, value) => ({ ...columns, studios: wordsOf(value) }),

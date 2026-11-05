@@ -1,7 +1,13 @@
 import { FIELDS_OF_KIND } from '@ValenceContracts/schemas/TitleEdit';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 
-const NEVER_FROM_TMDB: readonly TitleField[] = ['sortTitle', 'tags', 'note', 'rottenTomatoes'];
+const NEVER_FROM_TMDB: readonly TitleField[] = [
+  'sortTitle',
+  'tags',
+  'note',
+  'rottenTomatoes',
+  'addedAt',
+];
 
 const LIVE_FOR_A_SHOW: readonly TitleField[] = ['overview', 'status', 'releaseDate'];
 

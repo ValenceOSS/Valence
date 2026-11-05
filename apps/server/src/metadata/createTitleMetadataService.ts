@@ -10,6 +10,7 @@ import {
   TitleFieldSchema,
 } from '@ValenceContracts/schemas/TitleEdit';
 import { columnOfField } from './columnOfField';
+import { addedAtOfDay } from './addedAtOfDay';
 import { subjectKeysOf } from './subjectKeysOf';
 import { valuesOfCandidate } from './valuesOfCandidate';
 import { retryingDeadlocks } from './retryingDeadlocks';
@@ -72,6 +73,7 @@ const ROW = {
   tagline: mediaItem.tagline,
   overview: mediaItem.overview,
   releaseDate: mediaItem.releaseDate,
+  addedAt: mediaItem.addedAt,
   genres: mediaItem.genres,
   tags: mediaItem.tags,
   studios: mediaItem.studios,
@@ -138,6 +140,7 @@ const createTitleMetadataService = ({
     tagline: file.tagline,
     overview: file.overview,
     releaseDate: file.releaseDate,
+    addedAt: file.addedAt.toISOString().slice(0, 10),
     genres: WordsSchema.parse(file.genres),
     tags: WordsSchema.parse(file.tags),
     studios: WordsSchema.parse(file.studios),
@@ -356,7 +359,7 @@ const createTitleMetadataService = ({
       return;
     }
 
-    const set: Record<string, TitleValue | number | null> = {};
+    const set: Record<string, TitleValue | number | Date | null> = {};
 
     for (const [name, value] of Object.entries(values)) {
       const field = TitleFieldSchema.safeParse(name);
@@ -375,6 +378,14 @@ const createTitleMetadataService = ({
 
         set.certifications = merged;
         set.certificationAge = certificationAgeOf(await certificationRegion(), merged);
+        continue;
+      }
+
+      if (column === 'addedAt') {
+        if (typeof value === 'string') {
+          set.addedAt = addedAtOfDay(value);
+        }
+
         continue;
       }
 

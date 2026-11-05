@@ -25146,6 +25146,11 @@
     "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
   },
   {
+    "handler": "screens.adminArea.titleDetails.dateAdded",
+    "text": "Date added",
+    "context": "A field for the day a film or an episode was added to the library, which decides where it sits in Recently added. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.firstAired",
     "text": "First aired",
     "context": "A field for the day a programme was first shown. On the Details tab of a title in the admin area (from `TitleDetails`)."

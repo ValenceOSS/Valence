@@ -114,7 +114,13 @@ const MetadataField = ({
       label={label}
       isLabelHidden
       value={textOfValue(shown)}
-      type={field === 'releaseDate' ? 'date' : NUMBERS.includes(field) ? 'number' : 'text'}
+      type={
+        field === 'releaseDate' || field === 'addedAt'
+          ? 'date'
+          : NUMBERS.includes(field)
+            ? 'number'
+            : 'text'
+      }
       {...(placeholder === undefined ? {} : { placeholder })}
       {...(LONG.includes(field) ? { rows: field === 'note' ? 1 : 3, isGrowing: true } : {})}
       {...(field === 'rating' ? { min: 0, max: 10 } : {})}

@@ -10,6 +10,7 @@ const SCANNED: EditableColumns = {
   tagline: 'The catalogue’s line',
   overview: 'What the catalogue says.',
   releaseDate: '2001-05-04',
+  addedAt: null,
   genres: ['Drama'],
   tags: null,
   studios: ['A studio'],
@@ -45,6 +46,14 @@ describe('overlayTitleEdits', () => {
       { scope: 'film', field: 'tags', value: null },
       { scope: 'film', field: 'releaseDate', value: '2001-05-04' },
     ]);
+  });
+
+  it('keeps the day a film was said to be added, over the day a scan would give it', () => {
+    const { columns } = overlayTitleEdits(SCANNED, {
+      film: [{ field: 'addedAt', value: '2020-01-02' }],
+    });
+
+    expect(columns.addedAt).toBe('2020-01-02');
   });
 
   it('replaces only the countries a content rating was edited for', () => {

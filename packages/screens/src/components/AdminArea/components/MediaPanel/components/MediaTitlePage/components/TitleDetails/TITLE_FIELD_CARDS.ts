@@ -9,7 +9,7 @@ const TITLE_FIELD_CARDS: readonly {
   {
     id: 'names',
     title: say('screens.adminArea.titleDetails.titleAndRelease'),
-    fields: ['title', 'originalTitle', 'sortTitle', 'releaseDate', 'status'],
+    fields: ['title', 'originalTitle', 'sortTitle', 'releaseDate', 'addedAt', 'status'],
   },
   {
     id: 'story',

@@ -26,7 +26,7 @@ import { sayCount } from '@ValenceI18n/sayCount';
 const SECTIONS: readonly { title: string; fields: readonly TitleField[] }[] = [
   {
     title: say('screens.adminArea.titleDetails.titleAndRelease'),
-    fields: ['sortTitle', 'releaseDate', 'status'],
+    fields: ['sortTitle', 'releaseDate', 'addedAt', 'status'],
   },
   { title: say('screens.adminArea.titleDetails.story'), fields: ['tagline', 'overview'] },
   {

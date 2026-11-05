@@ -6385,6 +6385,7 @@ const ENGLISH = {
   'screens.adminArea.titleDetails.contentRatingIn': 'Content rating ({country})',
   'screens.adminArea.titleDetails.count.savedChanges.one': 'Saved {count} change',
   'screens.adminArea.titleDetails.count.savedChanges.other': 'Saved {count} changes',
+  'screens.adminArea.titleDetails.dateAdded': 'Date added',
   'screens.adminArea.titleDetails.firstAired': 'First aired',
   'screens.adminArea.titleDetails.ids': 'IDs',
   'screens.adminArea.titleDetails.imdb': 'IMDb',

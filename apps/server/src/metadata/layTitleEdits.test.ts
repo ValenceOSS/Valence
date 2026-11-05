@@ -14,6 +14,7 @@ const COLUMNS: EditableColumns = {
   tagline: null,
   overview: null,
   releaseDate: null,
+  addedAt: null,
   genres: null,
   tags: null,
   studios: null,

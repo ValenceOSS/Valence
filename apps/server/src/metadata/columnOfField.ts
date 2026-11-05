@@ -9,6 +9,7 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['tagline', 'tagline'],
     ['overview', 'overview'],
     ['releaseDate', 'releaseDate'],
+    ['addedAt', 'addedAt'],
     ['genres', 'genres'],
     ['tags', 'tags'],
     ['studios', 'studios'],
@@ -36,6 +37,7 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['title', 'title'],
     ['overview', 'overview'],
     ['releaseDate', 'releaseDate'],
+    ['addedAt', 'addedAt'],
   ],
 };
 

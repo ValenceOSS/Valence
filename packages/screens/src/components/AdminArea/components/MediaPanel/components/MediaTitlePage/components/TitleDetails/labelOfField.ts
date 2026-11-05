@@ -21,6 +21,8 @@ const labelOfField = (field: TitleField, kind: TitleSubjectKind): string => {
       return say('screens.adminArea.titleDetails.tagline');
     case 'overview':
       return say('screens.adminArea.adminSections.overview');
+    case 'addedAt':
+      return say('screens.adminArea.titleDetails.dateAdded');
     case 'releaseDate':
       return kind === 'film'
         ? say('common.releaseDate')

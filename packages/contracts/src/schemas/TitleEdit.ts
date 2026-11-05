@@ -33,6 +33,7 @@ const TITLE_FIELD_SCHEMAS = {
   tagline: z.string().trim().max(512).nullable(),
   overview: z.string().trim().max(8000).nullable(),
   releaseDate: DaySchema.nullable(),
+  addedAt: DaySchema,
   status: z.string().trim().min(1).max(64).nullable(),
   genres: WordsSchema,
   tags: WordsSchema,
@@ -59,6 +60,7 @@ const TitleFieldSchema = z.enum([
   'tagline',
   'overview',
   'releaseDate',
+  'addedAt',
   'status',
   'genres',
   'tags',
@@ -83,6 +85,7 @@ const FIELDS_OF_KIND: Record<
     'tagline',
     'overview',
     'releaseDate',
+    'addedAt',
     'genres',
     'tags',
     'studios',
@@ -112,7 +115,7 @@ const FIELDS_OF_KIND: Record<
     'note',
   ],
   season: ['title', 'overview', 'releaseDate', 'note'],
-  episode: ['title', 'overview', 'releaseDate', 'note'],
+  episode: ['title', 'overview', 'releaseDate', 'addedAt', 'note'],
 };
 
 const TitleValueSchema = z.union([

@@ -41,6 +41,7 @@ import { isNotDistinctFrom } from '@ValenceDatabase/isNotDistinctFrom';
 import { upsert } from '@ValenceDatabase/upsert';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import { layTitleEdits } from '@ValenceServer/metadata/layTitleEdits';
+import { addedAtOfDay } from '@ValenceServer/metadata/addedAtOfDay';
 import { movesBetween } from '@ValenceServer/metadata/movesBetween';
 import { MediaProbeSchema } from '@ValenceServer/transcoder/TranscoderClient';
 import { subjectKeysOf } from '@ValenceServer/metadata/subjectKeysOf';
@@ -386,6 +387,7 @@ const createMediaStore = (
         tagline: row.metadata.tagline ?? null,
         overview: row.metadata.overview ?? null,
         releaseDate: row.metadata.releaseDate ?? null,
+        addedAt: null,
         genres: row.metadata.genres ?? null,
         tags: null,
         studios: row.metadata.studios ?? null,
@@ -421,6 +423,7 @@ const createMediaStore = (
         sortTitle: edited.sortTitle,
         originalTitle: edited.originalTitle,
         year: edited.year,
+        ...(edited.addedAt === null ? {} : { addedAt: addedAtOfDay(edited.addedAt) }),
         sizeBytes: row.sizeBytes,
         modifiedAtMs: row.modifiedAtMs,
         container: row.probe.container,
