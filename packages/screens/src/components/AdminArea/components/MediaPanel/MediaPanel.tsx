@@ -1,3 +1,4 @@
+import { ImportSheetDialog } from './components/ImportSheetDialog/ImportSheetDialog';
 import { QuickMatchDialog } from './components/QuickMatchDialog/QuickMatchDialog';
 import type { QuickMatchTitle } from './components/QuickMatchDialog/QuickMatchDialog.types';
 import { searchOfTitleList } from '@ValenceClient/admin/searchOfTitleList';
@@ -400,6 +401,7 @@ const MediaPanel = ({
   const [refreshingTitle, setRefreshingTitle] = useState<MediaTitle | null>(null);
   const [isSeeingOrphans, setIsSeeingOrphans] = useState(false);
   const [isManagingWords, setIsManagingWords] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [quickMatching, setQuickMatching] = useState<readonly QuickMatchTitle[] | null>(null);
 
   const moveAll = useCallback(
@@ -1819,6 +1821,13 @@ const MediaPanel = ({
         }}
       />
 
+      <ImportSheetDialog
+        libraryId={isImporting ? asked.libraryId : null}
+        onClose={() => {
+          setIsImporting(false);
+        }}
+      />
+
       <QuickMatchDialog
         titles={quickMatching}
         onClose={() => {
@@ -2138,6 +2147,13 @@ const MediaPanel = ({
                             label: say('screens.adminArea.wordsManager.genresAndTags'),
                             onChoose: () => {
                               setIsManagingWords(true);
+                            },
+                          },
+                          {
+                            id: 'import',
+                            label: say('screens.adminArea.importSheet.importASpreadsheet'),
+                            onChoose: () => {
+                              setIsImporting(true);
                             },
                           },
                           {

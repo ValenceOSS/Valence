@@ -19296,6 +19296,66 @@
     "context": "Text shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.importSheet.bringBackAnEditedExport",
+    "text": "Bring back a spreadsheet exported from this list and edited elsewhere. Each row is found by its TMDB id, or by its title and year, and its title, sort title, release date and genres are changed where they differ. Nothing changes until you apply it.",
+    "context": "Description in the dialog importing a spreadsheet into the media list."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.changedSentOfCount",
+    "text": "Changing {sent} of {count}",
+    "context": "Progress while an imported spreadsheet is applied."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.chooseTheFile",
+    "text": "Choose the spreadsheet",
+    "context": "Button picking the CSV file to import into the media list."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changedTitles.one",
+    "text": "Changed {count} title from the spreadsheet",
+    "context": "Notice after an imported spreadsheet was applied."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changedTitles.other",
+    "text": "Changed {count} titles from the spreadsheet",
+    "context": "Notice after an imported spreadsheet was applied."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changesTitles.one",
+    "text": "Changes {count} title",
+    "context": "Summary of an imported spreadsheet before it is applied, and its apply button."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changesTitles.other",
+    "text": "Changes {count} titles",
+    "context": "Summary of an imported spreadsheet before it is applied, and its apply button."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.rowsNotFound.one",
+    "text": "{count} row matches no title here, so it’s passed over.",
+    "context": "Note in the spreadsheet import when a row names no title in the library."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.rowsNotFound.other",
+    "text": "{count} rows match no title here, so they’re passed over.",
+    "context": "Note in the spreadsheet import when rows name no title in the library."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.importASpreadsheet",
+    "text": "Import a spreadsheet…",
+    "context": "Item in the media list's menu: bring back a spreadsheet exported from it and edited, changing the titles it names."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.nothingToChange",
+    "text": "Nothing in it differs from what the library holds.",
+    "context": "What the spreadsheet import says when no row changes anything."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.readingIt",
+    "text": "Reading the spreadsheet",
+    "context": "Spinner while an imported spreadsheet is read and compared with the library."
+  },
+  {
     "handler": "screens.adminArea.indexerCatalogueDialog.anyLabel",
     "text": "Any {label}",
     "context": "Shown in the indexer catalogue dialog in the admin area. {label} is filled in by the app."

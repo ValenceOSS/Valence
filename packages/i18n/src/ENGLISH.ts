@@ -4841,6 +4841,24 @@ const ENGLISH = {
   'screens.adminArea.hardwareTest.testing': 'Testing…',
   'screens.adminArea.hardwareTest.title': 'Test hardware acceleration',
   'screens.adminArea.hDRConversion': 'HDR tone mapping',
+  'screens.adminArea.importSheet.bringBackAnEditedExport':
+    'Bring back a spreadsheet exported from this list and edited elsewhere. Each row is found by its TMDB id, or by its title and year, and its title, sort title, release date and genres are changed where they differ. Nothing changes until you apply it.',
+  'screens.adminArea.importSheet.changedSentOfCount': 'Changing {sent} of {count}',
+  'screens.adminArea.importSheet.chooseTheFile': 'Choose the spreadsheet',
+  'screens.adminArea.importSheet.count.changedTitles.one':
+    'Changed {count} title from the spreadsheet',
+  'screens.adminArea.importSheet.count.changedTitles.other':
+    'Changed {count} titles from the spreadsheet',
+  'screens.adminArea.importSheet.count.changesTitles.one': 'Changes {count} title',
+  'screens.adminArea.importSheet.count.changesTitles.other': 'Changes {count} titles',
+  'screens.adminArea.importSheet.count.rowsNotFound.one':
+    '{count} row matches no title here, so it’s passed over.',
+  'screens.adminArea.importSheet.count.rowsNotFound.other':
+    '{count} rows match no title here, so they’re passed over.',
+  'screens.adminArea.importSheet.importASpreadsheet': 'Import a spreadsheet…',
+  'screens.adminArea.importSheet.nothingToChange':
+    'Nothing in it differs from what the library holds.',
+  'screens.adminArea.importSheet.readingIt': 'Reading the spreadsheet',
   'screens.adminArea.indexerCatalogueDialog.anyLabel': 'Any {label}',
   'screens.adminArea.indexerCatalogueDialog.anyTorrentIndexerWithATorznab':
     'Any torrent indexer with a Torznab feed, such as one from Jackett or Prowlarr.',
