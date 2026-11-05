@@ -162,6 +162,20 @@ describe('serveMetadata', () => {
     expect(built.titleMetadata.read).not.toHaveBeenCalled();
   });
 
+  it('exports a library’s titles as a spreadsheet, filtered as the list is', async () => {
+    const ask = await signedIn(true);
+    const sheet = await ask('/api/admin/titles/export?libraryId=lib&filter=genre:Drama&filter=tag:x');
+
+    expect(sheet.status).toBe(200);
+    expect(sheet.headers.get('content-type')).toContain('text/csv');
+    expect(sheet.headers.get('content-disposition')).toContain('attachment');
+    expect(built.titleList.list.mock.calls[0]?.[0]).toMatchObject({
+      libraryId: 'lib',
+      filter: ['genre:Drama', 'tag:x'],
+    });
+    expect((await sheet.text()).split('\r\n')[0]).toContain('kind,title');
+  });
+
   it('finds people in the catalogue by name, for somebody given leave', async () => {
     const ask = await signedIn(true);
     const found = await ask('/api/admin/titles/people?name=An%20actor');

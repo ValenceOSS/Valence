@@ -2360,6 +2360,8 @@ const ENGLISH = {
     'That change can’t be undone, because something it changed has been changed again since.',
   'error.metadata.thatValueCannotBeSaved':
     'That can’t be saved. The field isn’t one this title has, or the value isn’t one it accepts.',
+  'error.metadata.thoseTitlesCouldNotBeListed':
+    'Those titles couldn’t be listed: the library, order or filters asked for aren’t ones Valence knows.',
   'error.music.aSmartPlaylistFillsItself':
     'A smart playlist fills itself from its rules, so nothing can be added to it, moved or taken out.',
   'error.music.chooseAProfileFirst': 'Choose a profile first.',
@@ -5338,6 +5340,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas':
     'Everything here is matched and has a poster.',
   'screens.adminArea.mediaPanel.everythingInName': 'Everything in {name}',
+  'screens.adminArea.mediaPanel.exportAsASpreadsheet': 'Export as a spreadsheet',
   'screens.adminArea.mediaPanel.filterTheTitles': 'Filter the titles',
   'screens.adminArea.mediaPanel.findAProgrammeOrFilm': 'Find a series or film',
   'screens.adminArea.mediaPanel.hasSubtitles': 'Has subtitles',

@@ -1,3 +1,5 @@
+import { TitleListQuerySchema } from '@ValenceContracts/schemas/TitleList';
+import { csvOfTitles } from '@ValenceServer/metadata/csvOfTitles';
 import {
   listOrphanedEditsRoute,
   attachOrphanedEditsRoute,
@@ -28,6 +30,8 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 const NOT_FOR_YOU = refuse('common.thatIsForAdministrators');
 
 const NO_SUCH_ITEM = refuse('error.common.noSuchItem');
+
+const EVERY_TITLE = 1_000_000;
 
 /**
  * Registers the endpoints an administrator reads and edits a title's metadata through: every
@@ -277,6 +281,29 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
       { people: await findCataloguePeople(context.req.valid('query').name) },
       200,
     );
+  });
+
+  app.get('/api/admin/titles/export', async (context) => {
+    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(NOT_FOR_YOU, 404);
+    }
+
+    const query = TitleListQuerySchema.safeParse({
+      ...context.req.query(),
+      filter: context.req.queries('filter') ?? [],
+    });
+
+    if (!query.success) {
+      return context.json(refuse('error.metadata.thoseTitlesCouldNotBeListed'), 400);
+    }
+
+    const { titles } = await titleList.list(query.data, undefined, EVERY_TITLE);
+
+    return context.body(csvOfTitles(titles), 200, {
+      'content-type': 'text/csv; charset=utf-8',
+      'content-disposition': 'attachment; filename="titles.csv"',
+      'cache-control': 'no-store',
+    });
   });
 
   app.openapi(readTitleFilesRoute, async (context) => {

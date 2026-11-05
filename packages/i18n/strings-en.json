@@ -9961,6 +9961,11 @@
     "context": "An error the server answers with (HTTP 400) when an administrator edits a title’s metadata (from `serveMetadata`)."
   },
   {
+    "handler": "error.metadata.thoseTitlesCouldNotBeListed",
+    "text": "Those titles couldn’t be listed: the library, order or filters asked for aren’t ones Valence knows.",
+    "context": "Refusal when the media list's spreadsheet export is asked for with a query the server can't read."
+  },
+  {
     "handler": "error.music.aSmartPlaylistFillsItself",
     "text": "A smart playlist fills itself from its rules, so nothing can be added to it, moved or taken out.",
     "context": "An error the server answers with (HTTP 409) when somebody tries to add to, reorder or take something out of a smart playlist (from `registerMusicRoutes`)."
@@ -21149,6 +21154,11 @@
     "handler": "screens.adminArea.mediaPanel.everythingInName",
     "text": "Everything in {name}",
     "context": "The label of a data table in the media panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.exportAsASpreadsheet",
+    "text": "Export as a spreadsheet",
+    "context": "Item in the media list's menu that downloads the titles shown, with their filters, as a CSV file."
   },
   {
     "handler": "screens.adminArea.mediaPanel.filterTheTitles",

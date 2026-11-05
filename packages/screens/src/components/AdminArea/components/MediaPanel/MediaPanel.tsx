@@ -1,3 +1,4 @@
+import { searchOfTitleList } from '@ValenceClient/admin/searchOfTitleList';
 import { SaveViewDialog } from './components/SaveViewDialog/SaveViewDialog';
 import { readSavedViews } from './readSavedViews';
 import { saveSavedViews } from './saveSavedViews';
@@ -2082,6 +2083,15 @@ const MediaPanel = ({
                             label: say('screens.adminArea.wordsManager.genresAndTags'),
                             onChoose: () => {
                               setIsManagingWords(true);
+                            },
+                          },
+                          {
+                            id: 'export',
+                            label: say('screens.adminArea.mediaPanel.exportAsASpreadsheet'),
+                            onChoose: () => {
+                              window.location.assign(
+                                `/api/admin/titles/export${searchOfTitleList(asked)}`,
+                              );
                             },
                           },
                           ...(orphanCount === 0
