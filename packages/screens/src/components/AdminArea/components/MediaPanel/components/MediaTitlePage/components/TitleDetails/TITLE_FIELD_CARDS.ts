@@ -29,7 +29,7 @@ const TITLE_FIELD_CARDS: readonly {
   {
     id: 'ids',
     title: say('screens.adminArea.titleDetails.ids'),
-    fields: ['imdbId', 'tvdbId'],
+    fields: ['imdbId', 'tvdbId', 'anilistId', 'malId'],
   },
   {
     id: 'note',

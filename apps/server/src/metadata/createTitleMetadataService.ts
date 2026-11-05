@@ -83,6 +83,8 @@ const ROW = {
   rottenTomatoes: mediaItem.rottenTomatoes,
   imdbId: mediaItem.imdbId,
   tvdbId: mediaItem.tvdbId,
+  anilistId: series.anilistId,
+  malId: series.malId,
   seriesTitle: mediaItem.seriesTitle,
   seriesSortTitle: mediaItem.seriesSortTitle,
 };
@@ -150,6 +152,8 @@ const createTitleMetadataService = ({
     rottenTomatoes: NumberSchema.parse(file.rottenTomatoes),
     imdbId: file.imdbId,
     tvdbId: file.tvdbId,
+    anilistId: file.anilistId?.toString() ?? null,
+    malId: file.malId?.toString() ?? null,
     seriesTitle: file.seriesTitle,
     seriesSortTitle: file.seriesSortTitle,
   });
@@ -360,6 +364,7 @@ const createTitleMetadataService = ({
     }
 
     const set: Record<string, TitleValue | number | Date | null> = {};
+    const ofSeries: { anilistId?: number | null; malId?: number | null } = {};
 
     for (const [name, value] of Object.entries(values)) {
       const field = TitleFieldSchema.safeParse(name);
@@ -381,6 +386,11 @@ const createTitleMetadataService = ({
         continue;
       }
 
+      if (column === 'anilistId' || column === 'malId') {
+        ofSeries[column] = typeof value === 'string' ? Number(value) : null;
+        continue;
+      }
+
       if (column === 'addedAt') {
         if (typeof value === 'string') {
           set.addedAt = addedAtOfDay(value);
@@ -394,6 +404,10 @@ const createTitleMetadataService = ({
       if (column === 'releaseDate' && subject.kind === 'film' && typeof value === 'string') {
         set.year = Number.parseInt(value.slice(0, 4), 10);
       }
+    }
+
+    if (Object.keys(ofSeries).length > 0 && file.seriesId !== null) {
+      await db.update(series).set(ofSeries).where(eq(series.id, file.seriesId));
     }
 
     if (Object.keys(set).length === 0) {

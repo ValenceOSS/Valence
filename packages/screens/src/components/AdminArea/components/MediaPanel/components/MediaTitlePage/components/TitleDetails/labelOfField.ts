@@ -47,6 +47,10 @@ const labelOfField = (field: TitleField, kind: TitleSubjectKind): string => {
       return say('client.library.describeTitleDetails.rottenTomatoes');
     case 'imdbId':
       return say('screens.adminArea.titleDetails.imdb');
+    case 'anilistId':
+      return say('screens.adminArea.titleDetails.aniList');
+    case 'malId':
+      return say('screens.adminArea.titleDetails.myAnimeList');
     case 'tvdbId':
       return say('screens.adminArea.titleDetails.tvdb');
     case 'note':

@@ -16,6 +16,8 @@ type EditableColumns = {
   rottenTomatoes: number | null;
   imdbId: string | null;
   tvdbId: string | null;
+  anilistId: string | null;
+  malId: string | null;
   seriesTitle: string | null;
   seriesSortTitle: string | null;
 };

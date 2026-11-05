@@ -352,6 +352,8 @@ const createMediaStore = (
           catalogueEpisodeId: mediaItem.catalogueEpisodeId,
           extraKind: mediaItem.extraKind,
           seriesKey: series.key,
+          posterUrl: mediaItem.posterUrl,
+          backdropUrl: mediaItem.backdropUrl,
         })
         .from(mediaItem)
         .leftJoin(series, eq(series.id, mediaItem.seriesId))
@@ -397,6 +399,8 @@ const createMediaStore = (
         rottenTomatoes: row.metadata.rottenTomatoes ?? null,
         imdbId: row.metadata.imdbId ?? null,
         tvdbId: row.metadata.tvdbId ?? null,
+        anilistId: null,
+        malId: null,
         seriesTitle,
         seriesSortTitle: null,
       });
@@ -482,6 +486,11 @@ const createMediaStore = (
         extraKind: row.extraKind,
         versionLabel: row.versionLabel,
         updatedAt: new Date(),
+        ...(stored !== undefined &&
+        (stored.posterUrl !== (row.metadata.posterUrl ?? null) ||
+          stored.backdropUrl !== (row.metadata.backdropUrl ?? null))
+          ? { artworkChangedAt: new Date() }
+          : {}),
       };
 
       await upsert(db, mediaItem, {

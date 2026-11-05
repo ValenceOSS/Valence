@@ -15,4 +15,9 @@ describe('addressOfId', () => {
     expect(addressOfId('imdbId', '603', false)).toBeNull();
     expect(addressOfId('tvdbId', 'tt1', true)).toBeNull();
   });
+
+  it('opens an anime on AniList and MyAnimeList by their own ids', () => {
+    expect(addressOfId('anilistId', '21', true)).toBe('https://anilist.co/anime/21');
+    expect(addressOfId('malId', '21', true)).toBe('https://myanimelist.net/anime/21');
+  });
 });

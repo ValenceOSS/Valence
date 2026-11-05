@@ -1,3 +1,4 @@
+import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { TitleFilesSchema } from '@ValenceContracts/schemas/TitleList';
 import type { TitleFiles } from '@ValenceContracts/schemas/TitleList';
@@ -9,7 +10,15 @@ import type { TitleFiles } from '@ValenceContracts/schemas/TitleList';
  * @param id - One file of the title, or the list's id for a programme.
  * @returns The title's files and their paths.
  */
-const fetchTitleFiles = (id: string): Promise<TitleFiles> =>
-  readFromServer(`/api/admin/titles/${encodeURIComponent(id)}`, TitleFilesSchema);
+const fetchTitleFiles = async (id: string): Promise<TitleFiles> => {
+  const files = await readFromServer(
+    `/api/admin/titles/${encodeURIComponent(id)}`,
+    TitleFilesSchema,
+  );
+
+  artworkRevisions.learn(files.files);
+
+  return files;
+};
 
 export { fetchTitleFiles };

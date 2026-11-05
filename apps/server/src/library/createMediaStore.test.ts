@@ -268,6 +268,31 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(await logoOf()).toBe('https://logo/a.png');
   });
 
+  it('marks a file’s artwork changed when a scan brings it a new poster, so it is drawn afresh', async () => {
+    const { db, store } = await aStore();
+    const episode = anEpisode('/shows/Show/1.mkv', 'Show', 'tv:1');
+    const changedAt = async () =>
+      (await db.select({ at: mediaItem.artworkChangedAt }).from(mediaItem))[0]?.at ?? null;
+
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, posterUrl: 'https://a.jpg' },
+    });
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, posterUrl: 'https://a.jpg' },
+    });
+
+    expect(await changedAt()).toBeNull();
+
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, posterUrl: 'https://b.jpg' },
+    });
+
+    expect(await changedAt()).not.toBeNull();
+  });
+
   it('names a programme after its catalogue match, and keeps that match once made', async () => {
     const { db, store } = await aStore();
     /**

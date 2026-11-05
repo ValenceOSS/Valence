@@ -19,6 +19,8 @@ import { say } from '@ValenceI18n/say';
 
 const FULL_WIDTH: readonly TitleField[] = ['tagline', 'overview', 'note'];
 
+const ANIME_ONLY: readonly TitleField[] = ['anilistId', 'malId'];
+
 const HALF_WIDTH: readonly TitleField[] = [
   'title',
   'originalTitle',
@@ -100,7 +102,11 @@ const TitleDetails = ({ mediaId, scope, onShowHistory, onFixMatch }: TitleDetail
    * @returns The section, or nothing where the title has none of its fields.
    */
   const sectionOf = (card: (typeof TITLE_FIELD_CARDS)[number]) => {
-    const fields = card.fields.filter((field) => has.includes(field));
+    const fields = card.fields.filter(
+      (field) =>
+        has.includes(field) &&
+        (!ANIME_ONLY.includes(field) || (metadata.data.fields[field]?.value ?? null) !== null),
+    );
     const fieldOf = (field: TitleField) => {
       const suggestions = suggestionsOf(field);
 

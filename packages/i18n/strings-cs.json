@@ -25121,6 +25121,11 @@
     "context": "A field for the day an episode or season was shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
   },
   {
+    "handler": "screens.adminArea.titleDetails.aniList",
+    "text": "AniList",
+    "context": "The field holding an anime programme's AniList id, with a link to its page there. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.classification",
     "text": "Classification",
     "context": "The heading of the card holding a title’s genres, tags, studios and networks. On the Details tab of a title in the admin area (from `TitleDetails`)."
@@ -25164,6 +25169,11 @@
     "handler": "screens.adminArea.titleDetails.imdb",
     "text": "IMDb",
     "context": "A field for a title’s IMDb id. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.myAnimeList",
+    "text": "MyAnimeList",
+    "context": "The field holding an anime programme's MyAnimeList id, with a link to its page there. On the Details tab of a title in the admin area (from `TitleDetails`)."
   },
   {
     "handler": "screens.adminArea.titleDetails.networks",

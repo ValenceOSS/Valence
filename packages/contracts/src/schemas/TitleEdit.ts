@@ -50,6 +50,14 @@ const TITLE_FIELD_SCHEMAS = {
     .string()
     .regex(/^\d{1,10}$/)
     .nullable(),
+  anilistId: z
+    .string()
+    .regex(/^\d{1,10}$/)
+    .nullable(),
+  malId: z
+    .string()
+    .regex(/^\d{1,10}$/)
+    .nullable(),
   note: z.string().trim().max(2000).nullable(),
 };
 
@@ -71,6 +79,8 @@ const TitleFieldSchema = z.enum([
   'rottenTomatoes',
   'imdbId',
   'tvdbId',
+  'anilistId',
+  'malId',
   'note',
 ]);
 
@@ -112,6 +122,8 @@ const FIELDS_OF_KIND: Record<
     'rating',
     'imdbId',
     'tvdbId',
+    'anilistId',
+    'malId',
     'note',
   ],
   season: ['title', 'overview', 'releaseDate', 'note'],

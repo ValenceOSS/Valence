@@ -32,6 +32,8 @@ const COLUMNS: Record<EditScope, readonly (readonly [TitleField, keyof EditableC
     ['rating', 'rating'],
     ['imdbId', 'imdbId'],
     ['tvdbId', 'tvdbId'],
+    ['anilistId', 'anilistId'],
+    ['malId', 'malId'],
   ],
   episode: [
     ['title', 'title'],

@@ -66,6 +66,8 @@ const WRITERS: {
   rottenTomatoes: (columns, value) => ({ ...columns, rottenTomatoes: numberOf(value) }),
   imdbId: (columns, value) => ({ ...columns, imdbId: textOf(value) }),
   tvdbId: (columns, value) => ({ ...columns, tvdbId: textOf(value) }),
+  anilistId: (columns, value) => ({ ...columns, anilistId: textOf(value) }),
+  malId: (columns, value) => ({ ...columns, malId: textOf(value) }),
   seriesTitle: (columns, value) => ({
     ...columns,
     seriesTitle: textOf(value) ?? columns.seriesTitle,

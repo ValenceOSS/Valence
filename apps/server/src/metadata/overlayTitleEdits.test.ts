@@ -20,6 +20,8 @@ const SCANNED: EditableColumns = {
   rottenTomatoes: 80,
   imdbId: 'tt0000001',
   tvdbId: null,
+  anilistId: null,
+  malId: null,
   seriesTitle: null,
   seriesSortTitle: null,
 };

@@ -88,7 +88,8 @@ const MetadataField = ({
   };
 
   const address =
-    (field === 'imdbId' || field === 'tvdbId') && typeof shown === 'string'
+    (field === 'imdbId' || field === 'tvdbId' || field === 'anilistId' || field === 'malId') &&
+    typeof shown === 'string'
       ? addressOfId(field, shown, kind === 'show')
       : null;
   const control = isWords ? (

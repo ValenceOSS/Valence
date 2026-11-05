@@ -24,6 +24,8 @@ const COLUMNS: EditableColumns = {
   rottenTomatoes: null,
   imdbId: null,
   tvdbId: null,
+  anilistId: null,
+  malId: null,
   seriesTitle: 'Show',
   seriesSortTitle: null,
 };

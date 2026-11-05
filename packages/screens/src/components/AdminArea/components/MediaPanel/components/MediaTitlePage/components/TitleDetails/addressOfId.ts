@@ -1,4 +1,4 @@
-type IdSite = 'tmdb' | 'imdbId' | 'tvdbId';
+type IdSite = 'tmdb' | 'imdbId' | 'tvdbId' | 'anilistId' | 'malId';
 
 const IMDB = /^tt\d+$/u;
 
@@ -25,7 +25,11 @@ const addressOfId = (site: IdSite, id: string, isShow: boolean): string | null =
 
   return site === 'tmdb'
     ? `https://www.themoviedb.org/${isShow ? 'tv' : 'movie'}/${said}`
-    : `https://thetvdb.com/dereferrer/${isShow ? 'series' : 'movie'}/${said}`;
+    : site === 'anilistId'
+      ? `https://anilist.co/anime/${said}`
+      : site === 'malId'
+        ? `https://myanimelist.net/anime/${said}`
+        : `https://thetvdb.com/dereferrer/${isShow ? 'series' : 'movie'}/${said}`;
 };
 
 export type { IdSite };
