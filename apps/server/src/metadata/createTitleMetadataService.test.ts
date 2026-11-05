@@ -180,6 +180,28 @@ describe('createTitleMetadataService', { timeout: STARTING_DATABASE_MS }, () => 
     ]);
   });
 
+  it('leaves a file’s time of day alone where its date added is set to the day it already has', async () => {
+    const { db, service } = await aService();
+    const arrived = new Date('2020-01-02T19:39:22.257Z');
+
+    await db
+      .update(mediaItem)
+      .set({ addedAt: arrived })
+      .where(inArray(mediaItem.id, ['cut', 'extended']));
+    await service.edit('cut', 'title', { lock: ['addedAt'] }, ADA);
+    await service.edit('cut', 'title', { reset: ['addedAt'] }, ADA);
+
+    const rows = await db
+      .select({ addedAt: mediaItem.addedAt })
+      .from(mediaItem)
+      .where(inArray(mediaItem.id, ['cut', 'extended']));
+
+    expect(rows.map((row) => row.addedAt.toISOString())).toEqual([
+      arrived.toISOString(),
+      arrived.toISOString(),
+    ]);
+  });
+
   it('notes what the catalogue now says under an edit, changing nothing on the files', async () => {
     const { db, service } = await aService();
 

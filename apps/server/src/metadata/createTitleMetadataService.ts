@@ -365,7 +365,8 @@ const createTitleMetadataService = ({
   };
 
   /**
-   * Writes a title's new values onto every file of it, so each reads as edited at once.
+   * Writes a title's new values onto every file of it, so each reads as edited at once. A date
+   * added that falls on the day the file already has leaves its time of day as it was.
    *
    * @param file - One file of the title.
    * @param subject - The title.
@@ -411,7 +412,7 @@ const createTitleMetadataService = ({
       }
 
       if (column === 'addedAt') {
-        if (typeof value === 'string') {
+        if (typeof value === 'string' && value !== file.addedAt.toISOString().slice(0, 10)) {
           set.addedAt = addedAtOfDay(value);
         }
 

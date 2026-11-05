@@ -50,6 +50,12 @@ const castOf = (value: TitleValue): CastEntry[] | null =>
  */
 const numberOf = (value: TitleValue): number | null => (typeof value === 'number' ? value : null);
 
+const UNREAD_BY_SCANS: ReadonlySet<keyof EditableColumns> = new Set([
+  'addedAt',
+  'anilistId',
+  'malId',
+]);
+
 const WRITERS: {
   [C in keyof EditableColumns]: (columns: EditableColumns, value: TitleValue) => EditableColumns;
 } = {
@@ -96,7 +102,8 @@ const WRITERS: {
 /**
  * Lays an administrator's edits over what the catalogue and the file said about a file's title,
  * and keeps a note of what the catalogue said for every field that was edited, so the edit can show
- * it and be put back to it. A film's edits reach the film's own columns; a programme's reach the
+ * it and be put back to it. A field a scan never reads, such as when the file was added, keeps the
+ * value noted when it was edited, since the scan has nothing to say of it. A film's edits reach the film's own columns; a programme's reach the
  * columns every one of its episodes carries for it; an episode's reach that episode's own. An edit
  * whose value no longer passes the field's rule is passed over, and the catalogue's value stands.
  *
@@ -120,7 +127,9 @@ const overlayTitleEdits = (
         continue;
       }
 
-      catalogue.push({ scope, field: edit.field, value: columns[column] });
+      if (!UNREAD_BY_SCANS.has(column)) {
+        catalogue.push({ scope, field: edit.field, value: columns[column] });
+      }
 
       if (!checked.success) {
         continue;

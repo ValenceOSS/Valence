@@ -58,12 +58,16 @@ describe('overlayTitleEdits', () => {
     ]);
   });
 
-  it('keeps the day a film was said to be added, over the day a scan would give it', () => {
-    const { columns } = overlayTitleEdits(SCANNED, {
-      film: [{ field: 'addedAt', value: '2020-01-02' }],
+  it('keeps the day a film was said to be added, and notes nothing under it, since scans never read it', () => {
+    const { columns, catalogue } = overlayTitleEdits(SCANNED, {
+      film: [
+        { field: 'addedAt', value: '2020-01-02' },
+        { field: 'anilistId', value: 5 },
+      ],
     });
 
     expect(columns.addedAt).toBe('2020-01-02');
+    expect(catalogue).toEqual([]);
   });
 
   it('lays an edited cast over the one the catalogue gave', () => {
