@@ -15,11 +15,26 @@ const MediaSegmentSchema = z.object({
   source: SegmentSourceSchema,
 });
 
+const SetSegmentsSchema = z.object({
+  segments: z
+    .array(
+      z
+        .object({
+          kind: SegmentKindSchema,
+          startSeconds: z.number().nonnegative(),
+          endSeconds: z.number().positive(),
+        })
+        .refine((segment) => segment.endSeconds > segment.startSeconds),
+    )
+    .max(16),
+});
+
 type MediaSegment = z.infer<typeof MediaSegmentSchema>;
 type SegmentKind = z.infer<typeof SegmentKindSchema>;
 export type { MediaSegment, SegmentKind };
 
 export {
+  SetSegmentsSchema,
   MediaSegmentSchema,
   SegmentKindSchema,
   SegmentSourceSchema,

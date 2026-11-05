@@ -10421,6 +10421,11 @@
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveSamples`)."
   },
   {
+    "handler": "error.segments.thoseMarkersCouldNotBeRead",
+    "text": "Those skip markers couldn’t be read: each ends after it starts, and a file has at most 16.",
+    "context": "Refusal when a file's intro, recap, credits or preview markers are set by hand with times the server can't take."
+  },
+  {
     "handler": "error.server.aFolderCannotBeMovedInto",
     "text": "A folder can’t be moved into itself.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `createAppContext`)."
@@ -24869,6 +24874,61 @@
     "handler": "screens.adminArea.sizeFree",
     "text": "{size} free",
     "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.addAMarker",
+    "text": "Add a marker",
+    "context": "Button adding a skip marker to a file."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.endsAt",
+    "text": "Marker ends at",
+    "context": "Field holding when a skip marker ends, written like 2:45."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.markersSaved",
+    "text": "Markers saved",
+    "context": "Notice after a file's skip markers were saved."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.noMarkersYet",
+    "text": "No markers yet.",
+    "context": "What the Skip markers card says for a file with none."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.removeThisMarker",
+    "text": "Remove this marker",
+    "context": "Button taking one skip marker off a file."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.saveMarkers",
+    "text": "Save markers",
+    "context": "Button saving a file's skip markers."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.skipMarkers",
+    "text": "Skip markers",
+    "context": "Card on a film's or an episode's Files tab: where the player offers to skip the intro, recap, credits or preview."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.startsAt",
+    "text": "Marker starts at",
+    "context": "Field holding when a skip marker starts, written like 1:23."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.whatItIs",
+    "text": "What it marks",
+    "context": "Field choosing whether a skip marker is an intro, recap, credits or preview, for a screen reader."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.whereThePlayerOffersToSkip",
+    "text": "Where the player offers to skip. Detection finds intros and credits on its own; markers saved here are kept through every detection run after.",
+    "context": "Description of the Skip markers card."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.writeAsAClock",
+    "text": "Write times like 1:23 or 1:02:03, each ending after it starts.",
+    "context": "Shown under the skip markers while one of their times can't be read."
   },
   {
     "handler": "screens.adminArea.someCouldNotBeConfirmed",

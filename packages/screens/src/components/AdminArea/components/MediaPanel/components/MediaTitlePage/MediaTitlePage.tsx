@@ -1,3 +1,4 @@
+import { SkipMarkers } from './components/SkipMarkers/SkipMarkers';
 import { EpisodeNumberDialog } from './components/EpisodeNumberDialog/EpisodeNumberDialog';
 import { EpisodeOrderPicker } from './components/EpisodeOrderPicker/EpisodeOrderPicker';
 import { TitleVersions } from './components/TitleVersions/TitleVersions';
@@ -703,35 +704,39 @@ const MediaTitlePage = ({
         }}
         filesLabel={say('desktop.main.theApplicationMenu.file')}
         files={
-          <PanelCard title={say('desktop.main.theApplicationMenu.file')} isFlush>
-            {place === null || file === null ? (
-              <DataTable
-                label={say('desktop.main.theApplicationMenu.file')}
-                columns={fileColumns}
-                rows={leaf === undefined ? [] : [leaf]}
-                getRowId={(row) => row.id}
-              />
-            ) : (
-              <FolderView
-                key={file}
-                libraries={libraries}
-                mayDelete={mayManageFiles}
-                root={folderOf(file)}
-                onChanged={() => {
-                  onFilesChanged?.();
-                }}
-                onScan={(scanned) => {
-                  onScan?.(scanned);
-                }}
-                hidesTitles
-                keeps={(entry) =>
-                  entry.mediaId === episodeId || (fileName !== null && entry.belongsTo === fileName)
-                }
-                columns={mediaColumns}
-                actionsOf={mediaActionsOf}
-              />
-            )}
-          </PanelCard>
+          <div className="flex flex-col gap-4">
+            <SkipMarkers mediaId={episodeId} />
+            <PanelCard title={say('desktop.main.theApplicationMenu.file')} isFlush>
+              {place === null || file === null ? (
+                <DataTable
+                  label={say('desktop.main.theApplicationMenu.file')}
+                  columns={fileColumns}
+                  rows={leaf === undefined ? [] : [leaf]}
+                  getRowId={(row) => row.id}
+                />
+              ) : (
+                <FolderView
+                  key={file}
+                  libraries={libraries}
+                  mayDelete={mayManageFiles}
+                  root={folderOf(file)}
+                  onChanged={() => {
+                    onFilesChanged?.();
+                  }}
+                  onScan={(scanned) => {
+                    onScan?.(scanned);
+                  }}
+                  hidesTitles
+                  keeps={(entry) =>
+                    entry.mediaId === episodeId ||
+                    (fileName !== null && entry.belongsTo === fileName)
+                  }
+                  columns={mediaColumns}
+                  actionsOf={mediaActionsOf}
+                />
+              )}
+            </PanelCard>
+          </div>
         }
         onPrevious={
           before === undefined
@@ -1072,6 +1077,7 @@ const MediaTitlePage = ({
             {title.kind === 'film' && title.parts.length > 1 ? (
               <TitleVersions versions={title.parts} paths={paths} />
             ) : null}
+            {title.kind === 'film' ? <SkipMarkers mediaId={title.lead.id} /> : null}
             <PanelCard title={filesWord} isFlush>
               {place === null ? (
                 <DataTable

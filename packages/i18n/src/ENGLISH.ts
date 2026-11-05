@@ -2471,6 +2471,8 @@ const ENGLISH = {
     'A role with administrator permission can’t be deleted. Change its permissions, or move its members to another role first.',
   'error.role.noSuchRole': 'No such role.',
   'error.samples.thatIsForSomebodyWhoMay': 'Only people allowed to request music can do that.',
+  'error.segments.thoseMarkersCouldNotBeRead':
+    'Those skip markers couldn’t be read: each ends after it starts, and a file has at most 16.',
   'error.server.aFolderCannotBeMovedInto': 'A folder can’t be moved into itself.',
   'error.server.aNameIsOnePlainName': 'Names can’t contain slashes or start or end with a space.',
   'error.server.noLibraryOfKind': 'There’s no {kind} library to put it in.',
@@ -6310,6 +6312,19 @@ const ENGLISH = {
   'screens.adminArea.signInCard.tv': 'TV',
   'screens.adminArea.signInCard.welcomeHome': 'Welcome home',
   'screens.adminArea.sizeFree': '{size} free',
+  'screens.adminArea.skipMarkers.addAMarker': 'Add a marker',
+  'screens.adminArea.skipMarkers.endsAt': 'Marker ends at',
+  'screens.adminArea.skipMarkers.markersSaved': 'Markers saved',
+  'screens.adminArea.skipMarkers.noMarkersYet': 'No markers yet.',
+  'screens.adminArea.skipMarkers.removeThisMarker': 'Remove this marker',
+  'screens.adminArea.skipMarkers.saveMarkers': 'Save markers',
+  'screens.adminArea.skipMarkers.skipMarkers': 'Skip markers',
+  'screens.adminArea.skipMarkers.startsAt': 'Marker starts at',
+  'screens.adminArea.skipMarkers.whatItIs': 'What it marks',
+  'screens.adminArea.skipMarkers.whereThePlayerOffersToSkip':
+    'Where the player offers to skip. Detection finds intros and credits on its own; markers saved here are kept through every detection run after.',
+  'screens.adminArea.skipMarkers.writeAsAClock':
+    'Write times like 1:23 or 1:02:03, each ending after it starts.',
   'screens.adminArea.someCouldNotBeConfirmed':
     'Some could not be confirmed, and are still waiting.',
   'screens.adminArea.someOfThisCouldNotBeRead':
