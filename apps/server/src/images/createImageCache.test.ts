@@ -120,6 +120,21 @@ describe('createImageCache', () => {
     expect(onProblem).not.toHaveBeenCalled();
   });
 
+  it('fetches a catalogue logo drawn as an SVG as its PNG, and keeps it under the drawing', async () => {
+    const drawing = 'https://image.tmdb.org/t/p/original/logo.svg';
+    const fetchImpl = respondWith({ contentType: 'image/png' });
+    const { instance } = await cache(fetchImpl);
+
+    const image = await instance.read(drawing);
+
+    expect(image?.contentType).toBe('image/png');
+    expect(fetchImpl).toHaveBeenCalledWith('https://image.tmdb.org/t/p/original/logo.png');
+
+    await instance.read(drawing);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it('reports an unreachable catalogue rather than throwing', async () => {
     const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { instance } = await cache(
