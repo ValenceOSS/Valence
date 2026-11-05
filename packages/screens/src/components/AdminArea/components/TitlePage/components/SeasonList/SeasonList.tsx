@@ -19,6 +19,7 @@ import { say } from '@ValenceI18n/say';
 const WORST_FIRST: readonly (TitlePart | 'notAsked')[] = [
   'failed',
   'downloading',
+  'queued',
   'missing',
   'toApprove',
   'waiting',

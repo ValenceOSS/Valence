@@ -3,14 +3,15 @@ import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';
 
 /**
  * Where one episode, album or film a request waits for stands, as a title page draws it: waiting on
- * approval, not followed, here, on its way, failed, missing, or not out yet.
+ * approval, not followed, here, on its way, failed, waiting to be searched for, searched for with
+ * nothing found, or not out yet.
  *
  * @param item - What the request waits for.
  * @param approval - Whether the request is approved.
  * @returns Where it stands.
  */
 const partOfItem = (
-  item: Pick<RequestItem, 'state' | 'isFollowed'>,
+  item: Pick<RequestItem, 'state' | 'isFollowed' | 'lastSearchedAt'>,
   approval: MediaRequest['approval'],
 ): TitlePart => {
   if (item.state === 'available' || item.state === 'filed') {
@@ -32,9 +33,10 @@ const partOfItem = (
       return 'downloading';
     case 'failed':
       return 'failed';
-    case 'wanted':
     case 'searching':
-      return 'missing';
+      return 'queued';
+    case 'wanted':
+      return item.lastSearchedAt === null ? 'queued' : 'missing';
     case 'waiting':
       return 'waiting';
   }
