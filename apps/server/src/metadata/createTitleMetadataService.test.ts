@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { eq, inArray } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem, series, user } from '#dialect/Schema';
@@ -63,30 +63,32 @@ const aService = async () => {
   ]);
 
   const changed: string[][] = [];
+  const seriesShape = vi.fn((_externalId: string, _mediaId: string) =>
+    Promise.resolve({
+      seasons: [
+        {
+          seasonNumber: 1,
+          episodeCount: 2,
+          episodes: [
+            {
+              episodeNumber: 1,
+              title: 'Pilot',
+              stillUrl: null,
+              overview: null,
+              airDate: '2020-01-02',
+            },
+          ],
+        },
+      ],
+      overview: 'What the catalogue says of the show.',
+      status: 'Ended',
+    }),
+  );
   const service = createTitleMetadataService({
     db,
     edits: createTitleEditStore(db),
     certificationRegion: () => Promise.resolve('GB'),
-    seriesShape: () =>
-      Promise.resolve({
-        seasons: [
-          {
-            seasonNumber: 1,
-            episodeCount: 2,
-            episodes: [
-              {
-                episodeNumber: 1,
-                title: 'Pilot',
-                stillUrl: null,
-                overview: null,
-                airDate: '2020-01-02',
-              },
-            ],
-          },
-        ],
-        overview: 'What the catalogue says of the show.',
-        status: 'Ended',
-      }),
+    seriesShape,
     describeCandidate: (externalId) =>
       Promise.resolve(
         externalId === '999'
@@ -111,7 +113,7 @@ const aService = async () => {
     },
   });
 
-  return { db, service, changed };
+  return { db, service, changed, seriesShape };
 };
 
 /**
@@ -287,6 +289,14 @@ describe('createTitleMetadataService', { timeout: STARTING_DATABASE_MS }, () => 
       { title: 'Second', seriesTitle: 'My show' },
     ]);
     expect(placed?.title).toBe('My show');
+  });
+
+  it('asks for the programme’s seasons with the file, so a season read from another show is laid out from it', async () => {
+    const { service, seriesShape } = await aService();
+
+    await service.read('pilot', 'season');
+
+    expect(seriesShape).toHaveBeenCalledWith('1', 'pilot');
   });
 
   it('edits an episode alone', async () => {

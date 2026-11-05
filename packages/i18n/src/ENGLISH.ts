@@ -1688,6 +1688,7 @@ const ENGLISH = {
   'common.titleCountEpisodes.other': '{title} — {count} episodes',
   'common.titleIsRequested': '{title} requested',
   'common.titleTheTrailer': '{title} trailer',
+  'common.titleYear': '{title} ({year})',
   'common.today': 'Today',
   'common.tomorrow': 'Tomorrow',
   'common.took': 'Took',
@@ -2302,6 +2303,8 @@ const ENGLISH = {
   'error.library.thatIsPastTheEndThe':
     'That’s past the end — the file is {durationSeconds} seconds long.',
   'error.library.thatPathIsNotAReadable': 'That path isn’t a readable folder.',
+  'error.library.thatSeasonCouldNotBeRead': 'That season couldn’t be read.',
+  'error.library.thatShowHasNoSuchSeason': 'That show doesn’t have that season in the catalogue.',
   'error.library.thatVersionChoiceCouldNotBeRead':
     'That choice for the version couldn’t be read: a name is at most 64 characters.',
   'error.library.theFileCouldNotBeMoved': 'Couldn’t move the file.',
@@ -6165,6 +6168,18 @@ const ENGLISH = {
   'screens.adminArea.scrubPreviewsForTitleHaveNot':
     'Scrub previews for {title} haven’t finished yet.',
   'screens.adminArea.searchForARecord': 'Search for an album',
+  'screens.adminArea.seasonSourceDialog.episodesFrom': 'Episodes from',
+  'screens.adminArea.seasonSourceDialog.fixSeasonMatch': 'Fix season match',
+  'screens.adminArea.seasonSourceDialog.readingTheSeasonAgain': 'Reading the season again',
+  'screens.adminArea.seasonSourceDialog.seasonOfShow': 'Season of {show}',
+  'screens.adminArea.seasonSourceDialog.showSeason': '{show}, season {season}',
+  'screens.adminArea.seasonSourceDialog.takesThisSeasonsEpisodes':
+    'Takes this season’s episodes, pictures and dates from a season of another show, for when the catalogue lists the season as a show of its own.',
+  'screens.adminArea.seasonSourceDialog.thatShowHasNoSeasons':
+    'The catalogue lists no seasons for {show}.',
+  'screens.adminArea.seasonSourceDialog.thisSeasonsEpisodesComeFrom':
+    'This season’s episodes come from {show}, season {season}. Search for another show, or use the show’s own season.',
+  'screens.adminArea.seasonSourceDialog.useTheShowsOwnSeason': 'Use the show’s own season',
   'screens.adminArea.seerrCard.answerOverseerrAndJellyseerr':
     'Accept requests from Overseerr and Jellyseerr',
   'screens.adminArea.seerrCard.askAs': 'Request as',
@@ -7722,7 +7737,6 @@ const ENGLISH = {
   'screens.importWizard.importReportView.matchedOfItems': '{matched} of {items}',
   'screens.importWizard.importReportView.notMatched': 'Not matched',
   'screens.importWizard.importReportView.plays': 'Plays',
-  'screens.importWizard.importReportView.titleYear': '{title} ({year})',
   'screens.importWizard.importReportView.watchedResumesPlaysFavouritesRatingsPlaylists':
     'Watched {watched}, in progress {resumes}, plays {plays}, favourites {favourites}, ratings {ratings}, playlists {playlists}',
   'screens.importWizard.importReportView.whatComesAcross': 'What is imported',

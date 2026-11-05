@@ -2,6 +2,8 @@ import { withExtraChoices } from './withExtraChoices';
 import type { ExtraChoice } from './withExtraChoices';
 import { orderOf } from './orderOf';
 import type { EpisodePin } from './EpisodePin.types';
+import type { SeasonSourceRow } from './SeasonSourceRow.types';
+import { borrowedSeasonsIn } from './borrowedSeasonsIn';
 import { inOriginalTitle } from './inOriginalTitle';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { joinedProbe } from '@ValenceServer/library/joinedProbe';
@@ -126,6 +128,7 @@ type MediaStore = {
   listEpisodePins?: (libraryId: string) => Promise<EpisodePin[]>;
   listExtraChoices?: (libraryId: string) => Promise<ExtraChoice[]>;
   listEpisodeOrders?: (libraryId: string) => Promise<ReadonlyMap<string, string>>;
+  listSeasonSources?: (libraryId: string) => Promise<SeasonSourceRow[]>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
@@ -674,6 +677,8 @@ const scanLibrary = async ({
 
   await store.regroupSeries?.(libraryId, foldersToRegroup(seriesFolders, found, isPartial));
 
+  const seasonSources = (await store.listSeasonSources?.(libraryId)) ?? [];
+
   let added = 0;
   let updated = 0;
   let failed = 0;
@@ -795,6 +800,7 @@ const scanLibrary = async ({
                 rememberedExternalId: remembered,
                 ...(metadataLanguage === null ? {} : { language: metadataLanguage }),
                 ...orderOf(episodeOrders, knownExternalId ?? remembered),
+                ...borrowedSeasonsIn(seasonSources, episode.seriesFolder),
               },
               (name, reason) =>
                 onProblem?.(

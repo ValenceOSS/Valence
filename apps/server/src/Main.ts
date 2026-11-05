@@ -51,6 +51,7 @@ import { createBulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEd
 import { createOrphanedEdits } from '@ValenceServer/metadata/createOrphanedEdits';
 import { findCandidates } from '@ValenceServer/metadata/findCandidates';
 import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
+import { seasonSourcesOfFile } from '@ValenceServer/library/seasonSourcesOfFile';
 import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
 import {
@@ -5130,8 +5131,12 @@ const titleMetadataService = createTitleMetadataService({
   db,
   edits: titleEdits,
   certificationRegion: async () => (await settings.read()).certificationRegion,
-  seriesShape: (externalId) =>
-    catalogueProvider.describeSeries?.(externalId) ?? Promise.resolve(null),
+  seriesShape: async (externalId, mediaId) =>
+    (await catalogueProvider.describeSeries?.(
+      externalId,
+      undefined,
+      (await seasonSourcesOfFile(db, mediaId))?.sources ?? [],
+    )) ?? null,
   describeCandidate: (externalId, kind) =>
     catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
   forgetCatalogue: (externalId, kind) => {

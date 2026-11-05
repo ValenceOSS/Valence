@@ -9,6 +9,7 @@ import {
   mediaItem,
   mediaItemJob,
   rating,
+  seasonSource,
   series,
   user,
   viewerProfile,
@@ -707,6 +708,137 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ).resolves.toEqual([
       { id: 'kept', seriesId: 'matched' },
       { id: 'moved', seriesId: 'matched' },
+    ]);
+  });
+
+  it('keeps where a programme’s seasons are read from when it is gathered into another, once a season', async () => {
+    const { db, store } = await aStore();
+    const one = await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', null));
+    const two = await store.upsert(anEpisode('/shows/Show/2.mkv', 'Show', null));
+
+    await db.insert(series).values([
+      {
+        id: 'matched',
+        libraryId: SHOWS_ID,
+        key: 'catalogue:tv:1',
+        title: 'Show',
+        externalId: 'tv:1',
+      },
+      { id: 'by-title', libraryId: SHOWS_ID, key: 'title:show', title: 'Show' },
+    ]);
+    await db
+      .update(mediaItem)
+      .set({ seriesId: 'matched' })
+      .where(eq(mediaItem.id, one ?? ''));
+    await db
+      .update(mediaItem)
+      .set({ seriesId: 'by-title' })
+      .where(eq(mediaItem.id, two ?? ''));
+
+    const source = { externalSeason: 1, title: 'Revival', year: 2026 };
+
+    await db.insert(seasonSource).values([
+      { ...source, seriesId: 'matched', seasonNumber: 7, externalId: 'kept' },
+      { ...source, seriesId: 'by-title', seasonNumber: 7, externalId: 'doubled' },
+      { ...source, seriesId: 'by-title', seasonNumber: 8, externalId: 'moved' },
+    ]);
+
+    await store.regroupSeries?.(
+      SHOWS_ID,
+      new Map([
+        ['/shows/Show/1.mkv', '/shows/Show'],
+        ['/shows/Show/2.mkv', '/shows/Show'],
+      ]),
+    );
+
+    await expect(store.listSeasonSources?.(SHOWS_ID)).resolves.toEqual(
+      expect.arrayContaining([
+        { ...source, folder: '/shows/Show', seasonNumber: 7, externalId: 'kept' },
+        { ...source, folder: '/shows/Show', seasonNumber: 8, externalId: 'moved' },
+      ]),
+    );
+    await expect(db.select().from(seasonSource)).resolves.toHaveLength(2);
+  });
+
+  it('keeps one of the same season held by two programmes gathered into a third', async () => {
+    const { db, store } = await aStore();
+    const ids = await Promise.all(
+      ['1', '2', '3'].map((name) =>
+        store.upsert(anEpisode(`/shows/Show/${name}.mkv`, 'Show', null)),
+      ),
+    );
+
+    await db.insert(series).values([
+      {
+        id: 'matched',
+        libraryId: SHOWS_ID,
+        key: 'catalogue:tv:1',
+        title: 'Show',
+        externalId: 'tv:1',
+      },
+      { id: 'first', libraryId: SHOWS_ID, key: 'title:show', title: 'Show' },
+      { id: 'second', libraryId: SHOWS_ID, key: 'title:the show', title: 'Show' },
+    ]);
+
+    for (const [at, seriesId] of ['matched', 'first', 'second'].entries()) {
+      await db
+        .update(mediaItem)
+        .set({ seriesId })
+        .where(eq(mediaItem.id, ids[at] ?? ''));
+    }
+
+    const source = { seasonNumber: 7, externalSeason: 1, title: 'Revival', year: 2026 };
+
+    await db.insert(seasonSource).values([
+      { ...source, seriesId: 'first', externalId: 'one' },
+      { ...source, seriesId: 'second', externalId: 'other' },
+    ]);
+
+    await store.regroupSeries?.(
+      SHOWS_ID,
+      new Map(['1', '2', '3'].map((name) => [`/shows/Show/${name}.mkv`, '/shows/Show'])),
+    );
+
+    await expect(
+      db.select({ seriesId: seasonSource.seriesId }).from(seasonSource),
+    ).resolves.toEqual([{ seriesId: 'matched' }]);
+  });
+
+  it('lists only the seasons of programmes kept in a folder, which is how a scan finds them', async () => {
+    const { db, store } = await aStore();
+
+    await db.insert(series).values([
+      { id: 'in-folder', libraryId: SHOWS_ID, key: 'folder:/shows/A', title: 'A' },
+      { id: 'by-title', libraryId: SHOWS_ID, key: 'title:b', title: 'B' },
+    ]);
+    await db.insert(seasonSource).values([
+      {
+        seriesId: 'in-folder',
+        seasonNumber: 2,
+        externalId: '9',
+        externalSeason: 1,
+        title: 'A2',
+        year: null,
+      },
+      {
+        seriesId: 'by-title',
+        seasonNumber: 2,
+        externalId: '9',
+        externalSeason: 1,
+        title: 'B2',
+        year: null,
+      },
+    ]);
+
+    await expect(store.listSeasonSources?.(SHOWS_ID)).resolves.toEqual([
+      {
+        folder: '/shows/A',
+        seasonNumber: 2,
+        externalId: '9',
+        externalSeason: 1,
+        title: 'A2',
+        year: null,
+      },
     ]);
   });
 

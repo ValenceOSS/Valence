@@ -997,6 +997,22 @@ const series = mysqlTable(
   ],
 );
 
+const seasonSource = mysqlTable(
+  'season_source',
+  {
+    seriesId: identifier('seriesId')
+      .notNull()
+      .references(() => series.id, { onDelete: 'cascade' }),
+    seasonNumber: int('seasonNumber').notNull(),
+    externalId: mediumtext('externalId').notNull(),
+    externalSeason: int('externalSeason').notNull(),
+    title: mediumtext('title').notNull(),
+    year: int('year'),
+    setAt: momentNow('setAt').notNull(),
+  },
+  (table) => [uniqueIndex('season_source_season_idx').on(table.seriesId, table.seasonNumber)],
+);
+
 const mediaItem = mysqlTable(
   'media_item',
   {
@@ -2372,6 +2388,7 @@ export {
   wordRule,
   extraChoice,
   episodePin,
+  seasonSource,
   versionChoice,
   titleEdit,
   titleChange,

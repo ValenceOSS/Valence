@@ -205,6 +205,48 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     await expect(choices.urlFor('ep-1', 'backdrop', false)).resolves.toBeNull();
   });
 
+  it(
+    'asks for a season’s pictures from the show it is read from, where it is another’s',
+    async () => {
+      const db = await aScratchDatabase();
+
+      await db
+        .update(mediaItem)
+        .set({ seasonNumber: 7, episodeNumber: 1 })
+        .where(eq(mediaItem.id, 'ep-1'));
+
+      const readPartOptions = vi.fn(() => Promise.resolve([option('/revival.jpg')]));
+      const choices = createArtworkChoices({
+        db,
+        readOptions: () => Promise.resolve(OFFERED),
+        readPartOptions,
+        borrowedSeasonOf: (_mediaId, season) =>
+          Promise.resolve(season === 7 ? { externalId: '900', season: 1 } : null),
+        readAgain: () => Promise.resolve(null),
+        fetchLogos: () => Promise.resolve(null),
+      });
+
+      await choices.readPart('ep-1', { season: 7, episode: null });
+      await choices.readPart('ep-1', { season: 7, episode: 1 });
+      await choices.readPart('ep-1', { season: 2, episode: null });
+
+      expect(readPartOptions.mock.calls).toEqual([
+        [{ externalId: '900', season: 1, episode: null }],
+        [{ externalId: '900', season: 1, episode: 1 }],
+        [{ externalId: '100', season: 2, episode: null }],
+      ]);
+      await expect(
+        choices.choosePart(
+          'ep-1',
+          { season: 7, episode: null },
+          `${BASE}/original/revival.jpg`,
+          null,
+        ),
+      ).resolves.toEqual({ jobId: null });
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
   it('keeps an uploaded picture and chooses it, turning away what is not a picture', async () => {
     const uploads = await mkdtemp(join(tmpdir(), 'valence-uploads-'));
     const choices = createArtworkChoices({

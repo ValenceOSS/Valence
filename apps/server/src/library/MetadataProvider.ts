@@ -23,6 +23,8 @@ import type { Likeness, TitleKind } from '@ValenceServer/likeness/Likeness';
 
 type SeriesReach = { season: number; episode: number };
 
+type BorrowedSeason = { seasonNumber: number; externalId: string; externalSeason: number };
+
 type MediaFacts = {
   path: string;
   probe: MediaProbe;
@@ -45,6 +47,7 @@ type MediaFacts = {
   rememberedExternalId?: string | null;
   language?: string;
   episodeOrder?: string;
+  borrowed?: readonly BorrowedSeason[];
 };
 
 type CastMember = {
@@ -172,7 +175,11 @@ type OwnArtwork = Record<ArtworkKind, OwnPicture | null>;
 type MetadataProvider = {
   name: string;
   describe: (facts: MediaFacts) => Promise<Metadata | null>;
-  describeSeries?: (externalId: string, order?: string) => Promise<SeriesShape | null>;
+  describeSeries?: (
+    externalId: string,
+    order?: string,
+    borrowed?: readonly BorrowedSeason[],
+  ) => Promise<SeriesShape | null>;
   describeNextEpisode?: (externalId: string) => Promise<NextEpisode | null>;
   describeAiringSeason?: (externalId: string) => Promise<AiringSeason | null>;
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
@@ -256,6 +263,7 @@ const resolveAiringSeason = (
  * @param onProblem - Told when a provider fails, so a scan can report it without stopping.
  * @param order - Another of the catalogue's orders the programme's files are numbered in, where one
  *   was chosen, so its seasons and episodes are laid out as the files are.
+ * @param borrowed - Seasons somebody said are another catalogue entry's, laid out from that entry.
  * @returns The shape of the series, or null where nobody could say.
  */
 const resolveSeriesShape = (
@@ -263,8 +271,13 @@ const resolveSeriesShape = (
   externalId: string,
   onProblem?: (provider: string, reason: Said) => void,
   order?: string,
+  borrowed: readonly BorrowedSeason[] = [],
 ): Promise<SeriesShape | null> =>
-  firstAnswerOf(providers, (provider) => provider.describeSeries?.(externalId, order), onProblem);
+  firstAnswerOf(
+    providers,
+    (provider) => provider.describeSeries?.(externalId, order, borrowed),
+    onProblem,
+  );
 
 /**
  * Asks each metadata provider in turn about one file and takes the first real answer, so a plugin's
@@ -288,6 +301,7 @@ export type {
   OwnArtwork,
   OwnPicture,
   AiringSeason,
+  BorrowedSeason,
   CastMember,
   CatalogueBrowsing,
   CatalogueDescription,

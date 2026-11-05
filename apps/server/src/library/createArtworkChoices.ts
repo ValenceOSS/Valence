@@ -29,6 +29,10 @@ type ArtworkChoicesOptions = {
   readOptions?: MetadataProvider['readArtworkOptions'];
   readOwn?: MetadataProvider['readOwnArtwork'];
   readPartOptions?: MetadataProvider['readPartArtwork'];
+  borrowedSeasonOf?: (
+    mediaId: string,
+    season: number,
+  ) => Promise<{ externalId: string; season: number } | null>;
   readAgain: (libraryId: string, paths: string[]) => Promise<string | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string } | null>;
   onChanged?: (mediaIds: string[]) => void;
@@ -71,6 +75,7 @@ const createArtworkChoices = ({
   readAgain,
   fetchLogos,
   readPartOptions,
+  borrowedSeasonOf,
   onChanged,
   uploads,
   now = () => new Date(),
@@ -567,7 +572,7 @@ const createArtworkChoices = ({
 
   /**
    * Lists what the catalogue has for one season's poster or one episode's still, with the one
-   * chosen now.
+   * chosen now, from the entry a season is read from where somebody said it is another's.
    *
    * @param mediaId - Any file of the programme.
    * @param part - The season, and the episode where it is an episode's still.
@@ -587,11 +592,11 @@ const createArtworkChoices = ({
       return 'missing';
     }
 
-    const options = await readPartOptions?.({
+    const asked = (await borrowedSeasonOf?.(mediaId, part.season)) ?? {
       externalId: title.externalId,
       season: part.season,
-      episode: part.episode,
-    }).catch(() => null);
+    };
+    const options = await readPartOptions?.({ ...asked, episode: part.episode }).catch(() => null);
 
     if (options === undefined || options === null) {
       return 'unavailable';
@@ -667,11 +672,11 @@ const createArtworkChoices = ({
       return { jobId };
     }
 
-    const options = await readPartOptions?.({
+    const asked = (await borrowedSeasonOf?.(mediaId, part.season)) ?? {
       externalId: title.externalId,
       season: part.season,
-      episode: part.episode,
-    }).catch(() => null);
+    };
+    const options = await readPartOptions?.({ ...asked, episode: part.episode }).catch(() => null);
 
     if (options === undefined || options === null) {
       return 'unavailable';

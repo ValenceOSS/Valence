@@ -1013,6 +1013,22 @@ const series = pgTable(
   ],
 );
 
+const seasonSource = pgTable(
+  'season_source',
+  {
+    seriesId: text('seriesId')
+      .notNull()
+      .references(() => series.id, { onDelete: 'cascade' }),
+    seasonNumber: integer('seasonNumber').notNull(),
+    externalId: text('externalId').notNull(),
+    externalSeason: integer('externalSeason').notNull(),
+    title: text('title').notNull(),
+    year: integer('year'),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('season_source_season_idx').on(table.seriesId, table.seasonNumber)],
+);
+
 const mediaItem = pgTable(
   'media_item',
   {
@@ -2376,6 +2392,7 @@ export {
   wordRule,
   extraChoice,
   episodePin,
+  seasonSource,
   versionChoice,
   titleEdit,
   titleChange,

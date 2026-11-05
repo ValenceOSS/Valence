@@ -7346,6 +7346,11 @@
     "context": "The label of a embedded video, used in the media detail dialog and in the show dialog. {title} is filled in by the app."
   },
   {
+    "handler": "common.titleYear",
+    "text": "{title} ({year})",
+    "context": "A title with the year it came out or began, such as an item in the import report or a show in the catalogue. {title} is its title and {year} its year."
+  },
+  {
     "handler": "common.today",
     "text": "Today",
     "context": "The name of today, above what is happening on it on the release calendar, and the button that brings the calendar back to it."
@@ -9764,6 +9769,16 @@
     "handler": "error.library.thatPathIsNotAReadable",
     "text": "That path isn’t a readable folder.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.thatSeasonCouldNotBeRead",
+    "text": "That season couldn’t be read.",
+    "context": "Refusal when the show and season a season is read from are sent in a form the server can't read."
+  },
+  {
+    "handler": "error.library.thatShowHasNoSuchSeason",
+    "text": "That show doesn’t have that season in the catalogue.",
+    "context": "Refusal when a season is set to be read from a season the chosen catalogue show doesn't have."
   },
   {
     "handler": "error.library.thatVersionChoiceCouldNotBeRead",
@@ -24271,6 +24286,51 @@
     "context": "Shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.seasonSourceDialog.episodesFrom",
+    "text": "Episodes from",
+    "context": "Label of a season's fact naming the other show and season its episodes are read from."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.fixSeasonMatch",
+    "text": "Fix season match",
+    "context": "Button on a season's page, and the title of its dialog, for reading the season's episodes from another show in the catalogue."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.readingTheSeasonAgain",
+    "text": "Reading the season again",
+    "context": "Toast after a season's episodes are set to be read from another show, or from the show's own season again."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.seasonOfShow",
+    "text": "Season of {show}",
+    "context": "Label of the list of a show's seasons to read a season's episodes from. {show} is the show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.showSeason",
+    "text": "{show}, season {season}",
+    "context": "A show and one of its seasons, such as A Show (2026), season 1. {show} is the show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.takesThisSeasonsEpisodes",
+    "text": "Takes this season’s episodes, pictures and dates from a season of another show, for when the catalogue lists the season as a show of its own.",
+    "context": "Explains the fix season match dialog before a show is searched for."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.thatShowHasNoSeasons",
+    "text": "The catalogue lists no seasons for {show}.",
+    "context": "Shown in the fix season match dialog when the chosen show has no seasons to choose from. {show} is the show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.thisSeasonsEpisodesComeFrom",
+    "text": "This season’s episodes come from {show}, season {season}. Search for another show, or use the show’s own season.",
+    "context": "Says where a season's episodes are read from now, in the fix season match dialog. {show} is a show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.useTheShowsOwnSeason",
+    "text": "Use the show’s own season",
+    "context": "Button that stops reading a season's episodes from another show."
+  },
+  {
     "handler": "screens.adminArea.seerrCard.answerOverseerrAndJellyseerr",
     "text": "Accept requests from Overseerr and Jellyseerr",
     "context": "A switch that turns the feature on. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
@@ -30374,11 +30434,6 @@
     "handler": "screens.importWizard.importReportView.plays",
     "text": "Plays",
     "context": "A tile in the import report: how many viewings come across with their dates."
-  },
-  {
-    "handler": "screens.importWizard.importReportView.titleYear",
-    "text": "{title} ({year})",
-    "context": "An unmatched item in the import report. {title} is its title and {year} its year."
   },
   {
     "handler": "screens.importWizard.importReportView.watchedResumesPlaysFavouritesRatingsPlaylists",

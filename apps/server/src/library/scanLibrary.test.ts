@@ -2,7 +2,8 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it, vi } from 'vitest';
 import { scanLibrary, selectChanged } from './scanLibrary';
 import type { MediaRow, ScanPhase, ScannedFile, ScannedItem, StoredItem } from './scanLibrary';
-import type { MetadataProvider } from './MetadataProvider';
+import type { MediaFacts, MetadataProvider } from './MetadataProvider';
+import type { SeasonSourceRow } from './SeasonSourceRow.types';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import type {
   MediaInput,
@@ -102,6 +103,7 @@ const harness = (options: {
   onProgress?: (phase: ScanPhase, processed: number, total: number) => void;
   trickplay?: { intervalSeconds: number; tileWidth: number; columns: number; rows: number };
   overrides?: { path: string; externalId: string; externalKind: 'tv' | 'movie' | 'none' }[];
+  seasonSources?: SeasonSourceRow[];
   defaultAudioLanguage?: string | null;
   atOnce?: number;
   capabilitiesImpl?: () => Promise<never>;
@@ -228,6 +230,7 @@ const harness = (options: {
           return Promise.resolve(paths.map((path) => departed(path)));
         },
         listOverrides: () => Promise.resolve(options.overrides ?? []),
+        listSeasonSources: () => Promise.resolve(options.seasonSources ?? []),
         ...(options.readProbe === undefined
           ? {}
           : {
@@ -1435,6 +1438,51 @@ describe('a correction somebody made', () => {
     await run();
 
     expect(asked).toBe('222');
+  });
+
+  it('reads a season somebody said is another show’s from that show, and the rest from their own', async () => {
+    const asked = new Map<string, MediaFacts['borrowed']>();
+    const { run } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [
+        file('/media/shows/Show/Season 06/show.s06e01.mkv'),
+        file('/media/shows/Show/Season 07/show.s07e01.mkv'),
+        file('/media/shows/Other/Season 07/other.s07e01.mkv'),
+      ],
+      seasonSources: [
+        {
+          folder: '/media/shows/Show',
+          seasonNumber: 7,
+          externalId: '900',
+          externalSeason: 1,
+          title: 'Show',
+          year: 2026,
+        },
+      ],
+      providers: [
+        {
+          name: 'catalogue',
+          describe: (facts) => {
+            asked.set(facts.path, facts.borrowed);
+
+            return Promise.resolve({ title: 'Episode', year: 2016, seriesTitle: 'Show' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(Object.fromEntries(asked)).toEqual({
+      '/media/shows/Show/Season 06/show.s06e01.mkv': [
+        { seasonNumber: 7, externalId: '900', externalSeason: 1 },
+      ],
+      '/media/shows/Show/Season 07/show.s07e01.mkv': [
+        { seasonNumber: 7, externalId: '900', externalSeason: 1 },
+      ],
+      '/media/shows/Other/Season 07/other.s07e01.mkv': undefined,
+    });
   });
 
   it('is stored as a correction, so it replaces the programme’s match', async () => {

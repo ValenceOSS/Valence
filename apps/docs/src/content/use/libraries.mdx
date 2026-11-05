@@ -322,7 +322,7 @@ The page's address names the title and where you are on it (`?media=`, `&titleTa
 A season and an episode each have a page of their own, laid out as the series' is. A trail at the top leads back up to **Media**, the series and, from an episode, its season, and **Previous** and **Next**, or **K** and **J**, step to the season or episode before and after it.
 
 - An episode's page shows its still, its name and number, such as S01E02, its quality, and at the right the series, when it aired, how long it runs, its size and when it was added. **Change the episode…**, **Find subtitles** and **Re-encode** are its buttons. **Change the episode…** says which episode the file is whatever its name says, or which episodes a file of several holds, and keeps that through every scan until **Go by the file name again**. Its other file actions are in its menu. Its tabs are **Details** (its title, overview, air date, directors, writers and note), **People** (its guest stars, edited as a title's cast is), **Artwork** (its still, from TMDB's), **File** (the file manager narrowed to its video and the subtitles and pictures beside it) and **History**.
-- A season's page shows the series' poster, the season's name and year, and how many of its episodes are here. Its tabs are **Details** (its name, overview, air date and note), **Artwork** (its poster, from TMDB's), **Episodes**, where pressing an episode opens its page, and **History**.
+- A season's page shows the series' poster, the season's name and year, and how many of its episodes are here, with **Episodes from** where the season is read from another show. **Fix season match** is its button, described under [A season that is another show](#a-season-that-is-another-show). Its tabs are **Details** (its name, overview, air date and note), **Artwork** (its poster, from TMDB's), **Episodes**, where pressing an episode opens its page, and **History**.
 
 A season's page adds `&part=season` to the address, and an episode's names it with `&episode=`.
 
@@ -334,6 +334,16 @@ Sometimes the catalogue matches a file to the wrong film or series, usually beca
 2. Fix match searches under the title's name as soon as it opens, and shows the file or folder it is matching. Change the name, choose **Film** or **Show**, or paste a TMDB address or number, an IMDb id or a TVDB id. Each result says how well it fits, and **Show more** lists the next page.
 3. Choose the right entry. Fix match then compares the title with it field by field. Fields that would change are ticked to take the new value, and fields you edited or locked are left as they are unless you tick them.
 4. Press **Apply**. Valence records the correction and reads the files again, and every later scan uses it. For an episode the correction applies to every episode of the series.
+
+### A season that is another show
+
+TMDB sometimes lists a season as a show of its own, such as a revival with new presenters, while your files, often named by Sonarr from TVDB, carry on the old show's numbering as its next season. Valence then finds no such season, and its episodes have no stills, titles or air dates from TMDB.
+
+1. Open the season's page and press **Fix season match**. It's there for a series kept in a folder of its own, which is how Valence knows a new file belongs to that season.
+2. It searches TMDB under the series' name. Choose the show the season really is; the year beside each tells a revival from the show it carries on.
+3. Choose that show's season, and press **Apply**.
+
+The series stays the one it is matched to, so it is not split in two. Only that season's episodes, its poster and its pictures come from the other show, by their episode numbers, new episodes of it are read the same way when they arrive, and what the other show has still to air shows on the release calendar and under Coming up as that season's. **Episodes from** on the season's page says which show and season they come from, and **Use the show's own season** in the same dialog goes back. Changing which show the whole series is matched to doesn't touch it.
 
 **Refresh** on the title's page, in a title's menu in the list, or on the selection bar asks TMDB again: **Update details** keeps the match and every edit, **Update some fields** asks only for the fields you tick, **Match again** forgets the match and finds it again from the file names, **Fetch artwork** fetches the pictures again, and **Read the files again** reads each file's streams and length afresh. **Unmatch** takes the title back to what its file names say and keeps it unmatched. You need the media override permission.
 

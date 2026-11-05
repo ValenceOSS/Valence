@@ -9,6 +9,10 @@ import {
   EpisodePinRequestSchema,
 } from '@ValenceContracts/schemas/EpisodeOrder';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import {
+  CatalogueShowIdSchema,
+  ChooseSeasonSourceSchema,
+} from '@ValenceContracts/schemas/SeasonSource';
 import { VersionChoiceSchema } from '@ValenceContracts/schemas/VersionChoice';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
@@ -789,6 +793,71 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     await recordAudit(context, 'media.matchFixed', named.target, named.detail);
 
     return context.json(pinned, 200);
+  });
+
+  app.get('/api/media/:id/season-source', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const state = (await library.readSeasonSource?.(context.req.param('id'))) ?? {
+      source: null,
+      canChoose: false,
+    };
+
+    return context.json(state, 200);
+  });
+
+  app.get('/api/media/:id/season-source/seasons', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const show = CatalogueShowIdSchema.safeParse(context.req.query('show'));
+
+    if (!show.success) {
+      return context.json(refuse('error.library.thatSeasonCouldNotBeRead'), 400);
+    }
+
+    const seasons = (await library.readCatalogueSeasons?.(show.data)) ?? null;
+
+    return seasons === null
+      ? context.json(refuse('error.common.noSuchItem'), 404)
+      : context.json(seasons, 200);
+  });
+
+  app.put('/api/media/:id/season-source', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = ChooseSeasonSourceSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thatSeasonCouldNotBeRead'), 400);
+    }
+
+    const chosen = (await library.chooseSeasonSource?.(id, asked.data.source)) ?? null;
+
+    if (chosen === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    if (chosen === 'noSuchSeason') {
+      return context.json(refuse('error.library.thatShowHasNoSuchSeason'), 400);
+    }
+
+    if (chosen === 'catalogueUnavailable') {
+      return context.json(refuse('error.library.catalogueCouldNotBeAsked'), 502);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.matchFixed', named.target, named.detail);
+
+    return context.json(chosen, 200);
   });
 
   app.put('/api/media/:id/version', async (context) => {

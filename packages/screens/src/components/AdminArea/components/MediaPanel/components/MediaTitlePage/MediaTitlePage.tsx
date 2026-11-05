@@ -2,6 +2,8 @@ import { ExtraChoiceDialog } from './components/ExtraChoiceDialog/ExtraChoiceDia
 import { SkipMarkers } from './components/SkipMarkers/SkipMarkers';
 import { EpisodeNumberDialog } from './components/EpisodeNumberDialog/EpisodeNumberDialog';
 import { EpisodeOrderPicker } from './components/EpisodeOrderPicker/EpisodeOrderPicker';
+import { SeasonSourceDialog } from './components/SeasonSourceDialog/SeasonSourceDialog';
+import { nameOfCatalogueShow } from '@ValenceScreens/admin/nameOfCatalogueShow';
 import { TitleVersions } from './components/TitleVersions/TitleVersions';
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
@@ -170,6 +172,7 @@ const MediaTitlePage = ({
   const [isUnmatching, setIsUnmatching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isNumbering, setIsNumbering] = useState(false);
+  const [isSourcing, setIsSourcing] = useState(false);
   const [markingExtra, setMarkingExtra] = useState<{
     mediaId: string;
     name: string;
@@ -259,6 +262,12 @@ const MediaTitlePage = ({
       ? -1
       : pagedSeasons.findIndex((one) => one.season === at.season);
   const seasonPage = seasonPageAt < 0 ? undefined : pagedSeasons[seasonPageAt];
+  const sourced = useQuery(
+    adminQueries.seasonSource(
+      seasonPage === undefined || !title.isMatched ? null : fileOfSeason(seasonPage),
+    ),
+  );
+  const seasonFrom = seasonPage === undefined ? null : (sourced.data?.source ?? null);
   const isPartPage = openEpisodeOf !== undefined || seasonPage !== undefined;
 
   useShortcut('K', isPartPage ? undefined : onPrevious);
@@ -829,8 +838,45 @@ const MediaTitlePage = ({
               seasonLeaves.reduce((sum, leaf) => sum + (leaf.lead.sizeBytes ?? 0), 0),
             ),
           },
+          ...(seasonFrom === null
+            ? []
+            : [
+                {
+                  label: say('screens.adminArea.seasonSourceDialog.episodesFrom'),
+                  value: say('screens.adminArea.seasonSourceDialog.showSeason', {
+                    show: nameOfCatalogueShow(seasonFrom),
+                    season: seasonFrom.externalSeason.toString(),
+                  }),
+                },
+              ]),
         ]}
-        actions={null}
+        actions={
+          sourced.data?.canChoose === true ? (
+            <>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setIsSourcing(true);
+                }}
+              >
+                {say('screens.adminArea.seasonSourceDialog.fixSeasonMatch')}
+              </Button>
+              <SeasonSourceDialog
+                key={`${seasonFile}-${isSourcing.toString()}`}
+                mediaId={seasonFile}
+                showName={title.name}
+                ownExternalId={title.lead.externalId ?? null}
+                current={seasonFrom}
+                isOpen={isSourcing}
+                onClose={() => {
+                  setIsSourcing(false);
+                }}
+                onChanged={follow}
+              />
+            </>
+          ) : null
+        }
         tab={at.tab}
         onTab={(tab) => {
           moveTo({ ...at, tab });

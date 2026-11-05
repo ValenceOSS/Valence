@@ -41,7 +41,7 @@ type MetadataServiceOptions = {
   db: AnyValenceDatabase;
   edits: TitleEditStore;
   certificationRegion: () => Promise<string>;
-  seriesShape: (externalId: string) => Promise<SeriesShape | null>;
+  seriesShape: (externalId: string, mediaId: string) => Promise<SeriesShape | null>;
   describeCandidate?: (
     externalId: string,
     kind: 'tv' | 'movie',
@@ -269,7 +269,9 @@ const createTitleMetadataService = ({
     seasonNumber: number | null,
   ): Promise<Partial<Record<TitleField, TitleValue>>> => {
     const shape =
-      file.externalId === null ? null : await seriesShape(file.externalId).catch(() => null);
+      file.externalId === null
+        ? null
+        : await seriesShape(file.externalId, file.id).catch(() => null);
 
     if (seasonNumber !== null) {
       const season = shape?.seasons.find((one) => one.seasonNumber === seasonNumber);

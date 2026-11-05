@@ -165,6 +165,9 @@ type SearchResult = z.infer<typeof SearchResultSchema>;
 const SEASONS_READ_FOR_A_DATE = 3;
 
 const SeasonResponseSchema = z.object({
+  overview: z.string().optional(),
+  poster_path: z.string().nullish(),
+  air_date: z.string().nullish(),
   episodes: z
     .array(
       z.object({
@@ -1069,7 +1072,9 @@ const createCatalogueMetadataProvider = ({
        * An episode is looked up by its number within the programme, and never checked against the
        * title its file gives: a file's title is whatever a release called it, and the programme and
        * the number are what say which episode it is. One named by its air date is looked up by that
-       * day, and the season and number it turns out to have are handed back with it.
+       * day, and the season and number it turns out to have are handed back with it. A season
+       * somebody said is another entry's is looked up there instead, while the programme it belongs
+       * to stays this one.
        *
        * @param detail - The catalogue's own record.
        * @returns The metadata to store against the file.
@@ -1087,11 +1092,30 @@ const createCatalogueMetadataProvider = ({
 
         const poster = imageUrl(imageBaseUrl, detail.poster_path, 'w500');
 
+        const borrowed = facts.borrowed ?? [];
+        const source =
+          borrowed.find((one) => one.seasonNumber === facts.episode?.seasonNumber) ?? null;
         const ordered =
-          facts.episodeOrder === undefined || episodeNumber === null
+          source !== null || facts.episodeOrder === undefined || episodeNumber === null
             ? null
             : await readOrdered(key, facts.episodeOrder, episodeNumber);
-        const seasonAsked = ordered?.[0]?.season ?? facts.episode?.seasonNumber ?? 1;
+        const seasonAsked =
+          source?.externalSeason ?? ordered?.[0]?.season ?? facts.episode?.seasonNumber ?? 1;
+        const borrowedCounts = isEpisode
+          ? await Promise.all(
+              borrowed.map(async (one) => {
+                const listed = SeasonResponseSchema.safeParse(
+                  await inLanguage(
+                    `/tv/${one.externalId}/season/${one.externalSeason.toString()}`,
+                    key,
+                    {},
+                  ),
+                );
+
+                return listed.success ? listed.data.episodes.length : 0;
+              }),
+            )
+          : [];
         const numbersAsked =
           ordered === null
             ? episodeNumber === null
@@ -1102,7 +1126,7 @@ const createCatalogueMetadataProvider = ({
         const [season, lettering] = await Promise.all([
           episodeNumber !== null
             ? inLanguage(
-                `/tv/${detail.id.toString()}/season/${seasonAsked.toString()}`,
+                `/tv/${source?.externalId ?? detail.id.toString()}/season/${seasonAsked.toString()}`,
                 key,
                 {},
               ).then((answer) => SeasonResponseSchema.safeParse(answer))
@@ -1189,9 +1213,19 @@ const createCatalogueMetadataProvider = ({
           ...(guestStars.length === 0 ? {} : { guestStars }),
           ...(isEpisode && detail.seasons.length > 0
             ? {
-                episodeTotal: detail.seasons
-                  .filter((one) => one.season_number > 0)
-                  .reduce((sum, one) => sum + one.episode_count, 0),
+                episodeTotal:
+                  detail.seasons
+                    .filter(
+                      (one) =>
+                        one.season_number > 0 &&
+                        !borrowed.some((taken) => taken.seasonNumber === one.season_number),
+                    )
+                    .reduce((sum, one) => sum + one.episode_count, 0) +
+                  borrowed.reduce(
+                    (sum, one, at) =>
+                      one.seasonNumber > 0 ? sum + (borrowedCounts[at] ?? 0) : sum,
+                    0,
+                  ),
               }
             : {}),
           ...(directors.length === 0 ? {} : { directors }),
@@ -1941,12 +1975,27 @@ const createCatalogueMetadataProvider = ({
           };
     },
 
-    describeSeries: async (externalId, order) => {
+    describeSeries: async (externalId, order, borrowed = []) => {
       const key = await readKey();
 
       if (key === null || key === '') {
         return null;
       }
+
+      const episodesOf = (listed: z.infer<typeof SeasonResponseSchema>['episodes']) =>
+        listed.map((episode) => ({
+          episodeNumber: episode.episode_number,
+          title:
+            episode.name === undefined || episode.name === ''
+              ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
+                  episode_number: episode.episode_number.toString(),
+                })
+              : episode.name,
+          stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
+          overview:
+            episode.overview === undefined || episode.overview === '' ? null : episode.overview,
+          airDate: episode.air_date ?? null,
+        }));
 
       const detailed = await request(`/tv/${externalId}`, key, {});
       const detail = DetailResponseSchema.safeParse(detailed);
@@ -2013,29 +2062,48 @@ const createCatalogueMetadataProvider = ({
                 season.overview === undefined || season.overview === '' ? null : season.overview,
               posterUrl: imageUrl(imageBaseUrl, season.poster_path, 'w342'),
               airDate: season.air_date ?? null,
-              episodes: !listed.success
-                ? []
-                : listed.data.episodes.map((episode) => ({
-                    episodeNumber: episode.episode_number,
-                    title:
-                      episode.name === undefined || episode.name === ''
-                        ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
-                            episode_number: episode.episode_number.toString(),
-                          })
-                        : episode.name,
-                    stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
-                    overview:
-                      episode.overview === undefined || episode.overview === ''
-                        ? null
-                        : episode.overview,
-                    airDate: episode.air_date ?? null,
-                  })),
+              episodes: listed.success ? episodesOf(listed.data.episodes) : [],
             };
           }),
         ));
+      const fromElsewhere = (
+        await Promise.all(
+          borrowed.map(async (one) => {
+            const listed = SeasonResponseSchema.safeParse(
+              await request(
+                `/tv/${one.externalId}/season/${one.externalSeason.toString()}`,
+                key,
+                {},
+              ),
+            );
+
+            return listed.success
+              ? [
+                  {
+                    seasonNumber: one.seasonNumber,
+                    episodeCount: listed.data.episodes.length,
+                    name: null,
+                    overview:
+                      listed.data.overview === undefined || listed.data.overview === ''
+                        ? null
+                        : listed.data.overview,
+                    posterUrl: imageUrl(imageBaseUrl, listed.data.poster_path, 'w342'),
+                    airDate: listed.data.air_date ?? null,
+                    episodes: episodesOf(listed.data.episodes),
+                  },
+                ]
+              : [];
+          }),
+        )
+      ).flat();
 
       return {
-        seasons,
+        seasons: [
+          ...seasons.filter(
+            (season) => !fromElsewhere.some((one) => one.seasonNumber === season.seasonNumber),
+          ),
+          ...fromElsewhere,
+        ].toSorted((left, right) => left.seasonNumber - right.seasonNumber),
         status:
           detail.data.status === undefined || detail.data.status === '' ? null : detail.data.status,
         overview:

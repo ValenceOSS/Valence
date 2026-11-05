@@ -208,7 +208,7 @@ const positionOf = (positionSeconds: number): string => {
 const titleOfRequest = (request: WebhookRequest): string =>
   request.year === null
     ? request.title
-    : say('screens.importWizard.importReportView.titleYear', {
+    : say('common.titleYear', {
         title: request.title,
         year: request.year.toString(),
       });

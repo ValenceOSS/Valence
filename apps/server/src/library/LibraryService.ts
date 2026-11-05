@@ -1,5 +1,10 @@
 import type { WordRule } from '@ValenceContracts/schemas/WordRule';
 import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
+import type {
+  CatalogueSeasons,
+  ChooseSeasonSource,
+  SeasonSourceState,
+} from '@ValenceContracts/schemas/SeasonSource';
 import type { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { EntryFacts } from '@ValenceServer/files/describeLibraryEntries';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
@@ -278,6 +283,12 @@ type LibraryService = ShowService & {
   ) => Promise<Correction | null>;
   chooseEpisodeOrder?: (mediaId: string, order: string | null) => Promise<Correction | null>;
   readEpisodeOrders?: (mediaId: string) => Promise<EpisodeOrders | null>;
+  readSeasonSource?: (mediaId: string) => Promise<SeasonSourceState>;
+  chooseSeasonSource?: (
+    mediaId: string,
+    source: ChooseSeasonSource['source'],
+  ) => Promise<Correction | 'noSuchSeason' | 'catalogueUnavailable' | null>;
+  readCatalogueSeasons?: (externalId: string) => Promise<CatalogueSeasons | null>;
   chooseVersion?: (
     mediaId: string,
     choice: { label?: string | null; isStanding?: boolean },

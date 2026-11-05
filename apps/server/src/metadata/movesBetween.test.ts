@@ -44,6 +44,15 @@ describe('movesBetween', () => {
     ).toEqual([{ from: 'tv:9:s1e2', to: 'tv:9:e77', kind: 'episode' }]);
   });
 
+  it('moves an episode back to its number once it has lost the catalogue’s id for it', () => {
+    expect(
+      movesBetween(
+        { kind: 'episode', show: 'tv:9', season: 'tv:9:s7', episode: 'tv:9:e900' },
+        { kind: 'episode', show: 'tv:9', season: 'tv:9:s7', episode: 'tv:9:s7e2' },
+      ),
+    ).toEqual([{ from: 'tv:9:e900', to: 'tv:9:s7e2', kind: 'episode' }]);
+  });
+
   it('leaves an episode of another programme, or a renumbered one, where it is', () => {
     expect(
       movesBetween(

@@ -702,6 +702,108 @@ describe('createCatalogueMetadataProvider', () => {
     expect(found).toMatchObject({ externalId: '5', title: 'Biscuits with the Boss' });
   });
 
+  it('reads an episode of a season somebody said is another show’s from that show, staying this one', async () => {
+    const { instance, calls } = provider({
+      '/tv/9/season/1': {
+        episodes: [
+          {
+            episode_number: 2,
+            name: 'A New Beginning',
+            still_path: '/new.jpg',
+            air_date: '2026-09-04',
+            overview: 'The revival begins.',
+          },
+        ],
+      },
+      '/tv/5/episode_groups': { results: [] },
+      '/tv/episode_group/dvd': {
+        groups: [
+          {
+            name: 'Disc 1',
+            order: 1,
+            episodes: [{ season_number: 1, episode_number: 1, order: 0 }],
+          },
+        ],
+      },
+      '/tv/5': {
+        id: 5,
+        name: 'Old Show',
+        genres: [],
+        backdrop_path: '/old.jpg',
+        seasons: [
+          { season_number: 0, episode_count: 4 },
+          { season_number: 1, episode_count: 10 },
+          { season_number: 7, episode_count: 3 },
+        ],
+      },
+    });
+
+    const found = await instance.describe({
+      ...facts(
+        '/media/Old Show/Season 7/Old Show - S07E02 - A New Beginning WEBDL-1080p.mkv',
+        { seriesTitle: 'Old Show', seasonNumber: 7, episodeNumber: 2 },
+        '5',
+      ),
+      episodeOrder: 'dvd',
+      borrowed: [{ seasonNumber: 7, externalId: '9', externalSeason: 1 }],
+    });
+
+    expect(found).toMatchObject({
+      externalId: '5',
+      seriesTitle: 'Old Show',
+      title: 'A New Beginning',
+      overview: 'The revival begins.',
+      backdropUrl: 'https://image.tmdb.org/t/p/w780/new.jpg',
+      releaseDate: '2026-09-04',
+      episodeTotal: 11,
+    });
+    expect(calls.some((call) => call.includes('/tv/5/season/7'))).toBe(false);
+    expect(calls.some((call) => call.includes('episode_group'))).toBe(false);
+  });
+
+  it('reads every episode a file of several holds from the season it is read from', async () => {
+    const { instance } = provider({
+      '/tv/9/season/1': {
+        episodes: [
+          { episode_number: 1, name: 'First' },
+          { episode_number: 2, name: 'Second' },
+        ],
+      },
+      '/tv/5': { id: 5, name: 'Old Show', genres: [] },
+    });
+
+    const found = await instance.describe({
+      ...facts(
+        '/media/Old Show/Season 7/Old Show - S07E01-E02.mkv',
+        { seriesTitle: 'Old Show', seasonNumber: 7, episodeNumber: 1, episodeNumberEnd: 2 },
+        '5',
+      ),
+      borrowed: [{ seasonNumber: 7, externalId: '9', externalSeason: 1 }],
+    });
+
+    expect(found?.title).toBe('First / Second');
+  });
+
+  it('reads the programme’s other seasons from its own entry', async () => {
+    const { instance, calls } = provider({
+      '/tv/5/season/6': { episodes: [{ episode_number: 1, name: 'Own Episode' }] },
+      '/tv/9/season/1': { episodes: [] },
+      '/tv/5': { id: 5, name: 'Old Show', genres: [] },
+    });
+
+    const found = await instance.describe({
+      ...facts(
+        '/media/Old Show/Season 6/Old Show - S06E01.mkv',
+        { seriesTitle: 'Old Show', seasonNumber: 6, episodeNumber: 1 },
+        '5',
+      ),
+      borrowed: [{ seasonNumber: 7, externalId: '9', externalSeason: 1 }],
+    });
+
+    expect(found?.title).toBe('Own Episode');
+    expect(calls.some((call) => call.includes('/tv/5/season/6'))).toBe(true);
+  });
+
   it('accepts an episode title that only roughly agrees, not just an identical one', async () => {
     const { instance } = provider({
       '/tv/5/season/1': { episodes: [{ episode_number: 2, name: 'The Biscuits Special' }] },
@@ -1279,6 +1381,67 @@ describe('reading the shape of a series', () => {
         },
       ],
     });
+  });
+
+  it('lays out a season somebody said is another show’s from that show, in its own place', async () => {
+    const { instance } = provider({
+      '/tv/5/season/1': { episodes: [{ episode_number: 1, name: 'Pilot' }] },
+      '/tv/5/season/2': { episodes: [] },
+      '/tv/9/season/1': {
+        poster_path: '/revival.jpg',
+        air_date: '2026-09-04',
+        overview: 'New presenters.',
+        episodes: [
+          { episode_number: 1, name: 'A New Beginning', air_date: '2026-09-04' },
+          { episode_number: 2, name: 'Second Outing' },
+        ],
+      },
+      '/tv/5': {
+        ...SERIES,
+        seasons: [
+          { season_number: 1, episode_count: 1 },
+          { season_number: 2, episode_count: 0 },
+        ],
+      },
+    });
+
+    const shape = await instance.describeSeries?.('5', undefined, [
+      { seasonNumber: 2, externalId: '9', externalSeason: 1 },
+      { seasonNumber: 3, externalId: '9', externalSeason: 1 },
+    ]);
+
+    expect(shape?.seasons.map((one) => one.seasonNumber)).toEqual([1, 2, 3]);
+    expect(shape?.seasons[1]).toEqual({
+      seasonNumber: 2,
+      episodeCount: 2,
+      name: null,
+      overview: 'New presenters.',
+      posterUrl: 'https://image.tmdb.org/t/p/w342/revival.jpg',
+      airDate: '2026-09-04',
+      episodes: [
+        {
+          episodeNumber: 1,
+          title: 'A New Beginning',
+          stillUrl: null,
+          overview: null,
+          airDate: '2026-09-04',
+        },
+        { episodeNumber: 2, title: 'Second Outing', stillUrl: null, overview: null, airDate: null },
+      ],
+    });
+  });
+
+  it('keeps the show’s own season where the one it is read from cannot be read', async () => {
+    const { instance } = provider({
+      '/tv/5/season/1': { episodes: [{ episode_number: 1, name: 'Pilot' }] },
+      '/tv/5': SERIES,
+    });
+
+    const shape = await instance.describeSeries?.('5', undefined, [
+      { seasonNumber: 1, externalId: '404', externalSeason: 1 },
+    ]);
+
+    expect(shape?.seasons[0]?.episodes[0]?.title).toBe('Pilot');
   });
 
   it('keeps the day each episode aired, and whether the series is still running', async () => {

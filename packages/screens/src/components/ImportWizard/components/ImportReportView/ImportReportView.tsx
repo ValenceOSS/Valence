@@ -145,7 +145,7 @@ const ImportReportView = ({ report }: ImportReportViewProps) => (
               <span className="text-sm text-text">
                 {item.year === null
                   ? item.title
-                  : say('screens.importWizard.importReportView.titleYear', {
+                  : say('common.titleYear', {
                       title: item.title,
                       year: item.year.toString(),
                     })}

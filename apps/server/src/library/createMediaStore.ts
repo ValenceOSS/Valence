@@ -9,6 +9,7 @@ import { and, asc, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } fro
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   episodePin,
+  seasonSource,
   wordRule,
   extraChoice,
   mediaItem,
@@ -34,6 +35,7 @@ import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
+import { folderOfSeriesKey } from './folderOfSeriesKey';
 import { keptCopiesOf } from './keptCopiesOf';
 import { carryOverViewing } from './carryOverViewing';
 import { successorsOf } from './successorsOf';
@@ -825,6 +827,38 @@ const createMediaStore = (
               .set({ seriesId: kept })
               .where(inArray(collectionEntry.seriesId, losers));
 
+            const sources = await tx
+              .select({ seriesId: seasonSource.seriesId, seasonNumber: seasonSource.seasonNumber })
+              .from(seasonSource)
+              .where(inArray(seasonSource.seriesId, [kept, ...losers]));
+            const claimed = new Set(
+              sources.filter((one) => one.seriesId === kept).map((one) => one.seasonNumber),
+            );
+
+            for (const one of sources.filter((source) => source.seriesId !== kept)) {
+              if (claimed.has(one.seasonNumber)) {
+                await tx
+                  .delete(seasonSource)
+                  .where(
+                    and(
+                      eq(seasonSource.seriesId, one.seriesId),
+                      eq(seasonSource.seasonNumber, one.seasonNumber),
+                    ),
+                  );
+              } else {
+                claimed.add(one.seasonNumber);
+                await tx
+                  .update(seasonSource)
+                  .set({ seriesId: kept })
+                  .where(
+                    and(
+                      eq(seasonSource.seriesId, one.seriesId),
+                      eq(seasonSource.seasonNumber, one.seasonNumber),
+                    ),
+                  );
+              }
+            }
+
             await tx
               .update(mediaItem)
               .set({ seriesId: kept })
@@ -929,6 +963,27 @@ const createMediaStore = (
         })
         .from(episodePin)
         .where(eq(episodePin.libraryId, libraryId)),
+
+    listSeasonSources: async (libraryId) => {
+      const rows = await db
+        .select({
+          key: series.key,
+          seasonNumber: seasonSource.seasonNumber,
+          externalId: seasonSource.externalId,
+          externalSeason: seasonSource.externalSeason,
+          title: seasonSource.title,
+          year: seasonSource.year,
+        })
+        .from(seasonSource)
+        .innerJoin(series, eq(series.id, seasonSource.seriesId))
+        .where(eq(series.libraryId, libraryId));
+
+      return rows.flatMap(({ key, ...row }) => {
+        const folder = folderOfSeriesKey(key);
+
+        return folder === null ? [] : [{ ...row, folder }];
+      });
+    },
 
     listEpisodeOrders: async (libraryId) => {
       const rows = await db

@@ -42,6 +42,16 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       _pin: { seasonNumber: number; episodeNumber: number; episodeNumberEnd: number | null } | null,
     ) => Promise.resolve({ corrected: 1, jobId: 'job' }),
   );
+  const chooseSeasonSource = vi.fn(
+    (_mediaId: string, source: { externalId: string; externalSeason: number } | null) =>
+      Promise.resolve(
+        source?.externalSeason === 9
+          ? ('noSuchSeason' as const)
+          : source?.externalId === '500'
+            ? ('catalogueUnavailable' as const)
+            : { corrected: 6, jobId: 'job' },
+      ),
+  );
   const readImage = vi.fn((_url: string, _width?: number) =>
     Promise.resolve({ body: new TextEncoder().encode('picture').buffer, contentType: 'image/png' }),
   );
@@ -72,6 +82,22 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
         ),
       readEpisodeOrders: () =>
         Promise.resolve({ orders: [{ id: 'dvd', name: 'DVD', type: 3 }], chosen: null }),
+      readSeasonSource: (mediaId) =>
+        Promise.resolve(
+          mediaId === MEDIA_ID
+            ? {
+                source: { externalId: '900', externalSeason: 1, title: 'Revival', year: 2026 },
+                canChoose: true,
+              }
+            : { source: null, canChoose: false },
+        ),
+      chooseSeasonSource,
+      readCatalogueSeasons: (externalId) =>
+        Promise.resolve(
+          externalId === '900'
+            ? { seasons: [{ seasonNumber: 1, name: null, episodeCount: 6, airDate: '2026-09-04' }] }
+            : null,
+        ),
     },
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
@@ -92,7 +118,7 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       headers: { cookie, origin: TEST_ORIGIN, ...init.headers },
     });
 
-  return { ask, uploadArtwork, readImage, chooseVersion, pinEpisode };
+  return { ask, uploadArtwork, readImage, chooseVersion, pinEpisode, chooseSeasonSource };
 };
 
 describe('serveLibrary', () => {
@@ -190,6 +216,52 @@ describe('serveLibrary', () => {
       chosen: null,
     });
     expect(await chosen.json()).toEqual({ corrected: 4, jobId: 'job' });
+  });
+
+  it('says which show a season is read from, and lists the seasons a show has', async () => {
+    const { ask } = await build();
+
+    expect(await (await ask(`/api/media/${MEDIA_ID}/season-source`)).json()).toEqual({
+      source: { externalId: '900', externalSeason: 1, title: 'Revival', year: 2026 },
+      canChoose: true,
+    });
+    expect(await (await ask('/api/media/other/season-source')).json()).toEqual({
+      source: null,
+      canChoose: false,
+    });
+    expect(
+      await (await ask(`/api/media/${MEDIA_ID}/season-source/seasons?show=900`)).json(),
+    ).toEqual({
+      seasons: [{ seasonNumber: 1, name: null, episodeCount: 6, airDate: '2026-09-04' }],
+    });
+    expect((await ask(`/api/media/${MEDIA_ID}/season-source/seasons?show=1`)).status).toBe(404);
+    expect((await ask(`/api/media/${MEDIA_ID}/season-source/seasons?show=x`)).status).toBe(400);
+  });
+
+  it('reads a season from another show, refusing a season that show does not have', async () => {
+    const { ask, chooseSeasonSource } = await build();
+    const put = (body: object) =>
+      ask(`/api/media/${MEDIA_ID}/season-source`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    const answer = await put({ source: { externalId: '900', externalSeason: 1 } });
+
+    expect(answer.status).toBe(200);
+    expect(await answer.json()).toEqual({ corrected: 6, jobId: 'job' });
+    expect(chooseSeasonSource).toHaveBeenCalledWith(MEDIA_ID, {
+      externalId: '900',
+      externalSeason: 1,
+    });
+    expect((await put({ source: { externalId: '900', externalSeason: 9 } })).status).toBe(400);
+    expect((await put({ source: { externalId: 'not an id', externalSeason: 1 } })).status).toBe(
+      400,
+    );
+    expect((await put({ source: { externalId: '500', externalSeason: 1 } })).status).toBe(502);
+    expect((await put({ source: null })).status).toBe(200);
+    expect(chooseSeasonSource).toHaveBeenLastCalledWith(MEDIA_ID, null);
   });
 
   it('marks a file an extra of a title, or not an extra, refusing a kind it does not know', async () => {

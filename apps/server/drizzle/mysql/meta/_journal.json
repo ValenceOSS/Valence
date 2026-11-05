@@ -442,6 +442,13 @@
       "when": 1793846481787,
       "tag": "0062_libraries_can_write_nfo_files",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "5",
+      "when": 1793918433163,
+      "tag": "0063_a_season_can_be_read_from_another_show",
+      "breakpoints": true
     }
   ]
 }

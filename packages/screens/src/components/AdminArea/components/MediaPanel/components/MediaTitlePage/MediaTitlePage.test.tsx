@@ -9,15 +9,20 @@ import type { ReactElement } from 'react';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 import type * as LibraryQueriesModule from '@ValenceClient/query/libraryQueries';
+import type { SeasonSourceState } from '@ValenceContracts/schemas/SeasonSource';
 
-const { unmatch, listFolder, readShow } = vi.hoisted(() => ({
+const { unmatch, listFolder, readShow, readSeasonSource } = vi.hoisted(() => ({
   unmatch: vi.fn(),
   listFolder: vi.fn(),
   readShow: vi.fn(),
+  readSeasonSource: vi.fn((_mediaId: string): Promise<SeasonSourceState> =>
+    Promise.resolve({ source: null, canChoose: true }),
+  ),
 }));
 
 vi.mock('@ValenceClient/admin/unmatchTitle', () => ({ unmatchTitle: unmatch }));
 vi.mock('@ValenceClient/admin/fetchLibraryFolder', () => ({ fetchLibraryFolder: listFolder }));
+vi.mock('@ValenceClient/admin/fetchSeasonSource', () => ({ fetchSeasonSource: readSeasonSource }));
 vi.mock('@ValenceClient/query/libraryQueries', async (importOriginal) => {
   const actual = await importOriginal<typeof LibraryQueriesModule>();
 
@@ -363,6 +368,25 @@ describe('MediaTitlePage', () => {
       episode: 'e2',
       isSeasonPage: false,
     });
+  });
+
+  it('says which other show a season’s episodes come from, and offers to fix the season’s match', async () => {
+    readSeasonSource.mockResolvedValueOnce({
+      source: { externalId: '900', externalSeason: 1, title: 'A Show', year: 2026 },
+      canChoose: true,
+    });
+
+    const matched = EPISODES.map((one) => ({ ...one, externalId: '100' }));
+
+    readShow.mockResolvedValue({ seasons: [{ seasonNumber: 1, episodes: matched }] });
+    drawn(titleOf(...matched), {
+      titlePlace: { tab: 'details', season: 1, episode: null, isSeasonPage: true },
+    });
+
+    expect((await screen.findAllByText('A Show (2026), season 1')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Episodes from').length).toBeGreaterThan(0);
+    expect(readSeasonSource).toHaveBeenCalledWith('e1');
+    expect(screen.getByRole('button', { name: 'Fix season match' })).toBeInTheDocument();
   });
 
   it('goes back from an episode to its programme’s seasons', async () => {

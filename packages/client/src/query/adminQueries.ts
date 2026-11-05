@@ -1,3 +1,5 @@
+import { fetchCatalogueSeasons } from '@ValenceClient/admin/fetchCatalogueSeasons';
+import { fetchSeasonSource } from '@ValenceClient/admin/fetchSeasonSource';
 import { fetchTitleValues } from '@ValenceClient/admin/fetchTitleValues';
 import { fetchTitleFiles } from '@ValenceClient/admin/fetchTitleFiles';
 import { fetchTitlePage } from '@ValenceClient/admin/fetchTitlePage';
@@ -770,6 +772,33 @@ const libraryProblems = () =>
   });
 
 /**
+ * Which catalogue show's season a season is read from, where it is another's.
+ *
+ * @param mediaId - Any episode of the season, or nothing where none is asked for.
+ * @returns The query options.
+ */
+const seasonSource = (mediaId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'season-source', mediaId],
+    queryFn: () => fetchSeasonSource(mediaId ?? ''),
+    enabled: mediaId !== null,
+  });
+
+/**
+ * The seasons another show in the catalogue has, to choose the one a season is read from.
+ *
+ * @param mediaId - Any episode of the season being changed.
+ * @param externalId - The other show, or nothing where none is chosen yet.
+ * @returns The query options.
+ */
+const catalogueSeasons = (mediaId: string, externalId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'catalogue-seasons', mediaId, externalId],
+    queryFn: () => fetchCatalogueSeasons(mediaId, externalId ?? ''),
+    enabled: externalId !== null,
+  });
+
+/**
  * Every file of the title one file belongs to, for opening it straight from an address.
  *
  * @param mediaId - One file of the title, or nothing where none is asked for.
@@ -953,6 +982,8 @@ const adminQueries = {
   libraryProblems,
   orphanedEdits,
   titleFiles,
+  seasonSource,
+  catalogueSeasons,
   statistics,
   libraryHealth,
   updateCheck,
