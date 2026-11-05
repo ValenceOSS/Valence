@@ -16,8 +16,9 @@ import { say } from '@ValenceI18n/say';
  *
  * @param versions - The versions, the one playing by default first.
  * @param paths - Where each file is, by its id.
+ * @param onSplit - Opens Fix match for one version alone, where it is really a different film.
  */
-const TitleVersions = ({ versions, paths }: TitleVersionsProps) => {
+const TitleVersions = ({ versions, paths, onSplit }: TitleVersionsProps) => {
   const cache = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -59,6 +60,13 @@ const TitleVersions = ({ versions, paths }: TitleVersionsProps) => {
                 onDefault={() => {
                   void choose(version.lead.id, { isStanding: true });
                 }}
+                {...(onSplit === undefined
+                  ? {}
+                  : {
+                      onSplit: () => {
+                        onSplit(version);
+                      },
+                    })}
               />
             );
           })}

@@ -15,8 +15,17 @@ import { say } from '@ValenceI18n/say';
  * @param isBusy - Whether a change to it is being saved.
  * @param onLabel - Told the name it is to go by.
  * @param onDefault - Told it is to play by default.
+ * @param onSplit - Opens Fix match for this file alone, where it is really a different film.
  */
-const VersionRow = ({ file, label, isDefault, isBusy, onLabel, onDefault }: VersionRowProps) => {
+const VersionRow = ({
+  file,
+  label,
+  isDefault,
+  isBusy,
+  onLabel,
+  onDefault,
+  onSplit,
+}: VersionRowProps) => {
   const [typed, setTyped] = useState(label ?? '');
   const [saved, setSaved] = useState(label ?? '');
   const settle = () => {
@@ -46,6 +55,16 @@ const VersionRow = ({ file, label, isDefault, isBusy, onLabel, onDefault }: Vers
         }}
         className="w-56 max-w-full"
       />
+      {onSplit === undefined ? null : (
+        <Button
+          variant="ghost"
+          size="sm"
+          label={say('screens.adminArea.titleVersions.splitOffName', { file })}
+          onClick={onSplit}
+        >
+          {say('screens.adminArea.titleVersions.splitOff')}
+        </Button>
+      )}
       <span className="flex w-40 shrink-0 justify-end">
         {isDefault ? (
           <Badge size="sm" tone="accent">

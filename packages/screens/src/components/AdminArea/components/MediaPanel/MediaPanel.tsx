@@ -1,3 +1,5 @@
+import { MergeTitlesDialog } from './components/MergeTitlesDialog/MergeTitlesDialog';
+import type { MergeFilm } from './components/MergeTitlesDialog/MergeTitlesDialog.types';
 import { ImportSheetDialog } from './components/ImportSheetDialog/ImportSheetDialog';
 import { QuickMatchDialog } from './components/QuickMatchDialog/QuickMatchDialog';
 import type { QuickMatchTitle } from './components/QuickMatchDialog/QuickMatchDialog.types';
@@ -402,6 +404,7 @@ const MediaPanel = ({
   const [isSeeingOrphans, setIsSeeingOrphans] = useState(false);
   const [isManagingWords, setIsManagingWords] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [merging, setMerging] = useState<readonly MergeFilm[] | null>(null);
   const [quickMatching, setQuickMatching] = useState<readonly QuickMatchTitle[] | null>(null);
 
   const moveAll = useCallback(
@@ -1548,6 +1551,20 @@ const MediaPanel = ({
           },
         ];
   });
+  const filmsPicked: MergeFilm[] = [...picked].flatMap((id) => {
+    const held = visible.get(id);
+
+    return held?.kind === 'film'
+      ? [
+          {
+            mediaId: held.lead.id,
+            name: held.name,
+            year: held.year,
+            externalId: held.isMatched ? (held.lead.externalId ?? null) : null,
+          },
+        ]
+      : [];
+  });
   const moreForPicked: ActionMenuItem[][] = [
     [
       {
@@ -1578,6 +1595,18 @@ const MediaPanel = ({
           );
         },
       },
+      ...(filmsPicked.length < 2
+        ? []
+        : [
+            {
+              id: 'merge',
+              label: say('screens.adminArea.mergeTitles.mergeIntoOneFilm'),
+              icon: <Icon of={CopyFilledIcon} size={15} />,
+              onChoose: () => {
+                setMerging(filmsPicked);
+              },
+            },
+          ]),
       ...(unmatchedPicked.length === 0
         ? []
         : [
@@ -1821,6 +1850,18 @@ const MediaPanel = ({
         }}
       />
 
+      <MergeTitlesDialog
+        key={merging === null ? 'closed' : merging.map((one) => one.mediaId).join()}
+        films={merging}
+        onClose={() => {
+          setMerging(null);
+        }}
+        onMerged={() => {
+          setPicked(new Set());
+          void cache.invalidateQueries({ queryKey: adminQueries.key });
+        }}
+      />
+
       <ImportSheetDialog
         libraryId={isImporting ? asked.libraryId : null}
         onClose={() => {
@@ -2021,6 +2062,7 @@ const MediaPanel = ({
         actionsFor={actionsFor}
         place={opened.kind === 'film' || opened.kind === 'series' ? placeOf(opened) : null}
         paths={paths}
+        onCorrect={onCorrect}
         {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
         {...(onOpenInCatalogue === undefined ? {} : { onOpenInCatalogue })}
         onBack={() => {

@@ -136,6 +136,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.mediaPanel.count.undoneTitles',
   'screens.adminArea.mediaPanel.count.unmatched',
   'screens.adminArea.mediaPanel.count.unreadable',
+  'screens.adminArea.mergeTitles.count.mergeFilms',
   'screens.adminArea.orphanedEditsDialog.count.movedEditsToName',
   'screens.adminArea.orphanedEditsDialog.count.threwAwayEdits',
   'screens.adminArea.preRollCard.countClips',

@@ -21696,6 +21696,36 @@
     "context": "The label in the admin area."
   },
   {
+    "handler": "screens.adminArea.mergeTitles.count.mergeFilms.one",
+    "text": "Merge {count} film",
+    "context": "Title of the dialog merging films chosen into one, and its button."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.count.mergeFilms.other",
+    "text": "Merge {count} films",
+    "context": "Title of the dialog merging films chosen into one, and its button."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.keepWhichMatch",
+    "text": "Choose the film they all are. The others are matched to it, and become its versions.",
+    "context": "Description in the dialog merging films into one."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.mergedIntoName",
+    "text": "Merged into {name}",
+    "context": "Notice after films were merged into one. {name} is the film they became."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.mergeIntoOneFilm",
+    "text": "Merge into one film…",
+    "context": "Item in the media list's selection menu, for two or more films chosen that are really one film, such as two cuts matched to different entries."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.unmatchedFilm",
+    "text": "{name}, not matched",
+    "context": "A film in the merge dialog that has no TMDB match, so it can't be the one they all become. {name} is the film."
+  },
+  {
     "handler": "screens.adminArea.mostWatchedList.hours",
     "text": "{hours} h",
     "context": "How long something was watched for, in hours. {hours} is a number such as 2.5."
@@ -26514,6 +26544,16 @@
     "handler": "screens.adminArea.titleVersions.playThisByDefault",
     "text": "Play this by default",
     "context": "Button that makes one version of a film the one every app plays unless another is chosen."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.splitOff",
+    "text": "Split off…",
+    "context": "Button on one version of a film that is really a different film: opens Fix match for that file alone, so it becomes a film of its own."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.splitOffName",
+    "text": "Split {file} off as a film of its own",
+    "context": "What the Split off button does, for a screen reader. {file} is the version's file."
   },
   {
     "handler": "screens.adminArea.titleVersions.versions",

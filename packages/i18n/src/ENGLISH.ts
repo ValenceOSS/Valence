@@ -5475,6 +5475,13 @@ const ENGLISH = {
   'screens.adminArea.mediaTitlePage.unmatch': 'Unmatch',
   'screens.adminArea.mediaTitlePage.whatToShowOfTheTitle': 'What to show of this title',
   'screens.adminArea.memory': 'Memory',
+  'screens.adminArea.mergeTitles.count.mergeFilms.one': 'Merge {count} film',
+  'screens.adminArea.mergeTitles.count.mergeFilms.other': 'Merge {count} films',
+  'screens.adminArea.mergeTitles.keepWhichMatch':
+    'Choose the film they all are. The others are matched to it, and become its versions.',
+  'screens.adminArea.mergeTitles.mergedIntoName': 'Merged into {name}',
+  'screens.adminArea.mergeTitles.mergeIntoOneFilm': 'Merge into one film…',
+  'screens.adminArea.mergeTitles.unmatchedFilm': '{name}, not matched',
   'screens.adminArea.mostWatchedList.hours': '{hours} h',
   'screens.adminArea.mostWatchedList.mostWatched': 'Most watched',
   'screens.adminArea.mostWatchedList.nothingWasWatched': 'Nothing was watched in this range.',
@@ -6723,6 +6730,8 @@ const ENGLISH = {
   'screens.adminArea.titleVersions.noName': 'No name, as the original',
   'screens.adminArea.titleVersions.playsByDefault': 'Plays by default',
   'screens.adminArea.titleVersions.playThisByDefault': 'Play this by default',
+  'screens.adminArea.titleVersions.splitOff': 'Split off…',
+  'screens.adminArea.titleVersions.splitOffName': 'Split {file} off as a film of its own',
   'screens.adminArea.titleVersions.versions': 'Versions of this film',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges':

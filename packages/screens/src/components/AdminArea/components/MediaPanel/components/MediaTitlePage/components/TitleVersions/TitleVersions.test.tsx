@@ -67,4 +67,26 @@ describe('TitleVersions', () => {
       expect(choosing).toHaveBeenCalledWith('two', { isStanding: true });
     });
   });
+
+  it('splits a version off through Fix match for that file alone', async () => {
+    const onSplit = vi.fn();
+    const user = userEvent.setup();
+    const extended = aVersion('two', 'Extended');
+
+    render(
+      <TitleVersions
+        versions={[aVersion('one', null), extended]}
+        paths={PATHS}
+        onSplit={onSplit}
+      />,
+      {
+        wrapper: CacheScope,
+      },
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Split a.extended.mkv off as a film of its own' }),
+    );
+
+    expect(onSplit).toHaveBeenCalledWith(extended);
+  });
 });

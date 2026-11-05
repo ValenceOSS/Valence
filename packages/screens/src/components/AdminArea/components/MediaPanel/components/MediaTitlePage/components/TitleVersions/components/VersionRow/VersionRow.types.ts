@@ -5,6 +5,7 @@ type VersionRowProps = {
   isBusy: boolean;
   onLabel: (label: string) => void;
   onDefault: () => void;
+  onSplit?: () => void;
 };
 
 export type { VersionRowProps };

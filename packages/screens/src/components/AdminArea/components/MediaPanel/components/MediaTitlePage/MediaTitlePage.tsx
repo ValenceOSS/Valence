@@ -127,6 +127,7 @@ const describeMatch = (title: MediaTitle): string | null => {
  * @param actionsFor - What can be done to the title and to each of its files.
  * @param place - Where it is on the disk, where known.
  * @param paths - Where each file is, by its item.
+ * @param onCorrect - Opens Fix match for one file of the title, such as a version to split off.
  * @param onOpenFolder - Called with a folder to open in Files, where the file manager is offered.
  * @param onOpenInCatalogue - Called with where the title is in the Catalogue, where it can be opened.
  * @param onBack - Called to go back to every title.
@@ -146,6 +147,7 @@ const MediaTitlePage = ({
   place,
   paths,
   onOpenFolder,
+  onCorrect,
   onOpenInCatalogue,
   onBack,
   onPrevious,
@@ -1099,7 +1101,17 @@ const MediaTitlePage = ({
         <TabPanel value="files" travel={travel}>
           <div className="flex flex-col gap-4">
             {title.kind === 'film' && title.parts.length > 1 ? (
-              <TitleVersions versions={title.parts} paths={paths} />
+              <TitleVersions
+                versions={title.parts}
+                paths={paths}
+                {...(onCorrect === undefined
+                  ? {}
+                  : {
+                      onSplit: (version: MediaTitle) => {
+                        onCorrect(version.lead);
+                      },
+                    })}
+              />
             ) : null}
             {title.kind === 'film' ? <SkipMarkers mediaId={title.lead.id} /> : null}
             <ExtraChoiceDialog
