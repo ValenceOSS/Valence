@@ -316,7 +316,9 @@ jobs:
 
       - run: cp -n .turbo/test-results/* .turbo/cache/ 2>/dev/null || true
 
-      - run: pnpm turbo run test:shard --filter=${{ matrix.package }}
+      - run: |
+          (while true; do echo "== memory $(date -u +%T)"; free -m | sed -n 2,3p; df -h / | tail -1; ps -eo rss,pid,args --sort=-rss | head -6 | cut -c1-160; sleep 5; done) &
+          pnpm turbo run test:shard --filter=${{ matrix.package }} --log-order=stream
 
       - name: Keep the test results
         run: |
