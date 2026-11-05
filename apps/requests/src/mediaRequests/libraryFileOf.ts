@@ -1,7 +1,7 @@
 /* oxlint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
 import { join } from 'node:path';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
-import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import { seasonFolderOf } from '@ValenceRequests/mediaRequests/seasonFolderOf';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';

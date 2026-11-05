@@ -24,6 +24,10 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
 import type { MediaFileMove } from '@ValenceServer/library/moveMediaFile';
+import type {
+  PatternRenamePlan,
+  PatternRenameResult,
+} from '@ValenceContracts/schemas/PatternRename';
 import type { CalendarEpisode } from '@ValenceServer/calendar/CalendarEpisode';
 
 type MediaDeletion = MediaFileDeletion | { kind: 'absent' };
@@ -278,6 +282,11 @@ type LibraryService = ShowService & {
     mediaId: string,
     choice: { label?: string | null; isStanding?: boolean },
   ) => Promise<boolean>;
+  planPatternRenames?: (mediaIds: readonly string[]) => Promise<PatternRenamePlan>;
+  renameToPattern?: (
+    mediaIds: readonly string[],
+    whenTaken: 'skip' | 'number',
+  ) => Promise<PatternRenameResult>;
 };
 
 const DEFAULT_LIMIT = 60;

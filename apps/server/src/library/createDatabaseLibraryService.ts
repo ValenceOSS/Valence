@@ -1,5 +1,6 @@
 import { firstAnswerOf } from '@ValenceServer/library/firstAnswerOf';
 import { createVersionChoices } from './createVersionChoices';
+import { createPatternRenames } from '@ValenceServer/rename/createPatternRenames';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -897,6 +898,7 @@ const createDatabaseLibraryService = ({
   };
 
   const versionChoices = createVersionChoices(db);
+  const patternRenames = createPatternRenames({ db, queueReadAgain });
 
   const artworkChoices = createArtworkChoices({
     db,
@@ -2507,6 +2509,8 @@ const createDatabaseLibraryService = ({
     uploadArtwork: (mediaId, kind, artwork, by) =>
       artworkChoices.upload(mediaId, kind, artwork, by),
     chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
+    planPatternRenames: (mediaIds) => patternRenames.plan(mediaIds),
+    renameToPattern: (mediaIds, whenTaken) => patternRenames.apply(mediaIds, whenTaken),
 
     chooseExtra: async (mediaId, choice) => {
       const [file] = await db

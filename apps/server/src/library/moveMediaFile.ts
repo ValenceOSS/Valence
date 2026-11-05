@@ -1,5 +1,6 @@
-import { copyFile, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
+import { readdir, stat } from 'node:fs/promises';
 import { basename, dirname, extname, join, relative } from 'node:path';
+import { moveFile } from '@ValenceServer/files/moveFile';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { isSidecarOf } from '@ValenceServer/library/isSidecarOf';
 import { isMediaFile } from '@ValenceServer/library/isMediaFile';
@@ -15,28 +16,6 @@ type MediaFileMove =
   | { kind: 'readOnly' }
   | { kind: 'denied' }
   | { kind: 'failed' };
-
-/**
- * Moves one file, renaming it where both places are on one disk and copying it across then
- * removing the original where they are not, since a rename cannot cross from one disk to another.
- *
- * @param from - Where it is.
- * @param to - Where it goes.
- */
-const moveOne = async (from: string, to: string): Promise<void> => {
-  await mkdir(dirname(to), { recursive: true });
-
-  try {
-    await rename(from, to);
-  } catch (error) {
-    if (!(error instanceof Error) || !('code' in error) || error.code !== 'EXDEV') {
-      throw error;
-    }
-
-    await copyFile(from, to);
-    await rm(from);
-  }
-};
 
 /**
  * Moves one media file from one library's folder into another's, at the same place under it, with
@@ -86,12 +65,12 @@ const moveMediaFile = async (
 
   try {
     for (const move of moves) {
-      await moveOne(move.from, move.to);
+      await moveFile(move.from, move.to);
       moved.push(move);
     }
   } catch (error) {
     for (const move of moved.toReversed()) {
-      await moveOne(move.to, move.from).catch(() => undefined);
+      await moveFile(move.to, move.from).catch(() => undefined);
     }
 
     return diskRefusalOf(error instanceof Error ? error : null);
@@ -113,7 +92,7 @@ const moveMediaFile = async (
         const sidecar = join(to, name);
 
         if ((await stat(sidecar).catch(() => null)) === null) {
-          await moveOne(join(folder, name), sidecar);
+          await moveFile(join(folder, name), sidecar);
         }
       }
     }

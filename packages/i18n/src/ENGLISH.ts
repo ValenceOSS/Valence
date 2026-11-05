@@ -2308,6 +2308,8 @@ const ENGLISH = {
   'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
   'error.library.thoseEpisodeNumbersCouldNotBeRead':
     'Those episode numbers couldn’t be read: a season is 0 or more, an episode 1 or more, and a last episode comes after the first.',
+  'error.library.thoseFilesCouldNotBeRead':
+    'That couldn’t be read: say which files to rename, and what to do where a name is taken.',
   'error.library.thoseRulesCouldNotBeRead':
     'Those rules couldn’t be read: each finds a genre of at most 64 characters, and a library has at most 200.',
   'error.library.valenceMayNotMoveFilesThere':
@@ -5991,6 +5993,42 @@ const ENGLISH = {
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
     'They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.',
+  'screens.adminArea.renameToPattern.addANumberToTheName': 'Add a number to the name',
+  'screens.adminArea.renameToPattern.count.alreadyNamed.one':
+    '{count} file is already named to the pattern.',
+  'screens.adminArea.renameToPattern.count.alreadyNamed.other':
+    '{count} files are already named to the pattern.',
+  'screens.adminArea.renameToPattern.count.extras.one':
+    '{count} extra moves only with its film’s folder.',
+  'screens.adminArea.renameToPattern.count.extras.other':
+    '{count} extras move only with their film’s folder.',
+  'screens.adminArea.renameToPattern.count.filesKeptBesideIt.one':
+    'With {count} file kept beside it',
+  'screens.adminArea.renameToPattern.count.filesKeptBesideIt.other':
+    'With {count} files kept beside it',
+  'screens.adminArea.renameToPattern.count.inParts.one':
+    '{count} film is kept as several files, so it is left as it is.',
+  'screens.adminArea.renameToPattern.count.inParts.other':
+    '{count} films are kept as several files, so they are left as they are.',
+  'screens.adminArea.renameToPattern.count.notMatched.one':
+    '{count} file isn’t matched to the catalogue, so its name would be a guess. Match it first.',
+  'screens.adminArea.renameToPattern.count.notMatched.other':
+    '{count} files aren’t matched to the catalogue, so their names would be a guess. Match them first.',
+  'screens.adminArea.renameToPattern.count.renamedFiles.one':
+    'Renamed {count} file to the naming pattern',
+  'screens.adminArea.renameToPattern.count.renamedFiles.other':
+    'Renamed {count} files to the naming pattern',
+  'screens.adminArea.renameToPattern.count.renameFiles.one': 'Rename {count} file',
+  'screens.adminArea.renameToPattern.count.renameFiles.other': 'Rename {count} files',
+  'screens.adminArea.renameToPattern.eachFileMovesToTheName':
+    'Each file moves to the folder and name the library’s naming pattern gives it, with the subtitles and other files kept beside it. A folder holding only what is renamed is renamed whole. Watch history and every choice made for a file go with it.',
+  'screens.adminArea.renameToPattern.everyFileBelow': 'Every file below',
+  'screens.adminArea.renameToPattern.leaveTheFileAsItIs': 'Leave the file as it is',
+  'screens.adminArea.renameToPattern.nameTaken': 'Name taken',
+  'screens.adminArea.renameToPattern.nothingToRename': 'Nothing here needs renaming.',
+  'screens.adminArea.renameToPattern.renameToTheNamingPattern': 'Rename to the naming pattern',
+  'screens.adminArea.renameToPattern.whenTheNameIsTaken': 'When the new name is taken',
+  'screens.adminArea.renameToPattern.workingOutTheNewNames': 'Working out the new names',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
   'screens.adminArea.requestPageCard.backgroundTrailers': 'Background trailers',
   'screens.adminArea.requestPageCard.backgroundTrailersAbout':

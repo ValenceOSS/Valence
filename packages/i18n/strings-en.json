@@ -9786,6 +9786,11 @@
     "context": "Refusal when an episode's numbers are set by hand with numbers the server can't take."
   },
   {
+    "handler": "error.library.thoseFilesCouldNotBeRead",
+    "text": "That couldn’t be read: say which files to rename, and what to do where a name is taken.",
+    "context": "Refusal when files are renamed to the library's naming pattern with a body the server can't read."
+  },
+  {
     "handler": "error.library.thoseRulesCouldNotBeRead",
     "text": "Those rules couldn’t be read: each finds a genre of at most 64 characters, and a library has at most 200.",
     "context": "Refusal when a library's genre rules are saved with a body the server can't read."
@@ -23629,6 +23634,121 @@
     "handler": "screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients",
     "text": "They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.",
     "context": "Explains removing several ticked downloads at once, in the dialog confirming it."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.addANumberToTheName",
+    "text": "Add a number to the name",
+    "context": "Option: a file whose new name is taken gets the next free number, such as ' - 2'."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.alreadyNamed.one",
+    "text": "{count} file is already named to the pattern.",
+    "context": "Rename-to-pattern dialog: files left because they are already where they belong."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.alreadyNamed.other",
+    "text": "{count} files are already named to the pattern.",
+    "context": "Rename-to-pattern dialog: files left because they are already where they belong."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.extras.one",
+    "text": "{count} extra moves only with its film’s folder.",
+    "context": "Rename-to-pattern dialog: extras are not renamed on their own."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.extras.other",
+    "text": "{count} extras move only with their film’s folder.",
+    "context": "Rename-to-pattern dialog: extras are not renamed on their own."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.filesKeptBesideIt.one",
+    "text": "With {count} file kept beside it",
+    "context": "Under a file in the rename-to-pattern dialog: how many subtitles or other files move with it."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.filesKeptBesideIt.other",
+    "text": "With {count} files kept beside it",
+    "context": "Under a file in the rename-to-pattern dialog: how many subtitles or other files move with it."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.inParts.one",
+    "text": "{count} film is kept as several files, so it is left as it is.",
+    "context": "Rename-to-pattern dialog: films split into parts are not renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.inParts.other",
+    "text": "{count} films are kept as several files, so they are left as they are.",
+    "context": "Rename-to-pattern dialog: films split into parts are not renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.notMatched.one",
+    "text": "{count} file isn’t matched to the catalogue, so its name would be a guess. Match it first.",
+    "context": "Rename-to-pattern dialog: unmatched files that are left as they are."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.notMatched.other",
+    "text": "{count} files aren’t matched to the catalogue, so their names would be a guess. Match them first.",
+    "context": "Rename-to-pattern dialog: unmatched files that are left as they are."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renamedFiles.one",
+    "text": "Renamed {count} file to the naming pattern",
+    "context": "Notice once files were renamed to the pattern."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renamedFiles.other",
+    "text": "Renamed {count} files to the naming pattern",
+    "context": "Notice once files were renamed to the pattern."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renameFiles.one",
+    "text": "Rename {count} file",
+    "context": "Confirm button of the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renameFiles.other",
+    "text": "Rename {count} files",
+    "context": "Confirm button of the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.eachFileMovesToTheName",
+    "text": "Each file moves to the folder and name the library’s naming pattern gives it, with the subtitles and other files kept beside it. A folder holding only what is renamed is renamed whole. Watch history and every choice made for a file go with it.",
+    "context": "Explanation at the top of the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.everyFileBelow",
+    "text": "Every file below",
+    "context": "Checkbox that ticks or unticks every file in the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.leaveTheFileAsItIs",
+    "text": "Leave the file as it is",
+    "context": "Option: a file whose new name is taken is not renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.nameTaken",
+    "text": "Name taken",
+    "context": "Badge on a file whose new name another file already has."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.nothingToRename",
+    "text": "Nothing here needs renaming.",
+    "context": "The rename-to-pattern dialog, when every file is already named to the pattern or can't be renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.renameToTheNamingPattern",
+    "text": "Rename to the naming pattern",
+    "context": "Menu item and dialog title: renames the chosen files and folders to the pattern Jellyfin, Plex and Valence's requests use."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.whenTheNameIsTaken",
+    "text": "When the new name is taken",
+    "context": "Label of the choice of what to do where another file already has a file's new name."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.workingOutTheNewNames",
+    "text": "Working out the new names",
+    "context": "Spinner while the rename-to-pattern dialog asks where each file would go."
   },
   {
     "handler": "screens.adminArea.requestDetailDialog.neverAgain",

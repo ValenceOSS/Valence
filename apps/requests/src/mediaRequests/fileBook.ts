@@ -9,7 +9,7 @@ import { partsOfAudiobook } from '@ValenceRequests/mediaRequests/partsOfAudioboo
 import { formatsHeldIn } from '@ValenceRequests/mediaRequests/formatsHeldIn';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
-import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import { placesInSeries, seriesNameOf } from '@ValenceRequests/mediaRequests/seriesOfPack';
 import { bookFolderInDownload } from '@ValenceRequests/mediaRequests/bookFolderInDownload';
 import { booksInDownload } from '@ValenceRequests/mediaRequests/booksInDownload';

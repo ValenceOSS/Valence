@@ -1,3 +1,4 @@
+import { RenameToPatternDialog } from './components/RenameToPatternDialog/RenameToPatternDialog';
 import { MergeTitlesDialog } from './components/MergeTitlesDialog/MergeTitlesDialog';
 import type { MergeFilm } from './components/MergeTitlesDialog/MergeTitlesDialog.types';
 import { ImportSheetDialog } from './components/ImportSheetDialog/ImportSheetDialog';
@@ -16,6 +17,7 @@ import {
   Copy as CopyFilledIcon,
   EyeOff as EyeOffFilledIcon,
   Film as FilmFilledIcon,
+  CursorText as CursorTextFilledIcon,
   FolderArrowRight as FolderArrowRightFilledIcon,
   FolderOpen as FolderOpenIcon,
   Image as ImageFilledIcon,
@@ -406,6 +408,21 @@ const MediaPanel = ({
   const [isImporting, setIsImporting] = useState(false);
   const [merging, setMerging] = useState<readonly MergeFilm[] | null>(null);
   const [quickMatching, setQuickMatching] = useState<readonly QuickMatchTitle[] | null>(null);
+  const [renaming, setRenaming] = useState<readonly string[] | null>(null);
+
+  const renameAction = useCallback(
+    (title: MediaTitle): ActionMenuItem => ({
+      id: 'rename-to-pattern',
+      label: say('screens.adminArea.renameToPattern.renameToTheNamingPattern'),
+      icon: <Icon of={CursorTextFilledIcon} size={15} />,
+      onChoose: () => {
+        void withFiles(title).then((full) => {
+          setRenaming(filesOf(full).map((file) => file.id));
+        });
+      },
+    }),
+    [withFiles],
+  );
 
   const moveAll = useCallback(
     (title: MediaTitle): ActionMenuItem[] =>
@@ -873,6 +890,7 @@ const MediaPanel = ({
               ]),
         ],
         [
+          renameAction(title),
           ...moveAll(title),
           ...leaveOutItems(placeOf(title)?.folder, title.name, true),
           ...(onDelete === undefined || title.lead.seriesId === null
@@ -899,6 +917,7 @@ const MediaPanel = ({
       onReencode,
       placeOf,
       refreshAction,
+      renameAction,
       withFiles,
     ],
   );
@@ -909,24 +928,30 @@ const MediaPanel = ({
         case 'series':
           return seriesActions(title);
         case 'episode':
-          return fileActions(title.lead, title.name);
+          return [[renameAction(title)], ...fileActions(title.lead, title.name)];
         case 'version':
-          return fileActions(title.lead, `${title.lead.title}: ${title.name}`);
+          return [
+            [renameAction(title)],
+            ...fileActions(title.lead, `${title.lead.title}: ${title.name}`),
+          ];
         case 'season':
-          return onReencode === undefined
-            ? []
-            : [
-                [
-                  {
-                    id: 'reencode',
-                    label: say('screens.adminArea.mediaPanel.reEncodeThisSeason'),
-                    icon: <Icon of={TapeFilledIcon} size={15} />,
-                    onChoose: () => {
-                      onReencode(title.episodes);
+          return [
+            [renameAction(title)],
+            ...(onReencode === undefined
+              ? []
+              : [
+                  [
+                    {
+                      id: 'reencode',
+                      label: say('screens.adminArea.mediaPanel.reEncodeThisSeason'),
+                      icon: <Icon of={TapeFilledIcon} size={15} />,
+                      onChoose: () => {
+                        onReencode(title.episodes);
+                      },
                     },
-                  },
-                ],
-              ];
+                  ],
+                ]),
+          ];
         case 'film':
           return [
             [
@@ -940,6 +965,7 @@ const MediaPanel = ({
               },
               ...refreshAction(title),
               ...artworkAction(title),
+              renameAction(title),
               ...(title.episodes.length > 1 || (title.row?.versions ?? 0) > 0
                 ? moveAll(title)
                 : []),
@@ -948,7 +974,16 @@ const MediaPanel = ({
           ];
       }
     },
-    [artworkAction, fileActions, moveAll, onCorrect, onReencode, refreshAction, seriesActions],
+    [
+      artworkAction,
+      fileActions,
+      moveAll,
+      onCorrect,
+      onReencode,
+      refreshAction,
+      renameAction,
+      seriesActions,
+    ],
   );
 
   const visible = new Map<string, MediaTitle>();
@@ -1661,6 +1696,16 @@ const MediaPanel = ({
           });
         },
       },
+      {
+        id: 'rename-to-pattern',
+        label: say('screens.adminArea.renameToPattern.renameToTheNamingPattern'),
+        icon: <Icon of={CursorTextFilledIcon} size={15} />,
+        onChoose: () => {
+          void filesOfPicked().then((files) => {
+            setRenaming(files.map((file) => file.id));
+          });
+        },
+      },
       ...(onMoved === undefined
         ? []
         : [
@@ -1847,6 +1892,14 @@ const MediaPanel = ({
         }}
         onStarted={() => {
           void cache.invalidateQueries({ queryKey: adminQueries.key });
+        }}
+      />
+
+      <RenameToPatternDialog
+        key={renaming === null ? 'closed' : renaming.join()}
+        mediaIds={renaming}
+        onClose={() => {
+          setRenaming(null);
         }}
       />
 

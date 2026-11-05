@@ -1,4 +1,8 @@
 import { ExtraChoiceRequestSchema } from '@ValenceContracts/schemas/ExtraChoice';
+import {
+  PatternRenamePlanRequestSchema,
+  PatternRenameRequestSchema,
+} from '@ValenceContracts/schemas/PatternRename';
 import { WordRulesSchema } from '@ValenceContracts/schemas/WordRule';
 import {
   ChooseEpisodeOrderSchema,
@@ -644,6 +648,52 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     await recordAudit(context, 'media.metadataChanged', named.target, named.detail);
 
     return context.json(chosen, 200);
+  });
+
+  app.post('/api/media/rename-plan', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = PatternRenamePlanRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseFilesCouldNotBeRead'), 400);
+    }
+
+    return context.json(
+      (await library.planPatternRenames?.(asked.data.mediaIds)) ?? { files: [] },
+      200,
+    );
+  });
+
+  app.post('/api/media/rename', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = PatternRenameRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseFilesCouldNotBeRead'), 400);
+    }
+
+    const named = await auditedMedia(asked.data.mediaIds[0] ?? '');
+    const renamed = (await library.renameToPattern?.(
+      asked.data.mediaIds,
+      asked.data.whenTaken,
+    )) ?? { renamed: 0, skipped: asked.data.mediaIds.length, jobId: null };
+
+    if (renamed.renamed > 0) {
+      await recordAudit(context, 'files.renamed', named.target, {
+        ...named.detail,
+        files: renamed.renamed.toString(),
+      });
+    }
+
+    return context.json(renamed, 200);
   });
 
   app.get('/api/libraries/:id/word-rules', async (context) => {
