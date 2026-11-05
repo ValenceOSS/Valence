@@ -856,6 +856,21 @@ const mediaArtworkChoice = mysqlTable(
   ],
 );
 
+const wordRule = mysqlTable(
+  'word_rule',
+  {
+    id: identifier('id').primaryKey(),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    field: varchar('field', { length: 32 }).notNull(),
+    find: varchar('find', { length: 256 }).notNull(),
+    replace: varchar('replace', { length: 256 }).notNull(),
+    setAt: momentNow('setAt').notNull(),
+  },
+  (table) => [index('word_rule_library_idx').on(table.libraryId)],
+);
+
 const episodePin = mysqlTable(
   'episode_pin',
   {
@@ -2338,6 +2353,7 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  wordRule,
   episodePin,
   versionChoice,
   titleEdit,

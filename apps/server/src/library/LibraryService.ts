@@ -1,3 +1,4 @@
+import type { WordRule } from '@ValenceContracts/schemas/WordRule';
 import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
 import type { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { EntryFacts } from '@ValenceServer/files/describeLibraryEntries';
@@ -249,6 +250,8 @@ type LibraryService = ShowService & {
     | { fault: NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>> }
   >;
   isOwnArtwork?: (mediaId: string, url: string) => Promise<boolean>;
+  readWordRules?: (libraryId: string) => Promise<WordRule[]>;
+  saveWordRules?: (libraryId: string, rules: readonly WordRule[]) => Promise<WordRule[]>;
   pinEpisode?: (
     mediaId: string,
     pin: { seasonNumber: number; episodeNumber: number; episodeNumberEnd: number | null } | null,

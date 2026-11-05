@@ -1,3 +1,4 @@
+import { applyWordRules } from './applyWordRules';
 import { createVersionChoices } from './createVersionChoices';
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -7,6 +8,7 @@ import { and, asc, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } fro
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   episodePin,
+  wordRule,
   mediaItem,
   mediaItemJob,
   mediaLeftOut,
@@ -123,6 +125,8 @@ const groupSeriesByFolder = (
 
   return byFolder;
 };
+
+const RULES_LAST_MS = 30_000;
 
 /**
  * Files a programme under its key in a library, or finds the one already there, and says which it
@@ -276,6 +280,30 @@ const createMediaStore = (
   removePreviewMoment: (libraryId: string, path: string) => Promise<boolean>;
 } => {
   const versionChoices = createVersionChoices(db);
+  const rulesHeld = new Map<string, { at: number; rules: { find: string; replace: string }[] }>();
+
+  /**
+   * Reads a library's rules for its genres, held a little while so a scan reads them once.
+   *
+   * @param libraryId - The library.
+   * @returns Its rules.
+   */
+  const genreRulesOf = async (libraryId: string) => {
+    const held = rulesHeld.get(libraryId);
+
+    if (held !== undefined && Date.now() - held.at < RULES_LAST_MS) {
+      return held.rules;
+    }
+
+    const rules = await db
+      .select({ find: wordRule.find, replace: wordRule.replace })
+      .from(wordRule)
+      .where(and(eq(wordRule.libraryId, libraryId), eq(wordRule.field, 'genres')));
+
+    rulesHeld.set(libraryId, { at: Date.now(), rules });
+
+    return rules;
+  };
   const titleEdits = createTitleEditStore(db);
 
   return {
@@ -393,7 +421,7 @@ const createMediaStore = (
         overview: row.metadata.overview ?? null,
         releaseDate: row.metadata.releaseDate ?? null,
         addedAt: null,
-        genres: row.metadata.genres ?? null,
+        genres: applyWordRules(row.metadata.genres, await genreRulesOf(row.libraryId)),
         tags: null,
         studios: row.metadata.studios ?? null,
         networks: row.metadata.networks ?? null,

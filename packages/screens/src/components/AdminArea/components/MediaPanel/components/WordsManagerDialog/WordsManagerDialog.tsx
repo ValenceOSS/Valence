@@ -1,3 +1,10 @@
+import { X as XIcon } from '@keyline-icons/react/fill';
+import { Button } from '@ValenceUI/Button';
+import { Checkbox } from '@ValenceUI/Checkbox';
+import { Icon } from '@ValenceUI/Icon';
+import { fetchWordRules } from '@ValenceClient/admin/fetchWordRules';
+import { saveWordRules } from '@ValenceClient/admin/saveWordRules';
+import type { WordRule } from '@ValenceContracts/schemas/WordRule';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -25,7 +32,7 @@ const KINDS = [
 /**
  * Renames and removes a library's genres and tags on every title that carries them, so a library
  * read from several catalogues can be tidied in one place: renaming one to a name already in use
- * merges the two. Removing asks first, and each change is one change set, undone from the message
+ * merges the two, and either can be kept as a rule every later scan follows. Removing asks first, and each change is one change set, undone from the message
  * that follows or from a title's history.
  *
  * @param libraryId - The library, or nothing while it is closed.
@@ -36,6 +43,32 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
   const [kind, setKind] = useState<(typeof KINDS)[number]>(KINDS[0]);
   const [busy, setBusy] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{ word: string; count: number } | null>(null);
+  const [isForLater, setIsForLater] = useState(true);
+  const rules = useQuery({
+    queryKey: ['word-rules', libraryId],
+    queryFn: () => fetchWordRules(libraryId ?? ''),
+    enabled: libraryId !== null,
+  });
+  const held = rules.data ?? [];
+
+  /**
+   * Keeps a new list of the library's rules, saying where it could not.
+   *
+   * @param next - Every rule.
+   */
+  const keepRules = async (next: readonly WordRule[]) => {
+    if (libraryId === null) {
+      return;
+    }
+
+    const problem = await saveWordRules(libraryId, next);
+
+    if (problem !== null) {
+      notify.failed(problem.problem);
+    }
+
+    await cache.invalidateQueries({ queryKey: ['word-rules', libraryId] });
+  };
   const words = useQuery({
     ...adminQueries.titleValues(kind.id, libraryId ?? undefined),
     enabled: libraryId !== null,
@@ -69,6 +102,13 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
         'titles',
       );
       const titles = sayCount('common.count.titles', outcome.changed.length);
+
+      if (kind.id === 'genres' && isForLater) {
+        await keepRules([
+          ...held.filter((rule) => rule.find.toLocaleLowerCase() !== word.toLocaleLowerCase()),
+          { field: 'genres', find: word, replace: next },
+        ]);
+      }
 
       await cache.invalidateQueries({ queryKey: adminQueries.key });
       notify.worked(
@@ -132,6 +172,16 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-line">
+            {kind.id === 'genres' ? (
+              <li className="pb-2">
+                <Checkbox
+                  label={say('screens.adminArea.wordsManager.alsoForLaterScans')}
+                  checked={isForLater}
+                  onCheckedChange={setIsForLater}
+                  className="text-sm"
+                />
+              </li>
+            ) : null}
             {values.map((one) => (
               <WordRow
                 key={`${kind.id}:${one.value}`}
@@ -149,6 +199,41 @@ const WordsManagerDialog = ({ libraryId, onClose }: WordsManagerDialogProps) => 
           </ul>
         )}
       </DialogContent>
+
+      {kind.id === 'genres' && held.length > 0 ? (
+        <DialogContent className="flex flex-col gap-2 border-t border-[var(--surface-line)]">
+          <h3 className="font-body text-sm font-medium text-text">
+            {say('screens.adminArea.wordsManager.rulesForLaterScans')}
+          </h3>
+          <ul className="flex flex-col gap-1">
+            {held.map((rule) => (
+              <li key={rule.find} className="flex items-center justify-between gap-2">
+                <span className="font-body text-sm text-text-muted">
+                  {rule.replace === ''
+                    ? say('screens.adminArea.wordsManager.findIsTakenOut', { find: rule.find })
+                    : say('screens.adminArea.wordsManager.findBecomesReplace', {
+                        find: rule.find,
+                        replace: rule.replace,
+                      })}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  isIconOnly
+                  label={say('screens.adminArea.wordsManager.forgetTheRuleFor', {
+                    find: rule.find,
+                  })}
+                  onClick={() => {
+                    void keepRules(held.filter((one) => one !== rule));
+                  }}
+                >
+                  <Icon of={XIcon} size={15} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      ) : null}
 
       <DialogFooter dismiss={{ onChoose: onClose }} />
 

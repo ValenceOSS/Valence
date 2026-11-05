@@ -878,6 +878,21 @@ const mediaArtworkChoice = pgTable(
   ],
 );
 
+const wordRule = pgTable(
+  'word_rule',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    field: text('field').notNull(),
+    find: text('find').notNull(),
+    replace: text('replace').notNull(),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+  },
+  (table) => [index('word_rule_library_idx').on(table.libraryId)],
+);
+
 const episodePin = pgTable(
   'episode_pin',
   {
@@ -2343,6 +2358,7 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  wordRule,
   episodePin,
   versionChoice,
   titleEdit,

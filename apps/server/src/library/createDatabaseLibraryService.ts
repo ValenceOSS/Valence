@@ -71,6 +71,7 @@ import {
   mediaPreviewOverride,
   series,
   episodePin,
+  wordRule,
   jobRunIssue,
 } from '#dialect/Schema';
 import {
@@ -2480,6 +2481,29 @@ const createDatabaseLibraryService = ({
     uploadArtwork: (mediaId, kind, artwork, by) =>
       artworkChoices.upload(mediaId, kind, artwork, by),
     chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
+
+    readWordRules: async (libraryId) =>
+      (
+        await db
+          .select({ find: wordRule.find, replace: wordRule.replace })
+          .from(wordRule)
+          .where(and(eq(wordRule.libraryId, libraryId), eq(wordRule.field, 'genres')))
+          .orderBy(asc(wordRule.setAt))
+      ).map((rule) => ({ field: 'genres' as const, ...rule })),
+
+    saveWordRules: async (libraryId, rules) => {
+      await db.transaction(async (tx) => {
+        await tx.delete(wordRule).where(eq(wordRule.libraryId, libraryId));
+
+        if (rules.length > 0) {
+          await tx
+            .insert(wordRule)
+            .values(rules.map((rule) => ({ id: randomUUID(), libraryId, ...rule })));
+        }
+      });
+
+      return [...rules];
+    },
 
     pinEpisode: async (mediaId, pin) => {
       const [file] = await db

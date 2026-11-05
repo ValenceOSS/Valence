@@ -4,15 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { WordsManagerDialog } from './WordsManagerDialog';
 
-const { values, keys, editing } = vi.hoisted(() => ({
+const { values, keys, editing, ruling } = vi.hoisted(() => ({
   values: vi.fn(),
   keys: vi.fn(),
   editing: vi.fn(),
+  ruling: vi.fn(() => Promise.resolve(null)),
 }));
 
 vi.mock('@ValenceClient/admin/fetchTitleValues', () => ({ fetchTitleValues: values }));
 vi.mock('@ValenceClient/admin/fetchTitleKeys', () => ({ fetchTitleKeys: keys }));
 vi.mock('@ValenceClient/admin/editTitlesInParts', () => ({ editTitlesInParts: editing }));
+vi.mock('@ValenceClient/admin/fetchWordRules', () => ({
+  fetchWordRules: () => Promise.resolve([]),
+}));
+vi.mock('@ValenceClient/admin/saveWordRules', () => ({ saveWordRules: ruling }));
 
 const TITLE = { mediaId: '00000000-0000-4000-8000-000000000001', scope: 'title' };
 
@@ -27,7 +32,7 @@ beforeEach(() => {
 });
 
 describe('WordsManagerDialog', () => {
-  it('renames a genre on every title in the library that carries it', async () => {
+  it('renames a genre on every title in the library that carries it, and on titles scanned later', async () => {
     const user = userEvent.setup();
 
     render(<WordsManagerDialog libraryId="lib" onClose={vi.fn()} />, { wrapper: CacheScope });
@@ -50,6 +55,11 @@ describe('WordsManagerDialog', () => {
     expect(keys).toHaveBeenCalledWith(
       expect.objectContaining({ libraryId: 'lib', filters: ['genre:Sci-Fi'] }),
     );
+    await waitFor(() => {
+      expect(ruling).toHaveBeenCalledWith('lib', [
+        { field: 'genres', find: 'Sci-Fi', replace: 'Science Fiction' },
+      ]);
+    });
   });
 
   it('takes a tag off every title once asked to, never at the first press', async () => {

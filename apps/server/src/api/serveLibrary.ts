@@ -1,3 +1,4 @@
+import { WordRulesSchema } from '@ValenceContracts/schemas/WordRule';
 import {
   ChooseEpisodeOrderSchema,
   EpisodePinRequestSchema,
@@ -591,6 +592,37 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     return context.json(uploaded, 200);
+  });
+
+  app.get('/api/libraries/:id/word-rules', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    return context.json(
+      { rules: (await library.readWordRules?.(context.req.param('id'))) ?? [] },
+      200,
+    );
+  });
+
+  app.put('/api/libraries/:id/word-rules', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const libraryId = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = WordRulesSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseRulesCouldNotBeRead'), 400);
+    }
+
+    const rules = (await library.saveWordRules?.(libraryId, asked.data.rules)) ?? [];
+
+    await recordAudit(context, 'library.changed', await auditedLibrary(libraryId));
+
+    return context.json({ rules }, 200);
   });
 
   app.get('/api/media/:id/episode-orders', async (context) => {

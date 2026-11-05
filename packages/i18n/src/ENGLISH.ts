@@ -2306,6 +2306,8 @@ const ENGLISH = {
   'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
   'error.library.thoseEpisodeNumbersCouldNotBeRead':
     'Those episode numbers couldn’t be read: a season is 0 or more, an episode 1 or more, and a last episode comes after the first.',
+  'error.library.thoseRulesCouldNotBeRead':
+    'Those rules couldn’t be read: each finds a genre of at most 64 characters, and a library has at most 200.',
   'error.library.valenceMayNotMoveFilesThere':
     'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
@@ -6955,6 +6957,10 @@ const ENGLISH = {
   'screens.adminArea.whatsNewCard.askedForByName': 'Asked for by {name}',
   'screens.adminArea.whatsNewCard.nothingHasArrivedYet': 'Nothing has arrived yet.',
   'screens.adminArea.whyThereIsNoFigure': 'Why there is no figure',
+  'screens.adminArea.wordsManager.alsoForLaterScans': 'Do the same to titles scanned later',
+  'screens.adminArea.wordsManager.findBecomesReplace': '{find} becomes {replace}',
+  'screens.adminArea.wordsManager.findIsTakenOut': '{find} is taken out',
+  'screens.adminArea.wordsManager.forgetTheRuleFor': 'Forget the rule for {find}',
   'screens.adminArea.wordsManager.genresAndTags': 'Genres and tags',
   'screens.adminArea.wordsManager.itIsTakenOffEveryTitle':
     'It’s taken off every title in this library that carries it. Undo in the message that follows puts it back.',
@@ -6965,6 +6971,7 @@ const ENGLISH = {
   'screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary':
     'Rename one to change it on every title in this library. Renaming one to another already in use merges the two.',
   'screens.adminArea.wordsManager.renameWord': 'Rename {word}',
+  'screens.adminArea.wordsManager.rulesForLaterScans': 'Rules every scan follows',
   'screens.adminArea.wordsManager.wordRemovedFromTitles': '{word} removed from {titles}',
   'screens.adminArea.wordsManager.wordRenamedToNextOnTitles':
     '{word} renamed to {next} on {titles}',

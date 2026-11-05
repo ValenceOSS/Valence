@@ -1072,6 +1072,13 @@
       "when": 1793843722830,
       "tag": "0152_episodes_keep_their_numbers_and_order",
       "breakpoints": true
+    },
+    {
+      "idx": 153,
+      "version": "7",
+      "when": 1793845492972,
+      "tag": "0153_libraries_keep_rules_for_their_words",
+      "breakpoints": true
     }
   ]
 }

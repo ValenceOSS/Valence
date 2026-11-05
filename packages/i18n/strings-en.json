@@ -9781,6 +9781,11 @@
     "context": "Refusal when an episode's numbers are set by hand with numbers the server can't take."
   },
   {
+    "handler": "error.library.thoseRulesCouldNotBeRead",
+    "text": "Those rules couldn’t be read: each finds a genre of at most 64 characters, and a library has at most 200.",
+    "context": "Refusal when a library's genre rules are saved with a body the server can't read."
+  },
+  {
     "handler": "error.library.valenceMayNotMoveFilesThere",
     "text": "Valence doesn’t have permission to move files there.",
     "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
@@ -27396,6 +27401,26 @@
     "context": "Text shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.wordsManager.alsoForLaterScans",
+    "text": "Do the same to titles scanned later",
+    "context": "Checkbox in the genres and tags dialog: a rename or removal is also kept as a rule every later scan follows."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.findBecomesReplace",
+    "text": "{find} becomes {replace}",
+    "context": "One genre rule: a genre TMDB gives is renamed. {find} and {replace} are genres."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.findIsTakenOut",
+    "text": "{find} is taken out",
+    "context": "One genre rule: a genre TMDB gives is never kept. {find} is the genre."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.forgetTheRuleFor",
+    "text": "Forget the rule for {find}",
+    "context": "Button removing one genre rule, for a screen reader."
+  },
+  {
     "handler": "screens.adminArea.wordsManager.genresAndTags",
     "text": "Genres and tags",
     "context": "Item in the media list's menu, and the title of the dialog that renames, merges and removes a library's genres and tags."
@@ -27434,6 +27459,11 @@
     "handler": "screens.adminArea.wordsManager.renameWord",
     "text": "Rename {word}",
     "context": "Field holding the new name for a genre or tag in the genres and tags dialog, for a screen reader. {word} is the genre or tag."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.rulesForLaterScans",
+    "text": "Rules every scan follows",
+    "context": "Heading of the list of genre renames and removals the library's scans apply to what TMDB says."
   },
   {
     "handler": "screens.adminArea.wordsManager.wordRemovedFromTitles",
