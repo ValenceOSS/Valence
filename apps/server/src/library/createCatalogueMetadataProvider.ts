@@ -1,3 +1,4 @@
+import { placeInEpisodeOrder } from './placeInEpisodeOrder';
 import { namesOfJobs } from './namesOfJobs';
 import { wait } from '@ValenceCore/functions/wait';
 import { readContentAdvice } from '@ValenceServer/library/readContentAdvice';
@@ -932,6 +933,35 @@ const createCatalogueMetadataProvider = ({
     },
 
     describe: async (facts) => {
+      /**
+       * Reads which of the catalogue's episodes a file is, where its programme follows another of
+       * the catalogue's orders.
+       *
+       * @param asking - The credential to ask with.
+       * @param groupId - The order.
+       * @param episode - The file's episode, in that order.
+       * @returns The catalogue's own season and episode for each it holds, or nothing.
+       */
+      const readOrdered = async (asking: string, groupId: string, episode: number) => {
+        const read = EpisodeGroupSchema.safeParse(
+          await request(`/tv/episode_group/${groupId}`, asking, {}),
+        );
+
+        return read.success
+          ? placeInEpisodeOrder(
+              read.data.groups.map((part) => ({
+                order: part.order,
+                episodes: part.episodes
+                  .toSorted((left, right) => left.order - right.order)
+                  .map((one) => ({ season: one.season_number, episode: one.episode_number })),
+              })),
+              facts.episode?.seasonNumber ?? 1,
+              episode,
+              facts.episode?.episodeNumberEnd ?? null,
+            )
+          : null;
+      };
+
       const inLanguage = (path: string, key: string, query: Record<string, string>) =>
         request(
           path,
@@ -1052,10 +1082,22 @@ const createCatalogueMetadataProvider = ({
 
         const poster = imageUrl(imageBaseUrl, detail.poster_path, 'w500');
 
+        const ordered =
+          facts.episodeOrder === undefined || episodeNumber === null
+            ? null
+            : await readOrdered(key, facts.episodeOrder, episodeNumber);
+        const seasonAsked = ordered?.[0]?.season ?? facts.episode?.seasonNumber ?? 1;
+        const numbersAsked =
+          ordered === null
+            ? episodeNumber === null
+              ? []
+              : episodeNumbersOf(episodeNumber, facts.episode?.episodeNumberEnd ?? null)
+            : ordered.filter((one) => one.season === seasonAsked).map((one) => one.episode);
+
         const [season, lettering] = await Promise.all([
           episodeNumber !== null
             ? inLanguage(
-                `/tv/${detail.id.toString()}/season/${(facts.episode?.seasonNumber ?? 1).toString()}`,
+                `/tv/${detail.id.toString()}/season/${seasonAsked.toString()}`,
                 key,
                 {},
               ).then((answer) => SeasonResponseSchema.safeParse(answer))
@@ -1070,7 +1112,7 @@ const createCatalogueMetadataProvider = ({
             : null;
         const covered =
           season?.success === true && episodeNumber !== null
-            ? episodeNumbersOf(episodeNumber, facts.episode?.episodeNumberEnd ?? null).flatMap(
+            ? numbersAsked.flatMap(
                 (number) => season.data.episodes.find((one) => one.episode_number === number) ?? [],
               )
             : dated === null
@@ -1140,6 +1182,13 @@ const createCatalogueMetadataProvider = ({
             : { genres: detail.genres.map((genre) => genre.name) }),
           ...(cast.length === 0 ? {} : { cast }),
           ...(guestStars.length === 0 ? {} : { guestStars }),
+          ...(isEpisode && detail.seasons.length > 0
+            ? {
+                episodeTotal: detail.seasons
+                  .filter((one) => one.season_number > 0)
+                  .reduce((sum, one) => sum + one.episode_count, 0),
+              }
+            : {}),
           ...(directors.length === 0 ? {} : { directors }),
           ...(writers.length === 0 ? {} : { writers }),
           ...(creators.length === 0 ? {} : { creators }),

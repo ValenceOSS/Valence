@@ -1,3 +1,7 @@
+import {
+  ChooseEpisodeOrderSchema,
+  EpisodePinRequestSchema,
+} from '@ValenceContracts/schemas/EpisodeOrder';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { VersionChoiceSchema } from '@ValenceContracts/schemas/VersionChoice';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
@@ -71,7 +75,8 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
   } = context;
 
   /**
-   * Names an item for the audit log, by its title and the library it is in.
+   * Names an item for the audit log, by its title and the library it is in, or by nothing where
+   * the item cannot be read, since the change it records is already made.
    *
    * @param mediaId - The item.
    * @returns What an entry about it is about, and what else identifies it.
@@ -79,7 +84,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
   const auditedMedia = async (
     mediaId: string,
   ): Promise<{ target: string | null; detail: Record<string, string> | null }> => {
-    const item = await library.getMedia(mediaId);
+    const item = await library.getMedia(mediaId).catch(() => null);
 
     if (item === null) {
       return { target: null, detail: null };
@@ -586,6 +591,70 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     return context.json(uploaded, 200);
+  });
+
+  app.get('/api/media/:id/episode-orders', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const orders = (await library.readEpisodeOrders?.(context.req.param('id'))) ?? null;
+
+    return orders === null
+      ? context.json(refuse('error.common.noSuchItem'), 404)
+      : context.json(orders, 200);
+  });
+
+  app.put('/api/media/:id/episode-order', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = ChooseEpisodeOrderSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thatEpisodeOrderCouldNotBeRead'), 400);
+    }
+
+    const chosen = (await library.chooseEpisodeOrder?.(id, asked.data.order)) ?? null;
+
+    if (chosen === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.metadataChanged', named.target, named.detail);
+
+    return context.json(chosen, 200);
+  });
+
+  app.put('/api/media/:id/episode-pin', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = EpisodePinRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseEpisodeNumbersCouldNotBeRead'), 400);
+    }
+
+    const pinned = (await library.pinEpisode?.(id, asked.data.pin)) ?? null;
+
+    if (pinned === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.matchFixed', named.target, named.detail);
+
+    return context.json(pinned, 200);
   });
 
   app.put('/api/media/:id/version', async (context) => {

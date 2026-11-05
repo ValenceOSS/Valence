@@ -40,6 +40,7 @@ type MediaFacts = {
   ids?: ExternalIds;
   rememberedExternalId?: string | null;
   language?: string;
+  episodeOrder?: string;
 };
 
 type CastMember = {
@@ -62,6 +63,7 @@ type Metadata = {
   creators?: string[];
   countries?: string[];
   originalLanguage?: string;
+  episodeTotal?: number;
   rating?: number;
   certifications?: Record<string, string>;
   contentAdvice?: ContentAdvice;

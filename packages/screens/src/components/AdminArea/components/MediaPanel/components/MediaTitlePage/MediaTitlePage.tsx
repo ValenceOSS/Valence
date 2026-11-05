@@ -1,3 +1,5 @@
+import { EpisodeNumberDialog } from './components/EpisodeNumberDialog/EpisodeNumberDialog';
+import { EpisodeOrderPicker } from './components/EpisodeOrderPicker/EpisodeOrderPicker';
 import { TitleVersions } from './components/TitleVersions/TitleVersions';
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
@@ -158,6 +160,7 @@ const MediaTitlePage = ({
   const moveTo = onTitlePlace ?? setLocalPlace;
   const [isRefreshOpen, setIsRefreshOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isNumbering, setIsNumbering] = useState(false);
   const cache = useQueryClient();
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
   const { change } = useTitleChange(title.lead.id, 'title');
@@ -654,6 +657,26 @@ const MediaTitlePage = ({
         ]}
         actions={
           <>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                setIsNumbering(true);
+              }}
+            >
+              {say('screens.adminArea.episodeNumberDialog.changeTheEpisode')}
+            </Button>
+            <EpisodeNumberDialog
+              key={`${episodeId}-${isNumbering.toString()}`}
+              mediaId={episodeId}
+              season={episodeSeason.season}
+              episode={openEpisodeOf.episode}
+              isOpen={isNumbering}
+              onClose={() => {
+                setIsNumbering(false);
+              }}
+              onChanged={follow}
+            />
             {buttons.map((one) => (
               <Button
                 key={one.id}
@@ -991,28 +1014,31 @@ const MediaTitlePage = ({
 
         {title.kind === 'series' ? (
           <TabPanel value="seasons" travel={travel}>
-            <SeasonList
-              seasons={seasons}
-              {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
-              actionsOf={(season) =>
-                fileOfSeason(season) === null
-                  ? []
-                  : [
-                      {
-                        id: 'edit',
-                        label: say('common.editDetails'),
-                        onChoose: () => {
-                          openSeasonPage(season.season);
+            <div className="flex flex-col gap-4">
+              <EpisodeOrderPicker mediaId={title.lead.id} onChanged={follow} />
+              <SeasonList
+                seasons={seasons}
+                {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+                actionsOf={(season) =>
+                  fileOfSeason(season) === null
+                    ? []
+                    : [
+                        {
+                          id: 'edit',
+                          label: say('common.editDetails'),
+                          onChoose: () => {
+                            openSeasonPage(season.season);
+                          },
                         },
-                      },
-                    ]
-              }
-              onOpenEpisode={openEpisode}
-              openSeason={at.season}
-              onOpenSeason={(season) => {
-                moveTo({ ...NOWHERE, tab: 'seasons', season });
-              }}
-            />
+                      ]
+                }
+                onOpenEpisode={openEpisode}
+                openSeason={at.season}
+                onOpenSeason={(season) => {
+                  moveTo({ ...NOWHERE, tab: 'seasons', season });
+                }}
+              />
+            </div>
           </TabPanel>
         ) : null}
 

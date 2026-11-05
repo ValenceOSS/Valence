@@ -1,3 +1,4 @@
+import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
 import type { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { EntryFacts } from '@ValenceServer/files/describeLibraryEntries';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
@@ -248,6 +249,12 @@ type LibraryService = ShowService & {
     | { fault: NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>> }
   >;
   isOwnArtwork?: (mediaId: string, url: string) => Promise<boolean>;
+  pinEpisode?: (
+    mediaId: string,
+    pin: { seasonNumber: number; episodeNumber: number; episodeNumberEnd: number | null } | null,
+  ) => Promise<Correction | null>;
+  chooseEpisodeOrder?: (mediaId: string, order: string | null) => Promise<Correction | null>;
+  readEpisodeOrders?: (mediaId: string) => Promise<EpisodeOrders | null>;
   chooseVersion?: (
     mediaId: string,
     choice: { label?: string | null; isStanding?: boolean },

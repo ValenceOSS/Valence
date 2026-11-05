@@ -104,6 +104,7 @@ const createTitleListService = (
         subtitleStreams: mediaItem.subtitleStreams,
         catalogueEpisodeId: mediaItem.catalogueEpisodeId,
         seriesKey: series.key,
+        episodeTotal: series.episodeTotal,
       })
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
@@ -129,6 +130,7 @@ const createTitleListService = (
         subtitleStreams,
         catalogueEpisodeId,
         seriesKey,
+        episodeTotal,
         ...row
       }) => ({
         summary: summaryOfRow(row),
@@ -137,6 +139,7 @@ const createTitleListService = (
         parentId: row.parentId,
         originalTitle,
         seriesKey,
+        episodeTotal,
         catalogueEpisodeId,
         hasOverview: overview !== null && overview.trim() !== '',
         tags: WordsSchema.parse(tags ?? []),

@@ -39,6 +39,7 @@ const aListedFile = (
     parentId: null,
     originalTitle: null,
     seriesKey: null,
+    episodeTotal: null,
     catalogueEpisodeId: null,
     hasOverview: true,
     tags: [],

@@ -856,6 +856,22 @@ const mediaArtworkChoice = mysqlTable(
   ],
 );
 
+const episodePin = mysqlTable(
+  'episode_pin',
+  {
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    seasonNumber: int('seasonNumber').notNull(),
+    episodeNumber: int('episodeNumber').notNull(),
+    episodeNumberEnd: int('episodeNumberEnd'),
+    setAt: momentNow('setAt').notNull(),
+  },
+  (table) => [uniqueIndex('episode_pin_path_idx').on(table.libraryId, table.pathHash)],
+);
+
 const versionChoice = mysqlTable(
   'version_choice',
   {
@@ -939,6 +955,8 @@ const series = mysqlTable(
     anilistId: int('anilistId'),
     malId: int('malId'),
     animeIdsCheckedAt: moment('animeIdsCheckedAt'),
+    episodeOrder: mediumtext('episodeOrder'),
+    episodeTotal: int('episodeTotal'),
     addedAt: momentNow('addedAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
   },
@@ -2320,6 +2338,7 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  episodePin,
   versionChoice,
   titleEdit,
   titleChange,

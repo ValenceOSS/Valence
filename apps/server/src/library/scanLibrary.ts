@@ -1,3 +1,5 @@
+import { orderOf } from './orderOf';
+import type { EpisodePin } from './EpisodePin.types';
 import { inOriginalTitle } from './inOriginalTitle';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { joinedProbe } from '@ValenceServer/library/joinedProbe';
@@ -119,6 +121,8 @@ type MediaStore = {
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   linkSameFilms?: (libraryId: string) => Promise<void>;
   applyVersionChoices?: (libraryId: string) => Promise<void>;
+  listEpisodePins?: (libraryId: string) => Promise<EpisodePin[]>;
+  listEpisodeOrders?: (libraryId: string) => Promise<ReadonlyMap<string, string>>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
@@ -492,6 +496,10 @@ const scanLibrary = async ({
   const listed = onDisk.filter((file) => !heldParts.has(file.path));
   const probeVersion = await readProbeVersion(transcoder);
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
+  const pins = new Map(
+    ((await store.listEpisodePins?.(libraryId)) ?? []).map((pin) => [pin.path, pin]),
+  );
+  const episodeOrders = (await store.listEpisodeOrders?.(libraryId)) ?? new Map<string, string>();
 
   const scope = isPartial && kind !== 'movies' ? seriesFolderUnder(root, within) : null;
   const isInScope = (path: string): boolean => scope === null || path.startsWith(`${scope}/`);
@@ -707,7 +715,17 @@ const scanLibrary = async ({
       }
 
       const placement = placed.get(file.path);
-      const numbered = placement?.episode ?? NOT_AN_EPISODE;
+      const pin = pins.get(file.path);
+      const named = placement?.episode ?? NOT_AN_EPISODE;
+      const numbered =
+        pin === undefined || named.seriesFolder === null
+          ? named
+          : {
+              ...named,
+              seasonNumber: pin.seasonNumber,
+              episodeNumber: pin.episodeNumber,
+              episodeNumberEnd: pin.episodeNumberEnd,
+            };
       const episode = {
         ...numbered,
         seriesReach:
@@ -771,6 +789,7 @@ const scanLibrary = async ({
                 ids,
                 rememberedExternalId: remembered,
                 ...(metadataLanguage === null ? {} : { language: metadataLanguage }),
+                ...orderOf(episodeOrders, knownExternalId ?? remembered),
               },
               (name, reason) =>
                 onProblem?.(

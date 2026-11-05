@@ -57,7 +57,11 @@ const passes = (title: ListedTitle, kind: TitleFilterKind, value: string, now: n
             ? !title.hasBackdrop
             : value === 'logo'
               ? !title.hasLogo
-              : true;
+              : value === 'episodes'
+                ? row.episodeTotal !== null &&
+                  row.episodeTotal !== undefined &&
+                  row.episodes < row.episodeTotal
+                : true;
     case 'resolution':
       return row.looks.isStepMixed ? false : (row.looks.step ?? '') === value;
     case 'range':

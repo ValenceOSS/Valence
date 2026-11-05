@@ -13,6 +13,7 @@ type ListedFile = {
   parentId: string | null;
   originalTitle: string | null;
   seriesKey: string | null;
+  episodeTotal: number | null;
   catalogueEpisodeId: string | null;
   hasOverview: boolean;
   tags: readonly string[];
@@ -215,6 +216,7 @@ const listedTitlesOf = (files: readonly ListedFile[], context: ListingContext): 
       episodes: isShow
         ? ordered.filter((file) => file.parentId === null || !ids.has(file.parentId)).length
         : 0,
+      episodeTotal: isShow ? leadFile.episodeTotal : null,
       sizeBytes: ordered.reduce((sum, file) => sum + file.sizeBytes, 0),
       durationSeconds: isShow
         ? ordered.reduce((sum, file) => sum + file.summary.durationSeconds, 0)

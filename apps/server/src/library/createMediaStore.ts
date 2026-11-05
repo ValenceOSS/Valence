@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { and, asc, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
+  episodePin,
   mediaItem,
   mediaItemJob,
   mediaLeftOut,
@@ -429,6 +430,13 @@ const createMediaStore = (
               },
               row.isCorrected,
             );
+
+      if (seriesId !== null && row.metadata.episodeTotal !== undefined) {
+        await db
+          .update(series)
+          .set({ episodeTotal: row.metadata.episodeTotal })
+          .where(eq(series.id, seriesId));
+      }
 
       const changeable = {
         libraryId: row.libraryId,
@@ -865,6 +873,32 @@ const createMediaStore = (
     },
 
     applyVersionChoices: (libraryId) => versionChoices.apply(libraryId),
+
+    listEpisodePins: async (libraryId) =>
+      db
+        .select({
+          path: episodePin.path,
+          seasonNumber: episodePin.seasonNumber,
+          episodeNumber: episodePin.episodeNumber,
+          episodeNumberEnd: episodePin.episodeNumberEnd,
+        })
+        .from(episodePin)
+        .where(eq(episodePin.libraryId, libraryId)),
+
+    listEpisodeOrders: async (libraryId) => {
+      const rows = await db
+        .select({ externalId: series.externalId, episodeOrder: series.episodeOrder })
+        .from(series)
+        .where(and(eq(series.libraryId, libraryId), isNotNull(series.episodeOrder)));
+
+      return new Map(
+        rows.flatMap((row) =>
+          row.externalId === null || row.episodeOrder === null
+            ? []
+            : [[row.externalId, row.episodeOrder] as const],
+        ),
+      );
+    },
 
     linkSameFilms: async (libraryId) => {
       const films = await db

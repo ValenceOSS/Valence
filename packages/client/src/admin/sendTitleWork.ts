@@ -13,11 +13,16 @@ type TitleWorkAnswer =
  *
  * @param path - Where the request goes.
  * @param body - What is asked, where there is more to say than the address.
+ * @param method - How it is asked: to do something, or to set how something is.
  * @returns How many files or fields it reached and the job doing the work, or why it was refused.
  */
-const sendTitleWork = async (path: string, body?: object): Promise<TitleWorkAnswer> => {
+const sendTitleWork = async (
+  path: string,
+  body?: object,
+  method: 'POST' | 'PUT' = 'POST',
+): Promise<TitleWorkAnswer> => {
   const response = await fetch(path, {
-    method: 'POST',
+    method,
     credentials: 'same-origin',
     ...(body === undefined
       ? {}

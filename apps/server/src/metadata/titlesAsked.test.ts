@@ -84,4 +84,40 @@ describe('titlesAsked', () => {
   it('ignores a chip it cannot read', () => {
     expect(namesOf({ filter: ['nonsense', 'colour:blue'] })).toEqual(['Alien', 'Heat']);
   });
+
+  it('finds the shows missing episodes TMDB lists, and none whose count is unknown', () => {
+    const shows = listedTitlesOf(
+      [
+        aListedFile('one', {
+          seriesKey: 'folder:A',
+          episodeTotal: 3,
+          summary: {
+            title: 'A1',
+            seriesId: 'a',
+            seriesTitle: 'A',
+            seasonNumber: 1,
+            episodeNumber: 1,
+          },
+        }),
+        aListedFile('two', {
+          seriesKey: 'folder:B',
+          episodeTotal: null,
+          summary: {
+            title: 'B1',
+            seriesId: 'b',
+            seriesTitle: 'B',
+            seasonNumber: 1,
+            episodeNumber: 1,
+          },
+        }),
+      ],
+      { duplicates: new Map(), duplicatePaths: new Map(), editedKeys: new Set() },
+    );
+
+    expect(
+      titlesAsked(shows, { ...ASKED, filter: ['missing:episodes'] }, NOW).shown.map(
+        (one) => one.row.name,
+      ),
+    ).toEqual(['A']);
+  });
 });

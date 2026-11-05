@@ -2293,6 +2293,7 @@ const ENGLISH = {
   'error.library.thatDiskIsReadOnlyForMoving':
     'One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.',
   'error.library.thatDoesNotLookLikeA': 'That doesn’t look like a catalogue URL or ID.',
+  'error.library.thatEpisodeOrderCouldNotBeRead': 'That episode order couldn’t be read.',
   'error.library.thatFileIsNotInsideItsLibrary':
     'That file isn’t inside its library, so Valence won’t move it.',
   'error.library.thatIsNotInsideThisLibrary': 'That isn’t inside this library.',
@@ -2303,6 +2304,8 @@ const ENGLISH = {
     'That choice for the version couldn’t be read: a name is at most 64 characters.',
   'error.library.theFileCouldNotBeMoved': 'Couldn’t move the file.',
   'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
+  'error.library.thoseEpisodeNumbersCouldNotBeRead':
+    'Those episode numbers couldn’t be read: a season is 0 or more, an episode 1 or more, and a last episode comes after the first.',
   'error.library.valenceMayNotMoveFilesThere':
     'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
@@ -4475,6 +4478,8 @@ const ENGLISH = {
   'screens.adminArea.describeSince.minutesAgo.one': '{count} minute ago',
   'screens.adminArea.describeSince.minutesAgo.other': '{count} minutes ago',
   'screens.adminArea.describeSince.never': 'never',
+  'screens.adminArea.describeTitle.count.haveOfEpisodes.one': '{have} of {count} episode',
+  'screens.adminArea.describeTitle.count.haveOfEpisodes.other': '{have} of {count} episodes',
   'screens.adminArea.describeToneMapping.anythingTheCardCannotTakeIs':
     'HDR that the GPU can’t tone-map plays without tone mapping, because this FFmpeg build has no software tone mapper.',
   'screens.adminArea.describeToneMapping.softwareInSoftware': '{software}, in software',
@@ -4680,6 +4685,21 @@ const ENGLISH = {
     'Video is streamed in small pieces called segments, and the player has to fetch the first one before anything plays. Two-second pieces instead of four mean playback starts and seeks about twice as fast, especially over a slow connection or a tunnel. The cost is twice as many requests to the server.',
   'screens.adminArea.encodingSettings.shortSegmentsDetail':
     'Sends video in 2-second pieces, so playback starts and seeks sooner.',
+  'screens.adminArea.episodeNumberDialog.changeTheEpisode': 'Change the episode…',
+  'screens.adminArea.episodeNumberDialog.itsNameSaysOtherwise':
+    'For a file whose name gives the wrong episode, or one holding several. It’s read again as the episode you give, and stays that episode through every scan.',
+  'screens.adminArea.episodeNumberDialog.lastEpisode': 'Last episode, for a file of several',
+  'screens.adminArea.episodeNumberDialog.readingItAgain': 'Reading it again as that episode',
+  'screens.adminArea.episodeNumberDialog.useTheFileName': 'Go by the file name again',
+  'screens.adminArea.episodeNumberDialog.whichEpisodeIsThisFile': 'Which episode is this file?',
+  'screens.adminArea.episodeOrderPicker.episodeOrder': 'Episode order',
+  'screens.adminArea.episodeOrderPicker.everyEpisodeIsReadAgain':
+    'Every episode is read again in that order, so a file named S01E05 becomes the fifth episode of that order’s first season. Edits are kept.',
+  'screens.adminArea.episodeOrderPicker.numberByName': 'Number the episodes by {order}?',
+  'screens.adminArea.episodeOrderPicker.tmdbsOwnOrder': 'TMDB’s own order',
+  'screens.adminArea.episodeOrderPicker.useThisOrder': 'Use this order',
+  'screens.adminArea.episodeOrderPicker.whichOrderTheFilesFollow':
+    'Which order your files are numbered in. Each episode’s title, overview and still follow the order you choose.',
   'screens.adminArea.fileDetails.addingUp': 'Adding up…',
   'screens.adminArea.fileDetails.atLeastSize': 'At least {size}',
   'screens.adminArea.fileDetails.chooseSomethingToSeeIt':

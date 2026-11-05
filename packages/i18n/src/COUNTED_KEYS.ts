@@ -109,6 +109,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.describeSince.daysAgo',
   'screens.adminArea.describeSince.hoursAgo',
   'screens.adminArea.describeSince.minutesAgo',
+  'screens.adminArea.describeTitle.count.haveOfEpisodes',
   'screens.adminArea.deviceLoadList.streams',
   'screens.adminArea.deviceLoadList.streamsOfCapacity',
   'screens.adminArea.devicePlacement.encodersChecked',

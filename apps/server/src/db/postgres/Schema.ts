@@ -878,6 +878,21 @@ const mediaArtworkChoice = pgTable(
   ],
 );
 
+const episodePin = pgTable(
+  'episode_pin',
+  {
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    seasonNumber: integer('seasonNumber').notNull(),
+    episodeNumber: integer('episodeNumber').notNull(),
+    episodeNumberEnd: integer('episodeNumberEnd'),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.libraryId, table.path] })],
+);
+
 const versionChoice = pgTable(
   'version_choice',
   {
@@ -957,6 +972,8 @@ const series = pgTable(
     anilistId: integer('anilistId'),
     malId: integer('malId'),
     animeIdsCheckedAt: timestamp('animeIdsCheckedAt'),
+    episodeOrder: text('episodeOrder'),
+    episodeTotal: integer('episodeTotal'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
@@ -2326,6 +2343,7 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
+  episodePin,
   versionChoice,
   titleEdit,
   titleChange,

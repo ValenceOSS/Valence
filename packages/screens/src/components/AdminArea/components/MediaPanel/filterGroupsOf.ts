@@ -30,6 +30,7 @@ const filterGroupsOf = (choices: TitleChoices | undefined): FilterGroup[] => {
         { id: 'missing:poster', label: say('screens.adminArea.artworkPicker.poster') },
         { id: 'missing:backdrop', label: say('screens.adminArea.artworkPicker.backdrop') },
         { id: 'missing:logo', label: say('screens.adminArea.artworkPicker.logo') },
+        { id: 'missing:episodes', label: say('common.episodes') },
       ],
     },
     { name: say('common.resolution'), options: optionsOf('resolution') },

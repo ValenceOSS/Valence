@@ -1,3 +1,4 @@
+import { firstAnswerOf } from '@ValenceServer/library/firstAnswerOf';
 import { createVersionChoices } from './createVersionChoices';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
@@ -69,6 +70,7 @@ import {
   mediaOverride,
   mediaPreviewOverride,
   series,
+  episodePin,
   jobRunIssue,
 } from '#dialect/Schema';
 import {
@@ -2478,6 +2480,91 @@ const createDatabaseLibraryService = ({
     uploadArtwork: (mediaId, kind, artwork, by) =>
       artworkChoices.upload(mediaId, kind, artwork, by),
     chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
+
+    pinEpisode: async (mediaId, pin) => {
+      const [file] = await db
+        .select({
+          libraryId: mediaItem.libraryId,
+          path: mediaItem.path,
+          seriesId: mediaItem.seriesId,
+        })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (file === undefined || file.seriesId === null) {
+        return null;
+      }
+
+      const where = and(eq(episodePin.libraryId, file.libraryId), eq(episodePin.path, file.path));
+
+      await db.transaction(async (tx) => {
+        await tx.delete(episodePin).where(where);
+
+        if (pin !== null) {
+          await tx
+            .insert(episodePin)
+            .values({ libraryId: file.libraryId, path: file.path, ...pin });
+        }
+      });
+
+      return { corrected: 1, jobId: await queueReadAgain(file.libraryId, [file.path], true) };
+    },
+
+    chooseEpisodeOrder: async (mediaId, order) => {
+      const [file] = await db
+        .select({ seriesId: mediaItem.seriesId })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+      const paths = await pathsOfTheSameThing(mediaId);
+
+      if (file?.seriesId === null || file?.seriesId === undefined || paths === null) {
+        return null;
+      }
+
+      await db
+        .update(series)
+        .set({ episodeOrder: order, updatedAt: new Date() })
+        .where(eq(series.id, file.seriesId));
+
+      return {
+        corrected: paths.paths.length,
+        jobId: await queueReadAgain(paths.libraryId, paths.paths, true),
+      };
+    },
+
+    readEpisodeOrders: async (mediaId) => {
+      const [file] = await db
+        .select({ episodeOrder: series.episodeOrder, externalId: series.externalId })
+        .from(mediaItem)
+        .innerJoin(series, eq(series.id, mediaItem.seriesId))
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (file === undefined) {
+        return null;
+      }
+
+      const { externalId } = file;
+      const groups =
+        externalId === null
+          ? []
+          : ((await firstAnswerOf(
+              providers ?? [],
+              async (provider) => {
+                const found = await provider.readEpisodeGroups?.(externalId);
+
+                return found === undefined || found.length === 0 ? null : found;
+              },
+              () => {},
+            )) ?? []);
+
+      return {
+        orders: groups.map((group) => ({ id: group.id, name: group.name, type: group.type })),
+        chosen: file.episodeOrder,
+      };
+    },
     isOwnArtwork: (mediaId, url) => artworkChoices.isOwnPicture(mediaId, url),
 
     readArtworkUrl: async (mediaId, kind, isOfTitle = false) => {

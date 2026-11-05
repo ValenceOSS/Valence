@@ -27,7 +27,15 @@ const describeTitle = (title: MediaTitle): string => {
   }
 
   if (title.kind === 'series') {
-    return `${sayCount('common.count.seasons', title.seasons)} · ${sayCount('common.count.episodes', episodes)}`;
+    const total = title.row?.episodeTotal ?? null;
+
+    return `${sayCount('common.count.seasons', title.seasons)} · ${
+      total === null || total < episodes
+        ? sayCount('common.count.episodes', episodes)
+        : sayCount('screens.adminArea.describeTitle.count.haveOfEpisodes', total, {
+            have: episodes.toLocaleString(),
+          })
+    }`;
   }
 
   return [

@@ -36,6 +36,12 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
     (mediaId: string, _choice: { label?: string | null; isStanding?: boolean }) =>
       Promise.resolve(mediaId === MEDIA_ID),
   );
+  const pinEpisode = vi.fn(
+    (
+      _mediaId: string,
+      _pin: { seasonNumber: number; episodeNumber: number; episodeNumberEnd: number | null } | null,
+    ) => Promise.resolve({ corrected: 1, jobId: 'job' }),
+  );
   const readImage = vi.fn((_url: string, _width?: number) =>
     Promise.resolve({ body: new TextEncoder().encode('picture').buffer, contentType: 'image/png' }),
   );
@@ -53,6 +59,13 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       uploadArtwork,
       isOwnArtwork: (_mediaId, url) => Promise.resolve(url === ON_DISK),
       chooseVersion,
+      pinEpisode,
+      chooseEpisodeOrder: (mediaId, order) =>
+        Promise.resolve(
+          mediaId === MEDIA_ID && order !== 'gone' ? { corrected: 4, jobId: 'job' } : null,
+        ),
+      readEpisodeOrders: () =>
+        Promise.resolve({ orders: [{ id: 'dvd', name: 'DVD', type: 3 }], chosen: null }),
     },
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
@@ -73,7 +86,7 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       headers: { cookie, origin: TEST_ORIGIN, ...init.headers },
     });
 
-  return { ask, uploadArtwork, readImage, chooseVersion };
+  return { ask, uploadArtwork, readImage, chooseVersion, pinEpisode };
 };
 
 describe('serveLibrary', () => {
@@ -138,5 +151,38 @@ describe('serveLibrary', () => {
     expect(chooseVersion).toHaveBeenCalledWith(MEDIA_ID, { label: 'Extended', isStanding: true });
     expect((await put('another', { label: 'x' })).status).toBe(404);
     expect((await put(MEDIA_ID, { label: 'x'.repeat(65) })).status).toBe(400);
+  });
+
+  it('says which episode a file is, refusing numbers that cannot be', async () => {
+    const { ask, pinEpisode } = await build();
+    const put = (body: object) =>
+      ask(`/api/media/${MEDIA_ID}/episode-pin`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    const pin = { seasonNumber: 1, episodeNumber: 2, episodeNumberEnd: 3 };
+
+    expect((await put({ pin })).status).toBe(200);
+    expect(pinEpisode).toHaveBeenCalledWith(MEDIA_ID, pin);
+    expect((await put({ pin: { ...pin, episodeNumberEnd: 1 } })).status).toBe(400);
+    expect((await put({ pin: null })).status).toBe(200);
+  });
+
+  it('lists a show’s episode orders, and chooses one', async () => {
+    const { ask } = await build();
+    const listed = await ask(`/api/media/${MEDIA_ID}/episode-orders`);
+    const chosen = await ask(`/api/media/${MEDIA_ID}/episode-order`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ order: 'dvd' }),
+    });
+
+    expect(await listed.json()).toEqual({
+      orders: [{ id: 'dvd', name: 'DVD', type: 3 }],
+      chosen: null,
+    });
+    expect(await chosen.json()).toEqual({ corrected: 4, jobId: 'job' });
   });
 });

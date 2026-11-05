@@ -82,6 +82,7 @@ const TitleRowSchema = z.object({
   versions: z.number().int().nonnegative(),
   seasons: z.number().int().nonnegative(),
   episodes: z.number().int().nonnegative(),
+  episodeTotal: z.number().int().nonnegative().nullable().optional(),
   sizeBytes: z.number().nonnegative().nullable(),
   durationSeconds: z.number().nonnegative(),
   latestAddedAt: z.string(),

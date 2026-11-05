@@ -9736,6 +9736,11 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.thatEpisodeOrderCouldNotBeRead",
+    "text": "That episode order couldn’t be read.",
+    "context": "Refusal when a show's episode order is chosen with a body the server can't read."
+  },
+  {
     "handler": "error.library.thatFileIsNotInsideItsLibrary",
     "text": "That file isn’t inside its library, so Valence won’t move it.",
     "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
@@ -9769,6 +9774,11 @@
     "handler": "error.library.theFileIsNoLongerThere",
     "text": "That file is no longer where Valence last saw it.",
     "context": "An error the server answers with (HTTP 404) in the library, when an admin moves media into another library."
+  },
+  {
+    "handler": "error.library.thoseEpisodeNumbersCouldNotBeRead",
+    "text": "Those episode numbers couldn’t be read: a season is 0 or more, an episode 1 or more, and a last episode comes after the first.",
+    "context": "Refusal when an episode's numbers are set by hand with numbers the server can't take."
   },
   {
     "handler": "error.library.valenceMayNotMoveFilesThere",
@@ -17846,6 +17856,16 @@
     "context": "How long ago something happened, on the admin pages, when it never has. Shown on its own or in sentences like \"Scanned {when}\"."
   },
   {
+    "handler": "screens.adminArea.describeTitle.count.haveOfEpisodes.one",
+    "text": "{have} of {count} episode",
+    "context": "How many of a show's episodes are on the disk, out of how many TMDB lists, in the media list. {have} is how many are here."
+  },
+  {
+    "handler": "screens.adminArea.describeTitle.count.haveOfEpisodes.other",
+    "text": "{have} of {count} episodes",
+    "context": "How many of a show's episodes are on the disk, out of how many TMDB lists, in the media list. {have} is how many are here."
+  },
+  {
     "handler": "screens.adminArea.describeToneMapping.anythingTheCardCannotTakeIs",
     "text": "HDR that the GPU can’t tone-map plays without tone mapping, because this FFmpeg build has no software tone mapper.",
     "context": "Shown in the admin area (from `describeToneMapping`)."
@@ -18604,6 +18624,66 @@
     "handler": "screens.adminArea.encodingSettings.shortSegmentsDetail",
     "text": "Sends video in 2-second pieces, so playback starts and seeks sooner.",
     "context": "Under the short segments setting."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.changeTheEpisode",
+    "text": "Change the episode…",
+    "context": "Button on an episode's page that opens the dialog saying which episode its file is, whatever its name says."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.itsNameSaysOtherwise",
+    "text": "For a file whose name gives the wrong episode, or one holding several. It’s read again as the episode you give, and stays that episode through every scan.",
+    "context": "Description in the dialog that says which episode a file is."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.lastEpisode",
+    "text": "Last episode, for a file of several",
+    "context": "Optional field: the last episode a file holds when it holds several, such as 2 for a file of episodes 1 and 2."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.readingItAgain",
+    "text": "Reading it again as that episode",
+    "context": "Notice after a file's episode was set by hand."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.useTheFileName",
+    "text": "Go by the file name again",
+    "context": "Button in the dialog that forgets the episode given by hand, so the file's name decides again."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.whichEpisodeIsThisFile",
+    "text": "Which episode is this file?",
+    "context": "Title of the dialog that says which episode a file is, whatever its name says."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.episodeOrder",
+    "text": "Episode order",
+    "context": "Setting on a show's Seasons tab: which of TMDB's orders its episodes are numbered in, such as the DVD order."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.everyEpisodeIsReadAgain",
+    "text": "Every episode is read again in that order, so a file named S01E05 becomes the fifth episode of that order’s first season. Edits are kept.",
+    "context": "Detail of the confirmation before a show's episode order changes."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.numberByName",
+    "text": "Number the episodes by {order}?",
+    "context": "Title of the confirmation before a show's episode order changes. {order} is the order, such as Blu-ray Order."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.tmdbsOwnOrder",
+    "text": "TMDB’s own order",
+    "context": "The first choice of a show's episode order: the order TMDB lists its seasons in."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.useThisOrder",
+    "text": "Use this order",
+    "context": "Confirm button when changing a show's episode order."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.whichOrderTheFilesFollow",
+    "text": "Which order your files are numbered in. Each episode’s title, overview and still follow the order you choose.",
+    "context": "Description of a show's episode order setting."
   },
   {
     "handler": "screens.adminArea.fileDetails.addingUp",
