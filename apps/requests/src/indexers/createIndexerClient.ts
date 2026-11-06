@@ -21,6 +21,7 @@ import type {
   Release,
   ReleaseSearch,
 } from '@ValenceContracts/schemas/Indexer';
+import type { SearchResultsReader } from '@ValenceRequests/cardigann/SearchResultsReader';
 import { saying } from '@ValenceI18n/saying';
 
 type IndexerConnection = {
@@ -47,6 +48,7 @@ type CreateIndexerClientOptions = {
   definitions?: (id: string) => Promise<CardigannDefinition | null>;
   site?: SiteClient;
   onAsked?: (asked: { indexer: string; address: string; found: number }) => void;
+  readResults?: SearchResultsReader;
 };
 
 /**
@@ -65,6 +67,7 @@ type CreateIndexerClientOptions = {
  * @param site - How the engine reaches the sites definitions describe.
  * @param onAsked - Told of every address a search asked, with its keys masked, and how many
  *   releases it found there, so the log shows what each indexer was really asked.
+ * @param readResults - What reads a page of results off the main thread, where there is one.
  * @returns The client.
  */
 const createIndexerClient = ({
@@ -73,6 +76,7 @@ const createIndexerClient = ({
   definitions,
   site,
   onAsked,
+  readResults,
 }: CreateIndexerClientOptions) => {
   const engineFor = async (indexer: IndexerConnection, isUrgent = false) => {
     const definition =
@@ -105,6 +109,7 @@ const createIndexerClient = ({
             (definition.requestDelay ?? 0) * 1000,
             isUrgent,
           ),
+        ...(readResults === undefined ? {} : { readResults }),
         ...(onAsked === undefined
           ? {}
           : {
