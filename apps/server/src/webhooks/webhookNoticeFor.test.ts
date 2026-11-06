@@ -51,6 +51,7 @@ const aViewer = {
   accountName: 'Dan',
   profileId: 'profile-1',
   profileName: 'Connie',
+  fromServer: null,
 };
 
 const aSession = {
@@ -1263,6 +1264,28 @@ describe('webhookNoticeFor, somebody watching or listening', () => {
       posterUrl: POSTER,
       footer: 'Films',
       tone: 'viewing',
+    });
+  });
+
+  it('says which linked server somebody is watching from, without a device line that repeats it', () => {
+    const notice = webhookNoticeFor({
+      ...anEnvelope,
+      event: 'playback.started',
+      data: {
+        ...aPlayback,
+        accountId: null,
+        accountName: null,
+        profileId: null,
+        profileName: null,
+        fromServer: 'Kai’s Valence',
+        deviceLabel: 'Kai’s Valence',
+        clientLabel: null,
+      },
+    });
+
+    expect({ lead: leadOf(notice), context: notice.context }).toStrictEqual({
+      lead: '**Someone from Kai’s Valence** started watching',
+      context: [],
     });
   });
 

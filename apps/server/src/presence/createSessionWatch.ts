@@ -39,6 +39,10 @@ type Held = {
  * How long somebody stayed is measured to when their connection actually went, not to when this
  * decided to believe it, so the wait does not inflate every visit by its own length.
  *
+ * Somebody watching through a linked server is never here in that sense: their server opens a
+ * connection only to play something, which a playback event already says, so they neither arrive
+ * nor leave.
+ *
  * @param lingerMs - How long a connection has to come back before it counts as gone.
  * @param schedule - How to wait, injected so this can be tested without a clock.
  * @param now - The clock, for how long somebody stayed.
@@ -79,6 +83,10 @@ const createSessionWatch = ({
 
   return {
     opened: (session) => {
+      if (session.fromServer !== null) {
+        return;
+      }
+
       const held = here.get(session.clientId);
 
       if (held !== undefined) {

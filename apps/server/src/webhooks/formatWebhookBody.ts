@@ -370,16 +370,27 @@ const sentenceFor = (payload: WebhookPayload, serverName: string): string => {
     }
 
     case 'playback.started': {
+      const isListening = isListenedTo(payload.data.item.kind);
+      const started = {
+        viewer: nameOfViewer(payload.data),
+        item: nameOfItem(payload.data.item),
+        how: HOW_PLAYED[payload.data.mode],
+      };
+
+      if (payload.data.fromServer !== null) {
+        return say(
+          isListening
+            ? 'server.webhooks.formatWebhookBody.startedListeningFromAnotherServer'
+            : 'server.webhooks.formatWebhookBody.startedWatchingFromAnotherServer',
+          started,
+        );
+      }
+
       return say(
-        isListenedTo(payload.data.item.kind)
+        isListening
           ? 'server.webhooks.formatWebhookBody.startedListening'
           : 'server.webhooks.formatWebhookBody.startedWatching',
-        {
-          viewer: nameOfViewer(payload.data),
-          item: nameOfItem(payload.data.item),
-          device: deviceInASentence(payload.data),
-          how: HOW_PLAYED[payload.data.mode],
-        },
+        { ...started, device: deviceInASentence(payload.data) },
       );
     }
 

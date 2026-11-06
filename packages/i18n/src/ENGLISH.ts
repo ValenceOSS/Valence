@@ -9925,8 +9925,12 @@ const ENGLISH = {
     'A sign-in as {identifier} was blocked on {deviceLabel} from {address} — {reason}',
   'server.webhooks.formatWebhookBody.startedListening':
     '{viewer} started listening to {item} on {device}, {how}.',
+  'server.webhooks.formatWebhookBody.startedListeningFromAnotherServer':
+    '{viewer} started listening to {item}, {how}.',
   'server.webhooks.formatWebhookBody.startedWatching':
     '{viewer} started watching {item} on {device}, {how}.',
+  'server.webhooks.formatWebhookBody.startedWatchingFromAnotherServer':
+    '{viewer} started watching {item}, {how}.',
   'server.webhooks.formatWebhookBody.theCatalogueCanBeReachedAgain':
     'The metadata catalogue is reachable again. No action needed.',
   'server.webhooks.formatWebhookBody.theCatalogueCouldNotBeReached':
