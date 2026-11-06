@@ -24,7 +24,6 @@ import { KeptCopiesDialog } from './components/KeptCopiesDialog/KeptCopiesDialog
 import { PreTranscodingCard } from './components/PreTranscodingCard/PreTranscodingCard';
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { KeptCopiesSubject } from './components/KeptCopiesDialog/KeptCopiesDialog.types';
-import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
 import { MediaTab } from './components/MediaTab/MediaTab';
 import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
 import { ReencodeReview } from '@ValenceScreens/components/ReencodeReview/ReencodeReview';
@@ -35,7 +34,7 @@ import {
   rejectReencode,
   startReencodes,
 } from '@ValenceClient/admin/fetchReencodes';
-import { MatchPicker } from './components/MatchPicker/MatchPicker';
+import { FixMatchDialog } from '@ValenceScreens/components/AdminArea/components/FixMatchDialog/FixMatchDialog';
 import { ArtworkPicker } from './components/ArtworkPicker/ArtworkPicker';
 import type { ArtworkSubject } from './components/ArtworkPicker/ArtworkPicker.types';
 import { CorrectionPicker } from '@ValenceScreens/components/AdminArea/components/CorrectionPicker/CorrectionPicker';
@@ -198,6 +197,8 @@ const stayStill = (): (() => void) => () => {};
  * @param onPanel - Told which panel to open, and what to narrow it to where that was said.
  * @param mediaTitle - The title the address says to open in Media.
  * @param onMediaTitle - Called with the title opened in Media, or null on going back.
+ * @param mediaPlace - Which tab, season and episode of the title open in Media the address says.
+ * @param onMediaPlace - Called with where the title open in Media has moved to.
  * @param webhook - The webhook the address says to open.
  * @param onWebhook - Called with the webhook opened, or null on going back.
  * @param linkedServer - The linked server the address says to open.
@@ -206,8 +207,14 @@ const stayStill = (): (() => void) => () => {};
  * @param observability - What the address says the jobs and logs page is showing and narrowed to.
  * @param onObservabilityChange - Called with each change to it, to write into the address.
  * @param onJobChange - Called with the job whose schedule was opened, or null on going back.
- * @param folder - The folder the address says to open in Files.
- * @param onOpenFolder - Called with a folder to open in Files.
+ * @param folder - The folder the address says to open in Media's folder view.
+ * @param onOpenFolder - Called with a folder to open in Media's folder view.
+ * @param mediaView - Whether Media shows its titles or its folders, as the address says.
+ * @param onMediaView - Called with which Media is to show.
+ * @param mediaList - Which library Media lists, and how it is searched, filtered and sorted, as
+ *   the address says.
+ * @param onMediaList - Called with how Media's list has changed.
+ * @param onMediaFolder - Called with the folder Media's folder view has open.
  * @param catalogue - The Catalogue's tab and the title open in it, as the address says them.
  * @param onCatalogue - Called with a change to either, to write into the address.
  */
@@ -217,6 +224,8 @@ const AdminArea = ({
   onPanel,
   mediaTitle = null,
   onMediaTitle,
+  mediaPlace,
+  onMediaPlace,
   webhook = null,
   onWebhook,
   linkedServer = null,
@@ -226,6 +235,11 @@ const AdminArea = ({
   onObservabilityChange,
   onJobChange,
   folder = null,
+  mediaView,
+  onMediaView,
+  mediaList,
+  onMediaList,
+  onMediaFolder,
   onOpenFolder,
   catalogue = CATALOGUE_AT_FIRST,
   onCatalogue,
@@ -1173,6 +1187,8 @@ const AdminArea = ({
             <MediaTab
               openedTitle={mediaTitle}
               {...(onMediaTitle === undefined ? {} : { onOpenTitle: onMediaTitle })}
+              {...(mediaPlace === undefined ? {} : { titlePlace: mediaPlace })}
+              {...(onMediaPlace === undefined ? {} : { onTitlePlace: onMediaPlace })}
               libraries={libraries}
               mayDelete={mayDeleteMedia}
               {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
@@ -1184,15 +1200,13 @@ const AdminArea = ({
               onReencode={chooseToReencode}
               onShowCopies={showCopies}
               {...(onCatalogue === undefined ? {} : { onOpenInCatalogue: onCatalogue })}
-            />
-          </TabPanel>
-
-          <TabPanel value="files">
-            <FilesPanel
-              libraries={libraries}
-              mayDelete={mayDeleteMedia}
-              openAt={folder}
-              onChanged={readTheLibraryAgain}
+              {...(mediaView === undefined ? {} : { view: mediaView })}
+              {...(onMediaView === undefined ? {} : { onView: onMediaView })}
+              {...(mediaList === undefined ? {} : { listPlace: mediaList })}
+              {...(onMediaList === undefined ? {} : { onListPlace: onMediaList })}
+              folder={folder}
+              {...(onMediaFolder === undefined ? {} : { onFolder: onMediaFolder })}
+              onFilesChanged={readTheLibraryAgain}
               onScan={(libraryId) => {
                 void rescan(libraryId);
               }}
@@ -1491,7 +1505,7 @@ const AdminArea = ({
         onChanged={readTheLibraryAgain}
       />
 
-      <MatchPicker
+      <FixMatchDialog
         media={correcting}
         isInShows={
           libraries.find((library) => library.id === correcting?.libraryId)?.kind === 'shows'

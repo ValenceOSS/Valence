@@ -142,7 +142,7 @@ const AnimeSettingsCard = ({
                 const named =
                   film.year === null
                     ? film.title
-                    : say('screens.importWizard.importReportView.titleYear', {
+                    : say('common.titleYear', {
                         title: film.title,
                         year: film.year.toString(),
                       });

@@ -1,8 +1,29 @@
+import { ExtraChoiceRequestSchema } from '@ValenceContracts/schemas/ExtraChoice';
+import {
+  PatternRenamePlanRequestSchema,
+  PatternRenameRequestSchema,
+} from '@ValenceContracts/schemas/PatternRename';
+import { WordRulesSchema } from '@ValenceContracts/schemas/WordRule';
+import {
+  ChooseEpisodeOrderSchema,
+  EpisodePinRequestSchema,
+} from '@ValenceContracts/schemas/EpisodeOrder';
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import {
+  CatalogueShowIdSchema,
+  ChooseSeasonSourceSchema,
+} from '@ValenceContracts/schemas/SeasonSource';
+import { VersionChoiceSchema } from '@ValenceContracts/schemas/VersionChoice';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
+import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
+import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
+import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
+import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
+import { ArtworkKindSchema } from '@ValenceContracts/schemas/ArtworkChoice';
 import {
   listLibrariesRoute,
   createLibraryRoute,
@@ -59,10 +80,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     requestsClient,
     settings,
     recordAudit,
+    titleMetadata,
+    readImage,
   } = context;
 
   /**
-   * Names an item for the audit log, by its title and the library it is in.
+   * Names an item for the audit log, by its title and the library it is in, or by nothing where
+   * the item cannot be read, since the change it records is already made.
    *
    * @param mediaId - The item.
    * @returns What an entry about it is about, and what else identifies it.
@@ -70,7 +94,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
   const auditedMedia = async (
     mediaId: string,
   ): Promise<{ target: string | null; detail: Record<string, string> | null }> => {
-    const item = await library.getMedia(mediaId);
+    const item = await library.getMedia(mediaId).catch(() => null);
 
     if (item === null) {
       return { target: null, detail: null };
@@ -148,6 +172,9 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       requestProfileId,
       requestPath,
       keepsShowsTogether,
+      metadataLanguage,
+      usesOriginalTitle,
+      writesNfo,
       higherProfileAsks,
       fulfilment,
     } = context.req.valid('json');
@@ -176,6 +203,9 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { requestPath: requestPath === '' ? null : requestPath }),
       ...(keepsShowsTogether === undefined ? {} : { keepsShowsTogether }),
+      ...(metadataLanguage === undefined ? {} : { metadataLanguage }),
+      ...(usesOriginalTitle === undefined ? {} : { usesOriginalTitle }),
+      ...(writesNfo === undefined ? {} : { writesNfo }),
       ...(higherProfileAsks === undefined ? {} : { higherProfileAsks }),
       ...(fulfilment === undefined ? {} : { fulfilment }),
     });
@@ -356,7 +386,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
-    const { reference, kind } = context.req.valid('json');
+    const { reference, kind, keep } = context.req.valid('json');
     const read = readCatalogueReference(reference);
 
     if (read === null) {
@@ -370,10 +400,19 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const before = await auditedMedia(context.req.valid('param').id);
+    const account = await readAccount(context.req.raw.headers);
+
+    await titleMetadata?.carry(
+      context.req.valid('param').id,
+      { externalId: read.id, kind: externalKind },
+      keep ?? [],
+      { id: account?.id ?? null, name: account?.name ?? null },
+    );
+
     const corrected = await library.correctMatch(
       context.req.valid('param').id,
       { externalId: read.id, externalKind },
-      (await readAccount(context.req.raw.headers))?.id ?? null,
+      account?.id ?? null,
     );
 
     if (corrected !== null) {
@@ -449,7 +488,14 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
-    const read = await library.readArtworkChoices(context.req.valid('param').id);
+    const { season, episode } = context.req.valid('query');
+    const read =
+      season === undefined
+        ? await library.readArtworkChoices(context.req.valid('param').id)
+        : ((await library.readArtworkPart?.(context.req.valid('param').id, {
+            season,
+            episode: episode ?? null,
+          })) ?? 'unavailable');
 
     if (read === 'missing') {
       return context.json(refuse('error.common.noSuchItem'), 404);
@@ -472,12 +518,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { id, kind } = context.req.valid('param');
-    const chosen = await library.chooseArtwork(
-      id,
-      kind,
-      context.req.valid('json').url,
-      (await readAccount(context.req.raw.headers))?.id ?? null,
-    );
+    const { season, episode } = context.req.valid('query');
+    const by = (await readAccount(context.req.raw.headers))?.id ?? null;
+    const chosen =
+      season === undefined
+        ? await library.chooseArtwork(id, kind, context.req.valid('json').url, by)
+        : ((await library.chooseArtworkPart?.(
+            id,
+            { season, episode: episode ?? null },
+            context.req.valid('json').url,
+            by,
+          )) ?? 'unavailable');
 
     if (chosen === 'missing' || chosen === 'unmatched') {
       return context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
@@ -504,12 +555,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { id, kind } = context.req.valid('param');
-    const forgotten = await library.chooseArtwork(
-      id,
-      kind,
-      null,
-      (await readAccount(context.req.raw.headers))?.id ?? null,
-    );
+    const { season, episode } = context.req.valid('query');
+    const by = (await readAccount(context.req.raw.headers))?.id ?? null;
+    const forgotten =
+      season === undefined
+        ? await library.chooseArtwork(id, kind, null, by)
+        : ((await library.chooseArtworkPart?.(
+            id,
+            { season, episode: episode ?? null },
+            null,
+            by,
+          )) ?? 'unavailable');
 
     if (typeof forgotten === 'string') {
       return context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
@@ -520,6 +576,339 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     await recordAudit(context, 'media.artworkReset', named.target, { ...named.detail, kind });
 
     return context.json(forgotten, 200);
+  });
+
+  app.put('/api/media/:id/artwork/:kind/upload', tooBigToRead(ARTWORK_LIMITS), async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const kind = ArtworkKindSchema.safeParse(context.req.param('kind'));
+
+    if (!kind.success || library.uploadArtwork === undefined) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const uploaded = await library.uploadArtwork(
+      id,
+      kind.data,
+      {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      },
+      (await readAccount(context.req.raw.headers))?.id ?? null,
+    );
+
+    if (typeof uploaded === 'string') {
+      return uploaded === 'unavailable'
+        ? context.json(refuse('error.library.catalogueCouldNotBeAsked'), 503)
+        : context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
+    }
+
+    if ('fault' in uploaded) {
+      const said = describePictureFault(uploaded.fault, ARTWORK_LIMITS);
+
+      return context.json(bodyOf(said), said.status);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.artworkChosen', named.target, {
+      ...named.detail,
+      kind: kind.data,
+    });
+
+    return context.json(uploaded, 200);
+  });
+
+  app.put('/api/media/:id/extra', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = ExtraChoiceRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thatExtraChoiceCouldNotBeRead'), 400);
+    }
+
+    const { extraKind, parentId, isForgotten } = asked.data;
+    const chosen =
+      (await library.chooseExtra?.(id, {
+        extraKind,
+        parentId,
+        ...(isForgotten === undefined ? {} : { isForgotten }),
+      })) ?? null;
+
+    if (chosen === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.metadataChanged', named.target, named.detail);
+
+    return context.json(chosen, 200);
+  });
+
+  app.post('/api/media/rename-plan', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = PatternRenamePlanRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseFilesCouldNotBeRead'), 400);
+    }
+
+    return context.json(
+      (await library.planPatternRenames?.(asked.data.mediaIds)) ?? { files: [] },
+      200,
+    );
+  });
+
+  app.post('/api/media/rename', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = PatternRenameRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseFilesCouldNotBeRead'), 400);
+    }
+
+    const named = await auditedMedia(asked.data.mediaIds[0] ?? '');
+    const renamed = (await library.renameToPattern?.(
+      asked.data.mediaIds,
+      asked.data.whenTaken,
+    )) ?? { renamed: 0, skipped: asked.data.mediaIds.length, jobId: null };
+
+    if (renamed.renamed > 0) {
+      await recordAudit(context, 'files.renamed', named.target, {
+        ...named.detail,
+        files: renamed.renamed.toString(),
+      });
+    }
+
+    return context.json(renamed, 200);
+  });
+
+  app.get('/api/libraries/:id/word-rules', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    return context.json(
+      { rules: (await library.readWordRules?.(context.req.param('id'))) ?? [] },
+      200,
+    );
+  });
+
+  app.put('/api/libraries/:id/word-rules', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const libraryId = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = WordRulesSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseRulesCouldNotBeRead'), 400);
+    }
+
+    const rules = (await library.saveWordRules?.(libraryId, asked.data.rules)) ?? [];
+
+    await recordAudit(context, 'library.changed', await auditedLibrary(libraryId));
+
+    return context.json({ rules }, 200);
+  });
+
+  app.get('/api/media/:id/episode-orders', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const orders = (await library.readEpisodeOrders?.(context.req.param('id'))) ?? null;
+
+    return orders === null
+      ? context.json(refuse('error.common.noSuchItem'), 404)
+      : context.json(orders, 200);
+  });
+
+  app.put('/api/media/:id/episode-order', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = ChooseEpisodeOrderSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thatEpisodeOrderCouldNotBeRead'), 400);
+    }
+
+    const chosen = (await library.chooseEpisodeOrder?.(id, asked.data.order)) ?? null;
+
+    if (chosen === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.metadataChanged', named.target, named.detail);
+
+    return context.json(chosen, 200);
+  });
+
+  app.put('/api/media/:id/episode-pin', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = EpisodePinRequestSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thoseEpisodeNumbersCouldNotBeRead'), 400);
+    }
+
+    const pinned = (await library.pinEpisode?.(id, asked.data.pin)) ?? null;
+
+    if (pinned === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.matchFixed', named.target, named.detail);
+
+    return context.json(pinned, 200);
+  });
+
+  app.get('/api/media/:id/season-source', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const state = (await library.readSeasonSource?.(context.req.param('id'))) ?? {
+      source: null,
+      canChoose: false,
+    };
+
+    return context.json(state, 200);
+  });
+
+  app.get('/api/media/:id/season-source/seasons', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const show = CatalogueShowIdSchema.safeParse(context.req.query('show'));
+
+    if (!show.success) {
+      return context.json(refuse('error.library.thatSeasonCouldNotBeRead'), 400);
+    }
+
+    const seasons = (await library.readCatalogueSeasons?.(show.data)) ?? null;
+
+    return seasons === null
+      ? context.json(refuse('error.common.noSuchItem'), 404)
+      : context.json(seasons, 200);
+  });
+
+  app.put('/api/media/:id/season-source', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = ChooseSeasonSourceSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.library.thatSeasonCouldNotBeRead'), 400);
+    }
+
+    const chosen = (await library.chooseSeasonSource?.(id, asked.data.source)) ?? null;
+
+    if (chosen === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    if (chosen === 'noSuchSeason') {
+      return context.json(refuse('error.library.thatShowHasNoSuchSeason'), 400);
+    }
+
+    if (chosen === 'catalogueUnavailable') {
+      return context.json(refuse('error.library.catalogueCouldNotBeAsked'), 502);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.matchFixed', named.target, named.detail);
+
+    return context.json(chosen, 200);
+  });
+
+  app.put('/api/media/:id/version', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const id = context.req.param('id');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const choice = VersionChoiceSchema.safeParse(body.success ? body.data : null);
+
+    if (!choice.success) {
+      return context.json(refuse('error.library.thatVersionChoiceCouldNotBeRead'), 400);
+    }
+
+    const { label, isStanding } = choice.data;
+    const chosen =
+      (await library.chooseVersion?.(id, {
+        ...(label === undefined ? {} : { label }),
+        ...(isStanding === undefined ? {} : { isStanding }),
+      })) ?? false;
+
+    if (!chosen) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.versionChosen', named.target, named.detail);
+
+    return context.body(null, 204);
+  });
+
+  app.get('/api/media/:id/artwork/picture', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const url = context.req.query('url') ?? '';
+    const isOwn = (await library.isOwnArtwork?.(context.req.param('id'), url)) ?? false;
+    const image =
+      isOwn && readImage !== undefined ? await readImage(url, ARTWORK_WIDTHS.small) : null;
+
+    if (image === null) {
+      return context.json(refuse('error.image.thatArtworkCouldNotBeRead'), 404);
+    }
+
+    return context.body(image.body, 200, {
+      'content-type': image.contentType,
+      'cache-control': 'private, max-age=3600',
+    });
   });
 
   app.openapi(forgetCorrectionRoute, async (context) => {

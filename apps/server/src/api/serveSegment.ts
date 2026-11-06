@@ -1,3 +1,6 @@
+import { savedSegmentsOf } from '@ValenceServer/segments/savedSegmentsOf';
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { SetSegmentsSchema } from '@ValenceContracts/schemas/MediaSegment';
 import { listChaptersRoute, listSegmentsRoute } from '@ValenceServer/routes/SegmentRoute';
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
 import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
@@ -34,6 +37,27 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     if ((await library.getMedia(mediaId)) === null) {
       return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
+
+    return context.json({ segments: await segments.list(mediaId) }, 200);
+  });
+
+  app.put('/api/media/:mediaId/segments', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const mediaId = context.req.param('mediaId');
+    const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
+    const asked = SetSegmentsSchema.safeParse(body.success ? body.data : null);
+
+    if (!asked.success) {
+      return context.json(refuse('error.segments.thoseMarkersCouldNotBeRead'), 400);
+    }
+
+    await segments.replace(
+      mediaId,
+      savedSegmentsOf(await segments.list(mediaId), asked.data.segments),
+    );
 
     return context.json({ segments: await segments.list(mediaId) }, 200);
   });

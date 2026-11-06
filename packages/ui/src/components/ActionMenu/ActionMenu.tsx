@@ -128,7 +128,12 @@ const ActionMenu = ({
           onClick={(event) => {
             event.stopPropagation();
           }}
-          className={cn(MENU.content, POPUP_MOTION)}
+          collisionPadding={8}
+          className={cn(
+            MENU.content,
+            'max-h-[min(80vh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto',
+            POPUP_MOTION,
+          )}
         >
           <div
             ref={containerRef}

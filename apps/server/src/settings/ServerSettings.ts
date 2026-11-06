@@ -61,6 +61,7 @@ const ServerSettingsSchema = z.object({
   fetchesMusicDetails: z.boolean().default(false),
   audioDbKey: z.string().default(''),
   omdbKey: z.string().default(''),
+  fanartKey: z.string().default(''),
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
   libraryLocks: LibraryLocksSchema.default({}),

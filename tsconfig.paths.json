@@ -62,6 +62,10 @@
       "@ValenceUI/BackToTop": ["./packages/ui/src/components/BackToTop/BackToTop.tsx"],
       "@ValenceUI/Badge": ["./packages/ui/src/components/Badge/Badge.tsx"],
       "@ValenceUI/Badge.types": ["./packages/ui/src/components/Badge/Badge.types.ts"],
+      "@ValenceUI/Breadcrumbs": ["./packages/ui/src/components/Breadcrumbs/Breadcrumbs.tsx"],
+      "@ValenceUI/Breadcrumbs.types": [
+        "./packages/ui/src/components/Breadcrumbs/Breadcrumbs.types.ts"
+      ],
       "@ValenceUI/Button": ["./packages/ui/src/components/Button/Button.tsx"],
       "@ValenceUI/Button/buttonStyles": ["./packages/ui/src/components/Button/buttonStyles.ts"],
       "@ValenceUI/Button.types": ["./packages/ui/src/components/Button/Button.types.ts"],
@@ -270,6 +274,10 @@
       "@ValenceUI/ScopedField.types": [
         "./packages/ui/src/components/ScopedField/ScopedField.types.ts"
       ],
+      "@ValenceUI/SelectionBar": ["./packages/ui/src/components/SelectionBar/SelectionBar.tsx"],
+      "@ValenceUI/SelectionBar.types": [
+        "./packages/ui/src/components/SelectionBar/SelectionBar.types.ts"
+      ],
       "@ValenceUI/SelectField": ["./packages/ui/src/components/SelectField/SelectField.tsx"],
       "@ValenceUI/SelectField.types": [
         "./packages/ui/src/components/SelectField/SelectField.types.ts"
@@ -348,6 +356,8 @@
       "@ValenceUI/Tabs": ["./packages/ui/src/components/Tabs/Tabs.tsx"],
       "@ValenceUI/Tabs.types": ["./packages/ui/src/components/Tabs/Tabs.types.ts"],
       "@ValenceUI/PinField": ["./packages/ui/src/components/PinField/PinField.tsx"],
+      "@ValenceUI/TagField": ["./packages/ui/src/components/TagField/TagField.tsx"],
+      "@ValenceUI/TagField.types": ["./packages/ui/src/components/TagField/TagField.types.ts"],
       "@ValenceUI/TextField": ["./packages/ui/src/components/TextField/TextField.tsx"],
       "@ValenceUI/Toaster": ["./packages/ui/src/components/Toaster/Toaster.tsx"],
       "@ValenceUI/Toaster.types": ["./packages/ui/src/components/Toaster/Toaster.types.ts"],
@@ -430,6 +440,7 @@
       "@ValenceUI/scrollerAbove": ["./packages/ui/src/functions/scrollerAbove.ts"],
       "@ValenceUI/useRoomBelow": ["./packages/ui/src/functions/useRoomBelow.ts"],
       "@ValenceUI/useTravelDirection": ["./packages/ui/src/functions/useTravelDirection.ts"],
+      "@ValenceUI/useShortcut": ["./packages/ui/src/functions/useShortcut.ts"],
       "@ValenceUI/hasFinePointer": ["./packages/ui/src/functions/hasFinePointer.ts"],
       "@ValenceUI/askForWebGlRenderer": ["./packages/ui/src/functions/askForWebGlRenderer.ts"],
       "@ValenceUI/hasHardwareGraphics": ["./packages/ui/src/functions/hasHardwareGraphics.ts"],
@@ -438,6 +449,7 @@
       "@ValenceUI/notify": ["./packages/ui/src/functions/notify.ts"],
       "@ValenceUI/readMaskFrames": ["./packages/ui/src/functions/readMaskFrames.ts"],
       "@ValenceUI/tokens": ["./packages/ui/src/tokens/tokens.ts"],
+      "@ValenceUI/snapRowContext": ["./packages/ui/src/functions/snapRowContext.ts"],
       "@ValenceUI/tooltipScopeContext": ["./packages/ui/src/functions/tooltipScopeContext.ts"],
       "@ValenceUI/pageCover": ["./packages/ui/src/functions/pageCover.ts"],
       "@ValenceUI/useIsPageCovered": ["./packages/ui/src/functions/useIsPageCovered.ts"],

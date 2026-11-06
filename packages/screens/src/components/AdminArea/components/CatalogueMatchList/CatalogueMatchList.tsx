@@ -18,8 +18,14 @@ const keyOf = (match: CatalogueMatch): string => `${match.kind}-${match.external
  * @param matches - What the catalogue offered.
  * @param busyId - The one being acted on, which shows it is.
  * @param onChoose - Told which was chosen.
+ * @param scoreOf - How well each fits, out of a hundred, where that is worked out.
  */
-const CatalogueMatchList = ({ matches, busyId = null, onChoose }: CatalogueMatchListProps) => {
+const CatalogueMatchList = ({
+  matches,
+  busyId = null,
+  onChoose,
+  scoreOf,
+}: CatalogueMatchListProps) => {
   const busy = matches.find((match) => match.externalId === busyId);
 
   return (
@@ -30,6 +36,7 @@ const CatalogueMatchList = ({ matches, busyId = null, onChoose }: CatalogueMatch
         year: match.year,
         detail: match.overview ?? say('common.noSynopsis'),
         posterUrl: match.posterUrl,
+        ...(scoreOf === undefined ? {} : { score: scoreOf(match) }),
       }))}
       busyId={busy === undefined ? null : keyOf(busy)}
       onChoose={(id) => {

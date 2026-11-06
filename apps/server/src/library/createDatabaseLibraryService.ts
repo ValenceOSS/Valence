@@ -1,3 +1,6 @@
+import { firstAnswerOf } from '@ValenceServer/library/firstAnswerOf';
+import { createVersionChoices } from './createVersionChoices';
+import { createPatternRenames } from '@ValenceServer/rename/createPatternRenames';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -5,6 +8,7 @@ import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
@@ -12,6 +16,8 @@ import { artworkRevisionOf } from '@ValenceServer/library/artworkRevisionOf';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
 import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
+import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
+import { overlayShowEdits } from '@ValenceServer/metadata/overlayShowEdits';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
@@ -29,6 +35,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  like,
   lte,
   ne,
   or,
@@ -64,6 +71,11 @@ import {
   mediaOverride,
   mediaPreviewOverride,
   series,
+  episodePin,
+  seasonSource,
+  wordRule,
+  extraChoice,
+  jobRunIssue,
 } from '#dialect/Schema';
 import {
   LibraryKindSchema,
@@ -101,6 +113,8 @@ import { catalogueTitleKey } from '@ValenceServer/calendar/catalogueTitleKey';
 import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { resolveAiringSeason, resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
+import { seasonSourcesOfFile } from './seasonSourcesOfFile';
+import { folderOfSeriesKey } from './folderOfSeriesKey';
 import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
@@ -189,6 +203,7 @@ type CreateDatabaseLibraryServiceOptions = {
   books?: BookStore;
   nameChapters?: (libraryId: string) => Promise<number>;
   images?: { forget: (url: string) => Promise<void> };
+  artworkUploads?: string;
   music?: {
     store: MusicStore;
     artwork: MusicArtwork;
@@ -219,6 +234,9 @@ const LIBRARY_COLUMNS = {
   requestProfileId: library.requestProfileId,
   requestPath: library.requestPath,
   keepsShowsTogether: library.keepsShowsTogether,
+  metadataLanguage: library.metadataLanguage,
+  usesOriginalTitle: library.usesOriginalTitle,
+  writesNfo: library.writesNfo,
   higherProfileAsks: library.higherProfileAsks,
   requestFulfilment: library.requestFulfilment,
   linkedServerId: library.linkedServerId,
@@ -253,7 +271,12 @@ type ReadAgainOutcome = {
 
 type DatabaseLibraryService = LibraryService & {
   runScan: (libraryId: string, force?: boolean, jobId?: string) => Promise<ScanResult | null>;
-  runReadAgain: (libraryId: string, paths: string[], jobId?: string) => Promise<ReadAgainOutcome>;
+  runReadAgain: (
+    libraryId: string,
+    paths: string[],
+    jobId?: string,
+    keepsMatches?: boolean,
+  ) => Promise<ReadAgainOutcome>;
   runScanFolder: (libraryId: string, folder: string, jobId?: string) => Promise<ScanResult | null>;
   findByCatalogueId: (
     libraryId: string,
@@ -325,28 +348,25 @@ const searchRank = (search: string) => {
  * @returns The ordering, as the clauses to apply in turn.
  */
 const orderingFor = (options: ListItemsOptions) => {
+  const byTitle = asc(sql`coalesce(${mediaItem.sortTitle}, ${mediaItem.title})`);
+
   if (options.search !== undefined && options.search.trim() !== '') {
     return [
       asc(searchRank(options.search)),
       nullsLast(mediaItem.rating, 'desc'),
-      asc(mediaItem.title),
+      byTitle,
       asc(mediaItem.id),
     ];
   }
 
   if (options.order === 'yourRating' && options.profileId !== undefined) {
-    return [
-      nullsLast(yourStars(options.profileId), 'desc'),
-      asc(mediaItem.title),
-      asc(mediaItem.id),
-    ];
+    return [nullsLast(yourStars(options.profileId), 'desc'), byTitle, asc(mediaItem.id)];
   }
 
-  return [
-    options.order === 'newest' ? desc(mediaItem.addedAt) : asc(mediaItem.title),
-    asc(mediaItem.id),
-  ];
+  return [options.order === 'newest' ? desc(mediaItem.addedAt) : byTitle, asc(mediaItem.id)];
 };
+
+const FOLDERS_ASKED_AT_ONCE = 200;
 
 /**
  * The library as Postgres holds it, and the work the job queue runs against it — scanning, probing,
@@ -368,6 +388,7 @@ const createDatabaseLibraryService = ({
   books,
   nameChapters,
   images,
+  artworkUploads,
   music,
   atOnce = 1,
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
@@ -421,6 +442,7 @@ const createDatabaseLibraryService = ({
   });
 
   const shapes = createAnswerKeeper<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const titleEdits = createTitleEditStore(db);
 
   const nextEpisodes = createAnswerKeeper<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
@@ -495,26 +517,46 @@ const createDatabaseLibraryService = ({
    * Shortening this alone would buy nothing: the question would be asked again and served from the
    * cache underneath. See VAL-221.
    *
+   * A programme whose files follow another of the catalogue's orders is laid out in that order,
+   * as its files are numbered, and a season somebody said is another entry's is laid out from it.
+   *
    * @param detail - The show being drawn.
    * @returns Its shape, or null where nothing identifies the programme.
    */
   const shapeOf = async (detail: ShowDetail): Promise<SeriesShape | null> => {
     const [row] = await db
-      .select({ externalId: mediaItem.externalId })
+      .select({ externalId: mediaItem.externalId, episodeOrder: series.episodeOrder })
       .from(mediaItem)
+      .leftJoin(series, eq(series.id, mediaItem.seriesId))
       .where(eq(mediaItem.id, detail.coverMediaId))
       .limit(1);
 
     const externalId = row?.externalId ?? null;
+    const order = row?.episodeOrder ?? null;
 
     if (externalId === null || externalId === '') {
       return null;
     }
 
-    return shapes.keep(externalId, () =>
-      resolveSeriesShape(providers ?? [], externalId, (provider, reason) => {
-        onProblem?.(provider, reason);
-      }),
+    const borrowed = (await seasonSourcesOfFile(db, detail.coverMediaId))?.sources ?? [];
+    const asked = [
+      ...(order === null ? [] : [`order=${order}`]),
+      ...borrowed.map(
+        (one) =>
+          `season${one.seasonNumber.toString()}=${one.externalId}/${one.externalSeason.toString()}`,
+      ),
+    ];
+
+    return shapes.keep(asked.length === 0 ? externalId : `${externalId}?${asked.join('&')}`, () =>
+      resolveSeriesShape(
+        providers ?? [],
+        externalId,
+        (provider, reason) => {
+          onProblem?.(provider, reason);
+        },
+        order ?? undefined,
+        borrowed,
+      ),
     );
   };
 
@@ -695,6 +737,7 @@ const createDatabaseLibraryService = ({
       .select({
         libraryId: mediaItem.libraryId,
         path: mediaItem.path,
+        seriesId: mediaItem.seriesId,
         seriesTitle: mediaItem.seriesTitle,
       })
       .from(mediaItem)
@@ -713,7 +756,12 @@ const createDatabaseLibraryService = ({
       .select({ path: mediaItem.path })
       .from(mediaItem)
       .where(
-        and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.seriesTitle, row.seriesTitle)),
+        and(
+          eq(mediaItem.libraryId, row.libraryId),
+          row.seriesId === null
+            ? eq(mediaItem.seriesTitle, row.seriesTitle)
+            : eq(mediaItem.seriesId, row.seriesId),
+        ),
       );
 
     return { libraryId: row.libraryId, paths: siblings.map((one) => one.path) };
@@ -731,11 +779,14 @@ const createDatabaseLibraryService = ({
    * @param libraryId - The library the files are in.
    * @param paths - The files to read again.
    * @param onProgress - The job to report progress against, where one is watching.
+   * @param keepsMatches - Whether each file keeps the entry it is matched to, rather than being
+   *   matched again from its name.
    */
   const readAgain = async (
     libraryId: string,
     paths: string[],
     onProgress?: (phase: ScanPhase, processed: number, total: number) => void,
+    keepsMatches = false,
   ): Promise<void> => {
     const items = await db
       .select({
@@ -778,6 +829,8 @@ const createDatabaseLibraryService = ({
 
     await scanLibrary({
       libraryId,
+      metadataLanguage: found.metadataLanguage ?? null,
+      usesOriginalTitle: found.usesOriginalTitle,
       kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: {
@@ -788,6 +841,8 @@ const createDatabaseLibraryService = ({
       transcoder,
       providers: providers ?? [],
       force: true,
+      keepsMatches,
+      reusesProbes: keepsMatches,
       isPartial: true,
       ...(onProblem === undefined ? {} : { onProblem }),
       ...(onProgress === undefined ? {} : { onProgress }),
@@ -807,10 +862,19 @@ const createDatabaseLibraryService = ({
    *
    * @param libraryId - The library the files are in.
    * @param paths - The files to read again.
+   * @param keepsMatches - Whether each file keeps the entry it is matched to.
    * @returns The job reading these files, or null where there is none and none could be started.
    */
-  const queueReadAgain = async (libraryId: string, paths: string[]): Promise<string | null> => {
-    const jobId = await jobs.enqueue(READ_AGAIN_JOB, { libraryId, paths }, libraryId);
+  const queueReadAgain = async (
+    libraryId: string,
+    paths: string[],
+    keepsMatches = false,
+  ): Promise<string | null> => {
+    const jobId = await jobs.enqueue(
+      READ_AGAIN_JOB,
+      keepsMatches ? { libraryId, paths, keepsMatches } : { libraryId, paths },
+      libraryId,
+    );
 
     return jobId ?? (await jobs.liveJob(READ_AGAIN_JOB, libraryId));
   };
@@ -856,15 +920,45 @@ const createDatabaseLibraryService = ({
     }
   };
 
+  const versionChoices = createVersionChoices(db);
+  const patternRenames = createPatternRenames({ db, queueReadAgain });
+
   const artworkChoices = createArtworkChoices({
     db,
-    readOptions: (providers ?? []).find((provider) => provider.readArtworkOptions !== undefined)
-      ?.readArtworkOptions,
+    readOptions: async (asked) => {
+      const answers = await Promise.all(
+        (providers ?? []).map(
+          async (provider) =>
+            (await provider.readArtworkOptions?.(asked).catch(() => null)) ?? null,
+        ),
+      );
+      const [first, ...rest] = answers.filter((answer) => answer !== null);
+
+      return first === undefined
+        ? null
+        : {
+            poster: [...first.poster, ...rest.flatMap((one) => one.poster)],
+            backdrop: [...first.backdrop, ...rest.flatMap((one) => one.backdrop)],
+            logo: [...first.logo, ...rest.flatMap((one) => one.logo)],
+          };
+    },
     readOwn: (providers ?? []).find((provider) => provider.readOwnArtwork !== undefined)
       ?.readOwnArtwork,
+    readPartOptions: (providers ?? []).find((provider) => provider.readPartArtwork !== undefined)
+      ?.readPartArtwork,
+    borrowedSeasonOf: async (mediaId, season) => {
+      const found = (await seasonSourcesOfFile(db, mediaId))?.sources.find(
+        (one) => one.seasonNumber === season,
+      );
+
+      return found === undefined
+        ? null
+        : { externalId: found.externalId, season: found.externalSeason };
+    },
     readAgain: queueReadAgain,
     fetchLogos: (libraryId) => askForLibraryWork(jobs, FETCH_LOGOS_JOB, libraryId, { libraryId }),
     ...(onArtworkChanged === undefined ? {} : { onChanged: onArtworkChanged }),
+    ...(artworkUploads === undefined ? {} : { uploads: artworkUploads }),
   });
 
   /**
@@ -1057,12 +1151,20 @@ const createDatabaseLibraryService = ({
    * @returns What the scan changed.
    */
   const scanFilms = async (
-    found: { id: string; path: string; kind: string },
+    found: {
+      id: string;
+      path: string;
+      kind: string;
+      metadataLanguage?: string | null;
+      usesOriginalTitle?: boolean;
+    },
     force: boolean,
     jobId: string | undefined,
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
+      metadataLanguage: found.metadataLanguage ?? null,
+      usesOriginalTitle: found.usesOriginalTitle ?? false,
       kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: filesFor(found.id),
@@ -1295,6 +1397,42 @@ const createDatabaseLibraryService = ({
   };
 
   /**
+   * The seasons of some series read from another show in the catalogue, so what airs in them is
+   * looked for on that show and laid out under the series' own season.
+   *
+   * @param seriesIds - The series.
+   * @returns Each series' borrowed seasons, by its id.
+   */
+  const borrowedSeasonsOf = async (
+    seriesIds: readonly string[],
+  ): Promise<
+    Map<string, { seasonNumber: number; externalId: string; externalSeason: number }[]>
+  > => {
+    const rows =
+      seriesIds.length === 0
+        ? []
+        : await db
+            .select({
+              seriesId: seasonSource.seriesId,
+              seasonNumber: seasonSource.seasonNumber,
+              externalId: seasonSource.externalId,
+              externalSeason: seasonSource.externalSeason,
+            })
+            .from(seasonSource)
+            .where(inArray(seasonSource.seriesId, [...new Set(seriesIds)]));
+    const bySeries = new Map<
+      string,
+      { seasonNumber: number; externalId: string; externalSeason: number }[]
+    >();
+
+    for (const { seriesId, ...row } of rows) {
+      bySeries.set(seriesId, [...(bySeries.get(seriesId) ?? []), row]);
+    }
+
+    return bySeries;
+  };
+
+  /**
    * Names one episode of one series, so the episodes held can be looked up as they are listed.
    *
    * @param seriesId - The series.
@@ -1451,6 +1589,9 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         keepsShowsTogether: row.keepsShowsTogether,
+        metadataLanguage: row.metadataLanguage,
+        usesOriginalTitle: row.usesOriginalTitle,
+        writesNfo: row.writesNfo,
         higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
@@ -1484,6 +1625,9 @@ const createDatabaseLibraryService = ({
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        metadataLanguage: null,
+        usesOriginalTitle: false,
+        writesNfo: false,
         higherProfileAsks: 'ask',
         fulfilment: null,
       };
@@ -1521,6 +1665,13 @@ const createDatabaseLibraryService = ({
           ...(input.higherProfileAsks === undefined
             ? {}
             : { higherProfileAsks: input.higherProfileAsks }),
+          ...(input.metadataLanguage === undefined
+            ? {}
+            : { metadataLanguage: input.metadataLanguage }),
+          ...(input.usesOriginalTitle === undefined
+            ? {}
+            : { usesOriginalTitle: input.usesOriginalTitle }),
+          ...(input.writesNfo === undefined ? {} : { writesNfo: input.writesNfo }),
           ...(input.fulfilment === undefined ? {} : { requestFulfilment: input.fulfilment }),
         })
         .where(eq(library.id, libraryId));
@@ -1565,6 +1716,9 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         keepsShowsTogether: row.keepsShowsTogether,
+        metadataLanguage: row.metadataLanguage,
+        usesOriginalTitle: row.usesOriginalTitle,
+        writesNfo: row.writesNfo,
         higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
@@ -1810,6 +1964,111 @@ const createDatabaseLibraryService = ({
       });
 
       return { leftOut, jobId: queued?.jobId ?? null };
+    },
+
+    unmatch: async (mediaId, by) => {
+      const paths = await pathsOfTheSameThing(mediaId);
+
+      if (paths === null) {
+        return null;
+      }
+
+      for (const path of paths.paths) {
+        await store.saveOverride({
+          libraryId: paths.libraryId,
+          path,
+          externalId: '',
+          externalKind: 'none',
+          updatedBy: by,
+        });
+      }
+
+      const jobId = await queueReadAgain(paths.libraryId, paths.paths);
+
+      return { corrected: paths.paths.length, jobId };
+    },
+
+    refreshTitle: async (mediaId, mode) => {
+      const paths = await pathsOfTheSameThing(mediaId);
+
+      if (paths === null) {
+        return null;
+      }
+
+      if (mode === 'files') {
+        await db
+          .update(mediaItem)
+          .set({ probeVersion: null })
+          .where(
+            and(eq(mediaItem.libraryId, paths.libraryId), inArray(mediaItem.path, paths.paths)),
+          );
+
+        return {
+          corrected: paths.paths.length,
+          jobId: await queueReadAgain(paths.libraryId, paths.paths, true),
+        };
+      }
+
+      if (mode === 'details') {
+        const [held] = await db
+          .select({ externalId: mediaItem.externalId, seriesTitle: mediaItem.seriesTitle })
+          .from(mediaItem)
+          .where(eq(mediaItem.id, mediaId))
+          .limit(1);
+
+        if (held?.externalId !== null && held?.externalId !== undefined) {
+          const { externalId } = held;
+
+          shapes.forgetWhere((key) => key === externalId || key.startsWith(`${externalId}?`));
+
+          const borrowed = (await seasonSourcesOfFile(db, mediaId))?.sources ?? [];
+
+          for (const provider of providers ?? []) {
+            provider.forgetAnswersAbout?.(externalId, held.seriesTitle === null ? 'movie' : 'tv');
+
+            for (const one of borrowed) {
+              provider.forgetAnswersAbout?.(one.externalId, 'tv');
+            }
+          }
+        }
+
+        return {
+          corrected: paths.paths.length,
+          jobId: await queueReadAgain(paths.libraryId, paths.paths, true),
+        };
+      }
+
+      const files = await db
+        .select({
+          id: mediaItem.id,
+          posterUrl: mediaItem.posterUrl,
+          backdropUrl: mediaItem.backdropUrl,
+          logoUrl: mediaItem.logoUrl,
+        })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, paths.libraryId), inArray(mediaItem.path, paths.paths)));
+      const addresses = new Set(
+        files.flatMap((file) =>
+          [file.posterUrl, file.backdropUrl, file.logoUrl].filter((url) => url !== null),
+        ),
+      );
+      const forgetting = images ?? { forget: () => Promise.resolve() };
+
+      for (const address of addresses) {
+        await forgetting.forget(address);
+      }
+
+      const ids = files.map((file) => file.id);
+
+      if (ids.length > 0) {
+        await db
+          .update(mediaItem)
+          .set({ artworkChangedAt: new Date() })
+          .where(inArray(mediaItem.id, ids));
+        onArtworkChanged?.(ids);
+      }
+
+      return { corrected: ids.length, jobId: null };
     },
 
     forgetCorrection: async (mediaId) => {
@@ -2316,8 +2575,272 @@ const createDatabaseLibraryService = ({
     readBarePosterUrl: (mediaId) => artworkChoices.barePosterFor(mediaId),
 
     readArtworkChoices: (mediaId) => artworkChoices.read(mediaId),
+    readArtworkPart: (mediaId, part) => artworkChoices.readPart(mediaId, part),
+    chooseArtworkPart: (mediaId, part, url, by) =>
+      artworkChoices.choosePart(mediaId, part, url, by),
 
     chooseArtwork: (mediaId, kind, url, by) => artworkChoices.choose(mediaId, kind, url, by),
+    uploadArtwork: (mediaId, kind, artwork, by) =>
+      artworkChoices.upload(mediaId, kind, artwork, by),
+    chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
+    planPatternRenames: (mediaIds) => patternRenames.plan(mediaIds),
+    renameToPattern: (mediaIds, whenTaken) => patternRenames.apply(mediaIds, whenTaken),
+
+    chooseExtra: async (mediaId, choice) => {
+      const [file] = await db
+        .select({ libraryId: mediaItem.libraryId, path: mediaItem.path })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+      const [parent] =
+        choice.parentId === null
+          ? []
+          : await db
+              .select({ path: mediaItem.path, libraryId: mediaItem.libraryId })
+              .from(mediaItem)
+              .where(eq(mediaItem.id, choice.parentId))
+              .limit(1);
+
+      if (
+        file === undefined ||
+        (choice.extraKind !== null && (parent === undefined || parent.libraryId !== file.libraryId))
+      ) {
+        return null;
+      }
+
+      const where = and(eq(extraChoice.libraryId, file.libraryId), eq(extraChoice.path, file.path));
+
+      await db.transaction(async (tx) => {
+        await tx.delete(extraChoice).where(where);
+
+        if (choice.isForgotten === true) {
+          return;
+        }
+
+        await tx.insert(extraChoice).values({
+          libraryId: file.libraryId,
+          path: file.path,
+          extraKind: choice.extraKind,
+          parentPath: choice.extraKind === null ? null : (parent?.path ?? null),
+        });
+      });
+
+      if (choice.extraKind === null) {
+        await db
+          .update(mediaItem)
+          .set({ extraKind: null, parentId: null })
+          .where(eq(mediaItem.id, mediaId));
+      }
+
+      return { corrected: 1, jobId: await queueReadAgain(file.libraryId, [file.path], true) };
+    },
+
+    readWordRules: async (libraryId) =>
+      (
+        await db
+          .select({ find: wordRule.find, replace: wordRule.replace })
+          .from(wordRule)
+          .where(and(eq(wordRule.libraryId, libraryId), eq(wordRule.field, 'genres')))
+          .orderBy(asc(wordRule.setAt))
+      ).map((rule) => ({ field: 'genres' as const, ...rule })),
+
+    saveWordRules: async (libraryId, rules) => {
+      await db.transaction(async (tx) => {
+        await tx.delete(wordRule).where(eq(wordRule.libraryId, libraryId));
+
+        if (rules.length > 0) {
+          await tx
+            .insert(wordRule)
+            .values(rules.map((rule) => ({ id: randomUUID(), libraryId, ...rule })));
+        }
+      });
+
+      return [...rules];
+    },
+
+    pinEpisode: async (mediaId, pin) => {
+      const [file] = await db
+        .select({
+          libraryId: mediaItem.libraryId,
+          path: mediaItem.path,
+          seriesId: mediaItem.seriesId,
+        })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (file === undefined || file.seriesId === null) {
+        return null;
+      }
+
+      const where = and(eq(episodePin.libraryId, file.libraryId), eq(episodePin.path, file.path));
+
+      await db.transaction(async (tx) => {
+        await tx.delete(episodePin).where(where);
+
+        if (pin !== null) {
+          await tx
+            .insert(episodePin)
+            .values({ libraryId: file.libraryId, path: file.path, ...pin });
+        }
+      });
+
+      return { corrected: 1, jobId: await queueReadAgain(file.libraryId, [file.path], true) };
+    },
+
+    readSeasonSource: async (mediaId) => {
+      const held = await seasonSourcesOfFile(db, mediaId);
+
+      if (held === null || held.seasonNumber === null) {
+        return { source: null, canChoose: false };
+      }
+
+      const found = held.sources.find((one) => one.seasonNumber === held.seasonNumber);
+
+      return {
+        canChoose: true,
+        source:
+          found === undefined
+            ? null
+            : {
+                externalId: found.externalId,
+                externalSeason: found.externalSeason,
+                title: found.title,
+                year: found.year,
+              },
+      };
+    },
+
+    chooseSeasonSource: async (mediaId, source) => {
+      const held = await seasonSourcesOfFile(db, mediaId);
+      const seasonNumber = held?.seasonNumber ?? null;
+
+      if (held === null || seasonNumber === null) {
+        return null;
+      }
+
+      const { libraryId, seriesId } = held;
+      const season = and(
+        eq(seasonSource.seriesId, seriesId),
+        eq(seasonSource.seasonNumber, seasonNumber),
+      );
+
+      if (source === null) {
+        await db.delete(seasonSource).where(season);
+      } else {
+        const [shape, described] = await Promise.all([
+          resolveSeriesShape(providers ?? [], source.externalId),
+          firstAnswerOf(providers ?? [], (provider) =>
+            provider.describeTitle?.(source.externalId, 'tv'),
+          ),
+        ]);
+
+        if (shape === null) {
+          return 'catalogueUnavailable';
+        }
+
+        if (
+          described === null ||
+          !shape.seasons.some((one) => one.seasonNumber === source.externalSeason)
+        ) {
+          return 'noSuchSeason';
+        }
+
+        const chosen = {
+          externalId: source.externalId,
+          externalSeason: source.externalSeason,
+          title: described.title,
+          year: described.year,
+          setAt: new Date(),
+        };
+
+        await upsert(db, seasonSource, {
+          values: [{ seriesId, seasonNumber, ...chosen }],
+          target: [seasonSource.seriesId, seasonSource.seasonNumber],
+          set: chosen,
+        });
+      }
+
+      const files = await db
+        .select({ path: mediaItem.path })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.seriesId, seriesId), eq(mediaItem.seasonNumber, seasonNumber)))
+        .orderBy(asc(mediaItem.path));
+      const paths = files.map((one) => one.path);
+
+      return { corrected: paths.length, jobId: await queueReadAgain(libraryId, paths, true) };
+    },
+
+    readCatalogueSeasons: async (externalId) => {
+      const shape = await resolveSeriesShape(providers ?? [], externalId);
+
+      return shape === null
+        ? null
+        : {
+            seasons: shape.seasons.map((one) => ({
+              seasonNumber: one.seasonNumber,
+              name: one.name ?? null,
+              episodeCount: one.episodeCount,
+              airDate: one.airDate ?? null,
+            })),
+          };
+    },
+
+    chooseEpisodeOrder: async (mediaId, order) => {
+      const [file] = await db
+        .select({ seriesId: mediaItem.seriesId })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+      const paths = await pathsOfTheSameThing(mediaId);
+
+      if (file?.seriesId === null || file?.seriesId === undefined || paths === null) {
+        return null;
+      }
+
+      await db
+        .update(series)
+        .set({ episodeOrder: order, updatedAt: new Date() })
+        .where(eq(series.id, file.seriesId));
+
+      return {
+        corrected: paths.paths.length,
+        jobId: await queueReadAgain(paths.libraryId, paths.paths, true),
+      };
+    },
+
+    readEpisodeOrders: async (mediaId) => {
+      const [file] = await db
+        .select({ episodeOrder: series.episodeOrder, externalId: series.externalId })
+        .from(mediaItem)
+        .innerJoin(series, eq(series.id, mediaItem.seriesId))
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (file === undefined) {
+        return null;
+      }
+
+      const { externalId } = file;
+      const groups =
+        externalId === null
+          ? []
+          : ((await firstAnswerOf(
+              providers ?? [],
+              async (provider) => {
+                const found = await provider.readEpisodeGroups?.(externalId);
+
+                return found === undefined || found.length === 0 ? null : found;
+              },
+              () => {},
+            )) ?? []);
+
+      return {
+        orders: groups.map((group) => ({ id: group.id, name: group.name, type: group.type })),
+        chosen: file.episodeOrder,
+      };
+    },
+    isOwnArtwork: (mediaId, url) => artworkChoices.isOwnPicture(mediaId, url),
 
     readArtworkUrl: async (mediaId, kind, isOfTitle = false) => {
       const chosen = await artworkChoices.urlFor(mediaId, kind, isOfTitle);
@@ -2530,6 +3053,126 @@ const createDatabaseLibraryService = ({
       return Object.fromEntries([...parts, ...rows].map((row) => [row.path, row.id]));
     },
 
+    readEntryFacts: async (libraryId, files, folders) => {
+      const HELD = {
+        id: mediaItem.id,
+        parentId: mediaItem.parentId,
+        seriesId: mediaItem.seriesId,
+        title: mediaItem.title,
+        seriesTitle: mediaItem.seriesTitle,
+        externalId: mediaItem.externalId,
+        extraKind: mediaItem.extraKind,
+      };
+      const filmsUnder = async () => {
+        const found: { id: string; title: string; path: string }[] = [];
+
+        for (let at = 0; at < folders.length; at += FOLDERS_ASKED_AT_ONCE) {
+          const asked = folders.slice(at, at + FOLDERS_ASKED_AT_ONCE);
+
+          found.push(
+            ...(await db
+              .select({ id: mediaItem.id, title: mediaItem.title, path: mediaItem.path })
+              .from(mediaItem)
+              .where(
+                and(
+                  eq(mediaItem.libraryId, libraryId),
+                  isNull(mediaItem.seriesTitle),
+                  isNull(mediaItem.extraKind),
+                  isNull(mediaItem.parentId),
+                  or(...asked.map((folder) => like(mediaItem.path, `${likeLiterally(folder)}/%`))),
+                ),
+              )),
+          );
+        }
+
+        return Object.fromEntries(
+          folders.flatMap((folder) => {
+            const held = found.filter((one) => one.path.startsWith(`${folder}/`));
+            const [only] = held;
+
+            return only === undefined || held.some((one) => one.id !== only.id)
+              ? []
+              : [[folder, { rootId: only.id, title: only.title }]];
+          }),
+        );
+      };
+      const [items, parts, shows, leftOut, issues, films] = await Promise.all([
+        files.length === 0
+          ? []
+          : db
+              .select({ ...HELD, path: mediaItem.path })
+              .from(mediaItem)
+              .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, [...files]))),
+        files.length === 0
+          ? []
+          : db
+              .select({ ...HELD, path: mediaPart.path })
+              .from(mediaPart)
+              .innerJoin(mediaItem, eq(mediaItem.id, mediaPart.mediaItemId))
+              .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaPart.path, [...files]))),
+        folders.length === 0
+          ? []
+          : db
+              .select({ id: series.id, key: series.key, title: series.title })
+              .from(series)
+              .where(
+                and(
+                  eq(series.libraryId, libraryId),
+                  inArray(
+                    series.key,
+                    folders.map((folder) => `folder:${folder}`),
+                  ),
+                ),
+              ),
+        store.listLeftOut(libraryId),
+        files.length === 0
+          ? []
+          : db
+              .select({
+                path: jobRunIssue.path,
+                reason: jobRunIssue.reason,
+                atMs: jobRunIssue.atMs,
+              })
+              .from(jobRunIssue)
+              .where(inArray(jobRunIssue.path, [...files]))
+              .orderBy(asc(jobRunIssue.atMs)),
+        folders.length === 0 ? {} : filmsUnder(),
+      ]);
+
+      return {
+        media: Object.fromEntries(
+          [...parts, ...items].map((row) => [
+            row.path,
+            {
+              id: row.id,
+              rootId: row.parentId ?? row.id,
+              seriesId: row.seriesId,
+              title: row.title,
+              seriesTitle: row.seriesTitle,
+              isMatched: row.externalId !== null && row.externalId !== '',
+              isExtra: row.extraKind !== null,
+            },
+          ]),
+        ),
+        shows: Object.fromEntries(
+          shows.flatMap((one) => {
+            const folder = folderOfSeriesKey(one.key);
+
+            return folder === null ? [] : [[folder, { seriesId: one.id, title: one.title }]];
+          }),
+        ),
+        films,
+        leftOut: leftOut.map((one) => ({ path: one.path, isFolder: one.isFolder })),
+        issues: Object.fromEntries(
+          issues.flatMap((one) => {
+            const said = SaidSchema.safeParse(one.reason);
+
+            return said.success ? [[one.path, said.data]] : [];
+          }),
+        ),
+      };
+    },
+
     mediaPathsIn: async (libraryId) => {
       const [items, albums, books] = await Promise.all([
         db
@@ -2669,7 +3312,7 @@ const createDatabaseLibraryService = ({
       };
     },
 
-    runReadAgain: async (libraryId, paths, jobId) => {
+    runReadAgain: async (libraryId, paths, jobId, keepsMatches = false) => {
       const readFiles = () =>
         db
           .select({
@@ -2691,6 +3334,7 @@ const createDatabaseLibraryService = ({
           ? undefined
           : (phase, processed, total) =>
               jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total),
+        keepsMatches,
       );
 
       const after = await readFiles();
@@ -2750,6 +3394,8 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
+        metadataLanguage: found.metadataLanguage ?? null,
+        usesOriginalTitle: found.usesOriginalTitle,
         kind: found.kind === 'movies' ? 'movies' : found.kind === 'anime' ? 'anime' : 'shows',
         root: found.path,
         within: folder,
@@ -2947,15 +3593,39 @@ const createDatabaseLibraryService = ({
     comingUp: async (viewer) => {
       const today = new Date().toISOString().slice(0, 10);
 
+      const shows = await showsInTheCatalogue(viewer);
+      const borrowed = await borrowedSeasonsOf(
+        shows.flatMap(({ show }) => (show.seriesId === null ? [] : [show.seriesId])),
+      );
+      const nextOf = (externalId: string) =>
+        nextEpisodes.keep(externalId, () =>
+          resolveNextEpisode(providers ?? [], externalId, (provider, reason) => {
+            onProblem?.(provider, reason);
+          }),
+        );
       const upcoming = await Promise.all(
-        (await showsInTheCatalogue(viewer)).map(async ({ show, externalId }) => {
-          const next = await nextEpisodes.keep(externalId, () =>
-            resolveNextEpisode(providers ?? [], externalId, (provider, reason) => {
-              onProblem?.(provider, reason);
+        shows.map(async ({ show, externalId }) => {
+          const fromElsewhere = await Promise.all(
+            (show.seriesId === null ? [] : (borrowed.get(show.seriesId) ?? [])).map(async (one) => {
+              const next = await nextOf(one.externalId);
+
+              return next === null || next.seasonNumber !== one.externalSeason
+                ? []
+                : [{ ...next, seasonNumber: one.seasonNumber }];
             }),
           );
+          const own = await nextOf(externalId);
+          const isBorrowed = (seasonNumber: number) =>
+            show.seriesId !== null &&
+            (borrowed.get(show.seriesId) ?? []).some((one) => one.seasonNumber === seasonNumber);
+          const [soonest] = [
+            ...(own === null || isBorrowed(own.seasonNumber) ? [] : [own]),
+            ...fromElsewhere.flat(),
+          ]
+            .flatMap((next) => (next.airDate < today ? [] : [next]))
+            .toSorted((left, right) => left.airDate.localeCompare(right.airDate));
 
-          return next !== null && next.airDate >= today ? [{ show, episode: next }] : [];
+          return soonest === undefined ? [] : [{ show, episode: soonest }];
         }),
       );
 
@@ -3090,20 +3760,39 @@ const createDatabaseLibraryService = ({
     },
 
     releaseCalendar: async (viewer, from, to) => {
+      const shows = await showsInTheCatalogue(viewer);
+      const borrowed = await borrowedSeasonsOf(
+        shows.flatMap(({ show }) => (show.seriesId === null ? [] : [show.seriesId])),
+      );
       const airing = await Promise.all(
-        (await showsInTheCatalogue(viewer)).map(async ({ show, externalId }) => {
-          const season = await airingSeasonOf(externalId);
+        shows.map(async ({ show, externalId }) => {
+          const asked = [
+            { from: externalId, season: null, as: null },
+            ...(show.seriesId === null ? [] : (borrowed.get(show.seriesId) ?? [])).map((one) => ({
+              from: one.externalId,
+              season: one.externalSeason,
+              as: one.seasonNumber,
+            })),
+          ];
+          const seasons = await Promise.all(
+            asked.map(async (one) => ({ ...one, airing: await airingSeasonOf(one.from) })),
+          );
 
-          return season === null
-            ? []
-            : season.episodes
-                .filter((episode) => episode.airDate >= from && episode.airDate <= to)
-                .map((episode) => ({
-                  show,
-                  externalId,
-                  seasonNumber: season.seasonNumber,
-                  episode,
-                }));
+          return seasons.flatMap(({ season, as, airing: found }) =>
+            found === null ||
+            (season === null
+              ? asked.some((one) => one.as === found.seasonNumber)
+              : found.seasonNumber !== season)
+              ? []
+              : found.episodes
+                  .filter((episode) => episode.airDate >= from && episode.airDate <= to)
+                  .map((episode) => ({
+                    show,
+                    externalId,
+                    seasonNumber: as ?? found.seasonNumber,
+                    episode,
+                  })),
+          );
         }),
       );
 
@@ -3199,6 +3888,33 @@ const createDatabaseLibraryService = ({
         .limit(1);
       const externalId = cover?.externalId ?? '';
       const region = (await certificationRegion()).trim().toUpperCase();
+      const [placed] =
+        detail.seriesId === null
+          ? []
+          : await db
+              .select({ key: series.key })
+              .from(series)
+              .where(eq(series.id, detail.seriesId))
+              .limit(1);
+      const showKey =
+        externalId !== ''
+          ? `tv:${externalId}`
+          : placed === undefined
+            ? null
+            : `series:${placed.key}`;
+      const laid =
+        showKey === null
+          ? shape
+          : overlayShowEdits(
+              shape,
+              showKey,
+              await titleEdits.editsFor(libraryId, [
+                showKey,
+                ...(shape?.seasons ?? []).map(
+                  (season) => `${showKey}:s${season.seasonNumber.toString()}`,
+                ),
+              ]),
+            );
 
       const whole = {
         ...detail,
@@ -3213,14 +3929,40 @@ const createDatabaseLibraryService = ({
         tmdbId: /^\d+$/.test(externalId) ? Number(externalId) : null,
       };
 
+      if (laid === null) {
+        return whole;
+      }
+
+      const pictured =
+        externalId === ''
+          ? new Map<string, string>()
+          : await artworkChoices.partsChosen(libraryId, externalId);
+      const seasons = laid.seasons.map((season) => ({
+        ...season,
+        posterUrl:
+          pictured.get(artworkChoices.kindOfPart({ season: season.seasonNumber, episode: null })) ??
+          season.posterUrl ??
+          null,
+        episodes: season.episodes.map((episode) => ({
+          ...episode,
+          stillUrl:
+            pictured.get(
+              artworkChoices.kindOfPart({
+                season: season.seasonNumber,
+                episode: episode.episodeNumber,
+              }),
+            ) ?? episode.stillUrl,
+        })),
+      }));
+
       return shape === null
-        ? whole
+        ? { ...whole, status: laid.status ?? null, overview: laid.overview ?? null }
         : {
             ...whole,
-            shape: shape.seasons,
-            status: shape.status ?? null,
-            overview: shape.overview ?? null,
-            nextEpisode: nextEpisodeOf(shape.seasons, new Date().toISOString().slice(0, 10)),
+            shape: seasons,
+            status: laid.status ?? null,
+            overview: laid.overview ?? null,
+            nextEpisode: nextEpisodeOf(seasons, new Date().toISOString().slice(0, 10)),
           };
     },
   };

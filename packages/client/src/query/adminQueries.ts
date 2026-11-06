@@ -1,3 +1,17 @@
+import { fetchCatalogueSeasons } from '@ValenceClient/admin/fetchCatalogueSeasons';
+import { fetchSeasonSource } from '@ValenceClient/admin/fetchSeasonSource';
+import { fetchTitleValues } from '@ValenceClient/admin/fetchTitleValues';
+import { fetchTitleFiles } from '@ValenceClient/admin/fetchTitleFiles';
+import { fetchTitlePage } from '@ValenceClient/admin/fetchTitlePage';
+import { fetchTitleKeys } from '@ValenceClient/admin/fetchTitleKeys';
+import { fetchTitleChoices } from '@ValenceClient/admin/fetchTitleChoices';
+import { fetchLibraryProblems } from '@ValenceClient/admin/fetchLibraryProblems';
+import { fetchOrphanedEdits } from '@ValenceClient/admin/fetchOrphanedEdits';
+import type { TitleListAsk } from '@ValenceClient/admin/TitleListAsk.types';
+import type { TitleValueField } from '@ValenceContracts/schemas/TitleList';
+import { fetchMatchPreview } from '@ValenceClient/admin/fetchMatchPreview';
+import { fetchTitleHistory, fetchTitleMetadata } from '@ValenceClient/admin/fetchTitleMetadata';
+import type { TitleScope } from '@ValenceClient/admin/fetchTitleMetadata';
 import { fetchRecentViewings } from '@ValenceClient/admin/fetchRecentViewings';
 import { fetchStatistics } from '@ValenceClient/admin/fetchStatistics';
 import { fetchLibraryHealth } from '@ValenceClient/admin/fetchLibraryHealth';
@@ -15,7 +29,7 @@ import { fetchTheirActivity } from '@ValenceClient/admin/fetchTheirActivity';
 import { fetchTheirLibraries } from '@ValenceClient/admin/fetchTheirLibraries';
 import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
 import { fetchBooks } from '@ValenceClient/books/fetchBooks';
-import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import {
   fetchAdminOverview,
   fetchRunningScans,
@@ -63,6 +77,8 @@ import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetc
 
 const MOST_ALBUMS_LISTED = 500;
 const EVERY_FILE_KEPT_FOR_MS = 5 * 60_000;
+
+const TITLE_VALUES_KEPT_FOR_MS = 60_000;
 
 const ADMIN = ['admin'] as const;
 
@@ -636,6 +652,166 @@ const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | 
   });
 
 /**
+ * A title's metadata, each field with where its value came from.
+ *
+ * @param mediaId - A file of the title.
+ * @param scope - The film or programme, the file's season, or the file's episode.
+ * @returns The query.
+ */
+const titleMetadata = (mediaId: string, scope: TitleScope) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-metadata', mediaId, scope],
+    queryFn: () => fetchTitleMetadata(mediaId, scope),
+  });
+
+/**
+ * The changes made to a title, newest first.
+ *
+ * @param mediaId - A file of the title.
+ * @param scope - The film or programme, the file's season, or the file's episode.
+ * @returns The query.
+ */
+const titleHistory = (mediaId: string, scope: TitleScope) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-history', mediaId, scope],
+    queryFn: () => fetchTitleHistory(mediaId, scope),
+  });
+
+/**
+ * A title compared, field by field, with the catalogue entry it is about to be matched to.
+ *
+ * @param mediaId - A file of the title.
+ * @param externalId - The entry's catalogue number.
+ * @param kind - Whether the entry is a film or a programme.
+ * @returns The query options.
+ */
+const matchPreview = (mediaId: string, externalId: string, kind: 'tv' | 'movie') =>
+  queryOptions({
+    queryKey: [...ADMIN, 'match-preview', mediaId, kind, externalId],
+    queryFn: () => fetchMatchPreview(mediaId, externalId, kind),
+  });
+
+/**
+ * The words in use in one field of a library's titles, for suggesting them.
+ *
+ * @param field - The field, such as the tags.
+ * @param libraryId - The library, or every one where none is named.
+ * @returns The query options.
+ */
+const titleValues = (field: TitleValueField, libraryId?: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-values', field, libraryId ?? null],
+    queryFn: () => fetchTitleValues(field, libraryId),
+    staleTime: TITLE_VALUES_KEPT_FOR_MS,
+  });
+
+/**
+ * A library's titles read a page after another as the list is scrolled, searched, filtered and put
+ * in order on the server.
+ *
+ * @param asked - The library, order, search, quick filter and filter chips.
+ * @returns The query.
+ */
+const titlePages = (asked: TitleListAsk) =>
+  infiniteQueryOptions({
+    queryKey: [...ADMIN, 'title-pages', asked],
+    initialPageParam: '',
+    queryFn: ({ pageParam }) => fetchTitlePage(asked, pageParam === '' ? undefined : pageParam),
+    getNextPageParam: (last) => last.next ?? undefined,
+    enabled: asked.libraryId !== '',
+    placeholderData: keepPreviousData,
+  });
+
+/**
+ * Every title a listing asks for, named, for selecting all of them.
+ *
+ * @param asked - The library, order, search, quick filter and filter chips.
+ * @returns The query options.
+ */
+const titleKeys = (asked: TitleListAsk) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-keys', asked],
+    queryFn: () => fetchTitleKeys(asked),
+  });
+
+/**
+ * What a library's filters can be set to.
+ *
+ * @param libraryId - The library, or nothing where none is chosen.
+ * @returns The query options.
+ */
+const titleChoices = (libraryId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-choices', libraryId],
+    queryFn: () => fetchTitleChoices(libraryId ?? ''),
+    enabled: libraryId !== null && libraryId !== '',
+  });
+
+/**
+ * The titles of a library whose edits are kept though their files have gone.
+ *
+ * @param libraryId - The library, or nothing where none is chosen.
+ * @returns The query options.
+ */
+const orphanedEdits = (libraryId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'orphaned-edits', libraryId],
+    queryFn: () => fetchOrphanedEdits(libraryId ?? ''),
+    enabled: libraryId !== null && libraryId !== '',
+  });
+
+/**
+ * How many titles in each library need a look.
+ *
+ * @returns The query options.
+ */
+const libraryProblems = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'library-problems'],
+    queryFn: fetchLibraryProblems,
+  });
+
+/**
+ * Which catalogue show's season a season is read from, where it is another's.
+ *
+ * @param mediaId - Any episode of the season, or nothing where none is asked for.
+ * @returns The query options.
+ */
+const seasonSource = (mediaId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'season-source', mediaId],
+    queryFn: () => fetchSeasonSource(mediaId ?? ''),
+    enabled: mediaId !== null,
+  });
+
+/**
+ * The seasons another show in the catalogue has, to choose the one a season is read from.
+ *
+ * @param mediaId - Any episode of the season being changed.
+ * @param externalId - The other show, or nothing where none is chosen yet.
+ * @returns The query options.
+ */
+const catalogueSeasons = (mediaId: string, externalId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'catalogue-seasons', mediaId, externalId],
+    queryFn: () => fetchCatalogueSeasons(mediaId, externalId ?? ''),
+    enabled: externalId !== null,
+  });
+
+/**
+ * Every file of the title one file belongs to, for opening it straight from an address.
+ *
+ * @param mediaId - One file of the title, or nothing where none is asked for.
+ * @returns The query options.
+ */
+const titleFiles = (mediaId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'title-files', mediaId],
+    queryFn: () => fetchTitleFiles(mediaId ?? ''),
+    enabled: mediaId !== null,
+  });
+
+/**
  * Every re-encode, including the ones waiting for somebody to judge them.
  *
  * Asked for again while anything is still being written, because an encode reports its progress by
@@ -796,6 +972,18 @@ const backups = () =>
   });
 
 const adminQueries = {
+  titleMetadata,
+  titleHistory,
+  matchPreview,
+  titleValues,
+  titlePages,
+  titleKeys,
+  titleChoices,
+  libraryProblems,
+  orphanedEdits,
+  titleFiles,
+  seasonSource,
+  catalogueSeasons,
   statistics,
   libraryHealth,
   updateCheck,

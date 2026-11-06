@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
@@ -13,6 +13,10 @@ const AT_MOST = 40;
  * recently kept first, so what somebody marked to come back to is somewhere to come back to from
  * the sofa. Only what this television may play is shown, and nothing is drawn where nothing is kept.
  *
+ * Keeping or letting go of something leaves the shelf where it is: what was let go of leaves at
+ * once, and what was newly kept joins once it has been read, rather than the shelf going away and
+ * everything beneath it moving up while the list is read again.
+ *
  * @param viewerId - Whose favourites they are.
  * @param watchable - The libraries this television plays from.
  * @param progress - How far through each title this viewer is.
@@ -25,6 +29,7 @@ const FavouritesShelfDrawn = ({ viewerId, watchable, progress, onOpen }: Favouri
   const found = useQuery({
     ...libraryQueries.across(watchable, { ids, limit: ids.length }),
     enabled: ids.length > 0 && watchable.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   const items = useMemo(() => {

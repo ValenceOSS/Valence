@@ -3,6 +3,7 @@ import { readFile, rename, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { expect, onTestFinished } from 'vitest';
 
 const PREPARING = new Map<string, Promise<Blob>>();
 
@@ -48,7 +49,8 @@ const aPreparedCopy = async (
  * A Postgres of its own, in memory, started from a copy of one already prepared — so a test that
  * wants migrated tables gets them without running every migration again, in this file, in another,
  * or in another worker. The copy is kept in a file named for its recipe, so changing a migration
- * makes a new one.
+ * makes a new one. One opened during a test is closed once that test has finished, so a file of
+ * many tests does not hold every database it ever opened until it ends.
  *
  * @param name - What the copy is, for its file name.
  * @param recipe - Everything that decides what the database holds, such as its migrations' SQL.
@@ -65,7 +67,13 @@ const aPreparedPGlite = async (
 
   PREPARING.set(key, preparing);
 
-  return new PGlite({ loadDataDir: await preparing });
+  const client = new PGlite({ loadDataDir: await preparing });
+
+  if (expect.getState().currentTestName !== undefined) {
+    onTestFinished(() => client.close());
+  }
+
+  return client;
 };
 
 export { aPreparedPGlite };

@@ -11,8 +11,11 @@ import type { MediaTitle } from './MediaTitle.types';
  * @returns The line to show.
  */
 const describeTitle = (title: MediaTitle): string => {
-  if (title.kind === 'film' && title.parts.length > 0) {
-    return sayCount('common.count.editions', title.parts.length);
+  const editions = title.row === undefined ? title.parts.length : title.row.versions + 1;
+  const episodes = title.row?.episodes ?? title.episodes.length;
+
+  if (title.kind === 'film' && editions > 1) {
+    return sayCount('common.count.editions', editions);
   }
 
   if (title.kind === 'episode' && title.parts.length > 0) {
@@ -24,7 +27,15 @@ const describeTitle = (title: MediaTitle): string => {
   }
 
   if (title.kind === 'series') {
-    return `${sayCount('common.count.seasons', title.seasons)} · ${sayCount('common.count.episodes', title.episodes.length)}`;
+    const total = title.row?.episodeTotal ?? null;
+
+    return `${sayCount('common.count.seasons', title.seasons)} · ${
+      total === null || total < episodes
+        ? sayCount('common.count.episodes', episodes)
+        : sayCount('screens.adminArea.describeTitle.count.haveOfEpisodes', total, {
+            have: episodes.toLocaleString(),
+          })
+    }`;
   }
 
   return [

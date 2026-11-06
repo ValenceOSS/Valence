@@ -10,6 +10,7 @@ type DialogProps = {
   size?: DialogSize;
   isInstant?: boolean;
   edge?: string | null;
+  holdsOutsideClicks?: boolean;
   className?: string;
 };
 

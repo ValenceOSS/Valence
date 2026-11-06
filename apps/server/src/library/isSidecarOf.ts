@@ -1,17 +1,5 @@
 import { extname } from 'node:path';
-import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
-
-const SIDECAR_EXTENSIONS: ReadonlySet<string> = new Set([
-  ...TEXT_SUBTITLE_EXTENSIONS,
-  'sub',
-  'idx',
-  'sup',
-  'nfo',
-  'jpg',
-  'jpeg',
-  'png',
-  'webp',
-]);
+import { SIDECAR_EXTENSIONS } from '@ValenceServer/library/SIDECAR_EXTENSIONS';
 
 /**
  * Whether a file beside a film belongs to it alone: named for it, as `Arrival.en.srt` or

@@ -16,7 +16,9 @@ type Favourites = {
  * favourites page without any of them being told.
  *
  * The change is written to the cache before the server is asked, so a heart fills the moment it is
- * pressed, and put back the same way if the server refuses. Only that one item is put back rather
+ * pressed, and put back the same way if the server refuses. Something newly kept goes first, as the
+ * server lists it, so the list read again later is the same list rather than a reordering of it that
+ * would have everything built on it asked for again. Only that one item is put back rather
  * than the whole list, since somebody keeping two things quickly should not have the first undone
  * by the second being refused. Any read still in flight is called off first, so a list that arrives
  * a moment later does not report the heart as empty again.
@@ -42,7 +44,7 @@ const useFavourites = (watcherId: string | null, what: 'media' | 'books' = 'medi
 
   const write = (mediaId: string, wants: boolean): void => {
     cache.setQueryData(asked.queryKey, (ids = []) =>
-      wants ? [...ids.filter((id) => id !== mediaId), mediaId] : ids.filter((id) => id !== mediaId),
+      wants ? [mediaId, ...ids.filter((id) => id !== mediaId)] : ids.filter((id) => id !== mediaId),
     );
   };
 

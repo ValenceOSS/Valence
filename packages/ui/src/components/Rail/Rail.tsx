@@ -13,6 +13,7 @@ import {
   stillTransition,
 } from '@ValenceUI/animations/reveal';
 import { usePagedScroller } from '@ValenceUI/usePagedScroller';
+import { snapRowContext } from '@ValenceUI/snapRowContext';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -193,7 +194,7 @@ const Rail = ({
             sizesCards ? cn(FITTED, PER[cards], hasArrows ? LANE : '') : 'scroll-p-1 px-1',
           )}
         >
-          {children}
+          <snapRowContext.Provider value={true}>{children}</snapRowContext.Provider>
         </motion.ul>
       </div>
     </section>

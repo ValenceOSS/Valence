@@ -24,6 +24,7 @@ The Settings panel is four cards: **Server**, **Sign-in screen**, **Online servi
 | Apps                    | Settings › Sign-in screen                     | All of them              | Which of Valence's apps can be used with this server. The web is always on.                      |
 | The Movie Database      | Settings › Online services › API keys         | Empty                    | The key that fetches titles, years and artwork.                                                  |
 | OMDb                    | Settings › Online services › API keys         | Empty                    | A key for Rotten Tomatoes scores.                                                                |
+| fanart.tv               | Settings › Online services › API keys         | Empty                    | A key for more posters, backgrounds and logos.                                                   |
 | TheAudioDB              | Settings › Online services › API keys         | Empty                    | A personal key for artist lookups.                                                               |
 | Trailers                | Settings › Online services › Features         | Off                      | Offers trailers for titles that have none on disk.                                               |
 | Music details           | Settings › Online services › Features         | Off                      | Cover art, artist photos, music videos and lyrics.                                               |
@@ -123,11 +124,12 @@ Each key row shows whether a key is set. **Add key** opens a field for one; once
 
 - **The Movie Database** fetches titles, years, posters and descriptions for films and series. Without it, everything comes from filenames alone. The key can also be supplied at install time with the `CATALOGUE_API_KEY` environment variable (see [Configuration](/install/configuration)), and it is the default the setting starts from. The toast reads "Catalogue key saved."
 - **OMDb** is optional. A free key adds each title's Rotten Tomatoes score as titles are scanned, so run a scan after saving. The toast reads "OMDb key saved."
+- **fanart.tv** is optional. A personal key adds fanart.tv's posters, backgrounds and logos to a title's Artwork tab, beside TMDB's. The toast reads "fanart.tv key saved".
 - **TheAudioDB** is optional too. Without a key, artists are looked up with the free public key, which finds only one music video for each artist. The toast reads "TheAudioDB key saved."
 
 <Callout title="Keys are write only" tone="quiet">
-  The Movie Database, OMDb and TheAudioDB keys are stored on the server and only ever reported as
-  set or not set. The panel cannot show them back to you, so keep your own copy.
+  The Movie Database, OMDb, fanart.tv and TheAudioDB keys are stored on the server and only ever
+  reported as set or not set. The panel cannot show them back to you, so keep your own copy.
 </Callout>
 
 ### Features

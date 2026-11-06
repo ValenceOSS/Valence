@@ -1,3 +1,4 @@
+import { folderOfSeriesKey } from '@ValenceServer/library/folderOfSeriesKey';
 import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -8,8 +9,6 @@ import type { TitleFile, TitleFiles } from '@ValenceContracts/schemas/AdminCatal
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 const NOTHING_HELD: TitleFiles = { folder: null, files: [] };
-
-const FOLDER_KEY = 'folder:';
 
 /**
  * The files the server's own libraries hold of one title, for its admin page: a film's copies, a
@@ -71,10 +70,11 @@ const createDatabaseTitleFiles =
             isStillThere(),
           ),
         );
-      const key = rows.find((row) => row.key.startsWith(FOLDER_KEY))?.key;
+      const folder =
+        rows.map((row) => folderOfSeriesKey(row.key)).find((one) => one !== null) ?? null;
 
       return {
-        folder: key === undefined ? null : key.slice(FOLDER_KEY.length),
+        folder,
         files: rows.map(({ key: _key, ...row }) => asFile(row)),
       };
     }

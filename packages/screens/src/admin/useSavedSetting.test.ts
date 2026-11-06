@@ -31,6 +31,20 @@ describe('useSavedSetting', () => {
     expect(onSaved).toHaveBeenCalled();
   });
 
+  it('hands the outcome to a caller that says it its own way, and says nothing itself', async () => {
+    const save = vi.fn(() => Promise.resolve(true));
+    const tells = vi.fn();
+    const { result } = renderHook(() => useSavedSetting('', save, { ...WORDS, tells }));
+
+    await act(async () => {
+      result.current[1]('A title');
+      await Promise.resolve();
+    });
+
+    expect(tells).toHaveBeenCalledWith(true);
+    expect(notified.worked).not.toHaveBeenCalled();
+  });
+
   it('puts the saved value back where the save fails', async () => {
     const { result } = renderHook(() =>
       useSavedSetting('one', () => Promise.resolve(false), WORDS),

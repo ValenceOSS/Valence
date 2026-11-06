@@ -1,4 +1,9 @@
 import { eq } from 'drizzle-orm';
+import sharp from 'sharp';
+import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { diskPictureAddress } from './diskPictureAddress';
 import { describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem } from '#dialect/Schema';
@@ -106,9 +111,173 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     expect(read).toEqual({
       kind: 'tv',
       options: OFFERED,
+      onDisk: [],
       chosen: { poster: null, backdrop: null, logo: null },
       defaults: { poster: null, backdrop: null, logo: null },
     });
+  });
+
+  it('offers the pictures beside a film’s file, and chooses one without asking the catalogue', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'valence-artwork-'));
+    const db = await aScratchDatabase();
+
+    await writeFile(join(folder, 'poster.jpg'), 'a');
+    await writeFile(join(folder, 'notes.txt'), 'b');
+    await db
+      .update(mediaItem)
+      .set({ path: join(folder, 'f.mkv') })
+      .where(eq(mediaItem.id, 'film'));
+
+    const readOptions = vi.fn(() => Promise.resolve(OFFERED));
+    const choices = createArtworkChoices({
+      db,
+      readOptions,
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
+    });
+    const read = await choices.read('film');
+    const [onDisk] = typeof read === 'string' ? [] : read.onDisk;
+
+    expect(onDisk).toEqual({
+      url: diskPictureAddress(join(folder, 'poster.jpg')),
+      name: 'poster.jpg',
+    });
+
+    readOptions.mockClear();
+
+    await expect(choices.choose('film', 'poster', onDisk?.url ?? '', null)).resolves.toEqual({
+      jobId: null,
+    });
+    expect(readOptions).not.toHaveBeenCalled();
+    await expect(choices.isOwnPicture('film', onDisk?.url ?? '')).resolves.toBe(true);
+    await expect(
+      choices.isOwnPicture('film', diskPictureAddress(join(folder, 'notes.txt'))),
+    ).resolves.toBe(false);
+  });
+
+  it('chooses an episode’s still and a season’s poster from the catalogue’s, and goes back', async () => {
+    const db = await aScratchDatabase();
+
+    await db
+      .update(mediaItem)
+      .set({ seasonNumber: 1, episodeNumber: 1 })
+      .where(eq(mediaItem.id, 'ep-1'));
+    await db
+      .update(mediaItem)
+      .set({ seasonNumber: 1, episodeNumber: 2 })
+      .where(eq(mediaItem.id, 'ep-2'));
+
+    const stills = [option('/still-a.jpg'), option('/still-b.jpg')];
+    const readAgain = vi.fn(() => Promise.resolve('job'));
+    const choices = createArtworkChoices({
+      db,
+      readOptions: () => Promise.resolve(OFFERED),
+      readPartOptions: () => Promise.resolve(stills),
+      readAgain,
+      fetchLogos: () => Promise.resolve(null),
+    });
+    const still = stills[1]?.url ?? '';
+    const column = async (id: string) =>
+      (await db.select().from(mediaItem).where(eq(mediaItem.id, id)))[0]?.backdropUrl ?? null;
+
+    await expect(
+      choices.choosePart('ep-1', { season: 1, episode: 1 }, `${BASE}/elsewhere.jpg`, null),
+    ).resolves.toBe('refused');
+    await expect(
+      choices.choosePart('ep-1', { season: 1, episode: 1 }, still, null),
+    ).resolves.toEqual({
+      jobId: null,
+    });
+
+    expect(await column('ep-1')).toBe(still);
+    expect(await column('ep-2')).toBe('still-2.jpg');
+    await expect(choices.urlFor('ep-1', 'backdrop', false)).resolves.toBe(still);
+
+    await choices.choosePart('ep-1', { season: 1, episode: null }, still, null);
+
+    expect((await choices.partsChosen('shows', '100')).get('poster:s1')).toBe(still);
+
+    await expect(
+      choices.choosePart('ep-1', { season: 1, episode: 1 }, null, null),
+    ).resolves.toEqual({
+      jobId: 'job',
+    });
+    await expect(choices.urlFor('ep-1', 'backdrop', false)).resolves.toBeNull();
+  });
+
+  it(
+    'asks for a season’s pictures from the show it is read from, where it is another’s',
+    async () => {
+      const db = await aScratchDatabase();
+
+      await db
+        .update(mediaItem)
+        .set({ seasonNumber: 7, episodeNumber: 1 })
+        .where(eq(mediaItem.id, 'ep-1'));
+
+      const readPartOptions = vi.fn(() => Promise.resolve([option('/revival.jpg')]));
+      const choices = createArtworkChoices({
+        db,
+        readOptions: () => Promise.resolve(OFFERED),
+        readPartOptions,
+        borrowedSeasonOf: (_mediaId, season) =>
+          Promise.resolve(season === 7 ? { externalId: '900', season: 1 } : null),
+        readAgain: () => Promise.resolve(null),
+        fetchLogos: () => Promise.resolve(null),
+      });
+
+      await choices.readPart('ep-1', { season: 7, episode: null });
+      await choices.readPart('ep-1', { season: 7, episode: 1 });
+      await choices.readPart('ep-1', { season: 2, episode: null });
+
+      expect(readPartOptions.mock.calls).toEqual([
+        [{ externalId: '900', season: 1, episode: null }],
+        [{ externalId: '900', season: 1, episode: 1 }],
+        [{ externalId: '100', season: 2, episode: null }],
+      ]);
+      await expect(
+        choices.choosePart(
+          'ep-1',
+          { season: 7, episode: null },
+          `${BASE}/original/revival.jpg`,
+          null,
+        ),
+      ).resolves.toEqual({ jobId: null });
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it('keeps an uploaded picture and chooses it, turning away what is not a picture', async () => {
+    const uploads = await mkdtemp(join(tmpdir(), 'valence-uploads-'));
+    const choices = createArtworkChoices({
+      db: await aScratchDatabase(),
+      readOptions: () => Promise.resolve(OFFERED),
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
+      uploads,
+    });
+
+    await expect(
+      choices.upload(
+        'film',
+        'poster',
+        { body: new Uint8Array([1, 2]), contentType: 'text/plain' },
+        null,
+      ),
+    ).resolves.toEqual({ fault: 'notAPicture' });
+
+    const png = new Uint8Array(
+      await sharp({
+        create: { width: 4, height: 6, channels: 3, background: { r: 0, g: 0, b: 0 } },
+      })
+        .png()
+        .toBuffer(),
+    );
+
+    await expect(
+      choices.upload('film', 'poster', { body: png, contentType: 'image/png' }, null),
+    ).resolves.toEqual({ jobId: null });
+    expect((await readdir(uploads)).filter((name) => name.endsWith('.type'))).toHaveLength(1);
   });
 
   it('shows the pictures the catalogue would pick itself, beside the ones to choose from', async () => {

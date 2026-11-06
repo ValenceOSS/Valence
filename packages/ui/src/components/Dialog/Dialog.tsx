@@ -166,6 +166,8 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  *   known, so the panel does not shift when the colour arrives.
  *   It also blurs what scrolls under the foot of the panel, into the colour where there is one,
  *   until there is nothing further to scroll to.
+ * @param holdsOutsideClicks - Whether a click outside it, or Escape, leaves it open, for a dialog
+ *   holding choices not yet saved, which a stray click or key would otherwise throw away.
  * @param className - Extra classes for the caller's own layout.
  */
 const Dialog = ({
@@ -176,6 +178,7 @@ const Dialog = ({
   size = 'default',
   isInstant = false,
   edge,
+  holdsOutsideClicks = false,
   className,
 }: DialogProps) => {
   const portalContainer = usePortalContainer();
@@ -251,7 +254,12 @@ const Dialog = ({
             panelRef.current?.focus();
           }}
           onInteractOutside={(event) => {
-            if (isOverDialogs(event.target)) {
+            if (holdsOutsideClicks || isOverDialogs(event.target)) {
+              event.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(event) => {
+            if (holdsOutsideClicks) {
               event.preventDefault();
             }
           }}

@@ -640,6 +640,16 @@
     "context": "Shown in the admin (from `readRefusal`)."
   },
   {
+    "handler": "client.admin.readTitlesTogether.theTitlesCouldNotBeRead",
+    "text": "The titles could not be read.",
+    "context": "Said when the fields of the titles chosen in the admin's media could not be read, to edit them all at once."
+  },
+  {
+    "handler": "client.admin.undoTitlesTogether.theChangeCouldNotBeUndone",
+    "text": "The change could not be undone.",
+    "context": "Said when undoing a change made to many titles at once in the admin's media failed."
+  },
+  {
     "handler": "client.books.describeLength.hoursHOverMin",
     "text": "{hours} h {over} min",
     "context": "Shown in the books (from `describeLength`). {hours} is filled in by the app; {over} is filled in by the app."
@@ -3544,6 +3554,16 @@
     "handler": "common.count.updated.other",
     "text": "{count} updated",
     "context": "How many files a library scan found changed."
+  },
+  {
+    "handler": "common.count.votes.one",
+    "text": "{count} vote",
+    "context": "How many people on the catalogue voted for a picture, under it in the artwork chooser."
+  },
+  {
+    "handler": "common.count.votes.other",
+    "text": "{count} votes",
+    "context": "How many people on the catalogue voted for a picture, under it in the artwork chooser."
   },
   {
     "handler": "common.count.years.one",
@@ -7336,6 +7356,11 @@
     "context": "The label of a embedded video, used in the media detail dialog and in the show dialog. {title} is filled in by the app."
   },
   {
+    "handler": "common.titleYear",
+    "text": "{title} ({year})",
+    "context": "A title with the year it came out or began, such as an item in the import report or a show in the catalogue. {title} is its title and {year} its year."
+  },
+  {
     "handler": "common.today",
     "text": "Today",
     "context": "The name of today, above what is happening on it on the release calendar, and the button that brings the calendar back to it."
@@ -9726,6 +9751,16 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.thatEpisodeOrderCouldNotBeRead",
+    "text": "That episode order couldn’t be read.",
+    "context": "Refusal when a show's episode order is chosen with a body the server can't read."
+  },
+  {
+    "handler": "error.library.thatExtraChoiceCouldNotBeRead",
+    "text": "That couldn’t be read: say what kind of extra the file is and which title it belongs to, or that it is not an extra.",
+    "context": "Refusal when a file is marked as an extra, or as not one, with a body the server can't read."
+  },
+  {
     "handler": "error.library.thatFileIsNotInsideItsLibrary",
     "text": "That file isn’t inside its library, so Valence won’t move it.",
     "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
@@ -9746,6 +9781,21 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.thatSeasonCouldNotBeRead",
+    "text": "That season couldn’t be read.",
+    "context": "Refusal when the show and season a season is read from are sent in a form the server can't read."
+  },
+  {
+    "handler": "error.library.thatShowHasNoSuchSeason",
+    "text": "That show doesn’t have that season in the catalogue.",
+    "context": "Refusal when a season is set to be read from a season the chosen catalogue show doesn't have."
+  },
+  {
+    "handler": "error.library.thatVersionChoiceCouldNotBeRead",
+    "text": "That choice for the version couldn’t be read: a name is at most 64 characters.",
+    "context": "Refusal when renaming a film's version, or choosing which stands for it, is asked with a body the server can't read."
+  },
+  {
     "handler": "error.library.theFileCouldNotBeMoved",
     "text": "Couldn’t move the file.",
     "context": "An error the server answers with (HTTP 500) in the library, when an admin moves media into another library."
@@ -9754,6 +9804,21 @@
     "handler": "error.library.theFileIsNoLongerThere",
     "text": "That file is no longer where Valence last saw it.",
     "context": "An error the server answers with (HTTP 404) in the library, when an admin moves media into another library."
+  },
+  {
+    "handler": "error.library.thoseEpisodeNumbersCouldNotBeRead",
+    "text": "Those episode numbers couldn’t be read: a season is 0 or more, an episode 1 or more, and a last episode comes after the first.",
+    "context": "Refusal when an episode's numbers are set by hand with numbers the server can't take."
+  },
+  {
+    "handler": "error.library.thoseFilesCouldNotBeRead",
+    "text": "That couldn’t be read: say which files to rename, and what to do where a name is taken.",
+    "context": "Refusal when files are renamed to the library's naming pattern with a body the server can't read."
+  },
+  {
+    "handler": "error.library.thoseRulesCouldNotBeRead",
+    "text": "Those rules couldn’t be read: each finds a genre of at most 64 characters, and a library has at most 200.",
+    "context": "Refusal when a library's genre rules are saved with a body the server can't read."
   },
   {
     "handler": "error.library.valenceMayNotMoveFilesThere",
@@ -9939,6 +10004,21 @@
     "handler": "error.live.theStreamIsGone",
     "text": "The stream isn’t there any more. The playlist it came from may be out of date.",
     "context": "Why a live TV channel would not play: the stream answered 404 or 410."
+  },
+  {
+    "handler": "error.metadata.thatChangeWasChangedSince",
+    "text": "That change can’t be undone, because something it changed has been changed again since.",
+    "context": "An error the server answers with (HTTP 409) when an administrator undoes a change to a title’s metadata (from `serveMetadata`)."
+  },
+  {
+    "handler": "error.metadata.thatValueCannotBeSaved",
+    "text": "That can’t be saved. The field isn’t one this title has, or the value isn’t one it accepts.",
+    "context": "An error the server answers with (HTTP 400) when an administrator edits a title’s metadata (from `serveMetadata`)."
+  },
+  {
+    "handler": "error.metadata.thoseTitlesCouldNotBeListed",
+    "text": "Those titles couldn’t be listed: the library, order or filters asked for aren’t ones Valence knows.",
+    "context": "Refusal when the media list's spreadsheet export is asked for with a query the server can't read."
   },
   {
     "handler": "error.music.aSmartPlaylistFillsItself",
@@ -10379,6 +10459,11 @@
     "handler": "error.samples.thatIsForSomebodyWhoMay",
     "text": "Only people allowed to request music can do that.",
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveSamples`)."
+  },
+  {
+    "handler": "error.segments.thoseMarkersCouldNotBeRead",
+    "text": "Those skip markers couldn’t be read: each ends after it starts, and a file has at most 16.",
+    "context": "Refusal when a file's intro, recap, credits or preview markers are set by hand with times the server can't take."
   },
   {
     "handler": "error.server.aFolderCannotBeMovedInto",
@@ -13986,14 +14071,39 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.mediaMetadataChanged",
+    "text": "Metadata changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaMetadataUndone",
+    "text": "Metadata change undone",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.mediaMoved",
     "text": "Title moved",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaRefreshed",
+    "text": "Title refreshed",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
     "handler": "screens.admin.auditActionNames.mediaRemoved",
     "text": "Title deleted",
     "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaUnmatched",
+    "text": "Title unmatched",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaVersionChosen",
+    "text": "Version chosen",
+    "context": "A kind of change in the admin area’s audit log: one of a film's versions renamed, or chosen to stand for the film."
   },
   {
     "handler": "screens.admin.auditActionNames.pluginAppPasswordMade",
@@ -14911,6 +15021,16 @@
     "context": "The description of a form field in the add library dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.addTagsDialog.count.addTagsToTitles.one",
+    "text": "Add tags to {count} title",
+    "context": "The heading of the dialog that adds tags to every title chosen in the admin's media. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.addTagsDialog.count.addTagsToTitles.other",
+    "text": "Add tags to {count} titles",
+    "context": "The heading of the dialog that adds tags to every title chosen in the admin's media. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.addTriggerDialog.aTimeOfDay",
     "text": "Enter a time of day, such as 03:00.",
     "context": "Shown under the time a scheduled job runs, when what was typed is not a time of day."
@@ -15671,6 +15791,106 @@
     "context": "Heading of the card for what a request for an artist downloads."
   },
   {
+    "handler": "screens.adminArea.artworkChooser.asTheCatalogueRanksThem",
+    "text": "As the catalogue ranks them",
+    "context": "An order for the pictures in the artwork chooser: the catalogue's own."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.besideItsFiles",
+    "text": "Beside its files",
+    "context": "Heading over the pictures found in the title's folders on the disk, in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.episodeStill",
+    "text": "Episode still",
+    "context": "The only kind of picture on an episode's Artwork tab: the frame shown for it in the episode list."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.fromFanartTv",
+    "text": "From fanart.tv",
+    "context": "Under a picture offered in the artwork chooser that comes from fanart.tv rather than TMDB."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.fromTheCatalogue",
+    "text": "From the catalogue",
+    "context": "Heading over the pictures the catalogue offers, in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.goBackToTheCataloguesPick",
+    "text": "Go back to the catalogue’s pick",
+    "context": "Button that forgets the chosen picture so the catalogue's own is used again."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseAnUploadedPicture",
+    "text": "In use: an uploaded picture",
+    "context": "Line over the pictures saying the title is drawn with a picture an administrator uploaded."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseNameFromTheDisk",
+    "text": "In use: {name}, from beside its files",
+    "context": "Line over the pictures saying the title is drawn with a picture found on the disk. {name} is its file name."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseOneFromTheCatalogue",
+    "text": "In use: one chosen from the catalogue",
+    "context": "Line over the pictures saying an administrator chose one of the catalogue's pictures."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.inUseTheCataloguesPick",
+    "text": "In use: the catalogue’s pick",
+    "context": "Line over the pictures saying the title is drawn with the picture the catalogue picks itself."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.largestFirst",
+    "text": "Largest first",
+    "context": "An order for the pictures in the artwork chooser: the most pixels first."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.mostVotesFirst",
+    "text": "Most votes first",
+    "context": "An order for the pictures in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.noLetteringFirst",
+    "text": "No lettering first",
+    "context": "An order for the pictures in the artwork chooser: pictures without any title written on them first."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.pictureSize",
+    "text": "{width} × {height}",
+    "context": "A picture's size in pixels, under it in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.picturesOfTheTitle",
+    "text": "Pictures of the title",
+    "context": "Heading of the Artwork tab on a title's page in the admin media list."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.seasonPoster",
+    "text": "Season poster",
+    "context": "The only kind of picture on a season's Artwork tab."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.uploadAPicture",
+    "text": "Upload from this computer",
+    "context": "Button in the artwork chooser that picks a picture from this computer to use for the title."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.uploaded",
+    "text": "Your upload",
+    "context": "Note on a picture that an administrator uploaded, in the artwork chooser."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.uploadedAndChosen",
+    "text": "Uploaded, and in use",
+    "context": "Notice after a picture was uploaded for a title and chosen."
+  },
+  {
+    "handler": "screens.adminArea.artworkChooser.useNameFromTheDisk",
+    "text": "Use {name} from the disk",
+    "context": "What pressing a picture found beside the title's files does, for a screen reader. {name} is its file name."
+  },
+  {
     "handler": "screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas",
     "text": "Loading artwork",
     "context": "The label of a spinner in the artwork picker in the admin area."
@@ -16254,6 +16474,86 @@
     "handler": "screens.adminArea.bucketDialog.wasabi",
     "text": "Wasabi",
     "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.changeAFieldToChangeItOn",
+    "text": "Change a field to change it on every title.",
+    "context": "Shown at the foot of the dialog editing many titles at once while nothing has been touched."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.changesFieldsOnTitles",
+    "text": "Changes {fields} on {titles}",
+    "context": "Shown at the foot of the dialog editing many titles at once, before saving. {fields} is how many fields, such as 3 fields; {titles} is how many titles, such as 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.changingSentOfCount",
+    "text": "Changing {sent} of {count}…",
+    "context": "Shown while a change made to many titles at once is being saved, a part at a time. {sent} is how many are done so far; {count} is how many in all."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.editTitles.one",
+    "text": "Edit {count} title",
+    "context": "The heading of the dialog that edits the metadata of every title chosen in the admin's media at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.editTitles.other",
+    "text": "Edit {count} titles",
+    "context": "The heading of the dialog that edits the metadata of every title chosen in the admin's media at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.fields.one",
+    "text": "{count} field",
+    "context": "How many fields a change made to many titles at once changes, read into a line such as “Changes 3 fields on 12 titles”. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.count.fields.other",
+    "text": "{count} fields",
+    "context": "How many fields a change made to many titles at once changes, read into a line such as “Changes 3 fields on 12 titles”. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.theirEpisodes",
+    "text": "Their episodes",
+    "context": "A choice in the dialog editing many programmes at once: edit every episode of them instead of the programmes."
+  },
+  {
+    "handler": "screens.adminArea.bulkEditDialog.whatToEdit",
+    "text": "What to edit",
+    "context": "The hidden label of the choice, in the dialog editing many programmes at once, between editing the programmes and editing their episodes."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.clearedOnEveryTitle",
+    "text": "Emptied on every title",
+    "context": "Said in place of a field in the dialog editing many titles at once when it is to be emptied on all of them."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.doNotChange",
+    "text": "Undo this change",
+    "context": "A button beside a field touched in the dialog editing many titles at once that lets it alone again."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.filledFromEachTitle",
+    "text": "Filled in from each title, without “The” or “A”",
+    "context": "Said in place of the sort title in the dialog editing many titles at once when each title's sort title is to be its title with a leading article dropped."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.fromTitle",
+    "text": "From title",
+    "context": "In the menu of the sort title in the dialog editing many titles at once: fill each title's sort title in from its title, a leading article dropped."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.noneYet",
+    "text": "None on any title",
+    "context": "Shown in an empty list, such as the tags, in the dialog editing many titles at once, where none of them has any."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.putBackOnEveryTitle",
+    "text": "Put back to TMDB’s on every title",
+    "context": "Said in place of a field in the dialog editing many titles at once when every title is to go back to what the catalogue, TMDB, says."
+  },
+  {
+    "handler": "screens.adminArea.bulkField.whatToDoWithTheWords",
+    "text": "What to do with the words",
+    "context": "The hidden label of the choice, beside a list such as the genres in the dialog editing many titles at once, between adding the words, taking them away and putting them in place of the rest."
   },
   {
     "handler": "screens.adminArea.busyHoursGrid.count.plays.one",
@@ -17021,6 +17321,36 @@
     "context": "Shown after confirming re-encodes awaiting review in the admin area."
   },
   {
+    "handler": "screens.adminArea.contentRatingField.addCountry",
+    "text": "Add country",
+    "context": "The button that adds another country's content rating to a title, in the admin's metadata editor."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.countryCode",
+    "text": "Country code",
+    "context": "The label of the field taking the two-letter code of a country whose content rating to add, such as FR."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.forAgeAndOver",
+    "text": "For {age} and over",
+    "context": "What age a content rating is for, beside it in the admin's content rating picker. {age} is a number of years."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.forEveryone",
+    "text": "For everyone",
+    "context": "Said beside a content rating suitable for any age, in the admin's content rating picker."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.noRating",
+    "text": "No rating",
+    "context": "The choice in the admin's content rating picker that leaves the server's own country unrated."
+  },
+  {
+    "handler": "screens.adminArea.contentRatingField.otherCountries",
+    "text": "Other countries",
+    "context": "The row on a title's content rating card that opens the ratings other countries give it, beside how many there are."
+  },
+  {
     "handler": "screens.adminArea.coreMap.efficiency",
     "text": "Efficiency cores",
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The power-saving cores of a chip that has both fast and efficient ones."
@@ -17624,6 +17954,16 @@
     "handler": "screens.adminArea.describeSince.never",
     "text": "never",
     "context": "How long ago something happened, on the admin pages, when it never has. Shown on its own or in sentences like \"Scanned {when}\"."
+  },
+  {
+    "handler": "screens.adminArea.describeTitle.count.haveOfEpisodes.one",
+    "text": "{have} of TMDB’s {count} episode",
+    "context": "How many of a show's episodes are on the disk, out of how many TMDB lists, in the media list. {have} is how many are here."
+  },
+  {
+    "handler": "screens.adminArea.describeTitle.count.haveOfEpisodes.other",
+    "text": "{have} of TMDB’s {count} episodes",
+    "context": "How many of a show's episodes are on the disk, out of how many TMDB lists, in the media list. {have} is how many are here."
   },
   {
     "handler": "screens.adminArea.describeToneMapping.anythingTheCardCannotTakeIs",
@@ -18386,6 +18726,96 @@
     "context": "Under the short segments setting."
   },
   {
+    "handler": "screens.adminArea.episodeNumberDialog.changeTheEpisode",
+    "text": "Change the episode…",
+    "context": "Button on an episode's page that opens the dialog saying which episode its file is, whatever its name says."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.itsNameSaysOtherwise",
+    "text": "For a file whose name gives the wrong episode, or one holding several. It’s read again as the episode you give, and stays that episode through every scan.",
+    "context": "Description in the dialog that says which episode a file is."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.lastEpisode",
+    "text": "Last episode, for a file of several",
+    "context": "Optional field: the last episode a file holds when it holds several, such as 2 for a file of episodes 1 and 2."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.readingItAgain",
+    "text": "Reading it again as that episode",
+    "context": "Notice after a file's episode was set by hand."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.useTheFileName",
+    "text": "Go by the file name again",
+    "context": "Button in the dialog that forgets the episode given by hand, so the file's name decides again."
+  },
+  {
+    "handler": "screens.adminArea.episodeNumberDialog.whichEpisodeIsThisFile",
+    "text": "Which episode is this file?",
+    "context": "Title of the dialog that says which episode a file is, whatever its name says."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.episodeOrder",
+    "text": "Episode order",
+    "context": "Setting on a show's Seasons tab: which of TMDB's orders its episodes are numbered in, such as the DVD order."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.everyEpisodeIsReadAgain",
+    "text": "Every episode is read again in that order, so a file named S01E05 becomes the fifth episode of that order’s first season. Edits are kept.",
+    "context": "Detail of the confirmation before a show's episode order changes."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.numberByName",
+    "text": "Number the episodes by {order}?",
+    "context": "Title of the confirmation before a show's episode order changes. {order} is the order, such as Blu-ray Order."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.tmdbsOwnOrder",
+    "text": "TMDB’s own order",
+    "context": "The first choice of a show's episode order: the order TMDB lists its seasons in."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.useThisOrder",
+    "text": "Use this order",
+    "context": "Confirm button when changing a show's episode order."
+  },
+  {
+    "handler": "screens.adminArea.episodeOrderPicker.whichOrderTheFilesFollow",
+    "text": "Which order your files are numbered in. Each episode’s title, overview and still follow the order you choose.",
+    "context": "Description of a show's episode order setting."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.asItsNameAndFolderSay",
+    "text": "As its name and folder say",
+    "context": "First choice in the dialog marking a file as an extra: forget any choice made, so its file name and folder decide again."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.keptThroughEveryScan",
+    "text": "An extra of {title} shows with it rather than as a film of its own. What you choose here is kept through every scan, whatever the file’s name or folder says.",
+    "context": "Description in the dialog marking a file as an extra of a film. {title} is the film."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.markAsAnExtra",
+    "text": "Mark as an extra…",
+    "context": "Item in a file's menu on a film's Files tab: say the file is one of the film's extras, such as its trailer, or that it is not an extra."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.notAnExtra",
+    "text": "Not an extra: a film of its own",
+    "context": "First choice in the dialog marking a file as an extra: the file is a film, not an extra."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.whatIsThisFile",
+    "text": "What is {file}?",
+    "context": "Title of the dialog marking a file as an extra or not. {file} is the file's name."
+  },
+  {
+    "handler": "screens.adminArea.extraChoice.whatItIs",
+    "text": "What it is",
+    "context": "Field in the dialog marking a file as an extra: which kind of extra, or not one."
+  },
+  {
     "handler": "screens.adminArea.fileDetails.addingUp",
     "text": "Adding up…",
     "context": "In the side of the admin’s file manager that says what is chosen. Shown while a folder’s size is being added up."
@@ -18444,6 +18874,16 @@
     "handler": "screens.adminArea.filesPanel.chooseName",
     "text": "Choose {name}",
     "context": "The box beside a file or folder in the admin’s file manager. {name} is the file or folder."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.count.orphanedFiles.one",
+    "text": "{count} orphaned file",
+    "context": "Button in the media list's Folders view that shows only the subtitle, NFO and picture files whose video has gone. Pressed again it shows every file."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.count.orphanedFiles.other",
+    "text": "{count} orphaned files",
+    "context": "Button in the media list's Folders view that shows only the subtitle, NFO and picture files whose video has gone. Pressed again it shows every file."
   },
   {
     "handler": "screens.adminArea.filesPanel.delete",
@@ -18566,6 +19006,86 @@
     "context": "The label of a button in the files panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.findAndReplace.find",
+    "text": "Find",
+    "context": "Field holding the words to look for, in the bulk edit dialog's find and replace."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.findAndReplace",
+    "text": "Find and replace",
+    "context": "Section of the bulk edit dialog that replaces some words with others in one field of every title chosen."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.inAListOnlyWholeWords",
+    "text": "In text, every match is replaced. In a list such as genres, only an entry that matches in full is replaced, and leaving Replace with empty removes it.",
+    "context": "Note under the bulk edit dialog's find and replace, saying how it works on lists such as genres and on text such as an overview."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.inWhichField",
+    "text": "In which field",
+    "context": "Choice of the field to find and replace in, in the bulk edit dialog."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.matchCase",
+    "text": "Match case",
+    "context": "Checkbox in the bulk edit dialog's find and replace: only find the words with the same capitals."
+  },
+  {
+    "handler": "screens.adminArea.findAndReplace.replaceWith",
+    "text": "Replace with",
+    "context": "Field holding the words to put in their place, in the bulk edit dialog's find and replace. Left empty, what is found is taken out."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.apply",
+    "text": "Apply",
+    "context": "The button that matches a title to the chosen catalogue entry, taking the ticked fields from it."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.current",
+    "text": "Current",
+    "context": "The heading of the column holding each field's value as it is now, in the table comparing a title with a new catalogue entry."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.field",
+    "text": "Field",
+    "context": "The heading of the column naming each field, in the table comparing a title with the catalogue entry it is about to be matched to."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.nothingCameBackForQuery",
+    "text": "Nothing came back for “{query}”.",
+    "context": "Said in Fix match when a search found nothing. {query} is what was searched for."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.nothingWouldChange",
+    "text": "Nothing would change but the match.",
+    "context": "Said in the admin's Fix match dialog when the chosen catalogue entry gives every field the value it already has."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.showUnchanged",
+    "text": "Show unchanged",
+    "context": "A switch showing the fields that would stay the same, in the table comparing a title with a new catalogue entry."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.stepCompare",
+    "text": "Step 2 of 2: Compare",
+    "context": "The step the admin's Fix match dialog is on, while comparing a title's fields with the catalogue entry chosen for it."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.stepFind",
+    "text": "Step 1 of 2: Find",
+    "context": "The step the admin's Fix match dialog is on, while searching the catalogue for what a title really is."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.takeTheNewField",
+    "text": "Take the new {field}",
+    "context": "The hidden label of the tick box choosing whether a field takes the new catalogue entry's value. {field} is the field's name, such as Title."
+  },
+  {
+    "handler": "screens.adminArea.fixMatchDialog.tryWithoutTheYear",
+    "text": "Try without the year",
+    "context": "A button in Fix match that searches again with the year taken out of what was searched for."
+  },
+  {
     "handler": "screens.adminArea.folderBrowser.anime",
     "text": "anime",
     "context": "Shown in an empty text field until something is typed in the folder browser in the admin area."
@@ -18674,6 +19194,61 @@
     "handler": "screens.adminArea.folderBrowser.useThisFolder",
     "text": "Use this folder",
     "context": "The label of a button in the folder browser in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.folderView.belongsWith",
+    "text": "Belongs with",
+    "context": "The label in the folder view's details pane naming the video a subtitle, NFO or picture belongs beside."
+  },
+  {
+    "handler": "screens.adminArea.folderView.excluded",
+    "text": "Excluded",
+    "context": "A status badge on a file in the folder view of the admin's Media. Somebody excluded it from the library."
+  },
+  {
+    "handler": "screens.adminArea.folderView.excludedFromTheLibrary",
+    "text": "Somebody excluded it from the library.",
+    "context": "The reason in the folder view's details pane for a file that was excluded."
+  },
+  {
+    "handler": "screens.adminArea.folderView.inAFolderScansSkip",
+    "text": "It’s in a folder scans skip, such as one of extras or metadata.",
+    "context": "The reason in the folder view's details pane for a video in a folder that scans skip."
+  },
+  {
+    "handler": "screens.adminArea.folderView.itsVideoIsGone",
+    "text": "Its video is gone",
+    "context": "A status badge on a file in the folder view of the admin's Media. A subtitle, NFO or picture whose video is no longer there."
+  },
+  {
+    "handler": "screens.adminArea.folderView.looksLikeASample",
+    "text": "It looks like a sample, which scans skip.",
+    "context": "The reason in the folder view's details pane for a video that looks like a sample."
+  },
+  {
+    "handler": "screens.adminArea.folderView.notAVideo",
+    "text": "Not a video",
+    "context": "A status badge on a file in the folder view of the admin's Media. A file that is neither a video nor belongs with one."
+  },
+  {
+    "handler": "screens.adminArea.folderView.notReadYet",
+    "text": "Not read yet",
+    "context": "A status badge on a file in the folder view of the admin's Media. A video the library has not scanned yet."
+  },
+  {
+    "handler": "screens.adminArea.folderView.theLibraryHasNotReadItYet",
+    "text": "The library hasn’t read it yet. It’s added at the next scan.",
+    "context": "The reason in the folder view's details pane for a video the library hasn't scanned yet."
+  },
+  {
+    "handler": "screens.adminArea.folderView.whyItIsNotInTheLibrary",
+    "text": "Why it isn’t in the library",
+    "context": "The label in the folder view's details pane above the reason a file isn't in the library."
+  },
+  {
+    "handler": "screens.adminArea.folderView.withItsVideo",
+    "text": "With its video",
+    "context": "A status badge on a file in the folder view of the admin's Media. A subtitle, NFO or picture that belongs beside a video."
   },
   {
     "handler": "screens.adminArea.generatedTheMissingPreviewsOfName",
@@ -18844,6 +19419,66 @@
     "handler": "screens.adminArea.hDRConversion",
     "text": "HDR tone mapping",
     "context": "Text shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.bringBackAnEditedExport",
+    "text": "Bring back a spreadsheet exported from this list and edited elsewhere. Each row is found by its TMDB id, or by its title and year, and its title, sort title, release date and genres are changed where they differ. Nothing changes until you apply it.",
+    "context": "Description in the dialog importing a spreadsheet into the media list."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.changedSentOfCount",
+    "text": "Changing {sent} of {count}",
+    "context": "Progress while an imported spreadsheet is applied."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.chooseTheFile",
+    "text": "Choose the spreadsheet",
+    "context": "Button picking the CSV file to import into the media list."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changedTitles.one",
+    "text": "Changed {count} title from the spreadsheet",
+    "context": "Notice after an imported spreadsheet was applied."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changedTitles.other",
+    "text": "Changed {count} titles from the spreadsheet",
+    "context": "Notice after an imported spreadsheet was applied."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changesTitles.one",
+    "text": "Changes {count} title",
+    "context": "Summary of an imported spreadsheet before it is applied, and its apply button."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.changesTitles.other",
+    "text": "Changes {count} titles",
+    "context": "Summary of an imported spreadsheet before it is applied, and its apply button."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.rowsNotFound.one",
+    "text": "{count} row matches no title here, so it’s passed over.",
+    "context": "Note in the spreadsheet import when a row names no title in the library."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.count.rowsNotFound.other",
+    "text": "{count} rows match no title here, so they’re passed over.",
+    "context": "Note in the spreadsheet import when rows name no title in the library."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.importASpreadsheet",
+    "text": "Import a spreadsheet…",
+    "context": "Item in the media list's menu: bring back a spreadsheet exported from it and edited, changing the titles it names."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.nothingToChange",
+    "text": "Nothing in it differs from what the library holds.",
+    "context": "What the spreadsheet import says when no row changes anything."
+  },
+  {
+    "handler": "screens.adminArea.importSheet.readingIt",
+    "text": "Reading the spreadsheet",
+    "context": "Spinner while an imported spreadsheet is read and compared with the library."
   },
   {
     "handler": "screens.adminArea.indexerCatalogueDialog.anyLabel",
@@ -19382,7 +20017,7 @@
   },
   {
     "handler": "screens.adminArea.leftOutList.nothingIsLeftOut",
-    "text": "Nothing is excluded. Exclude a file or folder from Media or Files.",
+    "text": "Nothing is excluded. Exclude a title, file or folder from Media.",
     "context": "Shown in a library's settings when nothing is left out of it."
   },
   {
@@ -19636,9 +20271,19 @@
     "context": "Shown in the admin area: the detail of choosing a connected app to fulfil a library's requests. {kind} is Radarr, Sonarr or Lidarr."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.metadataLanguage",
+    "text": "Metadata language",
+    "context": "Setting of a library: which language TMDB is asked for its titles, overviews and logos in."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.metadataProfile",
     "text": "Metadata profile",
     "context": "Shown in the admin area: the label of the Lidarr metadata profile a music library's requests use."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.namesEachTitleByItsOriginal",
+    "text": "Names each film and show by the title it was released under, such as a Japanese film by its Japanese name, from the next scan or refresh.",
+    "context": "Description under a library's Use original titles switch."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.oneAtATime",
@@ -19736,9 +20381,24 @@
     "context": "Text shown in the library settings dialog in the admin area. {name} is filled in by the app; {label} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.tmdbIsAskedInThisLanguage",
+    "text": "TMDB is asked for titles, overviews and logos in this language, from the next scan or refresh. A title it has no translation for stays in English.",
+    "context": "Description of a library's metadata language setting."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.tmdbsDefault",
+    "text": "TMDB’s default, English",
+    "context": "The first choice of a library's metadata language: ask TMDB in no language in particular."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.twoAtATime",
     "text": "Two at a time",
     "context": "The label in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.useOriginalTitles",
+    "text": "Use original titles",
+    "context": "Switch in a library's settings: name films and shows by their original title rather than a translated one."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt",
@@ -19769,6 +20429,16 @@
     "handler": "screens.adminArea.librarySettingsDialog.whoFulfilsRequests",
     "text": "Download requests with",
     "context": "Shown in the admin area: the label of the choice between Valence and a connected app for a library's requests."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.writeNfoFiles",
+    "text": "Write NFO files",
+    "context": "Switch in a library's settings: keep an NFO file beside each film and episode, in Kodi's format, with what was edited in Valence."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.writesWhatYouEditBeside",
+    "text": "Each time you edit a title, Valence writes its NFO beside the file (and a show’s tvshow.nfo in its folder) in Kodi’s format, which Jellyfin and Emby read too. An NFO already there is replaced.",
+    "context": "Description under a library's Write NFO files switch."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.yourBrowser",
@@ -20581,16 +21251,6 @@
     "context": "Label of the choice between kinds of live TV source in the add dialog."
   },
   {
-    "handler": "screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf",
-    "text": "Your choice applies to every episode of this series and to future scans.",
-    "context": "Shown in the match picker in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd",
-    "text": "Your choice applies to this film and to future scans.",
-    "context": "Shown in the match picker in the admin area."
-  },
-  {
     "handler": "screens.adminArea.matchPicker.forgetTheCorrection",
     "text": "Remove correction",
     "context": "The label of a button in the match picker in the admin area."
@@ -20604,6 +21264,16 @@
     "handler": "screens.adminArea.matchPicker.searchForASeries",
     "text": "Search for a series",
     "context": "The label of the search field in the admin's dialog for correcting which series an episode was matched to."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.addTags",
+    "text": "Add tags",
+    "context": "A button beside the titles chosen in the admin's media that adds tags to them all."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.addToACollection",
+    "text": "Add to a collection…",
+    "context": "In the menu of what can be done to the titles chosen in the admin's media: add them all to a collection."
   },
   {
     "handler": "screens.adminArea.mediaPanel.allTitles",
@@ -20621,6 +21291,11 @@
     "context": "The label in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.columns",
+    "text": "Columns",
+    "context": "The menu, and its heading, that chooses which columns the admin's media list shows."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.couldNotBeRead",
     "text": "Couldn’t be read",
     "context": "A choice of which titles the admin area’s media page lists: files that could not be read."
@@ -20629,6 +21304,26 @@
     "handler": "screens.adminArea.mediaPanel.couldNotReadFiles",
     "text": "Couldn’t read {files}",
     "context": "Under a title in the media page in the admin area, naming the files that could not be read. {files} is a list of file names."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.allTitles.one",
+    "text": "All titles {count}",
+    "context": "A quick filter above the admin's media list that shows every title, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.allTitles.other",
+    "text": "All titles {count}",
+    "context": "A quick filter above the admin's media list that shows every title, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.changedTitles.one",
+    "text": "Changed {count} title",
+    "context": "Said once a change made to many titles at once in the admin's media is saved, with a way to undo it. {count} is how many it changed."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.changedTitles.other",
+    "text": "Changed {count} titles",
+    "context": "Said once a change made to many titles at once in the admin's media is saved, with a way to undo it. {count} is how many it changed."
   },
   {
     "handler": "screens.adminArea.mediaPanel.count.deleteCountFiles.one",
@@ -20641,6 +21336,36 @@
     "context": "Title of the dialog that deletes the titles selected in Media. {count} is how many files."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.count.duplicates.one",
+    "text": "Duplicates {count}",
+    "context": "A quick filter above the admin's media list that shows the titles held more than once, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.duplicates.other",
+    "text": "Duplicates {count}",
+    "context": "A quick filter above the admin's media list that shows the titles held more than once, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.edited.one",
+    "text": "Edited {count}",
+    "context": "A quick filter above the admin's media list that shows the titles an administrator has edited the metadata of, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.edited.other",
+    "text": "Edited {count}",
+    "context": "A quick filter above the admin's media list that shows the titles an administrator has edited the metadata of, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.editsWithoutATitle.one",
+    "text": "{count} edit without a title",
+    "context": "In the menu beside the search in the admin's media: open the titles whose files have gone but whose edits are kept. {count} is how many titles."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.editsWithoutATitle.other",
+    "text": "{count} edits without a title",
+    "context": "In the menu beside the search in the admin's media: open the titles whose files have gone but whose edits are kept. {count} is how many titles."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.count.nameToFix.one",
     "text": "{name} ({count} to fix)",
     "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
@@ -20649,6 +21374,66 @@
     "handler": "screens.adminArea.mediaPanel.count.nameToFix.other",
     "text": "{name} ({count} to fix)",
     "context": "A library in the menu on the media page in the admin area, with how many of its titles have something wrong. {name} is the library’s name."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.noCover.one",
+    "text": "No cover {count}",
+    "context": "A quick filter above the admin's list of albums or books that shows those with no cover, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.noCover.other",
+    "text": "No cover {count}",
+    "context": "A quick filter above the admin's list of albums or books that shows those with no cover, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles.one",
+    "text": "Rebuild the previews of {count} title?",
+    "context": "Confirm before rebuilding the previews and thumbnails of the titles ticked in the media list."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles.other",
+    "text": "Rebuild the previews of {count} titles?",
+    "context": "Confirm before rebuilding the previews and thumbnails of the titles ticked in the media list."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.undoneTitles.one",
+    "text": "Put {count} title back",
+    "context": "Said once a change made to many titles at once is undone. {count} is how many it put back."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.undoneTitles.other",
+    "text": "Put {count} titles back",
+    "context": "Said once a change made to many titles at once is undone. {count} is how many it put back."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unmatched.one",
+    "text": "Unmatched {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with no catalogue match or no poster, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unmatched.other",
+    "text": "Unmatched {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with no catalogue match or no poster, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unreadable.one",
+    "text": "Unreadable {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.unreadable.other",
+    "text": "Unreadable {count}",
+    "context": "A quick filter above the admin's media list that shows the titles with a file that could not be read, with how many there are. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles.one",
+    "text": "Update the details of {count} title?",
+    "context": "Confirm before asking TMDB again about every title ticked in the media list."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles.other",
+    "text": "Update the details of {count} titles?",
+    "context": "Confirm before asking TMDB again about every title ticked in the media list."
   },
   {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
@@ -20691,6 +21476,11 @@
     "context": "Shown in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.everyFileHereCouldBeRead",
+    "text": "Every file in this library could be read.",
+    "context": "What the media list says under the Unreadable quick filter when there are none."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.everythingHereHasACover",
     "text": "Everything here has a cover.",
     "context": "Shown in the media panel in the admin area."
@@ -20706,9 +21496,24 @@
     "context": "The label of a data table in the media panel in the admin area. {name} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.exportAsASpreadsheet",
+    "text": "Export as a spreadsheet",
+    "context": "Item in the media list's menu that downloads the titles shown, with their filters, as a CSV file."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.filterTheTitles",
+    "text": "Filter the titles",
+    "context": "The hidden label of the menu of filters above the admin's media list, such as by genre or what a title is missing."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.findAProgrammeOrFilm",
     "text": "Find a series or film",
     "context": "The label of a text field in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.hasSubtitles",
+    "text": "Has subtitles",
+    "context": "A filter of the admin's media list for titles with a subtitle track."
   },
   {
     "handler": "screens.adminArea.mediaPanel.hideTheEditionsOfName",
@@ -20724,6 +21529,11 @@
     "handler": "screens.adminArea.mediaPanel.hideTheEpisodesOfName",
     "text": "Hide the episodes of {name}",
     "context": "The label of the button that folds away a series' episodes in the admin's media table. {name} is the series' name."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.howToShowTheMedia",
+    "text": "How to show the media",
+    "context": "The hidden label of the tabs in the admin's Media that switch between its titles and its folders."
   },
   {
     "handler": "screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown",
@@ -20746,6 +21556,11 @@
     "context": "In a media table column, when the files of a title differ, such as an episode in 4K and another in HD."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.moreForTheMedia",
+    "text": "More for the media",
+    "context": "The hidden label of the menu beside the search in the admin's media, holding less common tools such as the edits whose titles have gone."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.moveToAnotherLibrary",
     "text": "Move to another library…",
     "context": "In the menu of a film, programme or file in the admin’s list of media, opening the dialog that moves it into another library."
@@ -20761,9 +21576,29 @@
     "context": "A badge on a title in the media page in the admin area that is matched but has no poster."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.noSubtitles",
+    "text": "No subtitles",
+    "context": "A filter of the admin's media list for titles with no subtitle track."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis",
     "text": "Nothing has been scanned into this library yet.",
     "context": "Shown in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.nothingNeededChanging",
+    "text": "Nothing needed changing.",
+    "context": "Said after a change made to many titles at once in the admin's media changed none of them, as they already held it."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.noTitleHereHasBeenEdited",
+    "text": "No title in this library has been edited yet.",
+    "context": "What the media list says under the Edited quick filter when no title has an edit."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.noTitleIsHereTwice",
+    "text": "No title in this library is here twice.",
+    "context": "What the media list says under the Duplicates quick filter when there are none."
   },
   {
     "handler": "screens.adminArea.mediaPanel.numberedMoreThanOnce",
@@ -20811,6 +21646,16 @@
     "context": "The label in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.refreshEllipsis",
+    "text": "Refresh…",
+    "context": "In the menu of a film or programme in the admin's media list: open the choices for asking the catalogue about it again."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.refreshingDoneOfCount",
+    "text": "Refreshed {done} of {count}",
+    "context": "Said while the titles chosen in the admin's media are asked about again, one after another. {done} is how many are done; {count} is how many in all."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.selectEveryTitleShown",
     "text": "Select every title shown",
     "context": "Hidden label of the checkbox that selects every title in the media table."
@@ -20822,7 +21667,7 @@
   },
   {
     "handler": "screens.adminArea.mediaPanel.showInFiles",
-    "text": "Show in Files",
+    "text": "Show in Folders",
     "context": "The label in the media panel in the admin area."
   },
   {
@@ -20866,6 +21711,16 @@
     "context": "A choice of which titles the admin area’s media page lists: titles that are in a library more than once."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.theTitleCouldNotBeRead",
+    "text": "The title could not be read.",
+    "context": "Said in place of a title's page in the admin's media when its files could not be read from the server."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.unlockAllFields",
+    "text": "Unlock all fields",
+    "context": "In the menu of what can be done to the titles chosen in the admin's media: let every field kept as it stood follow the catalogue again."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.unmatched",
     "text": "Unmatched",
     "context": "Shown in the media panel in the admin area."
@@ -20906,24 +21761,24 @@
     "context": "When a re-encode was asked for. {when} is how long ago, such as 3 days ago."
   },
   {
-    "handler": "screens.adminArea.mediaTitlePage.backToMedia",
-    "text": "Back to Media",
-    "context": "Button on a title's page in Media that goes back to every title."
-  },
-  {
     "handler": "screens.adminArea.mediaTitlePage.fixMatch",
     "text": "Fix match",
     "context": "Button on a title's page in Media that corrects which catalogue entry it is matched to."
   },
   {
-    "handler": "screens.adminArea.mediaTitlePage.matchedId",
-    "text": "Matched · {id}",
-    "context": "On a title's page in Media: it is matched in the catalogue. {id} is the catalogue's id for it."
+    "handler": "screens.adminArea.mediaTitlePage.itGoesBackToItsFileName",
+    "text": "It goes back to the name its files give it, without TMDB’s details, until it is matched again. Your edits are kept for when it is.",
+    "context": "What unmatching a title does, in its confirm."
   },
   {
-    "handler": "screens.adminArea.mediaTitlePage.matchedTmdbId",
-    "text": "Matched · TMDB {id}",
-    "context": "On a title's page in Media: it is matched to TMDB. {id} is TMDB's number for it."
+    "handler": "screens.adminArea.mediaTitlePage.lockAllFields",
+    "text": "Lock all fields",
+    "context": "A menu item on a title's page in the admin's Media that locks every field, so TMDB never changes them."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.lockedEveryField",
+    "text": "Locked every field.",
+    "context": "Said once every field of a title has been locked."
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.openFolder",
@@ -20936,14 +21791,69 @@
     "context": "Button on a title's page in Media that opens the title in the Catalogue page."
   },
   {
+    "handler": "screens.adminArea.mediaTitlePage.openTheSeasonsPage",
+    "text": "Open the season’s page",
+    "context": "Item in a season's menu on a series' Seasons tab, opening that season's own page."
+  },
+  {
     "handler": "screens.adminArea.mediaTitlePage.reEncodes",
     "text": "Re-encodes",
     "context": "Heading of the card listing the re-encodes asked of a title's files."
   },
   {
+    "handler": "screens.adminArea.mediaTitlePage.refreshing",
+    "text": "Refreshing…",
+    "context": "A badge on a title's page in the admin's Media while it is being read again."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.unmatch",
+    "text": "Unmatch",
+    "context": "A menu item on a title's page in the admin's Media that takes it back to what its file names say."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.unmatchName",
+    "text": "Unmatch {name}?",
+    "context": "Confirm before taking a title's match to TMDB away."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.whatToShowOfTheTitle",
+    "text": "What to show of this title",
+    "context": "What a screen reader calls the tabs of a title’s page in the admin area (from `MediaTitlePage`)."
+  },
+  {
     "handler": "screens.adminArea.memory",
     "text": "Memory",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.count.mergeFilms.one",
+    "text": "Merge {count} film",
+    "context": "Title of the dialog merging films chosen into one, and its button."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.count.mergeFilms.other",
+    "text": "Merge {count} films",
+    "context": "Title of the dialog merging films chosen into one, and its button."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.keepWhichMatch",
+    "text": "Choose the film they all are. The others are matched to it, and become its versions.",
+    "context": "Description in the dialog merging films into one."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.mergedIntoName",
+    "text": "Merged into {name}",
+    "context": "Notice after films were merged into one. {name} is the film they became."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.mergeIntoOneFilm",
+    "text": "Merge into one film…",
+    "context": "Item in the media list's selection menu, for two or more films chosen that are really one film, such as two cuts matched to different entries."
+  },
+  {
+    "handler": "screens.adminArea.mergeTitles.unmatchedFilm",
+    "text": "{name}, not matched",
+    "context": "A film in the merge dialog that has no TMDB match, so it can't be the one they all become. {name} is the film."
   },
   {
     "handler": "screens.adminArea.mostWatchedList.hours",
@@ -21106,6 +22016,21 @@
     "context": "At the top of the online services card."
   },
   {
+    "handler": "screens.adminArea.onlineServicesCard.fanartTv",
+    "text": "fanart.tv",
+    "context": "Name of the fanart.tv service in the admin's online services card, and of its key in the audit log."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.fanartTvAbout",
+    "text": "More posters, backgrounds and logos to choose from",
+    "context": "What the fanart.tv key adds, in the online services card."
+  },
+  {
+    "handler": "screens.adminArea.onlineServicesCard.fanartTvDetail",
+    "text": "With a personal key from fanart.tv, a title's Artwork tab also offers fanart.tv's posters, backgrounds and logos beside TMDB's. Without one, it offers TMDB's alone.",
+    "context": "Description of the fanart.tv key in the online services card."
+  },
+  {
     "handler": "screens.adminArea.onlineServicesCard.musicDetails",
     "text": "Music details",
     "context": "An online feature: filling in album covers, artist photos and lyrics."
@@ -21209,6 +22134,61 @@
     "handler": "screens.adminArea.onlineServicesCard.usageStatisticsDetail",
     "text": "Sends a few anonymous facts about this server once a day.",
     "context": "Under the usage statistics setting, followed by a link to see what is sent."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.attachToATitle",
+    "text": "Attach to a title",
+    "context": "A button beside a title whose files have gone that opens a search for the title still here to move its edits to."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.movedEditsToName.one",
+    "text": "Moved {count} edit to {name}",
+    "context": "Said once the edits of a title whose files have gone are moved onto a title still here. {count} is how many; {name} is the title."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.movedEditsToName.other",
+    "text": "Moved {count} edits to {name}",
+    "context": "Said once the edits of a title whose files have gone are moved onto a title still here. {count} is how many; {name} is the title."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.one",
+    "text": "Threw away {count} edit",
+    "context": "Said once the edits of a title whose files have gone are thrown away. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.other",
+    "text": "Threw away {count} edits",
+    "context": "Said once the edits of a title whose files have gone are thrown away. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.editsWithoutATitle",
+    "text": "Edits without a title",
+    "context": "The heading of the dialog listing the edits kept for titles of a library whose files have since gone, in the admin's media."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.everyEditHasATitle",
+    "text": "Every edit belongs to a title still here.",
+    "context": "Shown in the dialog of edits whose titles have gone, where there are none."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.fieldsEditedWhen",
+    "text": "{fields} edited {when}",
+    "context": "Under a title whose files have gone, in the dialog of its edits: how many fields were edited and when last. {fields} is such as 3 fields; {when} is such as 2 days ago."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.theseTitlesWereEditedButTheirFiles",
+    "text": "These titles were edited, but their files have gone. Attach the edits to a title still here, or throw them away.",
+    "context": "The line under the heading of the dialog listing edits whose titles have gone, in the admin's media."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.theyCannotBeGotBack",
+    "text": "They can’t be got back. Their history stays.",
+    "context": "Said when asking before throwing away the edits of a title whose files have gone."
+  },
+  {
+    "handler": "screens.adminArea.orphanedEditsDialog.throwTheseEditsAway",
+    "text": "Throw these edits away?",
+    "context": "Asked before throwing away the edits of a title whose files have gone."
   },
   {
     "handler": "screens.adminArea.overviewPanel.activeNow",
@@ -22281,6 +23261,76 @@
     "context": "Shown in the quality names in the admin area."
   },
   {
+    "handler": "screens.adminArea.quickMatch.acceptTheBestFitForTheRest",
+    "text": "Accept the best fit for the rest",
+    "context": "Matches this title and every title after it to the entry that fits it best."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.atOfCount",
+    "text": "{at} of {count}",
+    "context": "Which title is being reviewed, out of how many, while reviewing matches one by one."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.chooseWhatItIs",
+    "text": "Choose what it is from TMDB’s entries, best fit first, or skip it.",
+    "context": "Instruction while reviewing matches one by one."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.count.matchTitles.one",
+    "text": "Match {count} title",
+    "context": "Title of the quick match dialog, and its start button. {count} is how many unmatched titles are chosen."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.count.matchTitles.other",
+    "text": "Match {count} titles",
+    "context": "Title of the quick match dialog, and its start button. {count} is how many unmatched titles are chosen."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.fixMatchFor",
+    "text": "Fix match for {name}",
+    "context": "Button beside a title the quick match dialog left alone, opening Fix match for it."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.howItDecides",
+    "text": "Each is searched for on TMDB by its name. One is matched only where an entry fits it at least 90 out of 100 and clearly better than any other; the rest are left for you, with Fix match beside each.",
+    "context": "Description in the quick match dialog."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.lookingNow",
+    "text": "Looking",
+    "context": "Status of a title in the quick match dialog being searched for now."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.matchAutomatically",
+    "text": "Match automatically…",
+    "context": "Item in the media list's selection menu that matches the unmatched titles chosen to TMDB where one entry clearly fits."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.matchedCountOfTotal",
+    "text": "Matched {matched} of {total}",
+    "context": "Summary in the quick match dialog's footer once it is done."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.matchedToName",
+    "text": "Matched to {name}",
+    "context": "Status of a title the quick match dialog matched. {name} is the TMDB entry, with its year."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.needsALook",
+    "text": "Needs a look",
+    "context": "Status of a title the quick match dialog left alone, because no entry clearly fitted it."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.reviewTheRestOneByOne",
+    "text": "Review the rest one by one",
+    "context": "Button once quick match is done: steps through the titles it left, one at a time."
+  },
+  {
+    "handler": "screens.adminArea.quickMatch.skipTheRest",
+    "text": "Skip the rest",
+    "context": "Ends the one-by-one review, leaving the titles not yet reviewed unmatched."
+  },
+  {
     "handler": "screens.adminArea.rankedChoices.moveIdDown",
     "text": "Move {id} down",
     "context": "The label of a button in the ranked choices in the admin area. {id} is filled in by the app."
@@ -22309,6 +23359,86 @@
     "handler": "screens.adminArea.rebuiltEveryLibrary",
     "text": "Rebuilt every library.",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.askedTmdbAgain",
+    "text": "Asked TMDB again.",
+    "context": "Said once a title has been refreshed from the admin's Media."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.fetchArtwork",
+    "text": "Fetch artwork",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.fetchArtworkDetail",
+    "text": "Fetches its poster, backdrop and logo again.",
+    "context": "What the Fetch artwork choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.fieldsToUpdate",
+    "text": "Fields to update",
+    "context": "The heading over the tick boxes choosing which fields to ask TMDB for again."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.matchAgain",
+    "text": "Match again",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.matchAgainDetail",
+    "text": "Forgets its match and finds it again from its file names.",
+    "context": "What the Match again choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.onlyAMatchedTitle",
+    "text": "Only a title matched to TMDB has fields to ask for again.",
+    "context": "Why the Update some fields choice can't be picked for an unmatched title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.readTheFilesAgain",
+    "text": "Read the files again",
+    "context": "A choice in the dialog refreshing a title in the admin's media: look at its files afresh, as after replacing one, keeping its match and every edit."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.readTheFilesAgainDetail",
+    "text": "Looks at the files afresh, such as after replacing one, keeping the match and your edits.",
+    "context": "Explains the choice to read a title's files again in the dialog refreshing it, in the admin's media."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.refresh",
+    "text": "Refresh",
+    "context": "The button on a title's page in the admin's Media, and in the dialog it opens, that asks the catalogue again about the title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.refreshName",
+    "text": "Refresh {name}",
+    "context": "The title of the admin's dialog for asking the catalogue again about one title. {name} is the title's name."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateDetails",
+    "text": "Update details",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateDetailsDetail",
+    "text": "Asks TMDB again, keeping its match and every edit.",
+    "context": "What the Update details choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateSomeFields",
+    "text": "Update some fields",
+    "context": "A choice in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.updateSomeFieldsDetail",
+    "text": "Asks TMDB again for only the fields you tick, such as the ratings.",
+    "context": "What the Update some fields choice does, in the admin's dialog for asking the catalogue again about one title."
+  },
+  {
+    "handler": "screens.adminArea.refreshTitleDialog.whatToAskAgain",
+    "text": "What to ask again",
+    "context": "The hidden label of the list of choices in the admin's dialog for asking the catalogue again about one title."
   },
   {
     "handler": "screens.adminArea.refuseRequestDialog.itCouldNotBeRefused",
@@ -22634,6 +23764,126 @@
     "handler": "screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients",
     "text": "They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.",
     "context": "Explains removing several ticked downloads at once, in the dialog confirming it."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.addANumberToTheName",
+    "text": "Add a number to the name",
+    "context": "Option: a file whose new name is taken gets the next free number, such as ' - 2'."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.alreadyNamed.one",
+    "text": "{count} file is already named to the pattern.",
+    "context": "Rename-to-pattern dialog: files left because they are already where they belong."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.alreadyNamed.other",
+    "text": "{count} files are already named to the pattern.",
+    "context": "Rename-to-pattern dialog: files left because they are already where they belong."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.extras.one",
+    "text": "{count} extra moves only with its film’s folder.",
+    "context": "Rename-to-pattern dialog: extras are not renamed on their own."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.extras.other",
+    "text": "{count} extras move only with their film’s folder.",
+    "context": "Rename-to-pattern dialog: extras are not renamed on their own."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.filesKeptBesideIt.one",
+    "text": "With {count} file kept beside it",
+    "context": "Under a file in the rename-to-pattern dialog: how many subtitles or other files move with it."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.filesKeptBesideIt.other",
+    "text": "With {count} files kept beside it",
+    "context": "Under a file in the rename-to-pattern dialog: how many subtitles or other files move with it."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.inParts.one",
+    "text": "{count} film is kept as several files, so it is left as it is.",
+    "context": "Rename-to-pattern dialog: films split into parts are not renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.inParts.other",
+    "text": "{count} films are kept as several files, so they are left as they are.",
+    "context": "Rename-to-pattern dialog: films split into parts are not renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.notMatched.one",
+    "text": "{count} file isn’t matched to the catalogue, so its name would be a guess. Match it first.",
+    "context": "Rename-to-pattern dialog: unmatched files that are left as they are."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.notMatched.other",
+    "text": "{count} files aren’t matched to the catalogue, so their names would be a guess. Match them first.",
+    "context": "Rename-to-pattern dialog: unmatched files that are left as they are."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renamedFiles.one",
+    "text": "Renamed {count} file to the naming pattern",
+    "context": "Notice once files were renamed to the pattern."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renamedFiles.other",
+    "text": "Renamed {count} files to the naming pattern",
+    "context": "Notice once files were renamed to the pattern."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renameFiles.one",
+    "text": "Rename {count} file",
+    "context": "Confirm button of the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.count.renameFiles.other",
+    "text": "Rename {count} files",
+    "context": "Confirm button of the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.eachFileMovesToTheName",
+    "text": "Each file moves to the folder and name the library’s naming pattern gives it, with the subtitles and other files kept beside it. A folder holding only what is renamed is renamed whole. Watch history and every choice made for a file go with it.",
+    "context": "Explanation at the top of the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.everyFileBelow",
+    "text": "Every file below",
+    "context": "Checkbox that ticks or unticks every file in the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.leaveTheFileAsItIs",
+    "text": "Leave the file as it is",
+    "context": "Option: a file whose new name is taken is not renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.nameTaken",
+    "text": "Name taken",
+    "context": "Badge on a file whose new name another file already has."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.nothingToRename",
+    "text": "Nothing here needs renaming.",
+    "context": "The rename-to-pattern dialog, when every file is already named to the pattern or can't be renamed."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.renameToTheNamingPattern",
+    "text": "Rename to the naming pattern",
+    "context": "Menu item and dialog title: renames the chosen files and folders to the pattern Jellyfin, Plex and Valence's requests use."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.renameToTheNamingPatternEllipsis",
+    "text": "Rename to the naming pattern…",
+    "context": "Menu item on a title or the selection that opens the rename-to-pattern dialog."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.whenTheNameIsTaken",
+    "text": "When the new name is taken",
+    "context": "Label of the choice of what to do where another file already has a file's new name."
+  },
+  {
+    "handler": "screens.adminArea.renameToPattern.workingOutTheNewNames",
+    "text": "Working out the new names",
+    "context": "Spinner while the rename-to-pattern dialog asks where each file would go."
   },
   {
     "handler": "screens.adminArea.requestDetailDialog.neverAgain",
@@ -23011,6 +24261,36 @@
     "context": "The label of a dialog in the running work dialog in the admin area. {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.savedViews.forgetName",
+    "text": "Forget {name}",
+    "context": "Item in the media list's saved views menu that deletes a saved view. {name} is the view's name."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.keptOnThisDeviceForThisLibrary",
+    "text": "It keeps this library’s filters, search and order, on this device.",
+    "context": "Description in the dialog that saves a view of the media list."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.nameThisView",
+    "text": "Name this view",
+    "context": "Title of the dialog that saves the media list's filters, search and order under a name."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.savedViews",
+    "text": "Saved views",
+    "context": "Menu in the media list's toolbar holding filters, searches and orders saved under a name, on this device."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.saveThisView",
+    "text": "Save this view…",
+    "context": "Item in the media list's saved views menu that saves the filters, search and order shown now under a name."
+  },
+  {
+    "handler": "screens.adminArea.savedViews.saveView",
+    "text": "Save view",
+    "context": "Button that saves a view of the media list under the name typed."
+  },
+  {
     "handler": "screens.adminArea.scannedName",
     "text": "Scanned {name}.",
     "context": "Shown in the admin area. {name} is filled in by the app."
@@ -23054,6 +24334,51 @@
     "handler": "screens.adminArea.searchForARecord",
     "text": "Search for an album",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.episodesFrom",
+    "text": "Episodes from",
+    "context": "Label of a season's fact naming the other show and season its episodes are read from."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.fixSeasonMatch",
+    "text": "Fix season match",
+    "context": "Button on a season's page, and the title of its dialog, for reading the season's episodes from another show in the catalogue."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.readingTheSeasonAgain",
+    "text": "Reading the season again",
+    "context": "Toast after a season's episodes are set to be read from another show, or from the show's own season again."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.seasonOfShow",
+    "text": "Season of {show}",
+    "context": "Label of the list of a show's seasons to read a season's episodes from. {show} is the show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.showSeason",
+    "text": "{show}, season {season}",
+    "context": "A show and one of its seasons, such as A Show (2026), season 1. {show} is the show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.takesThisSeasonsEpisodes",
+    "text": "Takes this season’s episodes, pictures and dates from a season of another show, for when the catalogue lists the season as a show of its own.",
+    "context": "Explains the fix season match dialog before a show is searched for."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.thatShowHasNoSeasons",
+    "text": "The catalogue lists no seasons for {show}.",
+    "context": "Shown in the fix season match dialog when the chosen show has no seasons to choose from. {show} is the show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.thisSeasonsEpisodesComeFrom",
+    "text": "This season’s episodes come from {show}, season {season}. Search for another show, or use the show’s own season.",
+    "context": "Says where a season's episodes are read from now, in the fix season match dialog. {show} is a show's name and year."
+  },
+  {
+    "handler": "screens.adminArea.seasonSourceDialog.useTheShowsOwnSeason",
+    "text": "Use the show’s own season",
+    "context": "Button that stops reading a season's episodes from another show."
   },
   {
     "handler": "screens.adminArea.seerrCard.answerOverseerrAndJellyseerr",
@@ -23436,6 +24761,11 @@
     "context": "The description of a setting row in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.fanartTvKeySaved",
+    "text": "fanart.tv key saved",
+    "context": "Notice after the fanart.tv key was saved."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb",
     "text": "Download music metadata from the web",
     "context": "The label of a switch in the settings panel in the admin area."
@@ -23714,6 +25044,11 @@
     "handler": "screens.adminArea.settingsPanel.theDesktopApp",
     "text": "Desktop app",
     "context": "An admin setting's title: whether the Valence desktop app may connect to this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.theFanartTvKeyCouldNotBe",
+    "text": "The fanart.tv key couldn’t be saved.",
+    "context": "Notice when the fanart.tv key couldn't be saved."
   },
   {
     "handler": "screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot",
@@ -24016,6 +25351,61 @@
     "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
   },
   {
+    "handler": "screens.adminArea.skipMarkers.addAMarker",
+    "text": "Add a marker",
+    "context": "Button adding a skip marker to a file."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.endsAt",
+    "text": "Marker ends at",
+    "context": "Field holding when a skip marker ends, written like 2:45."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.markersSaved",
+    "text": "Markers saved",
+    "context": "Notice after a file's skip markers were saved."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.noMarkersYet",
+    "text": "No markers yet.",
+    "context": "What the Skip markers card says for a file with none."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.removeThisMarker",
+    "text": "Remove this marker",
+    "context": "Button taking one skip marker off a file."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.saveMarkers",
+    "text": "Save markers",
+    "context": "Button saving a file's skip markers."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.skipMarkers",
+    "text": "Skip markers",
+    "context": "Card on a film's or an episode's Files tab: where the player offers to skip the intro, recap, credits or preview."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.startsAt",
+    "text": "Marker starts at",
+    "context": "Field holding when a skip marker starts, written like 1:23."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.whatItIs",
+    "text": "What it marks",
+    "context": "Field choosing whether a skip marker is an intro, recap, credits or preview, for a screen reader."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.whereThePlayerOffersToSkip",
+    "text": "Where the player offers to skip. Detection finds intros and credits on its own; markers saved here are kept through every detection run after.",
+    "context": "Description of the Skip markers card."
+  },
+  {
+    "handler": "screens.adminArea.skipMarkers.writeAsAClock",
+    "text": "Write times like 1:23 or 1:02:03, each ending after it starts.",
+    "context": "Shown under the skip markers while one of their times can't be read."
+  },
+  {
     "handler": "screens.adminArea.someCouldNotBeConfirmed",
     "text": "Some could not be confirmed, and are still waiting.",
     "context": "Shown when confirming every re-encode awaiting review in the admin area partly failed."
@@ -24024,6 +25414,46 @@
     "handler": "screens.adminArea.someOfThisCouldNotBeRead",
     "text": "Some data couldn’t be loaded from the server, so parts of this page may be missing rather than empty.",
     "context": "A warning across the admin area when some of what it shows could not be read."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.edited",
+    "text": "Edited",
+    "context": "A badge on a field whose value an administrator set. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.locked",
+    "text": "Locked",
+    "context": "A badge on a field kept as it stands through every refresh. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.nothing",
+    "text": "Nothing",
+    "context": "What a field with no value is quoted as. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.tmdb",
+    "text": "TMDB",
+    "context": "A badge on a field whose value came from TMDB. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.tmdbChangedTo",
+    "text": "TMDB changed to: {value}",
+    "context": "Beneath an edited field, when TMDB’s own value has changed since the edit. {value} is TMDB’s new value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.tmdbSays",
+    "text": "TMDB: {value}",
+    "context": "Beneath an edited field, what TMDB says instead. {value} is TMDB’s value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.unlockTheField",
+    "text": "Unlock the field",
+    "context": "Item in a locked metadata field's menu that lets it follow TMDB again."
+  },
+  {
+    "handler": "screens.adminArea.sourcedField.useThis",
+    "text": "Use this",
+    "context": "A button beneath an edited field that takes up TMDB’s new value. On a field of a title’s metadata in the admin area’s title page (from `SourcedField`)."
   },
   {
     "handler": "screens.adminArea.startedReEncoding",
@@ -24549,6 +25979,241 @@
     "handler": "screens.adminArea.thePreviewsOfTitleCouldNot",
     "text": "Couldn’t rebuild previews for {title}.",
     "context": "Shown in the admin area. {title} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.inNoCollectionYet",
+    "text": "It isn’t in a collection yet.",
+    "context": "Shown on a film's or programme's page in the admin's media where it is in no collection."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.takeItOutOfName",
+    "text": "Take it out of {name}",
+    "context": "The hidden label of the button beside a collection on a title's page in the admin's media that takes the title out of it. {name} is the collection."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.thatCouldNotBeTakenOut",
+    "text": "That could not be taken out of the collection.",
+    "context": "Said when taking a film or programme out of a collection from its page in the admin's media failed."
+  },
+  {
+    "handler": "screens.adminArea.titleCollections.titleIsNoLongerInName",
+    "text": "{title} is no longer in {name}",
+    "context": "Said once a film or programme is taken out of a collection from its page in the admin's media. {title} is the title; {name} is the collection."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.airDate",
+    "text": "Air date",
+    "context": "A field for the day an episode or season was shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aniList",
+    "text": "AniList",
+    "context": "The field holding an anime programme's AniList id, with a link to its page there. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aYouTubeLinkOrVideoId",
+    "text": "A YouTube link or video ID",
+    "context": "What the empty Trailer field on a title's Details tab shows, saying what to paste into it."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.classification",
+    "text": "Classification",
+    "context": "The heading of the card holding a title’s genres, tags, studios and networks. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.contentRating",
+    "text": "Content rating",
+    "context": "The heading of the card holding a title’s age ratings by country. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.contentRatingIn",
+    "text": "Content rating ({country})",
+    "context": "The label of a title’s age rating in the server’s own country, the one that decides what a child’s profile may see, with every other country’s folded beneath it. {country} is a country such as United Kingdom. On the Details tab of a title in the admin area (from `MetadataField`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.count.savedChanges.one",
+    "text": "Saved {count} change",
+    "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.count.savedChanges.other",
+    "text": "Saved {count} changes",
+    "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.countries",
+    "text": "Countries",
+    "context": "Field on a title's Details tab: the countries it was made in, as two-letter codes such as GB."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.createdBy",
+    "text": "Creators",
+    "context": "Field on a show's Details tab: the people who created it."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.dateAdded",
+    "text": "Date added",
+    "context": "A field for the day a film or an episode was added to the library, which decides where it sits in Recently added. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.directedBy",
+    "text": "Directed by",
+    "context": "Field on a film's or an episode's Details tab: who directed it."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.firstAired",
+    "text": "First aired",
+    "context": "A field for the day a programme was first shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.guestStars",
+    "text": "Guest stars",
+    "context": "An episode's guest cast, on its People tab."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.ids",
+    "text": "IDs",
+    "context": "The heading of the card holding a title’s ids on other sites. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.imdb",
+    "text": "IMDb",
+    "context": "A field for a title’s IMDb id. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.myAnimeList",
+    "text": "MyAnimeList",
+    "context": "The field holding an anime programme's MyAnimeList id, with a link to its page there. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.networks",
+    "text": "Networks",
+    "context": "A field for the channels a programme was shown on. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.note",
+    "text": "Note",
+    "context": "A field for a note about a title that only administrators see. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.notMatchedYet",
+    "text": "Not matched yet",
+    "context": "Said in place of a title's TMDB id where it is not matched, in the admin's metadata editor."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.openOnSite",
+    "text": "Open on {site}",
+    "context": "The hidden label of the link beside one of a title's ids that opens its page on that site. {site} is a site such as IMDb."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.originalLanguage",
+    "text": "Original language",
+    "context": "Field on a title's Details tab: the language it was made in, as a two-letter code such as ja."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.originalTitle",
+    "text": "Original title",
+    "context": "A field for a title’s title in its own language. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.originAndCrew",
+    "text": "Origin and crew",
+    "context": "Section of a title's Details tab holding its original language, countries, creators, directors and writers."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.saved",
+    "text": "Change saved",
+    "context": "A toast once a change to a title’s metadata has been saved. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.sortTitle",
+    "text": "Sort title",
+    "context": "A field for the title a title is sorted by. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.story",
+    "text": "Story",
+    "context": "The heading of the card holding a title’s tagline and overview. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.tagline",
+    "text": "Tagline",
+    "context": "A field for a title’s one-line tagline. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.tags",
+    "text": "Tags",
+    "context": "A field for words an administrator files a title under. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.theDetailsCouldNotBeRead",
+    "text": "Couldn’t read this title’s details.",
+    "context": "Shown on the Details tab of a title in the admin area when its metadata couldn’t be read (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.titleAndRelease",
+    "text": "Title and release",
+    "context": "The heading of the card on a title's Details tab holding its names and when it came out."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.tvdb",
+    "text": "TVDB",
+    "context": "A field for a title’s TVDB id. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.undone",
+    "text": "Change undone",
+    "context": "A toast once a change to a title’s metadata has been undone. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.writtenBy",
+    "text": "Written by",
+    "context": "Field on a film's or an episode's Details tab: who wrote it."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.addedNames",
+    "text": "added {names}",
+    "context": "Part of a cast change in a title's history: who was added. {names} lists them."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.changedTheBilling",
+    "text": "changed the order",
+    "context": "Part of a cast change in a title's history: people were moved up or down."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.changedThePartsOf",
+    "text": "changed the part of {names}",
+    "context": "Part of a cast change in a title's history: whose role changed. {names} lists them."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.fieldChanged",
+    "text": "{field}: {change}",
+    "context": "One field of a change in a title's history, for a list such as the cast where what changed is described rather than quoted. {change} says what, such as Added Someone."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.fields",
+    "text": "Fields",
+    "context": "The header of the column saying which fields a change changed. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.fieldWentFromTo",
+    "text": "{field}: {before} → {after}",
+    "context": "One field a change changed. {field} is its name; {before} and {after} its values. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.nothingChangedYet",
+    "text": "Nothing has been changed on this title yet.",
+    "context": "Shown when no administrator has edited a title. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.theHistoryCouldNotBeRead",
+    "text": "Couldn’t read this title’s history.",
+    "context": "Shown when a title’s history couldn’t be read. On the History tab of a title in the admin area (from `TitleHistory`)."
+  },
+  {
+    "handler": "screens.adminArea.titleHistory.tookOffNames",
+    "text": "took off {names}",
+    "context": "Part of a cast change in a title's history: who was taken off. {names} lists them."
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.answered",
@@ -25134,6 +26799,111 @@
     "handler": "screens.adminArea.titlePage.trackTable.tracks",
     "text": "Tracks",
     "context": "The heading of the list of an album's tracks on its page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.addAPerson",
+    "text": "Add a person",
+    "context": "Field for finding somebody to add to the title's cast, by name."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.addName",
+    "text": "Add {name} to the cast",
+    "context": "Button that adds a person found in the catalogue to the cast. {name} is the person."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.addNameByNameOnly",
+    "text": "Add “{name}” by name only",
+    "context": "Button that adds somebody to the cast who is not in the catalogue, with only the name typed."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.castOrderSaysWhoIsBilledFirst",
+    "text": "The order here is the order every app shows them in.",
+    "context": "Note on the People tab's cast list."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.knownForWorks",
+    "text": "Known for {works}",
+    "context": "Under a person found in the catalogue: the titles they are best known for."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.lookingInTheCatalogue",
+    "text": "Looking in the catalogue",
+    "context": "Spinner while people are searched for in the catalogue, on the People tab."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.moveNameDown",
+    "text": "Move {name} down",
+    "context": "Button that moves a cast member one place later in the cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.moveNameToTheTop",
+    "text": "Move {name} to the top",
+    "context": "Button that moves a cast member to the top of the billing."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.moveNameUp",
+    "text": "Move {name} up",
+    "context": "Button that moves a cast member one place earlier in the cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.nobodyIsInTheCast",
+    "text": "Nobody is in the cast yet. Add somebody above.",
+    "context": "What the People tab says when the title has no cast."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.noOneInTheCatalogue",
+    "text": "Nobody by that name is in the catalogue.",
+    "context": "What the People tab says when a search for a person finds nobody."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.roleOfName",
+    "text": "{name}’s role",
+    "context": "The role field of one cast member, for a screen reader. {name} is the person."
+  },
+  {
+    "handler": "screens.adminArea.titlePeople.takeNameOff",
+    "text": "Take {name} off the cast",
+    "context": "Button that removes a person from the title's cast."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.nameOfVersion",
+    "text": "Name of {file}",
+    "context": "The field naming one version of a film, for a screen reader. {file} is its file name."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.namesAndTheDefaultAreKept",
+    "text": "Names and the default are kept through every scan.",
+    "context": "Note under the Versions card on a film's Files tab."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.noName",
+    "text": "No name, as the original",
+    "context": "Placeholder of a version's name field when it has none, so it reads as the original."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.playsByDefault",
+    "text": "Plays by default",
+    "context": "Badge on the version of a film every app plays unless another is chosen."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.playThisByDefault",
+    "text": "Play this by default",
+    "context": "Button that makes one version of a film the one every app plays unless another is chosen."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.splitOff",
+    "text": "Split off…",
+    "context": "Button on one version of a film that is really a different film: opens Fix match for that file alone, so it becomes a film of its own."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.splitOffName",
+    "text": "Split {file} off as a film of its own",
+    "context": "What the Split off button does, for a screen reader. {file} is the version's file."
+  },
+  {
+    "handler": "screens.adminArea.titleVersions.versions",
+    "text": "Versions of this film",
+    "context": "Card on a film's Files tab listing each version of it, such as a theatrical and an extended cut."
   },
   {
     "handler": "screens.adminArea.transcoder",
@@ -26049,6 +27819,81 @@
     "handler": "screens.adminArea.whyThereIsNoFigure",
     "text": "Why there is no figure",
     "context": "Text shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.alsoForLaterScans",
+    "text": "Do the same to titles scanned later",
+    "context": "Checkbox in the genres and tags dialog: a rename or removal is also kept as a rule every later scan follows."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.findBecomesReplace",
+    "text": "{find} becomes {replace}",
+    "context": "One genre rule: a genre TMDB gives is renamed. {find} and {replace} are genres."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.findIsTakenOut",
+    "text": "{find} is taken out",
+    "context": "One genre rule: a genre TMDB gives is never kept. {find} is the genre."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.forgetTheRuleFor",
+    "text": "Forget the rule for {find}",
+    "context": "Button removing one genre rule, for a screen reader."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.genresAndTags",
+    "text": "Genres and tags",
+    "context": "Item in the media list's menu, and the title of the dialog that renames, merges and removes a library's genres and tags."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.itIsTakenOffEveryTitle",
+    "text": "It’s taken off every title in this library that carries it. Undo in the message that follows puts it back.",
+    "context": "Detail of the confirmation before a genre or tag is removed from a library."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.noneInThisLibrary",
+    "text": "None in this library yet.",
+    "context": "What the genres and tags dialog shows when the library has no genres, or no tags."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.remove",
+    "text": "Remove from every title",
+    "context": "Confirm button of the dialog that takes a genre or tag off every title in the library."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.removeWordFromEveryTitle",
+    "text": "Remove {word} from every title",
+    "context": "Button in the genres and tags dialog that takes a genre or tag off every title in the library. {word} is the genre or tag."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.removeWordQuestion",
+    "text": "Remove {word} from {titles}?",
+    "context": "Title of the confirmation before a genre or tag is taken off every title that carries it. {titles} is how many, as in 35 titles."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary",
+    "text": "Rename one to change it on every title in this library. Renaming one to another already in use merges the two.",
+    "context": "Description under the title of the genres and tags dialog."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.renameWord",
+    "text": "Rename {word}",
+    "context": "Field holding the new name for a genre or tag in the genres and tags dialog, for a screen reader. {word} is the genre or tag."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.rulesForLaterScans",
+    "text": "Rules every scan follows",
+    "context": "Heading of the list of genre renames and removals the library's scans apply to what TMDB says."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.wordRemovedFromTitles",
+    "text": "{word} removed from {titles}",
+    "context": "Notice after a genre or tag was taken off titles. {titles} is how many titles, as in 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.wordsManager.wordRenamedToNextOnTitles",
+    "text": "{word} renamed to {next} on {titles}",
+    "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
   },
   {
     "handler": "screens.adminPage.adminSearch.findAPage",
@@ -27787,7 +29632,7 @@
   },
   {
     "handler": "screens.folderLink.openFolderInFiles",
-    "text": "Open {folder} in Files",
+    "text": "Show {folder} in Folders",
     "context": "The label of a button in the folder link. {folder} is filled in by the app."
   },
   {
@@ -28649,11 +30494,6 @@
     "handler": "screens.importWizard.importReportView.plays",
     "text": "Plays",
     "context": "A tile in the import report: how many viewings come across with their dates."
-  },
-  {
-    "handler": "screens.importWizard.importReportView.titleYear",
-    "text": "{title} ({year})",
-    "context": "An unmatched item in the import report. {title} is its title and {year} its year."
   },
   {
     "handler": "screens.importWizard.importReportView.watchedResumesPlaysFavouritesRatingsPlaylists",
@@ -35387,6 +37227,11 @@
     "context": "Description of the scheduled job that checks every live TV channel."
   },
   {
+    "handler": "server.jobs.jobDefinitions.asksTheCatalogueAboutEveryEditedTitle",
+    "text": "Asks the catalogue what it now says of every edited film and programme, so an edit can say when the catalogue has changed under it. Nothing on the files changes.",
+    "context": "Describes the job that checks edited titles with the catalogue, on the admin's Jobs page."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.backUpTheDatabase",
     "text": "Back up the database",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
@@ -35415,6 +37260,11 @@
     "handler": "server.jobs.jobDefinitions.checkDiskSpace",
     "text": "Check disk space",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.checkEditedTitlesWithTheCatalogue",
+    "text": "Check edited titles with the catalogue",
+    "context": "The name of the job that asks the catalogue what it now says of every film and programme an administrator has edited."
   },
   {
     "handler": "server.jobs.jobDefinitions.checksTheRequestsServiceAndIts",
@@ -36115,6 +37965,16 @@
     "handler": "server.main.doneOfTotalSongsMeasured",
     "text": "{done} of {total} songs measured",
     "context": "Progress of the loudness measuring job."
+  },
+  {
+    "handler": "server.main.editedTitlesChecked.one",
+    "text": "{count} edited title checked",
+    "context": "Said when the job checking edited titles with the catalogue finishes. {count} is how many it asked about."
+  },
+  {
+    "handler": "server.main.editedTitlesChecked.other",
+    "text": "{count} edited titles checked",
+    "context": "Said when the job checking edited titles with the catalogue finishes. {count} is how many it asked about."
   },
   {
     "handler": "server.main.nameHasItAlready",
@@ -37297,9 +39157,19 @@
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for a song or an audiobook. {viewer} is who; {item} is what; {device} is the device; {how} is how it is reaching the device."
   },
   {
+    "handler": "server.webhooks.formatWebhookBody.startedListeningFromAnotherServer",
+    "text": "{viewer} started listening to {item}, {how}.",
+    "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for a song or an audiobook played through a linked server, which {viewer} already names. {viewer} is who; {item} is what; {how} is how it is reaching them."
+  },
+  {
     "handler": "server.webhooks.formatWebhookBody.startedWatching",
     "text": "{viewer} started watching {item} on {device}, {how}.",
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`). {viewer} is filled in by the app; {item} is filled in by the app; {device} is filled in by the app; {how} is filled in by the app."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.startedWatchingFromAnotherServer",
+    "text": "{viewer} started watching {item}, {how}.",
+    "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for something played through a linked server, which {viewer} already names. {viewer} is who; {item} is what; {how} is how it is reaching them."
   },
   {
     "handler": "server.webhooks.formatWebhookBody.theCatalogueCanBeReachedAgain",
@@ -38613,6 +40483,16 @@
     "context": "The label of a button in the rail. {title} is filled in by the app."
   },
   {
+    "handler": "ui.selectionBar.count.selectAll.one",
+    "text": "Select all {count}",
+    "context": "A button beside how many rows of a table are ticked that ticks every row there is, those not shown yet too. {count} is how many there are in all."
+  },
+  {
+    "handler": "ui.selectionBar.count.selectAll.other",
+    "text": "Select all {count}",
+    "context": "A button beside how many rows of a table are ticked that ticks every row there is, those not shown yet too. {count} is how many there are in all."
+  },
+  {
     "handler": "ui.sidebarGroup.labelWaiting",
     "text": "{label}, {count} waiting",
     "context": "Read out for a sidebar item with things waiting behind it. {label} is the item, {count} how many."
@@ -38911,6 +40791,11 @@
     "handler": "ui.stepTrail.showEarlierSteps.other",
     "text": "Show {count} earlier steps",
     "context": "A button above a list of steps that shows the earlier steps hidden for space."
+  },
+  {
+    "handler": "ui.tagField.suggestions",
+    "text": "Suggestions for {label}",
+    "context": "What a screen reader calls the list of words suggested while typing into a list of words such as genres or tags. {label} is what the words are."
   },
   {
     "handler": "ui.timeBars.dragAcrossTheBarsToZoom",

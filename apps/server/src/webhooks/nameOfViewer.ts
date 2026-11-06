@@ -5,10 +5,12 @@ type NamedViewer = {
   accountName: string | null;
   profileName: string | null;
   guestOf?: string | null;
+  fromServer?: string | null;
 };
 
 /**
- * Names whoever is at the other end: the profile and the household it belongs to, since a profile's
+ * Names whoever is at the other end: somebody on a linked server by that server, with their own name
+ * where their server sends it; the profile and the household it belongs to, since a profile's
  * name alone says nothing about which household's Kid it is; then the household alone; and then
  * whoever shared the link they came in on — a guest has no account and no profile, and "somebody"
  * is a worse answer than the person who let them in.
@@ -18,6 +20,13 @@ type NamedViewer = {
  */
 const nameOfViewer = (viewer: NamedViewer): string => {
   const host = viewer.guestOf ?? null;
+  const server = viewer.fromServer ?? null;
+
+  if (server !== null) {
+    return viewer.profileName === null
+      ? say('common.someoneFromName', { name: server })
+      : say('common.nameFromServer', { name: viewer.profileName, server });
+  }
 
   if (viewer.profileName !== null) {
     return nameOfAsker({ profileName: viewer.profileName, household: viewer.accountName });

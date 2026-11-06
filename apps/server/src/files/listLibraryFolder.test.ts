@@ -22,6 +22,15 @@ afterEach(async () => {
 
 const nothingKnown = () => Promise.resolve({});
 
+const KNOWN = {
+  mediaId: null,
+  title: 'Arrival',
+  titleId: 'media-1',
+  status: 'inLibrary' as const,
+  reason: null,
+  belongsTo: null,
+};
+
 describe('listLibraryFolder', () => {
   it('lists the libraries, asked about nothing', async () => {
     const answer = await listLibraryFolder([aLibraryAt(root)], undefined, nothingKnown);
@@ -33,10 +42,12 @@ describe('listLibraryFolder', () => {
 
   it('lists folders then files, as a person sorts them, with sizes and what Valence knows', async () => {
     const library = aLibraryAt(root);
-    const answer = await listLibraryFolder([library], root, (paths) =>
+    const answer = await listLibraryFolder([library], root, (entries) =>
       Promise.resolve(
         Object.fromEntries(
-          paths.filter((path) => path.endsWith('.mkv')).map((path) => [path, 'media-1']),
+          entries
+            .filter((entry) => entry.path.endsWith('.mkv'))
+            .map((entry) => [entry.path, { ...KNOWN, mediaId: 'media-1' }]),
         ),
       ),
     );
@@ -51,7 +62,12 @@ describe('listLibraryFolder', () => {
       'Arrival.mkv',
       'notes.txt',
     ]);
-    expect(folder?.entries[2]).toMatchObject({ sizeBytes: 6, mediaId: 'media-1' });
+    expect(folder?.entries[2]).toMatchObject({
+      sizeBytes: 6,
+      mediaId: 'media-1',
+      title: 'Arrival',
+      status: 'inLibrary',
+    });
     expect(folder?.entries[3]).toMatchObject({ mediaId: null });
     expect(folder).toMatchObject({ parent: null, libraryId: library.id, libraryPath: root });
   });

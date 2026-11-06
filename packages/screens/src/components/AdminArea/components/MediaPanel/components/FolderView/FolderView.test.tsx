@@ -1,0 +1,413 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { FolderView } from './FolderView';
+import type { Library } from '@ValenceContracts/schemas/Library';
+import type { LibraryEntry, LibraryFolder } from '@ValenceContracts/schemas/LibraryFiles';
+
+const fetchLibraryFolderMock = vi.hoisted(() => vi.fn());
+
+const searchLibraryFilesMock = vi.hoisted(() => vi.fn());
+
+const changeLibraryFileMock = vi.hoisted(() => vi.fn());
+
+const createFolderMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/admin/fetchLibraryFolder', () => ({
+  fetchLibraryFolder: fetchLibraryFolderMock,
+}));
+vi.mock('@ValenceClient/admin/searchLibraryFiles', () => ({
+  searchLibraryFiles: searchLibraryFilesMock,
+}));
+vi.mock('@ValenceClient/admin/changeLibraryFile', () => ({
+  changeLibraryFile: changeLibraryFileMock,
+}));
+vi.mock('@ValenceClient/admin/createFolder', () => ({ createFolder: createFolderMock }));
+
+const notifyMock = vi.hoisted(() => ({ worked: vi.fn(), failed: vi.fn() }));
+
+vi.mock('@ValenceUI/notify', () => ({ notify: notifyMock }));
+
+const FILMS: Library = {
+  id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+  name: 'Films',
+  kind: 'movies',
+  path: '/media/films',
+  itemCount: 1,
+  lastScannedAt: null,
+  defaultAudioLanguage: null,
+  filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
+  keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
+};
+
+const entry = (overrides: Partial<LibraryEntry>): LibraryEntry => ({
+  name: 'Arrival.mkv',
+  path: '/media/films/Arrival.mkv',
+  isFolder: false,
+  sizeBytes: 1024,
+  modifiedAt: '2026-09-24T00:00:00.000Z',
+  mediaId: null,
+  ...overrides,
+});
+
+const FOLDERS: Record<string, LibraryFolder> = {
+  libraries: {
+    path: null,
+    parent: null,
+    libraryId: null,
+    libraryPath: null,
+    entries: [entry({ name: 'Films', path: '/media/films', isFolder: true, sizeBytes: null })],
+    isTruncated: false,
+  },
+  '/media/films': {
+    path: '/media/films',
+    parent: null,
+    libraryId: FILMS.id,
+    libraryPath: '/media/films',
+    entries: [
+      entry({
+        name: 'Arrival (2016)',
+        path: '/media/films/Arrival (2016)',
+        isFolder: true,
+        sizeBytes: null,
+      }),
+      entry({ mediaId: 'm1' }),
+    ],
+    isTruncated: false,
+  },
+};
+
+beforeEach(() => {
+  fetchLibraryFolderMock.mockReset();
+  fetchLibraryFolderMock.mockImplementation((path: string | null) =>
+    Promise.resolve(FOLDERS[path ?? 'libraries'] ?? FOLDERS.libraries),
+  );
+  searchLibraryFilesMock.mockReset();
+  changeLibraryFileMock.mockReset();
+  changeLibraryFileMock.mockResolvedValue('/media/films/Arrival (2016).mkv');
+  createFolderMock.mockReset();
+  notifyMock.worked.mockReset();
+  notifyMock.failed.mockReset();
+});
+
+/**
+ * Draws the panel with a cache of its own.
+ *
+ * @param mayDelete - Whether Delete is offered.
+ * @param openAt - A folder handed in to open.
+ * @returns What it was told.
+ */
+const draw = (mayDelete = true, openAt: string | null = null) => {
+  const onChanged = vi.fn();
+  const onScan = vi.fn();
+  const onOpenTitle = vi.fn();
+
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <FolderView
+        libraries={[FILMS]}
+        mayDelete={mayDelete}
+        openAt={openAt}
+        onChanged={onChanged}
+        onScan={onScan}
+        onOpenTitle={onOpenTitle}
+      />
+    </QueryClientProvider>,
+  );
+
+  return { onChanged, onScan, onOpenTitle };
+};
+
+/**
+ * Opens the Films library from the list of libraries.
+ *
+ * @param actor - Who is pressing.
+ */
+const openFilms = async (actor: ReturnType<typeof userEvent.setup>) => {
+  await actor.click(await screen.findByRole('button', { name: 'Films' }));
+  await screen.findByRole('cell', { name: /^Arrival\.mkv/ });
+};
+
+describe('FolderView', () => {
+  it('offers to leave a folder out of its library, saying it takes everything in it', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival (2016)' }));
+    await actor.click(screen.getByRole('menuitem', { name: 'Exclude from library' }));
+
+    expect(await screen.findByText('Exclude Arrival (2016)?')).toBeInTheDocument();
+    expect(screen.getByText(/this folder and everything in it/)).toBeInTheDocument();
+  });
+
+  it('offers to leave a file out even where nothing may be deleted', async () => {
+    const actor = userEvent.setup();
+
+    draw(false);
+    await openFilms(actor);
+
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival.mkv' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Exclude from library' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Delete/ })).toBeNull();
+  });
+
+  it('starts at the libraries, with nothing to do to them but open them', async () => {
+    draw();
+
+    expect(await screen.findByRole('cell', { name: /^Films$/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Actions for/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /New folder/ })).not.toBeInTheDocument();
+  });
+
+  it('opens a library, walks back along the trail, and says which files Valence knows', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+
+    const trail = screen.getByRole('navigation', { name: 'Current folder' });
+
+    expect(within(trail).getByRole('button', { name: 'Films' })).toBeInTheDocument();
+    expect(screen.queryByText('Not in library')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /New folder/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Upload here/ })).toBeInTheDocument();
+
+    await actor.click(within(trail).getByRole('button', { name: 'Libraries' }));
+
+    expect(await screen.findByRole('cell', { name: /^Films$/ })).toBeInTheDocument();
+  });
+
+  it('opens a folder it is handed, such as a library’s from the Libraries page', async () => {
+    draw(true, '/media/films');
+
+    expect(await screen.findByRole('cell', { name: /^Arrival\.mkv/ })).toBeInTheDocument();
+    expect(fetchLibraryFolderMock).toHaveBeenCalledWith('/media/films');
+  });
+
+  it('renames a file, and tells the page something changed', async () => {
+    const actor = userEvent.setup();
+    const { onChanged } = draw();
+
+    await openFilms(actor);
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival.mkv' }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Rename/ }));
+
+    const name = await screen.findByLabelText('Name');
+
+    await actor.clear(name);
+    await actor.type(name, 'Arrival (2016).mkv');
+    await actor.click(screen.getByRole('button', { name: 'Rename' }));
+
+    await waitFor(() => {
+      expect(changeLibraryFileMock).toHaveBeenCalledWith('/media/films/Arrival.mkv', {
+        kind: 'rename',
+        name: 'Arrival (2016).mkv',
+      });
+    });
+    await waitFor(() => {
+      expect(onChanged).toHaveBeenCalled();
+    });
+  });
+
+  it('deletes only after asking, and offers no delete to whoever may not', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival.mkv' }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Delete/ }));
+
+    expect(changeLibraryFileMock).not.toHaveBeenCalled();
+
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(changeLibraryFileMock).toHaveBeenCalledWith('/media/films/Arrival.mkv', {
+        kind: 'delete',
+      });
+    });
+  });
+
+  it('deletes everything chosen, then says so once and reads the folder once', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+
+    const reads = fetchLibraryFolderMock.mock.calls.length;
+
+    await actor.click(screen.getByRole('checkbox', { name: 'Choose everything here' }));
+    await actor.click(screen.getByRole('button', { name: 'Delete…' }));
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(notifyMock.worked).toHaveBeenCalledWith('Deleted 2 items.');
+    });
+
+    expect(changeLibraryFileMock).toHaveBeenCalledTimes(2);
+    expect(notifyMock.worked).toHaveBeenCalledTimes(1);
+    expect(fetchLibraryFolderMock.mock.calls.length - reads).toBe(1);
+  });
+
+  it('says what went and keeps what is left to delete when one of them is refused', async () => {
+    changeLibraryFileMock
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce(new Error('The file is in use.'));
+
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+    await actor.click(screen.getByRole('checkbox', { name: 'Choose everything here' }));
+    await actor.click(screen.getByRole('button', { name: 'Delete…' }));
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(notifyMock.failed).toHaveBeenCalledTimes(1);
+    });
+
+    expect(notifyMock.worked).toHaveBeenCalledExactlyOnceWith(
+      `Deleted ${FOLDERS['/media/films']?.entries[0]?.name ?? ''}.`,
+    );
+
+    changeLibraryFileMock.mockClear();
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(changeLibraryFileMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(changeLibraryFileMock).toHaveBeenCalledWith('/media/films/Arrival.mkv', {
+      kind: 'delete',
+    });
+  });
+
+  it('offers no delete to whoever may not delete media', async () => {
+    const actor = userEvent.setup();
+
+    draw(false);
+    await openFilms(actor);
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival.mkv' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Rename/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Delete/ })).not.toBeInTheDocument();
+  });
+
+  it('finds files by name in the folder it is in', async () => {
+    const actor = userEvent.setup();
+
+    searchLibraryFilesMock.mockResolvedValue({
+      entries: [
+        entry({
+          name: 'Arrival.mkv',
+          path: '/media/films/Arrival (2016)/Arrival.mkv',
+          sizeBytes: null,
+        }),
+      ],
+      isTruncated: false,
+    });
+    draw();
+    await openFilms(actor);
+    await actor.type(screen.getByLabelText('Search files and folders'), 'arr');
+
+    expect(await screen.findByText('/media/films/Arrival (2016)/Arrival.mkv')).toBeInTheDocument();
+    expect(searchLibraryFilesMock).toHaveBeenLastCalledWith('arr', '/media/films');
+  });
+
+  it('names the title a file belongs to, opens it, and badges where each file stands', async () => {
+    const user = userEvent.setup();
+
+    fetchLibraryFolderMock.mockImplementation(() =>
+      Promise.resolve({
+        ...FOLDERS['/media/films'],
+        entries: [
+          entry({ mediaId: 'm1', title: 'Arrival', titleId: 'm1', status: 'inLibrary' }),
+          entry({
+            name: 'Broken.mkv',
+            path: '/media/films/Broken.mkv',
+            status: 'unreadable',
+            reason: { code: 'x', message: 'No video stream', values: {} },
+          }),
+          entry({
+            name: 'Arrival.en.srt',
+            path: '/media/films/Arrival.en.srt',
+            status: 'sidecar',
+            belongsTo: 'Arrival.mkv',
+          }),
+        ],
+      }),
+    );
+
+    const { onOpenTitle } = draw(true, '/media/films');
+
+    expect(await screen.findByText('In the library')).toBeInTheDocument();
+    expect(screen.getByText('Unreadable')).toBeInTheDocument();
+    expect(screen.getByText('With its video')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open Arrival' }));
+
+    expect(onOpenTitle).toHaveBeenCalledWith('m1');
+
+    await user.click(screen.getByText('Broken.mkv'));
+
+    expect(await screen.findByText('No video stream')).toBeInTheDocument();
+    expect(screen.getByText('Why it isn’t in the library')).toBeInTheDocument();
+  });
+
+  it('shows only the files whose video has gone, when asked', async () => {
+    const user = userEvent.setup();
+
+    fetchLibraryFolderMock.mockImplementation(() =>
+      Promise.resolve({
+        ...FOLDERS['/media/films'],
+        entries: [
+          entry({ name: 'Kept.mkv', path: '/media/films/Kept.mkv', status: 'inLibrary' }),
+          entry({ name: 'Gone.en.srt', path: '/media/films/Gone.en.srt', status: 'orphaned' }),
+        ],
+      }),
+    );
+
+    draw(true, '/media/films');
+    await user.click(await screen.findByRole('button', { name: '1 orphaned file' }));
+
+    expect(screen.getByText('Gone.en.srt')).toBeInTheDocument();
+    expect(screen.queryByText('Kept.mkv')).not.toBeInTheDocument();
+  });
+
+  it('stays within the folder it is rooted at, and takes its search from outside', async () => {
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <FolderView
+          libraries={[FILMS]}
+          mayDelete
+          root="/media/films"
+          search=""
+          onChanged={vi.fn()}
+          onScan={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Arrival (2016)')).toBeInTheDocument();
+    expect(fetchLibraryFolderMock).toHaveBeenCalledWith('/media/films');
+    expect(screen.getByRole('button', { name: 'Parent folder' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Libraries' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Search files and folders')).not.toBeInTheDocument();
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(FolderView.displayName).toBe('FolderView');
+  });
+});

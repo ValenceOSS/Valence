@@ -44,8 +44,8 @@ describe('MediaItemSchema', () => {
     expect(MediaItemSchema.parse({ ...validItem, year: null }).year).toBeNull();
   });
 
-  it('rejects an item with no audio streams', () => {
-    expect(() => MediaItemSchema.parse({ ...validItem, audioStreams: [] })).toThrow();
+  it('accepts a silent video, with no audio streams', () => {
+    expect(MediaItemSchema.parse({ ...validItem, audioStreams: [] }).audioStreams).toEqual([]);
   });
 
   it('accepts a container Valence has no name for', () => {

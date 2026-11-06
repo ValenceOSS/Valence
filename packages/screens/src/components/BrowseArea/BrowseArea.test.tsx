@@ -251,6 +251,92 @@ describe('BrowseArea', () => {
     });
   });
 
+  it('keeps the favourites on screen while something newly kept is read, and lets go of what was unkept at once', async () => {
+    const kept = [item('a', 'Arrival'), item('b', 'Blade Runner 2049'), item('c', 'Contact')];
+
+    fetchLibraryItems.mockImplementation((_libraryId, options) => {
+      const items = kept.filter((media) => options?.ids?.includes(media.id) === true);
+
+      return Promise.resolve({ items, total: items.length });
+    });
+
+    const { rerender } = renderInAnAddress(
+      <BrowseArea kind="favourites" favourites={['b', 'a']} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(await screen.findByText('Blade Runner 2049')).toBeInTheDocument();
+
+    fetchLibraryItems.mockImplementation(() => new Promise(() => {}));
+
+    rerender(
+      <BrowseArea kind="favourites" favourites={['a']} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(screen.queryByText('Blade Runner 2049')).not.toBeInTheDocument();
+    expect(screen.getByText('Arrival')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Loading favourites')).not.toBeInTheDocument();
+
+    rerender(
+      <BrowseArea kind="favourites" favourites={['c', 'a']} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(screen.getByText('Arrival')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Loading favourites')).not.toBeInTheDocument();
+  });
+
+  it('keeps a kept book on screen while the books are read again', async () => {
+    const { rerender } = renderInAnAddress(
+      <BrowseArea
+        kind="favourites"
+        favourites={[]}
+        keptBooks={['book-1']}
+        onOpenBook={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Pride and Prejudice')).toBeInTheDocument();
+
+    findBooks.mockImplementation(() => new Promise(() => {}));
+
+    rerender(
+      <BrowseArea
+        kind="favourites"
+        favourites={[]}
+        keptBooks={['book-2', 'book-1']}
+        onOpenBook={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Pride and Prejudice')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Loading favourites')).not.toBeInTheDocument();
+  });
+
+  it('says it is reading, rather than showing the last library, when another library is chosen', async () => {
+    fetchLibraries.mockResolvedValue([
+      { id: 'library-1', kind: 'movies' },
+      { id: 'library-2', kind: 'movies' },
+    ]);
+
+    const { rerender } = renderInAnAddress(
+      <BrowseArea kind="films" libraryId="library-1" onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(await screen.findByText('Arrival')).toBeInTheDocument();
+
+    fetchLibraryItems.mockImplementation(() => new Promise(() => {}));
+
+    rerender(
+      <BrowseArea kind="films" libraryId="library-2" onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(await screen.findByLabelText('Loading films')).toBeInTheDocument();
+    expect(screen.queryByText('Arrival')).not.toBeInTheDocument();
+  });
+
   it('shows what it found', async () => {
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 

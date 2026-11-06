@@ -1,3 +1,4 @@
+import { TITLE_TABS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TITLE_TABS';
 import {
   createRootRoute,
   createRoute,
@@ -6,6 +7,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
+import { TITLE_SHOWS, TITLE_SORTS } from '@ValenceContracts/schemas/TitleList';
 import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { CatalogueTabSchema } from '@ValenceContracts/schemas/AdminCatalogue';
 import { readSearch } from '@ValenceClient/navigation/readSearch';
@@ -109,6 +111,17 @@ const adminSearch = z.object({
   tab: CatalogueTabSchema.optional().catch(undefined),
   title: z.string().optional(),
   media: z.string().optional(),
+  titleTab: z.enum(TITLE_TABS).optional().catch(undefined),
+  mediaView: z.enum(['titles', 'folders']).optional().catch(undefined),
+  season: z.coerce.number().int().nonnegative().optional().catch(undefined),
+  episode: z.string().optional(),
+  part: z.enum(['season']).optional().catch(undefined),
+  library: z.string().optional().catch(undefined),
+  find: z.string().optional().catch(undefined),
+  quick: z.enum(TITLE_SHOWS).optional().catch(undefined),
+  order: z.enum(TITLE_SORTS).optional().catch(undefined),
+  desc: z.boolean().optional().catch(undefined),
+  filter: z.array(z.string()).optional().catch(undefined),
   webhook: z.string().optional(),
   server: z.string().optional(),
   ...ObservabilitySearchSchema.shape,

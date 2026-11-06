@@ -1,3 +1,4 @@
+import { sortKeyOf } from '@ValenceCore/functions/sortKeyOf';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from './MediaTitle.types';
 import { say } from '@ValenceI18n/say';
@@ -219,7 +220,7 @@ const gatherTitles = (items: readonly MediaSummary[]): MediaTitle[] => {
         libraryId: item.libraryId,
         kind: 'film',
         name: item.title,
-        order: item.title.toLowerCase(),
+        order: sortKeyOf(item.title, item.sortTitle),
         year: item.year,
         lead: item,
         episodes: editions,
@@ -256,7 +257,7 @@ const gatherTitles = (items: readonly MediaSummary[]): MediaTitle[] => {
       libraryId: lead.libraryId,
       kind: 'series',
       name: lead.seriesTitle ?? lead.title,
-      order: (lead.seriesTitle ?? lead.title).toLowerCase(),
+      order: sortKeyOf(lead.seriesTitle ?? lead.title, lead.seriesSortTitle),
       year: episodes.map((episode) => episode.year).find((year) => year !== null) ?? null,
       lead,
       episodes,

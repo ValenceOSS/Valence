@@ -16,7 +16,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { Spinner } from '@ValenceUI/Spinner';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   ArrowDownWideNarrow as SortIcon,
   Film as FilmIcon,
@@ -93,6 +93,8 @@ const PAGES: Record<
 };
 
 const NOTHING_FINISHED = () => false;
+
+const NOTHING_FOUND: readonly MediaSummary[] = [];
 
 /**
  * A page of the library asked one question — the films, the programmes, what arrived recently, what
@@ -220,30 +222,49 @@ const BrowseArea = ({
       ? { ids: kept === '' ? [] : kept.split(','), limit: PAGE_SIZE }
       : { order: 'newest' as const, limit: PAGE_SIZE };
 
-  const found = useQuery(
-    isFilterable
-      ? libraryQueries.everything(libraryIds, { kind, ...filters.asked })
-      : libraryQueries.across(libraryIds, asked),
-  );
+  const question = JSON.stringify([kind, libraryId, filters.asked]);
+  const [answered, setAnswered] = useState(question);
+  const isAskedAgain = answered === question;
 
-  const items = useMemo(() => collapseToShows(found.data ?? []), [found.data]);
+  const found = useQuery({
+    ...(isFilterable
+      ? libraryQueries.everything(libraryIds, { kind, ...filters.asked })
+      : libraryQueries.across(libraryIds, asked)),
+    ...(isAskedAgain ? { placeholderData: keepPreviousData } : {}),
+  });
+
+  if (!isAskedAgain && found.data !== undefined && !found.isPlaceholderData) {
+    setAnswered(question);
+  }
+
+  const answer = useMemo(() => {
+    const every = found.data ?? NOTHING_FOUND;
+
+    if (kind !== 'favourites') {
+      return every;
+    }
+
+    const stillKept = new Set(kept.split(','));
+
+    return every.filter((media) => stillKept.has(media.id));
+  }, [found.data, kind, kept]);
+
+  const items = useMemo(() => collapseToShows(answer), [answer]);
   const unwatched = useMemo(
     () =>
-      kind === 'shows' && isFinished !== undefined
-        ? unwatchedByShow(found.data ?? [], isFinished)
-        : null,
-    [kind, found.data, isFinished],
+      kind === 'shows' && isFinished !== undefined ? unwatchedByShow(answer, isFinished) : null,
+    [kind, answer, isFinished],
   );
 
   const shown = useMemo(
     () =>
       !isFilterable
         ? items
-        : arrangeForBrowsing(found.data ?? [], {
+        : arrangeForBrowsing(answer, {
             ...arrangement,
             isFinished: isFinished ?? NOTHING_FINISHED,
           }),
-    [isFilterable, items, found.data, arrangement, isFinished],
+    [isFilterable, items, answer, arrangement, isFinished],
   );
 
   const arrange = (next: Arrangement) => {
@@ -252,8 +273,12 @@ const BrowseArea = ({
   };
 
   const bookIds = kind === 'favourites' ? keptBooks : [];
-  const foundBooks = useQuery(bookQueries.find({ ids: bookIds }));
-  const books = bookIds.length === 0 ? [] : (foundBooks.data ?? []);
+  const foundBooks = useQuery({
+    ...bookQueries.find({ ids: bookIds }),
+    ...(isAskedAgain ? { placeholderData: keepPreviousData } : {}),
+  });
+  const booksStillKept = new Set(bookIds);
+  const books = (foundBooks.data ?? []).filter((book) => booksStillKept.has(book.id));
 
   const isReading =
     libraries.isPending ||

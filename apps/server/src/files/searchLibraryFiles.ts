@@ -4,6 +4,7 @@ import { libraryOf } from '@ValenceServer/files/libraryOf';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryFileSearch } from '@ValenceContracts/schemas/LibraryFiles';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
+import type { EntryDescription, ListedEntry } from '@ValenceServer/files/describeLibraryEntries';
 
 type LibraryFileSearchAnswer = { kind: 'found'; search: LibraryFileSearch } | { kind: 'outside' };
 
@@ -16,7 +17,7 @@ type LibraryFileSearchAnswer = { kind: 'found'; search: LibraryFileSearch } | { 
  * @param libraries - The libraries there are.
  * @param words - What the names should hold, in any case.
  * @param within - The folder to look below, or nothing for every library.
- * @param mediaIdsAt - Which of some paths are items in the catalogue, and which items.
+ * @param describe - Says what each entry found is to its library.
  * @returns What was found, or why it would not look.
  */
 const searchLibraryFiles = async (
@@ -24,7 +25,7 @@ const searchLibraryFiles = async (
   libraries: readonly Library[],
   words: string,
   within: string | undefined,
-  mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>,
+  describe: (entries: readonly ListedEntry[]) => Promise<Record<string, EntryDescription>>,
 ): Promise<LibraryFileSearchAnswer> => {
   const isEverywhere = within === undefined || within.trim() === '';
 
@@ -38,7 +39,7 @@ const searchLibraryFiles = async (
     isEverywhere ? libraries.map((library) => library.path) : [resolve(within)],
     true,
   );
-  const known = await mediaIdsAt(found.filter((one) => !one.isFolder).map((one) => one.path));
+  const known = await describe(found);
 
   return {
     kind: 'found',
@@ -47,7 +48,8 @@ const searchLibraryFiles = async (
         ...one,
         sizeBytes: null,
         modifiedAt: null,
-        mediaId: known[one.path] ?? null,
+        mediaId: null,
+        ...known[one.path],
       })),
       isTruncated,
     },

@@ -1,6 +1,6 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 
 const PLACED = /^\d+(?:\.\d+)?\s*-\s*/;
 

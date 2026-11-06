@@ -1,10 +1,13 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { shellContext } from '@ValenceClient/shell/shellContext';
 import { aShell } from '@ValenceClient/testing/aShell';
+import { useQueryClient } from '@tanstack/react-query';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { LibraryBrowser } from './LibraryBrowser';
+import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Collection } from '@ValenceContracts/schemas/Collection';
@@ -653,6 +656,72 @@ describe('LibraryBrowser', () => {
         shows.id,
         expect.objectContaining({ limit: 200 }),
       );
+    });
+
+    it('stays on the page, featured item and rows, while a library somebody hid is read away', async () => {
+      /**
+       * Reads the libraries again once told to, as hiding one does.
+       */
+      const ReadsLibrariesAgain = ({ isTold }: { isTold: boolean }) => {
+        const cache = useQueryClient();
+
+        useEffect(() => {
+          if (isTold) {
+            void cache.invalidateQueries({ queryKey: libraryQueries.all().queryKey });
+          }
+        }, [cache, isTold]);
+
+        return null;
+      };
+
+      fetchLibrariesMock.mockResolvedValue([films, shows]);
+      fetchItemsMock.mockImplementation((libraryId: string) =>
+        Promise.resolve(
+          libraryId === films.id
+            ? { items: several('film', 6), total: 6 }
+            : { items: [heat], total: 1 },
+        ),
+      );
+
+      const { rerender } = draw(
+        <>
+          <ReadsLibrariesAgain isTold={false} />
+          <LibraryBrowser hasHero onPlay={vi.fn()} onReading={vi.fn()} />
+        </>,
+      );
+
+      expect(await screen.findByRole('region', { name: 'Featured' })).toBeInTheDocument();
+      expect(await screen.findByRole('region', { name: 'Recently added' })).toBeInTheDocument();
+
+      fetchLibrariesMock.mockResolvedValue([films]);
+      fetchItemsMock.mockImplementation(() => new Promise(() => {}));
+
+      const readsBefore = fetchLibrariesMock.mock.calls.length;
+
+      rerender(
+        inShell(
+          <>
+            <ReadsLibrariesAgain isTold />
+            <LibraryBrowser hasHero onPlay={vi.fn()} onReading={vi.fn()} />
+          </>,
+        ),
+      );
+
+      await waitFor(() => {
+        expect(fetchLibrariesMock.mock.calls.length).toBeGreaterThan(readsBefore);
+      });
+
+      await act(async () => {
+        await new Promise((settle) => setTimeout(settle, 20));
+      });
+
+      expect(fetchItemsMock).toHaveBeenCalledWith(
+        films.id,
+        expect.objectContaining({ limit: 200 }),
+      );
+
+      expect(screen.getByRole('region', { name: 'Featured' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Recently added' })).toBeInTheDocument();
     });
 
     it('says which item it is showing, so the page can be lit by it', async () => {

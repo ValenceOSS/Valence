@@ -1,210 +1,45 @@
-import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { Spinner } from '@ValenceUI/Spinner';
-import { notify } from '@ValenceUI/notify';
-import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
-import { chooseArtwork } from '@ValenceClient/library/chooseArtwork';
-import { fetchArtworkChoices } from '@ValenceClient/library/fetchArtworkChoices';
-import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { ArtworkTile } from './components/ArtworkTile/ArtworkTile';
-import type { ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
+import { ArtworkChooser } from '@ValenceScreens/components/AdminArea/components/ArtworkChooser/ArtworkChooser';
 import type { ArtworkPickerProps } from './ArtworkPicker.types';
 import { say } from '@ValenceI18n/say';
-import type { StringKey } from '@ValenceI18n/StringKey';
-
-const KINDS = [
-  { id: 'poster', label: say('screens.adminArea.artworkPicker.poster') },
-  { id: 'backdrop', label: say('screens.adminArea.artworkPicker.backdrop') },
-  { id: 'logo', label: say('screens.adminArea.artworkPicker.logo') },
-] as const;
-
-const COLUMNS = {
-  poster: 'grid-cols-[repeat(auto-fill,minmax(8rem,1fr))]',
-  backdrop: 'grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]',
-  logo: 'grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]',
-} as const;
-
-const WORDS = {
-  poster: {
-    own: 'screens.adminArea.artworkPicker.useTheCataloguesOwnPoster',
-    numbered: 'screens.adminArea.artworkPicker.usePosterNumberLanguage',
-    none: 'screens.adminArea.artworkPicker.theCatalogueHasNoPosters',
-  },
-  backdrop: {
-    own: 'screens.adminArea.artworkPicker.useTheCataloguesOwnBackdrop',
-    numbered: 'screens.adminArea.artworkPicker.useBackdropNumberLanguage',
-    none: 'screens.adminArea.artworkPicker.theCatalogueHasNoBackdrops',
-  },
-  logo: {
-    own: 'screens.adminArea.artworkPicker.useTheCataloguesOwnLogo',
-    numbered: 'screens.adminArea.artworkPicker.useLogoNumberLanguage',
-    none: 'screens.adminArea.artworkPicker.theCatalogueHasNoLogos',
-  },
-} as const satisfies Record<ArtworkKind, Record<'own' | 'numbered' | 'none', StringKey>>;
-
-const LANGUAGES = new Intl.DisplayNames(['en'], { type: 'language' });
 
 /**
- * Names the language a picture's lettering is in, for the note on its tile.
- *
- * @param language - The catalogue's two-letter code, or null for a picture with no lettering.
- * @returns The language's name, or a word saying there is none.
- */
-const languageOf = (language: string | null): string => {
-  if (language === null) {
-    return say('screens.adminArea.artworkPicker.noText');
-  }
-
-  try {
-    return LANGUAGES.of(language) ?? language.toUpperCase();
-  } catch {
-    return language.toUpperCase();
-  }
-};
-
-/**
- * Chooses the poster, backdrop and logo a film or programme is drawn with, from everything the
- * catalogue holds for it, for when its own pick is the wrong one — lettering in a language nobody in
- * the house reads, a poster from another country, a backdrop that gives the ending away. The first
- * tile goes back to the catalogue's pick, and shows it. A choice reaches every file of the title and outlives every
- * scan after it; a programme's backdrop is its own, and each episode keeps its still.
+ * Chooses the poster, backdrop and logo a film or programme is drawn with, in a dialog over the
+ * page it was opened from, for when the catalogue's own pick is the wrong one — lettering in a
+ * language nobody in the house reads, a poster from another country, a backdrop that gives the
+ * ending away.
  *
  * @param subject - The title being dressed, or null when the picker is closed.
  * @param onClose - Told it was dismissed.
  * @param onChanged - Told a choice was made, with the job restoring the catalogue's pick where one was
  *   needed.
  */
-const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
-  const cache = useQueryClient();
-  const [kind, setKind] = useState<ArtworkKind>('poster');
-  const [busy, setBusy] = useState<string | null>(null);
-  const mediaId = subject?.mediaId ?? '';
-  const choices = useQuery({
-    queryKey: ['artwork-choices', mediaId],
-    queryFn: () => fetchArtworkChoices(mediaId),
-    enabled: subject !== null,
-    staleTime: 60_000,
-  });
+const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => (
+  <DialogCompanion
+    label={subject?.name ?? say('common.artwork')}
+    isOpen={subject !== null}
+    onClose={onClose}
+  >
+    <DialogTitle
+      size="compact"
+      title={subject?.name ?? say('common.artwork')}
+      detail={
+        subject?.isSeries === true
+          ? say('screens.adminArea.artworkPicker.reachesEveryEpisodeAndOutlivesEvery')
+          : say('screens.adminArea.artworkPicker.drawsThisFilmEverywhereAndEvery')
+      }
+    />
 
-  const choose = async (url: string | null, key: string) => {
-    if (subject === null) {
-      return;
-    }
+    <DialogContent>
+      {subject === null ? null : <ArtworkChooser subject={subject} onChanged={onChanged} />}
+    </DialogContent>
 
-    setBusy(key);
-
-    const outcome = await chooseArtwork(subject.mediaId, kind, url);
-
-    setBusy(null);
-
-    if ('problem' in outcome) {
-      notify.failed(outcome.problem);
-
-      return;
-    }
-
-    artworkRevisions.bump([subject.mediaId, ...subject.mediaIds]);
-    await cache.invalidateQueries({ queryKey: ['artwork-choices', subject.mediaId] });
-    await cache.invalidateQueries({ queryKey: libraryQueries.key });
-    notify.worked(
-      url === null
-        ? say('screens.adminArea.artworkPicker.backToTheCataloguesOwnPicture')
-        : say('screens.adminArea.artworkPicker.chosen'),
-    );
-    onChanged(outcome.jobId);
-  };
-
-  const read = choices.data;
-  const offered = read === undefined || 'problem' in read ? [] : read.options[kind];
-  const chosen = read === undefined || 'problem' in read ? null : read.chosen[kind];
-  const byDefault = read === undefined || 'problem' in read ? null : read.defaults[kind];
-
-  return (
-    <DialogCompanion
-      label={subject?.name ?? say('common.artwork')}
-      isOpen={subject !== null}
-      onClose={onClose}
-    >
-      <DialogTitle
-        size="compact"
-        title={subject?.name ?? say('common.artwork')}
-        detail={
-          subject?.isSeries === true
-            ? say('screens.adminArea.artworkPicker.reachesEveryEpisodeAndOutlivesEvery')
-            : say('screens.adminArea.artworkPicker.drawsThisFilmEverywhereAndEvery')
-        }
-      />
-
-      <DialogContent className="flex flex-col gap-5">
-        <SegmentedRow
-          label={say('screens.adminArea.artworkPicker.whichPicture')}
-          items={KINDS}
-          value={kind}
-          onSelect={(next) => {
-            setKind(next === 'backdrop' ? 'backdrop' : next === 'logo' ? 'logo' : 'poster');
-          }}
-        />
-
-        {choices.isPending ? (
-          <Spinner
-            isCentered
-            label={say('screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas')}
-          />
-        ) : read === undefined || 'problem' in read ? (
-          <p className="font-body text-sm text-text-muted">
-            {read?.problem ?? say('error.library.catalogueCouldNotBeAsked')}
-          </p>
-        ) : (
-          <ul className={`grid gap-3 ${COLUMNS[kind]}`}>
-            <li>
-              <ArtworkTile
-                kind={kind}
-                label={say(WORDS[kind].own)}
-                previewUrl={byDefault}
-                note={say('screens.artworkPicker.artworkTile.theCataloguesPick')}
-                isChosen={chosen === null}
-                isBusy={busy === 'automatic'}
-                onChoose={() => {
-                  void choose(null, 'automatic');
-                }}
-              />
-            </li>
-
-            {offered.map((option, at) => (
-              <li key={option.url}>
-                <ArtworkTile
-                  kind={kind}
-                  label={say(WORDS[kind].numbered, {
-                    number: (at + 1).toString(),
-                    language: languageOf(option.language),
-                  })}
-                  previewUrl={option.previewUrl}
-                  note={languageOf(option.language)}
-                  isChosen={chosen === option.url}
-                  isBusy={busy === option.url}
-                  onChoose={() => {
-                    void choose(option.url, option.url);
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {read !== undefined && !('problem' in read) && offered.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">{say(WORDS[kind].none)}</p>
-        ) : null}
-      </DialogContent>
-
-      <DialogFooter dismiss={{ onChoose: onClose }} />
-    </DialogCompanion>
-  );
-};
+    <DialogFooter dismiss={{ onChoose: onClose }} />
+  </DialogCompanion>
+);
 
 ArtworkPicker.displayName = 'ArtworkPicker';
 

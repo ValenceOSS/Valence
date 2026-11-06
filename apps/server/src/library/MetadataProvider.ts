@@ -1,4 +1,9 @@
-import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
+import type { CataloguePerson } from '@ValenceContracts/schemas/CataloguePeople';
+import type {
+  ArtworkOption,
+  ArtworkChoices,
+  ArtworkKind,
+} from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -17,6 +22,8 @@ import type { EpisodeGroup } from '@ValenceServer/requests/anime/EpisodeGroup';
 import type { Likeness, TitleKind } from '@ValenceServer/likeness/Likeness';
 
 type SeriesReach = { season: number; episode: number };
+
+type BorrowedSeason = { seasonNumber: number; externalId: string; externalSeason: number };
 
 type MediaFacts = {
   path: string;
@@ -38,6 +45,9 @@ type MediaFacts = {
   year?: number | null;
   ids?: ExternalIds;
   rememberedExternalId?: string | null;
+  language?: string;
+  episodeOrder?: string;
+  borrowed?: readonly BorrowedSeason[];
 };
 
 type CastMember = {
@@ -54,6 +64,13 @@ type Metadata = {
   tagline?: string;
   genres?: string[];
   cast?: CastMember[];
+  guestStars?: CastMember[];
+  directors?: string[];
+  writers?: string[];
+  creators?: string[];
+  countries?: string[];
+  originalLanguage?: string;
+  episodeTotal?: number;
   rating?: number;
   certifications?: Record<string, string>;
   contentAdvice?: ContentAdvice;
@@ -69,6 +86,11 @@ type Metadata = {
   status?: string;
   imdbId?: string;
   rottenTomatoes?: number;
+  originalTitle?: string;
+  studios?: string[];
+  networks?: string[];
+  tvdbId?: string;
+  catalogueEpisodeId?: string;
   seasonNumber?: number;
   episodeNumber?: number;
 };
@@ -102,7 +124,7 @@ type CataloguePersonWork = {
   timeline: CatalogueCredit[];
 };
 
-type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean };
+type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean; total?: number };
 
 type CatalogueDescription = {
   title: string;
@@ -116,12 +138,29 @@ type CatalogueDescription = {
   trailerKey: string | null;
   rating?: number | null;
   certifications?: Record<string, string>;
+  originalTitle?: string | null;
+  tagline?: string | null;
+  releaseDate?: string | null;
+  status?: string | null;
+  studios?: string[];
+  networks?: string[];
+  imdbId?: string | null;
+  tvdbId?: string | null;
+  originalLanguage?: string | null;
+  countries?: string[];
+  creators?: string[];
+  directors?: string[];
+  writers?: string[];
 };
 
 type SeriesShape = {
   seasons: {
     seasonNumber: number;
     episodeCount: number;
+    name?: string | null;
+    overview?: string | null;
+    posterUrl?: string | null;
+    airDate?: string | null;
     episodes: {
       episodeNumber: number;
       title: string;
@@ -146,14 +185,24 @@ type OwnArtwork = Record<ArtworkKind, OwnPicture | null>;
 type MetadataProvider = {
   name: string;
   describe: (facts: MediaFacts) => Promise<Metadata | null>;
-  describeSeries?: (externalId: string) => Promise<SeriesShape | null>;
+  describeSeries?: (
+    externalId: string,
+    order?: string,
+    borrowed?: readonly BorrowedSeason[],
+  ) => Promise<SeriesShape | null>;
   describeNextEpisode?: (externalId: string) => Promise<NextEpisode | null>;
   describeAiringSeason?: (externalId: string) => Promise<AiringSeason | null>;
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readArtworkOptions?: (options: {
     externalId: string;
     isSeries: boolean;
+    tvdbId?: string | null;
   }) => Promise<ArtworkChoices['options'] | null>;
+  readPartArtwork?: (options: {
+    externalId: string;
+    season: number;
+    episode: number | null;
+  }) => Promise<ArtworkOption[] | null>;
   readOwnArtwork?: (options: {
     externalId: string;
     isSeries: boolean;
@@ -176,8 +225,12 @@ type MetadataProvider = {
     kind: 'tv' | 'movie',
   ) => Promise<RequestCatalogue | null>;
   seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
+  findByImdbId?: (imdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
+  findByTvdbId?: (tvdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
   readEpisodeGroups?: (externalId: string) => Promise<EpisodeGroup[]>;
+  searchPeople?: (name: string) => Promise<CataloguePerson[]>;
   forgetAnswers?: () => void;
+  forgetAnswersAbout?: (externalId: string, kind: 'tv' | 'movie') => void;
 };
 
 /**
@@ -220,14 +273,23 @@ const resolveAiringSeason = (
  * @param providers - The providers to ask, in order of preference.
  * @param externalId - The catalogue's identifier for the programme.
  * @param onProblem - Told when a provider fails, so a scan can report it without stopping.
+ * @param order - Another of the catalogue's orders the programme's files are numbered in, where one
+ *   was chosen, so its seasons and episodes are laid out as the files are.
+ * @param borrowed - Seasons somebody said are another catalogue entry's, laid out from that entry.
  * @returns The shape of the series, or null where nobody could say.
  */
 const resolveSeriesShape = (
   providers: MetadataProvider[],
   externalId: string,
   onProblem?: (provider: string, reason: Said) => void,
+  order?: string,
+  borrowed: readonly BorrowedSeason[] = [],
 ): Promise<SeriesShape | null> =>
-  firstAnswerOf(providers, (provider) => provider.describeSeries?.(externalId), onProblem);
+  firstAnswerOf(
+    providers,
+    (provider) => provider.describeSeries?.(externalId, order, borrowed),
+    onProblem,
+  );
 
 /**
  * Asks each metadata provider in turn about one file and takes the first real answer, so a plugin's
@@ -251,6 +313,7 @@ export type {
   OwnArtwork,
   OwnPicture,
   AiringSeason,
+  BorrowedSeason,
   CastMember,
   CatalogueBrowsing,
   CatalogueDescription,

@@ -5,6 +5,7 @@ import { libraryOf } from '@ValenceServer/files/libraryOf';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry, LibraryFolder } from '@ValenceContracts/schemas/LibraryFiles';
 import type { DiskRefusal } from '@ValenceServer/files/diskRefusalOf';
+import type { EntryDescription, ListedEntry } from '@ValenceServer/files/describeLibraryEntries';
 
 const MOST_LISTED = 2000;
 
@@ -25,13 +26,13 @@ type LibraryFolderAnswer =
  *
  * @param libraries - The libraries there are.
  * @param path - The folder, or nothing for the libraries.
- * @param mediaIdsAt - Which of some paths are items in the catalogue, and which items.
+ * @param describe - Says what each entry listed is to its library.
  * @returns What is in it, or why it could not be listed.
  */
 const listLibraryFolder = async (
   libraries: readonly Library[],
   path: string | undefined,
-  mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>,
+  describe: (entries: readonly ListedEntry[]) => Promise<Record<string, EntryDescription>>,
 ): Promise<LibraryFolderAnswer> => {
   if (path === undefined || path.trim() === '') {
     return {
@@ -89,9 +90,7 @@ const listLibraryFolder = async (
             : 1,
       )
       .slice(0, MOST_LISTED);
-    const known = await mediaIdsAt(
-      entries.filter((entry) => !entry.isFolder).map((entry) => entry.path),
-    );
+    const known = await describe(entries);
 
     return {
       kind: 'listed',
@@ -100,7 +99,11 @@ const listLibraryFolder = async (
         parent: at === resolve(library.path) ? null : dirname(at),
         libraryId: library.id,
         libraryPath: library.path,
-        entries: entries.map((entry) => ({ ...entry, mediaId: known[entry.path] ?? null })),
+        entries: entries.map((entry) => ({
+          ...entry,
+          mediaId: null,
+          ...known[entry.path],
+        })),
         isTruncated: read.length > MOST_LISTED,
       },
     };

@@ -278,6 +278,8 @@ describe('adminQueries', () => {
     expect(adminQueries.mediaPaths([]).enabled).toBe(false);
     expect(adminQueries.jobHistoryIssues(null).enabled).toBe(false);
     expect(adminQueries.jobRun(null).enabled).toBe(false);
+    expect(adminQueries.seasonSource(null).enabled).toBe(false);
+    expect(adminQueries.catalogueSeasons('file', null).enabled).toBe(false);
   });
 
   it('reads the persisted history of job runs, filtered', async () => {

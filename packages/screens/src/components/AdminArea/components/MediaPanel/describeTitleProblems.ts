@@ -1,4 +1,3 @@
-import type { LibraryHealth } from '@ValenceContracts/schemas/LibraryHealth';
 import { say } from '@ValenceI18n/say';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -7,6 +6,11 @@ import { sayingAll } from '@ValenceI18n/sayingAll';
 import type { MediaTitle } from './MediaTitle.types';
 
 type TitleProblem = 'unmatched' | 'noPoster' | 'twice' | 'unreadable';
+
+type ProblemSource = {
+  duplicate: { items: readonly { id: string; path: string; group: string | null }[] };
+  unreadable: { items: readonly { id: string; path: string }[] };
+};
 
 type TitleProblems = {
   problems: readonly TitleProblem[];
@@ -23,6 +27,12 @@ const idsOf = (title: MediaTitle): string[] => [
   title.lead.id,
   ...title.episodes.map((episode) => episode.id),
   ...title.parts.flatMap(idsOf),
+  ...(title.row === undefined
+    ? []
+    : [
+        ...title.row.problemFiles.duplicate.filter((one) => one.isOwn).map((one) => one.id),
+        ...title.row.problemFiles.unreadable.map((one) => one.id),
+      ]),
 ];
 
 const nameAll = (files: readonly string[]): string => {
@@ -54,12 +64,13 @@ const nameAll = (files: readonly string[]): string => {
  * that is itself a copy.
  *
  * @param title - The title, with its episodes and parts.
- * @param health - What the server found wrong in the libraries, or nothing before it has answered.
+ * @param health - Which files are there twice and which could not be read, or nothing before the
+ *   server has said.
  * @returns The kinds of problem the title has, and a line naming the files behind each.
  */
 const describeTitleProblems = (
   title: MediaTitle,
-  health: LibraryHealth | null | undefined,
+  health: ProblemSource | null | undefined,
 ): TitleProblems => {
   const ids = new Set(idsOf(title));
   const twice = (health?.duplicate.items ?? []).filter((item) => ids.has(item.id));
@@ -110,6 +121,6 @@ const describeTitleProblems = (
   };
 };
 
-export type { TitleProblem, TitleProblems };
+export type { ProblemSource, TitleProblem, TitleProblems };
 
 export { describeTitleProblems };

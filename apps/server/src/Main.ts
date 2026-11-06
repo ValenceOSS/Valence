@@ -1,4 +1,7 @@
 import { z } from '@hono/zod-openapi';
+import { createFanartProvider } from '@ValenceServer/fanart/createFanartProvider';
+import { createNfoWriter } from '@ValenceServer/nfo/createNfoWriter';
+import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { createDatabaseViewingState } from '@ValenceServer/plugins/host/createDatabaseViewingState';
@@ -42,6 +45,13 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
+import { createTitleListService } from '@ValenceServer/metadata/createTitleListService';
+import { createBulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
+import { createOrphanedEdits } from '@ValenceServer/metadata/createOrphanedEdits';
+import { findCandidates } from '@ValenceServer/metadata/findCandidates';
+import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
+import { seasonSourcesOfFile } from '@ValenceServer/library/seasonSourcesOfFile';
 import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
 import {
@@ -369,6 +379,7 @@ import {
   ScanRequestFolderJobSchema,
   REFRESH_REQUESTS_JOB,
   READ_ANIME_IDS_JOB,
+  CHECK_EDITED_METADATA_JOB,
   READ_LIKENESS_JOB,
   MEASURE_LOUDNESS_JOB,
   READ_KEYFRAMES_AHEAD_JOB,
@@ -634,6 +645,7 @@ const settings = createDatabaseSettingsStore({
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',
+    fanartKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
     libraryLocks: {},
@@ -1053,6 +1065,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
     accountName: await nameOfAccount(viewing.accountId),
     profileId: viewing.profileId,
     profileName: viewing.profileName,
+    fromServer: viewing.fromServer,
     item: {
       itemId: item.id,
       kind,
@@ -1104,6 +1117,7 @@ const describeListening = async ({
     accountName: await nameOfAccount(device.accountId),
     profileId: device.profileId,
     profileName: device.profileName,
+    fromServer: null,
     item: {
       itemId: track.id,
       kind: 'song',
@@ -1145,6 +1159,7 @@ const describeSession = async (session: PresenceSession): Promise<SessionData> =
   address: session.address,
   guestOf: session.guestOf,
   viaShare: session.viaShare,
+  fromServer: session.fromServer,
 });
 
 const sessions = createSessionWatch({
@@ -1580,6 +1595,7 @@ const describeBookListening = async ({
     accountName: await nameOfAccount(device.accountId),
     profileId: device.profileId,
     profileName: device.profileName,
+    fromServer: null,
     item: {
       itemId: heard.id,
       kind: 'book',
@@ -2529,6 +2545,18 @@ const jobs = createJobQueue({
           await matchArrivedRequests();
         });
       },
+      [CHECK_EDITED_METADATA_JOB]: async (jobId) => {
+        const asked = await titleMetadataService.noteCatalogueChanges((done, total) => {
+          jobs.reportProgress(jobId, saying('server.main.askingTheCatalogue'), done, total);
+        });
+
+        jobs.reportProgress(
+          jobId,
+          sayingCount('server.main.editedTitlesChecked', asked),
+          asked,
+          asked,
+        );
+      },
       [READ_ANIME_IDS_JOB]: async (jobId) => {
         const waiting = await animeIds.unchecked(
           new Date(Date.now() - ANIME_IDS_LOOKED_UP_AGAIN_MS),
@@ -2764,10 +2792,10 @@ const jobs = createJobQueue({
           return;
         }
 
-        const { libraryId, paths } = parsed.data;
+        const { libraryId, paths, keepsMatches } = parsed.data;
 
         await runLibraryWork(READ_AGAIN_JOB, libraryId, payload, async () => {
-          const read = await libraryService.runReadAgain(libraryId, paths, jobId);
+          const read = await libraryService.runReadAgain(libraryId, paths, jobId, keepsMatches);
 
           if (read.mediaIds.length === 0) {
             return;
@@ -3568,6 +3596,8 @@ const scanRuns = collectScanRuns({
   },
 });
 
+const artworkUploads = join(dirname(env.PROFILE_IMAGE_DIR), 'artwork');
+
 const libraryService = createDatabaseLibraryService({
   db,
   files: createMediaFileSystem(),
@@ -3587,6 +3617,7 @@ const libraryService = createDatabaseLibraryService({
       },
     }),
     createFilenameMetadataProvider(),
+    createFanartProvider({ readApiKey: async () => (await settings.read()).fanartKey }),
   ],
   books: bookService,
   nameChapters: createChapterNamer(bookService, (series) =>
@@ -3601,6 +3632,7 @@ const libraryService = createDatabaseLibraryService({
     ),
   ),
   images: { forget: (url) => images.forget(url) },
+  artworkUploads,
   music: {
     store: musicStore,
     artwork: musicArtwork,
@@ -4434,9 +4466,10 @@ const creditProviders = [
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
   fetchImpl: async (url) =>
-    readLinkedAddress(url) === null
+    (await readLocalPicture(url, artworkUploads)) ??
+    (readLinkedAddress(url) === null
       ? fetch(url)
-      : ((await linkedAsker.askAt(url)) ?? new Response(null, { status: 502 })),
+      : ((await linkedAsker.askAt(url)) ?? new Response(null, { status: 502 }))),
   onProblem: (url, reason) => {
     log.warn('scanner', `artwork ${url}: ${reason.message}`);
 
@@ -5092,6 +5125,37 @@ const streamService = createStreamService({
 
 const signedInSockets = createSignedInSockets();
 
+const titleEdits = createTitleEditStore(db);
+
+const titleListService = createTitleListService(db, {
+  certificationRegion: async () => (await settings.read()).certificationRegion,
+});
+
+const nfoWriter = createNfoWriter(db, undefined, (path, reason) => {
+  log.warn('scanner', `could not write ${path}: ${reason}`);
+});
+
+const titleMetadataService = createTitleMetadataService({
+  db,
+  edits: titleEdits,
+  certificationRegion: async () => (await settings.read()).certificationRegion,
+  seriesShape: async (externalId, mediaId) =>
+    (await catalogueProvider.describeSeries?.(
+      externalId,
+      undefined,
+      (await seasonSourcesOfFile(db, mediaId))?.sources ?? [],
+    )) ?? null,
+  describeCandidate: (externalId, kind) =>
+    catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
+  forgetCatalogue: (externalId, kind) => {
+    catalogueProvider.forgetAnswersAbout?.(externalId, kind);
+  },
+  onChanged: (mediaIds) => {
+    realtime.publish('media', { event: 'metadata', mediaIds }, { kind: 'everyone' });
+    void nfoWriter.writeFor(mediaIds);
+  },
+});
+
 const app = createApp({
   callerOf,
   imports: importService,
@@ -5275,6 +5339,33 @@ const app = createApp({
   brandLogo,
   unlockSecret: `${env.BETTER_AUTH_SECRET}:library-locks`,
   books: createLinkedBooks(bookService, db, linkedAsker),
+  titleList: titleListService,
+  orphanedEdits: createOrphanedEdits({
+    subjects: titleEdits.subjects,
+    titles: titleListService.subjects,
+    move: titleEdits.move,
+    forget: titleEdits.forget,
+  }),
+  findCandidates: (asked) =>
+    findCandidates(asked, {
+      searchPages: (searching) =>
+        catalogueProvider.searchPages?.(searching) ??
+        Promise.resolve({ matches: [], hasMore: false }),
+      describeTitle: (externalId, kind) =>
+        catalogueProvider.describeTitle?.(externalId, kind) ?? Promise.resolve(null),
+      findByImdbId: (imdbId, kind) =>
+        catalogueProvider.findByImdbId?.(imdbId, kind) ?? Promise.resolve(null),
+      findByTvdbId: (tvdbId, kind) =>
+        catalogueProvider.findByTvdbId?.(tvdbId, kind) ?? Promise.resolve(null),
+    }),
+  findCataloguePeople: (name) => catalogueProvider.searchPeople?.(name) ?? Promise.resolve([]),
+  titleMetadata: titleMetadataService,
+  bulkTitles: createBulkTitleEditor({
+    db,
+    read: titleMetadataService.read,
+    edit: titleMetadataService.edit,
+    undo: titleMetadataService.undo,
+  }),
   music: musicServices,
   collections: collectionService,
   videoDevices,

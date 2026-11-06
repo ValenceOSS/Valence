@@ -20,8 +20,6 @@ import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { MediaTabProps } from './MediaTab.types';
 import { say } from '@ValenceI18n/say';
 
-const NO_MEDIA: MediaSummary[] = [];
-
 const NO_ALBUMS: MusicAlbum[] = [];
 
 const NO_BOOKS: Book[] = [];
@@ -35,6 +33,16 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
  *
  * @param openedTitle - The title open, where one is.
  * @param onOpenTitle - Called with the title to open, or null to go back to every title.
+ * @param titlePlace - Which tab, season and episode of the open title to show.
+ * @param onTitlePlace - Called with where the open title has moved to.
+ * @param view - Whether titles or folders are shown.
+ * @param listPlace - Which library is listed, and how it is searched, filtered and sorted.
+ * @param onListPlace - Told how the list has changed.
+ * @param onView - Called with which is to be shown.
+ * @param folder - The folder open in the folder view.
+ * @param onFolder - Called with the folder the folder view has open.
+ * @param onFilesChanged - Told that something on the disk changed.
+ * @param onScan - Asked to scan a library once something is uploaded into it.
  * @param libraries - The libraries there are.
  * @param mayDelete - Whether whoever is looking may delete and move media.
  * @param onOpenFolder - Told a folder to open in Files.
@@ -50,6 +58,16 @@ const NO_PATHS: Readonly<Record<string, string>> = {};
 const MediaTabContents = ({
   openedTitle = null,
   onOpenTitle,
+  titlePlace,
+  onTitlePlace,
+  view,
+  onView,
+  listPlace,
+  onListPlace,
+  folder = null,
+  onFolder,
+  onFilesChanged,
+  onScan,
   libraries,
   mayDelete,
   onOpenFolder,
@@ -63,7 +81,13 @@ const MediaTabContents = ({
   onOpenInCatalogue,
 }: MediaTabProps) => {
   const cache = useQueryClient();
-  const libraryIds = useMemo(() => libraries.map((library) => library.id), [libraries]);
+  const shelfLibraryIds = useMemo(
+    () =>
+      libraries
+        .filter((library) => library.kind === 'music' || library.kind === 'books')
+        .map((library) => library.id),
+    [libraries],
+  );
   const bookLibraryIds = useMemo(
     () => libraries.filter((library) => library.kind === 'books').map((library) => library.id),
     [libraries],
@@ -75,20 +99,14 @@ const MediaTabContents = ({
     ...adminQueries.books(bookLibraryIds),
     enabled: bookLibraryIds.length > 0,
   });
-  const everyFileKey = adminQueries.everyFile(libraryIds).queryKey;
-  const askedEveryFile = useQuery({
-    ...adminQueries.everyFile(libraryIds),
-    enabled: libraryIds.length > 0,
-  });
   const askedPaths = useQuery({
-    ...adminQueries.mediaPaths(libraryIds),
-    enabled: libraryIds.length > 0,
+    ...adminQueries.mediaPaths(shelfLibraryIds),
+    enabled: shelfLibraryIds.length > 0,
   });
 
   const isLooking = useLookAgainWhenShown(true, [
     libraryQueries.all().queryKey,
-    everyFileKey,
-    adminQueries.mediaPaths(libraryIds).queryKey,
+    adminQueries.mediaPaths(shelfLibraryIds).queryKey,
     adminQueries.albums().queryKey,
     adminQueries.books(bookLibraryIds).queryKey,
   ]);
@@ -103,20 +121,27 @@ const MediaTabContents = ({
     <MediaPanel
       openedTitle={openedTitle}
       {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
+      {...(titlePlace === undefined ? {} : { titlePlace })}
+      {...(onTitlePlace === undefined ? {} : { onTitlePlace })}
+      {...(view === undefined ? {} : { view })}
+      {...(onView === undefined ? {} : { onView })}
+      {...(listPlace === undefined ? {} : { listPlace })}
+      {...(onListPlace === undefined ? {} : { onListPlace })}
+      folder={folder}
+      {...(onFolder === undefined ? {} : { onFolder })}
+      mayManageFiles={mayDelete}
+      {...(onFilesChanged === undefined ? {} : { onFilesChanged })}
+      {...(onScan === undefined ? {} : { onScan })}
       {...(onOpenInCatalogue === undefined ? {} : { onOpenInCatalogue })}
-      isUnreachable={askedEveryFile.isLoadingError || askedLibraries.isLoadingError}
-      freshness={freshnessOf(
-        [askedLibraries, askedEveryFile, askedPaths, askedAlbums, askedBooks],
-        isLooking,
-      )}
+      isUnreachable={askedLibraries.isLoadingError}
+      freshness={freshnessOf([askedLibraries, askedPaths, askedAlbums, askedBooks], isLooking)}
       stillReading={{
         libraries: askedLibraries.isPending,
-        files: askedEveryFile.isPending,
+        files: false,
         albums: askedAlbums.isPending,
         books: askedBooks.isPending,
       }}
       libraries={libraries}
-      media={askedEveryFile.data ?? NO_MEDIA}
       albums={askedAlbums.data ?? NO_ALBUMS}
       books={askedBooks.data ?? NO_BOOKS}
       paths={askedPaths.data ?? NO_PATHS}
@@ -177,12 +202,6 @@ const MediaTabContents = ({
               );
 
               if (isGone) {
-                const isKept = (entry: MediaSummary) =>
-                  entry.id !== item.id && (seriesId === null || entry.seriesId !== seriesId);
-
-                cache.setQueryData(everyFileKey, (current: MediaSummary[] = []) =>
-                  current.filter(isKept),
-                );
                 readTheLibraryAgain();
               }
 

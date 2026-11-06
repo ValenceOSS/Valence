@@ -17,16 +17,32 @@ import type { FormFieldProps } from './FormField.types';
  *
  * @param label - What is being asked for.
  * @param description - What answering it does, said in a line or two.
+ * @param aside - Something small beside the label, such as a badge saying where a value came from.
  * @param error - What is wrong with the answer, in red beneath it, for a control that does not say
  *   so itself.
  * @param hint - Anything to say after the control, such as what happens to what was typed.
  * @param children - The control that answers it.
  * @param className - Extra classes for the caller's own layout.
  */
-const FormField = ({ label, description, hint, error, children, className }: FormFieldProps) => (
+const FormField = ({
+  label,
+  description,
+  aside,
+  hint,
+  error,
+  children,
+  className,
+}: FormFieldProps) => (
   <div data-slot="form-field" className={cn('flex flex-col gap-2', className)}>
     <div className="flex flex-col gap-0.5">
-      <h4 className={cn(FIELD_TEXT.label, 'leading-tight')}>{label}</h4>
+      {aside === undefined ? (
+        <h4 className={cn(FIELD_TEXT.label, 'leading-tight')}>{label}</h4>
+      ) : (
+        <div className="flex min-h-6 items-center gap-2">
+          <h4 className={cn(FIELD_TEXT.label, 'leading-tight')}>{label}</h4>
+          {aside}
+        </div>
+      )}
 
       {description === undefined ? null : <span className={FIELD_TEXT.note}>{description}</span>}
     </div>
@@ -39,7 +55,11 @@ const FormField = ({ label, description, hint, error, children, className }: For
       </span>
     )}
 
-    {hint === undefined ? null : <span className={FIELD_TEXT.note}>{hint}</span>}
+    {hint === undefined ? null : (
+      <div className={cn(FIELD_TEXT.note, 'flex flex-wrap items-center gap-x-2 gap-y-1')}>
+        {hint}
+      </div>
+    )}
   </div>
 );
 

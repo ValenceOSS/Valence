@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { act, render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -97,6 +97,39 @@ describe('FavouritesShelf', () => {
     );
 
     expect(drawn.queryByText('Favourites')).toBeNull();
+  });
+
+  it('stays on the shelf while something newly kept is read, and lets go of what was unkept at once', async () => {
+    const cache = aCache(['b', 'a'], [aFilm('a', 'Arrival'), aFilm('b', 'Blade Runner 2049')]);
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <FavouritesShelf
+          viewerId={VIEWER}
+          watchable={FILMS}
+          progress={new Map()}
+          onOpen={jest.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await drawn.findByText('Favourites')).toBeTruthy();
+
+    await act(async () => {
+      cache.setQueryData(viewingQueries.favourites(VIEWER).queryKey, ['c', 'b', 'a']);
+      await new Promise((settle) => setTimeout(settle, 20));
+    });
+
+    expect(drawn.getByText('Favourites')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Arrival' })).toBeTruthy();
+
+    await act(async () => {
+      cache.setQueryData(viewingQueries.favourites(VIEWER).queryKey, ['c', 'b']);
+      await new Promise((settle) => setTimeout(settle, 20));
+    });
+
+    expect(drawn.getByText('Favourites')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Arrival' })).toBeNull();
+    expect(drawn.getByRole('button', { name: 'Blade Runner 2049' })).toBeTruthy();
   });
 
   it('sets a display name so devtools can identify it', () => {

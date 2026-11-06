@@ -12,6 +12,7 @@ import {
   mediaItem,
   mediaPart,
   rating,
+  seasonSource,
   series,
   user,
   viewerProfile,
@@ -19,6 +20,7 @@ import {
 } from '#dialect/Schema';
 import { createDatabaseLibraryService } from './createDatabaseLibraryService';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
+import type { MetadataProvider } from './MetadataProvider';
 import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -812,6 +814,51 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
   });
 });
 
+describe('what the folder view says of files', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('reads what the library holds of some paths, its left-out rules, and its programmes’ folders', async () => {
+    const { db, service } = await aLibrary();
+
+    await db.insert(series).values({
+      id: 'folder-show',
+      libraryId: FILMS_ID,
+      key: 'folder:/films/A Show',
+      title: 'A Show',
+    });
+    await service.leaveOut(FILMS_ID, { path: '/films/brazil.mkv', note: null }, null);
+
+    await db
+      .update(mediaItem)
+      .set({ path: '/films/Arrival (2016)/arrival.mkv' })
+      .where(eq(mediaItem.id, 'arrival'));
+
+    const facts = await service.readEntryFacts(
+      FILMS_ID,
+      ['/films/alien-cut.mkv', '/films/nothing.mkv'],
+      ['/films/A Show', '/films/Elsewhere', '/films/Arrival (2016)', '/films'],
+    );
+
+    expect(facts.media).toEqual({
+      '/films/alien-cut.mkv': {
+        id: 'alien-cut',
+        rootId: 'alien',
+        seriesId: null,
+        title: 'Alien',
+        seriesTitle: null,
+        isMatched: false,
+        isExtra: false,
+      },
+    });
+    expect(facts.shows).toEqual({
+      '/films/A Show': { seriesId: 'folder-show', title: 'A Show' },
+    });
+    expect(facts.films).toEqual({
+      '/films/Arrival (2016)': { rootId: 'arrival', title: 'Arrival' },
+    });
+    expect(facts.leftOut).toEqual([{ path: '/films/brazil.mkv', isFolder: false }]);
+    expect(facts.issues).toEqual({});
+  });
+});
+
 describe('leaving files out of a library', { timeout: STARTING_POSTGRES_MS }, () => {
   /**
    * The library of films, its files on the disk exactly as stored, so a scan has nothing to read
@@ -1161,5 +1208,249 @@ describe('a film kept as several files', { timeout: STARTING_POSTGRES_MS }, () =
 
     expect(parts.map((part) => part.path)).toEqual([first, second]);
     expect(items.map((item) => item.path)).not.toContain(second);
+  });
+});
+
+describe('a season read from another show', { timeout: STARTING_POSTGRES_MS }, () => {
+  /**
+   * A show kept in its folder, whose seventh season the catalogue lists as a show of its own.
+   *
+   * @param extra - What else the catalogue answers.
+   * @returns The database, the service and what the catalogue was asked for a show's shape.
+   */
+  const aRevivedShow = async (extra: Partial<MetadataProvider> = {}) => {
+    const db = await aMigratedDatabase();
+
+    await db.insert(library).values({ id: SHOWS_ID, name: 'Shows', kind: 'shows', path: '/shows' });
+    await db
+      .insert(series)
+      .values({ id: 'old', libraryId: SHOWS_ID, key: 'folder:/shows/Old', title: 'Old' });
+    await db.insert(mediaItem).values(
+      [1, 2].map((episodeNumber) =>
+        aFilm(`s7e${episodeNumber.toString()}`, `Episode ${episodeNumber.toString()}`, {
+          libraryId: SHOWS_ID,
+          path: `/shows/Old/Season 07/Old - S07E0${episodeNumber.toString()}.mkv`,
+          seriesId: 'old',
+          seriesTitle: 'Old',
+          seasonNumber: 7,
+          episodeNumber,
+          externalId: '100',
+        }),
+      ),
+    );
+
+    const describeSeries = vi.fn(
+      (
+        externalId: string,
+        _order?: string,
+        borrowed: readonly {
+          seasonNumber: number;
+          externalId: string;
+          externalSeason: number;
+        }[] = [],
+      ) =>
+        Promise.resolve({
+          seasons: [
+            ...(externalId === '900'
+              ? [{ seasonNumber: 1, episodeCount: 6, name: 'Season 1', episodes: [] }]
+              : [{ seasonNumber: 6, episodeCount: 1, episodes: [] }]),
+            ...borrowed.map((one) => ({
+              seasonNumber: one.seasonNumber,
+              episodeCount: 6,
+              episodes: [],
+            })),
+          ],
+        }),
+    );
+    const enqueue = vi.fn(() => Promise.resolve('job'));
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: { ...JOBS, enqueue },
+      providers: [
+        {
+          name: 'catalogue',
+          describe: () => Promise.resolve(null),
+          describeSeries,
+          describeTitle: (externalId) =>
+            Promise.resolve(
+              externalId === '900'
+                ? {
+                    title: 'Old',
+                    year: 2026,
+                    overview: null,
+                    posterUrl: null,
+                    backdropUrl: null,
+                    genres: [],
+                    runtimeMinutes: null,
+                    cast: [],
+                    trailerKey: null,
+                  }
+                : null,
+            ),
+          ...extra,
+        },
+      ],
+    });
+
+    return { db, service, describeSeries, enqueue };
+  };
+
+  it('keeps which show and season a season is read from, and reads the season again', async () => {
+    const { db, service, enqueue } = await aRevivedShow();
+
+    await expect(
+      service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 }),
+    ).resolves.toEqual({ corrected: 2, jobId: 'job' });
+    await expect(service.readSeasonSource?.('s7e2')).resolves.toEqual({
+      source: { externalId: '900', externalSeason: 1, title: 'Old', year: 2026 },
+      canChoose: true,
+    });
+    expect(enqueue).toHaveBeenCalledWith(
+      'library.readAgain',
+      {
+        libraryId: SHOWS_ID,
+        paths: ['/shows/Old/Season 07/Old - S07E01.mkv', '/shows/Old/Season 07/Old - S07E02.mkv'],
+        keepsMatches: true,
+      },
+      SHOWS_ID,
+    );
+
+    await service.chooseSeasonSource?.('s7e2', { externalId: '900', externalSeason: 1 });
+
+    await expect(db.select().from(seasonSource)).resolves.toHaveLength(1);
+  });
+
+  it('turns away a season the other show does not have, and a show the catalogue does not know', async () => {
+    const { db, service } = await aRevivedShow();
+
+    await expect(
+      service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 2 }),
+    ).resolves.toBe('noSuchSeason');
+    await expect(
+      service.chooseSeasonSource?.('s7e1', { externalId: '404', externalSeason: 1 }),
+    ).resolves.toBe('noSuchSeason');
+    await expect(db.select().from(seasonSource)).resolves.toEqual([]);
+  });
+
+  it('lays the season out from the other show on the show’s page', async () => {
+    const { service, describeSeries } = await aRevivedShow();
+
+    await service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 });
+
+    const detail = await service.getShow(SERVER, SHOWS_ID, 'old');
+
+    expect(describeSeries).toHaveBeenLastCalledWith('100', undefined, [
+      expect.objectContaining({ seasonNumber: 7, externalId: '900', externalSeason: 1 }),
+    ]);
+    expect(detail?.shape?.map((one) => one.seasonNumber)).toEqual([6, 7]);
+  });
+
+  it('goes back to the show’s own season', async () => {
+    const { db, service } = await aRevivedShow();
+
+    await service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 });
+    await service.chooseSeasonSource?.('s7e2', null);
+
+    await expect(service.readSeasonSource?.('s7e1')).resolves.toEqual({
+      source: null,
+      canChoose: true,
+    });
+    await expect(db.select().from(seasonSource)).resolves.toEqual([]);
+  });
+
+  it('lists the seasons another show has, to choose from', async () => {
+    const { service } = await aRevivedShow();
+
+    await expect(service.readCatalogueSeasons?.('900')).resolves.toEqual({
+      seasons: [{ seasonNumber: 1, name: 'Season 1', episodeCount: 6, airDate: null }],
+    });
+  });
+
+  it('lays what airs in the other show out on the calendar under the series’ own season', async () => {
+    const { service } = await aRevivedShow({
+      describeAiringSeason: (externalId) =>
+        Promise.resolve(
+          externalId === '900'
+            ? {
+                seasonNumber: 1,
+                episodes: [
+                  { episodeNumber: 2, title: 'Two', airDate: '2026-10-05', stillUrl: null },
+                  { episodeNumber: 3, title: 'Three', airDate: '2026-10-12', stillUrl: null },
+                ],
+              }
+            : {
+                seasonNumber: 7,
+                episodes: [
+                  { episodeNumber: 3, title: 'Wrong', airDate: '2026-10-12', stillUrl: null },
+                ],
+              },
+        ),
+    });
+
+    await service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 });
+
+    const episodes = await service.releaseCalendar(SERVER, '2026-10-01', '2026-10-31');
+
+    expect(
+      episodes.map((episode) => [
+        episode.externalId,
+        episode.seasonNumber,
+        episode.episodeNumber,
+        episode.title,
+        episode.isHeld,
+      ]),
+    ).toEqual([
+      ['100', 7, 2, 'Two', true],
+      ['100', 7, 3, 'Three', false],
+    ]);
+  });
+
+  it('says what comes up next in the other show, under the series’ own season', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-01T00:00:00.000Z') });
+
+    try {
+      const { service } = await aRevivedShow({
+        describeNextEpisode: (externalId) =>
+          Promise.resolve(
+            externalId === '900'
+              ? { seasonNumber: 1, episodeNumber: 3, title: 'Three', airDate: '2026-10-12' }
+              : null,
+          ),
+      });
+
+      await service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 });
+
+      const coming = await service.comingUp(SERVER);
+
+      expect(coming.map(({ episode }) => [episode.seasonNumber, episode.episodeNumber])).toEqual([
+        [7, 3],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cannot read a season of a series filed by its title rather than a folder from elsewhere', async () => {
+    const { db, service } = await aRevivedShow();
+
+    await db.update(series).set({ key: 'title:old' }).where(eq(series.id, 'old'));
+
+    await expect(service.readSeasonSource?.('s7e1')).resolves.toEqual({
+      source: null,
+      canChoose: false,
+    });
+    await expect(
+      service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 }),
+    ).resolves.toBeNull();
+  });
+
+  it('says the catalogue could not be asked rather than that the show has no such season', async () => {
+    const { service } = await aRevivedShow({ describeSeries: () => Promise.resolve(null) });
+
+    await expect(
+      service.chooseSeasonSource?.('s7e1', { externalId: '900', externalSeason: 1 }),
+    ).resolves.toBe('catalogueUnavailable');
   });
 });

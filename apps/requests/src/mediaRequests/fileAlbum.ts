@@ -8,7 +8,7 @@ import { partsOfCollaboration } from '@ValenceCore/functions/partsOfCollaboratio
 import { isSameTitle } from '@ValenceRequests/mediaRequests/isSameTitle';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { readAudioTags } from '@ValenceRequests/mediaRequests/readAudioTags';
-import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { AudioTags } from '@ValenceRequests/mediaRequests/AudioTags';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';

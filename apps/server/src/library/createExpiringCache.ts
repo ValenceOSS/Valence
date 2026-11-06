@@ -2,6 +2,7 @@ type ExpiringCache<T> = {
   get: (key: string) => T | undefined;
   set: (key: string, value: T) => void;
   delete: (key: string) => void;
+  forgetWhere: (isForgotten: (key: string) => boolean) => void;
   clear: () => void;
 };
 
@@ -81,6 +82,13 @@ const createExpiringCache = <T>(
 
     delete: (key) => {
       held.delete(key);
+    },
+    forgetWhere: (isForgotten) => {
+      for (const key of held.keys()) {
+        if (isForgotten(key)) {
+          held.delete(key);
+        }
+      }
     },
     clear: () => {
       held.clear();

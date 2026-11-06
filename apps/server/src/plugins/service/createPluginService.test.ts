@@ -933,6 +933,7 @@ describe('telling plugins what happened', () => {
           accountName: 'Ada',
           profileId,
           profileName: 'Ada',
+          fromServer: null,
           item: {
             itemId: 'item-1',
             kind: 'movie',
@@ -1171,6 +1172,7 @@ describe('telling plugins what happened', () => {
         accountName: 'Ada',
         profileId: 'profile-1',
         profileName: 'Ada',
+        fromServer: null,
         item: {
           itemId: 'item-1',
           kind: 'movie',

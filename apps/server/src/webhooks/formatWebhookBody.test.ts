@@ -59,6 +59,7 @@ const aSongStopped: WebhookPayload = {
     accountName: 'Ada',
     profileId: 'profile-1',
     profileName: 'Ada',
+    fromServer: null,
     item: {
       itemId: 'track-1',
       kind: 'song',
@@ -101,6 +102,32 @@ describe('formatWebhookBody', () => {
     ).toBe(
       'Ada started listening to Running Up That Hill (1985) on iPhone 17 Pro Max (Valence for iOS), played directly.',
     );
+  });
+
+  it('names a linked server once, rather than again as the device it played on', () => {
+    const {
+      positionSeconds: _position,
+      durationSeconds: _duration,
+      ...playing
+    } = aSongStopped.data;
+
+    expect(
+      formatWebhookBody('ntfy', {
+        ...anEnvelope,
+        event: 'playback.started',
+        data: {
+          ...playing,
+          accountId: null,
+          accountName: null,
+          profileId: null,
+          profileName: null,
+          fromServer: 'Kai’s Valence',
+          deviceLabel: 'Kai’s Valence',
+          item: { ...playing.item, kind: 'movie', title: 'The Long Night', year: 2021 },
+          mode: 'Transcode',
+        },
+      }).body,
+    ).toBe('Someone from Kai’s Valence started watching The Long Night (2021), transcoded.');
   });
 
   it('sends the whole envelope to a generic receiver', () => {
@@ -754,6 +781,7 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
     accountName: 'Dan',
     profileId: 'profile-1',
     profileName: 'Connie',
+    fromServer: null,
     clientId: 'tab-1',
     deviceLabel: "Connie's iPhone",
     clientLabel: null,

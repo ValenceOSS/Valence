@@ -1,3 +1,4 @@
+import { TitleFieldSchema } from '@ValenceContracts/schemas/TitleEdit';
 import {
   ArtworkChoicesSchema,
   ArtworkKindSchema,
@@ -250,6 +251,7 @@ const CorrectionRequest = z
   .object({
     reference: z.string().min(1),
     kind: z.enum(['tv', 'movie']).optional(),
+    keep: z.array(TitleFieldSchema).optional(),
   })
   .openapi('CorrectionRequest');
 
@@ -285,12 +287,17 @@ const correctMatchRoute = createRoute({
   },
 });
 
+const ArtworkPartQuerySchema = z.object({
+  season: z.coerce.number().int().min(0).max(9999).optional(),
+  episode: z.coerce.number().int().min(1).max(99_999).optional(),
+});
+
 const artworkChoicesRoute = createRoute({
   method: 'get',
   path: '/api/media/{id}/artwork',
   tags: ['Library'],
   summary: 'List the posters, backdrops and logos the catalogue has for an item’s title',
-  request: { params: z.object({ id: z.string().uuid() }) },
+  request: { params: z.object({ id: z.string().uuid() }), query: ArtworkPartQuerySchema },
   responses: {
     200: {
       description: 'What there is to choose from, and what is chosen now',
@@ -316,6 +323,7 @@ const chooseArtworkRoute = createRoute({
   summary: 'Choose one of the catalogue’s pictures for an item’s title, for every file of it',
   request: {
     params: z.object({ id: z.string().uuid(), kind: ArtworkKindSchema }),
+    query: ArtworkPartQuerySchema,
     body: {
       content: { 'application/json': { schema: ChooseArtworkSchema.openapi('ChooseArtwork') } },
     },
@@ -345,7 +353,10 @@ const forgetArtworkRoute = createRoute({
   path: '/api/media/{id}/artwork/{kind}',
   tags: ['Library'],
   summary: 'Go back to the catalogue’s own picture for an item’s title',
-  request: { params: z.object({ id: z.string().uuid(), kind: ArtworkKindSchema }) },
+  request: {
+    params: z.object({ id: z.string().uuid(), kind: ArtworkKindSchema }),
+    query: ArtworkPartQuerySchema,
+  },
   responses: {
     200: {
       description: 'The choice is gone, with the job putting the catalogue’s pick back',

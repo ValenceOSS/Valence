@@ -1188,4 +1188,4 @@ export type {
   TranscoderSocket,
 };
 
-export { createTranscoderClient, readSocketPath, TranscoderError };
+export { createTranscoderClient, readSocketPath, TranscoderError, MediaProbeSchema };

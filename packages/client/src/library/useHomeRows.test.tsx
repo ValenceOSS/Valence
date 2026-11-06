@@ -379,6 +379,230 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('keeps the genres in their order when marking something watched changes what somebody leans towards', async () => {
+    const genres = ['Comedy', 'Drama', 'Action', 'Family', 'Crime', 'Mystery', 'Horror'];
+
+    facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
+    aLibrary({
+      byGenre: Object.fromEntries(genres.map((genre) => [genre, films(genre, 5)])),
+      byId: [film('scary', ['Horror'])],
+    });
+
+    let progress = new Map<string, WatchProgress>();
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, [LIBRARY], progress, true, true),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual(
+        genres.slice(0, 6).map((genre) => `genre:${genre}`),
+      );
+    });
+
+    itemsMock.mockClear();
+    progress = new Map([['scary', { ...halfWay('scary'), isFinished: true }]]);
+    rerender();
+
+    expect(result.current.isReading).toBe(false);
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual(
+        genres.slice(0, 6).map((genre) => `genre:${genre}`),
+      );
+    });
+    expect(itemsMock).not.toHaveBeenCalled();
+  });
+
+  it('works out what somebody leans towards again when another profile takes over', async () => {
+    facetsMock.mockResolvedValue({ genres: ['Comedy', 'Drama'], decades: [], maxRating: 10 });
+    aLibrary({
+      byGenre: { Drama: films('drama', 5, 'Drama'), Comedy: films('comedy', 5, 'Comedy') },
+      byId: [film('sad', ['Drama'])],
+    });
+
+    let progress = new Map<string, WatchProgress>();
+    let isProgressKnown = true;
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, [LIBRARY], progress, true, isProgressKnown),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual(['genre:Comedy', 'genre:Drama']);
+    });
+
+    isProgressKnown = false;
+    rerender();
+
+    expect(result.current.isReading).toBe(true);
+
+    progress = new Map([['sad', { ...halfWay('sad'), isFinished: true }]]);
+    isProgressKnown = true;
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'picked',
+        'genre:Drama',
+        'genre:Comedy',
+      ]);
+    });
+  });
+
+  it('works out the next profile’s leanings from what they liked, not from the last profile’s still held', async () => {
+    const funny = film('funny', ['Comedy']);
+    const sad = film('sad', ['Drama']);
+    const answers: ((value: { items: MediaSummary[]; total: number }) => void)[] = [];
+
+    facetsMock.mockResolvedValue({ genres: ['Drama', 'Comedy'], decades: [], maxRating: 10 });
+    aLibrary({
+      byGenre: { Drama: films('drama', 5, 'Drama'), Comedy: films('comedy', 5, 'Comedy') },
+      byId: [funny],
+    });
+
+    let progress = new Map([['funny', { ...halfWay('funny'), isFinished: true }]]);
+    let isProgressKnown = true;
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, [LIBRARY], progress, true, isProgressKnown),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'picked',
+        'genre:Comedy',
+        'genre:Drama',
+      ]);
+    });
+
+    const byGenre: Record<string, MediaSummary[]> = {
+      Drama: films('drama', 5, 'Drama'),
+      Comedy: films('comedy', 5, 'Comedy'),
+    };
+
+    itemsMock.mockImplementation(
+      (_libraryId: string, options: { ids?: string[]; genre?: string }) => {
+        if (options.ids?.includes('sad') === true) {
+          return new Promise<{ items: MediaSummary[]; total: number }>((resolve) => {
+            answers.push(resolve);
+          });
+        }
+
+        const items = options.genre === undefined ? [] : (byGenre[options.genre] ?? []);
+
+        return Promise.resolve({ items, total: items.length });
+      },
+    );
+
+    isProgressKnown = false;
+    rerender();
+
+    progress = new Map([['sad', { ...halfWay('sad'), isFinished: true }]]);
+    isProgressKnown = true;
+    rerender();
+
+    await waitFor(() => {
+      expect(answers.length).toBeGreaterThan(0);
+    });
+
+    expect(result.current.isReading).toBe(true);
+
+    act(() => {
+      for (const answer of answers) {
+        answer({ items: [sad], total: 1 });
+      }
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'picked',
+        'genre:Drama',
+        'genre:Comedy',
+      ]);
+    });
+  });
+
+  it('never takes the rows away once drawn, while a row that has become worth showing is read', async () => {
+    const watching = film('watching', ['Drama']);
+    const answers: ((value: { items: MediaSummary[]; total: number }) => void)[] = [];
+
+    facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
+    aLibrary({ recent: films('new', 5, 'Drama'), byGenre: { Drama: films('drama', 5, 'Drama') } });
+
+    let progress = new Map<string, WatchProgress>();
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, [LIBRARY], progress, true, true),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual(['recent', 'genre:Drama']);
+    });
+
+    itemsMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answers.push(resolve);
+        }),
+    );
+
+    progress = new Map([['watching', halfWay('watching')]]);
+    rerender();
+
+    expect(result.current.isReading).toBe(false);
+    expect(result.current.rails.map((rail) => rail.id)).toEqual(['recent', 'genre:Drama']);
+
+    act(() => {
+      for (const answer of answers) {
+        answer({ items: [watching], total: 1 });
+      }
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toContain('resume');
+    });
+  });
+
+  it('keeps every row showing what it showed while the rows of fewer libraries are read, from the first draw on', async () => {
+    const OTHER = '3f2504e0-4f89-41d3-9a0c-0305e82c3302';
+
+    facetsMock.mockResolvedValue({ genres: ['Comedy', 'Drama'], decades: [], maxRating: 10 });
+    aLibrary({
+      recent: films('new', 5, 'Comedy'),
+      byGenre: { Comedy: films('comedy', 5), Drama: films('drama', 5) },
+    });
+
+    let watchable: string[] = [];
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, watchable, new Map(), true, true),
+      { wrapper: inACache },
+    );
+
+    watchable = [LIBRARY, OTHER];
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'recent',
+        'genre:Comedy',
+        'genre:Drama',
+      ]);
+    });
+
+    itemsMock.mockImplementation(() => new Promise(() => {}));
+
+    watchable = [LIBRARY];
+    rerender();
+
+    expect(result.current.isReading).toBe(false);
+    expect(result.current.rails.map((rail) => rail.id)).toEqual([
+      'recent',
+      'genre:Comedy',
+      'genre:Drama',
+    ]);
+  });
+
   it('hands back the same rows when drawn again with nothing changed, so a page can skip them', async () => {
     const watchable = [LIBRARY];
     const progress = new Map<string, WatchProgress>();

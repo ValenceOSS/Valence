@@ -22,6 +22,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { AdminArea } from '@ValenceScreens/components/AdminArea/AdminArea';
+import { searchOfList } from './searchOfList';
 import { visibleAdminSections } from '@ValenceScreens/components/AdminArea/visibleAdminSections';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeAcceleration } from '@ValenceScreens/components/AdminArea/describeAcceleration';
@@ -77,7 +78,26 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job, folder, tab, title, media, webhook, server } = search;
+  const {
+    job,
+    folder,
+    tab,
+    title,
+    media,
+    webhook,
+    server,
+    titleTab,
+    season,
+    episode,
+    part,
+    mediaView,
+    library,
+    find,
+    quick,
+    order,
+    desc,
+    filter,
+  } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -95,7 +115,19 @@ const AdminPage = () => {
   const sections = visibleAdminSections(requesting.data?.isEnabled ?? false);
   const items = sections.flatMap((section) => section.items);
   const showing =
-    items.find((one) => one.id === (panel === 'logs' ? 'jobs' : panel))?.id ?? 'overview';
+    items.find(
+      (one) => one.id === (panel === 'logs' ? 'jobs' : panel === 'files' ? 'media' : panel),
+    )?.id ?? 'overview';
+  const mediaList = {
+    library: library ?? null,
+    search: find ?? '',
+    show: quick ?? 'all',
+    sort: order ?? 'title',
+    isDescending: desc === true,
+    filters: filter ?? [],
+  };
+  const shownMediaView =
+    panel === 'files' || folder !== undefined ? 'folders' : (mediaView ?? 'titles');
   const showingName = items.find((one) => one.id === showing)?.label ?? '';
   const showingGroup =
     sections.find((section) => section.items.some((one) => one.id === showing))?.label ?? null;
@@ -432,11 +464,71 @@ const AdminPage = () => {
                   },
                 });
               }}
-              onMediaTitle={(id) => {
+              mediaList={mediaList}
+              onMediaList={(place) => {
                 void go({
                   to: '/admin/$panel',
                   params: { panel: 'media' },
-                  search: id === null ? {} : { media: id },
+                  search: {
+                    ...(mediaView === undefined ? {} : { mediaView }),
+                    ...(folder === undefined ? {} : { folder }),
+                    ...searchOfList(place),
+                  },
+                  replace: true,
+                });
+              }}
+              onMediaTitle={(id, place) => {
+                const underneath = {
+                  ...(mediaView === undefined ? {} : { mediaView }),
+                  ...(folder === undefined ? {} : { folder }),
+                  ...searchOfList(mediaList),
+                };
+
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search:
+                    id === null
+                      ? underneath
+                      : {
+                          ...underneath,
+                          media: id,
+                          ...(place === undefined || place.tab === 'details'
+                            ? {}
+                            : { titleTab: place.tab }),
+                          ...(place?.season === null || place?.season === undefined
+                            ? {}
+                            : { season: place.season }),
+                          ...(place?.episode === null || place?.episode === undefined
+                            ? {}
+                            : { episode: place.episode }),
+                          ...(place?.isSeasonPage === true ? { part: 'season' as const } : {}),
+                        },
+                });
+              }}
+              mediaPlace={{
+                tab: titleTab ?? 'details',
+                season: season ?? null,
+                episode: episode ?? null,
+                isSeasonPage: part === 'season',
+              }}
+              onMediaPlace={(place) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: {
+                    ...(mediaView === undefined ? {} : { mediaView }),
+                    ...(folder === undefined ? {} : { folder }),
+                    ...searchOfList(mediaList),
+                    ...(media === undefined ? {} : { media }),
+                    ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
+                    ...(place.season === null ? {} : { season: place.season }),
+                    ...(place.episode === null ? {} : { episode: place.episode }),
+                    ...(place.isSeasonPage ? { part: 'season' as const } : {}),
+                  },
+                  replace:
+                    place.episode === (episode ?? null) &&
+                    place.isSeasonPage === (part === 'season'),
                 });
               }}
               onLinkedServer={(id) => {
@@ -456,8 +548,32 @@ const AdminPage = () => {
               onOpenFolder={(path) => {
                 void go({
                   to: '/admin/$panel',
-                  params: { panel: 'files' },
-                  search: { folder: path },
+                  params: { panel: 'media' },
+                  search: { mediaView: 'folders', folder: path },
+                });
+              }}
+              mediaView={shownMediaView}
+              onMediaView={(view) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: {
+                    ...searchOfList(mediaList),
+                    ...(view === 'titles' ? {} : { mediaView: view }),
+                  },
+                  replace: true,
+                });
+              }}
+              onMediaFolder={(path) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'media' },
+                  search: {
+                    ...searchOfList(mediaList),
+                    mediaView: 'folders',
+                    ...(path === null ? {} : { folder: path }),
+                  },
+                  replace: true,
                 });
               }}
               onJobChange={(next) => {

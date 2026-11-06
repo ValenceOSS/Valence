@@ -63,6 +63,7 @@ const OVERVIEW = {
     hasCatalogueKey: true,
     hasAudioDbKey: false,
     hasOmdbKey: false,
+    hasFanartKey: false,
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',

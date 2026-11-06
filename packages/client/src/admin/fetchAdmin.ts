@@ -63,6 +63,7 @@ const AdminOverviewSchema = z.object({
     hasCatalogueKey: z.boolean(),
     hasAudioDbKey: z.boolean().default(false),
     hasOmdbKey: z.boolean().default(false),
+    hasFanartKey: z.boolean().default(false),
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string().default(''),

@@ -182,6 +182,8 @@ const ENGLISH = {
     '# titles on disk. Check what you’re sending before you share it.',
   'client.admin.logsAsText.valenceLogExport': '# Valence log export',
   'client.admin.readRefusal.thatCouldNotBeDoneTry': 'Couldn’t do that. Try again in a moment.',
+  'client.admin.readTitlesTogether.theTitlesCouldNotBeRead': 'The titles could not be read.',
+  'client.admin.undoTitlesTogether.theChangeCouldNotBeUndone': 'The change could not be undone.',
   'client.books.describeLength.hoursHOverMin': '{hours} h {over} min',
   'client.books.describeReadingPlace.chapterTitlePagePage': '{chapterTitle} · page {page}',
   'client.books.describeReadingPlace.chapterTitlePagePageOfPageCount':
@@ -883,6 +885,8 @@ const ENGLISH = {
   'common.count.unreadable.other': '{count} unreadable',
   'common.count.updated.one': '{count} updated',
   'common.count.updated.other': '{count} updated',
+  'common.count.votes.one': '{count} vote',
+  'common.count.votes.other': '{count} votes',
   'common.count.years.one': '{count} year',
   'common.count.years.other': '{count} years',
   'common.countEpisodesLeft.one': '{count} episode left',
@@ -1686,6 +1690,7 @@ const ENGLISH = {
   'common.titleCountEpisodes.other': '{title} — {count} episodes',
   'common.titleIsRequested': '{title} requested',
   'common.titleTheTrailer': '{title} trailer',
+  'common.titleYear': '{title} ({year})',
   'common.today': 'Today',
   'common.tomorrow': 'Tomorrow',
   'common.took': 'Took',
@@ -2291,14 +2296,27 @@ const ENGLISH = {
   'error.library.thatDiskIsReadOnlyForMoving':
     'One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.',
   'error.library.thatDoesNotLookLikeA': 'That doesn’t look like a catalogue URL or ID.',
+  'error.library.thatEpisodeOrderCouldNotBeRead': 'That episode order couldn’t be read.',
+  'error.library.thatExtraChoiceCouldNotBeRead':
+    'That couldn’t be read: say what kind of extra the file is and which title it belongs to, or that it is not an extra.',
   'error.library.thatFileIsNotInsideItsLibrary':
     'That file isn’t inside its library, so Valence won’t move it.',
   'error.library.thatIsNotInsideThisLibrary': 'That isn’t inside this library.',
   'error.library.thatIsPastTheEndThe':
     'That’s past the end — the file is {durationSeconds} seconds long.',
   'error.library.thatPathIsNotAReadable': 'That path isn’t a readable folder.',
+  'error.library.thatSeasonCouldNotBeRead': 'That season couldn’t be read.',
+  'error.library.thatShowHasNoSuchSeason': 'That show doesn’t have that season in the catalogue.',
+  'error.library.thatVersionChoiceCouldNotBeRead':
+    'That choice for the version couldn’t be read: a name is at most 64 characters.',
   'error.library.theFileCouldNotBeMoved': 'Couldn’t move the file.',
   'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
+  'error.library.thoseEpisodeNumbersCouldNotBeRead':
+    'Those episode numbers couldn’t be read: a season is 0 or more, an episode 1 or more, and a last episode comes after the first.',
+  'error.library.thoseFilesCouldNotBeRead':
+    'That couldn’t be read: say which files to rename, and what to do where a name is taken.',
+  'error.library.thoseRulesCouldNotBeRead':
+    'Those rules couldn’t be read: each finds a genre of at most 64 characters, and a library has at most 200.',
   'error.library.valenceMayNotMoveFilesThere':
     'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
@@ -2354,6 +2372,12 @@ const ENGLISH = {
     'The stream’s server didn’t answer. It may be down, or not reachable from here.',
   'error.live.theStreamIsGone':
     'The stream isn’t there any more. The playlist it came from may be out of date.',
+  'error.metadata.thatChangeWasChangedSince':
+    'That change can’t be undone, because something it changed has been changed again since.',
+  'error.metadata.thatValueCannotBeSaved':
+    'That can’t be saved. The field isn’t one this title has, or the value isn’t one it accepts.',
+  'error.metadata.thoseTitlesCouldNotBeListed':
+    'Those titles couldn’t be listed: the library, order or filters asked for aren’t ones Valence knows.',
   'error.music.aSmartPlaylistFillsItself':
     'A smart playlist fills itself from its rules, so nothing can be added to it, moved or taken out.',
   'error.music.chooseAProfileFirst': 'Choose a profile first.',
@@ -2458,6 +2482,8 @@ const ENGLISH = {
     'A role with administrator permission can’t be deleted. Change its permissions, or move its members to another role first.',
   'error.role.noSuchRole': 'No such role.',
   'error.samples.thatIsForSomebodyWhoMay': 'Only people allowed to request music can do that.',
+  'error.segments.thoseMarkersCouldNotBeRead':
+    'Those skip markers couldn’t be read: each ends after it starts, and a file has at most 16.',
   'error.server.aFolderCannotBeMovedInto': 'A folder can’t be moved into itself.',
   'error.server.aNameIsOnePlainName': 'Names can’t contain slashes or start or end with a space.',
   'error.server.noLibraryOfKind': 'There’s no {kind} library to put it in.',
@@ -3463,8 +3489,13 @@ const ENGLISH = {
   'screens.admin.auditActionNames.mediaArtworkReset': 'Artwork reset',
   'screens.admin.auditActionNames.mediaMatchFixed': 'Match fixed',
   'screens.admin.auditActionNames.mediaMatchReset': 'Match reset',
+  'screens.admin.auditActionNames.mediaMetadataChanged': 'Metadata changed',
+  'screens.admin.auditActionNames.mediaMetadataUndone': 'Metadata change undone',
   'screens.admin.auditActionNames.mediaMoved': 'Title moved',
+  'screens.admin.auditActionNames.mediaRefreshed': 'Title refreshed',
   'screens.admin.auditActionNames.mediaRemoved': 'Title deleted',
+  'screens.admin.auditActionNames.mediaUnmatched': 'Title unmatched',
+  'screens.admin.auditActionNames.mediaVersionChosen': 'Version chosen',
   'screens.admin.auditActionNames.pluginAppPasswordMade': 'App password made',
   'screens.admin.auditActionNames.pluginAppPasswordRemoved': 'App password removed',
   'screens.admin.auditActionNames.pluginChanged': 'Plugin changed',
@@ -3687,6 +3718,8 @@ const ENGLISH = {
     'The type of media in this library, which sets how it’s scanned and labelled.',
   'screens.adminArea.addLibraryDialog.whatToCallThisKindOf': 'The name for this type of library.',
   'screens.adminArea.addLibraryDialog.whichOfTheBuiltInKinds': 'The built-in type it’s scanned as.',
+  'screens.adminArea.addTagsDialog.count.addTagsToTitles.one': 'Add tags to {count} title',
+  'screens.adminArea.addTagsDialog.count.addTagsToTitles.other': 'Add tags to {count} titles',
   'screens.adminArea.addTriggerDialog.aTimeOfDay': 'Enter a time of day, such as 03:00.',
   'screens.adminArea.addTriggerDialog.aWholeNumberFrom1To':
     'Enter a whole number from 1 to {most}.',
@@ -3894,6 +3927,27 @@ const ENGLISH = {
   'screens.adminArea.artistRequestsCard.artistReleasesDetail':
     'Sets which releases an artist request downloads unless the requester chooses.',
   'screens.adminArea.artistRequestsCard.artistRequests': 'Artist requests',
+  'screens.adminArea.artworkChooser.asTheCatalogueRanksThem': 'As the catalogue ranks them',
+  'screens.adminArea.artworkChooser.besideItsFiles': 'Beside its files',
+  'screens.adminArea.artworkChooser.episodeStill': 'Episode still',
+  'screens.adminArea.artworkChooser.fromFanartTv': 'From fanart.tv',
+  'screens.adminArea.artworkChooser.fromTheCatalogue': 'From the catalogue',
+  'screens.adminArea.artworkChooser.goBackToTheCataloguesPick': 'Go back to the catalogue’s pick',
+  'screens.adminArea.artworkChooser.inUseAnUploadedPicture': 'In use: an uploaded picture',
+  'screens.adminArea.artworkChooser.inUseNameFromTheDisk': 'In use: {name}, from beside its files',
+  'screens.adminArea.artworkChooser.inUseOneFromTheCatalogue':
+    'In use: one chosen from the catalogue',
+  'screens.adminArea.artworkChooser.inUseTheCataloguesPick': 'In use: the catalogue’s pick',
+  'screens.adminArea.artworkChooser.largestFirst': 'Largest first',
+  'screens.adminArea.artworkChooser.mostVotesFirst': 'Most votes first',
+  'screens.adminArea.artworkChooser.noLetteringFirst': 'No lettering first',
+  'screens.adminArea.artworkChooser.pictureSize': '{width} × {height}',
+  'screens.adminArea.artworkChooser.picturesOfTheTitle': 'Pictures of the title',
+  'screens.adminArea.artworkChooser.seasonPoster': 'Season poster',
+  'screens.adminArea.artworkChooser.uploadAPicture': 'Upload from this computer',
+  'screens.adminArea.artworkChooser.uploaded': 'Your upload',
+  'screens.adminArea.artworkChooser.uploadedAndChosen': 'Uploaded, and in use',
+  'screens.adminArea.artworkChooser.useNameFromTheDisk': 'Use {name} from the disk',
   'screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas': 'Loading artwork',
   'screens.adminArea.artworkPicker.backdrop': 'Backdrop',
   'screens.adminArea.artworkPicker.backToTheCataloguesOwnPicture': 'Reset to the default artwork.',
@@ -4043,6 +4097,24 @@ const ENGLISH = {
   'screens.adminArea.bucketDialog.secretAccessKey': 'Secret access key',
   'screens.adminArea.bucketDialog.service': 'Service',
   'screens.adminArea.bucketDialog.wasabi': 'Wasabi',
+  'screens.adminArea.bulkEditDialog.changeAFieldToChangeItOn':
+    'Change a field to change it on every title.',
+  'screens.adminArea.bulkEditDialog.changesFieldsOnTitles': 'Changes {fields} on {titles}',
+  'screens.adminArea.bulkEditDialog.changingSentOfCount': 'Changing {sent} of {count}…',
+  'screens.adminArea.bulkEditDialog.count.editTitles.one': 'Edit {count} title',
+  'screens.adminArea.bulkEditDialog.count.editTitles.other': 'Edit {count} titles',
+  'screens.adminArea.bulkEditDialog.count.fields.one': '{count} field',
+  'screens.adminArea.bulkEditDialog.count.fields.other': '{count} fields',
+  'screens.adminArea.bulkEditDialog.theirEpisodes': 'Their episodes',
+  'screens.adminArea.bulkEditDialog.whatToEdit': 'What to edit',
+  'screens.adminArea.bulkField.clearedOnEveryTitle': 'Emptied on every title',
+  'screens.adminArea.bulkField.doNotChange': 'Undo this change',
+  'screens.adminArea.bulkField.filledFromEachTitle':
+    'Filled in from each title, without “The” or “A”',
+  'screens.adminArea.bulkField.fromTitle': 'From title',
+  'screens.adminArea.bulkField.noneYet': 'None on any title',
+  'screens.adminArea.bulkField.putBackOnEveryTitle': 'Put back to TMDB’s on every title',
+  'screens.adminArea.bulkField.whatToDoWithTheWords': 'What to do with the words',
   'screens.adminArea.busyHoursGrid.count.plays.one': '{count} play',
   'screens.adminArea.busyHoursGrid.count.plays.other': '{count} plays',
   'screens.adminArea.busyHoursGrid.dayAtHour': '{day} at {hour}',
@@ -4270,6 +4342,12 @@ const ENGLISH = {
     'Kept {count} new encode and deleted its original.',
   'screens.adminArea.confirmedCountReEncodes.other':
     'Kept {count} new encodes and deleted their originals.',
+  'screens.adminArea.contentRatingField.addCountry': 'Add country',
+  'screens.adminArea.contentRatingField.countryCode': 'Country code',
+  'screens.adminArea.contentRatingField.forAgeAndOver': 'For {age} and over',
+  'screens.adminArea.contentRatingField.forEveryone': 'For everyone',
+  'screens.adminArea.contentRatingField.noRating': 'No rating',
+  'screens.adminArea.contentRatingField.otherCountries': 'Other countries',
   'screens.adminArea.coreMap.efficiency': 'Efficiency cores',
   'screens.adminArea.coreMap.label': '{cores} cores running {threads} threads',
   'screens.adminArea.coreMap.performance': 'Performance cores',
@@ -4430,6 +4508,8 @@ const ENGLISH = {
   'screens.adminArea.describeSince.minutesAgo.one': '{count} minute ago',
   'screens.adminArea.describeSince.minutesAgo.other': '{count} minutes ago',
   'screens.adminArea.describeSince.never': 'never',
+  'screens.adminArea.describeTitle.count.haveOfEpisodes.one': '{have} of TMDB’s {count} episode',
+  'screens.adminArea.describeTitle.count.haveOfEpisodes.other': '{have} of TMDB’s {count} episodes',
   'screens.adminArea.describeToneMapping.anythingTheCardCannotTakeIs':
     'HDR that the GPU can’t tone-map plays without tone mapping, because this FFmpeg build has no software tone mapper.',
   'screens.adminArea.describeToneMapping.softwareInSoftware': '{software}, in software',
@@ -4635,6 +4715,28 @@ const ENGLISH = {
     'Video is streamed in small pieces called segments, and the player has to fetch the first one before anything plays. Two-second pieces instead of four mean playback starts and seeks about twice as fast, especially over a slow connection or a tunnel. The cost is twice as many requests to the server.',
   'screens.adminArea.encodingSettings.shortSegmentsDetail':
     'Sends video in 2-second pieces, so playback starts and seeks sooner.',
+  'screens.adminArea.episodeNumberDialog.changeTheEpisode': 'Change the episode…',
+  'screens.adminArea.episodeNumberDialog.itsNameSaysOtherwise':
+    'For a file whose name gives the wrong episode, or one holding several. It’s read again as the episode you give, and stays that episode through every scan.',
+  'screens.adminArea.episodeNumberDialog.lastEpisode': 'Last episode, for a file of several',
+  'screens.adminArea.episodeNumberDialog.readingItAgain': 'Reading it again as that episode',
+  'screens.adminArea.episodeNumberDialog.useTheFileName': 'Go by the file name again',
+  'screens.adminArea.episodeNumberDialog.whichEpisodeIsThisFile': 'Which episode is this file?',
+  'screens.adminArea.episodeOrderPicker.episodeOrder': 'Episode order',
+  'screens.adminArea.episodeOrderPicker.everyEpisodeIsReadAgain':
+    'Every episode is read again in that order, so a file named S01E05 becomes the fifth episode of that order’s first season. Edits are kept.',
+  'screens.adminArea.episodeOrderPicker.numberByName': 'Number the episodes by {order}?',
+  'screens.adminArea.episodeOrderPicker.tmdbsOwnOrder': 'TMDB’s own order',
+  'screens.adminArea.episodeOrderPicker.useThisOrder': 'Use this order',
+  'screens.adminArea.episodeOrderPicker.whichOrderTheFilesFollow':
+    'Which order your files are numbered in. Each episode’s title, overview and still follow the order you choose.',
+  'screens.adminArea.extraChoice.asItsNameAndFolderSay': 'As its name and folder say',
+  'screens.adminArea.extraChoice.keptThroughEveryScan':
+    'An extra of {title} shows with it rather than as a film of its own. What you choose here is kept through every scan, whatever the file’s name or folder says.',
+  'screens.adminArea.extraChoice.markAsAnExtra': 'Mark as an extra…',
+  'screens.adminArea.extraChoice.notAnExtra': 'Not an extra: a film of its own',
+  'screens.adminArea.extraChoice.whatIsThisFile': 'What is {file}?',
+  'screens.adminArea.extraChoice.whatItIs': 'What it is',
   'screens.adminArea.fileDetails.addingUp': 'Adding up…',
   'screens.adminArea.fileDetails.atLeastSize': 'At least {size}',
   'screens.adminArea.fileDetails.chooseSomethingToSeeIt':
@@ -4648,6 +4750,8 @@ const ENGLISH = {
   'screens.adminArea.filesPanel.changed': 'Changed',
   'screens.adminArea.filesPanel.chooseEverythingHere': 'Choose everything here',
   'screens.adminArea.filesPanel.chooseName': 'Choose {name}',
+  'screens.adminArea.filesPanel.count.orphanedFiles.one': '{count} orphaned file',
+  'screens.adminArea.filesPanel.count.orphanedFiles.other': '{count} orphaned files',
   'screens.adminArea.filesPanel.delete': 'Delete…',
   'screens.adminArea.filesPanel.deleteThis': 'Delete this?',
   'screens.adminArea.filesPanel.filesFound': 'Files found',
@@ -4676,6 +4780,23 @@ const ENGLISH = {
     'Deletes the folder and everything in it from disk, then rescans the library to remove its contents. This can’t be undone.',
   'screens.adminArea.filesPanel.thisFolderIsEmpty': 'This folder is empty.',
   'screens.adminArea.filesPanel.uploadHere': 'Upload here',
+  'screens.adminArea.findAndReplace.find': 'Find',
+  'screens.adminArea.findAndReplace.findAndReplace': 'Find and replace',
+  'screens.adminArea.findAndReplace.inAListOnlyWholeWords':
+    'In text, every match is replaced. In a list such as genres, only an entry that matches in full is replaced, and leaving Replace with empty removes it.',
+  'screens.adminArea.findAndReplace.inWhichField': 'In which field',
+  'screens.adminArea.findAndReplace.matchCase': 'Match case',
+  'screens.adminArea.findAndReplace.replaceWith': 'Replace with',
+  'screens.adminArea.fixMatchDialog.apply': 'Apply',
+  'screens.adminArea.fixMatchDialog.current': 'Current',
+  'screens.adminArea.fixMatchDialog.field': 'Field',
+  'screens.adminArea.fixMatchDialog.nothingCameBackForQuery': 'Nothing came back for “{query}”.',
+  'screens.adminArea.fixMatchDialog.nothingWouldChange': 'Nothing would change but the match.',
+  'screens.adminArea.fixMatchDialog.showUnchanged': 'Show unchanged',
+  'screens.adminArea.fixMatchDialog.stepCompare': 'Step 2 of 2: Compare',
+  'screens.adminArea.fixMatchDialog.stepFind': 'Step 1 of 2: Find',
+  'screens.adminArea.fixMatchDialog.takeTheNewField': 'Take the new {field}',
+  'screens.adminArea.fixMatchDialog.tryWithoutTheYear': 'Try without the year',
   'screens.adminArea.folderBrowser.anime': 'anime',
   'screens.adminArea.folderBrowser.cancelTheNewFolder': 'Cancel new folder',
   'screens.adminArea.folderBrowser.chooseAPlaceToStart': 'Choose a starting location',
@@ -4701,6 +4822,19 @@ const ENGLISH = {
     'Couldn’t create the folder. Try again.',
   'screens.adminArea.folderBrowser.theFoldersCouldNotBeRead': 'Couldn’t load folders.',
   'screens.adminArea.folderBrowser.useThisFolder': 'Use this folder',
+  'screens.adminArea.folderView.belongsWith': 'Belongs with',
+  'screens.adminArea.folderView.excluded': 'Excluded',
+  'screens.adminArea.folderView.excludedFromTheLibrary': 'Somebody excluded it from the library.',
+  'screens.adminArea.folderView.inAFolderScansSkip':
+    'It’s in a folder scans skip, such as one of extras or metadata.',
+  'screens.adminArea.folderView.itsVideoIsGone': 'Its video is gone',
+  'screens.adminArea.folderView.looksLikeASample': 'It looks like a sample, which scans skip.',
+  'screens.adminArea.folderView.notAVideo': 'Not a video',
+  'screens.adminArea.folderView.notReadYet': 'Not read yet',
+  'screens.adminArea.folderView.theLibraryHasNotReadItYet':
+    'The library hasn’t read it yet. It’s added at the next scan.',
+  'screens.adminArea.folderView.whyItIsNotInTheLibrary': 'Why it isn’t in the library',
+  'screens.adminArea.folderView.withItsVideo': 'With its video',
   'screens.adminArea.generatedTheMissingPreviewsOfName':
     'Generated the missing previews for {name}.',
   'screens.adminArea.giveUpRulesList.whatSaved': '{what} saved.',
@@ -4742,6 +4876,24 @@ const ENGLISH = {
   'screens.adminArea.hardwareTest.testing': 'Testing…',
   'screens.adminArea.hardwareTest.title': 'Test hardware acceleration',
   'screens.adminArea.hDRConversion': 'HDR tone mapping',
+  'screens.adminArea.importSheet.bringBackAnEditedExport':
+    'Bring back a spreadsheet exported from this list and edited elsewhere. Each row is found by its TMDB id, or by its title and year, and its title, sort title, release date and genres are changed where they differ. Nothing changes until you apply it.',
+  'screens.adminArea.importSheet.changedSentOfCount': 'Changing {sent} of {count}',
+  'screens.adminArea.importSheet.chooseTheFile': 'Choose the spreadsheet',
+  'screens.adminArea.importSheet.count.changedTitles.one':
+    'Changed {count} title from the spreadsheet',
+  'screens.adminArea.importSheet.count.changedTitles.other':
+    'Changed {count} titles from the spreadsheet',
+  'screens.adminArea.importSheet.count.changesTitles.one': 'Changes {count} title',
+  'screens.adminArea.importSheet.count.changesTitles.other': 'Changes {count} titles',
+  'screens.adminArea.importSheet.count.rowsNotFound.one':
+    '{count} row matches no title here, so it’s passed over.',
+  'screens.adminArea.importSheet.count.rowsNotFound.other':
+    '{count} rows match no title here, so they’re passed over.',
+  'screens.adminArea.importSheet.importASpreadsheet': 'Import a spreadsheet…',
+  'screens.adminArea.importSheet.nothingToChange':
+    'Nothing in it differs from what the library holds.',
+  'screens.adminArea.importSheet.readingIt': 'Reading the spreadsheet',
   'screens.adminArea.indexerCatalogueDialog.anyLabel': 'Any {label}',
   'screens.adminArea.indexerCatalogueDialog.anyTorrentIndexerWithATorznab':
     'Any torrent indexer with a Torznab feed, such as one from Jackett or Prowlarr.',
@@ -4888,7 +5040,7 @@ const ENGLISH = {
     'Files and folders this library’s scans skip. Include one again and the next scan adds it back.',
   'screens.adminArea.leftOutList.leftOutOfThisLibrary': 'Excluded from this library',
   'screens.adminArea.leftOutList.nothingIsLeftOut':
-    'Nothing is excluded. Exclude a file or folder from Media or Files.',
+    'Nothing is excluded. Exclude a title, file or folder from Media.',
   'screens.adminArea.leftOutList.pathIsBack':
     '{path} is included again. The next scan adds it back.',
   'screens.adminArea.leftOutList.whatIsLeftOutCouldNot':
@@ -4957,7 +5109,10 @@ const ENGLISH = {
     'Keep the profile asked first',
   'screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports':
     '{kind} searches, downloads and imports it.',
+  'screens.adminArea.librarySettingsDialog.metadataLanguage': 'Metadata language',
   'screens.adminArea.librarySettingsDialog.metadataProfile': 'Metadata profile',
+  'screens.adminArea.librarySettingsDialog.namesEachTitleByItsOriginal':
+    'Names each film and show by the title it was released under, such as a Japanese film by its Japanese name, from the next scan or refresh.',
   'screens.adminArea.librarySettingsDialog.oneAtATime': 'One at a time',
   'screens.adminArea.librarySettingsDialog.previewsAndPlaybackPreferThisLanguage':
     'Previews and playback use this audio language when a file has it. Files without a matching track use their own default.',
@@ -4987,7 +5142,11 @@ const ENGLISH = {
     'This library was added as {flavour}. Choose Anime to make it an anime library.',
   'screens.adminArea.librarySettingsDialog.thisWillStartAPreviewGeneration':
     'This starts generating previews for {name}’s existing media to match {label}. Progress is shown next to the library. Continue?',
+  'screens.adminArea.librarySettingsDialog.tmdbIsAskedInThisLanguage':
+    'TMDB is asked for titles, overviews and logos in this language, from the next scan or refresh. A title it has no translation for stays in English.',
+  'screens.adminArea.librarySettingsDialog.tmdbsDefault': 'TMDB’s default, English',
   'screens.adminArea.librarySettingsDialog.twoAtATime': 'Two at a time',
+  'screens.adminArea.librarySettingsDialog.useOriginalTitles': 'Use original titles',
   'screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt':
     'Valence searches for, downloads and imports it.',
   'screens.adminArea.librarySettingsDialog.whenSomebodyAsksForATitle':
@@ -4998,6 +5157,9 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary':
     'The profile assigned to this library',
   'screens.adminArea.librarySettingsDialog.whoFulfilsRequests': 'Download requests with',
+  'screens.adminArea.librarySettingsDialog.writeNfoFiles': 'Write NFO files',
+  'screens.adminArea.librarySettingsDialog.writesWhatYouEditBeside':
+    'Each time you edit a title, Valence writes its NFO beside the file (and a show’s tvshow.nfo in its folder) in Kodi’s format, which Jellyfin and Emby read too. An NFO already there is replaced.',
   'screens.adminArea.librarySettingsDialog.yourBrowser': 'Your browser',
   'screens.adminArea.linkedServersPanel.aboutTheFingerprint': 'About the fingerprint',
   'screens.adminArea.linkedServersPanel.aboutThisServer': 'About this server',
@@ -5220,22 +5382,47 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.ukGuideEpgShare': 'UK guide · epgshare01',
   'screens.adminArea.liveTvPanel.uploadAChannelPicture': 'Upload a channel picture',
   'screens.adminArea.liveTvPanel.whatToAdd': 'What to add',
-  'screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf':
-    'Your choice applies to every episode of this series and to future scans.',
-  'screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd':
-    'Your choice applies to this film and to future scans.',
   'screens.adminArea.matchPicker.forgetTheCorrection': 'Remove correction',
   'screens.adminArea.matchPicker.searchForAFilm': 'Search for a film',
   'screens.adminArea.matchPicker.searchForASeries': 'Search for a series',
+  'screens.adminArea.mediaPanel.addTags': 'Add tags',
+  'screens.adminArea.mediaPanel.addToACollection': 'Add to a collection…',
   'screens.adminArea.mediaPanel.allTitles': 'All titles',
   'screens.adminArea.mediaPanel.alsoNumbered': 'Also numbered S{season} E{episode}: {files}',
   'screens.adminArea.mediaPanel.chooseArtwork': 'Choose artwork…',
+  'screens.adminArea.mediaPanel.columns': 'Columns',
   'screens.adminArea.mediaPanel.couldNotBeRead': 'Couldn’t be read',
   'screens.adminArea.mediaPanel.couldNotReadFiles': 'Couldn’t read {files}',
+  'screens.adminArea.mediaPanel.count.allTitles.one': 'All titles {count}',
+  'screens.adminArea.mediaPanel.count.allTitles.other': 'All titles {count}',
+  'screens.adminArea.mediaPanel.count.changedTitles.one': 'Changed {count} title',
+  'screens.adminArea.mediaPanel.count.changedTitles.other': 'Changed {count} titles',
   'screens.adminArea.mediaPanel.count.deleteCountFiles.one': 'Delete {count} file?',
   'screens.adminArea.mediaPanel.count.deleteCountFiles.other': 'Delete {count} files?',
+  'screens.adminArea.mediaPanel.count.duplicates.one': 'Duplicates {count}',
+  'screens.adminArea.mediaPanel.count.duplicates.other': 'Duplicates {count}',
+  'screens.adminArea.mediaPanel.count.edited.one': 'Edited {count}',
+  'screens.adminArea.mediaPanel.count.edited.other': 'Edited {count}',
+  'screens.adminArea.mediaPanel.count.editsWithoutATitle.one': '{count} edit without a title',
+  'screens.adminArea.mediaPanel.count.editsWithoutATitle.other': '{count} edits without a title',
   'screens.adminArea.mediaPanel.count.nameToFix.one': '{name} ({count} to fix)',
   'screens.adminArea.mediaPanel.count.nameToFix.other': '{name} ({count} to fix)',
+  'screens.adminArea.mediaPanel.count.noCover.one': 'No cover {count}',
+  'screens.adminArea.mediaPanel.count.noCover.other': 'No cover {count}',
+  'screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles.one':
+    'Rebuild the previews of {count} title?',
+  'screens.adminArea.mediaPanel.count.rebuildThePreviewsOfTitles.other':
+    'Rebuild the previews of {count} titles?',
+  'screens.adminArea.mediaPanel.count.undoneTitles.one': 'Put {count} title back',
+  'screens.adminArea.mediaPanel.count.undoneTitles.other': 'Put {count} titles back',
+  'screens.adminArea.mediaPanel.count.unmatched.one': 'Unmatched {count}',
+  'screens.adminArea.mediaPanel.count.unmatched.other': 'Unmatched {count}',
+  'screens.adminArea.mediaPanel.count.unreadable.one': 'Unreadable {count}',
+  'screens.adminArea.mediaPanel.count.unreadable.other': 'Unreadable {count}',
+  'screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles.one':
+    'Update the details of {count} title?',
+  'screens.adminArea.mediaPanel.count.updateTheDetailsOfTitles.other':
+    'Update the details of {count} titles?',
   'screens.adminArea.mediaPanel.deleteEveryEpisodeOfName': 'Delete every episode of {name}?',
   'screens.adminArea.mediaPanel.deleteFile': 'Delete file',
   'screens.adminArea.mediaPanel.deleteFile2': 'Delete file…',
@@ -5245,24 +5432,36 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.duplicates': 'Duplicates',
   'screens.adminArea.mediaPanel.everyEpisodesFileIsDeletedFrom':
     'Deletes every episode file from disk, along with its subtitles and artwork, and removes the series from the library. This can’t be undone.',
+  'screens.adminArea.mediaPanel.everyFileHereCouldBeRead':
+    'Every file in this library could be read.',
   'screens.adminArea.mediaPanel.everythingHereHasACover': 'Everything here has a cover.',
   'screens.adminArea.mediaPanel.everythingHereIsMatchedAndHas':
     'Everything here is matched and has a poster.',
   'screens.adminArea.mediaPanel.everythingInName': 'Everything in {name}',
+  'screens.adminArea.mediaPanel.exportAsASpreadsheet': 'Export as a spreadsheet',
+  'screens.adminArea.mediaPanel.filterTheTitles': 'Filter the titles',
   'screens.adminArea.mediaPanel.findAProgrammeOrFilm': 'Find a series or film',
+  'screens.adminArea.mediaPanel.hasSubtitles': 'Has subtitles',
   'screens.adminArea.mediaPanel.hideTheEditionsOfName': 'Hide the editions of {name}',
   'screens.adminArea.mediaPanel.hideTheEpisodesInName': 'Hide the episodes in {name}',
   'screens.adminArea.mediaPanel.hideTheEpisodesOfName': 'Hide the episodes of {name}',
+  'screens.adminArea.mediaPanel.howToShowTheMedia': 'How to show the media',
   'screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown':
     'Its previews and thumbnails are deleted and regenerated from the file. This takes a while and uses the server’s encoder.',
   'screens.adminArea.mediaPanel.matchedToTheSameFilm': 'Matched to the same film: {files}',
   'screens.adminArea.mediaPanel.matchedToTheSameFilmAs': 'Matched to the same film as {files}',
   'screens.adminArea.mediaPanel.mixed': 'Mixed',
+  'screens.adminArea.mediaPanel.moreForTheMedia': 'More for the media',
   'screens.adminArea.mediaPanel.moveToAnotherLibrary': 'Move to another library…',
   'screens.adminArea.mediaPanel.noCover': 'No cover',
   'screens.adminArea.mediaPanel.noPoster': 'No poster',
+  'screens.adminArea.mediaPanel.noSubtitles': 'No subtitles',
   'screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis':
     'Nothing has been scanned into this library yet.',
+  'screens.adminArea.mediaPanel.nothingNeededChanging': 'Nothing needed changing.',
+  'screens.adminArea.mediaPanel.noTitleHereHasBeenEdited':
+    'No title in this library has been edited yet.',
+  'screens.adminArea.mediaPanel.noTitleIsHereTwice': 'No title in this library is here twice.',
   'screens.adminArea.mediaPanel.numberedMoreThanOnce':
     'Numbered S{season} E{episode} more than once: {files}',
   'screens.adminArea.mediaPanel.rebuilding': 'Rebuilding…',
@@ -5274,9 +5473,11 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.reEncodeEveryEpisode': 'Re-encode every episode…',
   'screens.adminArea.mediaPanel.reEncodeSelected': 'Re-encode',
   'screens.adminArea.mediaPanel.reEncodeThisSeason': 'Re-encode this season…',
+  'screens.adminArea.mediaPanel.refreshEllipsis': 'Refresh…',
+  'screens.adminArea.mediaPanel.refreshingDoneOfCount': 'Refreshed {done} of {count}',
   'screens.adminArea.mediaPanel.selectEveryTitleShown': 'Select every title shown',
   'screens.adminArea.mediaPanel.selectName': 'Select {name}',
-  'screens.adminArea.mediaPanel.showInFiles': 'Show in Files',
+  'screens.adminArea.mediaPanel.showInFiles': 'Show in Folders',
   'screens.adminArea.mediaPanel.showTheEditionsOfName': 'Show the editions of {name}',
   'screens.adminArea.mediaPanel.showTheEpisodesInName': 'Show the episodes in {name}',
   'screens.adminArea.mediaPanel.showTheEpisodesOfName': 'Show the episodes of {name}',
@@ -5289,6 +5490,8 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd':
     'There are no libraries yet. Add one on the Libraries page.',
   'screens.adminArea.mediaPanel.thereTwice': 'There twice',
+  'screens.adminArea.mediaPanel.theTitleCouldNotBeRead': 'The title could not be read.',
+  'screens.adminArea.mediaPanel.unlockAllFields': 'Unlock all fields',
   'screens.adminArea.mediaPanel.unmatched': 'Unmatched',
   'screens.adminArea.mediaPanel.unreadable': 'Unreadable',
   'screens.adminArea.mediaPanel.whichTitles': 'Which titles',
@@ -5297,14 +5500,27 @@ const ENGLISH = {
   'screens.adminArea.mediaRequestsPanel.hideWhatTitleIsMadeOf': 'Collapse {title}',
   'screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf': 'Expand {title}',
   'screens.adminArea.mediaTitlePage.askedWhen': 'Asked {when}',
-  'screens.adminArea.mediaTitlePage.backToMedia': 'Back to Media',
   'screens.adminArea.mediaTitlePage.fixMatch': 'Fix match',
-  'screens.adminArea.mediaTitlePage.matchedId': 'Matched · {id}',
-  'screens.adminArea.mediaTitlePage.matchedTmdbId': 'Matched · TMDB {id}',
+  'screens.adminArea.mediaTitlePage.itGoesBackToItsFileName':
+    'It goes back to the name its files give it, without TMDB’s details, until it is matched again. Your edits are kept for when it is.',
+  'screens.adminArea.mediaTitlePage.lockAllFields': 'Lock all fields',
+  'screens.adminArea.mediaTitlePage.lockedEveryField': 'Locked every field.',
   'screens.adminArea.mediaTitlePage.openFolder': 'Open folder',
   'screens.adminArea.mediaTitlePage.openInCatalogue': 'Open in Catalogue',
+  'screens.adminArea.mediaTitlePage.openTheSeasonsPage': 'Open the season’s page',
   'screens.adminArea.mediaTitlePage.reEncodes': 'Re-encodes',
+  'screens.adminArea.mediaTitlePage.refreshing': 'Refreshing…',
+  'screens.adminArea.mediaTitlePage.unmatch': 'Unmatch',
+  'screens.adminArea.mediaTitlePage.unmatchName': 'Unmatch {name}?',
+  'screens.adminArea.mediaTitlePage.whatToShowOfTheTitle': 'What to show of this title',
   'screens.adminArea.memory': 'Memory',
+  'screens.adminArea.mergeTitles.count.mergeFilms.one': 'Merge {count} film',
+  'screens.adminArea.mergeTitles.count.mergeFilms.other': 'Merge {count} films',
+  'screens.adminArea.mergeTitles.keepWhichMatch':
+    'Choose the film they all are. The others are matched to it, and become its versions.',
+  'screens.adminArea.mergeTitles.mergedIntoName': 'Merged into {name}',
+  'screens.adminArea.mergeTitles.mergeIntoOneFilm': 'Merge into one film…',
+  'screens.adminArea.mergeTitles.unmatchedFilm': '{name}, not matched',
   'screens.adminArea.mostWatchedList.hours': '{hours} h',
   'screens.adminArea.mostWatchedList.mostWatched': 'Most watched',
   'screens.adminArea.mostWatchedList.nothingWasWatched': 'Nothing was watched in this range.',
@@ -5343,6 +5559,11 @@ const ENGLISH = {
   'screens.adminArea.ofTotalValenceUses': 'of {total} · Valence {used}',
   'screens.adminArea.onlineServicesCard.everythingValenceConnectsTo':
     'Everything Valence connects to outside this server. Nothing else leaves it.',
+  'screens.adminArea.onlineServicesCard.fanartTv': 'fanart.tv',
+  'screens.adminArea.onlineServicesCard.fanartTvAbout':
+    'More posters, backgrounds and logos to choose from',
+  'screens.adminArea.onlineServicesCard.fanartTvDetail':
+    "With a personal key from fanart.tv, a title's Artwork tab also offers fanart.tv's posters, backgrounds and logos beside TMDB's. Without one, it offers TMDB's alone.",
   'screens.adminArea.onlineServicesCard.musicDetails': 'Music details',
   'screens.adminArea.onlineServicesCard.musicDetailsAbout':
     'Album covers come from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced.',
@@ -5378,6 +5599,22 @@ const ENGLISH = {
     "Once a day: Valence's version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.",
   'screens.adminArea.onlineServicesCard.usageStatisticsDetail':
     'Sends a few anonymous facts about this server once a day.',
+  'screens.adminArea.orphanedEditsDialog.attachToATitle': 'Attach to a title',
+  'screens.adminArea.orphanedEditsDialog.count.movedEditsToName.one':
+    'Moved {count} edit to {name}',
+  'screens.adminArea.orphanedEditsDialog.count.movedEditsToName.other':
+    'Moved {count} edits to {name}',
+  'screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.one': 'Threw away {count} edit',
+  'screens.adminArea.orphanedEditsDialog.count.threwAwayEdits.other': 'Threw away {count} edits',
+  'screens.adminArea.orphanedEditsDialog.editsWithoutATitle': 'Edits without a title',
+  'screens.adminArea.orphanedEditsDialog.everyEditHasATitle':
+    'Every edit belongs to a title still here.',
+  'screens.adminArea.orphanedEditsDialog.fieldsEditedWhen': '{fields} edited {when}',
+  'screens.adminArea.orphanedEditsDialog.theseTitlesWereEditedButTheirFiles':
+    'These titles were edited, but their files have gone. Attach the edits to a title still here, or throw them away.',
+  'screens.adminArea.orphanedEditsDialog.theyCannotBeGotBack':
+    'They can’t be got back. Their history stays.',
+  'screens.adminArea.orphanedEditsDialog.throwTheseEditsAway': 'Throw these edits away?',
   'screens.adminArea.overviewPanel.activeNow': 'Active now',
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
@@ -5667,6 +5904,22 @@ const ENGLISH = {
   'screens.adminArea.putTheOriginalBack': 'Restored the original.',
   'screens.adminArea.qualityNames.cam': 'Cam',
   'screens.adminArea.qualityNames.telesync': 'Telesync',
+  'screens.adminArea.quickMatch.acceptTheBestFitForTheRest': 'Accept the best fit for the rest',
+  'screens.adminArea.quickMatch.atOfCount': '{at} of {count}',
+  'screens.adminArea.quickMatch.chooseWhatItIs':
+    'Choose what it is from TMDB’s entries, best fit first, or skip it.',
+  'screens.adminArea.quickMatch.count.matchTitles.one': 'Match {count} title',
+  'screens.adminArea.quickMatch.count.matchTitles.other': 'Match {count} titles',
+  'screens.adminArea.quickMatch.fixMatchFor': 'Fix match for {name}',
+  'screens.adminArea.quickMatch.howItDecides':
+    'Each is searched for on TMDB by its name. One is matched only where an entry fits it at least 90 out of 100 and clearly better than any other; the rest are left for you, with Fix match beside each.',
+  'screens.adminArea.quickMatch.lookingNow': 'Looking',
+  'screens.adminArea.quickMatch.matchAutomatically': 'Match automatically…',
+  'screens.adminArea.quickMatch.matchedCountOfTotal': 'Matched {matched} of {total}',
+  'screens.adminArea.quickMatch.matchedToName': 'Matched to {name}',
+  'screens.adminArea.quickMatch.needsALook': 'Needs a look',
+  'screens.adminArea.quickMatch.reviewTheRestOneByOne': 'Review the rest one by one',
+  'screens.adminArea.quickMatch.skipTheRest': 'Skip the rest',
   'screens.adminArea.rankedChoices.moveIdDown': 'Move {id} down',
   'screens.adminArea.rankedChoices.moveIdUp': 'Move {id} up',
   'screens.adminArea.readEveryFileOfEveryLibrary':
@@ -5674,6 +5927,28 @@ const ENGLISH = {
   'screens.adminArea.readEveryFileOfNameAgain': 'Started rescanning every file in {name}.',
   'screens.adminArea.rebuildingThePreviewsOfTitle': 'Rebuilding the previews of {title}.',
   'screens.adminArea.rebuiltEveryLibrary': 'Rebuilt every library.',
+  'screens.adminArea.refreshTitleDialog.askedTmdbAgain': 'Asked TMDB again.',
+  'screens.adminArea.refreshTitleDialog.fetchArtwork': 'Fetch artwork',
+  'screens.adminArea.refreshTitleDialog.fetchArtworkDetail':
+    'Fetches its poster, backdrop and logo again.',
+  'screens.adminArea.refreshTitleDialog.fieldsToUpdate': 'Fields to update',
+  'screens.adminArea.refreshTitleDialog.matchAgain': 'Match again',
+  'screens.adminArea.refreshTitleDialog.matchAgainDetail':
+    'Forgets its match and finds it again from its file names.',
+  'screens.adminArea.refreshTitleDialog.onlyAMatchedTitle':
+    'Only a title matched to TMDB has fields to ask for again.',
+  'screens.adminArea.refreshTitleDialog.readTheFilesAgain': 'Read the files again',
+  'screens.adminArea.refreshTitleDialog.readTheFilesAgainDetail':
+    'Looks at the files afresh, such as after replacing one, keeping the match and your edits.',
+  'screens.adminArea.refreshTitleDialog.refresh': 'Refresh',
+  'screens.adminArea.refreshTitleDialog.refreshName': 'Refresh {name}',
+  'screens.adminArea.refreshTitleDialog.updateDetails': 'Update details',
+  'screens.adminArea.refreshTitleDialog.updateDetailsDetail':
+    'Asks TMDB again, keeping its match and every edit.',
+  'screens.adminArea.refreshTitleDialog.updateSomeFields': 'Update some fields',
+  'screens.adminArea.refreshTitleDialog.updateSomeFieldsDetail':
+    'Asks TMDB again for only the fields you tick, such as the ratings.',
+  'screens.adminArea.refreshTitleDialog.whatToAskAgain': 'What to ask again',
   'screens.adminArea.refuseRequestDialog.itCouldNotBeRefused': 'Couldn’t decline the request.',
   'screens.adminArea.refuseRequestDialog.nothingIsFetchedForItIt':
     'Nothing will be downloaded for it. You can still approve it later.',
@@ -5756,6 +6031,44 @@ const ENGLISH = {
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
     'They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.',
+  'screens.adminArea.renameToPattern.addANumberToTheName': 'Add a number to the name',
+  'screens.adminArea.renameToPattern.count.alreadyNamed.one':
+    '{count} file is already named to the pattern.',
+  'screens.adminArea.renameToPattern.count.alreadyNamed.other':
+    '{count} files are already named to the pattern.',
+  'screens.adminArea.renameToPattern.count.extras.one':
+    '{count} extra moves only with its film’s folder.',
+  'screens.adminArea.renameToPattern.count.extras.other':
+    '{count} extras move only with their film’s folder.',
+  'screens.adminArea.renameToPattern.count.filesKeptBesideIt.one':
+    'With {count} file kept beside it',
+  'screens.adminArea.renameToPattern.count.filesKeptBesideIt.other':
+    'With {count} files kept beside it',
+  'screens.adminArea.renameToPattern.count.inParts.one':
+    '{count} film is kept as several files, so it is left as it is.',
+  'screens.adminArea.renameToPattern.count.inParts.other':
+    '{count} films are kept as several files, so they are left as they are.',
+  'screens.adminArea.renameToPattern.count.notMatched.one':
+    '{count} file isn’t matched to the catalogue, so its name would be a guess. Match it first.',
+  'screens.adminArea.renameToPattern.count.notMatched.other':
+    '{count} files aren’t matched to the catalogue, so their names would be a guess. Match them first.',
+  'screens.adminArea.renameToPattern.count.renamedFiles.one':
+    'Renamed {count} file to the naming pattern',
+  'screens.adminArea.renameToPattern.count.renamedFiles.other':
+    'Renamed {count} files to the naming pattern',
+  'screens.adminArea.renameToPattern.count.renameFiles.one': 'Rename {count} file',
+  'screens.adminArea.renameToPattern.count.renameFiles.other': 'Rename {count} files',
+  'screens.adminArea.renameToPattern.eachFileMovesToTheName':
+    'Each file moves to the folder and name the library’s naming pattern gives it, with the subtitles and other files kept beside it. A folder holding only what is renamed is renamed whole. Watch history and every choice made for a file go with it.',
+  'screens.adminArea.renameToPattern.everyFileBelow': 'Every file below',
+  'screens.adminArea.renameToPattern.leaveTheFileAsItIs': 'Leave the file as it is',
+  'screens.adminArea.renameToPattern.nameTaken': 'Name taken',
+  'screens.adminArea.renameToPattern.nothingToRename': 'Nothing here needs renaming.',
+  'screens.adminArea.renameToPattern.renameToTheNamingPattern': 'Rename to the naming pattern',
+  'screens.adminArea.renameToPattern.renameToTheNamingPatternEllipsis':
+    'Rename to the naming pattern…',
+  'screens.adminArea.renameToPattern.whenTheNameIsTaken': 'When the new name is taken',
+  'screens.adminArea.renameToPattern.workingOutTheNewNames': 'Working out the new names',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
   'screens.adminArea.requestPageCard.backgroundTrailers': 'Background trailers',
   'screens.adminArea.requestPageCard.backgroundTrailersAbout':
@@ -5854,6 +6167,13 @@ const ENGLISH = {
   'screens.adminArea.runningWorkDialog.runNow': 'Run now',
   'screens.adminArea.runningWorkDialog.runSubjectNow': 'Run {subject} now',
   'screens.adminArea.runningWorkDialog.whatTitleIsDoing': 'What {title} is doing',
+  'screens.adminArea.savedViews.forgetName': 'Forget {name}',
+  'screens.adminArea.savedViews.keptOnThisDeviceForThisLibrary':
+    'It keeps this library’s filters, search and order, on this device.',
+  'screens.adminArea.savedViews.nameThisView': 'Name this view',
+  'screens.adminArea.savedViews.savedViews': 'Saved views',
+  'screens.adminArea.savedViews.saveThisView': 'Save this view…',
+  'screens.adminArea.savedViews.saveView': 'Save view',
   'screens.adminArea.scannedName': 'Scanned {name}.',
   'screens.adminArea.scanProgressBar.clearing': 'Clearing',
   'screens.adminArea.scanProgressBar.findingIntros': 'Finding intros',
@@ -5864,6 +6184,18 @@ const ENGLISH = {
   'screens.adminArea.scrubPreviewsForTitleHaveNot':
     'Scrub previews for {title} haven’t finished yet.',
   'screens.adminArea.searchForARecord': 'Search for an album',
+  'screens.adminArea.seasonSourceDialog.episodesFrom': 'Episodes from',
+  'screens.adminArea.seasonSourceDialog.fixSeasonMatch': 'Fix season match',
+  'screens.adminArea.seasonSourceDialog.readingTheSeasonAgain': 'Reading the season again',
+  'screens.adminArea.seasonSourceDialog.seasonOfShow': 'Season of {show}',
+  'screens.adminArea.seasonSourceDialog.showSeason': '{show}, season {season}',
+  'screens.adminArea.seasonSourceDialog.takesThisSeasonsEpisodes':
+    'Takes this season’s episodes, pictures and dates from a season of another show, for when the catalogue lists the season as a show of its own.',
+  'screens.adminArea.seasonSourceDialog.thatShowHasNoSeasons':
+    'The catalogue lists no seasons for {show}.',
+  'screens.adminArea.seasonSourceDialog.thisSeasonsEpisodesComeFrom':
+    'This season’s episodes come from {show}, season {season}. Search for another show, or use the show’s own season.',
+  'screens.adminArea.seasonSourceDialog.useTheShowsOwnSeason': 'Use the show’s own season',
   'screens.adminArea.seerrCard.answerOverseerrAndJellyseerr':
     'Accept requests from Overseerr and Jellyseerr',
   'screens.adminArea.seerrCard.askAs': 'Request as',
@@ -5962,6 +6294,7 @@ const ENGLISH = {
     'Shown behind the profiles on the sign-in screen, tinted with the colour of the selected profile. It’s only visible while Show profiles on sign-in is on. JPEG, PNG, WebP, AVIF or GIF, up to 16 MB.',
   'screens.adminArea.settingsPanel.drawsTheHouseholdsFacesOnThe':
     'Shows every profile on the sign-in screen, so people sign in by choosing theirs. When off, the sign-in screen asks for a username or email and a password, and no one who isn’t signed in can see the names, pictures or IDs of people on this server.',
+  'screens.adminArea.settingsPanel.fanartTvKeySaved': 'fanart.tv key saved',
   'screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb':
     'Download music metadata from the web',
   'screens.adminArea.settingsPanel.fetchTrailersFromTheCatalogue':
@@ -6036,6 +6369,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theCertificationRegionCouldNotBe':
     'Couldn’t save the certification region.',
   'screens.adminArea.settingsPanel.theDesktopApp': 'Desktop app',
+  'screens.adminArea.settingsPanel.theFanartTvKeyCouldNotBe':
+    'The fanart.tv key couldn’t be saved.',
   'screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot':
     'Couldn’t save the music metadata setting.',
   'screens.adminArea.settingsPanel.theNextEpisodeIsMadeReady':
@@ -6116,10 +6451,31 @@ const ENGLISH = {
   'screens.adminArea.signInCard.tv': 'TV',
   'screens.adminArea.signInCard.welcomeHome': 'Welcome home',
   'screens.adminArea.sizeFree': '{size} free',
+  'screens.adminArea.skipMarkers.addAMarker': 'Add a marker',
+  'screens.adminArea.skipMarkers.endsAt': 'Marker ends at',
+  'screens.adminArea.skipMarkers.markersSaved': 'Markers saved',
+  'screens.adminArea.skipMarkers.noMarkersYet': 'No markers yet.',
+  'screens.adminArea.skipMarkers.removeThisMarker': 'Remove this marker',
+  'screens.adminArea.skipMarkers.saveMarkers': 'Save markers',
+  'screens.adminArea.skipMarkers.skipMarkers': 'Skip markers',
+  'screens.adminArea.skipMarkers.startsAt': 'Marker starts at',
+  'screens.adminArea.skipMarkers.whatItIs': 'What it marks',
+  'screens.adminArea.skipMarkers.whereThePlayerOffersToSkip':
+    'Where the player offers to skip. Detection finds intros and credits on its own; markers saved here are kept through every detection run after.',
+  'screens.adminArea.skipMarkers.writeAsAClock':
+    'Write times like 1:23 or 1:02:03, each ending after it starts.',
   'screens.adminArea.someCouldNotBeConfirmed':
     'Some could not be confirmed, and are still waiting.',
   'screens.adminArea.someOfThisCouldNotBeRead':
     'Some data couldn’t be loaded from the server, so parts of this page may be missing rather than empty.',
+  'screens.adminArea.sourcedField.edited': 'Edited',
+  'screens.adminArea.sourcedField.locked': 'Locked',
+  'screens.adminArea.sourcedField.nothing': 'Nothing',
+  'screens.adminArea.sourcedField.tmdb': 'TMDB',
+  'screens.adminArea.sourcedField.tmdbChangedTo': 'TMDB changed to: {value}',
+  'screens.adminArea.sourcedField.tmdbSays': 'TMDB: {value}',
+  'screens.adminArea.sourcedField.unlockTheField': 'Unlock the field',
+  'screens.adminArea.sourcedField.useThis': 'Use this',
   'screens.adminArea.startedReEncoding': 'Started re-encoding.',
   'screens.adminArea.statisticsPanel.addedEachWeek': 'Added each week',
   'screens.adminArea.statisticsPanel.anUnknownDevice': 'An unknown device',
@@ -6256,6 +6612,54 @@ const ENGLISH = {
   'screens.adminArea.theMessageCouldNotBeSent': 'Couldn’t send the message.',
   'screens.adminArea.thePreviewsOfNameCouldNot': 'Couldn’t generate previews for {name}.',
   'screens.adminArea.thePreviewsOfTitleCouldNot': 'Couldn’t rebuild previews for {title}.',
+  'screens.adminArea.titleCollections.inNoCollectionYet': 'It isn’t in a collection yet.',
+  'screens.adminArea.titleCollections.takeItOutOfName': 'Take it out of {name}',
+  'screens.adminArea.titleCollections.thatCouldNotBeTakenOut':
+    'That could not be taken out of the collection.',
+  'screens.adminArea.titleCollections.titleIsNoLongerInName': '{title} is no longer in {name}',
+  'screens.adminArea.titleDetails.airDate': 'Air date',
+  'screens.adminArea.titleDetails.aniList': 'AniList',
+  'screens.adminArea.titleDetails.aYouTubeLinkOrVideoId': 'A YouTube link or video ID',
+  'screens.adminArea.titleDetails.classification': 'Classification',
+  'screens.adminArea.titleDetails.contentRating': 'Content rating',
+  'screens.adminArea.titleDetails.contentRatingIn': 'Content rating ({country})',
+  'screens.adminArea.titleDetails.count.savedChanges.one': 'Saved {count} change',
+  'screens.adminArea.titleDetails.count.savedChanges.other': 'Saved {count} changes',
+  'screens.adminArea.titleDetails.countries': 'Countries',
+  'screens.adminArea.titleDetails.createdBy': 'Creators',
+  'screens.adminArea.titleDetails.dateAdded': 'Date added',
+  'screens.adminArea.titleDetails.directedBy': 'Directed by',
+  'screens.adminArea.titleDetails.firstAired': 'First aired',
+  'screens.adminArea.titleDetails.guestStars': 'Guest stars',
+  'screens.adminArea.titleDetails.ids': 'IDs',
+  'screens.adminArea.titleDetails.imdb': 'IMDb',
+  'screens.adminArea.titleDetails.myAnimeList': 'MyAnimeList',
+  'screens.adminArea.titleDetails.networks': 'Networks',
+  'screens.adminArea.titleDetails.note': 'Note',
+  'screens.adminArea.titleDetails.notMatchedYet': 'Not matched yet',
+  'screens.adminArea.titleDetails.openOnSite': 'Open on {site}',
+  'screens.adminArea.titleDetails.originalLanguage': 'Original language',
+  'screens.adminArea.titleDetails.originalTitle': 'Original title',
+  'screens.adminArea.titleDetails.originAndCrew': 'Origin and crew',
+  'screens.adminArea.titleDetails.saved': 'Change saved',
+  'screens.adminArea.titleDetails.sortTitle': 'Sort title',
+  'screens.adminArea.titleDetails.story': 'Story',
+  'screens.adminArea.titleDetails.tagline': 'Tagline',
+  'screens.adminArea.titleDetails.tags': 'Tags',
+  'screens.adminArea.titleDetails.theDetailsCouldNotBeRead': 'Couldn’t read this title’s details.',
+  'screens.adminArea.titleDetails.titleAndRelease': 'Title and release',
+  'screens.adminArea.titleDetails.tvdb': 'TVDB',
+  'screens.adminArea.titleDetails.undone': 'Change undone',
+  'screens.adminArea.titleDetails.writtenBy': 'Written by',
+  'screens.adminArea.titleHistory.addedNames': 'added {names}',
+  'screens.adminArea.titleHistory.changedTheBilling': 'changed the order',
+  'screens.adminArea.titleHistory.changedThePartsOf': 'changed the part of {names}',
+  'screens.adminArea.titleHistory.fieldChanged': '{field}: {change}',
+  'screens.adminArea.titleHistory.fields': 'Fields',
+  'screens.adminArea.titleHistory.fieldWentFromTo': '{field}: {before} → {after}',
+  'screens.adminArea.titleHistory.nothingChangedYet': 'Nothing has been changed on this title yet.',
+  'screens.adminArea.titleHistory.theHistoryCouldNotBeRead': 'Couldn’t read this title’s history.',
+  'screens.adminArea.titleHistory.tookOffNames': 'took off {names}',
   'screens.adminArea.titlePage.animeQuestionCard.answered': 'Fetching it',
   'screens.adminArea.titlePage.animeQuestionCard.bestGuess': 'Best guess',
   'screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither':
@@ -6408,6 +6812,30 @@ const ENGLISH = {
   'screens.adminArea.titlePage.trackTable.length': 'Length',
   'screens.adminArea.titlePage.trackTable.track': 'Track',
   'screens.adminArea.titlePage.trackTable.tracks': 'Tracks',
+  'screens.adminArea.titlePeople.addAPerson': 'Add a person',
+  'screens.adminArea.titlePeople.addName': 'Add {name} to the cast',
+  'screens.adminArea.titlePeople.addNameByNameOnly': 'Add “{name}” by name only',
+  'screens.adminArea.titlePeople.castOrderSaysWhoIsBilledFirst':
+    'The order here is the order every app shows them in.',
+  'screens.adminArea.titlePeople.knownForWorks': 'Known for {works}',
+  'screens.adminArea.titlePeople.lookingInTheCatalogue': 'Looking in the catalogue',
+  'screens.adminArea.titlePeople.moveNameDown': 'Move {name} down',
+  'screens.adminArea.titlePeople.moveNameToTheTop': 'Move {name} to the top',
+  'screens.adminArea.titlePeople.moveNameUp': 'Move {name} up',
+  'screens.adminArea.titlePeople.nobodyIsInTheCast':
+    'Nobody is in the cast yet. Add somebody above.',
+  'screens.adminArea.titlePeople.noOneInTheCatalogue': 'Nobody by that name is in the catalogue.',
+  'screens.adminArea.titlePeople.roleOfName': '{name}’s role',
+  'screens.adminArea.titlePeople.takeNameOff': 'Take {name} off the cast',
+  'screens.adminArea.titleVersions.nameOfVersion': 'Name of {file}',
+  'screens.adminArea.titleVersions.namesAndTheDefaultAreKept':
+    'Names and the default are kept through every scan.',
+  'screens.adminArea.titleVersions.noName': 'No name, as the original',
+  'screens.adminArea.titleVersions.playsByDefault': 'Plays by default',
+  'screens.adminArea.titleVersions.playThisByDefault': 'Play this by default',
+  'screens.adminArea.titleVersions.splitOff': 'Split off…',
+  'screens.adminArea.titleVersions.splitOffName': 'Split {file} off as a film of its own',
+  'screens.adminArea.titleVersions.versions': 'Versions of this film',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges':
     'A backup is taken before the update changes the database, so you can go back.',
@@ -6650,6 +7078,24 @@ const ENGLISH = {
   'screens.adminArea.whatsNewCard.askedForByName': 'Asked for by {name}',
   'screens.adminArea.whatsNewCard.nothingHasArrivedYet': 'Nothing has arrived yet.',
   'screens.adminArea.whyThereIsNoFigure': 'Why there is no figure',
+  'screens.adminArea.wordsManager.alsoForLaterScans': 'Do the same to titles scanned later',
+  'screens.adminArea.wordsManager.findBecomesReplace': '{find} becomes {replace}',
+  'screens.adminArea.wordsManager.findIsTakenOut': '{find} is taken out',
+  'screens.adminArea.wordsManager.forgetTheRuleFor': 'Forget the rule for {find}',
+  'screens.adminArea.wordsManager.genresAndTags': 'Genres and tags',
+  'screens.adminArea.wordsManager.itIsTakenOffEveryTitle':
+    'It’s taken off every title in this library that carries it. Undo in the message that follows puts it back.',
+  'screens.adminArea.wordsManager.noneInThisLibrary': 'None in this library yet.',
+  'screens.adminArea.wordsManager.remove': 'Remove from every title',
+  'screens.adminArea.wordsManager.removeWordFromEveryTitle': 'Remove {word} from every title',
+  'screens.adminArea.wordsManager.removeWordQuestion': 'Remove {word} from {titles}?',
+  'screens.adminArea.wordsManager.renameOrMergeAcrossTheLibrary':
+    'Rename one to change it on every title in this library. Renaming one to another already in use merges the two.',
+  'screens.adminArea.wordsManager.renameWord': 'Rename {word}',
+  'screens.adminArea.wordsManager.rulesForLaterScans': 'Rules every scan follows',
+  'screens.adminArea.wordsManager.wordRemovedFromTitles': '{word} removed from {titles}',
+  'screens.adminArea.wordsManager.wordRenamedToNextOnTitles':
+    '{word} renamed to {next} on {titles}',
   'screens.adminPage.adminSearch.findAPage': 'Find a page',
   'screens.adminPage.adminSearch.general': 'General',
   'screens.adminPage.adminSearch.searchTheAdminArea': 'Search the admin area',
@@ -7075,7 +7521,7 @@ const ENGLISH = {
   'screens.firstPassword.passwordSet': 'Password set. You can sign in with it from now on.',
   'screens.firstPassword.yourAccountHasNoPasswordYet':
     'Your account doesn’t have a password yet. Set one so you can sign in without a passkey.',
-  'screens.folderLink.openFolderInFiles': 'Open {folder} in Files',
+  'screens.folderLink.openFolderInFiles': 'Show {folder} in Folders',
   'screens.forgotPassword.ifAnAccountAnswersToThat':
     'If an account matches, a link to set a new password has been sent. It works once and expires after an hour. No email? Your server admin can find the link in the server log.',
   'screens.forgotPassword.resetYourPassword': 'Reset your password',
@@ -7309,7 +7755,6 @@ const ENGLISH = {
   'screens.importWizard.importReportView.matchedOfItems': '{matched} of {items}',
   'screens.importWizard.importReportView.notMatched': 'Not matched',
   'screens.importWizard.importReportView.plays': 'Plays',
-  'screens.importWizard.importReportView.titleYear': '{title} ({year})',
   'screens.importWizard.importReportView.watchedResumesPlaysFavouritesRatingsPlaylists':
     'Watched {watched}, in progress {resumes}, plays {plays}, favourites {favourites}, ratings {ratings}, playlists {playlists}',
   'screens.importWizard.importReportView.whatComesAcross': 'What is imported',
@@ -8986,6 +9431,8 @@ const ENGLISH = {
     '{name} rejected the API key. Check you copied all of it.',
   'server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs':
     'Asks every live TV channel’s stream for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.',
+  'server.jobs.jobDefinitions.asksTheCatalogueAboutEveryEditedTitle':
+    'Asks the catalogue what it now says of every edited film and programme, so an edit can say when the catalogue has changed under it. Nothing on the files changes.',
   'server.jobs.jobDefinitions.backUpTheDatabase': 'Back up the database',
   'server.jobs.jobDefinitions.bringEverythingAcross': 'Import from Jellyfin, Emby or Plex',
   'server.jobs.jobDefinitions.bringRequestsUpToDateWith': 'Sync requests with the catalogue',
@@ -8993,6 +9440,8 @@ const ENGLISH = {
     'Imports users, watch history, collections and playlists from Jellyfin, Emby or Plex.',
   'server.jobs.jobDefinitions.checkCatalogueConnectivity': 'Check catalogue connectivity',
   'server.jobs.jobDefinitions.checkDiskSpace': 'Check disk space',
+  'server.jobs.jobDefinitions.checkEditedTitlesWithTheCatalogue':
+    'Check edited titles with the catalogue',
   'server.jobs.jobDefinitions.checksTheRequestsServiceAndIts':
     'Checks the requests service and its VPN are running.',
   'server.jobs.jobDefinitions.checksTheTMDBKeyStillWorks': 'Checks the TMDB key still works.',
@@ -9181,6 +9630,8 @@ const ENGLISH = {
   'server.main.doneBroughtUpToDate': '{done} updated',
   'server.main.doneOfTotalLookedUp': '{done} of {total} looked up',
   'server.main.doneOfTotalSongsMeasured': '{done} of {total} songs measured',
+  'server.main.editedTitlesChecked.one': '{count} edited title checked',
+  'server.main.editedTitlesChecked.other': '{count} edited titles checked',
   'server.main.nameHasItAlready': '{name} already has it.',
   'server.main.nameIsNoLongerConnected': '{name} is no longer connected',
   'server.main.notFound': 'not found',
@@ -9522,8 +9973,12 @@ const ENGLISH = {
     'A sign-in as {identifier} was blocked on {deviceLabel} from {address} — {reason}',
   'server.webhooks.formatWebhookBody.startedListening':
     '{viewer} started listening to {item} on {device}, {how}.',
+  'server.webhooks.formatWebhookBody.startedListeningFromAnotherServer':
+    '{viewer} started listening to {item}, {how}.',
   'server.webhooks.formatWebhookBody.startedWatching':
     '{viewer} started watching {item} on {device}, {how}.',
+  'server.webhooks.formatWebhookBody.startedWatchingFromAnotherServer':
+    '{viewer} started watching {item}, {how}.',
   'server.webhooks.formatWebhookBody.theCatalogueCanBeReachedAgain':
     'The metadata catalogue is reachable again. No action needed.',
   'server.webhooks.formatWebhookBody.theCatalogueCouldNotBeReached':
@@ -9814,6 +10269,8 @@ const ENGLISH = {
   'ui.pageDots.showPage': 'Show page {page}',
   'ui.rail.backAPageOfTitle': 'Back a page of {title}',
   'ui.rail.forwardAPageOfTitle': 'Forward a page of {title}',
+  'ui.selectionBar.count.selectAll.one': 'Select all {count}',
+  'ui.selectionBar.count.selectAll.other': 'Select all {count}',
   'ui.sidebarGroup.labelWaiting': '{label}, {count} waiting',
   'ui.siteFooter.builtWith': 'Built with',
   'ui.siteFooter.changelog': 'Changelog',
@@ -9883,6 +10340,7 @@ const ENGLISH = {
   'ui.siteNav.whatValenceDoes': 'What Valence does',
   'ui.stepTrail.showEarlierSteps.one': 'Show {count} earlier step',
   'ui.stepTrail.showEarlierSteps.other': 'Show {count} earlier steps',
+  'ui.tagField.suggestions': 'Suggestions for {label}',
   'ui.timeBars.dragAcrossTheBarsToZoom': 'Drag across the bars to zoom in',
   'ui.timeBars.nothingInThisTime': 'Nothing in this time range.',
   'ui.tokens.captionColours.black': 'Black',

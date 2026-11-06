@@ -1,3 +1,12 @@
+import type { WordRule } from '@ValenceContracts/schemas/WordRule';
+import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
+import type {
+  CatalogueSeasons,
+  ChooseSeasonSource,
+  SeasonSourceState,
+} from '@ValenceContracts/schemas/SeasonSource';
+import type { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type { EntryFacts } from '@ValenceServer/files/describeLibraryEntries';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
@@ -6,6 +15,7 @@ import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/Artw
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type {
+  ExtraKind,
   Library,
   LibraryFacets,
   MediaDetail,
@@ -19,6 +29,10 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
 import type { MediaFileMove } from '@ValenceServer/library/moveMediaFile';
+import type {
+  PatternRenamePlan,
+  PatternRenameResult,
+} from '@ValenceContracts/schemas/PatternRename';
 import type { CalendarEpisode } from '@ValenceServer/calendar/CalendarEpisode';
 
 type MediaDeletion = MediaFileDeletion | { kind: 'absent' };
@@ -97,6 +111,9 @@ type UpdateLibraryInput = {
   requestProfileId?: string | null;
   requestPath?: string | null;
   keepsShowsTogether?: boolean;
+  metadataLanguage?: string | null;
+  usesOriginalTitle?: boolean;
+  writesNfo?: boolean;
   higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };
@@ -168,6 +185,11 @@ type LibraryService = ShowService & {
   deleteSeries: (seriesId: string) => Promise<SeriesDeletion>;
   moveMedia: (mediaIds: readonly string[], toLibraryId: string) => Promise<MediaMove>;
   mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>;
+  readEntryFacts: (
+    libraryId: string,
+    files: readonly string[],
+    folders: readonly string[],
+  ) => Promise<EntryFacts>;
   mediaPathsIn: (libraryId: string) => Promise<Record<string, string>>;
   correctMatch: (
     mediaId: string,
@@ -175,6 +197,11 @@ type LibraryService = ShowService & {
     by: string | null,
   ) => Promise<Correction | null>;
   forgetCorrection: (mediaId: string) => Promise<Correction | null>;
+  unmatch: (mediaId: string, by: string | null) => Promise<Correction | null>;
+  refreshTitle: (
+    mediaId: string,
+    mode: 'details' | 'artwork' | 'files',
+  ) => Promise<Correction | null>;
   listLeftOut: (libraryId: string) => Promise<LeftOut[] | null>;
   leaveOut: (
     libraryId: string,
@@ -211,6 +238,16 @@ type LibraryService = ShowService & {
     isOfTitle?: boolean,
   ) => Promise<string | null>;
   readBarePosterUrl: (mediaId: string) => Promise<string | null>;
+  readArtworkPart?: (
+    mediaId: string,
+    part: { season: number; episode: number | null },
+  ) => Promise<ArtworkChoices | 'missing' | 'unmatched' | 'unavailable'>;
+  chooseArtworkPart?: (
+    mediaId: string,
+    part: { season: number; episode: number | null },
+    url: string | null,
+    by: string | null,
+  ) => Promise<{ jobId: string | null } | 'missing' | 'unmatched' | 'unavailable' | 'refused'>;
   readArtworkChoices: (
     mediaId: string,
   ) => Promise<ArtworkChoices | 'missing' | 'unmatched' | 'unavailable'>;
@@ -220,6 +257,47 @@ type LibraryService = ShowService & {
     url: string | null,
     by: string | null,
   ) => Promise<{ jobId: string | null } | 'missing' | 'unmatched' | 'unavailable' | 'refused'>;
+  uploadArtwork?: (
+    mediaId: string,
+    kind: ArtworkKind,
+    artwork: { body: Uint8Array; contentType: string },
+    by: string | null,
+  ) => Promise<
+    | { jobId: string | null }
+    | 'missing'
+    | 'unmatched'
+    | 'unavailable'
+    | 'refused'
+    | { fault: NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePicture>>> }
+  >;
+  isOwnArtwork?: (mediaId: string, url: string) => Promise<boolean>;
+  chooseExtra?: (
+    mediaId: string,
+    choice: { extraKind: ExtraKind | null; parentId: string | null; isForgotten?: boolean },
+  ) => Promise<Correction | null>;
+  readWordRules?: (libraryId: string) => Promise<WordRule[]>;
+  saveWordRules?: (libraryId: string, rules: readonly WordRule[]) => Promise<WordRule[]>;
+  pinEpisode?: (
+    mediaId: string,
+    pin: { seasonNumber: number; episodeNumber: number; episodeNumberEnd: number | null } | null,
+  ) => Promise<Correction | null>;
+  chooseEpisodeOrder?: (mediaId: string, order: string | null) => Promise<Correction | null>;
+  readEpisodeOrders?: (mediaId: string) => Promise<EpisodeOrders | null>;
+  readSeasonSource?: (mediaId: string) => Promise<SeasonSourceState>;
+  chooseSeasonSource?: (
+    mediaId: string,
+    source: ChooseSeasonSource['source'],
+  ) => Promise<Correction | 'noSuchSeason' | 'catalogueUnavailable' | null>;
+  readCatalogueSeasons?: (externalId: string) => Promise<CatalogueSeasons | null>;
+  chooseVersion?: (
+    mediaId: string,
+    choice: { label?: string | null; isStanding?: boolean },
+  ) => Promise<boolean>;
+  planPatternRenames?: (mediaIds: readonly string[]) => Promise<PatternRenamePlan>;
+  renameToPattern?: (
+    mediaIds: readonly string[],
+    whenTaken: 'skip' | 'number',
+  ) => Promise<PatternRenameResult>;
 };
 
 const DEFAULT_LIMIT = 60;

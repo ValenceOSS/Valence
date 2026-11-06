@@ -126,4 +126,17 @@ describe('createAnswerKeeper', () => {
 
     expect(asked()).toBe(2);
   });
+
+  it('asks again about what it was told to forget, and only that', async () => {
+    const keeper = createAnswerKeeper<string | null>(1000);
+    const { read, asked } = counting(() => Promise.resolve('an answer'));
+
+    await keeper.keep('one', read);
+    await keeper.keep('two', read);
+    keeper.forgetWhere((key) => key === 'one');
+    await keeper.keep('one', read);
+    await keeper.keep('two', read);
+
+    expect(asked()).toBe(3);
+  });
 });

@@ -65,6 +65,7 @@ type PresenceViewing = {
   accountId: string | null;
   profileId: string | null;
   profileName: string | null;
+  fromServer: string | null;
   deviceLabel: string;
   clientLabel: string | null;
   clientKind: ClientKind;
@@ -187,6 +188,7 @@ const createPresenceService = (
     accountId: entry.accountId,
     profileId: entry.profileId,
     profileName: entry.profileName,
+    fromServer: entry.fromServer,
     deviceLabel: entry.deviceLabel,
     clientLabel: entry.clientLabel,
     clientKind: entry.clientKind ?? 'browser',

@@ -9,6 +9,7 @@ import {
   mediaItem,
   mediaItemJob,
   rating,
+  seasonSource,
   series,
   user,
   viewerProfile,
@@ -16,6 +17,7 @@ import {
   watchProgress,
 } from '#dialect/Schema';
 import { createMediaStore, listOutstandingFor, markJobComplete } from './createMediaStore';
+import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { MediaRow } from './scanLibrary';
 
@@ -101,6 +103,103 @@ const aStore = async () => {
 };
 
 describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('lays a programme’s and an episode’s edits over every scan, and keeps what the catalogue says', async () => {
+    const { db, store } = await aStore();
+    const edits = createTitleEditStore(db);
+    const nobody = { id: null, name: null };
+
+    await edits.change(
+      { libraryId: SHOWS_ID, key: 'tv:1', kind: 'show' },
+      [{ field: 'title', edit: { value: 'My show', catalogue: 'Show' } }],
+      nobody,
+      'set',
+    );
+    await edits.change(
+      { libraryId: SHOWS_ID, key: 'tv:1:e77', kind: 'episode' },
+      [{ field: 'title', edit: { value: 'My pilot', catalogue: 'Pilot' } }],
+      nobody,
+      'set',
+    );
+
+    const episode = anEpisode('/shows/Show/1.mkv', 'Show Renamed', '1');
+
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, catalogueEpisodeId: '77' },
+    });
+
+    const [stored] = await db
+      .select({ title: mediaItem.title, seriesTitle: mediaItem.seriesTitle })
+      .from(mediaItem);
+    const [placed] = await db.select({ title: series.title }).from(series);
+    const [showEdit] = await edits.editsFor(SHOWS_ID, ['tv:1']);
+
+    expect(stored).toEqual({ title: 'My pilot', seriesTitle: 'My show' });
+    expect(placed?.title).toBe('My show');
+    expect(showEdit?.catalogue).toBe('Show Renamed');
+  });
+
+  it('carries the edits made to a programme before it was matched over to its match', async () => {
+    const { db, store } = await aStore();
+    const edits = createTitleEditStore(db);
+    const nobody = { id: null, name: null };
+    const unmatched = anEpisode('/shows/Show/1.mkv', 'Show', null);
+
+    await store.upsert(unmatched);
+
+    const [folder] = await db.select({ key: series.key }).from(series);
+    const showKey = `series:${folder?.key ?? ''}`;
+
+    await edits.change(
+      { libraryId: SHOWS_ID, key: showKey, kind: 'show' },
+      [{ field: 'title', edit: { value: 'My show', catalogue: 'Show' } }],
+      nobody,
+      'set',
+    );
+    await edits.change(
+      { libraryId: SHOWS_ID, key: `${showKey}:s1e1`, kind: 'episode' },
+      [{ field: 'title', edit: { value: 'My pilot', catalogue: 'Pilot' } }],
+      nobody,
+      'set',
+    );
+
+    const matched = anEpisode('/shows/Show/1.mkv', 'Show', '1');
+
+    await store.upsert({
+      ...matched,
+      metadata: { ...matched.metadata, catalogueEpisodeId: '77' },
+    });
+
+    const [stored] = await db
+      .select({ title: mediaItem.title, seriesTitle: mediaItem.seriesTitle })
+      .from(mediaItem);
+
+    expect(stored).toEqual({ title: 'My pilot', seriesTitle: 'My show' });
+    expect((await edits.editsFor(SHOWS_ID, ['tv:1', 'tv:1:e77'])).map((one) => one.field)).toEqual([
+      'title',
+      'title',
+    ]);
+    expect(await edits.editsFor(SHOWS_ID, [showKey, `${showKey}:s1e1`])).toEqual([]);
+    expect(await edits.history(SHOWS_ID, 'tv:1')).toHaveLength(1);
+  });
+
+  it('reads back what it stored of a file’s probe, for a re-read that need not probe it again', async () => {
+    const { store } = await aStore();
+
+    await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', '1'));
+
+    await expect(store.readProbe?.(SHOWS_ID, '/shows/Show/1.mkv')).resolves.toMatchObject({
+      probeVersion: 1,
+      probe: {
+        container: 'mkv',
+        durationSeconds: 1800,
+        video: { codec: 'h264', width: 1920, height: 1080, range: 'SDR', level: 41 },
+        audioStreams: [],
+      },
+    });
+    await expect(store.readProbe?.(SHOWS_ID, '/shows/Show/2.mkv')).resolves.toBeNull();
+  });
+
   it('keeps what is left out of a library once per path, and brings it back', async () => {
     const { store } = await aStore();
     const asked = {
@@ -168,6 +267,31 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     await store.upsert(episode);
 
     expect(await logoOf()).toBe('https://logo/a.png');
+  });
+
+  it('marks a file’s artwork changed when a scan brings it a new poster, so it is drawn afresh', async () => {
+    const { db, store } = await aStore();
+    const episode = anEpisode('/shows/Show/1.mkv', 'Show', 'tv:1');
+    const changedAt = async () =>
+      (await db.select({ at: mediaItem.artworkChangedAt }).from(mediaItem))[0]?.at ?? null;
+
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, posterUrl: 'https://a.jpg' },
+    });
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, posterUrl: 'https://a.jpg' },
+    });
+
+    expect(await changedAt()).toBeNull();
+
+    await store.upsert({
+      ...episode,
+      metadata: { ...episode.metadata, posterUrl: 'https://b.jpg' },
+    });
+
+    expect(await changedAt()).not.toBeNull();
   });
 
   it('names a programme after its catalogue match, and keeps that match once made', async () => {
@@ -584,6 +708,137 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ).resolves.toEqual([
       { id: 'kept', seriesId: 'matched' },
       { id: 'moved', seriesId: 'matched' },
+    ]);
+  });
+
+  it('keeps where a programme’s seasons are read from when it is gathered into another, once a season', async () => {
+    const { db, store } = await aStore();
+    const one = await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', null));
+    const two = await store.upsert(anEpisode('/shows/Show/2.mkv', 'Show', null));
+
+    await db.insert(series).values([
+      {
+        id: 'matched',
+        libraryId: SHOWS_ID,
+        key: 'catalogue:tv:1',
+        title: 'Show',
+        externalId: 'tv:1',
+      },
+      { id: 'by-title', libraryId: SHOWS_ID, key: 'title:show', title: 'Show' },
+    ]);
+    await db
+      .update(mediaItem)
+      .set({ seriesId: 'matched' })
+      .where(eq(mediaItem.id, one ?? ''));
+    await db
+      .update(mediaItem)
+      .set({ seriesId: 'by-title' })
+      .where(eq(mediaItem.id, two ?? ''));
+
+    const source = { externalSeason: 1, title: 'Revival', year: 2026 };
+
+    await db.insert(seasonSource).values([
+      { ...source, seriesId: 'matched', seasonNumber: 7, externalId: 'kept' },
+      { ...source, seriesId: 'by-title', seasonNumber: 7, externalId: 'doubled' },
+      { ...source, seriesId: 'by-title', seasonNumber: 8, externalId: 'moved' },
+    ]);
+
+    await store.regroupSeries?.(
+      SHOWS_ID,
+      new Map([
+        ['/shows/Show/1.mkv', '/shows/Show'],
+        ['/shows/Show/2.mkv', '/shows/Show'],
+      ]),
+    );
+
+    await expect(store.listSeasonSources?.(SHOWS_ID)).resolves.toEqual(
+      expect.arrayContaining([
+        { ...source, folder: '/shows/Show', seasonNumber: 7, externalId: 'kept' },
+        { ...source, folder: '/shows/Show', seasonNumber: 8, externalId: 'moved' },
+      ]),
+    );
+    await expect(db.select().from(seasonSource)).resolves.toHaveLength(2);
+  });
+
+  it('keeps one of the same season held by two programmes gathered into a third', async () => {
+    const { db, store } = await aStore();
+    const ids = await Promise.all(
+      ['1', '2', '3'].map((name) =>
+        store.upsert(anEpisode(`/shows/Show/${name}.mkv`, 'Show', null)),
+      ),
+    );
+
+    await db.insert(series).values([
+      {
+        id: 'matched',
+        libraryId: SHOWS_ID,
+        key: 'catalogue:tv:1',
+        title: 'Show',
+        externalId: 'tv:1',
+      },
+      { id: 'first', libraryId: SHOWS_ID, key: 'title:show', title: 'Show' },
+      { id: 'second', libraryId: SHOWS_ID, key: 'title:the show', title: 'Show' },
+    ]);
+
+    for (const [at, seriesId] of ['matched', 'first', 'second'].entries()) {
+      await db
+        .update(mediaItem)
+        .set({ seriesId })
+        .where(eq(mediaItem.id, ids[at] ?? ''));
+    }
+
+    const source = { seasonNumber: 7, externalSeason: 1, title: 'Revival', year: 2026 };
+
+    await db.insert(seasonSource).values([
+      { ...source, seriesId: 'first', externalId: 'one' },
+      { ...source, seriesId: 'second', externalId: 'other' },
+    ]);
+
+    await store.regroupSeries?.(
+      SHOWS_ID,
+      new Map(['1', '2', '3'].map((name) => [`/shows/Show/${name}.mkv`, '/shows/Show'])),
+    );
+
+    await expect(
+      db.select({ seriesId: seasonSource.seriesId }).from(seasonSource),
+    ).resolves.toEqual([{ seriesId: 'matched' }]);
+  });
+
+  it('lists only the seasons of programmes kept in a folder, which is how a scan finds them', async () => {
+    const { db, store } = await aStore();
+
+    await db.insert(series).values([
+      { id: 'in-folder', libraryId: SHOWS_ID, key: 'folder:/shows/A', title: 'A' },
+      { id: 'by-title', libraryId: SHOWS_ID, key: 'title:b', title: 'B' },
+    ]);
+    await db.insert(seasonSource).values([
+      {
+        seriesId: 'in-folder',
+        seasonNumber: 2,
+        externalId: '9',
+        externalSeason: 1,
+        title: 'A2',
+        year: null,
+      },
+      {
+        seriesId: 'by-title',
+        seasonNumber: 2,
+        externalId: '9',
+        externalSeason: 1,
+        title: 'B2',
+        year: null,
+      },
+    ]);
+
+    await expect(store.listSeasonSources?.(SHOWS_ID)).resolves.toEqual([
+      {
+        folder: '/shows/A',
+        seasonNumber: 2,
+        externalId: '9',
+        externalSeason: 1,
+        title: 'A2',
+        year: null,
+      },
     ]);
   });
 
