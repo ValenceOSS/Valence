@@ -53,7 +53,7 @@ const CatalogueBookRow = ({
               badges={
                 title.standing.status === 'askable'
                   ? [say('common.request')]
-                  : describeCatalogueCard(title).badges.slice(1)
+                  : describeCatalogueCard(title).badges
               }
               {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
               onSelect={() => {

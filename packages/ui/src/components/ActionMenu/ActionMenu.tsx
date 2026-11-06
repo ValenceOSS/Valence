@@ -76,7 +76,7 @@ const LOOKS = {
  *   control that has to be found on a busy row; or labelled, sized to words rather than a glyph, for
  *   a menu that says what it is; a segment, one part of a joined row of them; overlay, dark and
  *   solid, for a control laid over artwork; or play, a title's wide white button, for a main
- *   action that opens a choice.
+ *   action that opens a choice, keeping its face while open, its menu as wide as it is.
  * @param onOpenChange - Told when it opens or closes, for a caller that must not vanish from under
  *   it while it is open.
  * @param className - Extra classes for the caller's own layout.
@@ -110,7 +110,9 @@ const ActionMenu = ({
           'text-current',
           PRESS_MOTION,
           'focus-visible:focus-ring',
-          'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',
+          look === 'play'
+            ? ''
+            : 'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
           LOOKS[look],
           className,
@@ -129,6 +131,9 @@ const ActionMenu = ({
             event.stopPropagation();
           }}
           collisionPadding={8}
+          {...(look === 'play'
+            ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
+            : {})}
           className={cn(
             MENU.content,
             'max-h-[min(80vh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto',

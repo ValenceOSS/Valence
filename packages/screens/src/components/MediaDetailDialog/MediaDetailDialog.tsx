@@ -3,6 +3,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
+  ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
@@ -25,6 +26,10 @@ import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { SplitButton } from '@ValenceUI/SplitButton';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Server as ServerDuotoneIcon } from '@keyline-icons/react/duotone';
+import { describePicture } from '@ValenceClient/library/describePicture';
+import { useFilmCopies } from '@ValenceScreens/library/useFilmCopies';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -78,6 +83,8 @@ import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 import { say } from '@ValenceI18n/say';
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { sayingAll } from '@ValenceI18n/sayingAll';
 import { LikeThisShelf } from '@ValenceScreens/components/LikeThisShelf/LikeThisShelf';
 
 const CAST_PLACEHOLDERS = 5;
@@ -201,6 +208,10 @@ const MediaDetailDialog = ({
   const trailerKey = trailer === null ? (detail?.trailerKey ?? null) : null;
   const hasTrailer = trailer !== null || trailerKey !== null;
   const versions = detail?.versions ?? [];
+  const filmCopies = useFilmCopies(media === null ? null : shown);
+  const [firstServer = '', ...otherServers] = filmCopies.map(
+    (copy) => copy.server ?? say('common.thisServer'),
+  );
   const preferred = usePreferredCopy(shown, versions);
   const chosenVersion = versions.find((one) => one.id === (version ?? preferred)) ?? null;
   const isTheSameTitle = chosenVersion !== null && originOf(chosenVersion.libraryId) !== null;
@@ -265,7 +276,35 @@ const MediaDetailDialog = ({
             },
           })}
     >
-      {versions.length === 0 ? (
+      {filmCopies.length > 1 ? (
+        <ActionMenu
+          label={say('common.playFrom')}
+          align="start"
+          look="play"
+          trigger={
+            <>
+              {playFaceOf}
+              <Icon of={ChevronDownIcon} size={16} />
+            </>
+          }
+          groups={[
+            {
+              name: say('common.playFrom'),
+              items: filmCopies.map((copy) => ({
+                id: copy.media.id,
+                label: copy.server ?? say('common.thisServer'),
+                icon: <Icon of={ServerDuotoneIcon} size={18} />,
+                detail: [describePicture(copy.media), formatDuration(copy.media.durationSeconds)]
+                  .filter((part) => part !== null)
+                  .join(' · '),
+                onChoose: () => {
+                  onPlay(copy.media, copy.media.id === shown.id ? (shownResume ?? 0) : 0);
+                },
+              })),
+            },
+          ]}
+        />
+      ) : versions.length === 0 ? (
         <Button
           variant="confirm"
           size="none"
@@ -588,7 +627,13 @@ const MediaDetailDialog = ({
                   </p>
                 )}
 
-                {origin === null && alsoOn.length === 0 ? null : (
+                {filmCopies.length > 1 ? (
+                  <p className="text-text-muted">
+                    {say('common.fromName', {
+                      name: sayAgain(sayingAll([firstServer, ...otherServers])),
+                    })}
+                  </p>
+                ) : origin === null && alsoOn.length === 0 ? null : (
                   <p className="text-text-muted">
                     {origin === null
                       ? say('common.alsoOnNames', { names: alsoOn.join(', ') })

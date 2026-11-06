@@ -12,6 +12,7 @@ const aLinkedServerFace = (change: Partial<LinkedServerFace> = {}): LinkedServer
   colour: '#e8503a',
   isReachable: true,
   takesRequests: false,
+  pictureAt: null,
   ...change,
 });
 

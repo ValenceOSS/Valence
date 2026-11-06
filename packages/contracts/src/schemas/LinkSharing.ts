@@ -102,6 +102,7 @@ const LinkedServerFaceSchema = z.object({
   colour: z.string(),
   isReachable: z.boolean(),
   takesRequests: z.boolean().default(false),
+  pictureAt: z.string().nullable().default(null),
 });
 
 const LinkedServerFacesSchema = z.object({ servers: z.array(LinkedServerFaceSchema) });

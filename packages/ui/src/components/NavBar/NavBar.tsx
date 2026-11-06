@@ -224,7 +224,7 @@ const NavBar = ({
                 const isCurrent = item.id === selectedId;
 
                 const look = cn(
-                  'relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
+                  'relative isolate flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
                   'coarse:h-11',
                   MOVES,
                   litPlace === item.id ? 'text-[var(--color-surface)]' : 'text-text',

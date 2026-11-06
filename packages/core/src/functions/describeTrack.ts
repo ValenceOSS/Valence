@@ -84,6 +84,20 @@ const LANGUAGE_CODES: Record<string, string> = {
   vietnamese: 'vi',
   vie: 'vi',
   vi: 'vi',
+  rum: 'ro',
+  slo: 'sk',
+  alb: 'sq',
+  arm: 'hy',
+  baq: 'eu',
+  bur: 'my',
+  geo: 'ka',
+  ice: 'is',
+  mac: 'mk',
+  mao: 'mi',
+  may: 'ms',
+  per: 'fa',
+  tib: 'bo',
+  wel: 'cy',
 };
 
 /* oxlint-disable valence/no-hard-coded-strings -- each language named in its own language, the way a track menu shows it */
@@ -132,6 +146,21 @@ const CHANNEL_NAMES: Record<number, string> = {
 };
 
 /**
+ * A language's code as the platform writes it, which is the two-letter code where the language has
+ * one — `bg` for `bul` — so two spellings of a language not listed here are still one language.
+ *
+ * @param code - The language, by a code.
+ * @returns Its shortest code, or the code itself where the platform does not know it.
+ */
+const shortestCodeOf = (code: string): string => {
+  try {
+    return Intl.getCanonicalLocales(code)[0]?.toLowerCase() ?? code;
+  } catch {
+    return code;
+  }
+};
+
+/**
  * Normalises whatever a file called a language into a two-letter code. Files carry two-letter
  * codes, three-letter codes, both competing three-letter standards, and sometimes the language
  * written out in full, with or without a region after them; all of them mean the same thing to a
@@ -147,12 +176,31 @@ const readLanguage = (raw: string | null | undefined): string | null => {
     return null;
   }
 
-  return LANGUAGE_CODES[lowered] ?? lowered;
+  return LANGUAGE_CODES[lowered] ?? shortestCodeOf(lowered);
+};
+
+/**
+ * What a language calls itself, as the platform knows it, capitalised as a name in a menu is —
+ * `Български` for `bul` — for a language the names written out here do not cover.
+ *
+ * @param code - The language, by its code.
+ * @returns Its own name, or null where the platform does not know it or cannot name languages.
+ */
+const nameInItself = (code: string): string | null => {
+  try {
+    const named = new Intl.DisplayNames([code], { type: 'language', fallback: 'none' }).of(code);
+
+    return named === undefined || named === ''
+      ? null
+      : `${named.charAt(0).toLocaleUpperCase(code)}${named.slice(1)}`;
+  } catch {
+    return null;
+  }
 };
 
 /**
  * Names a language the way a viewer reads it, in that language's own words — Deutsch rather than
- * German. A code nothing recognises is shown upper-cased rather than replaced by a guess, so
+ * German, from the platform where the names written out here do not cover it. A code nothing recognises is shown upper-cased rather than replaced by a guess, so
  * somebody seeing `TLH` at least learns something true about the file.
  *
  * @param raw - The language as the file tagged it, in any spelling.
@@ -165,7 +213,7 @@ const describeLanguage = (raw: string | null | undefined): string | null => {
     return null;
   }
 
-  return LANGUAGE_NAMES[code] ?? code.toUpperCase();
+  return LANGUAGE_NAMES[code] ?? nameInItself(code) ?? code.toUpperCase();
 };
 
 /**

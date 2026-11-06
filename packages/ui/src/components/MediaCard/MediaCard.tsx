@@ -7,6 +7,7 @@ import { Check as CheckIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { OriginMark } from '@ValenceUI/OriginMark';
+import { CardStatus } from './components/CardStatus/CardStatus';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
@@ -39,13 +40,18 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param title - What the thing is called.
  * @param eyebrow - A line above the title, such as which episode this is.
  * @param subtitle - A line beneath it, such as the year or the length.
- * @param badges - Short facts to show over the artwork, such as the format.
+ * @param badges - Short facts to show over the artwork, such as the format, each plain or, where it
+ *   is a status, in the tone the status is drawn in everywhere else.
  * @param overlay - Something of the caller's own laid over the top left of the artwork, which lifts
  *   with the card, such as who asked for it.
  * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
  *   icon than said, such as that it is already in the library.
  * @param origin - Where the thing comes from, where that is another server: its initial in its colour,
  *   in the bottom left corner of the artwork, named on hover. Nothing is drawn for this server's own.
+ * @param alsoFrom - The other servers that have it too, each drawn as its own mark beside the first,
+ *   overlapping, where the thing is one title several servers have.
+ * @param status - Where the thing stands, such as a request downloading, as a badge in its tone in
+ *   the bottom left corner of the artwork, beside where it comes from.
  * @param count - A number to show in the top right corner of the artwork, such as how many episodes
  *   are left to watch; nothing is drawn for none.
  * @param countLabel - What the number means, read out and shown on hover.
@@ -73,6 +79,8 @@ const MediaCard = ({
   overlay,
   corner,
   origin,
+  alsoFrom = [],
+  status,
   count,
   countLabel,
   imageUrl,
@@ -86,6 +94,9 @@ const MediaCard = ({
   isStill = false,
   className,
 }: MediaCardProps) => {
+  const marks = [...(origin === undefined ? [] : [origin]), ...alsoFrom].filter(
+    (mark, at, every) => every.findIndex((other) => other.label === mark.label) === at,
+  );
   const prefersReducedMotion = useReducedMotionConfig();
   const isLead = emphasis === 'lead';
   const isBook = shape === 'book';
@@ -155,11 +166,15 @@ const MediaCard = ({
 
             {badges.length === 0 ? null : (
               <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-                {badges.map((badge) => (
-                  <Badge key={badge} tone="solid">
-                    {badge}
-                  </Badge>
-                ))}
+                {badges.map((badge) =>
+                  typeof badge === 'string' ? (
+                    <Badge key={badge} tone="solid">
+                      {badge}
+                    </Badge>
+                  ) : (
+                    <CardStatus key={badge.label} status={badge} />
+                  ),
+                )}
               </span>
             )}
 
@@ -210,8 +225,18 @@ const MediaCard = ({
               </span>
             )}
 
-            {origin === undefined ? null : (
-              <OriginMark {...origin} className="absolute bottom-3 left-3" />
+            {marks.length === 0 && status === undefined ? null : (
+              <span className="absolute bottom-3 left-3 flex items-center gap-2">
+                {marks.length === 0 ? null : (
+                  <span className="flex -space-x-2">
+                    {marks.map((mark) => (
+                      <OriginMark key={mark.label} {...mark} />
+                    ))}
+                  </span>
+                )}
+
+                {status === undefined ? null : <CardStatus status={status} />}
+              </span>
             )}
 
             {watchedFraction === undefined || watchedFraction < 1 ? null : (

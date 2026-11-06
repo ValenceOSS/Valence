@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useHeldBadges } from '@ValenceScreens/library/useHeldBadges';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { RevealItem } from '@ValenceUI/RevealItem';
@@ -38,12 +39,18 @@ const LikeThisShelf = ({
 }: LikeThisShelfProps) => {
   const isOpen = useContext(AreSectionsOpen);
   const alike = useLikeThis(mediaId);
+  const heldBadgesOf = useHeldBadges();
 
   const asked = useQuery(
     requestsQueries.similarTitles(kind, externalId ?? null, onAsk !== undefined),
   );
   const heldIds = new Set(alike.flatMap((media) => media.externalId ?? []));
-  const fromCatalogue = (asked.data?.titles ?? []).filter((title) => !heldIds.has(title.id));
+  const fromCatalogue = (asked.data?.titles ?? []).filter(
+    (title) =>
+      !heldIds.has(title.id) &&
+      title.standing.status !== 'library' &&
+      title.standing.status !== 'linked',
+  );
 
   if (alike.length === 0 && fromCatalogue.length === 0) {
     return null;
@@ -69,9 +76,7 @@ const LikeThisShelf = ({
               onPlay={onPlay}
               onInspect={onInspect}
               onOpenShow={onOpenShow}
-              {...(onAsk === undefined
-                ? {}
-                : { badges: [say('screens.askableDialog.describeCatalogueCard.inLibrary')] })}
+              {...(onAsk === undefined ? {} : { badges: heldBadgesOf(media.libraryId) })}
             />
           </RevealItem>
         ))}
@@ -85,7 +90,7 @@ const LikeThisShelf = ({
             <MediaCard
               title={title.title}
               subtitle={title.year?.toString() ?? ''}
-              badges={describeCatalogueCard(title).badges.slice(1)}
+              badges={describeCatalogueCard(title).badges}
               {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
               onSelect={() => {
                 onAsk?.(askingOf(title));

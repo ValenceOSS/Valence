@@ -5253,23 +5253,23 @@
   },
   {
     "handler": "common.notInTheLibrary",
-    "text": "Not in the library",
-    "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it."
+    "text": "Not in any library",
+    "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it. \"Any\" because a linked server's libraries count too."
   },
   {
     "handler": "common.notInThisLibrary",
-    "text": "Not in this library",
+    "text": "Not in any library",
     "context": "Shown in the missing episode in the show of the phone app."
   },
   {
     "handler": "common.notInThisLibraryAirs",
-    "text": "Not in this library · {airs}",
+    "text": "Not in any library · {airs}",
     "context": "Shown in the missing episode in the show of the phone app. {airs} is filled in by the app."
   },
   {
     "handler": "common.notInYourLibrary",
-    "text": "Not in your library",
-    "context": "Shown, used in the artist story in the artist view and in the season picker in the show dialog."
+    "text": "Not in any library",
+    "context": "Shown, used in the artist story in the artist view and in the season picker in the show dialog. \"Any\" because a linked server's libraries count too."
   },
   {
     "handler": "common.noTitleKeepsItsRulesYet",
@@ -5864,6 +5864,11 @@
     "handler": "common.playASongToFollowIts",
     "text": "Play a song to see its lyrics here.",
     "context": "The detail of a nothing here, used in the lyrics panel in the music page and in the lyrics view in the music page."
+  },
+  {
+    "handler": "common.playFrom",
+    "text": "Play from",
+    "context": "The heading of the menu under the Play button of a film or programme choosing which server's copy to play, where more than one server has it."
   },
   {
     "handler": "common.playHere",

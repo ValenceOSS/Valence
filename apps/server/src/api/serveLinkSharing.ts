@@ -798,6 +798,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
             colour: server.colour,
             isReachable: isLinkedServerReachable(server.id),
             takesRequests: linkedServerTakesRequests(server.id),
+            pictureAt: server.pictureAt,
           })),
       },
       200,

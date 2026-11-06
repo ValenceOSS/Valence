@@ -19,6 +19,7 @@ type ShowDialogProps = {
   onRequestMore?: (tmdbId: number) => void;
   onAsk?: (asking: string) => void;
   onOpenPerson?: (member: CastMember) => void;
+  onSwitchCopy?: (show: ShowSummary) => void;
 };
 
 export type { ShowDialogProps };

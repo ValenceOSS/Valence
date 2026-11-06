@@ -19,6 +19,7 @@ import { MediaCard } from '@ValenceUI/MediaCard';
 import { PersonPortraits } from './components/PersonPortraits/PersonPortraits';
 import { SeasonMate } from '@ValenceScreens/components/SeasonMate/SeasonMate';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
+import { useHeldBadges } from '@ValenceScreens/library/useHeldBadges';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 import type { CatalogueTitle, PersonCredit } from '@ValenceContracts/schemas/CatalogueTitle';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
@@ -143,6 +144,7 @@ const PersonDialog = ({
   onBack,
   backLabel,
 }: PersonDialogProps) => {
+  const heldBadgesOf = useHeldBadges();
   const [lastOpened, setLastOpened] = useState<number | null>(null);
 
   const asked = useQuery(libraryQueries.person(personId));
@@ -222,9 +224,9 @@ const PersonDialog = ({
           : person.alsoKnownAs.join(', '),
     },
   ].filter((fact) => fact.value !== null);
-  const notHeld = work.filter((title) => title.standing.status !== 'library');
-  const inLibrary = say('screens.askableDialog.describeCatalogueCard.inLibrary');
-  const heldBadges = onAsk === undefined ? {} : { badges: [inLibrary] };
+  const notHeld = work.filter(
+    (title) => title.standing.status !== 'library' && title.standing.status !== 'linked',
+  );
   const moreRows = [
     {
       kind: 'film',
@@ -390,7 +392,9 @@ const PersonDialog = ({
                     {credits.films.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
-                          {...heldBadges}
+                          {...(onAsk === undefined
+                            ? {}
+                            : { badges: heldBadgesOf(media.libraryId) })}
                           growsOnHover={false}
                           shape="poster"
                           media={media}
@@ -416,7 +420,9 @@ const PersonDialog = ({
                     {credits.shows.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
-                          {...heldBadges}
+                          {...(onAsk === undefined
+                            ? {}
+                            : { badges: heldBadgesOf(media.libraryId) })}
                           growsOnHover={false}
                           isSeries
                           shape="poster"
@@ -472,7 +478,7 @@ const PersonDialog = ({
                           <MediaCard
                             title={title.title}
                             subtitle={title.year?.toString() ?? ''}
-                            badges={describeCatalogueCard(title).badges.slice(1)}
+                            badges={describeCatalogueCard(title).badges}
                             {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
                             onSelect={() => {
                               onAsk?.(askingOf(title));

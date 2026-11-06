@@ -2,6 +2,8 @@ import { motion } from 'motion/react';
 import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { useArrivals } from '@ValenceScreens/motion/useArrivals';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { groupCopies } from '@ValenceScreens/library/groupCopies';
 import type { MediaGridProps, MediaGridSize } from './MediaGrid.types';
 import { say } from '@ValenceI18n/say';
 
@@ -20,7 +22,8 @@ const UNDER_A_CARD = 64;
  * how far through it they are and whether they have kept it, both asked of the caller rather than
  * fetched here.
  *
- * @param items - What to draw.
+ * @param items - What to draw, a copy each — a title several servers have is drawn once, marked
+ *   with each.
  * @param onPlay - Told to start something, and where from.
  * @param onInspect - Told to open the page about something.
  * @param watchedFractionFor - How far through each item this viewer is.
@@ -51,10 +54,12 @@ const MediaGrid = ({
   shape = 'wide',
 }: MediaGridProps) => {
   const arrivalOf = useArrivals();
+  const originOf = useOriginOf();
+  const titles = groupCopies(items, (media) => originOf(media.libraryId) === null);
 
   return (
     <VirtualGrid
-      count={items.length}
+      count={titles.length}
       label={say('screens.mediaGrid.whatIsHere')}
       leastCardWidth={(shape === 'poster' ? POSTER_WIDTHS : WIDE_WIDTHS)[size]}
       rowHeight={
@@ -64,16 +69,19 @@ const MediaGrid = ({
       }
     >
       {(at) => {
-        const media = items[at];
+        const title = titles[at];
 
-        if (media === undefined) {
+        if (title === undefined) {
           return null;
         }
+
+        const { media, copies } = title;
 
         return (
           <motion.div key={media.id} {...arrivalOf(media.id)}>
             <RailCard
               media={media}
+              copies={copies}
               {...(unwatchedFor?.(media) === undefined
                 ? {}
                 : { unwatchedCount: unwatchedFor(media) ?? 0 })}

@@ -1533,6 +1533,11 @@ const musicWeb = createMusicWeb({
   },
 });
 
+const askedWeb = createMusicWeb({
+  userAgent: `Valence/${SERVER_VERSION} ( https://github.com/ValenceOSS/Valence )`,
+  spacingMs: { 'openlibrary.org': 1000, 'covers.openlibrary.org': 250 },
+});
+
 /**
  * Looks for what a music library's files left out on the web, where the server has been told it
  * may: covers, artists' photographs, music videos and song words.
@@ -3895,10 +3900,10 @@ const discovery: Discovery = {
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
     ),
   bookShelves: () => shelved.keep('books', () => readOpenLibraryShelves(musicWeb)),
-  searchBooks: (query) => searchOpenLibrary(musicWeb, query),
+  searchBooks: (query) => searchOpenLibrary(askedWeb, query),
   aboutBook: (title, author) =>
     booksAbout.keep(`${author ?? ''}\n${title}`, () =>
-      readOpenLibraryAbout(musicWeb, title, author),
+      readOpenLibraryAbout(askedWeb, title, author),
     ),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
   findBookSeries: (title, author) =>

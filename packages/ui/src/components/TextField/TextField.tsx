@@ -31,7 +31,8 @@ import type { TextFieldProps } from './TextField.types';
  * @param max - The largest acceptable value, for a numeric field.
  * @param isPill - Whether to round it fully, for a field sitting in a bar rather than a form.
  * @param size - How large to draw it.
- * @param isBare - Whether to paint no box at all, for a field that supplies its own surface.
+ * @param isBare - Whether to paint no box at all, for a field that supplies its own surface: only a
+ *   line beneath it, which brightens while it has focus in place of a ring.
  * @param isInset - Whether it sits inside a box something else draws, such as beside a tag field's
  *   chips, so it paints nothing of its own and leaves the focus ring to that box.
  * @param icon - Something to draw inside the field, such as a magnifying glass.
@@ -126,7 +127,11 @@ const TextField = ({
         'valence-field text-text outline-none',
         'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
         'motion-reduce:transition-none placeholder:text-text-muted',
-        isInset ? 'h-6 bg-transparent px-1 text-[0.8125rem]' : 'focus-visible:focus-ring',
+        isInset
+          ? 'h-6 bg-transparent px-1 text-[0.8125rem]'
+          : isBare
+            ? ''
+            : 'focus-visible:focus-ring',
         FIELD_DISABLED,
         'w-full',
         type === 'number'
@@ -172,7 +177,9 @@ const TextField = ({
       <span
         className={cn(
           'flex w-full items-center gap-3',
-          isBare ? 'border-b border-[var(--surface-line)] pb-3' : '',
+          isBare
+            ? 'border-b border-[var(--surface-line)] pb-3 transition-colors duration-[var(--duration-fast)] focus-within:border-text-muted'
+            : '',
         )}
       >
         {icon === undefined ? null : <span className="shrink-0 text-text-muted">{icon}</span>}

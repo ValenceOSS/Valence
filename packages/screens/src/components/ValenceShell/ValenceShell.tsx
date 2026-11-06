@@ -403,6 +403,10 @@ const ValenceShell = () => {
         <ShowDialog
           show={topDialog === 'show' ? openShow : null}
           {...backToCameFrom}
+          onSwitchCopy={(copy) => {
+            setOpenShow(copy);
+            go({ show: copy.id });
+          }}
           onOpenPerson={(member) => {
             setOpenRole(member.role);
             go({ person: member.personId ?? null });

@@ -6,6 +6,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
+  ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   Info as InfoIcon,
@@ -47,13 +48,17 @@ import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButto
 import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
 import { useArtworkTint } from '@ValenceScreens/library/useArtworkTint';
 import { TitleHero } from '@ValenceScreens/components/TitleHero/TitleHero';
+import { useShowCopies } from '@ValenceScreens/library/useShowCopies';
 import { RoundActions } from '@ValenceScreens/components/RoundActions/RoundActions';
 import type { RoundAction } from '@ValenceScreens/components/RoundActions/RoundActions.types';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Server as ServerDuotoneIcon } from '@keyline-icons/react/duotone';
+import type { ShowCopy } from '@ValenceScreens/library/useShowCopies';
 import { useHeldWhileLeaving } from '@ValenceClient/shell/useHeldWhileLeaving';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
@@ -101,6 +106,8 @@ import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpiso
  *   viewer may ask; offered where the catalogue lists aired episodes the library does not hold.
  * @param onAsk - Told to open a title from the catalogue, as its address names it.
  * @param onOpenPerson - Told which performer to open from a missing episode's cast.
+ * @param onSwitchCopy - Told to open another server's copy of the programme instead, where more
+ *   than one server has it, to watch it from there.
  */
 const ShowDialog = ({
   show,
@@ -119,6 +126,7 @@ const ShowDialog = ({
   onRequestMore,
   onAsk,
   onOpenPerson,
+  onSwitchCopy,
 }: ShowDialogProps) => {
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const [lastShown, setLastShown] = useState(show);
@@ -141,6 +149,8 @@ const ShowDialog = ({
   );
 
   const asked = useQuery(libraryQueries.show(show?.libraryId ?? null, show?.id ?? null));
+  const copies = useShowCopies(show);
+  const cache = useQueryClient();
   const detail = useHeldWhileLeaving(asked.data ?? null, show !== null);
   const isLoading = show !== null && asked.isPending;
   const trailer = (detail?.extras ?? []).find((one) => one.extraKind === 'trailer') ?? null;
@@ -227,6 +237,52 @@ const ShowDialog = ({
       ? null
       : carryingOn.startSeconds / carryingOn.episode.durationSeconds;
 
+  const playFace =
+    carryingOn === null ? null : (
+      <>
+        <Icon of={PlayFilledIcon} size={18} />
+        {carryingOn.isResuming
+          ? say('screens.showDialog.resumeStartSeconds', {
+              startSeconds: formatDuration(carryingOn.startSeconds),
+            })
+          : say('screens.showDialog.playValueEpisodeValue2', {
+              value: nameSeason(carryingOn.episode.seasonNumber ?? null),
+              value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
+            })}
+        {showWatched === null ? null : (
+          <WatchedBar
+            watched={showWatched}
+            className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+          />
+        )}
+      </>
+    );
+
+  /**
+   * Plays the programme from one of its copies: the episode to carry on from there, read from that
+   * copy, with the dialog moved onto it so its episodes are the ones shown.
+   *
+   * @param copy - The copy to play from.
+   */
+  const playFrom = async (copy: ShowCopy) => {
+    if (copy.show.id === shown.id) {
+      if (carryingOn !== null) {
+        onPlay(carryingOn.episode, carryingOn.startSeconds);
+      }
+
+      return;
+    }
+
+    onSwitchCopy?.(copy.show);
+
+    const there = await cache.fetchQuery(libraryQueries.show(copy.show.libraryId, copy.show.id));
+    const next = there === null ? null : pickUpFrom(there, { resumeFor, isFinished });
+
+    if (next !== null) {
+      onPlay(next.episode, next.startSeconds);
+    }
+  };
+
   const play =
     carryingOn === null ? (
       <PlayWithRestart>
@@ -234,6 +290,32 @@ const ShowDialog = ({
           {say('screens.showDialog.readingTheEpisodes')}
         </Button>
       </PlayWithRestart>
+    ) : copies.length > 1 && onSwitchCopy !== undefined ? (
+      <ActionMenu
+        label={say('common.playFrom')}
+        align="start"
+        look="play"
+        trigger={
+          <>
+            {playFace}
+            <Icon of={ChevronDownIcon} size={16} />
+          </>
+        }
+        groups={[
+          {
+            name: say('common.playFrom'),
+            items: copies.map((copy) => ({
+              id: copy.show.id,
+              label: copy.server ?? say('common.thisServer'),
+              icon: <Icon of={ServerDuotoneIcon} size={18} />,
+              detail: sayCount('common.count.episodes', copy.show.episodeCount),
+              onChoose: () => {
+                void playFrom(copy);
+              },
+            })),
+          },
+        ]}
+      />
     ) : (
       <PlayWithRestart
         {...(carryingOn.isResuming
@@ -252,21 +334,7 @@ const ShowDialog = ({
             onPlay(carryingOn.episode, carryingOn.startSeconds);
           }}
         >
-          <Icon of={PlayFilledIcon} size={18} />
-          {carryingOn.isResuming
-            ? say('screens.showDialog.resumeStartSeconds', {
-                startSeconds: formatDuration(carryingOn.startSeconds),
-              })
-            : say('screens.showDialog.playValueEpisodeValue2', {
-                value: nameSeason(carryingOn.episode.seasonNumber ?? null),
-                value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
-              })}
-          {showWatched === null ? null : (
-            <WatchedBar
-              watched={showWatched}
-              className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
-            />
-          )}
+          {playFace}
         </Button>
       </PlayWithRestart>
     );

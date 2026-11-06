@@ -106,7 +106,8 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
 /**
  * The page of a film, series, artist or album that can be asked for, opened from anywhere its
  * address names it: its artwork, what it is, who is in it, and where it stands — in the library
- * already, with a way to open it; somewhere along being fetched; or there to be asked for, with
+ * already, or on a linked server, where it opens that title's own page instead, as if it were here;
+ * somewhere along being fetched; or there to be asked for, with
  * the seasons of a series or the kinds of an artist's releases to choose. A film that is not in the
  * library plays straight from a source a plugin offers, for somebody who may: Play chooses the best
  * stream and plays it, and Sources lets them choose. A series already asked
@@ -157,7 +158,10 @@ const AskableDialog = ({
   const title = found.data ?? null;
   const heldKind = title?.kind ?? null;
   const isMore = named?.isMore === true;
-  const heldId = !isMore && title?.standing.status === 'library' ? title.standing.mediaId : null;
+  const heldId =
+    !isMore && (title?.standing.status === 'library' || title?.standing.status === 'linked')
+      ? title.standing.mediaId
+      : null;
   const isElsewhere = title?.standing.status === 'linked';
   const kinds = useRequestableKinds();
   const isUnrequestable = title !== null && !kinds.has(title.kind);

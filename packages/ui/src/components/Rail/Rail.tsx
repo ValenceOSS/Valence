@@ -30,6 +30,8 @@ const PER = {
     '[--rail-per:2] @md:[--rail-per:3] @2xl:[--rail-per:4] @4xl:[--rail-per:5] @6xl:[--rail-per:6]',
   poster:
     '[--rail-per:3] sm:[--rail-per:4] md:[--rail-per:5] lg:[--rail-per:6] xl:[--rail-per:8] 2xl:[--rail-per:9]',
+  library:
+    '[--rail-per:2] sm:[--rail-per:3] md:[--rail-per:4] lg:[--rail-per:5] xl:[--rail-per:7] 2xl:[--rail-per:8]',
 } as const;
 
 const FITTED = [

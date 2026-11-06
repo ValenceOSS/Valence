@@ -180,16 +180,14 @@ const BrowseArea = ({
   const libraryIds = useMemo(() => {
     const every = libraries.data ?? [];
     const chosen = librariesChosen(every, libraryId);
+    const holdsIt = (entry: (typeof every)[number]) =>
+      (kind === 'films' && entry.kind === 'movies') ||
+      (kind === 'shows' && isEpisodicKind(entry.kind));
+    const asked = chosen.some(holdsIt) ? chosen : every;
 
-    return (
-      chosen.some(
-        (entry) =>
-          (kind === 'films' && entry.kind === 'movies') ||
-          (kind === 'shows' && isEpisodicKind(entry.kind)),
-      )
-        ? chosen
-        : every
-    ).map((entry) => entry.id);
+    return (kind === 'films' || kind === 'shows' ? asked.filter(holdsIt) : asked).map(
+      (entry) => entry.id,
+    );
   }, [libraries.data, libraryId, kind]);
 
   const smartRules = useMemo(() => {

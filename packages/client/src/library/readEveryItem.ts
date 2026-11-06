@@ -4,7 +4,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const PAGE_SIZE = 200;
 
-const AT_ONCE = 6;
+const AT_ONCE = 16;
 
 /**
  * Reads everything in a library that matches a question, however many that is, by asking for the

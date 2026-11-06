@@ -5,6 +5,7 @@ import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { readBookFormat } from '@ValenceCore/releases/readBookFormat';
 import { matchBook } from '@ValenceRequests/mediaRequests/matchBook';
 import { isSeriesPack } from '@ValenceRequests/mediaRequests/isSeriesPack';
+import { isVolumePack } from '@ValenceRequests/mediaRequests/isVolumePack';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
 import { isNearTitle } from '@ValenceRequests/mediaRequests/isNearTitle';
@@ -291,7 +292,8 @@ const judgeForRequest = ({
         : isBookRequest(request.kind)
           ? !isTitleChecked ||
             matchBook(request, release.title) ||
-            isSeriesPack(request, release.title)
+            isSeriesPack(request, release.title) ||
+            isVolumePack(request, release.title)
             ? [...items]
             : []
           : isMusicRequest(request.kind)

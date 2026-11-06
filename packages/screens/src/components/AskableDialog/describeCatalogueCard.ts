@@ -1,15 +1,16 @@
 import { Check as CheckIcon } from '@keyline-icons/react';
-import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
+import { IN_LIBRARY_BADGE } from '@ValenceScreens/library/IN_LIBRARY_BADGE';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
-import type { MediaCardCorner } from '@ValenceUI/MediaCard.types';
+import type { MediaCardBadge, MediaCardCorner } from '@ValenceUI/MediaCard.types';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import { say } from '@ValenceI18n/say';
 
 /**
- * Says how a title to ask for is drawn on a card: the kind of thing it is, how far its request has
- * got, and that it is already in the library, as badges — and, where whoever is watching has seen
- * it through, a tick in the corner. The tick means watched everywhere in Valence, so being in the
- * library is said in words beside the kind rather than with it.
+ * Says how a title to ask for is drawn on a card: how far its request has got, or that it is already
+ * in the library, as a badge — and, where whoever is watching has seen it through, a tick in the
+ * corner. The tick means watched everywhere in Valence, so being in the library is said in words
+ * rather than with it. What kind of thing it is goes unsaid, the shelf it is on saying so, and being
+ * on a linked server is the server's own mark, from `useStandingOrigin`, rather than words.
  *
  * @param title - The title.
  * @param isWatched - Whether whoever is watching has seen it to the end.
@@ -18,22 +19,17 @@ import { say } from '@ValenceI18n/say';
 const describeCatalogueCard = (
   title: CatalogueTitle,
   isWatched = false,
-): { badges: string[]; corner?: MediaCardCorner } => {
+): { badges: MediaCardBadge[]; corner?: MediaCardCorner } => {
   if (title.standing.status === 'library') {
     return {
-      badges: [
-        REQUEST_KIND_NAMES[title.kind],
-        say('screens.askableDialog.describeCatalogueCard.inLibrary'),
-      ],
+      badges: [IN_LIBRARY_BADGE],
       ...(isWatched ? { corner: { icon: CheckIcon, label: say('common.watched') } } : {}),
     };
   }
 
-  const standing = describeStanding(title.standing);
+  const standing = title.standing.status === 'linked' ? null : describeStanding(title.standing);
 
-  return {
-    badges: [REQUEST_KIND_NAMES[title.kind], ...(standing === null ? [] : [standing.label])],
-  };
+  return { badges: standing === null ? [] : [standing] };
 };
 
 export { describeCatalogueCard };

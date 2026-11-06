@@ -120,6 +120,7 @@ const fitInside = (top: number, height: number): number => {
  *   page lays titles out.
  * @param flag - What is new about it, across the picture where it rests as the picture alone.
  * @param badges - Words in the corner of its picture, such as that it is in the library.
+ * @param copies - Other servers' copies of the same title, each marked beside its own.
  * @param drawsLarge - Whether the card is drawn wider than a rail draws one, as a grid that
  *   stretches its cards to fill the row does, so its picture, upright or lying flat, is asked for
  *   whole rather than at the size a rail's card needs.
@@ -128,6 +129,7 @@ const fitInside = (top: number, height: number): number => {
  */
 const RailCard = ({
   media,
+  copies = [],
   watchedFraction,
   unwatchedCount,
   onPlay,
@@ -378,6 +380,11 @@ const RailCard = ({
               })}
           {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
           {...cardOrigin(media.libraryId)}
+          alsoFrom={copies.flatMap((copy) => {
+            const { origin } = cardOrigin(copy.libraryId);
+
+            return origin === undefined ? [] : [origin];
+          })}
           {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           className="w-full"

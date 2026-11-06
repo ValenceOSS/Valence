@@ -423,7 +423,6 @@ const MediaTitlePage = ({
       group.filter(
         (one) =>
           one.id !== 'wrong-match' &&
-          one.id !== 'artwork' &&
           one.id !== 'refresh' &&
           !(title.kind === 'film' && FILE_ONLY.includes(one.id)),
       ),
