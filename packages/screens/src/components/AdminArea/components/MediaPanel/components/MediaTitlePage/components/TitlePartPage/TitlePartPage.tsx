@@ -159,53 +159,53 @@ const TitlePartPage = ({
               ]}
             />
           }
-        />
-
-        <TabPanel value="details" travel={travel}>
-          <TitleDetails
-            key={mediaId}
-            mediaId={mediaId}
-            scope={scope}
-            onShowHistory={() => {
-              onTab('history');
-            }}
-          />
-        </TabPanel>
-
-        {scope === 'episode' ? (
-          <TabPanel value="people" travel={travel}>
-            <TitlePeople
+        >
+          <TabPanel value="details" travel={travel}>
+            <TitleDetails
               key={mediaId}
               mediaId={mediaId}
-              scope="episode"
-              field="guestStars"
+              scope={scope}
               onShowHistory={() => {
                 onTab('history');
               }}
             />
           </TabPanel>
-        ) : null}
 
-        {artworkPart === undefined ? null : (
-          <TabPanel value="artwork" travel={travel}>
-            <PanelCard title={say('screens.adminArea.artworkChooser.picturesOfTheTitle')}>
-              <ArtworkChooser
+          {scope === 'episode' ? (
+            <TabPanel value="people" travel={travel}>
+              <TitlePeople
                 key={mediaId}
-                subject={{ mediaId, name, isSeries: true, mediaIds: [mediaId] }}
-                part={artworkPart}
-                onChanged={() => {}}
+                mediaId={mediaId}
+                scope="episode"
+                field="guestStars"
+                onShowHistory={() => {
+                  onTab('history');
+                }}
               />
-            </PanelCard>
+            </TabPanel>
+          ) : null}
+
+          {artworkPart === undefined ? null : (
+            <TabPanel value="artwork" travel={travel}>
+              <PanelCard title={say('screens.adminArea.artworkChooser.picturesOfTheTitle')}>
+                <ArtworkChooser
+                  key={mediaId}
+                  subject={{ mediaId, name, isSeries: true, mediaIds: [mediaId] }}
+                  part={artworkPart}
+                  onChanged={() => {}}
+                />
+              </PanelCard>
+            </TabPanel>
+          )}
+
+          <TabPanel value="files" travel={travel}>
+            {files}
           </TabPanel>
-        )}
 
-        <TabPanel value="files" travel={travel}>
-          {files}
-        </TabPanel>
-
-        <TabPanel value="history" travel={travel}>
-          <TitleHistory key={mediaId} mediaId={mediaId} scope={scope} kind={scope} />
-        </TabPanel>
+          <TabPanel value="history" travel={travel}>
+            <TitleHistory key={mediaId} mediaId={mediaId} scope={scope} kind={scope} />
+          </TabPanel>
+        </MediaTitleHero>
       </motion.div>
     </Tabs>
   );

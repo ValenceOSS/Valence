@@ -529,6 +529,10 @@ const AdminPage = () => {
                   replace:
                     place.episode === (episode ?? null) &&
                     place.isSeasonPage === (part === 'season'),
+                  resetScroll:
+                    place.season !== (season ?? null) ||
+                    place.episode !== (episode ?? null) ||
+                    place.isSeasonPage !== (part === 'season'),
                 });
               }}
               onLinkedServer={(id) => {
