@@ -5,7 +5,6 @@ import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/asy
 import {
   createContext as mockCreateContext,
   createElement as mockCreateElement,
-  useContext as mockUseContext,
   useEffect as mockUseEffect,
   useState as mockUseState,
 } from 'react';
@@ -106,59 +105,6 @@ jest.mock('expo', () => ({
 jest.mock('@ValenceMobile/platform/theCookiesThisPhoneHolds', () => ({
   theCookiesThisPhoneHolds: jest.fn(() => Promise.resolve(null)),
 }));
-
-const mockTrayOpen = mockCreateContext<{ isOpen: boolean; onOpenChange: (open: boolean) => void }>({
-  isOpen: false,
-  onOpenChange: () => undefined,
-});
-
-jest.mock('morphlet', () => {
-  const Section = ({ children, ...props }: ViewProps & { children?: ReactNode }) =>
-    mockCreateElement(mockView, props, children);
-
-  return {
-    Tray: {
-      Root: (props: {
-        open?: boolean;
-        onOpenChange?: (open: boolean) => void;
-        children?: ReactNode;
-      }) =>
-        mockCreateElement(
-          mockTrayOpen.Provider,
-          {
-            value: {
-              isOpen: props.open === true,
-              onOpenChange: (open: boolean) => {
-                props.onOpenChange?.(open);
-              },
-            },
-          },
-          props.children,
-        ),
-      Content: ({ children, ...props }: ViewProps & { children?: ReactNode }) => {
-        const tray = mockUseContext(mockTrayOpen);
-
-        return tray.isOpen
-          ? mockCreateElement(
-              mockView,
-              props,
-              mockCreateElement(mockPressable, {
-                accessibilityRole: 'button',
-                accessibilityLabel: 'Close',
-                onPress: () => {
-                  tray.onOpenChange(false);
-                },
-              }),
-              children,
-            )
-          : null;
-      },
-      Header: Section,
-      Body: Section,
-      Footer: Section,
-    },
-  };
-});
 
 jest.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: ({ children, style }: ViewProps & { children?: ReactNode }) =>
