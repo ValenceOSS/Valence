@@ -68,6 +68,7 @@ import { onControlledDevice, readControlledDevice } from '@ValenceClient/video/c
 import { startListening } from '@ValenceClient/books/startListening';
 import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
+import { PosterWall } from '@ValenceScreens/components/PosterWall/PosterWall';
 import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 import { useHasLiveChannels } from '@ValenceClient/live/useHasLiveChannels';
@@ -90,6 +91,7 @@ const ValenceShell = () => {
     null,
   );
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const [isWallOpen, setIsWallOpen] = useState(false);
   const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
   const controlled = useSyncExternalStore(
     onControlledDevice,
@@ -351,6 +353,10 @@ const ValenceShell = () => {
         }}
         notifications={isTheDesktopClient() ? undefined : <NotificationBell {...bell} />}
         onSurprise={surprise}
+        isWallOpen={isWallOpen}
+        onOpenWall={() => {
+          setIsWallOpen(true);
+        }}
         onSignOut={() => {
           void leave();
         }}
@@ -625,6 +631,19 @@ const ValenceShell = () => {
           }}
           onClose={() => {
             go({ account: null });
+          }}
+        />
+
+        <PosterWall
+          isOpen={isWallOpen}
+          onClose={() => {
+            setIsWallOpen(false);
+          }}
+          onOpenFilm={(mediaId) => {
+            go({ inspecting: mediaId });
+          }}
+          onOpenShow={(showId) => {
+            go({ show: showId });
           }}
         />
 
