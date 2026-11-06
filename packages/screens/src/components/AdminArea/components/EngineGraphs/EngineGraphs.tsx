@@ -18,7 +18,8 @@ const ENGINES = [
  * What each engine of the graphics card has been doing, the way a task manager shows it: a small
  * graph of the last few minutes for 3D work, copies, video encoding and decoding, and the scaling
  * and colour work beside it, each with where it stands now, and a graph of the memory held on the
- * card. An engine the driver keeps no time for is left out rather than drawn idle. The figures are
+ * card. An engine the driver keeps no time for is left out rather than drawn idle, and where there
+ * is nothing to draw at all the section is left out with it. The figures are
  * Valence's own work on the card, which is said beneath them.
  *
  * @param history - The readings so far, oldest first.
@@ -28,6 +29,10 @@ const EngineGraphs = ({ history }: EngineGraphsProps) => {
   const shown = ENGINES.filter((engine) => history.some((reading) => reading[engine.key] !== null));
   const memory = history.map((reading) => reading.memoryBytes ?? 0);
   const hasMemory = history.some((reading) => reading.memoryBytes !== null);
+
+  if (shown.length === 0 && !hasMemory) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-2 px-2.5 pb-1 pt-1">

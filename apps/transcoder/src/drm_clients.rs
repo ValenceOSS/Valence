@@ -223,8 +223,14 @@ fn share(then: &Snapshot, now: &Snapshot, elapsed: u64) -> Option<f32> {
 }
 
 /// The share of the elapsed time one engine spent on work Valence asked for,
-/// or nothing where the driver keeps no time for that engine.
+/// or nothing where the driver keeps no time for that engine. With no clients
+/// open at all nothing is using any engine, which is an idle reading rather
+/// than a missing one.
 fn share_of(engine: &str, then: &Snapshot, now: &Snapshot, elapsed: u64) -> Option<f32> {
+    if now.clients == 0 {
+        return Some(0.0);
+    }
+
     let capacity = now.capacity.get(engine).copied().unwrap_or(1).max(1);
     let empty = HashMap::new();
     let before = then.busy.get(engine).unwrap_or(&empty);
@@ -297,7 +303,8 @@ impl VideoEngine {
                 copy: share_of("copy", then, &now, elapsed),
                 video: share(then, &now, elapsed),
                 video_enhance: share_of("video-enhance", then, &now, elapsed),
-                memory_bytes: (!now.memory.is_empty()).then(|| now.memory.values().sum()),
+                memory_bytes: (now.clients == 0 || !now.memory.is_empty())
+                    .then(|| now.memory.values().sum()),
             }),
             _ => None,
         };
@@ -433,6 +440,17 @@ drm-engine-video-enhance:\t40000 ns
         let mut engine = VideoEngine::new();
 
         assert_eq!(engine.read().await, None);
+    }
+
+    #[test]
+    fn reads_every_engine_as_idle_when_nothing_is_open() {
+        let idle = Snapshot::default();
+
+        assert_eq!(share_of("render", &idle, &idle, 1_000_000_000), Some(0.0));
+        assert_eq!(
+            share_of("video-enhance", &idle, &idle, 1_000_000_000),
+            Some(0.0)
+        );
     }
 
     #[test]
