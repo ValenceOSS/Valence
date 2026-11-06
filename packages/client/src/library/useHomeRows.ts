@@ -38,6 +38,8 @@ const ACCLAIMED_FROM = 7.5;
 
 const NOTHING: readonly MediaSummary[] = [];
 
+const NO_TASTE: readonly string[] = [];
+
 /**
  * Keeps only what the rows read from a set of questions — each one's answer and whether it is still
  * being asked — so the set stays the same object until one of those changes.
@@ -108,7 +110,14 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * The genres somebody leans towards are asked for first, and what they are offered is chosen from
  * those same answers, so offering it costs nothing more. Which genres those are waits on what they
  * have kept, rated and watched, so the rows are not asked for once and then asked for again in
- * another order.
+ * another order. Those leanings are worked out once, when the page is first drawn: marking something
+ * watched from the page changes them, and the rows must not reorder under somebody, or ask for a
+ * genre that has just moved up, while they are still looking at it.
+ *
+ * Once the first rows are drawn, the page is not read again from the start. Whatever is asked for
+ * afterwards — a row that has just become worth showing, the next few genres — fills in where it
+ * goes rather than taking the page away while it arrives. Only forgetting what somebody has watched,
+ * kept and rated — as happens when another profile takes over — starts the page again.
  *
  * What somebody is part way through and has liked is read from the hidden library films played
  * from sources are kept in as well, since those are theirs to resume though they are in no library.
@@ -173,6 +182,14 @@ const useHomeRows = (
 
   const isTasteKnown = isProgressKnown && !favourites.isLoading && !ratings.isLoading;
 
+  const [keptTaste, setKeptTaste] = useState<readonly string[] | null>(null);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  if (!isTasteKnown && (keptTaste !== null || hasDrawn)) {
+    setKeptTaste(null);
+    setHasDrawn(false);
+  }
+
   const hasStreams = useServerHas('streams.fromSources');
   const streamed = useQuery(streamQueries.library(canAsk && hasStreams === true));
   const viewable = useMemo(
@@ -194,7 +211,7 @@ const useHomeRows = (
 
   const liked = useQuery({
     ...libraryQueries.across(viewable, { ids: likedIds, limit: LIKED_READ }),
-    enabled: canAsk && isTasteKnown && likedIds.length > 0,
+    enabled: canAsk && isTasteKnown && keptTaste === null && likedIds.length > 0,
     placeholderData: keepPreviousData,
   });
 
@@ -212,16 +229,18 @@ const useHomeRows = (
     enabled: canAsk,
   });
 
-  const likedNow = likedIds.length > 0 ? liked.data : undefined;
+  if (keptTaste === null && canAsk && isTasteKnown && !liked.isLoading) {
+    setKeptTaste(tasteOf((likedIds.length > 0 ? liked.data : undefined) ?? []));
+  }
 
-  const taste = useMemo(() => tasteOf(likedNow ?? []), [likedNow]);
+  const taste = keptTaste ?? NO_TASTE;
 
   const everyGenre = useMemo(
     () =>
-      isTasteKnown && !liked.isLoading && facets.data !== undefined
-        ? [...new Set([...taste, ...facets.data.genres])]
+      keptTaste !== null && facets.data !== undefined
+        ? [...new Set([...keptTaste, ...facets.data.genres])]
         : [],
-    [isTasteKnown, liked.isLoading, facets.data, taste],
+    [keptTaste, facets.data],
   );
 
   const genres = useMemo(() => everyGenre.slice(0, genreLimit), [everyGenre, genreLimit]);
@@ -389,16 +408,19 @@ const useHomeRows = (
     byEncore,
   ]);
 
-  const isReading =
+  const isReadingFirst =
     canAsk &&
-    (!isTasteKnown ||
+    (keptTaste === null ||
       facets.isLoading ||
       recent.isLoading ||
       acclaimed.isLoading ||
       resuming.isLoading ||
       upNext.isLoading ||
-      liked.isLoading ||
       byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading));
+
+  if (!hasDrawn && canAsk && !isReadingFirst) {
+    setHasDrawn(true);
+  }
 
   const hasMoreGenres = everyGenre.length > genreLimit;
   const hasMoreDecades = everyDecade.length > decadeLimit;
@@ -421,7 +443,7 @@ const useHomeRows = (
 
   return {
     rails,
-    isReading,
+    isReading: !hasDrawn && isReadingFirst,
     hasMore: hasMoreGenres || hasMoreDecades || hasMoreEncores,
     isReadingMore:
       byGenre.some((one) => one.isLoading) ||
