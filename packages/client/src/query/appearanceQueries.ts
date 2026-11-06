@@ -1,5 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { fetchAppearance } from '@ValenceClient/appearance/fetchAppearance';
+import { readRememberedAppearance } from '@ValenceClient/appearance/readRememberedAppearance';
+import { rememberAppearance } from '@ValenceClient/appearance/rememberAppearance';
 
 const APPEARANCE = ['appearance'] as const;
 
@@ -9,7 +11,13 @@ const APPEARANCE = ['appearance'] as const;
  * @returns The query.
  */
 const appearance = () =>
-  queryOptions({ queryKey: [...APPEARANCE], queryFn: () => fetchAppearance(), retry: false });
+  queryOptions({
+    queryKey: [...APPEARANCE],
+    queryFn: async () => rememberAppearance(await fetchAppearance()),
+    initialData: readRememberedAppearance,
+    initialDataUpdatedAt: 0,
+    retry: false,
+  });
 
 const appearanceQueries = { appearance, key: APPEARANCE };
 
