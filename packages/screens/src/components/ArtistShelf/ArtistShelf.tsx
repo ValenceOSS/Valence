@@ -62,7 +62,6 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
                 src={pictureOf(artist)}
                 label={artist.name}
                 shape="round"
-                travelsAs={`artist-${artist.id}`}
                 className="w-full"
               />
             }

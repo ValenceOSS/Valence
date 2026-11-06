@@ -20,6 +20,7 @@ const MIX = {
   detail: 'Music from the 2020s',
   trackCount: 2,
   coverAlbumIds: [],
+  faces: [],
   tracks: [aTrack(1), aTrack(2)],
 };
 

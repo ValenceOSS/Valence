@@ -88,6 +88,7 @@ describe('MusicHome', () => {
               detail: 'Rock from your library',
               trackCount: 20,
               coverAlbumIds: [],
+              faces: [],
             },
           ],
         },

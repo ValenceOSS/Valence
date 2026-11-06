@@ -13021,6 +13021,16 @@
     "context": "Why a release was refused for a book request: an abridged audiobook. Shown in interactive search and the request's history."
   },
   {
+    "handler": "requests.profiles.judgeBookFormat.itIsAFilmOrProgramme",
+    "text": "It’s a film or programme, not a book",
+    "context": "Why a release was refused for a book request: it is a video, such as a film of the same name, going by the indexer's category or a name like DVDRip or 1080p. Shown in interactive search and the request's history."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.itIsAGame",
+    "text": "It’s a game or software, not a book",
+    "context": "Why a release was refused for a book request: it is a game of the same name, going by the indexer's category or a name like PCGame. Shown in interactive search and the request's history."
+  },
+  {
     "handler": "requests.profiles.judgeBookFormat.itIsAnAdaptation",
     "text": "It’s a full-cast adaptation, not the book read aloud",
     "context": "Why a release was refused for a book request: a dramatised, full-cast audio production of the book rather than a narration of it. Shown in interactive search and the request's history."
@@ -27346,9 +27356,19 @@
     "context": "How much of a download has arrived, in the downloads table. {done} is the amount arrived and {size} the whole size, such as 2.1 GB of 4.6 GB."
   },
   {
+    "handler": "screens.downloadsPanel.downloadQueueTable.downloadSpeed",
+    "text": "Download speed",
+    "context": "A column heading in the admin downloads queue: how fast each download is arriving."
+  },
+  {
     "handler": "screens.downloadsPanel.downloadQueueTable.fileIntoName",
     "text": "Import into {name}",
     "context": "The label in the download queue table in the downloads panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.finishes",
+    "text": "Finishes",
+    "context": "A column heading in the admin downloads queue: how long until each download is done, and the time of day it should be done by."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA",
@@ -27366,14 +27386,14 @@
     "context": "Shown in the download queue table in the downloads panel."
   },
   {
-    "handler": "screens.downloadsPanel.downloadQueueTable.perSecond",
-    "text": "/s",
-    "context": "After a download speed, like \"4 MB/s\"."
-  },
-  {
     "handler": "screens.downloadsPanel.downloadQueueTable.states.processing",
     "text": "Processing",
     "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.uploadSpeed",
+    "text": "Upload speed",
+    "context": "A column heading in the admin downloads queue: how fast each download is being sent to others."
   },
   {
     "handler": "screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat",
@@ -29732,6 +29752,16 @@
     "context": "Read out while the dialog that finds a missing song's album is searching the catalogue."
   },
   {
+    "handler": "screens.mixArtwork.dailyMix",
+    "text": "Daily Mix",
+    "context": "Written on the picture Valence makes for a daily mix, beside its number. Keep it short."
+  },
+  {
+    "handler": "screens.mixArtwork.station",
+    "text": "Station",
+    "context": "Written small at the corner of the picture Valence makes for a station. Keep it short."
+  },
+  {
     "handler": "screens.motion.motionChoices.full",
     "text": "Full",
     "context": "The label in the motion (from `motionChoices`)."
@@ -29857,34 +29887,9 @@
     "context": "Shown where your liked songs could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
-    "handler": "screens.musicPage.musicHome.afternoon",
-    "text": "Good afternoon",
-    "context": "The greeting at the top of the music home after midday, where the listener’s name is not known."
-  },
-  {
-    "handler": "screens.musicPage.musicHome.afternoonName",
-    "text": "Good afternoon, {name}",
-    "context": "The greeting at the top of the music home after midday. {name} is the listener’s name."
-  },
-  {
-    "handler": "screens.musicPage.musicHome.evening",
-    "text": "Good evening",
-    "context": "The greeting at the top of the music home in the evening, where the listener’s name is not known."
-  },
-  {
-    "handler": "screens.musicPage.musicHome.eveningName",
-    "text": "Good evening, {name}",
-    "context": "The greeting at the top of the music home in the evening. {name} is the listener’s name."
-  },
-  {
-    "handler": "screens.musicPage.musicHome.morning",
-    "text": "Good morning",
-    "context": "The greeting at the top of the music home before midday, where the listener’s name is not known."
-  },
-  {
-    "handler": "screens.musicPage.musicHome.morningName",
-    "text": "Good morning, {name}",
-    "context": "The greeting at the top of the music home before midday. {name} is the listener’s name."
+    "handler": "screens.musicPage.musicHome.madeForName",
+    "text": "Made for {name}",
+    "context": "The heading of the row of mixes Valence made for this listener today, on the music home. {name} is the listener."
   },
   {
     "handler": "screens.musicPage.musicHome.readingYourMusic",
@@ -29897,9 +29902,24 @@
     "context": "What the grid of small tiles at the top of the music home is called, for screen readers."
   },
   {
+    "handler": "screens.musicPage.musicHome.recents",
+    "text": "Recents",
+    "context": "The heading of the row of albums the listener played lately, on the music home."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.recommendedStations",
+    "text": "Recommended stations",
+    "context": "The heading of the row of stations Valence builds around artists the listener plays, on the music home."
+  },
+  {
     "handler": "screens.musicPage.musicHome.seeAllWhat",
     "text": "See all {what}",
     "context": "The label of a button in the music home in the music page. {what} is filled in by the app."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.yourTopMixes",
+    "text": "Your top mixes",
+    "context": "The heading of the row of mixes Valence makes for each genre and decade, on the music home."
   },
   {
     "handler": "screens.musicPage.musicLibrary.albumName",
@@ -31595,6 +31615,16 @@
     "handler": "screens.pluginSurfaceView.thisPluginCouldNotDrawIts",
     "text": "This plugin couldn’t load its page",
     "context": "The title of a callout in the plugin surface view."
+  },
+  {
+    "handler": "screens.posterWall.empty",
+    "text": "There’s nothing here to watch yet",
+    "context": "Shown on the poster wall when the server has no films or shows."
+  },
+  {
+    "handler": "screens.posterWall.label",
+    "text": "Poster wall",
+    "context": "The button in the top bar that opens a full-screen wall of every film and show poster, and the name of that wall."
   },
   {
     "handler": "screens.previewMomentPicker.backToAutomatic",
@@ -36235,6 +36265,11 @@
     "handler": "server.music.mixes.rediscoverDetail",
     "text": "Songs you played a lot and haven’t heard lately",
     "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What the Rediscover mix holds, beneath its name."
+  },
+  {
+    "handler": "server.music.mixes.withNames",
+    "text": "{names} and more",
+    "context": "The line under a mix or station on the music home, where its picture already says its name. {names} is a list of artists in it, separated by commas."
   },
   {
     "handler": "server.music.musicDevices.anAdministrator",

@@ -1,7 +1,8 @@
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
+import { cn } from '@ValenceUI/cn';
 import type { MusicTileProps } from './MusicTile.types';
 import { say } from '@ValenceI18n/say';
 
@@ -29,20 +30,25 @@ const PLAY = [
  * screen, where a hover is only ever the start of a tap.
  *
  * @param title - What it is called.
+ * @param isTitleShown - Whether its name is written beneath it, which a picture that already says it
+ *   leaves out, giving the line beneath two lines of its own.
  * @param detail - The line beneath.
  * @param artwork - Its picture.
  * @param onOpen - Opens it.
  * @param onPlay - Plays it, where it can be played from here.
+ * @param isPlaying - Whether it is what is playing, which keeps its button up and has it pause.
  * @param onPointingAt - Told when the pointer reaches it, so what it opens can be read ahead.
  * @param menu - What can be done to it, from a menu that opens where it is right-clicked.
  * @param shape - Square for a record, round for a person, which the shadow under it follows.
  */
 const MusicTile = ({
   title,
+  isTitleShown = true,
   detail,
   artwork,
   onOpen,
   onPlay,
+  isPlaying = false,
   onPointingAt,
   menu,
   shape = 'square',
@@ -63,10 +69,20 @@ const MusicTile = ({
         </span>
 
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">
-            {title}
+          {isTitleShown ? (
+            <span className="truncate text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">
+              {title}
+            </span>
+          ) : null}
+          <span
+            className={
+              isTitleShown
+                ? 'truncate text-[0.8125rem] text-text-muted'
+                : 'line-clamp-2 text-[0.875rem] leading-snug text-text-muted'
+            }
+          >
+            {detail}
           </span>
-          <span className="truncate text-[0.8125rem] text-text-muted">{detail}</span>
         </span>
       </Button>
 
@@ -76,12 +92,14 @@ const MusicTile = ({
             variant="confirm"
             size="none"
             isIconOnly
-            label={say('common.playTitle', { title })}
+            label={
+              isPlaying ? say('common.pauseTitle', { title }) : say('common.playTitle', { title })
+            }
             hasTooltip={false}
-            className={PLAY}
+            className={cn(PLAY, isPlaying ? 'translate-y-0 opacity-100' : '')}
             onClick={onPlay}
           >
-            <Icon of={PlayFilledIcon} size={18} />
+            <Icon of={isPlaying ? PauseFilledIcon : PlayFilledIcon} size={18} />
           </Button>
         </span>
       )}

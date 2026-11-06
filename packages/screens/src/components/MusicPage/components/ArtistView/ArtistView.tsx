@@ -87,18 +87,11 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
       <MusicHeader
         eyebrow={say('common.artist')}
         title={artist.name}
-        layout="hero"
         backdrop={picture}
         isBackdropSharp={artist.hasImage}
         artwork={
           artist.hasImage ? undefined : (
-            <MusicArtwork
-              src={picture}
-              label={artist.name}
-              shape="round"
-              travelsAs={`artist-${artist.id}`}
-              className="w-full"
-            />
+            <MusicArtwork src={picture} label={artist.name} shape="round" className="w-full" />
           )
         }
         details={

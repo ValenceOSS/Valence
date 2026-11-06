@@ -75,6 +75,7 @@ describe('TheMusic', () => {
         detail: 'Music from the 2020s',
         trackCount: 30,
         coverAlbumIds: [],
+        faces: [],
       },
     ]);
     const onMix = jest.fn();

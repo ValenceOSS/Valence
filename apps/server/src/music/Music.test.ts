@@ -90,6 +90,7 @@ const MIX: Mix = {
   detail: 'Music from the 2020s',
   trackIds: [TRACK_ID],
   coverAlbumIds: [ALBUM_ID],
+  faces: [],
 };
 
 const fakeMusic = () => {

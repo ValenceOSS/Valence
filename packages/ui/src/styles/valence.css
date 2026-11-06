@@ -747,6 +747,15 @@ body[data-scroll-locked] .valence-navbar {
   right: var(--removed-body-scroll-bar-size, 0px);
 }
 
+:root {
+  --mix-colour-1: oklch(0.86 0.17 125);
+  --mix-colour-2: oklch(0.8 0.12 350);
+  --mix-colour-3: oklch(0.82 0.13 55);
+  --mix-colour-4: oklch(0.78 0.12 305);
+  --mix-colour-5: oklch(0.87 0.13 180);
+  --mix-colour-6: oklch(0.9 0.13 95);
+}
+
 .valence-shell {
   --nav-clearance: calc(4rem + env(safe-area-inset-top, 0px));
   --floor-clearance: env(safe-area-inset-bottom, 0px);

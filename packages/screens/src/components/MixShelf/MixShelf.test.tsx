@@ -21,6 +21,7 @@ const MIX: MusicMixSummary = {
   detail: 'Music from the 2020s',
   trackCount: 1,
   coverAlbumIds: [],
+  faces: [],
 };
 
 beforeEach(() => {
@@ -33,20 +34,20 @@ beforeEach(() => {
 
 describe('MixShelf', () => {
   it('draws nothing where no mixes have been made', () => {
-    const { container } = renderInAnAddress(<MixShelf mixes={[]} />);
+    const { container } = renderInAnAddress(<MixShelf heading="Made for you" mixes={[]} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('shows each mix made for this profile under Made for you', () => {
-    renderInAnAddress(<MixShelf mixes={[MIX]} />);
+    renderInAnAddress(<MixShelf heading="Made for you" mixes={[MIX]} />);
 
     expect(screen.getByRole('region', { name: 'Made for you' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^2020s Mix/ })).toBeInTheDocument();
   });
 
   it('plays a mix straight from the shelf, saying it came from that mix', async () => {
-    renderInAnAddress(<MixShelf mixes={[MIX]} />);
+    renderInAnAddress(<MixShelf heading="Made for you" mixes={[MIX]} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Play 2020s Mix' }));
 
