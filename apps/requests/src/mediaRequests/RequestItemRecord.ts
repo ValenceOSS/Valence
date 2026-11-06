@@ -12,6 +12,8 @@ type RequestItemRecord = RequestItem & {
   missingFrom?: ReleaseIdentity[];
 };
 
-type RequestItemStore = RecordStore<RequestItemRecord>;
+type RequestItemStore = RecordStore<RequestItemRecord> & {
+  listOf?: (requestId: string) => Promise<RequestItemRecord[]>;
+};
 
 export type { RequestItemRecord, RequestItemStore };

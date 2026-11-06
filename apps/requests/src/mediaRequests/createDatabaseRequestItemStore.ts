@@ -32,6 +32,9 @@ const asRecord = (row: RequestItemRow): RequestItemRecord => ({
 const createDatabaseRequestItemStore = (db: RequestsDatabase): RequestItemStore => ({
   list: async () => (await db.select().from(requestItem)).map(asRecord),
 
+  listOf: async (requestId) =>
+    (await db.select().from(requestItem).where(eq(requestItem.requestId, requestId))).map(asRecord),
+
   find: async (id) => {
     const [row] = await db.select().from(requestItem).where(eq(requestItem.id, id));
 

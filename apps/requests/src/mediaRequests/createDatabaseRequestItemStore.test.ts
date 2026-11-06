@@ -27,4 +27,20 @@ describe('createDatabaseRequestItemStore', () => {
     expect(await store.find(film.id)).toBeNull();
     expect(await store.update(film.id, { state: 'wanted' })).toBeNull();
   });
+
+  it('reads only one request’s items when asked for them', async () => {
+    const db = await aScratchDatabase();
+    const store = createDatabaseRequestItemStore(db);
+    const requests = createDatabaseMediaRequestStore(db);
+    const other = '4e8f2a6c-7b1d-4c3e-9f5a-2d6b8c0e1f3a';
+
+    await requests.insert(aMediaRequest());
+    await requests.insert(aMediaRequest({ id: other, tmdbId: 424242 }));
+    await store.insert(aRequestItem());
+    await store.insert(
+      aRequestItem({ id: '6d2c8b4a-0e1f-4a3b-8c5d-9e7f1a2b3c4d', requestId: other }),
+    );
+
+    expect((await store.listOf?.(other))?.map((item) => item.requestId)).toEqual([other]);
+  });
 });
