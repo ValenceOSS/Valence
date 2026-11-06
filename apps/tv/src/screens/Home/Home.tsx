@@ -3,7 +3,7 @@ import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { useAskToDismiss } from '@ValenceNative/library/useAskToDismiss';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
@@ -42,7 +42,8 @@ const WATCH_NEXT_MOVES_EVERY_SECONDS = 300;
  * Valence on the Home screen.
  *
  * Nothing is drawn until the titles for the top are known as well as the first shelves, so the
- * shelves are not drawn first and then pushed down the screen by the hero arriving above them.
+ * shelves are not drawn first and then pushed down the screen by the hero arriving above them. Only
+ * the first time: the libraries changing later keeps the titles at the top until the new ones arrive.
  * Coming back up onto the hero's buttons scrolls the page back to the top, so the hero is seen whole
  * rather than half off the screen above.
  *
@@ -93,6 +94,7 @@ const HomePage = ({
   const sample = useQuery({
     ...libraryQueries.across(watchable, { search: '', limit: HERO_SAMPLE }),
     enabled: watchable.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   const room = useRoomToFill();

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { streamQueries } from '@ValenceClient/query/streamQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -10,6 +10,7 @@ import { carryingOn } from '@ValenceClient/library/carryingOn';
 import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
@@ -38,17 +39,24 @@ const ACCLAIMED_FROM = 7.5;
 
 const NOTHING: readonly MediaSummary[] = [];
 
+const NO_TASTE: readonly string[] = [];
+
 /**
- * Keeps only what the rows read from a set of questions — each one's answer and whether it is still
- * being asked — so the set stays the same object until one of those changes.
+ * Keeps only what the rows read from a set of questions — each one's answer, whether it is still
+ * being asked, and whether the answer is only the one from before — so the set stays the same object
+ * until one of those changes.
  *
  * @param results - The questions, as asked.
- * @returns Each one's answer and whether it is still being read.
+ * @returns Each one's answer, whether it is still being read, and whether it is the one from before.
  */
 const answersOf = (
-  results: readonly { data: MediaSummary[] | undefined; isLoading: boolean }[],
-): { data: MediaSummary[] | undefined; isLoading: boolean }[] =>
-  results.map(({ data, isLoading }) => ({ data, isLoading }));
+  results: readonly {
+    data: MediaSummary[] | undefined;
+    isLoading: boolean;
+    isPlaceholderData: boolean;
+  }[],
+): { data: MediaSummary[] | undefined; isLoading: boolean; isPlaceholderData: boolean }[] =>
+  results.map(({ data, isLoading, isPlaceholderData }) => ({ data, isLoading, isPlaceholderData }));
 
 /**
  * What to call a shelf in the endless tail, which is a genre seen from a particular angle: the newest
@@ -108,7 +116,17 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * The genres somebody leans towards are asked for first, and what they are offered is chosen from
  * those same answers, so offering it costs nothing more. Which genres those are waits on what they
  * have kept, rated and watched, so the rows are not asked for once and then asked for again in
- * another order.
+ * another order. Those leanings are worked out once, when the page is first drawn: marking something
+ * watched from the page changes them, and the rows must not reorder under somebody, or ask for a
+ * genre that has just moved up, while they are still looking at it.
+ *
+ * Once the first rows are drawn, the page is not read again from the start. Whatever is asked for
+ * afterwards — a row that has just become worth showing, the next few genres — fills in where it
+ * goes rather than taking the page away while it arrives. When the libraries shown change — somebody
+ * hides one, or brings it back — each row goes on showing what it showed until its new answer comes,
+ * so the page keeps its length and its place rather than emptying and filling again. Only
+ * forgetting what somebody has watched, kept and rated — as happens when another profile takes over
+ * — starts the page again.
  *
  * What somebody is part way through and has liked is read from the hidden library films played
  * from sources are kept in as well, since those are theirs to resume though they are in no library.
@@ -143,6 +161,15 @@ const useHomeRows = (
   showMore: () => void;
 } => {
   const canAsk = isActive && watchable.length > 0;
+  const cache = useQueryClient();
+  const [readFrom, setReadFrom] = useState(watchable);
+
+  const rowOf = (options: ListItemsOptions) => ({
+    ...libraryQueries.across(watchable, options),
+    enabled: canAsk,
+    placeholderData: (): MediaSummary[] | undefined =>
+      cache.getQueryData(libraryQueries.across(readFrom, options).queryKey),
+  });
   const [genreLimit, setGenreLimit] = useState(FIRST_GENRES);
   const [decadeLimit, setDecadeLimit] = useState(0);
   const [encoreLimit, setEncoreLimit] = useState(0);
@@ -173,6 +200,14 @@ const useHomeRows = (
 
   const isTasteKnown = isProgressKnown && !favourites.isLoading && !ratings.isLoading;
 
+  const [keptTaste, setKeptTaste] = useState<readonly string[] | null>(null);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  if (!isTasteKnown && (keptTaste !== null || hasDrawn)) {
+    setKeptTaste(null);
+    setHasDrawn(false);
+  }
+
   const hasStreams = useServerHas('streams.fromSources');
   const streamed = useQuery(streamQueries.library(canAsk && hasStreams === true));
   const viewable = useMemo(
@@ -194,43 +229,37 @@ const useHomeRows = (
 
   const liked = useQuery({
     ...libraryQueries.across(viewable, { ids: likedIds, limit: LIKED_READ }),
-    enabled: canAsk && isTasteKnown && likedIds.length > 0,
+    enabled: canAsk && isTasteKnown && keptTaste === null && likedIds.length > 0,
     placeholderData: keepPreviousData,
   });
 
-  const recent = useQuery({
-    ...libraryQueries.across(watchable, { order: 'newest', limit: ROW_LIMIT }),
-    enabled: canAsk,
-  });
+  const recent = useQuery(rowOf({ order: 'newest', limit: ROW_LIMIT }));
 
-  const acclaimed = useQuery({
-    ...libraryQueries.across(watchable, {
-      minRating: ACCLAIMED_FROM,
-      order: 'newest',
-      limit: ROW_LIMIT,
-    }),
-    enabled: canAsk,
-  });
+  const acclaimed = useQuery(
+    rowOf({ minRating: ACCLAIMED_FROM, order: 'newest', limit: ROW_LIMIT }),
+  );
 
-  const likedNow = likedIds.length > 0 ? liked.data : undefined;
+  const isLikedRead =
+    likedIds.length === 0 || liked.isError || (liked.isSuccess && !liked.isPlaceholderData);
 
-  const taste = useMemo(() => tasteOf(likedNow ?? []), [likedNow]);
+  if (keptTaste === null && canAsk && isTasteKnown && isLikedRead) {
+    setKeptTaste(tasteOf((likedIds.length > 0 ? liked.data : undefined) ?? []));
+  }
+
+  const taste = keptTaste ?? NO_TASTE;
 
   const everyGenre = useMemo(
     () =>
-      isTasteKnown && !liked.isLoading && facets.data !== undefined
-        ? [...new Set([...taste, ...facets.data.genres])]
+      keptTaste !== null && facets.data !== undefined
+        ? [...new Set([...keptTaste, ...facets.data.genres])]
         : [],
-    [isTasteKnown, liked.isLoading, facets.data, taste],
+    [keptTaste, facets.data],
   );
 
   const genres = useMemo(() => everyGenre.slice(0, genreLimit), [everyGenre, genreLimit]);
 
   const byGenre = useQueries({
-    queries: genres.map((genre) => ({
-      ...libraryQueries.across(watchable, { genre, limit: ROW_LIMIT }),
-      enabled: canAsk,
-    })),
+    queries: genres.map((genre) => rowOf({ genre, limit: ROW_LIMIT })),
     combine: answersOf,
   });
 
@@ -243,14 +272,9 @@ const useHomeRows = (
   const decades = useMemo(() => everyDecade.slice(0, decadeLimit), [everyDecade, decadeLimit]);
 
   const byDecade = useQueries({
-    queries: decades.map((decade) => ({
-      ...libraryQueries.across(watchable, {
-        yearFrom: decade,
-        yearTo: decade + DECADE_SPAN,
-        limit: ROW_LIMIT,
-      }),
-      enabled: canAsk,
-    })),
+    queries: decades.map((decade) =>
+      rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, limit: ROW_LIMIT }),
+    ),
     combine: answersOf,
   });
 
@@ -310,15 +334,14 @@ const useHomeRows = (
   const hasMoreEncores = shownGenres.length > 0 && encoreLimit < encoreRoom;
 
   const byEncore = useQueries({
-    queries: encores.map(({ genre, order, decade }) => ({
-      ...libraryQueries.across(watchable, {
+    queries: encores.map(({ genre, order, decade }) =>
+      rowOf({
         genre,
         limit: ROW_LIMIT,
         ...(order === null ? {} : { order }),
         ...(decade === null ? {} : { yearFrom: decade, yearTo: decade + DECADE_SPAN }),
       }),
-      enabled: canAsk,
-    })),
+    ),
     combine: answersOf,
   });
 
@@ -389,16 +412,29 @@ const useHomeRows = (
     byEncore,
   ]);
 
-  const isReading =
+  const isReadingFirst =
     canAsk &&
-    (!isTasteKnown ||
+    (keptTaste === null ||
       facets.isLoading ||
       recent.isLoading ||
       acclaimed.isLoading ||
       resuming.isLoading ||
       upNext.isLoading ||
-      liked.isLoading ||
       byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading));
+
+  if (!hasDrawn && canAsk && !isReadingFirst) {
+    setHasDrawn(true);
+  }
+
+  const isEveryRowRead =
+    canAsk &&
+    [recent, acclaimed, ...byGenre, ...byDecade, ...byEncore].every(
+      (one) => !one.isLoading && !one.isPlaceholderData,
+    );
+
+  if (isEveryRowRead && [...readFrom].sort().join(' ') !== [...watchable].sort().join(' ')) {
+    setReadFrom(watchable);
+  }
 
   const hasMoreGenres = everyGenre.length > genreLimit;
   const hasMoreDecades = everyDecade.length > decadeLimit;
@@ -421,7 +457,7 @@ const useHomeRows = (
 
   return {
     rails,
-    isReading,
+    isReading: !hasDrawn && isReadingFirst,
     hasMore: hasMoreGenres || hasMoreDecades || hasMoreEncores,
     isReadingMore:
       byGenre.some((one) => one.isLoading) ||

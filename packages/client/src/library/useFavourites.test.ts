@@ -119,6 +119,25 @@ describe('useFavourites', () => {
     expect(result.current.isKept('media-1')).toBe(true);
   });
 
+  it('puts something newly kept first, as the server lists it, so reading the list again changes nothing', async () => {
+    fetchFavourites.mockResolvedValue(['media-2', 'media-1']);
+
+    const { result } = renderHookInACache(() => useFavourites('watcher-1'));
+
+    await waitFor(() => {
+      expect([...result.current.kept]).toEqual(['media-2', 'media-1']);
+    });
+
+    await act(async () => {
+      result.current.toggle('media-3');
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect([...result.current.kept]).toEqual(['media-3', 'media-2', 'media-1']);
+    });
+  });
+
   it('puts the heart back when the server disagrees', async () => {
     setFavourite.mockResolvedValue(false);
 
