@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { MOST_GAP } from '@ValenceClient/books/readerPreferences';
 
 const STORAGE_KEY = 'valence.reader.text';
 
@@ -15,7 +16,10 @@ const TextPreferencesSchema = z.object({
   size: z.enum(TEXT_SIZES).catch('medium'),
   spacing: z.enum(TEXT_SPACINGS).catch('normal'),
   margins: z.enum(TEXT_MARGINS).catch('normal'),
-  page: z.enum(TEXT_PAGES).catch('dark'),
+  page: z.enum(TEXT_PAGES).catch('light'),
+  isDouble: z.boolean().catch(true),
+  gap: z.number().int().min(0).max(MOST_GAP).catch(24),
+  isAnimated: z.boolean().catch(true),
 });
 
 type TextPreferences = z.infer<typeof TextPreferencesSchema>;
@@ -24,7 +28,10 @@ const DEFAULTS: TextPreferences = {
   size: 'medium',
   spacing: 'normal',
   margins: 'normal',
-  page: 'dark',
+  page: 'light',
+  isDouble: true,
+  gap: 24,
+  isAnimated: true,
 };
 
 /**

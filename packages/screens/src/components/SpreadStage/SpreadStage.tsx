@@ -1,22 +1,13 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
-import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
 import { PageCurl } from '@ValenceUI/PageCurl';
 import { useCurlTurn } from '@ValenceUI/useCurlTurn';
 import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
 import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
 import { isCurlPull } from '@ValenceCore/functions/isCurlPull';
 import { usePageDrag } from '@ValenceUI/usePageDrag';
-import { widthFor } from '@ValenceScreens/reading/widthFor';
 import type { CurlHold, CurlLeaf } from '@ValenceCore/functions/pageCurl.types';
 import type { SpreadStageProps } from './SpreadStage.types';
-import { say } from '@ValenceI18n/say';
-
-const FIT_CLASSES = {
-  width: 'w-full object-contain',
-  height: 'h-full object-contain',
-  both: 'max-h-full max-w-full object-contain',
-} as const;
 
 const TURN_SECONDS = PAGE_TURN.curls.ms / 1000;
 
@@ -58,10 +49,11 @@ const secondsFor = (waiting: number): number =>
  *
  * @param spreads - Every spread of the chapter, each as its pages in reading order.
  * @param spreadAt - Which spread is asked for.
- * @param bookId - The book being read.
- * @param chapterId - The chapter being read.
- * @param across - How many pages the reader shows at once, which is how wide to ask for them.
- * @param fit - How a page is fitted to the screen.
+ * What a page is — a picture of a comic's page, or a page of a book's text — is the reader's to
+ * draw; this lays them out, holds them and turns them, and the curl measures whatever the reader
+ * marks as a page with `data-reader-page`.
+ *
+ * @param turnKey - What is being read, such as the chapter, which starts it afresh when it changes.
  * @param gap - The room, in pixels, between the two pages of a pair.
  * @param isRightToLeft - Whether the book is read right to left.
  * @param isAnimated - Whether turning a page is animated.
@@ -70,15 +62,12 @@ const secondsFor = (waiting: number): number =>
  * @param canGoBack - Whether there is a chapter before this one to turn back into.
  * @param canGoOn - Whether there is a chapter after this one to turn on into.
  * @param onTurn - Told a page was turned by dragging it, one on or one back.
- * @param onLoaded - Told when a page has loaded, so a wide one can be given a spread of its own.
+ * @param renderPage - Draws one page, and whether it is to be seen or only hold its place.
  */
 const SpreadStage = ({
   spreads,
   spreadAt,
-  bookId,
-  chapterId,
-  across,
-  fit,
+  turnKey,
   gap,
   isRightToLeft,
   isAnimated,
@@ -86,12 +75,12 @@ const SpreadStage = ({
   canGoBack = false,
   canGoOn = false,
   onTurn,
-  onLoaded,
+  renderPage,
 }: SpreadStageProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isMoving = isAnimated && prefersReducedMotion !== true;
   const [shownAt, setShownAt] = useState(spreadAt);
-  const [shownChapter, setShownChapter] = useState(chapterId);
+  const [shownKey, setShownKey] = useState(turnKey);
   const [turning, setTurning] = useState<Turning | null>(null);
   const turningRef = useRef<Turning | null>(null);
   const stage = useRef<HTMLDivElement | null>(null);
@@ -104,19 +93,19 @@ const SpreadStage = ({
     setTurning(next);
   };
 
-  if (chapterId !== shownChapter) {
-    setShownChapter(chapterId);
+  if (turnKey !== shownKey) {
+    setShownKey(turnKey);
     setShownAt(spreadAt);
     setTurning(null);
   }
 
   useLayoutEffect(() => {
     turningRef.current = null;
-  }, [chapterId]);
+  }, [turnKey]);
 
   useLayoutEffect(() => {
     curl.stop();
-  }, [chapterId, curl]);
+  }, [turnKey, curl]);
 
   const mayGo = (by: 1 | -1): boolean =>
     by === 1 ? shownAt < spreads.length - 1 || canGoOn : shownAt > 0 || canGoBack;
@@ -125,7 +114,7 @@ const SpreadStage = ({
 
   const leafNow = (): CurlLeaf => {
     const box = stage.current?.getBoundingClientRect();
-    const pages = [...(stage.current?.querySelectorAll('img') ?? [])]
+    const pages = [...(stage.current?.querySelectorAll('[data-reader-page]') ?? [])]
       .map((page) => page.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0);
     const outer = pages.reduce<DOMRect | null>(
@@ -287,20 +276,8 @@ const SpreadStage = ({
     });
   }, [turning, spreadAt, shownAt, isMoving, curl]);
 
-  const askedWidth = widthFor(across);
-
   const page = (number: number, isShown: boolean) => (
-    <img
-      key={number}
-      src={bookPageUrl(bookId, chapterId, number, askedWidth)}
-      alt={isShown ? say('common.pageValue', { value: (number + 1).toString() }) : ''}
-      aria-hidden={!isShown}
-      draggable={false}
-      onLoad={(event) => {
-        onLoaded(number, event.currentTarget);
-      }}
-      className={`pointer-events-none select-none ${FIT_CLASSES[fit]} ${isShown ? '' : 'invisible'}`}
-    />
+    <Fragment key={number}>{renderPage(number, isShown)}</Fragment>
   );
 
   const spreadOf = (pages: readonly number[], showing: 'all' | 'outer' | 'inner' = 'all') => {
