@@ -450,6 +450,79 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('works out the next profile’s leanings from what they liked, not from the last profile’s still held', async () => {
+    const funny = film('funny', ['Comedy']);
+    const sad = film('sad', ['Drama']);
+    const answers: ((value: { items: MediaSummary[]; total: number }) => void)[] = [];
+
+    facetsMock.mockResolvedValue({ genres: ['Drama', 'Comedy'], decades: [], maxRating: 10 });
+    aLibrary({
+      byGenre: { Drama: films('drama', 5, 'Drama'), Comedy: films('comedy', 5, 'Comedy') },
+      byId: [funny],
+    });
+
+    let progress = new Map([['funny', { ...halfWay('funny'), isFinished: true }]]);
+    let isProgressKnown = true;
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, [LIBRARY], progress, true, isProgressKnown),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'picked',
+        'genre:Comedy',
+        'genre:Drama',
+      ]);
+    });
+
+    const byGenre: Record<string, MediaSummary[]> = {
+      Drama: films('drama', 5, 'Drama'),
+      Comedy: films('comedy', 5, 'Comedy'),
+    };
+
+    itemsMock.mockImplementation(
+      (_libraryId: string, options: { ids?: string[]; genre?: string }) => {
+        if (options.ids?.includes('sad') === true) {
+          return new Promise<{ items: MediaSummary[]; total: number }>((resolve) => {
+            answers.push(resolve);
+          });
+        }
+
+        const items = options.genre === undefined ? [] : (byGenre[options.genre] ?? []);
+
+        return Promise.resolve({ items, total: items.length });
+      },
+    );
+
+    isProgressKnown = false;
+    rerender();
+
+    progress = new Map([['sad', { ...halfWay('sad'), isFinished: true }]]);
+    isProgressKnown = true;
+    rerender();
+
+    await waitFor(() => {
+      expect(answers.length).toBeGreaterThan(0);
+    });
+
+    expect(result.current.isReading).toBe(true);
+
+    act(() => {
+      for (const answer of answers) {
+        answer({ items: [sad], total: 1 });
+      }
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'picked',
+        'genre:Drama',
+        'genre:Comedy',
+      ]);
+    });
+  });
+
   it('never takes the rows away once drawn, while a row that has become worth showing is read', async () => {
     const watching = film('watching', ['Drama']);
     const answers: ((value: { items: MediaSummary[]; total: number }) => void)[] = [];

@@ -239,7 +239,10 @@ const useHomeRows = (
     rowOf({ minRating: ACCLAIMED_FROM, order: 'newest', limit: ROW_LIMIT }),
   );
 
-  if (keptTaste === null && canAsk && isTasteKnown && !liked.isLoading) {
+  const isLikedRead =
+    likedIds.length === 0 || liked.isError || (liked.isSuccess && !liked.isPlaceholderData);
+
+  if (keptTaste === null && canAsk && isTasteKnown && isLikedRead) {
     setKeptTaste(tasteOf((likedIds.length > 0 ? liked.data : undefined) ?? []));
   }
 
