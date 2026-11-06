@@ -48,6 +48,20 @@ describe('Rail', () => {
     });
   });
 
+  it('keeps still the card it snaps to while the card arrives, so the row never scrolls to meet it', async () => {
+    render(
+      <Rail title="Recently added">
+        <RevealItem index={0}>One</RevealItem>
+      </Rail>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('One')).toHaveStyle({ opacity: '1' });
+    });
+
+    expect(screen.getByRole('listitem').getAttribute('style')).toBeNull();
+  });
+
   it('names itself so the row can be found', () => {
     render(<Rail title="Recently added">{items}</Rail>);
 

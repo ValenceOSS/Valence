@@ -449,6 +449,7 @@
       "@ValenceUI/notify": ["./packages/ui/src/functions/notify.ts"],
       "@ValenceUI/readMaskFrames": ["./packages/ui/src/functions/readMaskFrames.ts"],
       "@ValenceUI/tokens": ["./packages/ui/src/tokens/tokens.ts"],
+      "@ValenceUI/snapRowContext": ["./packages/ui/src/functions/snapRowContext.ts"],
       "@ValenceUI/tooltipScopeContext": ["./packages/ui/src/functions/tooltipScopeContext.ts"],
       "@ValenceUI/pageCover": ["./packages/ui/src/functions/pageCover.ts"],
       "@ValenceUI/useIsPageCovered": ["./packages/ui/src/functions/useIsPageCovered.ts"],
