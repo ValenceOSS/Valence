@@ -5510,6 +5510,7 @@ const ENGLISH = {
   'screens.adminArea.mediaTitlePage.openTheSeasonsPage': 'Open the season’s page',
   'screens.adminArea.mediaTitlePage.reEncodes': 'Re-encodes',
   'screens.adminArea.mediaTitlePage.refreshing': 'Refreshing…',
+  'screens.adminArea.mediaTitlePage.showInTheApp': 'Preview',
   'screens.adminArea.mediaTitlePage.unmatch': 'Unmatch',
   'screens.adminArea.mediaTitlePage.unmatchName': 'Unmatch {name}?',
   'screens.adminArea.mediaTitlePage.whatToShowOfTheTitle': 'What to show of this title',
@@ -5653,6 +5654,8 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.storageValenceIsUsing': 'Storage used by Valence',
   'screens.adminArea.overviewPanel.theLogsCouldNotBeRead': 'Couldn’t load the logs.',
   'screens.adminArea.overviewPanel.whatIsOn': 'What',
+  'screens.adminArea.overviewPanel.whichPartOfTheWeekIsShown':
+    'Which part of the week the chart shows',
   'screens.adminArea.overviewPanel.whoAndWhere': 'Who and where',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',
   'screens.adminArea.phoneNotificationsRow.phoneNotifications': 'Phone notifications',

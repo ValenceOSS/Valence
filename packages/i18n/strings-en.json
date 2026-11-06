@@ -21806,6 +21806,11 @@
     "context": "A badge on a title's page in the admin's Media while it is being read again."
   },
   {
+    "handler": "screens.adminArea.mediaTitlePage.showInTheApp",
+    "text": "Preview",
+    "context": "A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers."
+  },
+  {
     "handler": "screens.adminArea.mediaTitlePage.unmatch",
     "text": "Unmatch",
     "context": "A menu item on a title's page in the admin's Media that takes it back to what its file names say."
@@ -22354,6 +22359,11 @@
     "handler": "screens.adminArea.overviewPanel.whatIsOn",
     "text": "What",
     "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.whichPartOfTheWeekIsShown",
+    "text": "Which part of the week the chart shows",
+    "context": "Read out by screen readers for the draggable window under the server load chart, which picks the stretch of the last seven days the chart above draws."
   },
   {
     "handler": "screens.adminArea.overviewPanel.whoAndWhere",

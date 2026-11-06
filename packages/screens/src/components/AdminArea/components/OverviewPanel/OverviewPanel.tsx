@@ -81,7 +81,7 @@ const OverviewPanel = ({
   const own = libraries.filter((library) => (library.linkedServerId ?? null) === null);
 
   const askedLoadHistory = useQuery({
-    ...adminQueries.resourceHistory(loadRange === 'minute' ? '24h' : loadRange),
+    ...adminQueries.resourceHistory('7d'),
     enabled: loadRange !== 'minute',
   });
 

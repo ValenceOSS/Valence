@@ -366,6 +366,10 @@
       "@ValenceUI/TooltipScope.types": [
         "./packages/ui/src/components/TooltipScope/TooltipScope.types.ts"
       ],
+      "@ValenceUI/SpanPicker": ["./packages/ui/src/components/SpanPicker/SpanPicker.tsx"],
+      "@ValenceUI/SpanPicker.types": [
+        "./packages/ui/src/components/SpanPicker/SpanPicker.types.ts"
+      ],
       "@ValenceUI/TrendChart": ["./packages/ui/src/components/TrendChart/TrendChart.tsx"],
       "@ValenceUI/TrendChart.types": [
         "./packages/ui/src/components/TrendChart/TrendChart.types.ts"

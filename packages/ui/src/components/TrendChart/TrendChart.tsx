@@ -4,6 +4,8 @@ import { cn } from '@ValenceUI/cn';
 import type { TrendChartProps, TrendLine } from './TrendChart.types';
 import { say } from '@ValenceI18n/say';
 
+const MORPH_MS = 450;
+
 /**
  * Turns a list of readings into the row-per-reading shape the charting library expects, since it
  * takes objects rather than numbers.
@@ -37,6 +39,9 @@ const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, n
  * @param tickOf - How to write a grid line's reading at the chart's edge.
  * @param fills - Whether it grows to fill the height it is given rather than standing a set height.
  * @param isTall - Whether to draw it tall, for a chart that is the point of its card.
+ * @param isAnimated - Whether new readings move the lines to where they now stand rather than
+ *   redrawing them, for a change somebody asked for, such as a longer range; left off while the
+ *   readings tick in or are being dragged through, where moving would only lag.
  * @param className - Extra classes for the caller's own layout.
  */
 const TrendChart = ({
@@ -50,6 +55,7 @@ const TrendChart = ({
   tickOf,
   isTall = false,
   fills = false,
+  isAnimated = false,
   className,
 }: TrendChartProps) => {
   const fillId = useId();
@@ -153,7 +159,9 @@ const TrendChart = ({
               strokeDasharray="1 4"
               strokeLinecap="round"
               fill={`url(#${fillId})`}
-              isAnimationActive={false}
+              isAnimationActive={isAnimated}
+              animationDuration={MORPH_MS}
+              animationEasing="ease-out"
               dot={false}
               activeDot={{ r: 3, strokeWidth: 0, fill: 'var(--color-accent)' }}
             />
@@ -168,7 +176,9 @@ const TrendChart = ({
                 strokeDasharray="1 4"
                 strokeLinecap="round"
                 fill={`url(#${fillId}-${which.toString()})`}
-                isAnimationActive={false}
+                isAnimationActive={isAnimated}
+                animationDuration={MORPH_MS}
+                animationEasing="ease-out"
                 dot={false}
                 activeDot={{ r: 3, strokeWidth: 0, fill: line.colour }}
               />

@@ -459,7 +459,7 @@ describe('OverviewPanel', () => {
       expect(askedResourceHistory).toHaveBeenCalledTimes(1);
     });
 
-    it('reads a persisted range once it is chosen, and charts it', async () => {
+    it('reads the whole week once, and charts the range chosen from it', async () => {
       const actor = userEvent.setup();
 
       askedResourceHistory.mockResolvedValue([
@@ -473,7 +473,8 @@ describe('OverviewPanel', () => {
       await actor.click(await screen.findByRole('menuitemradio', { name: 'Last 24 hours' }));
 
       expect((await screen.findByText('Peak')).nextElementSibling).toHaveTextContent('80%');
-      expect(askedResourceHistory).toHaveBeenCalledWith('24h');
+      expect(askedResourceHistory).toHaveBeenCalledTimes(1);
+      expect(askedResourceHistory).toHaveBeenCalledWith('7d');
     });
 
     it('says nothing has been measured yet rather than drawing an empty chart oddly', async () => {

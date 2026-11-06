@@ -16,6 +16,7 @@ type TrendChartProps = {
   tickOf?: (value: number) => string;
   isTall?: boolean;
   fills?: boolean;
+  isAnimated?: boolean;
   className?: string;
 };
 
