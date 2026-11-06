@@ -112,6 +112,7 @@ import { foldStreamedFilms } from '@ValenceServer/streamSources/foldStreamedFilm
 import { withStreamedInputs } from '@ValenceServer/streamSources/withStreamedInputs';
 
 import { notStreamed } from '@ValenceServer/visibility/notStreamed';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
@@ -887,14 +888,16 @@ const countUsers = async (): Promise<number> => {
 };
 
 /**
- * How much disk the media itself takes, across every library. Reported beside what Valence has added to
- * it, since the useful question on the dashboard is which of the two is growing.
+ * How much disk the media itself takes, across this server's own libraries. Reported beside what
+ * Valence has added to it, since the useful question on the dashboard is which of the two is growing.
+ * A library kept from a linked server is left out, since its files are on that server's disk.
  */
 const readLibraryBytes = async (): Promise<number> => {
   const rows = await db
     .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)` })
     .from(mediaItem)
-    .where(and(isStillThere(), notStreamed(db, 'item')));
+    .innerJoin(library, eq(library.id, mediaItem.libraryId))
+    .where(and(isStillThere(), heldOnThisServer()));
 
   return Number(rows[0]?.total ?? 0);
 };
