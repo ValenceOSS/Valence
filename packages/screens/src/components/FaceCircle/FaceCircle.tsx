@@ -4,7 +4,7 @@ import { cn } from '@ValenceUI/cn';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPicture } from '@ValenceScreens/library/framedPicture';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
-import { inkFor } from '@ValenceClient/library/inkFor';
+import { facePaint } from '@ValenceClient/profiles/facePaint';
 import type { FaceCircleProps } from './FaceCircle.types';
 
 const RETRIES = 2;
@@ -94,16 +94,17 @@ const FaceCircle = ({
   const showsPicture = chosen !== null || (avatar.kind !== 'initial' && !isMissing);
   const frame = chosen === null && avatar.kind === 'photo' ? framedPicture(avatar.frame) : {};
   const letter = avatar.kind === 'initial' ? LETTER_FONT_LOOKS[avatar.font] : null;
+  const paint = facePaint(colour, avatar.kind === 'initial' ? avatar.colourTo : null);
 
   return (
     <span
       style={{
-        backgroundColor: showsPicture ? undefined : colour,
+        ...(showsPicture ? {} : paint.style),
         ...(letter === null ? {} : { fontFamily: letter.family, fontWeight: letter.weight }),
       }}
       className={cn(
         'flex items-center justify-center overflow-hidden bg-subtle font-semibold',
-        !showsPicture && inkFor(colour) === 'dark' ? 'text-letter-dark' : 'text-letter-light',
+        !showsPicture && paint.ink === 'dark' ? 'text-letter-dark' : 'text-letter-light',
         shape === 'circle' ? 'rounded-full' : 'rounded-lg',
         isLifted && 'shadow-lg',
         className,

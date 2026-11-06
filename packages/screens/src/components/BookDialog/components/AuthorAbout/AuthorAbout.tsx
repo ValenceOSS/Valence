@@ -22,16 +22,16 @@ const AuthorAbout = ({ author }: AuthorAboutProps) => {
 
   return (
     <DialogSection heading={say('screens.bookDialog.aboutTheAuthor')}>
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
         {author.photoUrl === null ? (
-          <span className="flex size-24 shrink-0 items-center justify-center rounded-full bg-[var(--surface-hover)]">
-            <Icon of={UserIcon} size={36} tone="muted" />
+          <span className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-hover)] sm:w-40">
+            <Icon of={UserIcon} size={40} tone="muted" />
           </span>
         ) : (
           <img
             src={author.photoUrl}
             alt=""
-            className="size-24 shrink-0 rounded-full object-cover shadow-md"
+            className="aspect-[2/3] w-32 shrink-0 rounded-xl object-cover shadow-md sm:w-40"
           />
         )}
 
@@ -51,7 +51,7 @@ const AuthorAbout = ({ author }: AuthorAboutProps) => {
           </div>
 
           {author.bio === null ? null : (
-            <ReadMore lines={4} className="max-w-[65ch] text-[0.95rem] leading-relaxed text-text">
+            <ReadMore lines={7} className="text-[0.95rem] leading-relaxed text-text">
               {author.bio}
             </ReadMore>
           )}

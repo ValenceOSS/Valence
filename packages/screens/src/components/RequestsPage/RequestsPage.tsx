@@ -105,13 +105,12 @@ const RequestsPage = () => {
         </div>
       ) : null}
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
           key={place.requestsView ?? 'discover'}
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          exit="gone"
         >
           <motion.div
             variants={revealVariants(prefersReducedMotion)}

@@ -560,6 +560,8 @@ import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
+const BOOK_COVERS_AFTER_MS = 60_000;
+
 const MonitorResourceSampleSchema = z.object({
   resources: z.object({
     atMs: z.number(),
@@ -1395,6 +1397,29 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   describe: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
   picture: (url) => musicWeb.bytes(url),
 });
+
+/**
+ * Looks for the books on a shelf on Open Library in the background, keeping the cover there for
+ * each one surely matched, without holding up whatever asked.
+ *
+ * @param libraryId - The shelf, or every shelf where none is given.
+ */
+const matchBookCovers = (libraryId?: string): void => {
+  void bookService
+    .matchCovers(libraryId)
+    .then((matched) => {
+      if (matched > 0) {
+        log.info('catalogue', `matched ${matched.toString()} covers on Open Library`);
+      }
+    })
+    .catch((error: Error) => {
+      log.warn('catalogue', `matching covers on Open Library failed: ${error.message}`);
+    });
+};
+
+setTimeout(() => {
+  matchBookCovers();
+}, BOOK_COVERS_AFTER_MS);
 
 const partsOf = createPartsOf(db);
 
@@ -2433,6 +2458,10 @@ const jobs = createJobQueue({
             isCancelled: () => jobs.isCancelled(jobId),
             onRead: async () => {
               await followUpReading(libraryService, libraryId, scanned?.kind);
+
+              if (scanned?.kind === 'books') {
+                matchBookCovers(libraryId);
+              }
             },
             onScanned: async (result) => {
               jobs.reportProgress(

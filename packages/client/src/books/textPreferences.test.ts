@@ -36,6 +36,7 @@ describe('textPreferences', () => {
       isDouble: true,
       gap: 24,
       isAnimated: true,
+      isScrolling: false,
     });
   });
 
@@ -48,6 +49,7 @@ describe('textPreferences', () => {
       isDouble: false,
       gap: 8,
       isAnimated: false,
+      isScrolling: false,
     });
 
     expect(readTextPreferences()).toEqual({
@@ -58,6 +60,7 @@ describe('textPreferences', () => {
       isDouble: false,
       gap: 8,
       isAnimated: false,
+      isScrolling: false,
     });
   });
 
@@ -70,6 +73,7 @@ describe('textPreferences', () => {
       isDouble: true,
       gap: 24,
       isAnimated: true,
+      isScrolling: false,
     });
 
     expect([...held.keys()]).toEqual(['valence.reader.text']);
@@ -86,6 +90,7 @@ describe('textPreferences', () => {
       isDouble: true,
       gap: 24,
       isAnimated: true,
+      isScrolling: false,
     });
   });
 

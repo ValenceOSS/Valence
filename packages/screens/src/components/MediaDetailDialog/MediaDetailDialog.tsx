@@ -30,6 +30,8 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Server as ServerDuotoneIcon } from '@keyline-icons/react/duotone';
 import { describePicture } from '@ValenceClient/library/describePicture';
 import { useFilmCopies } from '@ValenceScreens/library/useFilmCopies';
+import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
+import { OriginMark } from '@ValenceUI/OriginMark';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -209,6 +211,7 @@ const MediaDetailDialog = ({
   const hasTrailer = trailer !== null || trailerKey !== null;
   const versions = detail?.versions ?? [];
   const filmCopies = useFilmCopies(media === null ? null : shown);
+  const cardOrigin = useCardOrigin();
   const [firstServer = '', ...otherServers] = filmCopies.map(
     (copy) => copy.server ?? say('common.thisServer'),
   );
@@ -231,6 +234,17 @@ const MediaDetailDialog = ({
       }),
     ),
   ];
+  const fromMarks = (
+    filmCopies.length > 1
+      ? filmCopies.map((copy) => copy.media.libraryId)
+      : [shown.libraryId, ...versions.map((one) => one.libraryId)]
+  )
+    .flatMap((libraryId) => {
+      const { origin: mark } = cardOrigin(libraryId);
+
+      return mark === undefined ? [] : [mark];
+    })
+    .filter((mark, at, every) => every.findIndex((other) => other.label === mark.label) === at);
   const season = metadata?.seasonNumber ?? null;
   const genres = metadata?.genres ?? [];
   const cast = metadata?.cast ?? [];
@@ -627,17 +641,24 @@ const MediaDetailDialog = ({
                   </p>
                 )}
 
-                {filmCopies.length > 1 ? (
-                  <p className="text-text-muted">
-                    {say('common.fromName', {
-                      name: sayAgain(sayingAll([firstServer, ...otherServers])),
-                    })}
-                  </p>
-                ) : origin === null && alsoOn.length === 0 ? null : (
-                  <p className="text-text-muted">
-                    {origin === null
-                      ? say('common.alsoOnNames', { names: alsoOn.join(', ') })
-                      : say('common.fromName', { name: origin.name })}
+                {filmCopies.length < 2 && origin === null && alsoOn.length === 0 ? null : (
+                  <p className="flex items-center gap-2.5 text-text-muted">
+                    {fromMarks.length === 0 ? null : (
+                      <span className="flex shrink-0 -space-x-2">
+                        {fromMarks.map((mark) => (
+                          <OriginMark key={mark.label} {...mark} />
+                        ))}
+                      </span>
+                    )}
+                    <span className="min-w-0">
+                      {filmCopies.length > 1
+                        ? say('common.fromName', {
+                            name: sayAgain(sayingAll([firstServer, ...otherServers])),
+                          })
+                        : origin === null
+                          ? say('common.alsoOnNames', { names: alsoOn.join(', ') })
+                          : say('common.fromName', { name: origin.name })}
+                    </span>
                   </p>
                 )}
 

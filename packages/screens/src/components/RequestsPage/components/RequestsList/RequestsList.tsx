@@ -2,9 +2,7 @@ import { useMe } from '@ValenceClient/requests/useMe';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import { useMemo, useState } from 'react';
-import { motion } from 'motion/react';
-import { groupVariants } from '@ValenceUI/animations/reveal';
-import { RevealItem } from '@ValenceUI/RevealItem';
+import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Compass as CompassIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
@@ -41,6 +39,9 @@ import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsListProps } from './RequestsList.types';
 import { say } from '@ValenceI18n/say';
 import { catalogueIdOfRequest } from '@ValenceClient/requests/catalogueIdOfRequest';
+
+const ONE_ACROSS = 100_000;
+const ROW_HEIGHT = 128;
 
 /**
  * The requests on this server, newest first, with where each has got to — waiting on approval,
@@ -145,14 +146,20 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
         />
       ) : null}
 
-      <motion.ul
-        aria-label={say('common.requests')}
-        variants={groupVariants}
-        initial="hidden"
-        animate="shown"
-        className="flex flex-col gap-3"
+      <VirtualGrid
+        label={say('common.requests')}
+        count={shown.length}
+        leastCardWidth={ONE_ACROSS}
+        rowHeight={ROW_HEIGHT}
+        gap={12}
       >
-        {shown.map((request, at) => {
+        {(at) => {
+          const request = shown[at];
+
+          if (request === undefined) {
+            return null;
+          }
+
           const badge = describeRequestBadge(request);
           const said = describeRequestProgress(request);
           const going = progressOfRequest(request, progress.data ?? []);
@@ -160,119 +167,117 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
           const cost = describeDownloadCost(spent.bytes, spent.seconds);
 
           return (
-            <RevealItem key={request.id} index={at}>
-              <Card className="flex flex-wrap items-start gap-4">
-                {isMusicRequest(request.kind) ? (
-                  <MusicArtwork
-                    src={request.posterUrl}
-                    label={say('common.theCoverOfTitle', { title: request.title })}
-                    shape={request.kind === 'artist' ? 'round' : 'square'}
-                    className="w-16"
-                  />
-                ) : (
-                  <span className="aspect-[2/3] w-16 shrink-0 overflow-hidden rounded-md bg-surface-raised ring-1 ring-line">
-                    {request.posterUrl === null ? null : (
-                      <img
-                        src={request.posterUrl}
-                        alt=""
-                        loading="lazy"
-                        className="size-full object-cover"
-                      />
-                    )}
-                  </span>
-                )}
-
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-text">
-                      {request.title}
-                      {request.year === null ? '' : ` (${request.year.toString()})`}
-                    </span>
-                    <Badge size="sm">{REQUEST_KIND_NAMES[request.kind]}</Badge>
-                    <Badge size="sm" tone={badge.tone}>
-                      {badge.label}
-                    </Badge>
-                  </span>
-
-                  <span className="text-xs text-text-muted">
-                    {[
-                      describeAskers(askersOf(request), asMe),
-                      named.get(request.libraryId) ?? null,
-                      request.profileName,
-                    ]
-                      .filter((part) => part !== null)
-                      .join(' · ')}
-                  </span>
-
-                  {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
-                  {request.refusedBecause === null ? null : (
-                    <span className="break-words text-xs text-text-muted">
-                      {say('screens.requestsPage.requestsList.refusedRefusedBecause', {
-                        refusedBecause: sayAgain(request.refusedBecause),
-                      })}
-                    </span>
-                  )}
-                  {badge.detail === null ? null : (
-                    <span className="break-words text-xs text-text-muted">{badge.detail}</span>
-                  )}
-
-                  {going !== null || cost === null ? null : (
-                    <span className="text-xs text-text-muted">{cost}</span>
-                  )}
-
-                  {going === null ? null : (
-                    <ProgressBar
-                      label={say('common.howFarTitleHasDownloaded', { title: request.title })}
-                      value={Math.round(going.progress * 1000) / 10}
-                      readout={
-                        <DownloadProgressReadout progress={going} className="text-text-muted" />
-                      }
+            <Card key={request.id} className="flex flex-wrap items-start gap-4">
+              {isMusicRequest(request.kind) ? (
+                <MusicArtwork
+                  src={request.posterUrl}
+                  label={say('common.theCoverOfTitle', { title: request.title })}
+                  shape={request.kind === 'artist' ? 'round' : 'square'}
+                  className="w-16"
+                />
+              ) : (
+                <span className="aspect-[2/3] w-16 shrink-0 overflow-hidden rounded-md bg-surface-raised ring-1 ring-line">
+                  {request.posterUrl === null ? null : (
+                    <img
+                      src={request.posterUrl}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover"
                     />
                   )}
-                </div>
+                </span>
+              )}
 
-                <span className="flex shrink-0 flex-wrap gap-2">
-                  {isAskedByMe(request, asMe) &&
-                  request.state !== 'filed' &&
-                  request.state !== 'available' ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setCancelling(request);
-                      }}
-                    >
-                      {say('common.cancel')}
-                    </Button>
-                  ) : null}
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-text">
+                    {request.title}
+                    {request.year === null ? '' : ` (${request.year.toString()})`}
+                  </span>
+                  <Badge size="sm">{REQUEST_KIND_NAMES[request.kind]}</Badge>
+                  <Badge size="sm" tone={badge.tone}>
+                    {badge.label}
+                  </Badge>
+                </span>
+
+                <span className="text-xs text-text-muted">
+                  {[
+                    describeAskers(askersOf(request), asMe),
+                    named.get(request.libraryId) ?? null,
+                    request.profileName,
+                  ]
+                    .filter((part) => part !== null)
+                    .join(' · ')}
+                </span>
+
+                {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
+                {request.refusedBecause === null ? null : (
+                  <span className="break-words text-xs text-text-muted">
+                    {say('screens.requestsPage.requestsList.refusedRefusedBecause', {
+                      refusedBecause: sayAgain(request.refusedBecause),
+                    })}
+                  </span>
+                )}
+                {badge.detail === null ? null : (
+                  <span className="break-words text-xs text-text-muted">{badge.detail}</span>
+                )}
+
+                {going !== null || cost === null ? null : (
+                  <span className="text-xs text-text-muted">{cost}</span>
+                )}
+
+                {going === null ? null : (
+                  <ProgressBar
+                    label={say('common.howFarTitleHasDownloaded', { title: request.title })}
+                    value={Math.round(going.progress * 1000) / 10}
+                    readout={
+                      <DownloadProgressReadout progress={going} className="text-text-muted" />
+                    }
+                  />
+                )}
+              </div>
+
+              <span className="flex shrink-0 flex-wrap gap-2">
+                {isAskedByMe(request, asMe) &&
+                request.state !== 'filed' &&
+                request.state !== 'available' ? (
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     onClick={() => {
-                      if (request.state === 'available' && request.mediaId !== null) {
-                        onOpen(request.kind, request.mediaId);
-
-                        return;
-                      }
-
-                      onAsk(
-                        askingOf({
-                          kind: request.kind,
-                          id: catalogueIdOfRequest(request),
-                        }),
-                      );
+                      setCancelling(request);
                     }}
                   >
-                    {request.state === 'available' && request.mediaId !== null
-                      ? say('common.open')
-                      : say('common.details')}
+                    {say('common.cancel')}
                   </Button>
-                </span>
-              </Card>
-            </RevealItem>
+                ) : null}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    if (request.state === 'available' && request.mediaId !== null) {
+                      onOpen(request.kind, request.mediaId);
+
+                      return;
+                    }
+
+                    onAsk(
+                      askingOf({
+                        kind: request.kind,
+                        id: catalogueIdOfRequest(request),
+                      }),
+                    );
+                  }}
+                >
+                  {request.state === 'available' && request.mediaId !== null
+                    ? say('common.open')
+                    : say('common.details')}
+                </Button>
+              </span>
+            </Card>
           );
-        })}
-      </motion.ul>
+        }}
+      </VirtualGrid>
 
       <ConfirmDialog
         title={

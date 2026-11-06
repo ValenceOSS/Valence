@@ -28,7 +28,7 @@ const OriginMark = ({
       aria-label={label}
       style={{ backgroundColor: colour }}
       className={cn(
-        'flex size-6 items-center justify-center overflow-hidden rounded-full text-[0.7rem] font-semibold shadow-sm ring-2 ring-shade/40',
+        'flex size-6 items-center justify-center overflow-hidden rounded-full text-[0.7rem] font-semibold shadow-sm ring-2 ring-shade',
         ink === 'dark' ? 'text-letter-dark' : 'text-letter-light',
         className,
       )}

@@ -35,6 +35,8 @@ import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
 import { say } from '@ValenceI18n/say';
+import { TEXT_FLOW } from './TEXT_FLOW';
+import { ScrollingText } from './components/ScrollingText/ScrollingText';
 
 type Landing =
   | { kind: 'within'; within: number }
@@ -58,18 +60,23 @@ const SERIF = 'ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif'
 
 const SLIDER_STEPS = 1000;
 
+const SCREEN_STEP = 0.9;
+
+const FINISHED_WITHIN = 0.98;
+
+const SCROLL_WIDTH = 760;
+
+const MOST_SCROLL_INSET = 24;
+
+const PICTURE_SHARE = 0.8;
+
 const PAGE: Record<TextPreferences['page'], string> = {
   light: 'bg-paper-light text-ink-light',
   sepia: 'bg-paper-sepia text-ink-sepia',
   dark: 'bg-paper-dark text-ink-dark',
 };
 
-const FLOW = [
-  'h-full [hyphens:auto] [&_:is(p,figcaption,blockquote)]:[font-family:inherit] [&_:is(p,figcaption,blockquote)]:tracking-normal',
-  '[&_p]:mb-[0.8em] [&_h1]:mb-[0.6em] [&_h1]:text-[1.6em] [&_h1]:font-semibold [&_h2]:mb-[0.6em] [&_h2]:text-[1.35em] [&_h2]:font-semibold [&_h3]:mb-[0.5em] [&_h3]:text-[1.15em] [&_h3]:font-semibold',
-  '[&_img]:mx-auto [&_img]:my-[0.8em] [&_img]:block [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-[var(--page-height)] [&_img]:[break-inside:avoid]',
-  '[&_blockquote]:mx-[1.5em] [&_blockquote]:italic [&_a]:underline [&_a]:underline-offset-2 [&_li]:ml-[1.25em] [&_ul]:list-disc [&_ol]:list-decimal [&_figcaption]:text-center [&_figcaption]:text-[0.85em]',
-].join(' ');
+const FLOW = TEXT_FLOW;
 
 const NAMES: Record<string, string> = {
   small: say('common.small'),
@@ -135,6 +142,17 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   const [anchorPages, setAnchorPages] = useState<ReadonlyMap<string, number>>(new Map());
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [dragged, setDragged] = useState<number | null>(null);
+  const [scrolledWithin, setScrolledWithin] = useState(0);
+  const [scrollFrom, setScrollFrom] = useState<{
+    part: number;
+    landing: Landing;
+    key: number;
+  } | null>(null);
+  const scrolling = useRef<HTMLDivElement | null>(null);
+  const isScrolling = settings.isScrolling;
+  const setScroller = useCallback((element: HTMLDivElement | null) => {
+    scrolling.current = element;
+  }, []);
   const stage = useRef<HTMLDivElement | null>(null);
   const flow = useRef<HTMLDivElement | null>(null);
   const lastPart = Math.max(sizes.length - 1, 0);
@@ -263,26 +281,49 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     report.current = onPlaceChange;
   });
 
-  const fraction = part === null ? startAt : fractionOfBook(sizes, part, page / pages);
-  const isFinished = part === lastPart && at >= spreads.length - 1;
+  const fraction =
+    part === null
+      ? startAt
+      : fractionOfBook(sizes, part, isScrolling ? scrolledWithin : page / pages);
+  const isFinished = isScrolling
+    ? part === lastPart && scrolledWithin > FINISHED_WITHIN
+    : part === lastPart && at >= spreads.length - 1;
 
   useEffect(() => {
-    if (isLaidOut && part !== null) {
+    if ((isLaidOut || isScrolling) && part !== null) {
       report.current?.(fraction, isFinished);
     }
-  }, [fraction, isFinished, isLaidOut, part]);
+  }, [fraction, isFinished, isLaidOut, isScrolling, part]);
 
-  const goTo = useCallback((to: number, arriving: Landing) => {
-    setIsLaidOut(false);
-    setPart(to);
-    setLanding(arriving);
-  }, []);
+  const goTo = useCallback(
+    (to: number, arriving: Landing) => {
+      if (isScrolling) {
+        setPart(to);
+        setScrollFrom((was) => ({ part: to, landing: arriving, key: (was?.key ?? 0) + 1 }));
+
+        return;
+      }
+
+      setIsLaidOut(false);
+      setPart(to);
+      setLanding(arriving);
+    },
+    [isScrolling],
+  );
 
   const turn = useCallback(
     (by: number) => {
       keep();
 
       if (part === null) {
+        return;
+      }
+
+      if (isScrolling) {
+        const element = scrolling.current;
+
+        element?.scrollBy({ top: by * element.clientHeight * SCREEN_STEP, behavior: 'smooth' });
+
         return;
       }
 
@@ -307,7 +348,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
       setLanding(null);
       setAt(next);
     },
-    [at, goTo, keep, lastPart, part, spreads.length],
+    [at, goTo, isScrolling, keep, lastPart, part, spreads.length],
   );
 
   const forward = useCallback(() => {
@@ -327,21 +368,35 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
       const arriving: Landing =
         place.anchor === null ? { kind: 'start' } : { kind: 'anchor', anchor: place.anchor };
 
-      if (place.part === part) {
+      if (place.part === part && !isScrolling) {
         setLanding(arriving);
       } else {
         goTo(place.part, arriving);
       }
     },
-    [goTo, part, wake],
+    [goTo, isScrolling, part, wake],
   );
 
   const change = (changed: Partial<TextPreferences>) => {
     const next = { ...settings, ...changed };
 
+    const within = isScrolling ? scrolledWithin : page / pages;
+
     setSettings(next);
     writeTextPreferences(next, book.id);
-    setLanding({ kind: 'within', within: page / pages });
+    setLanding({ kind: 'within', within });
+
+    if (next.isScrolling && part !== null) {
+      setScrolledWithin(within);
+      setScrollFrom((was) => ({
+        part,
+        landing: { kind: 'within', within },
+        key: (was?.key ?? 0) + 1,
+      }));
+    } else if (isScrolling) {
+      setIsLaidOut(false);
+    }
+
     wake();
   };
 
@@ -355,6 +410,13 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     lineHeight: TEXT_LOOK.leading[settings.spacing],
     fontFamily: SERIF,
     '--page-height': `${textHeight.toString()}px`,
+  } as const;
+
+  const scrollStyle = {
+    fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
+    lineHeight: TEXT_LOOK.leading[settings.spacing],
+    fontFamily: SERIF,
+    '--page-height': `${Math.round(box.height * PICTURE_SHARE).toString()}px`,
   } as const;
 
   const entries = contents.data?.contents ?? [];
@@ -463,15 +525,20 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                   items={[
                     { id: 'single', label: say('screens.pageReader.onePage') },
                     { id: 'double', label: say('screens.pageReader.twoPages') },
+                    { id: 'scroll', label: say('common.scroll') },
                   ]}
-                  value={settings.isDouble ? 'double' : 'single'}
+                  value={isScrolling ? 'scroll' : settings.isDouble ? 'double' : 'single'}
                   onSelect={(id) => {
-                    change({ isDouble: id === 'double' });
+                    change(
+                      id === 'scroll'
+                        ? { isScrolling: true }
+                        : { isScrolling: false, isDouble: id === 'double' },
+                    );
                   }}
                 />
               </SettingRow>
 
-              {settings.isDouble ? (
+              {settings.isDouble && !isScrolling ? (
                 <SettingRow
                   title={say('screens.pageReader.gapBetweenPages')}
                   description={say('screens.pageReader.gapPx', {
@@ -490,16 +557,18 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 </SettingRow>
               ) : null}
 
-              <SettingRow title={say('screens.pageReader.animateTurningPages')}>
-                <Switch
-                  label={say('screens.pageReader.animateTurningPages')}
-                  isLabelHidden
-                  isOn={settings.isAnimated}
-                  onToggle={() => {
-                    change({ isAnimated: !settings.isAnimated });
-                  }}
-                />
-              </SettingRow>
+              {isScrolling ? null : (
+                <SettingRow title={say('screens.pageReader.animateTurningPages')}>
+                  <Switch
+                    label={say('screens.pageReader.animateTurningPages')}
+                    isLabelHidden
+                    isOn={settings.isAnimated}
+                    onToggle={() => {
+                      change({ isAnimated: !settings.isAnimated });
+                    }}
+                  />
+                </SettingRow>
+              )}
 
               <SettingRow title={say('common.size')}>
                 <SegmentedRow
@@ -583,7 +652,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
 
                 setDragged(null);
 
-                if (to.part === part) {
+                if (to.part === part && !isScrolling) {
                   setLanding({ kind: 'within', within: to.within });
                 } else {
                   goTo(to.part, { kind: 'within', within: to.within });
@@ -599,7 +668,28 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         }
       >
         <div ref={stage} className="relative h-full w-full">
-          {text.data === undefined || part === null ? (
+          {isScrolling && part !== null ? (
+            <ScrollingText
+              key={scrollFrom?.key ?? 0}
+              bookId={book.id}
+              chapterId={chapterId}
+              startPart={scrollFrom?.part ?? part}
+              landing={scrollFrom?.landing ?? landing ?? { kind: 'start' }}
+              lastPart={lastPart}
+              pageClassName={PAGE[settings.page]}
+              inset={Math.max(
+                MOST_SCROLL_INSET,
+                Math.min(box.width, SCROLL_WIDTH) * TEXT_LOOK.margin[settings.margins] * 1.6,
+              )}
+              textStyle={scrollStyle}
+              onPlace={(reading, within) => {
+                setPart(reading);
+                setScrolledWithin(within);
+              }}
+              onFollow={follow}
+              onScroller={setScroller}
+            />
+          ) : text.data === undefined || part === null ? (
             <Spinner isCentered label={say('common.openingTheBook')} />
           ) : (
             <>

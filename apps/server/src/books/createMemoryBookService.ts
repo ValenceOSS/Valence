@@ -282,6 +282,7 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
     correct: (bookId) => Promise.resolve(given.books.some((one) => one.id === bookId)),
 
     forgetCorrection: (bookId) => Promise.resolve(given.books.some((one) => one.id === bookId)),
+    matchCovers: () => Promise.resolve(0),
   };
 };
 

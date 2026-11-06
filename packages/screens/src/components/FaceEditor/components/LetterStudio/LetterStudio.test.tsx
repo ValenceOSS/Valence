@@ -11,6 +11,8 @@ describe('LetterStudio', () => {
         name="marques"
         colour="#3a8ee8"
         font={PLUS_JAKARTA_SANS_AS_STORED}
+        colourTo={null}
+        onGradient={vi.fn()}
         onColour={vi.fn()}
         onFont={vi.fn()}
       />,
@@ -30,6 +32,8 @@ describe('LetterStudio', () => {
         name="Marques"
         colour="#3a8ee8"
         font={PLUS_JAKARTA_SANS_AS_STORED}
+        colourTo={null}
+        onGradient={vi.fn()}
         onColour={vi.fn()}
         onFont={onFont}
       />,

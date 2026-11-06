@@ -43,7 +43,8 @@ const SURROUNDS = ['edge', 'black', 'grey', 'white'] as const;
  * @param onClose - Told it was put away.
  * @param title - What is being read.
  * @param isRightToLeft - Whether the pages turn right to left.
- * @param onRightToLeft - Told which way the pages should turn.
+ * @param onRightToLeft - Told which way the pages should turn; without it a book is read left to
+ *   right and the choice is not offered, which is everything but manga.
  * @param layout - How many pages show at once, or nothing where the phone decides that itself.
  * @param onLayout - Told how many pages should show at once.
  * @param isCoverAlone - Whether the cover sits on its own.
@@ -87,21 +88,25 @@ const AReaderSheet = ({
         <NavigationStack>
           <Toolbar>
             <Form modifiers={[navigationTitle(title)]}>
-              <Section
-                title={say('common.readingDirection')}
-                footer={<Text>{say('phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo')}</Text>}
-              >
-                <Picker
-                  selection={isRightToLeft ? 'rightToLeft' : 'leftToRight'}
-                  onSelectionChange={(chosen) => {
-                    onRightToLeft(chosen === 'rightToLeft');
-                  }}
-                  modifiers={[pickerStyle('segmented')]}
+              {onRightToLeft === undefined ? null : (
+                <Section
+                  title={say('common.readingDirection')}
+                  footer={
+                    <Text>{say('phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo')}</Text>
+                  }
                 >
-                  <Text modifiers={[tag('leftToRight')]}>{say('common.leftToRight')}</Text>
-                  <Text modifiers={[tag('rightToLeft')]}>{say('common.rightToLeft')}</Text>
-                </Picker>
-              </Section>
+                  <Picker
+                    selection={isRightToLeft ? 'rightToLeft' : 'leftToRight'}
+                    onSelectionChange={(chosen) => {
+                      onRightToLeft(chosen === 'rightToLeft');
+                    }}
+                    modifiers={[pickerStyle('segmented')]}
+                  >
+                    <Text modifiers={[tag('leftToRight')]}>{say('common.leftToRight')}</Text>
+                    <Text modifiers={[tag('rightToLeft')]}>{say('common.rightToLeft')}</Text>
+                  </Picker>
+                </Section>
+              )}
 
               <Section
                 title={say('phone.aReader.aReaderSheet.pagesAtOnce')}

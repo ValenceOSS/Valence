@@ -430,18 +430,20 @@ const AdminPage = () => {
           void go({ to: '/admin/$panel', params: { panel: next } });
         }}
       >
-        <div className="mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] flex-col bg-[var(--frame-back)] [--admin-chrome:6.75rem]">
+        <div className="mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] flex-col bg-[var(--frame-back)] [--admin-chrome:7.25rem]">
           <header className="sticky top-[var(--valence-window-bar)] z-40 flex flex-col bg-[var(--frame-back)]">
-            <div className="flex h-14 items-center gap-1 border-b border-[var(--surface-line)] px-4">
+            <div className="flex h-16 items-center gap-1 border-b border-[var(--surface-line)] px-4 sm:px-6">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="bare"
+                size="none"
                 label={say('screens.adminPage.backToValence')}
+                hasTooltip={false}
                 onClick={() => {
                   void go({ to: '/' });
                 }}
+                className="flex items-center rounded-md coarse:min-h-11"
               >
-                <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
+                <BrandMark hasMark marksPlace={MARKS_PLACE} />
               </Button>
 
               <span className="flex-1" />
@@ -643,9 +645,10 @@ const AdminPage = () => {
                   onClick={() => {
                     void go({ to: '/' });
                   }}
-                  className="flex items-center"
+                  hasTooltip={false}
+                  className="flex items-center rounded-md coarse:min-h-11"
                 >
-                  <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
+                  <BrandMark hasMark marksPlace={MARKS_PLACE} />
                 </Button>
               }
               groups={[

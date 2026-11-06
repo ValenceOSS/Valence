@@ -123,11 +123,28 @@ const isABlock = (node: BookNode) => node.kind === 'element' && BLOCKS.has(node.
  * @param size - How large the words are.
  * @param leading - How far apart its lines are, as a multiple of the size.
  * @param ink - The colour of the words.
+ * @param face - The type it is set in, and whether it is justified, where not the app's own.
  * @param onLink - Told a link was followed.
  * @param onAnchors - Told where the named places are.
  */
-const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheBookTextProps) => {
+const TheBookTextDrawn = ({
+  nodes,
+  size,
+  leading,
+  ink,
+  face,
+  onLink,
+  onAnchors,
+}: TheBookTextProps) => {
   const line = size * leading;
+  const body: TextStyle =
+    face === undefined
+      ? styles.body
+      : {
+          fontFamily: face.regular,
+          ...(face.isJustified ? { textAlign: 'justify' } : {}),
+        };
+  const heavy: TextStyle | null = face === undefined ? null : { fontFamily: face.bold };
   const block = { gap: line };
   const anchors = useRef(new Map<string, number>());
 
@@ -159,8 +176,9 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     return heading === undefined
       ? undefined
       : {
-          fontFamily: heading.family,
+          fontFamily: face?.bold ?? heading.family,
           fontSize: size * heading.scale,
+          ...(face === undefined ? {} : { textAlign: 'left' }),
           lineHeight: Math.ceil((size * heading.scale * 1.25) / line) * line,
         };
   };
@@ -199,7 +217,7 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
             onLink(href);
           }}
         >
-          <Text style={[styles.body, styles.link, { color: ink, fontSize: size }]}>
+          <Text style={[body, styles.link, { color: ink, fontSize: size }]}>
             {node.children.map((child, at) => drawRun(child, at, isKept))}
           </Text>
         </Button>
@@ -209,7 +227,11 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     return (
       <Text
         key={key}
-        style={[INLINE[node.tag], smaller === undefined ? null : { fontSize: size * smaller }]}
+        style={[
+          INLINE[node.tag],
+          node.tag === 'strong' || node.tag === 'b' ? heavy : null,
+          smaller === undefined ? null : { fontSize: size * smaller },
+        ]}
       >
         {node.children.map((child, at) => drawRun(child, at, isKept))}
       </Text>
@@ -234,7 +256,7 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     run.every((node) => node.kind === 'text' && node.text.trim() === '') ? null : (
       <Text
         key={key}
-        style={[styles.body, { color: ink, fontSize: size, lineHeight: size * leading }, look]}
+        style={[body, { color: ink, fontSize: size, lineHeight: size * leading }, look]}
       >
         {run.map((node, at) => drawRun(node, at, isKept))}
       </Text>

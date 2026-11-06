@@ -155,6 +155,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       >
         <DialogTitle
           size="compact"
+          className="border-b-0 pb-0"
           title={profile?.name ?? user.name}
           detail={accountHandleOf(user)}
           icon={

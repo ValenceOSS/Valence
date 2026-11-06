@@ -12,6 +12,7 @@ import { wallGrid } from '@ValenceScreens/components/PosterWall/wallGrid';
 import { wallLens } from '@ValenceScreens/components/PosterWall/wallLens';
 import { titleAtCell } from '@ValenceScreens/components/PosterWall/titleAtCell';
 import { useWallAxis } from '@ValenceScreens/components/PosterWall/useWallAxis';
+import { isOnScreen } from '@ValenceScreens/components/PosterWall/isOnScreen';
 import type {
   WallCell,
   WallLens,
@@ -107,6 +108,8 @@ const WallField = ({ onClose, onOpenFilm, onOpenShow }: WallFieldProps) => {
 
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [focus, setFocus] = useState<WallCell>({ row: 0, column: 0 });
+  const [, setOnScreen] = useState('');
+  const box = useRef<WallCell[]>([]);
 
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
@@ -163,11 +166,17 @@ const WallField = ({ onClose, onOpenFilm, onOpenShow }: WallFieldProps) => {
     }
 
     const nearest = nearestOnWall({ x: atX, y: atY }, grid);
+    const onScreen = box.current
+      .filter((cell) => isOnScreen(cell, { x: atX, y: atY }, grid, lens, size))
+      .map(keyOfCell)
+      .join(',');
+
+    setOnScreen(onScreen);
 
     setFocus((standing) =>
       standing.row === nearest.row && standing.column === nearest.column ? standing : nearest,
     );
-  }, [grid, lens, panX, panY, size.height, size.width]);
+  }, [grid, lens, panX, panY, size]);
 
   const schedule = useCallback(() => {
     if (drawing.current === 0) {
@@ -358,8 +367,20 @@ const WallField = ({ onClose, onOpenFilm, onOpenShow }: WallFieldProps) => {
 
   const rows = useWallAxis(fieldRef, panY, grid.stepY, outermost, false);
   const columns = useWallAxis(fieldRef, panX, grid.stepX, outermost + grid.stepX / 2, true);
-  const shown: WallCell[] =
+  const inBox: WallCell[] =
     titles.length === 0 ? [] : rows.flatMap((row) => columns.map((column) => ({ row, column })));
+
+  useLayoutEffect(() => {
+    box.current = inBox;
+    schedule();
+  });
+
+  const shown =
+    size.width === 0
+      ? inBox
+      : inBox.filter((cell) =>
+          isOnScreen(cell, { x: panX.get(), y: panY.get() }, grid, lens, size),
+        );
 
   return (
     <div className="relative size-full overflow-hidden">

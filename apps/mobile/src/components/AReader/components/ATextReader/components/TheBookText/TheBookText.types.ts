@@ -5,6 +5,7 @@ type TheBookTextProps = {
   size: number;
   leading: number;
   ink: string;
+  face?: { regular: string; bold: string; isJustified: boolean };
   onLink: (href: string) => void;
   onAnchors: (anchors: ReadonlyMap<string, number>) => void;
 };

@@ -26,6 +26,7 @@ type ButtonProps = {
   label?: string;
   dismissal?: Dismissal;
   isOnlyDrawn?: boolean;
+  holdsStill?: boolean;
 };
 
 export type { ButtonProps, Dismissal, PressedAt };

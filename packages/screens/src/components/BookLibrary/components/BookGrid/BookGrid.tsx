@@ -40,7 +40,7 @@ const BookGrid = ({ books, label, onOpen, size = 'medium' }: BookGridProps) => {
           <MediaCard
             key={book.id}
             title={book.title}
-            shape="book"
+            shape="poster"
             imageUrl={bookCoverUrl(book.id)}
             {...cardOrigin(book.libraryId)}
             subtitle={describeOnShelf(book)}

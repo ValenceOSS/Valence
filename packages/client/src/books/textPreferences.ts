@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { MOST_GAP } from '@ValenceClient/books/readerPreferences';
+import { READING_THEME_IDS } from '@ValenceCore/tokens/READING_THEME_IDS';
 
 const STORAGE_KEY = 'valence.reader.text';
 
@@ -20,6 +21,8 @@ const TextPreferencesSchema = z.object({
   isDouble: z.boolean().catch(true),
   gap: z.number().int().min(0).max(MOST_GAP).catch(24),
   isAnimated: z.boolean().catch(true),
+  isScrolling: z.boolean().catch(false),
+  theme: z.enum(READING_THEME_IDS).optional().catch(undefined),
 });
 
 type TextPreferences = z.infer<typeof TextPreferencesSchema>;
@@ -32,6 +35,7 @@ const DEFAULTS: TextPreferences = {
   isDouble: true,
   gap: 24,
   isAnimated: true,
+  isScrolling: false,
 };
 
 /**

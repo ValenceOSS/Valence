@@ -32,13 +32,24 @@ afterAll(async () => {
   await rm(where, { recursive: true, force: true });
 });
 
+/**
+ * Opens the test document as a book of drawn pages, which a document without words always is.
+ *
+ * @returns The book, or nothing where it opened as anything else.
+ */
+const openDrawn = async () => {
+  const opened = await openPortableDocument(path);
+
+  return opened?.layout === 'fixed' ? opened : null;
+};
+
 describe('openPortableDocument', () => {
   it('counts the pages a document holds', async () => {
-    expect((await openPortableDocument(path))?.pageCount).toBe(2);
+    expect((await openDrawn())?.pageCount).toBe(2);
   });
 
   it('draws a page, since a document holds instructions rather than pictures', async () => {
-    const page = await (await openPortableDocument(path))?.readPage(0);
+    const page = await (await openDrawn())?.readPage(0);
 
     expect(page?.contentType).toBe('image/png');
 
@@ -50,11 +61,11 @@ describe('openPortableDocument', () => {
   });
 
   it('says nothing of a page past the end', async () => {
-    expect(await (await openPortableDocument(path))?.readPage(9)).toBeNull();
+    expect(await (await openDrawn())?.readPage(9)).toBeNull();
   });
 
   it('says nothing of a page before the beginning', async () => {
-    expect(await (await openPortableDocument(path))?.readPage(-1)).toBeNull();
+    expect(await (await openDrawn())?.readPage(-1)).toBeNull();
   });
 
   it('will not open a file that is not a document', async () => {

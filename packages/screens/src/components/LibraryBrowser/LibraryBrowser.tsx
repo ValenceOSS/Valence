@@ -413,13 +413,12 @@ const LibraryBrowser = ({
               : '',
           )}
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <motion.div
               key={appliedSearch}
               variants={staggerVariants}
               initial="hidden"
               animate="shown"
-              exit="gone"
             >
               {rails.length === 0 ? (
                 <EmptyLibrary

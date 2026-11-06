@@ -70,7 +70,7 @@ const BookRow = ({
             <RevealItem key={`series-${series.name}`} index={at} className="shrink-0">
               <MediaCard
                 title={series.name}
-                shape="book"
+                shape="poster"
                 {...(first === undefined ? {} : { imageUrl: bookCoverUrl(first.id) })}
                 {...(first === undefined ? {} : cardOrigin(first.libraryId))}
                 subtitle={[sayCount('common.count.books', series.books.length), ...authors].join(
@@ -93,7 +93,7 @@ const BookRow = ({
           <RevealItem key={book.id} index={at} className="shrink-0">
             <MediaCard
               title={book.title}
-              shape="book"
+              shape="poster"
               imageUrl={bookCoverUrl(book.id)}
               {...cardOrigin(book.libraryId)}
               subtitle={where?.detail ?? describeOnShelf(book)}

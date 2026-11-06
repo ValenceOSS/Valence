@@ -337,13 +337,12 @@ const SearchArea = ({
           )}
         </header>
 
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={[kind, ...filters.selected].join(':')}
             variants={staggerVariants}
             initial="hidden"
             animate="shown"
-            exit="gone"
           >
             {libraries.isError || found.isError ? (
               <CouldNotRead

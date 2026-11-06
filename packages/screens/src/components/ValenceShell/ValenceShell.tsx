@@ -3,7 +3,7 @@ import { accountsHere } from '@ValenceClient/session/accountsHere';
 import { switchAccount } from '@ValenceClient/session/switchAccount';
 import { setAddingAnotherAccount } from '@ValenceClient/session/addingAnotherAccount';
 import { Outlet, useNavigate } from '@tanstack/react-router';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { switchToProfile } from '@ValenceClient/profiles/switchToProfile';
@@ -788,18 +788,15 @@ const ValenceShell = () => {
           }}
         />
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={place.section}
-            variants={groupVariants}
-            initial="hidden"
-            animate="shown"
-            exit="gone"
-            style={{ display: 'contents' }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={place.section}
+          variants={groupVariants}
+          initial="hidden"
+          animate="shown"
+          style={{ display: 'contents' }}
+        >
+          <Outlet />
+        </motion.div>
       </AppShell>
 
       <GetTheDesktopApp />

@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { build, defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import type { Plugin, ProxyOptions } from 'vite';
 
@@ -125,9 +126,28 @@ const toTheServer = (isSocket: boolean): ProxyOptions => ({
 const cert = certificate('local.pem');
 const key = certificate('local-key.pem');
 
+const compiler = reactCompilerPreset();
+
+const memoised = {
+  ...compiler,
+  rolldown: {
+    ...compiler.rolldown,
+    filter: {
+      ...compiler.rolldown?.filter,
+      id: { exclude: [/\/node_modules\//, /\/packages\/i18n\//, /\.test\.tsx?$/] },
+    },
+  },
+};
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [react(), tailwindcss(), pushWorker(), aliasesAsTheyChange()],
+  plugins: [
+    react(),
+    babel({ presets: [memoised] }),
+    tailwindcss(),
+    pushWorker(),
+    aliasesAsTheyChange(),
+  ],
   optimizeDeps: {
     exclude: ['jassub'],
     include: [

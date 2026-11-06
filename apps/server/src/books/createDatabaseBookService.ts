@@ -35,6 +35,7 @@ import {
 } from '@ValenceContracts/schemas/Book';
 import { createBookPageCache } from './createBookPageCache';
 import { drawBookCover } from './drawBookCover';
+import { isSameBook } from './isSameBook';
 import { readFolderArt } from './readFolderArt';
 import { openBookFile } from './openBookFile';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -60,6 +61,8 @@ import { booksVisibleToViewer } from '@ValenceServer/visibility/booksVisibleToVi
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const FIND_LIMIT = 500;
+
+const TriedSchema = z.array(z.string());
 
 const COVER_WIDTH = 640;
 
@@ -107,6 +110,7 @@ type BookService = BookStore &
     searchMatches: (query: string) => Promise<OpenLibraryBook[]>;
     correct: (bookId: string, openLibraryId: number) => Promise<boolean>;
     forgetCorrection: (bookId: string) => Promise<boolean>;
+    matchCovers: (libraryId?: string) => Promise<number>;
   };
 
 const NamesSchema = z.array(z.string()).nullable().catch(null);
@@ -171,6 +175,9 @@ const toBook = (
  * authors, year, description and cover are taken from there and kept, and a scan leaves them alone
  * until the correction is forgotten, when the file's own say comes back with the next scan.
  *
+ * Every other book is looked for on Open Library by its title and author once, and where it is
+ * surely the same book its cover there is kept and shown instead of the one in the file.
+ *
  * @param db - The database.
  * @param cacheDir - Where pages are kept once they have been read.
  * @param matching - How to search Open Library and read a work and its cover from it, for telling a
@@ -191,6 +198,31 @@ const createDatabaseBookService = (
    * @returns The file.
    */
   const chosenCoverOf = (bookId: string): string => join(chosenCovers, `${bookId}.webp`);
+
+  const foundCovers = join(cacheDir, 'book-covers-found');
+  const triedFile = join(foundCovers, 'tried.json');
+  const matchingNow = new Set<string>();
+
+  /**
+   * Where the cover Open Library has for a book is kept, once it has been matched there.
+   *
+   * @param bookId - The book.
+   * @returns The file.
+   */
+  const foundCoverOf = (bookId: string): string => join(foundCovers, `${bookId}.webp`);
+
+  /**
+   * The books already looked for on Open Library, so a book with no match is not asked about again
+   * every scan.
+   *
+   * @returns Their ids.
+   */
+  const readTried = async (): Promise<Set<string>> => {
+    const held = await readFile(triedFile, 'utf8').catch(() => null);
+    const read = TriedSchema.safeParse(held === null ? [] : JSON.parse(held));
+
+    return new Set(read.success ? read.data : []);
+  };
 
   const chapterFor = async (chapterId: string) => {
     const [found] = await db
@@ -601,7 +633,9 @@ const createDatabaseBookService = (
     },
 
     readCover: async (bookId) => {
-      const chosen = await readFile(chosenCoverOf(bookId)).catch(() => null);
+      const chosen =
+        (await readFile(chosenCoverOf(bookId)).catch(() => null)) ??
+        (await readFile(foundCoverOf(bookId)).catch(() => null));
 
       if (chosen !== null) {
         return { bytes: new Uint8Array(chosen), contentType: 'image/webp' };
@@ -636,11 +670,16 @@ const createDatabaseBookService = (
         return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
       }
 
-      if (first.format !== 'epub') {
+      if (first.format !== 'epub' && first.format !== 'pdf') {
         return pageOf(first.id, 0, COVER_WIDTH);
       }
 
       const opened = await openBookFile(first.path).catch(() => null);
+
+      if (opened?.layout === 'fixed') {
+        return pageOf(first.id, 0, COVER_WIDTH);
+      }
+
       const cover = opened?.layout === 'reflow' ? await opened.readCover() : null;
 
       return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
@@ -989,6 +1028,74 @@ const createDatabaseBookService = (
       await rm(chosenCoverOf(bookId), { force: true });
 
       return true;
+    },
+
+    matchCovers: async (libraryId) => {
+      const key = libraryId ?? '*';
+
+      if (matching === null || matchingNow.has(key)) {
+        return 0;
+      }
+
+      matchingNow.add(key);
+
+      try {
+        const tried = await readTried();
+        const rows = await db
+          .select({ id: book.id, title: book.title, authors: book.authors })
+          .from(book)
+          .where(
+            and(
+              libraryId === undefined ? undefined : eq(book.libraryId, libraryId),
+              isNull(book.externalId),
+              eq(book.isCorrected, false),
+            ),
+          );
+        let matched = 0;
+
+        await mkdir(foundCovers, { recursive: true });
+
+        for (const row of rows) {
+          if (tried.has(row.id)) {
+            continue;
+          }
+
+          tried.add(row.id);
+
+          const authors = namesIn(JsonValueSchema.catch(null).parse(row.authors ?? null)) ?? [];
+          const found = await matching
+            .search([row.title, authors[0] ?? ''].join(' ').trim())
+            .catch(() => []);
+          const pick = found.find((one) => isSameBook(one, row.title, authors));
+          const picture =
+            pick?.coverUrl === null || pick === undefined
+              ? null
+              : await matching.picture(pick.coverUrl.replace(/-M\.jpg$/u, '-L.jpg'));
+
+          if (pick !== undefined && picture !== null) {
+            const drawn = await drawBookCover(
+              { bytes: picture, contentType: 'image/jpeg' },
+              COVER_WIDTH,
+            );
+
+            await writeFile(foundCoverOf(row.id), drawn.bytes);
+            await db
+              .update(book)
+              .set({
+                externalId: `openlibrary:OL${pick.openLibraryId.toString()}W`,
+                posterUrl: pick.coverUrl,
+              })
+              .where(and(eq(book.id, row.id), eq(book.isCorrected, false)));
+            matched += 1;
+          }
+
+          await writeFile(triedFile, JSON.stringify([...tried]));
+        }
+
+        return matched;
+      } finally {
+        matchingNow.delete(key);
+      }
     },
   };
 

@@ -1,11 +1,25 @@
 import { readFile } from 'node:fs/promises';
 import { ColorSpace, Document, Matrix } from 'mupdf';
-import type { FixedBook } from './BookFile';
+import { say } from '@ValenceI18n/say';
+import { pdfPartsOf } from './pdfPartsOf';
+import { readPdfPageText } from './readPdfPageText';
+import { reflowPdfText } from './reflowPdfText';
+import type { FixedBook, ReflowBook } from './BookFile';
+
+type OutlineItem = NonNullable<ReturnType<Document['loadOutline']>>[number];
 
 const RENDER_AT = 2;
 
+const SAMPLED_PAGES = 8;
+
+const FEWEST_LETTERS_A_PAGE = 300;
+
 /**
- * Opens a PDF, and draws its pages rather than unpacking them.
+ * Opens a PDF. One whose pages carry their words — a book typeset to PDF rather than scanned — is
+ * read as text that reflows like an EPUB: its words rebuilt into paragraphs and headings, split into
+ * the chapters its own contents name, so it can be read at any size on any screen. One whose pages
+ * are pictures, as a scan or a comic is, has its pages drawn rather than unpacked.
+ *
  *
  * A PDF holds instructions, not pictures — text, vectors and fonts that mean nothing until somebody
  * decides how large to draw them. So a page here is rendered, at twice its nominal size so it holds
@@ -19,7 +33,7 @@ const RENDER_AT = 2;
  * @param path - The document.
  * @returns The pages and how to draw one, or nothing where this is not a document that opens.
  */
-const openPortableDocument = async (path: string): Promise<FixedBook | null> => {
+const openPortableDocument = async (path: string): Promise<FixedBook | ReflowBook | null> => {
   const data = await readFile(path).catch(() => null);
 
   if (data === null) {
@@ -63,10 +77,40 @@ const openPortableDocument = async (path: string): Promise<FixedBook | null> => 
   const title = stated(Document.META_INFO_TITLE);
   const author = stated(Document.META_INFO_AUTHOR);
 
-  return {
-    layout: 'fixed',
-    pageCount,
-    ...(title === null && author === null
+  const drawn = (at: number) => {
+    try {
+      const page = opened.loadPage(at);
+      const picture = page.toPixmap(
+        Matrix.scale(RENDER_AT, RENDER_AT),
+        ColorSpace.DeviceRGB,
+        false,
+      );
+
+      return Promise.resolve({ bytes: picture.asPNG(), contentType: 'image/png' });
+    } catch {
+      return Promise.resolve(null);
+    }
+  };
+
+  const lettersOn = (at: number): number => {
+    try {
+      return opened
+        .loadPage(at)
+        .toStructuredText('preserve-whitespace')
+        .asText()
+        .replace(/\s/gu, '').length;
+    } catch {
+      return 0;
+    }
+  };
+
+  const sampled = Array.from({ length: Math.min(SAMPLED_PAGES, pageCount) }, (_, at) =>
+    Math.floor(((at + 0.5) * pageCount) / Math.min(SAMPLED_PAGES, pageCount)),
+  );
+  const isText =
+    sampled.reduce((sum, at) => sum + lettersOn(at), 0) / sampled.length >= FEWEST_LETTERS_A_PAGE;
+  const about =
+    title === null && author === null
       ? {}
       : {
           about: {
@@ -75,26 +119,85 @@ const openPortableDocument = async (path: string): Promise<FixedBook | null> => 
             authors: author === null ? [] : [author],
             description: null,
           },
-        }),
-    readPage: (at) => {
-      if (at < 0 || at >= pageCount) {
-        return Promise.resolve(null);
-      }
+        };
+
+  if (isText) {
+    const chapters = ((): { title: string; page: number; depth: number }[] => {
+      const flatten = (
+        items: readonly OutlineItem[],
+        depth: number,
+      ): { title: string; page: number; depth: number }[] =>
+        items.flatMap((item) => [
+          ...(item.title === undefined || item.page === undefined
+            ? []
+            : [{ title: item.title.trim(), page: item.page, depth }]),
+          ...flatten(item.down ?? [], depth + 1),
+        ]);
 
       try {
-        const page = opened.loadPage(at);
-        const drawn = page.toPixmap(
-          Matrix.scale(RENDER_AT, RENDER_AT),
-          ColorSpace.DeviceRGB,
-          false,
-        );
-        const bytes = drawn.asPNG();
-
-        return Promise.resolve({ bytes, contentType: 'image/png' });
+        return flatten(opened.loadOutline() ?? [], 0);
       } catch {
-        return Promise.resolve(null);
+        return [];
       }
-    },
+    })();
+    const parts = pdfPartsOf(
+      pageCount,
+      chapters.filter((one) => one.depth === 0),
+      (from, to) =>
+        say('server.books.pagesFromTo', { from: (from + 1).toString(), to: to.toString() }),
+    );
+    const partOf = (page: number) =>
+      Math.max(
+        0,
+        parts.findIndex((part) => page >= part.from && page < part.to),
+      );
+
+    return {
+      layout: 'reflow',
+      ...about,
+      spine: parts.map((part, at) => ({
+        href: `part-${at.toString()}`,
+        title: part.title,
+        size: Math.max(1, part.to - part.from),
+      })),
+      readContents: () =>
+        Promise.resolve(
+          chapters.length === 0
+            ? parts.map((part, at) => ({ title: part.title, part: at, anchor: null, depth: 0 }))
+            : chapters.map((one) => ({
+                title: one.title,
+                part: partOf(one.page),
+                anchor: null,
+                depth: one.depth,
+              })),
+        ),
+      readDocument: (part) => {
+        const range = parts[part];
+
+        if (range === undefined) {
+          return Promise.resolve(null);
+        }
+
+        try {
+          const pages = Array.from({ length: range.to - range.from }, (_, at) =>
+            readPdfPageText(opened.loadPage(range.from + at)),
+          );
+
+          return Promise.resolve(reflowPdfText(pages));
+        } catch {
+          return Promise.resolve(null);
+        }
+      },
+      readResource: () => Promise.resolve(null),
+      readCover: () => drawn(0),
+    };
+  }
+
+  return {
+    layout: 'fixed',
+    pageCount,
+    ...about,
+    readPage: (at) => (at < 0 || at >= pageCount ? Promise.resolve(null) : drawn(at)),
   };
 };
 

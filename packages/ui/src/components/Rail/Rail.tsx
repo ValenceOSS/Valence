@@ -1,4 +1,5 @@
 import { Children, useState } from 'react';
+import type { UIEvent } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -43,6 +44,10 @@ const LANE = 'px-[var(--rail-lane)] scroll-px-[var(--rail-lane)]';
 
 const VIEWED = { once: true, amount: 0.15 } as const;
 
+const BATCH = 24;
+
+const LEAD_SCREENS = 2;
+
 /**
  * One titled row of a library, scrolling sideways rather than wrapping, which is how a shelf is
  * read: along, not down. The title can lead somewhere when there is more than the row shows, and
@@ -80,6 +85,9 @@ const VIEWED = { once: true, amount: 0.15 } as const;
  * view — a row further down the page lands as it is scrolled to, and never again after that. A card
  * that joins the row after it has landed, as a scan adds titles to a page somebody is looking at,
  * arrives by itself: the row holds on to having landed rather than telling only the cards it had then.
+ *
+ * A long row draws its first cards and the rest a batch at a time as it is turned towards them, so
+ * a shelf of hundreds costs what the few screens of it anybody looks at cost.
 
  */
 const Rail = ({
@@ -94,8 +102,21 @@ const Rail = ({
   look = 'title',
   className,
 }: RailProps) => {
+  const every = Children.toArray(children);
+  const [drawn, setDrawn] = useState(BATCH);
+  const shown = every.length > drawn ? every.slice(0, drawn) : every;
   const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
-    usePagedScroller<HTMLUListElement>(Children.count(children));
+    usePagedScroller<HTMLUListElement>(shown.length);
+  const onTrackScroll = (event: UIEvent<HTMLUListElement>) => {
+    measure();
+
+    const track = event.currentTarget;
+    const left = track.scrollWidth - track.scrollLeft - track.clientWidth;
+
+    if (drawn < every.length && left < track.clientWidth * LEAD_SCREENS) {
+      setDrawn((now) => now + BATCH);
+    }
+  };
 
   const hasPages = pages.count > 1;
   const prefersReducedMotion = useReducedMotionConfig();
@@ -183,7 +204,7 @@ const Rail = ({
       <div className="relative">
         <motion.ul
           ref={trackRef}
-          onScroll={measure}
+          onScroll={onTrackScroll}
           variants={groupVariants}
           initial="hidden"
           animate={hasArrived ? 'shown' : 'hidden'}
@@ -196,7 +217,7 @@ const Rail = ({
             sizesCards ? cn(FITTED, PER[cards], hasArrows ? LANE : '') : 'scroll-p-1 px-1',
           )}
         >
-          <snapRowContext.Provider value={true}>{children}</snapRowContext.Provider>
+          <snapRowContext.Provider value={true}>{shown}</snapRowContext.Provider>
         </motion.ul>
       </div>
     </section>
