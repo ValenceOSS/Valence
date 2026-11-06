@@ -497,7 +497,7 @@ body {
 
 :root[data-valence-platform='darwin'] {
   --valence-window-bar-height: 2.375rem;
-  --valence-window-bar-lead: 4.875rem;
+  --valence-window-bar-lead: 5.5rem;
 }
 
 [data-over-dialogs] {
