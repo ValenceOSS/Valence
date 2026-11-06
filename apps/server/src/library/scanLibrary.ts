@@ -1,3 +1,10 @@
+import { withExtraChoices } from './withExtraChoices';
+import type { ExtraChoice } from './withExtraChoices';
+import { orderOf } from './orderOf';
+import type { EpisodePin } from './EpisodePin.types';
+import type { SeasonSourceRow } from './SeasonSourceRow.types';
+import { borrowedSeasonsIn } from './borrowedSeasonsIn';
+import { inOriginalTitle } from './inOriginalTitle';
 import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { joinedProbe } from '@ValenceServer/library/joinedProbe';
 import { discFolderOf } from '@ValenceServer/library/naming/discFolderOf';
@@ -79,10 +86,12 @@ type MediaFileSystem = {
   readText?: (path: string) => Promise<string | null>;
 };
 
+const FILE_NAMES_ONLY = createFilenameMetadataProvider();
+
 type MediaOverride = {
   path: string;
   externalId: string;
-  externalKind: 'tv' | 'movie';
+  externalKind: 'tv' | 'movie' | 'none';
 };
 
 type ScannedItem = {
@@ -108,9 +117,18 @@ type MediaStore = {
   markFound?: (libraryId: string, paths: string[]) => Promise<void>;
   listMissingSince?: (libraryId: string, before: Date) => Promise<string[]>;
   listOverrides?: (libraryId: string) => Promise<MediaOverride[]>;
+  readProbe?: (
+    libraryId: string,
+    path: string,
+  ) => Promise<{ probe: MediaProbe; probeVersion: number | null } | null>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   linkSameFilms?: (libraryId: string) => Promise<void>;
+  applyVersionChoices?: (libraryId: string) => Promise<void>;
+  listEpisodePins?: (libraryId: string) => Promise<EpisodePin[]>;
+  listExtraChoices?: (libraryId: string) => Promise<ExtraChoice[]>;
+  listEpisodeOrders?: (libraryId: string) => Promise<ReadonlyMap<string, string>>;
+  listSeasonSources?: (libraryId: string) => Promise<SeasonSourceRow[]>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
@@ -126,7 +144,11 @@ type ScanLibraryOptions = {
   transcoder: Transcoder;
   providers?: MetadataProvider[];
   force?: boolean;
+  keepsMatches?: boolean;
+  reusesProbes?: boolean;
   isPartial?: boolean;
+  metadataLanguage?: string | null;
+  usesOriginalTitle?: boolean;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: ScanPhase, processed: number, total: number, item?: string) => void;
@@ -453,7 +475,11 @@ const scanLibrary = async ({
   transcoder,
   providers = [createFilenameMetadataProvider()],
   force = false,
+  keepsMatches = false,
+  reusesProbes = false,
   isPartial: askedPartial = false,
+  metadataLanguage = null,
+  usesOriginalTitle = false,
   atOnce = 1,
   onProblem,
   onProgress,
@@ -476,6 +502,10 @@ const scanLibrary = async ({
   const listed = onDisk.filter((file) => !heldParts.has(file.path));
   const probeVersion = await readProbeVersion(transcoder);
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
+  const pins = new Map(
+    ((await store.listEpisodePins?.(libraryId)) ?? []).map((pin) => [pin.path, pin]),
+  );
+  const episodeOrders = (await store.listEpisodeOrders?.(libraryId)) ?? new Map<string, string>();
 
   const scope = isPartial && kind !== 'movies' ? seriesFolderUnder(root, within) : null;
   const isInScope = (path: string): boolean => scope === null || path.startsWith(`${scope}/`);
@@ -546,8 +576,10 @@ const scanLibrary = async ({
     joined.set(first, read);
   }
 
-  const placed =
-    unjoined.size === 0 ? firstPlaced : placeInLibrary(kind, placeable, root, unjoined);
+  const placed = withExtraChoices(
+    unjoined.size === 0 ? firstPlaced : placeInLibrary(kind, placeable, root, unjoined),
+    (await store.listExtraChoices?.(libraryId)) ?? [],
+  );
   const laterParts = new Set(
     [...placed.values()].flatMap((placement) => placement.parts?.slice(1) ?? []),
   );
@@ -645,6 +677,8 @@ const scanLibrary = async ({
 
   await store.regroupSeries?.(libraryId, foldersToRegroup(seriesFolders, found, isPartial));
 
+  const seasonSources = (await store.listSeasonSources?.(libraryId)) ?? [];
+
   let added = 0;
   let updated = 0;
   let failed = 0;
@@ -673,7 +707,15 @@ const scanLibrary = async ({
         return false;
       }
 
-      const probe = read?.probe ?? (await transcoder.probe(file.path));
+      const kept =
+        reusesProbes && read === null && probeVersion !== null
+          ? await store.readProbe?.(libraryId, file.path)
+          : null;
+      const probe =
+        read?.probe ??
+        (kept !== null && kept !== undefined && kept.probeVersion === probeVersion
+          ? kept.probe
+          : await transcoder.probe(file.path));
 
       if (probe.video === null) {
         failed += 1;
@@ -683,7 +725,17 @@ const scanLibrary = async ({
       }
 
       const placement = placed.get(file.path);
-      const numbered = placement?.episode ?? NOT_AN_EPISODE;
+      const pin = pins.get(file.path);
+      const named = placement?.episode ?? NOT_AN_EPISODE;
+      const numbered =
+        pin === undefined || named.seriesFolder === null
+          ? named
+          : {
+              ...named,
+              seasonNumber: pin.seasonNumber,
+              episodeNumber: pin.episodeNumber,
+              episodeNumberEnd: pin.episodeNumberEnd,
+            };
       const episode = {
         ...numbered,
         seriesReach:
@@ -712,22 +764,43 @@ const scanLibrary = async ({
           : (catalogueBySeries.get(episode.seriesFolder) ??
             storedByPath.get(file.path)?.externalId ??
             null);
-      const knownExternalId = corrected?.externalId ?? null;
+      const isLeftUnmatched = corrected?.externalKind === 'none';
+      const stillMatched =
+        keepsMatches && corrected === null
+          ? ((episode.seriesFolder === null ? null : catalogueBySeries.get(episode.seriesFolder)) ??
+            storedByPath.get(file.path)?.externalId ??
+            null)
+          : null;
+      const knownExternalId = isLeftUnmatched ? null : (corrected?.externalId ?? stillMatched);
+      const knownExternalKind =
+        corrected !== null && corrected.externalKind !== 'none'
+          ? corrected.externalKind
+          : stillMatched === null
+            ? null
+            : episode.seriesFolder === null
+              ? 'movie'
+              : 'tv';
+      const asked = isLeftUnmatched
+        ? providers.filter((provider) => provider.name === FILE_NAMES_ONLY.name)
+        : providers;
 
-      const metadata =
+      const described =
         extra === null
           ? await resolveMetadata(
-              providers,
+              asked.length === 0 ? [FILE_NAMES_ONLY] : asked,
               {
                 path: file.path,
                 probe,
                 episode,
                 knownExternalId,
-                ...(corrected === null ? {} : { knownExternalKind: corrected.externalKind }),
+                ...(knownExternalKind === null ? {} : { knownExternalKind }),
                 title: placement?.title ?? nameOfFile(file.path),
                 year: placement?.year ?? null,
                 ids,
                 rememberedExternalId: remembered,
+                ...(metadataLanguage === null ? {} : { language: metadataLanguage }),
+                ...orderOf(episodeOrders, knownExternalId ?? remembered),
+                ...borrowedSeasonsIn(seasonSources, episode.seriesFolder),
               },
               (name, reason) =>
                 onProblem?.(
@@ -739,6 +812,7 @@ const scanLibrary = async ({
                 ),
             )
           : { title: placement?.title ?? nameOfFile(file.path), year: placement?.year ?? null };
+      const metadata = usesOriginalTitle ? inOriginalTitle(described) : described;
 
       if (metadata === null) {
         failed += 1;
@@ -752,7 +826,12 @@ const scanLibrary = async ({
 
       const heldBefore = knownExternalId ?? storedByPath.get(file.path)?.externalId ?? null;
 
-      if (heldBefore !== null && (metadata.externalId ?? null) === null) {
+      if (
+        extra === null &&
+        !isLeftUnmatched &&
+        heldBefore !== null &&
+        (metadata.externalId ?? null) === null
+      ) {
         failed += 1;
         onProblem?.(
           file.path,
@@ -923,6 +1002,7 @@ const scanLibrary = async ({
   }
 
   await store.linkSameFilms?.(libraryId);
+  await store.applyVersionChoices?.(libraryId);
 
   await store.forgetEmptySeries?.(libraryId);
 

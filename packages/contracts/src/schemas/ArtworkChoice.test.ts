@@ -34,8 +34,9 @@ describe('ArtworkChoicesSchema', () => {
 });
 
 describe('ChooseArtworkSchema', () => {
-  it('asks for an address', () => {
-    expect(ChooseArtworkSchema.safeParse({ url: 'not an address' }).success).toBe(false);
+  it('asks for an address, the catalogue’s or one of a picture kept on the server', () => {
+    expect(ChooseArtworkSchema.safeParse({ url: '' }).success).toBe(false);
     expect(ChooseArtworkSchema.safeParse({ url: option.url }).success).toBe(true);
+    expect(ChooseArtworkSchema.safeParse({ url: 'valence-disk:L2EuanBn' }).success).toBe(true);
   });
 });

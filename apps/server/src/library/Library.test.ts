@@ -1114,7 +1114,7 @@ describe('choosing the artwork a title is drawn with', () => {
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/artwork/poster`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url: 'not an address' }),
+      body: JSON.stringify({ url: '' }),
     });
 
     expect(response.status).toBe(400);

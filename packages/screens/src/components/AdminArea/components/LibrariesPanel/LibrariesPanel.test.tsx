@@ -131,14 +131,14 @@ describe('LibrariesPanel', () => {
     });
   });
 
-  it('opens a library’s folder in Files when its path is pressed', async () => {
+  it('opens a library’s folder in Media’s folders when its path is pressed', async () => {
     const onOpenFolder = vi.fn();
     const user = userEvent.setup();
 
     render(<LibrariesPanel {...props} onOpenFolder={onOpenFolder} libraries={[library()]} />);
 
     await user.click(
-      await screen.findByRole('button', { name: `Open ${library().path} in Files` }),
+      await screen.findByRole('button', { name: `Show ${library().path} in Folders` }),
     );
 
     expect(onOpenFolder).toHaveBeenCalledWith(library().path);

@@ -11,6 +11,7 @@ const ArtworkOptionSchema = z.object({
   width: z.number().int().nonnegative(),
   height: z.number().int().nonnegative(),
   votes: z.number().int().nonnegative(),
+  source: z.enum(['catalogue', 'fanart']).optional(),
 });
 
 const ArtworkChoicesSchema = z.object({
@@ -20,6 +21,7 @@ const ArtworkChoicesSchema = z.object({
     backdrop: z.array(ArtworkOptionSchema),
     logo: z.array(ArtworkOptionSchema),
   }),
+  onDisk: z.array(z.object({ url: z.string(), name: z.string() })).default([]),
   chosen: z.object({
     poster: z.string().nullable(),
     backdrop: z.string().nullable(),
@@ -34,7 +36,7 @@ const ArtworkChoicesSchema = z.object({
     .default({ poster: null, backdrop: null, logo: null }),
 });
 
-const ChooseArtworkSchema = z.object({ url: z.string().url() });
+const ChooseArtworkSchema = z.object({ url: z.string().min(1).max(2048) });
 
 type ArtworkKind = z.infer<typeof ArtworkKindSchema>;
 

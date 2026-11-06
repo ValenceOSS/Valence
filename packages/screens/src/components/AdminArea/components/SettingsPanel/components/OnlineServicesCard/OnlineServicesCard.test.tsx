@@ -24,7 +24,7 @@ describe('OnlineServicesCard', () => {
     renderWithAnswers(<OnlineServicesCard overview={anAdminOverview({ hasCatalogueKey: true })} />);
 
     expect(screen.getByText('Key set')).toBeInTheDocument();
-    expect(screen.getAllByText('No key')).toHaveLength(2);
+    expect(screen.getAllByText('No key')).toHaveLength(3);
 
     await user.click(screen.getByRole('switch', { name: 'Trailers' }));
 

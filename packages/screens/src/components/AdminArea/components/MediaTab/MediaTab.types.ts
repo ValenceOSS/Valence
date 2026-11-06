@@ -1,3 +1,8 @@
+import type {
+  ListPlace,
+  MediaView,
+} from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaPanel.types';
+import type { TitlePlace } from '@ValenceScreens/components/AdminArea/components/MediaPanel/TitlePlace.types';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
@@ -7,7 +12,17 @@ import type { ArtworkSubject } from '@ValenceScreens/components/AdminArea/compon
 type MediaTabProps = {
   libraries: readonly Library[];
   openedTitle?: string | null;
-  onOpenTitle?: (id: string | null) => void;
+  onOpenTitle?: (id: string | null, place?: TitlePlace) => void;
+  titlePlace?: TitlePlace;
+  onTitlePlace?: (place: TitlePlace) => void;
+  view?: MediaView;
+  onView?: (view: MediaView) => void;
+  listPlace?: ListPlace;
+  onListPlace?: (place: ListPlace) => void;
+  folder?: string | null;
+  onFolder?: (path: string | null) => void;
+  onFilesChanged?: () => void;
+  onScan?: (libraryId: string) => void;
   mayDelete: boolean;
   onOpenFolder?: (path: string) => void;
   onCorrect: (media: MediaSummary) => void;

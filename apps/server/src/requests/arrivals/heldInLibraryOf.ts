@@ -1,8 +1,7 @@
+import { folderOfSeriesKey } from '@ValenceServer/library/folderOfSeriesKey';
 import { dirname } from 'node:path';
 import type { HeldEpisode, HeldInLibrary } from '@ValenceContracts/schemas/MediaRequest';
 import type { SeriesFile } from '@ValenceServer/requests/catalogue/SeriesFile';
-
-const FOLDER_KEY = 'folder:';
 
 /**
  * Every episode the files hold, a double episode counting as each of the episodes it spans, each
@@ -71,8 +70,7 @@ const heldInLibraryOf = (
     mostCommon(here.map((file) => file.seriesId)) ?? mostCommon(files.map((file) => file.seriesId));
   const kept = here.filter((file) => file.seriesId === seriesId);
   const key = kept[0]?.seriesKey ?? '';
-  const folder =
-    keepsShowsTogether && key.startsWith(FOLDER_KEY) ? key.slice(FOLDER_KEY.length) : null;
+  const folder = keepsShowsTogether ? folderOfSeriesKey(key) : null;
   const seasons = [...new Set(kept.map((file) => file.season))].toSorted(
     (left, right) => left - right,
   );

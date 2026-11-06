@@ -3,6 +3,7 @@ type SavedSettingOptions = {
   failed: string;
   delayMs?: number;
   onSaved?: () => void;
+  tells?: (isSaved: boolean) => void;
 };
 
 export type { SavedSettingOptions };

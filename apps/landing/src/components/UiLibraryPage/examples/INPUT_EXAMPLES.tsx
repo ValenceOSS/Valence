@@ -20,6 +20,7 @@ import { Slider } from '@ValenceUI/Slider';
 import { StarRating } from '@ValenceUI/StarRating';
 import { SwatchRow } from '@ValenceUI/SwatchRow';
 import { Switch } from '@ValenceUI/Switch';
+import { TagField } from '@ValenceUI/TagField';
 import { TextField } from '@ValenceUI/TextField';
 import { ROLE_COLOURS } from '@ValenceUI/tokens/roleColours';
 import { AppliedFiltersDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/AppliedFiltersDemo';
@@ -114,6 +115,22 @@ const INPUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
       title: 'Disabled',
       render: () => (
         <TextField label="Address" value="https://valence.local" disabled onValueChange={nothing} />
+      ),
+    },
+  ],
+  TagField: [
+    {
+      title: 'Words, with suggestions from what is in use',
+      render: () => (
+        <TagField
+          label="Genres"
+          values={['Drama', 'Science Fiction']}
+          suggestions={[
+            { value: 'Thriller', count: 40 },
+            { value: 'Comedy', count: 56 },
+          ]}
+          onValuesChange={nothing}
+        />
       ),
     },
   ],

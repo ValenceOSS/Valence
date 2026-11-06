@@ -1,4 +1,5 @@
 import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
+import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
@@ -77,6 +78,9 @@ type UpdateLibraryInput = {
   requestProfileId?: string | null;
   requestPath?: string | null;
   keepsShowsTogether?: boolean;
+  metadataLanguage?: string | null;
+  usesOriginalTitle?: boolean;
+  writesNfo?: boolean;
   higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };
@@ -345,18 +349,24 @@ const AnswerSchema = z.union([CorrectionSchema, ProblemSchema]);
  * @param mediaId - The item being corrected.
  * @param reference - What was pasted.
  * @param kind - Whether it is a film or a programme, needed only for a bare number.
+ * @param keep - The fields to keep as they stand rather than take from the new entry.
  * @returns How many files it reached, or why it was refused.
  */
 const correctMatch = async (
   mediaId: string,
   reference: string,
   kind?: 'tv' | 'movie',
+  keep?: readonly TitleField[],
 ): Promise<Correction | { problem: string }> => {
   const response = await fetch(`/api/media/${mediaId}/match`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     credentials: 'same-origin',
-    body: JSON.stringify({ reference, ...(kind === undefined ? {} : { kind }) }),
+    body: JSON.stringify({
+      reference,
+      ...(kind === undefined ? {} : { kind }),
+      ...(keep === undefined ? {} : { keep }),
+    }),
   }).catch(() => null);
 
   if (response === null) {

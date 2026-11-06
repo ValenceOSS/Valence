@@ -562,4 +562,60 @@ describe('DataTable', () => {
     expect(scroller).not.toHaveAttribute('data-more-before');
     expect(scroller).not.toHaveAttribute('data-more-after');
   });
+
+  it('asks for more rows once scrolled to its end, showing every row it holds and the total', () => {
+    const onReachEnd = vi.fn();
+
+    render(
+      <DataTable
+        label="Libraries"
+        columns={COLUMNS}
+        rows={MANY}
+        totalRows={40}
+        hasMoreRows
+        onReachEnd={onReachEnd}
+      />,
+    );
+
+    expect(screen.getAllByRole('row')).toHaveLength(MANY.length + 1);
+    expect(screen.getByText('Showing 12 of 40 · scroll to load more')).toBeInTheDocument();
+    expect(onReachEnd).toHaveBeenCalled();
+  });
+
+  it('asks for nothing more once every row is held', () => {
+    const onReachEnd = vi.fn();
+
+    render(
+      <DataTable
+        label="Libraries"
+        columns={COLUMNS}
+        rows={ROWS}
+        totalRows={ROWS.length}
+        onReachEnd={onReachEnd}
+      />,
+    );
+
+    expect(onReachEnd).not.toHaveBeenCalled();
+  });
+
+  it('opens a row before the rows beneath it are known, where told it can', () => {
+    const { container } = render(
+      <DataTable
+        label="Libraries"
+        columns={[
+          ...COLUMNS,
+          {
+            id: 'open',
+            header: '',
+            cell: ({ row }) => (row.getCanExpand() ? 'opens' : 'shut'),
+          },
+        ]}
+        rows={ROWS}
+        canOpen={(row) => row.name === ROWS[0]?.name}
+      />,
+    );
+
+    expect(container.textContent).toContain('opens');
+    expect(container.textContent).toContain('shut');
+  });
 });

@@ -1,3 +1,10 @@
+import type { CataloguePerson } from '@ValenceContracts/schemas/CataloguePeople';
+import type { Candidates } from '@ValenceServer/metadata/findCandidates';
+import type { CatalogueSearching, CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
+import type { TitleListService } from '@ValenceServer/metadata/createTitleListService';
+import type { BulkTitleEditor } from '@ValenceServer/metadata/createBulkTitleEditor';
+import type { OrphanedEditsService } from '@ValenceServer/metadata/createOrphanedEdits';
+import type { TitleMetadataService } from '@ValenceServer/metadata/createTitleMetadataService';
 import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
 import type { DeviceNotes } from '@ValenceServer/devices/DeviceNotes';
 import type { AskingDevices } from '@ValenceServer/devices/createAskingDevices';
@@ -41,7 +48,6 @@ import type {
   TranscoderStreamedFile,
 } from '@ValenceServer/transcoder/TranscoderClient';
 import type { RunningJob } from '@ValenceServer/jobs/JobQueue';
-import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import type { ValenceAuth } from '@ValenceServer/auth/Auth';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 import type { LibraryService } from '@ValenceServer/library/LibraryService';
@@ -226,6 +232,12 @@ type CreateAppOptions = {
   unlockSecret?: string;
   buckets?: BucketMounts;
   books?: BookService;
+  titleMetadata?: TitleMetadataService;
+  titleList?: TitleListService;
+  bulkTitles?: BulkTitleEditor;
+  orphanedEdits?: OrphanedEditsService;
+  findCandidates?: (asked: CatalogueSearching) => Promise<Candidates>;
+  findCataloguePeople?: (name: string) => Promise<CataloguePerson[]>;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
   collections?: CollectionService;

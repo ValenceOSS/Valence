@@ -64,6 +64,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     hasCatalogueKey: true,
     hasAudioDbKey: false,
     hasOmdbKey: false,
+    hasFanartKey: false,
     cookieSecure: true,
     hardwareAccel: '',
     spreadAcrossDevices: false,

@@ -1,25 +1,9 @@
-import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { readJson } from '@ValenceCore/functions/readJson';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 const MARKUP = /<[^>]+>/g;
 
 const SERVER_DATA = /<script[^>]*id="serialized-server-data"[^>]*>([\s\S]*?)<\/script>/;
-
-/**
- * Reads JSON without throwing, as nothing where it is not JSON.
- *
- * @param text - What might be JSON.
- * @returns What it says, or nothing.
- */
-const readJson = (text: string): JsonValue | null => {
-  try {
-    const read = JsonValueSchema.safeParse(JSON.parse(text));
-
-    return read.success ? read.data : null;
-  } catch {
-    return null;
-  }
-};
 
 /**
  * Looks through what a page says for the notes its "more" sheet opens on.

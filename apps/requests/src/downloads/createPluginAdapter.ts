@@ -27,7 +27,7 @@ import type { DownloadClientRecord } from '@ValenceRequests/downloads/DownloadCl
 import type { LinkFetcher, LinkedFiles } from '@ValenceRequests/downloads/createLinkFetcher';
 import { readTorrentHash } from '@ValenceRequests/downloads/readTorrentHash';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
-import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { PluginCallChannel } from '@ValenceRequests/pluginCalls/createPluginCallChannel';
 
 type SentToPlugin = { remoteId: string; title: string; libraryKind: LibraryKind };

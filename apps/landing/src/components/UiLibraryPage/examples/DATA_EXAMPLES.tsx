@@ -1,3 +1,5 @@
+import { SelectionBar } from '@ValenceUI/SelectionBar';
+import { Button } from '@ValenceUI/Button';
 import { BarList } from '@ValenceUI/BarList';
 import { DataTable } from '@ValenceUI/DataTable';
 import { ShareChart } from '@ValenceUI/ShareChart';
@@ -135,6 +137,26 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             hasMoreRows
           />
         </div>
+      ),
+    },
+  ],
+  SelectionBar: [
+    {
+      title: 'What can be done to the rows ticked',
+      render: () => (
+        <SelectionBar
+          count={3}
+          total={1240}
+          onSelectAll={() => undefined}
+          onClear={() => undefined}
+        >
+          <Button variant="secondary" size="xs">
+            Edit
+          </Button>
+          <Button variant="secondary" size="xs">
+            Refresh
+          </Button>
+        </SelectionBar>
       ),
     },
   ],

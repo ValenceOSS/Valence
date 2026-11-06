@@ -120,6 +120,11 @@ const HEIGHT_CLASSES = {
  *   the table being drawn again elsewhere, and can be carried in an address.
  * @param onPageChange - Told each time the page changes, where the caller keeps it.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
+ * @param canOpen - Whether a row opens onto rows beneath it before they are known, for rows the
+ *   caller reads only once they are opened.
+ * @param onReachEnd - Told the bottom was reached with every row given already shown, where the
+ *   caller reads more from a server as the table is scrolled: every row given is shown, `totalRows`
+ *   says how many there are in all, and `hasMoreRows` whether any are left to read.
  * @param height - Whether the table caps at a modest height, reaches for the bottom of the
  *   viewport, for a page that is otherwise this table alone, takes whatever room its parent gives
  *   it, as in a dialog whose table is the part that scrolls, or stands exactly as tall as the room
@@ -149,6 +154,8 @@ const DataTable = <Row extends RowData>({
   page: givenPage,
   onPageChange,
   growsOnScroll = false,
+  onReachEnd,
+  canOpen,
   height = 'compact',
   sorting: givenSorting,
   onSortingChange,
@@ -226,14 +233,32 @@ const DataTable = <Row extends RowData>({
   const holding = Math.min(shown, Math.max(rows.length, pageSize));
 
   const reachEnd = (box: HTMLElement) => {
+    const isNearTheEnd = box.scrollHeight - box.scrollTop - box.clientHeight < NEAR_THE_END;
+
+    if (onReachEnd !== undefined) {
+      if (isNearTheEnd && hasMoreRows) {
+        onReachEnd();
+      }
+
+      return;
+    }
+
     if (!growsOnScroll || holding >= rows.length) {
       return;
     }
 
-    if (box.scrollHeight - box.scrollTop - box.clientHeight < NEAR_THE_END) {
+    if (isNearTheEnd) {
       setShown(holding + pageSize);
     }
   };
+
+  useEffect(() => {
+    const box = containerRef.current;
+
+    if (onReachEnd !== undefined && box !== null && hasMoreRows) {
+      reachEnd(box);
+    }
+  });
 
   const heldSorting: SortingState =
     onSortingChange === undefined
@@ -251,11 +276,14 @@ const DataTable = <Row extends RowData>({
     data: orderedRows,
     enableSorting: !isReordering,
     columns,
-    manualPagination: totalRows !== undefined,
+    manualPagination: totalRows !== undefined || onReachEnd !== undefined,
     manualSorting: onSortingChange !== undefined,
     manualFiltering: onFiltersChange !== undefined,
     ...(getRowId === undefined ? {} : { getRowId }),
     ...(getSubRows === undefined ? {} : { getSubRows }),
+    ...(canOpen === undefined
+      ? {}
+      : { getRowCanExpand: (row: { original: Row }) => canOpen(row.original) }),
     paginateExpandedRows: false,
     autoResetExpanded: false,
     onExpandedChange: setExpanded,
@@ -263,9 +291,12 @@ const DataTable = <Row extends RowData>({
       sorting: heldSorting,
       columnFilters: heldFilters,
       expanded,
-      pagination: growsOnScroll
-        ? { pageIndex: 0, pageSize: holding }
-        : { pageIndex: page, pageSize },
+      pagination:
+        onReachEnd !== undefined
+          ? { pageIndex: 0, pageSize: Math.max(rows.length, 1) }
+          : growsOnScroll
+            ? { pageIndex: 0, pageSize: holding }
+            : { pageIndex: page, pageSize },
     },
     autoResetPageIndex: false,
     onSortingChange: (next) => {
@@ -581,7 +612,21 @@ const DataTable = <Row extends RowData>({
         </table>
       </div>
 
-      {growsOnScroll ? (
+      {onReachEnd !== undefined ? (
+        totalRows === undefined || rows.length >= totalRows ? null : (
+          <p
+            className={cn(
+              'border-t border-[var(--surface-line)] px-5 py-2.5 font-body text-xs text-text-muted',
+              BAND,
+            )}
+          >
+            {say('ui.dataTable.showingHoldingOfLengthScrollFor', {
+              holding: rows.length.toLocaleString(),
+              length: totalRows.toLocaleString(),
+            })}
+          </p>
+        )
+      ) : growsOnScroll ? (
         holding >= rows.length ? null : (
           <p
             className={cn(

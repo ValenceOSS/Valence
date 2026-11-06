@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { TitleRow } from '@ValenceContracts/schemas/TitleList';
 
 type MediaTitle = {
   id: string;
@@ -15,6 +16,7 @@ type MediaTitle = {
   addedAt: string;
   posterFrom: string | null;
   isMatched: boolean;
+  row?: TitleRow;
 };
 
 export type { MediaTitle };

@@ -35,7 +35,7 @@ describe('fetchArtworkChoices', () => {
   it('reads what the catalogue has for the title', async () => {
     answering(200, CHOICES);
 
-    expect(await fetchArtworkChoices('film-1')).toEqual(CHOICES);
+    expect(await fetchArtworkChoices('film-1')).toEqual({ ...CHOICES, onDisk: [] });
     expect(fetch).toHaveBeenCalledWith('/api/media/film-1/artwork', { credentials: 'same-origin' });
   });
 

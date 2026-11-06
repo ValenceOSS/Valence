@@ -1,3 +1,6 @@
+import { ExtraKindSchema } from '@ValenceContracts/schemas/Library';
+import { applyWordRules } from './applyWordRules';
+import { createVersionChoices } from './createVersionChoices';
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
@@ -5,6 +8,10 @@ import { z } from 'zod';
 import { and, asc, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
+  episodePin,
+  seasonSource,
+  wordRule,
+  extraChoice,
   mediaItem,
   mediaItemJob,
   mediaLeftOut,
@@ -28,9 +35,11 @@ import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
+import { folderOfSeriesKey } from './folderOfSeriesKey';
 import { keptCopiesOf } from './keptCopiesOf';
 import { carryOverViewing } from './carryOverViewing';
 import { successorsOf } from './successorsOf';
+import { carryOverAddedAt } from './carryOverAddedAt';
 import type { MediaStore, StoredPart } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -38,6 +47,12 @@ import { incoming } from '@ValenceDatabase/incoming';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { isNotDistinctFrom } from '@ValenceDatabase/isNotDistinctFrom';
 import { upsert } from '@ValenceDatabase/upsert';
+import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
+import { layTitleEdits } from '@ValenceServer/metadata/layTitleEdits';
+import { addedAtOfDay } from '@ValenceServer/metadata/addedAtOfDay';
+import { movesBetween } from '@ValenceServer/metadata/movesBetween';
+import { MediaProbeSchema } from '@ValenceServer/transcoder/TranscoderClient';
+import { subjectKeysOf } from '@ValenceServer/metadata/subjectKeysOf';
 
 const LEFT_OUT_COLUMNS = {
   id: mediaLeftOut.id,
@@ -114,6 +129,8 @@ const groupSeriesByFolder = (
 
   return byFolder;
 };
+
+const RULES_LAST_MS = 30_000;
 
 /**
  * Files a programme under its key in a library, or finds the one already there, and says which it
@@ -243,7 +260,7 @@ const createMediaStore = (
     libraryId: string;
     path: string;
     externalId: string;
-    externalKind: 'tv' | 'movie';
+    externalKind: 'tv' | 'movie' | 'none';
     updatedBy: string | null;
   }) => Promise<void>;
   removeOverrides: (libraryId: string, paths: string[]) => Promise<number>;
@@ -265,666 +282,966 @@ const createMediaStore = (
   }) => Promise<void>;
   readPreviewMoment: (libraryId: string, path: string) => Promise<PreviewMoment | null>;
   removePreviewMoment: (libraryId: string, path: string) => Promise<boolean>;
-} => ({
-  listStored: async (libraryId) => {
-    const rows = await db
-      .select({
-        path: mediaItem.path,
-        sizeBytes: mediaItem.sizeBytes,
-        modifiedAtMs: mediaItem.modifiedAtMs,
-        externalId: mediaItem.externalId,
-        videoBitDepth: mediaItem.videoBitDepth,
-        videoCodecTag: mediaItem.videoCodecTag,
-        videoRangeBase: mediaItem.videoRangeBase,
-        canCopySegments: mediaItem.canCopySegments,
-        probeVersion: mediaItem.probeVersion,
-        videoLevel: mediaItem.videoLevel,
-        videoFrameRate: mediaItem.videoFrameRate,
-        videoIsInterlaced: mediaItem.videoIsInterlaced,
-        videoRefFrames: mediaItem.videoRefFrames,
-        videoPixelAspect: mediaItem.videoPixelAspect,
-        videoRotationDegrees: mediaItem.videoRotationDegrees,
-        missingSince: mediaItem.missingSince,
-      })
-      .from(mediaItem)
-      .where(eq(mediaItem.libraryId, libraryId));
-    const parts = await db
-      .select({
-        of: mediaItem.path,
-        path: mediaPart.path,
-        sizeBytes: mediaPart.sizeBytes,
-        modifiedAtMs: mediaPart.modifiedAtMs,
-      })
-      .from(mediaPart)
-      .innerJoin(mediaItem, eq(mediaItem.id, mediaPart.mediaItemId))
-      .where(eq(mediaItem.libraryId, libraryId))
-      .orderBy(asc(mediaPart.mediaItemId), asc(mediaPart.position));
-    const partsOf = new Map<string, StoredPart[]>();
+} => {
+  const versionChoices = createVersionChoices(db);
+  const rulesHeld = new Map<string, { at: number; rules: { find: string; replace: string }[] }>();
 
-    for (const { of, ...part } of parts) {
-      addToGroup(partsOf, of, part);
+  /**
+   * Reads a library's rules for its genres, held a little while so a scan reads them once.
+   *
+   * @param libraryId - The library.
+   * @returns Its rules.
+   */
+  const genreRulesOf = async (libraryId: string) => {
+    const held = rulesHeld.get(libraryId);
+
+    if (held !== undefined && Date.now() - held.at < RULES_LAST_MS) {
+      return held.rules;
     }
 
-    return rows.map((row) => ({ ...row, parts: partsOf.get(row.path) ?? [] }));
-  },
+    const rules = await db
+      .select({ find: wordRule.find, replace: wordRule.replace })
+      .from(wordRule)
+      .where(and(eq(wordRule.libraryId, libraryId), eq(wordRule.field, 'genres')));
 
-  upsert: async (row) => {
-    const video = row.probe.video;
+    rulesHeld.set(libraryId, { at: Date.now(), rules });
 
-    if (video === null) {
-      return null;
-    }
+    return rules;
+  };
+  const titleEdits = createTitleEditStore(db);
 
-    const seriesTitle = row.metadata.seriesTitle ?? row.episode.seriesTitle;
-
-    const seriesKey = resolveSeriesKey({
-      externalId: row.metadata.externalId ?? null,
-      seriesFolder: row.episode.seriesFolder,
-      seriesTitle,
-    });
-
-    const seriesId =
-      seriesKey === null || seriesTitle === null
-        ? null
-        : await placeSeries(
-            db,
-            {
-              libraryId: row.libraryId,
-              key: seriesKey,
-              title: seriesTitle,
-              externalId: row.metadata.externalId ?? null,
-            },
-            row.isCorrected,
-          );
-
-    const changeable = {
-      libraryId: row.libraryId,
-      path: row.path,
-      title: row.title,
-      year: row.year,
-      sizeBytes: row.sizeBytes,
-      modifiedAtMs: row.modifiedAtMs,
-      container: row.probe.container,
-      durationSeconds: row.probe.durationSeconds,
-      bitrateKbps: row.probe.bitrateKbps,
-      videoCodec: video.codec,
-      videoCodecTag: video.codecTag,
-      videoRange: video.range,
-      videoRangeBase: video.rangeBase,
-      videoBitDepth: video.bitDepth ?? null,
-      canCopySegments: row.probe.canCopySegments ?? null,
-      probeVersion: row.probeVersion,
-      videoLevel: video.level,
-      videoFrameRate: video.frameRate,
-      videoIsInterlaced: video.isInterlaced,
-      videoRefFrames: video.refFrames,
-      videoPixelAspect: video.pixelAspect,
-      videoRotationDegrees: video.rotationDegrees,
-      width: video.width,
-      height: video.height,
-      audioStreams: row.probe.audioStreams,
-      subtitleStreams: row.probe.subtitleStreams,
-      chapters: row.probe.chapters,
-      seriesId,
-      seriesTitle,
-      seasonNumber: row.episode.seasonNumber,
-      episodeNumber: row.episode.episodeNumber,
-      episodeNumberEnd: row.episode.episodeNumberEnd,
-      overview: row.metadata.overview ?? null,
-      tagline: row.metadata.tagline ?? null,
-      genres: row.metadata.genres ?? null,
-      castMembers: row.metadata.cast ?? null,
-      rating: row.metadata.rating ?? null,
-      certifications: row.metadata.certifications ?? null,
-      contentAdvice: row.metadata.contentAdvice ?? null,
-      certificationAge: certificationAgeOf(
-        await certificationRegion(),
-        row.metadata.certifications ?? null,
-      ),
-      posterUrl: row.metadata.posterUrl ?? null,
-      backdropUrl: row.metadata.backdropUrl ?? null,
-      ...(row.metadata.logoUrl === undefined ? {} : { logoUrl: row.metadata.logoUrl }),
-      externalId: row.metadata.externalId ?? null,
-      trailerKey: row.metadata.trailerKey ?? null,
-      releaseDate: row.metadata.releaseDate ?? null,
-      budget: row.metadata.budget ?? null,
-      revenue: row.metadata.revenue ?? null,
-      catalogueStatus: row.metadata.status ?? null,
-      imdbId: row.metadata.imdbId ?? null,
-      rottenTomatoes: row.metadata.rottenTomatoes ?? null,
-      extraKind: row.extraKind,
-      versionLabel: row.versionLabel,
-      updatedAt: new Date(),
-    };
-
-    await upsert(db, mediaItem, {
-      values: [{ id: randomUUID(), ...changeable }],
-      target: [mediaItem.libraryId, mediaItem.path],
-      set: changeable,
-    });
-
-    const [saved] = await db
-      .select({ id: mediaItem.id })
-      .from(mediaItem)
-      .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)))
-      .limit(1);
-
-    if (saved === undefined) {
-      return null;
-    }
-
-    await db.delete(mediaItemJob).where(eq(mediaItemJob.mediaItemId, saved.id));
-    const parts = row.parts ?? [];
-
-    if (parts.length > 1) {
-      await db.transaction(async (tx) => {
-        await tx.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
-        await tx.insert(mediaPart).values(
-          parts.map((part, at) => ({
-            mediaItemId: saved.id,
-            position: at + 1,
-            path: part.path,
-            sizeBytes: part.sizeBytes,
-            modifiedAtMs: part.modifiedAtMs,
-            durationSeconds: part.durationSeconds,
-          })),
-        );
-      });
-    } else {
-      await db.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
-    }
-
-    return saved.id;
-  },
-
-  removeByPaths: async (libraryId, paths) => {
-    if (paths.length === 0) {
-      return [];
-    }
-
-    const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
-    const keptCopies = await keptCopiesOf(db, leaving);
-    const successions = await successionsOf(db, libraryId, paths);
-
-    await carryOverViewing(db, successions);
-
-    const removed = await db.transaction(async (tx) => {
-      const found = await tx
+  return {
+    listStored: async (libraryId) => {
+      const rows = await db
         .select({
-          itemId: mediaItem.id,
-          title: mediaItem.title,
+          path: mediaItem.path,
+          sizeBytes: mediaItem.sizeBytes,
+          modifiedAtMs: mediaItem.modifiedAtMs,
+          externalId: mediaItem.externalId,
+          videoBitDepth: mediaItem.videoBitDepth,
+          videoCodecTag: mediaItem.videoCodecTag,
+          videoRangeBase: mediaItem.videoRangeBase,
+          canCopySegments: mediaItem.canCopySegments,
+          probeVersion: mediaItem.probeVersion,
+          videoLevel: mediaItem.videoLevel,
+          videoFrameRate: mediaItem.videoFrameRate,
+          videoIsInterlaced: mediaItem.videoIsInterlaced,
+          videoRefFrames: mediaItem.videoRefFrames,
+          videoPixelAspect: mediaItem.videoPixelAspect,
+          videoRotationDegrees: mediaItem.videoRotationDegrees,
+          missingSince: mediaItem.missingSince,
+        })
+        .from(mediaItem)
+        .where(eq(mediaItem.libraryId, libraryId));
+      const parts = await db
+        .select({
+          of: mediaItem.path,
+          path: mediaPart.path,
+          sizeBytes: mediaPart.sizeBytes,
+          modifiedAtMs: mediaPart.modifiedAtMs,
+        })
+        .from(mediaPart)
+        .innerJoin(mediaItem, eq(mediaItem.id, mediaPart.mediaItemId))
+        .where(eq(mediaItem.libraryId, libraryId))
+        .orderBy(asc(mediaPart.mediaItemId), asc(mediaPart.position));
+      const partsOf = new Map<string, StoredPart[]>();
+
+      for (const { of, ...part } of parts) {
+        addToGroup(partsOf, of, part);
+      }
+
+      return rows.map((row) => ({ ...row, parts: partsOf.get(row.path) ?? [] }));
+    },
+
+    upsert: async (row) => {
+      const video = row.probe.video;
+
+      if (video === null) {
+        return null;
+      }
+
+      const seriesTitle = row.metadata.seriesTitle ?? row.episode.seriesTitle;
+
+      const seriesKey = resolveSeriesKey({
+        externalId: row.metadata.externalId ?? null,
+        seriesFolder: row.episode.seriesFolder,
+        seriesTitle,
+      });
+
+      const keys = subjectKeysOf({
+        path: row.path,
+        externalId: row.metadata.externalId ?? null,
+        seriesKey,
+        seasonNumber: row.episode.seasonNumber,
+        episodeNumber: row.episode.episodeNumber,
+        catalogueEpisodeId: row.metadata.catalogueEpisodeId ?? null,
+        extraKind: row.extraKind,
+      });
+      const [stored] = await db
+        .select({
+          id: mediaItem.id,
+          externalId: mediaItem.externalId,
           seriesTitle: mediaItem.seriesTitle,
           seasonNumber: mediaItem.seasonNumber,
           episodeNumber: mediaItem.episodeNumber,
-          year: mediaItem.year,
+          catalogueEpisodeId: mediaItem.catalogueEpisodeId,
+          extraKind: mediaItem.extraKind,
+          seriesKey: series.key,
           posterUrl: mediaItem.posterUrl,
-          overview: mediaItem.overview,
-          durationSeconds: mediaItem.durationSeconds,
-          rating: mediaItem.rating,
-          width: mediaItem.width,
-          height: mediaItem.height,
-          videoRange: mediaItem.videoRange,
+          backdropUrl: mediaItem.backdropUrl,
         })
         .from(mediaItem)
-        .where(leaving);
+        .leftJoin(series, eq(series.id, mediaItem.seriesId))
+        .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)))
+        .limit(1);
 
-      const leavingIds = found.map((one) => one.itemId);
+      if (stored !== undefined) {
+        await titleEdits.move(
+          row.libraryId,
+          movesBetween(
+            subjectKeysOf({
+              path: row.path,
+              externalId: stored.externalId,
+              seriesKey:
+                stored.seriesTitle === null
+                  ? null
+                  : (stored.seriesKey ?? `title:${stored.seriesTitle}`),
+              seasonNumber: stored.seasonNumber,
+              episodeNumber: stored.episodeNumber,
+              catalogueEpisodeId: stored.catalogueEpisodeId,
+              extraKind: stored.extraKind,
+            }),
+            keys,
+          ),
+        );
+      }
 
-      if (leavingIds.length > 0) {
-        await tx
+      const laid = await layTitleEdits(titleEdits, row.libraryId, keys, {
+        title: row.title,
+        sortTitle: null,
+        originalTitle: row.metadata.originalTitle ?? null,
+        year: row.year,
+        tagline: row.metadata.tagline ?? null,
+        overview: row.metadata.overview ?? null,
+        releaseDate: row.metadata.releaseDate ?? null,
+        addedAt: null,
+        genres: applyWordRules(row.metadata.genres, await genreRulesOf(row.libraryId)),
+        tags: null,
+        studios: row.metadata.studios ?? null,
+        networks: row.metadata.networks ?? null,
+        certifications: row.metadata.certifications ?? null,
+        rating: row.metadata.rating ?? null,
+        rottenTomatoes: row.metadata.rottenTomatoes ?? null,
+        imdbId: row.metadata.imdbId ?? null,
+        tvdbId: row.metadata.tvdbId ?? null,
+        anilistId: null,
+        malId: null,
+        castMembers: row.metadata.cast ?? null,
+        trailerKey: row.metadata.trailerKey ?? null,
+        guestStars: row.metadata.guestStars ?? null,
+        originalLanguage: row.metadata.originalLanguage ?? null,
+        countries: row.metadata.countries ?? null,
+        creators: row.metadata.creators ?? null,
+        directors: row.metadata.directors ?? null,
+        writers: row.metadata.writers ?? null,
+        seriesTitle,
+        seriesSortTitle: null,
+      });
+      const edited = laid.columns;
+
+      const seriesId =
+        seriesKey === null || seriesTitle === null
+          ? null
+          : await placeSeries(
+              db,
+              {
+                libraryId: row.libraryId,
+                key: seriesKey,
+                title: edited.seriesTitle ?? seriesTitle,
+                externalId: row.metadata.externalId ?? null,
+              },
+              row.isCorrected,
+            );
+
+      if (seriesId !== null && row.metadata.episodeTotal !== undefined) {
+        await db
+          .update(series)
+          .set({ episodeTotal: row.metadata.episodeTotal })
+          .where(eq(series.id, seriesId));
+      }
+
+      const changeable = {
+        libraryId: row.libraryId,
+        path: row.path,
+        title: edited.title,
+        sortTitle: edited.sortTitle,
+        originalTitle: edited.originalTitle,
+        year: edited.year,
+        ...(edited.addedAt === null ? {} : { addedAt: addedAtOfDay(edited.addedAt) }),
+        sizeBytes: row.sizeBytes,
+        modifiedAtMs: row.modifiedAtMs,
+        container: row.probe.container,
+        durationSeconds: row.probe.durationSeconds,
+        bitrateKbps: row.probe.bitrateKbps,
+        videoCodec: video.codec,
+        videoCodecTag: video.codecTag,
+        videoRange: video.range,
+        videoRangeBase: video.rangeBase,
+        videoBitDepth: video.bitDepth ?? null,
+        canCopySegments: row.probe.canCopySegments ?? null,
+        probeVersion: row.probeVersion,
+        videoLevel: video.level,
+        videoFrameRate: video.frameRate,
+        videoIsInterlaced: video.isInterlaced,
+        videoRefFrames: video.refFrames,
+        videoPixelAspect: video.pixelAspect,
+        videoRotationDegrees: video.rotationDegrees,
+        width: video.width,
+        height: video.height,
+        audioStreams: row.probe.audioStreams,
+        subtitleStreams: row.probe.subtitleStreams,
+        chapters: row.probe.chapters,
+        seriesId,
+        seriesTitle: edited.seriesTitle,
+        seriesSortTitle: edited.seriesSortTitle,
+        seasonNumber: row.episode.seasonNumber,
+        episodeNumber: row.episode.episodeNumber,
+        episodeNumberEnd: row.episode.episodeNumberEnd,
+        overview: edited.overview,
+        tagline: edited.tagline,
+        genres: edited.genres,
+        tags: edited.tags,
+        studios: edited.studios,
+        networks: edited.networks,
+        castMembers: edited.castMembers,
+        rating: edited.rating,
+        certifications: edited.certifications,
+        contentAdvice: row.metadata.contentAdvice ?? null,
+        certificationAge: certificationAgeOf(await certificationRegion(), edited.certifications),
+        posterUrl: row.metadata.posterUrl ?? null,
+        backdropUrl: row.metadata.backdropUrl ?? null,
+        ...(row.metadata.logoUrl === undefined ? {} : { logoUrl: row.metadata.logoUrl }),
+        externalId: row.metadata.externalId ?? null,
+        externalKind:
+          row.metadata.externalId === undefined ? null : seriesTitle === null ? 'movie' : 'tv',
+        catalogueEpisodeId: row.metadata.catalogueEpisodeId ?? null,
+        tvdbId: edited.tvdbId,
+        trailerKey: edited.trailerKey,
+        guestStars: edited.guestStars,
+        originalLanguage: edited.originalLanguage,
+        countries: edited.countries,
+        creators: edited.creators,
+        directors: edited.directors,
+        writers: edited.writers,
+        releaseDate: edited.releaseDate,
+        budget: row.metadata.budget ?? null,
+        revenue: row.metadata.revenue ?? null,
+        catalogueStatus: row.metadata.status ?? null,
+        imdbId: edited.imdbId,
+        rottenTomatoes: edited.rottenTomatoes,
+        extraKind: row.extraKind,
+        versionLabel: row.versionLabel,
+        updatedAt: new Date(),
+        ...(stored !== undefined &&
+        (stored.posterUrl !== (row.metadata.posterUrl ?? null) ||
+          stored.backdropUrl !== (row.metadata.backdropUrl ?? null))
+          ? { artworkChangedAt: new Date() }
+          : {}),
+      };
+
+      await upsert(db, mediaItem, {
+        values: [{ id: randomUUID(), ...changeable }],
+        target: [mediaItem.libraryId, mediaItem.path],
+        set: changeable,
+      });
+      await laid.noteCatalogue();
+
+      const [saved] = await db
+        .select({ id: mediaItem.id })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)))
+        .limit(1);
+
+      if (saved === undefined) {
+        return null;
+      }
+
+      await db.delete(mediaItemJob).where(eq(mediaItemJob.mediaItemId, saved.id));
+      const parts = row.parts ?? [];
+
+      if (parts.length > 1) {
+        await db.transaction(async (tx) => {
+          await tx.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
+          await tx.insert(mediaPart).values(
+            parts.map((part, at) => ({
+              mediaItemId: saved.id,
+              position: at + 1,
+              path: part.path,
+              sizeBytes: part.sizeBytes,
+              modifiedAtMs: part.modifiedAtMs,
+              durationSeconds: part.durationSeconds,
+            })),
+          );
+        });
+      } else {
+        await db.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
+      }
+
+      return saved.id;
+    },
+
+    removeByPaths: async (libraryId, paths) => {
+      if (paths.length === 0) {
+        return [];
+      }
+
+      const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
+      const keptCopies = await keptCopiesOf(db, leaving);
+      const successions = await successionsOf(db, libraryId, paths);
+
+      await carryOverViewing(db, successions);
+      await carryOverAddedAt(db, successions);
+
+      const removed = await db.transaction(async (tx) => {
+        const found = await tx
+          .select({
+            itemId: mediaItem.id,
+            title: mediaItem.title,
+            seriesTitle: mediaItem.seriesTitle,
+            seasonNumber: mediaItem.seasonNumber,
+            episodeNumber: mediaItem.episodeNumber,
+            year: mediaItem.year,
+            posterUrl: mediaItem.posterUrl,
+            overview: mediaItem.overview,
+            durationSeconds: mediaItem.durationSeconds,
+            rating: mediaItem.rating,
+            width: mediaItem.width,
+            height: mediaItem.height,
+            videoRange: mediaItem.videoRange,
+          })
+          .from(mediaItem)
+          .where(leaving);
+
+        const leavingIds = found.map((one) => one.itemId);
+
+        if (leavingIds.length > 0) {
+          await tx
+            .update(mediaItem)
+            .set({ parentId: null, versionLabel: null })
+            .where(
+              and(
+                inArray(mediaItem.parentId, leavingIds),
+                isNull(mediaItem.extraKind),
+                notInArray(mediaItem.id, leavingIds),
+              ),
+            );
+        }
+
+        await tx.delete(mediaItem).where(leaving);
+
+        return found;
+      });
+
+      await forgetKeptCopies(keptCopies);
+
+      return removed.map(({ width, height, videoRange, ...one }) => ({
+        ...one,
+        genres: [],
+        quality: describeQuality(width, height, videoRange),
+      }));
+    },
+
+    setAside: async (libraryId, paths, now) => {
+      if (paths.length === 0) {
+        return [];
+      }
+
+      const succeeded = new Set(
+        (await successionsOf(db, libraryId, paths)).map((succession) => succession.from),
+      );
+      const leaving = await db
+        .select({ id: mediaItem.id, path: mediaItem.path })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+      const replaced = leaving.filter((one) => succeeded.has(one.id));
+      const kept = leaving.filter((one) => !succeeded.has(one.id)).map((one) => one.id);
+
+      if (kept.length > 0) {
+        await db
+          .update(mediaItem)
+          .set({ missingSince: now })
+          .where(and(inArray(mediaItem.id, kept), isNull(mediaItem.missingSince)));
+      }
+
+      return replaced.map((one) => one.path);
+    },
+
+    markFound: async (libraryId, paths) => {
+      if (paths.length === 0) {
+        return;
+      }
+
+      await db
+        .update(mediaItem)
+        .set({ missingSince: null })
+        .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+    },
+
+    listMissingSince: async (libraryId, before) => {
+      const rows = await db
+        .select({ path: mediaItem.path })
+        .from(mediaItem)
+        .where(
+          and(
+            eq(mediaItem.libraryId, libraryId),
+            isNotNull(mediaItem.missingSince),
+            lt(mediaItem.missingSince, before),
+          ),
+        );
+
+      return rows.map((row) => row.path);
+    },
+
+    markScanned: async (libraryId) => {
+      await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
+    },
+
+    regroupSeries: async (libraryId, foldersByPath) => {
+      const items = await db
+        .select({ path: mediaItem.path, seriesId: mediaItem.seriesId })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, libraryId), isNotNull(mediaItem.seriesId)));
+
+      for (const [folder, ids] of groupSeriesByFolder(items, foldersByPath)) {
+        const key = `folder:${folder}`;
+
+        const candidates = await db
+          .select({ id: series.id, key: series.key, externalId: series.externalId })
+          .from(series)
+          .where(and(eq(series.libraryId, libraryId), inArray(series.id, ids)))
+          .orderBy(
+            sql`case when ${series.externalId} is null then 1 else 0 end`,
+            series.addedAt,
+            series.id,
+          );
+
+        const survivor = candidates[0];
+
+        if (survivor === undefined) {
+          continue;
+        }
+
+        const losers = candidates.slice(1).map((one) => one.id);
+
+        if (losers.length > 0) {
+          await db.transaction(async (tx) => {
+            const kept = survivor.id;
+            const other = sql.identifier('kept');
+
+            const doubledRatings = await tx
+              .select({ id: rating.id })
+              .from(rating)
+              .where(
+                and(
+                  inArray(rating.seriesId, losers),
+                  sql`exists (select 1 from ${rating} as ${other} where ${onCopy(other, rating.profileId)} = ${rating.profileId} and ${onCopy(other, rating.seriesId)} = ${kept})`,
+                ),
+              );
+
+            if (doubledRatings.length > 0) {
+              await tx.delete(rating).where(
+                inArray(
+                  rating.id,
+                  doubledRatings.map((row) => row.id),
+                ),
+              );
+            }
+
+            const doubledHidings = await tx
+              .select({ id: hidden.id })
+              .from(hidden)
+              .where(
+                and(
+                  inArray(hidden.seriesId, losers),
+                  sql`exists (select 1 from ${hidden} as ${other} where ${onCopy(other, hidden.profileId)} = ${hidden.profileId} and ${onCopy(other, hidden.seriesId)} = ${kept})`,
+                ),
+              );
+
+            if (doubledHidings.length > 0) {
+              await tx.delete(hidden).where(
+                inArray(
+                  hidden.id,
+                  doubledHidings.map((row) => row.id),
+                ),
+              );
+            }
+
+            const doubledExceptions = await tx
+              .select({ id: ageException.id })
+              .from(ageException)
+              .where(
+                and(
+                  inArray(ageException.seriesId, losers),
+                  sql`exists (select 1 from ${ageException} as ${other} where ${onCopy(other, ageException.userId)} = ${ageException.userId} and ${onCopy(other, ageException.seriesId)} = ${kept})`,
+                ),
+              );
+
+            if (doubledExceptions.length > 0) {
+              await tx.delete(ageException).where(
+                inArray(
+                  ageException.id,
+                  doubledExceptions.map((row) => row.id),
+                ),
+              );
+            }
+
+            await tx.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
+            await tx.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
+            await tx
+              .update(ageException)
+              .set({ seriesId: kept })
+              .where(inArray(ageException.seriesId, losers));
+            await tx.update(share).set({ seriesId: kept }).where(inArray(share.seriesId, losers));
+
+            const doubledEntries = await tx
+              .select({ id: collectionEntry.id })
+              .from(collectionEntry)
+              .where(
+                and(
+                  inArray(collectionEntry.seriesId, losers),
+                  sql`exists (select 1 from ${collectionEntry} as ${other} where ${onCopy(other, collectionEntry.collectionId)} = ${collectionEntry.collectionId} and ${onCopy(other, collectionEntry.seriesId)} = ${kept})`,
+                ),
+              );
+
+            if (doubledEntries.length > 0) {
+              await tx.delete(collectionEntry).where(
+                inArray(
+                  collectionEntry.id,
+                  doubledEntries.map((row) => row.id),
+                ),
+              );
+            }
+
+            await tx
+              .update(collectionEntry)
+              .set({ seriesId: kept })
+              .where(inArray(collectionEntry.seriesId, losers));
+
+            const sources = await tx
+              .select({ seriesId: seasonSource.seriesId, seasonNumber: seasonSource.seasonNumber })
+              .from(seasonSource)
+              .where(inArray(seasonSource.seriesId, [kept, ...losers]));
+            const claimed = new Set(
+              sources.filter((one) => one.seriesId === kept).map((one) => one.seasonNumber),
+            );
+
+            for (const one of sources.filter((source) => source.seriesId !== kept)) {
+              if (claimed.has(one.seasonNumber)) {
+                await tx
+                  .delete(seasonSource)
+                  .where(
+                    and(
+                      eq(seasonSource.seriesId, one.seriesId),
+                      eq(seasonSource.seasonNumber, one.seasonNumber),
+                    ),
+                  );
+              } else {
+                claimed.add(one.seasonNumber);
+                await tx
+                  .update(seasonSource)
+                  .set({ seriesId: kept })
+                  .where(
+                    and(
+                      eq(seasonSource.seriesId, one.seriesId),
+                      eq(seasonSource.seasonNumber, one.seasonNumber),
+                    ),
+                  );
+              }
+            }
+
+            await tx
+              .update(mediaItem)
+              .set({ seriesId: kept })
+              .where(inArray(mediaItem.seriesId, losers));
+
+            await tx.delete(series).where(inArray(series.id, losers));
+          });
+        }
+
+        if (survivor.key === key) {
+          continue;
+        }
+
+        await db.delete(series).where(and(eq(series.libraryId, libraryId), eq(series.key, key)));
+
+        await db.update(series).set({ key }).where(eq(series.id, survivor.id));
+      }
+    },
+
+    forgetEmptySeries: async (libraryId) => {
+      await db
+        .delete(series)
+        .where(
+          and(
+            eq(series.libraryId, libraryId),
+            sql`not exists (select 1 from ${mediaItem} where ${mediaItem.seriesId} = ${series.id})`,
+          ),
+        );
+    },
+
+    linkExtras: async (libraryId, links) => {
+      for (const link of links) {
+        const [parent] = await db
+          .select({ id: mediaItem.id })
+          .from(mediaItem)
+          .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, link.parentPath)))
+          .limit(1);
+
+        if (parent === undefined) {
+          continue;
+        }
+
+        await db
+          .update(mediaItem)
+          .set({ parentId: parent.id })
+          .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, link.path)));
+      }
+    },
+
+    forgetStaleVersions: async (libraryId, stillVersions) => {
+      const parent = sql.identifier('parent');
+      const stale = await db
+        .select({ id: mediaItem.id })
+        .from(mediaItem)
+        .where(
+          and(
+            eq(mediaItem.libraryId, libraryId),
+            isNull(mediaItem.extraKind),
+            isNotNull(mediaItem.parentId),
+            sql`not exists (select 1 from ${mediaItem} as ${parent} where ${onCopy(parent, mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(parent, mediaItem.externalId)} = ${mediaItem.externalId})`,
+            stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
+          ),
+        );
+
+      if (stale.length > 0) {
+        await db
           .update(mediaItem)
           .set({ parentId: null, versionLabel: null })
           .where(
-            and(
-              inArray(mediaItem.parentId, leavingIds),
-              isNull(mediaItem.extraKind),
-              notInArray(mediaItem.id, leavingIds),
+            inArray(
+              mediaItem.id,
+              stale.map((row) => row.id),
             ),
           );
       }
+    },
 
-      await tx.delete(mediaItem).where(leaving);
+    applyVersionChoices: (libraryId) => versionChoices.apply(libraryId),
 
-      return found;
-    });
+    listExtraChoices: async (libraryId) =>
+      (
+        await db
+          .select({
+            path: extraChoice.path,
+            extraKind: extraChoice.extraKind,
+            parentPath: extraChoice.parentPath,
+          })
+          .from(extraChoice)
+          .where(eq(extraChoice.libraryId, libraryId))
+      ).map((choice) => ({
+        ...choice,
+        extraKind: ExtraKindSchema.nullable().catch(null).parse(choice.extraKind),
+      })),
 
-    await forgetKeptCopies(keptCopies);
+    listEpisodePins: async (libraryId) =>
+      db
+        .select({
+          path: episodePin.path,
+          seasonNumber: episodePin.seasonNumber,
+          episodeNumber: episodePin.episodeNumber,
+          episodeNumberEnd: episodePin.episodeNumberEnd,
+        })
+        .from(episodePin)
+        .where(eq(episodePin.libraryId, libraryId)),
 
-    return removed.map(({ width, height, videoRange, ...one }) => ({
-      ...one,
-      genres: [],
-      quality: describeQuality(width, height, videoRange),
-    }));
-  },
+    listSeasonSources: async (libraryId) => {
+      const rows = await db
+        .select({
+          key: series.key,
+          seasonNumber: seasonSource.seasonNumber,
+          externalId: seasonSource.externalId,
+          externalSeason: seasonSource.externalSeason,
+          title: seasonSource.title,
+          year: seasonSource.year,
+        })
+        .from(seasonSource)
+        .innerJoin(series, eq(series.id, seasonSource.seriesId))
+        .where(eq(series.libraryId, libraryId));
 
-  setAside: async (libraryId, paths, now) => {
-    if (paths.length === 0) {
-      return [];
-    }
+      return rows.flatMap(({ key, ...row }) => {
+        const folder = folderOfSeriesKey(key);
 
-    const succeeded = new Set(
-      (await successionsOf(db, libraryId, paths)).map((succession) => succession.from),
-    );
-    const leaving = await db
-      .select({ id: mediaItem.id, path: mediaItem.path })
-      .from(mediaItem)
-      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
-    const replaced = leaving.filter((one) => succeeded.has(one.id));
-    const kept = leaving.filter((one) => !succeeded.has(one.id)).map((one) => one.id);
+        return folder === null ? [] : [{ ...row, folder }];
+      });
+    },
 
-    if (kept.length > 0) {
-      await db
-        .update(mediaItem)
-        .set({ missingSince: now })
-        .where(and(inArray(mediaItem.id, kept), isNull(mediaItem.missingSince)));
-    }
-
-    return replaced.map((one) => one.path);
-  },
-
-  markFound: async (libraryId, paths) => {
-    if (paths.length === 0) {
-      return;
-    }
-
-    await db
-      .update(mediaItem)
-      .set({ missingSince: null })
-      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
-  },
-
-  listMissingSince: async (libraryId, before) => {
-    const rows = await db
-      .select({ path: mediaItem.path })
-      .from(mediaItem)
-      .where(
-        and(
-          eq(mediaItem.libraryId, libraryId),
-          isNotNull(mediaItem.missingSince),
-          lt(mediaItem.missingSince, before),
-        ),
-      );
-
-    return rows.map((row) => row.path);
-  },
-
-  markScanned: async (libraryId) => {
-    await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
-  },
-
-  regroupSeries: async (libraryId, foldersByPath) => {
-    const items = await db
-      .select({ path: mediaItem.path, seriesId: mediaItem.seriesId })
-      .from(mediaItem)
-      .where(and(eq(mediaItem.libraryId, libraryId), isNotNull(mediaItem.seriesId)));
-
-    for (const [folder, ids] of groupSeriesByFolder(items, foldersByPath)) {
-      const key = `folder:${folder}`;
-
-      const candidates = await db
-        .select({ id: series.id, key: series.key, externalId: series.externalId })
+    listEpisodeOrders: async (libraryId) => {
+      const rows = await db
+        .select({ externalId: series.externalId, episodeOrder: series.episodeOrder })
         .from(series)
-        .where(and(eq(series.libraryId, libraryId), inArray(series.id, ids)))
-        .orderBy(
-          sql`case when ${series.externalId} is null then 1 else 0 end`,
-          series.addedAt,
-          series.id,
-        );
+        .where(and(eq(series.libraryId, libraryId), isNotNull(series.episodeOrder)));
 
-      const survivor = candidates[0];
-
-      if (survivor === undefined) {
-        continue;
-      }
-
-      const losers = candidates.slice(1).map((one) => one.id);
-
-      if (losers.length > 0) {
-        await db.transaction(async (tx) => {
-          const kept = survivor.id;
-          const other = sql.identifier('kept');
-
-          const doubledRatings = await tx
-            .select({ id: rating.id })
-            .from(rating)
-            .where(
-              and(
-                inArray(rating.seriesId, losers),
-                sql`exists (select 1 from ${rating} as ${other} where ${onCopy(other, rating.profileId)} = ${rating.profileId} and ${onCopy(other, rating.seriesId)} = ${kept})`,
-              ),
-            );
-
-          if (doubledRatings.length > 0) {
-            await tx.delete(rating).where(
-              inArray(
-                rating.id,
-                doubledRatings.map((row) => row.id),
-              ),
-            );
-          }
-
-          const doubledHidings = await tx
-            .select({ id: hidden.id })
-            .from(hidden)
-            .where(
-              and(
-                inArray(hidden.seriesId, losers),
-                sql`exists (select 1 from ${hidden} as ${other} where ${onCopy(other, hidden.profileId)} = ${hidden.profileId} and ${onCopy(other, hidden.seriesId)} = ${kept})`,
-              ),
-            );
-
-          if (doubledHidings.length > 0) {
-            await tx.delete(hidden).where(
-              inArray(
-                hidden.id,
-                doubledHidings.map((row) => row.id),
-              ),
-            );
-          }
-
-          const doubledExceptions = await tx
-            .select({ id: ageException.id })
-            .from(ageException)
-            .where(
-              and(
-                inArray(ageException.seriesId, losers),
-                sql`exists (select 1 from ${ageException} as ${other} where ${onCopy(other, ageException.userId)} = ${ageException.userId} and ${onCopy(other, ageException.seriesId)} = ${kept})`,
-              ),
-            );
-
-          if (doubledExceptions.length > 0) {
-            await tx.delete(ageException).where(
-              inArray(
-                ageException.id,
-                doubledExceptions.map((row) => row.id),
-              ),
-            );
-          }
-
-          await tx.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
-          await tx.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
-          await tx
-            .update(ageException)
-            .set({ seriesId: kept })
-            .where(inArray(ageException.seriesId, losers));
-          await tx.update(share).set({ seriesId: kept }).where(inArray(share.seriesId, losers));
-
-          const doubledEntries = await tx
-            .select({ id: collectionEntry.id })
-            .from(collectionEntry)
-            .where(
-              and(
-                inArray(collectionEntry.seriesId, losers),
-                sql`exists (select 1 from ${collectionEntry} as ${other} where ${onCopy(other, collectionEntry.collectionId)} = ${collectionEntry.collectionId} and ${onCopy(other, collectionEntry.seriesId)} = ${kept})`,
-              ),
-            );
-
-          if (doubledEntries.length > 0) {
-            await tx.delete(collectionEntry).where(
-              inArray(
-                collectionEntry.id,
-                doubledEntries.map((row) => row.id),
-              ),
-            );
-          }
-
-          await tx
-            .update(collectionEntry)
-            .set({ seriesId: kept })
-            .where(inArray(collectionEntry.seriesId, losers));
-
-          await tx
-            .update(mediaItem)
-            .set({ seriesId: kept })
-            .where(inArray(mediaItem.seriesId, losers));
-
-          await tx.delete(series).where(inArray(series.id, losers));
-        });
-      }
-
-      if (survivor.key === key) {
-        continue;
-      }
-
-      await db.delete(series).where(and(eq(series.libraryId, libraryId), eq(series.key, key)));
-
-      await db.update(series).set({ key }).where(eq(series.id, survivor.id));
-    }
-  },
-
-  forgetEmptySeries: async (libraryId) => {
-    await db
-      .delete(series)
-      .where(
-        and(
-          eq(series.libraryId, libraryId),
-          sql`not exists (select 1 from ${mediaItem} where ${mediaItem.seriesId} = ${series.id})`,
+      return new Map(
+        rows.flatMap((row) =>
+          row.externalId === null || row.episodeOrder === null
+            ? []
+            : [[row.externalId, row.episodeOrder] as const],
         ),
       );
-  },
+    },
 
-  linkExtras: async (libraryId, links) => {
-    for (const link of links) {
-      const [parent] = await db
-        .select({ id: mediaItem.id })
+    linkSameFilms: async (libraryId) => {
+      const films = await db
+        .select({
+          id: mediaItem.id,
+          path: mediaItem.path,
+          externalId: mediaItem.externalId,
+          parentId: mediaItem.parentId,
+          versionLabel: mediaItem.versionLabel,
+        })
         .from(mediaItem)
-        .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, link.parentPath)))
-        .limit(1);
-
-      if (parent === undefined) {
-        continue;
-      }
-
-      await db
-        .update(mediaItem)
-        .set({ parentId: parent.id })
-        .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, link.path)));
-    }
-  },
-
-  forgetStaleVersions: async (libraryId, stillVersions) => {
-    const parent = sql.identifier('parent');
-    const stale = await db
-      .select({ id: mediaItem.id })
-      .from(mediaItem)
-      .where(
-        and(
-          eq(mediaItem.libraryId, libraryId),
-          isNull(mediaItem.extraKind),
-          isNotNull(mediaItem.parentId),
-          sql`not exists (select 1 from ${mediaItem} as ${parent} where ${onCopy(parent, mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(parent, mediaItem.externalId)} = ${mediaItem.externalId})`,
-          stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
-        ),
-      );
-
-    if (stale.length > 0) {
-      await db
-        .update(mediaItem)
-        .set({ parentId: null, versionLabel: null })
         .where(
-          inArray(
-            mediaItem.id,
-            stale.map((row) => row.id),
+          and(
+            eq(mediaItem.libraryId, libraryId),
+            isNull(mediaItem.seriesTitle),
+            isNull(mediaItem.extraKind),
+            isNotNull(mediaItem.externalId),
+            isNotATrack(db),
+            isStillThere(),
           ),
         );
-    }
-  },
 
-  linkSameFilms: async (libraryId) => {
-    const films = await db
-      .select({
-        id: mediaItem.id,
-        path: mediaItem.path,
-        externalId: mediaItem.externalId,
-        parentId: mediaItem.parentId,
-        versionLabel: mediaItem.versionLabel,
-      })
-      .from(mediaItem)
-      .where(
-        and(
-          eq(mediaItem.libraryId, libraryId),
-          isNull(mediaItem.seriesTitle),
-          isNull(mediaItem.extraKind),
-          isNotNull(mediaItem.externalId),
-          isNotATrack(db),
-          isStillThere(),
+      const links = groupSameFilms(
+        films.flatMap((film) =>
+          film.externalId === null ? [] : [{ ...film, externalId: film.externalId }],
         ),
       );
 
-    const links = groupSameFilms(
-      films.flatMap((film) =>
-        film.externalId === null ? [] : [{ ...film, externalId: film.externalId }],
-      ),
-    );
+      for (const link of links) {
+        await db
+          .update(mediaItem)
+          .set({ parentId: link.parentId, versionLabel: link.versionLabel })
+          .where(eq(mediaItem.id, link.id));
+      }
+    },
 
-    for (const link of links) {
-      await db
-        .update(mediaItem)
-        .set({ parentId: link.parentId, versionLabel: link.versionLabel })
-        .where(eq(mediaItem.id, link.id));
-    }
-  },
+    readProbe: async (libraryId, path) => {
+      const [row] = await db
+        .select({
+          container: mediaItem.container,
+          durationSeconds: mediaItem.durationSeconds,
+          bitrateKbps: mediaItem.bitrateKbps,
+          videoCodec: mediaItem.videoCodec,
+          videoCodecTag: mediaItem.videoCodecTag,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          videoRange: mediaItem.videoRange,
+          videoRangeBase: mediaItem.videoRangeBase,
+          videoBitDepth: mediaItem.videoBitDepth,
+          videoLevel: mediaItem.videoLevel,
+          videoFrameRate: mediaItem.videoFrameRate,
+          videoIsInterlaced: mediaItem.videoIsInterlaced,
+          videoRefFrames: mediaItem.videoRefFrames,
+          videoPixelAspect: mediaItem.videoPixelAspect,
+          videoRotationDegrees: mediaItem.videoRotationDegrees,
+          audioStreams: mediaItem.audioStreams,
+          subtitleStreams: mediaItem.subtitleStreams,
+          chapters: mediaItem.chapters,
+          canCopySegments: mediaItem.canCopySegments,
+          probeVersion: mediaItem.probeVersion,
+        })
+        .from(mediaItem)
+        .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, path)))
+        .limit(1);
 
-  listOverrides: async (libraryId) => {
-    const rows = await db
-      .select({
-        path: mediaOverride.path,
-        externalId: mediaOverride.externalId,
-        externalKind: mediaOverride.externalKind,
-      })
-      .from(mediaOverride)
-      .where(eq(mediaOverride.libraryId, libraryId));
+      if (row === undefined) {
+        return null;
+      }
 
-    return rows.map((row) => ({
-      path: row.path,
-      externalId: row.externalId,
-      externalKind: row.externalKind === 'movie' ? ('movie' as const) : ('tv' as const),
-    }));
-  },
+      const read = MediaProbeSchema.safeParse({
+        container: row.container,
+        durationSeconds: row.durationSeconds,
+        bitrateKbps: row.bitrateKbps,
+        video: {
+          index: 0,
+          codec: row.videoCodec,
+          codecTag: row.videoCodecTag,
+          width: row.width,
+          height: row.height,
+          range: row.videoRange,
+          rangeBase: row.videoRangeBase,
+          bitrateKbps: null,
+          bitDepth: row.videoBitDepth,
+          level: row.videoLevel,
+          frameRate: row.videoFrameRate,
+          isInterlaced: row.videoIsInterlaced ?? false,
+          refFrames: row.videoRefFrames,
+          pixelAspect: row.videoPixelAspect,
+          rotationDegrees: row.videoRotationDegrees,
+        },
+        audioStreams: row.audioStreams,
+        subtitleStreams: row.subtitleStreams,
+        chapters: row.chapters ?? [],
+        ...(row.canCopySegments === null ? {} : { canCopySegments: row.canCopySegments }),
+      });
 
-  saveOverride: async (row) => {
-    const changeable = {
-      libraryId: row.libraryId,
-      path: row.path,
-      externalId: row.externalId,
-      externalKind: row.externalKind,
-      updatedAt: new Date(),
-      updatedBy: row.updatedBy,
-    };
+      return read.success ? { probe: read.data, probeVersion: row.probeVersion } : null;
+    },
 
-    await upsert(db, mediaOverride, {
-      values: [{ id: randomUUID(), ...changeable }],
-      target: [mediaOverride.libraryId, mediaOverride.path],
-      set: changeable,
-    });
-  },
+    listOverrides: async (libraryId) => {
+      const rows = await db
+        .select({
+          path: mediaOverride.path,
+          externalId: mediaOverride.externalId,
+          externalKind: mediaOverride.externalKind,
+        })
+        .from(mediaOverride)
+        .where(eq(mediaOverride.libraryId, libraryId));
 
-  removeOverrides: async (libraryId, paths) => {
-    if (paths.length === 0) {
-      return 0;
-    }
+      return rows.map((row) => ({
+        path: row.path,
+        externalId: row.externalId,
+        externalKind:
+          row.externalKind === 'movie' || row.externalKind === 'none'
+            ? row.externalKind
+            : ('tv' as const),
+      }));
+    },
 
-    return countAffected(
-      await db
-        .delete(mediaOverride)
-        .where(and(eq(mediaOverride.libraryId, libraryId), inArray(mediaOverride.path, paths))),
-    );
-  },
+    saveOverride: async (row) => {
+      const changeable = {
+        libraryId: row.libraryId,
+        path: row.path,
+        externalId: row.externalId,
+        externalKind: row.externalKind,
+        updatedAt: new Date(),
+        updatedBy: row.updatedBy,
+      };
 
-  listLeftOut: async (libraryId) =>
-    (
-      await db
+      await upsert(db, mediaOverride, {
+        values: [{ id: randomUUID(), ...changeable }],
+        target: [mediaOverride.libraryId, mediaOverride.path],
+        set: changeable,
+      });
+    },
+
+    removeOverrides: async (libraryId, paths) => {
+      if (paths.length === 0) {
+        return 0;
+      }
+
+      return countAffected(
+        await db
+          .delete(mediaOverride)
+          .where(and(eq(mediaOverride.libraryId, libraryId), inArray(mediaOverride.path, paths))),
+      );
+    },
+
+    listLeftOut: async (libraryId) =>
+      (
+        await db
+          .select(LEFT_OUT_COLUMNS)
+          .from(mediaLeftOut)
+          .where(eq(mediaLeftOut.libraryId, libraryId))
+          .orderBy(mediaLeftOut.path)
+      ).map(asLeftOut),
+
+    leaveOut: async (row) => {
+      await insertUnlessPresent(db, mediaLeftOut, {
+        values: [{ id: randomUUID(), ...row }],
+        target: [mediaLeftOut.libraryId, mediaLeftOut.path],
+      });
+
+      const [kept] = await db
         .select(LEFT_OUT_COLUMNS)
         .from(mediaLeftOut)
-        .where(eq(mediaLeftOut.libraryId, libraryId))
-        .orderBy(mediaLeftOut.path)
-    ).map(asLeftOut),
+        .where(and(eq(mediaLeftOut.libraryId, row.libraryId), eq(mediaLeftOut.path, row.path)))
+        .limit(1);
 
-  leaveOut: async (row) => {
-    await insertUnlessPresent(db, mediaLeftOut, {
-      values: [{ id: randomUUID(), ...row }],
-      target: [mediaLeftOut.libraryId, mediaLeftOut.path],
-    });
+      return kept === undefined ? null : asLeftOut(kept);
+    },
 
-    const [kept] = await db
-      .select(LEFT_OUT_COLUMNS)
-      .from(mediaLeftOut)
-      .where(and(eq(mediaLeftOut.libraryId, row.libraryId), eq(mediaLeftOut.path, row.path)))
-      .limit(1);
+    bringBack: async (libraryId, id) => {
+      const [kept] = await db
+        .select(LEFT_OUT_COLUMNS)
+        .from(mediaLeftOut)
+        .where(and(eq(mediaLeftOut.libraryId, libraryId), eq(mediaLeftOut.id, id)))
+        .limit(1);
 
-    return kept === undefined ? null : asLeftOut(kept);
-  },
+      if (kept === undefined) {
+        return null;
+      }
 
-  bringBack: async (libraryId, id) => {
-    const [kept] = await db
-      .select(LEFT_OUT_COLUMNS)
-      .from(mediaLeftOut)
-      .where(and(eq(mediaLeftOut.libraryId, libraryId), eq(mediaLeftOut.id, id)))
-      .limit(1);
+      await db.delete(mediaLeftOut).where(eq(mediaLeftOut.id, id));
 
-    if (kept === undefined) {
-      return null;
-    }
+      return asLeftOut(kept);
+    },
 
-    await db.delete(mediaLeftOut).where(eq(mediaLeftOut.id, id));
+    savePreviewMoment: async (row) => {
+      const changeable = {
+        libraryId: row.libraryId,
+        path: row.path,
+        atSeconds: row.atSeconds,
+        durationSeconds: row.durationSeconds,
+        updatedAt: new Date(),
+        updatedBy: row.updatedBy,
+      };
 
-    return asLeftOut(kept);
-  },
+      await upsert(db, mediaPreviewOverride, {
+        values: [{ id: randomUUID(), ...changeable }],
+        target: [mediaPreviewOverride.libraryId, mediaPreviewOverride.path],
+        set: changeable,
+      });
+    },
 
-  savePreviewMoment: async (row) => {
-    const changeable = {
-      libraryId: row.libraryId,
-      path: row.path,
-      atSeconds: row.atSeconds,
-      durationSeconds: row.durationSeconds,
-      updatedAt: new Date(),
-      updatedBy: row.updatedBy,
-    };
-
-    await upsert(db, mediaPreviewOverride, {
-      values: [{ id: randomUUID(), ...changeable }],
-      target: [mediaPreviewOverride.libraryId, mediaPreviewOverride.path],
-      set: changeable,
-    });
-  },
-
-  readPreviewMoment: async (libraryId, path) => {
-    const rows = await db
-      .select({
-        atSeconds: mediaPreviewOverride.atSeconds,
-        durationSeconds: mediaPreviewOverride.durationSeconds,
-      })
-      .from(mediaPreviewOverride)
-      .where(
-        and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
-      )
-      .limit(1);
-
-    return rows[0] ?? null;
-  },
-
-  removePreviewMoment: async (libraryId, path) => {
-    const removed = countAffected(
-      await db
-        .delete(mediaPreviewOverride)
+    readPreviewMoment: async (libraryId, path) => {
+      const rows = await db
+        .select({
+          atSeconds: mediaPreviewOverride.atSeconds,
+          durationSeconds: mediaPreviewOverride.durationSeconds,
+        })
+        .from(mediaPreviewOverride)
         .where(
           and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
-        ),
-    );
+        )
+        .limit(1);
 
-    return removed > 0;
-  },
+      return rows[0] ?? null;
+    },
 
-  clear: async (libraryId) => {
-    const inTheLibrary = eq(mediaItem.libraryId, libraryId);
-    const keptCopies = await keptCopiesOf(db, inTheLibrary);
-    const cleared = countAffected(await db.delete(mediaItem).where(inTheLibrary));
+    removePreviewMoment: async (libraryId, path) => {
+      const removed = countAffected(
+        await db
+          .delete(mediaPreviewOverride)
+          .where(
+            and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
+          ),
+      );
 
-    await forgetKeptCopies(keptCopies);
+      return removed > 0;
+    },
 
-    return cleared;
-  },
-});
+    clear: async (libraryId) => {
+      const inTheLibrary = eq(mediaItem.libraryId, libraryId);
+      const keptCopies = await keptCopiesOf(db, inTheLibrary);
+      const cleared = countAffected(await db.delete(mediaItem).where(inTheLibrary));
+
+      await forgetKeptCopies(keptCopies);
+
+      return cleared;
+    },
+  };
+};
 
 /**
  * Asks which items in a library a given job has not finished with.

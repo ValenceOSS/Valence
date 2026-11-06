@@ -21,4 +21,10 @@ describe('pinnedPanelsPreference', () => {
 
     expect(readPinnedPanels()).toEqual([]);
   });
+
+  it('reads a pin on Files as a pin on Media, which Files is now part of', () => {
+    savePinnedPanels(['files', 'downloads', 'media']);
+
+    expect(readPinnedPanels()).toEqual(['media', 'downloads']);
+  });
 });

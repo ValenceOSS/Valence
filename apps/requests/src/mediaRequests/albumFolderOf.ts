@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 
 /**
  * The folder in a music library an album is filed into: its artist's folder, and in that the album

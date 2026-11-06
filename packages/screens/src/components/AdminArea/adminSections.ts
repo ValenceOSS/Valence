@@ -8,7 +8,6 @@ import {
   Cloud as CloudIcon,
   ClipboardList as ClipboardListIcon,
   Download as DownloadIcon,
-  FolderOpen as FolderOpenIcon,
   Folders as FoldersIcon,
   Globe as GlobeIcon,
   GlobeSearch as GlobeSearchIcon,
@@ -38,7 +37,6 @@ import {
   Cloud as CloudFilledIcon,
   ClipboardList as ClipboardListFilledIcon,
   Download as DownloadFilledIcon,
-  FolderOpen as FolderOpenFilledIcon,
   Folders as FoldersFilledIcon,
   Globe as GlobeFilledIcon,
   GlobeSearch as GlobeSearchFilledIcon,
@@ -119,13 +117,6 @@ const ADMIN_SECTIONS = [
         activeIcon: FoldersFilledIcon,
       },
       { id: 'media', label: say('common.media'), icon: VideoIcon, activeIcon: VideoFilledIcon },
-
-      {
-        id: 'files',
-        label: say('common.files'),
-        icon: FolderOpenIcon,
-        activeIcon: FolderOpenFilledIcon,
-      },
       { id: 'encoding', label: say('common.encoding'), icon: TapeIcon, activeIcon: TapeFilledIcon },
       {
         id: 'liveTv',

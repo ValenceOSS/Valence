@@ -1,9 +1,13 @@
+import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { say } from '@ValenceI18n/say';
 import type { PosterMatchListProps } from './PosterMatchList.types';
+
+const GOOD_FIT = 85;
 
 /**
  * What a catalogue offered for a name, each with its poster or cover, title, year and a line about
- * it, to choose one from.
+ * it, and how well it fits where that was worked out, to choose one from.
  *
  * @param matches - What was offered.
  * @param busyId - The one being acted on, which shows it is.
@@ -34,9 +38,16 @@ const PosterMatchList = ({ matches, busyId = null, onChoose }: PosterMatchListPr
           </span>
 
           <span className="flex min-w-0 flex-col gap-1">
-            <span className="text-sm font-medium text-text">
-              {match.title}
-              {match.year === null ? '' : ` (${match.year.toString()})`}
+            <span className="flex items-center gap-2">
+              <span className="text-sm font-medium text-text">
+                {match.title}
+                {match.year === null ? '' : ` (${match.year.toString()})`}
+              </span>
+              {match.score === undefined ? null : (
+                <Badge size="sm" tone={match.score >= GOOD_FIT ? 'success' : 'quiet'}>
+                  {say('common.percent', { value: match.score.toString() })}
+                </Badge>
+              )}
             </span>
             <span className="line-clamp-2 font-body text-xs text-text-muted">{match.detail}</span>
           </span>

@@ -10,6 +10,7 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   catalogueApiKey: say('screens.adminArea.settingsPanel.catalogueKey'),
   audioDbKey: say('screens.adminArea.settingsPanel.theAudioDBKey'),
   omdbKey: say('screens.adminArea.settingsPanel.oMDbKey'),
+  fanartKey: say('screens.adminArea.onlineServicesCard.fanartTv'),
   hardwareAccel: say('screens.adminArea.settingsPanel.hardwareAcceleration'),
   spreadAcrossDevices: say('screens.adminArea.devicePlacement.useMoreThanOne'),
   hardwareDevices: say('screens.adminArea.graphicsDevices'),

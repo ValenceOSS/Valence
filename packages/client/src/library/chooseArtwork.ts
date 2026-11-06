@@ -1,3 +1,5 @@
+import { queryOfPart } from '@ValenceClient/library/queryOfPart';
+import type { ArtworkPart } from '@ValenceClient/library/queryOfPart';
 import { z } from 'zod';
 import type { ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import { say } from '@ValenceI18n/say';
@@ -14,14 +16,16 @@ const AnswerSchema = z.union([
  * @param mediaId - Any file of the title.
  * @param kind - Which picture.
  * @param url - The picture chosen, or null to go back to the catalogue's.
+ * @param part - A season, or an episode, whose own picture this is rather than the title's.
  * @returns The job putting the catalogue's pick back where one was needed, or what went wrong.
  */
 const chooseArtwork = async (
   mediaId: string,
   kind: ArtworkKind,
   url: string | null,
+  part?: ArtworkPart,
 ): Promise<{ jobId: string | null } | { problem: string }> => {
-  const response = await fetch(`/api/media/${mediaId}/artwork/${kind}`, {
+  const response = await fetch(`/api/media/${mediaId}/artwork/${kind}${queryOfPart(part)}`, {
     method: url === null ? 'DELETE' : 'PUT',
     credentials: 'same-origin',
     ...(url === null

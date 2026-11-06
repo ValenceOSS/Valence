@@ -23,9 +23,20 @@ const LIBRARIES = [aLibraryAt('/media/films', 'films'), aLibraryAt('/media/anime
 
 describe('searchLibraryFiles', () => {
   it('finds files and folders below every library, saying which files Valence knows', async () => {
-    const answer = await searchLibraryFiles(DISK, LIBRARIES, 'arrival', undefined, (paths) =>
+    const answer = await searchLibraryFiles(DISK, LIBRARIES, 'arrival', undefined, (entries) =>
       Promise.resolve(
-        paths.includes('/media/films/Arrival.mkv') ? { '/media/films/Arrival.mkv': 'm1' } : {},
+        entries.some((entry) => entry.path === '/media/films/Arrival.mkv')
+          ? {
+              '/media/films/Arrival.mkv': {
+                mediaId: 'm1',
+                title: 'Arrival',
+                titleId: 'm1',
+                status: 'inLibrary' as const,
+                reason: null,
+                belongsTo: null,
+              },
+            }
+          : {},
       ),
     );
 

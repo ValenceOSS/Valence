@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signedInApp, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -57,13 +58,15 @@ const AnswerSchema = z.object({
 
 const SegmentsSchema = z.object({ segments: z.array(z.object({ kind: z.string() })) });
 
-const build = () => {
-  const { auth, settings } = createMemoryAuth();
+const build = (isAdministrator = false) => {
+  const { auth, settings, store } = createMemoryAuth();
+  const permissions = createMemoryPermissionService();
 
   return signedInApp(
     createApp({
       auth,
       settings,
+      permissions,
       countUsers: () => Promise.resolve(1),
       promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService({
@@ -93,7 +96,7 @@ const build = () => {
       favourites: createMemoryFavouriteService(),
       ratings: createMemoryRatingService(),
     }),
-    { auth },
+    { auth, store, permissions, isAdministrator },
   );
 };
 
@@ -111,6 +114,24 @@ describe('the timeline of an item', () => {
     expect(SegmentsSchema.parse(await answer.json()).segments).toEqual([
       expect.objectContaining({ kind: 'intro' }),
     ]);
+  });
+
+  it('keeps the markers an administrator sets, and refuses one that ends before it starts', async () => {
+    const app = build(true);
+    const put = (segments: object[]) =>
+      app.request(`${TEST_ORIGIN}/api/media/${MEDIA_ID}/segments`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ segments }),
+      });
+
+    const saved = await put([{ kind: 'credits', startSeconds: 100, endSeconds: 120 }]);
+
+    expect(saved.status).toBe(200);
+    expect(SegmentsSchema.parse(await saved.json()).segments).toEqual([
+      expect.objectContaining({ kind: 'credits' }),
+    ]);
+    expect((await put([{ kind: 'intro', startSeconds: 50, endSeconds: 10 }])).status).toBe(400);
   });
 
   it('says there is no such item rather than listing nothing', async () => {

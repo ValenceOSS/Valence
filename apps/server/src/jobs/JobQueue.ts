@@ -12,6 +12,7 @@ const READ_AGAIN_JOB = 'library.readAgain';
 const ReadAgainJobSchema = z.object({
   libraryId: z.string().uuid(),
   paths: z.array(z.string().min(1)).min(1),
+  keepsMatches: z.boolean().optional(),
 });
 
 const ScanLibraryJobSchema = z.object({
@@ -114,6 +115,8 @@ const SEND_MEDIA_DIGEST_JOB = 'server.sendMediaDigest';
 const SEND_TELEMETRY_JOB = 'server.sendTelemetry';
 
 const READ_ANIME_IDS_JOB = 'library.readAnimeIds';
+
+const CHECK_EDITED_METADATA_JOB = 'library.checkEditedMetadata';
 
 const READ_LIKENESS_JOB = 'library.readLikeness';
 
@@ -235,6 +238,7 @@ type JobQueue = {
 export type { JobProgress, JobQueue, JobState, RunningJob };
 
 export {
+  CHECK_EDITED_METADATA_JOB,
   SCAN_LIBRARY_JOB,
   ScanLibraryJobSchema,
   READ_AGAIN_JOB,

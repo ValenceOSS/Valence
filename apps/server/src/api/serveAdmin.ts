@@ -284,6 +284,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           hasCatalogueKey: current.catalogueApiKey !== '',
           hasAudioDbKey: current.audioDbKey !== '',
           hasOmdbKey: current.omdbKey !== '',
+          hasFanartKey: current.fanartKey !== '',
           hardwareAccel: current.hardwareAccel,
           spreadAcrossDevices: current.spreadAcrossDevices,
           hardwareDevices: current.hardwareDevices,
@@ -349,6 +350,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
       ...(patch.audioDbKey === undefined ? {} : { audioDbKey: patch.audioDbKey }),
       ...(patch.omdbKey === undefined ? {} : { omdbKey: patch.omdbKey }),
+      ...(patch.fanartKey === undefined ? {} : { fanartKey: patch.fanartKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.spreadAcrossDevices === undefined
         ? {}
@@ -431,6 +433,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         hasCatalogueKey: updated.catalogueApiKey !== '',
         hasAudioDbKey: updated.audioDbKey !== '',
         hasOmdbKey: updated.omdbKey !== '',
+        hasFanartKey: updated.fanartKey !== '',
         trustedOrigins: updated.trustedOrigins,
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,

@@ -19,7 +19,7 @@ describe('FolderLink', () => {
     expect(screen.getByText('Arrival (2016)/Arrival.mkv')).toBeInTheDocument();
 
     await user.click(
-      screen.getByRole('button', { name: 'Open /media/films/Arrival (2016) in Files' }),
+      screen.getByRole('button', { name: 'Show /media/films/Arrival (2016) in Folders' }),
     );
 
     expect(onOpen).toHaveBeenCalledWith('/media/films/Arrival (2016)');

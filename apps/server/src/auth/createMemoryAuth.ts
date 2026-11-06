@@ -117,6 +117,7 @@ const createMemoryAuth = (
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',
+    fanartKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
     libraryLocks: {},

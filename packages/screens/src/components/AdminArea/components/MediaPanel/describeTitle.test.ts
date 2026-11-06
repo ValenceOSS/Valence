@@ -19,6 +19,52 @@ describe('describeTitle', () => {
     expect(show === undefined ? '' : describeTitle(show)).toBe('2 seasons · 3 episodes');
   });
 
+  it('counts a series’ episodes out of how many TMDB lists, where it knows', () => {
+    const [show] = gatherTitles([episodeOf('a', 1, 1), episodeOf('b', 1, 2)]);
+
+    expect(
+      show === undefined
+        ? ''
+        : describeTitle({
+            ...show,
+            row: {
+              id: 'x',
+              key: 'x',
+              kind: 'show',
+              libraryId: 'lib',
+              lead: show.lead,
+              name: 'Show',
+              order: 'show',
+              year: null,
+              files: 2,
+              versions: 0,
+              seasons: 1,
+              episodes: 2,
+              episodeTotal: 10,
+              sizeBytes: null,
+              durationSeconds: 0,
+              latestAddedAt: show.addedAt,
+              isMatched: true,
+              posterFrom: null,
+              folder: null,
+              leadPath: null,
+              looks: {
+                step: null,
+                isStepMixed: false,
+                range: null,
+                isRangeMixed: false,
+                codec: null,
+                isCodecMixed: false,
+                audio: null,
+                isAudioMixed: false,
+              },
+              problemFiles: { duplicate: [], unreadable: [] },
+              isEdited: false,
+            },
+          }),
+    ).toBe('1 season · 2 of TMDB’s 10 episodes');
+  });
+
   it('counts the editions of a film held more than once', () => {
     const [film] = gatherTitles([
       aMediaSummary({ id: 'film' }),

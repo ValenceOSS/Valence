@@ -82,4 +82,25 @@ describe('FormField', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(FormField.displayName).toBe('FormField');
   });
+
+  it('holds something small beside the label, and a hint that can carry a control', () => {
+    render(
+      <FormField
+        label="Title"
+        aside={<span>Edited</span>}
+        hint={
+          <>
+            <span>TMDB: A film</span>
+            <button type="button">Reset</button>
+          </>
+        }
+      >
+        <input aria-label="Title" />
+      </FormField>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Title' })).toBeInTheDocument();
+    expect(screen.getByText('Edited')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+  });
 });

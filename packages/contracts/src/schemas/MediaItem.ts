@@ -122,7 +122,7 @@ const MediaItemSchema = z.object({
     .nullish()
     .describe('The pixel shape where it is not square, as a ratio like 4/3. Absent means square.'),
   videoRotationDegrees: z.number().int().nullish(),
-  audioStreams: z.array(AudioStreamSchema).min(1),
+  audioStreams: z.array(AudioStreamSchema).describe('Every audio track. A silent video has none.'),
   subtitleStreams: z.array(SubtitleStreamSchema),
 });
 

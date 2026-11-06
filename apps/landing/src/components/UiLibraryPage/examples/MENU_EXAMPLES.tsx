@@ -1,5 +1,6 @@
 import { Copy, Download, Heart, Settings, Share } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Breadcrumbs } from '@ValenceUI/Breadcrumbs';
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -29,6 +30,22 @@ const QUALITIES = [
 ];
 
 const MENU_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
+  Breadcrumbs: [
+    {
+      title: 'A trail down through folders',
+      render: () => (
+        <Breadcrumbs
+          label="Where you are"
+          crumbs={[
+            { id: 'top', label: 'Libraries' },
+            { id: 'films', label: 'Films' },
+            { id: 'arrival', label: 'Arrival (2016)' },
+          ]}
+          onChoose={nothing}
+        />
+      ),
+    },
+  ],
   OptionMenu: [
     {
       title: 'As a field',

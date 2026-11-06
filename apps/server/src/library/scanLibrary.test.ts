@@ -2,7 +2,8 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it, vi } from 'vitest';
 import { scanLibrary, selectChanged } from './scanLibrary';
 import type { MediaRow, ScanPhase, ScannedFile, ScannedItem, StoredItem } from './scanLibrary';
-import type { MetadataProvider } from './MetadataProvider';
+import type { MediaFacts, MetadataProvider } from './MetadataProvider';
+import type { SeasonSourceRow } from './SeasonSourceRow.types';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import type {
   MediaInput,
@@ -93,12 +94,16 @@ const harness = (options: {
   probeImpl?: (path: string) => Promise<MediaProbe>;
   providers?: MetadataProvider[];
   force?: boolean;
+  keepsMatches?: boolean;
+  reusesProbes?: boolean;
+  readProbe?: (path: string) => Promise<{ probe: MediaProbe; probeVersion: number | null } | null>;
   isPartial?: boolean;
   isCancelled?: () => boolean;
   onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: ScanPhase, processed: number, total: number) => void;
   trickplay?: { intervalSeconds: number; tileWidth: number; columns: number; rows: number };
-  overrides?: { path: string; externalId: string; externalKind: 'tv' | 'movie' }[];
+  overrides?: { path: string; externalId: string; externalKind: 'tv' | 'movie' | 'none' }[];
+  seasonSources?: SeasonSourceRow[];
   defaultAudioLanguage?: string | null;
   atOnce?: number;
   capabilitiesImpl?: () => Promise<never>;
@@ -225,6 +230,13 @@ const harness = (options: {
           return Promise.resolve(paths.map((path) => departed(path)));
         },
         listOverrides: () => Promise.resolve(options.overrides ?? []),
+        listSeasonSources: () => Promise.resolve(options.seasonSources ?? []),
+        ...(options.readProbe === undefined
+          ? {}
+          : {
+              readProbe: (_libraryId: string, path: string) =>
+                options.readProbe?.(path) ?? Promise.resolve(null),
+            }),
         ...(options.linkExtras === undefined ? {} : { linkExtras: options.linkExtras }),
         ...(options.regroupSeries === undefined ? {} : { regroupSeries: options.regroupSeries }),
         ...(options.setAside === undefined ? {} : { setAside: options.setAside }),
@@ -243,6 +255,8 @@ const harness = (options: {
         : { defaultAudioLanguage: options.defaultAudioLanguage }),
       ...(options.providers === undefined ? {} : { providers: options.providers }),
       ...(options.force === undefined ? {} : { force: options.force }),
+      ...(options.keepsMatches === undefined ? {} : { keepsMatches: options.keepsMatches }),
+      ...(options.reusesProbes === undefined ? {} : { reusesProbes: options.reusesProbes }),
       ...(options.isPartial === undefined ? {} : { isPartial: options.isPartial }),
       ...(options.isCancelled === undefined ? {} : { isCancelled: options.isCancelled }),
       ...(options.onProblem === undefined ? {} : { onProblem: options.onProblem }),
@@ -1426,6 +1440,51 @@ describe('a correction somebody made', () => {
     expect(asked).toBe('222');
   });
 
+  it('reads a season somebody said is another show’s from that show, and the rest from their own', async () => {
+    const asked = new Map<string, MediaFacts['borrowed']>();
+    const { run } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [
+        file('/media/shows/Show/Season 06/show.s06e01.mkv'),
+        file('/media/shows/Show/Season 07/show.s07e01.mkv'),
+        file('/media/shows/Other/Season 07/other.s07e01.mkv'),
+      ],
+      seasonSources: [
+        {
+          folder: '/media/shows/Show',
+          seasonNumber: 7,
+          externalId: '900',
+          externalSeason: 1,
+          title: 'Show',
+          year: 2026,
+        },
+      ],
+      providers: [
+        {
+          name: 'catalogue',
+          describe: (facts) => {
+            asked.set(facts.path, facts.borrowed);
+
+            return Promise.resolve({ title: 'Episode', year: 2016, seriesTitle: 'Show' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(Object.fromEntries(asked)).toEqual({
+      '/media/shows/Show/Season 06/show.s06e01.mkv': [
+        { seasonNumber: 7, externalId: '900', externalSeason: 1 },
+      ],
+      '/media/shows/Show/Season 07/show.s07e01.mkv': [
+        { seasonNumber: 7, externalId: '900', externalSeason: 1 },
+      ],
+      '/media/shows/Other/Season 07/other.s07e01.mkv': undefined,
+    });
+  });
+
   it('is stored as a correction, so it replaces the programme’s match', async () => {
     const { run, rows } = harness({
       kind: 'shows',
@@ -1589,6 +1648,88 @@ describe('a correction somebody made', () => {
     await run();
 
     expect(asked).toEqual({ known: null, remembered: '777' });
+  });
+});
+
+describe('a re-read that keeps each match', () => {
+  it('asks the provider about the entry the file is matched to, not its name', async () => {
+    let asked: { known: string | null | undefined; kind: string | undefined } = {
+      known: undefined,
+      kind: undefined,
+    };
+    const { run } = harness({
+      found: [file('/media/films/b.mkv')],
+      existing: [stored('/media/films/b.mkv', { externalId: '777' })],
+      force: true,
+      keepsMatches: true,
+      providers: [
+        {
+          name: 'catalogue',
+          describe: (facts) => {
+            asked = { known: facts.knownExternalId, kind: facts.knownExternalKind };
+
+            return Promise.resolve({ title: 'B', year: 2000, externalId: '777' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked).toEqual({ known: '777', kind: 'movie' });
+  });
+});
+
+describe('a re-read that reuses what it stored of each file', () => {
+  it('takes the stored probe where it was made under the same rules, and probes otherwise', async () => {
+    const probed: string[] = [];
+    const { run } = harness({
+      found: [file('/media/films/a.mkv'), file('/media/films/b.mkv')],
+      existing: [stored('/media/films/a.mkv'), stored('/media/films/b.mkv')],
+      force: true,
+      reusesProbes: true,
+      readProbe: (path) =>
+        Promise.resolve({ probe: probe(), probeVersion: path.endsWith('a.mkv') ? 1 : 0 }),
+      probeImpl: (path) => {
+        probed.push(path);
+
+        return Promise.resolve(probe());
+      },
+    });
+
+    await run();
+
+    expect(probed).toEqual(['/media/films/b.mkv']);
+  });
+});
+
+describe('a title somebody unmatched', () => {
+  it('is read from its file name alone, and stays unmatched', async () => {
+    const asked: string[] = [];
+    const { run, rows } = harness({
+      found: [file('/media/films/Some Film (2001).mkv')],
+      existing: [stored('/media/films/Some Film (2001).mkv', { externalId: '777' })],
+      overrides: [
+        { path: '/media/films/Some Film (2001).mkv', externalId: '', externalKind: 'none' },
+      ],
+      force: true,
+      providers: [
+        {
+          name: 'catalogue',
+          describe: () => {
+            asked.push('catalogue');
+
+            return Promise.resolve({ title: 'Wrong', year: 2000, externalId: '777' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked).toEqual([]);
+    expect(rows.at(-1)).toMatchObject({ title: 'Some Film', year: 2001 });
+    expect(rows.at(-1)?.metadata.externalId).toBeUndefined();
   });
 });
 

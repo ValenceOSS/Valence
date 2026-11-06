@@ -10,6 +10,7 @@ import {
   searchLibraryFilesRoute,
 } from '@ValenceServer/routes/FilesRoute';
 import { listLibraryFolder } from '@ValenceServer/files/listLibraryFolder';
+import { describeEntriesIn } from '@ValenceServer/files/describeEntriesIn';
 import { measureLibraryFolder } from '@ValenceServer/files/measureLibraryFolder';
 import { searchLibraryFiles } from '@ValenceServer/files/searchLibraryFiles';
 import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
@@ -32,10 +33,9 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const listed = await listLibraryFolder(
-      await library.list(asTheServer),
-      context.req.valid('query').path,
-      library.mediaIdsAt,
+    const libraries = await library.list(asTheServer);
+    const listed = await listLibraryFolder(libraries, context.req.valid('query').path, (entries) =>
+      describeEntriesIn(libraries, entries, library.readEntryFacts),
     );
 
     switch (listed.kind) {
@@ -93,12 +93,9 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { words, within } = context.req.valid('query');
-    const found = await searchLibraryFiles(
-      folderDisk,
-      await library.list(asTheServer),
-      words,
-      within,
-      library.mediaIdsAt,
+    const libraries = await library.list(asTheServer);
+    const found = await searchLibraryFiles(folderDisk, libraries, words, within, (entries) =>
+      describeEntriesIn(libraries, entries, library.readEntryFacts),
     );
 
     return found.kind === 'found'

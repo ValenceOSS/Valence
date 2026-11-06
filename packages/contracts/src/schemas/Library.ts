@@ -67,6 +67,9 @@ const LibrarySchema = z.object({
   requestProfileId: z.string().uuid().nullable().default(null),
   requestPath: z.string().nullable().default(null),
   keepsShowsTogether: z.boolean().default(true),
+  metadataLanguage: z.string().nullable().optional(),
+  usesOriginalTitle: z.boolean().optional(),
+  writesNfo: z.boolean().optional(),
   higherProfileAsks: HigherProfileAsksSchema.default('ask'),
   fulfilment: FulfilmentSchema.nullable().optional(),
   linkedServerId: z.string().uuid().nullable().optional(),
@@ -82,6 +85,13 @@ const UpdateLibraryRequestSchema = z.object({
   requestProfileId: z.string().uuid().nullable().optional(),
   requestPath: z.string().trim().nullable().optional(),
   keepsShowsTogether: z.boolean().optional(),
+  metadataLanguage: z
+    .string()
+    .regex(/^[a-z]{2}(?:-[A-Z]{2})?$/u)
+    .nullable()
+    .optional(),
+  usesOriginalTitle: z.boolean().optional(),
+  writesNfo: z.boolean().optional(),
   higherProfileAsks: HigherProfileAsksSchema.optional(),
   fulfilment: FulfilmentSchema.nullable().optional(),
 });
@@ -90,6 +100,7 @@ const MediaSummarySchema = z.object({
   id: z.string().uuid(),
   libraryId: z.string().uuid(),
   title: z.string().min(1),
+  sortTitle: z.string().nullish(),
   year: z.number().int().min(1870).max(2200).nullable(),
   durationSeconds: z.number().positive(),
   width: z.number().int().positive(),
@@ -109,6 +120,7 @@ const MediaSummarySchema = z.object({
   versionLabel: z.string().nullish(),
   rating: z.number().nullish(),
   seriesTitle: z.string().nullish(),
+  seriesSortTitle: z.string().nullish(),
   seasonNumber: z.number().int().nullish(),
   episodeNumber: z.number().int().nullish(),
   episodeNumberEnd: z.number().int().nullish(),

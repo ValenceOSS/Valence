@@ -134,6 +134,15 @@ describe('TextField', () => {
     expect(input.className).not.toContain('color-scheme');
   });
 
+  it('takes a date as a calendar date, written the way the server keeps it', () => {
+    render(<TextField label="Released" value="2001-05-04" onValueChange={vi.fn()} type="date" />);
+
+    const input = screen.getByLabelText('Released');
+
+    expect(input).toHaveAttribute('type', 'date');
+    expect(input).toHaveValue('2001-05-04');
+  });
+
   it('does not accept input when disabled', async () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
@@ -390,5 +399,29 @@ describe('a control after the field', () => {
     await user.type(box, 'a');
 
     expect(onValueChange).toHaveBeenCalledWith('a');
+  });
+
+  it('paints no box of its own where it sits inside another', () => {
+    render(<TextField label="Genres" isInset value="" onValueChange={() => undefined} />);
+
+    expect(screen.getByLabelText('Genres')).toHaveClass('bg-transparent');
+    expect(screen.getByLabelText('Genres')).not.toHaveClass('rounded-lg');
+  });
+
+  it('shows what its value is counted in inside the box and reads it out with the field', () => {
+    render(
+      <TextField
+        label="Rating"
+        type="number"
+        unit="/ 10"
+        value="7"
+        onValueChange={() => undefined}
+      />,
+    );
+
+    const field = screen.getByLabelText('Rating');
+
+    expect(field).toHaveAccessibleDescription('/ 10');
+    expect(field).toHaveClass('pr-12');
   });
 });

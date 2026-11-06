@@ -45,6 +45,7 @@ const emptySettings = () =>
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',
+    fanartKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
     libraryLocks: {},

@@ -2,11 +2,11 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useDeferredValue, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   Folder as FolderIcon,
   FolderPlus as FolderPlusIcon,
 } from '@keyline-icons/react/fill';
+import { Breadcrumbs } from '@ValenceUI/Breadcrumbs';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -145,38 +145,18 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
           <Icon of={FolderPlusIcon} size={14} />
         </Button>
 
-        <nav
-          aria-label={say('common.whereYouAre')}
-          className="valence-rail flex min-w-0 items-center gap-0.5 overflow-x-auto"
-        >
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={() => {
-              setAt(null);
-            }}
-          >
-            {say('common.places')}
-          </Button>
-
-          {at === null
-            ? null
-            : pathSegments(at).map((segment) => (
-                <span key={segment.path} className="flex shrink-0 items-center gap-0.5">
-                  <Icon of={ChevronRightIcon} size={12} tone="muted" />
-
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => {
-                      setAt(segment.path);
-                    }}
-                  >
-                    {segment.label}
-                  </Button>
-                </span>
-              ))}
-        </nav>
+        <Breadcrumbs
+          label={say('common.whereYouAre')}
+          crumbs={[
+            { id: '', label: say('common.places') },
+            ...(at === null
+              ? []
+              : pathSegments(at).map((segment) => ({ id: segment.path, label: segment.label }))),
+          ]}
+          onChoose={(id) => {
+            setAt(id === '' ? null : id);
+          }}
+        />
       </div>
 
       <TextField
