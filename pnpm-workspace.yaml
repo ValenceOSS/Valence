@@ -60,6 +60,7 @@ packageExtensions:
     peerDependencies:
       react-native: '*'
 patchedDependencies:
+  expo-glass-tabs@0.1.1: patches/expo-glass-tabs@0.1.1.patch
   expo-video@57.0.4: patches/expo-video@57.0.4.patch
   react-native-web@0.21.3: patches/react-native-web@0.21.3.patch
 minimumReleaseAgeExclude:

@@ -165,6 +165,10 @@ jest.mock('react-native-gesture-handler', () => ({
     mockCreateElement(mockView, { style }, children),
 }));
 
+jest.mock('expo-blur', () => ({
+  BlurView: (props: ViewProps) => mockCreateElement(mockView, props),
+}));
+
 jest.mock('expo-glass-tabs', () => ({
   TabBarMinimizeProvider: ({ children }: { children?: ReactNode }) => children,
   GlassTabBar: ({ children, onLayout }: ViewProps & { children?: ReactNode }) =>

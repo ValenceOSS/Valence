@@ -176,6 +176,7 @@ overrides:
 packageExtensionsChecksum: sha256-daeow0RbvsNSfXgFeWt5IjB1z9nAowZ5ANJJJUWas+8=
 
 patchedDependencies:
+  expo-glass-tabs@0.1.1: 606af01e3bf3d06989f3def95dd5c5d95b74de62671d3c2438db4145c86ca466
   expo-video@57.0.4: 71f95119ba3dec49ec5b599ef312e5abb4ce1264fadf8bc5c3ab59815fee4bb5
   react-native-web@0.21.3: bebd075d39fcc6e9153483f5f1c23434710e1321318ebfb5faa02a689d94f1ea
 
@@ -666,7 +667,7 @@ importers:
         version: 58.0.5(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       expo-glass-tabs:
         specifier: 0.1.1
-        version: 0.1.1(4c9fbd3f99e422cc852bf00b4e281749)
+        version: 0.1.1(patch_hash=606af01e3bf3d06989f3def95dd5c5d95b74de62671d3c2438db4145c86ca466)(4c9fbd3f99e422cc852bf00b4e281749)
       expo-haptics:
         specifier: 58.0.7
         version: 58.0.7(expo@58.0.23)
@@ -20068,7 +20069,7 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1)
 
-  expo-glass-tabs@0.1.1(4c9fbd3f99e422cc852bf00b4e281749):
+  expo-glass-tabs@0.1.1(patch_hash=606af01e3bf3d06989f3def95dd5c5d95b74de62671d3c2438db4145c86ca466)(4c9fbd3f99e422cc852bf00b4e281749):
     dependencies:
       expo-blur: 58.0.5(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       expo-glass-effect: 58.0.5(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)

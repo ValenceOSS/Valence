@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { GlassTabBar, GlassTabButton } from 'expo-glass-tabs';
 import { setMinimized, useMinimizeState } from 'expo-glass-tabs/build/minimize-context';
+import { AFadedEdge } from '@ValenceMobile/components/AFadedEdge/AFadedEdge';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { ATabFace } from '@ValenceMobile/components/TheTabs/components/ATabFace/ATabFace';
 import { TABS_FOLLOW_SCROLLING } from '@ValenceMobile/components/TheTabs/TABS_FOLLOW_SCROLLING';
+import { theColours } from '@ValenceMobile/theme/theColours';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AGlassTabsProps } from './AGlassTabs.types';
@@ -13,7 +16,12 @@ const EXPANDED_NEAR_THE_TOP = 24;
 
 const TURNS_AFTER = 3;
 
+const BLUR_BLEEDS = 44;
+
+const BLUR_FADES_OVER = 0.8;
+
 const styles = StyleSheet.create({
+  blurs: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   leftOut: { opacity: 0 },
 });
 
@@ -22,6 +30,10 @@ const styles = StyleSheet.create({
  * or a solid one where the phone has none, whose lens slides to the tab showing, which can be scrubbed
  * along with a finger and a tick at each tab, and which tucks in to its icons alone as a page scrolls
  * down and comes back out as it scrolls up or reaches its top, with the page blurring away beneath it.
+ *
+ * Behind it the page blurs away towards the foot of the screen as one blur faded out at its top,
+ * rather than the library's own, which stacks thin blurs whose edges show as bands across whatever
+ * sits just above the bar.
  *
  * The pages report how far they have scrolled through `TABS_FOLLOW_SCROLLING` rather than through
  * the library's own hook, which only a Reanimated scroll view can use; the rule for when it tucks in
@@ -46,6 +58,9 @@ const AGlassTabs = ({
 }: AGlassTabsProps) => {
   const colours = useTheColours();
   const minimized = useMinimizeState();
+  const isDark = colours.surface === theColours.dark.surface;
+  const [barTall, setBarTall] = useState(0);
+  const blurTall = barTall + BLUR_BLEEDS;
   const [lastScrolledTo] = useState(() => new Map([['at', 0]]));
 
   useEffect(() => {
@@ -76,7 +91,28 @@ const AGlassTabs = ({
         {children}
       </TABS_FOLLOW_SCROLLING.Provider>
 
+      {barTall === 0 ? null : (
+        <View pointerEvents="none" style={[styles.blurs, { height: blurTall }]}>
+          <AFadedEdge leading={blurTall * BLUR_FADES_OVER} trailing={0} isUpright>
+            <BlurView
+              tint={isDark ? 'dark' : 'light'}
+              intensity={36}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  experimental_backgroundImage: `linear-gradient(to top, ${withAlpha(colours.surface, 0.7)} 0%, ${withAlpha(colours.surface, 0.3)} 45%, ${withAlpha(colours.surface, 0)} 100%)`,
+                },
+              ]}
+            />
+          </AFadedEdge>
+        </View>
+      )}
+
       <GlassTabBar
+        hasEdgeBlur={false}
         onIndexSelected={(index) => {
           const chosen = tabs[index];
 
@@ -92,6 +128,7 @@ const AGlassTabs = ({
           solidFallback: withAlpha(colours.surfaceRaised, 0.96),
         }}
         onLayout={({ nativeEvent }) => {
+          setBarTall(nativeEvent.layout.height);
           onMeasure(nativeEvent.layout.height);
         }}
       >
