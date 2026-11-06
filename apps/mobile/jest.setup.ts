@@ -5,12 +5,17 @@ import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/asy
 import {
   createContext as mockCreateContext,
   createElement as mockCreateElement,
+  useContext as mockUseContext,
   useEffect as mockUseEffect,
   useState as mockUseState,
 } from 'react';
 import type { ReactNode } from 'react';
-import { Image as mockNativeImage } from 'react-native';
-import type { ImageStyle, StyleProp } from 'react-native';
+import {
+  Image as mockNativeImage,
+  Pressable as mockPressable,
+  View as mockView,
+} from 'react-native';
+import type { ImageStyle, StyleProp, ViewProps } from 'react-native';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
@@ -100,6 +105,94 @@ jest.mock('expo', () => ({
 
 jest.mock('@ValenceMobile/platform/theCookiesThisPhoneHolds', () => ({
   theCookiesThisPhoneHolds: jest.fn(() => Promise.resolve(null)),
+}));
+
+const mockTrayOpen = mockCreateContext<{ isOpen: boolean; onOpenChange: (open: boolean) => void }>({
+  isOpen: false,
+  onOpenChange: () => undefined,
+});
+
+jest.mock('morphlet', () => {
+  const Section = ({ children, ...props }: ViewProps & { children?: ReactNode }) =>
+    mockCreateElement(mockView, props, children);
+
+  return {
+    Tray: {
+      Root: (props: {
+        open?: boolean;
+        onOpenChange?: (open: boolean) => void;
+        children?: ReactNode;
+      }) =>
+        mockCreateElement(
+          mockTrayOpen.Provider,
+          {
+            value: {
+              isOpen: props.open === true,
+              onOpenChange: (open: boolean) => {
+                props.onOpenChange?.(open);
+              },
+            },
+          },
+          props.children,
+        ),
+      Content: ({ children, ...props }: ViewProps & { children?: ReactNode }) => {
+        const tray = mockUseContext(mockTrayOpen);
+
+        return tray.isOpen
+          ? mockCreateElement(
+              mockView,
+              props,
+              mockCreateElement(mockPressable, {
+                accessibilityRole: 'button',
+                accessibilityLabel: 'Close',
+                onPress: () => {
+                  tray.onOpenChange(false);
+                },
+              }),
+              children,
+            )
+          : null;
+      },
+      Header: Section,
+      Body: Section,
+      Footer: Section,
+    },
+  };
+});
+
+jest.mock('react-native-gesture-handler', () => ({
+  GestureHandlerRootView: ({ children, style }: ViewProps & { children?: ReactNode }) =>
+    mockCreateElement(mockView, { style }, children),
+}));
+
+jest.mock('expo-glass-tabs', () => ({
+  TabBarMinimizeProvider: ({ children }: { children?: ReactNode }) => children,
+  GlassTabBar: ({ children, onLayout }: ViewProps & { children?: ReactNode }) =>
+    mockCreateElement(mockView, { onLayout }, children),
+  GlassTabButton: (props: {
+    item: { label: string; renderIcon?: (props: { tint: string; size: number }) => ReactNode };
+    isFocused?: boolean;
+    onPress?: () => void;
+  }) =>
+    mockCreateElement(
+      mockPressable,
+      {
+        accessibilityRole: 'button',
+        accessibilityLabel: props.item.label,
+        accessibilityState: { selected: props.isFocused === true },
+        onPress: props.onPress,
+      },
+      props.item.renderIcon?.({ tint: '#000000', size: 21 }),
+    ),
+}));
+
+jest.mock('expo-glass-tabs/build/minimize-context', () => ({
+  useMinimizeState: () => ({}),
+  setMinimized: jest.fn(),
+}));
+
+jest.mock('expo-haptics', () => ({
+  selectionAsync: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock('expo-image', () => ({

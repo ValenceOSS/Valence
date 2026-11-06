@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Tray } from 'morphlet';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -52,6 +53,7 @@ const styles = StyleSheet.create({
   },
   tint: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   title: { flex: 1 },
+  tray: { overflow: 'hidden', paddingTop: 16 },
 });
 
 /**
@@ -64,6 +66,10 @@ const styles = StyleSheet.create({
  *
  * A press on the dimmed page puts it away, and so does dragging it down by its top past a little
  * way or flicking it; let go short of that and it springs back.
+ *
+ * On an iPhone it is Morphlet's native tray instead: a card floating clear of the screen's edges that
+ * springs to fit what it holds and morphs as that changes, dragged away or put away from the page
+ * behind it by the system's own gestures, with the same frosted glass, title and way to close.
  *
  * @param isOpen - Whether it is out.
  * @param label - What it is for, for anybody who cannot see it.
@@ -149,6 +155,62 @@ const ABottomSheet = ({
     }),
   );
 
+  const head =
+    title === undefined ? null : (
+      <View style={styles.head}>
+        <View style={styles.title}>
+          <Words size="heading" lines={1}>
+            {title}
+          </Words>
+        </View>
+        <Button tone="bare" label={closeLabel} onPress={onClose}>
+          <Icon of={X} size={22} colour={colours.text} />
+        </Button>
+      </View>
+    );
+
+  if (Platform.OS === 'ios') {
+    return (
+      <Tray.Root
+        open={isOpen}
+        animation="smooth"
+        {...(isStill ? { duration: 0 } : {})}
+        onOpenChange={(next) => {
+          if (!next) {
+            onClose();
+          }
+        }}
+      >
+        <Tray.Content
+          accessibilityViewIsModal
+          accessibilityLabel={label}
+          backgroundColor="transparent"
+          cornerRadius={ROUND}
+          backdropOpacity={0.4}
+          style={[
+            styles.tray,
+            {
+              height: isTall ? height * TALLEST : undefined,
+              paddingBottom: SCREEN_EDGE,
+              paddingHorizontal: SCREEN_EDGE,
+            },
+          ]}
+        >
+          <ABlur isDark={isDark} changesOver={0} />
+          <View
+            style={[
+              styles.tint,
+              { backgroundColor: withAlpha(colours.surface, isDark ? 0.45 : 0.55) },
+            ]}
+            pointerEvents="none"
+          />
+          {head === null ? null : <Tray.Header>{head}</Tray.Header>}
+          <Tray.Body>{children}</Tray.Body>
+        </Tray.Content>
+      </Tray.Root>
+    );
+  }
+
   return (
     <Modal
       visible={isShowing}
@@ -165,11 +227,7 @@ const ABottomSheet = ({
           onPress={onClose}
         />
       </Animated.View>
-      <KeyboardAvoidingView
-        style={styles.rises}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        pointerEvents="box-none"
-      >
+      <KeyboardAvoidingView style={styles.rises} pointerEvents="box-none">
         <Animated.View
           accessibilityViewIsModal
           accessibilityLabel={label}
@@ -197,18 +255,7 @@ const ABottomSheet = ({
             <View style={styles.grip}>
               <View style={[styles.handle, { backgroundColor: withAlpha(colours.text, 0.28) }]} />
             </View>
-            {title === undefined ? null : (
-              <View style={styles.head}>
-                <View style={styles.title}>
-                  <Words size="heading" lines={1}>
-                    {title}
-                  </Words>
-                </View>
-                <Button tone="bare" label={closeLabel} onPress={onClose}>
-                  <Icon of={X} size={22} colour={colours.text} />
-                </Button>
-              </View>
-            )}
+            {head}
           </View>
           {children}
         </Animated.View>

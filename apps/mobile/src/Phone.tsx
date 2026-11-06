@@ -1,6 +1,7 @@
 import { TheAskingSheet } from '@ValenceMobile/components/TheAskingSheet/TheAskingSheet';
 import { useCallback, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { StyleSheet, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -20,6 +21,8 @@ import { TheFlyingMark } from '@ValenceMobile/components/TheFlyingMark/TheFlying
 import { TheChosenAppearance } from '@ValenceMobile/components/TheChosenAppearance/TheChosenAppearance';
 import { TheHousehold } from '@ValenceMobile/components/TheHousehold/TheHousehold';
 import { IfThisAppIsOn } from '@ValenceMobile/components/IfThisAppIsOn/IfThisAppIsOn';
+
+const styles = StyleSheet.create({ whole: { flex: 1 } });
 import { WhereIsYourValence } from '@ValenceMobile/components/WhereIsYourValence/WhereIsYourValence';
 
 const answers = buildQueryClient();
@@ -83,59 +86,61 @@ const Phone = () => {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      {isReady ? (
-        <QueryClientProvider client={answers}>
-          <THE_FIRST_SCREEN_IS_READY.Provider value={homeIsReady}>
-            {address === null || isAsking ? (
-              <WhereIsYourValence
-                onChosen={(chosen) => {
-                  rememberServerAddress(chosen);
-                  setAddress(chosen);
-                  setIsAsking(false);
-                  void answers.invalidateQueries();
-                }}
-              />
-            ) : (
-              <IfThisAppIsOn
-                onElsewhere={() => {
-                  setIsAsking(true);
-                }}
-              >
-                <TheHousehold
+    <GestureHandlerRootView style={styles.whole}>
+      <SafeAreaProvider>
+        {isReady ? (
+          <QueryClientProvider client={answers}>
+            <THE_FIRST_SCREEN_IS_READY.Provider value={homeIsReady}>
+              {address === null || isAsking ? (
+                <WhereIsYourValence
+                  onChosen={(chosen) => {
+                    rememberServerAddress(chosen);
+                    setAddress(chosen);
+                    setIsAsking(false);
+                    void answers.invalidateQueries();
+                  }}
+                />
+              ) : (
+                <IfThisAppIsOn
                   onElsewhere={() => {
                     setIsAsking(true);
                   }}
-                />
-              </IfThisAppIsOn>
-            )}
-            <TheChosenAppearance />
-            <TheAskingSheet />
-            <StatusBar style="auto" />
-            <TheFirstScreenWatch
-              hasServer={address !== null && !isAsking}
-              isHomeReady={isHomeReady}
-              onReady={splashDone}
-            />
-          </THE_FIRST_SCREEN_IS_READY.Provider>
-        </QueryClientProvider>
-      ) : null}
+                >
+                  <TheHousehold
+                    onElsewhere={() => {
+                      setIsAsking(true);
+                    }}
+                  />
+                </IfThisAppIsOn>
+              )}
+              <TheChosenAppearance />
+              <TheAskingSheet />
+              <StatusBar style="auto" />
+              <TheFirstScreenWatch
+                hasServer={address !== null && !isAsking}
+                isHomeReady={isHomeReady}
+                onReady={splashDone}
+              />
+            </THE_FIRST_SCREEN_IS_READY.Provider>
+          </QueryClientProvider>
+        ) : null}
 
-      {isSplashGone ? null : (
-        <ASplash
-          isReady={isSplashDone}
-          isDark={
-            (isReady
-              ? theThemeToDrawIn(chosenTheme(), scheme)
-              : scheme === 'light'
-                ? 'light'
-                : 'dark') === 'dark'
-          }
-          onGone={splashGone}
-        />
-      )}
-      {isReady ? <TheFlyingMark /> : null}
-    </SafeAreaProvider>
+        {isSplashGone ? null : (
+          <ASplash
+            isReady={isSplashDone}
+            isDark={
+              (isReady
+                ? theThemeToDrawIn(chosenTheme(), scheme)
+                : scheme === 'light'
+                  ? 'light'
+                  : 'dark') === 'dark'
+            }
+            onGone={splashGone}
+          />
+        )}
+        {isReady ? <TheFlyingMark /> : null}
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 

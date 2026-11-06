@@ -1,5 +1,5 @@
 import { Broadcast } from '@keyline-icons/react-native';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import type { TheLiveTvProps } from './TheLiveTv.types';
 import { say } from '@ValenceI18n/say';
+import { TABS_FOLLOW_SCROLLING } from '@ValenceMobile/components/TheTabs/TABS_FOLLOW_SCROLLING';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SCROLLED = 4;
@@ -157,16 +158,20 @@ const TheLiveTv = ({ header, onScrolled }: TheLiveTvProps) => {
     [onChannel, now, watch, keep],
   );
 
+  const tellTabs = useContext(TABS_FOLLOW_SCROLLING);
+
   const onScroll = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
       const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
+
+      tellTabs?.(nativeEvent.contentOffset.y);
 
       if (isScrolled !== wasScrolled.current) {
         wasScrolled.current = isScrolled;
         onScrolled?.(isScrolled);
       }
     },
-    [onScrolled],
+    [onScrolled, tellTabs],
   );
 
   const chips = [

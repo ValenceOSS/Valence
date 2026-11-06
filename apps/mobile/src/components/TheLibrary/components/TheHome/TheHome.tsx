@@ -25,6 +25,7 @@ import type { ComingUp } from '@ValenceContracts/schemas/Show';
 import type { AShelfOf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf.types';
 import type { TheHomeProps } from './TheHome.types';
 import { say } from '@ValenceI18n/say';
+import { TABS_FOLLOW_SCROLLING } from '@ValenceMobile/components/TheTabs/TABS_FOLLOW_SCROLLING';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const FEATURED = 5;
@@ -148,11 +149,14 @@ const TheHomePage = ({
     [upcoming, progress, today, onLookAt, onLookAtShow, flagOf, askToDismiss],
   );
 
+  const tellTabs = useContext(TABS_FOLLOW_SCROLLING);
+
   const onScroll = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
       const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
 
       onScrolledTo?.(nativeEvent.contentOffset.y);
+      tellTabs?.(nativeEvent.contentOffset.y);
       const isHeroSeen =
         heroEnds.current === null || nativeEvent.contentOffset.y < heroEnds.current - STILL_SEEN_BY;
 
@@ -163,7 +167,7 @@ const TheHomePage = ({
         onScrolled?.(isScrolled);
       }
     },
-    [onScrolled, onScrolledTo],
+    [onScrolled, onScrolledTo, tellTabs],
   );
 
   useEffect(() => {
