@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 type MenuOption = {
   id: string;
   label: string;
+  icon?: ReactNode;
   detail?: string;
   group?: string | null;
 };

@@ -6,7 +6,7 @@ import { DriveList } from './DriveList';
 const machine = (change: Partial<Hardware> = {}): Hardware => ({
   surroundings: 'host',
   processor: null,
-  memory: { totalBytes: 0, modules: [] },
+  memory: { totalBytes: 0, modules: [], emptySlots: [] },
   drives: [
     {
       name: 'nvme0n1',
@@ -17,6 +17,7 @@ const machine = (change: Partial<Hardware> = {}): Hardware => ({
     },
     { name: 'sda', model: null, kind: 'hdd', connection: null, totalBytes: 4_000_000_000_000 },
   ],
+  sataPorts: null,
   ...change,
 });
 

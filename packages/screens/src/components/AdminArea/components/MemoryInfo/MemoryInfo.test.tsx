@@ -17,8 +17,10 @@ const machine = (change: Partial<Hardware> = {}): Hardware => ({
         slot: 'DIMM A1',
       },
     ],
+    emptySlots: [],
   },
   drives: [],
+  sataPorts: null,
   ...change,
 });
 
@@ -43,7 +45,7 @@ describe('MemoryInfo', () => {
       <MemoryInfo
         hardware={machine({
           surroundings: 'container',
-          memory: { totalBytes: 1024, modules: [] },
+          memory: { totalBytes: 1024, modules: [], emptySlots: [] },
         })}
       />,
     );

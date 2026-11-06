@@ -3,6 +3,7 @@ import type { TitleFieldState } from '@ValenceContracts/schemas/TitleEdit';
 
 type SourcedFieldProps = {
   label: string;
+  isLabelHidden?: boolean;
   state: TitleFieldState | undefined;
   onReset: () => void;
   onLock: () => void;

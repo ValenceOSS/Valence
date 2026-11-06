@@ -15,6 +15,8 @@ import type {
   VideoQualityId,
 } from '@ValenceContracts/schemas/QualityProfile';
 import { saying } from '@ValenceI18n/saying';
+import { sayingCount } from '@ValenceI18n/sayingCount';
+import { isScarce } from '@ValenceRequests/profiles/isScarce';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { StringKey } from '@ValenceI18n/StringKey';
 
@@ -411,7 +413,10 @@ const judgeRelease = (
           ? [saying('requests.profiles.judgeRelease.nobodyIsSeedingIt')]
           : []),
       ],
-      reasons: [],
+      reasons:
+        isScarce(release) && release.seeders !== null && release.seeders > 0
+          ? [sayingCount('requests.profiles.judgeRelease.count.onlyFewSeedingIt', release.seeders)]
+          : [],
     },
     {
       score: preferred.length * PREFERRED_WORD,

@@ -13,6 +13,7 @@ describe('describeGraphics', () => {
       encoderPercent: 88,
       devicePercent: 34,
       measured: 'wholeMachine' as const,
+      engines: null,
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('88%');
@@ -25,6 +26,7 @@ describe('describeGraphics', () => {
       encoderPercent: 90,
       devicePercent: 5,
       measured: 'wholeMachine' as const,
+      engines: null,
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('90%');
@@ -36,6 +38,7 @@ describe('describeGraphics', () => {
       encoderPercent: null,
       devicePercent: 41,
       measured: 'wholeMachine' as const,
+      engines: null,
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('41%');
@@ -48,6 +51,7 @@ describe('describeGraphics', () => {
       encoderPercent: null,
       devicePercent: 0,
       measured: 'wholeMachine' as const,
+      engines: null,
     });
 
     expect(tile.detail).toBe('whole GPU, not encoder');
@@ -62,24 +66,28 @@ describe('describeGraphics', () => {
         encoderPercent: 88,
         devicePercent: 34,
         measured: 'wholeMachine' as const,
+        engines: null,
       },
       {
         name: 'Apple M5 Pro',
         encoderPercent: null,
         devicePercent: 41,
         measured: 'wholeMachine' as const,
+        engines: null,
       },
       {
         name: 'A card with a very long name indeed',
         encoderPercent: null,
         devicePercent: null,
         measured: 'wholeMachine' as const,
+        engines: null,
       },
       {
         name: 'Intel UHD Graphics 770',
         encoderPercent: 62,
         devicePercent: null,
         measured: 'valenceOnly' as const,
+        engines: null,
       },
     ];
 
@@ -94,6 +102,7 @@ describe('describeGraphics', () => {
       encoderPercent: null,
       devicePercent: null,
       measured: 'wholeMachine' as const,
+      engines: null,
     });
 
     expect(tile.value).toBe('—');
@@ -107,6 +116,7 @@ describe('describeGraphics', () => {
         encoderPercent: 50,
         devicePercent: 10,
         measured: 'wholeMachine' as const,
+        engines: null,
       }).fraction,
     ).toBe(0.5);
     expect(
@@ -115,6 +125,7 @@ describe('describeGraphics', () => {
         encoderPercent: null,
         devicePercent: 10,
         measured: 'wholeMachine' as const,
+        engines: null,
       }).fraction,
     ).toBe(0.1);
   });
@@ -129,6 +140,7 @@ describe('describeGraphics', () => {
       encoderPercent: 62,
       devicePercent: null,
       measured: 'valenceOnly' as const,
+      engines: null,
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('62%');
@@ -142,6 +154,7 @@ describe('describeGraphics', () => {
         encoderPercent: 0,
         devicePercent: null,
         measured: 'valenceOnly' as const,
+        engines: null,
       }).detail,
     ).not.toBe('encoder, not whole GPU');
   });
@@ -157,6 +170,7 @@ describe('describeGraphics', () => {
           encoderPercent: null,
           devicePercent: null,
           measured: 'wholeMachine' as const,
+          engines: null,
         },
         ['kernel: Card has no utilisation figure to report yet'],
       ).detail,

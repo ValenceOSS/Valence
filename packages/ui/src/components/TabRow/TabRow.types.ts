@@ -1,6 +1,9 @@
+import type { ReactNode } from 'react';
+
 type TabRowItem = {
   id: string;
   label: string;
+  leading?: ReactNode;
 };
 
 type TabRowGroup = {
@@ -10,7 +13,7 @@ type TabRowGroup = {
 
 type TabRowSize = 'sm' | 'md';
 
-type TabRowTone = 'track' | 'underlined';
+type TabRowTone = 'track' | 'underlined' | 'plain';
 
 type TabRowProps = {
   label: string;

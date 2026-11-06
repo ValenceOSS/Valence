@@ -1,4 +1,6 @@
 import { FIELD_TEXT } from '@ValenceUI/tokens/FIELD_TEXT';
+import { FIELD_DISABLED } from '@ValenceUI/tokens/FIELD_DISABLED';
+import { FIELD_SURFACE } from '@ValenceUI/tokens/FIELD_SURFACE';
 import { useId } from 'react';
 import { FieldNote } from './components/FieldNote/FieldNote';
 import { cn } from '@ValenceUI/cn';
@@ -125,7 +127,7 @@ const TextField = ({
         'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
         'motion-reduce:transition-none placeholder:text-text-muted',
         isInset ? 'h-6 bg-transparent px-1 text-[0.8125rem]' : 'focus-visible:focus-ring',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        FIELD_DISABLED,
         'w-full',
         type === 'number'
           ? '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
@@ -134,7 +136,7 @@ const TextField = ({
           ? ''
           : isBare
             ? 'bg-transparent outline-none'
-            : 'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl hover:border-[var(--surface-divider)]',
+            : cn(FIELD_SURFACE, 'hover:border-[var(--surface-divider)]'),
         isBare || isInset
           ? ''
           : size === 'sm'
@@ -146,7 +148,7 @@ const TextField = ({
                 : 'h-8 px-3 text-[0.8125rem]',
         isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
         isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
-        isBare || isInset ? '' : isPill ? 'rounded-full' : 'rounded-lg',
+        isBare || isInset || !isPill ? '' : 'rounded-full',
         joins === 'next' ? 'rounded-r-none border-r-0' : '',
         error === undefined ? '' : 'border-destructive',
         unit === undefined ? '' : 'pr-12',
@@ -156,7 +158,7 @@ const TextField = ({
   );
 
   return (
-    <div data-slot="field" className={cn('flex flex-col gap-1.5', className)}>
+    <div data-slot="field" className={cn('flex flex-col gap-2', className)}>
       <label htmlFor={fieldId} className={cn(FIELD_TEXT.label, isLabelHidden ? 'sr-only' : '')}>
         {label}
       </label>
@@ -193,9 +195,10 @@ const TextField = ({
             {...(onFocus === undefined ? {} : { onFocus })}
             {...(onBlur === undefined ? {} : { onBlur })}
             className={cn(
-              'valence-field w-full resize-y rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-3 py-2.5 text-text outline-none',
+              'valence-field w-full resize-y px-3 py-2.5 text-text outline-none',
+              FIELD_SURFACE,
               'hover:border-[var(--surface-divider)] focus-visible:focus-ring placeholder:text-text-muted',
-              'disabled:cursor-not-allowed disabled:opacity-50',
+              FIELD_DISABLED,
               isCode ? 'font-mono text-xs leading-relaxed' : 'text-[0.8125rem] leading-snug',
               isGrowing ? 'field-sizing-content max-h-96 min-h-8 resize-none py-1.5' : '',
               error === undefined ? '' : 'border-destructive',

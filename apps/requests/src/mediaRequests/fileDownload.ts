@@ -1,4 +1,5 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
+import { BEING_CHECKED } from '@ValenceRequests/mediaRequests/BEING_CHECKED';
 import { rename, unlink } from 'node:fs/promises';
 import { dirname, extname } from 'node:path';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
@@ -15,8 +16,6 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
-
-const BEING_CHECKED = '.checking';
 
 type Fileable = Pick<
   RequestItemRecord,

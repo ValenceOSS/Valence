@@ -9,7 +9,7 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * Every physical drive in the machine: what it is, how it stores and is attached, and how big it
- * is.
+ * is, then how many of its SATA ports are free, which says ports rather than bays.
  *
  * @param hardware - What the machine is built from.
  */
@@ -54,6 +54,15 @@ const DriveList = ({ hardware }: DriveListProps) => (
         );
       })}
     </ul>
+
+    {hardware.sataPorts === null || hardware.sataPorts.total === 0 ? null : (
+      <span className="block px-2.5 pb-1 pt-0.5 text-xs text-text-muted">
+        {say('screens.adminArea.hardware.freeOfSataPorts', {
+          free: (hardware.sataPorts.total - hardware.sataPorts.inUse).toLocaleString(),
+          total: hardware.sataPorts.total.toLocaleString(),
+        })}
+      </span>
+    )}
 
     {hardware.surroundings === 'virtualMachine' ? (
       <InfoNote>{say('screens.adminArea.hardware.insideAVirtualMachine')}</InfoNote>

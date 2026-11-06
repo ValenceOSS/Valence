@@ -13131,6 +13131,16 @@
     "context": "Why an ebook release ranks lower: it is a scan. {points} is the score it takes away."
   },
   {
+    "handler": "requests.profiles.judgeRelease.count.onlyFewSeedingIt.one",
+    "text": "Only {count} person is seeding it, so better-shared releases go first",
+    "context": "Why a torrent release was put behind better-shared ones when a release is chosen: it has only a seeder or two. {count} is how many. Shown in the profiles in the requests service (from `judgeRelease`)."
+  },
+  {
+    "handler": "requests.profiles.judgeRelease.count.onlyFewSeedingIt.other",
+    "text": "Only {count} people are seeding it, so better-shared releases go first",
+    "context": "Why a torrent release was put behind better-shared ones when a release is chosen: it has only a seeder or two. {count} is how many. Shown in the profiles in the requests service (from `judgeRelease`)."
+  },
+  {
     "handler": "requests.profiles.judgeRelease.fifthChoice",
     "text": "{quality}, the fifth preference",
     "context": "Why a release scored: its quality is the profile's fifth choice. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence."
@@ -18726,6 +18736,41 @@
     "context": "Under the short segments setting."
   },
   {
+    "handler": "screens.adminArea.engineGraphs.copy",
+    "text": "Copy",
+    "context": "The graph of the graphics card's copy engine, which moves data between buffers. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.engines",
+    "text": "Engines",
+    "context": "The heading over the small graphs of what each engine of the graphics card is doing. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.memoryOnTheCard",
+    "text": "Graphics memory",
+    "context": "The graph of how much memory Valence's work holds on the graphics card. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.onlyValencesOwnWork",
+    "text": "These show Valence’s own work on the card. Other programs using it aren’t counted.",
+    "context": "A note under the engine graphs saying they only cover Valence's own work. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.threeD",
+    "text": "3D",
+    "context": "The graph of the graphics card's 3D (render) engine, as a task manager names it. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.video",
+    "text": "Video encode and decode",
+    "context": "The graph of the graphics card's video engine; on Intel the same engine both encodes and decodes. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.videoEnhance",
+    "text": "Video enhance",
+    "context": "The graph of the graphics card's video-enhance engine, which scales and converts colour. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
     "handler": "screens.adminArea.episodeNumberDialog.changeTheEpisode",
     "text": "Change the episode…",
     "context": "Button on an episode's page that opens the dialog saying which episode its file is, whatever its name says."
@@ -19296,6 +19341,16 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The heading over the list of physical drives in the machine."
   },
   {
+    "handler": "screens.adminArea.hardware.emptySlot",
+    "text": "Empty slot",
+    "context": "A memory slot with nothing in it, in the Memory card's information on the admin overview. (from `MemoryInfo`)"
+  },
+  {
+    "handler": "screens.adminArea.hardware.freeOfSataPorts",
+    "text": "{free} of {total} SATA ports free",
+    "context": "A line under the list of drives saying how many SATA ports have no drive on them. Ports, not bays: it says nothing of whether the case has room. (from `DriveList`)"
+  },
+  {
     "handler": "screens.adminArea.hardware.gigahertz",
     "text": "{speed} GHz",
     "context": "In the information card of the hardware figures at the top of the admin area. The fastest the processor runs. {speed} is a number of gigahertz, such as 3.2."
@@ -19321,6 +19376,11 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name the processor gives itself."
   },
   {
+    "handler": "screens.adminArea.hardware.slots",
+    "text": "Slots",
+    "context": "A row in the Memory card's information on the admin overview, next to how many memory slots are used. (from `MemoryInfo`)"
+  },
+  {
     "handler": "screens.adminArea.hardware.ssd",
     "text": "SSD",
     "context": "In the information card of the hardware figures at the top of the admin area. A drive that is a solid-state drive."
@@ -19339,6 +19399,11 @@
     "handler": "screens.adminArea.hardware.topSpeed",
     "text": "Top speed",
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside the fastest the processor can run."
+  },
+  {
+    "handler": "screens.adminArea.hardware.usedOfSlots",
+    "text": "{used} of {total} used",
+    "context": "How many of the machine's memory slots have a stick in them. {used} is how many do, {total} how many slots there are. (from `MemoryInfo`)"
   },
   {
     "handler": "screens.adminArea.hardwareChains",
@@ -21809,6 +21874,11 @@
     "handler": "screens.adminArea.mediaTitlePage.showInTheApp",
     "text": "Preview",
     "context": "A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.unlockedEveryField",
+    "text": "Unlocked every field",
+    "context": "The toast once every locked field of a title has been unlocked from its page's menu, so they follow TMDB again. (from `MediaTitlePage`)"
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.unmatch",
@@ -25457,7 +25527,7 @@
   },
   {
     "handler": "screens.adminArea.sourcedField.unlockTheField",
-    "text": "Unlock the field",
+    "text": "Unlock",
     "context": "Item in a locked metadata field's menu that lets it follow TMDB again."
   },
   {
@@ -26011,6 +26081,41 @@
     "context": "Said once a film or programme is taken out of a collection from its page in the admin's media. {title} is the title; {name} is the collection."
   },
   {
+    "handler": "screens.adminArea.titleDetails.aboutClassification",
+    "text": "How it’s grouped and found when browsing.",
+    "context": "The line under the Classification section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutIds",
+    "text": "Where it’s found in other catalogues.",
+    "context": "The line under the IDs section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutNote",
+    "text": "Only administrators see this.",
+    "context": "The line under the Note section's heading on a title's Details tab, saying who can read the note. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutOriginAndCrew",
+    "text": "Where it comes from and who made it.",
+    "context": "The line under the Origin and crew section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutRatings",
+    "text": "Its scores, and the age it’s rated for in each country.",
+    "context": "The line under the Ratings section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutStory",
+    "text": "The words its page in the app shows.",
+    "context": "The line under the Story section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutTitleAndRelease",
+    "text": "What it’s called, how it sorts, and when it came out and was added.",
+    "context": "The line under the Title and release section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.airDate",
     "text": "Air date",
     "context": "A field for the day an episode or season was shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
@@ -26039,6 +26144,16 @@
     "handler": "screens.adminArea.titleDetails.contentRatingIn",
     "text": "Content rating ({country})",
     "context": "The label of a title’s age rating in the server’s own country, the one that decides what a child’s profile may see, with every other country’s folded beneath it. {country} is a country such as United Kingdom. On the Details tab of a title in the admin area (from `MetadataField`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.count.changedFields.one",
+    "text": "{count} changed",
+    "context": "A note beside a section of a title's metadata, in the list of sections and on the section itself, counting the fields in it changed by hand or locked. {count} is how many. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.count.changedFields.other",
+    "text": "{count} changed",
+    "context": "A note beside a section of a title's metadata, in the list of sections and on the section itself, counting the fields in it changed by hand or locked. {count} is how many. On the Details tab of a title in the admin area (from `TitleForm`)."
   },
   {
     "handler": "screens.adminArea.titleDetails.count.savedChanges.one",
@@ -26131,9 +26246,124 @@
     "context": "Section of a title's Details tab holding its original language, countries, creators, directors and writers."
   },
   {
+    "handler": "screens.adminArea.titleDetails.placeholder.aCountryCode",
+    "text": "Add a country code, such as GB",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its countries field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addACreator",
+    "text": "Add a creator",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its creators field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addADirector",
+    "text": "Add a director",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its directors field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addAGenre",
+    "text": "Add a genre",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its genres field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addANetwork",
+    "text": "Add a network",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its networks field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addAStudio",
+    "text": "Add a studio",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its studios field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addATag",
+    "text": "Add a tag",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its tags field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addAWriter",
+    "text": "Add a writer",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its writers field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aLanguageCode",
+    "text": "A language code, such as en",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its originalLanguage field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aMyAnimeListId",
+    "text": "A MyAnimeList ID",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its malId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.anAnilistId",
+    "text": "An AniList ID",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its anilistId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.anImdbId",
+    "text": "An IMDb ID, such as tt0133093",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its imdbId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aNoteForAdministrators",
+    "text": "A note only administrators will see",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its note field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aShortLineUnderTheName",
+    "text": "A short line shown under the name",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its tagline field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aTvdbId",
+    "text": "A TVDB ID",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its tvdbId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.fromNoughtToAHundred",
+    "text": "From 0 to 100",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its rottenTomatoes field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.fromNoughtToTen",
+    "text": "From 0 to 10",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its rating field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.itsStatus",
+    "text": "Such as Returning or Ended",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its status field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.pickADate",
+    "text": "Pick a date",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its releaseDate field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.theNameInItsOwnLanguage",
+    "text": "The name in its own language",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its originalTitle field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.theNameItsShownUnder",
+    "text": "The name it’s shown under",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its title field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.whatItsAboutInAFewSentences",
+    "text": "What it’s about, in a few sentences",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its overview field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.saved",
     "text": "Change saved",
     "context": "A toast once a change to a title’s metadata has been saved. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.sectionsOfTheDetails",
+    "text": "Sections of the details",
+    "context": "The list down the side of a title's Details tab naming each section of its metadata, read out to anybody who cannot see it. On the Details tab of a title in the admin area (from `TitleForm`)."
   },
   {
     "handler": "screens.adminArea.titleDetails.sortTitle",
@@ -27929,6 +28159,16 @@
     "handler": "screens.adminPage.pinToTheSidebar",
     "text": "Pin {name} to the sidebar",
     "context": "A button beside an admin page’s title. {name} is the page."
+  },
+  {
+    "handler": "screens.adminPage.putTheSectionsAcrossTheTop",
+    "text": "Put the sections across the top",
+    "context": "A button in the bar across the top of the admin area that moves the list of its sections. (from `AdminPage`)"
+  },
+  {
+    "handler": "screens.adminPage.putTheSectionsDownTheSide",
+    "text": "Put the sections down the side",
+    "context": "A button in the bar across the top of the admin area that moves the list of its sections. (from `AdminPage`)"
   },
   {
     "handler": "screens.adminPage.readingWhatYouMayDo",

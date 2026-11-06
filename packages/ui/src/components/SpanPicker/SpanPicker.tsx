@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
-import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts';
+import { SpanStrip } from './components/SpanStrip/SpanStrip';
 import { cn } from '@ValenceUI/cn';
 import type { ChosenSpan, SpanPickerProps } from './SpanPicker.types';
 
@@ -122,22 +122,7 @@ const SpanPicker = ({
         className="relative h-12 touch-none select-none overflow-hidden rounded-xl bg-[var(--surface-line)]/40"
         onPointerDown={bringTo}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={values.map((value, at) => ({ at, value }))}
-            margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
-          >
-            <YAxis hide domain={[0, Math.max(ceiling, 1)]} />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="none"
-              fill="var(--color-text-muted)"
-              fillOpacity={0.3}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <SpanStrip values={values} ceiling={ceiling} />
 
         <div
           role="slider"

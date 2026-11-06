@@ -19,6 +19,7 @@ import type { SelectFieldProps } from './SelectField.types';
  * @param error - Why the choice will not do, beneath the field.
  * @param size - How tall the field stands, to sit level with what is beside it.
  * @param isLabelHidden - Whether the label is only read out, for a field whose purpose is plain.
+ * @param isDisabled - Whether the choice cannot be changed, such as where it is locked.
  * @param className - Extra classes for the caller's own layout.
  */
 const SelectField = ({
@@ -31,12 +32,13 @@ const SelectField = ({
   error,
   size = 'md',
   isLabelHidden = false,
+  isDisabled = false,
   className,
 }: SelectFieldProps) => {
   const labelId = useId();
 
   return (
-    <div data-slot="field" className={cn('flex min-w-0 flex-col gap-1.5', className)}>
+    <div data-slot="field" className={cn('flex min-w-0 flex-col gap-2', className)}>
       <span id={labelId} className={cn(FIELD_TEXT.label, isLabelHidden ? 'sr-only' : '')}>
         {label}
       </span>
@@ -57,6 +59,7 @@ const SelectField = ({
         }
         triggerShape="field"
         align="start"
+        isDisabled={isDisabled}
         {...(error === undefined ? {} : { className: 'border-destructive' })}
       />
 

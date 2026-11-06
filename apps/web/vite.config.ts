@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { build, defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import type { Plugin } from 'vite';
+import type { Plugin, ProxyOptions } from 'vite';
 
 /**
  * Reads a development certificate where one has been put beside the config, so the dev server can be
@@ -96,6 +96,32 @@ const aliasesAsTheyChange = (): Plugin => ({
   },
 });
 
+const SERVER = process.env.VALENCE_DEV_SERVER ?? 'http://localhost:8420';
+
+/**
+ * Sends the dev server's requests on to a Valence server, which is the one running on this machine
+ * unless VALENCE_DEV_SERVER names another, such as a live one. A request handed on to another server
+ * says it came from that server, as a page served there would, so its sign-in accepts it.
+ *
+ * @param isSocket - Whether WebSockets are handed on too.
+ * @returns How to hand the requests on.
+ */
+const toTheServer = (isSocket: boolean): ProxyOptions => ({
+  target: SERVER,
+  ws: isSocket,
+  changeOrigin: true,
+  configure: (proxy) => {
+    proxy.on('proxyReq', (request) => {
+      if (request.getHeader('origin') !== undefined) {
+        request.setHeader('origin', new URL(SERVER).origin);
+      }
+    });
+    proxy.on('proxyReqWs', (request) => {
+      request.setHeader('origin', new URL(SERVER).origin);
+    });
+  },
+});
+
 const cert = certificate('local.pem');
 const key = certificate('local-key.pem');
 
@@ -116,8 +142,8 @@ export default defineConfig({
     cors: false,
     ...(cert === null || key === null ? {} : { https: { cert, key } }),
     proxy: {
-      '/api': { target: 'http://localhost:8420', ws: true },
-      '/arr': { target: 'http://localhost:8420' },
+      '/api': toTheServer(true),
+      '/arr': toTheServer(false),
     },
   },
 });

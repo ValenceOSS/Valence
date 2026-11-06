@@ -1770,11 +1770,9 @@ const MediaPanel = ({
         {say('screens.adminArea.mediaPanel.addTags')}
       </Button>
       <ActionMenu
-        look="labelled"
         size="sm"
         align="start"
         label={say('common.more')}
-        trigger={say('common.more')}
         groups={moreForPicked.map((items) => ({ items }))}
       />
     </>
@@ -2495,6 +2493,7 @@ const MediaPanel = ({
                             }
                             onChooseRow={openRow}
                             height="fills"
+                            isVirtual
                             getSubRows={(title) =>
                               title.parts.length === 0 ? undefined : title.parts
                             }

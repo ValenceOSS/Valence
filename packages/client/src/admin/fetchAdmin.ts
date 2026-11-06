@@ -189,6 +189,16 @@ const GraphicsUseSchema = z.object({
   encoderPercent: z.number().nullable(),
   devicePercent: z.number().nullable(),
   measured: z.enum(['wholeMachine', 'valenceOnly']).default('wholeMachine'),
+  engines: z
+    .object({
+      render: z.number().nullable(),
+      copy: z.number().nullable(),
+      video: z.number().nullable(),
+      videoEnhance: z.number().nullable(),
+      memoryBytes: z.number().nullable(),
+    })
+    .nullable()
+    .default(null),
 });
 
 const ArtefactStoreSchema = z.object({

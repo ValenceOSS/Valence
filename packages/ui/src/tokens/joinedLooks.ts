@@ -1,5 +1,6 @@
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { cn } from '@ValenceUI/cn';
+import { FIELD_SURFACE } from '@ValenceUI/tokens/FIELD_SURFACE';
 
 const JOINED_SIZE = 'size-9 coarse:size-11';
 
@@ -40,8 +41,9 @@ const JOINED_LOOKS = {
     FLIPS,
   ),
   field: cn(
-    'h-8 gap-1.5 rounded-l-none rounded-r-lg px-3 text-[0.8125rem] font-medium text-text',
-    'border border-l-0 border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl',
+    'h-8 gap-1.5 px-3 text-[0.8125rem] font-medium text-text',
+    FIELD_SURFACE,
+    'rounded-l-none border-l-0',
     'hover:border-[var(--surface-divider)] hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
     DIVIDER,
     'before:inset-y-1.5 before:bg-[var(--surface-line)]',

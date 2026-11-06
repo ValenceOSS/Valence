@@ -73,9 +73,9 @@ import type { ReactNode } from 'react';
 import {
   AppWindow as AppWindowFilledIcon,
   ArrowUpRight as ArrowUpRightFilledIcon,
-  ChevronDown as ChevronDownFilledIcon,
   Hash as HashFilledIcon,
   Lock as LockFilledIcon,
+  Unlock as UnlockFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
   Unlink as UnlinkFilledIcon,
   Wrench as WrenchFilledIcon,
@@ -360,6 +360,12 @@ const MediaTitlePage = ({
             state.source !== 'locked'
           );
         });
+  const locked =
+    metadata.data === undefined
+      ? []
+      : FIELDS_OF_KIND[metadata.data.subject.kind].filter(
+          (field) => metadata.data.fields[field]?.source === 'locked',
+        );
   const moreActions = [
     [
       ...(unlocked.length === 0
@@ -373,6 +379,25 @@ const MediaTitlePage = ({
                 void change(
                   { lock: unlocked },
                   say('screens.adminArea.mediaTitlePage.lockedEveryField'),
+                ).then((outcome) => {
+                  if (!outcome.isSaved) {
+                    notify.failed(outcome.reason);
+                  }
+                });
+              },
+            },
+          ]),
+      ...(locked.length === 0
+        ? []
+        : [
+            {
+              id: 'unlock',
+              label: say('screens.adminArea.mediaPanel.unlockAllFields'),
+              icon: <Icon of={UnlockFilledIcon} size={15} />,
+              onChoose: () => {
+                void change(
+                  { reset: locked },
+                  say('screens.adminArea.mediaTitlePage.unlockedEveryField'),
                 ).then((outcome) => {
                   if (!outcome.isSaved) {
                     notify.failed(outcome.reason);
@@ -767,14 +792,7 @@ const MediaTitlePage = ({
             {groups.length === 0 ? null : (
               <ActionMenu
                 label={say('common.actionsForName', { name })}
-                look="labelled"
-                className="h-7 px-2.5 text-[0.8125rem]"
-                trigger={
-                  <>
-                    {say('common.more')}
-                    <Icon of={ChevronDownFilledIcon} size={14} />
-                  </>
-                }
+                size="sm"
                 groups={groups.map((items) => ({ items }))}
               />
             )}
@@ -1120,14 +1138,7 @@ const MediaTitlePage = ({
               {moreActions.length === 0 ? null : (
                 <ActionMenu
                   label={say('common.moreForName', { name: title.name })}
-                  look="labelled"
-                  className="h-7 px-2.5 text-[0.8125rem]"
-                  trigger={
-                    <>
-                      {say('common.more')}
-                      <Icon of={ChevronDownFilledIcon} size={14} />
-                    </>
-                  }
+                  size="sm"
                   groups={moreActions.map((items) => ({ items }))}
                 />
               )}
@@ -1157,26 +1168,31 @@ const MediaTitlePage = ({
           }
         >
           <TabPanel value="details" travel={travel}>
-            <div className="flex flex-col gap-4">
-              <TitleDetails
-                mediaId={title.lead.id}
-                scope="title"
-                {...(fix === undefined ? {} : { onFixMatch: fix.onChoose })}
-                onShowHistory={() => {
-                  moveTo({ ...NOWHERE, tab: 'history' });
-                }}
-              />
-              {title.kind === 'series' && title.lead.seriesId === null ? null : (
-                <TitleCollections
-                  subject={
-                    title.kind === 'series' && title.lead.seriesId !== null
-                      ? { seriesId: title.lead.seriesId }
-                      : { mediaItemId: title.lead.id }
-                  }
-                  name={title.name}
-                />
-              )}
-            </div>
+            <TitleDetails
+              mediaId={title.lead.id}
+              scope="title"
+              {...(fix === undefined ? {} : { onFixMatch: fix.onChoose })}
+              onShowHistory={() => {
+                moveTo({ ...NOWHERE, tab: 'history' });
+              }}
+              {...(title.kind === 'series' && title.lead.seriesId === null
+                ? {}
+                : {
+                    after: {
+                      label: say('common.collections'),
+                      content: (
+                        <TitleCollections
+                          subject={
+                            title.kind === 'series' && title.lead.seriesId !== null
+                              ? { seriesId: title.lead.seriesId }
+                              : { mediaItemId: title.lead.id }
+                          }
+                          name={title.name}
+                        />
+                      ),
+                    },
+                  })}
+            />
           </TabPanel>
 
           {title.kind === 'series' ? (

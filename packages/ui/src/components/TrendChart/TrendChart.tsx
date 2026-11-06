@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
 import { cn } from '@ValenceUI/cn';
 import type { TrendChartProps, TrendLine } from './TrendChart.types';
@@ -59,6 +59,7 @@ const TrendChart = ({
   className,
 }: TrendChartProps) => {
   const fillId = useId();
+  const rows = useMemo(() => toRows(values, lines), [values, lines]);
 
   if (values.length === 0) {
     return (
@@ -78,7 +79,7 @@ const TrendChart = ({
         className={cn('w-full', fills ? 'min-h-44 flex-1' : isTall ? 'h-44' : 'h-24')}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={toRows(values, lines)} margin={{ top: 6, right: 0, bottom: 0, left: 0 }}>
+          <AreaChart data={rows} margin={{ top: 6, right: 0, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />

@@ -7,6 +7,8 @@ type ReorderRowProps = {
   onDragEnd: () => void;
   onClick?: () => void;
   className?: string;
+  index?: number;
+  measureRef?: (row: HTMLTableRowElement | null) => void;
   children: ReactNode;
 };
 

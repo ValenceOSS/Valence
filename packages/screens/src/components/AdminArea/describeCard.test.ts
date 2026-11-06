@@ -13,6 +13,7 @@ describe('describeCard', () => {
         encoderPercent: 88,
         devicePercent: 34,
         measured: 'wholeMachine',
+        engines: null,
       }),
     ).toBe('NVIDIA GeForce RTX 4070');
   });
@@ -24,6 +25,7 @@ describe('describeCard', () => {
         encoderPercent: null,
         devicePercent: 41,
         measured: 'wholeMachine',
+        engines: null,
       }),
     ).toBe('Apple M5 Pro · encoder usage unavailable');
   });
@@ -35,6 +37,7 @@ describe('describeCard', () => {
         encoderPercent: 62,
         devicePercent: null,
         measured: 'valenceOnly',
+        engines: null,
       }),
     ).toBe('Intel UHD Graphics 770 · Valence’s usage only');
   });
@@ -46,6 +49,7 @@ describe('describeCard', () => {
         encoderPercent: null,
         devicePercent: null,
         measured: 'valenceOnly',
+        engines: null,
       }),
     ).toBe('Intel UHD Graphics 770 · Valence’s usage only');
   });

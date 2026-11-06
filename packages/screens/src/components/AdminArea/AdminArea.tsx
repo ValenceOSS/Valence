@@ -99,6 +99,8 @@ import { freshnessOf } from '@ValenceClient/query/freshnessOf';
 import { StatStrip } from './components/StatStrip/StatStrip';
 import { ProcessorInfo } from './components/ProcessorInfo/ProcessorInfo';
 import { MemoryInfo } from './components/MemoryInfo/MemoryInfo';
+import { EngineGraphs } from '@ValenceScreens/components/AdminArea/components/EngineGraphs/EngineGraphs';
+import type { EngineReading } from '@ValenceScreens/components/AdminArea/components/EngineGraphs/EngineGraphs.types';
 import { DriveList } from './components/DriveList/DriveList';
 import { DeviceLoadList } from './components/DeviceLoadList/DeviceLoadList';
 import { isSpreadingStreams } from './isSpreadingStreams';
@@ -258,6 +260,7 @@ const AdminArea = ({
   const [readings, setReadings] = useState<LoadReading[]>([]);
   const history = useMemo(() => readings.map((reading) => reading.systemCpuPercent), [readings]);
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
+  const [engineHistory, setEngineHistory] = useState<readonly EngineReading[]>([]);
   const [viewingJobKind, setViewingJobKind] = useState<string | null>(initialJob ?? null);
   const [correcting, setCorrecting] = useState<MediaSummary | null>(null);
   const [dressing, setDressing] = useState<ArtworkSubject | null>(null);
@@ -784,6 +787,11 @@ const AdminArea = ({
 
         return encoder === null ? [] : [...current, encoder].slice(-historyLength);
       });
+      setEngineHistory((current) => {
+        const engines = reading.resources.graphics?.engines ?? null;
+
+        return engines === null ? [] : [...current, engines].slice(-historyLength);
+      });
     });
 
     return stop;
@@ -827,6 +835,8 @@ const AdminArea = ({
       )}
 
       {spreadDevices === null ? null : <DeviceLoadList devices={spreadDevices} />}
+
+      {engineHistory.length === 0 ? null : <EngineGraphs history={engineHistory} />}
 
       <InfoRow label={say('screens.adminArea.hardwareEncoding')}>
         {acceleration?.label ?? '—'}

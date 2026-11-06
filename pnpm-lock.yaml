@@ -176,6 +176,7 @@ overrides:
 packageExtensionsChecksum: sha256-daeow0RbvsNSfXgFeWt5IjB1z9nAowZ5ANJJJUWas+8=
 
 patchedDependencies:
+  '@keyline-icons/react@1.8.0': 35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0
   expo-glass-tabs@0.1.1: 606af01e3bf3d06989f3def95dd5c5d95b74de62671d3c2438db4145c86ca466
   expo-video@57.0.4: 71f95119ba3dec49ec5b599ef312e5abb4ce1264fadf8bc5c3ab59815fee4bb5
   react-native-web@0.21.3: bebd075d39fcc6e9153483f5f1c23434710e1321318ebfb5faa02a689d94f1ea
@@ -225,7 +226,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(react@19.3.0)
+        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.3.0)
@@ -328,7 +329,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(react@19.3.0)
+        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@scalar/api-reference-react':
         specifier: 0.9.70
         version: 0.9.70(qrcode@1.5.4)(react@19.3.0)(supports-color@8.1.1)(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.6.7)
@@ -428,7 +429,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(react@19.3.0)
+        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@remotion/player':
         specifier: 4.0.533
         version: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -531,7 +532,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(react@19.3.0)
+        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@valence/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -1395,7 +1396,7 @@ importers:
         version: 1.7.4(@better-auth/core@1.7.4(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.6.7))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.4(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(better-sqlite3@13.0.3)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(kysely@0.29.4)(mysql2@3.24.5(@types/node@24.13.4))(pg@8.23.0)(postgres@3.4.9))(mysql2@3.24.5(@types/node@24.13.4))(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.0)(@types/node@24.13.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@4.1.11)(vue@3.5.43(typescript@7.0.2)))(better-call@1.4.0(zod@4.6.7))(nanostores@1.4.2)
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(react@19.3.0)
+        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@mediabunny/ac3':
         specifier: 1.62.0
         version: 1.62.0(mediabunny@1.62.0)
@@ -1405,6 +1406,9 @@ importers:
       '@mediabunny/flac-encoder':
         specifier: 1.62.0
         version: 1.62.0(mediabunny@1.62.0)
+      '@tanstack/react-form':
+        specifier: 1.33.5
+        version: 1.33.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.3.0)
@@ -1513,7 +1517,7 @@ importers:
         version: 5.3.0
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(react@19.3.0)
+        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@paper-design/shaders-react':
         specifier: 0.0.80
         version: 0.0.80(@types/react@19.3.0)(react@19.3.0)
@@ -5946,15 +5950,36 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
 
+  '@tanstack/devtools-event-client@0.4.4':
+    resolution: {integrity: sha512-6T5Yop/793YI+H+5J8Hsyj4kCih9sl4t3ElLgKioW5hk3ocn+ZdSJ94tT7vL7uabxSugWYBZlOTMPzEw2puvQw==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  '@tanstack/form-core@1.33.5':
+    resolution: {integrity: sha512-3dfx9MBP0aq5sXKteikG629X9oviptrQj0IFRk9YGcb+lB7Kv5x8S17oOSk1wUWgjQZ4xVJEMbKwOAODymocgA==}
+
   '@tanstack/history@1.162.4':
     resolution: {integrity: sha512-utTS5L2OkeYUzXGohL1Z8sefu1GLNOJcxe8Hd6iIdc/Xo1K1nDB2JEp4iSFhvYh33xKC9V91TxrS8qfrpoKobQ==}
     engines: {node: '>=20.19'}
+
+  '@tanstack/pacer-lite@0.1.1':
+    resolution: {integrity: sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w==}
+    engines: {node: '>=18'}
 
   '@tanstack/query-core@5.102.8':
     resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
 
   '@tanstack/query-devtools@5.102.8':
     resolution: {integrity: sha512-ZgeMKuF5d/zOE+tgWm3cSbD6Zcbr6IugVsnbHzUcSismqLZDSUPBKM6ILUxExgwe6rPAOox2x5bA5T+PSOQG0Q==}
+
+  '@tanstack/react-form@1.33.5':
+    resolution: {integrity: sha512-LlRB28qJwO/QCGaHvWnbdh4haBgTFiZVmzA2uzxSBS3YA7/IqrQ6HOBK70CkFQ+DbflZ7NawsmSln13h5iIdTA==}
+    peerDependencies:
+      '@tanstack/react-start': '*'
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@tanstack/react-start':
+        optional: true
 
   '@tanstack/react-query-devtools@5.102.8':
     resolution: {integrity: sha512-QKb7A44BZOU7nxsGA4gFN1fofjYovar5O0T83Ff4Y+2eRq09RGFrAzzutVdF/6/emfSaMDohp6e759BjB3fxEw==}
@@ -15477,7 +15502,7 @@ snapshots:
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1)
       react-native-svg: 15.16.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
 
-  '@keyline-icons/react@1.8.0(react@19.3.0)':
+  '@keyline-icons/react@1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)':
     dependencies:
       react: 19.3.0
 
@@ -17587,11 +17612,29 @@ snapshots:
       tailwindcss: 4.3.3
       vite: 8.3.0(@types/node@24.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)
 
+  '@tanstack/devtools-event-client@0.4.4': {}
+
+  '@tanstack/form-core@1.33.5':
+    dependencies:
+      '@tanstack/devtools-event-client': 0.4.4
+      '@tanstack/pacer-lite': 0.1.1
+      '@tanstack/store': 0.11.1
+
   '@tanstack/history@1.162.4': {}
+
+  '@tanstack/pacer-lite@0.1.1': {}
 
   '@tanstack/query-core@5.102.8': {}
 
   '@tanstack/query-devtools@5.102.8': {}
+
+  '@tanstack/react-form@1.33.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      '@tanstack/form-core': 1.33.5
+      '@tanstack/react-store': 0.11.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react: 19.3.0
+    transitivePeerDependencies:
+      - react-dom
 
   '@tanstack/react-query-devtools@5.102.8(@tanstack/react-query@5.102.8(react@19.3.0))(react@19.3.0)':
     dependencies:

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -19,6 +19,8 @@ const MOST_DRAWN = 120;
 
 const MOST_DRAWN_ACROSS_THE_WEEK = 600;
 
+const MOST_ON_THE_CHART = 240;
+
 const LOAD_COLOUR = 'var(--color-highlight)';
 
 const MEMORY_COLOUR = 'var(--color-success)';
@@ -36,13 +38,22 @@ const GRAPHICS_COLOUR = 'var(--color-busy)';
  * it rather than being drawn again; the window can then be dragged anywhere in the week, or pulled
  * wider or narrower at either end, and the figures above follow whatever it holds.
  *
+ * The week is grouped into readings once, not on every move of the window, and the chart draws no
+ * more points than it has room to show; the figures are still worked out from every reading the
+ * window holds, so a peak is never averaged away. While the window is dragged it moves at once and
+ * the chart follows a moment behind, rather than the drag waiting on every redraw.
+ *
  * @param readings - The last minute's readings, or the whole week's, oldest first.
  * @param range - The range chosen, which decides where the window starts and how precisely each
  *   reading is timed.
  */
 const LoadChart = ({ readings, range }: LoadChartProps) => {
   const isLive = range === 'minute';
-  const drawn = bucketReadings(readings, isLive ? MOST_DRAWN : MOST_DRAWN_ACROSS_THE_WEEK);
+  const drawn = useMemo(
+    () => bucketReadings(readings, isLive ? MOST_DRAWN : MOST_DRAWN_ACROSS_THE_WEEK),
+    [readings, isLive],
+  );
+  const weekValues = useMemo(() => drawn.map((reading) => reading.systemCpuPercent), [drawn]);
   const [shownRange, setShownRange] = useState(range);
   const [moved, setMoved] = useState<ChosenSpan | null>(null);
   const [isMorphing, setIsMorphing] = useState(false);
@@ -65,8 +76,42 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           end: last,
         }
       : { start: Math.min(moved.start, last), end: Math.min(moved.end, last) };
-  const held = isLive ? drawn : drawn.slice(span.start, span.end + 1);
+  const shownStart = useDeferredValue(span.start);
+  const shownEnd = useDeferredValue(span.end);
+  const held = useMemo(
+    () => (isLive ? drawn : drawn.slice(shownStart, shownEnd + 1)),
+    [drawn, isLive, shownStart, shownEnd],
+  );
   const values = held.map((reading) => reading.systemCpuPercent);
+  const onChart = useMemo(() => bucketReadings(held, MOST_ON_THE_CHART), [held]);
+  const chart = useMemo(
+    () => ({
+      values: onChart.map((reading) => reading.systemCpuPercent),
+      lines: [
+        {
+          values: onChart.map((reading) =>
+            reading.cpuCount === 0
+              ? 0
+              : Math.min(100, (reading.loadAverage / reading.cpuCount) * 100),
+          ),
+          colour: LOAD_COLOUR,
+        },
+        {
+          values: onChart.map((reading) =>
+            reading.systemMemoryTotalBytes === 0
+              ? 0
+              : (reading.systemMemoryUsedBytes / reading.systemMemoryTotalBytes) * 100,
+          ),
+          colour: MEMORY_COLOUR,
+        },
+        {
+          values: onChart.map((reading) => reading.gpuPercent ?? null),
+          colour: GRAPHICS_COLOUR,
+        },
+      ],
+    }),
+    [onChart],
+  );
   const latest = held.at(-1) ?? null;
   const peak = Math.max(0, ...values);
   const average =
@@ -117,29 +162,8 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
       </dl>
 
       <TrendChart
-        values={held.map((reading) => reading.systemCpuPercent)}
-        lines={[
-          {
-            values: held.map((reading) =>
-              reading.cpuCount === 0
-                ? 0
-                : Math.min(100, (reading.loadAverage / reading.cpuCount) * 100),
-            ),
-            colour: LOAD_COLOUR,
-          },
-          {
-            values: held.map((reading) =>
-              reading.systemMemoryTotalBytes === 0
-                ? 0
-                : (reading.systemMemoryUsedBytes / reading.systemMemoryTotalBytes) * 100,
-            ),
-            colour: MEMORY_COLOUR,
-          },
-          {
-            values: held.map((reading) => reading.gpuPercent ?? null),
-            colour: GRAPHICS_COLOUR,
-          },
-        ]}
+        values={chart.values}
+        lines={chart.lines}
         ceiling={100}
         fills
         isAnimated={isMorphing}
@@ -153,7 +177,7 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
               })
         }
         tipOf={(index) => {
-          const reading = held[index];
+          const reading = onChart[index];
 
           return reading === undefined ? null : (
             <>
@@ -184,7 +208,7 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
 
       {isLive || drawn.length < 2 ? null : (
         <SpanPicker
-          values={drawn.map((reading) => reading.systemCpuPercent)}
+          values={weekValues}
           ceiling={100}
           span={span}
           onSpanChange={(next) => {

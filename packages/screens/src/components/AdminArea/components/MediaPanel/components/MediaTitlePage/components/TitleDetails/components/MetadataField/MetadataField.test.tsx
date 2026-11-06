@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MetadataField } from './MetadataField';
@@ -11,27 +11,26 @@ import { MetadataField } from './MetadataField';
 const saving = () => vi.fn(() => Promise.resolve({ isSaved: true, reason: '' }));
 
 describe('MetadataField', () => {
-  it('saves what was typed once typing settles', async () => {
+  it('tells the form of each change rather than saving it', async () => {
     const user = userEvent.setup();
     const change = saving();
+    const onValueChange = vi.fn();
 
     render(
       <MetadataField
         field="tagline"
         kind="film"
         state={{ value: null, source: 'catalogue', catalogue: null }}
+        value={null}
+        onValueChange={onValueChange}
         change={change}
       />,
     );
 
-    await user.type(screen.getByLabelText('Tagline'), 'A line');
+    await user.type(screen.getByLabelText('Tagline'), 'A');
 
-    await waitFor(
-      () => {
-        expect(change).toHaveBeenCalledWith({ set: { tagline: 'A line' } });
-      },
-      { timeout: 2000 },
-    );
+    expect(onValueChange).toHaveBeenCalledWith('A');
+    expect(change).not.toHaveBeenCalled();
   });
 
   it('puts an edited field back to what TMDB says', async () => {
@@ -43,6 +42,8 @@ describe('MetadataField', () => {
         field="title"
         kind="film"
         state={{ value: 'Mine', source: 'edited', catalogue: 'A film' }}
+        value="Mine"
+        onValueChange={vi.fn()}
         change={change}
       />,
     );
@@ -58,6 +59,8 @@ describe('MetadataField', () => {
         field="imdbId"
         kind="film"
         state={{ value: 'tt0133093', source: 'catalogue', catalogue: 'tt0133093' }}
+        value="tt0133093"
+        onValueChange={vi.fn()}
         change={saving()}
       />,
     );

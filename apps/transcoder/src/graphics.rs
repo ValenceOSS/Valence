@@ -31,7 +31,7 @@ use std::time::Duration;
 use serde::Serialize;
 use tokio::process::Command;
 
-use crate::drm_clients::VideoEngine;
+use crate::drm_clients::{EngineUse, VideoEngine};
 
 /// How many readings are averaged into the figure that is reported.
 ///
@@ -76,6 +76,9 @@ pub struct GraphicsUse {
     /// What the card as a whole is doing, which is a different question.
     pub device_percent: Option<f32>,
     pub measured: Measured,
+    /// What each engine spent on Valence's work, and the memory it holds,
+    /// where the kernel's per-client books say.
+    pub engines: Option<EngineUse>,
 }
 
 /// Runs a vendor tool, and says why not where it gave no clean answer.
@@ -164,6 +167,7 @@ fn parse_nvidia(output: &str) -> Result<GraphicsUse, String> {
             encoder_percent: encoder.parse().ok(),
             device_percent: device.parse().ok(),
             measured: Measured::WholeMachine,
+            engines: None,
         };
 
         if reading.encoder_percent.is_some() || reading.device_percent.is_some() {
@@ -209,6 +213,7 @@ fn parse_apple(output: &str) -> Option<GraphicsUse> {
             encoder_percent: None,
             device_percent: Some(device),
             measured: Measured::WholeMachine,
+            engines: None,
         })
     })
 }
@@ -278,6 +283,7 @@ async fn read_amd() -> Result<GraphicsUse, String> {
             encoder_percent: None,
             device_percent: Some(percent),
             measured: Measured::WholeMachine,
+            engines: None,
         });
     }
 
@@ -344,6 +350,7 @@ impl Smoothed {
             encoder_percent: mean(&self.encoder),
             device_percent: mean(&self.device),
             measured: reading.measured,
+            engines: reading.engines,
         })
     }
 }
@@ -362,11 +369,14 @@ async fn read_drm(engine: &mut VideoEngine) -> Result<GraphicsUse, String> {
             .to_owned()
     })?;
 
+    let engines = engine.read().await;
+
     Ok(GraphicsUse {
         name: crate::pci_names::name(card).await,
-        encoder_percent: engine.read().await,
+        encoder_percent: engines.and_then(|reading| reading.video),
         device_percent: None,
         measured: Measured::ValenceOnly,
+        engines,
     })
 }
 
@@ -491,6 +501,7 @@ mod tests {
             encoder_percent: encoder,
             device_percent: device,
             measured: Measured::WholeMachine,
+            engines: None,
         }
     }
 
@@ -682,6 +693,7 @@ mod tests {
                 encoder_percent: Some(30.0),
                 device_percent: None,
                 measured: Measured::ValenceOnly,
+                engines: None,
             }))
             .expect("a card answered");
 

@@ -11,7 +11,7 @@ type PopoverPanelProps = {
   align?: 'start' | 'center' | 'end';
   isDisabled?: boolean;
   isBare?: boolean;
-  triggerLook?: 'icon' | 'smallIcon' | 'button' | 'segment' | 'inline';
+  triggerLook?: 'icon' | 'smallIcon' | 'button' | 'segment' | 'inline' | 'field';
   tone?: 'default' | 'overlay';
   isOverDialogs?: boolean;
   hasSurface?: boolean;

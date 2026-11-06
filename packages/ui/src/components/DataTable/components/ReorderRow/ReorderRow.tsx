@@ -16,6 +16,9 @@ const CONTROLS = 'button, a, input, select, textarea, [role="combobox"], [role="
  * @param onDragEnd - Told once a drag lets go.
  * @param onClick - Told when the row itself is pressed.
  * @param className - Extra classes for the row.
+ * @param index - Where the row sits among those drawn, for a table that draws only the rows in view.
+ * @param measureRef - Handed the row once it is drawn, so a table that draws only the rows in view
+ *   learns how tall it is.
  * @param children - The row's cells.
  */
 const ReorderRow = ({
@@ -25,6 +28,8 @@ const ReorderRow = ({
   onDragEnd,
   onClick,
   className,
+  index,
+  measureRef,
   children,
 }: ReorderRowProps) => {
   const controls = useDragControls();
@@ -32,6 +37,8 @@ const ReorderRow = ({
   if (!isReordering) {
     return (
       <tr
+        {...(measureRef === undefined ? {} : { ref: measureRef })}
+        {...(index === undefined ? {} : { 'data-index': index })}
         data-highlight={id}
         data-depth={depth}
         {...(onClick === undefined ? {} : { onClick })}
