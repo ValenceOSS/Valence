@@ -23,7 +23,7 @@ import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
 import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
 import { PAUSABLE_STATES } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/PAUSABLE_STATES';
-import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
+import { describeFinishTime } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeFinishTime';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
@@ -218,48 +218,62 @@ const DownloadQueueTable = ({
           return (
             <DownloadProgress title={row.original.title} progress={row.original.progress}>
               {arrived}
-              {row.original.downloadBytesPerSecond === null ||
-              row.original.downloadBytesPerSecond === 0 ? null : (
-                <>
-                  {' · '}
-                  <FormattedBytes bytes={row.original.downloadBytesPerSecond} />
-                  {say('screens.downloadsPanel.downloadQueueTable.perSecond')}
-                </>
-              )}
-              {row.original.secondsLeft === null ? null : (
-                <>
-                  {' · '}
-                  <Sentence
-                    words="common.durationLeft"
-                    fillings={{ timeLeft: describeTimeLeft(row.original.secondsLeft) }}
-                  />
-                </>
-              )}
             </DownloadProgress>
           );
         },
       },
       {
-        id: 'speed',
+        id: 'down',
         meta: { hidesOnPhones: true },
-        header: say('common.speed'),
+        header: say('screens.downloadsPanel.downloadQueueTable.downloadSpeed'),
         accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => (
-          <ReadoutLines
-            lines={speedsOf(row.original.downloadBytesPerSecond, row.original.uploadBytesPerSecond)}
-          />
+          <span className="text-sm tabular-nums text-text-muted">
+            {row.original.downloadBytesPerSecond === null || row.original.state === 'done' ? (
+              '—'
+            ) : (
+              <FormattedBytes bytes={row.original.downloadBytesPerSecond} suffix="/s" />
+            )}
+          </span>
         ),
       },
       {
-        id: 'left',
+        id: 'up',
         meta: { hidesOnPhones: true },
-        header: say('common.timeLeft'),
-        accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
+        header: say('screens.downloadsPanel.downloadQueueTable.uploadSpeed'),
+        accessorFn: (download) => download.uploadBytesPerSecond ?? -1,
         cell: ({ row }) => (
-          <span className="text-xs tabular-nums text-text-muted">
-            {row.original.secondsLeft === null ? '—' : describeTimeLeft(row.original.secondsLeft)}
+          <span className="text-sm tabular-nums text-text-muted">
+            {row.original.uploadBytesPerSecond === null ? (
+              '—'
+            ) : (
+              <FormattedBytes bytes={row.original.uploadBytesPerSecond} suffix="/s" />
+            )}
           </span>
         ),
+      },
+      {
+        id: 'finishes',
+        meta: { hidesOnPhones: true },
+        header: say('screens.downloadsPanel.downloadQueueTable.finishes'),
+        accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
+        cell: ({ row }) =>
+          row.original.secondsLeft === null || row.original.state === 'done' ? (
+            <span className="text-sm text-text-muted">—</span>
+          ) : (
+            <ReadoutLines
+              lines={[
+                <Sentence
+                  key="left"
+                  words="common.durationLeft"
+                  fillings={{ timeLeft: describeTimeLeft(row.original.secondsLeft) }}
+                />,
+                <span key="at" className="tabular-nums">
+                  {describeFinishTime(row.original.secondsLeft, Date.now())}
+                </span>,
+              ]}
+            />
+          ),
       },
       {
         id: 'peers',
@@ -391,10 +405,8 @@ const DownloadQueueTable = ({
       label={say('common.downloads')}
       columns={columns.filter(
         (column) =>
-          column.id !== 'speed' &&
-          column.id !== 'left' &&
-          (column.id !== 'peers' ||
-            downloads.some((download) => download.seeds !== null || download.peers !== null)),
+          column.id !== 'peers' ||
+          downloads.some((download) => download.seeds !== null || download.peers !== null),
       )}
       rows={[...downloads]}
       getRowId={(download) => download.id}
