@@ -491,6 +491,45 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('keeps every row showing what it showed while the rows of fewer libraries are read, from the first draw on', async () => {
+    const OTHER = '3f2504e0-4f89-41d3-9a0c-0305e82c3302';
+
+    facetsMock.mockResolvedValue({ genres: ['Comedy', 'Drama'], decades: [], maxRating: 10 });
+    aLibrary({
+      recent: films('new', 5, 'Comedy'),
+      byGenre: { Comedy: films('comedy', 5), Drama: films('drama', 5) },
+    });
+
+    let watchable: string[] = [];
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, watchable, new Map(), true, true),
+      { wrapper: inACache },
+    );
+
+    watchable = [LIBRARY, OTHER];
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual([
+        'recent',
+        'genre:Comedy',
+        'genre:Drama',
+      ]);
+    });
+
+    itemsMock.mockImplementation(() => new Promise(() => {}));
+
+    watchable = [LIBRARY];
+    rerender();
+
+    expect(result.current.isReading).toBe(false);
+    expect(result.current.rails.map((rail) => rail.id)).toEqual([
+      'recent',
+      'genre:Comedy',
+      'genre:Drama',
+    ]);
+  });
+
   it('hands back the same rows when drawn again with nothing changed, so a page can skip them', async () => {
     const watchable = [LIBRARY];
     const progress = new Map<string, WatchProgress>();

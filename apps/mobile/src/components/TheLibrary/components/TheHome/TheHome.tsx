@@ -3,7 +3,7 @@ import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { useAskToDismiss } from '@ValenceNative/library/useAskToDismiss';
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -93,7 +93,10 @@ const TheHomePage = ({
   const viewer = who.data?.id ?? null;
   const home = useHomeRows(viewer ?? '', watchable, progress, viewer !== null, !watched.isPending);
   const askToDismiss = useAskToDismiss();
-  const sample = useQuery(libraryQueries.across(watchable, { search: '', limit: FEATURED_FROM }));
+  const sample = useQuery({
+    ...libraryQueries.across(watchable, { search: '', limit: FEATURED_FROM }),
+    placeholderData: keepPreviousData,
+  });
   const featured = useMemo(() => pickFeatured(sample.data ?? [], FEATURED), [sample.data]);
   const comingUp = useQuery(libraryQueries.comingUp());
   const today = new Date().toISOString().slice(0, 10);

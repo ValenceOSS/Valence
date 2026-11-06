@@ -15,7 +15,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { Hero } from '@ValenceScreens/components/Hero/Hero';
 import { groupIntoRails, RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -111,7 +111,10 @@ const LibraryBrowser = ({
 
   const items = page.data ?? [];
 
-  const sample = useQuery(libraryQueries.across(watchable, { search: '', limit: HERO_SAMPLE }));
+  const sample = useQuery({
+    ...libraryQueries.across(watchable, { search: '', limit: HERO_SAMPLE }),
+    placeholderData: keepPreviousData,
+  });
 
   const heroItems = useMemo(() => sample.data ?? [], [sample.data]);
 
