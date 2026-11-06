@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ConcernsBanner } from './ConcernsBanner';
+import { ConcernList } from './ConcernList';
 import type { Concern } from '@ValenceScreens/components/AdminArea/collectConcerns';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 
@@ -14,24 +14,24 @@ const concern = (over: Partial<Concern> = {}): Concern => ({
   ...over,
 });
 
-describe('ConcernsBanner', () => {
+describe('ConcernList', () => {
   it('draws nothing when nothing needs a person', () => {
     const { container } = render(
-      <ConcernsBanner concerns={[]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />,
+      <ConcernList concerns={[]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />,
     );
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('reports what is wrong', () => {
-    render(<ConcernsBanner concerns={[concern()]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />);
+    render(<ConcernList concerns={[concern()]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />);
 
     expect(screen.getByText('The media service is unreachable')).toBeInTheDocument();
   });
 
   it('links to the docs about a concern that has somewhere to read, and only then', () => {
     render(
-      <ConcernsBanner
+      <ConcernList
         concerns={[
           concern({
             id: 'requests-vpn',
@@ -53,7 +53,7 @@ describe('ConcernsBanner', () => {
     const user = userEvent.setup();
 
     render(
-      <ConcernsBanner
+      <ConcernList
         concerns={[
           concern({
             id: 'unscanned',
@@ -78,7 +78,7 @@ describe('ConcernsBanner', () => {
     const user = userEvent.setup();
 
     render(
-      <ConcernsBanner
+      <ConcernList
         concerns={[
           concern({
             id: 'failed-jobs',
@@ -106,9 +106,7 @@ describe('ConcernsBanner', () => {
     const onDismiss = vi.fn<(dismissed: Concern) => void>();
     const user = userEvent.setup();
 
-    render(
-      <ConcernsBanner concerns={[concern()]} onOpenPanel={onOpenPanel} onDismiss={onDismiss} />,
-    );
+    render(<ConcernList concerns={[concern()]} onOpenPanel={onOpenPanel} onDismiss={onDismiss} />);
 
     await user.click(
       screen.getByRole('button', { name: 'Dismiss “The media service is unreachable”' }),

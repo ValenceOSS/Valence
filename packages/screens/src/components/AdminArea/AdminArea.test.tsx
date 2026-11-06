@@ -97,6 +97,7 @@ const MONITOR: Monitor = {
       { mountPoint: '/', totalBytes: 500 * 1024 ** 3, availableBytes: 100 * 1024 ** 3 },
       { mountPoint: '/media', totalBytes: 8 * 1024 ** 4, availableBytes: 2 * 1024 ** 4 },
     ],
+    drives: [],
     graphics: {
       name: 'Apple M5 Pro',
       encoderPercent: null,

@@ -10,6 +10,8 @@ type BookDialogProps = {
   onToggleKept: (book: Book) => void;
   onRate: (book: Book, stars: number | null) => void;
   onShare?: (book: Book) => void;
+  onOpenBook: (bookId: string) => void;
+  onAsk?: (asking: string) => void;
 };
 
 export type { BookDialogProps };

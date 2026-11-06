@@ -107,7 +107,7 @@ import { isSpreadingStreams } from './isSpreadingStreams';
 import { InfoRow } from '@ValenceUI/InfoRow';
 import { InfoNote } from '@ValenceUI/InfoNote';
 import type { LoadReading } from './components/OverviewPanel/components/LoadChart/LoadChart.types';
-import { ConcernsBanner } from './components/ConcernsBanner/ConcernsBanner';
+import { ConcernsBell } from './components/ConcernsBell/ConcernsBell';
 import { AdminSetupGuide } from './components/AdminSetupGuide/AdminSetupGuide';
 import {
   hasBeenTakenToSetup,
@@ -949,7 +949,7 @@ const AdminArea = ({
           </div>
         ) : null}
 
-        <ConcernsBanner
+        <ConcernsBell
           concerns={concerns.filter(
             (concern) =>
               !(overview?.settings.hiddenAlerts ?? []).includes(concern.id) &&
@@ -1054,7 +1054,7 @@ const AdminArea = ({
               label: say('screens.adminArea.storage'),
               ...(hardware === null || hardware.drives.length === 0
                 ? {}
-                : { info: <DriveList hardware={hardware} /> }),
+                : { info: <DriveList hardware={hardware} activity={resources?.drives ?? []} /> }),
               value:
                 mediaDisk === null ? (
                   '—'

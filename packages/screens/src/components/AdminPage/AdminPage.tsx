@@ -9,7 +9,6 @@ import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ChevronsUpDown as ChevronsUpDownIcon,
   PanelLeft as PanelLeftIcon,
   PanelTop as PanelTopIcon,
   Pin as PinIcon,
@@ -27,6 +26,7 @@ import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
 import { ADMIN_PAGE_ACTIONS } from '@ValenceScreens/components/AdminPage/ADMIN_PAGE_ACTIONS';
+import { ADMIN_NOTICES } from '@ValenceScreens/components/AdminPage/ADMIN_NOTICES';
 import { cn } from '@ValenceUI/cn';
 import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -422,9 +422,6 @@ const AdminPage = () => {
     );
   }
 
-  const showingSection =
-    sections.find((section) => section.items.some((one) => one.id === showing)) ?? sections[0];
-
   if (navPlace === 'top' && hasRoomForTheSidebar) {
     return (
       <Tabs
@@ -447,44 +444,6 @@ const AdminPage = () => {
                 <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
               </Button>
 
-              <span aria-hidden className="px-1 text-lg text-[var(--surface-divider)]">
-                /
-              </span>
-
-              <OptionMenu
-                label={say('common.sections')}
-                triggerShape="quiet"
-                align="start"
-                matchTriggerWidth={false}
-                className="h-8 gap-2 px-2.5 text-sm font-medium"
-                trigger={
-                  <>
-                    {showingSection?.label ?? showingName}
-                    <Icon of={ChevronsUpDownIcon} size={14} tone="muted" />
-                  </>
-                }
-                groups={[
-                  {
-                    name: say('common.sections'),
-                    options: sections.flatMap((section) => {
-                      const [first] = section.items;
-
-                      return first === undefined
-                        ? []
-                        : [{ id: section.id, label: section.label ?? first.label }];
-                    }),
-                    selectedId: showingSection?.id ?? '',
-                    onSelect: (id) => {
-                      const first = sections.find((section) => section.id === id)?.items[0];
-
-                      if (first !== undefined) {
-                        void go({ to: '/admin/$panel', params: { panel: first.id } });
-                      }
-                    },
-                  },
-                ]}
-              />
-
               <span className="flex-1" />
 
               <span className="flex items-center gap-2">
@@ -497,6 +456,7 @@ const AdminPage = () => {
                     }}
                   />
                 </span>
+                <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
                 <AdminStatusFooter
                   isPillOnly
                   version={version}
@@ -776,6 +736,7 @@ const AdminPage = () => {
             </h1>
 
             <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
+            <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
 
             {!isClosed ? null : (
               <span className="hidden sm:flex">

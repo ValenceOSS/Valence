@@ -20,6 +20,7 @@ pub mod credit_frames;
 pub mod dash;
 pub mod devices;
 pub mod download;
+pub mod drive_activity;
 pub mod drm_clients;
 pub mod durability;
 pub mod fingerprint;

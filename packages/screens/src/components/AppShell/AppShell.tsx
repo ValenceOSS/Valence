@@ -14,7 +14,7 @@ import {
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
   Tv as TvIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/duotone';
 import {
   BookOpen as BookOpenFilledIcon,
   Broadcast as BroadcastFilledIcon,

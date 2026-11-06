@@ -16,9 +16,8 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
-import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
-import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
+import { RowHighlight } from './components/RowHighlight/RowHighlight';
 import { dataTableFeatures } from './dataTableFeatures';
 import { DrawnCell } from './DrawnCell';
 import { ReorderRow } from './components/ReorderRow/ReorderRow';
@@ -185,7 +184,7 @@ const DataTable = <Row extends RowData>({
   const [expanded, setExpanded] = useState<ExpandedState>(isOpenAtFirst ? true : {});
   const [ownPage, setOwnPage] = useState(0);
   const [shown, setShown] = useState(pageSize);
-  const { containerRef, rect, follow, clear } = useSlidingHighlight();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const room = useRoomBelow(containerRef, height === 'fills');
   const [beside, setBeside] = useState({ isBefore: false, isAfter: false, isRtl: false });
 
@@ -389,8 +388,6 @@ const DataTable = <Row extends RowData>({
 
       <div
         ref={containerRef}
-        onPointerMove={follow}
-        onPointerLeave={clear}
         onScroll={(event) => {
           reachEnd(event.currentTarget);
           measureBeside(event.currentTarget);
@@ -410,7 +407,7 @@ const DataTable = <Row extends RowData>({
           HEIGHT_CLASSES[height],
         )}
       >
-        <HoverHighlight rect={rect} radius="none" />
+        <RowHighlight containerRef={containerRef} />
 
         <table className="w-full border-collapse text-sm" aria-label={label}>
           <thead ref={head}>

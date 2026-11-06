@@ -2,25 +2,11 @@ import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import {
-  BookOpen as BookOpenIcon,
-  Check as CheckIcon,
-  Film as FilmIcon,
-  MusicNote as MusicNoteIcon,
-  Sparkles as SparklesIcon,
-  Tv as TvIcon,
-} from '@keyline-icons/react/fill';
+import { Check as CheckIcon } from '@keyline-icons/react/fill';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import type { LibraryPickerProps } from './LibraryPicker.types';
-
-const KIND_ICONS = {
-  movies: FilmIcon,
-  shows: TvIcon,
-  anime: SparklesIcon,
-  music: MusicNoteIcon,
-  books: BookOpenIcon,
-} as const;
 
 /**
  * The libraries a piece of work can be pointed at, as tiles that each tick on and off, with how many
@@ -94,7 +80,7 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
                     : 'bg-[var(--surface-hover)] text-text-muted',
                 )}
               >
-                <Icon of={KIND_ICONS[library.kind]} size={17} />
+                <Icon of={LIBRARY_KIND_NAMES[library.kind].icon} size={17} />
               </span>
 
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">

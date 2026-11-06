@@ -23,14 +23,14 @@ const machine = (change: Partial<Hardware> = {}): Hardware => ({
 
 describe('DriveList', () => {
   it('names each drive by its model, or by what the system calls it where it has none', () => {
-    render(<DriveList hardware={machine()} />);
+    render(<DriveList hardware={machine()} activity={[]} />);
 
     expect(screen.getByText('Samsung SSD 980')).toBeInTheDocument();
     expect(screen.getAllByText('sda')).not.toHaveLength(0);
   });
 
   it('says how each drive stores and is attached', () => {
-    render(<DriveList hardware={machine()} />);
+    render(<DriveList hardware={machine()} activity={[]} />);
 
     expect(screen.getByText('NVMe')).toBeInTheDocument();
     expect(screen.getByText('SSD')).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('DriveList', () => {
   });
 
   it('warns that a virtual machine shows what it was given', () => {
-    render(<DriveList hardware={machine({ surroundings: 'virtualMachine' })} />);
+    render(<DriveList hardware={machine({ surroundings: 'virtualMachine' })} activity={[]} />);
 
     expect(screen.getByText(/inside a virtual machine/u)).toBeInTheDocument();
   });

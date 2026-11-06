@@ -222,6 +222,8 @@ pub struct DeploymentMemory {
 #[serde(rename_all = "camelCase")]
 pub struct DiskUse {
     pub mount_point: String,
+    /// The device it is on, such as `/dev/sda1`.
+    pub device: String,
     pub total_bytes: u64,
     pub available_bytes: u64,
 }
@@ -256,6 +258,8 @@ pub struct ResourceUse {
     pub load_average: f64,
     /// Every mounted filesystem, measured less often than the rest of this.
     pub disks: Vec<DiskUse>,
+    /// How fast each drive is reading and writing, and how full it is.
+    pub drives: Vec<crate::drive_activity::DriveActivity>,
     /// What the graphics hardware is doing, where the machine will say.
     pub graphics: Option<GraphicsUse>,
     /// Why no figure was read, source by source, where none was.
@@ -343,6 +347,7 @@ impl Journal {
 pub struct Monitor {
     system: Arc<Mutex<System>>,
     disks: Arc<Mutex<DiskReadings>>,
+    drives: Arc<Mutex<crate::drive_activity::DriveCounter>>,
     graphics: Arc<Mutex<Reading>>,
     artefacts: Arc<Mutex<Option<ArtefactStore>>>,
     cache: Arc<Mutex<Option<CacheUse>>>,
@@ -384,6 +389,7 @@ impl DiskReadings {
                 .filter(|disk| disk.total_space() > 0)
                 .map(|disk| DiskUse {
                     mount_point: disk.mount_point().to_string_lossy().into_owned(),
+                    device: disk.name().to_string_lossy().into_owned(),
                     total_bytes: disk.total_space(),
                     available_bytes: disk.available_space(),
                 })
@@ -402,6 +408,7 @@ impl Monitor {
         Self {
             system: Arc::new(Mutex::new(System::new())),
             disks: Arc::new(Mutex::new(DiskReadings::new())),
+            drives: Arc::new(Mutex::new(crate::drive_activity::DriveCounter::new())),
             graphics: Arc::new(Mutex::new(Reading::default())),
             artefacts: Arc::new(Mutex::new(None)),
             cache: Arc::new(Mutex::new(None)),
@@ -506,6 +513,15 @@ impl Monitor {
     /// Measures the machine and the processes the service is responsible for.
     pub async fn measure(&self) -> ResourceUse {
         let disks = self.disks.lock().await.read();
+        let filesystems: Vec<crate::drive_activity::Filesystem> = disks
+            .iter()
+            .map(|disk| crate::drive_activity::Filesystem {
+                device: disk.device.clone(),
+                total_bytes: disk.total_bytes,
+                available_bytes: disk.available_bytes,
+            })
+            .collect();
+        let drives = self.drives.lock().await.read(&filesystems);
         let Reading {
             graphics,
             notes: graphics_notes,
@@ -568,6 +584,7 @@ impl Monitor {
             deployment_memory,
             load_average: System::load_average().one,
             disks,
+            drives,
             graphics,
             graphics_notes,
             artefacts,

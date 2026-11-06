@@ -81,6 +81,7 @@ const open = (overrides: Partial<Parameters<typeof BookDialog>[0]> = {}) => {
     onToggleKept: vi.fn(),
     onRate: vi.fn(),
     onShare: vi.fn(),
+    onOpenBook: vi.fn(),
   };
 
   renderInAShell(<BookDialog bookId={BOOK_ID} isKept={false} {...handlers} {...overrides} />);

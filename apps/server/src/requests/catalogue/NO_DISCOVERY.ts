@@ -11,6 +11,7 @@ const NO_DISCOVERY: Discovery = {
   similarTitles: () => Promise.resolve([]),
   bookShelves: () => Promise.resolve([]),
   searchBooks: () => Promise.resolve([]),
+  aboutBook: () => Promise.resolve(null),
   describeBook: () => Promise.resolve(null),
   charts: () => Promise.resolve({ albums: [], artists: [] }),
   describeTitle: () => Promise.resolve(null),

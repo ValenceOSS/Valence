@@ -1,3 +1,4 @@
+import { BookAboutSchema } from '@ValenceContracts/schemas/BookAbout';
 import { createRoute, z } from '@hono/zod-openapi';
 import { SOURCE_TROUBLE_RESPONSE } from './SOURCE_TROUBLE_RESPONSE';
 import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
@@ -1071,6 +1072,26 @@ const similarTitlesRoute = createRoute({
   }),
 });
 
+const bookAboutRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/book-about',
+  tags: ['Requests'],
+  summary:
+    'Read what Open Library knows of a book, its author, and the books like it, each saying where it stands',
+  request: {
+    query: z.object({
+      title: z.string().trim().min(1).max(300),
+      author: z.string().trim().min(1).max(200).optional(),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'What is known of the book',
+      content: { 'application/json': { schema: BookAboutSchema.nullable() } },
+    },
+  }),
+});
+
 const catalogueGenresRoute = createRoute({
   method: 'get',
   path: '/api/requests/catalogue/genres',
@@ -1568,6 +1589,7 @@ export {
   catalogueBrowseRoute,
   personWorkRoute,
   similarTitlesRoute,
+  bookAboutRoute,
   catalogueSearchRoute,
   catalogueSearchPagesRoute,
   missingAlbumsRoute,

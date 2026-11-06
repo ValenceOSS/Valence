@@ -179,6 +179,14 @@ const DiskUseSchema = z.object({
   availableBytes: z.number(),
 });
 
+const DriveActivitySchema = z.object({
+  name: z.string(),
+  readBytesPerSecond: z.number(),
+  writtenBytesPerSecond: z.number(),
+  usedBytes: z.number().nullable(),
+  filesystemBytes: z.number().nullable(),
+});
+
 const ArtefactUseSchema = z.object({
   count: z.number(),
   bytes: z.number(),
@@ -224,6 +232,7 @@ const MonitorSchema = z.object({
     requestsMemoryBytes: z.number().nullable().default(null),
     loadAverage: z.number(),
     disks: z.array(DiskUseSchema).default([]),
+    drives: z.array(DriveActivitySchema).default([]),
     graphics: GraphicsUseSchema.nullable().default(null),
     graphicsNotes: z.array(z.string()).default([]),
   }),

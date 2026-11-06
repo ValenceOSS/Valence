@@ -37,6 +37,7 @@ import {
   catalogueBrowseRoute,
   personWorkRoute,
   similarTitlesRoute,
+  bookAboutRoute,
   catalogueGenresRoute,
   decideMediaRequestsRoute,
   liftMediaBlockRoute,
@@ -105,8 +106,9 @@ import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { courSeasonsOf } from '@ValenceContracts/functions/courSeasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
-import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { bookAsTitle, discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
 import { progressOf } from '@ValenceServer/requests/progressOf';
@@ -130,6 +132,8 @@ const HLS_PLAYLIST = 'application/vnd.apple.mpegurl';
 
 const PICTURE_FRAMING_HEADER = 'x-valence-picture-framing';
 
+const SHELVES_KEPT_FOR_MS = 30 * 60 * 1000;
+
 /**
  * Registers the requests endpoints.
  *
@@ -137,6 +141,8 @@ const PICTURE_FRAMING_HEADER = 'x-valence-picture-framing';
  * @param context - What they are answered with.
  */
 const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
+  const shelvesKept =
+    createAnswerKeeper<Awaited<ReturnType<typeof discoverShelves>>>(SHELVES_KEPT_FOR_MS);
   const {
     plugins,
     auth,
@@ -484,7 +490,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const [discovered, requested, kinds] = await Promise.all([
-      discoverShelves(discovery, { ...may, books: may.video }),
+      shelvesKept.keep(`${may.video.toString()}:${may.music.toString()}`, () =>
+        discoverShelves(discovery, { ...may, books: may.video }),
+      ),
       everyRequest(),
       requestableKinds(),
     ]);
@@ -679,6 +687,34 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       await discovery.genres(context.req.valid('query').kind === 'film' ? 'movie' : 'tv'),
       200,
     );
+  });
+
+  app.openapi(bookAboutRoute, async (context) => {
+    const { title, author } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const about = await discovery.aboutBook(title, author ?? null);
+
+    if (about === null) {
+      return context.json(null, 200);
+    }
+
+    const requests = await everyRequest();
+    const [byAuthor, alike] = await Promise.all([
+      standTitles(about.byAuthor.map(bookAsTitle), discovery.lookup, requests),
+      standTitles(about.alike.map(bookAsTitle), discovery.lookup, requests),
+    ]);
+
+    return context.json({ ...about, byAuthor, alike }, 200);
   });
 
   app.openapi(catalogueSearchRoute, async (context) => {

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { BookAboutSchema } from '@ValenceContracts/schemas/BookAbout';
+import type { BookAbout } from '@ValenceContracts/schemas/BookAbout';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
   CatalogueDiscoverySchema,
@@ -76,6 +78,24 @@ const fetchSimilarTitles = (kind: 'film' | 'series', id: string): Promise<Simila
   readFromServer(
     `/api/requests/catalogue/similar/${kind}/${encodeURIComponent(id)}`,
     SimilarTitlesSchema,
+  );
+
+/**
+ * Reads what Open Library knows of a book this server may hold: what it is about, how long it is,
+ * how readers rated it, who wrote it, and the books by them and like it, each saying where it
+ * stands.
+ *
+ * @param title - The book's title.
+ * @param author - Who wrote it, where that is known.
+ * @returns What is known, or null where Open Library does not know the book.
+ */
+const fetchBookAbout = (title: string, author: string | null): Promise<BookAbout | null> =>
+  readFromServer(
+    `/api/requests/catalogue/book-about?${new URLSearchParams({
+      title,
+      ...(author === null ? {} : { author }),
+    }).toString()}`,
+    BookAboutSchema.nullable(),
   );
 
 /**
@@ -186,6 +206,7 @@ export {
   fetchSimilarTitles,
   fetchCatalogueGenres,
   fetchCatalogueSearch,
+  fetchBookAbout,
   fetchDiscover,
   fetchRequestProgress,
   findMissingAlbums,

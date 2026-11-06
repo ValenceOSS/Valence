@@ -469,12 +469,14 @@
   overscroll-behavior-y: none;
 }
 
-p,
-figcaption,
-blockquote,
-li > p {
-  font-family: var(--font-body);
-  letter-spacing: 0.005em;
+@layer base {
+  p,
+  figcaption,
+  blockquote,
+  li > p {
+    font-family: var(--font-body);
+    letter-spacing: 0.005em;
+  }
 }
 
 body {

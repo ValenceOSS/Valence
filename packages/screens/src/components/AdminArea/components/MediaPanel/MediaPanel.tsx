@@ -392,6 +392,7 @@ const MediaPanel = ({
   );
   const [rebuilding, setRebuilding] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<MediaSummary | null>(null);
+  const [rebuildingSeries, setRebuildingSeries] = useState<MediaTitle | null>(null);
   const [rebuilt, setRebuilt] = useState<ReadonlySet<string>>(new Set());
   const [condemned, setCondemned] = useState<{
     item: MediaSummary;
@@ -889,6 +890,14 @@ const MediaPanel = ({
                   },
                 },
               ]),
+          {
+            id: 'rebuild-every',
+            label: say('screens.adminArea.mediaPanel.rebuildEveryEpisodesPreviews'),
+            icon: <Icon of={RefreshCwFilledIcon} size={15} />,
+            onChoose: () => {
+              setRebuildingSeries(title);
+            },
+          },
         ],
         [
           renameAction(title),
@@ -2055,6 +2064,30 @@ const MediaPanel = ({
           }
 
           setAskingOfPicked(null);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={rebuildingSeries !== null}
+        title={say('screens.adminArea.mediaPanel.rebuildThePreviewsForTitle', {
+          title: rebuildingSeries?.name ?? '',
+        })}
+        detail={say('screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown')}
+        confirmLabel={say('screens.adminArea.mediaPanel.rebuildPreviews')}
+        isDestructive
+        onClose={() => {
+          setRebuildingSeries(null);
+        }}
+        onConfirm={() => {
+          if (rebuildingSeries !== null) {
+            void withFiles(rebuildingSeries).then((full) => {
+              for (const episode of full.episodes) {
+                void rebuild(episode);
+              }
+            });
+          }
+
+          setRebuildingSeries(null);
         }}
       />
 

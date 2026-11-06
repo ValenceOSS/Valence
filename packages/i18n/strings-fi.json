@@ -17321,6 +17321,11 @@
     "context": "The label of a button in the concerns banner in the admin area. {panel} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.concernsBell.allClear",
+    "text": "Nothing needs your attention.",
+    "context": "Shown behind the bell at the top of the admin area when nothing is wrong."
+  },
+  {
     "handler": "screens.adminArea.confirmedCountReEncodes.one",
     "text": "Kept {count} new encode and deleted its original.",
     "context": "Shown after confirming re-encodes awaiting review in the admin area."
@@ -19376,6 +19381,11 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name the processor gives itself."
   },
   {
+    "handler": "screens.adminArea.hardware.readAt",
+    "text": "Read {speed}",
+    "context": "How fast a drive is reading right now, in the drives list on the admin overview. {speed} is such as 12 MB/s."
+  },
+  {
     "handler": "screens.adminArea.hardware.slots",
     "text": "Slots",
     "context": "A row in the Memory card's information on the admin overview, next to how many memory slots are used. (from `MemoryInfo`)"
@@ -19401,9 +19411,19 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside the fastest the processor can run."
   },
   {
+    "handler": "screens.adminArea.hardware.usedOfSize",
+    "text": "{used} used of {size}",
+    "context": "How full a drive is, in the drives list on the admin overview. {used} and {size} are sizes such as 2.7 TB."
+  },
+  {
     "handler": "screens.adminArea.hardware.usedOfSlots",
     "text": "{used} of {total} used",
     "context": "How many of the machine's memory slots have a stick in them. {used} is how many do, {total} how many slots there are. (from `MemoryInfo`)"
+  },
+  {
+    "handler": "screens.adminArea.hardware.writeAt",
+    "text": "Write {speed}",
+    "context": "How fast a drive is writing right now, in the drives list on the admin overview. {speed} is such as 12 MB/s."
   },
   {
     "handler": "screens.adminArea.hardwareChains",
@@ -21669,6 +21689,11 @@
     "handler": "screens.adminArea.mediaPanel.numberedMoreThanOnce",
     "text": "Numbered S{season} E{episode} more than once: {files}",
     "context": "Under a title in the media page in the admin area, naming the episode files that share a season and episode number. {season} and {episode} are numbers; {files} is a list of file names."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.rebuildEveryEpisodesPreviews",
+    "text": "Rebuild every episode’s previews…",
+    "context": "An item in a series' menu in the admin's media panel, which rebuilds the previews and thumbnails of all its episodes after asking."
   },
   {
     "handler": "screens.adminArea.mediaPanel.rebuilding",
@@ -28541,14 +28566,99 @@
     "context": "Shown in the book dialog."
   },
   {
+    "handler": "screens.bookDialog.aboutTheAuthor",
+    "text": "About the author",
+    "context": "The heading of the section in a book's dialog about who wrote it."
+  },
+  {
+    "handler": "screens.bookDialog.booksLikeThis",
+    "text": "Books like this",
+    "context": "The heading of a row in a book's dialog listing books about the same things."
+  },
+  {
+    "handler": "screens.bookDialog.bornOn",
+    "text": "Born {date}",
+    "context": "When a book's author was born, in a book's dialog. {date} is as Open Library gives it."
+  },
+  {
     "handler": "screens.bookDialog.chapterList.reflowsToFit",
     "text": "Reflows to fit",
     "context": "Shown in the chapter list in the book dialog."
   },
   {
+    "handler": "screens.bookDialog.count.editions.one",
+    "text": "{count} edition",
+    "context": "How many editions of a book there are. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.editions.other",
+    "text": "{count} editions",
+    "context": "How many editions of a book there are. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.haveRead.one",
+    "text": "{count} has read it",
+    "context": "How many Open Library readers have read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.haveRead.other",
+    "text": "{count} have read it",
+    "context": "How many Open Library readers have read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.pages.one",
+    "text": "{count} page",
+    "context": "How long a book is, in a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.pages.other",
+    "text": "{count} pages",
+    "context": "How long a book is, in a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.ratings.one",
+    "text": "{count} rating",
+    "context": "How many readers rated a book on Open Library, in a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.ratings.other",
+    "text": "{count} ratings",
+    "context": "How many readers rated a book on Open Library, in a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.wantToRead.one",
+    "text": "{count} wants to read it",
+    "context": "How many Open Library readers want to read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.wantToRead.other",
+    "text": "{count} want to read it",
+    "context": "How many Open Library readers want to read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.works.one",
+    "text": "{count} book",
+    "context": "How many books an author wrote, in the about-the-author section of a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.works.other",
+    "text": "{count} books",
+    "context": "How many books an author wrote, in the about-the-author section of a book's dialog. {count} is the number."
+  },
+  {
     "handler": "screens.bookDialog.ebookAndAudiobook",
     "text": "Ebook and audiobook",
     "context": "Shown in the book dialog."
+  },
+  {
+    "handler": "screens.bookDialog.firstPublished",
+    "text": "First published",
+    "context": "The label before the year a book was first published, in a book's dialog."
+  },
+  {
+    "handler": "screens.bookDialog.fromOpenLibrary",
+    "text": "Details from Open Library",
+    "context": "A note under a book's details saying where they came from."
   },
   {
     "handler": "screens.bookDialog.howFarThrough",
@@ -28561,6 +28671,16 @@
     "context": "The button that adds a title or book to the viewer's favourites, on its page or its card's preview."
   },
   {
+    "handler": "screens.bookDialog.livedFromTo",
+    "text": "{born} – {died}",
+    "context": "When a book's author was born and died, in a book's dialog. {born} and {died} are dates as Open Library gives them."
+  },
+  {
+    "handler": "screens.bookDialog.moreByName",
+    "text": "More by {name}",
+    "context": "The heading of a row in a book's dialog listing other books by its author. {name} is the author."
+  },
+  {
     "handler": "screens.bookDialog.moreToDoWithThisBook",
     "text": "More options",
     "context": "The label of a action bar in the book dialog."
@@ -28571,9 +28691,29 @@
     "context": "Shown in the book dialog."
   },
   {
+    "handler": "screens.bookDialog.publisher",
+    "text": "Publisher",
+    "context": "The label before who published a book, in a book's dialog."
+  },
+  {
+    "handler": "screens.bookDialog.ratingOutOfFive",
+    "text": "{rating} out of 5",
+    "context": "How a book was rated by Open Library's readers. {rating} is a number such as 4.1."
+  },
+  {
+    "handler": "screens.bookDialog.readersRating",
+    "text": "Readers' rating",
+    "context": "The label before how Open Library's readers rated a book, in a book's dialog."
+  },
+  {
     "handler": "screens.bookDialog.stopKeeping",
     "text": "Remove from favourites",
     "context": "The button that takes a title or book out of the viewer's favourites, on its page or its card's preview."
+  },
+  {
+    "handler": "screens.bookDialog.subjects",
+    "text": "Subjects",
+    "context": "The label before what a book is about, such as its themes, in a book's dialog."
   },
   {
     "handler": "screens.bookFormatChooser.eachIsSearchedForOnItsOwn",
@@ -28584,6 +28724,86 @@
     "handler": "screens.bookFormatChooser.whichFormats",
     "text": "Which formats",
     "context": "Accessible name of the list of a book's formats to tick when requesting it."
+  },
+  {
+    "handler": "screens.bookLibrary.allBooks",
+    "text": "All books",
+    "context": "The heading over the grid of every book in a library. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.author",
+    "text": "Author",
+    "context": "The filter that narrows the books to some authors. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.byAuthor",
+    "text": "Author",
+    "context": "Ordering the grid of books by author, A to Z. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.byAuthorName",
+    "text": "By {author}",
+    "context": "The heading over a shelf of books by one author, for an author with several books in the library. {author} is their name. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.byNewest",
+    "text": "Newest",
+    "context": "Ordering the grid of books by the year each came out, newest first. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.byRecentlyAdded",
+    "text": "Recently added",
+    "context": "Ordering the grid of books by when each was added, newest first. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.byTitle",
+    "text": "Title",
+    "context": "Ordering the grid of books by title, A to Z. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.comic",
+    "text": "Comic",
+    "context": "A book read as pictures a page at a time, such as a comic or manga, in the format filter. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.everyGenre",
+    "text": "Every genre",
+    "context": "The choice in the genre menu that shows books of every genre. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.filterTheBooksInName",
+    "text": "Filter the books in {name}",
+    "context": "The bar of filters over a library's books, read out to anybody who cannot see it. {name} is the library. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.format",
+    "text": "Format",
+    "context": "The filter that narrows the books to ebooks, audiobooks or comics. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.genre",
+    "text": "Genre",
+    "context": "The menu that narrows the grid of books to one genre, read out to anybody who cannot see it. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.inASeries",
+    "text": "In a series",
+    "context": "The choice in the series filter for books that are part of a series. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.nothingInThatGenre",
+    "text": "No books in that genre yet.",
+    "context": "Shown in place of the grid when the genre chosen has no books. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.sortBooks",
+    "text": "Sort the books",
+    "context": "The menu that orders the grid of every book, read out to anybody who cannot see it. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.standalone",
+    "text": "Standalone",
+    "context": "The choice in the series filter for books that stand on their own. On the Books page (from `BookLibrary`)."
   },
   {
     "handler": "screens.bookRail.thatShelfCouldNotBeRead",
@@ -29464,6 +29684,11 @@
     "handler": "screens.downloadsPanel.downloadQueueTable.finishes",
     "text": "Finishes",
     "context": "A column heading in the admin downloads queue: how long until each download is done, and the time of day it should be done by."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.kind",
+    "text": "Type",
+    "context": "The heading of the column in the download queue saying what kind of thing a download is: films, series, books and so on."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA",
@@ -34140,6 +34365,16 @@
     "handler": "screens.readerPanel.letThePanelGo",
     "text": "Unpin panel",
     "context": "Shown in the reader panel."
+  },
+  {
+    "handler": "screens.readingHero.alsoReading",
+    "text": "Also reading",
+    "context": "The heading over the other books somebody is partway through, under the one they read last. On the Books page (from `ContinueReading`)."
+  },
+  {
+    "handler": "screens.readingHero.youAreReading",
+    "text": "You’re reading",
+    "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",

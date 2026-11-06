@@ -125,6 +125,7 @@ const monitor = (jobs: Job[] = [], queued = 0): Monitor => ({
     requestsMemoryBytes: null,
     loadAverage: 0,
     disks: [],
+    drives: [],
     graphics: null,
     graphicsNotes: [],
     artefacts: null,

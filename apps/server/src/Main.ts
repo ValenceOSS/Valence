@@ -484,6 +484,8 @@ import { readNarrations } from '@ValenceServer/requests/audible/readNarrations';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { searchOpenLibrary } from '@ValenceServer/requests/openLibrary/searchOpenLibrary';
+import { readOpenLibraryAbout } from '@ValenceServer/requests/openLibrary/readOpenLibraryAbout';
+import type { OpenLibraryAbout } from '@ValenceServer/requests/openLibrary/readOpenLibraryAbout';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import type { OpenLibraryShelf } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { createMusicWeb } from '@ValenceServer/music/web/createMusicWeb';
@@ -3859,6 +3861,8 @@ const foundOnMusicBrainz = createAnswerKeeper<string | null>(CHARTS_LIVE_FOR_MS)
 
 const appleAlbums = createAnswerKeeper<AppleAlbumDetail | null>(CHARTS_LIVE_FOR_MS);
 
+const booksAbout = createAnswerKeeper<OpenLibraryAbout | null>(CHARTS_LIVE_FOR_MS);
+
 const bookSeriesFound = createAnswerKeeper<{
   asin: string;
   name: string;
@@ -3892,6 +3896,10 @@ const discovery: Discovery = {
     ),
   bookShelves: () => shelved.keep('books', () => readOpenLibraryShelves(musicWeb)),
   searchBooks: (query) => searchOpenLibrary(musicWeb, query),
+  aboutBook: (title, author) =>
+    booksAbout.keep(`${author ?? ''}\n${title}`, () =>
+      readOpenLibraryAbout(musicWeb, title, author),
+    ),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
   findBookSeries: (title, author) =>
     bookSeriesFound.keep(`${author ?? ''}\n${title}`, async () => {

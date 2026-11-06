@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ADMIN_PAGE_ACTIONS } from '@ValenceScreens/components/AdminPage/ADMIN_PAGE_ACTIONS';
+import { useBarSlot } from '@ValenceScreens/components/AdminPage/useBarSlot';
 import type { AdminPageActionsProps } from './AdminPageActions.types';
 
 /**
@@ -11,11 +11,7 @@ import type { AdminPageActionsProps } from './AdminPageActions.types';
  * @param children - The actions.
  */
 const AdminPageActions = ({ children }: AdminPageActionsProps) => {
-  const [slot, setSlot] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setSlot(document.getElementById(ADMIN_PAGE_ACTIONS));
-  }, []);
+  const slot = useBarSlot(ADMIN_PAGE_ACTIONS);
 
   return slot === null ? null : createPortal(children, slot);
 };

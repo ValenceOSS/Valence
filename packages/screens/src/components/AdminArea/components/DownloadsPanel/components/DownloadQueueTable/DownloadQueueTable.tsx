@@ -26,6 +26,7 @@ import { PAUSABLE_STATES } from '@ValenceScreens/components/AdminArea/components
 import { describeFinishTime } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeFinishTime';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
 import type { QueuedDownload, QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
@@ -47,11 +48,13 @@ const STATE_NAMES: Readonly<Record<QueuedDownloadState, string>> = {
  *
  * @param download - The download.
  * @returns Such as `2.1 GB of 4.6 GB`, or the size alone before anything has arrived, with the
- *   numbers rolling.
+ *   numbers rolling, and nothing while neither is known.
  */
 const describeArrived = (download: QueuedDownload): ReactNode => {
-  if (download.sizeBytes === null) {
-    return download.doneBytes === null ? null : <FormattedBytes bytes={download.doneBytes} />;
+  if (download.sizeBytes === null || download.sizeBytes === 0) {
+    return download.doneBytes === null || download.doneBytes === 0 ? null : (
+      <FormattedBytes bytes={download.doneBytes} />
+    );
   }
 
   return download.doneBytes === null || download.state === 'done' ? (
@@ -68,7 +71,7 @@ const describeArrived = (download: QueuedDownload): ReactNode => {
 };
 
 /**
- * Every download Valence has sent, newest first: what it is and where it went, how it is doing, how
+ * Every download Valence has sent, newest first, in one list that draws only the rows in view: what it is and where it went, how it is doing, how
  * much has arrived and how fast, how long is left, who it is coming from, and what can be done to
  * it — pausing, resuming and removing, one at a time or, where they can be ticked, several at once.
  *
@@ -152,20 +155,33 @@ const DownloadQueueTable = ({
         header: say('common.release'),
         accessorFn: (download) => download.title,
         cell: ({ row }) => (
-          <span className="flex max-w-[32rem] min-w-0 flex-col gap-0.5">
+          <span className="flex max-w-[18rem] min-w-0 flex-col gap-0.5">
             <Tooltip label={row.original.title}>
               <span className="truncate font-medium text-text">{row.original.title}</span>
             </Tooltip>
 
             <span className="truncate text-xs text-text-muted">
-              {[
-                LIBRARY_KIND_NAMES[row.original.libraryKind].label,
-                row.original.clientName,
-                row.original.indexerName,
-              ]
+              {[row.original.clientName, row.original.indexerName]
                 .filter((part) => part !== null)
                 .join(' · ')}
             </span>
+          </span>
+        ),
+      },
+      {
+        id: 'kind',
+        header: say('screens.downloadsPanel.downloadQueueTable.kind'),
+        accessorFn: (download) => LIBRARY_KIND_NAMES[download.libraryKind].label,
+        filterFn: (row, _columnId, filterValue) => row.original.libraryKind === filterValue,
+        meta: {
+          filterOptions: LIBRARY_KINDS.filter((kind) =>
+            downloads.some((download) => download.libraryKind === kind),
+          ).map((kind) => ({ id: kind, label: LIBRARY_KIND_NAMES[kind].label })),
+        },
+        cell: ({ row }) => (
+          <span className="flex max-w-[8rem] items-center gap-2 text-text-muted">
+            <Icon of={LIBRARY_KIND_NAMES[row.original.libraryKind].icon} size={15} />
+            <span className="truncate">{LIBRARY_KIND_NAMES[row.original.libraryKind].label}</span>
           </span>
         ),
       },
@@ -410,6 +426,8 @@ const DownloadQueueTable = ({
       )}
       rows={[...downloads]}
       getRowId={(download) => download.id}
+      isVirtual
+      pageSize={Math.max(downloads.length, 1)}
       {...(toolbar === undefined ? {} : { toolbar })}
       emptyMessage={say('screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA')}
     />

@@ -615,6 +615,16 @@ const ValenceShell = () => {
           onRate={(book, stars) => {
             rate({ bookId: book.id }, stars);
           }}
+          onOpenBook={(bookId) => {
+            go({ book: bookId });
+          }}
+          {...(mayRequest && requestableKinds.has('book')
+            ? {
+                onAsk: (asking: string) => {
+                  go({ book: null, asking });
+                },
+              }
+            : {})}
           {...(mayShare
             ? {
                 onShare: (book) => {
