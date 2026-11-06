@@ -185,6 +185,17 @@ describe('createSessionWatch', () => {
     expect(onEnded).toHaveBeenCalledTimes(1);
   });
 
+  it('says nothing of somebody watching through a linked server, arriving or leaving', () => {
+    const { clock, onStarted, onEnded, watch } = aWatch();
+
+    watch.opened({ ...aSession, accountId: null, fromServer: 'Kai’s Valence' });
+    watch.closed(aSession.clientId);
+    clock.tick(LINGER_MS);
+
+    expect(onStarted).not.toHaveBeenCalled();
+    expect(onEnded).not.toHaveBeenCalled();
+  });
+
   it('has nothing to say about a client it never saw arrive', () => {
     const { clock, onEnded, watch } = aWatch();
 

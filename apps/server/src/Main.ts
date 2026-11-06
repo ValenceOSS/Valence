@@ -1065,6 +1065,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
     accountName: await nameOfAccount(viewing.accountId),
     profileId: viewing.profileId,
     profileName: viewing.profileName,
+    fromServer: viewing.fromServer,
     item: {
       itemId: item.id,
       kind,
@@ -1116,6 +1117,7 @@ const describeListening = async ({
     accountName: await nameOfAccount(device.accountId),
     profileId: device.profileId,
     profileName: device.profileName,
+    fromServer: null,
     item: {
       itemId: track.id,
       kind: 'song',
@@ -1157,6 +1159,7 @@ const describeSession = async (session: PresenceSession): Promise<SessionData> =
   address: session.address,
   guestOf: session.guestOf,
   viaShare: session.viaShare,
+  fromServer: session.fromServer,
 });
 
 const sessions = createSessionWatch({
@@ -1592,6 +1595,7 @@ const describeBookListening = async ({
     accountName: await nameOfAccount(device.accountId),
     profileId: device.profileId,
     profileName: device.profileName,
+    fromServer: null,
     item: {
       itemId: heard.id,
       kind: 'book',

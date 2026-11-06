@@ -26,6 +26,18 @@ describe('nameOfViewer', () => {
     );
   });
 
+  it('names somebody on a linked server by that server where it keeps their name back', () => {
+    expect(
+      nameOfViewer({ accountName: null, profileName: null, fromServer: 'Kai’s Valence' }),
+    ).toBe('Someone from Kai’s Valence');
+  });
+
+  it('names somebody on a linked server and their server where it sends their name', () => {
+    expect(
+      nameOfViewer({ accountName: null, profileName: 'Sam', fromServer: 'Kai’s Valence' }),
+    ).toBe('Sam from Kai’s Valence');
+  });
+
   it('treats a guest of nobody as a guest of nobody rather than erroring', () => {
     expect(nameOfViewer({ accountName: null, profileName: null, guestOf: null })).toBe(
       'Someone with a share link',

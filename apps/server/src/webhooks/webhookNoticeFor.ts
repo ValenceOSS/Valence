@@ -556,7 +556,8 @@ const scanParts = (
 };
 
 /**
- * What somebody watching or listening is doing, for a playback event.
+ * What somebody watching or listening is doing, for a playback event. Somebody on a linked server
+ * plays on that server rather than on a device here, and the lead already names it.
  *
  * @param payload - The event.
  * @returns The notice's parts.
@@ -569,7 +570,7 @@ const playbackParts = (
   const viewer = strong(nameOfViewer(payload.data));
   const shared = {
     title: nameOfItem(item),
-    context: placesOf(payload.data),
+    context: payload.data.fromServer === null ? placesOf(payload.data) : [],
     tone: 'viewing' as const,
     posterUrl: item.posterUrl,
     footer: item.libraryName,

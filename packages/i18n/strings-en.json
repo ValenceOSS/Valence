@@ -38947,9 +38947,19 @@
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for a song or an audiobook. {viewer} is who; {item} is what; {device} is the device; {how} is how it is reaching the device."
   },
   {
+    "handler": "server.webhooks.formatWebhookBody.startedListeningFromAnotherServer",
+    "text": "{viewer} started listening to {item}, {how}.",
+    "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for a song or an audiobook played through a linked server, which {viewer} already names. {viewer} is who; {item} is what; {how} is how it is reaching them."
+  },
+  {
     "handler": "server.webhooks.formatWebhookBody.startedWatching",
     "text": "{viewer} started watching {item} on {device}, {how}.",
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`). {viewer} is filled in by the app; {item} is filled in by the app; {device} is filled in by the app; {how} is filled in by the app."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.startedWatchingFromAnotherServer",
+    "text": "{viewer} started watching {item}, {how}.",
+    "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for something played through a linked server, which {viewer} already names. {viewer} is who; {item} is what; {how} is how it is reaching them."
   },
   {
     "handler": "server.webhooks.formatWebhookBody.theCatalogueCanBeReachedAgain",

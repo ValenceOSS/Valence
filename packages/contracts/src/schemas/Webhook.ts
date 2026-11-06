@@ -297,6 +297,7 @@ const WebhookViewerSchema = z.object({
   accountName: z.string().nullable(),
   profileId: z.string().nullable(),
   profileName: z.string().nullable(),
+  fromServer: z.string().nullable().default(null),
 });
 
 const WebhookPlaybackSchema = WebhookViewerSchema.extend({
