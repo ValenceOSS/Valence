@@ -5020,6 +5020,7 @@ const ENGLISH = {
   'screens.adminArea.indexersPanel.searchesItAloneSoYouSee':
     'Searches this indexer alone, so you can see what it answers.',
   'screens.adminArea.indexersPanel.testAll': 'Test all',
+  'screens.adminArea.indexersPanel.testedTestedOfAll': 'Tested {tested} of {all}',
   'screens.adminArea.indexersPanel.testing': 'Testing',
   'screens.adminArea.indexersPanel.testSearch': 'Test search',
   'screens.adminArea.indexersPanel.testSearchOnName': 'Test search on {name}',

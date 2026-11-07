@@ -408,6 +408,49 @@ describe('IndexersPanel', () => {
     });
   });
 
+  it('counts the tests on the button as each one finishes', async () => {
+    fetchIndexers.mockResolvedValue([
+      anIndexer({ id: 'quick', name: 'Jackett' }),
+      anIndexer({ id: 'slow', name: 'Prowlarr' }),
+    ]);
+
+    let answerTheSlow: () => void = () => {};
+    const answered = {
+      value: {
+        isWorking: true,
+        problem: null,
+        problemCode: null,
+        capabilities: null,
+        captcha: null,
+      },
+      refusal: null,
+    };
+
+    testIndexer.mockImplementation((id) =>
+      id === 'quick'
+        ? Promise.resolve(answered)
+        : new Promise((resolve) => {
+            answerTheSlow = () => {
+              resolve(answered);
+            };
+          }),
+    );
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await screen.findByText('Jackett');
+    await user.click(screen.getByRole('button', { name: /Test all/ }));
+
+    expect(await screen.findByRole('button', { name: /Tested 1 of 2/ })).toBeInTheDocument();
+    expect(screen.getByText('Tested 1 of 2', { selector: '[aria-live="polite"]' })).toBeVisible();
+
+    answerTheSlow();
+
+    expect(await screen.findByRole('button', { name: /Test all/ })).toBeEnabled();
+  });
+
   it('has nothing to test where every indexer was switched off', async () => {
     fetchIndexers.mockResolvedValue([anIndexer({ isEnabled: false })]);
 
