@@ -3,7 +3,11 @@ import { decodeXmlText } from './decodeXmlText';
 
 describe('decodeXmlText', () => {
   it('spells out the named entities', () => {
-    expect(decodeXmlText('Pride &amp; Prejudice &lt;1813&gt;')).toBe('Pride & Prejudice <1813>');
+    expect(decodeXmlText('Pride &amp; Prejudice &hellip;')).toBe('Pride & Prejudice …');
+  });
+
+  it('drops a tag that was escaped, as a description escaped twice over carries', () => {
+    expect(decodeXmlText('&lt;p&gt;Pride &amp;amp; Prejudice&lt;/p&gt;')).toBe('Pride & Prejudice');
   });
 
   it('spells out entities written as numbers', () => {
@@ -11,7 +15,7 @@ describe('decodeXmlText', () => {
   });
 
   it('leaves an entity it does not know as it was', () => {
-    expect(decodeXmlText('&hellip;')).toBe('&hellip;');
+    expect(decodeXmlText('&notarealentity;')).toBe('&notarealentity;');
   });
 
   it('drops tags inside the text', () => {

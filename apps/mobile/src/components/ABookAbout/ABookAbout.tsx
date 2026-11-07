@@ -177,7 +177,7 @@ const ABookAbout = ({ title, author, overview, subjects = [], onAsk }: ABookAbou
                   lived,
                   writer.workCount === null
                     ? null
-                    : sayCount('screens.bookDialog.count.works', writer.workCount),
+                    : sayCount('common.count.books', writer.workCount),
                 ]
                   .filter((part) => part !== null)
                   .map((part) => (

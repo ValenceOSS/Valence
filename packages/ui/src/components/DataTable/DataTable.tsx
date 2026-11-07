@@ -65,6 +65,8 @@ const NEAR_THE_END = 200;
 
 const SIDE_FADE = 32;
 
+const DRAWN_BEFORE_MEASURED = 40;
+
 const ROW_GUESS = 56;
 
 const DRAWN_BEYOND = 10;
@@ -126,6 +128,7 @@ const HEIGHT_CLASSES = {
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
  * @param isVirtual - Whether only the rows in view, and a few either side, are drawn, for a table
  *   long enough that drawing every row would slow the page; rows cannot be reordered by hand then.
+ *   Until the table has room to measure, the first rows are drawn in full rather than none.
  * @param canOpen - Whether a row opens onto rows beneath it before they are known, for rows the
  *   caller reads only once they are opened.
  * @param onReachEnd - Told the bottom was reached with every row given already shown, where the
@@ -344,7 +347,8 @@ const DataTable = <Row extends RowData>({
     scrollMargin: head.current?.offsetHeight ?? 0,
     getItemKey: (at) => drawnRows[at]?.id ?? at,
   });
-  const inView = virtualiser.getVirtualItems();
+  const isMeasured = (virtualiser.scrollRect?.height ?? 0) > 0;
+  const inView = isMeasured ? virtualiser.getVirtualItems() : [];
   const firstInView = inView[0];
   const lastInView = inView.at(-1);
   const roomAbove =
@@ -353,13 +357,15 @@ const DataTable = <Row extends RowData>({
     lastInView === undefined
       ? 0
       : virtualiser.getTotalSize() - (lastInView.end - virtualiser.options.scrollMargin);
-  const rowsToDraw = isVirtual
-    ? inView.flatMap((item) => {
-        const row = drawnRows[item.index];
+  const rowsToDraw = !isVirtual
+    ? drawnRows.map((row, at) => ({ row, at }))
+    : isMeasured
+      ? inView.flatMap((item) => {
+          const row = drawnRows[item.index];
 
-        return row === undefined ? [] : [{ row, at: item.index }];
-      })
-    : drawnRows.map((row, at) => ({ row, at }));
+          return row === undefined ? [] : [{ row, at: item.index }];
+        })
+      : drawnRows.slice(0, DRAWN_BEFORE_MEASURED).map((row, at) => ({ row, at }));
   const spacer = (height: number, key: string) =>
     height <= 0 ? null : (
       <tr key={key} aria-hidden>

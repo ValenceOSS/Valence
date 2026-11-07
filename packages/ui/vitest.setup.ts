@@ -110,6 +110,10 @@ if (!('ResizeObserver' in globalThis)) {
   globalThis.ResizeObserver = LayoutlessResizeObserver;
 }
 
+if (!('scrollIntoView' in Element.prototype)) {
+  Element.prototype.scrollIntoView = (): void => undefined;
+}
+
 MotionGlobalConfig.skipAnimations = true;
 
 if (!('PointerEvent' in globalThis)) {

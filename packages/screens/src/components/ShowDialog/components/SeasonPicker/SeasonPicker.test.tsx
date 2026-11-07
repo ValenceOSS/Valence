@@ -52,7 +52,7 @@ describe('SeasonPicker', () => {
 
     await user.click(screen.getByRole('button', { name: 'Season' }));
 
-    expect(await screen.findByText('Not in your library')).toBeInTheDocument();
+    expect(await screen.findByText('Not in any library')).toBeInTheDocument();
   });
 
   it('names the specials by their own name, and chooses them as null', async () => {

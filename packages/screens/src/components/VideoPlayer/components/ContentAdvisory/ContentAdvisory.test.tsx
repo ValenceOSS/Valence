@@ -13,7 +13,7 @@ describe('ContentAdvisory', () => {
       />,
     );
 
-    expect(screen.getByText(/^Contains Violence.+Strong language$/u)).toBeInTheDocument();
+    expect(screen.getByText('Contains violence and strong language')).toBeInTheDocument();
   });
 
   it('says nothing once the moment has passed', () => {

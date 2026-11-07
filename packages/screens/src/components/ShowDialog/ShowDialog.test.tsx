@@ -484,7 +484,7 @@ describe('ShowDialog', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2, 4] }]));
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Not in this library')).toBeInTheDocument();
+    expect(await screen.findByText('Not in any library')).toBeInTheDocument();
     expect(screen.getByText('Episode 3')).toBeInTheDocument();
   });
 
@@ -492,11 +492,11 @@ describe('ShowDialog', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2, 4] }]));
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByText('Not in this library');
+    await screen.findByText('Not in any library');
 
     const rows = screen.getAllByRole('listitem');
     const missingAt = rows.findIndex(
-      (row) => within(row).queryByText('Not in this library') !== null,
+      (row) => within(row).queryByText('Not in any library') !== null,
     );
     const fourthAt = rows.findIndex(
       (row) => within(row).queryByRole('button', { name: /Play Episode 4/ }) !== null,
@@ -512,7 +512,7 @@ describe('ShowDialog', () => {
 
     await screen.findByRole('button', { name: /Play Episode 1/ });
 
-    expect(screen.queryByText('Not in this library')).not.toBeInTheDocument();
+    expect(screen.queryByText('Not in any library')).not.toBeInTheDocument();
   });
 
   it('offers a season it does not hold at all, alongside the ones it does', async () => {
@@ -589,7 +589,7 @@ describe('ShowDialog', () => {
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     expect(await screen.findByText(/Aired 1 Jan 2000/)).toBeInTheDocument();
-    expect(screen.getByText('Not in this library · Airs 1 Jan 2999')).toBeInTheDocument();
+    expect(screen.getByText('Not in any library · Airs 1 Jan 2999')).toBeInTheDocument();
   });
 
   it('opens a season it holds none of, and says so of every episode', async () => {
@@ -615,7 +615,7 @@ describe('ShowDialog', () => {
 
     expect(screen.getByText('1. A Fresh Start')).toBeInTheDocument();
     expect(screen.getByText('2. The Second')).toBeInTheDocument();
-    expect(screen.getAllByText('Not in this library')).toHaveLength(2);
+    expect(screen.getAllByText('Not in any library')).toHaveLength(2);
   });
 
   it('offers nothing to play in a season it holds none of', async () => {
@@ -691,7 +691,7 @@ describe('ShowDialog', () => {
 
     await screen.findByRole('button', { name: /Play Episode 1/ });
 
-    expect(screen.queryByText('Not in this library')).not.toBeInTheDocument();
+    expect(screen.queryByText('Not in any library')).not.toBeInTheDocument();
   });
 
   it('plays the episode that was pressed', async () => {

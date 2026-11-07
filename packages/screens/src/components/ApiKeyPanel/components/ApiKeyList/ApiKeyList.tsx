@@ -150,7 +150,7 @@ const ApiKeyList = ({
             />
 
             <ActionMenu
-              label={say('screens.apiKeyPanel.moreForName', { name: key.name })}
+              label={say('common.moreForName', { name: key.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={18} />}
               align="end"
               size="sm"

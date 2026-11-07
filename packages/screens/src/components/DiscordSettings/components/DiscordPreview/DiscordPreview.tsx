@@ -38,7 +38,7 @@ const DiscordPreview = ({ settings }: DiscordPreviewProps) => {
 
   return (
     <PanelCard
-      title={say('screens.mediaPreview.preview')}
+      title={say('screens.adminArea.mediaTitlePage.showInTheApp')}
       isFlush
       actions={
         <PanelCardAction icon={ShuffleIcon} onClick={samples.pickAgain}>
@@ -50,7 +50,7 @@ const DiscordPreview = ({ settings }: DiscordPreviewProps) => {
         <SegmentedRow
           size="sm"
           tone="accent"
-          label={say('screens.mediaPreview.preview')}
+          label={say('screens.adminArea.mediaTitlePage.showInTheApp')}
           items={STATES}
           value={state}
           onSelect={(chosen) => {

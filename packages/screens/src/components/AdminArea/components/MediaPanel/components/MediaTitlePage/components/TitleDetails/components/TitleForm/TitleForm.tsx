@@ -231,7 +231,7 @@ const TitleForm = ({
   };
 
   const changedNote = (count: number) =>
-    count === 0 ? undefined : sayCount('screens.adminArea.titleDetails.count.changedFields', count);
+    count === 0 ? undefined : sayCount('client.admin.describeScanResult.changed', count);
 
   return (
     <div className="@container min-w-0">

@@ -190,10 +190,10 @@ const BookDialog = ({
           year === null ? null : year.toString(),
           known?.pages === null || known?.pages === undefined
             ? null
-            : sayCount('screens.bookDialog.count.pages', known.pages),
+            : sayCount('common.count.pages', known.pages),
           known?.editions === null || known?.editions === undefined || known.editions < 2
             ? null
-            : sayCount('screens.bookDialog.count.editions', known.editions),
+            : sayCount('common.count.editions', known.editions),
         ].filter((part) => part !== null);
 
   const primary =

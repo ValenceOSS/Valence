@@ -38,7 +38,7 @@ const SeasonPicker = ({ seasons, value, onChange }: SeasonPickerProps) => {
           options: seasons.map((one) => ({
             id: idOf(one.seasonNumber),
             label: nameSeason(one.seasonNumber),
-            ...(one.isHeld ? {} : { detail: say('common.notInYourLibrary') }),
+            ...(one.isHeld ? {} : { detail: say('common.notInTheLibrary') }),
           })),
           selectedId: idOf(value),
           onSelect: choose,

@@ -3,7 +3,7 @@ import { sayContains } from './sayContains';
 
 describe('sayContains', () => {
   it('says in one line what a title contains', () => {
-    expect(sayContains(['violence', 'language'])).toMatch(/^Contains Violence.+Strong language$/u);
+    expect(sayContains(['violence', 'language'])).toBe('Contains violence and strong language');
   });
 
   it('says nothing for a title that contains nothing worth saying', () => {

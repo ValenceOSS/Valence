@@ -170,7 +170,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'kind',
-        header: say('screens.downloadsPanel.downloadQueueTable.kind'),
+        header: say('screens.adminArea.addLibraryDialog.type'),
         accessorFn: (download) => LIBRARY_KIND_NAMES[download.libraryKind].label,
         filterFn: (row, _columnId, filterValue) => row.original.libraryKind === filterValue,
         meta: {

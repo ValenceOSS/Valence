@@ -507,6 +507,7 @@ describe('the music routes', () => {
           detail: 'Music from the 2020s',
           trackCount: 1,
           coverAlbumIds: [ALBUM_ID],
+          faces: [],
         },
       ],
     });

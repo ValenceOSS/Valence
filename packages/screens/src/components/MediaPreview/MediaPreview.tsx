@@ -346,7 +346,7 @@ const MediaPreview = ({
       )}
 
       <VideoSurface
-        label={say('screens.mediaPreview.preview')}
+        label={say('screens.adminArea.mediaTitlePage.showInTheApp')}
         videoRef={videoRef}
         className={`valence-preview h-full w-full object-cover transition-opacity duration-700 ${
           isShowingFrame ? 'opacity-0' : 'opacity-100'

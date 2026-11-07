@@ -3,7 +3,20 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Badge } from './Badge';
 
-const badgeOf = (text: string): HTMLElement => screen.getByText(text);
+/**
+ * The badge saying something: the element holding its words, or, where a badge for something under
+ * way wraps its words in a shimmer, the badge around them.
+ *
+ * @param text - What the badge says.
+ * @returns The badge.
+ */
+const badgeOf = (text: string): HTMLElement => {
+  const found = screen.getByText(text);
+
+  return found.classList.contains('valence-shimmer-text') && found.parentElement !== null
+    ? found.parentElement
+    : found;
+};
 
 describe('Badge', () => {
   it('draws a quiet badge in the same gray as a selector track', () => {

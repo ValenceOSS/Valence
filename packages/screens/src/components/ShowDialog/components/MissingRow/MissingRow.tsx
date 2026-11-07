@@ -46,7 +46,7 @@ const MissingRow = ({
       : `${episodeNumber.toString()}. ${title}`;
   const standing =
     airs === undefined || airs === ''
-      ? say('common.notInThisLibrary')
+      ? say('common.notInTheLibrary')
       : say('common.notInThisLibraryAirs', { airs });
   const hasOverview = overview !== undefined && overview !== null && overview !== '';
 

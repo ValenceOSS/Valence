@@ -5,7 +5,8 @@ import { BackToTop } from './BackToTop';
 
 /**
  * jsdom lays nothing out, so every element reports a top of zero and nothing has ever gone past the
- * top of the window. Saying where things sit is how the page is scrolled here.
+ * top of the window. Saying where things sit, and how far the page has been scrolled to put them
+ * there, is how the page is scrolled here.
  *
  * @param top - Where everything sits down the window.
  */
@@ -14,10 +15,15 @@ const everythingAt = (top: number) => {
     configurable: true,
     value: () => new DOMRect(0, top),
   });
+  Object.defineProperty(document.documentElement, 'scrollTop', {
+    configurable: true,
+    value: Math.max(-top, 0),
+  });
 };
 
 afterEach(() => {
   Reflect.deleteProperty(HTMLElement.prototype, 'getBoundingClientRect');
+  Reflect.deleteProperty(document.documentElement, 'scrollTop');
   vi.unstubAllGlobals();
 });
 

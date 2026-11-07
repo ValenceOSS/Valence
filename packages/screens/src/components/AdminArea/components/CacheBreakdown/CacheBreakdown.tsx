@@ -13,8 +13,8 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * clips, scrub thumbnails, artwork, the pages of books, and what is being written for sessions
  * running now — each with a bar of its share of that total. The library's own files are set apart
  * at the foot, since they dwarf everything else and the useful question is how much Valence has
- * added to what was already there. While downloads are coming, the foot also estimates what all of
- * it will come to once they have arrived.
+ * added to what was already there. While downloads are coming, the foot also estimates how large
+ * they all are, with a bar of how much of that has arrived.
  *
  * @param cache - What the monitor found on disk, or null while it is still counting.
  * @param artwork - How much artwork has been fetched and kept.
@@ -84,13 +84,13 @@ const CacheBreakdown = ({
         ))}
       </dl>
 
-      {incoming === null || incoming.count === 0 || library === null ? null : (
+      {incoming === null || incoming.count === 0 ? null : (
         <dl className="flex flex-col gap-2 border-t border-border pt-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 flex-col gap-0.5">
               {nameOf({
-                label: say('screens.adminArea.cacheBreakdown.estimatedOnceDownloadsFinish'),
-                hint: say('screens.adminArea.cacheBreakdown.whatTheEstimateCounts'),
+                label: say('screens.adminArea.cacheBreakdown.estimatedSizeOfDownloads'),
+                hint: say('screens.adminArea.cacheBreakdown.whatTheDownloadsCount'),
               })}
               <dd className="text-xs text-text-muted">
                 {sayCount('screens.adminArea.cacheBreakdown.stillToDownload', incoming.count, {
@@ -107,12 +107,12 @@ const CacheBreakdown = ({
               )}
             </div>
             <dd className="shrink-0 text-sm font-medium tabular-nums text-text">
-              {formatBytes(keptBytes + library.bytes + incoming.totalBytes)}
+              {formatBytes(incoming.totalBytes)}
             </dd>
           </div>
 
           <ProgressBar
-            label={say('screens.adminArea.cacheBreakdown.estimatedOnceDownloadsFinish')}
+            label={say('screens.adminArea.cacheBreakdown.estimatedSizeOfDownloads')}
             value={incoming.doneBytes}
             max={Math.max(incoming.totalBytes, 1)}
             isThin

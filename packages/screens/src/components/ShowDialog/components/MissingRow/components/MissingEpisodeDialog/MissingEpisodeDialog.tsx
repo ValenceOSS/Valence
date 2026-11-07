@@ -138,7 +138,7 @@ const MissingEpisodeDialog = ({
 
                 <DialogHeadlinePart className="flex flex-col items-start gap-2.5">
                   <span className="text-base text-text-muted">{facts.join(' · ')}</span>
-                  <Badge size="sm">{say('common.notInThisLibrary')}</Badge>
+                  <Badge size="sm">{say('common.notInTheLibrary')}</Badge>
                 </DialogHeadlinePart>
 
                 {overview === null || overview === undefined || overview === '' ? null : (

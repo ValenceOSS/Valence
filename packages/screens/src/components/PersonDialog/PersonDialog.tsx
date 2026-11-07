@@ -85,7 +85,7 @@ const describeCredit = (credit: PersonCredit): string | undefined => {
   }
 
   return episodes === null
-    ? say('screens.personDialog.creditRole', { role: credit.role })
+    ? say('screens.personDialog.asRole', { role: credit.role })
     : say('screens.personDialog.creditEpisodes', { episodes, role: credit.role });
 };
 
@@ -215,7 +215,7 @@ const PersonDialog = ({
     },
     { label: say('screens.personDialog.placeOfBirth'), value: person?.bornIn ?? null },
     {
-      label: say('screens.personDialog.alsoKnownAs'),
+      label: say('screens.adminArea.titlePage.animeSettingsCard.searchedAs'),
       value:
         person?.alsoKnownAs === null ||
         person?.alsoKnownAs === undefined ||
@@ -492,9 +492,9 @@ const PersonDialog = ({
               })}
 
               {timeline.length === 0 ? null : (
-                <DialogSection heading={say('screens.personDialog.timeline')}>
+                <DialogSection heading={say('common.timeline')}>
                   <StepTrail
-                    label={say('screens.personDialog.timeline')}
+                    label={say('common.timeline')}
                     isNewestFirst
                     steps={timeline.map((credit) => ({
                       id: `${credit.kind}:${credit.id}`,

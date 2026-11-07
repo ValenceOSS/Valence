@@ -16,10 +16,10 @@ import { say } from '@ValenceI18n/say';
 const BRIGHTNESS_STEP = 0.1;
 
 const NAMES: Readonly<Record<AReadingLookProps['theme'], string>> = {
-  original: say('phone.aReader.aReadingLook.original'),
+  original: say('common.original'),
   quiet: say('phone.aReader.aReadingLook.quiet'),
   paper: say('phone.aReader.aReadingLook.paper'),
-  bold: say('phone.aReader.aReadingLook.bold'),
+  bold: say('client.playback.nameCaptionWeight.bold'),
   calm: say('phone.aReader.aReadingLook.calm'),
   focus: say('phone.aReader.aReadingLook.focus'),
 };

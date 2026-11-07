@@ -61,7 +61,7 @@ const AMissingEpisode = ({ at, title, stillUrl, airs }: AMissingEpisodeProps) =>
         </Words>
         <Words size="small" tone="muted">
           {airs === ''
-            ? say('common.notInThisLibrary')
+            ? say('common.notInTheLibrary')
             : say('common.notInThisLibraryAirs', { airs })}
         </Words>
       </View>

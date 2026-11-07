@@ -9,7 +9,7 @@ import type { EngineGraphsProps, EngineReading } from './EngineGraphs.types';
 
 const ENGINES = [
   { key: 'render', label: say('screens.adminArea.engineGraphs.threeD') },
-  { key: 'copy', label: say('screens.adminArea.engineGraphs.copy') },
+  { key: 'copy', label: say('common.copy') },
   { key: 'video', label: say('screens.adminArea.engineGraphs.video') },
   { key: 'videoEnhance', label: say('screens.adminArea.engineGraphs.videoEnhance') },
 ] as const satisfies readonly { key: keyof EngineReading; label: string }[];

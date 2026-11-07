@@ -226,7 +226,7 @@ const CustomMessageCard = ({ setup, subscribed, url, onSave }: CustomMessageCard
         <div className="flex min-w-0 flex-col gap-3 border-t border-[var(--surface-line)] p-4 xl:border-t-0">
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs font-medium text-text-muted">
-              {say('screens.mediaPreview.preview')}
+              {say('screens.adminArea.mediaTitlePage.showInTheApp')}
             </span>
             <SelectField
               label={say('screens.adminArea.customMessageCard.eventToPreview')}

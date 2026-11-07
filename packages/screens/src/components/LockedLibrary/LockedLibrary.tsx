@@ -65,7 +65,7 @@ const LockedLibrary = ({ library }: LockedLibraryProps) => {
           onValueChange={setSecret}
         />
         <Button type="submit" variant="secondary" size="sm" disabled={secret === '' || isUnlocking}>
-          {say('screens.lockedLibrary.unlock')}
+          {say('screens.adminArea.sourcedField.unlockTheField')}
         </Button>
       </form>
     </PanelCard>

@@ -340,7 +340,9 @@
       "@ValenceUI/MenuItemFace": ["./packages/ui/src/components/MenuItemFace/MenuItemFace.tsx"],
       "@ValenceUI/PanelCard": ["./packages/ui/src/components/PanelCard/PanelCard.tsx"],
       "@ValenceUI/SectionIndex": ["./packages/ui/src/components/SectionIndex/SectionIndex.tsx"],
-      "@ValenceUI/SectionIndex.types": ["./packages/ui/src/components/SectionIndex/SectionIndex.types.ts"],
+      "@ValenceUI/SectionIndex.types": [
+        "./packages/ui/src/components/SectionIndex/SectionIndex.types.ts"
+      ],
       "@ValenceUI/PanelCard.types": ["./packages/ui/src/components/PanelCard/PanelCard.types.ts"],
       "@ValenceUI/StatTile": ["./packages/ui/src/components/StatTile/StatTile.tsx"],
       "@ValenceUI/StatTile.types": ["./packages/ui/src/components/StatTile/StatTile.types.ts"],

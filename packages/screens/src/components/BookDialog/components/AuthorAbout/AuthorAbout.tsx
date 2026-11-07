@@ -43,7 +43,7 @@ const AuthorAbout = ({ author }: AuthorAboutProps) => {
                 lived,
                 author.workCount === null
                   ? null
-                  : sayCount('screens.bookDialog.count.works', author.workCount),
+                  : sayCount('common.count.books', author.workCount),
               ]
                 .filter((part) => part !== null)
                 .join(' · ')}

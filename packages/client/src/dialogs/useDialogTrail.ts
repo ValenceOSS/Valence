@@ -2,10 +2,10 @@ import { useLayoutEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { dialogStackSlice } from './dialogStackSlice';
 import { nextDialogTrail } from './nextDialogTrail';
-import type { dialogStore } from './dialogStore';
+import type { createDialogStore } from './createDialogStore';
 import type { DialogStep } from './DialogStep';
 
-type DialogStackState = ReturnType<typeof dialogStore.getState>;
+type DialogStackState = ReturnType<ReturnType<typeof createDialogStore>['getState']>;
 
 /**
  * Keeps the trail of dialogs that led to the one showing, which the address cannot hold: it has room

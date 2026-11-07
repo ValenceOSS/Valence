@@ -72,7 +72,7 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
                 detail={[
                   album.year?.toString(),
                   album.type === null ? undefined : RELEASE_TYPE_NAMES[album.type].one,
-                  say('common.notInYourLibrary'),
+                  say('common.notInTheLibrary'),
                 ]
                   .filter((part) => part !== undefined)
                   .join(' · ')}

@@ -47,8 +47,8 @@ const keep = (key: string, text: BookText): void => {
  * Every part of a book that reflows, ready to set, as the server streams it: nothing at first, then
  * the part it opens at the moment that part arrives — or, where that part holds nothing, the first
  * after it that does — then the whole book and its contents once the
- * rest has. A server that does not stream books is asked for each part in turn instead, and each is
- * read here. A book read whole lately is had at once.
+ * rest has. A server that does not stream books, or a stream that breaks off, is asked for each part in
+ * turn instead, and each is read here. A book read whole lately is had at once.
  *
  * @param bookId - The book.
  * @param chapterId - Which of its files.
@@ -122,7 +122,9 @@ const useBookText = (
         streamFromThisServer,
       ).catch(() => 'failed' as const);
 
-      if (answered === 'missing') {
+      const isAskedAPartAtATime = answered !== 'read' || got.contents === null;
+
+      if (isAskedAPartAtATime) {
         const each = await Promise.all(
           Array.from({ length: partCount }, (_, part) =>
             fetchBookDocument(bookId, chapterId, part).catch(() => null),
@@ -135,10 +137,12 @@ const useBookText = (
             ...(isWithHtml ? { html: html ?? '' } : {}),
           };
         });
-        got.contents = contentsOfBook(
-          listed,
-          parts.map((part) => part?.blocks ?? []),
-        );
+        got.contents = each.every((html) => html === null)
+          ? null
+          : contentsOfBook(
+              listed,
+              parts.map((part) => part?.blocks ?? []),
+            );
       }
 
       if (isGone()) {
@@ -146,7 +150,7 @@ const useBookText = (
       }
 
       const whole: BookText =
-        answered === 'failed' || got.contents === null
+        got.contents === null
           ? { parts, contents: null, isWhole: false, isFailed: true }
           : { parts, contents: got.contents, isWhole: true, isFailed: false };
 

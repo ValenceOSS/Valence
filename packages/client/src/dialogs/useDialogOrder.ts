@@ -2,10 +2,10 @@ import { useLayoutEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { dialogStackSlice } from './dialogStackSlice';
 import { nextDialogOrder } from './nextDialogOrder';
-import type { dialogStore } from './dialogStore';
+import type { createDialogStore } from './createDialogStore';
 import type { DialogKind } from './DialogKind';
 
-type DialogStackState = ReturnType<typeof dialogStore.getState>;
+type DialogStackState = ReturnType<ReturnType<typeof createDialogStore>['getState']>;
 
 /**
  * Keeps the order the open dialogs were opened in. The address says what is open, which keeps links

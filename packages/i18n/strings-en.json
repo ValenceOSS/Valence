@@ -5257,19 +5257,9 @@
     "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it. \"Any\" because a linked server's libraries count too."
   },
   {
-    "handler": "common.notInThisLibrary",
-    "text": "Not in any library",
-    "context": "Shown in the missing episode in the show of the phone app."
-  },
-  {
     "handler": "common.notInThisLibraryAirs",
     "text": "Not in any library · {airs}",
     "context": "Shown in the missing episode in the show of the phone app. {airs} is filled in by the app."
-  },
-  {
-    "handler": "common.notInYourLibrary",
-    "text": "Not in any library",
-    "context": "Shown, used in the artist story in the artist view and in the season picker in the show dialog. \"Any\" because a linked server's libraries count too."
   },
   {
     "handler": "common.noTitleKeepsItsRulesYet",
@@ -11046,11 +11036,6 @@
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
-    "handler": "phone.aReader.aReadingLook.bold",
-    "text": "Bold",
-    "context": "The name of a reading theme: white words set heavier on black."
-  },
-  {
     "handler": "phone.aReader.aReadingLook.brighter",
     "text": "Brighter",
     "context": "The label of the button that makes the screen brighter while reading."
@@ -11079,11 +11064,6 @@
     "handler": "phone.aReader.aReadingLook.letter",
     "text": "A",
     "context": "The letter drawn on the buttons that make the words of a book smaller and larger, small on one and large on the other."
-  },
-  {
-    "handler": "phone.aReader.aReadingLook.original",
-    "text": "Original",
-    "context": "The name of a reading theme: black words on a white page."
   },
   {
     "handler": "phone.aReader.aReadingLook.paper",
@@ -16681,9 +16661,9 @@
     "context": "Shown in the cache breakdown in the admin area."
   },
   {
-    "handler": "screens.adminArea.cacheBreakdown.estimatedOnceDownloadsFinish",
-    "text": "Estimated once downloads finish",
-    "context": "On the admin overview's storage card, the label of the estimate of total storage after the downloads in the queue have finished."
+    "handler": "screens.adminArea.cacheBreakdown.estimatedSizeOfDownloads",
+    "text": "Estimated size of downloads",
+    "context": "On the admin overview's storage card, the label of the estimated total size of the downloads in the queue that have not finished."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.keptByValence",
@@ -16706,9 +16686,9 @@
     "context": "The label of a button in the cache breakdown in the admin area. {label} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.cacheBreakdown.whatTheEstimateCounts",
-    "text": "What Valence keeps, plus the library, plus the full size of every unfinished download sent through Valence. Downloads without a size yet aren’t included, so the real figure may be higher.",
-    "context": "The hint explaining the estimate on the admin overview's storage card."
+    "handler": "screens.adminArea.cacheBreakdown.whatTheDownloadsCount",
+    "text": "The full size of every unfinished download sent through Valence, counting what has arrived already. Downloads without a size yet aren’t included, so the real figure may be higher.",
+    "context": "The hint explaining the estimated size of downloads on the admin overview's storage card."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.withoutASizeYet.one",
@@ -18814,11 +18794,6 @@
     "handler": "screens.adminArea.encodingSettings.shortSegmentsDetail",
     "text": "Sends video in 2-second pieces, so playback starts and seeks sooner.",
     "context": "Under the short segments setting."
-  },
-  {
-    "handler": "screens.adminArea.engineGraphs.copy",
-    "text": "Copy",
-    "context": "The graph of the graphics card's copy engine, which moves data between buffers. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
   },
   {
     "handler": "screens.adminArea.engineGraphs.engines",
@@ -26246,16 +26221,6 @@
     "context": "The label of a title’s age rating in the server’s own country, the one that decides what a child’s profile may see, with every other country’s folded beneath it. {country} is a country such as United Kingdom. On the Details tab of a title in the admin area (from `MetadataField`)."
   },
   {
-    "handler": "screens.adminArea.titleDetails.count.changedFields.one",
-    "text": "{count} changed",
-    "context": "A note beside a section of a title's metadata, in the list of sections and on the section itself, counting the fields in it changed by hand or locked. {count} is how many. On the Details tab of a title in the admin area (from `TitleForm`)."
-  },
-  {
-    "handler": "screens.adminArea.titleDetails.count.changedFields.other",
-    "text": "{count} changed",
-    "context": "A note beside a section of a title's metadata, in the list of sections and on the section itself, counting the fields in it changed by hand or locked. {count} is how many. On the Details tab of a title in the admin area (from `TitleForm`)."
-  },
-  {
     "handler": "screens.adminArea.titleDetails.count.savedChanges.one",
     "text": "Saved {count} change",
     "context": "The toast once changes to a title's metadata are saved, counting them while it stands, with a way to undo the latest. {count} is how many."
@@ -28331,11 +28296,6 @@
     "context": "Text shown in the api key panel. {max} is filled in by the app; {everySeconds} is filled in by the app."
   },
   {
-    "handler": "screens.apiKeyPanel.moreForName",
-    "text": "More for {name}",
-    "context": "The label of the menu of actions for one API key. {name} is what the key was called."
-  },
-  {
     "handler": "screens.apiKeyPanel.noKeysYet",
     "text": "No keys yet.",
     "context": "Text shown in the api key panel."
@@ -28681,16 +28641,6 @@
     "context": "Shown in the chapter list in the book dialog."
   },
   {
-    "handler": "screens.bookDialog.count.editions.one",
-    "text": "{count} edition",
-    "context": "How many editions of a book there are. {count} is the number."
-  },
-  {
-    "handler": "screens.bookDialog.count.editions.other",
-    "text": "{count} editions",
-    "context": "How many editions of a book there are. {count} is the number."
-  },
-  {
     "handler": "screens.bookDialog.count.haveRead.one",
     "text": "{count} has read it",
     "context": "How many Open Library readers have read a book. {count} is the number."
@@ -28699,16 +28649,6 @@
     "handler": "screens.bookDialog.count.haveRead.other",
     "text": "{count} have read it",
     "context": "How many Open Library readers have read a book. {count} is the number."
-  },
-  {
-    "handler": "screens.bookDialog.count.pages.one",
-    "text": "{count} page",
-    "context": "How long a book is, in a book's dialog. {count} is the number."
-  },
-  {
-    "handler": "screens.bookDialog.count.pages.other",
-    "text": "{count} pages",
-    "context": "How long a book is, in a book's dialog. {count} is the number."
   },
   {
     "handler": "screens.bookDialog.count.ratings.one",
@@ -28729,16 +28669,6 @@
     "handler": "screens.bookDialog.count.wantToRead.other",
     "text": "{count} want to read it",
     "context": "How many Open Library readers want to read a book. {count} is the number."
-  },
-  {
-    "handler": "screens.bookDialog.count.works.one",
-    "text": "{count} book",
-    "context": "How many books an author wrote, in the about-the-author section of a book's dialog. {count} is the number."
-  },
-  {
-    "handler": "screens.bookDialog.count.works.other",
-    "text": "{count} books",
-    "context": "How many books an author wrote, in the about-the-author section of a book's dialog. {count} is the number."
   },
   {
     "handler": "screens.bookDialog.ebookAndAudiobook",
@@ -28821,39 +28751,14 @@
     "context": "Accessible name of the list of a book's formats to tick when requesting it."
   },
   {
-    "handler": "screens.bookLibrary.allBooks",
-    "text": "All books",
-    "context": "The heading over the grid of every book in a library. On the Books page (from `BookLibrary`)."
-  },
-  {
     "handler": "screens.bookLibrary.author",
     "text": "Author",
     "context": "The filter that narrows the books to some authors. On the Books page (from `BookLibrary`)."
   },
   {
-    "handler": "screens.bookLibrary.byAuthor",
-    "text": "Author",
-    "context": "Ordering the grid of books by author, A to Z. On the Books page (from `BookLibrary`)."
-  },
-  {
-    "handler": "screens.bookLibrary.byAuthorName",
-    "text": "By {author}",
-    "context": "The heading over a shelf of books by one author, for an author with several books in the library. {author} is their name. On the Books page (from `BookLibrary`)."
-  },
-  {
     "handler": "screens.bookLibrary.byNewest",
     "text": "Newest",
     "context": "Ordering the grid of books by the year each came out, newest first. On the Books page (from `BookLibrary`)."
-  },
-  {
-    "handler": "screens.bookLibrary.byRecentlyAdded",
-    "text": "Recently added",
-    "context": "Ordering the grid of books by when each was added, newest first. On the Books page (from `BookLibrary`)."
-  },
-  {
-    "handler": "screens.bookLibrary.byTitle",
-    "text": "Title",
-    "context": "Ordering the grid of books by title, A to Z. On the Books page (from `BookLibrary`)."
   },
   {
     "handler": "screens.bookLibrary.comic",
@@ -28869,16 +28774,6 @@
     "handler": "screens.bookLibrary.filterTheBooksInName",
     "text": "Filter the books in {name}",
     "context": "The bar of filters over a library's books, read out to anybody who cannot see it. {name} is the library. On the Books page (from `BookLibrary`)."
-  },
-  {
-    "handler": "screens.bookLibrary.format",
-    "text": "Format",
-    "context": "The filter that narrows the books to ebooks, audiobooks or comics. On the Books page (from `BookLibrary`)."
-  },
-  {
-    "handler": "screens.bookLibrary.genre",
-    "text": "Genre",
-    "context": "The menu that narrows the grid of books to one genre, read out to anybody who cannot see it. On the Books page (from `BookLibrary`)."
   },
   {
     "handler": "screens.bookLibrary.inASeries",
@@ -29779,11 +29674,6 @@
     "handler": "screens.downloadsPanel.downloadQueueTable.finishes",
     "text": "Finishes",
     "context": "A column heading in the admin downloads queue: how long until each download is done, and the time of day it should be done by."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.kind",
-    "text": "Type",
-    "context": "The heading of the column in the download queue saying what kind of thing a download is: films, series, books and so on."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA",
@@ -31941,11 +31831,6 @@
     "context": "The field a locked library's password or PIN is typed in (from `LockedLibrary`)."
   },
   {
-    "handler": "screens.lockedLibrary.unlock",
-    "text": "Unlock",
-    "context": "The button that unlocks a library (from `LockedLibrary`)."
-  },
-  {
     "handler": "screens.logDetailDialog.happened",
     "text": "Occurrences",
     "context": "The name of a row in a log entry's details: how many times the same entry was written."
@@ -32150,11 +32035,6 @@
     "handler": "screens.mediaPreview.playThePreview",
     "text": "Play the preview",
     "context": "Shown in the media preview."
-  },
-  {
-    "handler": "screens.mediaPreview.preview",
-    "text": "Preview",
-    "context": "The label of a video surface in the media preview."
   },
   {
     "handler": "screens.mediaPreview.previewIsBeingMadeCheckBack",
@@ -33517,11 +33397,6 @@
     "context": "A birth date with the person's age, in the person dialog."
   },
   {
-    "handler": "screens.personDialog.alsoKnownAs",
-    "text": "Also known as",
-    "context": "A label in the person dialog's personal details."
-  },
-  {
     "handler": "screens.personDialog.asRole",
     "text": "as {role}",
     "context": "Text shown in the person dialog. {role} is filled in by the app."
@@ -33540,11 +33415,6 @@
     "handler": "screens.personDialog.creditEpisodes",
     "text": "{episodes} as {role}",
     "context": "A credit in the person dialog's timeline. {episodes} is how many episodes, {role} who they played."
-  },
-  {
-    "handler": "screens.personDialog.creditRole",
-    "text": "as {role}",
-    "context": "A credit in the person dialog's timeline."
   },
   {
     "handler": "screens.personDialog.diedOn",
@@ -33625,11 +33495,6 @@
     "handler": "screens.personDialog.somebodyInTheCast",
     "text": "Cast member",
     "context": "Shown in the person dialog."
-  },
-  {
-    "handler": "screens.personDialog.timeline",
-    "text": "Timeline",
-    "context": "The heading of a person's list of credits by year, in the person dialog."
   },
   {
     "handler": "screens.phoneSignIn.onlyContinueIfYouOpenedThis",

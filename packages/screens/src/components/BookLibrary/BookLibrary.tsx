@@ -67,9 +67,9 @@ const BookLibrary = ({ libraryId, title, onOpen }: BookLibraryProps) => {
   const filterGroups = useMemo(() => bookFilterGroups(books), [books]);
   const shown = useMemo(() => sortedBy(booksPassing(books, chosen), sort), [books, chosen, sort]);
   const sortNames: Record<BookSort, string> = {
-    title: say('screens.bookLibrary.byTitle'),
-    author: say('screens.bookLibrary.byAuthor'),
-    added: say('screens.bookLibrary.byRecentlyAdded'),
+    title: say('common.title'),
+    author: say('screens.bookLibrary.author'),
+    added: say('common.recentlyAdded'),
     newest: say('screens.bookLibrary.byNewest'),
   };
 
@@ -109,7 +109,7 @@ const BookLibrary = ({ libraryId, title, onOpen }: BookLibraryProps) => {
             id={headingId}
             className="flex items-baseline gap-2 text-2xl font-semibold tracking-[-0.01em] text-text"
           >
-            {say('screens.bookLibrary.allBooks')}
+            {say('phone.theLibrary.theBooks.everyBook')}
             <FormattedNumber value={shown.length} className="text-sm font-normal text-text-muted" />
           </h2>
 
@@ -172,7 +172,7 @@ const BookLibrary = ({ libraryId, title, onOpen }: BookLibraryProps) => {
         ) : (
           <BookGrid
             books={shown}
-            label={say('screens.bookLibrary.allBooks')}
+            label={say('phone.theLibrary.theBooks.everyBook')}
             onOpen={onOpen}
             size={size}
           />

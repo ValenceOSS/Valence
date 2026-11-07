@@ -57,7 +57,7 @@ const bookFilterGroups = (books: readonly Book[]): FilterGroup[] => {
       })),
     },
     {
-      name: say('screens.bookLibrary.format'),
+      name: say('screens.adminArea.webhookFields.shape'),
       options: formats.map((format) => ({ id: `format:${format}`, label: formatNames[format] })),
     },
     {

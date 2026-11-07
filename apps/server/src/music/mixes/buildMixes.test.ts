@@ -71,7 +71,7 @@ describe('buildMixes', () => {
 
     const daily = build({ lately }).find((mix) => mix.id === 'daily-1');
 
-    expect(daily?.detail).toBe('DRAKE');
+    expect(daily?.detail).toBe('DRAKE, KENDRICK and more');
     expect(daily?.trackIds.some((id) => id.startsWith('drake-'))).toBe(true);
     expect(daily?.trackIds.some((id) => id.startsWith('kendrick-'))).toBe(true);
     expect(daily?.trackIds.some((id) => id.startsWith('sleep-'))).toBe(false);

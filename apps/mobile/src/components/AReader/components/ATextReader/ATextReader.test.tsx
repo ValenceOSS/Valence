@@ -7,6 +7,10 @@ import { aBook } from '@ValenceMobile/testing/aBook';
 import { aChapter } from '@ValenceMobile/testing/aChapter';
 import { ATextReader } from './ATextReader';
 
+jest.mock('@ValenceMobile/platform/drawsNatively', () => ({
+  drawsNatively: () => false,
+}));
+
 jest.mock('@ValenceClient/books/fetchBooks', () => ({
   ...jest.requireActual<object>('@ValenceClient/books/fetchBooks'),
   fetchBookContents: jest.fn(),
