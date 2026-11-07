@@ -24,6 +24,10 @@ if (!('ResizeObserver' in globalThis)) {
   globalThis.ResizeObserver = LayoutlessResizeObserver;
 }
 
+if (!('scrollIntoView' in Element.prototype)) {
+  Element.prototype.scrollIntoView = (): void => undefined;
+}
+
 class UnwatchedIntersectionObserver implements IntersectionObserver {
   root: Element | Document | null = null;
 
