@@ -1,4 +1,5 @@
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { createGate } from '@ValenceRequests/solver/createGate';
 import { inTime } from '@ValenceRequests/solver/inTime';
 import { solveRequest } from '@ValenceRequests/solver/solveRequest';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
@@ -44,6 +45,12 @@ const THE_BROWSERS_OWN = new Set(['cookie', 'host', 'referer', 'user-agent']);
  * Any request that fails closes its agent too, so the next one starts from a fresh browser context
  * rather than one the site may have marked.
  *
+ * The browser takes one request at a time, and a request's time starts when its turn comes. Firefox
+ * working several checks at once leaves Cloudflare's check unable to finish in any of them: a search
+ * across three sites behind it, on a browser that had just started, timed out on all three together,
+ * every time, while each passed in seconds when asked alone. Waiting behind the others is not held
+ * against a request, so one asked alongside several still has its full time to pass.
+ *
  * @param pool - The agents, one to a site.
  * @param timeoutMs - How long a request may take, check and all.
  * @param now - The clock.
@@ -62,7 +69,9 @@ const createSolver = <A extends Agent>({
       'CloudflareCheckFailed',
     );
 
-  const fetch = async (
+  const turns = createGate(1);
+
+  const fetchNow = async (
     request: SiteRequest,
     cookies: Record<string, string>,
     session: string,
@@ -128,6 +137,12 @@ const createSolver = <A extends Agent>({
       },
     );
   };
+
+  const fetch = (
+    request: SiteRequest,
+    cookies: Record<string, string>,
+    session: string,
+  ): Promise<Solution> => turns.run(() => fetchNow(request, cookies, session));
 
   return { fetch };
 };
