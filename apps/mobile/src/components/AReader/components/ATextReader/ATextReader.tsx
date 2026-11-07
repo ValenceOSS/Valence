@@ -16,6 +16,7 @@ import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useBookText } from '@ValenceMobile/books/useBookText';
 import { placeOfPage } from '@ValenceClient/books/placeOfPage';
+import { nameOfPart } from '@ValenceCore/books/nameOfPart';
 import { firstToShow } from '@ValenceClient/books/firstToShow';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
@@ -391,9 +392,12 @@ const ATextReader = ({
     : isNative
       ? laid !== null && aim === null
       : !document.isPending && landing === null && shown > 0 && tall > 0;
-  const placeName = readableTitle(
-    here === null ? book.title : (entries[here]?.title ?? book.title),
-  );
+  const placeName =
+    part === null
+      ? book.title
+      : isWhole
+        ? nameOfPart(entries, wholeBlocks[part] ?? [], part, book.title)
+        : readableTitle(here === null ? book.title : (entries[here]?.title ?? book.title));
   const pageOfPages = isLong
     ? placeName
     : isNative
@@ -573,16 +577,13 @@ const ATextReader = ({
 
     return JSON.stringify({
       parts: Array.from({ length: sizes.length }, (_, at) => {
-        const named = contentsEntryAt(entries, at, 0, new Map());
         const blocks =
           isWholeRead || (shownFrom !== null && at >= opened && at <= shownFrom)
             ? (wholeBlocks[at] ?? [])
             : [];
 
         return {
-          heading: readableTitle(
-            named === null ? book.title : (entries[named]?.title ?? book.title),
-          ),
+          heading: nameOfPart(entries, wholeBlocks[at] ?? [], at, book.title),
           blocks: blocks.map((block) =>
             block.picture === undefined
               ? block
@@ -799,7 +800,15 @@ const ATextReader = ({
   return (
     <AReaderChrome
       title={book.title}
-      place={here === null ? null : (entries[here]?.title ?? null)}
+      place={
+        isWhole
+          ? part === null
+            ? null
+            : placeName
+          : here === null
+            ? null
+            : (entries[here]?.title ?? null)
+      }
       paper={colours.paper}
       ink={colours.ink}
       isDarkPage={colours.isDark}

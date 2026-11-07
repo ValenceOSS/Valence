@@ -184,6 +184,9 @@ private final class PictureBox {
 /// demand. Made and drawn away from the main thread; nothing in it changes once made, so it can be
 /// read from any thread.
 final class TypesetBook {
+  private static let coverMargin: CGFloat = 20
+  private static let coverCorner: CGFloat = 6
+
   let frames: [CTFrame]
   let partOfPage: [Int]
   let starts: [Int]
@@ -433,6 +436,36 @@ final class TypesetBook {
       look.paper.setFill()
       context.fill(CGRect(origin: .zero, size: size))
 
+      if let cover = onlyPicture(on: page) {
+        let room = CGRect(
+          x: Self.coverMargin,
+          y: look.top - Self.coverMargin,
+          width: size.width - Self.coverMargin * 2,
+          height: size.height - look.top - look.foot + Self.coverMargin * 2
+        )
+        let fit = min(room.width / cover.size.width, room.height / cover.size.height)
+        let drawn = CGSize(width: cover.size.width * fit, height: cover.size.height * fit)
+        let placed = CGRect(
+          x: room.midX - drawn.width / 2,
+          y: room.midY - drawn.height / 2,
+          width: drawn.width,
+          height: drawn.height
+        )
+        let shape = UIBezierPath(roundedRect: placed, cornerRadius: Self.coverCorner)
+
+        context.saveGState()
+        context.setShadow(offset: CGSize(width: 0, height: 6), blur: 18, color: UIColor.black.withAlphaComponent(0.35).cgColor)
+        look.paper.setFill()
+        shape.fill()
+        context.restoreGState()
+        context.saveGState()
+        shape.addClip()
+        cover.draw(in: placed)
+        context.restoreGState()
+
+        return
+      }
+
       let quiet = look.ink.withAlphaComponent(0.45)
       let chromeFont = UIFont(name: look.chrome, size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .medium)
       let frame = frames[page]
@@ -461,6 +494,27 @@ final class TypesetBook {
       context.restoreGState()
     }
     .preparingForDisplay()
+  }
+
+  /// The picture a page holds where it holds one picture and nothing else, as a cover's page does,
+  /// once that picture has been read; it is drawn as large as the page allows, whole, rather than in
+  /// the column.
+  private func onlyPicture(on page: Int) -> UIImage? {
+    guard isOnlyPictures(page), let lines = CTFrameGetLines(frames[page]) as? [CTLine] else {
+      return nil
+    }
+
+    let addresses = lines.flatMap { line in
+      ((CTLineGetGlyphRuns(line) as? [CTRun]) ?? []).compactMap { run in
+        (CTRunGetAttributes(run) as NSDictionary)[pictureKey] as? String
+      }
+    }
+
+    guard addresses.count == 1, let address = addresses.first else {
+      return nil
+    }
+
+    return pictures[address]
   }
 
   /// Draws the pictures set on a page, each where its space was left in the lines.
