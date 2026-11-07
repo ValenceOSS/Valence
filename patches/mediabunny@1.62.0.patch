@@ -1,5 +1,5 @@
 diff --git a/dist/modules/src/matroska/matroska-demuxer.js b/dist/modules/src/matroska/matroska-demuxer.js
-index 236459cb6a27c45adec09d66b438e519affe6100..fa6a4d9f9da2cb9fd904e47834a0f1b359e0678d 100644
+index 236459cb6a27c45adec09d66b438e519affe6100..94c8ce611a6de0b39b8396f38e2e44892bdcbdc0 100644
 --- a/dist/modules/src/matroska/matroska-demuxer.js
 +++ b/dist/modules/src/matroska/matroska-demuxer.js
 @@ -5,7 +5,8 @@
@@ -12,15 +12,27 @@ index 236459cb6a27c45adec09d66b438e519affe6100..fa6a4d9f9da2cb9fd904e47834a0f1b3
  import { extractAudioCodecString, extractColorSpace, extractVideoCodecString, OPUS_SAMPLE_RATE, PRORES_FOURCCS, } from '../codec.js';
  import { Demuxer } from '../demuxer.js';
  import { Logging } from '../logging.js';
-@@ -502,6 +503,74 @@ export class MatroskaDemuxer extends Demuxer {
+@@ -447,6 +448,11 @@ export class MatroskaDemuxer extends Demuxer {
+                             // Handled by the lace resolution code
+                         }
+                     }
++                    else if (currentBlock.lacing === BlockLacing.None
++                        && (track.info.codec === 'opus' || track.info.codec === 'vorbis')) {
++                        // A lone frame at the end of a cluster says how long it is too
++                        currentBlock.duration = this.durationsOfUntimedFrames(currentBlock, [currentBlock.data.length], 0, track, [])?.[0] ?? 0;
++                    }
+                 }
+             }
+             if (hasLacedBlocks) {
+@@ -502,6 +508,74 @@ export class MatroskaDemuxer extends Demuxer {
          }
          return trackData;
      }
-+    // The length of each frame of a laced block that has no duration of its own (the last of its track in a cluster,
-+    // with no later block to measure it by) and no default duration on its track. Opus and Vorbis say how long each
++    // The length of each frame of a block that has no duration of its own (the last of its track in a cluster, with
++    // no later block to measure it by) and no default duration on its track. Opus and Vorbis say how long each
 +    // packet is, Vorbis given its codec headers; any other codec takes a frame's length from another laced block of
 +    // the track in the same cluster, which is read whole. None of these depends on which clusters were read before.
-+    durationsOfUntimedLace(block, frameSizes, framesStartAt, track, blocks) {
++    durationsOfUntimedFrames(block, frameSizes, framesStartAt, track, blocks) {
 +        const frames = [];
 +        let at = framesStartAt;
 +        for (const frameSize of frameSizes) {
@@ -87,12 +99,12 @@ index 236459cb6a27c45adec09d66b438e519affe6100..fa6a4d9f9da2cb9fd904e47834a0f1b3
      expandLacedBlocks(blocks, track) {
          // https://www.matroska.org/technical/notes.html#block-lacing
          const expandedBlocks = [];
-@@ -586,13 +655,22 @@ export class MatroskaDemuxer extends Demuxer {
+@@ -586,13 +660,22 @@ export class MatroskaDemuxer extends Demuxer {
                  throw new Error('Invalid block lacing: frame sizes don\'t match the block.');
              }
              const blockDuration = originalBlock.duration || frameCount * (track.defaultDuration ?? 0);
 +            const untimedFrameDurations = blockDuration === 0
-+                ? this.durationsOfUntimedLace(originalBlock, frameSizes, slice.bufferPos, track, blocks)
++                ? this.durationsOfUntimedFrames(originalBlock, frameSizes, slice.bufferPos, track, blocks)
 +                : null;
 +            let untimedFrameTimestamp = originalBlock.timestamp;
              // Now, let's replace the block with one block per frame
