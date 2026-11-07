@@ -1,0 +1,20 @@
+diff --git a/dist/modules/src/matroska/matroska-demuxer.js b/dist/modules/src/matroska/matroska-demuxer.js
+index 236459cb6a27c45adec09d66b438e519affe6100..d6038a482615b21acff2d955c8511496276538a2 100644
+--- a/dist/modules/src/matroska/matroska-demuxer.js
++++ b/dist/modules/src/matroska/matroska-demuxer.js
+@@ -585,7 +585,14 @@ export class MatroskaDemuxer extends Demuxer {
+             if (frameSizes.length !== frameCount || frameSizes.some(x => x <= 0)) {
+                 throw new Error('Invalid block lacing: frame sizes don\'t match the block.');
+             }
+-            const blockDuration = originalBlock.duration || frameCount * (track.defaultDuration ?? 0);
++            // A laced block with no duration of its own (the last one in a cluster, where no later block
++            // gives it one) and no default duration on its track takes its frames' length from an earlier
++            // laced block of the same track, so its frames don't all land on one timestamp
++            const blockDuration = originalBlock.duration
++                || frameCount * (track.defaultDuration ?? track.lacedFrameDuration ?? 0);
++            if (blockDuration > 0) {
++                track.lacedFrameDuration = blockDuration / frameCount;
++            }
+             // Now, let's replace the block with one block per frame
+             for (let i = 0; i < frameCount; i++) {
+                 const frameSize = frameSizes[i];
