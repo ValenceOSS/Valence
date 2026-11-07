@@ -41,6 +41,8 @@ const THE_CHECKS_OWN: ReadonlySet<ProblemCode> = new Set([
   'CloudflareRefusesAddress',
 ]);
 
+const REFUSALS: ReadonlySet<ProblemCode> = new Set(['CloudflareRefusesAddress']);
+
 /**
  * Fetches a page past its site's browser check, in a browser of the service's own. Each site has an
  * agent for each session asking of it, so one indexer's requests share what the check left behind
@@ -63,7 +65,9 @@ const THE_CHECKS_OWN: ReadonlySet<ProblemCode> = new Set([
  * A site the session is already through asks straight away from the tab it left there, alongside
  * whatever else the browser is doing, and waits its turn only where the check shows again. When a
  * site's check fails, the requests for it already waiting fail with it rather than each spending its
- * own time on a check that has just failed; one asked after that has a fresh try.
+ * own time on a check that has just failed; one asked after that has a fresh try. A site that was
+ * already through and only answered slowly has failed no check, so only its refusing the address
+ * outright counts against the requests waiting for it.
  *
  * @param pool - The agents, one to a site.
  * @param timeoutMs - How long a request may take, check and all.
@@ -158,14 +162,18 @@ const createSolver = <A extends Agent>({
     };
   };
 
-  const noted = async <T>(hostname: string, asking: Promise<T>): Promise<T> => {
+  const noted = async <T>(
+    hostname: string,
+    asking: Promise<T>,
+    failures: ReadonlySet<ProblemCode>,
+  ): Promise<T> => {
     try {
       return await asking;
     } catch (error) {
       if (
         error instanceof IndexerFailure &&
         error.problemCode !== null &&
-        THE_CHECKS_OWN.has(error.problemCode)
+        failures.has(error.problemCode)
       ) {
         failedChecks.set(hostname, { failure: error, upTo: waited });
       }
@@ -189,6 +197,7 @@ const createSolver = <A extends Agent>({
 
           return solved === null ? null : solutionOf(agent, page, solved);
         }),
+        REFUSALS,
       );
 
       if (straightAway !== null) {
@@ -212,6 +221,7 @@ const createSolver = <A extends Agent>({
         inAgent(request, cookies, session, async (agent, page, asking, deadline) =>
           solutionOf(agent, page, await solveRequest({ page, request: asking, deadline, now })),
         ),
+        THE_CHECKS_OWN,
       );
     });
   };

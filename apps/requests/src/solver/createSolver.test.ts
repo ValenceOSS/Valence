@@ -317,4 +317,32 @@ describe('createSolver', () => {
     await expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow();
     await expect(solver.fetch(A_GET, {}, 'one')).resolves.toMatchObject({ status: 200 });
   });
+
+  it('fails no waiting request where a site already through only answered slowly', async () => {
+    const page = aSitePage();
+    const { pool } = aSolver(page);
+
+    vi.useFakeTimers();
+
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+
+    await solver.fetch(A_GET, {}, 'one');
+    page.fetch.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const slow = expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow('Timed out');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    page.visit.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const stuck = expect(
+      solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two'),
+    ).rejects.toThrow('Timed out');
+    const waiting = solver.fetch({ ...A_GET, url: 'https://example.org/other' }, {}, 'three');
+
+    await vi.advanceTimersByTimeAsync(6000);
+    vi.useRealTimers();
+    await slow;
+    await stuck;
+    await expect(waiting).resolves.toMatchObject({ status: 200 });
+  });
 });
