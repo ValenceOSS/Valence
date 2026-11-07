@@ -27,6 +27,7 @@ type DataTableProps<Row extends RowData> = {
   page?: number;
   onPageChange?: (page: number) => void;
   growsOnScroll?: boolean;
+  isVirtual?: boolean;
   onReachEnd?: () => void;
   canOpen?: (row: Row) => boolean;
   height?: 'compact' | 'fill' | 'parent' | 'fills';

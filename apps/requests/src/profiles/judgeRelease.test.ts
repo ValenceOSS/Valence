@@ -30,7 +30,7 @@ describe('judgeRelease', () => {
   it('takes a book or an audiobook without a resolution or an encoding, whatever its size', () => {
     const judged = (title: string) =>
       judgeRelease(
-        aRelease(title, { sizeBytes: 40 * GB }),
+        aRelease(title, { sizeBytes: 40 * GB, categories: [7020] }),
         parseReleaseName(title),
         aProfile(),
         undefined,
@@ -52,12 +52,15 @@ describe('judgeRelease', () => {
       true,
     );
 
-    expect(judged.rejections).toEqual(['It’s a video, not a book']);
+    expect(judged.rejections.map((rejection) => rejection.message)).toEqual([
+      'It’s a video, not a book',
+      'It’s a film or programme, not a book',
+    ]);
   });
 
   it('still refuses a book with a banned word, or that nobody seeds', () => {
     const judged = judgeRelease(
-      aRelease('Dune AUDIOBOOK SAMPLE', { protocol: 'torrent', seeders: 0 }),
+      aRelease('Dune AUDIOBOOK SAMPLE', { protocol: 'torrent', seeders: 0, categories: [3030] }),
       parseReleaseName('Dune AUDIOBOOK SAMPLE'),
       aProfile({ bannedWords: ['sample'] }),
       undefined,
@@ -65,7 +68,10 @@ describe('judgeRelease', () => {
       true,
     );
 
-    expect(judged.rejections).toEqual(['It has “sample”, which is banned', 'No one is seeding it']);
+    expect(judged.rejections.map((rejection) => rejection.message)).toEqual([
+      'It has “sample”, which is banned',
+      'No one is seeding it',
+    ]);
   });
 
   it('ranks a release by how far up the profile’s qualities it comes, and says so', () => {

@@ -1,9 +1,11 @@
+import type { MediaCardBadge } from '@ValenceUI/MediaCard.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ComponentProps } from 'react';
 import type { MediaCard } from '@ValenceUI/MediaCard';
 
 type RailCardProps = {
   media: MediaSummary;
+  copies?: readonly MediaSummary[];
   watchedFraction?: number;
   unwatchedCount?: number;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
@@ -21,6 +23,7 @@ type RailCardProps = {
   drawsLarge?: boolean;
   growsOnHover?: boolean;
   flag?: string;
+  badges?: readonly (string | MediaCardBadge)[];
 };
 
 export type { RailCardProps };

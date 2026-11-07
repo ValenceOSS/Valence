@@ -63,20 +63,13 @@ const ARRIVING: Variants = {
   gone: { opacity: 0, y: '120%' },
 };
 
-const ROOM: Variants = {
-  hidden: { height: 0 },
-  shown: { height: '5rem' },
-  gone: { height: 0 },
-};
-
 /**
- * The bar along the bottom of every page while there is music: what is playing, the buttons that
- * drive it, how far through it is, and the way to its lyrics, the queue and the other devices it
- * could be playing on.
+ * The player across the foot of the music section, on the same footing as the page above it rather
+ * than over it: what is playing, the buttons that drive it with how far through it is beneath them, and the way to its lyrics, the queue and the
+ * other devices it could be playing on.
  *
- * It stays put across every section, because the music does. It rises into place when the music
- * starts and sinks away when it stops, a new song rises in where the last one was, and its controls
- * move the way the dock's do. It steps aside while the immersive view is open, which carries
+ * It rises into place when the music starts and sinks away when it stops, a new song rises in where
+ * the last one was, and its cover grows into the immersive view when pressed. It steps aside while the immersive view is open, which carries
  * controls of its own. While this device is controlling
  * another, everything here drives that one instead, and a band along the foot says which — the
  * one thing it would be alarming not to know when pressing pause does nothing to the speakers in
@@ -171,16 +164,6 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   return (
     <AnimatePresence>
       <motion.div
-        key="room"
-        aria-hidden
-        variants={ROOM}
-        initial="hidden"
-        animate="shown"
-        exit="gone"
-        transition={arriving}
-        className="shrink-0"
-      />
-      <motion.div
         key="bar"
         ref={(bar: HTMLDivElement | null) => (bar === null ? undefined : keepBarRoom(bar))}
         variants={isStill ? fadeVariants : ARRIVING}
@@ -188,14 +171,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
         animate="shown"
         exit="gone"
         transition={arriving}
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:px-3"
+        className="fixed inset-x-0 bottom-0 z-40 bg-surface-raised pb-[env(safe-area-inset-bottom,0px)]"
       >
-        <section
-          aria-label={say('common.nowPlaying')}
-          className="valence-card-shell pointer-events-auto mx-auto max-w-[120rem] text-text"
-        >
-          <div className="valence-card-face valence-card-face--raised flex flex-col overflow-hidden">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1.6fr)_auto]">
+        <section aria-label={say('common.nowPlaying')} className="relative text-text">
+          <div className="flex flex-col">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 sm:px-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1.6fr)_minmax(0,1fr)]">
               <div className="flex min-w-0 items-center gap-3">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
@@ -221,15 +201,16 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       <MusicArtwork
                         src={shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null}
                         label={shown.albumTitle ?? shown.title}
-                        className="size-12 sm:size-14"
+                        {...(isIdle ? {} : { travelsAs: 'now-playing' })}
+                        className="size-12"
                       />
                     </Button>
 
                     <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-[0.9375rem] font-semibold text-text">
+                      <span className="truncate text-sm font-semibold text-text">
                         {shown.title}
                       </span>
-                      <span className="flex min-w-0 gap-1 truncate text-[0.8125rem] text-text-muted">
+                      <span className="flex min-w-0 gap-1 truncate text-xs text-text-muted">
                         {shown.artists.map((artist, at) => {
                           const { id } = artist;
 
@@ -264,6 +245,10 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   isDisabled={isIdle}
                   className="hidden shrink-0 sm:inline-flex"
                 />
+              </div>
+
+              <div className="col-span-2 mx-auto w-full max-w-[42rem] lg:col-span-1">
+                <MusicTransport state={state} shown={shown} player={player} isIdle={isIdle} />
               </div>
 
               <ActionMenu
@@ -320,10 +305,6 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 ]}
               />
 
-              <div className="col-span-2 lg:col-span-1">
-                <MusicTransport state={state} shown={shown} player={player} isIdle={isIdle} />
-              </div>
-
               <div className="hidden items-center justify-end gap-1 lg:flex">
                 <BarButton
                   label={say('common.lyrics')}
@@ -370,7 +351,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <OptionMenu
                   label={say('screens.nowPlayingBar.streamingQuality')}
                   align="end"
-                  triggerShape="field"
+                  triggerShape="quiet"
                   className="w-auto shrink-0"
                   trigger={
                     <span className="rounded-xs px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide">
@@ -434,11 +415,12 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <Slider
                   label={say('common.volume')}
                   tone="glass"
+                  isSlim
                   value={Math.round(volume * 100)}
                   max={100}
                   step={1}
                   valueLabel={(value) => `${value.toString()}%`}
-                  className="w-24 shrink-0 lg:w-28"
+                  className="w-20 shrink-0 xl:w-24"
                   onValueChange={(value) => {
                     player.setVolume(value / 100);
                   }}

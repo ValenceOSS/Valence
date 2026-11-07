@@ -282,12 +282,12 @@ describe('APageReader', () => {
   });
 
   it('turns the pages the way chosen in its sheet, and sits the cover alone or not', async () => {
-    await render(aReader());
+    await render(aReader({ book: aBook({ ...COMIC, direction: 'rightToLeft' }) }));
 
     expect(theSheet().layout).toBe('one');
 
     await act(() => {
-      theSheet().onRightToLeft(true);
+      theSheet().onRightToLeft?.(true);
     });
     await act(() => {
       theSheet().onCoverAlone(false);
@@ -295,6 +295,13 @@ describe('APageReader', () => {
 
     expect(theCurl()).toHaveProp('isRightToLeft', true);
     expect(theCurl()).toHaveProp('isCoverAlone', false);
+  });
+
+  it('reads anything but manga left to right, without offering the choice', async () => {
+    await render(aReader());
+
+    expect(theSheet().onRightToLeft).toBeUndefined();
+    expect(theSheet().isRightToLeft).toBe(false);
   });
 
   it('puts its controls in the strip down the side of a folding phone, instead of bars over the page', async () => {

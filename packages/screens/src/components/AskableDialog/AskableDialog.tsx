@@ -70,6 +70,7 @@ import { iconOfQuality } from '@ValenceScreens/library/iconOfQuality';
 import { TitleHero } from '@ValenceScreens/components/TitleHero/TitleHero';
 import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
 import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButton/ArtworkCloseButton';
+import { ArtworkBackButton } from '@ValenceScreens/components/ArtworkBackButton/ArtworkBackButton';
 import { RoundActions } from '@ValenceScreens/components/RoundActions/RoundActions';
 import type { RoundAction } from '@ValenceScreens/components/RoundActions/RoundActions.types';
 import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
@@ -105,7 +106,8 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
 /**
  * The page of a film, series, artist or album that can be asked for, opened from anywhere its
  * address names it: its artwork, what it is, who is in it, and where it stands — in the library
- * already, with a way to open it; somewhere along being fetched; or there to be asked for, with
+ * already, or on a linked server, where it opens that title's own page instead, as if it were here;
+ * somewhere along being fetched; or there to be asked for, with
  * the seasons of a series or the kinds of an artist's releases to choose. A film that is not in the
  * library plays straight from a source a plugin offers, for somebody who may: Play chooses the best
  * stream and plays it, and Sources lets them choose. A series already asked
@@ -121,8 +123,18 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  *   held whole locked, and only what is missing is fetched.
  * @param onOpenPerson - Told whose page to open from its cast, and the part they played, where
  *   opening one is offered.
+ * @param onBack - Told to go back to whatever opened this, offered in place of closing it.
+ * @param backLabel - What going back is called.
  */
-const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: AskableDialogProps) => {
+const AskableDialog = ({
+  asking,
+  onClose,
+  onOpen,
+  onPlay,
+  onOpenPerson,
+  onBack,
+  backLabel,
+}: AskableDialogProps) => {
   const cache = useQueryClient();
   const named = readAsking(asking);
   const found = useQuery({
@@ -146,7 +158,10 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: Askabl
   const title = found.data ?? null;
   const heldKind = title?.kind ?? null;
   const isMore = named?.isMore === true;
-  const heldId = !isMore && title?.standing.status === 'library' ? title.standing.mediaId : null;
+  const heldId =
+    !isMore && (title?.standing.status === 'library' || title?.standing.status === 'linked')
+      ? title.standing.mediaId
+      : null;
   const isElsewhere = title?.standing.status === 'linked';
   const kinds = useRequestableKinds();
   const isUnrequestable = title !== null && !kinds.has(title.kind);
@@ -481,6 +496,7 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: Askabl
       isOpen={named !== null && heldId === null}
       onClose={onClose}
       size="stage"
+      edge={tint}
     >
       <DialogContent className="p-3 sm:p-4">
         {found.isError ? (
@@ -524,7 +540,20 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: Askabl
                         ? null
                         : catalogueTrailerStreamUrl(title.kind, title.id)
                     }
-                    closing={<ArtworkCloseButton onClose={onClose} />}
+                    closing={
+                      onBack === undefined ? (
+                        <ArtworkCloseButton onClose={onClose} />
+                      ) : (
+                        <ArtworkBackButton
+                          label={
+                            backLabel === undefined
+                              ? say('common.back')
+                              : say('common.backToName', { name: backLabel })
+                          }
+                          onBack={onBack}
+                        />
+                      )
+                    }
                     backdrop={
                       title.backdropUrl === null ? (
                         <div className="absolute inset-0 overflow-hidden">
@@ -613,7 +642,7 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: Askabl
                   {mainAction === null && actions.length === 0 ? null : (
                     <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
                       {mainAction === null ? null : (
-                        <div className="w-full sm:w-[21rem]">
+                        <div className="w-full md:w-[21rem]">
                           {!isStreamable &&
                           mainAsk !== null &&
                           choices.length > 1 &&
@@ -672,7 +701,7 @@ const AskableDialog = ({ asking, onClose, onOpen, onPlay, onOpenPerson }: Askabl
                           label={say('screens.askableDialog.moreToDoWithThis')}
                           actions={actions}
                           isCompact
-                          className="sm:ml-auto"
+                          className="md:ml-auto"
                         />
                       )}
                     </DialogHeadlinePart>

@@ -2,6 +2,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { useCallback, useEffect, useState } from 'react';
 import { Spinner } from '@ValenceUI/Spinner';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import {
   fetchApiKeys,
   createApiKey,
@@ -28,6 +29,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
   const [made, setMade] = useState<{ name: string; key: string } | null>(null);
   const [hasCopied, setHasCopied] = useState(false);
   const [couldNotRead, setCouldNotRead] = useState(false);
+  const [revoking, setRevoking] = useState<ApiKey | null>(null);
 
   const read = useCallback(async () => {
     setCouldNotRead(false);
@@ -88,55 +90,75 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
   }
 
   return (
-    <ApiKeyList
-      keys={keys}
-      made={made}
-      hasCopied={hasCopied}
-      name={name}
-      isMaking={isMaking}
-      onNameChange={setName}
-      onCreate={() => {
-        if (name.trim() === '' || isMaking) {
-          return;
-        }
+    <>
+      <ConfirmDialog
+        title={say('screens.apiKeyPanel.revokeNameQuestion', { name: revoking?.name ?? '' })}
+        detail={say('screens.apiKeyPanel.anythingUsingNameStops', { name: revoking?.name ?? '' })}
+        confirmLabel={say('screens.apiKeyPanel.revokeKey')}
+        isDestructive
+        isOpen={revoking !== null}
+        onClose={() => {
+          setRevoking(null);
+        }}
+        onConfirm={() => {
+          const key = revoking;
 
-        setIsMaking(true);
-        setHasCopied(false);
+          setRevoking(null);
 
-        void createApiKey({
-          name: name.trim(),
-          expiresInDays: null,
-          permissions: null,
-          rateLimit: null,
-        })
-          .then(async (key) => {
-            if (key !== null) {
-              setMade({ name: key.name, key: key.key });
-              setName('');
-            }
+          if (key !== null) {
+            void revokeApiKey(key.id).then(read);
+          }
+        }}
+      />
 
-            await read();
+      <ApiKeyList
+        keys={keys}
+        made={made}
+        hasCopied={hasCopied}
+        name={name}
+        isMaking={isMaking}
+        onNameChange={setName}
+        onCreate={() => {
+          if (name.trim() === '' || isMaking) {
+            return;
+          }
+
+          setIsMaking(true);
+          setHasCopied(false);
+
+          void createApiKey({
+            name: name.trim(),
+            expiresInDays: null,
+            permissions: null,
+            rateLimit: null,
           })
-          .finally(() => {
-            setIsMaking(false);
-          });
-      }}
-      onCopy={() => {
-        if (made === null) {
-          return;
-        }
+            .then(async (key) => {
+              if (key !== null) {
+                setMade({ name: key.name, key: key.key });
+                setName('');
+              }
 
-        void navigator.clipboard.writeText(made.key).then(() => {
-          setHasCopied(true);
-        });
-      }}
-      onToggle={(key) => {
-        void setApiKeyEnabled(key.id, !key.enabled).then(read);
-      }}
-      onRevoke={(key) => {
-        void revokeApiKey(key.id).then(read);
-      }}
-    />
+              await read();
+            })
+            .finally(() => {
+              setIsMaking(false);
+            });
+        }}
+        onCopy={() => {
+          if (made === null) {
+            return;
+          }
+
+          void navigator.clipboard.writeText(made.key).then(() => {
+            setHasCopied(true);
+          });
+        }}
+        onToggle={(key) => {
+          void setApiKeyEnabled(key.id, !key.enabled).then(read);
+        }}
+        onAskRevoke={setRevoking}
+      />
+    </>
   );
 };
 

@@ -6,6 +6,7 @@ import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
+import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { PlaylistShelfProps } from './PlaylistShelf.types';
 import { say } from '@ValenceI18n/say';
@@ -47,7 +48,7 @@ const PlaylistShelf = ({
   action,
 }: PlaylistShelfProps) => {
   const { open } = useMusicNavigation();
-  const { player } = useMusicPlayer();
+  const { state, player } = useMusicPlayer();
   const addingTo = useMyPlaylists();
 
   if (playlists.length === 0 && leading === undefined) {
@@ -85,7 +86,16 @@ const PlaylistShelf = ({
                 open,
                 addingTo,
               )}
+              isPlaying={
+                state.isPlaying && isPlayingFrom({ kind: 'playlist', id: playlist.id }, state)
+              }
               onPlay={() => {
+                if (isPlayingFrom({ kind: 'playlist', id: playlist.id }, state)) {
+                  player.toggle();
+
+                  return;
+                }
+
                 void fetchPlaylist(playlist.id).then((read) => {
                   const tracks = read.entries.flatMap((entry) =>
                     entry.item === null || entry.item.track === null ? [] : [entry.item.track],

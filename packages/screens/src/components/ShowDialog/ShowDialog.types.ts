@@ -1,9 +1,12 @@
+import type { CastMember } from '@ValenceScreens/components/CastGrid/CastGrid.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 
 type ShowDialogProps = {
   show: ShowSummary | null;
   onClose: () => void;
+  onBack?: () => void;
+  backLabel?: string;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect?: (media: MediaSummary) => void;
   onOpenShow?: (media: MediaSummary) => void;
@@ -14,6 +17,9 @@ type ShowDialogProps = {
   onRate?: (show: ShowSummary, stars: number | null) => void;
   onMarkWatched?: (episodes: readonly MediaSummary[], isWatched: boolean) => void;
   onRequestMore?: (tmdbId: number) => void;
+  onAsk?: (asking: string) => void;
+  onOpenPerson?: (member: CastMember) => void;
+  onSwitchCopy?: (show: ShowSummary) => void;
 };
 
 export type { ShowDialogProps };

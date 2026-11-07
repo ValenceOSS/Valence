@@ -4,6 +4,7 @@ import { BarList } from '@ValenceUI/BarList';
 import { DataTable } from '@ValenceUI/DataTable';
 import { ShareChart } from '@ValenceUI/ShareChart';
 import { SharedTimeline } from '@ValenceUI/SharedTimeline';
+import { SpanPicker } from '@ValenceUI/SpanPicker';
 import { StatStrip } from '@ValenceUI/StatStrip';
 import { StatTile } from '@ValenceUI/StatTile';
 import { TimeBars } from '@ValenceUI/TimeBars';
@@ -35,6 +36,20 @@ const faceOf = (initial: string) => (
 const START_MS = Date.UTC(2026, 8, 30);
 
 const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
+  SpanPicker: [
+    {
+      title: 'A stretch of a week',
+      render: () => (
+        <SpanPicker
+          label="Server load"
+          values={[12, 18, 9, 30, 44, 38, 22, 16, 27, 35, 41, 20]}
+          ceiling={50}
+          span={{ start: 3, end: 8 }}
+          onSpanChange={() => undefined}
+        />
+      ),
+    },
+  ],
   StatTile: [
     {
       title: 'With a fraction and a trend',

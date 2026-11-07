@@ -103,10 +103,13 @@ const readAvatarChoice = (row: ProfileRow): ViewerProfile['avatar'] => {
     return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
   }
 
-  return {
-    kind: 'initial',
-    font: look?.kind === 'initial' ? look.font : PLUS_JAKARTA_SANS_AS_STORED,
-  };
+  return look?.kind === 'initial'
+    ? {
+        kind: 'initial',
+        font: look.font,
+        ...(look.colourTo === undefined ? {} : { colourTo: look.colourTo }),
+      }
+    : { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED };
 };
 
 /**

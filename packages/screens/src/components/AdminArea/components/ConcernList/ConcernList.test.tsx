@@ -1,0 +1,118 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import { ConcernList } from './ConcernList';
+import type { Concern } from '@ValenceScreens/components/AdminArea/collectConcerns';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
+
+const concern = (over: Partial<Concern> = {}): Concern => ({
+  id: 'transcoder',
+  tone: 'broken',
+  title: 'The media service is unreachable',
+  detail: 'Anything that needs transcoding won’t play until it’s reachable again.',
+  panel: 'overview',
+  ...over,
+});
+
+describe('ConcernList', () => {
+  it('draws nothing when nothing needs a person', () => {
+    const { container } = render(
+      <ConcernList concerns={[]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />,
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('reports what is wrong', () => {
+    render(<ConcernList concerns={[concern()]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />);
+
+    expect(screen.getByText('The media service is unreachable')).toBeInTheDocument();
+  });
+
+  it('links to the docs about a concern that has somewhere to read, and only then', () => {
+    render(
+      <ConcernList
+        concerns={[
+          concern({
+            id: 'requests-vpn',
+            title: 'The VPN is down',
+            help: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
+          }),
+          concern(),
+        ]}
+        onOpenPanel={vi.fn()}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole('link', { name: 'How to fix this' })).toHaveLength(1);
+  });
+
+  it('opens the panel that explains one', async () => {
+    const onOpenPanel = vi.fn<(panel: string) => void>();
+    const user = userEvent.setup();
+
+    render(
+      <ConcernList
+        concerns={[
+          concern({
+            id: 'unscanned',
+            tone: 'setup',
+            title: 'Films has never been scanned',
+            detail: 'It holds nothing until it is.',
+            panel: 'libraries',
+          }),
+        ]}
+        onOpenPanel={onOpenPanel}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /^Films has never been scanned/ }));
+
+    expect(onOpenPanel).toHaveBeenCalledWith('libraries', undefined);
+  });
+
+  it('opens the panel narrowed to exactly what the concern counted', async () => {
+    const onOpenPanel = vi.fn<(panel: string, search?: ObservabilitySearch) => void>();
+    const user = userEvent.setup();
+
+    render(
+      <ConcernList
+        concerns={[
+          concern({
+            id: 'failed-jobs',
+            title: '3 jobs failed in the last 24 hours',
+            panel: 'jobs',
+            search: { view: 'jobs', rstatus: 'failed', range: '24h' },
+          }),
+        ]}
+        onOpenPanel={onOpenPanel}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /^3 jobs failed/ }));
+
+    expect(onOpenPanel).toHaveBeenCalledWith('jobs', {
+      view: 'jobs',
+      rstatus: 'failed',
+      range: '24h',
+    });
+  });
+
+  it('dismisses one without opening its panel', async () => {
+    const onOpenPanel = vi.fn<(panel: string) => void>();
+    const onDismiss = vi.fn<(dismissed: Concern) => void>();
+    const user = userEvent.setup();
+
+    render(<ConcernList concerns={[concern()]} onOpenPanel={onOpenPanel} onDismiss={onDismiss} />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'Dismiss “The media service is unreachable”' }),
+    );
+
+    expect(onDismiss).toHaveBeenCalledWith(concern());
+    expect(onOpenPanel).not.toHaveBeenCalled();
+  });
+});

@@ -7,6 +7,7 @@ import { useDiscoverSearch } from '@ValenceClient/requests/useDiscoverSearch';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
+import { useStandingOrigin } from '@ValenceScreens/linking/useStandingOrigin';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 import { AskableBookTile } from '@ValenceScreens/components/RequestsPage/components/AskableBookTile/AskableBookTile';
 import { ShelfMoreCard } from '@ValenceScreens/components/RequestsPage/components/ShelfMoreCard/ShelfMoreCard';
@@ -30,6 +31,7 @@ const BEHIND_MORE = 4;
  * @param onSeeAll - Called with the kind and the words, to show everything found of that kind.
  */
 const DiscoverResults = ({ query, onAsk, onSeeAll }: DiscoverResultsProps) => {
+  const originOf = useStandingOrigin();
   const isWatched = useIsTitleWatched();
   const found = useDiscoverSearch(query);
   const readsOn = useServerHas('requests.searchPages') === true;
@@ -58,7 +60,7 @@ const DiscoverResults = ({ query, onAsk, onSeeAll }: DiscoverResultsProps) => {
       <Rail
         title={title}
         sizesCards
-        cards="poster"
+        cards="library"
         className="-mx-[var(--rail-lane)]"
         {...(openAll === undefined ? {} : { onOpenTitle: openAll })}
       >
@@ -68,6 +70,7 @@ const DiscoverResults = ({ query, onAsk, onSeeAll }: DiscoverResultsProps) => {
               title={one.title}
               subtitle={one.year?.toString() ?? ''}
               {...describeCatalogueCard(one, isWatched(one))}
+              {...originOf(one.standing)}
               {...(one.posterUrl === null ? {} : { imageUrl: one.posterUrl })}
               onSelect={() => {
                 onAsk(askingOf(one));
@@ -118,7 +121,7 @@ const DiscoverResults = ({ query, onAsk, onSeeAll }: DiscoverResultsProps) => {
         <Rail
           title={say('common.artists')}
           sizesCards
-          cards="poster"
+          cards="library"
           className="-mx-[var(--rail-lane)]"
         >
           {found.artists.map((title, at) => (
@@ -150,7 +153,7 @@ const DiscoverResults = ({ query, onAsk, onSeeAll }: DiscoverResultsProps) => {
         <Rail
           title={say('common.books')}
           sizesCards
-          cards="poster"
+          cards="library"
           className="-mx-[var(--rail-lane)]"
         >
           {found.books.map((title, at) => (

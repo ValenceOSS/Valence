@@ -17,6 +17,9 @@ import { librariesToHide } from '@ValenceClient/library/librariesToHide';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Hidden } from '@ValenceContracts/schemas/Hidden';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
+import { OriginMark } from '@ValenceUI/OriginMark';
 import { say } from '@ValenceI18n/say';
 
 const WHAT_IT_IS: Record<Hidden['kind'], string | null> = {
@@ -44,6 +47,26 @@ const HiddenPanel = () => {
   const asked = useQuery(viewingQueries.hidden(profileId));
   const hiding = useHidden(profileId);
   const shelves = librariesToHide(useQuery(libraryQueries.all()).data ?? [], hiding.entries);
+  const originOf = useOriginOf();
+  const cardOrigin = useCardOrigin();
+  const places = [
+    ...new Map(
+      shelves.map((shelf) => {
+        const origin = originOf(shelf.id);
+        const key = origin?.id ?? 'here';
+
+        return [
+          key,
+          {
+            key,
+            name: origin?.name ?? say('common.thisServer'),
+            mark: cardOrigin(shelf.id).origin,
+            shelves: shelves.filter((one) => (originOf(one.id)?.id ?? 'here') === key),
+          },
+        ] as const;
+      }),
+    ).values(),
+  ].toSorted((one, other) => Number(one.key !== 'here') - Number(other.key !== 'here'));
 
   const columns = useMemo<DataTableColumn<Hidden>[]>(
     () => [
@@ -106,44 +129,55 @@ const HiddenPanel = () => {
           {say('screens.accountArea.hiddenPanel.theQuickestOfTheThreeSomebody')}
         </p>
 
-        <div className="flex flex-wrap gap-2 pt-1">
-          {shelves.length === 0 ? (
-            <p className="text-sm text-text-muted">{say('common.thereAreNoLibrariesYet')}</p>
-          ) : (
-            shelves.map((shelf) => {
-              const isHidden = hiding.isHidden({ kind: 'library', subjectId: shelf.id });
+        {shelves.length === 0 ? (
+          <p className="pt-1 text-sm text-text-muted">{say('common.thereAreNoLibrariesYet')}</p>
+        ) : (
+          <div className="flex flex-col gap-3 pt-1">
+            {places.map((place) => (
+              <div key={place.key} className="flex flex-col gap-2">
+                <span className="flex items-center gap-2 text-xs font-medium text-text-muted">
+                  {place.mark === undefined ? null : <OriginMark {...place.mark} />}
+                  {place.name}
+                </span>
 
-              return (
-                <Button
-                  key={shelf.id}
-                  variant={isHidden ? 'ghost' : 'glossy'}
-                  size="sm"
-                  aria-pressed={isHidden}
-                  label={
-                    isHidden
-                      ? say('screens.accountArea.hiddenPanel.bringTheNameLibraryBack', {
-                          name: shelf.name,
-                        })
-                      : say('screens.accountArea.hiddenPanel.hideTheWholeNameLibrary', {
-                          name: shelf.name,
-                        })
-                  }
-                  onClick={() => {
-                    if (isHidden) {
-                      hiding.show({ kind: 'library', subjectId: shelf.id });
+                <div className="flex flex-wrap gap-2">
+                  {place.shelves.map((shelf) => {
+                    const isHidden = hiding.isHidden({ kind: 'library', subjectId: shelf.id });
 
-                      return;
-                    }
+                    return (
+                      <Button
+                        key={shelf.id}
+                        variant={isHidden ? 'ghost' : 'glossy'}
+                        size="sm"
+                        aria-pressed={isHidden}
+                        label={
+                          isHidden
+                            ? say('screens.accountArea.hiddenPanel.bringTheNameLibraryBack', {
+                                name: shelf.name,
+                              })
+                            : say('screens.accountArea.hiddenPanel.hideTheWholeNameLibrary', {
+                                name: shelf.name,
+                              })
+                        }
+                        onClick={() => {
+                          if (isHidden) {
+                            hiding.show({ kind: 'library', subjectId: shelf.id });
 
-                    hiding.askLibrary(shelf.id, shelf.name);
-                  }}
-                >
-                  {shelf.name}
-                </Button>
-              );
-            })
-          )}
-        </div>
+                            return;
+                          }
+
+                          hiding.askLibrary(shelf.id, shelf.name);
+                        }}
+                      >
+                        {shelf.name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <ConfirmHiding hiding={hiding} />

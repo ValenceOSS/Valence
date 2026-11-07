@@ -21,6 +21,10 @@ const MOST_ALBUMS_ON_A_PAGE = 500;
 
 const MOST_ARTISTS_ON_A_PAGE = 1000;
 
+const ARTIST_FRESH_MS = 15 * 60_000;
+
+const ARTIST_KEPT_MS = 60 * 60_000;
+
 const STORY_KEPT_MS = 60 * 60 * 1000;
 const MUSIC = ['music'] as const;
 
@@ -29,7 +33,8 @@ const PLAYLISTS = [...MUSIC, 'playlists'] as const;
 /**
  * The albums in every music library this profile can see.
  *
- * @param order - Newest first, by title, or by year.
+ * @param order - Newest first, by title, by year, or only those this profile has played, latest
+ *   first.
  * @returns The query, for every album, however many pages that takes.
  */
 const albums = (order: AlbumOrder = 'recent') =>
@@ -68,7 +73,8 @@ const album = (albumId: string) =>
   queryOptions({ queryKey: [...MUSIC, 'album', albumId], queryFn: () => fetchAlbum(albumId) });
 
 /**
- * One artist and everything of theirs.
+ * One artist and everything of theirs, which changes only when the library does, so it is kept far
+ * longer than most answers and going back to an artist shows them at once.
  *
  * @param artistId - The artist.
  * @returns The query.
@@ -77,6 +83,8 @@ const artist = (artistId: string) =>
   queryOptions({
     queryKey: [...MUSIC, 'artist', artistId],
     queryFn: () => fetchArtist(artistId),
+    staleTime: ARTIST_FRESH_MS,
+    gcTime: ARTIST_KEPT_MS,
   });
 
 /**

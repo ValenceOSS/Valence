@@ -82,7 +82,7 @@ const ApiKeysPicture = ({ isActed = false, isCopied = false }: ApiKeysPicturePro
         onCreate={nothing}
         onCopy={nothing}
         onToggle={nothing}
-        onRevoke={nothing}
+        onAskRevoke={nothing}
       />
     </PanelCard>
   );

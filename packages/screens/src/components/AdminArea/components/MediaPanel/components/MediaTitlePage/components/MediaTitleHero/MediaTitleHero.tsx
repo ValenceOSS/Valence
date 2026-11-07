@@ -1,93 +1,135 @@
-import { InfoRow } from '@ValenceUI/InfoRow';
+import { useState } from 'react';
+import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { cn } from '@ValenceUI/cn';
 import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaPoster/MediaPoster';
 import type { MediaTitleHeroProps } from './MediaTitleHero.types';
 
 /**
- * The head of a title's page in Media, or of one season or episode of it: its poster or still, its
- * name in large type with its year or episode beside it, what stands
- * out about it in a line of badges, what can be done to it, and the facts of it in a column of
- * their own at the right where there is room, under the badges where there is not, with the tabs
- * onto the rest of the page along its foot, so they sit right above what they switch between.
+ * A title's page in Media, or one season or episode of it. Its backdrop runs across the top of the
+ * card, fading in once it has loaded rather than arriving all at once, with the poster set over its
+ * foot so picture and page read as one; beside the poster its name in large type with its year or
+ * episode, what stands out about it in a line of badges, and what can be done to it. The facts of it
+ * run along the card's foot as a strip of their own, and the tabs onto the rest of the page sit
+ * beneath the card along a line of their own, the way the other admin pages head what they switch
+ * between. An episode's still is its backdrop, so it has
+ * no poster over it; and where there is no backdrop at all, the card starts at the poster.
  *
  * @param name - What the title is called.
  * @param aside - What is set beside the name, quieter, such as its year or an episode's number.
  * @param posterUrl - Its poster or still, where it has one.
+ * @param backdropUrl - The wide picture across the top, where it has one.
  * @param isWide - Whether the picture is a still from the video rather than a poster.
  * @param badges - What stands out about it, such as its match and its best quality.
  * @param facts - What else it is, each named, such as its library, how many files and how large.
  * @param actions - What can be done to it.
  * @param tabs - The tabs onto the rest of the page.
+ * @param children - What the tabs switch between.
  */
 const MediaTitleHero = ({
   name,
   aside,
   posterUrl,
+  backdropUrl = null,
   isWide = false,
   badges,
   facts,
   actions,
   tabs,
-}: MediaTitleHeroProps) => (
-  <section className="valence-card-shell @container flex flex-col overflow-hidden">
-    <div className="valence-card-face flex flex-col p-0">
-      <div className="flex flex-col gap-6 p-5 @xl:flex-row @xl:gap-7 @xl:p-7">
-        <MediaPoster
-          src={posterUrl}
-          isWide={isWide}
-          className={cn(
-            'shrink-0 self-start shadow-[var(--shadow-lifted)]',
-            isWide ? 'w-full max-w-xs @xl:w-72' : 'w-32',
-          )}
-        />
+  children,
+}: MediaTitleHeroProps) => {
+  const banner = isWide ? posterUrl : backdropUrl;
+  const [loaded, setLoaded] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const hasBanner = banner !== null && banner !== failed;
+  const hasPoster = !isWide;
 
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <div className="flex flex-col gap-3">
-            <h1 className="flex flex-wrap items-baseline gap-3">
-              <span className="text-3xl font-semibold tracking-tight text-text @xl:text-4xl">
-                {name}
-              </span>
-              {aside === null ? null : (
-                <span className="text-xl font-medium tabular-nums text-text-muted @xl:text-2xl">
-                  {aside}
-                </span>
+  return (
+    <div className="flex flex-col gap-5">
+      <section className="valence-card-shell">
+        <div className="valence-card-face @container overflow-hidden p-0">
+          {hasBanner ? (
+            <div className="relative h-40 overflow-hidden bg-[var(--surface-line)] @xl:h-56">
+              <img
+                src={banner}
+                alt=""
+                className={cn(
+                  'absolute inset-0 size-full object-cover object-[center_25%]',
+                  'transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)]',
+                  loaded === banner ? 'opacity-100' : 'opacity-0',
+                )}
+                onLoad={() => {
+                  setLoaded(banner);
+                }}
+                onError={() => {
+                  setFailed(banner);
+                }}
+              />
+              <BackdropScrim />
+            </div>
+          ) : null}
+
+          <div className="flex flex-col gap-5 px-5 pb-5 @xl:flex-row @xl:items-end @xl:gap-6 @xl:px-7">
+            {hasPoster ? (
+              <MediaPoster
+                src={posterUrl}
+                className={cn(
+                  'relative w-28 shrink-0 self-start shadow-[var(--shadow-overlay)] @xl:w-36',
+                  hasBanner ? '-mt-16 @xl:-mt-24' : 'mt-5 @xl:mt-7',
+                )}
+              />
+            ) : null}
+
+            <div
+              className={cn(
+                'flex min-w-0 flex-1 flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between',
+                hasPoster ? '' : 'pt-5 @xl:pt-7',
               )}
-            </h1>
+            >
+              <div className="flex min-w-0 flex-col gap-3">
+                <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-3xl font-semibold tracking-[-0.02em] text-text @xl:text-4xl">
+                    {name}
+                  </span>
+                  {aside === null ? null : (
+                    <span className="text-xl font-medium tabular-nums text-text-muted @xl:text-2xl">
+                      {aside}
+                    </span>
+                  )}
+                </h1>
 
-            <span className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
-              {badges}
-            </span>
+                <span className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
+                  {badges}
+                </span>
+              </div>
 
-            {facts.length === 0 ? null : (
-              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[0.8125rem] @4xl:hidden">
-                {facts.map((fact) => (
-                  <div key={fact.label} className="contents">
-                    <dt className="text-text-muted">{fact.label}</dt>
-                    <dd className="min-w-0 truncate text-text">{fact.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+              <span className="flex shrink-0 flex-wrap items-center gap-2">{actions}</span>
+            </div>
           </div>
 
-          <span className="mt-auto flex flex-wrap items-center gap-2">{actions}</span>
+          {facts.length === 0 ? null : (
+            <dl className="grid grid-cols-2 border-t border-[var(--surface-line)] @lg:grid-cols-3 @4xl:grid-flow-col @4xl:grid-cols-none @4xl:auto-cols-fr">
+              {facts.map((fact) => (
+                <div
+                  key={fact.label}
+                  className="flex min-w-0 flex-col gap-0.5 border-[var(--surface-line)] px-5 py-3 @xl:px-7 @4xl:border-l @4xl:first:border-l-0"
+                >
+                  <dt className="text-xs text-text-muted">{fact.label}</dt>
+                  <dd className="truncate text-sm font-medium text-text tabular-nums">
+                    {fact.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
+      </section>
 
-        {facts.length === 0 ? null : (
-          <div className="-my-1 hidden w-72 shrink-0 flex-col self-start border-l border-[var(--surface-line)] pl-5 text-[0.8125rem] @4xl:flex">
-            {facts.map((fact) => (
-              <InfoRow key={fact.label} label={fact.label}>
-                {fact.value}
-              </InfoRow>
-            ))}
-          </div>
-        )}
-      </div>
+      <div className="border-b border-[var(--surface-line)]">{tabs}</div>
 
-      <div className="border-t border-[var(--surface-line)] px-5 @xl:px-7">{tabs}</div>
+      {children}
     </div>
-  </section>
-);
+  );
+};
 
 MediaTitleHero.displayName = 'MediaTitleHero';
 

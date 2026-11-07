@@ -8,6 +8,7 @@ type AdminStatusFooterProps = {
   isLatestADevBuild?: boolean;
   onOpenUpdates: () => void;
   isInHeader?: boolean;
+  isPillOnly?: boolean;
 };
 
 export type { AdminStatusFooterProps };

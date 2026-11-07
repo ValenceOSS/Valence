@@ -23,10 +23,37 @@ const ABRIDGED = /(?<!un)abridged/i;
 
 const ADAPTED = /\b(?:graphic ?audio|dramati[sz](?:ed|ation)|full[ -]cast|audio ?drama)\b/i;
 
+const BOOK_CATEGORIES = [
+  { from: 3000, to: 3999 },
+  { from: 7000, to: 7999 },
+];
+
+const WATCHED_CATEGORIES = [
+  { from: 2000, to: 2999 },
+  { from: 5000, to: 5999 },
+  { from: 6000, to: 6999 },
+];
+
+const PLAYED_CATEGORIES = [
+  { from: 1000, to: 1999 },
+  { from: 4000, to: 4999 },
+];
+
+const WATCHED =
+  /\b(?:dvd-?rip|bd-?rip|br-?rip|blu-?ray|web-?dl|web-?rip|hd-?rip|hdtv|x26[45]|h\.?26[45]|hevc|xvid|divx|remux|(?:480|576|720|1080|2160)[pi])\b|\.(?:mkv|mp4|avi)\b/i;
+
+const PLAYED =
+  /\b(?:pc ?games?|fitgirl|dodi|skidrow|elamigos|nsp|xci|ps[2345]|psp|xbox(?: ?(?:360|one))?|nintendo switch)\b/i;
+
 /**
  * How a book release ranks by its format: an ebook EPUB first, then AZW3, then MOBI, and retail
  * before a scan; an audiobook M4B first, then MP3 — and an abridged audiobook refused outright,
  * since only the whole book is wanted, as is a full-cast adaptation, which is not the book read.
+ *
+ * A film, a programme or a game shares a book's name often enough to be found for it, and nothing
+ * in its name says ebook or audiobook either way, so it is refused for what it is: by the category
+ * the indexer filed it under where that is not a book's, and by its name where it reads as a video
+ * rip or a game.
  *
  * @param release - The release.
  * @returns Its score, why, and anything that refuses it.
@@ -42,12 +69,23 @@ const judgeBookFormat = (
   const isScanned = format === 'ebook' && SCANNED.test(release.title);
   const isAbridged = format === 'audiobook' && ABRIDGED.test(release.title);
   const isAdapted = format === 'audiobook' && ADAPTED.test(release.title);
+  const isFiledIn = (ranges: readonly { from: number; to: number }[]) =>
+    release.categories.some((category) =>
+      ranges.some((range) => category >= range.from && category <= range.to),
+    );
+  const isFiledAsABook = isFiledIn(BOOK_CATEGORIES);
+  const isWatched =
+    !isFiledAsABook && (isFiledIn(WATCHED_CATEGORIES) || WATCHED.test(release.title));
+  const isPlayed =
+    !isFiledAsABook && !isWatched && (isFiledIn(PLAYED_CATEGORIES) || PLAYED.test(release.title));
 
   return {
     score: points + (isRetail ? RETAIL.points : 0) - (isScanned ? RETAIL.points : 0),
     rejections: [
       ...(isAbridged ? [saying('requests.profiles.judgeBookFormat.itIsAbridged')] : []),
       ...(isAdapted ? [saying('requests.profiles.judgeBookFormat.itIsAnAdaptation')] : []),
+      ...(isWatched ? [saying('requests.profiles.judgeBookFormat.itIsAFilmOrProgramme')] : []),
+      ...(isPlayed ? [saying('requests.profiles.judgeBookFormat.itIsAGame')] : []),
     ],
     reasons: [
       ...(named === undefined

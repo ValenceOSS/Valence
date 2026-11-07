@@ -1,12 +1,9 @@
-import type { ReaderFit } from '@ValenceClient/books/readerPreferences';
+import type { ReactNode } from 'react';
 
 type SpreadStageProps = {
   spreads: readonly (readonly number[])[];
   spreadAt: number;
-  bookId: string;
-  chapterId: string;
-  across: number;
-  fit: ReaderFit;
+  turnKey: string;
   gap: number;
   isRightToLeft: boolean;
   isAnimated: boolean;
@@ -14,7 +11,7 @@ type SpreadStageProps = {
   canGoBack?: boolean;
   canGoOn?: boolean;
   onTurn?: (by: 1 | -1) => void;
-  onLoaded: (page: number, element: HTMLImageElement) => void;
+  renderPage: (page: number, isShown: boolean) => ReactNode;
 };
 
 export type { SpreadStageProps };

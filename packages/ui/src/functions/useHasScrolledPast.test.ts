@@ -4,17 +4,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { useHasScrolledPast } from './useHasScrolledPast';
 
 /**
+ * Says how far something has been scrolled, which the page this runs in never works out itself.
+ *
+ * @param element - What scrolls.
+ * @param by - How far down it has been scrolled.
+ */
+const scrolledBy = (element: Element, by: number): void => {
+  Object.defineProperty(element, 'scrollTop', { value: by, configurable: true });
+};
+
+/**
  * A sentinel inside something that scrolls, with both of their positions decided by the caller.
  *
  * @param markTop - Where the sentinel sits down the window.
  * @param scrollerTop - Where the scrolling box starts down the window.
+ * @param by - How far the box has been scrolled.
  * @returns The sentinel and the box that scrolls it.
  */
-const inAScroller = (markTop: number, scrollerTop: number) => {
+const inAScroller = (markTop: number, scrollerTop: number, by = 40) => {
   const scroller = document.createElement('div');
 
   scroller.style.overflowY = 'auto';
   scroller.getBoundingClientRect = () => new DOMRect(0, scrollerTop);
+  scrolledBy(scroller, by);
 
   const watched = document.createElement('span');
 
@@ -35,6 +47,17 @@ describe('useHasScrolledPast', () => {
 
   it('says nothing has gone while the mark is still below the top of what scrolls it', () => {
     const { watched } = inAScroller(300, 60);
+    const { result } = renderHook(() => useHasScrolledPast());
+
+    act(() => {
+      result.current.mark(watched);
+    });
+
+    expect(result.current.hasPassed).toBe(false);
+  });
+
+  it('says nothing has gone before anything has been scrolled, however the mark sits', () => {
+    const { watched } = inAScroller(20, 60, 0);
     const { result } = renderHook(() => useHasScrolledPast());
 
     act(() => {
@@ -112,6 +135,7 @@ describe('useHasScrolledPast', () => {
 
     watched.getBoundingClientRect = () => new DOMRect(0, -40);
     document.body.append(watched);
+    scrolledBy(document.documentElement, 40);
 
     const { result } = renderHook(() => useHasScrolledPast());
 
@@ -120,6 +144,7 @@ describe('useHasScrolledPast', () => {
     });
 
     expect(result.current.hasPassed).toBe(true);
+    scrolledBy(document.documentElement, 0);
   });
 
   it('says nothing has gone while the mark is still down the page', () => {

@@ -14,7 +14,7 @@ import {
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
   Tv as TvIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/duotone';
 import {
   BookOpen as BookOpenFilledIcon,
   Broadcast as BroadcastFilledIcon,
@@ -22,6 +22,7 @@ import {
   CircleUser as CircleUserFilledIcon,
   Compass as CompassFilledIcon,
   Dice5 as Dice5FilledIcon,
+  Fullscreen as FullscreenFilledIcon,
   Download as DownloadFilledIcon,
   Film as FilmFilledIcon,
   Flame as FlameFilledIcon,
@@ -214,6 +215,8 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  *   where it has more than one.
  * @param onChooseProfile - Told which of them to move to.
  * @param onManageProfiles - Told to open the account's profiles, offered to the account's owner.
+ * @param isWallOpen - Whether the wall of every poster is showing.
+ * @param onOpenWall - Told to show the wall of every poster, where there is one.
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
  *   menu or simply act.
@@ -259,6 +262,8 @@ const AppShell = ({
   onChooseProfile,
   onManageProfiles,
   onSurprise,
+  isWallOpen = false,
+  onOpenWall,
   libraryKinds,
   libraryChoices = {},
   requestsChoices,
@@ -431,6 +436,18 @@ const AppShell = ({
                     onSurprise();
                   },
                 }),
+          },
+        ]),
+    ...(onOpenWall === undefined
+      ? []
+      : [
+          {
+            id: 'wall',
+            label: say('screens.posterWall.label'),
+            icon: <Icon of={FullscreenFilledIcon} size={20} />,
+            gesture: 'settle' as const,
+            isCurrent: isWallOpen,
+            onSelect: onOpenWall,
           },
         ]),
     ...(notifications === undefined

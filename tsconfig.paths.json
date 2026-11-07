@@ -339,6 +339,10 @@
       ],
       "@ValenceUI/MenuItemFace": ["./packages/ui/src/components/MenuItemFace/MenuItemFace.tsx"],
       "@ValenceUI/PanelCard": ["./packages/ui/src/components/PanelCard/PanelCard.tsx"],
+      "@ValenceUI/SectionIndex": ["./packages/ui/src/components/SectionIndex/SectionIndex.tsx"],
+      "@ValenceUI/SectionIndex.types": [
+        "./packages/ui/src/components/SectionIndex/SectionIndex.types.ts"
+      ],
       "@ValenceUI/PanelCard.types": ["./packages/ui/src/components/PanelCard/PanelCard.types.ts"],
       "@ValenceUI/StatTile": ["./packages/ui/src/components/StatTile/StatTile.tsx"],
       "@ValenceUI/StatTile.types": ["./packages/ui/src/components/StatTile/StatTile.types.ts"],
@@ -366,6 +370,10 @@
       "@ValenceUI/TooltipScope.types": [
         "./packages/ui/src/components/TooltipScope/TooltipScope.types.ts"
       ],
+      "@ValenceUI/SpanPicker": ["./packages/ui/src/components/SpanPicker/SpanPicker.tsx"],
+      "@ValenceUI/SpanPicker.types": [
+        "./packages/ui/src/components/SpanPicker/SpanPicker.types.ts"
+      ],
       "@ValenceUI/TrendChart": ["./packages/ui/src/components/TrendChart/TrendChart.tsx"],
       "@ValenceUI/TrendChart.types": [
         "./packages/ui/src/components/TrendChart/TrendChart.types.ts"
@@ -388,6 +396,8 @@
       "@ValenceUI/tokens/PLAY_FACE": ["./packages/ui/src/tokens/PLAY_FACE.ts"],
       "@ValenceUI/tokens/GROUP_LABEL": ["./packages/ui/src/tokens/GROUP_LABEL.ts"],
       "@ValenceUI/tokens/FIELD_TEXT": ["./packages/ui/src/tokens/FIELD_TEXT.ts"],
+      "@ValenceUI/tokens/FIELD_SURFACE": ["./packages/ui/src/tokens/FIELD_SURFACE.ts"],
+      "@ValenceUI/tokens/FIELD_DISABLED": ["./packages/ui/src/tokens/FIELD_DISABLED.ts"],
       "@ValenceUI/FoldGradient": ["./packages/ui/src/components/FoldGradient/FoldGradient.tsx"],
       "@ValenceUI/FoldGradient.types": [
         "./packages/ui/src/components/FoldGradient/FoldGradient.types.ts"
@@ -460,6 +470,7 @@
       "@ValenceUI/useCurlTurn": ["./packages/ui/src/functions/useCurlTurn.ts"],
       "@ValenceUI/windowBarHeight": ["./packages/ui/src/functions/windowBarHeight.ts"],
       "@ValenceUI/useSlidingHighlight": ["./packages/ui/src/functions/useSlidingHighlight.ts"],
+      "@ValenceUI/useSectionInView": ["./packages/ui/src/functions/useSectionInView.ts"],
       "@ValenceUI/isOverDialogs": ["./packages/ui/src/functions/isOverDialogs.ts"],
       "@ValenceUI/useFitWidth": ["./packages/ui/src/functions/useFitWidth.ts"],
       "@ValenceUI/useReached": ["./packages/ui/src/functions/useReached.ts"],

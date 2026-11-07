@@ -27,6 +27,12 @@ import type { PageReaderProps } from './PageReader.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
+const FIT_CLASSES = {
+  width: 'w-full object-contain',
+  height: 'h-full object-contain',
+  both: 'max-h-full max-w-full object-contain',
+} as const;
+
 /**
  * Names a spread of pages the way somebody would say it: one page, or two with a dash between.
  *
@@ -357,7 +363,7 @@ const PageReader = ({
               </>
             }
           >
-            <SettingList>
+            <SettingList isInset>
               <SettingRow
                 title={say('screens.pageReader.layout')}
                 {...(settings.isScrolling
@@ -539,10 +545,7 @@ const PageReader = ({
             <SpreadStage
               spreads={groups}
               spreadAt={Math.min(at, Math.max(groups.length - 1, 0))}
-              bookId={book.id}
-              chapterId={chapterId}
-              across={settings.isDouble ? 2 : 1}
-              fit={settings.fit}
+              turnKey={chapterId}
               gap={settings.gap}
               isRightToLeft={settings.direction === 'rightToLeft'}
               isAnimated={settings.isAnimated}
@@ -550,7 +553,19 @@ const PageReader = ({
               canGoBack={which > 0}
               canGoOn={which < ordering.length - 1}
               onTurn={turn}
-              onLoaded={noted}
+              renderPage={(number, isShown) => (
+                <img
+                  data-reader-page
+                  src={bookPageUrl(book.id, chapterId, number, widthFor(settings.isDouble ? 2 : 1))}
+                  alt={isShown ? say('common.pageValue', { value: (number + 1).toString() }) : ''}
+                  aria-hidden={!isShown}
+                  draggable={false}
+                  onLoad={(event) => {
+                    noted(number, event.currentTarget);
+                  }}
+                  className={`pointer-events-none select-none ${FIT_CLASSES[settings.fit]} ${isShown ? '' : 'invisible'}`}
+                />
+              )}
             />
           </div>
         )}

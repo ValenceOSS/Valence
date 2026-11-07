@@ -884,6 +884,38 @@ describe('createRequestWorker', () => {
       expect((await items.list()).map((item) => item.state)).toEqual(['downloading', 'wanted']);
     });
 
+    it('asks for each season before any episode where nothing answers for the whole run', async () => {
+      const episodes = [1, 2].flatMap((season) =>
+        [1, 2].map((episode) =>
+          aRequestItem({
+            id: `s${season.toString()}e${episode.toString()}`,
+            requestId: SEVERANCE.id,
+            season,
+            episode,
+            title: `Episode ${episode.toString()}`,
+            airDate: '2022-02-18',
+          }),
+        ),
+      );
+      const { worker, searched } = aWorker({
+        requests: [SEVERANCE],
+        items: episodes,
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect(searched.map(({ season, episode }) => [season, episode])).toEqual([
+        [undefined, undefined],
+        [1, undefined],
+        [1, 1],
+        [1, 2],
+        [2, undefined],
+        [2, 1],
+        [2, 2],
+      ]);
+    });
+
     it('fetches a whole season pack for every episode it holds', async () => {
       const episodes = [1, 2].map((episode) =>
         aRequestItem({
@@ -1382,10 +1414,10 @@ describe('createRequestWorker', () => {
       });
     });
 
-    it('does not file it where the check did not mend it, nor ask again', async () => {
+    it('files it once its client has checked it again, trusting the check over the zeros, and asks no more', async () => {
       await theDownload({ from: 16 * MEBIBYTE, bytes: 16 * MEBIBYTE });
 
-      const { worker, items, filed, recheck } = aWorker({
+      const { worker, filed, recheck } = aWorker({
         items: [{ ...filing(), problemCode: 'DownloadNeverWritten' }],
         sent: [finished()],
         localPath: folder.path,
@@ -1394,12 +1426,7 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(recheck).not.toHaveBeenCalled();
-      expect(filed).not.toHaveBeenCalled();
-      expect(await theItem(items)).toMatchObject({
-        state: 'filing',
-        attempts: 1,
-        problemCode: 'DownloadNeverWritten',
-      });
+      expect(filed).toHaveBeenCalledOnce();
     });
 
     it('tries again later where the client cannot check a download', async () => {

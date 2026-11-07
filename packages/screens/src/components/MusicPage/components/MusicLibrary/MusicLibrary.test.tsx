@@ -86,7 +86,7 @@ describe('MusicLibrary', () => {
   it('opens what can be done to an entry where it is right-clicked', async () => {
     renderInAnAddress(<MusicLibrary />);
 
-    fireEvent.contextMenu(await screen.findByRole('button', { name: /Liked Songs/ }));
+    fireEvent.contextMenu(await screen.findByRole('button', { name: /^Sunday morning/ }));
 
     expect(await screen.findByRole('menuitem', { name: 'Play' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Add to queue' })).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('MusicLibrary', () => {
   it('opens the search', async () => {
     renderInAnAddress(<MusicLibrary />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Search music' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(window.location.search).toContain('listen=search');
   });

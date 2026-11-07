@@ -19,6 +19,7 @@ const countTitleStatuses = (
   return {
     library: counts.library ?? 0,
     downloading: counts.downloading ?? 0,
+    queued: counts.queued ?? 0,
     missing: counts.missing ?? 0,
     toApprove: counts.toApprove ?? 0,
     failed: counts.failed ?? 0,

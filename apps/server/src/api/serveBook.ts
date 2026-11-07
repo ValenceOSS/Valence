@@ -10,6 +10,7 @@ import {
   readBookDocumentRoute,
   readBookPageRoute,
   readBookResourceRoute,
+  readBookTextRoute,
   readBookRoute,
   readReadingProgressRoute,
   saveReadingProgressRoute,
@@ -180,6 +181,55 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'private, max-age=3600',
     });
+  });
+
+  app.openapi(readBookTextRoute, async (context) => {
+    const { bookId, chapterId } = context.req.valid('param');
+    const { from, html } = context.req.valid('query');
+    const lines =
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId, chapterId))
+        ? null
+        : await books.readText(
+            chapterId,
+            from ?? 0,
+            html === 'true',
+            (href) =>
+              `/api/books/${bookId}/chapters/${chapterId}/resource?href=${encodeURIComponent(href)}`,
+          );
+
+    if (lines === null) {
+      return context.json(refuse('error.book.thatIsNotABookThat'), 404);
+    }
+
+    const encoder = new TextEncoder();
+    const reading = lines[Symbol.asyncIterator]();
+
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        pull: async (controller) => {
+          const next = await reading.next();
+
+          if (next.done === true) {
+            controller.close();
+
+            return;
+          }
+
+          controller.enqueue(encoder.encode(`${JSON.stringify(next.value)}\n`));
+        },
+        cancel: async () => {
+          await reading.return?.(undefined);
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          'content-type': 'application/x-ndjson; charset=utf-8',
+          'cache-control': 'private, no-transform',
+          'x-accel-buffering': 'no',
+        },
+      },
+    );
   });
 
   app.openapi(readBookResourceRoute, async (context) => {

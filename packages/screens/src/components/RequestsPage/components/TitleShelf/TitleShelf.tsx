@@ -5,6 +5,7 @@ import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { ShelfMoreCard } from '@ValenceScreens/components/RequestsPage/components/ShelfMoreCard/ShelfMoreCard';
 import type { TitleShelfProps } from './TitleShelf.types';
 import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
+import { useStandingOrigin } from '@ValenceScreens/linking/useStandingOrigin';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 import { say } from '@ValenceI18n/say';
 
@@ -19,6 +20,7 @@ const BEHIND_MORE = 4;
  * @param onBrowse - Called with the whole list to show.
  */
 const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
+  const originOf = useStandingOrigin();
   const isWatched = useIsTitleWatched();
   const { browse } = shelf;
 
@@ -33,7 +35,7 @@ const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
     <Rail
       title={shelf.title}
       sizesCards
-      cards="poster"
+      cards="library"
       {...(openAll === undefined ? {} : { onOpenTitle: openAll })}
     >
       {shelf.titles.map((title, at) => (
@@ -42,6 +44,7 @@ const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
             title={title.title}
             subtitle={title.year?.toString() ?? ''}
             {...describeCatalogueCard(title, isWatched(title))}
+            {...originOf(title.standing)}
             {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
             onSelect={() => {
               onAsk(askingOf(title));

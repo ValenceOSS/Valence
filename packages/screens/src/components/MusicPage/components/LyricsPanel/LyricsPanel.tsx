@@ -6,10 +6,9 @@ import { useSongLyrics } from '@ValenceScreens/music/useSongLyrics';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The words of the song playing, in the panel beside the music, the way the queue sits there: small
- * enough to read alongside whatever page is open, following along with the song, with the line
- * being sung kept in the middle of the panel. Pressing a timed line goes to it. A song with none
- * says so, plainly.
+ * The words of the song playing, in the drawer beside the music: following along with the song, with
+ * the line being sung kept in the middle. Pressing a timed line goes to it. A song with none says
+ * so, plainly.
  */
 const LyricsPanel = () => {
   const { player, shown, lyrics, isReading, at } = useSongLyrics();

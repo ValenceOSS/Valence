@@ -6,6 +6,8 @@ type ASheetProps = {
   closeLabel?: string;
   onClose: () => void;
   footer?: ReactNode;
+  tallest?: number;
+  isTitled?: boolean;
   children: ReactNode;
 };
 

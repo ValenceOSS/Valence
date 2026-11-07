@@ -1,3 +1,4 @@
+import { BookAboutSchema } from '@ValenceContracts/schemas/BookAbout';
 import { createRoute, z } from '@hono/zod-openapi';
 import { SOURCE_TROUBLE_RESPONSE } from './SOURCE_TROUBLE_RESPONSE';
 import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
@@ -77,6 +78,8 @@ import {
   CatalogueDiscoverySchema,
   CatalogueGenreSchema,
   CataloguePageSchema,
+  PersonWorkSchema,
+  SimilarTitlesSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
   RequestProgressSchema,
@@ -1030,6 +1033,65 @@ const catalogueBrowseRoute = createRoute({
   }),
 });
 
+const personWorkRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/person/{personId}',
+  tags: ['Requests'],
+  summary:
+    'List the films and series the catalogue credits somebody with, each saying where it stands',
+  request: {
+    params: z.object({
+      personId: z.coerce.number().int().positive(),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'Their work, most popular first',
+      content: { 'application/json': { schema: PersonWorkSchema } },
+    },
+  }),
+});
+
+const similarTitlesRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/similar/{kind}/{id}',
+  tags: ['Requests'],
+  summary:
+    'List the films or series the catalogue recommends after a title, each saying where it stands',
+  request: {
+    params: z.object({
+      kind: z.enum(CATALOGUE_BROWSE_KINDS),
+      id: z.string().regex(/^\d{1,12}$/),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The titles most like it',
+      content: { 'application/json': { schema: SimilarTitlesSchema } },
+    },
+  }),
+});
+
+const bookAboutRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/book-about',
+  tags: ['Requests'],
+  summary:
+    'Read what Open Library knows of a book, its author, and the books like it, each saying where it stands',
+  request: {
+    query: z.object({
+      title: z.string().trim().min(1).max(300),
+      author: z.string().trim().min(1).max(200).optional(),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'What is known of the book',
+      content: { 'application/json': { schema: BookAboutSchema.nullable() } },
+    },
+  }),
+});
+
 const catalogueGenresRoute = createRoute({
   method: 'get',
   path: '/api/requests/catalogue/genres',
@@ -1525,6 +1587,9 @@ export {
   discoverRoute,
   catalogueGenresRoute,
   catalogueBrowseRoute,
+  personWorkRoute,
+  similarTitlesRoute,
+  bookAboutRoute,
   catalogueSearchRoute,
   catalogueSearchPagesRoute,
   missingAlbumsRoute,

@@ -168,6 +168,8 @@ const SignInBodySchema = z.object({ password: z.string().min(1) });
 
 const OVERVIEW_PATIENCE_MILLISECONDS = 5_000;
 
+const REQUESTS_HELD_FOR_MS = 60_000;
+
 const NOT_STOOD: CatalogueStanding = {
   status: 'askable',
   mediaId: null,
@@ -1516,6 +1518,9 @@ const createAppContext = (options: CreateAppOptions) => {
     };
   };
 
+  let heldRequests: { at: number; requests: MediaRequest[] } | null = null;
+  let readingRequests: Promise<MediaRequest[]> | null = null;
+
   /**
    * Tells every open client that the requests have changed, so a poster, a request's page or the
    * list of requests says where each one has got to without being reopened. Nothing is said of what
@@ -1523,6 +1528,11 @@ const createAppContext = (options: CreateAppOptions) => {
    * it may see.
    */
   const sayRequestsChanged = (): void => {
+    if (heldRequests !== null) {
+      heldRequests = { ...heldRequests, at: 0 };
+      void readEveryRequest();
+    }
+
     realtime?.publish('requests', { changed: true }, { kind: 'everyone' });
   };
 
@@ -1809,15 +1819,43 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
+   * Reads every request from the requests service and keeps it, one read at a time however many
+   * ask at once, keeping what was last read where the service does not answer.
+   *
+   * @returns Every request, as last read.
+   */
+  const readEveryRequest = (): Promise<MediaRequest[]> => {
+    readingRequests ??= (async () => {
+      const answer = await requestsClient?.listRequests();
+
+      if (answer?.kind === 'answered') {
+        heldRequests = { at: Date.now(), requests: answer.value };
+      }
+
+      return heldRequests?.requests ?? [];
+    })().finally(() => {
+      readingRequests = null;
+    });
+
+    return readingRequests;
+  };
+
+  /**
    * Every request anybody has made, for saying what has been asked for already — or none where the
    * requests service cannot say.
    *
    * @returns The requests.
    */
-  const everyRequest = async () => {
-    const answer = await requestsClient?.listRequests();
+  const everyRequest = async (): Promise<MediaRequest[]> => {
+    if (heldRequests === null) {
+      return readEveryRequest();
+    }
 
-    return answer?.kind === 'answered' ? answer.value : [];
+    if (Date.now() - heldRequests.at > REQUESTS_HELD_FOR_MS) {
+      void readEveryRequest();
+    }
+
+    return heldRequests.requests;
   };
 
   /**

@@ -12,6 +12,7 @@ type TrackListMissingSong = {
 };
 
 type TrackListProps = {
+  hasHeading?: boolean;
   label: string;
   tracks: readonly MusicTrack[];
   onPlay: (index: number) => void;

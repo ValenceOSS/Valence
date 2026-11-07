@@ -155,6 +155,7 @@ const DeviceList = () => {
           label={say('screens.accountArea.deviceList.whereYouAreSignedIn')}
           columns={columns}
           rows={devices}
+          height="fills"
           emptyMessage={say('screens.accountArea.deviceList.nothingIsSignedInWhichCannot')}
         />
       )}

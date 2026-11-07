@@ -1,5 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
-import { readBookDocument } from '@ValenceClient/books/readBookDocument';
+import { readBookDocument } from '@ValenceCore/books/readBookDocument';
 import { TheBookText } from './TheBookText';
 
 const aPart = (html: string, onLink = jest.fn(), onAnchors = jest.fn()) => (

@@ -35,6 +35,9 @@ import {
   musicCatalogueRoute,
   discoverRoute,
   catalogueBrowseRoute,
+  personWorkRoute,
+  similarTitlesRoute,
+  bookAboutRoute,
   catalogueGenresRoute,
   decideMediaRequestsRoute,
   liftMediaBlockRoute,
@@ -103,8 +106,10 @@ import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { courSeasonsOf } from '@ValenceContracts/functions/courSeasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
-import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { bookAsTitle, discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
+import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
 import { progressOf } from '@ValenceServer/requests/progressOf';
 import { withOfferedProtocol } from '@ValenceServer/plugins/downloadClients/withOfferedProtocol';
@@ -127,6 +132,8 @@ const HLS_PLAYLIST = 'application/vnd.apple.mpegurl';
 
 const PICTURE_FRAMING_HEADER = 'x-valence-picture-framing';
 
+const SHELVES_KEPT_FOR_MS = 30 * 60 * 1000;
+
 /**
  * Registers the requests endpoints.
  *
@@ -134,6 +141,8 @@ const PICTURE_FRAMING_HEADER = 'x-valence-picture-framing';
  * @param context - What they are answered with.
  */
 const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
+  const shelvesKept =
+    createAnswerKeeper<Awaited<ReturnType<typeof discoverShelves>>>(SHELVES_KEPT_FOR_MS);
   const {
     plugins,
     auth,
@@ -481,7 +490,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const [discovered, requested, kinds] = await Promise.all([
-      discoverShelves(discovery, { ...may, books: may.video }),
+      shelvesKept.keep(`${may.video.toString()}:${may.music.toString()}`, () =>
+        discoverShelves(discovery, { ...may, books: may.video }),
+      ),
       everyRequest(),
       requestableKinds(),
     ]);
@@ -568,6 +579,99 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
   });
 
+  app.openapi(personWorkRoute, async (context) => {
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const [work, kinds] = await Promise.all([
+      discovery.personWork(context.req.valid('param').personId),
+      requestableKinds(),
+    ]);
+
+    const asTitles = (matches: readonly CatalogueMatch[]) =>
+      matches.flatMap((match) => {
+        const kind = match.kind === 'movie' ? ('film' as const) : ('series' as const);
+
+        return kinds.has(kind)
+          ? [
+              {
+                kind,
+                id: match.externalId,
+                title: match.title,
+                subtitle: null,
+                year: match.year,
+                overview: match.overview,
+                posterUrl: match.posterUrl,
+              },
+            ]
+          : [];
+      });
+    const requests = await everyRequest();
+    const [titles, stoodCredits] = await Promise.all([
+      standTitles(asTitles(work.titles), discovery.lookup, requests),
+      standTitles(asTitles(work.timeline), discovery.lookup, requests),
+    ]);
+    const creditOf = new Map(work.timeline.map((credit) => [credit.externalId, credit]));
+
+    return context.json(
+      {
+        titles,
+        timeline: stoodCredits.map((title) => ({
+          ...title,
+          role: creditOf.get(title.id)?.role ?? null,
+          episodeCount: creditOf.get(title.id)?.episodeCount ?? null,
+        })),
+      },
+      200,
+    );
+  });
+
+  app.openapi(similarTitlesRoute, async (context) => {
+    const { kind, id } = context.req.valid('param');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json({ titles: [] }, 200);
+    }
+
+    const matches = await discovery.similarTitles(id, kind === 'film' ? 'movie' : 'tv');
+
+    return context.json(
+      {
+        titles: await standTitles(
+          matches.map((match) => ({
+            kind,
+            id: match.externalId,
+            title: match.title,
+            subtitle: null,
+            year: match.year,
+            overview: match.overview,
+            posterUrl: match.posterUrl,
+          })),
+          discovery.lookup,
+          await everyRequest(),
+        ),
+      },
+      200,
+    );
+  });
+
   app.openapi(catalogueGenresRoute, async (context) => {
     if (requestsClient === null) {
       return context.json(REQUESTING_OFF, 404);
@@ -583,6 +687,34 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       await discovery.genres(context.req.valid('query').kind === 'film' ? 'movie' : 'tv'),
       200,
     );
+  });
+
+  app.openapi(bookAboutRoute, async (context) => {
+    const { title, author } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const about = await discovery.aboutBook(title, author ?? null);
+
+    if (about === null) {
+      return context.json(null, 200);
+    }
+
+    const requests = await everyRequest();
+    const [byAuthor, alike] = await Promise.all([
+      standTitles(about.byAuthor.map(bookAsTitle), discovery.lookup, requests),
+      standTitles(about.alike.map(bookAsTitle), discovery.lookup, requests),
+    ]);
+
+    return context.json({ ...about, byAuthor, alike }, 200);
   });
 
   app.openapi(catalogueSearchRoute, async (context) => {

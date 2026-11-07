@@ -35,7 +35,7 @@ const ATitleLogo = ({
 
   if (lettering === null || missing === lettering) {
     return (
-      <Words size="title" lines={2} {...(isOnArtwork ? { tone: 'onArtwork' } : {})}>
+      <Words size="title" lines={2} isCentred {...(isOnArtwork ? { tone: 'onArtwork' } : {})}>
         {title}
       </Words>
     );

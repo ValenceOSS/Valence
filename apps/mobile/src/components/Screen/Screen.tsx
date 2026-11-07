@@ -17,6 +17,7 @@ import { SCROLLED_BY } from '@ValenceMobile/components/Screen/SCROLLED_BY';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
 import { CARD_SCROLL } from '@ValenceMobile/components/APageStack/CARD_SCROLL';
 import { IS_A_CARD } from '@ValenceMobile/components/APageStack/IS_A_CARD';
+import { TABS_FOLLOW_SCROLLING } from '@ValenceMobile/components/TheTabs/TABS_FOLLOW_SCROLLING';
 import { TheTopBar } from '@ValenceMobile/components/Screen/components/TheTopBar/TheTopBar';
 import type { ScreenProps } from './Screen.types';
 
@@ -83,7 +84,8 @@ const styles = StyleSheet.create({
  * @param scrolls - Whether there is more of it than fits.
  * @param goesBackDown - Whether the way back points down, for a page that rose from below.
  * @param onScrolled - Told whether the page has been scrolled from its top, for whatever sits over
- *   it and changes once it has.
+ *   it and changes once it has. Under the tabs, the tabs are told how far it has scrolled too, so
+ *   they can tuck in as it goes down and come out again as it comes back up.
  * @param centres - Whether the little there is belongs in the middle, which a page that scrolls
  *   keeps until there is more of it than fits. One that does not scroll keeps the same room above
  *   and below, so what is in it sits in the true middle rather than below the way back.
@@ -106,6 +108,7 @@ const Screen = ({
   const room = useSafeAreaInsets();
   const isACard = useContext(IS_A_CARD);
   const tellCard = useContext(CARD_SCROLL);
+  const tellTabs = useContext(TABS_FOLLOW_SCROLLING);
   const [isAtTop, setIsAtTop] = useState(true);
   const [scrolled] = useState(() => new Animated.Value(0));
   const [headTall, setHeadTall] = useState(0);
@@ -142,6 +145,8 @@ const Screen = ({
     (y: number) => {
       const isScrolled = y > SCROLLED;
 
+      tellTabs?.(y);
+
       if (tellCard !== null && wasAtTop.current !== y <= 0) {
         wasAtTop.current = y <= 0;
         tellCard.atTop(y <= 0);
@@ -166,7 +171,7 @@ const Screen = ({
         latest.current.onScrolled?.(isScrolled);
       }
     },
-    [tellCard],
+    [tellCard, tellTabs],
   );
 
   const followAlone = useCallback(
@@ -321,7 +326,7 @@ const Screen = ({
       keyboardDismissMode="interactive"
       {...(hasBar
         ? { onScroll: withBar }
-        : onScrolled === undefined && tellCard === null
+        : onScrolled === undefined && tellCard === null && tellTabs === null
           ? {}
           : { onScroll: followAlone })}
       {...(tellCard === null ? {} : glides)}

@@ -1,0 +1,42 @@
+diff --git a/build/glass-tab-bar.d.ts b/build/glass-tab-bar.d.ts
+index 1ff17b735de13c8c7f3dc13fe5af2520405040a6..6db40ff420d6988531ba203a8eb1cf69dea16728 100644
+--- a/build/glass-tab-bar.d.ts
++++ b/build/glass-tab-bar.d.ts
+@@ -28,6 +28,8 @@ export type GlassTabBarProps = TabListProps & {
+     theme?: Partial<GlassTabBarTheme>;
+     /** Haptic tick while the scrub crosses tab boundaries (iOS). */
+     haptics?: boolean;
++    /** Whether the bar draws its own progressive blur behind it, rising from the screen's foot. */
++    hasEdgeBlur?: boolean;
+ };
+ /**
+  * Floating liquid-glass tab bar with Revolut-style minimize-on-scroll,
+diff --git a/build/glass-tab-bar.js b/build/glass-tab-bar.js
+index 420cb04242abe5c71811088fd76bb91090558c5f..838cbc9ab5abf7badf39587a1a4392055d1d4367 100644
+--- a/build/glass-tab-bar.js
++++ b/build/glass-tab-bar.js
+@@ -49,7 +49,7 @@ const BarContext = createContext(null);
+  * a sliding highlight, and finger scrubbing. Use via `TabList asChild`
+  * with expo-router's headless tabs.
+  */
+-export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics = true, ...props }) {
++export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics = true, hasEdgeBlur = true, ...props }) {
+     const insets = useSafeAreaInsets();
+     const { width: windowWidth } = useWindowDimensions();
+     const minimized = useMinimizeState();
+@@ -160,13 +160,13 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+     });
+     const bottomOffset = Math.max(insets.bottom - 16, 12);
+     const barContext = useMemo(() => ({ slideIndex, isDragging, theme }), [slideIndex, isDragging, theme]);
+-    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [_jsx(ProgressiveBlur, { direction: "bottom", style: {
++    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [hasEdgeBlur ? _jsx(ProgressiveBlur, { direction: "bottom", style: {
+                     position: 'absolute',
+                     left: 0,
+                     right: 0,
+                     bottom: 0,
+                     height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
+-                } }), _jsx(View, { pointerEvents: "box-none", style: { marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }, children: _jsx(GestureDetector, { gesture: gesture, children: _jsxs(Animated.View, { style: barStyle, children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
++                } }) : null, _jsx(View, { pointerEvents: "box-none", style: { marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }, children: _jsx(GestureDetector, { gesture: gesture, children: _jsxs(Animated.View, { style: barStyle, children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
+                                     StyleSheet.absoluteFill,
+                                     { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
+                                     shapeStyle,

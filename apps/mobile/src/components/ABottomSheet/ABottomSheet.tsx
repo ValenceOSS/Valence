@@ -71,6 +71,8 @@ const styles = StyleSheet.create({
  * @param closeLabel - What the way to put it away is called, for anybody who cannot see it.
  * @param onClose - Told to put it away.
  * @param isTall - Whether it rises as far as it may whatever it holds, for something that scrolls.
+ * @param tallest - How much of the screen it may rise to, as a share, where it should stop short of
+ *   the usual.
  * @param children - What it holds.
  */
 const ABottomSheet = ({
@@ -81,6 +83,7 @@ const ABottomSheet = ({
   onClose,
   isTall = false,
   children,
+  tallest = TALLEST,
 }: ABottomSheetProps) => {
   const colours = useTheColours();
   const isDark = colours.surface === theColours.dark.surface;
@@ -176,8 +179,8 @@ const ABottomSheet = ({
           style={[
             styles.sheet,
             {
-              maxHeight: height * TALLEST,
-              height: isTall ? height * TALLEST : undefined,
+              maxHeight: height * tallest,
+              height: isTall ? height * tallest : undefined,
               paddingBottom: Math.max(room.bottom, SCREEN_EDGE),
               paddingLeft: Math.max(SCREEN_EDGE, room.left),
               paddingRight: Math.max(SCREEN_EDGE, room.right),

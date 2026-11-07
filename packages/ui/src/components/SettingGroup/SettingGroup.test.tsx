@@ -33,7 +33,7 @@ describe('SettingGroup', () => {
     );
 
     expect(container.firstElementChild).toHaveAttribute('data-slot', 'setting-group');
-    expect(container.firstElementChild).toHaveClass('py-4', 'extra');
+    expect(container.firstElementChild).toHaveClass('py-6', 'extra');
   });
 
   it('sets a display name so devtools can identify it', () => {

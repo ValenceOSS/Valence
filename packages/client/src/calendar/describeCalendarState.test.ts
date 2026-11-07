@@ -18,7 +18,7 @@ describe('describeCalendarState', () => {
       tone: 'quiet',
     });
     expect(describeCalendarState('notHeld')).toMatchObject({
-      label: 'Not in the library',
+      label: 'Not in any library',
       tone: 'quiet',
     });
   });

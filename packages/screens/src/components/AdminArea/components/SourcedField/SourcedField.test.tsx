@@ -75,7 +75,7 @@ describe('SourcedField', () => {
   it('says a locked value is locked, without quoting TMDB', () => {
     drawn({ ...FROM_TMDB, source: 'locked' });
 
-    expect(screen.getByText('Locked')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Locked' })).toBeInTheDocument();
     expect(screen.queryByText(/^TMDB:/)).not.toBeInTheDocument();
   });
 });

@@ -4,7 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { BookRail } from '@ValenceScreens/components/BookRail/BookRail';
+import { BookLibrary } from '@ValenceScreens/components/BookLibrary/BookLibrary';
 import { librariesChosen } from '@ValenceClient/library/librariesChosen';
 import type { BookShelfProps } from './BookShelf.types';
 import { say } from '@ValenceI18n/say';
@@ -85,7 +85,7 @@ const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) =
   return (
     <div className="flex flex-col gap-8">
       {shelves.map((library) => (
-        <BookRail key={library.id} libraryId={library.id} title={library.name} onOpen={onOpen} />
+        <BookLibrary key={library.id} libraryId={library.id} title={library.name} onOpen={onOpen} />
       ))}
     </div>
   );

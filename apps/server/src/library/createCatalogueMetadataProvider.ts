@@ -75,6 +75,14 @@ const PersonResponseSchema = z.object({
   biography: z.string().nullish(),
   birthday: z.string().nullish(),
   place_of_birth: z.string().nullish(),
+  deathday: z.string().nullish(),
+  known_for_department: z.string().nullish(),
+  gender: z.number().nullish(),
+  also_known_as: z.array(z.string()).nullish(),
+  external_ids: z.object({ instagram_id: z.string().nullish() }).nullish(),
+  images: z
+    .object({ profiles: z.array(z.object({ file_path: z.string() })).default([]) })
+    .nullish(),
 });
 
 const SearchResultSchema = z.object({
@@ -90,6 +98,40 @@ const SearchResultSchema = z.object({
   backdrop_path: z.string().nullish(),
   vote_average: z.number().optional(),
 });
+
+const PersonWorkEntrySchema = SearchResultSchema.extend({
+  media_type: z.string().optional(),
+  popularity: z.number().optional(),
+  genre_ids: z.array(z.number()).default([]),
+  episode_count: z.number().optional(),
+  character: z.string().nullish(),
+  job: z.string().nullish(),
+});
+
+const PersonWorkResponseSchema = z.object({
+  cast: z.array(PersonWorkEntrySchema).default([]),
+  crew: z.array(PersonWorkEntrySchema).default([]),
+});
+
+const NOT_THEIR_WORK_GENRES: ReadonlySet<number> = new Set([10763, 10767]);
+
+const MOST_OF_A_PERSONS_WORK = 60;
+
+const FEWEST_EPISODES_OF_THEIR_WORK = 3;
+
+const MOST_OF_A_PERSONS_TIMELINE = 300;
+
+const GENDERS: Readonly<Record<number, 'female' | 'male' | 'nonBinary'>> = {
+  1: 'female',
+  2: 'male',
+  3: 'nonBinary',
+};
+
+const IN_LATIN_LETTERS = /^[\p{Script=Latin}\s.'-]+$/u;
+
+const MOST_OTHER_NAMES = 2;
+
+const MOST_PORTRAITS = 10;
 
 const FindResponseSchema = z.object({
   movie_results: z.array(z.object({ id: z.number() })).default([]),
@@ -1476,7 +1518,9 @@ const createCatalogueMetadataProvider = ({
       }
 
       const found = PersonResponseSchema.safeParse(
-        await request(`/person/${personId.toString()}`, key, {}),
+        await request(`/person/${personId.toString()}`, key, {
+          append_to_response: 'external_ids,images',
+        }),
       );
 
       if (!found.success) {
@@ -1489,10 +1533,110 @@ const createCatalogueMetadataProvider = ({
         id: said.id,
         name: said.name,
         portraitUrl: imageUrl(imageBaseUrl, said.profile_path, 'w300'),
+        portraits: [
+          ...new Set(
+            [
+              said.profile_path,
+              ...(said.images?.profiles ?? []).map((one) => one.file_path),
+            ].flatMap((path) => {
+              const url = imageUrl(imageBaseUrl, path, 'w500');
+
+              return url === null ? [] : [url];
+            }),
+          ),
+        ].slice(0, MOST_PORTRAITS),
         biography: said.biography === undefined || said.biography === '' ? null : said.biography,
         bornOn: said.birthday ?? null,
         bornIn: said.place_of_birth ?? null,
+        diedOn: said.deathday ?? null,
+        knownFor: said.known_for_department ?? null,
+        gender:
+          said.gender === undefined || said.gender === null ? null : (GENDERS[said.gender] ?? null),
+        alsoKnownAs: (said.also_known_as ?? [])
+          .map((name) => name.trim())
+          .filter((name) => IN_LATIN_LETTERS.test(name))
+          .slice(0, MOST_OTHER_NAMES),
+        instagram: said.external_ids?.instagram_id ?? null,
       };
+    },
+
+    readPersonWork: async (personId) => {
+      const key = await readKey();
+      const nothing = { titles: [], timeline: [] };
+
+      if (key === null || key === '') {
+        return nothing;
+      }
+
+      const found = PersonWorkResponseSchema.safeParse(
+        await request(`/person/${personId.toString()}/combined_credits`, key, {}),
+      );
+
+      if (!found.success) {
+        return nothing;
+      }
+
+      const theirs = [...found.data.cast, ...found.data.crew].filter(
+        (entry) =>
+          (entry.media_type === 'movie' || entry.media_type === 'tv') &&
+          !entry.genre_ids.some((genre) => NOT_THEIR_WORK_GENRES.has(genre)),
+      );
+      const firstOfEach = [
+        ...new Map(
+          [...theirs]
+            .reverse()
+            .map((entry) => [`${entry.media_type ?? ''}:${entry.id.toString()}`, entry]),
+        ).values(),
+      ];
+      const kindOf = (entry: { media_type?: string | undefined }) =>
+        entry.media_type === 'tv' ? ('tv' as const) : ('movie' as const);
+      const dateOf = (entry: {
+        release_date?: string | undefined;
+        first_air_date?: string | undefined;
+      }) => entry.release_date ?? entry.first_air_date ?? '';
+
+      return {
+        titles: firstOfEach
+          .filter(
+            (entry) =>
+              entry.poster_path !== null &&
+              entry.poster_path !== undefined &&
+              (entry.episode_count ?? FEWEST_EPISODES_OF_THEIR_WORK) >=
+                FEWEST_EPISODES_OF_THEIR_WORK,
+          )
+          .sort((one, other) => (other.popularity ?? 0) - (one.popularity ?? 0))
+          .slice(0, MOST_OF_A_PERSONS_WORK)
+          .map((entry) => matchOf(entry, kindOf(entry), '', imageBaseUrl)),
+        timeline: firstOfEach
+          .sort((one, other) => dateOf(other).localeCompare(dateOf(one)))
+          .slice(0, MOST_OF_A_PERSONS_TIMELINE)
+          .map((entry) => ({
+            ...matchOf(entry, kindOf(entry), '', imageBaseUrl),
+            role:
+              entry.character === undefined || entry.character === null || entry.character === ''
+                ? (entry.job ?? null)
+                : entry.character,
+            episodeCount: entry.episode_count ?? null,
+          })),
+      };
+    },
+
+    readSimilarTitles: async (externalId, kind) => {
+      const key = await readKey();
+
+      if (key === null || key === '') {
+        return [];
+      }
+
+      const found = SearchResponseSchema.safeParse(
+        await request(`/${kind}/${externalId}/recommendations`, key, {}),
+      );
+
+      return found.success
+        ? found.data.results
+            .filter((entry) => entry.poster_path !== null && entry.poster_path !== undefined)
+            .map((entry) => matchOf(entry, kind, '', imageBaseUrl))
+        : [];
     },
 
     readLogoUrl: async ({ externalId, isSeries }) => {

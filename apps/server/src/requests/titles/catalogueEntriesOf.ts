@@ -49,7 +49,8 @@ const matchKeyOf = (
 
 /**
  * Where a request stands, for the Catalogue's status: waiting on approval, failed somewhere,
- * downloading, still missing something it follows, or in the library.
+ * downloading, still waiting its turn to be searched for or to come out, searched for without
+ * anything being found, or in the library.
  *
  * @param request - The request.
  * @returns Its status, or nothing for a refused one.
@@ -73,12 +74,19 @@ const statusOfRequest = (request: MediaRequest): TitleStatus | null => {
     return 'downloading';
   }
 
-  const isMissing = items.some(
+  const wanted = items.filter(
     (item) => item.isFollowed && (item.state === 'wanted' || item.state === 'searching'),
   );
   const isNothingHere = items.length > 0 && !items.some((item) => HERE.has(item.state));
+  const isStillToSearch = wanted.some(
+    (item) => item.state === 'searching' || item.lastSearchedAt === null,
+  );
 
-  return isMissing || isNothingHere ? 'missing' : 'library';
+  if (isStillToSearch || (isNothingHere && wanted.length === 0)) {
+    return 'queued';
+  }
+
+  return wanted.length > 0 || isNothingHere ? 'missing' : 'library';
 };
 
 /**

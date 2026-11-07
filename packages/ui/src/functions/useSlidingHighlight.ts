@@ -70,39 +70,51 @@ const measure = (item: Element, container: Element): HighlightRect => {
  * One background that slides between the things a pointer rests on, rather than a highlight per item
  * fading in and out. The movement is what makes a row of controls read as one set of choices instead
  * of several separate ones.
+ *
+ * @param heldRef - The container, where something else already holds it, so the highlight can be
+ *   followed by a part of the container's own drawing without the container drawing again on each
+ *   move.
+ * @returns The container, where the highlight is, and what moves and clears it.
  */
-const useSlidingHighlight = (): SlidingHighlight => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+const useSlidingHighlight = (heldRef?: RefObject<HTMLDivElement | null>): SlidingHighlight => {
+  const ownRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = heldRef ?? ownRef;
   const [rect, setRect] = useState<HighlightRect | null>(null);
   const [name, setName] = useState<string | null>(null);
 
-  const follow = useCallback((event: Aimed) => {
-    const container = containerRef.current;
-    const item = elementOf(event.target)?.closest(ITEM) ?? null;
+  const follow = useCallback(
+    (event: Aimed) => {
+      const container = containerRef.current;
+      const item = elementOf(event.target)?.closest(ITEM) ?? null;
 
-    if (container === null || item === null || !container.contains(item)) {
-      return;
-    }
+      if (container === null || item === null || !container.contains(item)) {
+        return;
+      }
 
-    const next = measure(item, container);
+      const next = measure(item, container);
 
-    setRect((held) => (isSamePlace(held, next) ? held : next));
-    setName(item.getAttribute('data-highlight'));
-  }, []);
+      setRect((held) => (isSamePlace(held, next) ? held : next));
+      setName(item.getAttribute('data-highlight'));
+    },
+    [containerRef],
+  );
 
-  const moveTo = useCallback((name: string) => {
-    const container = containerRef.current;
-    const item = container?.querySelector(`[data-highlight="${name}"]`) ?? null;
+  const moveTo = useCallback(
+    (name: string) => {
+      const container = containerRef.current;
+      const item = container?.querySelector(`[data-highlight="${name}"]`) ?? null;
 
-    if (container === null || item === null) {
-      return;
-    }
+      if (container === null || item === null) {
+        return;
+      }
 
-    const next = measure(item, container);
+      const next = measure(item, container);
 
-    setRect((held) => (isSamePlace(held, next) ? held : next));
-    setName(name);
-  }, []);
+      setRect((held) => (isSamePlace(held, next) ? held : next));
+      setName(name);
+    },
+    [containerRef],
+  );
 
   const clear = useCallback(() => {
     setRect(null);

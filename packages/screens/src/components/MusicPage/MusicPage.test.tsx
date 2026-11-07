@@ -21,6 +21,7 @@ const atWidth = (isWide: boolean) => {
 };
 
 beforeEach(() => {
+  window.history.pushState(null, '', '/');
   atWidth(true);
   vi.stubGlobal(
     'fetch',
@@ -79,18 +80,18 @@ describe('MusicPage', () => {
     expect(await screen.findByRole('heading', { name: 'Liked Songs' })).toBeInTheDocument();
   });
 
-  it('shows the queue beside the page when asked, and closes it', async () => {
+  it('shows the queue beside the page when asked, and folds it away again', async () => {
     renderInAnAddress(<MusicPage />);
 
     act(() => {
       setMusicPanel('queue');
     });
 
-    expect(await screen.findByRole('complementary', { name: 'Queue' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Queue' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Close queue' }));
 
-    expect(screen.queryByRole('complementary', { name: 'Queue' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Open Queue' })).toBeInTheDocument();
   });
 
   it('shows the devices beside the page when asked', async () => {
@@ -101,18 +102,8 @@ describe('MusicPage', () => {
     });
 
     expect(
-      await screen.findByRole('complementary', { name: 'Play on another device' }),
+      await screen.findByRole('heading', { name: 'Play on another device' }),
     ).toBeInTheDocument();
-  });
-
-  it('draws the library and the page in a glass-edged card the colour of the admin sidebar', () => {
-    renderInAnAddress(<MusicPage />);
-
-    const aside = document.querySelector('aside');
-
-    expect(aside).toHaveClass('valence-card-shell');
-    expect(aside?.firstElementChild).toHaveClass('valence-card-face--raised');
-    expect(screen.getByRole('region', { name: 'Music' })).toHaveClass('valence-card-shell');
   });
 
   it('gives the lyrics the whole height of the page, so their glow reaches its top edge', () => {

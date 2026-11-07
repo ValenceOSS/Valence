@@ -1,3 +1,4 @@
+import { DialogStackProvider } from '@ValenceClient/dialogs/DialogStackProvider';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -21,10 +22,12 @@ const answers = buildQueryClient();
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={answers}>
-      <TooltipScope>
-        <Desktop />
-        <Toaster />
-      </TooltipScope>
+      <DialogStackProvider>
+        <TooltipScope>
+          <Desktop />
+          <Toaster />
+        </TooltipScope>
+      </DialogStackProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

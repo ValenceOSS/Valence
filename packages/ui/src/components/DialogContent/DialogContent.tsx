@@ -9,7 +9,13 @@ import type { DialogContentProps } from './DialogContent.types';
  * @param className - Extra classes for the caller's own layout.
  */
 const DialogContent = ({ children, className }: DialogContentProps) => (
-  <div className={cn('valence-rail min-h-0 flex-1 overflow-y-auto px-6 py-5', className)}>
+  <div
+    data-slot="dialog-scroller"
+    className={cn(
+      'valence-rail min-h-0 flex-1 overflow-y-auto overscroll-none px-6 py-5',
+      className,
+    )}
+  >
     {children}
   </div>
 );

@@ -22,6 +22,7 @@ const EPISODES_SPACED_OUT = 60;
 const WORST_FIRST: readonly (TitlePart | 'notAsked')[] = [
   'failed',
   'downloading',
+  'queued',
   'missing',
   'toApprove',
   'waiting',

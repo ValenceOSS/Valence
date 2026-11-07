@@ -132,6 +132,7 @@ const MONITOR: Monitor = {
     requestsMemoryBytes: null,
     loadAverage: 1.5,
     disks: [],
+    drives: [],
     graphics: null,
     graphicsNotes: [],
     artefacts: null,

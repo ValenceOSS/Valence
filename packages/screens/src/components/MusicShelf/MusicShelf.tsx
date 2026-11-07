@@ -23,11 +23,19 @@ const GAP = 24;
  *
  * @param heading - What the shelf holds.
  * @param layout - A rail to page through, or a grid to scroll down.
+ * @param size - How big a rail's tiles are; large for pictures that carry their own words.
  * @param count - How many there are, where that is worth saying.
  * @param action - Anything to do with the whole shelf, beside its heading.
  * @param tiles - The tiles, each under the key it is known by.
  */
-const MusicShelf = ({ heading, layout = 'rail', count, action, tiles }: MusicShelfProps) => {
+const MusicShelf = ({
+  heading,
+  layout = 'rail',
+  size = 'regular',
+  count,
+  action,
+  tiles,
+}: MusicShelfProps) => {
   const arrivalOf = useArrivals();
 
   if (layout === 'rail') {
@@ -35,7 +43,7 @@ const MusicShelf = ({ heading, layout = 'rail', count, action, tiles }: MusicShe
       <Rail
         title={heading}
         sizesCards
-        cards="portrait"
+        cards={size === 'large' ? 'large' : 'portrait'}
         className="[--rail-lane:var(--music-lane)] sm:[--rail-lane:var(--music-lane)]"
         {...(count === undefined ? {} : { count })}
         {...(action === undefined ? {} : { action })}

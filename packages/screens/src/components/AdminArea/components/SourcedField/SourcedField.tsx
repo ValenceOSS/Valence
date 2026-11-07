@@ -1,5 +1,5 @@
 import { isSameTitleValue } from '@ValenceCore/functions/isSameTitleValue';
-import { History, Lock, RotateCcw } from '@keyline-icons/react/fill';
+import { History, Lock, RotateCcw, Unlock } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -11,13 +11,14 @@ import type { SourcedFieldProps } from './SourcedField.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * One field of a title's metadata, with where its value came from: a badge beside the label says
- * where it is not the catalogue's — the file name, an edit or a lock — and an edited field says beneath it what the
+ * One field of a title's metadata, with where its value came from: beside the label, a badge says
+ * where it is the file name's or an edit, and a lock where it is locked, and an edited field says beneath it what the
  * catalogue says, with a way back to it. A menu beside the label, there whenever the pointer or
  * the focus is on the field and always on a touch screen, puts it back, locks it as it stands, or
  * shows its history.
  *
  * @param label - What the field is.
+ * @param isLabelHidden - Whether the label is only read out, for a field whose section is named for it.
  * @param state - The field's value, where it came from, and what the catalogue says.
  * @param onReset - Puts the field back to the catalogue's value.
  * @param onLock - Keeps the field as it stands through every refresh.
@@ -29,6 +30,7 @@ import { say } from '@ValenceI18n/say';
  */
 const SourcedField = ({
   label,
+  isLabelHidden = false,
   state,
   onReset,
   onLock,
@@ -47,13 +49,18 @@ const SourcedField = ({
 
   const badge = (
     <>
-      {source === 'catalogue' ? null : (
+      {source === 'catalogue' ? null : source === 'locked' ? (
+        <Icon
+          of={Lock}
+          size={14}
+          tone="muted"
+          label={say('screens.adminArea.sourcedField.locked')}
+        />
+      ) : (
         <Badge size="sm" tone={isEdited ? 'accent' : 'quiet'}>
           {source === 'edited'
             ? say('screens.adminArea.sourcedField.edited')
-            : source === 'locked'
-              ? say('screens.adminArea.sourcedField.locked')
-              : say('screens.adminArea.titlePage.episodeTable.fileName')}
+            : say('screens.adminArea.titlePage.episodeTable.fileName')}
         </Badge>
       )}
 
@@ -73,7 +80,7 @@ const SourcedField = ({
                           source === 'locked'
                             ? say('screens.adminArea.sourcedField.unlockTheField')
                             : say('screens.jobRunner.describeJobGroup.reset'),
-                        icon: <Icon of={RotateCcw} size={15} />,
+                        icon: <Icon of={source === 'locked' ? Unlock : RotateCcw} size={15} />,
                         isDisabled: isBusy,
                         onChoose: onReset,
                       },
@@ -133,6 +140,7 @@ const SourcedField = ({
   return (
     <FormField
       label={label}
+      isLabelHidden={isLabelHidden}
       className={cn('group/field', className)}
       aside={badge}
       {...(hint === null ? {} : { hint })}

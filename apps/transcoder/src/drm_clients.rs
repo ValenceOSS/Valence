@@ -26,13 +26,21 @@ use std::time::Instant;
 
 use tokio::fs;
 
+use serde::Serialize;
+
 use crate::pci_names::CardId;
 
-/// How long the video engine spent on this client's work, in nanoseconds.
-const ENGINE: &str = "drm-engine-video:";
+/// The engines whose time is kept, by the name the kernel gives each: 3D
+/// work, copies between buffers, video encoding and decoding, and the
+/// scaling and colour work beside it.
+const ENGINES: [&str; 4] = ["render", "copy", "video", "video-enhance"];
 
-/// How many video engines the chip has, where it has more than one.
-const CAPACITY: &str = "drm-engine-capacity-video:";
+/// The engine the video work runs on.
+const VIDEO: &str = "video";
+
+/// The prefix of every line saying how much memory a client holds in one
+/// region, resident rather than merely reserved.
+const RESIDENT: &str = "drm-resident-";
 
 /// The kernel's own handle for one open file on a render node.
 const CLIENT: &str = "drm-client-id:";
@@ -128,9 +136,37 @@ fn number_after(text: &str, key: &str) -> Option<u64> {
 /// What every client on the machine had used when this was taken.
 #[derive(Default)]
 struct Snapshot {
-    busy: HashMap<u64, u64>,
-    capacity: u64,
+    busy: HashMap<&'static str, HashMap<u64, u64>>,
+    capacity: HashMap<&'static str, u64>,
+    memory: HashMap<u64, u64>,
     clients: usize,
+}
+
+/// A size the kernel wrote with its unit, in bytes.
+fn bytes_of(text: &str) -> Option<u64> {
+    let mut parts = text.split_whitespace();
+    let amount: u64 = parts.next()?.parse().ok()?;
+    let scale = match parts.next() {
+        None => 1,
+        Some("KiB") => 1 << 10,
+        Some("MiB") => 1 << 20,
+        Some("GiB") => 1 << 30,
+        Some(_) => return None,
+    };
+
+    amount.checked_mul(scale)
+}
+
+/// How much memory one client holds across every region it has memory in.
+fn resident_bytes(fdinfo: &str) -> Option<u64> {
+    let sizes: Vec<u64> = fdinfo
+        .lines()
+        .filter_map(|line| line.strip_prefix(RESIDENT))
+        .filter_map(|rest| rest.split_once(':'))
+        .filter_map(|(_, size)| bytes_of(size))
+        .collect();
+
+    (!sizes.is_empty()).then(|| sizes.iter().sum())
 }
 
 /// Adds one client's books to a snapshot.
@@ -141,14 +177,26 @@ fn absorb(snapshot: &mut Snapshot, fdinfo: &str) {
 
     snapshot.clients += 1;
 
-    let Some(busy) = number_after(fdinfo, ENGINE) else {
-        return;
-    };
+    if let Some(bytes) = resident_bytes(fdinfo) {
+        snapshot.memory.insert(client, bytes);
+    }
 
-    snapshot.busy.insert(client, busy);
-    snapshot.capacity = snapshot
-        .capacity
-        .max(number_after(fdinfo, CAPACITY).unwrap_or(1));
+    for engine in ENGINES {
+        let Some(busy) = number_after(fdinfo, &format!("drm-engine-{engine}:")) else {
+            continue;
+        };
+
+        snapshot
+            .busy
+            .entry(engine)
+            .or_default()
+            .insert(client, busy);
+
+        let capacity = number_after(fdinfo, &format!("drm-engine-capacity-{engine}:")).unwrap_or(1);
+        let held = snapshot.capacity.entry(engine).or_insert(1);
+
+        *held = (*held).max(capacity);
+    }
 }
 
 async fn snapshot() -> Snapshot {
@@ -171,11 +219,26 @@ async fn snapshot() -> Snapshot {
 /// that did not pass where this says it did. A stream loses at most one
 /// interval at its start, and nothing after that.
 fn share(then: &Snapshot, now: &Snapshot, elapsed: u64) -> Option<f32> {
-    let capacity = now.capacity.max(1);
+    share_of(VIDEO, then, now, elapsed)
+}
+
+/// The share of the elapsed time one engine spent on work Valence asked for,
+/// or nothing where the driver keeps no time for that engine. With no clients
+/// open at all nothing is using any engine, which is an idle reading rather
+/// than a missing one.
+fn share_of(engine: &str, then: &Snapshot, now: &Snapshot, elapsed: u64) -> Option<f32> {
+    if now.clients == 0 {
+        return Some(0.0);
+    }
+
+    let capacity = now.capacity.get(engine).copied().unwrap_or(1).max(1);
+    let empty = HashMap::new();
+    let before = then.busy.get(engine).unwrap_or(&empty);
     let spent: u64 = now
         .busy
+        .get(engine)?
         .iter()
-        .filter_map(|(client, busy)| Some(busy.saturating_sub(*then.busy.get(client)?)))
+        .filter_map(|(client, busy)| Some(busy.saturating_sub(*before.get(client)?)))
         .sum();
 
     let basis = spent
@@ -183,6 +246,18 @@ fn share(then: &Snapshot, now: &Snapshot, elapsed: u64) -> Option<f32> {
         .checked_div(elapsed.checked_mul(capacity)?)?;
 
     Some(f32::from(u16::try_from(basis.min(10_000)).ok()?) / 100.0)
+}
+
+/// What each engine spent on Valence's work over the last interval, and how
+/// much memory Valence's work holds on the card.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EngineUse {
+    pub render: Option<f32>,
+    pub copy: Option<f32>,
+    pub video: Option<f32>,
+    pub video_enhance: Option<f32>,
+    pub memory_bytes: Option<u64>,
 }
 
 /// The running account of what the video engine has been doing.
@@ -206,7 +281,7 @@ impl VideoEngine {
     /// true: no transcode is running. A machine whose clients are open but
     /// carry no engine times reports no figure at all, because a driver that
     /// does not answer must never read as an idle one.
-    pub async fn read(&mut self) -> Option<f32> {
+    pub async fn read(&mut self) -> Option<EngineUse> {
         let now = snapshot().await;
         let taken = Instant::now();
 
@@ -223,7 +298,14 @@ impl VideoEngine {
             .filter(|elapsed| *elapsed > 0);
 
         let reading = match (&self.previous, elapsed) {
-            (Some((then, _)), Some(elapsed)) => share(then, &now, elapsed),
+            (Some((then, _)), Some(elapsed)) => Some(EngineUse {
+                render: share_of("render", then, &now, elapsed),
+                copy: share_of("copy", then, &now, elapsed),
+                video: share(then, &now, elapsed),
+                video_enhance: share_of("video-enhance", then, &now, elapsed),
+                memory_bytes: (now.clients == 0 || !now.memory.is_empty())
+                    .then(|| now.memory.values().sum()),
+            }),
             _ => None,
         };
 
@@ -235,7 +317,10 @@ impl VideoEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::{absorb, hex_attribute, number_after, share, Snapshot, VideoEngine};
+    use super::{
+        absorb, bytes_of, hex_attribute, number_after, resident_bytes, share, share_of, Snapshot,
+        VideoEngine,
+    };
 
     const FDINFO: &str = "\
 pos:\t0
@@ -355,5 +440,50 @@ drm-engine-video-enhance:\t40000 ns
         let mut engine = VideoEngine::new();
 
         assert_eq!(engine.read().await, None);
+    }
+
+    #[test]
+    fn reads_every_engine_as_idle_when_nothing_is_open() {
+        let idle = Snapshot::default();
+
+        assert_eq!(share_of("render", &idle, &idle, 1_000_000_000), Some(0.0));
+        assert_eq!(
+            share_of("video-enhance", &idle, &idle, 1_000_000_000),
+            Some(0.0)
+        );
+    }
+
+    #[test]
+    fn keeps_each_engines_time_apart() {
+        let then = taken("drm-client-id:\t1\ndrm-engine-render:\t0 ns\ndrm-engine-copy:\t0 ns\n");
+        let now = taken(
+            "drm-client-id:\t1\ndrm-engine-render:\t250000000 ns\ndrm-engine-copy:\t750000000 ns\n",
+        );
+
+        assert_eq!(share_of("render", &then, &now, 1_000_000_000), Some(25.0));
+        assert_eq!(share_of("copy", &then, &now, 1_000_000_000), Some(75.0));
+        assert_eq!(
+            share_of("video", &then, &now, 1_000_000_000),
+            None,
+            "an engine the driver keeps no time for has no figure, not an idle one"
+        );
+    }
+
+    #[test]
+    fn reads_sizes_in_the_units_the_kernel_writes() {
+        assert_eq!(bytes_of(" 12 KiB"), Some(12 * 1024));
+        assert_eq!(bytes_of("3 MiB"), Some(3 * 1024 * 1024));
+        assert_eq!(bytes_of("4096"), Some(4096));
+        assert_eq!(bytes_of("2 parsecs"), None);
+    }
+
+    #[test]
+    fn adds_up_the_memory_a_client_holds_in_every_region() {
+        assert_eq!(
+            resident_bytes("drm-resident-system0:\t8 KiB\ndrm-resident-local0:\t2 MiB\ndrm-total-system0:\t99 MiB\n"),
+            Some(8 * 1024 + 2 * 1024 * 1024),
+            "memory merely reserved is not memory in use"
+        );
+        assert_eq!(resident_bytes(FDINFO), None);
     }
 }

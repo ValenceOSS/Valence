@@ -144,37 +144,45 @@ describe('TextReader', () => {
   it('opens a book at its start', async () => {
     open();
 
-    expect(await screen.findByText('It is a truth universally acknowledged.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('It is a truth universally acknowledged.'))[0],
+    ).toBeInTheDocument();
   });
 
   it('opens where somebody left off, weighing the parts by how much they hold', async () => {
     open({ startAt: 0.5 });
 
-    expect(await screen.findByText('Mr. Bennet was among the earliest.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Mr. Bennet was among the earliest.'))[0],
+    ).toBeInTheDocument();
   });
 
   it('turns on into the next part at the end of this one', async () => {
     open();
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
     await userEvent.keyboard('{ArrowRight}');
 
-    expect(await screen.findByText('Mr. Bennet was among the earliest.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Mr. Bennet was among the earliest.'))[0],
+    ).toBeInTheDocument();
   });
 
   it('turns back into the part before from the start of this one', async () => {
     open({ startAt: 0.5 });
 
-    await screen.findByText('Mr. Bennet was among the earliest.');
+    await screen.findAllByText('Mr. Bennet was among the earliest.');
     await userEvent.keyboard('{ArrowLeft}');
 
-    expect(await screen.findByText('It is a truth universally acknowledged.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('It is a truth universally acknowledged.'))[0],
+    ).toBeInTheDocument();
   });
 
   it('says how far through the whole book somebody is, for remembering', async () => {
     const { onPlaceChange } = open();
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
     await userEvent.keyboard('{ArrowRight}');
 
     await waitFor(() => {
@@ -187,23 +195,27 @@ describe('TextReader', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Onwards' }));
 
-    expect(await screen.findByText('Mr. Bennet was among the earliest.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Mr. Bennet was among the earliest.'))[0],
+    ).toBeInTheDocument();
   });
 
   it('goes to a chapter chosen from the contents', async () => {
     open();
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
     await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
 
-    expect(await screen.findByText('Mr. Bennet was among the earliest.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Mr. Bennet was among the earliest.'))[0],
+    ).toBeInTheDocument();
   });
 
   it('names the chapter being read in the title', async () => {
     open();
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
 
     expect(screen.getByText('Pride and Prejudice — Chapter I.')).toBeInTheDocument();
   });
@@ -211,7 +223,7 @@ describe('TextReader', () => {
   it('remembers how somebody likes text set, on the device', async () => {
     open();
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
     await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Sepia' }));
 
@@ -221,7 +233,7 @@ describe('TextReader', () => {
   it('leaves on escape', async () => {
     const { onClose } = open();
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
     await userEvent.keyboard('{Escape}');
 
     expect(onClose).toHaveBeenCalled();
@@ -232,7 +244,7 @@ describe('TextReader', () => {
 
     open();
 
-    expect(await screen.findByText('Couldn’t open this book.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Couldn’t open this book.'))[0]).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

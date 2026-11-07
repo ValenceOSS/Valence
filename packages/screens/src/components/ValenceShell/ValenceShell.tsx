@@ -3,7 +3,7 @@ import { accountsHere } from '@ValenceClient/session/accountsHere';
 import { switchAccount } from '@ValenceClient/session/switchAccount';
 import { setAddingAnotherAccount } from '@ValenceClient/session/addingAnotherAccount';
 import { Outlet, useNavigate } from '@tanstack/react-router';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { switchToProfile } from '@ValenceClient/profiles/switchToProfile';
@@ -43,6 +43,9 @@ import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWa
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { ACCOUNT_OPENS_ON } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { useDialogTrail } from '@ValenceClient/dialogs/useDialogTrail';
+import { dialogStepAt } from '@ValenceScreens/library/dialogStepAt';
+import { useDialogStack } from '@ValenceScreens/library/useDialogStack';
 import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
@@ -65,6 +68,7 @@ import { onControlledDevice, readControlledDevice } from '@ValenceClient/video/c
 import { startListening } from '@ValenceClient/books/startListening';
 import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
+import { PosterWall } from '@ValenceScreens/components/PosterWall/PosterWall';
 import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 import { useHasLiveChannels } from '@ValenceClient/live/useHasLiveChannels';
@@ -87,6 +91,7 @@ const ValenceShell = () => {
     null,
   );
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const [isWallOpen, setIsWallOpen] = useState(false);
   const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
   const controlled = useSyncExternalStore(
     onControlledDevice,
@@ -227,6 +232,32 @@ const ValenceShell = () => {
 
   const inspecting = place.inspecting === null ? null : (known.get(place.inspecting) ?? null);
   const seasonMates = useSeasonMates(inspecting, [...known.values()]);
+  const topDialog = useDialogStack({
+    show: place.show !== null,
+    film: place.inspecting !== null,
+    asking: place.asking !== null,
+    person: place.person !== null,
+    collection: place.collection !== null,
+  });
+  const openPerson = useQuery(libraryQueries.person(place.person));
+  const cameFrom = useDialogTrail(
+    dialogStepAt(
+      topDialog,
+      place,
+      inspecting,
+      openShow?.id === place.show ? openShow.title : null,
+      openPerson.data?.name ?? null,
+    ),
+  );
+  const backToCameFrom =
+    cameFrom === null
+      ? null
+      : {
+          onBack: () => {
+            go(cameFrom.place);
+          },
+          ...(cameFrom.title === null ? {} : { backLabel: cameFrom.title }),
+        };
 
   useEffect(() => {
     if (place.show === null) {
@@ -322,6 +353,10 @@ const ValenceShell = () => {
         }}
         notifications={isTheDesktopClient() ? undefined : <NotificationBell {...bell} />}
         onSurprise={surprise}
+        isWallOpen={isWallOpen}
+        onOpenWall={() => {
+          setIsWallOpen(true);
+        }}
         onSignOut={() => {
           void leave();
         }}
@@ -366,11 +401,27 @@ const ValenceShell = () => {
             })}
       >
         <ShowDialog
-          show={openShow}
+          show={topDialog === 'show' ? openShow : null}
+          {...backToCameFrom}
+          onSwitchCopy={(copy) => {
+            setOpenShow(copy);
+            go({ show: copy.id });
+          }}
+          onOpenPerson={(member) => {
+            setOpenRole(member.role);
+            go({ person: member.personId ?? null });
+          }}
+          {...(mayRequest
+            ? {
+                onAsk: (asking: string) => {
+                  go({ show: null, asking });
+                },
+              }
+            : {})}
           {...(may('requests.ask') && requestableKinds.has('series')
             ? {
                 onRequestMore: (tmdbId: number) => {
-                  go({ show: null, asking: `series:${tmdbId.toString()}:more` });
+                  go({ asking: `series:${tmdbId.toString()}:more` });
                 },
               }
             : {})}
@@ -428,7 +479,14 @@ const ValenceShell = () => {
         />
 
         <MediaDetailDialog
-          media={inspecting}
+          media={topDialog === 'film' ? inspecting : null}
+          {...(mayRequest
+            ? {
+                onAsk: (asking: string) => {
+                  go({ inspecting: null, show: null, asking });
+                },
+              }
+            : {})}
           siblings={seasonMates}
           watchedFractionFor={(mediaId) => {
             const found = progress.get(mediaId);
@@ -451,14 +509,15 @@ const ValenceShell = () => {
           {...(inspecting !== null && resumeFor(progress, inspecting.id) !== null
             ? { resumeSeconds: resumeFor(progress, inspecting.id) ?? 0 }
             : {})}
-          {...(openShow === null
-            ? {}
-            : {
-                onBack: () => {
-                  go({ inspecting: null });
-                },
-                backLabel: openShow.title,
-              })}
+          {...(backToCameFrom ??
+            (openShow === null
+              ? {}
+              : {
+                  onBack: () => {
+                    go({ inspecting: null });
+                  },
+                  backLabel: openShow.title,
+                }))}
           isKept={inspecting !== null && favourites.isKept(inspecting.id)}
           isWatched={inspecting !== null && progress.get(inspecting.id)?.isFinished === true}
           onMarkWatched={(media, isWatched) => {
@@ -560,6 +619,16 @@ const ValenceShell = () => {
           onRate={(book, stars) => {
             rate({ bookId: book.id }, stars);
           }}
+          onOpenBook={(bookId) => {
+            go({ book: bookId });
+          }}
+          {...(mayRequest && requestableKinds.has('book')
+            ? {
+                onAsk: (asking: string) => {
+                  go({ book: null, asking });
+                },
+              }
+            : {})}
           {...(mayShare
             ? {
                 onShare: (book) => {
@@ -579,6 +648,19 @@ const ValenceShell = () => {
           }}
         />
 
+        <PosterWall
+          isOpen={isWallOpen}
+          onClose={() => {
+            setIsWallOpen(false);
+          }}
+          onOpenFilm={(mediaId) => {
+            go({ inspecting: mediaId });
+          }}
+          onOpenShow={(showId) => {
+            go({ show: showId });
+          }}
+        />
+
         <DownloadsDialog
           isOpen={place.downloads}
           onClose={() => {
@@ -588,13 +670,22 @@ const ValenceShell = () => {
 
         {mayRequest ? (
           <AskableDialog
-            asking={place.asking}
+            asking={topDialog === 'asking' ? place.asking : null}
             onOpenPerson={(personId, role) => {
               setOpenRole(role);
               go({ person: personId });
             }}
+            {...(backToCameFrom ??
+              (openShow === null
+                ? {}
+                : {
+                    onBack: () => {
+                      go({ asking: null });
+                    },
+                    backLabel: openShow.title,
+                  }))}
             onClose={() => {
-              go({ asking: null });
+              go({ asking: null, show: null });
             }}
             onOpen={(kind, mediaId) => {
               replace(placeOfArrival(kind, mediaId));
@@ -635,18 +726,26 @@ const ValenceShell = () => {
         />
 
         <PersonDialog
-          personId={place.person}
+          personId={topDialog === 'person' ? place.person : null}
           role={openRole}
-          {...(inspecting === null && openShow === null && place.asking === null
-            ? {}
-            : {
-                onBack: () => {
-                  go({ person: null });
+          {...(mayRequest
+            ? {
+                onAsk: (asking: string) => {
+                  go({ person: null, inspecting: null, show: null, asking });
                 },
-                ...(inspecting === null && openShow === null
-                  ? {}
-                  : { backLabel: inspecting?.title ?? openShow?.title ?? '' }),
-              })}
+              }
+            : {})}
+          {...(backToCameFrom ??
+            (inspecting === null && openShow === null && place.asking === null
+              ? {}
+              : {
+                  onBack: () => {
+                    go({ person: null });
+                  },
+                  ...(inspecting === null && openShow === null
+                    ? {}
+                    : { backLabel: inspecting?.title ?? openShow?.title ?? '' }),
+                }))}
           onClose={() => {
             go({ person: null });
           }}
@@ -655,19 +754,20 @@ const ValenceShell = () => {
             go({ person: null, inspecting: null, playing: media.id });
           }}
           onInspect={(media) => {
-            go({ person: null, inspecting: media.id });
+            rememberItems([media]);
+            go({ person: null, asking: null, inspecting: media.id });
           }}
           onOpenShow={(media) => {
             const series = showIdOf(media);
 
             if (series !== null) {
-              go({ person: null, show: series });
+              go({ person: null, asking: null, inspecting: null, show: series });
             }
           }}
         />
 
         <CollectionDialog
-          collectionId={place.collection}
+          collectionId={topDialog === 'collection' ? place.collection : null}
           onClose={() => {
             go({ collection: null });
           }}
@@ -677,29 +777,26 @@ const ValenceShell = () => {
           }}
           onInspect={(media) => {
             rememberItems([media]);
-            go({ collection: null, inspecting: media.id });
+            go({ collection: null, asking: null, inspecting: media.id });
           }}
           onOpenShow={(media) => {
             const series = showIdOf(media);
 
             if (series !== null) {
-              go({ collection: null, show: series });
+              go({ collection: null, asking: null, inspecting: null, show: series });
             }
           }}
         />
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={place.section}
-            variants={groupVariants}
-            initial="hidden"
-            animate="shown"
-            exit="gone"
-            style={{ display: 'contents' }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={place.section}
+          variants={groupVariants}
+          initial="hidden"
+          animate="shown"
+          style={{ display: 'contents' }}
+        >
+          <Outlet />
+        </motion.div>
       </AppShell>
 
       <GetTheDesktopApp />

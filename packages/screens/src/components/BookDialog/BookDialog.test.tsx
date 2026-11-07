@@ -81,6 +81,7 @@ const open = (overrides: Partial<Parameters<typeof BookDialog>[0]> = {}) => {
     onToggleKept: vi.fn(),
     onRate: vi.fn(),
     onShare: vi.fn(),
+    onOpenBook: vi.fn(),
   };
 
   renderInAShell(<BookDialog bookId={BOOK_ID} isKept={false} {...handlers} {...overrides} />);
@@ -103,7 +104,8 @@ describe('BookDialog', () => {
     open();
 
     expect(await screen.findByRole('heading', { name: 'Pride and Prejudice' })).toBeInTheDocument();
-    expect(screen.getByText('Jane Austen · 1813')).toBeInTheDocument();
+    expect(screen.getByText('Jane Austen')).toBeInTheDocument();
+    expect(screen.getAllByText(/\b1813\b/u).length).toBeGreaterThan(0);
     expect(screen.getByText('It is a truth universally acknowledged.')).toBeInTheDocument();
     expect(screen.getByText('Romance')).toBeInTheDocument();
   });
@@ -112,7 +114,7 @@ describe('BookDialog', () => {
     serve([], { ...A_BOOK, layout: 'audio', hasText: false, hasAudio: true });
     open();
 
-    expect(await screen.findByText('Audiobook')).toBeInTheDocument();
+    expect((await screen.findAllByText(/^Audiobook\b/u)).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Read' })).toBeDisabled();
   });
 
@@ -175,7 +177,7 @@ describe('BookDialog', () => {
     serve([], { ...A_BOOK, hasText: true, hasAudio: true });
     open();
 
-    expect(await screen.findByText('Ebook and audiobook')).toBeInTheDocument();
+    expect((await screen.findAllByText(/^Ebook and audiobook\b/u)).length).toBeGreaterThan(0);
   });
 
   it('offers to download an audiobook to listen to offline', async () => {

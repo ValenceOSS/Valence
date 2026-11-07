@@ -7,6 +7,10 @@ import { aBook } from '@ValenceMobile/testing/aBook';
 import { aChapter } from '@ValenceMobile/testing/aChapter';
 import { ATextReader } from './ATextReader';
 
+jest.mock('@ValenceMobile/platform/drawsNatively', () => ({
+  drawsNatively: () => false,
+}));
+
 jest.mock('@ValenceClient/books/fetchBooks', () => ({
   ...jest.requireActual<object>('@ValenceClient/books/fetchBooks'),
   fetchBookContents: jest.fn(),
@@ -50,7 +54,8 @@ describe('ATextReader', () => {
 
     await userEvent.press(drawn.getByRole('button', { name: 'Contents and settings' }));
 
-    expect(drawn.getByText('Text size')).toBeTruthy();
+    expect(drawn.getByText('Themes')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Larger text' })).toBeTruthy();
     expect(drawn.getByText('Book Two')).toBeTruthy();
   });
 });

@@ -9,9 +9,15 @@ const PersonSchema = z.object({
   id: z.number().int().positive(),
   name: z.string(),
   portraitUrl: z.string().nullable(),
+  portraits: z.array(z.string()).nullish(),
   biography: z.string().nullable(),
   bornOn: z.string().nullable(),
   bornIn: z.string().nullable(),
+  diedOn: z.string().nullish(),
+  knownFor: z.string().nullish(),
+  gender: z.enum(['female', 'male', 'nonBinary']).nullish(),
+  alsoKnownAs: z.array(z.string()).nullish(),
+  instagram: z.string().nullish(),
 });
 
 const PersonCreditsSchema = z.object({

@@ -12,6 +12,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueGridProps } from './CatalogueGrid.types';
 import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
+import { useStandingOrigin } from '@ValenceScreens/linking/useStandingOrigin';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 import { say } from '@ValenceI18n/say';
 
@@ -34,6 +35,7 @@ const BEFORE_THE_END = '0px 0px 800px 0px';
  * @param onAsk - Called with the title to open, as its address names it.
  */
 const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) => {
+  const originOf = useStandingOrigin();
   const isWatched = useIsTitleWatched();
   const pages = useInfiniteQuery(requestsQueries.catalogueBrowse(browsing, true, filters));
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
@@ -121,6 +123,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
                 title={title.title}
                 subtitle={title.year?.toString() ?? ''}
                 {...describeCatalogueCard(title, isWatched(title))}
+                {...originOf(title.standing)}
                 {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
                 onSelect={() => {
                   onAsk(askingOf(title));

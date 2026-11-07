@@ -469,12 +469,14 @@
   overscroll-behavior-y: none;
 }
 
-p,
-figcaption,
-blockquote,
-li > p {
-  font-family: var(--font-body);
-  letter-spacing: 0.005em;
+@layer base {
+  p,
+  figcaption,
+  blockquote,
+  li > p {
+    font-family: var(--font-body);
+    letter-spacing: 0.005em;
+  }
 }
 
 body {
@@ -497,7 +499,7 @@ body {
 
 :root[data-valence-platform='darwin'] {
   --valence-window-bar-height: 2.375rem;
-  --valence-window-bar-lead: 4.875rem;
+  --valence-window-bar-lead: 5.5rem;
 }
 
 [data-over-dialogs] {
@@ -745,6 +747,15 @@ body :is(input, textarea, [contenteditable]) {
 
 body[data-scroll-locked] .valence-navbar {
   right: var(--removed-body-scroll-bar-size, 0px);
+}
+
+:root {
+  --mix-colour-1: oklch(0.86 0.17 125);
+  --mix-colour-2: oklch(0.8 0.12 350);
+  --mix-colour-3: oklch(0.82 0.13 55);
+  --mix-colour-4: oklch(0.78 0.12 305);
+  --mix-colour-5: oklch(0.87 0.13 180);
+  --mix-colour-6: oklch(0.9 0.13 95);
 }
 
 .valence-shell {
@@ -1211,11 +1222,11 @@ button:disabled,
 .valence-shimmer-text {
   background-image: linear-gradient(
     90deg,
-    color-mix(in oklab, currentColor 45%, transparent) 0%,
-    color-mix(in oklab, currentColor 45%, transparent) 35%,
+    color-mix(in oklab, currentColor 65%, transparent) 0%,
+    color-mix(in oklab, currentColor 65%, transparent) 35%,
     currentColor 50%,
-    color-mix(in oklab, currentColor 45%, transparent) 65%,
-    color-mix(in oklab, currentColor 45%, transparent) 100%
+    color-mix(in oklab, currentColor 65%, transparent) 65%,
+    color-mix(in oklab, currentColor 65%, transparent) 100%
   );
   background-size: 250% 100%;
   background-clip: text;

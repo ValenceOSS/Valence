@@ -8,6 +8,8 @@ import type { VirtualGridProps } from './VirtualGrid.types';
 
 const OVERSCAN_ROWS = 2;
 
+const ROWS_BEFORE_MEASURED = 6;
+
 /**
  * A grid that draws only the rows on screen, however many things it is given — the rest are room
  * kept open above and below, so a list of thousands costs the browser a screenful.
@@ -24,6 +26,8 @@ const OVERSCAN_ROWS = 2;
  * @param rowHeight - What a row is worth before it has been measured.
  * @param gap - The room between two cards, across and down.
  * @param label - What the grid holds, for anybody who cannot see it.
+ * @param isList - Whether the grid is a list, its cells being its items, as a collection's titles
+ *   are.
  * @param className - Extra classes for the caller's own layout.
  */
 const VirtualGrid = ({
@@ -33,6 +37,7 @@ const VirtualGrid = ({
   rowHeight,
   gap = 16,
   label,
+  isList = false,
   className,
 }: VirtualGridProps) => {
   const laneRef = useRef<HTMLDivElement>(null);
@@ -86,14 +91,27 @@ const VirtualGrid = ({
     enabled: scroller !== null,
   });
   const virtualiser = scroller === null ? inWindow : inPanel;
+  const isMeasured = (virtualiser.scrollRect?.height ?? 0) > 0;
+  const drawn = isMeasured
+    ? virtualiser.getVirtualItems()
+    : Array.from({ length: Math.min(rows, ROWS_BEFORE_MEASURED) }, (_, index) => ({
+        key: index,
+        index,
+        start: virtualiser.options.scrollMargin + index * (rowHeight + gap),
+      }));
 
   return (
-    <div ref={laneRef} className={cn('relative w-full', className)} aria-label={label}>
+    <div
+      ref={laneRef}
+      className={cn('relative w-full', className)}
+      aria-label={label}
+      {...(isList ? { role: 'list' } : {})}
+    >
       <div
         className="relative w-full"
         style={{ height: `${virtualiser.getTotalSize().toString()}px` }}
       >
-        {virtualiser.getVirtualItems().map((row) => (
+        {drawn.map((row) => (
           <div
             key={row.key}
             ref={virtualiser.measureElement}

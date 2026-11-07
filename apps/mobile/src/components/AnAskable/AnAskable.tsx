@@ -31,7 +31,9 @@ import { TheSeasons } from '@ValenceMobile/components/AnAskable/components/TheSe
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { askingFor } from '@ValenceClient/requests/askingFor';
-import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
+import { ALabelledToggle } from '@ValenceMobile/components/ALabelledToggle/ALabelledToggle';
+import { ABookHead } from '@ValenceMobile/components/ABookHead/ABookHead';
+import { ABookAbout } from '@ValenceMobile/components/ABookAbout/ABookAbout';
 import { groupReleases } from '@ValenceClient/requests/groupReleases';
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import {
@@ -163,10 +165,17 @@ const AnAskable = ({
   const [finding, setFinding] = useState<'finding' | 'found' | 'none'>('finding');
   const faces = useQuery(linkingQueries.faces());
   const title = asking.data;
+  const isBook = kind === 'book';
   const tint = usePictureTint(
-    title === undefined || title.backdropUrl === null
+    title === undefined
       ? null
-      : pictureOnThisServer(title.backdropUrl),
+      : isBook
+        ? title.posterUrl === null
+          ? null
+          : pictureOnThisServer(title.posterUrl)
+        : title.backdropUrl === null
+          ? null
+          : pictureOnThisServer(title.backdropUrl),
   );
   const heldAs =
     !isMore && title !== undefined && title.standing.status === 'library'
@@ -327,7 +336,8 @@ const AnAskable = ({
   const isUnderway =
     standing !== null && standing.tone !== 'danger' && (going !== null || mayTakeBack);
 
-  const backdrop = title.backdropUrl === null ? null : pictureOnThisServer(title.backdropUrl);
+  const backdrop =
+    isBook || title.backdropUrl === null ? null : pictureOnThisServer(title.backdropUrl);
   const trailer =
     backdrop === null || title.trailerKey === null || !isWatched(kind)
       ? null
@@ -385,20 +395,30 @@ const AnAskable = ({
         scrolls
         title={title.title}
         onBack={onBack}
-        {...(backdrop === null
-          ? {}
-          : {
+        {...(isBook
+          ? {
               head: (
-                <ATitleHead
-                  backdrop={backdrop}
-                  lettering={title.logoUrl === null ? null : pictureOnThisServer(title.logoUrl)}
-                  clip={trailer}
-                  onFinding={setFinding}
+                <ABookHead
                   title={title.title}
+                  cover={title.posterUrl === null ? null : pictureOnThisServer(title.posterUrl)}
                   {...(tint === null ? {} : { ground: tint })}
                 />
               ),
-            })}
+            }
+          : backdrop === null
+            ? {}
+            : {
+                head: (
+                  <ATitleHead
+                    backdrop={backdrop}
+                    lettering={title.logoUrl === null ? null : pictureOnThisServer(title.logoUrl)}
+                    clip={trailer}
+                    onFinding={setFinding}
+                    title={title.title}
+                    {...(tint === null ? {} : { ground: tint })}
+                  />
+                ),
+              })}
         {...(tint === null ? {} : { behind: <ATintedGround tint={tint} /> })}
         {...(trailer === null || finding === 'found'
           ? {}
@@ -416,7 +436,7 @@ const AnAskable = ({
               ),
             })}
       >
-        {backdrop === null && title.posterUrl !== null && !isWatched(kind) ? (
+        {backdrop === null && title.posterUrl !== null && !isWatched(kind) && !isBook ? (
           <ARemotePicture
             style={[styles.cover, { backgroundColor: colours.surfaceRaised }]}
             uri={pictureOnThisServer(title.posterUrl)}
@@ -425,7 +445,7 @@ const AnAskable = ({
 
         <ARising>
           <View style={styles.headline}>
-            {backdrop === null ? (
+            {backdrop === null && !isBook ? (
               <Words size="title" isCentred>
                 {title.title}
               </Words>
@@ -578,7 +598,7 @@ const AnAskable = ({
                 ) : null}
 
                 {kind === 'book' && title.series !== null && title.series !== undefined ? (
-                  <Toggle
+                  <ALabelledToggle
                     label={say('screens.askableDialog.everyBookInSeries', {
                       series: title.series.name,
                     })}
@@ -672,7 +692,21 @@ const AnAskable = ({
           </View>
         </ARising>
 
-        {title.overview === null && genres.length === 0 ? null : (
+        {isBook ? (
+          <>
+            <AHairline />
+
+            <ARising turn={3}>
+              <ABookAbout
+                title={title.title}
+                author={title.authors[0] ?? null}
+                overview={title.overview}
+                subjects={title.genres}
+                {...(onAskAbout === undefined ? {} : { onAsk: onAskAbout })}
+              />
+            </ARising>
+          </>
+        ) : title.overview === null && genres.length === 0 ? null : (
           <>
             <AHairline />
 

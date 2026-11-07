@@ -27,28 +27,54 @@ afterEach(() => {
 });
 
 describe('textPreferences', () => {
-  it('sets text at a medium size on a dark page before anybody has chosen', () => {
+  it('sets text at a medium size on a white page before anybody has chosen', () => {
     expect(readTextPreferences()).toEqual({
       size: 'medium',
       spacing: 'normal',
       margins: 'normal',
-      page: 'dark',
+      page: 'light',
+      isDouble: true,
+      gap: 24,
+      isAnimated: true,
+      isScrolling: false,
     });
   });
 
   it('remembers what somebody chose, on the device', () => {
-    writeTextPreferences({ size: 'larger', spacing: 'loose', margins: 'wide', page: 'sepia' });
+    writeTextPreferences({
+      size: 'larger',
+      spacing: 'loose',
+      margins: 'wide',
+      page: 'sepia',
+      isDouble: false,
+      gap: 8,
+      isAnimated: false,
+      isScrolling: false,
+    });
 
     expect(readTextPreferences()).toEqual({
       size: 'larger',
       spacing: 'loose',
       margins: 'wide',
       page: 'sepia',
+      isDouble: false,
+      gap: 8,
+      isAnimated: false,
+      isScrolling: false,
     });
   });
 
   it('keeps its settings apart from the page reader’s', () => {
-    writeTextPreferences({ size: 'small', spacing: 'tight', margins: 'narrow', page: 'light' });
+    writeTextPreferences({
+      size: 'small',
+      spacing: 'tight',
+      margins: 'narrow',
+      page: 'light',
+      isDouble: true,
+      gap: 24,
+      isAnimated: true,
+      isScrolling: false,
+    });
 
     expect([...held.keys()]).toEqual(['valence.reader.text']);
   });
@@ -61,6 +87,10 @@ describe('textPreferences', () => {
       spacing: 'normal',
       margins: 'normal',
       page: 'sepia',
+      isDouble: true,
+      gap: 24,
+      isAnimated: true,
+      isScrolling: false,
     });
   });
 
@@ -70,13 +100,11 @@ describe('textPreferences', () => {
     expect(readTextPreferences().size).toBe('medium');
   });
 
-  it('keeps each book its own, and starts a new one from however the last was left', () => {
+  it('keeps one set for every book on the device', () => {
     const night = { ...readTextPreferences(), size: 'larger' as const, page: 'sepia' as const };
 
-    writeTextPreferences(night, 'novel');
-    writeTextPreferences({ ...night, size: 'small' }, 'poems');
+    writeTextPreferences(night);
 
-    expect(readTextPreferences('novel')).toEqual(night);
-    expect(readTextPreferences('new-book')).toEqual({ ...night, size: 'small' });
+    expect(readTextPreferences()).toEqual(night);
   });
 });

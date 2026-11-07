@@ -53,7 +53,7 @@ const MusicArtwork = ({
           })}
       className={cn(
         'relative flex aspect-square shrink-0 items-center justify-center overflow-hidden bg-hover text-text-muted',
-        shape === 'round' ? 'rounded-full' : 'rounded-md',
+        shape === 'round' ? 'rounded-full' : 'rounded-xl',
         isLifted && 'shadow-[var(--shadow-artwork)]',
         className,
       )}

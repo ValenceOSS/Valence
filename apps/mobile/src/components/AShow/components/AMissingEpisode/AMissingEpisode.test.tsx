@@ -8,6 +8,6 @@ describe('AMissingEpisode', () => {
     );
 
     expect(drawn.getByText(/The You You Are/u)).toBeTruthy();
-    expect(drawn.getByText('Not in this library · Airs Friday')).toBeTruthy();
+    expect(drawn.getByText('Not in any library · Airs Friday')).toBeTruthy();
   });
 });

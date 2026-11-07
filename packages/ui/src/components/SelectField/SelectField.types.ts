@@ -10,6 +10,7 @@ type SelectFieldProps = {
   error?: string;
   size?: 'sm' | 'md';
   isLabelHidden?: boolean;
+  isDisabled?: boolean;
   className?: string;
 };
 

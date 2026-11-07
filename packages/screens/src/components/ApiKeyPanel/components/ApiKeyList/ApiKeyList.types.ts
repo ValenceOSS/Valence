@@ -10,7 +10,7 @@ type ApiKeyListProps = {
   onCreate: () => void;
   onCopy: () => void;
   onToggle: (key: ApiKey) => void;
-  onRevoke: (key: ApiKey) => void;
+  onAskRevoke: (key: ApiKey) => void;
 };
 
 export type { ApiKeyListProps };

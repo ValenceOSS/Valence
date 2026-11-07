@@ -24,6 +24,9 @@ const PILL_LOOKS = {
  * @param latest - The newer release, or the commit of the newer dev build, where one is out.
  * @param isLatestADevBuild - Whether what is newer is a dev build rather than a release.
  * @param onOpenUpdates - Called to open the updates page.
+ * @param isInHeader - Whether it sits at the end of a bar across the top rather than a sidebar's foot.
+ * @param isPillOnly - Whether only the pill is drawn, for a bar with no room for how video is
+ *   converted.
  */
 const AdminStatusFooter = ({
   version,
@@ -33,6 +36,7 @@ const AdminStatusFooter = ({
   isLatestADevBuild = false,
   onOpenUpdates,
   isInHeader = false,
+  isPillOnly = false,
 }: AdminStatusFooterProps) => {
   const look = latest === null ? (acceleration?.tone ?? 'quiet') : 'update';
 
@@ -43,23 +47,27 @@ const AdminStatusFooter = ({
         isInHeader ? 'shrink-0' : 'border-t border-[var(--surface-line)] px-2.5 pt-3',
       )}
     >
-      <span className={cn('flex min-w-0 flex-col', isInHeader ? 'items-end text-right' : 'flex-1')}>
-        <span className="truncate text-[0.8125rem] font-medium text-text">
-          {say('common.valence')}
-        </span>
-
-        {acceleration === null ? null : (
-          <span className="min-w-0 text-xs text-text-muted">
-            <AccelerationNote
-              acceleration={acceleration}
-              ffmpeg={ffmpeg}
-              side="top"
-              align="start"
-              isBlock
-            />
+      {isPillOnly ? null : (
+        <span
+          className={cn('flex min-w-0 flex-col', isInHeader ? 'items-end text-right' : 'flex-1')}
+        >
+          <span className="truncate text-[0.8125rem] font-medium text-text">
+            {say('common.valence')}
           </span>
-        )}
-      </span>
+
+          {acceleration === null ? null : (
+            <span className="min-w-0 text-xs text-text-muted">
+              <AccelerationNote
+                acceleration={acceleration}
+                ffmpeg={ffmpeg}
+                side="top"
+                align="start"
+                isBlock
+              />
+            </span>
+          )}
+        </span>
+      )}
 
       {version === null ? null : (
         <Button

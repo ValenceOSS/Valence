@@ -98,7 +98,8 @@ describe('ContinueReading', () => {
 
     renderInAnAddress(<ContinueReading onOpen={onOpen} />);
 
-    await userEvent.click(await screen.findByText('Book a'));
+    await screen.findByText('Book a');
+    await userEvent.click(screen.getByRole('button', { name: 'Continue reading' }));
 
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: IDS['a'] }));
   });

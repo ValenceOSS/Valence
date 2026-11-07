@@ -1,4 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { albumArtworkUrl, artistImageUrl } from '@ValenceClient/music/fetchMusic';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
@@ -35,6 +37,7 @@ const pictureOf = (artist: MusicArtist): string | null => {
  * @param action - Anything to do with the whole shelf, beside its heading.
  */
 const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfProps) => {
+  const cache = useQueryClient();
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
   const addingTo = useMyPlaylists();
@@ -59,12 +62,14 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
                 src={pictureOf(artist)}
                 label={artist.name}
                 shape="round"
-                travelsAs={`artist-${artist.id}`}
                 className="w-full"
               />
             }
             onOpen={() => {
               open({ kind: 'artist', id: artist.id });
+            }}
+            onPointingAt={() => {
+              void cache.prefetchQuery(musicQueries.artist(artist.id));
             }}
             menu={musicMenuFor(
               { kind: 'artist', id: artist.id },

@@ -59,6 +59,8 @@ type AppShellProps = {
   isSearchOpen: boolean;
   onOpenSearch: () => void;
   onSurprise?: (only?: LibraryKind) => void;
+  isWallOpen?: boolean;
+  onOpenWall?: () => void;
   libraryKinds?: LibraryKind[];
   libraryChoices?: Partial<Record<'films' | 'shows' | 'read', NavBarChoices>>;
   requestsChoices?: NavBarChoices;

@@ -62,7 +62,7 @@ describe('calendarEvents', () => {
 
   it('says when an episode has aired but nobody has it', () => {
     expect(calendarEvents([{ ...EPISODE, state: 'notHeld' }], '')[0]?.description).toBe(
-      'Not in the library',
+      'Not in any library',
     );
   });
 });

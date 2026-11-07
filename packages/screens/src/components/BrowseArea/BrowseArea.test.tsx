@@ -120,7 +120,7 @@ beforeEach(() => {
     audioCodecs: [],
     audioChannels: [],
   });
-  fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1' }]);
+  fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1', kind: 'movies' }]);
   fetchLibraryItems.mockReset().mockResolvedValue({ items: [item('a', 'Arrival')], total: 1 });
 });
 
@@ -130,18 +130,24 @@ vi.mock('@ValenceUI/useHasScrolledPast', () => ({
 
 describe('BrowseArea', () => {
   it('names the page it is', async () => {
+    fetchLibraries.mockResolvedValue([{ id: 'library-1', kind: 'shows' }]);
+
     renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     expect(await screen.findByRole('heading', { name: 'Shows' })).toBeInTheDocument();
   });
 
   it('offers the way back to the top once the top has been left', async () => {
+    fetchLibraries.mockResolvedValue([{ id: 'library-1', kind: 'shows' }]);
+
     renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     expect(await screen.findByRole('button', { name: 'Back to top' })).toBeInTheDocument();
   });
 
   it('asks the server for what comes in episodes', async () => {
+    fetchLibraries.mockResolvedValue([{ id: 'library-1', kind: 'shows' }]);
+
     renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     await waitFor(() => {
@@ -186,7 +192,7 @@ describe('BrowseArea', () => {
     expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-1', expect.anything());
   });
 
-  it('reads across every library when the one chosen is of another kind', async () => {
+  it('reads every library of films when the one chosen holds none, and not the one chosen', async () => {
     fetchLibraries.mockResolvedValue([
       { id: 'library-1', kind: 'movies' },
       { id: 'library-2', kind: 'shows' },
@@ -200,7 +206,7 @@ describe('BrowseArea', () => {
       expect(fetchLibraryItems).toHaveBeenCalledWith('library-1', expect.anything());
     });
 
-    expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
+    expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-2', expect.anything());
   });
 
   it('reads every page of the films, not the first one, since a library can hold more than a page', async () => {
@@ -417,6 +423,8 @@ describe('BrowseArea', () => {
   it('talks about the one library on a page that reads from one', async () => {
     fetchLibraryItems.mockResolvedValue({ items: [], total: 0 });
 
+    fetchLibraries.mockResolvedValue([{ id: 'library-1', kind: 'shows' }]);
+
     renderInAnAddress(
       <BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} onAddLibrary={vi.fn()} />,
     );
@@ -461,6 +469,8 @@ describe('how a page of the library is laid out', () => {
       ],
       total: 3,
     });
+
+    fetchLibraries.mockResolvedValue([{ id: 'library-1', kind: 'shows' }]);
 
     renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
@@ -514,6 +524,10 @@ describe('how a page of the library is laid out', () => {
   });
 
   it.each(['films', 'shows'] as const)('stands the %s page upright, on posters', async (kind) => {
+    fetchLibraries.mockResolvedValue([
+      { id: 'library-1', kind: kind === 'films' ? 'movies' : 'shows' },
+    ]);
+
     const { container } = renderInAnAddress(
       <BrowseArea kind={kind} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );

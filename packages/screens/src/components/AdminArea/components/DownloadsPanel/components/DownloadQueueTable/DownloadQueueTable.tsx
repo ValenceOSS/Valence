@@ -23,9 +23,10 @@ import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
 import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
 import { PAUSABLE_STATES } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/PAUSABLE_STATES';
-import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
+import { describeFinishTime } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeFinishTime';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
 import type { QueuedDownload, QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
@@ -47,11 +48,13 @@ const STATE_NAMES: Readonly<Record<QueuedDownloadState, string>> = {
  *
  * @param download - The download.
  * @returns Such as `2.1 GB of 4.6 GB`, or the size alone before anything has arrived, with the
- *   numbers rolling.
+ *   numbers rolling, and nothing while neither is known.
  */
 const describeArrived = (download: QueuedDownload): ReactNode => {
-  if (download.sizeBytes === null) {
-    return download.doneBytes === null ? null : <FormattedBytes bytes={download.doneBytes} />;
+  if (download.sizeBytes === null || download.sizeBytes === 0) {
+    return download.doneBytes === null || download.doneBytes === 0 ? null : (
+      <FormattedBytes bytes={download.doneBytes} />
+    );
   }
 
   return download.doneBytes === null || download.state === 'done' ? (
@@ -68,7 +71,7 @@ const describeArrived = (download: QueuedDownload): ReactNode => {
 };
 
 /**
- * Every download Valence has sent, newest first: what it is and where it went, how it is doing, how
+ * Every download Valence has sent, newest first, in one list that draws only the rows in view: what it is and where it went, how it is doing, how
  * much has arrived and how fast, how long is left, who it is coming from, and what can be done to
  * it — pausing, resuming and removing, one at a time or, where they can be ticked, several at once.
  *
@@ -152,20 +155,33 @@ const DownloadQueueTable = ({
         header: say('common.release'),
         accessorFn: (download) => download.title,
         cell: ({ row }) => (
-          <span className="flex max-w-[32rem] min-w-0 flex-col gap-0.5">
+          <span className="flex max-w-[18rem] min-w-0 flex-col gap-0.5">
             <Tooltip label={row.original.title}>
               <span className="truncate font-medium text-text">{row.original.title}</span>
             </Tooltip>
 
             <span className="truncate text-xs text-text-muted">
-              {[
-                LIBRARY_KIND_NAMES[row.original.libraryKind].label,
-                row.original.clientName,
-                row.original.indexerName,
-              ]
+              {[row.original.clientName, row.original.indexerName]
                 .filter((part) => part !== null)
                 .join(' · ')}
             </span>
+          </span>
+        ),
+      },
+      {
+        id: 'kind',
+        header: say('screens.adminArea.addLibraryDialog.type'),
+        accessorFn: (download) => LIBRARY_KIND_NAMES[download.libraryKind].label,
+        filterFn: (row, _columnId, filterValue) => row.original.libraryKind === filterValue,
+        meta: {
+          filterOptions: LIBRARY_KINDS.filter((kind) =>
+            downloads.some((download) => download.libraryKind === kind),
+          ).map((kind) => ({ id: kind, label: LIBRARY_KIND_NAMES[kind].label })),
+        },
+        cell: ({ row }) => (
+          <span className="flex max-w-[8rem] items-center gap-2 text-text-muted">
+            <Icon of={LIBRARY_KIND_NAMES[row.original.libraryKind].icon} size={15} />
+            <span className="truncate">{LIBRARY_KIND_NAMES[row.original.libraryKind].label}</span>
           </span>
         ),
       },
@@ -218,48 +234,62 @@ const DownloadQueueTable = ({
           return (
             <DownloadProgress title={row.original.title} progress={row.original.progress}>
               {arrived}
-              {row.original.downloadBytesPerSecond === null ||
-              row.original.downloadBytesPerSecond === 0 ? null : (
-                <>
-                  {' · '}
-                  <FormattedBytes bytes={row.original.downloadBytesPerSecond} />
-                  {say('screens.downloadsPanel.downloadQueueTable.perSecond')}
-                </>
-              )}
-              {row.original.secondsLeft === null ? null : (
-                <>
-                  {' · '}
-                  <Sentence
-                    words="common.durationLeft"
-                    fillings={{ timeLeft: describeTimeLeft(row.original.secondsLeft) }}
-                  />
-                </>
-              )}
             </DownloadProgress>
           );
         },
       },
       {
-        id: 'speed',
+        id: 'down',
         meta: { hidesOnPhones: true },
-        header: say('common.speed'),
+        header: say('screens.downloadsPanel.downloadQueueTable.downloadSpeed'),
         accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => (
-          <ReadoutLines
-            lines={speedsOf(row.original.downloadBytesPerSecond, row.original.uploadBytesPerSecond)}
-          />
+          <span className="text-sm tabular-nums text-text-muted">
+            {row.original.downloadBytesPerSecond === null || row.original.state === 'done' ? (
+              '—'
+            ) : (
+              <FormattedBytes bytes={row.original.downloadBytesPerSecond} suffix="/s" />
+            )}
+          </span>
         ),
       },
       {
-        id: 'left',
+        id: 'up',
         meta: { hidesOnPhones: true },
-        header: say('common.timeLeft'),
-        accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
+        header: say('screens.downloadsPanel.downloadQueueTable.uploadSpeed'),
+        accessorFn: (download) => download.uploadBytesPerSecond ?? -1,
         cell: ({ row }) => (
-          <span className="text-xs tabular-nums text-text-muted">
-            {row.original.secondsLeft === null ? '—' : describeTimeLeft(row.original.secondsLeft)}
+          <span className="text-sm tabular-nums text-text-muted">
+            {row.original.uploadBytesPerSecond === null ? (
+              '—'
+            ) : (
+              <FormattedBytes bytes={row.original.uploadBytesPerSecond} suffix="/s" />
+            )}
           </span>
         ),
+      },
+      {
+        id: 'finishes',
+        meta: { hidesOnPhones: true },
+        header: say('screens.downloadsPanel.downloadQueueTable.finishes'),
+        accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
+        cell: ({ row }) =>
+          row.original.secondsLeft === null || row.original.state === 'done' ? (
+            <span className="text-sm text-text-muted">—</span>
+          ) : (
+            <ReadoutLines
+              lines={[
+                <Sentence
+                  key="left"
+                  words="common.durationLeft"
+                  fillings={{ timeLeft: describeTimeLeft(row.original.secondsLeft) }}
+                />,
+                <span key="at" className="tabular-nums">
+                  {describeFinishTime(row.original.secondsLeft, Date.now())}
+                </span>,
+              ]}
+            />
+          ),
       },
       {
         id: 'peers',
@@ -391,13 +421,13 @@ const DownloadQueueTable = ({
       label={say('common.downloads')}
       columns={columns.filter(
         (column) =>
-          column.id !== 'speed' &&
-          column.id !== 'left' &&
-          (column.id !== 'peers' ||
-            downloads.some((download) => download.seeds !== null || download.peers !== null)),
+          column.id !== 'peers' ||
+          downloads.some((download) => download.seeds !== null || download.peers !== null),
       )}
       rows={[...downloads]}
       getRowId={(download) => download.id}
+      isVirtual
+      pageSize={Math.max(downloads.length, 1)}
       {...(toolbar === undefined ? {} : { toolbar })}
       emptyMessage={say('screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA')}
     />

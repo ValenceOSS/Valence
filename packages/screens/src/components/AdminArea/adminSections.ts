@@ -26,7 +26,7 @@ import {
   Users as UsersIcon,
   Video as VideoIcon,
   Webhook as WebhookIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/duotone';
 import {
   Activity as ActivityFilledIcon,
   Archive as ArchiveFilledIcon,

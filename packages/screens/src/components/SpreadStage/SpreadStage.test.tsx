@@ -4,17 +4,17 @@ import { SpreadStage } from './SpreadStage';
 
 const SPREADS = [[0, 1], [2, 3], [4, 5], [6]];
 
+const drawn = (number: number, isShown: boolean) =>
+  isShown ? <img data-reader-page src="" alt={`Page ${(number + 1).toString()}`} /> : null;
+
 const props = {
   spreads: SPREADS,
   spreadAt: 0,
-  bookId: 'a-book',
-  chapterId: 'one',
-  across: 2,
-  fit: 'both',
+  turnKey: 'one',
   gap: 0,
   isRightToLeft: false,
   isAnimated: false,
-  onLoaded: vi.fn(),
+  renderPage: drawn,
 } as const;
 
 const shown = (): string[] =>
@@ -31,14 +31,6 @@ describe('SpreadStage', () => {
     render(<SpreadStage {...props} isRightToLeft />);
 
     expect(shown()).toEqual(['Page 2', 'Page 1']);
-  });
-
-  it('asks for each page at the width it is drawn', () => {
-    render(<SpreadStage {...props} />);
-
-    screen.getAllByRole('img').forEach((page) => {
-      expect(page.getAttribute('src')).toContain('width=');
-    });
   });
 
   it('is simply the spread asked for where turning is not animated', () => {
@@ -66,16 +58,15 @@ describe('SpreadStage', () => {
     expect(screen.getByRole('img', { name: 'Page 7' })).toBeInTheDocument();
   });
 
-  it('tells the reader when a page has loaded', () => {
-    const onLoaded = vi.fn();
+  it('asks the reader to draw each page it shows, whatever a page is', () => {
+    const renderPage = vi.fn(drawn);
 
-    render(<SpreadStage {...props} onLoaded={onLoaded} />);
+    render(<SpreadStage {...props} renderPage={renderPage} />);
 
-    screen.getAllByRole('img').forEach((page) => {
-      page.dispatchEvent(new Event('load'));
-    });
-
-    expect(onLoaded).toHaveBeenCalledTimes(2);
+    expect(renderPage.mock.calls.map(([number, isShown]) => [number, isShown])).toEqual([
+      [0, true],
+      [1, true],
+    ]);
   });
 
   it('sets a display name so devtools can identify it', () => {

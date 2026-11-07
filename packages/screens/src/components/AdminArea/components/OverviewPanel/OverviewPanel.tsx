@@ -29,6 +29,8 @@ import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { LogLevelBadge } from '@ValenceScreens/components/LogLevelBadge/LogLevelBadge';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { incomingDownloads } from '@ValenceClient/requests/incomingDownloads';
 import { StorageInfo } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/StorageInfo/StorageInfo';
 import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/CacheBreakdown/CacheBreakdown';
 import { LoadRangeToggle } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle';
@@ -44,6 +46,7 @@ import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY
 import { say } from '@ValenceI18n/say';
 
 const RECENT_LOGS_EVERY_MS = 10_000;
+const DOWNLOADS_EVERY_MS = 30_000;
 
 const NOTHING_TO_READ: OverviewReading = { libraries: false, sessions: false, monitor: false };
 
@@ -78,7 +81,7 @@ const OverviewPanel = ({
   const own = libraries.filter((library) => (library.linkedServerId ?? null) === null);
 
   const askedLoadHistory = useQuery({
-    ...adminQueries.resourceHistory(loadRange === 'minute' ? '24h' : loadRange),
+    ...adminQueries.resourceHistory('7d'),
     enabled: loadRange !== 'minute',
   });
 
@@ -101,6 +104,13 @@ const OverviewPanel = ({
   const recentLogs = useQuery({
     ...adminQueries.logs({ levels: ['warn', 'error'], sort: 'newest', limit: 8 }),
     refetchInterval: RECENT_LOGS_EVERY_MS,
+  });
+
+  const askedRequests = useQuery(requestsQueries.availability());
+  const askedDownloads = useQuery({
+    ...requestsQueries.downloadQueue(),
+    enabled: askedRequests.data?.isEnabled ?? false,
+    refetchInterval: DOWNLOADS_EVERY_MS,
   });
 
   const logColumns: DataTableColumn<LogRecord>[] = [
@@ -449,6 +459,11 @@ const OverviewPanel = ({
                     bytes: overview.library.bytes,
                     itemCount: overview.library.itemCount,
                   }
+            }
+            incoming={
+              askedDownloads.data === undefined
+                ? null
+                : incomingDownloads(askedDownloads.data.downloads)
             }
           />
         </DashboardRegion>

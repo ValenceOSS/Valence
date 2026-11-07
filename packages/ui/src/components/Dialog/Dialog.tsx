@@ -8,6 +8,7 @@ import { coverPage } from '@ValenceUI/pageCover';
 import { isOverDialogs } from '@ValenceUI/isOverDialogs';
 import { companionContext } from './companionContext';
 import type { CompanionSlot } from './companionContext';
+import { DialogFootBlur } from './components/DialogFootBlur/DialogFootBlur';
 import { useHeldWhileClosing } from './useHeldWhileClosing';
 import type { DialogProps, DialogSize } from './Dialog.types';
 
@@ -61,13 +62,15 @@ const SHELL =
   'border border-[var(--card-line)] bg-[var(--frame-card)] p-1 shadow-[var(--shadow-overlay)]';
 
 const FACE =
-  'flex min-h-0 flex-1 flex-col overflow-hidden rounded-none bg-[var(--card-face)] shadow-[inset_0_0_0_1px_var(--surface-card-line)] [--card-shell:var(--frame-card)] sm:rounded-xl';
+  'relative isolate flex min-h-0 flex-1 flex-col overflow-hidden rounded-none bg-[var(--card-face)] shadow-[inset_0_0_0_1px_var(--surface-card-line)] [--card-shell:var(--frame-card)] sm:rounded-xl';
 
 const PANEL = [
   'flex flex-col overflow-hidden rounded-none',
   SHELL,
   'sm:w-[min(48rem,92vw)] sm:rounded-2xl',
 ].join(' ');
+
+const EDGED = 'sm:p-2 sm:rounded-[calc(var(--radius-xl)+0.5625rem)]';
 
 const ROW = ['flex flex-col gap-3 overflow-y-auto', 'sm:flex-row sm:gap-0 sm:overflow-hidden'].join(
   ' ',
@@ -158,6 +161,11 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  *   fading in — see `Drawer`, the component that composes this size.
  * @param isInstant - Whether it appears and goes at once rather than fading and growing, for a
  *   dialog opened from the keyboard many times a day, where any animation is only a delay.
+ * @param edge - The colour its border runs through, for a dialog that takes on what it shows. Any
+ *   value widens the frame, and nothing keeps it wide with the plain border until the colour is
+ *   known, so the panel does not shift when the colour arrives.
+ *   It also blurs what scrolls under the foot of the panel, into the colour where there is one,
+ *   until there is nothing further to scroll to.
  * @param holdsOutsideClicks - Whether a click outside it, or Escape, leaves it open, for a dialog
  *   holding choices not yet saved, which a stray click or key would otherwise throw away.
  * @param className - Extra classes for the caller's own layout.
@@ -169,6 +177,7 @@ const Dialog = ({
   children,
   size = 'default',
   isInstant = false,
+  edge,
   holdsOutsideClicks = false,
   className,
 }: DialogProps) => {
@@ -270,12 +279,22 @@ const Dialog = ({
                 PANEL,
                 'min-h-0 min-w-0 flex-1 sm:w-auto',
                 size === 'drawer' ? 'sm:rounded-b-none sm:rounded-t-2xl' : '',
+                edge === undefined ? '' : EDGED,
               )}
+              {...(edge === undefined || edge === null
+                ? {}
+                : {
+                    style: {
+                      borderColor: 'transparent',
+                      background: `linear-gradient(var(--frame-card), var(--frame-card)) padding-box, linear-gradient(to bottom, color-mix(in oklab, ${edge} 88%, white), ${edge} 60%, color-mix(in oklab, ${edge} 50%, transparent)) border-box`,
+                    },
+                  })}
             >
               <div
                 className={cn(FACE, size === 'drawer' ? 'sm:rounded-b-none sm:rounded-t-xl' : '')}
               >
                 {shown}
+                {edge === undefined ? null : <DialogFootBlur colour={edge} />}
               </div>
             </div>
 

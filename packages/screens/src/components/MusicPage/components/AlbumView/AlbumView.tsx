@@ -76,14 +76,8 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
       <MusicHeader
         eyebrow={album.isCompilation ? say('common.compilation') : say('common.album')}
         title={album.title}
-        artwork={
-          <MusicArtwork
-            src={cover}
-            label={album.title}
-            travelsAs={`album-${album.id}`}
-            className="w-full"
-          />
-        }
+        backdrop={cover}
+        artwork={<MusicArtwork src={cover} label={album.title} className="w-full" />}
         details={
           <>
             <Button
@@ -139,7 +133,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
         }
       />
 
-      <div className={`pb-8 ${MUSIC_LANES.tracks}`}>
+      <div className="min-w-0 pb-4">
         {tracks.length === 0 ? (
           <NothingHere
             of={RecordIcon}
@@ -147,6 +141,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
           />
         ) : (
           <TrackList
+            hasHeading
             label={album.title}
             tracks={tracks}
             numbering="track"

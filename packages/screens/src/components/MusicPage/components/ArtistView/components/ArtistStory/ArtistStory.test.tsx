@@ -57,7 +57,7 @@ describe('ArtistStory', () => {
 
     expect(await screen.findByText('More from Sleep Token')).toBeInTheDocument();
     expect(screen.getByText('Take Me Back to Eden')).toBeInTheDocument();
-    expect(screen.getByText('2023 · Album · Not in your library')).toBeInTheDocument();
+    expect(screen.getByText('2023 · Album · Not in any library')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'About Sleep Token' })).not.toBeInTheDocument();
   });
 

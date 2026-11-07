@@ -1,209 +1,119 @@
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { Video as VideoIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { useReducedMotionConfig, motion } from 'motion/react';
+import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import { albumArtworkUrl, fetchAlbum } from '@ValenceClient/music/fetchMusic';
-import { upcomingIn } from '@ValenceClient/music/playQueue';
-import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
-import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
-import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
-import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { MusicBackdrop } from '@ValenceScreens/components/MusicBackdrop/MusicBackdrop';
+import { PLAY_ON_ARTWORK } from '@ValenceScreens/music/PLAY_ON_ARTWORK';
+import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
+import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import type { MusicFeatureProps } from './MusicFeature.types';
 import { say } from '@ValenceI18n/say';
 
-const UP_NEXT_SHOWN = 4;
-
-const SETTLING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
-
 /**
- * The top of the music section: whatever is playing, large, with what comes after it beside it —
- * or, when nothing is, the newest record in the library, ready to start.
+ * The head of the music home: the newest record in the library, ready to start, on its cover spread
+ * across the page. What is playing has the player bar to itself, so this leaves it there and stays
+ * low enough for the rails to be seen beneath it.
  *
- * It lights the room in the colours of its cover. When the song changes the feature dissolves
- * into the next one through a moment of blur rather than cutting, so the page keeps time with the
- * music without jumping.
- *
- * @param newest - The album most recently added, for when nothing is playing.
- * @param player - The player to show, which is the window's own unless a test says otherwise.
+ * @param newest - The album most recently added.
+ * @param player - The player to drive, which is the window's own unless a test says otherwise.
  */
 const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
   const { state, player } = useMusicPlayer(given ?? theMusicPlayer());
   const { open } = useMusicNavigation();
   const prefersReducedMotion = useReducedMotionConfig();
-  const song = state.current;
-  const album = song?.album ?? newest;
-  const cover = album !== null && album.hasArtwork ? albumArtworkUrl(album.id) : null;
-  const upNext = state.queue === null ? [] : upcomingIn(state.queue).slice(0, UP_NEXT_SHOWN);
   const rises = revealVariants(prefersReducedMotion);
   const moves = revealTransition(prefersReducedMotion);
 
-  useLightTheMusic(cover);
-
-  if (album === null) {
+  if (newest === null) {
     return null;
   }
 
-  const dissolves =
-    prefersReducedMotion === true
-      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-      : {
-          initial: { opacity: 0, filter: 'blur(8px)' },
-          animate: { opacity: 1, filter: 'blur(0px)' },
-          exit: { opacity: 0, filter: 'blur(8px)' },
-        };
+  const cover = newest.hasArtwork ? albumArtworkUrl(newest.id) : null;
+  const isOn = isPlayingFrom({ kind: 'album', id: newest.id }, state);
+  const isPlaying = isOn && state.isPlaying;
 
   return (
     <section
-      aria-label={
-        song === null
-          ? say('screens.musicHome.musicFeature.newestInYourLibrary')
-          : say('common.nowPlaying')
-      }
-      className={`relative grid items-end gap-8 pt-6 pb-4 lg:grid-cols-[minmax(0,1fr)_20rem] ${MUSIC_LANES.page}`}
+      aria-label={say('screens.musicHome.musicFeature.newestInYourLibrary')}
+      className={`relative flex h-[clamp(15rem,36vh,20rem)] items-end overflow-hidden pb-6 ${MUSIC_LANES.page}`}
     >
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.div
-          key={song?.id ?? album.id}
-          {...dissolves}
-          transition={SETTLING}
-          className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8"
+      <div className="absolute inset-0 [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
+        <MusicBackdrop src={cover} />
+        <BackdropScrim />
+      </div>
+
+      <div className="relative flex w-full items-end gap-5 sm:gap-6">
+        <Button
+          variant="bare"
+          size="none"
+          label={say('common.openTitle', { title: newest.title })}
+          hasTooltip={false}
+          className="hidden w-28 shrink-0 sm:block lg:w-36"
+          onClick={() => {
+            open({ kind: 'album', id: newest.id });
+          }}
         >
-          <Button
-            variant="bare"
-            size="none"
-            label={say('common.openTitle', { title: album.title })}
-            hasTooltip={false}
-            className="block w-48 shrink-0 sm:w-60 lg:w-72"
-            onClick={() => {
-              open({ kind: 'album', id: album.id });
-            }}
+          <MusicArtwork src={cover} label={newest.title} isLifted className="w-full" />
+        </Button>
+
+        <motion.div
+          variants={staggerVariants}
+          initial="hidden"
+          animate="shown"
+          className="@container flex min-w-0 flex-1 flex-col gap-1.5"
+        >
+          <motion.span
+            variants={rises}
+            transition={moves}
+            className="text-xs font-semibold text-on-scrim"
           >
-            <MusicArtwork src={cover} label={album.title} isLifted className="w-full" />
-          </Button>
+            {say('screens.musicHome.musicFeature.newestInYourLibrary')}
+          </motion.span>
 
-          <motion.div
-            variants={staggerVariants}
-            initial="hidden"
-            animate="shown"
-            className="@container flex min-w-0 flex-1 flex-col gap-3"
+          <motion.h2
+            variants={rises}
+            transition={moves}
+            className="truncate text-[clamp(1.75rem,7cqi,3rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-on-scrim"
           >
-            <motion.span
-              variants={rises}
-              transition={moves}
-              className="text-xs font-semibold text-text-muted"
-            >
-              {song === null
-                ? say('screens.musicHome.musicFeature.newestInYourLibrary')
-                : state.isPlaying
-                  ? say('common.nowPlaying')
-                  : say('common.paused')}
-            </motion.span>
+            {newest.title}
+          </motion.h2>
 
-            <motion.h2
-              variants={rises}
-              transition={moves}
-              className="text-[clamp(1.5rem,11cqi,4.25rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
-            >
-              {song?.title ?? album.title}
-            </motion.h2>
+          <motion.p variants={rises} transition={moves} className="text-sm text-on-scrim">
+            {newest.artist.name}
+          </motion.p>
 
-            <motion.p variants={rises} transition={moves} className="text-sm text-text-muted">
-              {song === null
-                ? newest?.artist.name
-                : `${song.artists.map((artist) => artist.name).join(', ')} · ${song.album.title}`}
-            </motion.p>
+          <motion.div variants={rises} transition={moves} className="mt-2">
+            <Button
+              variant="confirm"
+              size="none"
+              className={`${PLAY_ON_ARTWORK} sm:w-56`}
+              onClick={() => {
+                if (isOn) {
+                  player.toggle();
 
-            <motion.div
-              variants={rises}
-              transition={moves}
-              className="mt-3 flex flex-wrap items-center gap-3"
-            >
-              <Button
-                variant="confirm"
-                size="lg"
-                onClick={() => {
-                  if (song !== null) {
-                    player.toggle();
+                  return;
+                }
 
-                    return;
-                  }
-
-                  void fetchAlbum(album.id).then((read) => {
-                    player.play(read.tracks, 0, {
-                      source: { kind: 'album', id: album.id, name: album.title },
-                    });
+                void fetchAlbum(newest.id).then((read) => {
+                  player.play(read.tracks, 0, {
+                    source: { kind: 'album', id: newest.id, name: newest.title },
                   });
-                }}
-              >
-                <Icon
-                  of={song !== null && state.isPlaying ? PauseFilledIcon : PlayFilledIcon}
-                  size={18}
-                />
-                {song === null
-                  ? say('common.play')
-                  : state.isPlaying
-                    ? say('common.pause')
-                    : say('common.resume')}
-              </Button>
-
-              {song === null || song.videoKey === null ? null : (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  onClick={() => {
-                    if (song.videoKey !== null) {
-                      player.pause();
-                      setMusicVideo({ title: song.title, videoKey: song.videoKey });
-                    }
-                  }}
-                >
-                  <Icon of={VideoIcon} size={18} />
-                  {say('common.watchTheVideo')}
-                </Button>
-              )}
-            </motion.div>
+                });
+              }}
+            >
+              <Icon of={isPlaying ? PauseFilledIcon : PlayFilledIcon} size={18} />
+              {isPlaying ? say('common.pause') : say('common.play')}
+            </Button>
           </motion.div>
         </motion.div>
-      </AnimatePresence>
-
-      {upNext.length === 0 ? null : (
-        <section aria-label={say('common.upNext')} className="hidden flex-col gap-2 lg:flex">
-          <h3 className="px-2 text-xs font-semibold text-text-muted">{say('common.upNext')}</h3>
-          <ol className="flex flex-col">
-            {upNext.map(({ at, track }) => (
-              <li key={`${track.id}-${at.toString()}`}>
-                <Button
-                  variant="row"
-                  size="none"
-                  hasTooltip={false}
-                  label={say('common.playTitleNow', { title: track.title })}
-                  className="items-center gap-3 p-2"
-                  onClick={() => {
-                    player.jumpTo(at);
-                  }}
-                >
-                  <MusicArtwork
-                    src={track.album.hasArtwork ? albumArtworkUrl(track.album.id) : null}
-                    label={track.album.title}
-                    className="size-10"
-                  />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium text-text">{track.title}</span>
-                    <span className="truncate text-xs text-text-muted">
-                      {track.artists.map((artist) => artist.name).join(', ')}
-                    </span>
-                  </span>
-                </Button>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      </div>
     </section>
   );
 };

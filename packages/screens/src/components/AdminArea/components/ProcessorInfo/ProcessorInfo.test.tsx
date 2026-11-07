@@ -6,8 +6,9 @@ import { ProcessorInfo } from './ProcessorInfo';
 const machine = (change: Partial<Hardware> = {}): Hardware => ({
   surroundings: 'host',
   processor: { model: 'Apple M5 Pro', cores: 2, threads: 2, speedMhz: 4608, groups: [] },
-  memory: { totalBytes: 0, modules: [] },
+  memory: { totalBytes: 0, modules: [], emptySlots: [] },
   drives: [],
+  sataPorts: null,
   ...change,
 });
 

@@ -7,6 +7,7 @@ type MusicShelfTile = { key: string; tile: ReactNode };
 type MusicShelfProps = {
   heading: string;
   layout?: MusicShelfLayout;
+  size?: 'regular' | 'large';
   count?: number;
   action?: ReactNode;
   tiles: readonly MusicShelfTile[];

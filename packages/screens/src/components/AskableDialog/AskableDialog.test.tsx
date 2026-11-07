@@ -674,7 +674,7 @@ describe('AskableDialog', () => {
     expect(AskableDialog.displayName).toBe('AskableDialog');
   });
 
-  it('offers to watch a title a linked server has, or to request it here anyway', async () => {
+  it('opens a title a linked server has on its own page at once, as if it were here', async () => {
     fetchAskable.mockResolvedValue(
       aTitle({
         standing: { ...ASKABLE, status: 'linked', mediaId: 'theirs', fromServer: 'Films' },
@@ -682,14 +682,8 @@ describe('AskableDialog', () => {
     );
     const { onOpen } = open();
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Watch on Films' }));
-
-    expect(onOpen).toHaveBeenCalledWith('film', 'theirs');
-
-    await userEvent.click(screen.getByRole('button', { name: 'Request here' }));
-
     await waitFor(() => {
-      expect(askForMedia).toHaveBeenCalledOnce();
+      expect(onOpen).toHaveBeenCalledWith('film', 'theirs');
     });
   });
 

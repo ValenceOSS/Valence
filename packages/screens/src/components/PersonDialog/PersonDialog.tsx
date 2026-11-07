@@ -6,11 +6,22 @@ import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
+import { Link } from '@ValenceUI/Link';
+import { StepTrail } from '@ValenceUI/StepTrail';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { hasAnythingToShow } from '@ValenceContracts/schemas/Person';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { MediaCard } from '@ValenceUI/MediaCard';
+import { PersonPortraits } from './components/PersonPortraits/PersonPortraits';
+import { SeasonMate } from '@ValenceScreens/components/SeasonMate/SeasonMate';
+import { askingOf } from '@ValenceScreens/requests/askingOf';
+import { useHeldBadges } from '@ValenceScreens/library/useHeldBadges';
+import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
+import type { CatalogueTitle, PersonCredit } from '@ValenceContracts/schemas/CatalogueTitle';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
@@ -25,6 +36,58 @@ import type { PersonDialogProps } from './PersonDialog.types';
 import { say } from '@ValenceI18n/say';
 
 const NOTHING: PersonCredits = { films: [], shows: [], episodes: [] };
+
+const NO_WORK: readonly CatalogueTitle[] = [];
+
+const NO_CREDITS: readonly PersonCredit[] = [];
+
+const GENDER_WORDS = {
+  female: 'screens.personDialog.genderFemale',
+  male: 'screens.personDialog.genderMale',
+  nonBinary: 'screens.personDialog.genderNonBinary',
+} as const;
+
+/**
+ * Works out how old somebody is, or was when they died.
+ *
+ * @param bornOn - The date they were born, as the catalogue gives it.
+ * @param until - The date to count to.
+ * @returns Their age in whole years, or null where a date could not be read.
+ */
+const ageOn = (bornOn: string, until: Date): number | null => {
+  const born = new Date(bornOn);
+
+  if (Number.isNaN(born.getTime()) || Number.isNaN(until.getTime())) {
+    return null;
+  }
+
+  const hasHadBirthday =
+    until.getMonth() > born.getMonth() ||
+    (until.getMonth() === born.getMonth() && until.getDate() >= born.getDate());
+
+  return until.getFullYear() - born.getFullYear() - (hasHadBirthday ? 0 : 1);
+};
+
+/**
+ * Says how somebody is credited on a title, leaving out what the catalogue does not know.
+ *
+ * @param credit - The credit.
+ * @returns The line under its title, or nothing where the catalogue gives neither.
+ */
+const describeCredit = (credit: PersonCredit): string | undefined => {
+  const episodes =
+    credit.kind !== 'series' || credit.episodeCount === null
+      ? null
+      : sayCount('common.count.episodes', credit.episodeCount);
+
+  if (credit.role === null) {
+    return episodes ?? undefined;
+  }
+
+  return episodes === null
+    ? say('screens.personDialog.asRole', { role: credit.role })
+    : say('screens.personDialog.creditEpisodes', { episodes, role: credit.role });
+};
 
 /**
  * Writes a birth date the way somebody says it rather than the way a catalogue stores it, and leaves
@@ -54,9 +117,9 @@ const describeBirth = (bornOn: string | null): string | null => {
  * Opened from a name in a cast list, which is the moment the question arises — somebody recognises a
  * face and wants to know what else of theirs is here.
  *
- * Only what is held: a filmography naming forty films of which thirty-seven cannot be played is a
- * list of things to be disappointed by. What the catalogue says about them is shown where it says
- * anything and left out entirely where it does not, rather than drawn as empty fields.
+ * What is held comes first, because it can be played now. Whoever may request gets the rest of what
+ * the catalogue credits them with after it, to ask for. What the catalogue says about them is shown
+ * where it says anything and left out entirely where it does not, rather than drawn as empty fields.
  *
  * @param personId - Who to open, or null while nobody is open.
  * @param role - The part they played in whatever this was opened from, where it was opened from one.
@@ -64,6 +127,8 @@ const describeBirth = (bornOn: string | null): string | null => {
  * @param onPlay - Told to start something of theirs, and where from.
  * @param onInspect - Told to open the page about something of theirs.
  * @param onOpenShow - Told to open a programme of theirs.
+ * @param onAsk - Told to open a title of theirs this server does not have, as its address names it,
+ *   and left out for whoever may not request, who is only shown what is held.
  * @param onBack - Told to go back to the dialog this was opened from, where it was opened from one,
  *   which is offered in place of closing it.
  * @param backLabel - What that dialog is about.
@@ -75,16 +140,27 @@ const PersonDialog = ({
   onPlay,
   onInspect,
   onOpenShow,
+  onAsk,
   onBack,
   backLabel,
 }: PersonDialogProps) => {
+  const heldBadgesOf = useHeldBadges();
   const [lastOpened, setLastOpened] = useState<number | null>(null);
 
   const asked = useQuery(libraryQueries.person(personId));
   const theirs = useQuery(libraryQueries.credits(personId));
+  const catalogued = useQuery(requestsQueries.personWork(personId, onAsk !== undefined));
 
   const person = personId === null ? null : (asked.data ?? null);
-  const credits = personId === null ? NOTHING : (theirs.data ?? NOTHING);
+  const credited = personId === null ? NOTHING : (theirs.data ?? NOTHING);
+  const credits = {
+    ...credited,
+    films: [
+      ...new Map(
+        credited.films.map((media) => [media.externalId ?? media.id, media] as const).reverse(),
+      ).values(),
+    ].reverse(),
+  };
   const isLoading = personId !== null && (asked.isPending || theirs.isPending);
   const tint = useArtworkTint(person?.portraitUrl ?? null);
 
@@ -101,9 +177,72 @@ const PersonDialog = ({
   }
 
   const born = describeBirth(person?.bornOn ?? null);
-  const said = [born, person?.bornIn ?? null].filter((one) => one !== null);
   const couldNotRead = personId !== null && (asked.isError || theirs.isError);
-  const isEmpty = !isLoading && !couldNotRead && !hasAnythingToShow(person, credits);
+  const work = personId === null ? NO_WORK : (catalogued.data?.titles ?? NO_WORK);
+  const timeline = personId === null ? NO_CREDITS : (catalogued.data?.timeline ?? NO_CREDITS);
+  const birthAge =
+    person?.bornOn === null || person?.bornOn === undefined
+      ? null
+      : ageOn(
+          person.bornOn,
+          person.diedOn === null || person.diedOn === undefined
+            ? new Date()
+            : new Date(person.diedOn),
+        );
+  const facts = [
+    { label: say('screens.personDialog.knownFor'), value: person?.knownFor ?? null },
+    {
+      label: say('screens.personDialog.knownCredits'),
+      value: timeline.length === 0 ? null : timeline.length.toString(),
+    },
+    {
+      label: say('screens.personDialog.gender'),
+      value:
+        person?.gender === null || person?.gender === undefined
+          ? null
+          : say(GENDER_WORDS[person.gender]),
+    },
+    {
+      label: say('screens.personDialog.birthdate'),
+      value:
+        born !== null && birthAge !== null
+          ? say('screens.personDialog.age', { date: born, age: birthAge.toString() })
+          : born,
+    },
+    {
+      label: say('screens.personDialog.diedOn'),
+      value: describeBirth(person?.diedOn ?? null),
+    },
+    { label: say('screens.personDialog.placeOfBirth'), value: person?.bornIn ?? null },
+    {
+      label: say('screens.adminArea.titlePage.animeSettingsCard.searchedAs'),
+      value:
+        person?.alsoKnownAs === null ||
+        person?.alsoKnownAs === undefined ||
+        person.alsoKnownAs.length === 0
+          ? null
+          : person.alsoKnownAs.join(', '),
+    },
+  ].filter((fact) => fact.value !== null);
+  const notHeld = work.filter(
+    (title) => title.standing.status !== 'library' && title.standing.status !== 'linked',
+  );
+  const moreRows = [
+    {
+      kind: 'film',
+      heading:
+        credits.films.length === 0 ? say('common.films') : say('screens.personDialog.moreFilms'),
+    },
+    {
+      kind: 'series',
+      heading:
+        credits.shows.length === 0
+          ? say('common.programmes')
+          : say('screens.personDialog.moreShows'),
+    },
+  ];
+  const isEmpty =
+    !isLoading && !couldNotRead && !hasAnythingToShow(person, credits) && notHeld.length === 0;
 
   return (
     <Dialog
@@ -111,6 +250,7 @@ const PersonDialog = ({
       isOpen={personId !== null}
       onClose={onClose}
       size="stage"
+      edge={tint}
     >
       <DialogContent className="p-3 sm:p-4">
         <TintedGround tint={tint}>
@@ -143,7 +283,15 @@ const PersonDialog = ({
                 {person?.portraitUrl === null || person?.portraitUrl === undefined ? (
                   <Icon of={UserIcon} size={64} tone="muted" />
                 ) : (
-                  <img src={person.portraitUrl} alt="" className="h-full w-full object-cover" />
+                  <PersonPortraits
+                    portraits={
+                      person.portraits === null ||
+                      person.portraits === undefined ||
+                      person.portraits.length === 0
+                        ? [person.portraitUrl]
+                        : person.portraits
+                    }
+                  />
                 )}
               </DialogHeadlinePart>
 
@@ -161,16 +309,37 @@ const PersonDialog = ({
                     {say('screens.personDialog.asRole', { role })}
                   </DialogHeadlinePart>
                 )}
-
-                {said.length === 0 ? null : (
-                  <DialogHeadlinePart as="span" className="text-sm text-text-muted">
-                    {said.join(' · ')}
-                  </DialogHeadlinePart>
-                )}
               </span>
+
+              {facts.length === 0 &&
+              (person?.instagram === null || person?.instagram === undefined) ? null : (
+                <DialogHeadlinePart className="flex flex-col gap-4">
+                  <h3 className="text-base font-semibold text-text">
+                    {say('screens.personDialog.personalInfo')}
+                  </h3>
+
+                  {person?.instagram === null || person?.instagram === undefined ? null : (
+                    <Link
+                      href={`https://www.instagram.com/${person.instagram}`}
+                      className="text-sm"
+                    >
+                      {say('screens.personDialog.instagram')}
+                    </Link>
+                  )}
+
+                  <dl className="flex flex-col gap-3">
+                    {facts.map((fact) => (
+                      <div key={fact.label} className="flex flex-col gap-0.5">
+                        <dt className="text-xs text-text-muted">{fact.label}</dt>
+                        <dd className="text-sm text-text">{fact.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </DialogHeadlinePart>
+              )}
             </DialogHeadline>
 
-            <DialogSections isOpen className="flex min-w-0 flex-col gap-10 md:pr-14">
+            <DialogSections isOpen className="flex min-w-0 flex-col gap-10">
               {isLoading ? (
                 <div aria-hidden className="flex flex-col gap-2">
                   <Skeleton className="h-4 w-full" />
@@ -179,10 +348,18 @@ const PersonDialog = ({
                 </div>
               ) : null}
 
-              {person?.biography === null || person?.biography === undefined ? null : (
-                <DialogSection heading={say('screens.personDialog.biography')}>
-                  <ReadMore lines={6}>{person.biography}</ReadMore>
-                </DialogSection>
+              {isLoading || couldNotRead ? null : (
+                <div className="md:pr-14">
+                  <DialogSection heading={say('screens.personDialog.biography')}>
+                    {person?.biography === null || person?.biography === undefined ? (
+                      <p className="text-sm text-text-muted">
+                        {say('screens.personDialog.noBiographyProvided')}
+                      </p>
+                    ) : (
+                      <ReadMore lines={6}>{person.biography}</ReadMore>
+                    )}
+                  </DialogSection>
+                </div>
               )}
 
               {couldNotRead ? (
@@ -215,6 +392,9 @@ const PersonDialog = ({
                     {credits.films.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
+                          {...(onAsk === undefined
+                            ? {}
+                            : { badges: heldBadgesOf(media.libraryId) })}
                           growsOnHover={false}
                           shape="poster"
                           media={media}
@@ -240,6 +420,9 @@ const PersonDialog = ({
                     {credits.shows.map((media, at) => (
                       <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                         <RailCard
+                          {...(onAsk === undefined
+                            ? {}
+                            : { badges: heldBadgesOf(media.libraryId) })}
                           growsOnHover={false}
                           isSeries
                           shape="poster"
@@ -258,24 +441,78 @@ const PersonDialog = ({
                 <DialogSection>
                   <Rail
                     title={say('common.episodes')}
-                    sizesCards
-                    cards="portrait"
                     hasArrows={false}
                     look="title"
-                    className="px-0"
+                    className="-mx-1 px-0"
                   >
-                    {credits.episodes.map((media, at) => (
-                      <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                        <RailCard
-                          growsOnHover={false}
-                          shape="poster"
-                          media={media}
-                          onPlay={onPlay}
-                          onInspect={onInspect}
+                    {credits.episodes.map((episode) => (
+                      <li key={episode.id} className="flex">
+                        <SeasonMate
+                          episode={episode}
+                          namesItsShow
+                          onSelect={() => {
+                            onInspect(episode);
+                          }}
                         />
-                      </RevealItem>
+                      </li>
                     ))}
                   </Rail>
+                </DialogSection>
+              )}
+
+              {moreRows.map(({ kind, heading }) => {
+                const titles = notHeld.filter((title) => title.kind === kind);
+
+                return titles.length === 0 ? null : (
+                  <DialogSection key={kind}>
+                    <Rail
+                      title={heading}
+                      sizesCards
+                      cards="portrait"
+                      hasArrows={false}
+                      look="title"
+                      className="px-0"
+                    >
+                      {titles.map((title, at) => (
+                        <RevealItem key={title.id} index={at} className="shrink-0 snap-start">
+                          <MediaCard
+                            title={title.title}
+                            subtitle={title.year?.toString() ?? ''}
+                            badges={describeCatalogueCard(title).badges}
+                            {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
+                            onSelect={() => {
+                              onAsk?.(askingOf(title));
+                            }}
+                          />
+                        </RevealItem>
+                      ))}
+                    </Rail>
+                  </DialogSection>
+                );
+              })}
+
+              {timeline.length === 0 ? null : (
+                <DialogSection heading={say('common.timeline')}>
+                  <StepTrail
+                    label={say('common.timeline')}
+                    isNewestFirst
+                    steps={timeline.map((credit) => ({
+                      id: `${credit.kind}:${credit.id}`,
+                      label: credit.title,
+                      detail: describeCredit(credit),
+                      mark: credit.standing.status === 'library' ? 'done' : 'waiting',
+                      ...(credit.year === null
+                        ? {}
+                        : { aside: { kind: 'note', text: credit.year.toString() } as const }),
+                      ...(onAsk === undefined
+                        ? {}
+                        : {
+                            onSelect: () => {
+                              onAsk(askingOf(credit));
+                            },
+                          }),
+                    }))}
+                  />
                 </DialogSection>
               )}
             </DialogSections>

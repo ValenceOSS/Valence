@@ -1,9 +1,15 @@
 import { z } from 'zod';
 import { MusicTrackSchema } from './Music';
 
-const MIX_KINDS = ['daily', 'onRepeat', 'rediscover', 'genre', 'decade'] as const;
+const MIX_KINDS = ['daily', 'onRepeat', 'rediscover', 'station', 'genre', 'decade'] as const;
 
 const MixKindSchema = z.enum(MIX_KINDS);
+
+const MixFaceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  albumId: z.string().nullable(),
+});
 
 const MusicMixSummarySchema = z.object({
   id: z.string().min(1),
@@ -12,6 +18,7 @@ const MusicMixSummarySchema = z.object({
   detail: z.string(),
   trackCount: z.number().int().nonnegative(),
   coverAlbumIds: z.array(z.string()),
+  faces: z.array(MixFaceSchema).default([]),
 });
 
 const MusicMixListSchema = z.object({ mixes: z.array(MusicMixSummarySchema) });

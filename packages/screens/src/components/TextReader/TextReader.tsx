@@ -1,28 +1,26 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotionConfig,
-  useTransform,
-} from 'motion/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Slider } from '@ValenceUI/Slider';
 import { Spinner } from '@ValenceUI/Spinner';
+import { Switch } from '@ValenceUI/Switch';
 import { cn } from '@ValenceUI/cn';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookText } from '@ValenceScreens/components/BookText/BookText';
 import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
 import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel';
 import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
+import { SpreadStage } from '@ValenceScreens/components/SpreadStage/SpreadStage';
+import { groupHolding, spreadsFor } from '@ValenceClient/books/spreadsFor';
+import { MOST_GAP } from '@ValenceClient/books/readerPreferences';
 import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
 import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
 import { TEXT_LOOK } from '@ValenceClient/books/TEXT_LOOK';
 import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
+import { bookPageNumber } from '@ValenceClient/books/bookPageNumber';
 import { placeInBook } from '@ValenceClient/books/placeInBook';
 import {
   TEXT_MARGINS,
@@ -34,12 +32,11 @@ import {
 } from '@ValenceClient/books/textPreferences';
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
-import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
-import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
-import { usePageDrag } from '@ValenceUI/usePageDrag';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
 import { say } from '@ValenceI18n/say';
+import { TEXT_FLOW } from './TEXT_FLOW';
+import { ScrollingText } from './components/ScrollingText/ScrollingText';
 
 type Landing =
   | { kind: 'within'; within: number }
@@ -47,19 +44,39 @@ type Landing =
   | { kind: 'start' }
   | { kind: 'end' };
 
-const GAP = 48;
+const COLUMN_GAP = 48;
+
+const STAGE_PADDING = 24;
+
+const PAGE_RATIO = 0.68;
+
+const TWO_PAGES_FROM = 900;
+
+const TEXT_TOP = 44;
+
+const TEXT_BOTTOM = 52;
 
 const SERIF = 'ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif';
 
-const TWO_COLUMNS_FROM = 960;
-
 const SLIDER_STEPS = 1000;
+
+const SCREEN_STEP = 0.9;
+
+const FINISHED_WITHIN = 0.98;
+
+const SCROLL_WIDTH = 760;
+
+const MOST_SCROLL_INSET = 24;
+
+const PICTURE_SHARE = 0.8;
 
 const PAGE: Record<TextPreferences['page'], string> = {
   light: 'bg-paper-light text-ink-light',
   sepia: 'bg-paper-sepia text-ink-sepia',
   dark: 'bg-paper-dark text-ink-dark',
 };
+
+const FLOW = TEXT_FLOW;
 
 const NAMES: Record<string, string> = {
   small: say('common.small'),
@@ -77,21 +94,27 @@ const NAMES: Record<string, string> = {
 };
 
 /**
- * Reads a book whose text lays itself out on the screen it is shown on — an EPUB.
+ * Reads a book whose text lays itself out on the screen it is shown on — an EPUB — the way the page
+ * reader reads a comic: pages of paper on a dark stage, one at a time or two side by side as an open
+ * book, turned with the same curl, the same keys, the same edges to tap and the same panel.
  *
- * A page is a column of text as wide as the screen allows, set in columns so that a turn is a page
- * rather than a scroll; a wide screen shows two columns side by side, as an open book would, rather
- * than one line as long as a monitor. How many pages a part makes is decided here, after it is laid
- * out, and again whenever the screen, the size of the text or a late-arriving picture changes it.
+ * The text is set in columns exactly the size of the page's printed area, so each column is one
+ * page, and a page is that column showing through a sheet of paper, numbered at its foot through
+ * the whole book. How many pages a part makes is
+ * decided here, after it is laid out, and again whenever the screen, the size of the text or a
+ * late-arriving picture changes it.
  *
  * Where somebody is up to is a fraction of the whole book rather than a page, because a page on a
  * phone is a third of one on a desktop. The parts are weighed by how much they hold, so the fraction
  * does not jump at the start of a long part. Opening a book goes back to that fraction; a link inside
  * the book, or an entry in its contents, goes to the place it names.
  *
- * The chrome, the keys and the edges to tap are the page reader's, so both kinds of book are read
- * the same way. The text settings — size, spacing, margins, and a light, sepia or dark page — are
- * its own, kept on the device.
+ * Only a single turn is animated. Arriving anywhere else — another part of the book, a link, the
+ * slider, a change of settings — starts the stage afresh on the page arrived at, rather than leafing
+ * through every page between where it was and where it landed.
+ *
+ * The text settings — size, spacing, margins, and a light, sepia or dark page — are its own, kept on
+ * the device, beside the page reader's own choice of one page or two and whether turning is animated.
  *
  * @param book - The book.
  * @param chapterId - The file its text is in.
@@ -106,23 +129,32 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     () => (contents.data ?? { parts: [] }).parts.map((part) => part.size),
     [contents.data],
   );
-  const [settings, setSettings] = useState<TextPreferences>(() => readTextPreferences(book.id));
+  const [settings, setSettings] = useState<TextPreferences>(() => readTextPreferences());
   const { isShown, wake, keep } = useChromeThatHides();
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
   const [part, setPart] = useState<number | null>(null);
-  const [page, setPage] = useState(0);
+  const [at, setAt] = useState(0);
   const [pages, setPages] = useState(1);
   const [isLaidOut, setIsLaidOut] = useState(false);
   const [landing, setLanding] = useState<Landing | null>(null);
+  const [arrivals, setArrivals] = useState(0);
   const [anchorPages, setAnchorPages] = useState<ReadonlyMap<string, number>>(new Map());
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [dragged, setDragged] = useState<number | null>(null);
-  const viewport = useRef<HTMLDivElement | null>(null);
+  const [scrolledWithin, setScrolledWithin] = useState(0);
+  const [scrollFrom, setScrollFrom] = useState<{
+    part: number;
+    landing: Landing;
+    key: number;
+  } | null>(null);
+  const scrolling = useRef<HTMLDivElement | null>(null);
+  const isScrolling = settings.isScrolling;
+  const setScroller = useCallback((element: HTMLDivElement | null) => {
+    scrolling.current = element;
+  }, []);
+  const stage = useRef<HTMLDivElement | null>(null);
   const flow = useRef<HTMLDivElement | null>(null);
-  const sliding = useMotionValue(0);
-  const isTurning = useRef(false);
-  const isStill = useReducedMotionConfig() === true;
   const lastPart = Math.max(sizes.length - 1, 0);
 
   const text = useQuery({
@@ -148,7 +180,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   }, [book.id, cache, chapterId, lastPart, part]);
 
   useEffect(() => {
-    const element = viewport.current;
+    const element = stage.current;
 
     if (element === null) {
       return undefined;
@@ -167,13 +199,27 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     };
   }, [text.data]);
 
-  useLayoutEffect(() => {
-    flow.current?.style.setProperty('--page-height', `${box.height.toString()}px`);
-  }, [box.height, text.data]);
+  const across = settings.isDouble && box.width >= TWO_PAGES_FROM ? 2 : 1;
+  const sheetHeight = Math.max(box.height - STAGE_PADDING * 2, 1);
+  const sheetWidth = Math.max(
+    Math.min(
+      sheetHeight * PAGE_RATIO,
+      (box.width - STAGE_PADDING * 2 - settings.gap * (across - 1)) / across,
+    ),
+    1,
+  );
+  const textInset = Math.max(20, sheetWidth * TEXT_LOOK.margin[settings.margins] * 1.6);
+  const textWidth = Math.max(sheetWidth - textInset * 2, 1);
+  const textHeight = Math.max(sheetHeight - TEXT_TOP - TEXT_BOTTOM, 1);
+  const step = textWidth + COLUMN_GAP;
 
-  const columns = box.width >= TWO_COLUMNS_FROM ? 2 : 1;
-  const columnWidth = Math.max((box.width - GAP * (columns - 1)) / columns, 1);
-  const step = box.width + GAP;
+  const spreads = useMemo(
+    () =>
+      spreadsFor({ pageCount: pages, isDouble: across === 2, isOffset: false, wide: new Set() }),
+    [across, pages],
+  );
+  const showing = spreads[Math.min(at, Math.max(spreads.length - 1, 0))] ?? [];
+  const page = showing[0] ?? 0;
 
   const measure = useCallback(() => {
     const element = flow.current;
@@ -182,7 +228,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
       return;
     }
 
-    const count = Math.max(1, Math.round((element.scrollWidth + GAP) / step));
+    const count = Math.max(1, Math.round((element.scrollWidth + COLUMN_GAP) / step));
     const left = element.getBoundingClientRect().left;
     const found = new Map<string, number>();
     const named = new Map([...element.querySelectorAll('[id]')].map((one) => [one.id, one]));
@@ -195,6 +241,13 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         found.set(anchor, Math.floor((target.getBoundingClientRect().left - left + 1) / step));
       }
     }
+
+    const laid = spreadsFor({
+      pageCount: count,
+      isDouble: across === 2,
+      isOffset: false,
+      wide: new Set(),
+    });
 
     setPages(count);
     setAnchorPages(found);
@@ -209,13 +262,14 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
               ? Math.floor(landing.within * count)
               : (found.get(landing.anchor) ?? 0);
 
-      setPage(Math.min(Math.max(landed, 0), count - 1));
+      setAt(groupHolding(laid, Math.min(Math.max(landed, 0), count - 1)));
+      setArrivals((was) => was + 1);
     } else {
-      setPage((was) => Math.min(was, count - 1));
+      setAt((was) => Math.min(was, Math.max(laid.length - 1, 0)));
     }
 
     setIsLaidOut(true);
-  }, [box.width, contents.data, landing, part, step]);
+  }, [across, box.width, contents.data, landing, part, step]);
 
   useLayoutEffect(() => {
     measure();
@@ -227,20 +281,35 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     report.current = onPlaceChange;
   });
 
-  const fraction = part === null ? startAt : fractionOfBook(sizes, part, page / pages);
-  const isFinished = part === lastPart && page >= pages - 1;
+  const fraction =
+    part === null
+      ? startAt
+      : fractionOfBook(sizes, part, isScrolling ? scrolledWithin : page / pages);
+  const isFinished = isScrolling
+    ? part === lastPart && scrolledWithin > FINISHED_WITHIN
+    : part === lastPart && at >= spreads.length - 1;
 
   useEffect(() => {
-    if (isLaidOut && part !== null) {
+    if ((isLaidOut || isScrolling) && part !== null) {
       report.current?.(fraction, isFinished);
     }
-  }, [fraction, isFinished, isLaidOut, part]);
+  }, [fraction, isFinished, isLaidOut, isScrolling, part]);
 
-  const goTo = useCallback((to: number, arriving: Landing) => {
-    setIsLaidOut(false);
-    setPart(to);
-    setLanding(arriving);
-  }, []);
+  const goTo = useCallback(
+    (to: number, arriving: Landing) => {
+      if (isScrolling) {
+        setPart(to);
+        setScrollFrom((was) => ({ part: to, landing: arriving, key: (was?.key ?? 0) + 1 }));
+
+        return;
+      }
+
+      setIsLaidOut(false);
+      setPart(to);
+      setLanding(arriving);
+    },
+    [isScrolling],
+  );
 
   const turn = useCallback(
     (by: number) => {
@@ -250,9 +319,17 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         return;
       }
 
-      const next = page + by;
+      if (isScrolling) {
+        const element = scrolling.current;
 
-      if (next >= pages) {
+        element?.scrollBy({ top: by * element.clientHeight * SCREEN_STEP, behavior: 'smooth' });
+
+        return;
+      }
+
+      const next = at + by;
+
+      if (next >= spreads.length) {
         if (part < lastPart) {
           goTo(part + 1, { kind: 'start' });
         }
@@ -269,83 +346,18 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
       }
 
       setLanding(null);
-      setPage(next);
+      setAt(next);
     },
-    [goTo, lastPart, page, pages, part, keep],
+    [at, goTo, isScrolling, keep, lastPart, part, spreads.length],
   );
 
-  const mayGo = (by: 1 | -1): boolean =>
-    by === 1
-      ? page < pages - 1 || (part !== null && part < lastPart)
-      : page > 0 || (part !== null && part > 0);
-
-  const slidesBy = useTransform(sliding, (at) => at * box.width * PAGE_TURN.slidesBy);
-  const showing = useTransform(sliding, (at) => 1 - Math.min(Math.abs(at), 1));
-
-  /**
-   * Turns a page the way the phone does: the one leaving slides a little aside and fades, and the
-   * next slides in from the other side, with the phone's own timings and eases from `PAGE_TURN`.
-   * Where there is nothing further, or somebody has asked for less movement, it simply turns.
-   *
-   * @param by - One on, or one back.
-   */
-  const slide = (by: 1 | -1) => {
-    if (!mayGo(by) || isTurning.current) {
-      return;
-    }
-
-    if (isStill) {
-      turn(by);
-
-      return;
-    }
-
-    isTurning.current = true;
-
-    animate(sliding, -by, {
-      duration: PAGE_TURN.leaves.ms / 1000,
-      ease: PAGE_TURN.leaves.ease,
-      onComplete: () => {
-        turn(by);
-        sliding.set(by);
-        animate(sliding, 0, {
-          duration: PAGE_TURN.arrives.ms / 1000,
-          ease: PAGE_TURN.arrives.ease,
-          onComplete: () => {
-            isTurning.current = false;
-          },
-        });
-      },
-    });
-  };
-
-  const latestSlide = useRef(slide);
-
-  useLayoutEffect(() => {
-    latestSlide.current = slide;
-  });
-
-  const swipe = usePageDrag({
-    isOn: isLaidOut,
-    isMouseAllowed: false,
-    reach: () => step,
-    mayMove: () => true,
-    onRelease: (offset, velocity) => {
-      const swiped = turnOfPageSwipe(offset, velocity);
-
-      if (swiped !== 0) {
-        latestSlide.current(swiped < 0 ? 1 : -1);
-      }
-    },
-  });
-
   const forward = useCallback(() => {
-    latestSlide.current(1);
-  }, []);
+    turn(1);
+  }, [turn]);
 
   const back = useCallback(() => {
-    latestSlide.current(-1);
-  }, []);
+    turn(-1);
+  }, [turn]);
 
   useTurnKeys({ isRightToLeft: book.direction === 'rightToLeft', forward, back, onClose });
 
@@ -356,23 +368,56 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
       const arriving: Landing =
         place.anchor === null ? { kind: 'start' } : { kind: 'anchor', anchor: place.anchor };
 
-      if (place.part === part) {
+      if (place.part === part && !isScrolling) {
         setLanding(arriving);
       } else {
         goTo(place.part, arriving);
       }
     },
-    [goTo, part, wake],
+    [goTo, isScrolling, part, wake],
   );
 
   const change = (changed: Partial<TextPreferences>) => {
     const next = { ...settings, ...changed };
 
+    const within = isScrolling ? scrolledWithin : page / pages;
+
     setSettings(next);
-    writeTextPreferences(next, book.id);
-    setLanding({ kind: 'within', within: page / pages });
+    writeTextPreferences(next);
+    setLanding({ kind: 'within', within });
+
+    if (next.isScrolling && part !== null) {
+      setScrolledWithin(within);
+      setScrollFrom((was) => ({
+        part,
+        landing: { kind: 'within', within },
+        key: (was?.key ?? 0) + 1,
+      }));
+    } else if (isScrolling) {
+      setIsLaidOut(false);
+    }
+
     wake();
   };
+
+  const flowStyle = {
+    width: `${textWidth.toString()}px`,
+    height: `${textHeight.toString()}px`,
+    columnWidth: `${textWidth.toString()}px`,
+    columnGap: `${COLUMN_GAP.toString()}px`,
+    columnFill: 'auto',
+    fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
+    lineHeight: TEXT_LOOK.leading[settings.spacing],
+    fontFamily: SERIF,
+    '--page-height': `${textHeight.toString()}px`,
+  } as const;
+
+  const scrollStyle = {
+    fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
+    lineHeight: TEXT_LOOK.leading[settings.spacing],
+    fontFamily: SERIF,
+    '--page-height': `${Math.round(box.height * PICTURE_SHARE).toString()}px`,
+  } as const;
 
   const entries = contents.data?.contents ?? [];
   const current = part === null ? null : contentsEntryAt(entries, part, page, anchorPages);
@@ -403,10 +448,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   }
 
   return (
-    <div
-      className={cn('valence-below-the-bar z-50 flex flex-col', PAGE[settings.page])}
-      onPointerMove={wake}
-    >
+    <div className="valence-below-the-bar z-50 flex flex-col bg-shade" onPointerMove={wake}>
       <ReaderChrome
         title={heading === null ? book.title : `${book.title} — ${heading}`}
         isShown={isShown}
@@ -414,6 +456,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         onForward={forward}
         onBack={back}
         onClose={onClose}
+        className="items-center justify-center"
         isPanelOpen={isPanelOpen}
         isPanelPinned={isPanelPinned}
         onPanelOpenChange={setIsPanelOpen}
@@ -474,7 +517,59 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
               )
             }
           >
-            <SettingList>
+            <SettingList isInset>
+              <SettingRow title={say('common.pages')}>
+                <SegmentedRow
+                  label={say('common.pages')}
+                  size="sm"
+                  items={[
+                    { id: 'single', label: say('screens.pageReader.onePage') },
+                    { id: 'double', label: say('screens.pageReader.twoPages') },
+                    { id: 'scroll', label: say('common.scroll') },
+                  ]}
+                  value={isScrolling ? 'scroll' : settings.isDouble ? 'double' : 'single'}
+                  onSelect={(id) => {
+                    change(
+                      id === 'scroll'
+                        ? { isScrolling: true }
+                        : { isScrolling: false, isDouble: id === 'double' },
+                    );
+                  }}
+                />
+              </SettingRow>
+
+              {settings.isDouble && !isScrolling ? (
+                <SettingRow
+                  title={say('screens.pageReader.gapBetweenPages')}
+                  description={say('screens.pageReader.gapPx', {
+                    gap: settings.gap.toString(),
+                  })}
+                >
+                  <Slider
+                    label={say('screens.pageReader.gapBetweenPages')}
+                    value={settings.gap}
+                    max={MOST_GAP}
+                    onValueChange={(next) => {
+                      change({ gap: next });
+                    }}
+                    className="w-40"
+                  />
+                </SettingRow>
+              ) : null}
+
+              {isScrolling ? null : (
+                <SettingRow title={say('screens.pageReader.animateTurningPages')}>
+                  <Switch
+                    label={say('screens.pageReader.animateTurningPages')}
+                    isLabelHidden
+                    isOn={settings.isAnimated}
+                    onToggle={() => {
+                      change({ isAnimated: !settings.isAnimated });
+                    }}
+                  />
+                </SettingRow>
+              )}
+
               <SettingRow title={say('common.size')}>
                 <SegmentedRow
                   label={say('common.size')}
@@ -557,7 +652,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
 
                 setDragged(null);
 
-                if (to.part === part) {
+                if (to.part === part && !isScrolling) {
                   setLanding({ kind: 'within', within: to.within });
                 } else {
                   goTo(to.part, { kind: 'within', within: to.within });
@@ -572,47 +667,101 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
           </>
         }
       >
-        <div
-          className="flex h-full w-full flex-col"
-          style={{
-            paddingInline: `${(TEXT_LOOK.margin[settings.margins] * 100).toString()}%`,
-            paddingBlock: '3.5rem',
-          }}
-        >
-          <div
-            ref={viewport}
-            className="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
-            {...swipe}
-          >
-            {text.data === undefined || part === null ? (
-              <Spinner isCentered label={say('common.openingTheBook')} />
-            ) : (
-              <motion.div className="h-full" style={{ x: slidesBy, opacity: showing }}>
-                <div
-                  ref={flow}
-                  onLoadCapture={measure}
-                  className={cn(
-                    'h-full [hyphens:auto]',
-                    isLaidOut ? 'opacity-100' : 'opacity-0',
-                    '[&_p]:mb-[0.8em] [&_h1]:mb-[0.6em] [&_h1]:text-[1.6em] [&_h1]:font-semibold [&_h2]:mb-[0.6em] [&_h2]:text-[1.35em] [&_h2]:font-semibold [&_h3]:mb-[0.5em] [&_h3]:text-[1.15em] [&_h3]:font-semibold',
-                    '[&_img]:mx-auto [&_img]:my-[0.8em] [&_img]:block [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-[var(--page-height)] [&_img]:[break-inside:avoid]',
-                    '[&_blockquote]:mx-[1.5em] [&_blockquote]:italic [&_a]:underline [&_a]:underline-offset-2 [&_li]:ml-[1.25em] [&_ul]:list-disc [&_ol]:list-decimal [&_figcaption]:text-center [&_figcaption]:text-[0.85em]',
-                  )}
-                  style={{
-                    columnWidth: `${columnWidth.toString()}px`,
-                    columnGap: `${GAP.toString()}px`,
-                    columnFill: 'auto',
-                    fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
-                    lineHeight: TEXT_LOOK.leading[settings.spacing],
-                    transform: `translateX(${(-page * step).toString()}px)`,
-                    fontFamily: SERIF,
-                  }}
-                >
+        <div ref={stage} className="relative h-full w-full">
+          {isScrolling && part !== null ? (
+            <ScrollingText
+              key={scrollFrom?.key ?? 0}
+              bookId={book.id}
+              chapterId={chapterId}
+              startPart={scrollFrom?.part ?? part}
+              landing={scrollFrom?.landing ?? landing ?? { kind: 'start' }}
+              lastPart={lastPart}
+              pageClassName={PAGE[settings.page]}
+              inset={Math.max(
+                MOST_SCROLL_INSET,
+                Math.min(box.width, SCROLL_WIDTH) * TEXT_LOOK.margin[settings.margins] * 1.6,
+              )}
+              textStyle={scrollStyle}
+              onPlace={(reading, within) => {
+                setPart(reading);
+                setScrolledWithin(within);
+              }}
+              onFollow={follow}
+              onScroller={setScroller}
+            />
+          ) : text.data === undefined || part === null ? (
+            <Spinner isCentered label={say('common.openingTheBook')} />
+          ) : (
+            <>
+              <div
+                aria-hidden
+                className="pointer-events-none invisible absolute top-0 left-0 overflow-hidden"
+                style={{ width: textWidth, height: textHeight }}
+              >
+                <div ref={flow} onLoadCapture={measure} className={FLOW} style={flowStyle}>
                   <BookText html={text.data} onFollow={follow} />
                 </div>
-              </motion.div>
-            )}
-          </div>
+              </div>
+
+              <div
+                className={cn(
+                  'h-full w-full transition-opacity duration-[var(--duration-fast)]',
+                  isLaidOut ? 'opacity-100' : 'opacity-0',
+                )}
+              >
+                <SpreadStage
+                  spreads={spreads}
+                  spreadAt={Math.min(at, Math.max(spreads.length - 1, 0))}
+                  turnKey={`${chapterId}:${part.toString()}:${arrivals.toString()}`}
+                  gap={settings.gap}
+                  isRightToLeft={book.direction === 'rightToLeft'}
+                  isAnimated={settings.isAnimated}
+                  canGoBack={part > 0}
+                  canGoOn={part < lastPart}
+                  onTurn={turn}
+                  renderPage={(number, isPageShown) => (
+                    <div
+                      data-reader-page
+                      aria-hidden={!isPageShown}
+                      className={cn(
+                        'relative shrink-0 overflow-hidden rounded-md shadow-[var(--shadow-lifted)]',
+                        PAGE[settings.page],
+                        isPageShown ? '' : 'invisible',
+                      )}
+                      style={{ width: sheetWidth, height: sheetHeight }}
+                    >
+                      <div
+                        className="absolute overflow-hidden"
+                        style={{
+                          left: textInset,
+                          top: TEXT_TOP,
+                          width: textWidth,
+                          height: textHeight,
+                        }}
+                      >
+                        <div
+                          className={FLOW}
+                          style={{
+                            ...flowStyle,
+                            transform: `translateX(${(-number * step).toString()}px)`,
+                          }}
+                        >
+                          <BookText html={text.data ?? ''} onFollow={follow} />
+                        </div>
+                      </div>
+
+                      <span
+                        className="absolute inset-x-0 text-center text-xs tabular-nums opacity-55"
+                        style={{ bottom: TEXT_BOTTOM / 2 - 8, fontFamily: SERIF }}
+                      >
+                        {bookPageNumber(sizes, part, pages, number).toString()}
+                      </span>
+                    </div>
+                  )}
+                />
+              </div>
+            </>
+          )}
         </div>
       </ReaderChrome>
     </div>

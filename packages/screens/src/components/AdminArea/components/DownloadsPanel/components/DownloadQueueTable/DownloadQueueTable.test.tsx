@@ -72,14 +72,14 @@ describe('DownloadQueueTable', () => {
 
     const row = within(rowOf('Dune'));
 
-    expect(row.getByText('Films · qBittorrent · Jackett')).toBeInTheDocument();
+    expect(row.getByText('qBittorrent · Jackett')).toBeInTheDocument();
     expect(row.getByText('Downloading')).toBeInTheDocument();
     expect(row.getAllByRole('status', { name: 'In progress' })).toHaveLength(1);
     expect(row.getByText('Downloading')).toBeInTheDocument();
     expect(row.getByText('45%')).toBeInTheDocument();
     expect(row.getByText('2.0 GB').parentElement).toHaveTextContent('2.0 GB of 4.0 GB');
     expect(row.getByText(/1\.0 MB/)).toBeInTheDocument();
-    expect(rowOf('Dune')).toHaveTextContent('· 12 min left');
+    expect(rowOf('Dune')).toHaveTextContent('12 min left');
     expect(row.getByText('9 seeding')).toBeInTheDocument();
     expect(row.getByText('2 fetching')).toBeInTheDocument();
     expect(
@@ -108,7 +108,7 @@ describe('DownloadQueueTable', () => {
 
     const row = within(rowOf('Dune'));
 
-    expect(row.getByText('Series · SABnzbd')).toBeInTheDocument();
+    expect(row.getByText('SABnzbd')).toBeInTheDocument();
     expect(row.getByText('4.0 GB')).toBeInTheDocument();
     expect(row.getByRole('button', { name: /finished it with a warning/ })).toBeInTheDocument();
     expect(row.queryByText(/finished it with a warning/)).not.toBeInTheDocument();

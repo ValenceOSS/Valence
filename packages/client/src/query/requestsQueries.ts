@@ -30,6 +30,9 @@ import {
 import {
   fetchAskable,
   fetchCatalogueBrowse,
+  fetchPersonWork,
+  fetchSimilarTitles,
+  fetchBookAbout,
   fetchCatalogueGenres,
   fetchCatalogueSearch,
   fetchDiscover,
@@ -373,7 +376,7 @@ const seriesSeasons = (tmdbId: number | null) =>
     queryKey: [...REQUESTS, 'seasons', tmdbId],
     queryFn: () => fetchSeriesSeasons(tmdbId ?? 0),
     enabled: tmdbId !== null,
-    staleTime: 60 * 60 * 1000,
+    staleTime: 3_600_000,
   });
 
 /**
@@ -479,6 +482,51 @@ const missingAlbums = (playlistId: string, isEnabled = true) =>
     queryFn: () => findMissingAlbums(playlistId),
     enabled: isEnabled,
     refetchInterval: ({ state }) => askAgainWhileMatching(state.data),
+  });
+
+/**
+ * What the catalogue recommends after a title, to offer what of it this server does not have.
+ *
+ * @param kind - Whether the title is a film or a series.
+ * @param id - The catalogue's identifier for it, or null where it has none.
+ * @param isEnabled - Whether whoever is asking may request anything.
+ * @returns The query.
+ */
+const similarTitles = (kind: 'film' | 'series', id: string | null, isEnabled: boolean) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'similarTitles', kind, id],
+    queryFn: () => fetchSimilarTitles(kind, id ?? ''),
+    enabled: id !== null && isEnabled,
+  });
+
+/**
+ * What Open Library knows of a book, its author and the books like it.
+ *
+ * @param title - The book's title, or null where no book is open.
+ * @param author - Who wrote it, where that is known.
+ * @param isEnabled - Whether whoever is asking may request anything.
+ * @returns The query.
+ */
+const bookAbout = (title: string | null, author: string | null, isEnabled: boolean) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'bookAbout', title, author],
+    queryFn: () => fetchBookAbout(title ?? '', author),
+    enabled: title !== null && isEnabled,
+    staleTime: 3_600_000,
+  });
+
+/**
+ * What the catalogue credits somebody with, to offer what of it this server does not have.
+ *
+ * @param personId - Who, or null where nobody is open.
+ * @param isEnabled - Whether whoever is asking may request anything.
+ * @returns The query.
+ */
+const personWork = (personId: number | null, isEnabled: boolean) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'personWork', personId],
+    queryFn: () => fetchPersonWork(personId ?? 0),
+    enabled: personId !== null && isEnabled,
   });
 
 /**
@@ -588,6 +636,9 @@ const requestsQueries = {
   seriesSeasons,
   discover,
   catalogueBrowse,
+  personWork,
+  similarTitles,
+  bookAbout,
   catalogueGenres,
   askableSearch,
   missingAlbums,

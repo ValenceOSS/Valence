@@ -134,6 +134,8 @@ const APageReader = ({
   const [preferences, setPreferences] = useState(() =>
     readReaderPreferences(book.direction, book.id),
   );
+  const isManga = book.direction === 'rightToLeft';
+  const isRightToLeft = isManga && preferences.direction === 'rightToLeft';
   const isTwoUp = width > height;
   const leftRoom = strip?.side === 'left' ? strip.breadth + SEAM : room.left;
   const rightRoom = strip?.side === 'right' ? strip.breadth + SEAM : room.right;
@@ -214,7 +216,7 @@ const APageReader = ({
       page={page}
       isTwoUp={isTwoUp}
       isCoverAlone={preferences.isOffset}
-      isRightToLeft={preferences.direction === 'rightToLeft'}
+      isRightToLeft={isRightToLeft}
       paper={SURROUND_PAPERS[preferences.surround]}
       followsTheEdge={preferences.surround === 'edge'}
       fit={preferences.fit}
@@ -241,10 +243,14 @@ const APageReader = ({
         setIsPanelOpen(false);
       }}
       title={book.title}
-      isRightToLeft={preferences.direction === 'rightToLeft'}
-      onRightToLeft={(isRightToLeft) => {
-        choose({ direction: isRightToLeft ? 'rightToLeft' : 'leftToRight' });
-      }}
+      isRightToLeft={isRightToLeft}
+      {...(isManga
+        ? {
+            onRightToLeft: (isChosen: boolean) => {
+              choose({ direction: isChosen ? 'rightToLeft' : 'leftToRight' });
+            },
+          }
+        : {})}
       layout={hasStrip ? null : preferences.isDouble ? 'two' : 'one'}
       onLayout={(layout) => {
         choose({ isDouble: layout === 'two' });
@@ -341,7 +347,7 @@ const APageReader = ({
             top={SIDE_TOP}
             below={room.bottom}
             ink={INK}
-            isRightToLeft={preferences.direction === 'rightToLeft'}
+            isRightToLeft={isRightToLeft}
             isMarked={isMarked}
             isLocked={isLocked}
             fit={preferences.fit}

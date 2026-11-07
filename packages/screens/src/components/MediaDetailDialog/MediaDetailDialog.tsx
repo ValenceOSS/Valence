@@ -3,6 +3,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
+  ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
@@ -25,6 +26,12 @@ import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { SplitButton } from '@ValenceUI/SplitButton';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Server as ServerDuotoneIcon } from '@keyline-icons/react/duotone';
+import { describePicture } from '@ValenceClient/library/describePicture';
+import { useFilmCopies } from '@ValenceScreens/library/useFilmCopies';
+import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
+import { OriginMark } from '@ValenceUI/OriginMark';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -68,7 +75,7 @@ import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
-import { SeasonMate } from './components/SeasonMate/SeasonMate';
+import { SeasonMate } from '@ValenceScreens/components/SeasonMate/SeasonMate';
 import { PartOfCollections } from '@ValenceScreens/components/PartOfCollections/PartOfCollections';
 import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectionDialog/AddToCollectionDialog';
 import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
@@ -78,6 +85,8 @@ import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 import { say } from '@ValenceI18n/say';
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { sayingAll } from '@ValenceI18n/sayingAll';
 import { LikeThisShelf } from '@ValenceScreens/components/LikeThisShelf/LikeThisShelf';
 
 const CAST_PLACEHOLDERS = 5;
@@ -100,6 +109,7 @@ const LOGO_BOX = 'max-h-[20svh] w-auto max-w-[min(70vw,30rem)] object-contain ob
  * @param onOpenShow - Told to open the page of a programme like this one, where that is offered.
  * @param onBack - Told to go back to whatever opened this.
  * @param backLabel - What going back is called.
+ * @param onAsk - Told to open a title from the catalogue, as its address names it.
  * @param isKept - Whether it is kept.
  * @param onToggleKept - Told to keep it, or stop.
  * @param isWatched - Whether this viewer has watched it through.
@@ -123,6 +133,7 @@ const MediaDetailDialog = ({
   onOpenShow,
   onBack,
   backLabel,
+  onAsk,
   isKept = false,
   onToggleKept,
   isWatched = false,
@@ -199,6 +210,11 @@ const MediaDetailDialog = ({
   const trailerKey = trailer === null ? (detail?.trailerKey ?? null) : null;
   const hasTrailer = trailer !== null || trailerKey !== null;
   const versions = detail?.versions ?? [];
+  const filmCopies = useFilmCopies(media === null ? null : shown);
+  const cardOrigin = useCardOrigin();
+  const [firstServer = '', ...otherServers] = filmCopies.map(
+    (copy) => copy.server ?? say('common.thisServer'),
+  );
   const preferred = usePreferredCopy(shown, versions);
   const chosenVersion = versions.find((one) => one.id === (version ?? preferred)) ?? null;
   const isTheSameTitle = chosenVersion !== null && originOf(chosenVersion.libraryId) !== null;
@@ -218,6 +234,17 @@ const MediaDetailDialog = ({
       }),
     ),
   ];
+  const fromMarks = (
+    filmCopies.length > 1
+      ? filmCopies.map((copy) => copy.media.libraryId)
+      : [shown.libraryId, ...versions.map((one) => one.libraryId)]
+  )
+    .flatMap((libraryId) => {
+      const { origin: mark } = cardOrigin(libraryId);
+
+      return mark === undefined ? [] : [mark];
+    })
+    .filter((mark, at, every) => every.findIndex((other) => other.label === mark.label) === at);
   const season = metadata?.seasonNumber ?? null;
   const genres = metadata?.genres ?? [];
   const cast = metadata?.cast ?? [];
@@ -263,7 +290,35 @@ const MediaDetailDialog = ({
             },
           })}
     >
-      {versions.length === 0 ? (
+      {filmCopies.length > 1 ? (
+        <ActionMenu
+          label={say('common.playFrom')}
+          align="start"
+          look="play"
+          trigger={
+            <>
+              {playFaceOf}
+              <Icon of={ChevronDownIcon} size={16} />
+            </>
+          }
+          groups={[
+            {
+              name: say('common.playFrom'),
+              items: filmCopies.map((copy) => ({
+                id: copy.media.id,
+                label: copy.server ?? say('common.thisServer'),
+                icon: <Icon of={ServerDuotoneIcon} size={18} />,
+                detail: [describePicture(copy.media), formatDuration(copy.media.durationSeconds)]
+                  .filter((part) => part !== null)
+                  .join(' · '),
+                onChoose: () => {
+                  onPlay(copy.media, copy.media.id === shown.id ? (shownResume ?? 0) : 0);
+                },
+              })),
+            },
+          ]}
+        />
+      ) : versions.length === 0 ? (
         <Button
           variant="confirm"
           size="none"
@@ -434,16 +489,23 @@ const MediaDetailDialog = ({
   ];
 
   return (
-    <Dialog label={shown.title} isOpen={media !== null} onClose={onClose} size="stage">
+    <Dialog label={shown.title} isOpen={media !== null} onClose={onClose} size="stage" edge={tint}>
       <DialogContent className="p-3 sm:p-4">
         <ScrolledTitle
           title={shown.title}
           artwork={shown.hasPoster ? artworkUrl(shown.id, 'poster', { size: 'small' }) : null}
+          detail={
+            <>
+              <MediaFacts media={shown} hasRuntime size="xs" tone="muted" />
+              <TitleBadges detail={detail} isBrief className="hidden flex-nowrap sm:flex" />
+            </>
+          }
           isShowing={hasScrolledPast}
+          tint={tint}
         >
           <Button
             isIconOnly
-            variant="ghost"
+            variant="confirm"
             size="sm"
             label={say('common.close')}
             onClick={onClose}
@@ -463,19 +525,10 @@ const MediaDetailDialog = ({
                   durationSeconds={shown.durationSeconds}
                   hasSound
                   controlsAtTop
-                  leavesTheTopLeft={onBack !== undefined}
-                  {...(onBack === undefined
-                    ? { closing: <ArtworkCloseButton onClose={onClose} /> }
-                    : {})}
-                  isRoomy
-                  repeats={false}
-                  fills
-                />
-              }
-              {...(onBack === undefined
-                ? {}
-                : {
-                    lead: (
+                  closing={
+                    onBack === undefined ? (
+                      <ArtworkCloseButton onClose={onClose} />
+                    ) : (
                       <ArtworkBackButton
                         label={
                           backLabel === undefined
@@ -484,8 +537,13 @@ const MediaDetailDialog = ({
                         }
                         onBack={onBack}
                       />
-                    ),
-                  })}
+                    )
+                  }
+                  isRoomy
+                  repeats={false}
+                  fills
+                />
+              }
             >
               <DialogHeadline className="flex flex-col items-start gap-8">
                 <DialogHeadlinePart
@@ -512,17 +570,19 @@ const MediaDetailDialog = ({
                 </DialogHeadlinePart>
 
                 <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
-                  <div className="w-full sm:w-[21rem]">{play}</div>
+                  <div className="w-full md:w-[21rem]">{play}</div>
 
                   <RoundActions
                     label={say('screens.mediaDetailDialog.moreToDoWithThis')}
                     actions={actions}
                     isCompact
-                    className="sm:ml-auto"
+                    className="md:ml-auto"
                   />
                 </DialogHeadlinePart>
               </DialogHeadline>
             </TitleHero>
+
+            <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
             <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
               <div className="flex min-w-0 flex-col gap-4">
@@ -581,11 +641,24 @@ const MediaDetailDialog = ({
                   </p>
                 )}
 
-                {origin === null && alsoOn.length === 0 ? null : (
-                  <p className="text-text-muted">
-                    {origin === null
-                      ? say('common.alsoOnNames', { names: alsoOn.join(', ') })
-                      : say('common.fromName', { name: origin.name })}
+                {filmCopies.length < 2 && origin === null && alsoOn.length === 0 ? null : (
+                  <p className="flex items-center gap-2.5 text-text-muted">
+                    {fromMarks.length === 0 ? null : (
+                      <span className="flex shrink-0 -space-x-2">
+                        {fromMarks.map((mark) => (
+                          <OriginMark key={mark.label} {...mark} />
+                        ))}
+                      </span>
+                    )}
+                    <span className="min-w-0">
+                      {filmCopies.length > 1
+                        ? say('common.fromName', {
+                            name: sayAgain(sayingAll([firstServer, ...otherServers])),
+                          })
+                        : origin === null
+                          ? say('common.alsoOnNames', { names: alsoOn.join(', ') })
+                          : say('common.fromName', { name: origin.name })}
+                    </span>
                   </p>
                 )}
 
@@ -601,8 +674,6 @@ const MediaDetailDialog = ({
                 )}
               </DialogHeadlinePart>
             </DialogHeadline>
-
-            <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
             <DialogSections isOpen className="flex flex-col gap-10 px-1 pb-8 pt-10 sm:px-2">
               {origin === null || origin.isReachable ? null : (
@@ -725,6 +796,9 @@ const MediaDetailDialog = ({
               {onInspect === undefined || onOpenShow === undefined || !isAFilm ? null : (
                 <LikeThisShelf
                   mediaId={shown.id}
+                  kind="film"
+                  externalId={shown.externalId}
+                  {...(onAsk === undefined ? {} : { onAsk })}
                   onPlay={onPlay}
                   onInspect={onInspect}
                   onOpenShow={onOpenShow}

@@ -92,7 +92,9 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
   const mayRequestMusic = useMayRequestMusic();
   const firstCover = detail?.playlist.artworkAlbumIds[0];
   const ownCover = detail === undefined ? null : playlistArtworkUrl(detail.playlist);
-  useLightTheMusic(ownCover ?? (firstCover === undefined ? null : albumArtworkUrl(firstCover)));
+  const heading = ownCover ?? (firstCover === undefined ? null : albumArtworkUrl(firstCover));
+
+  useLightTheMusic(heading);
 
   const refresh = () => {
     void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
@@ -178,6 +180,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
               : say('common.playlist')
         }
         title={playlist.name}
+        backdrop={heading}
         artwork={
           <PlaylistCover
             name={playlist.name}
@@ -370,6 +373,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
           />
         ) : (
           <TrackList
+            hasHeading
             label={playlist.name}
             tracks={tracks}
             missing={missing}

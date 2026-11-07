@@ -179,6 +179,14 @@ const DiskUseSchema = z.object({
   availableBytes: z.number(),
 });
 
+const DriveActivitySchema = z.object({
+  name: z.string(),
+  readBytesPerSecond: z.number(),
+  writtenBytesPerSecond: z.number(),
+  usedBytes: z.number().nullable(),
+  filesystemBytes: z.number().nullable(),
+});
+
 const ArtefactUseSchema = z.object({
   count: z.number(),
   bytes: z.number(),
@@ -189,6 +197,16 @@ const GraphicsUseSchema = z.object({
   encoderPercent: z.number().nullable(),
   devicePercent: z.number().nullable(),
   measured: z.enum(['wholeMachine', 'valenceOnly']).default('wholeMachine'),
+  engines: z
+    .object({
+      render: z.number().nullable(),
+      copy: z.number().nullable(),
+      video: z.number().nullable(),
+      videoEnhance: z.number().nullable(),
+      memoryBytes: z.number().nullable(),
+    })
+    .nullable()
+    .default(null),
 });
 
 const ArtefactStoreSchema = z.object({
@@ -214,6 +232,7 @@ const MonitorSchema = z.object({
     requestsMemoryBytes: z.number().nullable().default(null),
     loadAverage: z.number(),
     disks: z.array(DiskUseSchema).default([]),
+    drives: z.array(DriveActivitySchema).default([]),
     graphics: GraphicsUseSchema.nullable().default(null),
     graphicsNotes: z.array(z.string()).default([]),
   }),

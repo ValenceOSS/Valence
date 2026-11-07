@@ -10,6 +10,7 @@ import { StepTrailLines } from './components/StepTrailLines/StepTrailLines';
 import { StepTrailMark } from './components/StepTrailMark/StepTrailMark';
 import { StepTrailWords } from './components/StepTrailWords/StepTrailWords';
 import type { StepTrailAside, StepTrailProps, StepTrailStep } from './StepTrail.types';
+import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const SHOWN_AT_FIRST = 6;
@@ -78,14 +79,16 @@ const isLit = (step: StepTrailStep) => step.mark === 'done';
  *
  * @param label - What the trail is, for assistive technology.
  * @param steps - The steps, first first.
+ * @param isNewestFirst - Whether the steps run newest to oldest, as a career reads, so that a long
+ *   trail shows its first steps and offers the rest at its foot.
  * @param className - Extra classes for the caller's own layout.
  */
-const StepTrail = ({ label, steps, className }: StepTrailProps) => {
+const StepTrail = ({ label, steps, isNewestFirst = false, className }: StepTrailProps) => {
   const isStill = useReducedMotionConfig() === true;
   const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
   const [isAll, setIsAll] = useState(false);
   const hidden = isAll ? 0 : Math.max(steps.length - SHOWN_AT_FIRST, 0);
-  const shown = steps.slice(hidden);
+  const shown = isNewestFirst ? steps.slice(0, steps.length - hidden) : steps.slice(hidden);
   const [isSettled, setIsSettled] = useState(false);
   const motionOf = isStill ? { duration: 0 } : settleTween;
 
@@ -112,23 +115,28 @@ const StepTrail = ({ label, steps, className }: StepTrailProps) => {
     });
   };
 
+  const showEarlier = (
+    <Button
+      variant="subtle"
+      size="none"
+      onClick={() => {
+        setIsAll(true);
+      }}
+      className={cn(
+        'flex items-center gap-4 rounded-lg py-1 text-sm',
+        isNewestFirst ? 'mt-1 justify-start' : 'mb-1',
+      )}
+    >
+      <span aria-hidden className="flex w-6 justify-center">
+        <Icon of={ChevronDownIcon} size={14} className={isNewestFirst ? '' : 'rotate-180'} />
+      </span>
+      {isNewestFirst ? say('common.showMore') : sayCount('ui.stepTrail.showEarlierSteps', hidden)}
+    </Button>
+  );
+
   return (
     <div className={cn('flex flex-col', className)}>
-      {hidden === 0 ? null : (
-        <Button
-          variant="subtle"
-          size="none"
-          onClick={() => {
-            setIsAll(true);
-          }}
-          className="mb-1 flex items-center gap-4 rounded-lg py-1 text-sm"
-        >
-          <span aria-hidden className="flex w-6 justify-center">
-            <Icon of={ChevronDownIcon} size={14} className="rotate-180" />
-          </span>
-          {sayCount('ui.stepTrail.showEarlierSteps', hidden)}
-        </Button>
-      )}
+      {hidden === 0 || isNewestFirst ? null : showEarlier}
 
       <ol aria-label={label} className="flex flex-col">
         <AnimatePresence initial={false}>
@@ -140,17 +148,23 @@ const StepTrail = ({ label, steps, className }: StepTrailProps) => {
             const row = (
               <>
                 <StepTrailMark kind={step.mark} />
-                <span
-                  className={cn(
-                    'flex min-w-0 flex-1 text-[0.9375rem] font-medium transition-colors duration-300',
-                    LABELS[step.mark],
-                  )}
-                >
-                  <StepTrailWords
-                    className={step.mark === 'current' ? 'valence-shimmer-text' : undefined}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span
+                    className={cn(
+                      'flex min-w-0 text-[0.9375rem] font-medium transition-colors duration-300',
+                      LABELS[step.mark],
+                    )}
                   >
-                    {step.label}
-                  </StepTrailWords>
+                    <StepTrailWords
+                      className={step.mark === 'current' ? 'valence-shimmer-text' : undefined}
+                    >
+                      {step.label}
+                    </StepTrailWords>
+                  </span>
+
+                  {step.detail === undefined ? null : (
+                    <span className="truncate text-sm text-text-muted">{step.detail}</span>
+                  )}
                 </span>
                 {asideOf(step.aside)}
               </>
@@ -176,7 +190,10 @@ const StepTrail = ({ label, steps, className }: StepTrailProps) => {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0, transition: { duration: 0.1 } }}
                       transition={motionOf}
-                      className="absolute left-[11.5px] top-8 h-[calc(100%-1.5rem)] w-px overflow-hidden bg-[var(--surface-line)]"
+                      className={cn(
+                        'absolute left-[11.5px] h-[calc(100%-1.5rem)] w-px overflow-hidden bg-[var(--surface-line)]',
+                        step.detail === undefined ? 'top-8' : 'top-10',
+                      )}
                     >
                       <motion.span
                         className="absolute inset-0 origin-top bg-success/50"
@@ -190,20 +207,36 @@ const StepTrail = ({ label, steps, className }: StepTrailProps) => {
                   ) : null}
                 </AnimatePresence>
 
-                {hasLines ? (
+                {hasLines || step.onSelect !== undefined ? (
                   <Button
                     variant="bare"
                     size="none"
-                    aria-expanded={isOpen}
+                    {...(hasLines ? { 'aria-expanded': isOpen } : {})}
                     onClick={() => {
+                      if (step.onSelect !== undefined) {
+                        step.onSelect();
+
+                        return;
+                      }
+
                       toggle(step.id);
                     }}
-                    className="flex min-h-10 w-full items-center gap-4 text-left"
+                    className={cn(
+                      'flex w-full items-center gap-4 text-left',
+                      step.detail === undefined ? 'min-h-10' : 'min-h-14',
+                    )}
                   >
                     {row}
                   </Button>
                 ) : (
-                  <div className="flex min-h-10 items-center gap-4">{row}</div>
+                  <div
+                    className={cn(
+                      'flex items-center gap-4',
+                      step.detail === undefined ? 'min-h-10' : 'min-h-14',
+                    )}
+                  >
+                    {row}
+                  </div>
                 )}
 
                 <AnimatePresence initial={false}>
@@ -228,6 +261,8 @@ const StepTrail = ({ label, steps, className }: StepTrailProps) => {
           })}
         </AnimatePresence>
       </ol>
+
+      {hidden === 0 || !isNewestFirst ? null : showEarlier}
     </div>
   );
 };

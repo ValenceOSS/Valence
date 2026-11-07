@@ -33,8 +33,15 @@ const keptOf = (ratings: Readonly<Record<string, string>>): Record<string, strin
  * @param ratings - The ratings by country.
  * @param region - The server's own country, whose rating decides ages.
  * @param onRatingsChange - Told the ratings as they now stand.
+ * @param isDisabled - Whether the ratings cannot be changed, such as where they are locked; the
+ *   other countries can still be opened and read.
  */
-const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingFieldProps) => {
+const ContentRatingField = ({
+  ratings,
+  region,
+  onRatingsChange,
+  isDisabled = false,
+}: ContentRatingFieldProps) => {
   const [added, setAdded] = useState<readonly string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [typed, setTyped] = useState('');
@@ -68,6 +75,7 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
             label={regionName(region)}
             isLabelHidden
             value={own}
+            disabled={isDisabled}
             {...(ownAge === null ? {} : { description: ownAge, descriptionPlacement: 'below' })}
             onValueChange={(next) => {
               rate(region, next);
@@ -78,6 +86,7 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
             label={regionName(region)}
             isLabelHidden
             value={own}
+            isDisabled={isDisabled}
             options={[
               { id: '', label: say('screens.adminArea.contentRatingField.noRating') },
               ...Object.keys(known).flatMap((rating) => {
@@ -125,6 +134,7 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
                   label={regionName(country)}
                   size="sm"
                   value={ratings[country] ?? ''}
+                  disabled={isDisabled}
                   onValueChange={(next) => {
                     rate(country, next);
                   }}
@@ -133,30 +143,32 @@ const ContentRatingField = ({ ratings, region, onRatingsChange }: ContentRatingF
             </div>
           )}
 
-          <form
-            className="flex items-end gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
+          {isDisabled ? null : (
+            <form
+              className="flex items-end gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
 
-              if (canAdd) {
-                setAdded([...added, code]);
-                setTyped('');
-              }
-            }}
-          >
-            <TextField
-              label={say('screens.adminArea.contentRatingField.countryCode')}
-              isLabelHidden
-              size="sm"
-              placeholder={say('screens.adminArea.contentRatingField.countryCode')}
-              value={typed}
-              onValueChange={setTyped}
-              className="w-36"
-            />
-            <Button type="submit" variant="secondary" size="sm" disabled={!canAdd}>
-              {say('screens.adminArea.contentRatingField.addCountry')}
-            </Button>
-          </form>
+                if (canAdd) {
+                  setAdded([...added, code]);
+                  setTyped('');
+                }
+              }}
+            >
+              <TextField
+                label={say('screens.adminArea.contentRatingField.countryCode')}
+                isLabelHidden
+                size="sm"
+                placeholder={say('screens.adminArea.contentRatingField.countryCode')}
+                value={typed}
+                onValueChange={setTyped}
+                className="w-36"
+              />
+              <Button type="submit" variant="secondary" size="sm" disabled={!canAdd}>
+                {say('screens.adminArea.contentRatingField.addCountry')}
+              </Button>
+            </form>
+          )}
         </div>
       ) : null}
     </div>

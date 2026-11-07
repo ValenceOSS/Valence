@@ -1,3 +1,4 @@
+import { isScarce } from '@ValenceRequests/profiles/isScarce';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';
 
@@ -21,7 +22,9 @@ const bandOf = (release: Pick<Release, 'seeders' | 'grabs'>): number => {
  * may be taken before everything refused, then everything not plainly in another language than the
  * one wanted before what is — Sonarr refuses those outright, and a release in the wrong language
  * is no use however good its picture, but it stays a last resort for a title that has nothing
- * else — then the best quality, then the best score, then
+ * else — then anything shared by more than a seeder or two before what barely is, so a release a
+ * swarm can actually deliver beats a better one nobody is left seeding, then the best quality, then
+ * the best score, then
  * whichever fills the most of what is wanted, then the indexer asked first, then the most seeders
  * (or grabs, for usenet) by band, then the newest. The first that may be taken is the pick.
  *
@@ -54,6 +57,7 @@ const rankReleases = (
       Number(left.judgement.isRejected) - Number(right.judgement.isRejected) ||
       Number(left.judgement.isInAnotherLanguage === true) -
         Number(right.judgement.isInAnotherLanguage === true) ||
+      Number(isScarce(left.release)) - Number(isScarce(right.release)) ||
       right.judgement.quality - left.judgement.quality ||
       right.judgement.score - left.judgement.score ||
       (fills.get(right.release.id) ?? 0) - (fills.get(left.release.id) ?? 0) ||

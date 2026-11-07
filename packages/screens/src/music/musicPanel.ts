@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { saveMusicPanelCollapsed } from './musicPanelCollapsed';
 
 type MusicPanel = 'queue' | 'lyrics' | 'devices' | 'party' | null;
 
@@ -13,6 +14,7 @@ const listeners = new Set<() => void>();
  */
 const setMusicPanel = (panel: MusicPanel): void => {
   open = panel;
+  saveMusicPanelCollapsed(panel === null);
 
   for (const listener of listeners) {
     listener();

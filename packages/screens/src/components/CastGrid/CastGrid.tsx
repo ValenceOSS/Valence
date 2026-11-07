@@ -56,9 +56,7 @@ const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGri
             <span
               className={cn(
                 'overflow-hidden bg-surface-raised ring-1 ring-line',
-                isOpen
-                  ? 'mx-auto aspect-square w-4/5 rounded-full'
-                  : 'aspect-[2/3] w-full rounded-lg',
+                'aspect-[2/3] w-full rounded-md',
               )}
             >
               {member.imageUrl === null ? (
@@ -75,9 +73,18 @@ const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGri
               )}
             </span>
 
-            <span className="flex w-full flex-col items-center gap-0.5 text-center">
-              <span className="text-sm font-medium leading-tight text-text">{member.name}</span>
-              <span className="font-body text-xs leading-tight text-text-muted">{member.role}</span>
+            <span
+              className={cn(
+                'flex w-full min-w-0 flex-col gap-0.5',
+                isOpen ? 'items-start text-left' : 'items-center text-center',
+              )}
+            >
+              <span className="w-full truncate text-sm font-medium leading-tight text-text">
+                {member.name}
+              </span>
+              <span className="w-full truncate font-body text-xs leading-tight text-text-muted">
+                {member.role}
+              </span>
             </span>
           </>
         );

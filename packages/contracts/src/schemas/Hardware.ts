@@ -38,8 +38,13 @@ const HardwareSchema = z.object({
   memory: z.object({
     totalBytes: z.number().nonnegative(),
     modules: z.array(MemoryModuleSchema),
+    emptySlots: z.array(z.string()).default([]),
   }),
   drives: z.array(DriveSchema),
+  sataPorts: z
+    .object({ total: z.number().int().nonnegative(), inUse: z.number().int().nonnegative() })
+    .nullable()
+    .default(null),
 });
 
 type Hardware = z.infer<typeof HardwareSchema>;

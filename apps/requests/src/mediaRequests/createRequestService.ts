@@ -234,7 +234,9 @@ const createRequestService = ({
   onChange = () => undefined,
 }: CreateRequestServiceOptions) => {
   const itemsOf = async (id: string) =>
-    (await items.list()).filter((item) => item.requestId === id);
+    items.listOf === undefined
+      ? (await items.list()).filter((item) => item.requestId === id)
+      : items.listOf(id);
 
   const itemsShownFor = (
     record: MediaRequestRecord,
@@ -247,6 +249,37 @@ const createRequestService = ({
         : new Set([record.id]);
 
     return waiting.filter((item) => books.has(item.requestId));
+  };
+
+  /**
+   * Every request's own items, sorted out in one pass, so a list of requests finds each one's items
+   * directly rather than looking through every item on the server once for every request. A series
+   * of books, which shows the items of the books in it, is the one still worked out from the whole.
+   *
+   * @param every - Every request.
+   * @param waiting - Every item.
+   * @returns A reader of the items to show for a request.
+   */
+  const itemsShownByRequest = (
+    every: readonly MediaRequestRecord[],
+    waiting: readonly RequestItemRecord[],
+  ): ((record: MediaRequestRecord) => RequestItemRecord[]) => {
+    const byRequest = new Map<string, RequestItemRecord[]>();
+
+    for (const item of waiting) {
+      const held = byRequest.get(item.requestId);
+
+      if (held === undefined) {
+        byRequest.set(item.requestId, [item]);
+      } else {
+        held.push(item);
+      }
+    }
+
+    return (record) =>
+      record.kind === 'bookSeries'
+        ? itemsShownFor(record, every, waiting)
+        : (byRequest.get(record.id) ?? []);
   };
 
   const shown = async (record: MediaRequestRecord) =>
@@ -504,14 +537,12 @@ const createRequestService = ({
         profiles.list(),
       ]);
 
+      const shownFor = itemsShownByRequest(kept, waiting);
+
       return kept
         .toSorted((left, right) => right.createdAt.localeCompare(left.createdAt))
         .map((record) =>
-          showMediaRequest(
-            record,
-            itemsShownFor(record, kept, waiting),
-            chooseProfile(record, judging)?.name ?? null,
-          ),
+          showMediaRequest(record, shownFor(record), chooseProfile(record, judging)?.name ?? null),
         );
     },
 

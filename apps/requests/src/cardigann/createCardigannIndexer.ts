@@ -12,6 +12,7 @@ import { queryVariables } from '@ValenceRequests/cardigann/queryVariables';
 import { readCookieHeader } from '@ValenceRequests/cardigann/readCookieHeader';
 import { readHtmlSelector } from '@ValenceRequests/cardigann/readHtmlSelector';
 import { readSearchResults } from '@ValenceRequests/cardigann/readSearchResults';
+import type { SearchResultsReader } from '@ValenceRequests/cardigann/SearchResultsReader';
 import { renderTemplate } from '@ValenceRequests/cardigann/renderTemplate';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
@@ -42,6 +43,7 @@ type CreateCardigannIndexerOptions = {
   sleep?: (ms: number) => Promise<void>;
   onAsked?: (address: string, found: number) => void;
   wait?: () => Promise<void>;
+  readResults?: SearchResultsReader;
 };
 
 /**
@@ -82,7 +84,8 @@ const isTorrent = (bytes: Uint8Array): boolean => bytes[0] === 0x64;
  *   to reach the site, which indexer this is, how long to wait, the clock, what to tell of each
  *   address a search asked and how many releases it found there, and how to wait a turn before
  *   each request — shared between every engine for the same indexer, so searches made together
- *   keep the definition's gap between requests rather than each keeping it alone.
+ *   keep the definition's gap between requests rather than each keeping it alone — and what reads
+ *   a page of results off the main thread, where one is given, the page being read here otherwise.
  * @returns The indexer.
  */
 const createCardigannIndexer = ({
@@ -97,6 +100,7 @@ const createCardigannIndexer = ({
   sleep = pause,
   onAsked,
   wait,
+  readResults,
 }: CreateCardigannIndexerOptions) => {
   const categories = createCategoryMap(definition.caps);
   const delayMs = (definition.requestDelay ?? 0) * 1000;
@@ -472,14 +476,8 @@ const createCardigannIndexer = ({
         );
       }
 
-      const found = readSearchResults({
-        definition,
-        request,
-        body: response.body,
-        categories,
-        indexer,
-        nowMs: now(),
-      });
+      const page = { definition, request, body: response.body, indexer, nowMs: now() };
+      const found = (await readResults?.(page)) ?? readSearchResults({ ...page, categories });
 
       onAsked?.(
         request.method === 'POST' && request.body !== null && request.body !== ''

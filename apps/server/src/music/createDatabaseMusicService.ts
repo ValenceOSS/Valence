@@ -25,6 +25,7 @@ import {
   mediaItem,
   musicAlbum,
   musicArtist,
+  musicPlay,
   musicTrack,
   musicTrackArtist,
 } from '#dialect/Schema';
@@ -347,8 +348,26 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
   };
 
   return {
-    listAlbums: (viewer, options = {}) =>
-      albumsWhere(
+    listAlbums: async (viewer, options = {}) => {
+      if (options.order === 'played') {
+        const profileId = profileOf(viewer);
+
+        if (profileId === null) {
+          return [];
+        }
+
+        const lastPlayed = sql`(select max(${musicPlay.playedAt}) from ${musicPlay} inner join ${musicTrack} on ${musicTrack.mediaItemId} = ${musicPlay.trackId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${musicPlay.profileId} = ${profileId})`;
+
+        return albumsWhere(
+          viewer,
+          isNotNull(lastPlayed),
+          [desc(lastPlayed), asc(musicAlbum.id)],
+          options.limit ?? 200,
+          options.offset ?? 0,
+        );
+      }
+
+      return albumsWhere(
         viewer,
         undefined,
         options.order === 'title'
@@ -362,7 +381,8 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
             : [desc(musicAlbum.addedAt), asc(musicAlbum.titleKey), asc(musicAlbum.id)],
         options.limit ?? 200,
         options.offset ?? 0,
-      ),
+      );
+    },
 
     listArtists: (viewer, options = {}) => {
       const profileId = profileOf(viewer);
@@ -429,43 +449,49 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
           ),
       );
 
-      const albums = await albumsWhere(
-        viewer,
-        eq(musicAlbum.artistId, artistId),
-        [desc(sql`coalesce(${musicAlbum.year}, 0)`), asc(musicAlbum.titleKey)],
-        200,
-      );
-
-      const appearsOn = await albumsWhere(
-        viewer,
-        and(
-          ne(musicAlbum.artistId, artistId),
-          exists(
-            db
-              .select({ one: sql`1` })
-              .from(musicTrack)
-              .innerJoin(musicTrackArtist, eq(musicTrackArtist.mediaItemId, musicTrack.mediaItemId))
-              .where(
-                and(eq(musicTrack.albumId, musicAlbum.id), eq(musicTrackArtist.artistId, artistId)),
-              ),
-          ),
+      const [albums, appearsOn, popular] = await Promise.all([
+        albumsWhere(
+          viewer,
+          eq(musicAlbum.artistId, artistId),
+          [desc(sql`coalesce(${musicAlbum.year}, 0)`), asc(musicAlbum.titleKey)],
+          200,
         ),
-        [desc(sql`coalesce(${musicAlbum.year}, 0)`)],
-        200,
-      );
-
-      const popular = await tracksWhere(
-        viewer,
-        credited,
-        [
-          desc(
-            sql`(select count(*) from ${favourite} where ${favourite.mediaItemId} = ${mediaItem.id})`,
+        albumsWhere(
+          viewer,
+          and(
+            ne(musicAlbum.artistId, artistId),
+            exists(
+              db
+                .select({ one: sql`1` })
+                .from(musicTrack)
+                .innerJoin(
+                  musicTrackArtist,
+                  eq(musicTrackArtist.mediaItemId, musicTrack.mediaItemId),
+                )
+                .where(
+                  and(
+                    eq(musicTrack.albumId, musicAlbum.id),
+                    eq(musicTrackArtist.artistId, artistId),
+                  ),
+                ),
+            ),
           ),
-          desc(sql`coalesce(${musicAlbum.year}, 0)`),
-          ...inAlbumOrder,
-        ],
-        POPULAR_LIMIT,
-      );
+          [desc(sql`coalesce(${musicAlbum.year}, 0)`)],
+          200,
+        ),
+        tracksWhere(
+          viewer,
+          credited,
+          [
+            desc(
+              sql`(select count(*) from ${favourite} where ${favourite.mediaItemId} = ${mediaItem.id})`,
+            ),
+            desc(sql`coalesce(${musicAlbum.year}, 0)`),
+            ...inAlbumOrder,
+          ],
+          POPULAR_LIMIT,
+        ),
+      ]);
 
       return { artist, albums, appearsOn, popular };
     },

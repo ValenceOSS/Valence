@@ -5,7 +5,7 @@ type AReaderSheetProps = {
   onClose: () => void;
   title: string;
   isRightToLeft: boolean;
-  onRightToLeft: (isRightToLeft: boolean) => void;
+  onRightToLeft?: (isRightToLeft: boolean) => void;
   layout: 'one' | 'two' | null;
   onLayout: (layout: 'one' | 'two') => void;
   isCoverAlone: boolean;

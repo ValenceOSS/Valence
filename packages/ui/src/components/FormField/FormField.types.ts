@@ -4,6 +4,7 @@ type FormFieldProps = {
   label: string;
   description?: string;
   aside?: ReactNode;
+  isLabelHidden?: boolean;
   hint?: ReactNode;
   error?: string;
   children: ReactNode;

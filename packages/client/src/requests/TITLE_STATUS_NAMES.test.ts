@@ -6,7 +6,8 @@ describe('TITLE_STATUS_NAMES', () => {
     expect(TITLE_STATUS_NAMES).toEqual({
       library: 'In the library',
       downloading: 'Downloading',
-      missing: 'Missing',
+      queued: 'Waiting to search',
+      missing: 'Nothing found',
       toApprove: 'To approve',
       failed: 'Failed',
       notFollowed: 'Not followed',

@@ -1001,6 +1001,7 @@ const createRequestWorker = ({
         }
       } else if (
         !isFetched &&
+        plan.search.season !== undefined &&
         plan.search.episode === undefined &&
         found.request.kind === 'series'
       ) {
@@ -1296,8 +1297,9 @@ const createRequestWorker = ({
       }
 
       const path = mapClientPath(download.contentPath, client);
+      const hasBeenRechecked = filing.some((item) => item.problemCode === 'DownloadNeverWritten');
       const stretch =
-        download.protocol === 'torrent'
+        download.protocol === 'torrent' && !hasBeenRechecked
           ? await Promise.all([findDownloadedFiles(path), queue.layoutOf(download.id)])
               .then(([files, layout]) => findUnwrittenStretch(files, layout))
               .catch(() => null)
@@ -1308,9 +1310,7 @@ const createRequestWorker = ({
           name: basename(stretch.path),
           clientName: client.name,
         });
-        const hasCheckedAgain = filing.some((item) => item.problemCode === 'DownloadNeverWritten');
-
-        if (!hasCheckedAgain && (await queue.recheck(download.id))) {
+        if (await queue.recheck(download.id)) {
           await note(
             request,
             saying('requests.mediaRequests.requestWorker.titleIsCheckedAgainBeforeFiling', {

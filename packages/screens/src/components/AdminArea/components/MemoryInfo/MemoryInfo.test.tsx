@@ -17,8 +17,10 @@ const machine = (change: Partial<Hardware> = {}): Hardware => ({
         slot: 'DIMM A1',
       },
     ],
+    emptySlots: [],
   },
   drives: [],
+  sataPorts: null,
   ...change,
 });
 
@@ -33,9 +35,8 @@ describe('MemoryInfo', () => {
     render(<MemoryInfo hardware={machine()} />);
 
     expect(screen.getByText('DIMM A1')).toBeInTheDocument();
-    expect(screen.getByText('DDR5')).toBeInTheDocument();
+    expect(screen.getByText('Kingston DDR5')).toBeInTheDocument();
     expect(screen.getByText('5,600 MT/s')).toBeInTheDocument();
-    expect(screen.getByText('Kingston')).toBeInTheDocument();
   });
 
   it('explains why a container shows no sticks', () => {
@@ -43,7 +44,7 @@ describe('MemoryInfo', () => {
       <MemoryInfo
         hardware={machine({
           surroundings: 'container',
-          memory: { totalBytes: 1024, modules: [] },
+          memory: { totalBytes: 1024, modules: [], emptySlots: [] },
         })}
       />,
     );

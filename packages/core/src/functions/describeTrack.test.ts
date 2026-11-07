@@ -54,7 +54,7 @@ describe('describeLanguage', () => {
   });
 
   it('shows an unrecognised code as written rather than inventing a name', () => {
-    expect(describeLanguage('tlh')).toBe('TLH');
+    expect(describeLanguage('xyz')).toBe('XYZ');
   });
 
   it('reports nothing when the file said nothing', () => {

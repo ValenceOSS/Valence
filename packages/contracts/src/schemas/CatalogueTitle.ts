@@ -67,6 +67,20 @@ const CatalogueDiscoverySchema = z.object({
   studios: z.array(CatalogueStudioSchema),
 });
 
+const SimilarTitlesSchema = z.object({
+  titles: z.array(CatalogueTitleSchema),
+});
+
+const PersonCreditSchema = CatalogueTitleSchema.extend({
+  role: z.string().nullable(),
+  episodeCount: z.number().int().nonnegative().nullable(),
+});
+
+const PersonWorkSchema = z.object({
+  titles: z.array(CatalogueTitleSchema),
+  timeline: z.array(PersonCreditSchema),
+});
+
 const CataloguePageSchema = z.object({
   titles: z.array(CatalogueTitleSchema),
   page: z.number().int().positive(),
@@ -139,6 +153,9 @@ type CataloguePage = z.infer<typeof CataloguePageSchema>;
 type CatalogueStanding = z.infer<typeof CatalogueStandingSchema>;
 type CatalogueStudio = z.infer<typeof CatalogueStudioSchema>;
 type CatalogueTitle = z.infer<typeof CatalogueTitleSchema>;
+type PersonWork = z.infer<typeof PersonWorkSchema>;
+type SimilarTitles = z.infer<typeof SimilarTitlesSchema>;
+type PersonCredit = z.infer<typeof PersonCreditSchema>;
 type CatalogueRelease = z.infer<typeof CatalogueReleaseSchema>;
 type CatalogueShelf = z.infer<typeof CatalogueShelfSchema>;
 type CatalogueTitleDetail = z.infer<typeof CatalogueTitleDetailSchema>;
@@ -153,6 +170,9 @@ export type {
   CatalogueDiscovery,
   CatalogueList,
   CataloguePage,
+  PersonWork,
+  SimilarTitles,
+  PersonCredit,
   CatalogueRelease,
   CatalogueSearch,
   CatalogueShelf,
@@ -176,6 +196,8 @@ export {
   CatalogueGenreSchema,
   CatalogueListSchema,
   CataloguePageSchema,
+  PersonWorkSchema,
+  SimilarTitlesSchema,
   CatalogueReleaseSchema,
   CatalogueShelfSchema,
   CatalogueStandingSchema,

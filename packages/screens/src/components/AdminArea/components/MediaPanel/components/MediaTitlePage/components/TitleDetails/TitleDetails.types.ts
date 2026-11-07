@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { TitleScope } from '@ValenceClient/admin/fetchTitleMetadata';
 
 type TitleDetailsProps = {
@@ -5,6 +6,7 @@ type TitleDetailsProps = {
   scope: TitleScope;
   onShowHistory?: () => void;
   onFixMatch?: () => void;
+  after?: { label: string; content: ReactNode };
 };
 
 export type { TitleDetailsProps };

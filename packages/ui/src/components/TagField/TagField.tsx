@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react';
+import { FIELD_SURFACE } from '@ValenceUI/tokens/FIELD_SURFACE';
 import { X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -134,10 +135,13 @@ const TagField = ({
 
       <div
         className={cn(
-          'flex min-h-8 flex-wrap items-center gap-1 rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-[3px] py-[3px] backdrop-blur-xl',
+          'flex min-h-8 flex-wrap items-center gap-1 px-[3px] py-[3px]',
+          FIELD_SURFACE,
           'transition-[border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
           'hover:border-[var(--surface-divider)] focus-within:focus-ring',
-          disabled ? 'opacity-50' : '',
+          disabled
+            ? 'cursor-not-allowed bg-transparent text-text-muted shadow-none opacity-70'
+            : '',
         )}
         onPointerDown={(event) => {
           if (event.target === event.currentTarget) {

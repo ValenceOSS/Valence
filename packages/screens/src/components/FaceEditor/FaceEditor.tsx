@@ -60,6 +60,9 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
       : { style: 'adventurer', seed: profile.id },
   );
   const [colour, setColour] = useState<ProfileColour>(start.colour);
+  const [colourTo, setColourTo] = useState<ProfileColour | null>(
+    start.avatar.kind === 'initial' ? (start.avatar.colourTo ?? null) : null,
+  );
   const [font, setFont] = useState<LetterFont>(
     start.avatar.kind === 'initial' ? start.avatar.font : PLUS_JAKARTA_SANS_AS_STORED,
   );
@@ -70,6 +73,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
     if (isOpen && !wasOpen.current) {
       setMode(modeOf(start.avatar));
       setColour(start.colour);
+      setColourTo(start.avatar.kind === 'initial' ? (start.avatar.colourTo ?? null) : null);
     }
 
     wasOpen.current = isOpen;
@@ -86,7 +90,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
       ? { kind: 'photo', isVideo: photoIsVideo, frame }
       : mode === 'drawn'
         ? { kind: 'drawn', ...drawn }
-        : { kind: 'initial', font };
+        : { kind: 'initial', font, ...(colourTo === null ? {} : { colourTo }) };
 
   const canUse = mode !== 'photo' || photo !== null || hadPhoto;
 
@@ -153,8 +157,16 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
               <LetterStudio
                 name={profile.name}
                 colour={colour}
+                colourTo={colourTo}
                 font={font}
-                onColour={setColour}
+                onColour={(chosen) => {
+                  setColour(chosen);
+                  setColourTo(null);
+                }}
+                onGradient={(from, to) => {
+                  setColour(from);
+                  setColourTo(to);
+                }}
                 onFont={setFont}
               />
             ) : null}

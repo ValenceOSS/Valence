@@ -9,7 +9,7 @@ describe('CalendarStateSign', () => {
     ['downloading', 'Downloading'],
     ['wanted', 'Missing'],
     ['notOutYet', 'Not out yet'],
-    ['notHeld', 'Not in the library'],
+    ['notHeld', 'Not in any library'],
   ])('says %s in words for a screen reader', (state, said) => {
     render(<CalendarStateSign state={state} />);
 

@@ -6,6 +6,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
+  ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   Info as InfoIcon,
@@ -42,17 +43,22 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
 import { PLAY_FACE } from '@ValenceUI/tokens/PLAY_FACE';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
+import { ArtworkBackButton } from '@ValenceScreens/components/ArtworkBackButton/ArtworkBackButton';
 import { ArtworkCloseButton } from '@ValenceScreens/components/ArtworkCloseButton/ArtworkCloseButton';
 import { TintedGround } from '@ValenceScreens/components/TintedGround/TintedGround';
 import { useArtworkTint } from '@ValenceScreens/library/useArtworkTint';
 import { TitleHero } from '@ValenceScreens/components/TitleHero/TitleHero';
+import { useShowCopies } from '@ValenceScreens/library/useShowCopies';
 import { RoundActions } from '@ValenceScreens/components/RoundActions/RoundActions';
 import type { RoundAction } from '@ValenceScreens/components/RoundActions/RoundActions.types';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Server as ServerDuotoneIcon } from '@keyline-icons/react/duotone';
+import type { ShowCopy } from '@ValenceScreens/library/useShowCopies';
 import { useHeldWhileLeaving } from '@ValenceClient/shell/useHeldWhileLeaving';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
@@ -84,6 +90,8 @@ import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpiso
  *
  * @param show - The programme, or null while none is open.
  * @param onClose - Told when the dialog was dismissed.
+ * @param onBack - Told to go back to whatever opened this.
+ * @param backLabel - What going back is called.
  * @param onPlay - Told to start an episode, and where from.
  * @param onInspect - Told to open the page about an episode, or about a film like this programme.
  * @param onOpenShow - Told to open the page of a programme like this one, where that is offered.
@@ -96,10 +104,16 @@ import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpiso
  *   programme the scanner resolved to a series of its own, since a rating is keyed on that.
  * @param onRequestMore - Told to ask for more of the programme, by its catalogue id, where the
  *   viewer may ask; offered where the catalogue lists aired episodes the library does not hold.
+ * @param onAsk - Told to open a title from the catalogue, as its address names it.
+ * @param onOpenPerson - Told which performer to open from a missing episode's cast.
+ * @param onSwitchCopy - Told to open another server's copy of the programme instead, where more
+ *   than one server has it, to watch it from there.
  */
 const ShowDialog = ({
   show,
   onClose,
+  onBack,
+  backLabel,
   onPlay,
   onInspect,
   onOpenShow,
@@ -110,6 +124,9 @@ const ShowDialog = ({
   onMarkWatched,
   onRate,
   onRequestMore,
+  onAsk,
+  onOpenPerson,
+  onSwitchCopy,
 }: ShowDialogProps) => {
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const [lastShown, setLastShown] = useState(show);
@@ -132,6 +149,8 @@ const ShowDialog = ({
   );
 
   const asked = useQuery(libraryQueries.show(show?.libraryId ?? null, show?.id ?? null));
+  const copies = useShowCopies(show);
+  const cache = useQueryClient();
   const detail = useHeldWhileLeaving(asked.data ?? null, show !== null);
   const isLoading = show !== null && asked.isPending;
   const trailer = (detail?.extras ?? []).find((one) => one.extraKind === 'trailer') ?? null;
@@ -218,6 +237,52 @@ const ShowDialog = ({
       ? null
       : carryingOn.startSeconds / carryingOn.episode.durationSeconds;
 
+  const playFace =
+    carryingOn === null ? null : (
+      <>
+        <Icon of={PlayFilledIcon} size={18} />
+        {carryingOn.isResuming
+          ? say('screens.showDialog.resumeStartSeconds', {
+              startSeconds: formatDuration(carryingOn.startSeconds),
+            })
+          : say('screens.showDialog.playValueEpisodeValue2', {
+              value: nameSeason(carryingOn.episode.seasonNumber ?? null),
+              value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
+            })}
+        {showWatched === null ? null : (
+          <WatchedBar
+            watched={showWatched}
+            className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+          />
+        )}
+      </>
+    );
+
+  /**
+   * Plays the programme from one of its copies: the episode to carry on from there, read from that
+   * copy, with the dialog moved onto it so its episodes are the ones shown.
+   *
+   * @param copy - The copy to play from.
+   */
+  const playFrom = async (copy: ShowCopy) => {
+    if (copy.show.id === shown.id) {
+      if (carryingOn !== null) {
+        onPlay(carryingOn.episode, carryingOn.startSeconds);
+      }
+
+      return;
+    }
+
+    onSwitchCopy?.(copy.show);
+
+    const there = await cache.fetchQuery(libraryQueries.show(copy.show.libraryId, copy.show.id));
+    const next = there === null ? null : pickUpFrom(there, { resumeFor, isFinished });
+
+    if (next !== null) {
+      onPlay(next.episode, next.startSeconds);
+    }
+  };
+
   const play =
     carryingOn === null ? (
       <PlayWithRestart>
@@ -225,6 +290,32 @@ const ShowDialog = ({
           {say('screens.showDialog.readingTheEpisodes')}
         </Button>
       </PlayWithRestart>
+    ) : copies.length > 1 && onSwitchCopy !== undefined ? (
+      <ActionMenu
+        label={say('common.playFrom')}
+        align="start"
+        look="play"
+        trigger={
+          <>
+            {playFace}
+            <Icon of={ChevronDownIcon} size={16} />
+          </>
+        }
+        groups={[
+          {
+            name: say('common.playFrom'),
+            items: copies.map((copy) => ({
+              id: copy.show.id,
+              label: copy.server ?? say('common.thisServer'),
+              icon: <Icon of={ServerDuotoneIcon} size={18} />,
+              detail: sayCount('common.count.episodes', copy.show.episodeCount),
+              onChoose: () => {
+                void playFrom(copy);
+              },
+            })),
+          },
+        ]}
+      />
     ) : (
       <PlayWithRestart
         {...(carryingOn.isResuming
@@ -243,21 +334,7 @@ const ShowDialog = ({
             onPlay(carryingOn.episode, carryingOn.startSeconds);
           }}
         >
-          <Icon of={PlayFilledIcon} size={18} />
-          {carryingOn.isResuming
-            ? say('screens.showDialog.resumeStartSeconds', {
-                startSeconds: formatDuration(carryingOn.startSeconds),
-              })
-            : say('screens.showDialog.playValueEpisodeValue2', {
-                value: nameSeason(carryingOn.episode.seasonNumber ?? null),
-                value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
-              })}
-          {showWatched === null ? null : (
-            <WatchedBar
-              watched={showWatched}
-              className="mx-0 w-10 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
-            />
-          )}
+          {playFace}
         </Button>
       </PlayWithRestart>
     );
@@ -367,16 +444,27 @@ const ShowDialog = ({
   ];
 
   return (
-    <Dialog label={shown.title} isOpen={show !== null} onClose={onClose} size="stage">
+    <Dialog label={shown.title} isOpen={show !== null} onClose={onClose} size="stage" edge={tint}>
       <DialogContent className="p-3 sm:p-4">
         <ScrolledTitle
           title={shown.title}
           artwork={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
+          detail={
+            <>
+              {sayCount('common.count.episodes', shown.episodeCount)}
+              {detail?.status === undefined ||
+              detail.status === null ||
+              detail.status === '' ? null : (
+                <ShowStatusBadge status={detail.status} />
+              )}
+            </>
+          }
           isShowing={hasScrolledPast}
+          tint={tint}
         >
           <Button
             isIconOnly
-            variant="ghost"
+            variant="confirm"
             size="sm"
             label={say('common.close')}
             onClick={onClose}
@@ -394,7 +482,20 @@ const ShowDialog = ({
                 backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
                 durationSeconds={0}
                 controlsAtTop
-                closing={<ArtworkCloseButton onClose={onClose} />}
+                closing={
+                  onBack === undefined ? (
+                    <ArtworkCloseButton onClose={onClose} />
+                  ) : (
+                    <ArtworkBackButton
+                      label={
+                        backLabel === undefined
+                          ? say('common.back')
+                          : say('common.backToName', { name: backLabel })
+                      }
+                      onBack={onBack}
+                    />
+                  )
+                }
                 isRoomy
                 fills
               />
@@ -425,17 +526,19 @@ const ShowDialog = ({
               </DialogHeadlinePart>
 
               <DialogHeadlinePart className="flex w-full flex-wrap items-center gap-3">
-                <div className="w-full sm:w-[21rem]">{play}</div>
+                <div className="w-full md:w-[21rem]">{play}</div>
 
                 <RoundActions
                   label={say('screens.bookDialog.moreToDoWithThisBook')}
                   actions={actions}
                   isCompact
-                  className="sm:ml-auto"
+                  className="md:ml-auto"
                 />
               </DialogHeadlinePart>
             </DialogHeadline>
           </TitleHero>
+
+          <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
           <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
             <div className="flex min-w-0 flex-col gap-4">
@@ -501,8 +604,6 @@ const ShowDialog = ({
               )}
             </DialogHeadlinePart>
           </DialogHeadline>
-
-          <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
           <DialogSections isOpen className="flex flex-col gap-10 px-1 pb-8 pt-10 sm:px-2">
             <DialogSection>
@@ -572,12 +673,28 @@ const ShowDialog = ({
                   renderItem={({ at, episode, listed, airs }) =>
                     episode === null ? (
                       <MissingRow
+                        showTitle={shown.title}
+                        seasonNumber={chosenSeason ?? laidOut.choices[0]?.seasonNumber ?? null}
+                        logoMediaId={lettered?.id ?? null}
+                        castMediaId={shownEpisodes[0]?.id ?? shown.coverMediaId}
+                        genres={shown.genres ?? []}
+                        {...(onOpenPerson === undefined ? {} : { onOpenPerson })}
                         episodeNumber={at}
                         {...(airs === '' ? {} : { airs })}
                         {...(listed === null ? {} : { title: listed.title })}
                         {...(listed?.stillUrl === null || listed?.stillUrl === undefined
                           ? {}
                           : { stillUrl: listed.stillUrl })}
+                        {...(listed === null ? {} : { overview: listed.overview ?? null })}
+                        {...(onRequestMore === undefined ||
+                        detail === null ||
+                        (detail.tmdbId ?? null) === null
+                          ? {}
+                          : {
+                              onRequest: () => {
+                                onRequestMore(detail.tmdbId ?? 0);
+                              },
+                            })}
                       />
                     ) : (
                       <EpisodeRow
@@ -616,6 +733,13 @@ const ShowDialog = ({
             {onInspect === undefined || onOpenShow === undefined ? null : (
               <LikeThisShelf
                 mediaId={show === null ? null : shown.coverMediaId}
+                kind="series"
+                externalId={
+                  detail?.tmdbId === undefined || detail.tmdbId === null
+                    ? null
+                    : detail.tmdbId.toString()
+                }
+                {...(onAsk === undefined ? {} : { onAsk })}
                 onPlay={onPlay}
                 onInspect={onInspect}
                 onOpenShow={onOpenShow}

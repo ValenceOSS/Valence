@@ -51,8 +51,8 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  *
  * A status says itself twice: in its colour, and in a solid mark after its words — a tick for done,
  * a clock for waiting, a cross for failed — so it still reads for somebody who does not see the
- * colour. Whatever is in progress carries a spinner instead, so a status that is still changing does
- * not read the same as one that has settled.
+ * colour. Whatever is in progress carries a spinner instead, its words shimmering, so a status that is
+ * still changing does not read the same as one that has settled.
  *
  * @param children - The fact, in as few words as it can be said.
  * @param tone - How much attention it should draw, defaulting to none.
@@ -92,7 +92,11 @@ const Badge = ({
         className,
       )}
     >
-      {children}
+      {colour === null && tone === 'busy' ? (
+        <span className="valence-shimmer-text">{children}</span>
+      ) : (
+        children
+      )}
       {colour === null && tone === 'busy' ? (
         <Spinner size="xs" label={say('common.inProgress')} />
       ) : mark === undefined ? null : (

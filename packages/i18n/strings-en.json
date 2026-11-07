@@ -2040,6 +2040,16 @@
     "context": "A status of a title in the admin Catalogue: it's in the library but nothing new is fetched for it."
   },
   {
+    "handler": "client.requests.titleStatusNames.nothingFound",
+    "text": "Nothing found",
+    "context": "A status in the admin catalogue: every search for this title's missing parts has finished and none found a release it could take."
+  },
+  {
+    "handler": "client.requests.titleStatusNames.queued",
+    "text": "Waiting to search",
+    "context": "A status in the admin catalogue: this title has been asked for, and is waiting its turn to be searched for or to come out."
+  },
+  {
     "handler": "client.requests.titleStatusNames.toApprove",
     "text": "To approve",
     "context": "A status of a title in the admin Catalogue: someone asked for it and it's waiting for an admin to approve it."
@@ -5243,23 +5253,13 @@
   },
   {
     "handler": "common.notInTheLibrary",
-    "text": "Not in the library",
-    "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it."
-  },
-  {
-    "handler": "common.notInThisLibrary",
-    "text": "Not in this library",
-    "context": "Shown in the missing episode in the show of the phone app."
+    "text": "Not in any library",
+    "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it. \"Any\" because a linked server's libraries count too."
   },
   {
     "handler": "common.notInThisLibraryAirs",
-    "text": "Not in this library · {airs}",
+    "text": "Not in any library · {airs}",
     "context": "Shown in the missing episode in the show of the phone app. {airs} is filled in by the app."
-  },
-  {
-    "handler": "common.notInYourLibrary",
-    "text": "Not in your library",
-    "context": "Shown, used in the artist story in the artist view and in the season picker in the show dialog."
   },
   {
     "handler": "common.noTitleKeepsItsRulesYet",
@@ -5854,6 +5854,11 @@
     "handler": "common.playASongToFollowIts",
     "text": "Play a song to see its lyrics here.",
     "context": "The detail of a nothing here, used in the lyrics panel in the music page and in the lyrics view in the music page."
+  },
+  {
+    "handler": "common.playFrom",
+    "text": "Play from",
+    "context": "The heading of the menu under the Play button of a film or programme choosing which server's copy to play, where more than one server has it."
   },
   {
     "handler": "common.playHere",
@@ -11031,6 +11036,66 @@
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
+    "handler": "phone.aReader.aReadingLook.brighter",
+    "text": "Brighter",
+    "context": "The label of the button that makes the screen brighter while reading."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.calm",
+    "text": "Calm",
+    "context": "The name of a reading theme: warm light words on a dark olive page."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.dimmer",
+    "text": "Dimmer",
+    "context": "The label of the button that makes the screen dimmer while reading."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.focus",
+    "text": "Focus",
+    "context": "The name of a reading theme: light words on a near-black page."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.largerText",
+    "text": "Larger text",
+    "context": "The label of the button that makes the words of a book larger."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.letter",
+    "text": "A",
+    "context": "The letter drawn on the buttons that make the words of a book smaller and larger, small on one and large on the other."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.paper",
+    "text": "Paper",
+    "context": "The name of a reading theme: dark words on a pale grey page."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.quiet",
+    "text": "Quiet",
+    "context": "The name of a reading theme: dark words on a soft tan page."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.sample",
+    "text": "Aa",
+    "context": "A sample of the type drawn on each reading theme's swatch, as in Apple Books."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.smallerText",
+    "text": "Smaller text",
+    "context": "The label of the button that makes the words of a book smaller."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.themes",
+    "text": "Themes",
+    "context": "The heading over the reading themes a book can be read in."
+  },
+  {
+    "handler": "phone.aReader.aReadingLook.useNameTheme",
+    "text": "Use the {name} theme",
+    "context": "The label of a reading theme's swatch. {name} is the theme's name."
+  },
+  {
     "handler": "phone.aReader.aTextReader.goToAPlaceInThe",
     "text": "Go to a position in the book",
     "context": "The label of a slider in the text reader in the reader of the phone app."
@@ -13096,6 +13161,16 @@
     "context": "Why a release was refused for a book request: an abridged audiobook. Shown in interactive search and the request's history."
   },
   {
+    "handler": "requests.profiles.judgeBookFormat.itIsAFilmOrProgramme",
+    "text": "It’s a film or programme, not a book",
+    "context": "Why a release was refused for a book request: it is a video, such as a film of the same name, going by the indexer's category or a name like DVDRip or 1080p. Shown in interactive search and the request's history."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.itIsAGame",
+    "text": "It’s a game or software, not a book",
+    "context": "Why a release was refused for a book request: it is a game of the same name, going by the indexer's category or a name like PCGame. Shown in interactive search and the request's history."
+  },
+  {
     "handler": "requests.profiles.judgeBookFormat.itIsAnAdaptation",
     "text": "It’s a full-cast adaptation, not the book read aloud",
     "context": "Why a release was refused for a book request: a dramatised, full-cast audio production of the book rather than a narration of it. Shown in interactive search and the request's history."
@@ -13109,6 +13184,16 @@
     "handler": "requests.profiles.judgeBookFormat.scanned",
     "text": "Scanned (−{points})",
     "context": "Why an ebook release ranks lower: it is a scan. {points} is the score it takes away."
+  },
+  {
+    "handler": "requests.profiles.judgeRelease.count.onlyFewSeedingIt.one",
+    "text": "Only {count} person is seeding it, so better-shared releases go first",
+    "context": "Why a torrent release was put behind better-shared ones when a release is chosen: it has only a seeder or two. {count} is how many. Shown in the profiles in the requests service (from `judgeRelease`)."
+  },
+  {
+    "handler": "requests.profiles.judgeRelease.count.onlyFewSeedingIt.other",
+    "text": "Only {count} people are seeding it, so better-shared releases go first",
+    "context": "Why a torrent release was put behind better-shared ones when a release is chosen: it has only a seeder or two. {count} is how many. Shown in the profiles in the requests service (from `judgeRelease`)."
   },
   {
     "handler": "requests.profiles.judgeRelease.fifthChoice",
@@ -16576,14 +16661,44 @@
     "context": "Shown in the cache breakdown in the admin area."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.estimatedSizeOfDownloads",
+    "text": "Estimated size of downloads",
+    "context": "On the admin overview's storage card, the label of the estimated total size of the downloads in the queue that have not finished."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.keptByValence",
     "text": "Kept by Valence, not counting the library",
     "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.stillToDownload.one",
+    "text": "{left} still to download, {count} download",
+    "context": "On the admin overview's storage card, under the estimate. {left} is a size such as 1.2 TB, {count} how many downloads are unfinished."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.stillToDownload.other",
+    "text": "{left} still to download, {count} downloads",
+    "context": "On the admin overview's storage card, under the estimate. {left} is a size such as 1.2 TB, {count} how many downloads are unfinished."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.whatLabelMeans",
     "text": "What {label} means",
     "context": "The label of a button in the cache breakdown in the admin area. {label} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.whatTheDownloadsCount",
+    "text": "The full size of every unfinished download sent through Valence, counting what has arrived already. Downloads without a size yet aren’t included, so the real figure may be higher.",
+    "context": "The hint explaining the estimated size of downloads on the admin overview's storage card."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.withoutASizeYet.one",
+    "text": "{count} has no size yet, so it isn’t included",
+    "context": "On the admin overview's storage card, under the estimate: a download whose client has not reported its size."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.withoutASizeYet.other",
+    "text": "{count} have no size yet, so they aren’t included",
+    "context": "On the admin overview's storage card, under the estimate: downloads whose client has not reported their size."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.addATitle",
@@ -17259,6 +17374,11 @@
     "handler": "screens.adminArea.concernsBanner.goToPanel",
     "text": "Go to {panel}",
     "context": "The label of a button in the concerns banner in the admin area. {panel} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.concernsBell.allClear",
+    "text": "Nothing needs your attention.",
+    "context": "Shown behind the bell at the top of the admin area when nothing is wrong."
   },
   {
     "handler": "screens.adminArea.confirmedCountReEncodes.one",
@@ -18676,6 +18796,36 @@
     "context": "Under the short segments setting."
   },
   {
+    "handler": "screens.adminArea.engineGraphs.engines",
+    "text": "Engines",
+    "context": "The heading over the small graphs of what each engine of the graphics card is doing. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.memoryOnTheCard",
+    "text": "Graphics memory",
+    "context": "The graph of how much memory Valence's work holds on the graphics card. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.onlyValencesOwnWork",
+    "text": "These show Valence’s own work on the card. Other programs using it aren’t counted.",
+    "context": "A note under the engine graphs saying they only cover Valence's own work. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.threeD",
+    "text": "3D",
+    "context": "The graph of the graphics card's 3D (render) engine, as a task manager names it. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.video",
+    "text": "Video encode and decode",
+    "context": "The graph of the graphics card's video engine; on Intel the same engine both encodes and decodes. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
+    "handler": "screens.adminArea.engineGraphs.videoEnhance",
+    "text": "Video enhance",
+    "context": "The graph of the graphics card's video-enhance engine, which scales and converts colour. In the Graphics card's information on the admin overview (from `EngineGraphs`)."
+  },
+  {
     "handler": "screens.adminArea.episodeNumberDialog.changeTheEpisode",
     "text": "Change the episode…",
     "context": "Button on an episode's page that opens the dialog saying which episode its file is, whatever its name says."
@@ -19246,6 +19396,16 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The heading over the list of physical drives in the machine."
   },
   {
+    "handler": "screens.adminArea.hardware.emptySlot",
+    "text": "Empty slot",
+    "context": "A memory slot with nothing in it, in the Memory card's information on the admin overview. (from `MemoryInfo`)"
+  },
+  {
+    "handler": "screens.adminArea.hardware.freeOfSataPorts",
+    "text": "{free} of {total} SATA ports free",
+    "context": "A line under the list of drives saying how many SATA ports have no drive on them. Ports, not bays: it says nothing of whether the case has room. (from `DriveList`)"
+  },
+  {
     "handler": "screens.adminArea.hardware.gigahertz",
     "text": "{speed} GHz",
     "context": "In the information card of the hardware figures at the top of the admin area. The fastest the processor runs. {speed} is a number of gigahertz, such as 3.2."
@@ -19271,6 +19431,16 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name the processor gives itself."
   },
   {
+    "handler": "screens.adminArea.hardware.readAt",
+    "text": "Read {speed}",
+    "context": "How fast a drive is reading right now, in the drives list on the admin overview. {speed} is such as 12 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.hardware.slots",
+    "text": "Slots",
+    "context": "A row in the Memory card's information on the admin overview, next to how many memory slots are used. (from `MemoryInfo`)"
+  },
+  {
     "handler": "screens.adminArea.hardware.ssd",
     "text": "SSD",
     "context": "In the information card of the hardware figures at the top of the admin area. A drive that is a solid-state drive."
@@ -19289,6 +19459,21 @@
     "handler": "screens.adminArea.hardware.topSpeed",
     "text": "Top speed",
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside the fastest the processor can run."
+  },
+  {
+    "handler": "screens.adminArea.hardware.usedOfSize",
+    "text": "{used} used of {size}",
+    "context": "How full a drive is, in the drives list on the admin overview. {used} and {size} are sizes such as 2.7 TB."
+  },
+  {
+    "handler": "screens.adminArea.hardware.usedOfSlots",
+    "text": "{used} of {total} used",
+    "context": "How many of the machine's memory slots have a stick in them. {used} is how many do, {total} how many slots there are. (from `MemoryInfo`)"
+  },
+  {
+    "handler": "screens.adminArea.hardware.writeAt",
+    "text": "Write {speed}",
+    "context": "How fast a drive is writing right now, in the drives list on the admin overview. {speed} is such as 12 MB/s."
   },
   {
     "handler": "screens.adminArea.hardwareChains",
@@ -21556,6 +21741,11 @@
     "context": "Under a title in the media page in the admin area, naming the episode files that share a season and episode number. {season} and {episode} are numbers; {files} is a list of file names."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.rebuildEveryEpisodesPreviews",
+    "text": "Rebuild every episode’s previews…",
+    "context": "An item in a series' menu in the admin's media panel, which rebuilds the previews and thumbnails of all its episodes after asking."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.rebuilding",
     "text": "Rebuilding…",
     "context": "Shown in the media panel in the admin area."
@@ -21754,6 +21944,16 @@
     "handler": "screens.adminArea.mediaTitlePage.refreshing",
     "text": "Refreshing…",
     "context": "A badge on a title's page in the admin's Media while it is being read again."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.showInTheApp",
+    "text": "Preview",
+    "context": "A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers."
+  },
+  {
+    "handler": "screens.adminArea.mediaTitlePage.unlockedEveryField",
+    "text": "Unlocked every field",
+    "context": "The toast once every locked field of a title has been unlocked from its page's menu, so they follow TMDB again. (from `MediaTitlePage`)"
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.unmatch",
@@ -22304,6 +22504,11 @@
     "handler": "screens.adminArea.overviewPanel.whatIsOn",
     "text": "What",
     "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.whichPartOfTheWeekIsShown",
+    "text": "Which part of the week the chart shows",
+    "context": "Read out by screen readers for the draggable window under the server load chart, which picks the stretch of the last seven days the chart above draws."
   },
   {
     "handler": "screens.adminArea.overviewPanel.whoAndWhere",
@@ -25397,7 +25602,7 @@
   },
   {
     "handler": "screens.adminArea.sourcedField.unlockTheField",
-    "text": "Unlock the field",
+    "text": "Unlock",
     "context": "Item in a locked metadata field's menu that lets it follow TMDB again."
   },
   {
@@ -25951,6 +26156,41 @@
     "context": "Said once a film or programme is taken out of a collection from its page in the admin's media. {title} is the title; {name} is the collection."
   },
   {
+    "handler": "screens.adminArea.titleDetails.aboutClassification",
+    "text": "How it’s grouped and found when browsing.",
+    "context": "The line under the Classification section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutIds",
+    "text": "Where it’s found in other catalogues.",
+    "context": "The line under the IDs section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutNote",
+    "text": "Only administrators see this.",
+    "context": "The line under the Note section's heading on a title's Details tab, saying who can read the note. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutOriginAndCrew",
+    "text": "Where it comes from and who made it.",
+    "context": "The line under the Origin and crew section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutRatings",
+    "text": "Its scores, and the age it’s rated for in each country.",
+    "context": "The line under the Ratings section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutStory",
+    "text": "The words its page in the app shows.",
+    "context": "The line under the Story section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.aboutTitleAndRelease",
+    "text": "What it’s called, how it sorts, and when it came out and was added.",
+    "context": "The line under the Title and release section's heading, saying what its fields are for. On the Details tab of a title in the admin area (from `TitleForm`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.airDate",
     "text": "Air date",
     "context": "A field for the day an episode or season was shown. On the Details tab of a title in the admin area (from `TitleDetails`)."
@@ -26071,9 +26311,124 @@
     "context": "Section of a title's Details tab holding its original language, countries, creators, directors and writers."
   },
   {
+    "handler": "screens.adminArea.titleDetails.placeholder.aCountryCode",
+    "text": "Add a country code, such as GB",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its countries field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addACreator",
+    "text": "Add a creator",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its creators field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addADirector",
+    "text": "Add a director",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its directors field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addAGenre",
+    "text": "Add a genre",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its genres field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addANetwork",
+    "text": "Add a network",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its networks field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addAStudio",
+    "text": "Add a studio",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its studios field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addATag",
+    "text": "Add a tag",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its tags field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.addAWriter",
+    "text": "Add a writer",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its writers field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aLanguageCode",
+    "text": "A language code, such as en",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its originalLanguage field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aMyAnimeListId",
+    "text": "A MyAnimeList ID",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its malId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.anAnilistId",
+    "text": "An AniList ID",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its anilistId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.anImdbId",
+    "text": "An IMDb ID, such as tt0133093",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its imdbId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aNoteForAdministrators",
+    "text": "A note only administrators will see",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its note field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aShortLineUnderTheName",
+    "text": "A short line shown under the name",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its tagline field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.aTvdbId",
+    "text": "A TVDB ID",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its tvdbId field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.fromNoughtToAHundred",
+    "text": "From 0 to 100",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its rottenTomatoes field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.fromNoughtToTen",
+    "text": "From 0 to 10",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its rating field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.itsStatus",
+    "text": "Such as Returning or Ended",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its status field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.pickADate",
+    "text": "Pick a date",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its releaseDate field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.theNameInItsOwnLanguage",
+    "text": "The name in its own language",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its originalTitle field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.theNameItsShownUnder",
+    "text": "The name it’s shown under",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its title field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.placeholder.whatItsAboutInAFewSentences",
+    "text": "What it’s about, in a few sentences",
+    "context": "What an empty field on a title's Details tab shows before anything is entered, for its overview field. On the Details tab of a title in the admin area (from `placeholderOf`)."
+  },
+  {
     "handler": "screens.adminArea.titleDetails.saved",
     "text": "Change saved",
     "context": "A toast once a change to a title’s metadata has been saved. On the Details tab of a title in the admin area (from `TitleDetails`)."
+  },
+  {
+    "handler": "screens.adminArea.titleDetails.sectionsOfTheDetails",
+    "text": "Sections of the details",
+    "context": "The list down the side of a title's Details tab naming each section of its metadata, read out to anybody who cannot see it. On the Details tab of a title in the admin area (from `TitleForm`)."
   },
   {
     "handler": "screens.adminArea.titleDetails.sortTitle",
@@ -27871,6 +28226,16 @@
     "context": "A button beside an admin page’s title. {name} is the page."
   },
   {
+    "handler": "screens.adminPage.putTheSectionsAcrossTheTop",
+    "text": "Put the sections across the top",
+    "context": "A button in the bar across the top of the admin area that moves the list of its sections. (from `AdminPage`)"
+  },
+  {
+    "handler": "screens.adminPage.putTheSectionsDownTheSide",
+    "text": "Put the sections down the side",
+    "context": "A button in the bar across the top of the admin area that moves the list of its sections. (from `AdminPage`)"
+  },
+  {
     "handler": "screens.adminPage.readingWhatYouMayDo",
     "text": "Checking your permissions",
     "context": "The label of a spinner in the admin page."
@@ -27904,6 +28269,11 @@
     "handler": "screens.apiKeyPanel.aKeyLetsSomethingThatIs",
     "text": "A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.",
     "context": "Text shown in the api key panel."
+  },
+  {
+    "handler": "screens.apiKeyPanel.anythingUsingNameStops",
+    "text": "Anything using {name} stops working straight away. This can’t be undone.",
+    "context": "The detail of the dialog asking whether to revoke an API key. {name} is what the key was called."
   },
   {
     "handler": "screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain",
@@ -27941,9 +28311,19 @@
     "context": "The label of a spinner in the api key panel."
   },
   {
+    "handler": "screens.apiKeyPanel.revokeKey",
+    "text": "Revoke key",
+    "context": "The label of the button that confirms revoking an API key."
+  },
+  {
     "handler": "screens.apiKeyPanel.revokeName",
     "text": "Revoke {name}",
     "context": "The label of a button in the api key panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.apiKeyPanel.revokeNameQuestion",
+    "text": "Revoke {name}?",
+    "context": "The title of the dialog asking whether to revoke an API key. {name} is what the key was called."
   },
   {
     "handler": "screens.apiKeyPanel.thisAccountIsNotAllowedTo",
@@ -28241,14 +28621,69 @@
     "context": "Shown in the book dialog."
   },
   {
+    "handler": "screens.bookDialog.aboutTheAuthor",
+    "text": "About the author",
+    "context": "The heading of the section in a book's dialog about who wrote it."
+  },
+  {
+    "handler": "screens.bookDialog.booksLikeThis",
+    "text": "Books like this",
+    "context": "The heading of a row in a book's dialog listing books about the same things."
+  },
+  {
+    "handler": "screens.bookDialog.bornOn",
+    "text": "Born {date}",
+    "context": "When a book's author was born, in a book's dialog. {date} is as Open Library gives it."
+  },
+  {
     "handler": "screens.bookDialog.chapterList.reflowsToFit",
     "text": "Reflows to fit",
     "context": "Shown in the chapter list in the book dialog."
   },
   {
+    "handler": "screens.bookDialog.count.haveRead.one",
+    "text": "{count} has read it",
+    "context": "How many Open Library readers have read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.haveRead.other",
+    "text": "{count} have read it",
+    "context": "How many Open Library readers have read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.ratings.one",
+    "text": "{count} rating",
+    "context": "How many readers rated a book on Open Library, in a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.ratings.other",
+    "text": "{count} ratings",
+    "context": "How many readers rated a book on Open Library, in a book's dialog. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.wantToRead.one",
+    "text": "{count} wants to read it",
+    "context": "How many Open Library readers want to read a book. {count} is the number."
+  },
+  {
+    "handler": "screens.bookDialog.count.wantToRead.other",
+    "text": "{count} want to read it",
+    "context": "How many Open Library readers want to read a book. {count} is the number."
+  },
+  {
     "handler": "screens.bookDialog.ebookAndAudiobook",
     "text": "Ebook and audiobook",
     "context": "Shown in the book dialog."
+  },
+  {
+    "handler": "screens.bookDialog.firstPublished",
+    "text": "First published",
+    "context": "The label before the year a book was first published, in a book's dialog."
+  },
+  {
+    "handler": "screens.bookDialog.fromOpenLibrary",
+    "text": "Details from Open Library",
+    "context": "A note under a book's details saying where they came from."
   },
   {
     "handler": "screens.bookDialog.howFarThrough",
@@ -28261,6 +28696,16 @@
     "context": "The button that adds a title or book to the viewer's favourites, on its page or its card's preview."
   },
   {
+    "handler": "screens.bookDialog.livedFromTo",
+    "text": "{born} – {died}",
+    "context": "When a book's author was born and died, in a book's dialog. {born} and {died} are dates as Open Library gives them."
+  },
+  {
+    "handler": "screens.bookDialog.moreByName",
+    "text": "More by {name}",
+    "context": "The heading of a row in a book's dialog listing other books by its author. {name} is the author."
+  },
+  {
     "handler": "screens.bookDialog.moreToDoWithThisBook",
     "text": "More options",
     "context": "The label of a action bar in the book dialog."
@@ -28271,9 +28716,29 @@
     "context": "Shown in the book dialog."
   },
   {
+    "handler": "screens.bookDialog.publisher",
+    "text": "Publisher",
+    "context": "The label before who published a book, in a book's dialog."
+  },
+  {
+    "handler": "screens.bookDialog.ratingOutOfFive",
+    "text": "{rating} out of 5",
+    "context": "How a book was rated by Open Library's readers. {rating} is a number such as 4.1."
+  },
+  {
+    "handler": "screens.bookDialog.readersRating",
+    "text": "Readers' rating",
+    "context": "The label before how Open Library's readers rated a book, in a book's dialog."
+  },
+  {
     "handler": "screens.bookDialog.stopKeeping",
     "text": "Remove from favourites",
     "context": "The button that takes a title or book out of the viewer's favourites, on its page or its card's preview."
+  },
+  {
+    "handler": "screens.bookDialog.subjects",
+    "text": "Subjects",
+    "context": "The label before what a book is about, such as its themes, in a book's dialog."
   },
   {
     "handler": "screens.bookFormatChooser.eachIsSearchedForOnItsOwn",
@@ -28284,6 +28749,51 @@
     "handler": "screens.bookFormatChooser.whichFormats",
     "text": "Which formats",
     "context": "Accessible name of the list of a book's formats to tick when requesting it."
+  },
+  {
+    "handler": "screens.bookLibrary.author",
+    "text": "Author",
+    "context": "The filter that narrows the books to some authors. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.byNewest",
+    "text": "Newest",
+    "context": "Ordering the grid of books by the year each came out, newest first. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.comic",
+    "text": "Comic",
+    "context": "A book read as pictures a page at a time, such as a comic or manga, in the format filter. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.everyGenre",
+    "text": "Every genre",
+    "context": "The choice in the genre menu that shows books of every genre. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.filterTheBooksInName",
+    "text": "Filter the books in {name}",
+    "context": "The bar of filters over a library's books, read out to anybody who cannot see it. {name} is the library. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.inASeries",
+    "text": "In a series",
+    "context": "The choice in the series filter for books that are part of a series. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.nothingInThatGenre",
+    "text": "No books in that genre yet.",
+    "context": "Shown in place of the grid when the genre chosen has no books. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.sortBooks",
+    "text": "Sort the books",
+    "context": "The menu that orders the grid of every book, read out to anybody who cannot see it. On the Books page (from `BookLibrary`)."
+  },
+  {
+    "handler": "screens.bookLibrary.standalone",
+    "text": "Standalone",
+    "context": "The choice in the series filter for books that stand on their own. On the Books page (from `BookLibrary`)."
   },
   {
     "handler": "screens.bookRail.thatShelfCouldNotBeRead",
@@ -29151,9 +29661,19 @@
     "context": "How much of a download has arrived, in the downloads table. {done} is the amount arrived and {size} the whole size, such as 2.1 GB of 4.6 GB."
   },
   {
+    "handler": "screens.downloadsPanel.downloadQueueTable.downloadSpeed",
+    "text": "Download speed",
+    "context": "A column heading in the admin downloads queue: how fast each download is arriving."
+  },
+  {
     "handler": "screens.downloadsPanel.downloadQueueTable.fileIntoName",
     "text": "Import into {name}",
     "context": "The label in the download queue table in the downloads panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.finishes",
+    "text": "Finishes",
+    "context": "A column heading in the admin downloads queue: how long until each download is done, and the time of day it should be done by."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA",
@@ -29171,14 +29691,14 @@
     "context": "Shown in the download queue table in the downloads panel."
   },
   {
-    "handler": "screens.downloadsPanel.downloadQueueTable.perSecond",
-    "text": "/s",
-    "context": "After a download speed, like \"4 MB/s\"."
-  },
-  {
     "handler": "screens.downloadsPanel.downloadQueueTable.states.processing",
     "text": "Processing",
     "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.uploadSpeed",
+    "text": "Upload speed",
+    "context": "A column heading in the admin downloads queue: how fast each download is being sent to others."
   },
   {
     "handler": "screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat",
@@ -29351,9 +29871,24 @@
     "context": "The label of a segmented row in the face editor."
   },
   {
+    "handler": "screens.faceEditor.letterStudio.gradient",
+    "text": "Gradient",
+    "context": "The heading over the gradients a letter face can be painted with."
+  },
+  {
     "handler": "screens.faceEditor.letterStudio.setItInName",
     "text": "Set it in {name}",
     "context": "The label of a button in the letter studio in the face editor. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.useTheGradientFromTo",
+    "text": "Use the gradient from {from} to {to}",
+    "context": "The label of a swatch that paints a letter face with a gradient. {from} and {to} are colours as #rrggbb."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.whereTheGradientEnds",
+    "text": "Where the gradient ends",
+    "context": "The label of the swatch that picks any colour for a letter face's gradient to end on."
   },
   {
     "handler": "screens.faceEditor.photoStudio.across",
@@ -31296,11 +31831,6 @@
     "context": "The field a locked library's password or PIN is typed in (from `LockedLibrary`)."
   },
   {
-    "handler": "screens.lockedLibrary.unlock",
-    "text": "Unlock",
-    "context": "The button that unlocks a library (from `LockedLibrary`)."
-  },
-  {
     "handler": "screens.logDetailDialog.happened",
     "text": "Occurrences",
     "context": "The name of a row in a log entry's details: how many times the same entry was written."
@@ -31507,11 +32037,6 @@
     "context": "Shown in the media preview."
   },
   {
-    "handler": "screens.mediaPreview.preview",
-    "text": "Preview",
-    "context": "The label of a video surface in the media preview."
-  },
-  {
     "handler": "screens.mediaPreview.previewIsBeingMadeCheckBack",
     "text": "Preview is being generated — check back shortly",
     "context": "Shown in the media preview."
@@ -31530,6 +32055,16 @@
     "handler": "screens.missingSongDialog.lookingForItsAlbum",
     "text": "Looking for its album",
     "context": "Read out while the dialog that finds a missing song's album is searching the catalogue."
+  },
+  {
+    "handler": "screens.mixArtwork.dailyMix",
+    "text": "Daily Mix",
+    "context": "Written on the picture Valence makes for a daily mix, beside its number. Keep it short."
+  },
+  {
+    "handler": "screens.mixArtwork.station",
+    "text": "Station",
+    "context": "Written small at the corner of the picture Valence makes for a station. Keep it short."
   },
   {
     "handler": "screens.motion.motionChoices.full",
@@ -31657,14 +32192,39 @@
     "context": "Shown where your liked songs could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.musicPage.musicHome.madeForName",
+    "text": "Made for {name}",
+    "context": "The heading of the row of mixes Valence made for this listener today, on the music home. {name} is the listener."
+  },
+  {
     "handler": "screens.musicPage.musicHome.readingYourMusic",
     "text": "Loading your music",
     "context": "The label of a skeleton in the music home in the music page."
   },
   {
+    "handler": "screens.musicPage.musicHome.recentlyPlayed",
+    "text": "Recently played",
+    "context": "What the grid of small tiles at the top of the music home is called, for screen readers."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.recents",
+    "text": "Recents",
+    "context": "The heading of the row of albums the listener played lately, on the music home."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.recommendedStations",
+    "text": "Recommended stations",
+    "context": "The heading of the row of stations Valence builds around artists the listener plays, on the music home."
+  },
+  {
     "handler": "screens.musicPage.musicHome.seeAllWhat",
     "text": "See all {what}",
     "context": "The label of a button in the music home in the music page. {what} is filled in by the app."
+  },
+  {
+    "handler": "screens.musicPage.musicHome.yourTopMixes",
+    "text": "Your top mixes",
+    "context": "The heading of the row of mixes Valence makes for each genre and decade, on the music home."
   },
   {
     "handler": "screens.musicPage.musicLibrary.albumName",
@@ -32832,6 +33392,11 @@
     "context": "Shown in the passkey setup."
   },
   {
+    "handler": "screens.personDialog.age",
+    "text": "{date} ({age} years old)",
+    "context": "A birth date with the person's age, in the person dialog."
+  },
+  {
     "handler": "screens.personDialog.asRole",
     "text": "as {role}",
     "context": "Text shown in the person dialog. {role} is filled in by the app."
@@ -32842,9 +33407,89 @@
     "context": "The heading of a dialog section in the person dialog."
   },
   {
+    "handler": "screens.personDialog.birthdate",
+    "text": "Birthdate",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.creditEpisodes",
+    "text": "{episodes} as {role}",
+    "context": "A credit in the person dialog's timeline. {episodes} is how many episodes, {role} who they played."
+  },
+  {
+    "handler": "screens.personDialog.diedOn",
+    "text": "Died",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.gender",
+    "text": "Gender",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.genderFemale",
+    "text": "Female",
+    "context": "A person's gender in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.genderMale",
+    "text": "Male",
+    "context": "A person's gender in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.genderNonBinary",
+    "text": "Non-binary",
+    "context": "A person's gender in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.instagram",
+    "text": "Instagram",
+    "context": "The label of a link to a person's Instagram page."
+  },
+  {
+    "handler": "screens.personDialog.knownCredits",
+    "text": "Known credits",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.knownFor",
+    "text": "Known for",
+    "context": "A label in the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.moreFilms",
+    "text": "More films",
+    "context": "The heading of a row in the person dialog: films of theirs that are not on this server."
+  },
+  {
+    "handler": "screens.personDialog.moreShows",
+    "text": "More shows",
+    "context": "The heading of a row in the person dialog: shows of theirs that are not on this server."
+  },
+  {
+    "handler": "screens.personDialog.noBiographyProvided",
+    "text": "No biography provided",
+    "context": "Shown in the person dialog where the catalogue has no biography for them."
+  },
+  {
     "handler": "screens.personDialog.nothingIsKnownAboutThemAnd",
     "text": "No details are available for this person, and none of their work is on this server.",
     "context": "Text shown in the person dialog."
+  },
+  {
+    "handler": "screens.personDialog.personalInfo",
+    "text": "Personal info",
+    "context": "The heading of the person dialog's personal details."
+  },
+  {
+    "handler": "screens.personDialog.pictures",
+    "text": "Pictures of this person",
+    "context": "What the dots under a person's pictures are for, read out by assistive technology."
+  },
+  {
+    "handler": "screens.personDialog.placeOfBirth",
+    "text": "Place of birth",
+    "context": "A label in the person dialog's personal details."
   },
   {
     "handler": "screens.personDialog.somebodyInTheCast",
@@ -33260,6 +33905,16 @@
     "handler": "screens.pluginSurfaceView.thisPluginCouldNotDrawIts",
     "text": "This plugin couldn’t load its page",
     "context": "The title of a callout in the plugin surface view."
+  },
+  {
+    "handler": "screens.posterWall.empty",
+    "text": "There’s nothing here to watch yet",
+    "context": "Shown on the poster wall when the server has no films or shows."
+  },
+  {
+    "handler": "screens.posterWall.label",
+    "text": "Poster wall",
+    "context": "The button in the top bar that opens a full-screen wall of every film and show poster, and the name of that wall."
   },
   {
     "handler": "screens.previewMomentPicker.backToAutomatic",
@@ -33685,6 +34340,16 @@
     "handler": "screens.readerPanel.letThePanelGo",
     "text": "Unpin panel",
     "context": "Shown in the reader panel."
+  },
+  {
+    "handler": "screens.readingHero.alsoReading",
+    "text": "Also reading",
+    "context": "The heading over the other books somebody is partway through, under the one they read last. On the Books page (from `ContinueReading`)."
+  },
+  {
+    "handler": "screens.readingHero.youAreReading",
+    "text": "You’re reading",
+    "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",
@@ -36517,6 +37182,11 @@
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
   },
   {
+    "handler": "server.books.pagesFromTo",
+    "text": "Pages {from}–{to}",
+    "context": "The name of a part of a PDF book that has no chapter names of its own, in the reader's contents. {from} and {to} are page numbers."
+  },
+  {
     "handler": "server.books.partNumbered",
     "text": "Part {number}",
     "context": "Shown in the books on the server (from `openEpub`). {number} is filled in by the app."
@@ -37920,6 +38590,11 @@
     "handler": "server.music.mixes.rediscoverDetail",
     "text": "Songs you played a lot and haven’t heard lately",
     "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What the Rediscover mix holds, beneath its name."
+  },
+  {
+    "handler": "server.music.mixes.withNames",
+    "text": "{names} and more",
+    "context": "The line under a mix or station on the music home, where its picture already says its name. {names} is a list of artists in it, separated by commas."
   },
   {
     "handler": "server.music.musicDevices.anAdministrator",

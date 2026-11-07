@@ -1,10 +1,11 @@
 import { memo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ALinedParagraph } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/components/ALinedParagraph/ALinedParagraph';
 import { ABookPicture } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/components/ABookPicture/ABookPicture';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
-import type { BookNode } from '@ValenceClient/books/readBookDocument.types';
+import type { BookNode } from '@ValenceCore/books/readBookDocument.types';
 import type { ReactNode } from 'react';
 import type { TextStyle } from 'react-native';
 import type { TheBookTextProps } from './TheBookText.types';
@@ -123,11 +124,28 @@ const isABlock = (node: BookNode) => node.kind === 'element' && BLOCKS.has(node.
  * @param size - How large the words are.
  * @param leading - How far apart its lines are, as a multiple of the size.
  * @param ink - The colour of the words.
+ * @param face - The type it is set in, and whether it is justified, where not the app's own.
  * @param onLink - Told a link was followed.
  * @param onAnchors - Told where the named places are.
  */
-const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheBookTextProps) => {
-  const line = size * leading;
+const TheBookTextDrawn = ({
+  nodes,
+  size,
+  leading,
+  ink,
+  face,
+  onLink,
+  onAnchors,
+}: TheBookTextProps) => {
+  const line = Math.round(size * leading);
+  const body: TextStyle =
+    face === undefined
+      ? styles.body
+      : {
+          fontFamily: face.regular,
+          ...(face.isJustified ? { textAlign: 'justify' } : {}),
+        };
+  const heavy: TextStyle | null = face === undefined ? null : { fontFamily: face.bold };
   const block = { gap: line };
   const anchors = useRef(new Map<string, number>());
 
@@ -159,8 +177,9 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     return heading === undefined
       ? undefined
       : {
-          fontFamily: heading.family,
+          fontFamily: face?.bold ?? heading.family,
           fontSize: size * heading.scale,
+          ...(face === undefined ? {} : { textAlign: 'left' }),
           lineHeight: Math.ceil((size * heading.scale * 1.25) / line) * line,
         };
   };
@@ -199,7 +218,7 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
             onLink(href);
           }}
         >
-          <Text style={[styles.body, styles.link, { color: ink, fontSize: size }]}>
+          <Text style={[body, styles.link, { color: ink, fontSize: size }]}>
             {node.children.map((child, at) => drawRun(child, at, isKept))}
           </Text>
         </Button>
@@ -209,7 +228,11 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     return (
       <Text
         key={key}
-        style={[INLINE[node.tag], smaller === undefined ? null : { fontSize: size * smaller }]}
+        style={[
+          INLINE[node.tag],
+          node.tag === 'strong' || node.tag === 'b' ? heavy : null,
+          smaller === undefined ? null : { fontSize: size * smaller },
+        ]}
       >
         {node.children.map((child, at) => drawRun(child, at, isKept))}
       </Text>
@@ -232,12 +255,11 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     isKept: boolean,
   ): ReactNode =>
     run.every((node) => node.kind === 'text' && node.text.trim() === '') ? null : (
-      <Text
-        key={key}
-        style={[styles.body, { color: ink, fontSize: size, lineHeight: size * leading }, look]}
-      >
-        {run.map((node, at) => drawRun(node, at, isKept))}
-      </Text>
+      <ALinedParagraph key={key} line={line}>
+        <Text key={key} style={[body, { color: ink, fontSize: size, lineHeight: line }, look]}>
+          {run.map((node, at) => drawRun(node, at, isKept))}
+        </Text>
+      </ALinedParagraph>
     );
 
   /**
@@ -307,6 +329,7 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
           address={onThisServer(address)}
           label={node.attributes['alt'] ?? null}
           ratio={wide > 0 && tall > 0 ? wide / tall : null}
+          line={line}
         />
       );
     }

@@ -128,7 +128,7 @@ describe('seasonsOfTitle', () => {
         lastAbsolute: 2,
       },
       isAsked: true,
-      episodes: [{ episode: 2, aired: { season: 1, episode: 2 }, part: 'missing' }],
+      episodes: [{ episode: 2, aired: { season: 1, episode: 2 }, part: 'queued' }],
     });
     expect(cours[1]?.episodes[0]).toMatchObject({ episode: 1, part: 'library' });
   });

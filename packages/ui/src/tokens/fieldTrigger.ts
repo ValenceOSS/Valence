@@ -1,7 +1,11 @@
+import { FIELD_SURFACE } from '@ValenceUI/tokens/FIELD_SURFACE';
+import { FIELD_DISABLED } from '@ValenceUI/tokens/FIELD_DISABLED';
+
 const FIELD_TRIGGER = {
   base: [
-    'w-full justify-between gap-2 rounded-lg px-2.5 text-[0.8125rem] font-medium',
-    'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
+    'w-full justify-between gap-2 px-3 text-[0.8125rem] font-medium text-text',
+    FIELD_SURFACE,
+    FIELD_DISABLED,
     'hover:bg-[var(--surface-active)]',
   ].join(' '),
   sm: 'h-7',

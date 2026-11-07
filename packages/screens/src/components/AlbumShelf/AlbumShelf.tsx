@@ -7,6 +7,7 @@ import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
+import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AlbumShelfProps } from './AlbumShelf.types';
 
@@ -37,7 +38,7 @@ const AlbumShelf = ({
   action,
 }: AlbumShelfProps) => {
   const { open } = useMusicNavigation();
-  const { player } = useMusicPlayer();
+  const { state, player } = useMusicPlayer();
   const addingTo = useMyPlaylists();
   const cardOrigin = useCardOrigin();
 
@@ -60,7 +61,6 @@ const AlbumShelf = ({
               <MusicArtwork
                 src={album.hasArtwork ? albumArtworkUrl(album.id) : null}
                 label={album.title}
-                travelsAs={`album-${album.id}`}
                 {...cardOrigin(album.libraryId)}
                 className="w-full"
               />
@@ -75,7 +75,14 @@ const AlbumShelf = ({
               open,
               addingTo,
             )}
+            isPlaying={state.isPlaying && isPlayingFrom({ kind: 'album', id: album.id }, state)}
             onPlay={() => {
+              if (isPlayingFrom({ kind: 'album', id: album.id }, state)) {
+                player.toggle();
+
+                return;
+              }
+
               void fetchAlbum(album.id).then((read) => {
                 player.play(read.tracks, 0, {
                   source: { kind: 'album', id: album.id, name: album.title },

@@ -23,6 +23,7 @@ const HOVER_OPENS_MS = 120;
 const OPTION_ROW = cn(
   MENU.item,
   'relative z-10 text-text transition-colors duration-[var(--duration-fast)]',
+  'group/option',
 );
 
 const HOVER_CLOSES_MS = 220;
@@ -46,20 +47,33 @@ const chosenIn = (group: MenuGroup): string | null => {
 
 /**
  * What one choice in the menu says: a tick or a dot at the start of its row while it is in force,
- * the choice itself, and what more there is to say of it set quietly at the end.
+ * the choice itself, and what more there is to say of it set quietly at the end. A choice with an
+ * icon of its own shows the icon in place of the tick or dot, flush with the menu's heading, and says
+ * it is in force by the weight of its words and an icon that fills.
  *
  * @param option - The choice.
  * @param mark - Whether being chosen is shown with a tick, for one of many, or a dot, for the one.
  */
 const OptionText = ({ option, mark }: { option: MenuOption; mark: 'tick' | 'dot' }) => (
   <>
-    <span className={MENU.marker}>
-      <RadixMenu.ItemIndicator className="flex items-center justify-center">
-        {mark === 'tick' ? <Icon of={CheckIcon} size={14} /> : <span className={MENU.dot} />}
-      </RadixMenu.ItemIndicator>
-    </span>
+    {option.icon === undefined ? (
+      <span className={MENU.marker}>
+        <RadixMenu.ItemIndicator className="flex items-center justify-center">
+          {mark === 'tick' ? <Icon of={CheckIcon} size={14} /> : <span className={MENU.dot} />}
+        </RadixMenu.ItemIndicator>
+      </span>
+    ) : (
+      <span className={MENU.icon}>{option.icon}</span>
+    )}
 
-    <span className={MENU.itemLabel}>{option.label}</span>
+    <span
+      className={cn(
+        MENU.itemLabel,
+        option.icon === undefined ? '' : 'group-data-[state=checked]/option:font-semibold',
+      )}
+    >
+      {option.label}
+    </span>
 
     {option.detail === undefined ? null : <span className={MENU.detail}>{option.detail}</span>}
   </>

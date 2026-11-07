@@ -65,6 +65,7 @@ import { createHandOffWorker } from '@ValenceRequests/arrApps/handOff/createHand
 import { createArrImportRoutes } from '@ValenceRequests/arrImport/createArrImportRoutes';
 import { createArrImportService } from '@ValenceRequests/arrImport/createArrImportService';
 import type { ArrAppRecord } from '@ValenceRequests/arrApps/ArrAppRecord';
+import { createThreadedSearchReader } from '@ValenceRequests/cardigann/createThreadedSearchReader';
 import { z } from 'zod';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle', DIALECT);
@@ -186,6 +187,7 @@ const indexers = createIndexerService({
     fetch,
     pacer: createPacer(),
     definitions: definitions.definition,
+    readResults: createThreadedSearchReader(),
     site: createSiteClient({
       fetch,
       solver: solverWatch.watching(createSolver({ pool: sites })),

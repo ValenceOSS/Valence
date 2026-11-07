@@ -9,6 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { groupCopies } from '@ValenceScreens/library/groupCopies';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
@@ -160,6 +162,7 @@ const SearchArea = ({
     enabled: kind !== 'books' && kind !== 'music',
   });
 
+  const originOf = useOriginOf();
   const items = useMemo(
     () => (kind === 'books' || kind === 'music' ? [] : collapseToShows(found.data ?? [])),
     [found.data, kind],
@@ -210,7 +213,11 @@ const SearchArea = ({
 
   const people = wantsPeople ? (foundPeople.data ?? []) : [];
   const howMany =
-    items.length + books.length + music.albums.length + music.artists.length + people.length;
+    groupCopies(items, (media) => originOf(media.libraryId) === null).length +
+    books.length +
+    music.albums.length +
+    music.artists.length +
+    people.length;
 
   const isReading =
     libraries.isPending ||
@@ -330,13 +337,12 @@ const SearchArea = ({
           )}
         </header>
 
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={[kind, ...filters.selected].join(':')}
             variants={staggerVariants}
             initial="hidden"
             animate="shown"
-            exit="gone"
           >
             {libraries.isError || found.isError ? (
               <CouldNotRead

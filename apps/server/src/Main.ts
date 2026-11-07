@@ -112,6 +112,7 @@ import { foldStreamedFilms } from '@ValenceServer/streamSources/foldStreamedFilm
 import { withStreamedInputs } from '@ValenceServer/streamSources/withStreamedInputs';
 
 import { notStreamed } from '@ValenceServer/visibility/notStreamed';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
@@ -483,6 +484,8 @@ import { readNarrations } from '@ValenceServer/requests/audible/readNarrations';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { searchOpenLibrary } from '@ValenceServer/requests/openLibrary/searchOpenLibrary';
+import { readOpenLibraryAbout } from '@ValenceServer/requests/openLibrary/readOpenLibraryAbout';
+import type { OpenLibraryAbout } from '@ValenceServer/requests/openLibrary/readOpenLibraryAbout';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import type { OpenLibraryShelf } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { createMusicWeb } from '@ValenceServer/music/web/createMusicWeb';
@@ -556,6 +559,8 @@ import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
+
+const BOOK_COVERS_AFTER_MS = 60_000;
 
 const MonitorResourceSampleSchema = z.object({
   resources: z.object({
@@ -887,14 +892,16 @@ const countUsers = async (): Promise<number> => {
 };
 
 /**
- * How much disk the media itself takes, across every library. Reported beside what Valence has added to
- * it, since the useful question on the dashboard is which of the two is growing.
+ * How much disk the media itself takes, across this server's own libraries. Reported beside what
+ * Valence has added to it, since the useful question on the dashboard is which of the two is growing.
+ * A library kept from a linked server is left out, since its files are on that server's disk.
  */
 const readLibraryBytes = async (): Promise<number> => {
   const rows = await db
     .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)` })
     .from(mediaItem)
-    .where(and(isStillThere(), notStreamed(db, 'item')));
+    .innerJoin(library, eq(library.id, mediaItem.libraryId))
+    .where(and(isStillThere(), heldOnThisServer()));
 
   return Number(rows[0]?.total ?? 0);
 };
@@ -1391,6 +1398,29 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   picture: (url) => musicWeb.bytes(url),
 });
 
+/**
+ * Looks for the books on a shelf on Open Library in the background, keeping the cover there for
+ * each one surely matched, without holding up whatever asked.
+ *
+ * @param libraryId - The shelf, or every shelf where none is given.
+ */
+const matchBookCovers = (libraryId?: string): void => {
+  void bookService
+    .matchCovers(libraryId)
+    .then((matched) => {
+      if (matched > 0) {
+        log.info('catalogue', `matched ${matched.toString()} covers on Open Library`);
+      }
+    })
+    .catch((error: Error) => {
+      log.warn('catalogue', `matching covers on Open Library failed: ${error.message}`);
+    });
+};
+
+setTimeout(() => {
+  matchBookCovers();
+}, BOOK_COVERS_AFTER_MS);
+
 const partsOf = createPartsOf(db);
 
 const running: { plugins: PluginService | null } = { plugins: null };
@@ -1526,6 +1556,11 @@ const musicWeb = createMusicWeb({
     'en.wikipedia.org': 250,
     'graphql.anilist.co': 2100,
   },
+});
+
+const askedWeb = createMusicWeb({
+  userAgent: `Valence/${SERVER_VERSION} ( https://github.com/ValenceOSS/Valence )`,
+  spacingMs: { 'openlibrary.org': 1000, 'covers.openlibrary.org': 250 },
 });
 
 /**
@@ -2423,6 +2458,10 @@ const jobs = createJobQueue({
             isCancelled: () => jobs.isCancelled(jobId),
             onRead: async () => {
               await followUpReading(libraryService, libraryId, scanned?.kind);
+
+              if (scanned?.kind === 'books') {
+                matchBookCovers(libraryId);
+              }
             },
             onScanned: async (result) => {
               jobs.reportProgress(
@@ -3856,6 +3895,8 @@ const foundOnMusicBrainz = createAnswerKeeper<string | null>(CHARTS_LIVE_FOR_MS)
 
 const appleAlbums = createAnswerKeeper<AppleAlbumDetail | null>(CHARTS_LIVE_FOR_MS);
 
+const booksAbout = createAnswerKeeper<OpenLibraryAbout | null>(CHARTS_LIVE_FOR_MS);
+
 const bookSeriesFound = createAnswerKeeper<{
   asin: string;
   name: string;
@@ -3868,6 +3909,10 @@ const discovery: Discovery = {
   search: (searching) =>
     catalogueProvider.searchPages?.(searching) ?? Promise.resolve({ matches: [], hasMore: false }),
   genres: (kind) => catalogueProvider.genres?.(kind) ?? Promise.resolve([]),
+  personWork: (personId) =>
+    catalogueProvider.readPersonWork?.(personId) ?? Promise.resolve({ titles: [], timeline: [] }),
+  similarTitles: (externalId, kind) =>
+    catalogueProvider.readSimilarTitles?.(externalId, kind) ?? Promise.resolve([]),
   studios: () =>
     studioed.keep('studios', () => catalogueProvider.studios?.() ?? Promise.resolve([])),
   charts: () => charted.keep('charts', () => readDeezerCharts(musicWeb)),
@@ -3884,7 +3929,11 @@ const discovery: Discovery = {
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
     ),
   bookShelves: () => shelved.keep('books', () => readOpenLibraryShelves(musicWeb)),
-  searchBooks: (query) => searchOpenLibrary(musicWeb, query),
+  searchBooks: (query) => searchOpenLibrary(askedWeb, query),
+  aboutBook: (title, author) =>
+    booksAbout.keep(`${author ?? ''}\n${title}`, () =>
+      readOpenLibraryAbout(askedWeb, title, author),
+    ),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
   findBookSeries: (title, author) =>
     bookSeriesFound.keep(`${author ?? ''}\n${title}`, async () => {

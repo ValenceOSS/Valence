@@ -18,6 +18,7 @@ const SUMMARY = {
   detail: 'The best of Hip-Hop',
   trackCount: 1,
   coverAlbumIds: [],
+  faces: [],
 };
 
 beforeEach(() => {

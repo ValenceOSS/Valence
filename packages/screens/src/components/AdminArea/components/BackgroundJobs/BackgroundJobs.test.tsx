@@ -34,6 +34,7 @@ const monitor = (jobs: Job[]): Monitor => ({
     requestsMemoryBytes: null,
     loadAverage: 0,
     disks: [],
+    drives: [],
     graphics: null,
     graphicsNotes: [],
     artefacts: null,
@@ -126,7 +127,7 @@ describe('BackgroundJobs', () => {
     );
 
     expect(screen.getByText('Queued')).toHaveClass('bg-busy/15');
-    expect(screen.getAllByText('Running')[0]).toHaveClass('bg-busy/15');
+    expect(screen.getAllByText('Running')[0]?.parentElement).toHaveClass('bg-busy/15');
     expect(screen.getByText('Done')).toHaveClass('bg-success/15');
     expect(screen.getByText('Failed')).toHaveClass('bg-danger/15');
   });

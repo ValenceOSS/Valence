@@ -1,4 +1,8 @@
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
+import { readBookDocument } from '@ValenceCore/books/readBookDocument';
+import { typesetBlocksOf } from '@ValenceCore/books/typesetBlocksOf';
+import type { BookTextLine } from '@ValenceContracts/schemas/BookText';
+import { linesOf } from '@ValenceServer/books/linesOf';
 import { chapterHeardAt } from '@ValenceServer/books/chapterHeardAt';
 import type {
   Book,
@@ -103,6 +107,36 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
 
     readResource: (chapterId) =>
       Promise.resolve(chapterOf(chapterId)?.format === 'epub' ? bytes : null),
+
+    readText: (chapterId, from, isWithHtml, addressFor) => {
+      const documents = Object.entries(given.documents ?? {})
+        .filter(([key]) => key.startsWith(`${chapterId}:`))
+        .map(([key, document]) => ({
+          part: Number(key.slice(chapterId.length + 1)),
+          html: document.replace('{picture}', addressFor('picture.png')),
+        }))
+        .sort((one, other) => one.part - other.part);
+
+      if (documents.length === 0) {
+        return Promise.resolve(null);
+      }
+
+      const lines: BookTextLine[] = [
+        { kind: 'head', parts: documents.length },
+        ...[
+          ...documents.filter((one) => one.part >= from),
+          ...documents.filter((one) => one.part < from),
+        ].map((one): BookTextLine => ({
+          kind: 'part',
+          part: one.part,
+          blocks: typesetBlocksOf(readBookDocument(one.html)),
+          ...(isWithHtml ? { html: one.html } : {}),
+        })),
+        { kind: 'end', contents: [] },
+      ];
+
+      return Promise.resolve(linesOf(lines));
+    },
 
     readCover: (bookId) =>
       Promise.resolve(given.books.some((book) => book.id === bookId) ? bytes : null),
@@ -282,6 +316,7 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
     correct: (bookId) => Promise.resolve(given.books.some((one) => one.id === bookId)),
 
     forgetCorrection: (bookId) => Promise.resolve(given.books.some((one) => one.id === bookId)),
+    matchCovers: () => Promise.resolve(0),
   };
 };
 

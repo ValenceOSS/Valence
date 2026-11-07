@@ -74,6 +74,6 @@ describe('TitleBadges', () => {
       />,
     );
 
-    expect(screen.getByText(/^Contains Violence.+Strong language$/u)).toBeInTheDocument();
+    expect(screen.getByText('Contains violence and strong language')).toBeInTheDocument();
   });
 });

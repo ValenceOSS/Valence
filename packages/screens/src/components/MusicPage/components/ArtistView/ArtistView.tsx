@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { User as UserIcon } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Check as CheckIcon, Plus as PlusIcon, User as UserIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -13,6 +12,7 @@ import {
   artistImageUrl,
   setArtistFollowed,
 } from '@ValenceClient/music/fetchMusic';
+import { artistWhileReading } from '@ValenceClient/music/artistWhileReading';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
@@ -21,6 +21,7 @@ import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
 import { ArtistStory } from '@ValenceScreens/components/MusicPage/components/ArtistView/components/ArtistStory/ArtistStory';
 import type { ArtistViewProps } from './ArtistView.types';
 import { say } from '@ValenceI18n/say';
@@ -35,7 +36,10 @@ import { sayCount } from '@ValenceI18n/sayCount';
  */
 const ArtistView = ({ artistId }: ArtistViewProps) => {
   const cache = useQueryClient();
-  const asked = useQuery(musicQueries.artist(artistId));
+  const asked = useQuery({
+    ...musicQueries.artist(artistId),
+    placeholderData: () => artistWhileReading(cache, artistId),
+  });
   const { player } = useMusicPlayer();
   const [following, setFollowing] = useState<boolean | null>(null);
   const detail = asked.data;
@@ -83,14 +87,12 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
       <MusicHeader
         eyebrow={say('common.artist')}
         title={artist.name}
+        backdrop={picture}
+        isBackdropSharp={artist.hasImage}
         artwork={
-          <MusicArtwork
-            src={picture}
-            label={artist.name}
-            shape="round"
-            travelsAs={`artist-${artist.id}`}
-            className="w-full"
-          />
+          artist.hasImage ? undefined : (
+            <MusicArtwork src={picture} label={artist.name} shape="round" className="w-full" />
+          )
         }
         details={
           <span>
@@ -100,22 +102,16 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         }
         actions={
           <>
+            <PlayAndShuffle
+              tracks={popular}
+              source={source}
+              playLabel={say('common.play')}
+              shuffleLabel={say('common.shuffle')}
+            />
             <Button
-              variant="confirm"
-              size="lg"
-              isIconOnly
-              label={say('common.play')}
-              className="size-14"
-              disabled={popular.length === 0}
-              onClick={() => {
-                player.play(popular, 0, { source });
-              }}
-            >
-              <Icon of={PlayFilledIcon} size={24} />
-            </Button>
-            <Button
-              variant={isFollowed ? 'secondary' : 'ghost'}
-              size="md"
+              variant="ghost"
+              size="none"
+              label={isFollowed ? say('common.following') : say('common.follow')}
               isActive={isFollowed}
               onClick={() => {
                 const next = !isFollowed;
@@ -128,17 +124,26 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
                   }
 
                   void cache.invalidateQueries({ queryKey: musicQueries.artists(true).queryKey });
+                  void cache.invalidateQueries({
+                    queryKey: musicQueries.artist(artist.id).queryKey,
+                  });
                 });
               }}
             >
-              {isFollowed ? say('common.following') : say('common.follow')}
+              <Icon of={isFollowed ? CheckIcon : PlusIcon} size={20} />
             </Button>
           </>
         }
       />
 
       <div className="flex flex-col gap-12 pb-10">
-        {popular.length === 0 ? (
+        {asked.isPlaceholderData ? (
+          <div className={`flex flex-col gap-2 ${MUSIC_LANES.tracks}`}>
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : popular.length === 0 ? (
           <NothingHere
             of={UserIcon}
             title={say('screens.musicPage.artistView.nothingOfTheirsYouCanHear')}

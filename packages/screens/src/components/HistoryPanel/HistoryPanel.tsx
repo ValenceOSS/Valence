@@ -1,7 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { Bin as BinIcon, Check as CheckIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -22,6 +22,9 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { say } from '@ValenceI18n/say';
 import { notify } from '@ValenceUI/notify';
 
+const ONE_ACROSS = 100_000;
+const ROW_HEIGHT = 64;
+
 /**
  * Names something in the history that has since left the library, since a viewing outlives the file
  * it was of — the alternative is a row saying nothing at all.
@@ -40,7 +43,6 @@ const nameOf = (viewing: Viewing): string => viewing.title ?? say('common.noLong
  */
 const HistoryPanel = ({ now }: HistoryPanelProps) => {
   const [isClearing, setIsClearing] = useState(false);
-  const prefersReducedMotion = useReducedMotionConfig();
   const cache = useQueryClient();
 
   const asked = useInfiniteQuery(viewingQueries.history());
@@ -113,73 +115,80 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
 
   return (
     <div className="flex flex-col">
-      <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-        <AnimatePresence initial={false} mode="popLayout">
-          {entries.map((entry) => {
-            const name =
-              entry.kind === 'viewing' ? nameOf(entry.viewing) : entry.reading.book.title;
-            const isFinished =
-              entry.kind === 'viewing' ? entry.viewing.isFinished : entry.reading.isFinished;
+      <VirtualGrid
+        label={say('common.watchHistory')}
+        count={entries.length}
+        leastCardWidth={ONE_ACROSS}
+        rowHeight={ROW_HEIGHT}
+        gap={0}
+      >
+        {(at) => {
+          const entry = entries[at];
 
-            return (
-              <motion.li
-                key={entry.kind === 'viewing' ? entry.viewing.id : `book-${entry.reading.book.id}`}
-                layout={!(prefersReducedMotion ?? false)}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: prefersReducedMotion === true ? 0 : 0.18 }}
-                className="flex items-center gap-3 px-4 py-3"
-              >
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="truncate text-sm text-text-strong">{name}</span>
+          if (entry === undefined) {
+            return null;
+          }
 
-                  <span className="text-xs text-text-muted">
-                    {entry.kind === 'viewing' ? (
-                      entry.viewing.seriesTitle === null ? (
-                        say('screens.historyPanel.whenDurationWatched', {
-                          when: describeWhen(entry.at, now ?? new Date()),
-                          duration: formatDuration(entry.viewing.secondsWatched),
-                        })
-                      ) : (
-                        say('screens.historyPanel.seriesWhenDurationWatched', {
-                          series: entry.viewing.seriesTitle,
-                          when: describeWhen(entry.at, now ?? new Date()),
-                          duration: formatDuration(entry.viewing.secondsWatched),
-                        })
-                      )
+          const name = entry.kind === 'viewing' ? nameOf(entry.viewing) : entry.reading.book.title;
+          const isFinished =
+            entry.kind === 'viewing' ? entry.viewing.isFinished : entry.reading.isFinished;
+
+          return (
+            <div
+              key={entry.kind === 'viewing' ? entry.viewing.id : `book-${entry.reading.book.id}`}
+              role="listitem"
+              className="flex items-center gap-3 border-b border-[var(--surface-line)] px-4 py-3"
+            >
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="truncate text-sm text-text-strong">{name}</span>
+
+                <span className="text-xs text-text-muted">
+                  {entry.kind === 'viewing' ? (
+                    entry.viewing.seriesTitle === null ? (
+                      say('screens.historyPanel.whenDurationWatched', {
+                        when: describeWhen(entry.at, now ?? new Date()),
+                        duration: formatDuration(entry.viewing.secondsWatched),
+                      })
                     ) : (
-                      <>
-                        {describeWhen(entry.at, now ?? new Date())} ·{' '}
-                        {describeReadingPlace(entry.reading)}
-                      </>
-                    )}
-                  </span>
-                </div>
+                      say('screens.historyPanel.seriesWhenDurationWatched', {
+                        series: entry.viewing.seriesTitle,
+                        when: describeWhen(entry.at, now ?? new Date()),
+                        duration: formatDuration(entry.viewing.secondsWatched),
+                      })
+                    )
+                  ) : (
+                    <>
+                      {describeWhen(entry.at, now ?? new Date())} ·{' '}
+                      {describeReadingPlace(entry.reading)}
+                    </>
+                  )}
+                </span>
+              </div>
 
-                {isFinished ? (
-                  <Badge tone={STATUS_LOOK.done.tone}>
-                    <Icon of={CheckIcon} size={12} />
-                    {say('common.finished')}
-                  </Badge>
-                ) : null}
+              {isFinished ? (
+                <Badge tone={STATUS_LOOK.done.tone}>
+                  <Icon of={CheckIcon} size={12} />
+                  {say('common.finished')}
+                </Badge>
+              ) : null}
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto shrink-0"
-                  aria-label={say('common.forgetName', { name })}
-                  onClick={() => {
-                    void (entry.kind === 'viewing'
-                      ? forgetOne(entry.viewing.id)
-                      : forgetABook(entry.reading.book.id));
-                  }}
-                >
-                  <Icon of={BinIcon} size={16} />
-                </Button>
-              </motion.li>
-            );
-          })}
-        </AnimatePresence>
-      </ul>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto shrink-0"
+                aria-label={say('common.forgetName', { name })}
+                onClick={() => {
+                  void (entry.kind === 'viewing'
+                    ? forgetOne(entry.viewing.id)
+                    : forgetABook(entry.reading.book.id));
+                }}
+              >
+                <Icon of={BinIcon} size={16} />
+              </Button>
+            </div>
+          );
+        }}
+      </VirtualGrid>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--surface-line)] p-4">
         {hasMore ? (

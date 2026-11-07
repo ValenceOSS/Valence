@@ -51,7 +51,7 @@ const listAlbumsRoute = createRoute({
   summary: 'List the albums in every music library you can see',
   request: {
     query: z.object({
-      order: z.enum(['recent', 'title', 'year']).optional(),
+      order: z.enum(['recent', 'title', 'year', 'played']).optional(),
       limit: z.coerce.number().int().positive().max(500).optional(),
       offset: z.coerce.number().int().nonnegative().optional(),
     }),

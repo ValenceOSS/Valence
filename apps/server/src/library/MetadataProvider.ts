@@ -114,6 +114,16 @@ type CatalogueBrowsing = {
 
 type CatalogueSearching = { query: string; kind: 'tv' | 'movie'; page: number };
 
+type CatalogueCredit = CatalogueMatch & {
+  role: string | null;
+  episodeCount: number | null;
+};
+
+type CataloguePersonWork = {
+  titles: CatalogueMatch[];
+  timeline: CatalogueCredit[];
+};
+
 type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean; total?: number };
 
 type CatalogueDescription = {
@@ -202,6 +212,8 @@ type MetadataProvider = {
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   searchPages?: (searching: CatalogueSearching) => Promise<CataloguePaged>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
+  readPersonWork?: (personId: number) => Promise<CataloguePersonWork>;
+  readSimilarTitles?: (externalId: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   studios?: () => Promise<CatalogueStudio[]>;
   genres?: (kind: 'tv' | 'movie') => Promise<CatalogueGenre[]>;
   describeTitle?: (
@@ -307,6 +319,8 @@ export type {
   CatalogueDescription,
   CatalogueList,
   CatalogueMatch,
+  CatalogueCredit,
+  CataloguePersonWork,
   CataloguePaged,
   CatalogueSearching,
   MediaFacts,

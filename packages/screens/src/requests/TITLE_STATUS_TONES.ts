@@ -7,7 +7,8 @@ const TITLE_STATUS_TONES: Readonly<
 > = {
   library: { badge: 'success', meter: 'success', swatch: 'bg-success' },
   downloading: { badge: 'busy', meter: 'busy', swatch: 'bg-busy' },
-  missing: { badge: 'accent', meter: 'gap', swatch: 'bg-accent' },
+  queued: { badge: 'waiting', meter: 'quiet', swatch: 'bg-on-scrim/30' },
+  missing: { badge: 'warning', meter: 'gap', swatch: 'bg-highlight' },
   toApprove: { badge: 'highlight', meter: 'highlight', swatch: 'bg-highlight' },
   failed: { badge: 'danger', meter: 'danger', swatch: 'bg-danger' },
   notFollowed: { badge: 'quiet', meter: 'quiet', swatch: 'bg-on-scrim/50' },

@@ -1,7 +1,7 @@
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { seededShuffle } from './seededShuffle';
 import type { CatalogueSong } from '@ValenceServer/music/MusicService';
-import type { Mix } from './Mix';
+import type { Mix, MixFace } from './Mix';
 import type { PlayCount } from './MusicPlays';
 import { say } from '@ValenceI18n/say';
 
@@ -15,7 +15,17 @@ const ENOUGH_FOR_A_MIX = 20;
 
 const ENOUGH_FOR_A_LIST = 5;
 
-const MOST_DAILY = 4;
+const MOST_DAILY = 6;
+
+const MOST_STATIONS = 8;
+
+const STATION_LENGTH = 40;
+
+const STATION_OWN_SHARE = 0.4;
+
+const FACES = 3;
+
+const NAMED_IN_DETAIL = 3;
 
 const MOST_GENRES = 6;
 
@@ -75,10 +85,52 @@ const genreOfEachArtist = (songs: readonly CatalogueSong[]): Map<string, string>
 };
 
 /**
+ * The artists a mix is most made of, for its artwork, each with a cover of theirs from it.
+ *
+ * @param trackIds - The songs in the mix.
+ * @param byId - The songs there are.
+ * @param leadArtistId - The artist to put first whatever the count, for one it is named after.
+ * @returns The artists, the most of it first.
+ */
+const facesOf = (
+  trackIds: readonly string[],
+  byId: ReadonlyMap<string, CatalogueSong>,
+  leadArtistId: string | undefined,
+): MixFace[] => {
+  const tally = new Map<string, MixFace & { songs: number }>();
+
+  for (const trackId of trackIds) {
+    const song = byId.get(trackId);
+
+    for (const artist of song?.artists ?? []) {
+      const known = tally.get(artist.id);
+      const albumId = song?.hasArtwork === true ? song.albumId : null;
+
+      tally.set(artist.id, {
+        id: artist.id,
+        name: artist.name,
+        albumId: known?.albumId ?? albumId,
+        songs: (known?.songs ?? 0) + 1,
+      });
+    }
+  }
+
+  return [...tally.values()]
+    .sort(
+      (one, other) =>
+        Number(other.id === leadArtistId) - Number(one.id === leadArtistId) ||
+        other.songs - one.songs,
+    )
+    .slice(0, FACES + 1)
+    .map(({ id, name, albumId }) => ({ id, name, albumId }));
+};
+
+/**
  * The mixes Valence makes for one profile, from the music it may hear and what it has heard: a few
  * daily mixes, each a cluster of the artists it plays together with music like them it has not
- * heard; what it has had on repeat this month; what it played a lot and has let go quiet; and one
- * mix for each genre and each decade there is plenty of.
+ * heard; what it has had on repeat this month; what it played a lot and has let go quiet; a station
+ * for each artist it plays most, of them and the artists closest to them; and one mix for each genre
+ * and each decade there is plenty of. Each says which artists are most of it, for its artwork.
  *
  * Every mix is in an order that holds for the day and changes the next, from the seed. A mix with
  * too little in it to be worth playing is left out rather than made thin.
@@ -89,7 +141,7 @@ const genreOfEachArtist = (songs: readonly CatalogueSong[]): Map<string, string>
 const buildMixes = ({ songs, lately, overTheYear, liked, nowMs, seed }: MixMaterial): Mix[] => {
   const byId = new Map(songs.map((song) => [song.id, song]));
   const heardLately = new Map(lately.map((count) => [count.trackId, count]));
-  const mixes: Omit<Mix, 'coverAlbumIds'>[] = [];
+  const mixes: (Omit<Mix, 'coverAlbumIds' | 'faces'> & { leadArtistId?: string })[] = [];
 
   const onRepeat = lately
     .filter((count) => count.plays >= 2 && count.lastPlayedAtMs >= nowMs - 30 * DAY_MS)
@@ -197,6 +249,43 @@ const buildMixes = ({ songs, lately, overTheYear, liked, nowMs, seed }: MixMater
     });
   }
 
+  [...artistPlays]
+    .sort((one, other) => other[1] - one[1])
+    .slice(0, MOST_STATIONS)
+    .forEach(([artistId]) => {
+      const name = songs.flatMap((song) => song.artists).find((one) => one.id === artistId)?.name;
+      const own = songs.filter((song) => song.artists.some((one) => one.id === artistId));
+      const worksWith = new Set(
+        own.flatMap((song) => song.artists.map((one) => one.id)).filter((id) => id !== artistId),
+      );
+      const genre = genreOf.get(artistId);
+      const isCloseTo = (song: CatalogueSong) =>
+        song.artists.every((one) => one.id !== artistId) &&
+        song.artists.some(
+          (one) => worksWith.has(one.id) || (genre !== undefined && genreOf.get(one.id) === genre),
+        );
+      const keep = Math.round(STATION_LENGTH * STATION_OWN_SHARE);
+      const close = seededShuffle(songs.filter(isCloseTo), `${seed}:station:${artistId}`);
+      const chosen = seededShuffle(
+        [
+          ...seededShuffle(own, `${seed}:station-own:${artistId}`).slice(0, keep),
+          ...close.slice(0, STATION_LENGTH - Math.min(keep, own.length)),
+        ],
+        `${seed}:station-all:${artistId}`,
+      );
+
+      if (name !== undefined && close.length > 0 && chosen.length >= ENOUGH_FOR_A_MIX / 2) {
+        mixes.push({
+          id: `station-${artistId}`,
+          kind: 'station',
+          title: name,
+          detail: '',
+          leadArtistId: artistId,
+          trackIds: chosen.map((song) => song.id),
+        });
+      }
+    });
+
   const byGenre = new Map<string, CatalogueSong[]>();
 
   for (const song of songs) {
@@ -255,18 +344,32 @@ const buildMixes = ({ songs, lately, overTheYear, liked, nowMs, seed }: MixMater
       });
     });
 
-  return mixes.map((mix) => ({
-    ...mix,
-    coverAlbumIds: [
-      ...new Set(
-        mix.trackIds.flatMap((trackId) => {
-          const song = byId.get(trackId);
+  return mixes.map(({ leadArtistId, ...mix }) => {
+    const faces = facesOf(mix.trackIds, byId, leadArtistId);
+    const named = faces
+      .filter((face) => mix.kind !== 'station' || face.id !== leadArtistId)
+      .slice(0, NAMED_IN_DETAIL);
 
-          return song === undefined || !song.hasArtwork ? [] : [song.albumId];
-        }),
-      ),
-    ].slice(0, 4),
-  }));
+    return {
+      ...mix,
+      detail:
+        mix.kind !== 'onRepeat' && mix.kind !== 'rediscover' && named.length > 0
+          ? say('server.music.mixes.withNames', {
+              names: named.map((face) => face.name).join(', '),
+            })
+          : mix.detail,
+      faces,
+      coverAlbumIds: [
+        ...new Set(
+          mix.trackIds.flatMap((trackId) => {
+            const song = byId.get(trackId);
+
+            return song === undefined || !song.hasArtwork ? [] : [song.albumId];
+          }),
+        ),
+      ].slice(0, 4),
+    };
+  });
 };
 
 export type { MixMaterial };

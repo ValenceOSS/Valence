@@ -3,7 +3,8 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
-import { AFloatingTabs } from '@ValenceMobile/components/TheTabs/components/AFloatingTabs/AFloatingTabs';
+import { TabBarMinimizeProvider } from 'expo-glass-tabs';
+import { AGlassTabs } from '@ValenceMobile/components/TheTabs/components/AGlassTabs/AGlassTabs';
 import { ATabFace } from '@ValenceMobile/components/TheTabs/components/ATabFace/ATabFace';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
@@ -28,7 +29,8 @@ const styles = StyleSheet.create({
  *
  * On a phone with liquid glass, and on every Android phone, the tabs are a bar of our own floating
  * over the screen — laid on the glass where there is glass — and the screen runs on underneath with
- * room at its foot to scroll clear. An older iPhone has a strip of our own beneath the screen. Anything kept above the tabs is given room the same way, so the screen
+ * room at its foot to scroll clear. The bar is expo-glass-tabs', which tucks in to its icons alone as
+ * a page scrolls down and comes back out as it scrolls up, reaches its top or the tab changes. An older iPhone has a strip of our own beneath the screen. Anything kept above the tabs is given room the same way, so the screen
  * scrolls clear of that too, and is only spaced off the tabs while it shows anything.
  *
  * @param tabs - The parts there are.
@@ -69,17 +71,20 @@ const TheTabs = ({
   if (Platform.OS === 'android' || hasLiquidGlass()) {
     return (
       <View style={[styles.whole, { backgroundColor: colours.surface }]}>
-        <SafeAreaInsetsContext.Provider value={{ ...room, bottom: barHeight + clearOfAbove }}>
-          {children}
-        </SafeAreaInsetsContext.Provider>
-        <AFloatingTabs
-          tabs={tabs}
-          value={value}
-          onSelect={onSelect}
-          onMeasure={setBarHeight}
-          isFaceArriving={isFaceArriving}
-          {...(onFaceAt === undefined ? {} : { onFaceAt })}
-        />
+        <TabBarMinimizeProvider>
+          <AGlassTabs
+            tabs={tabs}
+            value={value}
+            onSelect={onSelect}
+            onMeasure={setBarHeight}
+            isFaceArriving={isFaceArriving}
+            {...(onFaceAt === undefined ? {} : { onFaceAt })}
+          >
+            <SafeAreaInsetsContext.Provider value={{ ...room, bottom: barHeight + clearOfAbove }}>
+              {children}
+            </SafeAreaInsetsContext.Provider>
+          </AGlassTabs>
+        </TabBarMinimizeProvider>
         {above === undefined ? null : (
           <View
             style={[styles.above, { bottom: barHeight + ABOVE_THE_BAR }]}

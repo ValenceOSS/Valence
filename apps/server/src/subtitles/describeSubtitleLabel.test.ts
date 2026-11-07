@@ -15,7 +15,7 @@ describe('describeSubtitleLabel', () => {
   });
 
   it('falls back to the code it was given', () => {
-    expect(describeSubtitleLabel('tlh', false, false)).toBe('TLH');
+    expect(describeSubtitleLabel('xyz', false, false)).toBe('XYZ');
   });
 
   it('admits when it does not know the language', () => {

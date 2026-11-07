@@ -8,10 +8,18 @@ import { TitleVersions } from './components/TitleVersions/TitleVersions';
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from '@tanstack/react-router';
+import { TomatoMark } from '@ValenceUI/TomatoMark';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
+import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
+import { TitleBadges } from '@ValenceScreens/components/TitleBadges/TitleBadges';
+import { HOME, writeLocation } from '@ValenceClient/navigation/readLocation';
+import { showIdOf } from '@ValenceClient/library/showIdOf';
+import { MediaDetailDialog } from '@ValenceScreens/components/MediaDetailDialog/MediaDetailDialog';
+import { ShowDialog } from '@ValenceScreens/components/ShowDialog/ShowDialog';
 import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import {
   ChevronLeft as ChevronLeftIcon,
-  Star as StarIcon,
   MoveLeft as MoveLeftIcon,
   MoveRight as MoveRightIcon,
 } from '@keyline-icons/react';
@@ -62,9 +70,18 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { MediaTitle } from '@ValenceScreens/components/AdminArea/components/MediaPanel/MediaTitle.types';
 import type { MediaTitlePageProps } from './MediaTitlePage.types';
 import type { ReactNode } from 'react';
-import { Lock as LockFilledIcon, Unlink as UnlinkFilledIcon } from '@keyline-icons/react/fill';
+import {
+  AppWindow as AppWindowFilledIcon,
+  ArrowUpRight as ArrowUpRightFilledIcon,
+  Hash as HashFilledIcon,
+  Lock as LockFilledIcon,
+  Unlock as UnlockFilledIcon,
+  RefreshCw as RefreshCwFilledIcon,
+  Unlink as UnlinkFilledIcon,
+  Wrench as WrenchFilledIcon,
+} from '@keyline-icons/react/fill';
 import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
-import type { Library } from '@ValenceContracts/schemas/Library';
+import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
 import { MediaTitleHero } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/MediaTitlePage/components/MediaTitleHero/MediaTitleHero';
 import { FolderView } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FolderView';
@@ -180,6 +197,28 @@ const MediaTitlePage = ({
   } | null>(null);
   const cache = useQueryClient();
   const metadata = useQuery(adminQueries.titleMetadata(title.lead.id, 'title'));
+  const router = useRouter({ warn: false });
+  const fields = metadata.data?.fields;
+  const wordsOf = (field: 'genres' | 'tags'): string[] => {
+    const value = fields?.[field]?.value;
+
+    return Array.isArray(value)
+      ? value.filter((word): word is string => typeof word === 'string')
+      : [];
+  };
+  const words = [...wordsOf('genres'), ...wordsOf('tags')];
+  const detail = useQuery(libraryQueries.detail(title.lead.id));
+  const tomato = detail.data?.metadata.rottenTomatoes ?? null;
+  const showId = title.kind === 'series' ? showIdOf(title.lead) : null;
+  const [isInTheApp, setIsInTheApp] = useState(false);
+  const shows = useQuery({
+    ...libraryQueries.shows(title.libraryId),
+    enabled: isInTheApp && title.kind === 'series',
+  });
+  const shownShow = shows.data?.find((one) => one.id === showId) ?? null;
+  const play = (media: MediaSummary) => {
+    void router.navigate({ href: writeLocation({ ...HOME, playing: media.id }) });
+  };
   const { change } = useTitleChange(title.lead.id, 'title');
   const tabs = TITLE_TABS.filter(
     (one) =>
@@ -321,6 +360,12 @@ const MediaTitlePage = ({
             state.source !== 'locked'
           );
         });
+  const locked =
+    metadata.data === undefined
+      ? []
+      : FIELDS_OF_KIND[metadata.data.subject.kind].filter(
+          (field) => metadata.data.fields[field]?.source === 'locked',
+        );
   const moreActions = [
     [
       ...(unlocked.length === 0
@@ -334,6 +379,25 @@ const MediaTitlePage = ({
                 void change(
                   { lock: unlocked },
                   say('screens.adminArea.mediaTitlePage.lockedEveryField'),
+                ).then((outcome) => {
+                  if (!outcome.isSaved) {
+                    notify.failed(outcome.reason);
+                  }
+                });
+              },
+            },
+          ]),
+      ...(locked.length === 0
+        ? []
+        : [
+            {
+              id: 'unlock',
+              label: say('screens.adminArea.mediaPanel.unlockAllFields'),
+              icon: <Icon of={UnlockFilledIcon} size={15} />,
+              onChoose: () => {
+                void change(
+                  { reset: locked },
+                  say('screens.adminArea.mediaTitlePage.unlockedEveryField'),
                 ).then((outcome) => {
                   if (!outcome.isSaved) {
                     notify.failed(outcome.reason);
@@ -359,15 +423,12 @@ const MediaTitlePage = ({
       group.filter(
         (one) =>
           one.id !== 'wrong-match' &&
-          one.id !== 'artwork' &&
           one.id !== 'refresh' &&
           !(title.kind === 'film' && FILE_ONLY.includes(one.id)),
       ),
     ),
   ].filter((group) => group.length > 0);
-  const best = sharpestStepOf(title.lead)?.label ?? null;
   const match = describeMatch(title);
-  const range = describeRange(title.lead.videoRange);
   const totalBytes = leaves.reduce((sum, leaf) => sum + (leaf.lead.sizeBytes ?? 0), 0);
   const filesWord = say('common.files');
   const nameOfLeaf = (leaf: MediaTitle) =>
@@ -696,12 +757,13 @@ const MediaTitlePage = ({
           <>
             <Button
               variant="secondary"
-              size="md"
+              size="sm"
               onClick={() => {
                 setIsNumbering(true);
               }}
             >
               {say('screens.adminArea.episodeNumberDialog.changeTheEpisode')}
+              <Icon of={HashFilledIcon} size={14} />
             </Button>
             <EpisodeNumberDialog
               key={`${episodeId}-${isNumbering.toString()}`}
@@ -718,17 +780,18 @@ const MediaTitlePage = ({
               <Button
                 key={one.id}
                 variant="secondary"
-                size="md"
+                size="sm"
                 disabled={one.isDisabled === true}
                 onClick={one.onChoose}
               >
                 {one.label}
+                {one.icon}
               </Button>
             ))}
             {groups.length === 0 ? null : (
               <ActionMenu
                 label={say('common.actionsForName', { name })}
-                size="md"
+                size="sm"
                 groups={groups.map((items) => ({ items }))}
               />
             )}
@@ -855,12 +918,13 @@ const MediaTitlePage = ({
             <>
               <Button
                 variant="secondary"
-                size="md"
+                size="sm"
                 onClick={() => {
                   setIsSourcing(true);
                 }}
               >
                 {say('screens.adminArea.seasonSourceDialog.fixSeasonMatch')}
+                <Icon of={WrenchFilledIcon} size={14} />
               </Button>
               <SeasonSourceDialog
                 key={`${seasonFile}-${isSourcing.toString()}`}
@@ -967,33 +1031,53 @@ const MediaTitlePage = ({
 
         <MediaTitleHero
           name={title.name}
-          aside={title.year === null ? null : title.year.toString()}
+          aside={null}
           posterUrl={
             title.posterFrom === null
               ? null
               : artworkUrl(title.posterFrom, 'poster', { size: 'medium' })
           }
+          backdropUrl={
+            title.posterFrom === null
+              ? null
+              : artworkUrl(title.posterFrom, 'backdrop', { isOfTitle: title.kind === 'series' })
+          }
           badges={
-            <>
-              {title.isMatched ? null : (
-                <Badge size="sm" tone="warning">
-                  {say('screens.adminArea.mediaPanel.unmatched')}
-                </Badge>
+            <span className="flex w-full flex-col gap-2.5">
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <MediaFacts
+                  media={{ ...title.lead, sizeBytes: totalBytes }}
+                  hasRuntime={title.kind !== 'series'}
+                  hasSize
+                  size="base"
+                  tone="muted"
+                />
+                {tomato === null ? null : (
+                  <span className="flex items-center gap-1.5 text-base tabular-nums text-text-muted">
+                    <TomatoMark score={tomato} />
+                    <FormattedNumber value={tomato} suffix="%" />
+                  </span>
+                )}
+              </span>
+
+              <span className="flex flex-wrap items-center gap-2">
+                {title.isMatched ? null : (
+                  <Badge size="sm" tone="warning">
+                    {say('screens.adminArea.mediaPanel.unmatched')}
+                  </Badge>
+                )}
+                {isRefreshing ? (
+                  <Badge size="sm" tone="busy">
+                    {say('screens.adminArea.mediaTitlePage.refreshing')}
+                  </Badge>
+                ) : null}
+                <TitleBadges detail={detail.data ?? null} isBrief />
+              </span>
+
+              {words.length === 0 ? null : (
+                <span className="text-sm text-text-muted">{words.join(' · ')}</span>
               )}
-              {isRefreshing ? (
-                <Badge size="sm" tone="busy">
-                  {say('screens.adminArea.mediaTitlePage.refreshing')}
-                </Badge>
-              ) : null}
-              {best === null ? null : <Badge size="sm">{best}</Badge>}
-              {range === null ? null : <Badge size="sm">{range}</Badge>}
-              {title.lead.rating === null || title.lead.rating === undefined ? null : (
-                <Badge size="sm">
-                  <Icon of={StarIcon} size={12} />
-                  {title.lead.rating.toFixed(1)}
-                </Badge>
-              )}
-            </>
+            </span>
           }
           facts={[
             ...(library === null ? [] : [{ label: say('common.library'), value: library.name }]),
@@ -1011,34 +1095,49 @@ const MediaTitlePage = ({
           actions={
             <>
               {fix === undefined ? null : (
-                <Button variant="secondary" size="md" onClick={fix.onChoose}>
+                <Button variant="secondary" size="sm" onClick={fix.onChoose}>
                   {say('screens.adminArea.mediaTitlePage.fixMatch')}
+                  <Icon of={WrenchFilledIcon} size={14} />
                 </Button>
               )}
               <Button
                 variant="secondary"
-                size="md"
+                size="sm"
                 onClick={() => {
                   setIsRefreshOpen(true);
                 }}
               >
                 {say('screens.adminArea.refreshTitleDialog.refresh')}
+                <Icon of={RefreshCwFilledIcon} size={14} />
               </Button>
+              {title.kind === 'series' && showId === null ? null : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setIsInTheApp(true);
+                  }}
+                >
+                  {say('screens.adminArea.mediaTitlePage.showInTheApp')}
+                  <Icon of={AppWindowFilledIcon} size={14} />
+                </Button>
+              )}
               {catalogueEntry === null || onOpenInCatalogue === undefined ? null : (
                 <Button
                   variant="secondary"
-                  size="md"
+                  size="sm"
                   onClick={() => {
                     onOpenInCatalogue({ tab: catalogueEntry.tab, title: catalogueEntry.key });
                   }}
                 >
                   {say('screens.adminArea.mediaTitlePage.openInCatalogue')}
+                  <Icon of={ArrowUpRightFilledIcon} size={14} />
                 </Button>
               )}
               {moreActions.length === 0 ? null : (
                 <ActionMenu
                   label={say('common.moreForName', { name: title.name })}
-                  size="md"
+                  size="sm"
                   groups={moreActions.map((items) => ({ items }))}
                 />
               )}
@@ -1066,10 +1165,8 @@ const MediaTitlePage = ({
               ]}
             />
           }
-        />
-
-        <TabPanel value="details" travel={travel}>
-          <div className="flex flex-col gap-4">
+        >
+          <TabPanel value="details" travel={travel}>
             <TitleDetails
               mediaId={title.lead.id}
               scope="title"
@@ -1077,174 +1174,181 @@ const MediaTitlePage = ({
               onShowHistory={() => {
                 moveTo({ ...NOWHERE, tab: 'history' });
               }}
+              {...(title.kind === 'series' && title.lead.seriesId === null
+                ? {}
+                : {
+                    after: {
+                      label: say('common.collections'),
+                      content: (
+                        <TitleCollections
+                          subject={
+                            title.kind === 'series' && title.lead.seriesId !== null
+                              ? { seriesId: title.lead.seriesId }
+                              : { mediaItemId: title.lead.id }
+                          }
+                          name={title.name}
+                        />
+                      ),
+                    },
+                  })}
             />
-            {title.kind === 'series' && title.lead.seriesId === null ? null : (
-              <TitleCollections
-                subject={
-                  title.kind === 'series' && title.lead.seriesId !== null
-                    ? { seriesId: title.lead.seriesId }
-                    : { mediaItemId: title.lead.id }
-                }
-                name={title.name}
-              />
-            )}
-          </div>
-        </TabPanel>
+          </TabPanel>
 
-        {title.kind === 'series' ? (
-          <TabPanel value="seasons" travel={travel}>
-            <div className="flex flex-col gap-4">
-              <EpisodeOrderPicker mediaId={title.lead.id} onChanged={follow} />
-              <SeasonList
-                seasons={seasons}
-                {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
-                actionsOf={(season) =>
-                  fileOfSeason(season) === null
-                    ? []
-                    : [
-                        {
-                          id: 'edit',
-                          label: say('screens.adminArea.mediaTitlePage.openTheSeasonsPage'),
-                          onChoose: () => {
-                            openSeasonPage(season.season);
+          {title.kind === 'series' ? (
+            <TabPanel value="seasons" travel={travel}>
+              <div className="flex flex-col gap-4">
+                <EpisodeOrderPicker mediaId={title.lead.id} onChanged={follow} />
+                <SeasonList
+                  seasons={seasons}
+                  {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+                  actionsOf={(season) =>
+                    fileOfSeason(season) === null
+                      ? []
+                      : [
+                          {
+                            id: 'edit',
+                            label: say('screens.adminArea.mediaTitlePage.openTheSeasonsPage'),
+                            onChoose: () => {
+                              openSeasonPage(season.season);
+                            },
                           },
+                        ]
+                  }
+                  onOpenEpisode={openEpisode}
+                  openSeason={at.season}
+                  onOpenSeason={(season) => {
+                    moveTo({ ...NOWHERE, tab: 'seasons', season });
+                  }}
+                />
+              </div>
+            </TabPanel>
+          ) : null}
+
+          <TabPanel value="people" travel={travel}>
+            <TitlePeople
+              mediaId={title.lead.id}
+              onShowHistory={() => {
+                moveTo({ ...NOWHERE, tab: 'history' });
+              }}
+            />
+          </TabPanel>
+
+          {title.isMatched ? (
+            <TabPanel value="artwork" travel={travel}>
+              <PanelCard title={say('screens.adminArea.artworkChooser.picturesOfTheTitle')}>
+                <ArtworkChooser
+                  subject={{
+                    mediaId: title.lead.id,
+                    name: title.name,
+                    isSeries: title.kind === 'series',
+                    mediaIds: [...leafIds],
+                  }}
+                  onChanged={follow}
+                />
+              </PanelCard>
+            </TabPanel>
+          ) : null}
+
+          <TabPanel value="files" travel={travel}>
+            <div className="flex flex-col gap-4">
+              {title.kind === 'film' && title.parts.length > 1 ? (
+                <TitleVersions
+                  versions={title.parts}
+                  paths={paths}
+                  {...(onCorrect === undefined
+                    ? {}
+                    : {
+                        onSplit: (version: MediaTitle) => {
+                          onCorrect(version.lead);
                         },
-                      ]
-                }
-                onOpenEpisode={openEpisode}
-                openSeason={at.season}
-                onOpenSeason={(season) => {
-                  moveTo({ ...NOWHERE, tab: 'seasons', season });
+                      })}
+                />
+              ) : null}
+              {title.kind === 'film' ? <SkipMarkers mediaId={title.lead.id} /> : null}
+              <ExtraChoiceDialog
+                key={markingExtra?.mediaId ?? 'none'}
+                file={markingExtra}
+                title={{ mediaId: title.lead.id, name: title.name }}
+                onClose={() => {
+                  setMarkingExtra(null);
+                }}
+                onChanged={(jobId) => {
+                  follow(jobId);
+                  onFilesChanged?.();
                 }}
               />
+              <PanelCard title={filesWord} isFlush>
+                {place === null ? (
+                  <DataTable
+                    label={filesWord}
+                    columns={fileColumns}
+                    rows={leaves}
+                    getRowId={(leaf) => leaf.id}
+                    pageSize={25}
+                  />
+                ) : (
+                  <FolderView
+                    key={place.folder}
+                    libraries={libraries}
+                    mayDelete={mayManageFiles}
+                    root={place.folder}
+                    onChanged={() => {
+                      onFilesChanged?.();
+                    }}
+                    onScan={(scanned) => {
+                      onScan?.(scanned);
+                    }}
+                    hidesTitles
+                    keeps={keepsHere}
+                    columns={mediaColumns}
+                    actionsOf={mediaActionsOf}
+                  />
+                )}
+              </PanelCard>
+
+              {pastReencodes.length === 0 ? null : (
+                <PanelCard title={say('screens.adminArea.mediaTitlePage.reEncodes')} isFlush>
+                  <ul className="flex flex-col divide-y divide-[color-mix(in_oklab,var(--color-text)_6%,transparent)] px-5">
+                    {pastReencodes.map((one) => (
+                      <li
+                        key={one.id}
+                        className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                      >
+                        <span className="flex min-w-0 flex-col">
+                          <span className="truncate text-text">
+                            {one.seriesTitle === null
+                              ? one.title
+                              : `${one.seriesTitle} · ${one.title}`}
+                          </span>
+                          <span className="text-xs text-text-muted">
+                            {say('screens.adminArea.mediaTitlePage.askedWhen', {
+                              when: describeSince(one.askedAt, Date.now()),
+                            })}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-4 text-text-muted">
+                          <span className="tabular-nums">
+                            {formatBytes(one.originalSizeBytes)} →{' '}
+                            {one.producedBytes === null ? '…' : formatBytes(one.producedBytes)}
+                          </span>
+                          <Badge size="sm">{describeReencodeState(one.state)}</Badge>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </PanelCard>
+              )}
             </div>
           </TabPanel>
-        ) : null}
 
-        <TabPanel value="people" travel={travel}>
-          <TitlePeople
-            mediaId={title.lead.id}
-            onShowHistory={() => {
-              moveTo({ ...NOWHERE, tab: 'history' });
-            }}
-          />
-        </TabPanel>
-
-        {title.isMatched ? (
-          <TabPanel value="artwork" travel={travel}>
-            <PanelCard title={say('screens.adminArea.artworkChooser.picturesOfTheTitle')}>
-              <ArtworkChooser
-                subject={{
-                  mediaId: title.lead.id,
-                  name: title.name,
-                  isSeries: title.kind === 'series',
-                  mediaIds: [...leafIds],
-                }}
-                onChanged={follow}
-              />
-            </PanelCard>
-          </TabPanel>
-        ) : null}
-
-        <TabPanel value="files" travel={travel}>
-          <div className="flex flex-col gap-4">
-            {title.kind === 'film' && title.parts.length > 1 ? (
-              <TitleVersions
-                versions={title.parts}
-                paths={paths}
-                {...(onCorrect === undefined
-                  ? {}
-                  : {
-                      onSplit: (version: MediaTitle) => {
-                        onCorrect(version.lead);
-                      },
-                    })}
-              />
-            ) : null}
-            {title.kind === 'film' ? <SkipMarkers mediaId={title.lead.id} /> : null}
-            <ExtraChoiceDialog
-              key={markingExtra?.mediaId ?? 'none'}
-              file={markingExtra}
-              title={{ mediaId: title.lead.id, name: title.name }}
-              onClose={() => {
-                setMarkingExtra(null);
-              }}
-              onChanged={(jobId) => {
-                follow(jobId);
-                onFilesChanged?.();
-              }}
+          <TabPanel value="history" travel={travel}>
+            <TitleHistory
+              mediaId={title.lead.id}
+              scope="title"
+              kind={title.kind === 'series' ? 'show' : 'film'}
             />
-            <PanelCard title={filesWord} isFlush>
-              {place === null ? (
-                <DataTable
-                  label={filesWord}
-                  columns={fileColumns}
-                  rows={leaves}
-                  getRowId={(leaf) => leaf.id}
-                  pageSize={25}
-                />
-              ) : (
-                <FolderView
-                  key={place.folder}
-                  libraries={libraries}
-                  mayDelete={mayManageFiles}
-                  root={place.folder}
-                  onChanged={() => {
-                    onFilesChanged?.();
-                  }}
-                  onScan={(scanned) => {
-                    onScan?.(scanned);
-                  }}
-                  hidesTitles
-                  keeps={keepsHere}
-                  columns={mediaColumns}
-                  actionsOf={mediaActionsOf}
-                />
-              )}
-            </PanelCard>
-
-            {pastReencodes.length === 0 ? null : (
-              <PanelCard title={say('screens.adminArea.mediaTitlePage.reEncodes')} isFlush>
-                <ul className="flex flex-col divide-y divide-[color-mix(in_oklab,var(--color-text)_6%,transparent)] px-5">
-                  {pastReencodes.map((one) => (
-                    <li
-                      key={one.id}
-                      className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-                    >
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-text">
-                          {one.seriesTitle === null
-                            ? one.title
-                            : `${one.seriesTitle} · ${one.title}`}
-                        </span>
-                        <span className="text-xs text-text-muted">
-                          {say('screens.adminArea.mediaTitlePage.askedWhen', {
-                            when: describeSince(one.askedAt, Date.now()),
-                          })}
-                        </span>
-                      </span>
-                      <span className="flex items-center gap-4 text-text-muted">
-                        <span className="tabular-nums">
-                          {formatBytes(one.originalSizeBytes)} →{' '}
-                          {one.producedBytes === null ? '…' : formatBytes(one.producedBytes)}
-                        </span>
-                        <Badge size="sm">{describeReencodeState(one.state)}</Badge>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </PanelCard>
-            )}
-          </div>
-        </TabPanel>
-
-        <TabPanel value="history" travel={travel}>
-          <TitleHistory
-            mediaId={title.lead.id}
-            scope="title"
-            kind={title.kind === 'series' ? 'show' : 'film'}
-          />
-        </TabPanel>
+          </TabPanel>
+        </MediaTitleHero>
       </motion.div>
 
       <ConfirmDialog
@@ -1281,6 +1385,24 @@ const MediaTitlePage = ({
         }}
         onStarted={follow}
       />
+
+      {title.kind === 'series' ? (
+        <ShowDialog
+          show={isInTheApp ? shownShow : null}
+          onClose={() => {
+            setIsInTheApp(false);
+          }}
+          onPlay={play}
+        />
+      ) : (
+        <MediaDetailDialog
+          media={isInTheApp ? title.lead : null}
+          onClose={() => {
+            setIsInTheApp(false);
+          }}
+          onPlay={play}
+        />
+      )}
     </Tabs>
   );
 };

@@ -72,6 +72,7 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  *   half a second after the handle has moved is describing the past.
  * @param tone - Whether it sits on the page, over video, or on a pane of glass whose colour is the
  *   page's own, where the page's raised surface would not show.
+ * @param isSlim - Whether to draw a thin line with a small round handle, for a player's own bar.
  * @param isDisabled - Whether it can be moved at all, for a value somebody else is in charge of.
  * @param revealsThumb - Whether the handle stays out of sight until a pointer is over the track, for a
  *   bar that should read as a line of progress until somebody reaches for it. It stays while being
@@ -93,6 +94,7 @@ const Slider = ({
   renderPreview,
   valueLabel,
   tone = 'default',
+  isSlim = false,
   isDisabled = false,
   revealsThumb = false,
   stretches = [],
@@ -192,7 +194,9 @@ const Slider = ({
         setIsOnHandle(false);
       }}
       className={cn(
-        'block size-3.5 w-8 rounded-full shadow outline-none select-none',
+        isSlim
+          ? 'block size-3 rounded-full shadow outline-none select-none'
+          : 'block size-3.5 w-8 rounded-full shadow outline-none select-none',
         'transition-[scale,opacity] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
         'motion-reduce:transition-none hover-hover:hover:scale-110 focus-visible:focus-ring',
         revealsThumb && !isDragging
@@ -277,7 +281,9 @@ const Slider = ({
         <RadixSlider.Track
           ref={trackRef}
           className={cn(
-            'relative h-1.5 w-full grow overflow-hidden rounded-full select-none',
+            isSlim
+              ? 'relative h-[3px] w-full grow overflow-hidden rounded-full select-none'
+              : 'relative h-1.5 w-full grow overflow-hidden rounded-full select-none',
             TRACK_CLASSES[tone],
           )}
         >

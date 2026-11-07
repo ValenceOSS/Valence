@@ -1,0 +1,101 @@
+import { describe, expect, it } from 'vitest';
+import { buildSearchRequests } from './buildSearchRequests';
+import { createCategoryMap } from './createCategoryMap';
+import { createThreadedSearchReader } from './createThreadedSearchReader';
+import { queryVariables } from './queryVariables';
+import { readDefinition } from './readDefinition';
+import { readSearchResults } from './readSearchResults';
+
+const NOW = Date.parse('2026-09-19T12:00:00.000Z');
+
+const INDEXER = { id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Example' };
+
+const DEFINITION = readDefinition(`id: example
+name: Example
+links: [https://example.org/]
+caps:
+  categorymappings:
+    - {id: 1, cat: Movies/HD, desc: "Films"}
+  modes:
+    search: [q]
+type: public
+search:
+  paths:
+    - path: search/{{ .Keywords }}/
+  rows:
+    selector: table.results tr:has(a.title)
+  fields:
+    category:
+      text: 1
+    title:
+      selector: a.title
+    details:
+      selector: a.title
+      attribute: href
+    download:
+      selector: a.dl
+      attribute: href
+    size:
+      selector: td.size
+    seeders:
+      selector: td.se
+    leechers:
+      selector: td.le
+    date:
+      text: now
+`);
+
+const BODY = `<table class="results">
+  <tr>
+    <td><a class="title" href="/torrent/7/">Dune.2021.1080p</a></td>
+    <td><a class="dl" href="/dl/7.torrent">get</a></td>
+    <td class="size">8.5 GB</td><td class="se">12</td><td class="le">3</td>
+  </tr>
+</table>`;
+
+/**
+ * The page the test definition asks for, as the site answered it.
+ */
+const page = () => {
+  if (DEFINITION === null) {
+    throw new Error('The test definition does not read.');
+  }
+
+  const [request] = buildSearchRequests({
+    definition: DEFINITION,
+    variables: { ...queryVariables({ query: 'dune' }), '.Config.sitelink': 'https://example.org/' },
+    categories: createCategoryMap(DEFINITION.caps),
+    asked: [],
+    siteLink: 'https://example.org/',
+    nowMs: NOW,
+  });
+
+  if (request === undefined) {
+    throw new Error('The test definition makes no request.');
+  }
+
+  return { definition: DEFINITION, request, body: BODY, indexer: INDEXER, nowMs: NOW };
+};
+
+describe('createThreadedSearchReader', () => {
+  it('reads a page on a thread into the same releases as reading it here', async () => {
+    const asked = page();
+    const read = createThreadedSearchReader(1);
+
+    expect(await read(asked)).toEqual(
+      readSearchResults({ ...asked, categories: createCategoryMap(asked.definition.caps) }),
+    );
+  });
+
+  it('answers nothing for a page the thread cannot read, so it is read here instead', async () => {
+    const asked = page();
+    const read = createThreadedSearchReader(1);
+
+    expect(
+      await read({
+        ...asked,
+        request: { ...asked.request, path: { ...asked.request.path, response: { type: 'json' } } },
+      }),
+    ).toBeNull();
+  });
+});

@@ -60,6 +60,8 @@ packageExtensions:
     peerDependencies:
       react-native: '*'
 patchedDependencies:
+  '@keyline-icons/react@1.8.0': patches/@keyline-icons__react@1.8.0.patch
+  expo-glass-tabs@0.1.1: patches/expo-glass-tabs@0.1.1.patch
   expo-video@57.0.4: patches/expo-video@57.0.4.patch
   react-native-web@0.21.3: patches/react-native-web@0.21.3.patch
 minimumReleaseAgeExclude:

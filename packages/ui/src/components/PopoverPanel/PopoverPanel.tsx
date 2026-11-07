@@ -1,7 +1,9 @@
 import * as RadixPopover from '@radix-ui/react-popover';
+import { FIELD_DISABLED } from '@ValenceUI/tokens/FIELD_DISABLED';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { cn } from '@ValenceUI/cn';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
+import { FIELD_TRIGGER } from '@ValenceUI/tokens/fieldTrigger';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
@@ -27,7 +29,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param triggerLook - An icon square that is lit when pointed at, a smaller one for a strip as
  *   thin as a window bar, a button of the standard kind with room for a word beside its icon, one
  *   part of a joined row of them, or
- *   whatever it is given drawn inline, for a trigger that is a run of words and faces.
+ *   whatever it is given drawn inline, for a trigger that is a run of words and faces, or a form
+ *   field, for a value picked from what opens, such as a date.
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
  * @param isOverDialogs - Whether it opens from chrome that stays usable over a dialog, such as the
  *   desktop's window bar, so a press inside it does not close the dialog either.
@@ -70,18 +73,25 @@ const PopoverPanel = ({
               ? buttonStyles({ variant: 'glossy', size: 'sm' })
               : triggerLook === 'segment'
                 ? cn('inline-flex shrink-0 items-center outline-none', JOINED_LOOKS.segment)
-                : triggerLook === 'inline'
-                  ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:focus-ring'
-                  : cn(
-                      'inline-flex shrink-0 items-center justify-center rounded-md',
-                      triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
-                      'text-current outline-none',
-                      'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-                      'motion-reduce:transition-none',
-                      'focus-visible:focus-ring',
-                      'disabled:cursor-not-allowed disabled:opacity-50',
-                      isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
+                : triggerLook === 'field'
+                  ? cn(
+                      'inline-flex items-center outline-none focus-visible:focus-ring',
+                      FIELD_TRIGGER.base,
+                      FIELD_DISABLED,
+                      FIELD_TRIGGER.md,
                     )
+                  : triggerLook === 'inline'
+                    ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:focus-ring'
+                    : cn(
+                        'inline-flex shrink-0 items-center justify-center rounded-md',
+                        triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
+                        'text-current outline-none',
+                        'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+                        'motion-reduce:transition-none',
+                        'focus-visible:focus-ring',
+                        'disabled:cursor-not-allowed disabled:opacity-50',
+                        isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
+                      )
           }
         >
           {trigger}

@@ -38,4 +38,33 @@ describe('judgeBookFormat', () => {
       'Retail (+10)',
     ]);
   });
+
+  it('refuses a film or programme that shares the book’s name', () => {
+    const refusal = ['It’s a film or programme, not a book'];
+    const reasonsOf = (title: string, categories: number[] = []) =>
+      judged(title, categories).rejections.map((said) => said.message);
+
+    expect(reasonsOf('Harry Potter and the Chamber of Secrets (2002) DVDRip - Nony')).toEqual(
+      refusal,
+    );
+    expect(reasonsOf('Harry Potter And the Deathly Hallows Part 1 (2010) 1080p x264')).toEqual(
+      refusal,
+    );
+    expect(reasonsOf('Harry Potter and the Chamber of Secrets', [2040])).toEqual(refusal);
+    expect(reasonsOf('Harry Potter and the Chamber of Secrets EPUB', [7020])).toEqual([]);
+  });
+
+  it('refuses a game that shares the book’s name', () => {
+    expect(
+      judged('[PCGame 1 CD Multi3] Harry Potter and the Philosopher’s Stone').rejections.map(
+        (said) => said.message,
+      ),
+    ).toEqual(['It’s a game or software, not a book']);
+    expect(judged('Harry Potter and the Philosopher’s Stone', [4050]).rejections).toHaveLength(1);
+  });
+
+  it('keeps a book whose category is a book’s, whatever its name says', () => {
+    expect(judged('The Hunger Games 1080p Edition EPUB', [7020]).rejections).toEqual([]);
+    expect(judged('Ready Player One (Unabridged) M4B', [3030]).rejections).toEqual([]);
+  });
 });

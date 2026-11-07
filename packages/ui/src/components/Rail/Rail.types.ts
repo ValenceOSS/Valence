@@ -7,7 +7,7 @@ type RailProps = {
   action?: ReactNode;
   onOpenTitle?: () => void;
   sizesCards?: boolean | undefined;
-  cards?: 'wide' | 'portrait' | 'poster' | undefined;
+  cards?: 'wide' | 'portrait' | 'large' | 'poster' | 'library' | undefined;
   hasArrows?: boolean | undefined;
   look?: 'title' | 'section' | undefined;
   className?: string;

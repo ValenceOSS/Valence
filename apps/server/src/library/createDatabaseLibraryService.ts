@@ -146,7 +146,13 @@ import type {
 } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaFileSystem, ScanPhase, ScannedItem } from './scanLibrary';
-import type { AiringSeason, MetadataProvider, SeriesShape } from './MetadataProvider';
+import type {
+  AiringSeason,
+  CatalogueDescription,
+  MetadataProvider,
+  SeriesShape,
+} from './MetadataProvider';
+import { LINKED_SCHEME } from '@ValenceServer/linking/catalogue/LINKED_SCHEME';
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
 import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
 import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
@@ -1513,6 +1519,34 @@ const createDatabaseLibraryService = ({
     });
 
   /**
+   * What this server's own catalogue says of a film another server holds, so its page is described
+   * here as this server describes its own — not as the other server happened to — or nothing where
+   * no catalogue here knows it or can be asked.
+   *
+   * @param externalId - The film's id in the catalogue.
+   * @returns What the catalogue says, or nothing.
+   */
+  const ownDescriptionOf = async (externalId: string): Promise<CatalogueDescription | null> => {
+    for (const provider of providers ?? []) {
+      if (provider.describeTitle === undefined) {
+        continue;
+      }
+
+      try {
+        const described = await provider.describeTitle(externalId, 'movie');
+
+        if (described !== null) {
+          return described;
+        }
+      } catch {
+        troubleWatch.report({ source: provider.name, reason: 'faulty' });
+      }
+    }
+
+    return null;
+  };
+
+  /**
    * Asks each provider for a title's backdrop and logo until both are found.
    *
    * @param title - The title.
@@ -1560,7 +1594,10 @@ const createDatabaseLibraryService = ({
             sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
               Number,
             ),
-          sizeBytes: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)`.mapWith(Number),
+          sizeBytes:
+            sql<number>`case when ${library.kind} = 'books' then coalesce(sum(${bookChapter.sizeBytes}), 0) else coalesce(sum(${mediaItem.sizeBytes}), 0) end`.mapWith(
+              Number,
+            ),
         })
         .from(library)
         .leftJoin(mediaItem, and(eq(mediaItem.libraryId, library.id), isStillThere()))
@@ -2487,6 +2524,11 @@ const createDatabaseLibraryService = ({
         .orderBy(asc(mediaItem.extraKind), asc(mediaItem.title));
 
       const region = (await certificationRegion()).trim().toUpperCase();
+      const own =
+        row.path.startsWith(LINKED_SCHEME) && row.seriesId === null && row.externalId !== null
+          ? await ownDescriptionOf(row.externalId)
+          : null;
+      const ownCertification = own?.certifications?.[region] ?? null;
       const detail: MediaDetail = MediaDetailSchema.parse({
         id: row.id,
         ...artworkRevisionOf(row.artworkChangedAt),
@@ -2542,11 +2584,19 @@ const createDatabaseLibraryService = ({
         subtitleStreams: row.subtitleStreams,
         addedAt: row.addedAt.toISOString(),
         metadata: {
-          overview: row.overview,
-          tagline: row.tagline,
-          genres: row.genres,
-          cast: row.castMembers,
-          rating: row.rating,
+          overview: own?.overview ?? row.overview,
+          tagline: own?.tagline ?? row.tagline,
+          genres: own === null || own.genres.length === 0 ? row.genres : own.genres,
+          cast:
+            own === null || own.cast.length === 0
+              ? row.castMembers
+              : own.cast.map((member) => ({
+                  personId: member.personId,
+                  name: member.name,
+                  role: member.role ?? '',
+                  imageUrl: member.photoUrl,
+                })),
+          rating: own?.rating ?? row.rating,
           hasPoster: row.posterUrl !== null,
           posterUrl: row.posterUrl,
           externalId: row.externalId,
@@ -2556,12 +2606,13 @@ const createDatabaseLibraryService = ({
           seasonNumber: row.seasonNumber,
           episodeNumber: row.episodeNumber,
           episodeNumberEnd: row.episodeNumberEnd,
-          releaseDate: row.releaseDate,
+          releaseDate: own?.releaseDate ?? row.releaseDate,
           budget: row.budget,
           revenue: row.revenue,
-          status: row.catalogueStatus,
+          status: own?.status ?? row.catalogueStatus,
           rottenTomatoes: row.rottenTomatoes,
           certification:
+            ownCertification ??
             readStoredCertifications(JsonValueSchema.parse(row.certifications ?? null))?.[region] ??
             null,
           certificationRegion: region,

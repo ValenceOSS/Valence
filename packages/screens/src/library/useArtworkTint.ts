@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cardTintOf } from '@ValenceCore/functions/cardTintOf';
-import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 import { readLights } from '@ValenceScreens/library/readLights';
+import { useIsDarkPage } from '@ValenceScreens/library/useIsDarkPage';
 
 /**
  * The colour a title's dialog is tinted with on a dark page, as the phone tints a title's page:
@@ -13,10 +13,7 @@ import { readLights } from '@ValenceScreens/library/readLights';
  */
 const useArtworkTint = (url: string | null): string | null => {
   const [tint, setTint] = useState<string | null>(null);
-  const prefersDark = useMatchesMedia('(prefers-color-scheme: dark)');
-  const chosen =
-    typeof document === 'undefined' ? null : document.documentElement.getAttribute('data-theme');
-  const isDark = chosen === 'dark' || (chosen !== 'light' && prefersDark);
+  const isDark = useIsDarkPage();
 
   useEffect(() => {
     if (url === null || !isDark) {

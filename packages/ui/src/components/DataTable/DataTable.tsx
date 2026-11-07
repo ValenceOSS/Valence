@@ -7,17 +7,17 @@ import {
   MoveRight as MoveRightIcon,
   Filter as FilterIcon,
 } from '@keyline-icons/react';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, Reorder, motion, useReducedMotionConfig } from 'motion/react';
 import { spring, stillTransition } from '@ValenceUI/animations/reveal';
 import { useRoomBelow } from '@ValenceUI/useRoomBelow';
 import { useTable } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
-import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
-import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
+import { RowHighlight } from './components/RowHighlight/RowHighlight';
 import { dataTableFeatures } from './dataTableFeatures';
 import { DrawnCell } from './DrawnCell';
 import { ReorderRow } from './components/ReorderRow/ReorderRow';
@@ -64,6 +64,12 @@ const ROWS_A_PAGE = 25;
 const NEAR_THE_END = 200;
 
 const SIDE_FADE = 32;
+
+const DRAWN_BEFORE_MEASURED = 40;
+
+const ROW_GUESS = 56;
+
+const DRAWN_BEYOND = 10;
 
 const SHRINKS = 'w-px whitespace-nowrap [&:not(:last-child)]:pr-0 sm:[&:not(:last-child)]:pr-0';
 
@@ -120,6 +126,9 @@ const HEIGHT_CLASSES = {
  *   the table being drawn again elsewhere, and can be carried in an address.
  * @param onPageChange - Told each time the page changes, where the caller keeps it.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
+ * @param isVirtual - Whether only the rows in view, and a few either side, are drawn, for a table
+ *   long enough that drawing every row would slow the page; rows cannot be reordered by hand then.
+ *   Until the table has room to measure, the first rows are drawn in full rather than none.
  * @param canOpen - Whether a row opens onto rows beneath it before they are known, for rows the
  *   caller reads only once they are opened.
  * @param onReachEnd - Told the bottom was reached with every row given already shown, where the
@@ -154,6 +163,7 @@ const DataTable = <Row extends RowData>({
   page: givenPage,
   onPageChange,
   growsOnScroll = false,
+  isVirtual = false,
   onReachEnd,
   canOpen,
   height = 'compact',
@@ -167,7 +177,7 @@ const DataTable = <Row extends RowData>({
   const [dragged, setDragged] = useState<{ from: string; ids: string[] } | null>(null);
   const idOf = (row: Row, at: number): string => getRowId?.(row) ?? at.toString();
   const givenOrder = rows.map(idOf).join('\n');
-  const isReordering = onReorder !== undefined && getRowId !== undefined;
+  const isReordering = onReorder !== undefined && getRowId !== undefined && !isVirtual;
   const dragOrder = dragged !== null && dragged.from === givenOrder ? dragged.ids : null;
   const orderedRows =
     dragOrder === null
@@ -177,7 +187,7 @@ const DataTable = <Row extends RowData>({
   const [expanded, setExpanded] = useState<ExpandedState>(isOpenAtFirst ? true : {});
   const [ownPage, setOwnPage] = useState(0);
   const [shown, setShown] = useState(pageSize);
-  const { containerRef, rect, follow, clear } = useSlidingHighlight();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const room = useRoomBelow(containerRef, height === 'fills');
   const [beside, setBeside] = useState({ isBefore: false, isAfter: false, isRtl: false });
 
@@ -327,6 +337,48 @@ const DataTable = <Row extends RowData>({
     },
   });
 
+  const drawnRows = table.getRowModel().rows;
+  const head = useRef<HTMLTableSectionElement | null>(null);
+  const virtualiser = useVirtualizer({
+    count: isVirtual ? drawnRows.length : 0,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => ROW_GUESS,
+    overscan: DRAWN_BEYOND,
+    scrollMargin: head.current?.offsetHeight ?? 0,
+    getItemKey: (at) => drawnRows[at]?.id ?? at,
+  });
+  const isMeasured = (virtualiser.scrollRect?.height ?? 0) > 0;
+  const inView = isMeasured ? virtualiser.getVirtualItems() : [];
+  const firstInView = inView[0];
+  const lastInView = inView.at(-1);
+  const roomAbove =
+    firstInView === undefined ? 0 : firstInView.start - virtualiser.options.scrollMargin;
+  const roomBelow =
+    lastInView === undefined
+      ? 0
+      : virtualiser.getTotalSize() - (lastInView.end - virtualiser.options.scrollMargin);
+  const rowsToDraw = !isVirtual
+    ? drawnRows.map((row, at) => ({ row, at }))
+    : isMeasured
+      ? inView.flatMap((item) => {
+          const row = drawnRows[item.index];
+
+          return row === undefined ? [] : [{ row, at: item.index }];
+        })
+      : drawnRows.slice(0, DRAWN_BEFORE_MEASURED).map((row, at) => ({ row, at }));
+  const spacer = (height: number, key: string) =>
+    height <= 0 ? null : (
+      <tr key={key} aria-hidden>
+        <td
+          colSpan={table.getAllLeafColumns().length}
+          className="border-0 p-0"
+          style={{ height }}
+        />
+      </tr>
+    );
+  const Presence = isVirtual ? Fragment : AnimatePresence;
+  const presenceProps = isVirtual ? {} : { initial: false };
+
   const pageCount =
     totalRows === undefined
       ? table.getPageCount() + (hasMoreRows ? 1 : 0)
@@ -342,8 +394,6 @@ const DataTable = <Row extends RowData>({
 
       <div
         ref={containerRef}
-        onPointerMove={follow}
-        onPointerLeave={clear}
         onScroll={(event) => {
           reachEnd(event.currentTarget);
           measureBeside(event.currentTarget);
@@ -363,10 +413,10 @@ const DataTable = <Row extends RowData>({
           HEIGHT_CLASSES[height],
         )}
       >
-        <HoverHighlight rect={rect} radius="none" />
+        <RowHighlight containerRef={containerRef} />
 
         <table className="w-full border-collapse text-sm" aria-label={label}>
-          <thead>
+          <thead ref={head}>
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id}>
                 {group.headers.map((header) => {
@@ -485,8 +535,9 @@ const DataTable = <Row extends RowData>({
                 </td>
               </tr>
             ) : (
-              <AnimatePresence initial={false}>
-                {table.getRowModel().rows.map((row) => {
+              <Presence {...presenceProps}>
+                {isVirtual ? spacer(roomAbove, 'room-above') : null}
+                {rowsToDraw.map(({ row, at: drawnAt }) => {
                   const cells = row
                     .getAllCells()
                     .map((cell) => (
@@ -517,6 +568,9 @@ const DataTable = <Row extends RowData>({
                       id={row.id}
                       isReordering={isReordering}
                       depth={row.depth}
+                      {...(isVirtual
+                        ? { index: drawnAt, measureRef: virtualiser.measureElement }
+                        : {})}
                       onDragEnd={() => {
                         if (dragOrder !== null) {
                           onReorder?.(dragOrder);
@@ -561,6 +615,9 @@ const DataTable = <Row extends RowData>({
                   ) : (
                     <motion.tr
                       key={row.id}
+                      {...(isVirtual
+                        ? { ref: virtualiser.measureElement, 'data-index': drawnAt }
+                        : {})}
                       data-highlight={row.id}
                       data-depth={row.depth}
                       exit={{ opacity: 0 }}
@@ -606,7 +663,8 @@ const DataTable = <Row extends RowData>({
                     </motion.tr>
                   );
                 })}
-              </AnimatePresence>
+                {isVirtual ? spacer(roomBelow, 'room-below') : null}
+              </Presence>
             )}
           </Reorder.Group>
         </table>

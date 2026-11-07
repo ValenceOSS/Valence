@@ -9,6 +9,7 @@ type DialogProps = {
   children: ReactNode;
   size?: DialogSize;
   isInstant?: boolean;
+  edge?: string | null;
   holdsOutsideClicks?: boolean;
   className?: string;
 };

@@ -95,6 +95,16 @@ pub struct Memory {
     /// Every stick that could be read, which is none where the firmware table
     /// is closed to the service.
     pub modules: Vec<MemoryModule>,
+    /// The slots the firmware lists as empty, by name.
+    pub empty_slots: Vec<String>,
+}
+
+/// The machine's SATA ports, and how many have a drive on them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SataPorts {
+    pub total: usize,
+    pub in_use: usize,
 }
 
 /// What a drive stores on.
@@ -128,6 +138,9 @@ pub struct Hardware {
     pub processor: Option<Processor>,
     pub memory: Memory,
     pub drives: Vec<Drive>,
+    /// The SATA ports, where the machine has any. Ports, not bays: a free
+    /// port says nothing about whether the case has room for another drive.
+    pub sata_ports: Option<SataPorts>,
 }
 
 static HARDWARE: OnceCell<Hardware> = OnceCell::const_new();
@@ -144,8 +157,10 @@ pub async fn read_hardware() -> Hardware {
                     memory: Memory {
                         total_bytes: 0,
                         modules: Vec::new(),
+                        empty_slots: Vec::new(),
                     },
                     drives: Vec::new(),
+                    sata_ports: None,
                 })
         })
         .await
@@ -168,9 +183,8 @@ fn read_now() -> Hardware {
     });
 
     let profile = system_profile();
-    let firmware_modules = std::fs::read("/sys/firmware/dmi/tables/DMI")
-        .map(|table| memory_modules_from_smbios(&table))
-        .unwrap_or_default();
+    let firmware = std::fs::read("/sys/firmware/dmi/tables/DMI").unwrap_or_default();
+    let firmware_modules = memory_modules_from_smbios(&firmware);
     let block_drives = linux_drives(Path::new("/sys/block"));
 
     Hardware {
@@ -182,12 +196,37 @@ fn read_now() -> Hardware {
                 Some(profile) if firmware_modules.is_empty() => mac_memory_modules(profile),
                 _ => firmware_modules,
             },
+            empty_slots: empty_memory_slots_from_smbios(&firmware),
         },
         drives: match &profile {
             Some(profile) if block_drives.is_empty() => mac_drives(profile),
             _ => block_drives,
         },
+        sata_ports: sata_ports(Path::new("/sys/class/ata_link")),
     }
+}
+
+/// The SATA links the kernel knows of, and how many have a drive answering on
+/// them: a link with no drive reports no speed.
+fn sata_ports(root: &Path) -> Option<SataPorts> {
+    let links: Vec<String> = std::fs::read_dir(root)
+        .ok()?
+        .filter_map(Result::ok)
+        .map(|link| {
+            std::fs::read_to_string(link.path().join("sata_spd"))
+                .unwrap_or_default()
+                .trim()
+                .to_owned()
+        })
+        .collect();
+
+    (!links.is_empty()).then(|| SataPorts {
+        total: links.len(),
+        in_use: links
+            .iter()
+            .filter(|speed| !speed.is_empty() && speed.as_str() != "<unknown>")
+            .count(),
+    })
 }
 
 /// The cores, grouped by kind, from whichever the platform will say.
@@ -543,6 +582,33 @@ fn connection_of(name: &str, wired: &str) -> Option<String> {
 /// a zero and the set ended by another. Type 17 is a memory device.
 fn memory_modules_from_smbios(table: &[u8]) -> Vec<MemoryModule> {
     let mut modules = Vec::new();
+
+    each_memory_device(table, |formatted, strings| {
+        if let Some(module) = memory_device(formatted, strings) {
+            modules.push(module);
+        }
+    });
+
+    modules
+}
+
+/// The slots the firmware lists with nothing in them, by the name printed
+/// beside each on the board.
+fn empty_memory_slots_from_smbios(table: &[u8]) -> Vec<String> {
+    let mut empty = Vec::new();
+
+    each_memory_device(table, |formatted, strings| {
+        if let Some(slot) = empty_slot(formatted, strings) {
+            empty.push(slot);
+        }
+    });
+
+    empty
+}
+
+/// Hands every memory device structure in the firmware table to `visit`,
+/// with the strings that belong to it.
+fn each_memory_device(table: &[u8], mut visit: impl FnMut(&[u8], &[String])) {
     let mut at = 0;
 
     while at + 4 <= table.len() {
@@ -571,15 +637,30 @@ fn memory_modules_from_smbios(table: &[u8]) -> Vec<MemoryModule> {
         }
 
         if kind == 17 {
-            if let Some(module) = memory_device(formatted, &strings) {
-                modules.push(module);
-            }
+            visit(formatted, &strings);
         }
 
         at = end + 2;
     }
+}
 
-    modules
+/// The name of a memory device's slot where the slot is empty, and nothing
+/// where something sits in it or the size cannot be read.
+fn empty_slot(formatted: &[u8], strings: &[String]) -> Option<String> {
+    let size = formatted
+        .get(0x0C..0x0E)
+        .map(|bytes| u16::from_le_bytes([bytes[0], bytes[1]]))?;
+
+    if size != 0 {
+        return None;
+    }
+
+    let index = usize::from(*formatted.get(0x10)?);
+
+    strings
+        .get(index.checked_sub(1)?)
+        .filter(|said| !is_placeholder(said))
+        .cloned()
 }
 
 /// One memory device structure, or nothing for an empty slot.
@@ -855,6 +936,20 @@ mod tests {
                 manufacturer: Some("Kingston".to_owned()),
                 slot: Some("DIMM A1".to_owned()),
             }]
+        );
+    }
+
+    #[test]
+    fn names_the_empty_slots_the_firmware_lists() {
+        let mut table = structure(0, &[0; 20], &["Vendor"]);
+
+        table.extend(memory_device_bytes(16384, 0x22, 5600));
+        table.extend(memory_device_bytes(0, 0x02, 0));
+        table.extend(structure(127, &[], &[]));
+
+        assert_eq!(
+            empty_memory_slots_from_smbios(&table),
+            vec!["DIMM A1".to_owned()]
         );
     }
 

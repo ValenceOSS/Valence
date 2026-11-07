@@ -63,6 +63,8 @@ const styles = StyleSheet.create({
  * @param isWide - Whether it takes the full width it is given, where it would otherwise keep to the
  *   width of what it says; a soft pill that does takes the shape of the thing to press, which it
  *   sits beside or beneath.
+ * @param holdsStill - Whether it stays exactly as it is under the finger, neither shrinking nor
+ *   dimming, for a press area that is the thing being read, as a page of a book is.
  * @param isBusy - Whether what it started is still going.
  * @param isDisabled - Whether it can be pressed at all.
  * @param isChosen - Whether this is the one currently picked, where it is one of several.
@@ -81,6 +83,7 @@ const Button = ({
   tone = 'bold',
   icon,
   fills = false,
+  holdsStill = false,
   isWide = false,
   isBusy = false,
   isDisabled = false,
@@ -116,7 +119,7 @@ const Button = ({
     isGhost && {
       backgroundColor: withAlpha(isDestructive ? colours.danger : colours.text, 0.1),
     },
-    isHeld && (isBare ? styles.pressedBare : styles.pressed),
+    isHeld && !holdsStill && (isBare ? styles.pressedBare : styles.pressed),
     isDisabled && styles.pressed,
   ];
   const inside = isBusy ? (
@@ -145,7 +148,7 @@ const Button = ({
   const giveWay = (to: number) => {
     setIsPressed(to !== 1);
 
-    if (!fills) {
+    if (!fills && !holdsStill) {
       Animated.spring(scale, { ...PRESS, toValue: to }).start();
     }
   };

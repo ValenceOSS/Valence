@@ -1,4 +1,5 @@
 import { Children, useState } from 'react';
+import type { UIEvent } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -26,8 +27,12 @@ const PER = {
   wide: '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5]',
   portrait:
     '[--rail-per:3] @md:[--rail-per:4] @2xl:[--rail-per:5] @4xl:[--rail-per:7] @6xl:[--rail-per:9]',
+  large:
+    '[--rail-per:2] @md:[--rail-per:3] @2xl:[--rail-per:4] @4xl:[--rail-per:5] @6xl:[--rail-per:6]',
   poster:
     '[--rail-per:3] sm:[--rail-per:4] md:[--rail-per:5] lg:[--rail-per:6] xl:[--rail-per:8] 2xl:[--rail-per:9]',
+  library:
+    '[--rail-per:2] sm:[--rail-per:3] md:[--rail-per:4] lg:[--rail-per:5] xl:[--rail-per:7] 2xl:[--rail-per:8]',
 } as const;
 
 const FITTED = [
@@ -38,6 +43,10 @@ const FITTED = [
 const LANE = 'px-[var(--rail-lane)] scroll-px-[var(--rail-lane)]';
 
 const VIEWED = { once: true, amount: 0.15 } as const;
+
+const BATCH = 24;
+
+const LEAD_SCREENS = 2;
 
 /**
  * One titled row of a library, scrolling sideways rather than wrapping, which is how a shelf is
@@ -76,6 +85,9 @@ const VIEWED = { once: true, amount: 0.15 } as const;
  * view — a row further down the page lands as it is scrolled to, and never again after that. A card
  * that joins the row after it has landed, as a scan adds titles to a page somebody is looking at,
  * arrives by itself: the row holds on to having landed rather than telling only the cards it had then.
+ *
+ * A long row draws its first cards and the rest a batch at a time as it is turned towards them, so
+ * a shelf of hundreds costs what the few screens of it anybody looks at cost.
 
  */
 const Rail = ({
@@ -90,8 +102,21 @@ const Rail = ({
   look = 'title',
   className,
 }: RailProps) => {
+  const every = Children.toArray(children);
+  const [drawn, setDrawn] = useState(BATCH);
+  const shown = every.length > drawn ? every.slice(0, drawn) : every;
   const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
-    usePagedScroller<HTMLUListElement>(Children.count(children));
+    usePagedScroller<HTMLUListElement>(shown.length);
+  const onTrackScroll = (event: UIEvent<HTMLUListElement>) => {
+    measure();
+
+    const track = event.currentTarget;
+    const left = track.scrollWidth - track.scrollLeft - track.clientWidth;
+
+    if (drawn < every.length && left < track.clientWidth * LEAD_SCREENS) {
+      setDrawn((now) => now + BATCH);
+    }
+  };
 
   const hasPages = pages.count > 1;
   const prefersReducedMotion = useReducedMotionConfig();
@@ -114,7 +139,7 @@ const Rail = ({
         transition={prefersReducedMotion === true ? stillTransition : bounceSpring}
         className={cn(
           'relative z-10 flex items-end justify-between gap-4',
-          sizesCards ? (hasArrows ? 'px-[var(--rail-lane)]' : 'pr-2') : 'px-1',
+          sizesCards ? (hasArrows ? 'px-[var(--rail-lane)]' : '') : 'px-1',
         )}
       >
         <h2
@@ -179,7 +204,7 @@ const Rail = ({
       <div className="relative">
         <motion.ul
           ref={trackRef}
-          onScroll={measure}
+          onScroll={onTrackScroll}
           variants={groupVariants}
           initial="hidden"
           animate={hasArrived ? 'shown' : 'hidden'}
@@ -192,7 +217,7 @@ const Rail = ({
             sizesCards ? cn(FITTED, PER[cards], hasArrows ? LANE : '') : 'scroll-p-1 px-1',
           )}
         >
-          <snapRowContext.Provider value={true}>{children}</snapRowContext.Provider>
+          <snapRowContext.Provider value={true}>{shown}</snapRowContext.Provider>
         </motion.ul>
       </div>
     </section>

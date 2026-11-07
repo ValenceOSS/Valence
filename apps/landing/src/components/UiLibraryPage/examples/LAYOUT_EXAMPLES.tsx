@@ -8,6 +8,7 @@ import { PageHero } from '@ValenceUI/PageHero';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
 import { SectionCard } from '@ValenceUI/SectionCard';
+import { SectionIndex } from '@ValenceUI/SectionIndex';
 import { SettingGroup } from '@ValenceUI/SettingGroup';
 import { SiteFooter } from '@ValenceUI/SiteFooter';
 import { SiteNav } from '@ValenceUI/SiteNav';
@@ -43,6 +44,21 @@ const LAYOUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             </Card>
           ))}
         </div>
+      ),
+    },
+  ],
+  SectionIndex: [
+    {
+      title: 'Where a long page goes',
+      render: () => (
+        <SectionIndex
+          label="On this page"
+          sections={[
+            { id: 'title', label: 'Title and release', note: '4 fields' },
+            { id: 'people', label: 'People' },
+            { id: 'artwork', label: 'Artwork', note: '2 changed' },
+          ]}
+        />
       ),
     },
   ],

@@ -9,8 +9,12 @@ import {
   useState as mockUseState,
 } from 'react';
 import type { ReactNode } from 'react';
-import { Image as mockNativeImage } from 'react-native';
-import type { ImageStyle, StyleProp } from 'react-native';
+import {
+  Image as mockNativeImage,
+  Pressable as mockPressable,
+  View as mockView,
+} from 'react-native';
+import type { ImageStyle, StyleProp, ViewProps } from 'react-native';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
@@ -100,6 +104,45 @@ jest.mock('expo', () => ({
 
 jest.mock('@ValenceMobile/platform/theCookiesThisPhoneHolds', () => ({
   theCookiesThisPhoneHolds: jest.fn(() => Promise.resolve(null)),
+}));
+
+jest.mock('react-native-gesture-handler', () => ({
+  GestureHandlerRootView: ({ children, style }: ViewProps & { children?: ReactNode }) =>
+    mockCreateElement(mockView, { style }, children),
+}));
+
+jest.mock('expo-blur', () => ({
+  BlurView: (props: ViewProps) => mockCreateElement(mockView, props),
+}));
+
+jest.mock('expo-glass-tabs', () => ({
+  TabBarMinimizeProvider: ({ children }: { children?: ReactNode }) => children,
+  GlassTabBar: ({ children, onLayout }: ViewProps & { children?: ReactNode }) =>
+    mockCreateElement(mockView, { onLayout }, children),
+  GlassTabButton: (props: {
+    item: { label: string; renderIcon?: (props: { tint: string; size: number }) => ReactNode };
+    isFocused?: boolean;
+    onPress?: () => void;
+  }) =>
+    mockCreateElement(
+      mockPressable,
+      {
+        accessibilityRole: 'button',
+        accessibilityLabel: props.item.label,
+        accessibilityState: { selected: props.isFocused === true },
+        onPress: props.onPress,
+      },
+      props.item.renderIcon?.({ tint: '#000000', size: 21 }),
+    ),
+}));
+
+jest.mock('expo-glass-tabs/build/minimize-context', () => ({
+  useMinimizeState: () => ({}),
+  setMinimized: jest.fn(),
+}));
+
+jest.mock('expo-haptics', () => ({
+  selectionAsync: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock('expo-image', () => ({

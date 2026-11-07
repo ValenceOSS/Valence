@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Whether a page is drawn as a card — a film, a programme, somebody in them, something to ask for,
+ * Whether a page is drawn as a card — a film, a programme, a book, somebody in them, something to ask for,
  * or the account and the pages it opens — which opening
  * another card from replaces rather than stacks over, remembering it so the way back steps back to
  * it, while one drag down closes the whole run of them. Opening one the run has already shown steps
@@ -145,6 +145,7 @@ const isACard = (page: APage): boolean =>
   page.kind === 'show' ||
   page.kind === 'series' ||
   page.kind === 'asking' ||
+  page.kind === 'book' ||
   page.kind === 'person' ||
   page.kind === 'me' ||
   page.kind === 'inbox' ||
@@ -827,6 +828,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
               open({ kind: 'reading', bookId, chapterId, isFromTheStart });
             }}
             onListen={toTheListeningPlayer}
+            onAskAbout={(about, id) => {
+              open(pageToAskAbout(cache, about, id));
+            }}
             onBack={back}
           />
         );

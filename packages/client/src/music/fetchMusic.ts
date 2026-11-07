@@ -25,14 +25,15 @@ import type { MusicSearchResult } from '@ValenceContracts/schemas/MusicSearch';
 import { inGroupsOf } from '@ValenceCore/functions/inGroupsOf';
 import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
 
-type AlbumOrder = 'recent' | 'title' | 'year';
+type AlbumOrder = 'recent' | 'title' | 'year' | 'played';
 
 const PICKS_FROM = 1000;
 
 /**
  * Reads the albums in every music library this profile can see.
  *
- * @param order - Newest first, by title, or by year.
+ * @param order - Newest first, by title, by year, or only those this profile has played, latest
+ *   first.
  * @param limit - How many at most, where more than the server's usual are wanted.
  * @param offset - How many to skip, for a later page.
  * @returns The albums.

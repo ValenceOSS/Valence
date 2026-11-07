@@ -8,7 +8,17 @@ import { AnimatePresence, motion } from 'motion/react';
 import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
-import { Pin as PinIcon, PinOff as PinOffIcon } from '@keyline-icons/react';
+import {
+  PanelLeft as PanelLeftIcon,
+  PanelTop as PanelTopIcon,
+  Pin as PinIcon,
+  PinOff as PinOffIcon,
+} from '@keyline-icons/react';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
+import {
+  readAdminNavPlace,
+  saveAdminNavPlace,
+} from '@ValenceScreens/navigation/adminNavPlacePreference';
 import { Sidebar } from '@ValenceUI/Sidebar';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
 import { sidebarWidth } from '@ValenceScreens/navigation/sidebarWidth';
@@ -16,6 +26,7 @@ import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
 import { ADMIN_PAGE_ACTIONS } from '@ValenceScreens/components/AdminPage/ADMIN_PAGE_ACTIONS';
+import { ADMIN_NOTICES } from '@ValenceScreens/components/AdminPage/ADMIN_NOTICES';
 import { cn } from '@ValenceUI/cn';
 import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -105,6 +116,7 @@ const AdminPage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [folds, setFolds] = useState(readSidebarFolds);
   const [pinned, setPinned] = useState(readPinnedPanels);
+  const [navPlace, setNavPlace] = useState(readAdminNavPlace);
   const attention = useAdminAttention();
   const counts = countsByPanel(attention);
   const hasRoomForTheSidebar = useMatchesMedia(ROOM_FOR_THE_SIDEBAR);
@@ -217,11 +229,350 @@ const AdminPage = () => {
     };
   }, [hasRoomForTheSidebar, isClosed, isLoading, mayAdminister]);
 
+  const area = (
+    <AdminArea
+      panel={showing}
+      onPanel={(next, search) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: next },
+          ...(search === undefined ? {} : { search }),
+        });
+      }}
+      initialJob={job ?? null}
+      observability={{ ...observability, ...(view === undefined ? {} : { view }) }}
+      onObservabilityChange={(change) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: showing },
+          search: {
+            ...(job === undefined ? {} : { job }),
+            ...mergeObservabilitySearch(observability, change),
+          },
+          replace: true,
+        });
+      }}
+      folder={folder ?? null}
+      catalogue={{ tab: tab ?? 'films', title: title ?? null }}
+      mediaTitle={media ?? (showing === 'media' ? (title ?? null) : null)}
+      webhook={webhook ?? (showing === 'webhooks' ? (title ?? null) : null)}
+      linkedServer={server ?? (showing === 'linking' ? (title ?? null) : null)}
+      onCatalogue={(address) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'catalogue' },
+          search: {
+            tab: address.tab,
+            ...(address.title === null ? {} : { title: address.title }),
+          },
+        });
+      }}
+      mediaList={mediaList}
+      onMediaList={(place) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'media' },
+          search: {
+            ...(mediaView === undefined ? {} : { mediaView }),
+            ...(folder === undefined ? {} : { folder }),
+            ...searchOfList(place),
+          },
+          replace: true,
+        });
+      }}
+      onMediaTitle={(id, place) => {
+        const underneath = {
+          ...(mediaView === undefined ? {} : { mediaView }),
+          ...(folder === undefined ? {} : { folder }),
+          ...searchOfList(mediaList),
+        };
+
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'media' },
+          search:
+            id === null
+              ? underneath
+              : {
+                  ...underneath,
+                  media: id,
+                  ...(place === undefined || place.tab === 'details'
+                    ? {}
+                    : { titleTab: place.tab }),
+                  ...(place?.season === null || place?.season === undefined
+                    ? {}
+                    : { season: place.season }),
+                  ...(place?.episode === null || place?.episode === undefined
+                    ? {}
+                    : { episode: place.episode }),
+                  ...(place?.isSeasonPage === true ? { part: 'season' as const } : {}),
+                },
+        });
+      }}
+      mediaPlace={{
+        tab: titleTab ?? 'details',
+        season: season ?? null,
+        episode: episode ?? null,
+        isSeasonPage: part === 'season',
+      }}
+      onMediaPlace={(place) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'media' },
+          search: {
+            ...(mediaView === undefined ? {} : { mediaView }),
+            ...(folder === undefined ? {} : { folder }),
+            ...searchOfList(mediaList),
+            ...(media === undefined ? {} : { media }),
+            ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
+            ...(place.season === null ? {} : { season: place.season }),
+            ...(place.episode === null ? {} : { episode: place.episode }),
+            ...(place.isSeasonPage ? { part: 'season' as const } : {}),
+          },
+          replace:
+            place.episode === (episode ?? null) && place.isSeasonPage === (part === 'season'),
+          resetScroll:
+            place.season !== (season ?? null) ||
+            place.episode !== (episode ?? null) ||
+            place.isSeasonPage !== (part === 'season'),
+        });
+      }}
+      onLinkedServer={(id) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'linking' },
+          search: id === null ? {} : { server: id },
+        });
+      }}
+      onWebhook={(id) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'webhooks' },
+          search: id === null ? {} : { webhook: id },
+        });
+      }}
+      onOpenFolder={(path) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'media' },
+          search: { mediaView: 'folders', folder: path },
+        });
+      }}
+      mediaView={shownMediaView}
+      onMediaView={(view) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'media' },
+          search: {
+            ...searchOfList(mediaList),
+            ...(view === 'titles' ? {} : { mediaView: view }),
+          },
+          replace: true,
+        });
+      }}
+      onMediaFolder={(path) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: 'media' },
+          search: {
+            ...searchOfList(mediaList),
+            mediaView: 'folders',
+            ...(path === null ? {} : { folder: path }),
+          },
+          replace: true,
+        });
+      }}
+      onJobChange={(next) => {
+        void go({
+          to: '/admin/$panel',
+          params: { panel: showing },
+          search: { ...observability, ...(next === null ? {} : { job: next }) },
+        });
+      }}
+    />
+  );
+
+  const moveTheSections = (
+    <Button
+      variant="subtle"
+      size="sm"
+      isIconOnly
+      label={
+        navPlace === 'top'
+          ? say('screens.adminPage.putTheSectionsDownTheSide')
+          : say('screens.adminPage.putTheSectionsAcrossTheTop')
+      }
+      onClick={() => {
+        const next = navPlace === 'top' ? 'side' : 'top';
+
+        setNavPlace(next);
+        saveAdminNavPlace(next);
+      }}
+      className="shrink-0"
+    >
+      <Icon of={navPlace === 'top' ? PanelLeftIcon : PanelTopIcon} size={15} />
+    </Button>
+  );
+
   if (isLoading || !mayAdminister) {
     return (
       <div className="mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] items-center justify-center">
         <Spinner size="lg" label={say('screens.adminPage.readingWhatYouMayDo')} />
       </div>
+    );
+  }
+
+  if (navPlace === 'top' && hasRoomForTheSidebar) {
+    return (
+      <Tabs
+        value={showing}
+        onValueChange={(next) => {
+          void go({ to: '/admin/$panel', params: { panel: next } });
+        }}
+      >
+        <div className="mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] flex-col bg-[var(--frame-back)] [--admin-chrome:7.25rem]">
+          <header className="sticky top-[var(--valence-window-bar)] z-40 flex flex-col bg-[var(--frame-back)]">
+            <div className="flex h-16 items-center gap-1 border-b border-[var(--surface-line)] px-4 sm:px-6">
+              <Button
+                variant="bare"
+                size="none"
+                label={say('screens.adminPage.backToValence')}
+                hasTooltip={false}
+                onClick={() => {
+                  void go({ to: '/' });
+                }}
+                className="flex items-center rounded-md coarse:min-h-11"
+              >
+                <BrandMark hasMark marksPlace={MARKS_PLACE} />
+              </Button>
+
+              <span className="flex-1" />
+
+              <span className="flex items-center gap-2">
+                <span className="w-64">
+                  <AdminSearch
+                    sections={sections}
+                    isCompact={false}
+                    onGo={(next) => {
+                      void go({ to: '/admin/$panel', params: { panel: next } });
+                    }}
+                  />
+                </span>
+                <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+                <AdminStatusFooter
+                  isPillOnly
+                  version={version}
+                  acceleration={acceleration}
+                  ffmpeg={ffmpeg}
+                  latest={attention.latest}
+                  isLatestADevBuild={attention.isLatestADevBuild}
+                  onOpenUpdates={() => {
+                    void go({ to: '/admin/$panel', params: { panel: 'updates' } });
+                  }}
+                  isInHeader
+                />
+                {moveTheSections}
+              </span>
+            </div>
+
+            <nav
+              aria-label={say('common.sections')}
+              className="valence-rail flex items-center gap-1 overflow-x-auto px-3 py-2"
+            >
+              {sections.map((section) => {
+                const [first] = section.items;
+
+                if (first === undefined) {
+                  return null;
+                }
+
+                const isHere = section.items.some((item) => item.id === showing);
+                const count = section.items.reduce(
+                  (sum, item) => sum + (counts[item.id]?.count ?? 0),
+                  0,
+                );
+                const name = section.label ?? first.label;
+                const nameOf = (item: (typeof section.items)[number]) =>
+                  item.label === say('screens.adminArea.adminSections.overview') &&
+                  section.label !== null
+                    ? section.label
+                    : item.label;
+                const area = (
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    isActive={isHere}
+                    {...(isHere ? { 'aria-current': 'page' as const } : {})}
+                    onClick={() => {
+                      void go({ to: '/admin/$panel', params: { panel: first.id } });
+                    }}
+                    className="shrink-0"
+                  >
+                    <Icon
+                      of={first.icon}
+                      whenActive={first.activeIcon}
+                      isActive={isHere}
+                      size={16}
+                    />
+                    {name}
+                    {count === 0 ? null : (
+                      <span className="text-xs tabular-nums text-text-muted">
+                        {count.toLocaleString()}
+                      </span>
+                    )}
+                  </Button>
+                );
+
+                return section.items.length < 2 ? (
+                  <span key={section.id} className="flex shrink-0">
+                    {area}
+                  </span>
+                ) : (
+                  <OptionMenu
+                    key={section.id}
+                    label={name}
+                    anchor={area}
+                    align="start"
+                    matchTriggerWidth={false}
+                    groups={[
+                      {
+                        name,
+                        options: section.items.map((item) => ({
+                          id: item.id,
+                          label: nameOf(item),
+                          icon: (
+                            <Icon
+                              of={item.icon}
+                              whenActive={item.activeIcon}
+                              isActive={item.id === showing}
+                              size={16}
+                            />
+                          ),
+                          ...((counts[item.id]?.count ?? 0) === 0
+                            ? {}
+                            : { detail: (counts[item.id]?.count ?? 0).toLocaleString() }),
+                        })),
+                        selectedId: showing,
+                        onSelect: (id) => {
+                          void go({ to: '/admin/$panel', params: { panel: id } });
+                        },
+                      },
+                    ]}
+                  />
+                );
+              })}
+
+              <span className="flex-1" />
+              <h1 className="sr-only">{showingName}</h1>
+              <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
+            </nav>
+          </header>
+
+          <div className="mx-2 mb-2 flex min-w-0 flex-1 flex-col overflow-clip rounded-2xl border border-[var(--surface-line)] bg-[var(--frame-panel)] shadow-[var(--shadow-raised)] [--card-shell:var(--frame-card)]">
+            <div className="flex-1 p-4">{area}</div>
+          </div>
+        </div>
+      </Tabs>
     );
   }
 
@@ -232,7 +583,7 @@ const AdminPage = () => {
         void go({ to: '/admin/$panel', params: { panel: next } });
       }}
     >
-      <div className="relative mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] bg-[var(--frame-back)]">
+      <div className="relative mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] bg-[var(--frame-back)] [--admin-chrome:3.5rem]">
         <AnimatePresence>
           {hasRoomForTheSidebar || !isDrawerOpen ? null : (
             <motion.div
@@ -294,9 +645,10 @@ const AdminPage = () => {
                   onClick={() => {
                     void go({ to: '/' });
                   }}
-                  className="flex items-center"
+                  hasTooltip={false}
+                  className="flex items-center rounded-md coarse:min-h-11"
                 >
-                  <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
+                  <BrandMark hasMark marksPlace={MARKS_PLACE} />
                 </Button>
               }
               groups={[
@@ -387,6 +739,7 @@ const AdminPage = () => {
             </h1>
 
             <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
+            <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
 
             {!isClosed ? null : (
               <span className="hidden sm:flex">
@@ -403,6 +756,8 @@ const AdminPage = () => {
                 />
               </span>
             )}
+
+            {moveTheSections}
 
             <Button
               variant="subtle"
@@ -426,165 +781,7 @@ const AdminPage = () => {
             </Button>
           </div>
 
-          <div className="flex-1 p-4">
-            <AdminArea
-              panel={showing}
-              onPanel={(next, search) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: next },
-                  ...(search === undefined ? {} : { search }),
-                });
-              }}
-              initialJob={job ?? null}
-              observability={{ ...observability, ...(view === undefined ? {} : { view }) }}
-              onObservabilityChange={(change) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: showing },
-                  search: {
-                    ...(job === undefined ? {} : { job }),
-                    ...mergeObservabilitySearch(observability, change),
-                  },
-                  replace: true,
-                });
-              }}
-              folder={folder ?? null}
-              catalogue={{ tab: tab ?? 'films', title: title ?? null }}
-              mediaTitle={media ?? (showing === 'media' ? (title ?? null) : null)}
-              webhook={webhook ?? (showing === 'webhooks' ? (title ?? null) : null)}
-              linkedServer={server ?? (showing === 'linking' ? (title ?? null) : null)}
-              onCatalogue={(address) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'catalogue' },
-                  search: {
-                    tab: address.tab,
-                    ...(address.title === null ? {} : { title: address.title }),
-                  },
-                });
-              }}
-              mediaList={mediaList}
-              onMediaList={(place) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'media' },
-                  search: {
-                    ...(mediaView === undefined ? {} : { mediaView }),
-                    ...(folder === undefined ? {} : { folder }),
-                    ...searchOfList(place),
-                  },
-                  replace: true,
-                });
-              }}
-              onMediaTitle={(id, place) => {
-                const underneath = {
-                  ...(mediaView === undefined ? {} : { mediaView }),
-                  ...(folder === undefined ? {} : { folder }),
-                  ...searchOfList(mediaList),
-                };
-
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'media' },
-                  search:
-                    id === null
-                      ? underneath
-                      : {
-                          ...underneath,
-                          media: id,
-                          ...(place === undefined || place.tab === 'details'
-                            ? {}
-                            : { titleTab: place.tab }),
-                          ...(place?.season === null || place?.season === undefined
-                            ? {}
-                            : { season: place.season }),
-                          ...(place?.episode === null || place?.episode === undefined
-                            ? {}
-                            : { episode: place.episode }),
-                          ...(place?.isSeasonPage === true ? { part: 'season' as const } : {}),
-                        },
-                });
-              }}
-              mediaPlace={{
-                tab: titleTab ?? 'details',
-                season: season ?? null,
-                episode: episode ?? null,
-                isSeasonPage: part === 'season',
-              }}
-              onMediaPlace={(place) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'media' },
-                  search: {
-                    ...(mediaView === undefined ? {} : { mediaView }),
-                    ...(folder === undefined ? {} : { folder }),
-                    ...searchOfList(mediaList),
-                    ...(media === undefined ? {} : { media }),
-                    ...(place.tab === 'details' ? {} : { titleTab: place.tab }),
-                    ...(place.season === null ? {} : { season: place.season }),
-                    ...(place.episode === null ? {} : { episode: place.episode }),
-                    ...(place.isSeasonPage ? { part: 'season' as const } : {}),
-                  },
-                  replace:
-                    place.episode === (episode ?? null) &&
-                    place.isSeasonPage === (part === 'season'),
-                });
-              }}
-              onLinkedServer={(id) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'linking' },
-                  search: id === null ? {} : { server: id },
-                });
-              }}
-              onWebhook={(id) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'webhooks' },
-                  search: id === null ? {} : { webhook: id },
-                });
-              }}
-              onOpenFolder={(path) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'media' },
-                  search: { mediaView: 'folders', folder: path },
-                });
-              }}
-              mediaView={shownMediaView}
-              onMediaView={(view) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'media' },
-                  search: {
-                    ...searchOfList(mediaList),
-                    ...(view === 'titles' ? {} : { mediaView: view }),
-                  },
-                  replace: true,
-                });
-              }}
-              onMediaFolder={(path) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: 'media' },
-                  search: {
-                    ...searchOfList(mediaList),
-                    mediaView: 'folders',
-                    ...(path === null ? {} : { folder: path }),
-                  },
-                  replace: true,
-                });
-              }}
-              onJobChange={(next) => {
-                void go({
-                  to: '/admin/$panel',
-                  params: { panel: showing },
-                  search: { ...observability, ...(next === null ? {} : { job: next }) },
-                });
-              }}
-            />
-          </div>
+          <div className="flex-1 p-4">{area}</div>
         </div>
       </div>
     </Tabs>

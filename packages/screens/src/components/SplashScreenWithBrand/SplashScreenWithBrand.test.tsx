@@ -17,8 +17,26 @@ const branded = (logo: string | null) => {
 };
 
 describe('SplashScreenWithBrand', () => {
-  it('is read out as loading Valence on a server with no brand of its own', () => {
+  it('holds back a name until it knows whose brand it is, rather than showing Valence first', () => {
     render(<SplashScreenWithBrand />, { wrapper: CacheScope });
+
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+    expect(screen.queryByText('Valence')).not.toBeInTheDocument();
+  });
+
+  it('is read out as loading Valence on a server with no brand of its own', () => {
+    const cache = new QueryClient();
+
+    cache.setQueryData(appearanceQueries.appearance().queryKey, {
+      roundness: 'default',
+      brand: { name: null, accent: null, description: null, logo: null },
+    });
+
+    render(
+      <QueryClientProvider client={cache}>
+        <SplashScreenWithBrand />
+      </QueryClientProvider>,
+    );
 
     expect(screen.getByRole('status', { name: 'Loading Valence' })).toBeInTheDocument();
   });

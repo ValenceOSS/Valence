@@ -14,10 +14,9 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheStarsProps } from './TheStars.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { STAR_LIT } from '@ValenceMobile/theme/STAR_LIT';
 
 const OUT_OF = [1, 2, 3, 4, 5] as const;
-
-const LIT = '#fbbf24';
 
 const STAR = 26;
 
@@ -95,7 +94,7 @@ const TheStars = ({ subject }: TheStarsProps) => {
                   wave={stars <= wave.to ? wave.times : 0}
                   delay={(stars - 1) * WAVE_STEP}
                   size={STAR}
-                  litColour={LIT}
+                  litColour={STAR_LIT}
                   restColour={colours.textMuted}
                 />
               </View>
@@ -124,7 +123,7 @@ const TheStars = ({ subject }: TheStarsProps) => {
                 ]}
               >
                 {OUT_OF.map((stars) => (
-                  <Icon key={stars} of={Star} size={SMALL_STAR} colour={LIT} />
+                  <Icon key={stars} of={Star} size={SMALL_STAR} colour={STAR_LIT} />
                 ))}
               </View>
             </View>

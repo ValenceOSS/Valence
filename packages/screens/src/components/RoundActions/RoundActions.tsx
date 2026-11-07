@@ -18,7 +18,7 @@ const FACE =
   'flex size-12 items-center justify-center rounded-full bg-[var(--surface-hover)] text-text transition-colors duration-[var(--duration-fast)] group-hover:bg-[var(--surface-active)] group-data-[state=open]:bg-[var(--surface-active)]';
 
 const COMPACT = cn(
-  'flex size-[3.25rem] shrink-0 items-center justify-center rounded-[0.875rem]',
+  'flex h-[3.25rem] min-w-0 flex-1 items-center justify-center rounded-[0.875rem] md:w-[3.25rem] md:flex-none',
   glassOnArtwork,
 );
 
@@ -95,7 +95,9 @@ const RoundActions = ({ label, actions, isCompact = false, className }: RoundAct
   return (
     <div
       className={cn(
-        isCompact ? 'flex items-center gap-2' : 'flex items-start justify-evenly gap-1',
+        isCompact
+          ? 'flex w-full items-center gap-2 md:w-auto'
+          : 'flex items-start justify-evenly gap-1',
         className,
       )}
     >

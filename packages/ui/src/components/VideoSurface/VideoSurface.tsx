@@ -46,6 +46,7 @@ const VideoSurface = ({
 }: VideoSurfaceProps) => {
   const trackId = textTrack?.id ?? null;
   const trackRef = useRef<HTMLTrackElement>(null);
+  const lastTimeRef = useRef<number | null>(null);
   useEffect(() => {
     const element = videoRef.current;
 
@@ -86,9 +87,16 @@ const VideoSurface = ({
       onTimeUpdate={(event) => {
         const element = event.currentTarget;
 
+        const hasMoved = lastTimeRef.current !== null && element.currentTime > lastTimeRef.current;
+
+        lastTimeRef.current = element.currentTime;
         onTimeUpdate?.(element.currentTime);
 
-        if (!element.paused && !element.seeking && element.readyState >= HAS_FUTURE_DATA) {
+        if (
+          !element.paused &&
+          !element.seeking &&
+          (hasMoved || element.readyState >= HAS_FUTURE_DATA)
+        ) {
           onBufferingChange?.(false);
         }
       }}

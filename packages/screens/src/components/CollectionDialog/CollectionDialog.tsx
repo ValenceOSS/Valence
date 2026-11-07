@@ -49,10 +49,14 @@ import { CollectionOrderSchema } from '@ValenceContracts/schemas/Collection';
 import type { CollectionOrder } from '@ValenceContracts/schemas/Collection';
 import type { CollectionDialogProps } from './CollectionDialog.types';
 import { say } from '@ValenceI18n/say';
+import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const PICTURES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 
+const CARD_WIDTH = 136;
+
+const ROW_HEIGHT = 260;
 /**
  * One collection in full: its cover, what it gathers, and every film and programme in it this viewer
  * may see, laid out as whoever made it placed them, by year, or by name.
@@ -328,59 +332,67 @@ const CollectionDialog = ({
           ) : null}
 
           {entries.length === 0 ? null : (
-            <ul
-              aria-label={label}
-              className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-4 gap-y-6"
+            <VirtualGrid
+              label={label}
+              isList
+              count={entries.length}
+              leastCardWidth={CARD_WIDTH}
+              rowHeight={ROW_HEIGHT}
+              gap={20}
             >
-              {entries.map((entry, at) => (
-                <li key={entry.id} className="flex min-w-0 flex-col gap-1">
-                  <RailCard
-                    growsOnHover={false}
-                    media={entry.media}
-                    shape="poster"
-                    isSeries={entry.kind === 'series'}
-                    onPlay={onPlay}
-                    onInspect={onInspect}
-                    onOpenShow={onOpenShow}
-                  />
+              {(at) => {
+                const entry = entries[at];
 
-                  {mayChangeEntries ? (
-                    <span className="flex flex-wrap items-center gap-1">
-                      {mayReorder && at > 0 ? (
+                return entry === undefined ? null : (
+                  <div key={entry.id} role="listitem" className="flex min-w-0 flex-col gap-1">
+                    <RailCard
+                      growsOnHover={false}
+                      media={entry.media}
+                      shape="poster"
+                      isSeries={entry.kind === 'series'}
+                      onPlay={onPlay}
+                      onInspect={onInspect}
+                      onOpenShow={onOpenShow}
+                    />
+
+                    {mayChangeEntries ? (
+                      <span className="flex flex-wrap items-center gap-1">
+                        {mayReorder && at > 0 ? (
+                          <PanelCardAction
+                            icon={ArrowLeftFilledIcon}
+                            onClick={() => {
+                              move(at, at - 1);
+                            }}
+                          >
+                            {say('screens.collectionDialog.earlier')}
+                          </PanelCardAction>
+                        ) : null}
+
+                        {mayReorder && at < entries.length - 1 ? (
+                          <PanelCardAction
+                            icon={ArrowRightFilledIcon}
+                            onClick={() => {
+                              move(at, at + 1);
+                            }}
+                          >
+                            {say('screens.collectionDialog.later')}
+                          </PanelCardAction>
+                        ) : null}
+
                         <PanelCardAction
-                          icon={ArrowLeftFilledIcon}
+                          icon={MinusFilledIcon}
                           onClick={() => {
-                            move(at, at - 1);
+                            void dropFromCollection(collection.id, entry.id).then(refresh);
                           }}
                         >
-                          {say('screens.collectionDialog.earlier')}
+                          {say('common.forget')}
                         </PanelCardAction>
-                      ) : null}
-
-                      {mayReorder && at < entries.length - 1 ? (
-                        <PanelCardAction
-                          icon={ArrowRightFilledIcon}
-                          onClick={() => {
-                            move(at, at + 1);
-                          }}
-                        >
-                          {say('screens.collectionDialog.later')}
-                        </PanelCardAction>
-                      ) : null}
-
-                      <PanelCardAction
-                        icon={MinusFilledIcon}
-                        onClick={() => {
-                          void dropFromCollection(collection.id, entry.id).then(refresh);
-                        }}
-                      >
-                        {say('common.forget')}
-                      </PanelCardAction>
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              }}
+            </VirtualGrid>
           )}
         </DialogSections>
       </DialogContent>

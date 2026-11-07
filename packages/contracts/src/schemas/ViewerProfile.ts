@@ -54,6 +54,7 @@ const AvatarSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('initial'),
     font: LetterFontSchema.default(PLUS_JAKARTA_SANS_AS_STORED),
+    colourTo: ProfileColourSchema.exactOptional(),
   }),
   z.object({ kind: z.literal('drawn'), style: AvatarStyleSchema, seed: z.string().min(1).max(64) }),
   z.object({

@@ -8,7 +8,8 @@ const TITLE_PART_LOOKS: Readonly<
 > = {
   library: { label: TITLE_STATUS_NAMES.library, tone: 'success', cell: 'bg-success' },
   downloading: { label: TITLE_STATUS_NAMES.downloading, tone: 'busy', cell: 'bg-busy' },
-  missing: { label: TITLE_STATUS_NAMES.missing, tone: 'accent', cell: 'bg-accent' },
+  queued: { label: TITLE_STATUS_NAMES.queued, tone: 'waiting', cell: 'bg-on-scrim/25' },
+  missing: { label: TITLE_STATUS_NAMES.missing, tone: 'warning', cell: 'bg-highlight' },
   toApprove: { label: TITLE_STATUS_NAMES.toApprove, tone: 'highlight', cell: 'bg-highlight' },
   failed: { label: TITLE_STATUS_NAMES.failed, tone: 'danger', cell: 'bg-danger' },
   notFollowed: { label: TITLE_STATUS_NAMES.notFollowed, tone: 'quiet', cell: 'bg-on-scrim/30' },

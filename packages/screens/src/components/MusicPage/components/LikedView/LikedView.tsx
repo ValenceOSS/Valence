@@ -33,7 +33,9 @@ const LikedView = () => {
   const tracks = asked.data ?? [];
   const covers = coverAlbumsOf(tracks);
 
-  useLightTheMusic(covers[0] === undefined ? null : albumArtworkUrl(covers[0]));
+  const heading = covers[0] === undefined ? null : albumArtworkUrl(covers[0]);
+
+  useLightTheMusic(heading);
   const total = tracks.reduce((sum, track) => sum + track.durationSeconds, 0);
 
   if (asked.isError) {
@@ -53,6 +55,7 @@ const LikedView = () => {
       <MusicHeader
         eyebrow={say('common.playlist')}
         title={say('common.likedSongs2')}
+        backdrop={heading}
         artwork={
           <PlaylistCover
             name={say('common.likedSongs2')}
@@ -102,6 +105,7 @@ const LikedView = () => {
           />
         ) : (
           <TrackList
+            hasHeading
             label={say('common.likedSongs2')}
             tracks={tracks}
             showsArtwork

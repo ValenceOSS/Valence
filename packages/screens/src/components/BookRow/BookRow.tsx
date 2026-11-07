@@ -2,28 +2,13 @@ import { Rail } from '@ValenceUI/Rail';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
+import { describeOnShelf } from '@ValenceScreens/components/BookRow/describeOnShelf';
 import { gatherSeries } from '@ValenceClient/books/gatherSeries';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BookRowProps } from './BookRow.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
-
-/**
- * What goes under a book on a shelf: who wrote an ebook or an audiobook, or how many chapters a
- * comic has.
- *
- * @param book - The book.
- * @returns The line under its cover.
- */
-const describeOnShelf = (book: Book): string =>
-  book.layout === 'reflow' || book.layout === 'audio'
-    ? book.authors === null || book.authors.length === 0
-      ? book.layout === 'audio'
-        ? say('common.audiobook')
-        : say('common.ebook')
-      : book.authors.join(', ')
-    : sayCount('common.count.chapters', book.chapterCount);
 
 /**
  * What goes above a book on a shelf: its place in its series, on a shelf of one series, and
@@ -85,7 +70,7 @@ const BookRow = ({
             <RevealItem key={`series-${series.name}`} index={at} className="shrink-0">
               <MediaCard
                 title={series.name}
-                shape="book"
+                shape="poster"
                 {...(first === undefined ? {} : { imageUrl: bookCoverUrl(first.id) })}
                 {...(first === undefined ? {} : cardOrigin(first.libraryId))}
                 subtitle={[sayCount('common.count.books', series.books.length), ...authors].join(
@@ -108,7 +93,7 @@ const BookRow = ({
           <RevealItem key={book.id} index={at} className="shrink-0">
             <MediaCard
               title={book.title}
-              shape="book"
+              shape="poster"
               imageUrl={bookCoverUrl(book.id)}
               {...cardOrigin(book.libraryId)}
               subtitle={where?.detail ?? describeOnShelf(book)}
