@@ -179,7 +179,7 @@ patchedDependencies:
   '@keyline-icons/react@1.8.0': 35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0
   expo-glass-tabs@0.1.1: 606af01e3bf3d06989f3def95dd5c5d95b74de62671d3c2438db4145c86ca466
   expo-video@57.0.4: 71f95119ba3dec49ec5b599ef312e5abb4ce1264fadf8bc5c3ab59815fee4bb5
-  mediabunny@1.62.0: 7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed
+  mediabunny@1.62.0: f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645
   react-native-web@0.21.3: bebd075d39fcc6e9153483f5f1c23434710e1321318ebfb5faa02a689d94f1ea
 
 importers:
@@ -1412,13 +1412,13 @@ importers:
         version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
       '@mediabunny/ac3':
         specifier: 1.62.0
-        version: 1.62.0(mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed))
+        version: 1.62.0(mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645))
       '@mediabunny/dts':
         specifier: 1.62.0
-        version: 1.62.0(mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed))
+        version: 1.62.0(mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645))
       '@mediabunny/flac-encoder':
         specifier: 1.62.0
-        version: 1.62.0(mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed))
+        version: 1.62.0(mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645))
       '@tanstack/react-form':
         specifier: 1.33.5
         version: 1.33.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -1454,7 +1454,7 @@ importers:
         version: 2.5.16
       mediabunny:
         specifier: 1.62.0
-        version: 1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed)
+        version: 1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645)
       motion:
         specifier: 13.5.1
         version: 13.5.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -15658,17 +15658,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@mediabunny/ac3@1.62.0(mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed))':
+  '@mediabunny/ac3@1.62.0(mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645))':
     dependencies:
-      mediabunny: 1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed)
+      mediabunny: 1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645)
 
-  '@mediabunny/dts@1.62.0(mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed))':
+  '@mediabunny/dts@1.62.0(mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645))':
     dependencies:
-      mediabunny: 1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed)
+      mediabunny: 1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645)
 
-  '@mediabunny/flac-encoder@1.62.0(mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed))':
+  '@mediabunny/flac-encoder@1.62.0(mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645))':
     dependencies:
-      mediabunny: 1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed)
+      mediabunny: 1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645)
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -22466,7 +22466,7 @@ snapshots:
 
   media-typer@2.0.0: {}
 
-  mediabunny@1.62.0(patch_hash=7d867d395e537782d1044b36d86c4375d04a1d6f63bdea11ec6ddccd609b53ed):
+  mediabunny@1.62.0(patch_hash=f49743c916b6b9dc0b5d0b002017dd8d7e0254c5f46007b193ce7710a14cc645):
     dependencies:
       '@types/dom-mediacapture-transform': 0.1.12
       '@types/dom-webcodecs': 0.1.13
