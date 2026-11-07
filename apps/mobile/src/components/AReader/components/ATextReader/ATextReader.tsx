@@ -16,6 +16,7 @@ import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useBookText } from '@ValenceMobile/books/useBookText';
 import { placeOfPage } from '@ValenceClient/books/placeOfPage';
+import { firstToShow } from '@ValenceClient/books/firstToShow';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { READING_THEMES } from '@ValenceCore/tokens/READING_THEMES';
@@ -564,19 +565,18 @@ const ATextReader = ({
   }, [isNative, isLong, isLaidOut, leafKey, page, part]);
 
   const curls = !isStill && leaves.part === part && (leaves.pictures[page] ?? '') !== '';
-  const openingBlocks = opened === null ? undefined : whole.parts[opened]?.blocks;
+  const shownFrom = opened === null ? null : firstToShow(whole.parts, opened);
   const typeset = useMemo(() => {
-    if (cookie === undefined || (!isWholeRead && openingBlocks === undefined)) {
+    if (cookie === undefined || opened === null || (!isWholeRead && shownFrom === null)) {
       return null;
     }
 
     return JSON.stringify({
       parts: Array.from({ length: sizes.length }, (_, at) => {
         const named = contentsEntryAt(entries, at, 0, new Map());
-        const blocks = isWholeRead
-          ? (wholeBlocks[at] ?? [])
-          : at === opened
-            ? (openingBlocks ?? [])
+        const blocks =
+          isWholeRead || (shownFrom !== null && at >= opened && at <= shownFrom)
+            ? (wholeBlocks[at] ?? [])
             : [];
 
         return {
@@ -596,7 +596,7 @@ const ATextReader = ({
       cookie,
       isWhole: isWholeRead,
     });
-  }, [cookie, isWholeRead, openingBlocks, sizes.length, entries, wholeBlocks, opened, book.title]);
+  }, [cookie, isWholeRead, shownFrom, sizes.length, entries, wholeBlocks, opened, book.title]);
   const column = Math.max(Math.floor((height - topRoom - footRoom) / lineHeight), 1) * lineHeight;
   const bookLook = {
     fontSize: size,

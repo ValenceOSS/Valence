@@ -4,6 +4,7 @@ import { readBookDocument } from '@ValenceCore/books/readBookDocument';
 import { typesetBlocksOf } from '@ValenceCore/books/typesetBlocksOf';
 import { fetchBookDocument } from '@ValenceClient/books/fetchBooks';
 import { readBookText } from '@ValenceClient/books/readBookText';
+import { firstToShow } from '@ValenceClient/books/firstToShow';
 import { streamFromThisServer } from '@ValenceMobile/platform/streamFromThisServer';
 import type { BookContents } from '@ValenceContracts/schemas/Book';
 import type { TypesetBlock } from '@ValenceContracts/schemas/BookText';
@@ -44,7 +45,8 @@ const keep = (key: string, text: BookText): void => {
 
 /**
  * Every part of a book that reflows, ready to set, as the server streams it: nothing at first, then
- * the part it opens at the moment that part arrives, then the whole book and its contents once the
+ * the part it opens at the moment that part arrives — or, where that part holds nothing, the first
+ * after it that does — then the whole book and its contents once the
  * rest has. A server that does not stream books is asked for each part in turn instead, and each is
  * read here. A book read whole lately is had at once.
  *
@@ -86,7 +88,10 @@ const useBookText = (
     const run = { isLive: true };
     const isGone = () => !run.isLive;
     const parts: (BookTextPart | undefined)[] = [];
-    const got: { contents: BookContents['contents'] | null } = { contents: null };
+    const got: { contents: BookContents['contents'] | null; isShown: boolean } = {
+      contents: null,
+      isShown: false,
+    };
 
     void (async () => {
       const answered = await readBookText(
@@ -103,7 +108,8 @@ const useBookText = (
               ...(line.html === undefined ? {} : { html: line.html }),
             };
 
-            if (line.part === opening && !isGone()) {
+            if (!got.isShown && !isGone() && firstToShow(parts, opening) !== null) {
+              got.isShown = true;
               setRead({
                 key,
                 text: { parts: [...parts], contents: null, isWhole: false, isFailed: false },

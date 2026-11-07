@@ -80,7 +80,7 @@ type BookQuery = {
   limit?: number;
 };
 
-const BOOK_TEXT_VERSION = 1;
+const BOOK_TEXT_VERSION = 2;
 
 const TEXTS_HELD = 4;
 

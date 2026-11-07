@@ -2,6 +2,33 @@ import sanitizeHtml from 'sanitize-html';
 import { BOOK_DOCUMENT_TAGS } from '@ValenceContracts/schemas/Book';
 
 /**
+ * A picture a book draws as an SVG image, as many draw their cover, as an ordinary picture: its
+ * address rewritten to point back at Valence, with the width and height the book gave it.
+ *
+ * @param attribs - The image's attributes.
+ * @param addressFor - Turns a path inside the book into one this server serves.
+ * @returns The picture, or an empty span where it points at nothing the book holds.
+ */
+const pictureOfAnSvgImage = (
+  attribs: Record<string, string>,
+  addressFor: (href: string) => string | null,
+): { tagName: string; attribs: Record<string, string> } => {
+  const src = attribs['xlink:href'] ?? attribs['href'];
+  const address = src === undefined ? null : addressFor(src);
+
+  return address === null
+    ? { tagName: 'span', attribs: {} }
+    : {
+        tagName: 'img',
+        attribs: {
+          src: address,
+          ...(attribs['width'] === undefined ? {} : { width: attribs['width'] }),
+          ...(attribs['height'] === undefined ? {} : { height: attribs['height'] }),
+        },
+      };
+};
+
+/**
  * Makes a chapter of somebody else's book safe to put in a page of ours.
  *
  * A book is a file from a stranger, and its chapters are arbitrary XHTML that ends up on the same
@@ -56,6 +83,8 @@ const cleanBookDocument = (
 
         return { tagName: 'a', attribs: link === null ? rest : { ...rest, href: link } };
       },
+      image: (_name, attribs) => pictureOfAnSvgImage(attribs, addressFor),
+      'svg:image': (_name, attribs) => pictureOfAnSvgImage(attribs, addressFor),
       img: (_name, attribs) => {
         const src = attribs['src'];
         const address = src === undefined ? null : addressFor(src);
@@ -63,21 +92,6 @@ const cleanBookDocument = (
         return address === null
           ? { tagName: 'span', attribs: {} }
           : { tagName: 'img', attribs: { ...attribs, src: address } };
-      },
-      image: (_name, attribs) => {
-        const src = attribs['xlink:href'] ?? attribs['href'];
-        const address = src === undefined ? null : addressFor(src);
-
-        return address === null
-          ? { tagName: 'span', attribs: {} }
-          : {
-              tagName: 'img',
-              attribs: {
-                src: address,
-                ...(attribs['width'] === undefined ? {} : { width: attribs['width'] }),
-                ...(attribs['height'] === undefined ? {} : { height: attribs['height'] }),
-              },
-            };
       },
     },
     nonTextTags: ['script', 'style', 'textarea', 'noscript', 'title'],
