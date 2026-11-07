@@ -19786,6 +19786,11 @@
     "context": "Text shown in the indexers panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexersPanel.testedTestedOfAll",
+    "text": "Tested {tested} of {all}",
+    "context": "The Test all button in the indexers panel while it works through them, counting up as each test finishes. {tested} and {all} are numbers."
+  },
+  {
     "handler": "screens.adminArea.indexersPanel.testing",
     "text": "Testing",
     "context": "The state badge on an indexer while Valence is checking it can be reached and searched."

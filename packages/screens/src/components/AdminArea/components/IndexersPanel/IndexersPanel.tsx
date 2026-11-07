@@ -82,6 +82,7 @@ const IndexersPanel = () => {
   const [removing, setRemoving] = useState<Indexer | null>(null);
   const [testing, setTesting] = useState<ReadonlySet<string>>(NONE_TESTING);
   const [isTestingAll, setIsTestingAll] = useState(false);
+  const [round, setRound] = useState({ tested: 0, of: 0 });
   const [problem, setProblem] = useState<string | null>(null);
 
   const reread = useCallback(
@@ -152,6 +153,7 @@ const IndexersPanel = () => {
   const testAll = () => {
     setIsTestingAll(true);
     setProblem(null);
+    setRound({ tested: 0, of: toTest.length });
 
     void mapWithLimit(toTest, TESTED_AT_ONCE, async (indexer) => {
       setTesting((before) => new Set([...before, indexer.id]));
@@ -159,6 +161,7 @@ const IndexersPanel = () => {
       const failure = await testAndSayWhy(indexer);
 
       setTesting((before) => new Set([...before].filter((one) => one !== indexer.id)));
+      setRound((before) => ({ ...before, tested: before.tested + 1 }));
 
       return { name: indexer.name, failure };
     })
@@ -361,6 +364,11 @@ const IndexersPanel = () => {
     ];
   }, [appNames, isTestingAll, reread, testing]);
 
+  const testedSoFar = say('screens.adminArea.indexersPanel.testedTestedOfAll', {
+    tested: round.tested.toString(),
+    all: round.of.toString(),
+  });
+
   return (
     <PanelCard
       title={say('common.indexers')}
@@ -373,8 +381,12 @@ const IndexersPanel = () => {
             isDisabled={toTest.length === 0 || testing.size > 0}
             onClick={testAll}
           >
-            {say('screens.adminArea.indexersPanel.testAll')}
+            {isTestingAll ? testedSoFar : say('screens.adminArea.indexersPanel.testAll')}
           </PanelCardAction>
+
+          <span aria-live="polite" className="sr-only">
+            {isTestingAll ? testedSoFar : null}
+          </span>
 
           {prowlarrs.length === 0 ? null : (
             <PanelCardAction
