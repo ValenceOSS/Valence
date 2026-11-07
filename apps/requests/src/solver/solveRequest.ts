@@ -1,7 +1,6 @@
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
-import { bytesOf } from '@ValenceRequests/solver/bytesOf';
-import { standingOf } from '@ValenceRequests/solver/standingOf';
-import type { PageAnswer } from '@ValenceRequests/solver/PageAnswerSchema';
+import { askThrough } from '@ValenceRequests/solver/askThrough';
+import type { Solved } from '@ValenceRequests/solver/askThrough';
 import type { PageRequest } from '@ValenceRequests/solver/PageRequest';
 import type { SitePage } from '@ValenceRequests/solver/toSitePage';
 import { saying } from '@ValenceI18n/saying';
@@ -13,8 +12,6 @@ type SolveRequestOptions = {
   now?: () => number;
   wait?: (ms: number) => Promise<void>;
 };
-
-type Solved = { answer: PageAnswer; bytes: Buffer };
 
 const AFTER_A_CLICK_MS = 3000;
 
@@ -84,39 +81,28 @@ const solveRequest = async ({
     }
   };
 
-  const ask = async () => {
-    const answer = await page.fetch(request);
-    const bytes = bytesOf(answer.dataUrl);
-    const standing = standingOf(answer.status, answer.headers.server ?? null, bytes.toString());
-
-    if (standing === 'blocked') {
-      throw new IndexerFailure(BLOCKED, 'CloudflareRefusesAddress');
-    }
-
-    return { answer, bytes, isChallenge: standing === 'challenged' };
-  };
-
   if (page.origin() !== origin) {
     await clearTheWay();
   }
 
-  let asked = await ask();
+  const asked = await askThrough(page, request);
 
-  if (asked.isChallenge) {
-    await clearTheWay();
-    asked = await ask();
-
-    if (asked.isChallenge) {
-      throw new IndexerFailure(
-        saying('requests.solver.solveRequest.theSitesBrowserCheckWouldNot'),
-        'CloudflareCheckFailed',
-      );
-    }
+  if (asked !== null) {
+    return asked;
   }
 
-  return { answer: asked.answer, bytes: asked.bytes };
-};
+  await clearTheWay();
 
-export type { Solved };
+  const askedAgain = await askThrough(page, request);
+
+  if (askedAgain === null) {
+    throw new IndexerFailure(
+      saying('requests.solver.solveRequest.theSitesBrowserCheckWouldNot'),
+      'CloudflareCheckFailed',
+    );
+  }
+
+  return askedAgain;
+};
 
 export { solveRequest };

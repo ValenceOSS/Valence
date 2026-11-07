@@ -46,6 +46,12 @@ const aSolver = (page = aSitePage()) => {
   return { solver: createSolver({ pool }), pool, page, addCookies };
 };
 
+const THE_CHECK = anAnswer({
+  status: 403,
+  headers: { server: 'cloudflare', 'content-type': 'text/html' },
+  body: '<title>Just a moment...</title>',
+});
+
 const A_GET = {
   url: 'https://example.org/search?q=a',
   method: 'GET' as const,
@@ -173,7 +179,7 @@ describe('createSolver', () => {
     expect(page.close).toHaveBeenCalled();
   });
 
-  it('takes one request at a time, across every site and session', async () => {
+  it('goes through one check at a time, across every site and session', async () => {
     const page = aSitePage();
     let answerTheFirst: (answer: PageAnswer) => void = () => {};
 
@@ -246,5 +252,69 @@ describe('createSolver', () => {
 
     await stuck;
     await expect(next).resolves.toMatchObject({ status: 200 });
+  });
+
+  it('asks straight away of a site the session is through, while another waits on its check', async () => {
+    const page = aSitePage();
+    const { pool } = aSolver(page);
+
+    vi.useFakeTimers();
+
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+
+    await solver.fetch(A_GET, {}, 'one');
+    page.visit.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const stuck = expect(
+      solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two'),
+    ).rejects.toThrow('Timed out');
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(page.visit).toHaveBeenCalledTimes(2);
+
+    const through = solver.fetch(A_GET, {}, 'one');
+
+    await vi.advanceTimersByTimeAsync(0);
+    await expect(through).resolves.toMatchObject({ status: 200 });
+
+    await vi.advanceTimersByTimeAsync(5000);
+    vi.useRealTimers();
+    await stuck;
+  });
+
+  it('waits its turn and goes through the check where it shows again on a site it was through', async () => {
+    const page = aSitePage({ answers: [anAnswer(), THE_CHECK, THE_CHECK] });
+    const { solver } = aSolver(page);
+
+    await solver.fetch(A_GET, {}, 'one');
+
+    await expect(solver.fetch(A_GET, {}, 'one')).resolves.toMatchObject({ status: 200 });
+    expect(page.visit).toHaveBeenCalledTimes(2);
+    expect(page.fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it('fails the requests already waiting for a site whose check just failed, untried', async () => {
+    const page = aSitePage({ standings: ['blocked'] });
+    const { solver } = aSolver(page);
+
+    const first = expect(solver.fetch(A_GET, {}, 'one')).rejects.toMatchObject({
+      problemCode: 'CloudflareRefusesAddress',
+    });
+    const waiting = expect(
+      solver.fetch({ ...A_GET, url: 'https://example.org/other' }, {}, 'two'),
+    ).rejects.toMatchObject({ problemCode: 'CloudflareRefusesAddress' });
+    const elsewhere = solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'one');
+
+    await first;
+    await waiting;
+    await expect(elsewhere).resolves.toMatchObject({ status: 200 });
+    expect(page.visit).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives a request asked after a site’s check failed a fresh try', async () => {
+    const { solver } = aSolver(aSitePage({ standings: ['blocked'] }));
+
+    await expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow();
+    await expect(solver.fetch(A_GET, {}, 'one')).resolves.toMatchObject({ status: 200 });
   });
 });
