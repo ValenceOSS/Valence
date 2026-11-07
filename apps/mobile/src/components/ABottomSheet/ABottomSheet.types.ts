@@ -7,6 +7,7 @@ type ABottomSheetProps = {
   closeLabel?: string;
   onClose: () => void;
   isTall?: boolean;
+  tallest?: number;
   children: ReactNode;
 };
 

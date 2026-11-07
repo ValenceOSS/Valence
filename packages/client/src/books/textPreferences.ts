@@ -40,23 +40,17 @@ const DEFAULTS: TextPreferences = {
 
 /**
  * How somebody likes text set, as they last left it: how large, how far apart the lines, how wide
- * the margins, and whether the page is light, sepia or dark.
+ * the margins, the theme, and how pages turn.
  *
- * Kept on the device beside the page reader's own settings, under a key of its own so that neither
- * can spoil the other, and for the same reason as those: it is a property of the screen. Anything
- * unreadable in what was kept falls back to the default for that one setting rather than all four.
+ * One set for the whole device, the same in every book, as Apple Books keeps it: kept beside the
+ * page reader's own settings, under a key of its own so that neither can spoil the other, and for
+ * the same reason as those: it is a property of the screen. Anything unreadable in what was kept
+ * falls back to the default for that one setting rather than all of them.
  *
- * Each book keeps its own, so the one read on a phone at night in large sepia type does not change
- * the next; a book opened for the first time starts from however the last one was left.
- *
- * @param bookId - The book being read, where there is one.
  * @returns How to set text, saved or defaulted.
  */
-const readTextPreferences = (bookId?: string): TextPreferences => {
-  const store = platformInUse().store;
-  const held =
-    (bookId === undefined ? null : store.read(`${STORAGE_KEY}.${bookId}`)) ??
-    store.read(STORAGE_KEY);
+const readTextPreferences = (): TextPreferences => {
+  const held = platformInUse().store.read(STORAGE_KEY);
 
   try {
     const read = TextPreferencesSchema.safeParse(held === null ? {} : JSON.parse(held));
@@ -68,19 +62,12 @@ const readTextPreferences = (bookId?: string): TextPreferences => {
 };
 
 /**
- * Remembers how somebody likes text set, for this book and as where the next new one starts.
+ * Remembers how somebody likes text set, for every book on this device.
  *
  * @param preferences - How they left it.
- * @param bookId - The book being read, where there is one.
  */
-const writeTextPreferences = (preferences: TextPreferences, bookId?: string): void => {
-  const store = platformInUse().store;
-
-  store.write(STORAGE_KEY, JSON.stringify(preferences));
-
-  if (bookId !== undefined) {
-    store.write(`${STORAGE_KEY}.${bookId}`, JSON.stringify(preferences));
-  }
+const writeTextPreferences = (preferences: TextPreferences): void => {
+  platformInUse().store.write(STORAGE_KEY, JSON.stringify(preferences));
 };
 
 export type { TextPreferences };

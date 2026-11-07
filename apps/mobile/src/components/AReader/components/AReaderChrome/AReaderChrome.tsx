@@ -1,28 +1,42 @@
 import { useEffect, useState } from 'react';
-import { ChevronLeft, SlidersHorizontal } from '@keyline-icons/react-native';
+import { Bookmark, ChevronLeft, SlidersHorizontal } from '@keyline-icons/react-native';
+import { Bookmark as BookmarkFilled } from '@keyline-icons/react-native/fill';
 import { StatusBar } from 'expo-status-bar';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
-import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
+import { AReaderControl } from '@ValenceMobile/components/AReader/components/AReaderChrome/components/AReaderControl/AReaderControl';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
+import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
+import { readerBarLook } from '@ValenceMobile/components/AReader/readerBarLook';
 import type { AReaderChromeProps } from './AReaderChrome.types';
 import { say } from '@ValenceI18n/say';
 
-const BAR = 56;
+const BAR = 52;
 
-const SOLID = 0.94;
+const SOLID = 1;
 
 const FROSTED_TINT = 0.45;
 
 const MOVES = { ...SPRINGS.rise, overshootClamping: true, useNativeDriver: true } as const;
 
+const SIDE_WITH_MARK = 92;
+
 const styles = StyleSheet.create({
-  bar: { alignItems: 'center', flexDirection: 'row', gap: 12, height: BAR },
+  bar: {
+    alignItems: 'center',
+    borderRadius: 20,
+    flexDirection: 'row',
+    gap: 4,
+    height: BAR,
+    paddingHorizontal: 4,
+  },
+  end: { justifyContent: 'flex-end' },
+  side: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   foot: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   head: { left: 0, position: 'absolute', right: 0, top: 0 },
   titles: { alignItems: 'center', flex: 1, gap: 1 },
@@ -47,6 +61,8 @@ const styles = StyleSheet.create({
  * @param onPanel - Told to bring out the reader's panel.
  * @param footer - What goes along the bottom.
  * @param children - The page.
+ * @param mark - Whether the page showing is bookmarked, and how to mark or unmark it, where the
+ *   reader keeps bookmarks in its top bar.
  * @param isFrosted - Whether the bars are dark frosted glass, the page showing blurred through a
  *   light tint of the paper's colour, rather than solid.
  */
@@ -62,6 +78,7 @@ const AReaderChrome = ({
   footer,
   children,
   isFrosted = false,
+  mark,
 }: AReaderChromeProps) => {
   const room = useSafeAreaInsets();
   const isStill = usePrefersStillness();
@@ -92,8 +109,9 @@ const AReaderChrome = ({
           styles.head,
           {
             backgroundColor: withAlpha(paper, isFrosted ? FROSTED_TINT : SOLID),
-            paddingLeft: Math.max(12, room.left),
-            paddingRight: Math.max(12, room.right),
+            paddingBottom: 8,
+            paddingLeft: Math.max(SCREEN_EDGE, room.left),
+            paddingRight: Math.max(SCREEN_EDGE, room.right),
             paddingTop: room.top,
             transform: [
               {
@@ -107,23 +125,41 @@ const AReaderChrome = ({
         ]}
       >
         {isFrosted ? <ABlur isDark /> : null}
-        <View style={styles.bar}>
-          <AGlassCircle of={ChevronLeft} label={say('common.back')} onPress={onBack} />
+        <View style={[styles.bar, readerBarLook(paper, ink, isDarkPage)]}>
+          <View style={[styles.side, mark === undefined ? null : { width: SIDE_WITH_MARK }]}>
+            <AReaderControl label={say('common.back')} onPress={onBack}>
+              <Icon of={ChevronLeft} size={22} colour={ink} />
+            </AReaderControl>
+          </View>
           <View style={styles.titles}>
             <Words lines={1} isStrong colour={ink}>
               {title}
             </Words>
             {place === null ? null : (
-              <Words size="small" lines={1} colour={withAlpha(ink, 0.7)}>
+              <Words size="small" lines={1} colour={withAlpha(ink, 0.6)}>
                 {place}
               </Words>
             )}
           </View>
-          <AGlassCircle
-            of={SlidersHorizontal}
-            label={say('common.contentsAndSettings')}
-            onPress={onPanel}
-          />
+          <View
+            style={[styles.side, styles.end, mark === undefined ? null : { width: SIDE_WITH_MARK }]}
+          >
+            {mark === undefined ? null : (
+              <AReaderControl
+                label={
+                  mark.isMarked
+                    ? say('phone.aReader.aReaderSide.unmarkThesePages')
+                    : say('phone.aReader.aReaderSide.markThesePages')
+                }
+                onPress={mark.onMark}
+              >
+                <Icon of={mark.isMarked ? BookmarkFilled : Bookmark} size={22} colour={ink} />
+              </AReaderControl>
+            )}
+            <AReaderControl label={say('common.contentsAndSettings')} onPress={onPanel}>
+              <Icon of={SlidersHorizontal} size={22} colour={ink} />
+            </AReaderControl>
+          </View>
         </View>
       </Animated.View>
 

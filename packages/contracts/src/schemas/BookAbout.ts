@@ -17,6 +17,7 @@ const BookAboutSchema = z.object({
   firstPublished: z.number().int().nullable(),
   pages: z.number().int().positive().nullable(),
   publishers: z.array(z.string()),
+  languages: z.array(z.string()).default([]),
   editions: z.number().int().nonnegative().nullable(),
   rating: z
     .object({ average: z.number().min(0).max(5), count: z.number().int().nonnegative() })

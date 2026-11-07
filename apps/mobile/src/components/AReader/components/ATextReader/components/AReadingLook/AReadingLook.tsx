@@ -9,6 +9,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { READING_SERIF } from '@ValenceMobile/theme/READING_SERIF';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AReadingLookProps } from './AReadingLook.types';
 import { say } from '@ValenceI18n/say';
 
@@ -26,13 +27,13 @@ const NAMES: Readonly<Record<AReadingLookProps['theme'], string>> = {
 const styles = StyleSheet.create({
   badge: {
     alignItems: 'center',
-    borderRadius: 9,
-    bottom: 8,
-    height: 18,
+    borderRadius: 12,
+    height: 24,
     justifyContent: 'center',
     position: 'absolute',
     right: 8,
-    width: 18,
+    top: 8,
+    width: 24,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   half: {
@@ -43,15 +44,16 @@ const styles = StyleSheet.create({
   },
   pair: { borderRadius: 23, flex: 1, flexDirection: 'row', overflow: 'hidden' },
   pairs: { flexDirection: 'row', gap: 12 },
+  section: { gap: 10 },
   sample: { fontSize: 26, lineHeight: 32 },
   seam: { width: StyleSheet.hairlineWidth },
+  named: { gap: 6 },
   tile: {
     alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 2,
-    gap: 2,
-    height: 92,
+    borderRadius: 12,
+    height: 84,
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   tileReach: { width: '31%', flexGrow: 1 },
   whole: { gap: 18 },
@@ -94,8 +96,8 @@ const AReadingLook = ({ theme, onTheme, onSmaller, onLarger }: AReadingLookProps
     void Brightness.setBrightnessAsync(next).catch(() => undefined);
   };
 
-  const pairLook = { backgroundColor: colours.surfaceRaised };
-  const seamLook = { backgroundColor: colours.border };
+  const pairLook = { backgroundColor: withAlpha(colours.text, 0.08) };
+  const seamLook = { backgroundColor: withAlpha(colours.text, 0.16) };
 
   return (
     <View style={styles.whole}>
@@ -161,54 +163,69 @@ const AReadingLook = ({ theme, onTheme, onSmaller, onLarger }: AReadingLookProps
         </View>
       </View>
 
-      <View style={styles.grid} accessibilityLabel={say('phone.aReader.aReadingLook.themes')}>
-        {READING_THEME_IDS.map((id) => {
-          const look = READING_THEMES[id];
-          const isChosen = id === theme;
+      <View style={styles.section}>
+        <Words size="small" tone="muted" isStrong>
+          {say('phone.aReader.aReadingLook.themes')}
+        </Words>
+        <View style={styles.grid} accessibilityLabel={say('phone.aReader.aReadingLook.themes')}>
+          {READING_THEME_IDS.map((id) => {
+            const look = READING_THEMES[id];
+            const isChosen = id === theme;
 
-          return (
-            <View key={id} style={styles.tileReach}>
-              <Button
-                tone="bare"
-                label={say('phone.aReader.aReadingLook.useNameTheme', { name: NAMES[id] })}
-                isChosen={isChosen}
-                onPress={() => {
-                  onTheme(id);
-                }}
-              >
-                <View
-                  style={[
-                    styles.tile,
-                    {
-                      backgroundColor: look.paper,
-                      borderColor: isChosen ? colours.text : colours.border,
-                    },
-                  ]}
+            return (
+              <View key={id} style={styles.tileReach}>
+                <Button
+                  tone="bare"
+                  label={say('phone.aReader.aReadingLook.useNameTheme', { name: NAMES[id] })}
+                  isChosen={isChosen}
+                  onPress={() => {
+                    onTheme(id);
+                  }}
                 >
-                  <Text
-                    style={[
-                      styles.sample,
-                      {
-                        color: look.ink,
-                        fontFamily: look.isBold ? READING_SERIF.bold : READING_SERIF.regular,
-                      },
-                    ]}
-                  >
-                    {say('phone.aReader.aReadingLook.sample')}
-                  </Text>
-                  <Words size="small" colour={look.ink}>
-                    {NAMES[id]}
-                  </Words>
-                  {isChosen ? (
-                    <View style={[styles.badge, { backgroundColor: look.ink }]}>
-                      <Icon of={Check} size={12} colour={look.paper} />
+                  <View style={styles.named}>
+                    <View
+                      style={[
+                        styles.tile,
+                        {
+                          backgroundColor: look.paper,
+                          borderColor: isChosen ? colours.text : withAlpha(colours.text, 0.16),
+                          borderWidth: isChosen ? 2 : StyleSheet.hairlineWidth,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.sample,
+                          {
+                            color: look.ink,
+                            fontFamily: look.isBold ? READING_SERIF.bold : READING_SERIF.regular,
+                          },
+                        ]}
+                      >
+                        {say('phone.aReader.aReadingLook.sample')}
+                      </Text>
+                      {isChosen ? (
+                        <View
+                          style={[styles.badge, { backgroundColor: withAlpha('#000000', 0.6) }]}
+                        >
+                          <Icon of={Check} size={14} colour="#ffffff" />
+                        </View>
+                      ) : null}
                     </View>
-                  ) : null}
-                </View>
-              </Button>
-            </View>
-          );
-        })}
+                    <Words
+                      size="small"
+                      lines={1}
+                      isCentred
+                      colour={isChosen ? colours.text : colours.textMuted}
+                    >
+                      {NAMES[id]}
+                    </Words>
+                  </View>
+                </Button>
+              </View>
+            );
+          })}
+        </View>
       </View>
     </View>
   );

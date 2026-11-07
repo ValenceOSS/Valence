@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { BookOpen, Share } from '@keyline-icons/react-native';
+import { Headphones, RotateCcw, Share } from '@keyline-icons/react-native';
 import {
   BookOpen as BookOpenFilled,
   Headphones as HeadphonesFilled,
 } from '@keyline-icons/react-native/fill';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
-import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { chaptersOf } from '@ValenceClient/books/createAudiobookPlayer';
 import { describeLength } from '@ValenceClient/books/describeLength';
@@ -20,10 +19,18 @@ import { useChapterPlaying } from '@ValenceClient/books/useChapterPlaying';
 import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
-import { Button } from '@ValenceMobile/components/Button/Button';
 import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { Button } from '@ValenceMobile/components/Button/Button';
+import { ABookHead } from '@ValenceMobile/components/ABookHead/ABookHead';
+import { AHairline } from '@ValenceMobile/components/AHairline/AHairline';
+import { ABookAbout } from '@ValenceMobile/components/ABookAbout/ABookAbout';
+import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
+import { ARising } from '@ValenceMobile/components/ARising/ARising';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
+import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
+import { usePictureTint } from '@ValenceMobile/hooks/usePictureTint';
+import { GROUND } from '@ValenceMobile/theme/GROUND';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
@@ -40,22 +47,12 @@ import { sayCount } from '@ValenceI18n/sayCount';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 
-const COVER = 128;
-
 const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   chapter: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 10 },
   chapters: { gap: 2 },
-  cover: {
-    alignItems: 'center',
-    borderRadius: 8,
-    height: COVER * 1.5,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: COVER,
-  },
-  fills: { height: '100%', width: '100%' },
-  head: { flexDirection: 'row', gap: 16 },
-  said: { flex: 1, gap: 4, justifyContent: 'flex-end' },
+  doing: { gap: 16 },
+  headline: { alignItems: 'center', gap: 8 },
   title: { flex: 1, gap: 2 },
 });
 
@@ -105,15 +102,19 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
  * @param bookId - Which book.
  * @param onRead - Told to open it, at a chapter somebody picked or where they left off.
  * @param onListen - Told once the book has started playing, to show the player.
+ * @param onAskAbout - Told to open a book from its shelves to ask for.
  * @param onBack - Told somebody is done with it.
  */
-const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
+const ABook = ({ bookId, onRead, onListen, onAskAbout, onBack }: ABookProps) => {
   const colours = useTheColours();
   const mayShare = useWhatIMayDo().may('sharing.link');
   const read = useQuery(bookQueries.one(bookId));
   const progress = useQuery(bookQueries.progress(bookId));
   const reading = useQuery(bookQueries.reading());
   const hasAudio = read.data?.book.hasAudio === true;
+  const tint = usePictureTint(
+    read.data?.book.hasCover === true ? onThisServer(bookCoverUrl(bookId)) : null,
+  );
   const heard = useQuery({ ...bookQueries.listeningPlace(bookId), enabled: hasAudio });
   const listening = useQuery({ ...bookQueries.listening(), enabled: hasAudio });
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
@@ -149,18 +150,9 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   const tracks = tracksOf(chapters);
   const toHear = chaptersOf(tracks);
   const isThisBook = hearing.state.book?.id === bookId;
-  const listen = (
-    <Button
-      tone={ordered.length === 0 ? 'bold' : 'quiet'}
-      icon={HeadphonesFilled}
-      isWide
-      onPress={() => {
-        void startListening(detail, thePhonesAudiobookPlayer()).then(onListen);
-      }}
-    >
-      {listenLabel(heard.data)}
-    </Button>
-  );
+  const listenToIt = () => {
+    void startListening(detail, thePhonesAudiobookPlayer()).then(onListen);
+  };
   const facts = [
     book.authors === null || book.authors.length === 0 ? null : book.authors.join(', '),
     book.year === null ? null : book.year.toString(),
@@ -173,147 +165,189 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       : null,
   ].filter((fact) => fact !== null);
 
+  const cover = book.hasCover ? onThisServer(bookCoverUrl(book.id)) : null;
+  const isReadable = ordered.length > 0;
+
   return (
-    <Screen scrolls onBack={onBack}>
-      <View style={styles.head}>
-        <View style={[styles.cover, { backgroundColor: colours.surfaceRaised }]}>
-          {book.hasCover ? (
-            <ARemotePicture style={styles.fills} uri={onThisServer(bookCoverUrl(book.id))} />
-          ) : (
-            <Icon of={BookOpen} size={40} colour={colours.textMuted} />
-          )}
-        </View>
-        <View style={styles.said}>
-          <Words size="heading">{book.title}</Words>
-          {facts.length === 0 ? null : <Words tone="muted">{facts.join(' · ')}</Words>}
-        </View>
-      </View>
+    <GROUND.Provider value={tint}>
+      <Screen
+        scrolls
+        title={book.title}
+        onBack={onBack}
+        head={
+          <ABookHead
+            title={book.title}
+            cover={cover}
+            {...(tint === null ? {} : { ground: tint })}
+          />
+        }
+        {...(tint === null ? {} : { behind: <ATintedGround tint={tint} /> })}
+      >
+        <ARising>
+          <View style={styles.headline}>
+            {facts.length === 0 ? null : (
+              <Words size="lead" tone="muted" isCentred>
+                {facts.join(' · ')}
+              </Words>
+            )}
+            {where === null ? null : (
+              <Words tone="muted" isCentred>
+                {isFinished ? say('common.finished') : describeReadingPlace(where)}
+              </Words>
+            )}
+            {partway === undefined ? null : (
+              <Words tone="muted" isCentred>
+                {partway.detail}
+              </Words>
+            )}
+          </View>
+        </ARising>
 
-      {hasAudio && ordered.length === 0 ? listen : null}
-
-      {ordered.length === 0 && !hasAudio ? (
-        <Words tone="muted">{say('common.nothingInThisBookYetScanning')}</Words>
-      ) : ordered.length === 0 ? null : (
-        <Button
-          tone="bold"
-          icon={BookOpenFilled}
-          isWide
-          onPress={() => {
-            onRead(book.id, null, isFinished);
-          }}
-        >
-          {isStarted
-            ? say('common.continueReading')
-            : isFinished
-              ? say('common.readAgain')
-              : say('common.read')}
-        </Button>
-      )}
-
-      {hasAudio && ordered.length > 0 ? listen : null}
-
-      {hasAudio ? (
-        <ADownloadToListen
-          kind="audiobook"
-          id={book.id}
-          title={book.title}
-          tracks={[]}
-          toKeep={() => ({ kind: 'audiobook', detail })}
-        />
-      ) : null}
-
-      {mayShare ? (
-        <Button
-          tone="ghost"
-          icon={Share}
-          isWide
-          onPress={() => {
-            setSharing({ kind: 'book', book });
-          }}
-        >
-          {say('common.share')}
-        </Button>
-      ) : null}
-
-      {where === null ? null : (
-        <Words tone="muted" isCentred>
-          {isFinished ? say('common.finished') : describeReadingPlace(where)}
-        </Words>
-      )}
-
-      {partway === undefined ? null : (
-        <Words tone="muted" isCentred>
-          {partway.detail}
-        </Words>
-      )}
-
-      <TheStars subject={{ bookId: book.id }} />
-
-      {book.overview === null ? null : <Words isProse>{book.overview}</Words>}
-
-      {ordered.length > 1 ? (
-        <View style={styles.chapters}>
-          <Words size="heading">{say('common.chapters')}</Words>
-          {ordered.map((chapter) => {
-            const note = [
-              chapter.pageCount === null ? null : sayCount('common.count.pages', chapter.pageCount),
-              howFarInto(held.get(chapter.id), chapter.pageCount),
-            ]
-              .filter((part) => part !== null)
-              .join(' · ');
-
-            return (
-              <Button
-                key={chapter.id}
-                tone="bare"
-                label={say('common.readTitle', { title: chapter.title })}
+        <ARising turn={1}>
+          <View style={styles.doing}>
+            {isReadable ? (
+              <APlayButton
+                icon={BookOpenFilled}
+                says={
+                  isStarted
+                    ? say('common.continueReading')
+                    : isFinished
+                      ? say('common.readAgain')
+                      : say('common.read')
+                }
                 onPress={() => {
-                  onRead(book.id, chapter.id, false);
+                  onRead(book.id, null, isFinished);
                 }}
-              >
-                <View style={styles.chapter}>
-                  <View style={styles.title}>
-                    <Words lines={1}>{`${chapter.number.toString()}. ${chapter.title}`}</Words>
-                    {note === '' ? null : (
-                      <Words size="small" tone="muted">
-                        {note}
-                      </Words>
-                    )}
+              />
+            ) : hasAudio ? (
+              <APlayButton
+                icon={HeadphonesFilled}
+                says={listenLabel(heard.data)}
+                onPress={listenToIt}
+              />
+            ) : (
+              <Words tone="muted" isCentred>
+                {say('common.nothingInThisBookYetScanning')}
+              </Words>
+            )}
+
+            <View style={styles.actions}>
+              {isReadable && hasAudio ? (
+                <ARoundAction
+                  icon={Headphones}
+                  says={listenLabel(heard.data)}
+                  onPress={listenToIt}
+                />
+              ) : null}
+              {isReadable && isStarted ? (
+                <ARoundAction
+                  icon={RotateCcw}
+                  says={say('common.startAgain')}
+                  onPress={() => {
+                    onRead(book.id, null, true);
+                  }}
+                />
+              ) : null}
+              {mayShare ? (
+                <ARoundAction
+                  icon={Share}
+                  says={say('common.share')}
+                  onPress={() => {
+                    setSharing({ kind: 'book', book });
+                  }}
+                />
+              ) : null}
+            </View>
+
+            {hasAudio ? (
+              <ADownloadToListen
+                kind="audiobook"
+                id={book.id}
+                title={book.title}
+                tracks={[]}
+                toKeep={() => ({ kind: 'audiobook', detail })}
+              />
+            ) : null}
+          </View>
+        </ARising>
+
+        <AHairline />
+
+        <ABookAbout
+          title={book.title}
+          author={book.authors?.[0] ?? null}
+          overview={book.overview}
+          {...(onAskAbout === undefined ? {} : { onAsk: onAskAbout })}
+        />
+
+        <TheStars subject={{ bookId: book.id }} />
+
+        {ordered.length > 1 ? (
+          <View style={styles.chapters}>
+            <Words size="heading">{say('common.chapters')}</Words>
+            {ordered.map((chapter) => {
+              const note = [
+                chapter.pageCount === null
+                  ? null
+                  : sayCount('common.count.pages', chapter.pageCount),
+                howFarInto(held.get(chapter.id), chapter.pageCount),
+              ]
+                .filter((part) => part !== null)
+                .join(' · ');
+
+              return (
+                <Button
+                  key={chapter.id}
+                  tone="bare"
+                  label={say('common.readTitle', { title: chapter.title })}
+                  onPress={() => {
+                    onRead(book.id, chapter.id, false);
+                  }}
+                >
+                  <View style={styles.chapter}>
+                    <View style={styles.title}>
+                      <Words lines={1}>{`${chapter.number.toString()}. ${chapter.title}`}</Words>
+                      {note === '' ? null : (
+                        <Words size="small" tone="muted">
+                          {note}
+                        </Words>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </Button>
-            );
-          })}
-        </View>
-      ) : null}
-      {toHear.length > 1 ? (
-        <View style={styles.chapters}>
-          <Words size="heading">
-            {ordered.length > 1 ? say('phone.aBook.audiobookChapters') : say('common.chapters')}
-          </Words>
-          {toHear.map((chapter, at) => (
-            <AChapterToHear
-              key={`${at.toString()}:${chapter.title}`}
-              title={chapter.title}
-              at={at}
-              lasts={chapter.bookEndSeconds - chapter.bookStartSeconds}
-              isCurrent={isThisBook && at === chapterPlaying}
-              onListen={(from) => {
-                startAtChapter(thePhonesAudiobookPlayer(), book, tracks, from);
-                onListen();
-              }}
-            />
-          ))}
-        </View>
-      ) : null}
-      <APluginPanels on="book" subjectId={bookId} />
-      <AShareSheet
-        subject={sharing}
-        onClose={() => {
-          setSharing(null);
-        }}
-      />
-    </Screen>
+                </Button>
+              );
+            })}
+          </View>
+        ) : null}
+        {toHear.length > 1 ? (
+          <View style={styles.chapters}>
+            <Words size="heading">
+              {ordered.length > 1 ? say('phone.aBook.audiobookChapters') : say('common.chapters')}
+            </Words>
+            {toHear.map((chapter, at) => (
+              <AChapterToHear
+                key={`${at.toString()}:${chapter.title}`}
+                title={chapter.title}
+                at={at}
+                lasts={chapter.bookEndSeconds - chapter.bookStartSeconds}
+                isCurrent={isThisBook && at === chapterPlaying}
+                onListen={(from) => {
+                  startAtChapter(thePhonesAudiobookPlayer(), book, tracks, from);
+                  onListen();
+                }}
+              />
+            ))}
+          </View>
+        ) : null}
+        <APluginPanels on="book" subjectId={bookId} />
+        <AShareSheet
+          subject={sharing}
+          onClose={() => {
+            setSharing(null);
+          }}
+        />
+      </Screen>
+    </GROUND.Provider>
   );
 };
 

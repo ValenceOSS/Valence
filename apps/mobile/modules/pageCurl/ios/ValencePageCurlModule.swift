@@ -150,6 +150,10 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
       leaf.fit = fit
     }
 
+    for back in pager?.viewControllers?.compactMap({ $0 as? PageBack }) ?? [] {
+      back.view.backgroundColor = paper
+    }
+
     tellThePaper()
 
     holdStill(isZoomed)
@@ -191,7 +195,7 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
       options: [.spineLocation: NSNumber(value: spine.rawValue)]
     )
 
-    made.isDoubleSided = isTwoUp
+    made.isDoubleSided = true
     made.dataSource = self
     made.delegate = self
     made.view.backgroundColor = paper
@@ -267,7 +271,11 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
   private func show(
     at position: Int, direction: UIPageViewController.NavigationDirection, isAnimated: Bool
   ) {
-    let shown = leaves(at: position)
+    let backOf = direction == .forward ? position - 1 : position
+    let shown: [UIViewController] =
+      isTwoUp || !isAnimated
+        ? leaves(at: position)
+        : leaves(at: position) + [PageBack(position: backOf, paper: paper)]
 
     guard let pager, !shown.isEmpty else {
       return
@@ -496,6 +504,19 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     _ pageViewController: UIPageViewController,
     viewControllerBefore viewController: UIViewController
   ) -> UIViewController? {
+    if !isTwoUp {
+      if let back = viewController as? PageBack {
+        return leaf(at: back.position)
+      }
+
+      guard let at = (viewController as? PageLeaf)?.position, sequence.indices.contains(at - 1)
+      else {
+        return nil
+      }
+
+      return PageBack(position: at - 1, paper: paper)
+    }
+
     guard let at = (viewController as? PageLeaf)?.position, sequence.indices.contains(at - 1)
     else {
       return nil
@@ -508,6 +529,19 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     _ pageViewController: UIPageViewController,
     viewControllerAfter viewController: UIViewController
   ) -> UIViewController? {
+    if !isTwoUp {
+      if let back = viewController as? PageBack {
+        return sequence.indices.contains(back.position + 1) ? leaf(at: back.position + 1) : nil
+      }
+
+      guard let at = (viewController as? PageLeaf)?.position, sequence.indices.contains(at + 1)
+      else {
+        return nil
+      }
+
+      return PageBack(position: at, paper: paper)
+    }
+
     guard let at = (viewController as? PageLeaf)?.position, sequence.indices.contains(at + 1)
     else {
       return nil
@@ -531,6 +565,32 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     if let at = positionShowing() {
       fetchAround(at)
     }
+  }
+}
+
+/// The back of a single page as it curls over: the book's own paper, rather than the page drawn
+/// through a white wash, which is what the system shows for a page with no back and which glares on
+/// a dark page.
+private final class PageBack: UIViewController {
+  let position: Int
+  private let paper: UIColor
+
+  init(position: Int, paper: UIColor) {
+    self.position = position
+    self.paper = paper
+
+    super.init(nibName: nil, bundle: nil)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    nil
+  }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    view.backgroundColor = paper
   }
 }
 

@@ -11,7 +11,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
-import { APageCurl } from '@ValenceMobile/components/APageCurl/APageCurl';
+import { AMatteCurl } from '@ValenceMobile/components/AMatteCurl/AMatteCurl';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
+import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { typesetBlocksOf } from '@ValenceClient/books/typesetBlocksOf';
 import { READING_THEMES } from '@ValenceCore/tokens/READING_THEMES';
 import { READING_SERIF } from '@ValenceMobile/theme/READING_SERIF';
 import { AReadingLook } from '@ValenceMobile/components/AReader/components/ATextReader/components/AReadingLook/AReadingLook';
@@ -24,6 +27,8 @@ import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
 import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
 import { placeInBook } from '@ValenceClient/books/placeInBook';
 import { readBookDocument } from '@ValenceClient/books/readBookDocument';
+import { readBookmarks } from '@ValenceClient/books/readBookmarks';
+import { writeBookmarks } from '@ValenceClient/books/writeBookmarks';
 import {
   TEXT_MARGINS,
   TEXT_SIZES,
@@ -36,11 +41,14 @@ import { AReaderChrome } from '@ValenceMobile/components/AReader/components/ARea
 import { AReaderPanel } from '@ValenceMobile/components/AReader/components/AReaderPanel/AReaderPanel';
 import { TheBookText } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/TheBookText';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ALabelledToggle } from '@ValenceMobile/components/ALabelledToggle/ALabelledToggle';
+import { readableTitle } from '@ValenceClient/books/readableTitle';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
+import { readerBarLook } from '@ValenceMobile/components/AReader/readerBarLook';
 import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { ATextReaderProps } from './ATextReader.types';
@@ -48,6 +56,18 @@ import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SLIDER_STEPS = 1000;
+
+const MARK_STEPS = 1_000_000;
+
+const MARKS_OF_TEXT = ':text';
+
+const NO_PICTURES: readonly string[] = [];
+
+const AHEAD = 4;
+
+const QUIET_BEFORE_CAPTURE_MS = 450;
+
+const BEHIND = 2;
 
 const CLEAR_OF_THE_BARS = 64;
 
@@ -86,11 +106,6 @@ const drawn = (): Promise<void> =>
     });
   });
 
-/**
- * Leaves the colour round a page alone, since a page of text is all paper to its edge.
- */
-const ignorePaper = (): void => undefined;
-
 const NAMES: Readonly<Record<string, string>> = {
   small: say('common.small'),
   medium: say('common.medium'),
@@ -108,10 +123,16 @@ const NAMES: Readonly<Record<string, string>> = {
 
 const styles = StyleSheet.create({
   band: { left: 0, position: 'absolute', right: 0 },
-  foot: { gap: 6 },
+  foot: {
+    borderRadius: 20,
+    gap: 8,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
   marker: { justifyContent: 'center', left: 0, position: 'absolute', right: 0 },
   readings: { flexDirection: 'row', justifyContent: 'space-between' },
-  setting: { gap: 8 },
+  setting: { gap: 10 },
   leaf: { shadowOffset: { height: 0, width: 4 }, shadowRadius: 12 },
   whole: { flex: 1 },
 });
@@ -157,7 +178,7 @@ const ATextReader = ({
   onFraction,
   onBack,
 }: ATextReaderProps) => {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const room = useSafeAreaInsets();
   const isStill = usePrefersStillness();
   const contents = useQuery(bookQueries.contents(book.id, chapterId));
@@ -170,16 +191,31 @@ const ATextReader = ({
   const [anchors, setAnchors] = useState<ReadonlyMap<string, number>>(new Map());
   const [isShowingChrome, setIsShowingChrome] = useState(true);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [settings, setSettings] = useState(() => readTextPreferences(book.id));
+  const [settings, setSettings] = useState(() => readTextPreferences());
   const [across] = useState(() => new Animated.Value(0));
   const turning = useRef(false);
   const pageArea = useRef<ComponentRef<typeof View>>(null);
-  const [leaves, setLeaves] = useState<{ key: string; pictures: readonly string[] }>({
-    key: '',
-    pictures: [],
-  });
+  const [leaves, setLeaves] = useState<{
+    key: string;
+    part: number;
+    pictures: readonly string[];
+  }>({ key: '', part: -1, pictures: [] });
+  const captured = useRef<{ key: string; pictures: string[] }>({ key: '', pictures: [] });
   const [drawing, setDrawing] = useState<number | null>(null);
   const capturing = useRef({ page: 0, step: 0, pages: 0 });
+  const lastTouched = useRef(0);
+  const long = useRef<ComponentRef<typeof ScrollView>>(null);
+  const [scrolled, setScrolled] = useState(0);
+  const [longTall, setLongTall] = useState(0);
+  const [longShown, setLongShown] = useState(0);
+  const [bookmarks, setBookmarks] = useState(() =>
+    readBookmarks(book.id, `${chapterId}${MARKS_OF_TEXT}`),
+  );
+  const [laid, setLaid] = useState<{
+    part: number;
+    count: number;
+    anchors: Readonly<Record<string, number>>;
+  } | null>(null);
   const beneath = useRef<ComponentRef<typeof ScrollView>>(null);
   const scrolling = useRef<ComponentRef<typeof ScrollView>>(null);
   const theme =
@@ -196,13 +232,23 @@ const ATextReader = ({
     [colours.isBold],
   );
   const size = TEXT_LOOK.size[settings.size];
-  const lineHeight = size * TEXT_LOOK.leading[settings.spacing];
+  const lineHeight = Math.round(size * TEXT_LOOK.leading[settings.spacing]);
   const margin = Math.max(width * TEXT_LOOK.margin[settings.margins], 16);
   const topRoom = room.top + CLEAR_OF_THE_BARS;
   const footRoom = room.bottom + CLEAR_OF_THE_BARS;
   const step = Math.max(Math.floor((shown - topRoom - footRoom) / lineHeight), 1) * lineHeight;
   const written = Math.max(tall - topRoom - shown, 1);
   const pages = Math.max(Math.ceil(written / step), 1);
+  const isLong = settings.isScrolling;
+  const isNative = drawsNatively() && !isStill && !isLong;
+  const nativeCount = laid !== null && laid.part === part ? laid.count : 0;
+  const pageCount = isNative ? Math.max(nativeCount, 1) : pages;
+  const through = isLong ? scrolled : isNative ? page / pageCount : (page * step) / written;
+  const throughEnd = isLong
+    ? Math.min(scrolled + longShown / Math.max(longTall, 1), 1)
+    : isNative
+      ? (page + 1) / pageCount
+      : ((page + 1) * step) / written;
 
   if (part === null && sizes.length > 0) {
     const opening = placeInBook(sizes, startAtFraction);
@@ -223,16 +269,28 @@ const ATextReader = ({
   const last = sizes.length - 1;
   const entries = contents.data?.contents ?? [];
   const here = part === null ? null : contentsEntryAt(entries, part, 0, new Map());
-  const fraction =
-    part === null ? startAtFraction : fractionOfBook(sizes, part, (page * step) / written);
-  const isAtTheEnd = part === last && page >= pages - 1;
-  const isLaidOut = !document.isPending && landing === null && shown > 0 && tall > 0;
-  const pageOfPages = isLaidOut
-    ? say('phone.aReader.aPageReader.pageValueOfCount', {
-        value: ((drawing ?? page) + 1).toString(),
-        count: pages.toString(),
-      })
-    : '';
+  const fraction = part === null ? startAtFraction : fractionOfBook(sizes, part, through);
+  const isAtTheEnd = isLong
+    ? part === last && throughEnd >= 0.99
+    : part === last && page >= pageCount - 1;
+  const pageStarts =
+    part === null ? 0 : Math.round(fractionOfBook(sizes, part, through) * MARK_STEPS);
+  const pageEnds =
+    part === null ? 0 : Math.round(fractionOfBook(sizes, part, throughEnd) * MARK_STEPS);
+  const isMarked = bookmarks.some((at) => at >= pageStarts && at < pageEnds);
+  const isLaidOut = isLong
+    ? longTall > 0 && landing === null
+    : isNative
+      ? nativeCount > 0 && landing === null
+      : !document.isPending && landing === null && shown > 0 && tall > 0;
+  const pageOfPages = isLong
+    ? readableTitle(here === null ? book.title : (entries[here]?.title ?? book.title))
+    : isLaidOut
+      ? say('phone.aReader.aPageReader.pageValueOfCount', {
+          value: ((drawing ?? page) + 1).toString(),
+          count: pageCount.toString(),
+        })
+      : '';
 
   useEffect(() => {
     if (landing === null || tall === 0 || shown === 0 || nodes.length === 0) {
@@ -256,10 +314,55 @@ const ATextReader = ({
   }, [landing, tall, shown, nodes.length, anchors, pages, step]);
 
   useEffect(() => {
-    if (part !== null && landing === null && tall > 0) {
+    if (!isLong || landing === null || longTall === 0 || longShown === 0) {
+      return;
+    }
+
+    const room = Math.max(longTall - longShown, 0);
+    const anchoredAt = 'anchor' in landing ? anchors.get(landing.anchor) : undefined;
+    const y =
+      anchoredAt === undefined ? ('within' in landing ? landing.within : 0) * room : anchoredAt;
+
+    long.current?.scrollTo({ y, animated: false });
+    setScrolled(room === 0 ? 0 : Math.min(y / room, 1));
+    setLanding(null);
+  }, [isLong, landing, longTall, longShown, anchors]);
+
+  useEffect(() => {
+    if (!isNative || landing === null || nativeCount === 0 || laid === null) {
+      return;
+    }
+
+    const to =
+      'anchor' in landing
+        ? (laid.anchors[landing.anchor] ?? 0)
+        : Math.floor(landing.within * nativeCount);
+
+    setPage(Math.min(Math.max(to, 0), nativeCount - 1));
+    setLanding(null);
+  }, [isNative, landing, nativeCount, laid]);
+
+  useEffect(() => {
+    if (
+      part !== null &&
+      landing === null &&
+      (isLong ? longTall > 0 : isNative ? nativeCount > 0 : tall > 0)
+    ) {
       onFraction(fraction, isAtTheEnd);
     }
-  }, [part, page, landing, tall, fraction, isAtTheEnd, onFraction]);
+  }, [
+    part,
+    page,
+    landing,
+    tall,
+    fraction,
+    isAtTheEnd,
+    onFraction,
+    isNative,
+    nativeCount,
+    isLong,
+    longTall,
+  ]);
 
   const leafKey = [
     chapterId,
@@ -278,22 +381,42 @@ const ATextReader = ({
   });
 
   useEffect(() => {
-    if (!isLaidOut) {
+    if (isNative || isLong || !isLaidOut || part === null) {
       return undefined;
     }
 
     const run = { isLive: true };
     const isGone = () => !run.isLive;
     const { page: from, step: by, pages: count } = capturing.current;
-    const made = Array.from({ length: count }, () => '');
-    const order = made
-      .map((_, at) => at)
+
+    if (captured.current.key !== leafKey) {
+      captured.current = { key: leafKey, pictures: Array.from({ length: count }, () => '') };
+    }
+
+    const kept = captured.current;
+    const wanted = Array.from({ length: AHEAD + BEHIND + 1 }, (_, at) => from - BEHIND + at)
+      .filter((at) => at >= 0 && at < count && (kept.pictures[at] ?? '') === '')
       .sort((one, other) => Math.abs(one - from) - Math.abs(other - from));
 
-    setLeaves({ key: leafKey, pictures: [...made] });
+    if (wanted.length === 0) {
+      return undefined;
+    }
 
     void (async () => {
-      for (const at of order) {
+      for (const at of wanted) {
+        while (
+          Math.abs(at - capturing.current.page) > 1 &&
+          Date.now() - lastTouched.current < QUIET_BEFORE_CAPTURE_MS
+        ) {
+          await new Promise((done) => {
+            setTimeout(done, QUIET_BEFORE_CAPTURE_MS / 3);
+          });
+
+          if (isGone()) {
+            return;
+          }
+        }
+
         setDrawing(at);
         scrolling.current?.scrollTo({ y: at * by, animated: false });
         await drawn();
@@ -302,7 +425,11 @@ const ATextReader = ({
           return;
         }
 
-        made[at] = await captureRef(pageArea, { format: 'jpg', quality: 0.92, result: 'tmpfile' })
+        kept.pictures[at] = await captureRef(pageArea, {
+          format: 'jpg',
+          quality: 0.9,
+          result: 'tmpfile',
+        })
           .then((address) => (address.startsWith('file:') ? address : `file://${address}`))
           .catch(() => '');
 
@@ -310,7 +437,7 @@ const ATextReader = ({
           return;
         }
 
-        setLeaves({ key: leafKey, pictures: [...made] });
+        setLeaves({ key: leafKey, part, pictures: [...kept.pictures] });
       }
 
       setDrawing(null);
@@ -321,10 +448,31 @@ const ATextReader = ({
       run.isLive = false;
       setDrawing(null);
     };
-  }, [isLaidOut, leafKey]);
+  }, [isNative, isLong, isLaidOut, leafKey, page, part]);
 
-  const curls =
-    !isStill && leaves.key === leafKey && (leaves.pictures[page] ?? '') !== '' && part !== null;
+  const curls = !isStill && leaves.part === part && (leaves.pictures[page] ?? '') !== '';
+  const typeset = useMemo(() => JSON.stringify(typesetBlocksOf(nodes)), [nodes]);
+  const column = Math.max(Math.floor((height - topRoom - footRoom) / lineHeight), 1) * lineHeight;
+  const bookLook = {
+    fontSize: size,
+    lineHeight,
+    insetX: Math.max(margin, room.left + 8),
+    top: topRoom,
+    foot: footRoom,
+    headerCentre: room.top + CLEAR_OF_THE_BARS / 2,
+    footerCentre: (topRoom + column + height - room.bottom) / 2,
+    regular: colours.isBold ? READING_SERIF.bold : READING_SERIF.regular,
+    bold: READING_SERIF.bold,
+    italic: colours.isBold ? READING_SERIF.boldItalic : READING_SERIF.italic,
+    boldItalic: READING_SERIF.boldItalic,
+    chrome: FONTS.sans.medium,
+    heading: here === null ? book.title : (entries[here]?.title ?? book.title),
+    footer: say('phone.aReader.aPageReader.pageValueOfCount', {
+      value: '{value}',
+      count: '{count}',
+    }),
+    isJustified: true,
+  };
 
   /**
    * Opens a section, landing as far down it as asked or at a named place in it.
@@ -485,9 +633,13 @@ const ATextReader = ({
   const choose = (change: Partial<TextPreferences>) => {
     const chosen = { ...settings, ...change };
 
-    writeTextPreferences(chosen, book.id);
+    writeTextPreferences(chosen);
     setSettings(chosen);
-    setLanding({ within: (page * step) / written });
+    setLanding({ within: through });
+
+    if (isNative) {
+      setLaid(null);
+    }
   };
 
   return (
@@ -497,20 +649,31 @@ const ATextReader = ({
       paper={colours.paper}
       ink={colours.ink}
       isDarkPage={colours.isDark}
+      mark={{
+        isMarked,
+        onMark: () => {
+          const marked = isMarked
+            ? bookmarks.filter((at) => at < pageStarts || at >= pageEnds)
+            : [...bookmarks, pageStarts].sort((one, other) => one - other);
+
+          writeBookmarks(book.id, `${chapterId}${MARKS_OF_TEXT}`, marked);
+          setBookmarks(marked);
+        },
+      }}
       isShown={isShowingChrome}
       onBack={onBack}
       onPanel={() => {
         setIsPanelOpen(true);
       }}
       footer={
-        <View style={styles.foot}>
+        <View style={[styles.foot, readerBarLook(colours.paper, colours.ink, colours.isDark)]}>
           <Slider
             label={say('phone.aReader.aTextReader.goToAPlaceInThe')}
             value={Math.round(fraction * SLIDER_STEPS)}
             furthest={SLIDER_STEPS}
             colour={colours.ink}
-            restColour={withAlpha(colours.ink, 0.25)}
-            aheadColour={withAlpha(colours.ink, 0.25)}
+            restColour={withAlpha(colours.ink, 0.18)}
+            aheadColour={withAlpha(colours.ink, 0.18)}
             onScrubbed={(to) => {
               const place = placeInBook(sizes, to / SLIDER_STEPS);
 
@@ -518,11 +681,11 @@ const ATextReader = ({
             }}
           />
           <View style={styles.readings}>
-            <Words size="small" colour={withAlpha(colours.ink, 0.8)}>
-              {say('common.percentRead', { percent: Math.round(fraction * 100).toString() })}
-            </Words>
-            <Words size="small" colour={withAlpha(colours.ink, 0.8)}>
+            <Words size="small" isStrong colour={colours.ink}>
               {pageOfPages}
+            </Words>
+            <Words size="small" colour={withAlpha(colours.ink, 0.6)}>
+              {say('common.percentRead', { percent: Math.round(fraction * 100).toString() })}
             </Words>
           </View>
         </View>
@@ -531,6 +694,116 @@ const ATextReader = ({
       {contents.isError || document.isError ? (
         <View style={[styles.whole, { padding: 24, paddingTop: topRoom }]}>
           <Words colour={colours.ink}>{say('common.thatBookCouldNotBeRead')}</Words>
+        </View>
+      ) : isLong ? (
+        <ScrollView
+          ref={long}
+          style={[styles.whole, { backgroundColor: colours.paper }]}
+          contentContainerStyle={{
+            paddingBottom: footRoom + lineHeight * 2,
+            paddingLeft: Math.max(margin, room.left + 8),
+            paddingRight: Math.max(margin, room.right + 8),
+            paddingTop: topRoom,
+          }}
+          scrollEventThrottle={100}
+          onLayout={({ nativeEvent }) => {
+            setLongShown(nativeEvent.layout.height);
+          }}
+          onContentSizeChange={(_, tallness) => {
+            setLongTall(tallness);
+          }}
+          onScroll={({ nativeEvent }) => {
+            const room = Math.max(
+              nativeEvent.contentSize.height - nativeEvent.layoutMeasurement.height,
+              1,
+            );
+
+            setScrolled(Math.min(Math.max(nativeEvent.contentOffset.y / room, 0), 1));
+          }}
+        >
+          {document.isPending || part === null ? (
+            <ASpinner colour={colours.ink} />
+          ) : (
+            <Button
+              tone="bare"
+              holdsStill
+              label={
+                isShowingChrome ? say('common.hideTheControls') : say('common.showTheControls')
+              }
+              onPress={() => {
+                setIsShowingChrome((was) => !was);
+              }}
+            >
+              <TheBookText
+                nodes={nodes}
+                size={size}
+                leading={TEXT_LOOK.leading[settings.spacing]}
+                ink={colours.ink}
+                face={face}
+                onLink={followLink}
+                onAnchors={setAnchors}
+              />
+            </Button>
+          )}
+          {part !== null && part < last ? (
+            <Button
+              tone="ghost"
+              onPress={() => {
+                goTo(part + 1, { within: 0 });
+              }}
+            >
+              {say('common.nextChapter')}
+            </Button>
+          ) : next !== null && part !== null ? (
+            <Button
+              tone="bold"
+              onPress={() => {
+                onChapter(next.id);
+              }}
+            >
+              {say('phone.aReader.aTextReader.onToTitle', { title: next.title })}
+            </Button>
+          ) : null}
+        </ScrollView>
+      ) : isNative ? (
+        <View style={[styles.whole, { backgroundColor: colours.paper }]}>
+          {document.isPending || part === null ? (
+            <ASpinner colour={colours.ink} />
+          ) : (
+            <AMatteCurl
+              style={StyleSheet.absoluteFill}
+              pages={NO_PICTURES}
+              page={page}
+              paper={colours.paper}
+              ink={colours.ink}
+              book={typeset}
+              bookLook={bookLook}
+              isLocked={isPanelOpen}
+              isAnimated={settings.isAnimated}
+              onPages={(count, anchors) => {
+                setLaid({ part, count, anchors });
+              }}
+              onGrab={() => {
+                lastTouched.current = Date.now();
+              }}
+              onTurn={setPage}
+              onMiddle={() => {
+                setIsShowingChrome((was) => !was);
+              }}
+              onPastTheEnd={() => {
+                if (part < last) {
+                  goTo(part + 1, { within: 0 });
+                } else if (next !== null) {
+                  onChapter(next.id);
+                }
+              }}
+              onBeforeTheStart={() => {
+                if (part > 0) {
+                  goTo(part - 1, { within: 1 });
+                }
+              }}
+            />
+          )}
         </View>
       ) : (
         <View style={styles.whole}>
@@ -542,6 +815,8 @@ const ATextReader = ({
           >
             <ScrollView
               ref={beneath}
+              contentInsetAdjustmentBehavior="never"
+              automaticallyAdjustContentInsets={false}
               pointerEvents="none"
               importantForAccessibility="no-hide-descendants"
               accessibilityElementsHidden
@@ -576,6 +851,8 @@ const ATextReader = ({
             >
               <ScrollView
                 ref={scrolling}
+                contentInsetAdjustmentBehavior="never"
+                automaticallyAdjustContentInsets={false}
                 style={styles.whole}
                 scrollEnabled={false}
                 contentContainerStyle={pageRoom}
@@ -666,19 +943,17 @@ const ATextReader = ({
           </View>
 
           {curls ? (
-            <APageCurl
+            <AMatteCurl
               style={StyleSheet.absoluteFill}
               pages={leaves.pictures}
               page={page}
-              isTwoUp={false}
-              isCoverAlone={false}
-              isRightToLeft={false}
               paper={colours.paper}
-              fit="both"
               isLocked={isPanelOpen}
-              turnsOnTap
-              followsTheEdge={false}
+              onGrab={() => {
+                lastTouched.current = Date.now();
+              }}
               onTurn={(to) => {
+                lastTouched.current = Date.now();
                 setPage(to);
 
                 if (drawing === null) {
@@ -695,7 +970,11 @@ const ATextReader = ({
                   onChapter(next.id);
                 }
               }}
-              onPaper={ignorePaper}
+              onBeforeTheStart={() => {
+                if (part > 0) {
+                  goTo(part - 1, { within: 1 });
+                }
+              }}
             />
           ) : null}
         </View>
@@ -753,9 +1032,38 @@ const ATextReader = ({
           }
         />
         <View style={styles.setting}>
-          <Words size="heading">{say('phone.aReader.aTextReader.lineSpacing')}</Words>
+          <Words size="small" tone="muted" isStrong>
+            {say('phone.aReader.aReaderSheet.turningPages')}
+          </Words>
+          <SegmentedRow
+            label={say('phone.aReader.aReaderSheet.turningPages')}
+            fills
+            items={[
+              { id: 'pages', label: say('common.pages') },
+              { id: 'scroll', label: say('common.scroll') },
+            ]}
+            value={settings.isScrolling ? 'scroll' : 'pages'}
+            onSelect={(id) => {
+              choose({ isScrolling: id === 'scroll' });
+            }}
+          />
+          {settings.isScrolling ? null : (
+            <ALabelledToggle
+              label={say('screens.pageReader.animateTurningPages')}
+              isOn={settings.isAnimated}
+              onToggle={(isOn) => {
+                choose({ isAnimated: isOn });
+              }}
+            />
+          )}
+        </View>
+        <View style={styles.setting}>
+          <Words size="small" tone="muted" isStrong>
+            {say('phone.aReader.aTextReader.lineSpacing')}
+          </Words>
           <SegmentedRow
             label={say('phone.aReader.aTextReader.lineSpacing')}
+            fills
             items={choicesOf(TEXT_SPACINGS)}
             value={settings.spacing}
             onSelect={(id) => {
@@ -768,9 +1076,12 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">{say('common.margins')}</Words>
+          <Words size="small" tone="muted" isStrong>
+            {say('common.margins')}
+          </Words>
           <SegmentedRow
             label={say('common.margins')}
+            fills
             items={choicesOf(TEXT_MARGINS)}
             value={settings.margins}
             onSelect={(id) => {

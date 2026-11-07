@@ -1,6 +1,7 @@
 import { memo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ALinedParagraph } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/components/ALinedParagraph/ALinedParagraph';
 import { ABookPicture } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/components/ABookPicture/ABookPicture';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
@@ -136,7 +137,7 @@ const TheBookTextDrawn = ({
   onLink,
   onAnchors,
 }: TheBookTextProps) => {
-  const line = size * leading;
+  const line = Math.round(size * leading);
   const body: TextStyle =
     face === undefined
       ? styles.body
@@ -254,12 +255,11 @@ const TheBookTextDrawn = ({
     isKept: boolean,
   ): ReactNode =>
     run.every((node) => node.kind === 'text' && node.text.trim() === '') ? null : (
-      <Text
-        key={key}
-        style={[body, { color: ink, fontSize: size, lineHeight: size * leading }, look]}
-      >
-        {run.map((node, at) => drawRun(node, at, isKept))}
-      </Text>
+      <ALinedParagraph key={key} line={line}>
+        <Text key={key} style={[body, { color: ink, fontSize: size, lineHeight: line }, look]}>
+          {run.map((node, at) => drawRun(node, at, isKept))}
+        </Text>
+      </ALinedParagraph>
     );
 
   /**
@@ -329,6 +329,7 @@ const TheBookTextDrawn = ({
           address={onThisServer(address)}
           label={node.attributes['alt'] ?? null}
           ratio={wide > 0 && tall > 0 ? wide / tall : null}
+          line={line}
         />
       );
     }

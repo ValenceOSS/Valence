@@ -9,6 +9,10 @@ const MOST_SUBJECTS_KEPT = 10;
 
 const MOST_PUBLISHERS_KEPT = 3;
 
+const MOST_LANGUAGES_KEPT = 3;
+
+const LANGUAGE_NAMES = new Intl.DisplayNames(['en'], { type: 'language' });
+
 const MOST_LISTED = 16;
 
 const ENOUGH_ALIKE = 8;
@@ -31,6 +35,7 @@ const FOUND_FIELDS = [
   'currently_reading_count',
   'already_read_count',
   'subject',
+  'language',
 ].join(',');
 
 const LISTED_FIELDS = 'key,title,author_name,first_publish_year,cover_i';
@@ -74,6 +79,7 @@ const FoundSchema = z.object({
   currently_reading_count: z.number().int().nullish().catch(null),
   already_read_count: z.number().int().nullish().catch(null),
   subject: z.array(z.string()).nullish().catch(null),
+  language: z.array(z.string()).nullish().catch(null),
 });
 
 const SearchSchema = z.object({
@@ -144,6 +150,27 @@ const proseOf = (written: string | null | undefined): string | null => {
 
   return prose === '' ? null : prose;
 };
+
+/**
+ * The languages a work has been published in, named, English first and the rest as Open Library
+ * lists them, leaving out any code it cannot name.
+ *
+ * @param codes - Open Library's three-letter codes for them.
+ * @returns Their names.
+ */
+const languagesOf = (codes: readonly string[]): string[] =>
+  [...codes]
+    .sort((one, other) => Number(other === 'eng') - Number(one === 'eng'))
+    .flatMap((code) => {
+      try {
+        const name = LANGUAGE_NAMES.of(code);
+
+        return name === undefined || name === code ? [] : [name];
+      } catch {
+        return [];
+      }
+    })
+    .slice(0, MOST_LANGUAGES_KEPT);
 
 /**
  * The search for works filed under a subject, by the key Open Library files it under: lower case,
@@ -328,6 +355,7 @@ const readOpenLibraryAbout = async (
     firstPublished: book.first_publish_year ?? null,
     pages: pageCount !== null && pageCount > 0 ? pageCount : null,
     publishers: (book.publisher ?? []).slice(0, MOST_PUBLISHERS_KEPT),
+    languages: languagesOf(book.language ?? []),
     editions: book.edition_count ?? null,
     rating:
       book.ratings_average === null || book.ratings_average === undefined || ratings === 0

@@ -12,6 +12,7 @@ type AReaderChromeProps = {
   footer: ReactNode;
   children: ReactNode;
   isFrosted?: boolean;
+  mark?: { isMarked: boolean; onMark: () => void };
 };
 
 export type { AReaderChromeProps };

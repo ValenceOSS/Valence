@@ -100,13 +100,11 @@ describe('textPreferences', () => {
     expect(readTextPreferences().size).toBe('medium');
   });
 
-  it('keeps each book its own, and starts a new one from however the last was left', () => {
+  it('keeps one set for every book on the device', () => {
     const night = { ...readTextPreferences(), size: 'larger' as const, page: 'sepia' as const };
 
-    writeTextPreferences(night, 'novel');
-    writeTextPreferences({ ...night, size: 'small' }, 'poems');
+    writeTextPreferences(night);
 
-    expect(readTextPreferences('novel')).toEqual(night);
-    expect(readTextPreferences('new-book')).toEqual({ ...night, size: 'small' });
+    expect(readTextPreferences()).toEqual(night);
   });
 });
