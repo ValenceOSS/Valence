@@ -13,7 +13,6 @@ type AMatteCurlBookLook = {
   italic: string;
   boldItalic: string;
   chrome: string;
-  heading: string;
   footer: string;
   isJustified: boolean;
 };
@@ -32,14 +31,24 @@ type AMatteCurlProps = {
   onPastTheEnd: () => void;
   onBeforeTheStart: () => void;
   onGrab: () => void;
-  onPages?: (count: number, anchors: Readonly<Record<string, number>>) => void;
+  onPages?: (
+    count: number,
+    anchors: Readonly<Record<string, number>>,
+    starts: readonly number[],
+    isFinal: boolean,
+  ) => void;
   style: StyleProp<ViewStyle>;
 };
 
 type NativeMatteCurlProps = Omit<AMatteCurlProps, 'onTurn' | 'onPages'> & {
   onTurn: (event: { nativeEvent: { page: number } }) => void;
   onPages: (event: {
-    nativeEvent: { count: number; anchors: Readonly<Record<string, number>> };
+    nativeEvent: {
+      count: number;
+      anchors: Readonly<Record<string, number>>;
+      starts: readonly number[];
+      isFinal: boolean;
+    };
   }) => void;
 };
 

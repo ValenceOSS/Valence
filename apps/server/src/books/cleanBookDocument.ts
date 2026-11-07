@@ -15,7 +15,8 @@ import { BOOK_DOCUMENT_TAGS } from '@ValenceContracts/schemas/Book';
  * there is no CSS to escape from if there is no CSS.
  *
  * Pictures are kept, and their addresses are rewritten to point back at Valence, because a book's
- * pictures live inside the book and no browser can reach in there.
+ * pictures live inside the book and no browser can reach in there. A picture drawn as an SVG image,
+ * as many books draw their cover, is kept as an ordinary picture.
  *
  * Links are kept only where they lead somewhere a reader can follow: out to the web, or to another
  * place in the same book, which `linkFor` rewrites into an address the reader understands. A link to
@@ -62,6 +63,21 @@ const cleanBookDocument = (
         return address === null
           ? { tagName: 'span', attribs: {} }
           : { tagName: 'img', attribs: { ...attribs, src: address } };
+      },
+      image: (_name, attribs) => {
+        const src = attribs['xlink:href'] ?? attribs['href'];
+        const address = src === undefined ? null : addressFor(src);
+
+        return address === null
+          ? { tagName: 'span', attribs: {} }
+          : {
+              tagName: 'img',
+              attribs: {
+                src: address,
+                ...(attribs['width'] === undefined ? {} : { width: attribs['width'] }),
+                ...(attribs['height'] === undefined ? {} : { height: attribs['height'] }),
+              },
+            };
       },
     },
     nonTextTags: ['script', 'style', 'textarea', 'noscript', 'title'],

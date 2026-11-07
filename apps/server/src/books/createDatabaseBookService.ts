@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { contentsOfBook } from '@ValenceCore/books/contentsOfBook';
+import type { BookTextLine } from '@ValenceContracts/schemas/BookText';
+import { KeptBookTextSchema } from './KeptBookText';
+import type { KeptBookText } from './KeptBookText';
+import { readBookText } from './readBookText';
+import { linesOf } from './linesOf';
+import type { BookTextPart } from './BookTextPart';
 import {
   and,
   asc,
@@ -73,6 +80,20 @@ type BookQuery = {
   limit?: number;
 };
 
+const BOOK_TEXT_VERSION = 1;
+
+const TEXTS_HELD = 4;
+
+/**
+ * The whole numbers from one up to, but not including, another.
+ *
+ * @param from - The first.
+ * @param to - Where they stop.
+ * @returns Them, in order.
+ */
+const range = (from: number, to: number): number[] =>
+  Array.from({ length: Math.max(to - from, 0) }, (_, at) => from + at);
+
 type BookService = BookStore &
   ChapterShelf & {
     setAside: NonNullable<BookStore['setAside']>;
@@ -89,6 +110,12 @@ type BookService = BookStore &
       addressFor: (href: string) => string,
     ) => Promise<string | null>;
     readResource: (chapterId: string, href: string) => Promise<BookPageBytes | null>;
+    readText: (
+      chapterId: string,
+      from: number,
+      isWithHtml: boolean,
+      addressFor: (href: string) => string,
+    ) => Promise<AsyncIterable<BookTextLine> | null>;
     readCover: (bookId: string) => Promise<BookPageBytes | null>;
     saveProgress: (
       profileId: string,
@@ -237,6 +264,55 @@ const createDatabaseBookService = (
       .limit(1);
 
     return found ?? null;
+  };
+
+  const texts = join(cacheDir, 'book-text');
+  const textsHeld = new Map<string, KeptBookText>();
+
+  /**
+   * What was kept of a book's text, where it was kept from the file as it is now.
+   *
+   * @param chapterId - The book's file.
+   * @param stamp - The file's size and when it last changed.
+   * @returns The text, or nothing where none was kept or the file has changed since.
+   */
+  const keptTextOf = async (chapterId: string, stamp: string): Promise<KeptBookText | null> => {
+    const held = textsHeld.get(chapterId);
+
+    if (held !== undefined) {
+      return held.stamp === stamp ? held : null;
+    }
+
+    const read = await readFile(join(texts, `${chapterId}.json`), 'utf8').catch(() => null);
+    const kept = read === null ? null : KeptBookTextSchema.safeParse(JSON.parse(read));
+
+    return kept?.success === true &&
+      kept.data.stamp === stamp &&
+      kept.data.version === BOOK_TEXT_VERSION
+      ? kept.data
+      : null;
+  };
+
+  /**
+   * Keeps a book's text, in memory for the few books read most lately and on disk for every one.
+   *
+   * @param chapterId - The book's file.
+   * @param kept - The text.
+   */
+  const keepText = async (chapterId: string, kept: KeptBookText): Promise<void> => {
+    textsHeld.delete(chapterId);
+    textsHeld.set(chapterId, kept);
+
+    for (const [oldest] of textsHeld) {
+      if (textsHeld.size <= TEXTS_HELD) {
+        break;
+      }
+
+      textsHeld.delete(oldest);
+    }
+
+    await mkdir(texts, { recursive: true });
+    await writeFile(join(texts, `${chapterId}.json`), JSON.stringify(kept)).catch(() => undefined);
   };
 
   const pageOf = createBookPageCache({
@@ -630,6 +706,89 @@ const createDatabaseBookService = (
       const opened = chapter === null ? null : await openBookFile(chapter.path).catch(() => null);
 
       return opened === null || opened.layout !== 'reflow' ? null : opened.readResource(href);
+    },
+
+    readText: async (chapterId, from, isWithHtml, addressFor) => {
+      const chapter = await chapterFor(chapterId);
+      const found = chapter === null ? null : await stat(chapter.path).catch(() => null);
+
+      if (chapter === null || found === null) {
+        return null;
+      }
+
+      const stamp = `${found.size.toString()}:${found.mtimeMs.toString()}`;
+      const kept = await keptTextOf(chapterId, stamp);
+
+      if (kept !== null) {
+        const count = kept.parts.length;
+        const start = Math.min(Math.max(from, 0), Math.max(count - 1, 0));
+
+        return linesOf([
+          { kind: 'head', parts: count },
+          ...[...range(start, count), ...range(0, start)].flatMap((part): BookTextLine[] => {
+            const held = kept.parts[part];
+
+            return held === undefined
+              ? []
+              : [
+                  {
+                    kind: 'part',
+                    part,
+                    blocks: held.blocks,
+                    ...(isWithHtml ? { html: held.html } : {}),
+                  },
+                ];
+          }),
+          { kind: 'end', contents: kept.contents },
+        ]);
+      }
+
+      const inside = new Map<string, string>();
+      const opened = await openBookFile(chapter.path, (href) => {
+        const address = addressFor(href);
+
+        inside.set(address, href);
+
+        return address;
+      }).catch(() => null);
+
+      if (opened === null || opened.layout !== 'reflow') {
+        return null;
+      }
+
+      const count = opened.spine.length;
+      const start = Math.min(Math.max(from, 0), Math.max(count - 1, 0));
+
+      return (async function* read(): AsyncGenerator<BookTextLine> {
+        const parts: BookTextPart[] = Array.from({ length: count }, () => ({
+          blocks: [],
+          html: '',
+        }));
+
+        yield { kind: 'head', parts: count };
+
+        for await (const one of readBookText(
+          opened,
+          [...range(start, count), ...range(0, start)],
+          (address) => inside.get(address) ?? null,
+        )) {
+          parts[one.part] = { blocks: one.blocks, html: one.html };
+          yield {
+            kind: 'part',
+            part: one.part,
+            blocks: one.blocks,
+            ...(isWithHtml ? { html: one.html } : {}),
+          };
+        }
+
+        const contents = contentsOfBook(
+          await opened.readContents().catch(() => []),
+          parts.map((part) => part.blocks),
+        );
+
+        yield { kind: 'end', contents };
+        await keepText(chapterId, { version: BOOK_TEXT_VERSION, stamp, contents, parts });
+      })();
     },
 
     readCover: async (bookId) => {

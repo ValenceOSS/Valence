@@ -26,11 +26,13 @@ const ignorePaper = (): void => undefined;
  * @param onPastTheEnd - Told somebody tried to turn past the last page.
  * @param onBeforeTheStart - Told somebody tried to turn back before the first page.
  * @param onGrab - Told a page was taken hold of to be turned, so nothing slow is started meanwhile.
- * @param book - A chapter's text as blocks, in JSON, for the pages to be set and drawn natively
- *   rather than handed over as pictures.
+ * @param book - A whole book as its parts' blocks, with the cookie its pictures are read with, in
+ *   JSON, for the pages to be set and drawn natively rather than handed over as pictures.
  * @param bookLook - How that text is set.
  * @param ink - The colour of the text.
- * @param onPages - Told how many pages the text made, and which page each named place is on.
+ * @param onPages - Told how many pages the book made, which page each named place is on, keyed by
+ *   its part as `part#name`, which page each part starts on, and whether that is the final count
+ *   or one made before the whole book or its pictures had arrived.
  * @param style - Where it sits.
  */
 const AMatteCurl = ({
@@ -54,7 +56,12 @@ const AMatteCurl = ({
       {...(bookLook === undefined ? {} : { bookLook })}
       {...(ink === undefined ? {} : { ink })}
       onPages={(event) => {
-        onPages?.(event.nativeEvent.count, event.nativeEvent.anchors);
+        onPages?.(
+          event.nativeEvent.count,
+          event.nativeEvent.anchors,
+          event.nativeEvent.starts,
+          event.nativeEvent.isFinal,
+        );
       }}
       onTurn={(event) => {
         onTurn(event.nativeEvent.page);

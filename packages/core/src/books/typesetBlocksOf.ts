@@ -1,5 +1,5 @@
 import type { BookNode } from './readBookDocument.types';
-import type { TypesetBlock, TypesetRun } from './TypesetBlock';
+import type { TypesetBlock, TypesetRun } from '@ValenceContracts/schemas/BookText';
 
 const BLOCK_TAGS: ReadonlySet<string> = new Set([
   'p',
@@ -36,8 +36,7 @@ const BOLD: ReadonlySet<string> = new Set(['strong', 'b']);
 /**
  * A chapter's text as the blocks a typesetter sets it in: each paragraph, heading and quotation as
  * runs of words in roman, italic or bold, with the places within it the book's contents and links
- * name, and a break where the book draws a rule. Pictures are left out, since a page set this way is
- * words alone.
+ * name, a break where the book draws a rule, and each picture, standing on its own, by where it is.
  *
  * @param nodes - The chapter, as read from its document.
  * @returns Its blocks, in order.
@@ -106,7 +105,36 @@ const typesetBlocksOf = (nodes: readonly BookNode[]): TypesetBlock[] => {
       }
     }
 
-    if (node.tag === 'img' || node.tag === 'script' || node.tag === 'style') {
+    if (node.tag === 'img') {
+      const address = node.attributes['src'];
+      const wide = Number(node.attributes['width']);
+      const tall = Number(node.attributes['height']);
+
+      if (address !== undefined && address !== '') {
+        const carriesOn = open === null ? null : open.kind;
+
+        close();
+        blocks.push({
+          kind: 'picture',
+          runs: [],
+          anchors: waiting,
+          picture: {
+            address,
+            width: Number.isInteger(wide) && wide > 0 ? wide : null,
+            height: Number.isInteger(tall) && tall > 0 ? tall : null,
+          },
+        });
+        waiting = [];
+
+        if (carriesOn !== null) {
+          begin(carriesOn);
+        }
+      }
+
+      return;
+    }
+
+    if (node.tag === 'script' || node.tag === 'style') {
       return;
     }
 

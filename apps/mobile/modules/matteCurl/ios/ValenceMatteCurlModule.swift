@@ -90,6 +90,10 @@ public class ValenceMatteCurlView: ExpoView, UIGestureRecognizerDelegate {
   private var typeset: TypesetBook?
   private var typesetFor = ""
   private var typesetting = 0
+  private var published = 0
+  private static var recent: [String: (book: TypesetBook, isFinal: Bool)] = [:]
+  private static var recentOrder: [String] = []
+  private static let recentKept = 3
   var wanted = 0
   var paper: UIColor = .black
   var isLocked = false
@@ -222,9 +226,10 @@ public class ValenceMatteCurlView: ExpoView, UIGestureRecognizerDelegate {
     }
   }
 
-  /// Lays the chapter out again, away from the main thread, where its text, its look or the size of
-  /// the page has changed since it was last laid out; then lists its pages and says how many there
-  /// are and which page each named place is on.
+  /// Lays the book out again, away from the main thread, where its text, its look or the size of
+  /// the page has changed since it was last laid out, reading its pictures first; then lists its
+  /// pages and says how many there are, which page each part starts on, and which page each named
+  /// place is on.
   private func typesetIfChanged() {
     guard
       let book, bounds.width > 0, bounds.height > 0,
@@ -247,22 +252,70 @@ public class ValenceMatteCurlView: ExpoView, UIGestureRecognizerDelegate {
     let run = typesetting
     let scale = traitCollection.displayScale
 
-    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      let blocks = (try? JSONDecoder().decode([TypesetBlock].self, from: Data(book.utf8))) ?? []
-      let made = TypesetBook(blocks: blocks, look: look, size: size, scale: scale)
+    if let kept = Self.recent[wanted] {
+      publish(kept.book, run: run, isFinal: kept.isFinal)
 
-      DispatchQueue.main.async {
-        guard let self, run == self.typesetting else {
-          return
-        }
-
-        self.typeset = made
-        self.pages = made.frames.indices.map { "typeset:\(run):\($0)" }
-        self.dressedAs = ""
-        self.onPages(["count": made.frames.count, "anchors": made.anchors])
-        self.settle()
+      if kept.isFinal {
+        return
       }
     }
+
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      let whole = (try? JSONDecoder().decode(TypesetWholeBook.self, from: Data(book.utf8)))
+        ?? TypesetWholeBook(parts: [], cookie: nil, isWhole: false)
+      let addresses = Set(whole.parts.flatMap { $0.blocks.compactMap { $0.picture?.address } })
+      let measured = Set(whole.parts.flatMap { part in
+        part.blocks.compactMap { block in
+          block.picture.flatMap { $0.width != nil && $0.height != nil ? $0.address : nil }
+        }
+      })
+      let known = TypesetPictures.known(addresses)
+      let missing = addresses.subtracting(known.keys)
+      let isLaidForGood = whole.isWhole && missing.isSubset(of: measured)
+      let first = TypesetBook(book: whole, look: look, size: size, scale: scale, pictures: known)
+
+      DispatchQueue.main.async {
+        self?.publish(first, run: run, isFinal: isLaidForGood, keptAs: missing.isEmpty && whole.isWhole ? wanted : nil)
+      }
+
+      guard !missing.isEmpty else {
+        return
+      }
+
+      let all = known.merging(TypesetPictures.read(missing, cookie: whole.cookie)) { held, _ in held }
+      let second = TypesetBook(book: whole, look: look, size: size, scale: scale, pictures: all)
+
+      DispatchQueue.main.async {
+        self?.publish(second, run: run, isFinal: whole.isWhole, keptAs: whole.isWhole ? wanted : nil)
+      }
+    }
+  }
+
+  /// Shows a book just set, where nothing newer has been asked for since, and says how many pages it
+  /// has, which page each part starts on, which page each named place is on, and whether that is
+  /// its final count; and, where it is the whole book with every picture in it, keeps it, to show at
+  /// once if the same book is opened again in the same size and look.
+  private func publish(_ made: TypesetBook, run: Int, isFinal: Bool, keptAs: String? = nil) {
+    guard run == typesetting else {
+      return
+    }
+
+    if let keptAs {
+      Self.recent[keptAs] = (made, isFinal)
+      Self.recentOrder.removeAll { $0 == keptAs }
+      Self.recentOrder.append(keptAs)
+
+      while Self.recentOrder.count > Self.recentKept {
+        Self.recent.removeValue(forKey: Self.recentOrder.removeFirst())
+      }
+    }
+
+    published += 1
+    typeset = made
+    pages = made.frames.indices.map { "typeset:\(run).\(published):\($0)" }
+    dressedAs = ""
+    onPages(["count": made.frames.count, "anchors": made.anchors, "starts": made.starts, "isFinal": isFinal])
+    settle()
   }
 
   /// A page's picture: drawn by the chapter's typesetting where the page is one of its pages, and

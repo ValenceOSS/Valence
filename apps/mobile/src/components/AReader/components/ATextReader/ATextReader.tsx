@@ -14,7 +14,10 @@ import { captureRef } from 'react-native-view-shot';
 import { AMatteCurl } from '@ValenceMobile/components/AMatteCurl/AMatteCurl';
 import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
-import { typesetBlocksOf } from '@ValenceClient/books/typesetBlocksOf';
+import { useBookText } from '@ValenceMobile/books/useBookText';
+import { placeOfPage } from '@ValenceClient/books/placeOfPage';
+import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
+import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { READING_THEMES } from '@ValenceCore/tokens/READING_THEMES';
 import { READING_SERIF } from '@ValenceMobile/theme/READING_SERIF';
 import { AReadingLook } from '@ValenceMobile/components/AReader/components/ATextReader/components/AReadingLook/AReadingLook';
@@ -26,7 +29,7 @@ import { TEXT_LOOK } from '@ValenceClient/books/TEXT_LOOK';
 import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
 import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
 import { placeInBook } from '@ValenceClient/books/placeInBook';
-import { readBookDocument } from '@ValenceClient/books/readBookDocument';
+import { readBookDocument } from '@ValenceCore/books/readBookDocument';
 import { readBookmarks } from '@ValenceClient/books/readBookmarks';
 import { writeBookmarks } from '@ValenceClient/books/writeBookmarks';
 import {
@@ -42,7 +45,7 @@ import { AReaderPanel } from '@ValenceMobile/components/AReader/components/ARead
 import { TheBookText } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/TheBookText';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { ALabelledToggle } from '@ValenceMobile/components/ALabelledToggle/ALabelledToggle';
-import { readableTitle } from '@ValenceClient/books/readableTitle';
+import { readableTitle } from '@ValenceCore/books/readableTitle';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -92,6 +95,11 @@ const ignoreLink = (): void => undefined;
 const ignoreAnchors = (): void => undefined;
 
 /**
+ * Stays on the first page of the book, which has nothing before it.
+ */
+const stayPut = (): void => undefined;
+
+/**
  * Waits for what was just changed to be drawn, two frames being what it takes for a scrolled page
  * to reach the screen.
  *
@@ -134,6 +142,15 @@ const styles = StyleSheet.create({
   readings: { flexDirection: 'row', justifyContent: 'space-between' },
   setting: { gap: 10 },
   leaf: { shadowOffset: { height: 0, width: 4 }, shadowRadius: 12 },
+  waiting: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   whole: { flex: 1 },
 });
 
@@ -146,20 +163,26 @@ const styles = StyleSheet.create({
 const choicesOf = (ids: readonly string[]) => ids.map((id) => ({ id, label: NAMES[id] ?? id }));
 
 /**
- * A book whose text reflows — an EPUB — read a page at a time, as the web's text reader reads it:
- * turned by tapping the left or right third of the page or by swiping across it, the page sliding
- * away to uncover the next as a page does in Apple Books, and a tap in the middle shows or hides the bars.
- * one section of the book into the next and back without a pause, and a link in the book goes to
- * the place it names, on the page it is on. It is set in a serif, justified, in one of six themes
- * chosen as Apple Books offers them, beside the size, spacing and margins, kept on this device.
+ * A book whose text reflows — an EPUB, or a PDF with words in it — read as Apple Books reads one.
+ * On an iPhone the whole book is set as one run of pages, natively, each part of it starting on a
+ * page of its own, its pictures drawn in place, a cover on a page to itself, and a part with nothing
+ * in it taking no page; turning the corner of a page curls it over, and every page, the slider and
+ * the page count run across the whole book, with the name of the part a page is in above it.
+ * Scrolling instead reads the whole book as one long page. A link goes to the place it names.
  *
- * The bars hold the way back, the section open, a slider to anywhere in the book, and the reader's
- * panel, which holds the book's contents and those settings.
+ * Elsewhere, or for somebody who has asked for less movement, one part of the book is shown at a
+ * time, turned by tapping the left or right third of the page or by swiping across it, and moving on
+ * from one part into the next as a page is turned.
+ *
+ * It is set in a serif, justified, in one of six themes chosen as Apple Books offers them, beside
+ * the size, spacing and margins, kept on this device. The bars hold the way back, a bookmark, a
+ * slider to anywhere in the book, and the reader's panel, which holds the book's contents — its own,
+ * or its headings where it has none — and those settings.
  *
  * It opens at the fraction of the way through the book somebody had reached, and every turn is
- * remembered as that same fraction, weighted by how long each section is, so the web and the phone
- * carry on from each other. The last page of the last section marks the book read, and offers the
- * next book of a series where there is one.
+ * remembered as that same fraction, weighted by how long each part is, so the web and the phone
+ * carry on from each other. The last page marks the book read, and offers the next book of a series
+ * where there is one.
  *
  * @param book - The book.
  * @param chapterId - Which of its files is open.
@@ -183,7 +206,12 @@ const ATextReader = ({
   const isStill = usePrefersStillness();
   const contents = useQuery(bookQueries.contents(book.id, chapterId));
   const sizes = useMemo(() => contents.data?.parts.map((part) => part.size) ?? [], [contents.data]);
-  const [part, setPart] = useState<number | null>(null);
+  const [opened, setPart] = useState<number | null>(null);
+  const [aim, setAim] = useState<{
+    part: number;
+    at: { within: number } | { anchor: string };
+  } | null>(null);
+  const [cookie, setCookie] = useState<string | null | undefined>(undefined);
   const [landing, setLanding] = useState<{ within: number } | { anchor: string } | null>(null);
   const [page, setPage] = useState(0);
   const [shown, setShown] = useState(0);
@@ -205,16 +233,21 @@ const ATextReader = ({
   const capturing = useRef({ page: 0, step: 0, pages: 0 });
   const lastTouched = useRef(0);
   const long = useRef<ComponentRef<typeof ScrollView>>(null);
-  const [scrolled, setScrolled] = useState(0);
+  const [longY, setLongY] = useState(0);
+  const [longLaid, setLongLaid] = useState<ReadonlyMap<number, { top: number; height: number }>>(
+    new Map(),
+  );
+  const longAnchors = useRef(new Map<string, number>());
   const [longTall, setLongTall] = useState(0);
   const [longShown, setLongShown] = useState(0);
   const [bookmarks, setBookmarks] = useState(() =>
     readBookmarks(book.id, `${chapterId}${MARKS_OF_TEXT}`),
   );
   const [laid, setLaid] = useState<{
-    part: number;
     count: number;
     anchors: Readonly<Record<string, number>>;
+    starts: readonly number[];
+    isFinal: boolean;
   } | null>(null);
   const beneath = useRef<ComponentRef<typeof ScrollView>>(null);
   const scrolling = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -241,25 +274,88 @@ const ATextReader = ({
   const pages = Math.max(Math.ceil(written / step), 1);
   const isLong = settings.isScrolling;
   const isNative = drawsNatively() && !isStill && !isLong;
-  const nativeCount = laid !== null && laid.part === part ? laid.count : 0;
-  const pageCount = isNative ? Math.max(nativeCount, 1) : pages;
-  const through = isLong ? scrolled : isNative ? page / pageCount : (page * step) / written;
-  const throughEnd = isLong
-    ? Math.min(scrolled + longShown / Math.max(longTall, 1), 1)
-    : isNative
-      ? (page + 1) / pageCount
-      : ((page + 1) * step) / written;
+  const isWhole = isNative || isLong;
+  const whole = useBookText(
+    book.id,
+    chapterId,
+    opened,
+    sizes.length > 0 ? sizes.length : null,
+    contents.data?.contents ?? null,
+    isLong,
+    isWhole,
+  );
+  const isWholeRead = isWhole && whole.isWhole;
+  const wholeNodes = useMemo(
+    () => whole.parts.map((one) => (one?.html === undefined ? [] : readBookDocument(one.html))),
+    [whole.parts],
+  );
+  const wholeBlocks = useMemo(() => whole.parts.map((one) => one?.blocks ?? []), [whole.parts]);
+  const shownParts = useMemo(
+    () => wholeBlocks.flatMap((blocks, at) => (blocks.length === 0 ? [] : [at])),
+    [wholeBlocks],
+  );
+  const entries = useMemo(
+    () =>
+      isWholeRead && whole.contents !== null ? whole.contents : (contents.data?.contents ?? []),
+    [isWholeRead, whole.contents, contents.data],
+  );
+  const isLongLaid =
+    isLong && isWholeRead && shownParts.every((at) => longLaid.has(at)) && longShown > 0;
 
-  if (part === null && sizes.length > 0) {
+  /**
+   * Which part a height down the whole book falls in, and how far through that part it is.
+   *
+   * @param y - How far down the book.
+   * @returns The part and how far through it, from 0 to 1.
+   */
+  const longAt = (y: number) => {
+    let found = shownParts[0] ?? 0;
+
+    for (const at of shownParts) {
+      const box = longLaid.get(at);
+
+      if (box !== undefined && box.top <= y + 1) {
+        found = at;
+      }
+    }
+
+    const box = longLaid.get(found);
+
+    return {
+      part: found,
+      within:
+        box === undefined ? 0 : Math.min(Math.max((y - box.top) / Math.max(box.height, 1), 0), 1),
+    };
+  };
+
+  const nativeHere = laid === null ? null : placeOfPage(laid.starts, laid.count, page);
+  const startHere = isNative ? nativeHere : isLongLaid ? longAt(longY) : null;
+  const endHere = isNative
+    ? nativeHere === null
+      ? null
+      : { part: nativeHere.part, within: nativeHere.withinEnd }
+    : isLongLaid
+      ? longAt(longY + longShown)
+      : null;
+  const through = (page * step) / written;
+  const throughEnd = ((page + 1) * step) / written;
+  const part = isWhole ? (startHere?.part ?? aim?.part ?? null) : opened;
+
+  if (opened === null && sizes.length > 0) {
     const opening = placeInBook(sizes, startAtFraction);
 
     setPart(opening.part);
     setLanding({ within: opening.within });
+    setAim({ part: opening.part, at: { within: opening.within } });
   }
 
+  useEffect(() => {
+    void theCookiesThisPhoneHolds(onThisServer('/')).then(setCookie);
+  }, []);
+
   const document = useQuery({
-    ...bookQueries.document(book.id, chapterId, part ?? 0),
-    enabled: part !== null,
+    ...bookQueries.document(book.id, chapterId, opened ?? 0),
+    enabled: opened !== null && !isWhole,
   });
   const nodes = useMemo(
     () =>
@@ -267,30 +363,53 @@ const ATextReader = ({
     [document.data],
   );
   const last = sizes.length - 1;
-  const entries = contents.data?.contents ?? [];
   const here = part === null ? null : contentsEntryAt(entries, part, 0, new Map());
-  const fraction = part === null ? startAtFraction : fractionOfBook(sizes, part, through);
-  const isAtTheEnd = isLong
-    ? part === last && throughEnd >= 0.99
-    : part === last && page >= pageCount - 1;
-  const pageStarts =
-    part === null ? 0 : Math.round(fractionOfBook(sizes, part, through) * MARK_STEPS);
-  const pageEnds =
-    part === null ? 0 : Math.round(fractionOfBook(sizes, part, throughEnd) * MARK_STEPS);
+  const fraction = isWhole
+    ? startHere === null
+      ? startAtFraction
+      : fractionOfBook(sizes, startHere.part, startHere.within)
+    : opened === null
+      ? startAtFraction
+      : fractionOfBook(sizes, opened, through);
+  const isAtTheEnd = isNative
+    ? laid !== null && page >= laid.count - 1
+    : isLong
+      ? isLongLaid && longY + longShown >= longTall - 2
+      : opened === last && page >= pages - 1;
+  const pageStarts = part === null ? 0 : Math.round(fraction * MARK_STEPS);
+  const pageEnds = isWhole
+    ? endHere === null
+      ? 0
+      : Math.round(fractionOfBook(sizes, endHere.part, endHere.within) * MARK_STEPS)
+    : opened === null
+      ? 0
+      : Math.round(fractionOfBook(sizes, opened, throughEnd) * MARK_STEPS);
   const isMarked = bookmarks.some((at) => at >= pageStarts && at < pageEnds);
   const isLaidOut = isLong
-    ? longTall > 0 && landing === null
+    ? isLongLaid && aim === null
     : isNative
-      ? nativeCount > 0 && landing === null
+      ? laid !== null && aim === null
       : !document.isPending && landing === null && shown > 0 && tall > 0;
+  const placeName = readableTitle(
+    here === null ? book.title : (entries[here]?.title ?? book.title),
+  );
   const pageOfPages = isLong
-    ? readableTitle(here === null ? book.title : (entries[here]?.title ?? book.title))
-    : isLaidOut
-      ? say('phone.aReader.aPageReader.pageValueOfCount', {
-          value: ((drawing ?? page) + 1).toString(),
-          count: pageCount.toString(),
-        })
-      : '';
+    ? placeName
+    : isNative
+      ? laid === null
+        ? ''
+        : laid.isFinal
+          ? say('phone.aReader.aPageReader.pageValueOfCount', {
+              value: (page + 1).toString(),
+              count: laid.count.toString(),
+            })
+          : say('common.pageValue', { value: (page + 1).toString() })
+      : isLaidOut
+        ? say('phone.aReader.aPageReader.pageValueOfCount', {
+            value: ((drawing ?? page) + 1).toString(),
+            count: pages.toString(),
+          })
+        : '';
 
   useEffect(() => {
     if (landing === null || tall === 0 || shown === 0 || nodes.length === 0) {
@@ -314,55 +433,49 @@ const ATextReader = ({
   }, [landing, tall, shown, nodes.length, anchors, pages, step]);
 
   useEffect(() => {
-    if (!isLong || landing === null || longTall === 0 || longShown === 0) {
+    if (!isLong || aim === null || !isLongLaid) {
       return;
     }
 
-    const room = Math.max(longTall - longShown, 0);
-    const anchoredAt = 'anchor' in landing ? anchors.get(landing.anchor) : undefined;
+    const at = shownParts.find((one) => one >= aim.part) ?? shownParts.at(-1) ?? 0;
+    const box = longLaid.get(at);
+    const anchored =
+      'anchor' in aim.at
+        ? longAnchors.current.get(`${aim.part.toString()}#${aim.at.anchor}`)
+        : undefined;
     const y =
-      anchoredAt === undefined ? ('within' in landing ? landing.within : 0) * room : anchoredAt;
+      box === undefined
+        ? 0
+        : box.top +
+          (anchored ?? ('within' in aim.at && at === aim.part ? aim.at.within * box.height : 0));
 
     long.current?.scrollTo({ y, animated: false });
-    setScrolled(room === 0 ? 0 : Math.min(y / room, 1));
-    setLanding(null);
-  }, [isLong, landing, longTall, longShown, anchors]);
+    setLongY(y);
+    setAim(null);
+  }, [isLong, aim, isLongLaid, shownParts, longLaid]);
 
   useEffect(() => {
-    if (!isNative || landing === null || nativeCount === 0 || laid === null) {
+    if (!isNative || aim === null || laid === null) {
       return;
     }
 
+    const start = laid.starts[aim.part] ?? 0;
+    const inPart = Math.max((laid.starts[aim.part + 1] ?? laid.count) - start, 1);
+    const anchored =
+      'anchor' in aim.at ? laid.anchors[`${aim.part.toString()}#${aim.at.anchor}`] : undefined;
     const to =
-      'anchor' in landing
-        ? (laid.anchors[landing.anchor] ?? 0)
-        : Math.floor(landing.within * nativeCount);
+      anchored ??
+      start + Math.min(Math.floor(('within' in aim.at ? aim.at.within : 0) * inPart), inPart - 1);
 
-    setPage(Math.min(Math.max(to, 0), nativeCount - 1));
-    setLanding(null);
-  }, [isNative, landing, nativeCount, laid]);
+    setPage(Math.min(Math.max(to, 0), Math.max(laid.count - 1, 0)));
+    setAim(null);
+  }, [isNative, aim, laid]);
 
   useEffect(() => {
-    if (
-      part !== null &&
-      landing === null &&
-      (isLong ? longTall > 0 : isNative ? nativeCount > 0 : tall > 0)
-    ) {
+    if (part !== null && (isWhole ? isLaidOut : landing === null && tall > 0)) {
       onFraction(fraction, isAtTheEnd);
     }
-  }, [
-    part,
-    page,
-    landing,
-    tall,
-    fraction,
-    isAtTheEnd,
-    onFraction,
-    isNative,
-    nativeCount,
-    isLong,
-    longTall,
-  ]);
+  }, [part, isWhole, isLaidOut, landing, tall, fraction, isAtTheEnd, onFraction]);
 
   const leafKey = [
     chapterId,
@@ -451,7 +564,39 @@ const ATextReader = ({
   }, [isNative, isLong, isLaidOut, leafKey, page, part]);
 
   const curls = !isStill && leaves.part === part && (leaves.pictures[page] ?? '') !== '';
-  const typeset = useMemo(() => JSON.stringify(typesetBlocksOf(nodes)), [nodes]);
+  const openingBlocks = opened === null ? undefined : whole.parts[opened]?.blocks;
+  const typeset = useMemo(() => {
+    if (cookie === undefined || (!isWholeRead && openingBlocks === undefined)) {
+      return null;
+    }
+
+    return JSON.stringify({
+      parts: Array.from({ length: sizes.length }, (_, at) => {
+        const named = contentsEntryAt(entries, at, 0, new Map());
+        const blocks = isWholeRead
+          ? (wholeBlocks[at] ?? [])
+          : at === opened
+            ? (openingBlocks ?? [])
+            : [];
+
+        return {
+          heading: readableTitle(
+            named === null ? book.title : (entries[named]?.title ?? book.title),
+          ),
+          blocks: blocks.map((block) =>
+            block.picture === undefined
+              ? block
+              : {
+                  ...block,
+                  picture: { ...block.picture, address: onThisServer(block.picture.address) },
+                },
+          ),
+        };
+      }),
+      cookie,
+      isWhole: isWholeRead,
+    });
+  }, [cookie, isWholeRead, openingBlocks, sizes.length, entries, wholeBlocks, opened, book.title]);
   const column = Math.max(Math.floor((height - topRoom - footRoom) / lineHeight), 1) * lineHeight;
   const bookLook = {
     fontSize: size,
@@ -466,7 +611,6 @@ const ATextReader = ({
     italic: colours.isBold ? READING_SERIF.boldItalic : READING_SERIF.italic,
     boldItalic: READING_SERIF.boldItalic,
     chrome: FONTS.sans.medium,
-    heading: here === null ? book.title : (entries[here]?.title ?? book.title),
     footer: say('phone.aReader.aPageReader.pageValueOfCount', {
       value: '{value}',
       count: '{count}',
@@ -481,6 +625,12 @@ const ATextReader = ({
    * @param at - How far down it, or the place.
    */
   const goTo = (to: number, at: { within: number } | { anchor: string }) => {
+    if (isWhole) {
+      setAim({ part: to, at });
+
+      return;
+    }
+
     if (to === part) {
       setLanding(at);
 
@@ -637,7 +787,11 @@ const ATextReader = ({
     setSettings(chosen);
     setLanding({ within: through });
 
-    if (isNative) {
+    if (startHere !== null) {
+      setAim({ part: startHere.part, at: { within: startHere.within } });
+    }
+
+    if (isNative || chosen.isScrolling !== settings.isScrolling) {
       setLaid(null);
     }
   };
@@ -669,12 +823,22 @@ const ATextReader = ({
         <View style={[styles.foot, readerBarLook(colours.paper, colours.ink, colours.isDark)]}>
           <Slider
             label={say('phone.aReader.aTextReader.goToAPlaceInThe')}
-            value={Math.round(fraction * SLIDER_STEPS)}
+            value={
+              isNative && laid?.isFinal === true
+                ? Math.round((page / Math.max(laid.count - 1, 1)) * SLIDER_STEPS)
+                : Math.round(fraction * SLIDER_STEPS)
+            }
             furthest={SLIDER_STEPS}
             colour={colours.ink}
             restColour={withAlpha(colours.ink, 0.18)}
             aheadColour={withAlpha(colours.ink, 0.18)}
             onScrubbed={(to) => {
+              if (isNative && laid?.isFinal === true) {
+                setPage(Math.round((to / SLIDER_STEPS) * Math.max(laid.count - 1, 0)));
+
+                return;
+              }
+
               const place = placeInBook(sizes, to / SLIDER_STEPS);
 
               goTo(place.part, { within: place.within });
@@ -691,7 +855,7 @@ const ATextReader = ({
         </View>
       }
     >
-      {contents.isError || document.isError ? (
+      {contents.isError || document.isError || whole.isFailed ? (
         <View style={[styles.whole, { padding: 24, paddingTop: topRoom }]}>
           <Words colour={colours.ink}>{say('common.thatBookCouldNotBeRead')}</Words>
         </View>
@@ -713,48 +877,56 @@ const ATextReader = ({
             setLongTall(tallness);
           }}
           onScroll={({ nativeEvent }) => {
-            const room = Math.max(
-              nativeEvent.contentSize.height - nativeEvent.layoutMeasurement.height,
-              1,
-            );
-
-            setScrolled(Math.min(Math.max(nativeEvent.contentOffset.y / room, 0), 1));
+            setLongY(nativeEvent.contentOffset.y);
           }}
         >
-          {document.isPending || part === null ? (
+          {!isWholeRead ? (
             <ASpinner colour={colours.ink} />
           ) : (
-            <Button
-              tone="bare"
-              holdsStill
-              label={
-                isShowingChrome ? say('common.hideTheControls') : say('common.showTheControls')
-              }
-              onPress={() => {
-                setIsShowingChrome((was) => !was);
-              }}
-            >
-              <TheBookText
-                nodes={nodes}
-                size={size}
-                leading={TEXT_LOOK.leading[settings.spacing]}
-                ink={colours.ink}
-                face={face}
-                onLink={followLink}
-                onAnchors={setAnchors}
-              />
-            </Button>
+            shownParts.map((at) => (
+              <View
+                key={at}
+                style={{ paddingBottom: lineHeight * 3 }}
+                onLayout={({ nativeEvent }) => {
+                  const { y, height: tallness } = nativeEvent.layout;
+
+                  setLongLaid((was) => {
+                    const known = was.get(at);
+
+                    return known !== undefined && known.top === y && known.height === tallness
+                      ? was
+                      : new Map(was).set(at, { top: y, height: tallness });
+                  });
+                }}
+              >
+                <Button
+                  tone="bare"
+                  holdsStill
+                  label={
+                    isShowingChrome ? say('common.hideTheControls') : say('common.showTheControls')
+                  }
+                  onPress={() => {
+                    setIsShowingChrome((was) => !was);
+                  }}
+                >
+                  <TheBookText
+                    nodes={wholeNodes[at] ?? []}
+                    size={size}
+                    leading={TEXT_LOOK.leading[settings.spacing]}
+                    ink={colours.ink}
+                    face={face}
+                    onLink={followLink}
+                    onAnchors={(found) => {
+                      found.forEach((y, name) => {
+                        longAnchors.current.set(`${at.toString()}#${name}`, y);
+                      });
+                    }}
+                  />
+                </Button>
+              </View>
+            ))
           )}
-          {part !== null && part < last ? (
-            <Button
-              tone="ghost"
-              onPress={() => {
-                goTo(part + 1, { within: 0 });
-              }}
-            >
-              {say('common.nextChapter')}
-            </Button>
-          ) : next !== null && part !== null ? (
+          {next !== null && isWholeRead ? (
             <Button
               tone="bold"
               onPress={() => {
@@ -767,7 +939,7 @@ const ATextReader = ({
         </ScrollView>
       ) : isNative ? (
         <View style={[styles.whole, { backgroundColor: colours.paper }]}>
-          {document.isPending || part === null ? (
+          {typeset === null ? (
             <ASpinner colour={colours.ink} />
           ) : (
             <AMatteCurl
@@ -780,8 +952,14 @@ const ATextReader = ({
               bookLook={bookLook}
               isLocked={isPanelOpen}
               isAnimated={settings.isAnimated}
-              onPages={(count, anchors) => {
-                setLaid({ part, count, anchors });
+              onPages={(count, anchors, starts, isFinal) => {
+                if (laid !== null && aim === null) {
+                  const here = placeOfPage(laid.starts, laid.count, page);
+
+                  setAim({ part: here.part, at: { within: here.within } });
+                }
+
+                setLaid({ count, anchors, starts, isFinal });
               }}
               onGrab={() => {
                 lastTouched.current = Date.now();
@@ -791,19 +969,18 @@ const ATextReader = ({
                 setIsShowingChrome((was) => !was);
               }}
               onPastTheEnd={() => {
-                if (part < last) {
-                  goTo(part + 1, { within: 0 });
-                } else if (next !== null) {
+                if (next !== null && laid?.isFinal === true) {
                   onChapter(next.id);
                 }
               }}
-              onBeforeTheStart={() => {
-                if (part > 0) {
-                  goTo(part - 1, { within: 1 });
-                }
-              }}
+              onBeforeTheStart={stayPut}
             />
           )}
+          {typeset !== null && laid === null ? (
+            <View pointerEvents="none" style={[styles.waiting, { backgroundColor: colours.paper }]}>
+              <ASpinner colour={colours.ink} />
+            </View>
+          ) : null}
         </View>
       ) : (
         <View style={styles.whole}>

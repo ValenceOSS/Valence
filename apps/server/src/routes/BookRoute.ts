@@ -173,6 +173,30 @@ const readBookDocumentRoute = createRoute({
   },
 });
 
+const readBookTextRoute = createRoute({
+  method: 'get',
+  path: '/api/books/{bookId}/chapters/{chapterId}/text',
+  tags: ['Books'],
+  summary:
+    'Stream every part of a book that reflows, ready to set, starting where somebody opens it',
+  description:
+    'Newline-delimited JSON: a head saying how many parts there are, then one line for each part — its paragraphs, headings and pictures, each picture measured, and its cleaned HTML where asked — starting from the part asked for and going on round to the one before it, then an end holding the contents.',
+  request: {
+    params: z.object({ bookId: z.string().uuid(), chapterId: z.string().uuid() }),
+    query: z.object({
+      from: z.coerce.number().int().nonnegative().optional(),
+      html: z.enum(['true', 'false']).optional(),
+    }),
+  },
+  responses: {
+    200: { description: 'The book, a part at a time' },
+    404: {
+      description: 'No such book, or not one that reflows',
+      content: { 'application/json': { schema: BookError } },
+    },
+  },
+});
+
 const readBookResourceRoute = createRoute({
   method: 'get',
   path: '/api/books/{bookId}/chapters/{chapterId}/resource',
@@ -232,6 +256,7 @@ export {
   readBookDocumentRoute,
   readBookPageRoute,
   readBookResourceRoute,
+  readBookTextRoute,
   readBookRoute,
   readReadingProgressRoute,
   saveReadingProgressRoute,

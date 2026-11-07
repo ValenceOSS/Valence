@@ -1,4 +1,4 @@
-import type { BookNode } from '@ValenceClient/books/readBookDocument.types';
+import type { BookNode } from '@ValenceCore/books/readBookDocument.types';
 
 type TheBookTextProps = {
   nodes: readonly BookNode[];

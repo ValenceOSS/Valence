@@ -5,7 +5,7 @@ import { ALinedParagraph } from '@ValenceMobile/components/AReader/components/AT
 import { ABookPicture } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/components/ABookPicture/ABookPicture';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
-import type { BookNode } from '@ValenceClient/books/readBookDocument.types';
+import type { BookNode } from '@ValenceCore/books/readBookDocument.types';
 import type { ReactNode } from 'react';
 import type { TextStyle } from 'react-native';
 import type { TheBookTextProps } from './TheBookText.types';

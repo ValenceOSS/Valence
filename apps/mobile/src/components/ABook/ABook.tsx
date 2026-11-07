@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Headphones, RotateCcw, Share } from '@keyline-icons/react-native';
+import { Headphones, Share } from '@keyline-icons/react-native';
 import {
   BookOpen as BookOpenFilled,
   Headphones as HeadphonesFilled,
@@ -215,9 +215,17 @@ const ABook = ({ bookId, onRead, onListen, onAskAbout, onBack }: ABookProps) => 
                       ? say('common.readAgain')
                       : say('common.read')
                 }
+                watched={isStarted ? (where.fraction ?? null) : null}
                 onPress={() => {
                   onRead(book.id, null, isFinished);
                 }}
+                {...(isStarted
+                  ? {
+                      onStartAgain: () => {
+                        onRead(book.id, null, true);
+                      },
+                    }
+                  : {})}
               />
             ) : hasAudio ? (
               <APlayButton
@@ -237,15 +245,6 @@ const ABook = ({ bookId, onRead, onListen, onAskAbout, onBack }: ABookProps) => 
                   icon={Headphones}
                   says={listenLabel(heard.data)}
                   onPress={listenToIt}
-                />
-              ) : null}
-              {isReadable && isStarted ? (
-                <ARoundAction
-                  icon={RotateCcw}
-                  says={say('common.startAgain')}
-                  onPress={() => {
-                    onRead(book.id, null, true);
-                  }}
                 />
               ) : null}
               {mayShare ? (

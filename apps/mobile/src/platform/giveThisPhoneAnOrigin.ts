@@ -1,10 +1,5 @@
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
-import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
-import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
-import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
-import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
-import { writeDeviceHints } from '@ValenceContracts/functions/writeDeviceHints';
-import { theDeviceHints } from '@ValenceClient/platform/theDeviceHints';
+import { tellThisServerWhoAsks } from '@ValenceMobile/platform/tellThisServerWhoAsks';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -45,10 +40,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
 
     if (input instanceof Request) {
       if (input.url.startsWith(address)) {
-        input.headers.set('origin', address);
-        input.headers.set('user-agent', appUserAgent(describeThisPhone()));
-        input.headers.set(CLIENT_KIND_HEADER, 'phone');
-        input.headers.set(DEVICE_HEADER, writeDeviceHints(theDeviceHints()));
+        tellThisServerWhoAsks(input.headers, address);
       }
 
       return asked(input, init);
@@ -63,10 +55,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
 
     const headers = new Headers(init?.headers);
 
-    headers.set('origin', address);
-    headers.set('user-agent', appUserAgent(describeThisPhone()));
-    headers.set(CLIENT_KIND_HEADER, 'phone');
-    headers.set(DEVICE_HEADER, writeDeviceHints(theDeviceHints()));
+    tellThisServerWhoAsks(headers, address);
 
     return asked(whole, { ...init, headers });
   };
