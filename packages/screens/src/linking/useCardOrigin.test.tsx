@@ -32,7 +32,13 @@ describe('useCardOrigin', () => {
     });
 
     expect(result.current('light')).toEqual({
-      origin: { initial: 'F', colour: '#f5e663', ink: 'dark', label: 'From films' },
+      origin: {
+        initial: 'F',
+        colour: '#f5e663',
+        ink: 'dark',
+        label: 'From films',
+        pictureUrl: null,
+      },
     });
     expect(result.current('dark').origin?.ink).toBe('light');
   });

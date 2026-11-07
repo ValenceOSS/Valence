@@ -59,7 +59,7 @@ describe('ScrolledTitle', () => {
   it('paints a sliver of itself above its top, so no hairline of content shows through', () => {
     render(<ScrolledTitle title="Arrival" isShowing />);
 
-    expect(bar()).toHaveClass('shadow-[0_-2px_0_var(--color-surface-raised),var(--shadow-raised)]');
+    expect(bar()?.firstElementChild).toHaveClass('-top-0.5', 'shadow-[var(--shadow-overlay)]');
   });
 
   it('sets a display name so devtools can identify it', () => {

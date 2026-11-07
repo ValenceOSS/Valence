@@ -54,7 +54,8 @@ describe('ATextReader', () => {
 
     await userEvent.press(drawn.getByRole('button', { name: 'Contents and settings' }));
 
-    expect(drawn.getByText('Text size')).toBeTruthy();
+    expect(drawn.getByText('Themes')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Larger text' })).toBeTruthy();
     expect(drawn.getByText('Book Two')).toBeTruthy();
   });
 });

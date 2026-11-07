@@ -311,7 +311,7 @@ describe('App routing', () => {
     fetchMock.mockReturnValue(new Promise(() => undefined));
     renderTheApp();
 
-    expect(await screen.findByRole('status', { name: 'Loading Valence' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
 
   it('shows the setup wizard when setup is incomplete', async () => {

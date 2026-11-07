@@ -5,8 +5,14 @@ import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { OnItsWayShelf } from './OnItsWayShelf';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type * as Motion from 'motion/react';
 
 const held: { requests: MediaRequest[] } = { requests: [] };
+
+vi.mock('motion/react', async (original) => ({
+  ...(await original<typeof Motion>()),
+  useInView: () => true,
+}));
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequests: () => Promise.resolve(held.requests),

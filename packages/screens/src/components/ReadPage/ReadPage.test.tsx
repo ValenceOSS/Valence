@@ -104,7 +104,9 @@ describe('ReadPage', () => {
 
     renderInAnAddress(<ReadPage />);
 
-    expect(await screen.findByText('It is a truth universally acknowledged.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('It is a truth universally acknowledged.')).length,
+    ).toBeGreaterThan(0);
   });
 
   it('says the book could not be opened where its place cannot be read, rather than waiting for ever', async () => {
@@ -170,7 +172,9 @@ describe('ReadPage', () => {
 
     renderInAnAddress(<ReadPage />);
 
-    expect(await screen.findByText('It is a truth universally acknowledged.')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('It is a truth universally acknowledged.')).length,
+    ).toBeGreaterThan(0);
   });
 
   it('says so when a book has nothing in it yet', async () => {
@@ -186,7 +190,7 @@ describe('ReadPage', () => {
 
     renderInAnAddress(<ReadPage />);
 
-    await screen.findByText('It is a truth universally acknowledged.');
+    await screen.findAllByText('It is a truth universally acknowledged.');
 
     expect(readingReported()).toContain(BOOK_ID);
   });

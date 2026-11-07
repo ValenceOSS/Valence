@@ -64,16 +64,15 @@ beforeEach(() => {
 });
 
 describe('MusicHome', () => {
-  it('puts liked songs and your playlists at the top', async () => {
+  it('lists your playlists in a shelf of their own', async () => {
     renderInAnAddress(<MusicHome />);
 
     const yours = await screen.findByRole('region', { name: 'Your playlists' });
 
-    expect(within(yours).getByRole('button', { name: /Liked Songs/ })).toBeInTheDocument();
     expect(within(yours).getByRole('button', { name: /^Sunday morning/ })).toBeInTheDocument();
   });
 
-  it('puts the mixes made for this profile today above everything else', async () => {
+  it('puts the mixes of the genres and decades played among your top mixes', async () => {
     vi.stubGlobal(
       'fetch',
       answerMusicRequests({
@@ -97,21 +96,17 @@ describe('MusicHome', () => {
 
     renderInAnAddress(<MusicHome />);
 
-    const made = await screen.findByRole('region', { name: 'Made for you' });
+    const made = await screen.findByRole('region', { name: 'Your top mixes' });
 
     expect(within(made).getByRole('button', { name: /^Rock Mix/ })).toBeInTheDocument();
   });
 
-  it('shows what was added lately', async () => {
+  it('leads with what was added last', async () => {
     renderInAnAddress(<MusicHome />);
 
-    expect(await screen.findByRole('region', { name: 'Recently added' })).toBeInTheDocument();
-  });
-
-  it('keeps what others shared apart from your own', async () => {
-    renderInAnAddress(<MusicHome />);
-
-    expect(await screen.findByRole('region', { name: 'Shared with you' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('region', { name: 'Newest in your library' }),
+    ).toBeInTheDocument();
   });
 
   it('says there is no music yet where there is none', async () => {
@@ -137,11 +132,10 @@ describe('MusicHome', () => {
     expect(screen.getByRole('heading', { name: 'Even In Arcadia' })).toBeInTheDocument();
   });
 
-  it('leads to the whole of each rail', async () => {
+  it('leads to the whole of your playlists', async () => {
     renderInAnAddress(<MusicHome />);
 
-    expect(await screen.findByRole('button', { name: 'See all albums' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'See all playlists' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'See all playlists' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

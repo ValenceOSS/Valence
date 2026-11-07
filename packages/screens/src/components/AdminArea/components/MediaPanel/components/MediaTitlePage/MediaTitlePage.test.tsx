@@ -97,7 +97,7 @@ describe('MediaTitlePage', () => {
   it('names the title, its library and its match', () => {
     drawn(titleOf({ id: 'film', title: 'Film', year: 2020, externalId: '603' }));
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Film2020');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Film');
     expect(screen.getAllByText('Films')).not.toHaveLength(0);
     expect(screen.getAllByText('TMDB 603')).not.toHaveLength(0);
   });

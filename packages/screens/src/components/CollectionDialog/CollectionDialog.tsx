@@ -334,6 +334,7 @@ const CollectionDialog = ({
           {entries.length === 0 ? null : (
             <VirtualGrid
               label={label}
+              isList
               count={entries.length}
               leastCardWidth={CARD_WIDTH}
               rowHeight={ROW_HEIGHT}

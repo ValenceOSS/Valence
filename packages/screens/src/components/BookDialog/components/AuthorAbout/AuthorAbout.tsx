@@ -41,9 +41,7 @@ const AuthorAbout = ({ author }: AuthorAboutProps) => {
             <span className="text-sm text-text-muted">
               {[
                 lived,
-                author.workCount === null
-                  ? null
-                  : sayCount('common.count.books', author.workCount),
+                author.workCount === null ? null : sayCount('common.count.books', author.workCount),
               ]
                 .filter((part) => part !== null)
                 .join(' · ')}

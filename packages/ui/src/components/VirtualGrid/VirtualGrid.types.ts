@@ -7,6 +7,7 @@ type VirtualGridProps = {
   rowHeight: number;
   gap?: number;
   label?: string;
+  isList?: boolean;
   className?: string;
 };
 

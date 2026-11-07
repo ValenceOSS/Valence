@@ -30,7 +30,7 @@ describe('TitleDetails', () => {
       wrapper: CacheScope,
     });
 
-    expect(await screen.findByText('Title and release')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Title and release' })).toBeInTheDocument();
     expect(screen.getByLabelText('Title')).toHaveValue('A film');
     expect(screen.getByText('603')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Fix match' })).toBeInTheDocument();

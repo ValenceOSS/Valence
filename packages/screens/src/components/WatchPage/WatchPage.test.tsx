@@ -55,7 +55,7 @@ describe('WatchPage', () => {
   it('holds the wordmark up until it knows what it is playing', () => {
     renderInAShell(<WatchPage />, { title: 'Living Room' });
 
-    expect(screen.getByRole('status', { name: /Loading Valence/i })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: /^Loading/i })).toBeInTheDocument();
   });
 
   it('starts where the server says this viewer got to', () => {
@@ -96,7 +96,7 @@ describe('WatchPage', () => {
       ]),
     });
 
-    expect(screen.getByRole('status', { name: 'Loading Valence' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
     expect(drawn.player).toBeNull();
   });
 

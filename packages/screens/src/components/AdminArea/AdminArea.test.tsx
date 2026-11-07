@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { ADMIN_NOTICES } from '@ValenceScreens/components/AdminPage/ADMIN_NOTICES';
 import type { Connect, Handlers } from '@ValenceClient/realtime/createRealtimeClient';
 import { useState } from 'react';
 import { TabRow } from '@ValenceUI/TabRow';
@@ -436,11 +437,24 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
 
   installPlatform({ ...aFakePlatform(), openSocket: connect });
+
+  const notices = document.createElement('div');
+
+  notices.id = ADMIN_NOTICES;
+  document.body.append(notices);
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  document.getElementById(ADMIN_NOTICES)?.remove();
 });
+
+/**
+ * Opens the bell along the top of the admin area, which holds whatever needs attention.
+ */
+const openTheBell = async (actor: ReturnType<typeof userEvent.setup>) => {
+  await actor.click(await screen.findByRole('button', { name: /Needs attention/ }));
+};
 
 /**
  * Presses one of a job's buttons on the Jobs section: Run, or the one that opens its schedule.
@@ -754,7 +768,10 @@ describe('AdminArea', () => {
     });
 
     it('says the VPN is down above everything else', async () => {
+      const actor = userEvent.setup();
+
       renderInAnAddress(<TheAdmin />);
+      await openTheBell(actor);
 
       expect(await screen.findByText('The VPN is down')).toBeInTheDocument();
     });
@@ -802,7 +819,10 @@ describe('AdminArea', () => {
         return otherwise(input, init);
       });
 
+      const actor = userEvent.setup();
+
       renderInAnAddress(<TheAdmin />);
+      await openTheBell(actor);
 
       expect(await screen.findByText('The indexer Jackett keeps failing')).toBeInTheDocument();
       expect(screen.queryByText('The VPN is down')).not.toBeInTheDocument();
@@ -864,9 +884,9 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs & logs');
+    await openTheBell(actor);
 
-    expect((await screen.findAllByText('no such encoder')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/no such encoder/)).length).toBeGreaterThan(0);
   });
 
   it('opens the job history filtered to the failures its warning counted', async () => {
@@ -902,6 +922,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin onPanel={onPanel} />);
 
+    await openTheBell(actor);
     await actor.click(
       await screen.findByRole('button', { name: /^2 jobs failed in the last 24 hours/ }),
     );

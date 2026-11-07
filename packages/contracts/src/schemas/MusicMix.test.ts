@@ -12,7 +12,9 @@ const SUMMARY = {
 
 describe('MusicMix', () => {
   it('reads a mix as the server lists it', () => {
-    expect(MusicMixListSchema.parse({ mixes: [SUMMARY] })).toEqual({ mixes: [SUMMARY] });
+    expect(MusicMixListSchema.parse({ mixes: [SUMMARY] })).toEqual({
+      mixes: [{ ...SUMMARY, faces: [] }],
+    });
   });
 
   it('refuses a mix of a kind Valence does not make', () => {

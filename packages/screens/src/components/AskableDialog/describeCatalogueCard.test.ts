@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { describeCatalogueCard } from './describeCatalogueCard';
+import { IN_LIBRARY_BADGE } from '@ValenceScreens/library/IN_LIBRARY_BADGE';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 
 const aTitle = (standing: CatalogueTitle['standing']): CatalogueTitle => ({
@@ -22,17 +23,17 @@ describe('describeCatalogueCard', () => {
       requestState: null,
     });
 
-    expect(describeCatalogueCard(held)).toEqual({ badges: ['Film', 'In library'] });
+    expect(describeCatalogueCard(held)).toEqual({ badges: [IN_LIBRARY_BADGE] });
     expect(describeCatalogueCard(held, true).corner?.label).toBe('Watched');
   });
 
-  it('says nothing of it for a title there is only to ask for', () => {
+  it('says nothing, not even what kind it is, for a title there is only to ask for', () => {
     const drawn = describeCatalogueCard(
       aTitle({ status: 'askable', mediaId: null, requestId: null, requestState: null }),
     );
 
     expect(drawn.corner).toBeUndefined();
-    expect(drawn.badges).toEqual(['Film']);
+    expect(drawn.badges).toEqual([]);
   });
 
   it('still says how far a request has got in words', () => {
@@ -41,6 +42,6 @@ describe('describeCatalogueCard', () => {
     );
 
     expect(drawn.corner).toBeUndefined();
-    expect(drawn.badges).toEqual(['Film', 'Downloading']);
+    expect(drawn.badges.map((badge) => badge.label)).toEqual(['Downloading']);
   });
 });

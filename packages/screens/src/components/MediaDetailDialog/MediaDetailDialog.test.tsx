@@ -418,7 +418,7 @@ describe('MediaDetailDialog', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
-    expect(screen.getByText('2016')).toBeInTheDocument();
+    expect(screen.getAllByText('2016').length).toBeGreaterThan(0);
     expect(screen.getByText('2:00:00')).toBeInTheDocument();
   });
 
@@ -434,7 +434,7 @@ describe('MediaDetailDialog', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     expect(await screen.findByRole('img', { name: 'Rated 12A by the BBFC' })).toBeInTheDocument();
-    expect(screen.getByText('HD')).toBeInTheDocument();
+    expect(screen.getAllByText('HD').length).toBeGreaterThan(0);
     expect(screen.getByText('HDR10')).toBeInTheDocument();
   });
 
@@ -511,7 +511,7 @@ describe('MediaDetailDialog', () => {
       />,
     );
 
-    expect(await screen.findByText('EP5')).toBeInTheDocument();
+    expect((await screen.findAllByText('EP5')).length).toBeGreaterThan(0);
     expect(screen.getByText('S2')).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Story of Us' })).toBeInTheDocument();

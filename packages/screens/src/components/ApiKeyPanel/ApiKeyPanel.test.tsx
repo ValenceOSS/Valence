@@ -163,7 +163,8 @@ describe('ApiKeyPanel', () => {
 
     render(<ApiKeyPanel />);
 
-    await user.click(await screen.findByRole('button', { name: 'Revoke Home Assistant' }));
+    await user.click(await screen.findByRole('button', { name: 'More for Home Assistant' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Revoke Home Assistant' }));
 
     expect(revokeMock).toHaveBeenCalledWith('key-1');
   });

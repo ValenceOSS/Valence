@@ -20,7 +20,7 @@ describe('TitleHero', () => {
     );
 
     expect(screen.getByRole('heading', { name: /A Show\s*2019/ })).toBeInTheDocument();
-    expect(screen.getByText('Missing')).toBeInTheDocument();
+    expect(screen.getByText('Nothing found')).toBeInTheDocument();
     expect(screen.getByText('3 seasons')).toBeInTheDocument();
     expect(screen.getByText('What it is about.')).toBeInTheDocument();
     expect(screen.getByText(/Asked for by Sam/)).toBeInTheDocument();

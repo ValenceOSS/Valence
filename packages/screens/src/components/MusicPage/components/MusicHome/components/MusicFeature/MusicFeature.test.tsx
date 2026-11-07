@@ -1,11 +1,10 @@
-import { renderHook, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
-import { setMusicVideo, useMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { MusicFeature } from './MusicFeature';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 
@@ -36,7 +35,7 @@ describe('MusicFeature', () => {
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 
-  it('puts the song playing at the front, with what comes after it', () => {
+  it('keeps the newest record at the front while a song plays, leaving it to the player bar', () => {
     const { player } = aFakeMusicPlayer({
       current: PLAYING,
       isPlaying: true,
@@ -45,11 +44,8 @@ describe('MusicFeature', () => {
 
     renderInAnAddress(<MusicFeature newest={NEWEST} player={player} />);
 
-    expect(screen.getByRole('heading', { name: 'Track 1' })).toBeInTheDocument();
-    expect(screen.getByText('Now playing')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Play Track 2 now' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Lyrics' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Open album' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Even In Arcadia' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Track 1' })).not.toBeInTheDocument();
   });
 
   it('opens the album when its artwork is pressed', async () => {
@@ -70,38 +66,6 @@ describe('MusicFeature', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
 
     expect(player.toggle).toHaveBeenCalled();
-  });
-
-  it('jumps to a song coming up', async () => {
-    const { player } = aFakeMusicPlayer({
-      current: PLAYING,
-      isPlaying: true,
-      queue: startQueue([PLAYING, aTrack(2)], 0),
-    });
-
-    renderInAnAddress(<MusicFeature newest={NEWEST} player={player} />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Play Track 2 now' }));
-
-    expect(player.jumpTo).toHaveBeenCalledWith(1);
-  });
-
-  it('plays the video of the song playing, pausing the music for it', async () => {
-    const { player } = aFakeMusicPlayer({
-      current: aTrack(1, { videoKey: 'abcdefghijk' }),
-      isPlaying: true,
-    });
-
-    renderInAnAddress(<MusicFeature newest={NEWEST} player={player} />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Watch music video' }));
-
-    expect(player.pause).toHaveBeenCalled();
-    expect(renderHook(() => useMusicVideo()).result.current).toEqual({
-      title: 'Track 1',
-      videoKey: 'abcdefghijk',
-    });
-    setMusicVideo(null);
   });
 
   it('draws nothing with nothing to show', () => {

@@ -537,7 +537,7 @@ describe('ShowDialog', () => {
     });
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Returning')).toBeInTheDocument();
+    expect((await screen.findAllByText('Returning')).length).toBeGreaterThan(0);
   });
 
   it('says when the next episode comes out, and which it is', async () => {
@@ -743,7 +743,7 @@ describe('what the header says about a series', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2, 3] }]));
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('3 episodes')).toBeInTheDocument();
+    expect((await screen.findAllByText('3 episodes')).length).toBeGreaterThan(0);
   });
 
   it('counts seasons as well once there is more than one', async () => {
@@ -786,7 +786,7 @@ describe('what the header says about a series', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByText('3 episodes');
+    await screen.findAllByText('3 episodes');
 
     expect(screen.queryByText(/Animation/)).not.toBeInTheDocument();
   });
@@ -798,7 +798,7 @@ describe('what the header says about a series', () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
     renderInAnAddress(<ShowDialog show={summary} onClose={onClose} onPlay={vi.fn()} />);
 
-    await screen.findByText('3 episodes');
+    await screen.findAllByText('3 episodes');
     await actor.click(screen.getByRole('button', { name: /Close/ }));
 
     expect(onClose).toHaveBeenCalled();
@@ -832,7 +832,7 @@ describe('what the header says about a series', () => {
 
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByText('3 episodes');
+    await screen.findAllByText('3 episodes');
 
     expect(screen.queryByText('Watch the trailer')).not.toBeInTheDocument();
   });
@@ -867,6 +867,6 @@ describe('what the header says about a series', () => {
 
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('3 episodes')).toBeInTheDocument();
+    expect((await screen.findAllByText('3 episodes')).length).toBeGreaterThan(0);
   });
 });

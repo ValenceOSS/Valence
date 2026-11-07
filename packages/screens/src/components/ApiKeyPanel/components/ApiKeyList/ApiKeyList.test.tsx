@@ -57,7 +57,7 @@ describe('ApiKeyList', () => {
     draw();
 
     expect(screen.getByText('Home Assistant')).toBeInTheDocument();
-    expect(screen.getByText('vk_7Qm2…')).toBeInTheDocument();
+    expect(screen.getByText('vk_7Qm2••••••')).toBeInTheDocument();
     expect(screen.getByText('Backup script')).toBeInTheDocument();
   });
 
@@ -97,7 +97,8 @@ describe('ApiKeyList', () => {
     const { onToggle, onAskRevoke, user } = draw();
 
     await user.click(screen.getByRole('switch', { name: 'Disable Home Assistant' }));
-    await user.click(screen.getByRole('button', { name: 'Revoke Backup script' }));
+    await user.click(screen.getByRole('button', { name: 'More for Backup script' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Revoke Backup script' }));
 
     expect(onToggle).toHaveBeenCalledWith(HOME_ASSISTANT);
     expect(onAskRevoke).toHaveBeenCalledWith(BACKUPS);

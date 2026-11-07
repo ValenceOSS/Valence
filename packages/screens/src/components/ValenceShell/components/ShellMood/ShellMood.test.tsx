@@ -26,13 +26,13 @@ describe('ShellMood', () => {
     expect(firstBloomOf(container)).toBe('rgb(90 60 140)');
   });
 
-  it('lights music with the album’s lights', () => {
+  it('leaves music unlit, whatever the album’s lights, since its page is lit by its own artwork', () => {
     setHomeLights(HOME);
     setMusicLights(MUSIC);
 
     const { container } = render(<ShellMood section="music" />);
 
-    expect(firstBloomOf(container)).toBe('rgb(140 60 20)');
+    expect(firstBloomOf(container)).toBeUndefined();
   });
 
   it('follows the home page’s lights as they change, without being drawn again from above', () => {
