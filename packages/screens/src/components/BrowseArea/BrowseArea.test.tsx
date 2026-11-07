@@ -192,7 +192,7 @@ describe('BrowseArea', () => {
     expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-1', expect.anything());
   });
 
-  it('reads across every library when the one chosen is of another kind', async () => {
+  it('reads every library of films when the one chosen holds none, and not the one chosen', async () => {
     fetchLibraries.mockResolvedValue([
       { id: 'library-1', kind: 'movies' },
       { id: 'library-2', kind: 'shows' },
@@ -206,7 +206,7 @@ describe('BrowseArea', () => {
       expect(fetchLibraryItems).toHaveBeenCalledWith('library-1', expect.anything());
     });
 
-    expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
+    expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-2', expect.anything());
   });
 
   it('reads every page of the films, not the first one, since a library can hold more than a page', async () => {
@@ -524,6 +524,10 @@ describe('how a page of the library is laid out', () => {
   });
 
   it.each(['films', 'shows'] as const)('stands the %s page upright, on posters', async (kind) => {
+    fetchLibraries.mockResolvedValue([
+      { id: 'library-1', kind: kind === 'films' ? 'movies' : 'shows' },
+    ]);
+
     const { container } = renderInAnAddress(
       <BrowseArea kind={kind} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );

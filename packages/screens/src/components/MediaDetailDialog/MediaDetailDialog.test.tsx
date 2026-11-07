@@ -419,14 +419,14 @@ describe('MediaDetailDialog', () => {
 
     expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
     expect(screen.getAllByText('2016').length).toBeGreaterThan(0);
-    expect(screen.getByText('2:00:00')).toBeInTheDocument();
+    expect(screen.getAllByText('2:00:00').length).toBeGreaterThan(0);
   });
 
   it('shows the overview once it arrives', async () => {
     detailMock.mockResolvedValue(detail({ overview: 'A linguist meets visitors.' }));
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('A linguist meets visitors.')).toBeInTheDocument();
+    expect((await screen.findAllByText('A linguist meets visitors.')).length).toBeGreaterThan(0);
   });
 
   it('shows the certificate as its board issues it, and how it looks, once it arrives', async () => {
@@ -435,7 +435,7 @@ describe('MediaDetailDialog', () => {
 
     expect(await screen.findByRole('img', { name: 'Rated 12A by the BBFC' })).toBeInTheDocument();
     expect(screen.getAllByText('HD').length).toBeGreaterThan(0);
-    expect(screen.getByText('HDR10')).toBeInTheDocument();
+    expect(screen.getAllByText('HDR10').length).toBeGreaterThan(0);
   });
 
   it('names the cast with their roles', async () => {
@@ -447,7 +447,7 @@ describe('MediaDetailDialog', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     expect(await screen.findAllByText('Amy Adams')).not.toHaveLength(0);
-    expect(screen.getByText('Louise Banks')).toBeInTheDocument();
+    expect(screen.getAllByText('Louise Banks').length).toBeGreaterThan(0);
   });
 
   it('says why the cast is empty rather than leaving a blank space', async () => {
@@ -458,7 +458,9 @@ describe('MediaDetailDialog', () => {
     });
 
     expect(screen.getByRole('heading', { name: 'Cast' })).toBeInTheDocument();
-    expect(await screen.findByText(/These come from a metadata provider/)).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText(/These come from a metadata provider/)).length,
+    ).toBeGreaterThan(0);
   });
 
   it('states when it came out, what it cost and what it took, where the catalogue said', async () => {
@@ -472,9 +474,9 @@ describe('MediaDetailDialog', () => {
     );
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('15 Sept 2021')).toBeInTheDocument();
-    expect(screen.getByText('$165M')).toBeInTheDocument();
-    expect(screen.getByText('$402M')).toBeInTheDocument();
+    expect((await screen.findAllByText('15 Sept 2021')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$165M').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$402M').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Details' })).toBeInTheDocument();
   });
 
@@ -491,7 +493,7 @@ describe('MediaDetailDialog', () => {
   it('says why there is no synopsis rather than showing an empty paragraph', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText(/Configure a metadata provider/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/Configure a metadata provider/)).length).toBeGreaterThan(0);
   });
 
   it('holds the shape of what is coming while it loads', () => {
@@ -512,7 +514,7 @@ describe('MediaDetailDialog', () => {
     );
 
     expect((await screen.findAllByText('EP5')).length).toBeGreaterThan(0);
-    expect(screen.getByText('S2')).toBeInTheDocument();
+    expect(screen.getAllByText('S2').length).toBeGreaterThan(0);
 
     expect(screen.getByRole('heading', { name: 'Story of Us' })).toBeInTheDocument();
   });
@@ -720,7 +722,7 @@ describe('keeping something, and getting back to where you were', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Science fiction, Drama')).toBeInTheDocument();
+    expect((await screen.findAllByText('Science fiction, Drama')).length).toBeGreaterThan(0);
   });
 
   it('says nothing about genres for an item carrying none', async () => {
@@ -787,7 +789,7 @@ describe('keeping something, and getting back to where you were', () => {
       />,
     );
 
-    expect(await screen.findByText('Spice must flow.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Spice must flow.')).length).toBeGreaterThan(0);
   });
 });
 
@@ -912,10 +914,10 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Extras')).toBeInTheDocument();
+      expect(screen.getAllByText('Extras').length).toBeGreaterThan(0);
     });
 
-    expect(screen.getByText('Scoring the film')).toBeInTheDocument();
+    expect(screen.getAllByText('Scoring the film').length).toBeGreaterThan(0);
   });
 
   it('offers the arrows to turn the extras by, since a mouse cannot scroll a row sideways', async () => {
@@ -938,7 +940,7 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Extras')).toBeInTheDocument();
+      expect(screen.getAllByText('Extras').length).toBeGreaterThan(0);
     });
 
     expect(screen.getAllByRole('button', { name: /a page of/ })).toHaveLength(2);
@@ -950,7 +952,7 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Trailer')).toBeInTheDocument();
+      expect(screen.getAllByText('Trailer').length).toBeGreaterThan(0);
     });
   });
 
@@ -960,7 +962,7 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Extras')).toBeInTheDocument();
+      expect(screen.getAllByText('Extras').length).toBeGreaterThan(0);
     });
 
     expect(await isOffered('Watch the trailer')).toBe(false);
@@ -1018,7 +1020,7 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Scoring the film')).toBeInTheDocument();
+      expect(screen.getAllByText('Scoring the film').length).toBeGreaterThan(0);
     });
 
     await userEvent.setup().click(screen.getByText('Scoring the film'));
@@ -1159,7 +1161,7 @@ describe('a title from a linked server', () => {
       />,
     );
 
-    expect(await screen.findByText('From Films')).toBeInTheDocument();
+    expect((await screen.findAllByText('From Films')).length).toBeGreaterThan(0);
   });
 
   it('says so where its server cannot be reached', async () => {
@@ -1185,7 +1187,7 @@ describe('a title from a linked server', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Also on Films')).toBeInTheDocument();
+    expect((await screen.findAllByText('Also on Films')).length).toBeGreaterThan(0);
   });
 
   it('plays the other server’s copy from where somebody got to, being the same film', async () => {

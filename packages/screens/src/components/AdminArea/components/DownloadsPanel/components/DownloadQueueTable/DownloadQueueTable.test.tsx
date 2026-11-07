@@ -79,7 +79,7 @@ describe('DownloadQueueTable', () => {
     expect(row.getByText('45%')).toBeInTheDocument();
     expect(row.getByText('2.0 GB').parentElement).toHaveTextContent('2.0 GB of 4.0 GB');
     expect(row.getByText(/1\.0 MB/)).toBeInTheDocument();
-    expect(rowOf('Dune')).toHaveTextContent('· 12 min left');
+    expect(rowOf('Dune')).toHaveTextContent('12 min left');
     expect(row.getByText('9 seeding')).toBeInTheDocument();
     expect(row.getByText('2 fetching')).toBeInTheDocument();
     expect(

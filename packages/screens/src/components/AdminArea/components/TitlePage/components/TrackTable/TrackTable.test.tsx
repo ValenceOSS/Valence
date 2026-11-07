@@ -35,7 +35,7 @@ describe('TrackTable', () => {
     expect(screen.getByText('3:18')).toBeInTheDocument();
     expect(screen.getByText('01 - Noun.flac')).toBeInTheDocument();
     expect(screen.getByText('In the library')).toBeInTheDocument();
-    expect(screen.getByText('Waiting to search')).toBeInTheDocument();
+    expect(screen.getByText('Nothing found')).toBeInTheDocument();
   });
 
   it('matches files to tracks in order where there is one for each', () => {
@@ -65,7 +65,7 @@ describe('TrackTable', () => {
 
     expect(screen.getByText('2-01 - Encore.flac')).toBeInTheDocument();
     expect(screen.getByText('2.1')).toBeInTheDocument();
-    expect(screen.getAllByText('Waiting to search')).toHaveLength(2);
+    expect(screen.getAllByText('Nothing found')).toHaveLength(2);
   });
 
   it('finds a later disc numbered on from the first where no file says its disc', () => {
@@ -83,7 +83,7 @@ describe('TrackTable', () => {
 
     expect(screen.getByText('01 - Opening.flac')).toBeInTheDocument();
     expect(screen.getByText('03 - Encore.flac')).toBeInTheDocument();
-    expect(screen.getAllByText('Waiting to search')).toHaveLength(1);
+    expect(screen.getAllByText('Nothing found')).toHaveLength(1);
   });
 
   it('sets a display name so devtools can identify it', () => {

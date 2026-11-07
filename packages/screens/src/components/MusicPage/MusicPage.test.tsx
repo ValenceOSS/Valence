@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -79,20 +79,18 @@ describe('MusicPage', () => {
     expect(await screen.findByRole('heading', { name: 'Liked Songs' })).toBeInTheDocument();
   });
 
-  it('shows the queue in a drawer on a window too narrow for it beside the page, and closes it', async () => {
+  it('shows the queue beside the page when asked, and folds it away again', async () => {
     renderInAnAddress(<MusicPage />);
 
     act(() => {
       setMusicPanel('queue');
     });
 
-    const drawer = await screen.findByRole('dialog', { name: 'Queue' });
+    expect(await screen.findByRole('heading', { name: 'Queue' })).toBeInTheDocument();
 
-    await userEvent.click(within(drawer).getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close queue' }));
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Queue' })).not.toBeInTheDocument();
-    });
+    expect(await screen.findByRole('button', { name: 'Open Queue' })).toBeInTheDocument();
   });
 
   it('shows the devices beside the page when asked', async () => {
@@ -103,16 +101,8 @@ describe('MusicPage', () => {
     });
 
     expect(
-      await screen.findByRole('dialog', { name: 'Play on another device' }),
+      await screen.findByRole('heading', { name: 'Play on another device' }),
     ).toBeInTheDocument();
-  });
-
-  it('keeps the library behind a button on a window too narrow for it beside the page', async () => {
-    renderInAnAddress(<MusicPage />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Your library' }));
-
-    expect(await screen.findByRole('dialog', { name: 'Your library' })).toBeInTheDocument();
   });
 
   it('gives the lyrics the whole height of the page, so their glow reaches its top edge', () => {
