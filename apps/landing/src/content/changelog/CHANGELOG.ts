@@ -2,6 +2,7 @@ import { dialogsSideBySide } from './dialogsSideBySide';
 import { facesAndArtCards } from './facesAndArtCards';
 import { linkedServersAndCalendars } from './linkedServersAndCalendars';
 import { liveTvAndTheBrowser } from './liveTvAndTheBrowser';
+import { musicBooksAndTheMetadataEditor } from './musicBooksAndTheMetadataEditor';
 import { musicRequestsAndHouseholds } from './musicRequestsAndHouseholds';
 import { patchedImages } from './patchedImages';
 import { phonesAndAudiobooks } from './phonesAndAudiobooks';
@@ -15,6 +16,7 @@ import { thePhoneRebuilt } from './thePhoneRebuilt';
 import type { ChangelogEntry } from './ChangelogEntry';
 
 const CHANGELOG: readonly ChangelogEntry[] = [
+  musicBooksAndTheMetadataEditor,
   thePhoneRebuilt,
   profilesCreditsAndTheRedesign,
   theAppStoreAndHdr,
