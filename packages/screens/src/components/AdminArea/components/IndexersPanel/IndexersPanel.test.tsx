@@ -444,6 +444,7 @@ describe('IndexersPanel', () => {
     await user.click(screen.getByRole('button', { name: /Test all/ }));
 
     expect(await screen.findByRole('button', { name: /Tested 1 of 2/ })).toBeInTheDocument();
+    expect(screen.getByText('Tested 1 of 2', { selector: '[aria-live="polite"]' })).toBeVisible();
 
     answerTheSlow();
 

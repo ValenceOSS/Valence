@@ -364,6 +364,11 @@ const IndexersPanel = () => {
     ];
   }, [appNames, isTestingAll, reread, testing]);
 
+  const testedSoFar = say('screens.adminArea.indexersPanel.testedTestedOfAll', {
+    tested: round.tested.toString(),
+    all: round.of.toString(),
+  });
+
   return (
     <PanelCard
       title={say('common.indexers')}
@@ -376,13 +381,12 @@ const IndexersPanel = () => {
             isDisabled={toTest.length === 0 || testing.size > 0}
             onClick={testAll}
           >
-            {isTestingAll
-              ? say('screens.adminArea.indexersPanel.testedTestedOfAll', {
-                  tested: round.tested.toString(),
-                  all: round.of.toString(),
-                })
-              : say('screens.adminArea.indexersPanel.testAll')}
+            {isTestingAll ? testedSoFar : say('screens.adminArea.indexersPanel.testAll')}
           </PanelCardAction>
+
+          <span aria-live="polite" className="sr-only">
+            {isTestingAll ? testedSoFar : null}
+          </span>
 
           {prowlarrs.length === 0 ? null : (
             <PanelCardAction
