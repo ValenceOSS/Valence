@@ -427,8 +427,8 @@ describe('judgeForRequest', () => {
       request: book,
       items: [ebook, audiobook],
       releases: [
-        aRelease('Someone - A Book MOBI'),
-        aRelease('Someone - A Book EPUB'),
+        { ...aRelease('Someone - A Book MOBI'), categories: [7020] },
+        { ...aRelease('Someone - A Book EPUB'), categories: [7020] },
         { ...aRelease('Someone - A Book (Unabridged) M4B'), categories: [3030] },
       ],
     });

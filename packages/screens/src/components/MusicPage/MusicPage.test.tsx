@@ -21,6 +21,7 @@ const atWidth = (isWide: boolean) => {
 };
 
 beforeEach(() => {
+  window.history.pushState(null, '', '/');
   atWidth(true);
   vi.stubGlobal(
     'fetch',
