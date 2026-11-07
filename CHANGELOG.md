@@ -1,5 +1,57 @@
 # Changelog
 
+## [1.9.0](https://github.com/ValenceOSS/Valence/compare/v1.8.0...v1.9.0) (2026-11-07)
+
+
+### Added
+
+* **admin:** edit a library's metadata in media, one title or many at once ([#812](https://github.com/ValenceOSS/Valence/issues/812)) ([9e83cf1](https://github.com/ValenceOSS/Valence/commit/9e83cf1ad35496ad604e2649fe53ff4cdc9213c4))
+* **admin:** rework the admin dashboard pages ([#803](https://github.com/ValenceOSS/Valence/issues/803)) ([fe96487](https://github.com/ValenceOSS/Valence/commit/fe9648762617dc778cb8b3e8c7a78e8068b9788f))
+* admins can turn off the overview alerts they don't want ([#795](https://github.com/ValenceOSS/Valence/issues/795)) ([d3eee1d](https://github.com/ValenceOSS/Valence/commit/d3eee1d1b49168a69024cb96137b9b3c296c8a12))
+* dev builds say when a newer dev build is out, and what it has ([#798](https://github.com/ValenceOSS/Valence/issues/798)) ([2391a11](https://github.com/ValenceOSS/Valence/commit/2391a116eb68531e41479f4840d1836d40539ed9))
+* **landing:** wallpapers for 16:10 and ultrawide desktops and tall phones ([#794](https://github.com/ValenceOSS/Valence/issues/794)) ([0ba39a1](https://github.com/ValenceOSS/Valence/commit/0ba39a13820b385ecc6504b7b430555b038d082f))
+* **mobile:** Android store readiness and push notifications through Firebase ([#805](https://github.com/ValenceOSS/Valence/issues/805)) ([4765855](https://github.com/ValenceOSS/Valence/commit/47658556afd8914cfa8663871566a19f62efc8c6))
+* **mobile:** find and download subtitles on the phone and the TV ([#801](https://github.com/ValenceOSS/Valence/issues/801)) ([ed3855e](https://github.com/ValenceOSS/Valence/commit/ed3855e331ff3609d7f96ed5aede599dfa8f1422))
+* **screens:** redesign music and search a show's seasons before its episodes ([#813](https://github.com/ValenceOSS/Valence/issues/813)) ([70f2790](https://github.com/ValenceOSS/Valence/commit/70f2790e273d068ef5374ff57647481925c6b1ca))
+* **screens:** title, request and person dialogs drawn like the phone's ([#796](https://github.com/ValenceOSS/Valence/issues/796)) ([fa7278d](https://github.com/ValenceOSS/Valence/commit/fa7278dc170fa427982a3501e0c3814602dcaf32))
+
+
+### Fixed
+
+* admin badges count what their pages list, and the media page says what is wrong ([#797](https://github.com/ValenceOSS/Valence/issues/797)) ([1806279](https://github.com/ValenceOSS/Valence/commit/1806279854d16aa2a90be61806d2bfc583bcf4ce))
+* browser playback stuck reconnecting, seek bar arrow keys, and the notification count size ([#807](https://github.com/ValenceOSS/Valence/issues/807)) ([cb5dd62](https://github.com/ValenceOSS/Valence/commit/cb5dd627e61ddc5c40bdc63f03b58e5762809878))
+* **deps:** update @dicebear/core to v10, drawing from @dicebear/styles ([#228](https://github.com/ValenceOSS/Valence/issues/228)) ([73f5679](https://github.com/ValenceOSS/Valence/commit/73f56792ee704e48e33f4b8a0e6acc63713241f9))
+* **deps:** update dependency @hono/node-server to v2.1.6 ([#229](https://github.com/ValenceOSS/Valence/issues/229)) ([4b9f654](https://github.com/ValenceOSS/Valence/commit/4b9f654ff1bf690ec01abb458432709a6e7bca48))
+* **docker:** name intel gpus from a current pci.ids, not bookworm's ([#819](https://github.com/ValenceOSS/Valence/issues/819)) ([016987f](https://github.com/ValenceOSS/Valence/commit/016987f3e3a64a975c5936014c22ebef49214062))
+* **mobile:** give each Expo module's Android publication its package's version, so a fresh install builds ([#773](https://github.com/ValenceOSS/Valence/issues/773)) ([7234e5c](https://github.com/ValenceOSS/Valence/commit/7234e5c83bf8c6b918bc4034bbdfc3831967d24e))
+* **mobile:** move the phone to the released Expo SDK 58 so Android starts, and make it run smoothly on slower phones ([#802](https://github.com/ValenceOSS/Valence/issues/802)) ([709374d](https://github.com/ValenceOSS/Valence/commit/709374da38de7fded1637183dcbb1e14f63ffc18))
+* **repo:** switching profile no longer hands the last profile's book, party or remote to the next ([#791](https://github.com/ValenceOSS/Valence/issues/791)) ([ec6a1e8](https://github.com/ValenceOSS/Valence/commit/ec6a1e8b440d8f6566cc671516bafff759aae643))
+* **repo:** the comment check reads only the files git keeps, so local leftovers cannot crash it ([#809](https://github.com/ValenceOSS/Valence/issues/809)) ([0c4f26d](https://github.com/ValenceOSS/Valence/commit/0c4f26d97f9a2d9ab28d27b7b31174f98a8731d3))
+* **requests:** take cloudflare's browser checks one at a time ([#820](https://github.com/ValenceOSS/Valence/issues/820)) ([f69a295](https://github.com/ValenceOSS/Valence/commit/f69a295f3d0078a5652d1ca35c058c8ef47909b9))
+* **server:** logos fetch the catalogue's png instead of the svg ([#814](https://github.com/ValenceOSS/Valence/issues/814)) ([567a6f8](https://github.com/ValenceOSS/Valence/commit/567a6f86341f21080a2e01ce3860222a87ed73f0))
+* **server:** new accounts show on the wall of faces before their first sign-in ([#810](https://github.com/ValenceOSS/Valence/issues/810)) ([5332422](https://github.com/ValenceOSS/Valence/commit/5332422e69a4b9a0049493d9506284954967fe37))
+* **server:** titles read from file names drop sonarr's webdl, webrip and remux tags ([#815](https://github.com/ValenceOSS/Valence/issues/815)) ([3876985](https://github.com/ValenceOSS/Valence/commit/387698546836e4ec0ba510af4989f51f038e9185))
+* **server:** webhooks name the linked server someone watches from ([#817](https://github.com/ValenceOSS/Valence/issues/817)) ([2c6884b](https://github.com/ValenceOSS/Valence/commit/2c6884bbbe071b362971f48799061603fe420053))
+* the media service and the requests browser stop holding on to gigabytes of memory ([#792](https://github.com/ValenceOSS/Valence/issues/792)) ([31a8a9a](https://github.com/ValenceOSS/Valence/commit/31a8a9a0ac9060479cb25a15638fcb57fb554141))
+* **transcoder:** a copy whose keyframes the browser cannot resume from is encoded instead ([#811](https://github.com/ValenceOSS/Valence/issues/811)) ([b7bb0cd](https://github.com/ValenceOSS/Valence/commit/b7bb0cddac20f12ce2f1c7348bfe10369ed2c814))
+* **ui:** cards in a row animate straight into place ([#818](https://github.com/ValenceOSS/Valence/issues/818)) ([dde825d](https://github.com/ValenceOSS/Valence/commit/dde825d576b50beefd8fab0c593a0fc8620d78cf))
+* **web:** cards in dialogs no longer grow a preview hidden behind the dialog ([#799](https://github.com/ValenceOSS/Valence/issues/799)) ([fe1beb9](https://github.com/ValenceOSS/Valence/commit/fe1beb9671ab46feaf4bfd0653645fbcde083c95))
+* **web:** clicking off an open player menu closes it without playing or pausing ([#808](https://github.com/ValenceOSS/Valence/issues/808)) ([891f69d](https://github.com/ValenceOSS/Valence/commit/891f69dfef8b1d1a009be31bee019fe7b35e59d3))
+* **web:** marking watched, keeping a favourite or hiding a library no longer blanks the page ([#816](https://github.com/ValenceOSS/Valence/issues/816)) ([8896acf](https://github.com/ValenceOSS/Valence/commit/8896acf7f41234f2e697dec88ad6993f02343487))
+* **web:** sound drifted ahead of the picture in mkv files with packed audio ([#822](https://github.com/ValenceOSS/Valence/issues/822)) ([b18fd5f](https://github.com/ValenceOSS/Valence/commit/b18fd5fbb04de4d0797028b377d3ee84439a6d37))
+
+
+### Faster
+
+* **mobile:** Android stops redrawing what is not moving, and five round actions fit a narrower phone ([#804](https://github.com/ValenceOSS/Valence/issues/804)) ([979f285](https://github.com/ValenceOSS/Valence/commit/979f285380b8950ee7f124bf52dde2b417605667))
+
+
+### Documentation
+
+* **landing:** a picture of the phone remote on the 1.8.0 changelog ([#789](https://github.com/ValenceOSS/Valence/issues/789)) ([9639489](https://github.com/ValenceOSS/Valence/commit/9639489fccc9b478ba81c718c2edda42a1abfb39))
+* **landing:** the 1.8.0 changelog ([#788](https://github.com/ValenceOSS/Valence/issues/788)) ([e167f67](https://github.com/ValenceOSS/Valence/commit/e167f6737e889cbc92e791c82acc24a657ba0f3d))
+* **landing:** the 1.9.0 changelog ([#821](https://github.com/ValenceOSS/Valence/issues/821)) ([4f4319d](https://github.com/ValenceOSS/Valence/commit/4f4319d2c4722fbba5b83a45322c0273d562bf39))
+
 ## [1.8.0](https://github.com/ValenceOSS/Valence/compare/v1.7.0...v1.8.0) (2026-11-01)
 
 
