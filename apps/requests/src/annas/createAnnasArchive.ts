@@ -329,11 +329,13 @@ const createAnnasArchive = (
         const reason = read.success ? (read.data.error ?? '') : '';
 
         throw new IndexerFailure(
-          /key/i.test(reason)
-            ? saying('requests.annas.annasArchive.theAccountKeyWasRefused')
-            : saying('requests.annas.annasArchive.noDownloadLinkWasGiven', {
-                status: response.status.toString(),
-              }),
+          /member/i.test(reason)
+            ? saying('requests.annas.annasArchive.downloadingNeedsAMembersKey')
+            : /key/i.test(reason)
+              ? saying('requests.annas.annasArchive.theAccountKeyWasRefused')
+              : saying('requests.annas.annasArchive.noDownloadLinkWasGiven', {
+                  status: response.status.toString(),
+                }),
         );
       }
 
