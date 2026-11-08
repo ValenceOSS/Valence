@@ -262,6 +262,7 @@ import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
 import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfilesOf';
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
+import { createMangaTitles } from '@ValenceServer/requests/anilist/createMangaTitles';
 import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
 import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
 import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
@@ -3865,7 +3866,27 @@ const charted = createAnswerKeeper<DeezerCharts>(CHARTS_LIVE_FOR_MS);
 
 const shelved = createAnswerKeeper<OpenLibraryShelf[]>(CHARTS_LIVE_FOR_MS);
 
-const describeBook = (openLibraryId: number) => describeBookForRequest(musicWeb, openLibraryId);
+const mangaTitles = createMangaTitles(musicWeb);
+
+/**
+ * What Open Library says of a book, for a request, with a manga volume it only knows in Japanese,
+ * Chinese or Korean named in English, and its other names kept to search by.
+ *
+ * @param openLibraryId - The number the work goes by.
+ * @returns What it says, or null where Open Library does not know the work.
+ */
+const describeBook = async (openLibraryId: number) => {
+  const described = await describeBookForRequest(musicWeb, openLibraryId);
+  const manga = described === null ? null : await mangaTitles.of(described.title);
+
+  return described === null || manga === null
+    ? described
+    : {
+        ...described,
+        title: manga.title,
+        aliases: [...new Set([...described.aliases, ...manga.aliases])],
+      };
+};
 
 const SERIES_KEPT_FOR_MS = 24 * 60 * 60 * 1000;
 
@@ -3929,7 +3950,7 @@ const discovery: Discovery = {
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
     ),
   bookShelves: () => shelved.keep('books', () => readOpenLibraryShelves(musicWeb)),
-  searchBooks: (query) => searchOpenLibrary(askedWeb, query),
+  searchBooks: async (query) => mangaTitles.retitled(await searchOpenLibrary(askedWeb, query)),
   aboutBook: (title, author) =>
     booksAbout.keep(`${author ?? ''}\n${title}`, () =>
       readOpenLibraryAbout(askedWeb, title, author),
