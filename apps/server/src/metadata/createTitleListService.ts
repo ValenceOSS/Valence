@@ -4,6 +4,7 @@ import { library, mediaItem, series, titleEdit } from '#dialect/Schema';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { findDuplicates } from '@ValenceServer/health/findDuplicates';
 import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
@@ -172,7 +173,7 @@ const createTitleListService = (
           isNull(mediaItem.parentId),
           isNull(mediaItem.extraKind),
           inArray(library.kind, WATCHED_KINDS),
-          eq(library.isStreamed, false),
+          heldOnThisServer(),
           isStillThere(),
         ),
       );

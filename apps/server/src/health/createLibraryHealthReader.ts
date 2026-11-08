@@ -1,4 +1,5 @@
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { and, eq, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm';
 import type { HealthItem, HealthList } from '@ValenceContracts/schemas/LibraryHealth';
@@ -29,7 +30,7 @@ const createLibraryHealthReader =
       isNull(mediaItem.parentId),
       isNull(mediaItem.extraKind),
       inArray(library.kind, WATCHED_KINDS),
-      eq(library.isStreamed, false),
+      heldOnThisServer(),
       isStillThere(),
     );
     const columns = {

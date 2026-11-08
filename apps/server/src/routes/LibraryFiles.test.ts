@@ -26,6 +26,11 @@ import {
 
 const BASE = 'http://localhost:8420';
 
+const THEIRS = {
+  ...aLibraryAt('linked://friend/api/libraries/1', '9b2f4c1e-7d3a-4e8b-a5c6-1f0e2d3c4b5a'),
+  linkedServerId: '6f1c0b8e-2b6c-4d8e-9d3a-6b3f6f0e1a2b',
+};
+
 let root = '';
 
 beforeEach(async () => {
@@ -48,7 +53,7 @@ afterEach(async () => {
 const build = async (isAdministrator = true) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
-  const library = createMemoryLibraryService({ libraries: [aLibraryAt(root)], media: [] });
+  const library = createMemoryLibraryService({ libraries: [aLibraryAt(root), THEIRS], media: [] });
   const app = createApp({
     auth,
     settings,
@@ -143,6 +148,16 @@ describe('the file manager over HTTP', () => {
     expect(
       (await askAsNobody(`/media?${new URLSearchParams({ libraryId }).toString()}`)).status,
     ).toBe(403);
+  });
+
+  it('keeps a linked server’s libraries out of it, since their files are not on this server', async () => {
+    const { send } = await build();
+
+    const places = LibraryFolderSchema.parse(await (await send('')).json());
+
+    expect(places.entries.map((entry) => entry.path)).not.toContain(THEIRS.path);
+    expect((await send(at(THEIRS.path))).status).toBe(403);
+    expect((await send(at(THEIRS.path), 'DELETE')).status).toBe(403);
   });
 
   it('refuses a folder outside every library', async () => {
