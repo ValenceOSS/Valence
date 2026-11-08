@@ -126,8 +126,9 @@ import { captureConsole } from '@ValenceServer/logging/captureConsole';
 import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
 import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
-import { withValenceMemory } from '@ValenceServer/monitor/withValenceMemory';
-import { createRequestsMemoryWatch } from '@ValenceServer/monitor/createRequestsMemoryWatch';
+import { withValenceUse } from '@ValenceServer/monitor/withValenceUse';
+import { createRequestsUseWatch } from '@ValenceServer/monitor/createRequestsUseWatch';
+import { createCpuMeter } from '@ValenceCore/functions/createCpuMeter';
 import { watchForStalls } from '@ValenceServer/monitor/watchForStalls';
 import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
@@ -559,6 +560,8 @@ import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
+
+const MEASURES_THIS_PROCESS_EVERY_MS = 5_000;
 
 const BOOK_COVERS_AFTER_MS = 60_000;
 
@@ -2178,10 +2181,32 @@ const tellRequestsWhoIsWhoLater = () => {
   });
 };
 
-const requestsMemory =
+const requestsUse =
   requestsSetup.kind === 'on' && requestsClient !== null
-    ? createRequestsMemoryWatch({ read: () => requestsClient.readMemory() })
+    ? createRequestsUseWatch({ read: () => requestsClient.readUse() })
     : null;
+
+const readApiCpu = createCpuMeter({
+  read: () => {
+    const used = process.cpuUsage();
+
+    return used.user + used.system;
+  },
+});
+let apiCpuPercent: number | null = null;
+
+setInterval(() => {
+  void readApiCpu().then((percent) => {
+    apiCpuPercent = percent;
+  });
+}, MEASURES_THIS_PROCESS_EVERY_MS).unref();
+
+/**
+ * What the media service cannot see for itself, as it stands now.
+ *
+ * @returns This process's figures and the requests service's.
+ */
+const valenceUseNow = () => ({ requests: requestsUse?.current() ?? null, apiCpuPercent });
 
 const requests =
   requestsSetup.kind === 'on' && requestsClient !== null
@@ -5729,8 +5754,7 @@ const app = createApp({
 
     return { cache, artwork, bookPages, libraryBytes: bytes };
   },
-  monitor: async () =>
-    withValenceMemory(await transcoder.readMonitor(), requestsMemory?.current() ?? null),
+  monitor: async () => withValenceUse(await transcoder.readMonitor(), valenceUseNow()),
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
   readImage: (url, width) => images.read(url, width),
@@ -6117,7 +6141,7 @@ const sampleResourcesThrottled = (reading: JsonValue): void => {
 void relayMonitor({
   open: () => transcoder.openMonitorSocket(),
   publish: (report) => {
-    const reading = withValenceMemory(report, requestsMemory?.current() ?? null);
+    const reading = withValenceUse(report, valenceUseNow());
 
     realtime.publish('monitor', reading, { kind: 'everyone' });
     transcoderIntake.take(reading);

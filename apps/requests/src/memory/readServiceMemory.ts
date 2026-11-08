@@ -1,41 +1,15 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { containerHierarchyIn } from '@ValenceRequests/cgroup/containerHierarchyIn';
+import { fieldInFile } from '@ValenceRequests/cgroup/fieldInFile';
+import { numberInFile } from '@ValenceRequests/cgroup/numberInFile';
+import { processTreeIn } from '@ValenceRequests/cgroup/processTreeIn';
 
 type ReadServiceMemoryOptions = {
   root?: string;
   proc?: string;
   pid?: number;
   ownBytes?: () => number;
-};
-
-const NO_LIMIT = 2 ** 60;
-
-/**
- * Reads one number from a cgroup file, or nothing where the file is missing or holds a word.
- *
- * @param path - The file.
- * @returns The number.
- */
-const numberIn = async (path: string): Promise<number | null> => {
-  const text = await readFile(path, 'utf8').catch(() => null);
-  const value = text === null ? Number.NaN : Number(text.trim());
-
-  return text === null || text.trim() === '' || !Number.isFinite(value) ? null : value;
-};
-
-/**
- * Reads one field of a `memory.stat`, or nothing where it is not there.
- *
- * @param path - The `memory.stat`.
- * @param field - The name at the start of the line.
- * @returns The number.
- */
-const fieldIn = async (path: string, field: string): Promise<number | null> => {
-  const text = await readFile(path, 'utf8').catch(() => null);
-  const line = text?.split('\n').find((one) => one.startsWith(`${field} `));
-  const value = line === undefined ? Number.NaN : Number(line.slice(field.length + 1));
-
-  return Number.isFinite(value) ? value : null;
 };
 
 /**
@@ -47,47 +21,14 @@ const fieldIn = async (path: string, field: string): Promise<number | null> => {
  * @returns The bytes.
  */
 const treeBytesIn = async (proc: string, pid: number): Promise<number | null> => {
-  const names = await readdir(proc).catch(() => null);
+  const tree = await processTreeIn(proc, pid);
 
-  if (names === null) {
+  if (tree === null) {
     return null;
-  }
-
-  const parents = new Map<number, number>();
-
-  await Promise.all(
-    names
-      .filter((name) => /^\d+$/.test(name))
-      .map(async (name) => {
-        const stat = await readFile(join(proc, name, 'stat'), 'utf8').catch(() => null);
-        const fields = stat?.slice(stat.lastIndexOf(')') + 2).split(' ');
-        const parent = Number(fields?.[1]);
-
-        if (Number.isInteger(parent)) {
-          parents.set(Number(name), parent);
-        }
-      }),
-  );
-
-  if (!parents.has(pid)) {
-    return null;
-  }
-
-  const tree = new Set([pid]);
-
-  for (let grew = true; grew;) {
-    grew = false;
-
-    for (const [child, parent] of parents) {
-      if (!tree.has(child) && tree.has(parent)) {
-        tree.add(child);
-        grew = true;
-      }
-    }
   }
 
   const sizes = await Promise.all(
-    [...tree].map(async (one) => {
+    tree.map(async (one) => {
       const status = await readFile(join(proc, one.toString(), 'status'), 'utf8').catch(() => '');
       const kilobytes = /^VmRSS:\s+(\d+)\s*kB/m.exec(status)?.[1];
 
@@ -104,9 +45,6 @@ const treeBytesIn = async (proc: string, pid: number): Promise<number | null> =>
  * where there is no container to read, this process and every process under it, the browser's
  * among them; and this process alone where not even that can be read.
  *
- * A version one hierarchy is believed only with a limit set, since outside a container its root
- * describes the whole machine.
- *
  * @param root - Where the cgroup filesystem is mounted.
  * @param proc - Where `/proc` is mounted.
  * @param pid - This process.
@@ -119,20 +57,19 @@ const readServiceMemory = async ({
   pid = process.pid,
   ownBytes = () => process.memoryUsage.rss(),
 }: ReadServiceMemoryOptions = {}): Promise<number> => {
-  const unified = await numberIn(join(root, 'memory.current'));
+  const hierarchy = await containerHierarchyIn(root);
 
-  if (unified !== null) {
-    const cache = (await fieldIn(join(root, 'memory.stat'), 'inactive_file')) ?? 0;
+  if (hierarchy === 'unified') {
+    const used = (await numberInFile(join(root, 'memory.current'))) ?? 0;
+    const cache = (await fieldInFile(join(root, 'memory.stat'), 'inactive_file')) ?? 0;
 
-    return Math.max(0, unified - cache);
+    return Math.max(0, used - cache);
   }
 
-  const legacy = join(root, 'memory');
-  const used = await numberIn(join(legacy, 'memory.usage_in_bytes'));
-  const limit = await numberIn(join(legacy, 'memory.limit_in_bytes'));
-
-  if (used !== null && limit !== null && limit < NO_LIMIT) {
-    const cache = (await fieldIn(join(legacy, 'memory.stat'), 'total_inactive_file')) ?? 0;
+  if (hierarchy === 'legacy') {
+    const legacy = join(root, 'memory');
+    const used = (await numberInFile(join(legacy, 'memory.usage_in_bytes'))) ?? 0;
+    const cache = (await fieldInFile(join(legacy, 'memory.stat'), 'total_inactive_file')) ?? 0;
 
     return Math.max(0, used - cache);
   }

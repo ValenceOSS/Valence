@@ -45,25 +45,35 @@ describe('createRequestsClient', () => {
     );
   });
 
-  it('reads what the service costs in memory', async () => {
-    const fetch = answering(200, { bytes: 3_200_000_000 });
+  it('reads what the service costs in memory and processor', async () => {
+    const fetch = answering(200, { bytes: 3_200_000_000, cpuPercent: 42.5 });
     const client = createRequestsClient({
       address: 'http://requests:8421',
       secret: A_SECRET,
       fetch,
     });
 
-    expect(await client.readMemory()).toBe(3_200_000_000);
+    expect(await client.readUse()).toEqual({ bytes: 3_200_000_000, cpuPercent: 42.5 });
     expect(fetch).toHaveBeenCalledWith('http://requests:8421/api/memory', expect.anything());
   });
 
-  it('knows nothing about its memory when the service cannot say, or is too old to', async () => {
+  it('reads no processor figure from a service too old to give one', async () => {
+    const client = createRequestsClient({
+      address: 'http://requests:8421',
+      secret: A_SECRET,
+      fetch: answering(200, { bytes: 3_200_000_000 }),
+    });
+
+    expect(await client.readUse()).toEqual({ bytes: 3_200_000_000, cpuPercent: null });
+  });
+
+  it('knows nothing about what it costs when the service cannot say, or is too old to', async () => {
     const make = (fetch: ReturnType<typeof answering>) =>
       createRequestsClient({ address: 'http://requests:8421', secret: A_SECRET, fetch });
 
-    expect(await make(answering(404, {})).readMemory()).toBeNull();
-    expect(await make(answering(500, {})).readMemory()).toBeNull();
-    expect(await make(answering(200, { bytes: 'lots' })).readMemory()).toBeNull();
+    expect(await make(answering(404, {})).readUse()).toBeNull();
+    expect(await make(answering(500, {})).readUse()).toBeNull();
+    expect(await make(answering(200, { bytes: 'lots' })).readUse()).toBeNull();
   });
 
   it('says when the secrets do not match', async () => {

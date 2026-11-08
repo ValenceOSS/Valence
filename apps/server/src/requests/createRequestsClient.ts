@@ -26,6 +26,7 @@ import type {
   IndexerDefinitionDetail,
 } from '@ValenceContracts/schemas/IndexerDefinition';
 import { RequestsMemorySchema, RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
+import type { RequestsMemory, RequestsStatus } from '@ValenceContracts/schemas/Requests';
 import {
   DownloadClientSchema,
   DownloadClientTestSchema,
@@ -98,7 +99,6 @@ import {
   MissingSearchSchema,
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
-import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 import { RequestNowSchema } from '@ValenceContracts/schemas/RequestNow';
 import type { RequestNow } from '@ValenceContracts/schemas/RequestNow';
 import {
@@ -290,12 +290,12 @@ const createRequestsClient = ({
           };
     },
 
-    readMemory: async (): Promise<number | null> => {
+    readUse: async (): Promise<RequestsMemory | null> => {
       const answer = await call('/api/memory', (body) => RequestsMemorySchema.parse(body), {
         waitMs: MEMORY_WAIT_MS,
       });
 
-      return answer.kind === 'answered' ? answer.value.bytes : null;
+      return answer.kind === 'answered' ? answer.value : null;
     },
 
     readConsole: (): Promise<RequestsAnswer<ServiceConsole>> =>

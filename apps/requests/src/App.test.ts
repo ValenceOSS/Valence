@@ -172,14 +172,21 @@ describe('createApp', () => {
     });
   });
 
-  it('says what it is costing in memory, browser included, for the server to count as Valence', async () => {
-    const app = createApp({ ...THE_REST, readMemory: () => Promise.resolve(3_200_000_000) });
+  it('says what it is costing in memory and processor, browser included, for the server to count as Valence', async () => {
+    const app = createApp({
+      ...THE_REST,
+      readMemory: () => Promise.resolve(3_200_000_000),
+      readCpu: () => Promise.resolve(42.5),
+    });
     const response = await app.request('/api/memory', {
       headers: { authorization: `Bearer ${A_SECRET}` },
     });
 
     expect(response.status).toBe(200);
-    expect(RequestsMemorySchema.parse(await response.json())).toEqual({ bytes: 3_200_000_000 });
+    expect(RequestsMemorySchema.parse(await response.json())).toEqual({
+      bytes: 3_200_000_000,
+      cpuPercent: 42.5,
+    });
   });
 
   it('keeps what it costs behind the secret', async () => {

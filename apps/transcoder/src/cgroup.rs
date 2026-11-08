@@ -92,6 +92,32 @@ async fn read_legacy(root: &Path) -> Option<CgroupMemory> {
     })
 }
 
+/// How much processor time everything in the container has used since it
+/// started, in microseconds: the API server, this service and every ffmpeg
+/// either of them started, however deep.
+///
+/// Nothing where there is no container to read. Believed only where the memory
+/// figures are, since the same rules say whether these files describe a
+/// container or the whole machine.
+pub async fn cpu_used_micros() -> Option<u64> {
+    cpu_at(Path::new(CGROUP_ROOT)).await
+}
+
+/// Reads the processor time from a cgroup filesystem mounted somewhere.
+///
+/// @param root - Where the cgroup filesystem is mounted.
+pub(crate) async fn cpu_at(root: &Path) -> Option<u64> {
+    if read_unified(root).await.is_some() {
+        return field(&root.join("cpu.stat"), "usage_usec").await;
+    }
+
+    read_legacy(root).await?;
+
+    number(&root.join("cpuacct").join("cpuacct.usage"))
+        .await
+        .map(|nanoseconds| nanoseconds / 1000)
+}
+
 /// The number a cgroup file holds, where it holds one.
 ///
 /// Nothing for the word a hierarchy writes when a limit is not set, which is
@@ -126,7 +152,7 @@ async fn field(path: &Path, field: &str) -> Option<u64> {
 
 #[cfg(test)]
 mod tests {
-    use super::{read_at, CgroupMemory};
+    use super::{cpu_at, read_at, CgroupMemory};
 
     async fn write(path: &std::path::Path, contents: &str) {
         tokio::fs::create_dir_all(path.parent().expect("a file is in a directory"))
@@ -246,5 +272,55 @@ mod tests {
             Some(1000),
             "a version two reading takes inactive_file, not something ending in it"
         );
+    }
+
+    #[tokio::test]
+    async fn reads_the_processor_time_the_container_has_used() {
+        let root = root("cpu-unified");
+
+        write(&root.join("memory.current"), "1000\n").await;
+        write(
+            &root.join("cpu.stat"),
+            "usage_usec 4500000\nuser_usec 4000000\nsystem_usec 500000\n",
+        )
+        .await;
+
+        assert_eq!(cpu_at(&root).await, Some(4_500_000));
+    }
+
+    #[tokio::test]
+    async fn reads_the_processor_time_from_the_older_hierarchy_in_microseconds() {
+        let root = root("cpu-legacy");
+
+        write(&root.join("memory/memory.usage_in_bytes"), "900\n").await;
+        write(&root.join("memory/memory.limit_in_bytes"), "2000\n").await;
+        write(&root.join("cpuacct/cpuacct.usage"), "7000000000\n").await;
+
+        assert_eq!(cpu_at(&root).await, Some(7_000_000));
+    }
+
+    #[tokio::test]
+    async fn says_nothing_of_processor_time_outside_a_container() {
+        let host = root("cpu-host");
+
+        write(&host.join("cpu.stat"), "usage_usec 99999999\n").await;
+
+        assert_eq!(
+            cpu_at(&host).await,
+            None,
+            "the root of a hierarchy is the whole machine, not Valence"
+        );
+
+        let legacy_host = root("cpu-legacy-host");
+
+        write(&legacy_host.join("memory/memory.usage_in_bytes"), "900\n").await;
+        write(
+            &legacy_host.join("memory/memory.limit_in_bytes"),
+            "9223372036854771712\n",
+        )
+        .await;
+        write(&legacy_host.join("cpuacct/cpuacct.usage"), "7000000000\n").await;
+
+        assert_eq!(cpu_at(&legacy_host).await, None);
     }
 }
