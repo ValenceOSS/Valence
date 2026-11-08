@@ -26,6 +26,19 @@ import type { PeerAnswer, PeerClient } from '@ValenceServer/linking/createPeerCl
 import type { CataloguePage } from './CataloguePageSchema';
 import type { ServerPictures } from '@ValenceServer/linking/createServerPictures';
 
+type PageRows = ReturnType<typeof localRowsOf>;
+
+const NOTHING_HELD: PageRows = {
+  series: [],
+  mediaItems: [],
+  artists: [],
+  albums: [],
+  tracks: [],
+  trackArtists: [],
+  books: [],
+  chapters: [],
+};
+
 const MOST_PAGES = 1000;
 
 const FORGOTTEN_AT_ONCE = 500;
@@ -113,7 +126,7 @@ const createCatalogueSync = ({
     return id;
   };
 
-  const keepPage = async (rows: ReturnType<typeof localRowsOf>) => {
+  const keepPage = async (rows: PageRows): Promise<PageRows> => {
     if (rows.series.length > 0) {
       await upsert(db, series, {
         values: rows.series,
@@ -143,8 +156,26 @@ const createCatalogueSync = ({
 
     const parents = rows.mediaItems.filter((row) => row.parentId === null);
     const children = rows.mediaItems.filter((row) => row.parentId !== null);
+    const wantedParents = [
+      ...new Set(children.flatMap((row) => (row.parentId === null ? [] : [row.parentId]))),
+    ];
+    const present = new Set(parents.map((row) => row.id));
 
-    for (const batch of [parents, children]) {
+    await inBatches(wantedParents, async (batch) => {
+      for (const row of await db
+        .select({ id: mediaItem.id })
+        .from(mediaItem)
+        .where(inArray(mediaItem.id, batch))) {
+        present.add(row.id);
+      }
+    });
+
+    const ready = children.filter((row) => row.parentId !== null && present.has(row.parentId));
+    const waiting = new Set(children.filter((row) => !ready.includes(row)).map((row) => row.id));
+    const tracks = rows.tracks.filter((row) => !waiting.has(row.mediaItemId));
+    const trackArtists = rows.trackArtists.filter((row) => !waiting.has(row.mediaItemId));
+
+    for (const batch of [parents, ready]) {
       if (batch.length > 0) {
         await upsert(db, mediaItem, {
           values: batch,
@@ -155,21 +186,21 @@ const createCatalogueSync = ({
       }
     }
 
-    if (rows.tracks.length > 0) {
+    if (tracks.length > 0) {
       await upsert(db, musicTrack, {
-        values: rows.tracks,
+        values: tracks,
         target: musicTrack.mediaItemId,
         set: setEverythingFrom(musicTrack, ['mediaItemId']),
       });
       await db.delete(musicTrackArtist).where(
         inArray(
           musicTrackArtist.mediaItemId,
-          rows.tracks.map((track) => track.mediaItemId),
+          tracks.map((track) => track.mediaItemId),
         ),
       );
 
-      if (rows.trackArtists.length > 0) {
-        await db.insert(musicTrackArtist).values(rows.trackArtists);
+      if (trackArtists.length > 0) {
+        await db.insert(musicTrackArtist).values(trackArtists);
       }
     }
 
@@ -190,6 +221,13 @@ const createCatalogueSync = ({
         sameRowOn: [[bookChapter.bookId, bookChapter.path]],
       });
     }
+
+    return {
+      ...NOTHING_HELD,
+      mediaItems: children.filter((row) => waiting.has(row.id)),
+      tracks: rows.tracks.filter((row) => waiting.has(row.mediaItemId)),
+      trackArtists: rows.trackArtists.filter((row) => waiting.has(row.mediaItemId)),
+    };
   };
 
   const forgetUnseen = async (libraryId: string, seen: ReadonlySet<string>) => {
@@ -267,6 +305,7 @@ const createCatalogueSync = ({
       const seen = new Set<string>();
       let after: string | null = null;
       let isWhole = false;
+      let held: PageRows = NOTHING_HELD;
 
       keptLibraries.add(libraryId);
 
@@ -285,7 +324,14 @@ const createCatalogueSync = ({
 
         const rows = localRowsOf(read.answer, serverId, libraryId);
 
-        await keepPage(rows);
+        const waiting = await keepPage(rows);
+
+        held = {
+          ...held,
+          mediaItems: [...held.mediaItems, ...waiting.mediaItems],
+          tracks: [...held.tracks, ...waiting.tracks],
+          trackArtists: [...held.trackArtists, ...waiting.trackArtists],
+        };
 
         for (const row of [
           ...rows.mediaItems,
@@ -305,6 +351,14 @@ const createCatalogueSync = ({
 
           break;
         }
+      }
+
+      const orphans = held.mediaItems.length === 0 ? held : await keepPage(held);
+
+      if (orphans.mediaItems.length > 0) {
+        warn(
+          `linking: ${orphans.mediaItems.length.toString()} of ${shared.name} on ${server.name} belong to something it does not share, so were left out`,
+        );
       }
 
       if (isWhole) {
