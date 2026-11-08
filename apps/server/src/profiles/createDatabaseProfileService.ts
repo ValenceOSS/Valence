@@ -1,4 +1,5 @@
 import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -222,56 +223,41 @@ const createDatabaseProfileService = (
   };
 
   /**
-   * Finds the profile an account watches under, creating one named after the account where it has
-   * none — every account has a profile, since watch progress and history hang off it rather than off
-   * the account. Where two requests made one at once, the later gives way, so the account keeps one
-   * owner.
+   * Finds the profile an account watches under, creating its owner profile, named after the
+   * account, where it has none. Requests that make one at once all land on the same profile, since
+   * an account can hold only one owner.
    *
    * @param userId - The account being asked about.
    * @param name - What to call the profile where one has to be made.
    * @returns The profile to use.
    */
   const ensure = async (userId: string, name: string): Promise<ViewerProfile> => {
-    const existing = await listFor(userId);
-    const first = existing[0];
+    const [first] = await listFor(userId);
 
     if (first !== undefined) {
       return first;
     }
 
-    const created = {
-      id: randomUUID(),
-      userId,
-      name: name.trim() === '' ? say('server.profiles.databaseProfileService.me') : name.trim(),
-      colour: DEFAULT_COLOUR,
-      isOwner: true,
-    };
-
-    await db.insert(viewerProfile).values(created);
+    await insertUnlessPresent(db, viewerProfile, {
+      values: [
+        {
+          id: randomUUID(),
+          userId,
+          name: name.trim() === '' ? say('server.profiles.databaseProfileService.me') : name.trim(),
+          colour: DEFAULT_COLOUR,
+          isOwner: true,
+        },
+      ],
+      target: viewerProfile.ownerOf,
+    });
 
     const [kept] = await listFor(userId);
 
-    if (kept !== undefined && kept.id !== created.id) {
-      await db.delete(viewerProfile).where(eq(viewerProfile.id, created.id));
-
-      return kept;
+    if (kept === undefined) {
+      throw new Error(`No profile could be made for account ${userId}.`);
     }
 
-    return {
-      id: created.id,
-      name: created.name,
-      colour: readColour(created.colour),
-      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
-      askStillWatchingAfter: STILL_WATCHING_DEFAULT,
-      showsWhatIamWatching: false,
-      discordPresence: DEFAULT_DISCORD_PRESENCE,
-      prefersBestCopy: false,
-      isOwner: true,
-      hasPin: false,
-      mayRequest: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    return kept;
   };
 
   return {

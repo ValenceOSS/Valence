@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { user, userProfile } from '#dialect/Schema';
+import { user, userProfile, viewerProfile } from '#dialect/Schema';
 import { eq } from 'drizzle-orm';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
@@ -128,6 +128,27 @@ describe('createDatabaseProfileService', () => {
       expect(everyone).toHaveLength(1);
       expect(everyone[0]?.isOwner).toBe(true);
       expect(new Set(made.map((profile) => profile.id))).toEqual(new Set([everyone[0]?.id]));
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'refuses a second owner on one account, however it is written',
+    async () => {
+      const db = await aMigratedDatabase();
+
+      await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+
+      const service = createDatabaseProfileService(db, '/nowhere');
+      const owner = await service.ensureDefault('ada', 'Ada');
+
+      await expect(
+        db
+          .insert(viewerProfile)
+          .values({ id: 'another', userId: 'ada', name: 'Ada', colour: COLOUR, isOwner: true }),
+      ).rejects.toThrow();
+      await expect(service.ensureDefault('ada', 'Ada')).resolves.toMatchObject({ id: owner.id });
+      await expect(service.list('ada')).resolves.toHaveLength(1);
     },
     STARTING_POSTGRES_MS,
   );
