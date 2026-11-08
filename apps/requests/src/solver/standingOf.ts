@@ -1,9 +1,10 @@
 import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareChallenge';
+import { isDdosGuardChallenge } from '@ValenceRequests/solver/isDdosGuardChallenge';
 
 type Standing = 'clear' | 'challenged' | 'blocked';
 
 /**
- * Where a page leaves a request: through, stopped at Cloudflare's browser check, or refused
+ * Where a page leaves a request: through, stopped at Cloudflare's or DDoS-Guard's browser check, or refused
  * outright by the site's Cloudflare rules, which no browser gets past.
  *
  * @param status - The status it answered with.
@@ -20,7 +21,9 @@ const standingOf = (status: number, server: string | null, body: string): Standi
     return 'blocked';
   }
 
-  return isCloudflareChallenge(status, server, body) ? 'challenged' : 'clear';
+  return isCloudflareChallenge(status, server, body) || isDdosGuardChallenge(status, server, body)
+    ? 'challenged'
+    : 'clear';
 };
 
 export type { Standing };

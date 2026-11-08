@@ -6,7 +6,13 @@ import type { ReleaseProtocol } from './Indexer';
 import type { LibraryKind } from './Library';
 import { say } from '@ValenceI18n/say';
 
-const BUILT_IN_CLIENT_KINDS = ['qbittorrent', 'transmission', 'sabnzbd', 'nzbget'] as const;
+const BUILT_IN_CLIENT_KINDS = [
+  'qbittorrent',
+  'transmission',
+  'sabnzbd',
+  'nzbget',
+  'direct',
+] as const;
 
 const DOWNLOAD_CLIENT_KINDS = [...BUILT_IN_CLIENT_KINDS, 'plugin'] as const;
 
@@ -21,6 +27,7 @@ const PROTOCOL_OF_CLIENT: Readonly<Record<BuiltInClientKind, ReleaseProtocol>> =
   transmission: 'torrent',
   sabnzbd: 'usenet',
   nzbget: 'usenet',
+  direct: 'direct',
 };
 
 const CategorySchema = z
@@ -125,7 +132,7 @@ const DownloadClientDraftSchema = z
       });
     }
 
-    if (draft.kind === 'plugin' && draft.localPath === '') {
+    if ((draft.kind === 'plugin' || draft.kind === 'direct') && draft.localPath === '') {
       context.addIssue({
         code: 'custom',
         path: ['localPath'],
@@ -133,7 +140,7 @@ const DownloadClientDraftSchema = z
       });
     }
 
-    if (draft.kind !== 'plugin' && draft.url === '') {
+    if (draft.kind !== 'plugin' && draft.kind !== 'direct' && draft.url === '') {
       context.addIssue({
         code: 'custom',
         path: ['url'],

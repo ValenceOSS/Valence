@@ -180,6 +180,8 @@ const sites = createSitePool({
   retire: browser.retire,
 });
 
+const solver = solverWatch.watching(createSolver({ pool: sites }));
+
 const indexers = createIndexerService({
   store: indexerStore,
   definitions: definitions.definition,
@@ -190,8 +192,9 @@ const indexers = createIndexerService({
     readResults: createThreadedSearchReader(),
     site: createSiteClient({
       fetch,
-      solver: solverWatch.watching(createSolver({ pool: sites })),
+      solver,
     }),
+    solver,
     onAsked: ({ indexer, address, found }) => {
       log(`${indexer} asked ${address}: ${found.toString()} found.`);
     },

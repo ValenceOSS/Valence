@@ -74,9 +74,10 @@ const saidOf = (refusal: RemoteRefusal, client: string): Said => {
  *
  * @param file - The magnet link, torrent or NZB.
  * @param title - The release's name.
- * @returns The release, as the SDK describes it.
+ * @returns The release, as the SDK describes it, or nothing for a direct download, which no
+ *   plugin's download client takes.
  */
-const releaseInOf = (file: ReleaseFile, title: string): ReleaseIn => {
+const releaseInOf = (file: ReleaseFile, title: string): ReleaseIn | null => {
   switch (file.kind) {
     case 'magnet':
       return { kind: 'magnet', title, magnet: file.url, infoHash: readMagnetHash(file.url) };
@@ -89,6 +90,8 @@ const releaseInOf = (file: ReleaseFile, title: string): ReleaseIn => {
       };
     case 'nzb':
       return { kind: 'nzb', title, nzbBase64: Buffer.from(file.bytes).toString('base64') };
+    case 'link':
+      return null;
   }
 };
 
@@ -309,7 +312,15 @@ const createPluginAdapter = ({
     add: async (file, title) => {
       needsAFolder();
 
-      const { value } = await ask('add', releaseInOf(file, title), AddAnswerSchema);
+      const release = releaseInOf(file, title);
+
+      if (release === null) {
+        throw new DownloadClientFailure(
+          saying('common.nameTakesNoDirectDownloads', { name: client.name }),
+        );
+      }
+
+      const { value } = await ask('add', release, AddAnswerSchema);
 
       if ('refused' in value) {
         throw new DownloadClientFailure(saidOf(value.refused, client.name));

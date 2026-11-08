@@ -9,6 +9,10 @@ import { capabilitiesOf } from '@ValenceRequests/cardigann/capabilitiesOf';
 import { createCardigannIndexer } from '@ValenceRequests/cardigann/createCardigannIndexer';
 import { siteLinkFor } from '@ValenceRequests/cardigann/siteLinkFor';
 import { addressToLog } from '@ValenceRequests/indexers/addressToLog';
+import { createOpdsCatalogue } from '@ValenceRequests/opds/createOpdsCatalogue';
+import { createAnnasArchive } from '@ValenceRequests/annas/createAnnasArchive';
+import type { ArchiveFetch } from '@ValenceRequests/annas/createAnnasArchive';
+import type { Solver } from '@ValenceRequests/solver/createSolver';
 import type { Pacer } from '@ValenceRequests/indexers/createPacer';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
@@ -40,20 +44,18 @@ type IndexerConnection = {
 };
 
 type CreateIndexerClientOptions = {
-  fetch: (
-    url: string,
-    init: { headers: Record<string, string>; signal: AbortSignal },
-  ) => Promise<Response>;
+  fetch: ArchiveFetch;
   pacer: Pacer;
   definitions?: (id: string) => Promise<CardigannDefinition | null>;
   site?: SiteClient;
   onAsked?: (asked: { indexer: string; address: string; found: number }) => void;
   readResults?: SearchResultsReader;
+  solver?: Pick<Solver, 'fetch'> | null;
 };
 
 /**
- * Asks Torznab and Newznab indexers what they can do and what they have, each in its turn and
- * within its own time, and says why in words wherever one could not answer.
+ * Asks Torznab and Newznab indexers, OPDS catalogues and Anna's Archive what they can do and what
+ * they have, each in its turn and within its own time, and says why in words wherever one could not answer.
  *
  * An indexer made from a Cardigann definition is run by the engine that reads it instead, within the
  * session the connection carries — which the engine changes as it logs in, and the caller keeps.
@@ -68,6 +70,7 @@ type CreateIndexerClientOptions = {
  * @param onAsked - Told of every address a search asked, with its keys masked, and how many
  *   releases it found there, so the log shows what each indexer was really asked.
  * @param readResults - What reads a page of results off the main thread, where there is one.
+ * @param solver - The browser that gets past a site's bot check, for Anna's Archive.
  * @returns The client.
  */
 const createIndexerClient = ({
@@ -77,7 +80,18 @@ const createIndexerClient = ({
   site,
   onAsked,
   readResults,
+  solver = null,
 }: CreateIndexerClientOptions) => {
+  const catalogues = createOpdsCatalogue(fetch, (catalogue) =>
+    pacer.turn(catalogue.id, catalogue.requestsPerMinute),
+  );
+
+  const archive = createAnnasArchive(
+    fetch,
+    (indexer) => pacer.turn(indexer.id, indexer.requestsPerMinute),
+    solver,
+  );
+
   const engineFor = async (indexer: IndexerConnection, isUrgent = false) => {
     const definition =
       definitions === undefined || indexer.definitionId === null
@@ -171,6 +185,14 @@ const createIndexerClient = ({
 
   return {
     capabilities: async (indexer: IndexerConnection): Promise<IndexerCapabilities> => {
+      if (indexer.kind === 'opds') {
+        return catalogues.capabilities(indexer);
+      }
+
+      if (indexer.kind === 'annas') {
+        return archive.capabilities(indexer);
+      }
+
       if (indexer.kind !== 'cardigann') {
         return readCapabilities(await ask(indexer, { t: 'caps' }));
       }
@@ -199,6 +221,21 @@ const createIndexerClient = ({
       search: ReleaseSearch,
       isUrgent = false,
     ): Promise<Release[]> => {
+      if (indexer.kind === 'opds' || indexer.kind === 'annas') {
+        const releases = await (indexer.kind === 'opds' ? catalogues : archive).search(
+          indexer,
+          search.query ?? '',
+        );
+
+        onAsked?.({
+          indexer: indexer.name,
+          address: addressToLog(indexer.url),
+          found: releases.length,
+        });
+
+        return releases;
+      }
+
       if (indexer.kind !== 'cardigann') {
         const parameters = searchParametersFor(search, indexer.capabilities, indexer.categories);
         const releases = readReleases(await ask(indexer, parameters, isUrgent), indexer);
@@ -220,6 +257,14 @@ const createIndexerClient = ({
     download: async (indexer: IndexerConnection, url: string): Promise<ReleaseFile> => {
       if (url.startsWith('magnet:')) {
         return { kind: 'magnet', url };
+      }
+
+      if (indexer.kind === 'opds') {
+        return catalogues.download(indexer, url);
+      }
+
+      if (indexer.kind === 'annas') {
+        return archive.download(indexer, url);
       }
 
       if (indexer.kind === 'cardigann') {

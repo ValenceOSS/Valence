@@ -49,6 +49,7 @@ import type {
   DownloadClientPlugin,
 } from '@ValenceContracts/schemas/DownloadClient';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
+import { INDEXER_KINDS, RELEASE_PROTOCOLS } from '@ValenceContracts/schemas/Indexer';
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
@@ -101,7 +102,7 @@ const indexer = requestsSchema(
   {
     id: char('id', { length: 36 }).primaryKey(),
     name: mediumtext('name').notNull(),
-    kind: varchar('kind', { length: 32, enum: ['torznab', 'newznab', 'cardigann'] }).notNull(),
+    kind: varchar('kind', { length: 32, enum: INDEXER_KINDS }).notNull(),
     definitionId: varchar('definition_id', { length: 255 }),
     settings: jsonColumn('settings').$type<IndexerSettings>().notNull().default(jsonDefault({})),
     session: jsonColumn('session').$type<SiteSession>(),
@@ -192,7 +193,7 @@ const sentDownload = requestsSchema(
     clientId: char('client_id', { length: 36 }).notNull(),
     remoteId: varchar('remote_id', { length: 255 }).notNull(),
     contentPath: mediumtext('content_path'),
-    protocol: varchar('protocol', { length: 32, enum: ['torrent', 'usenet'] }).notNull(),
+    protocol: varchar('protocol', { length: 32, enum: RELEASE_PROTOCOLS }).notNull(),
     libraryKind: varchar('library_kind', { length: 32, enum: LIBRARY_KINDS })
       .notNull()
       .default('movies'),

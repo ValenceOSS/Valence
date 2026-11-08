@@ -171,6 +171,10 @@ const createApp = ({
         return context.json(NO_SUCH_INDEXER, 404);
       }
 
+      if (file.kind === 'link') {
+        return context.json({ link: file.url });
+      }
+
       return file.kind === 'magnet'
         ? context.json({ magnet: file.url })
         : context.body(file.bytes.slice(), 200, {

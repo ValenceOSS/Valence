@@ -187,7 +187,7 @@ const createDownloadQueue = ({
       title: record.title,
       indexerName: record.indexerName,
       state: record.state,
-      canPause: named.get(record.clientId)?.kind !== 'plugin',
+      canPause: !['plugin', 'direct'].includes(named.get(record.clientId)?.kind ?? ''),
       wasPaused: record.wasPaused,
       problem: record.problem,
       problemCode: record.problemCode,
@@ -425,7 +425,7 @@ const createDownloadQueue = ({
       return false;
     }
 
-    const isCopy = client.kind === 'plugin';
+    const isCopy = client.kind === 'plugin' || client.kind === 'direct';
 
     if (
       !isCopy &&

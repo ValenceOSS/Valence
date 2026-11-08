@@ -180,6 +180,12 @@ const createNzbgetAdapter = (
     version: async () => z.string().parse(await rpc('version')),
 
     add: async (file, title, category) => {
+      if (file.kind === 'link') {
+        throw new DownloadClientFailure(
+          saying('common.nameTakesNoDirectDownloads', { name: settings.name }),
+        );
+      }
+
       if (file.kind !== 'nzb') {
         throw new DownloadClientFailure(
           saying('common.nameTakesNZBsNotTorrents', { name: settings.name }),

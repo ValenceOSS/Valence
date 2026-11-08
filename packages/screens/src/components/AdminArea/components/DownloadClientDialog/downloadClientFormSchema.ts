@@ -56,7 +56,7 @@ const downloadClientFormSchema = z
     }),
     isEnabled: z.boolean(),
   })
-  .refine((form) => form.kind === 'plugin' || isWebAddress(form.url), {
+  .refine((form) => form.kind === 'plugin' || form.kind === 'direct' || isWebAddress(form.url), {
     error: say('common.theAddressNeedsToBeA'),
     path: ['url'],
   })
@@ -64,12 +64,15 @@ const downloadClientFormSchema = z
     error: say('contracts.schemas.downloadClient.chooseWhichPluginSendsTheDownloads'),
     path: ['plugin'],
   })
-  .refine((form) => form.kind !== 'plugin' || form.localPath !== '', {
+  .refine((form) => (form.kind !== 'plugin' && form.kind !== 'direct') || form.localPath !== '', {
     error: say('contracts.schemas.downloadClient.enterTheFolderThisClientSaves'),
     path: ['localPath'],
   })
   .refine(
-    (form) => form.kind === 'plugin' || (form.remotePath === '') === (form.localPath === ''),
+    (form) =>
+      form.kind === 'plugin' ||
+      form.kind === 'direct' ||
+      (form.remotePath === '') === (form.localPath === ''),
     {
       error: say(
         'screens.downloadClientDialog.readDownloadClientForm.sayWhereTheDownloadsFolderIs',
@@ -80,17 +83,18 @@ const downloadClientFormSchema = z
   .transform((form): DownloadClientDraft => {
     const isSabnzbd = form.kind === 'sabnzbd';
     const isPlugin = form.kind === 'plugin';
+    const keepsFilesHere = isPlugin || form.kind === 'direct';
 
     return {
       kind: form.kind,
       plugin: isPlugin ? form.plugin : null,
       name: form.name,
-      url: isPlugin ? '' : form.url,
-      username: isSabnzbd || isPlugin ? '' : form.username,
-      password: isSabnzbd || isPlugin ? '' : form.password,
+      url: keepsFilesHere ? '' : form.url,
+      username: isSabnzbd || keepsFilesHere ? '' : form.username,
+      password: isSabnzbd || keepsFilesHere ? '' : form.password,
       apiKey: isSabnzbd ? form.apiKey : '',
       categories: form.categories,
-      remotePath: isPlugin ? '' : form.remotePath,
+      remotePath: keepsFilesHere ? '' : form.remotePath,
       localPath: form.localPath,
       priority: readWholeNumber(form.priority, 1, 50) ?? 1,
       isEnabled: form.isEnabled,

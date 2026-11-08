@@ -3,7 +3,7 @@ import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ProblemCodeFieldSchema } from './ProblemCode';
 import { JudgementSchema } from './QualityProfile';
 
-const INDEXER_KINDS = ['torznab', 'newznab', 'cardigann'] as const;
+const INDEXER_KINDS = ['torznab', 'newznab', 'cardigann', 'opds', 'annas'] as const;
 
 const IndexerKindSchema = z.enum(INDEXER_KINDS);
 
@@ -28,7 +28,9 @@ const IndexerCapabilitiesSchema = z.object({
   limit: z.number().int().positive().nullable(),
 });
 
-const ReleaseProtocolSchema = z.enum(['torrent', 'usenet']);
+const RELEASE_PROTOCOLS = ['torrent', 'usenet', 'direct'] as const;
+
+const ReleaseProtocolSchema = z.enum(RELEASE_PROTOCOLS);
 
 const IndexerSettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
 
@@ -215,6 +217,7 @@ export type {
 
 export {
   INDEXER_KINDS,
+  RELEASE_PROTOCOLS,
   INDEXER_SEARCH_MODES,
   IndexerCapabilitiesSchema,
   IndexerCategorySchema,
