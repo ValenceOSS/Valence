@@ -42,7 +42,6 @@ import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
-import { isStyledSubtitle } from '@ValenceScreens/playback/isStyledSubtitle';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
 import { ChapterMenu } from '@ValenceScreens/components/VideoPlayer/components/ChapterMenu/ChapterMenu';
 import { chapterAt } from '@ValenceClient/playback/chapterAt';
@@ -243,8 +242,6 @@ const PlayerControls = ({
       </div>
     );
   };
-  const chosenTrack = subtitleTracks.find((track) => track.id === selectedSubtitleId);
-  const isChosenTrackStyled = chosenTrack !== undefined && isStyledSubtitle(chosenTrack.format);
 
   return (
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
@@ -601,7 +598,7 @@ const PlayerControls = ({
                       ),
                     },
                   ]),
-              ...(subtitleTracks.length === 0 || isChosenTrackStyled
+              ...(subtitleTracks.length === 0
                 ? []
                 : [
                     {
