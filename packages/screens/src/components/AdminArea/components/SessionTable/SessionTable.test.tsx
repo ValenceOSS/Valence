@@ -43,6 +43,41 @@ const READING: ActiveSession = {
   },
 };
 
+const AUDIOBOOK: ActiveSession = {
+  ...IDLE_SESSION,
+  clientId: 'tab-3',
+  bookListening: {
+    bookId: '00000000-0000-4000-8000-0000000000b2',
+    title: 'An Audiobook',
+    authors: ['An Author'],
+    hasCover: false,
+    isPlaying: true,
+    positionSeconds: 60,
+    durationSeconds: 3600,
+    reportedAtMs: 1,
+  },
+};
+
+const PAUSED_MUSIC: ActiveSession = {
+  ...IDLE_SESSION,
+  clientId: 'tab-4',
+  listening: {
+    trackId: '00000000-0000-4000-8000-000000000001',
+    title: 'A Song',
+    artists: ['An Artist'],
+    albumId: '00000000-0000-4000-8000-000000000002',
+    hasArtwork: false,
+    isPlaying: false,
+    positionSeconds: 65,
+    durationSeconds: 290,
+    reportedAtMs: 1,
+    quality: 'low',
+    delivery: 'encoded',
+    codec: 'aac',
+    kbps: 96,
+  },
+};
+
 const handlers = () => ({
   onStop: vi.fn(),
   onPause: vi.fn(),
@@ -59,15 +94,43 @@ describe('SessionTable', () => {
     expect(screen.getByText('Nothing playing')).toBeInTheDocument();
   });
 
-  it('offers to stop somebody reading', async () => {
+  it('offers no stop for somebody reading', async () => {
+    const user = userEvent.setup();
+
+    renderWithAnswers(<SessionTable sessions={[READING]} busyClientId={null} {...handlers()} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await screen.findByRole('menu');
+
+    expect(screen.queryByRole('menuitem', { name: 'Stop' })).not.toBeInTheDocument();
+  });
+
+  it('offers to pause and stop somebody listening to an audiobook', async () => {
     const user = userEvent.setup();
     const on = handlers();
 
-    renderWithAnswers(<SessionTable sessions={[READING]} busyClientId={null} {...on} />);
+    renderWithAnswers(<SessionTable sessions={[AUDIOBOOK]} busyClientId={null} {...on} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Pause' }));
+
+    expect(on.onPause).toHaveBeenCalledWith('tab-3');
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(await screen.findByRole('menuitem', { name: 'Stop' }));
 
-    expect(on.onStop).toHaveBeenCalledWith('tab-2');
+    expect(on.onStop).toHaveBeenCalledWith('tab-3');
+  });
+
+  it('offers to play music somebody has paused', async () => {
+    const user = userEvent.setup();
+    const on = handlers();
+
+    renderWithAnswers(<SessionTable sessions={[PAUSED_MUSIC]} busyClientId={null} {...on} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Play' }));
+
+    expect(on.onResume).toHaveBeenCalledWith('tab-4');
   });
 });

@@ -119,7 +119,7 @@ describe('SessionCard', () => {
     expect(onPause).toHaveBeenCalled();
   });
 
-  it('shows somebody reading a book and how far through, with nothing to pause', () => {
+  it('shows somebody reading a book and how far through, with nothing to pause or stop', () => {
     render(
       <SessionCard
         session={{
@@ -145,7 +145,7 @@ describe('SessionCard', () => {
     expect(screen.getByText('Dune · Frank Herbert')).toBeInTheDocument();
     expect(screen.getByText(/Reading · 42% read/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
   });
 
   it('shows the device for a tab that is not watching anything', () => {
