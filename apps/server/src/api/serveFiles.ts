@@ -15,6 +15,7 @@ import { measureLibraryFolder } from '@ValenceServer/files/measureLibraryFolder'
 import { searchLibraryFiles } from '@ValenceServer/files/searchLibraryFiles';
 import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
 import { moveLibraryEntry } from '@ValenceServer/files/moveLibraryEntry';
+import { librariesOnThisDisk } from '@ValenceServer/files/librariesOnThisDisk';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -28,12 +29,19 @@ import { refuse } from '@ValenceI18n/refuse';
 const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
   const { library, folderDisk, requires, settleChange, recordAudit } = context;
 
+  /**
+   * Reads the libraries whose files are on this server, which are all the file manager may reach.
+   *
+   * @returns Those libraries.
+   */
+  const onThisDisk = async () => librariesOnThisDisk(await library.list(asTheServer));
+
   app.openapi(listLibraryFilesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const libraries = await library.list(asTheServer);
+    const libraries = await onThisDisk();
     const listed = await listLibraryFolder(libraries, context.req.valid('query').path, (entries) =>
       describeEntriesIn(libraries, entries, library.readEntryFacts),
     );
@@ -58,7 +66,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const measured = await measureLibraryFolder(
-      await library.list(asTheServer),
+      await onThisDisk(),
       context.req.valid('query').path,
     );
 
@@ -93,7 +101,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { words, within } = context.req.valid('query');
-    const libraries = await library.list(asTheServer);
+    const libraries = await onThisDisk();
     const found = await searchLibraryFiles(folderDisk, libraries, words, within, (entries) =>
       describeEntriesIn(libraries, entries, library.readEntryFacts),
     );
@@ -109,7 +117,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const settled = await settleChange(
-      await deleteLibraryEntry(await library.list(asTheServer), context.req.valid('query').path),
+      await deleteLibraryEntry(await onThisDisk(), context.req.valid('query').path),
     );
 
     if ('path' in settled) {
@@ -130,9 +138,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { path, name } = context.req.valid('json');
 
-    const settled = await settleChange(
-      await moveLibraryEntry(await library.list(asTheServer), path, { name }),
-    );
+    const settled = await settleChange(await moveLibraryEntry(await onThisDisk(), path, { name }));
 
     if ('path' in settled) {
       await recordAudit(context, 'files.renamed', path, { to: settled.path });
@@ -150,9 +156,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { path, into } = context.req.valid('json');
 
-    const settled = await settleChange(
-      await moveLibraryEntry(await library.list(asTheServer), path, { into }),
-    );
+    const settled = await settleChange(await moveLibraryEntry(await onThisDisk(), path, { into }));
 
     if ('path' in settled) {
       await recordAudit(context, 'files.moved', path, { to: settled.path });
