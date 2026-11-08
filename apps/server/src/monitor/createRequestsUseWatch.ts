@@ -7,9 +7,9 @@ type CreateRequestsUseWatchOptions<T> = {
 const REQUESTS_USE_EVERY_MS = 10_000;
 
 /**
- * Keeps the last word on what the requests service costs in memory and processor, asking again whenever it is
- * read and the answer is older than `everyMs`, so that the monitor feed always has a figure to hand
- * and never waits on another service to send one.
+ * Keeps the last word on what the requests service costs in memory and processor, asking again
+ * whenever it is read and the answer is older than `everyMs`, so that the monitor feed always has a
+ * figure to hand and never waits on another service to send one.
  *
  * @param read - Asks the requests service, which answers nothing where it cannot say.
  * @param everyMs - How old an answer may be before the next read asks again.
