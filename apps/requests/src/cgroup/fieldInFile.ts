@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 
 /**
- * Reads one field of a cgroup file of named numbers, such as `memory.stat` or `cpu.stat`, or nothing
- * where it is not there.
+ * Reads one field of a cgroup file of named numbers, such as `memory.stat` or `cpu.stat`, or
+ * nothing where it is not there.
  *
  * @param path - The file.
  * @param field - The name at the start of the line.

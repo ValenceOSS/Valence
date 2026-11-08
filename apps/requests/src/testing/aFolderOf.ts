@@ -4,8 +4,8 @@ import { join } from 'node:path';
 import { onTestFinished } from 'vitest';
 
 /**
- * Makes a folder of files for a test, such as a stand-in cgroup or `/proc` filesystem, removed again
- * once the test is over.
+ * Makes a folder of files for a test, such as a stand-in cgroup or `/proc` filesystem, removed
+ * again once the test is over.
  *
  * @param files - Each file's path inside the folder, and what it holds.
  * @returns The folder.
