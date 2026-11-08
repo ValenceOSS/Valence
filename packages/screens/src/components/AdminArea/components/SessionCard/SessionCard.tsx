@@ -308,16 +308,18 @@ const SessionCard = ({
               </Button>
             )}
 
-            <Button
-              isIconOnly
-              variant="ghost"
-              label={say('common.stop')}
-              size="sm"
-              disabled={isBusy}
-              onClick={onStop}
-            >
-              <Icon of={StopIcon} size={15} />
-            </Button>
+            {!isActive ? null : (
+              <Button
+                isIconOnly
+                variant="ghost"
+                label={say('common.stop')}
+                size="sm"
+                disabled={isBusy}
+                onClick={onStop}
+              >
+                <Icon of={StopIcon} size={15} />
+              </Button>
+            )}
 
             {session.clientId === platformInUse().thisClientId() ? null : (
               <Button
