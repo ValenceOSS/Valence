@@ -13,14 +13,14 @@ const LOSSLESS = new Set<MusicQuality>(['flac24', 'flac', 'alac']);
 
 type MatchArrivalsOptions = {
   requests: readonly MediaRequest[];
-  lookup: Pick<CatalogueLookup, 'films' | 'series' | 'albums' | 'albumQualities'>;
+  lookup: Pick<CatalogueLookup, 'films' | 'series' | 'albums' | 'albumQualities' | 'booksAt'>;
   heldEpisodes: (tmdbId: string) => Promise<readonly HeldEpisode[]>;
 };
 
 /**
  * What the libraries now hold of every approved request still waiting on something: a film or a
  * series by its catalogue id, each episode by its season and number, and an album by its
- * MusicBrainz release group — however it got there, whether Valence filed it, a connected app
+ * MusicBrainz release group, and a book by the folder it was filed into — however it got there, whether Valence filed it, a connected app
  * imported it, or somebody put it there by hand. An album counts only lossless where the request
  * upgrades lossy copies to lossless.
  *
@@ -39,7 +39,20 @@ const matchArrivals = async ({
   for (const request of requests) {
     const waiting = request.items.filter((item) => item.state !== 'available');
 
-    if (request.approval !== 'approved' || waiting.length === 0 || request.kind === 'book') {
+    if (request.approval !== 'approved' || waiting.length === 0) {
+      continue;
+    }
+
+    if (request.kind === 'book') {
+      const folders = waiting.flatMap((item) =>
+        item.filePath === null ? [] : [item.filePath.replace(/\/+$/, '')],
+      );
+      const [mediaId] = (await lookup.booksAt(folders)).values();
+
+      if (mediaId !== undefined) {
+        matched.push({ request, arrivals: { mediaId, episodes: null, albums: null } });
+      }
+
       continue;
     }
 

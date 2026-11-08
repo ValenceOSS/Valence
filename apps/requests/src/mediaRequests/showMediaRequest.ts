@@ -1,5 +1,6 @@
 import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { describeRequestState } from '@ValenceRequests/mediaRequests/describeRequestState';
+import { seriesCoverOf } from '@ValenceRequests/mediaRequests/seriesCoverOf';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -38,7 +39,8 @@ const showMediaRequest = (
   artistName: record.artistName,
   year: record.year,
   overview: record.overview,
-  posterUrl: record.posterUrl,
+  posterUrl:
+    record.posterUrl ?? (record.kind === 'bookSeries' ? seriesCoverOf(record.books ?? []) : null),
   libraryId: record.libraryId,
   profileId: record.profileId,
   profileName,
