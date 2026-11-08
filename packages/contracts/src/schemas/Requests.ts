@@ -47,6 +47,14 @@ const RequestsStatusSchema = z.object({
 
 const RequestsMemorySchema = z.object({
   bytes: z.number().nonnegative(),
+  cpuPercent: z
+    .number()
+    .nonnegative()
+    .nullable()
+    .default(null)
+    .describe(
+      'Percent of one core the requests service, its browser included, has used lately, or nothing before it has measured twice.',
+    ),
 });
 
 const RequestsAvailabilitySchema = z.object({

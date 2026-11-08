@@ -16,6 +16,9 @@ const resources = (overrides: Partial<Monitor['resources']> = {}): Monitor['reso
   deploymentMemory: null,
   apiMemoryBytes: null,
   requestsMemoryBytes: null,
+  deploymentCpuPercent: null,
+  apiCpuPercent: null,
+  requestsCpuPercent: null,
   loadAverage: 0,
   disks: [],
   drives: [],
@@ -46,6 +49,36 @@ describe('valenceCpuShare', () => {
         resources({ serviceCpuPercent: 20, children: [conversion(180), conversion(200)] }),
       ),
     ).toBe(100);
+  });
+
+  it('takes the server’s whole container where it can be read, which already counts its processes', () => {
+    expect(
+      valenceCpuShare(
+        resources({
+          deploymentCpuPercent: 300,
+          serviceCpuPercent: 20,
+          apiCpuPercent: 30,
+          children: [conversion(180)],
+        }),
+      ),
+    ).toBe(75);
+  });
+
+  it('counts the API server too where there is no container to read', () => {
+    expect(
+      valenceCpuShare(
+        resources({ serviceCpuPercent: 20, apiCpuPercent: 80, children: [conversion(100)] }),
+      ),
+    ).toBe(50);
+  });
+
+  it('adds the requests service and its browser, which live in a container of their own', () => {
+    expect(valenceCpuShare(resources({ deploymentCpuPercent: 100, requestsCpuPercent: 60 }))).toBe(
+      40,
+    );
+    expect(
+      valenceCpuShare(resources({ deploymentCpuPercent: 100, requestsCpuPercent: Number.NaN })),
+    ).toBe(25);
   });
 
   it('reports an idle service as idle', () => {

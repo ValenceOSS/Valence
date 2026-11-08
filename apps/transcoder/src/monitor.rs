@@ -254,6 +254,10 @@ pub struct ResourceUse {
     pub children: Vec<ProcessUse>,
     /// What everything in the deployment is using, where the cgroup will say.
     pub deployment_memory: Option<DeploymentMemory>,
+    /// Percent of one core that everything in the deployment has used since the
+    /// last reading: the API server, this service and every ffmpeg, however
+    /// briefly each ran. Nothing outside a container, or on the first reading.
+    pub deployment_cpu_percent: Option<f32>,
     /// One minute load average, where the platform reports one.
     pub load_average: f64,
     /// Every mounted filesystem, measured less often than the rest of this.
@@ -351,7 +355,41 @@ pub struct Monitor {
     graphics: Arc<Mutex<Reading>>,
     artefacts: Arc<Mutex<Option<ArtefactStore>>>,
     cache: Arc<Mutex<Option<CacheUse>>>,
+    deployment_cpu: Arc<Mutex<Option<CpuMark>>>,
     journal: Journal,
+}
+
+/// How much processor time the deployment had used, and when that was read.
+#[derive(Debug, Clone, Copy)]
+struct CpuMark {
+    used_micros: u64,
+    at: Instant,
+}
+
+/// Percent of one core used between two readings of processor time.
+///
+/// Nothing without an earlier reading, with no time between them, or where the
+/// count went backwards, as it does when the container restarts.
+fn cpu_percent_between(earlier: Option<CpuMark>, later: CpuMark) -> Option<f32> {
+    let earlier = earlier?;
+    let elapsed = later.at.checked_duration_since(earlier.at)?.as_micros();
+    let used = later.used_micros.checked_sub(earlier.used_micros)?;
+
+    if elapsed == 0 {
+        return None;
+    }
+
+    #[allow(
+        clippy::cast_precision_loss,
+        reason = "a percentage needs no more precision than an f64 holds"
+    )]
+    #[allow(
+        clippy::cast_possible_truncation,
+        reason = "the readout carries percentages as f32, like every other figure here"
+    )]
+    let percent = (used as f64 / elapsed as f64 * 100.0) as f32;
+
+    Some(percent)
 }
 
 /// The last answer the filesystems gave, and when they gave it.
@@ -412,6 +450,7 @@ impl Monitor {
             graphics: Arc::new(Mutex::new(Reading::default())),
             artefacts: Arc::new(Mutex::new(None)),
             cache: Arc::new(Mutex::new(None)),
+            deployment_cpu: Arc::new(Mutex::new(None)),
             journal,
         }
     }
@@ -527,6 +566,21 @@ impl Monitor {
             notes: graphics_notes,
         } = self.graphics.lock().await.clone();
         let artefacts = self.artefacts.lock().await.clone();
+        let deployment_cpu_percent = match crate::cgroup::cpu_used_micros().await {
+            Some(used_micros) => {
+                let mark = CpuMark {
+                    used_micros,
+                    at: Instant::now(),
+                };
+                let mut last = self.deployment_cpu.lock().await;
+                let percent = cpu_percent_between(*last, mark);
+
+                *last = Some(mark);
+
+                percent
+            }
+            None => None,
+        };
         let mut system = self.system.lock().await;
 
         system.refresh_cpu_specifics(CpuRefreshKind::nothing().with_cpu_usage().with_frequency());
@@ -582,6 +636,7 @@ impl Monitor {
             service_memory_bytes: service.map_or(0, sysinfo::Process::memory),
             children,
             deployment_memory,
+            deployment_cpu_percent,
             load_average: System::load_average().one,
             disks,
             drives,
@@ -594,7 +649,10 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-    use super::{Journal, JournalLayer, LogLevel, Monitor, LOG_LINES};
+    use super::{
+        cpu_percent_between, CpuMark, Journal, JournalLayer, LogLevel, Monitor, LOG_LINES,
+    };
+    use std::time::{Duration, Instant};
     use tracing_subscriber::layer::SubscriberExt as _;
 
     /// Runs `body` with a subscriber that writes every event into `journal`.
@@ -676,6 +734,48 @@ mod tests {
         assert_eq!(line.context.job_id.as_deref(), Some("job-1"));
         assert_eq!(line.context.session_id.as_deref(), Some("session-2"));
         assert_eq!(line.context.request_id, None);
+    }
+
+    #[test]
+    fn works_out_the_share_of_one_core_used_between_two_readings() {
+        let start = Instant::now();
+        let earlier = CpuMark {
+            used_micros: 1_000_000,
+            at: start,
+        };
+        let later = CpuMark {
+            used_micros: 4_000_000,
+            at: start + Duration::from_secs(2),
+        };
+
+        assert_eq!(
+            cpu_percent_between(Some(earlier), later),
+            Some(150.0),
+            "three seconds of processor time in two is one and a half cores"
+        );
+    }
+
+    #[test]
+    fn says_nothing_without_an_earlier_reading_or_after_a_restart() {
+        let start = Instant::now();
+        let later = CpuMark {
+            used_micros: 500,
+            at: start + Duration::from_secs(1),
+        };
+
+        assert_eq!(cpu_percent_between(None, later), None);
+        assert_eq!(
+            cpu_percent_between(
+                Some(CpuMark {
+                    used_micros: 9_000,
+                    at: start,
+                }),
+                later
+            ),
+            None,
+            "a count that went backwards is a container that started again"
+        );
+        assert_eq!(cpu_percent_between(Some(later), later), None);
     }
 
     #[tokio::test]
