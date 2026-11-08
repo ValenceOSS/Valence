@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createSitePool } from '@ValenceRequests/solver/createSitePool';
 import { aSitePage } from '@ValenceRequests/testing/aSitePage';
 import { anAnswer } from '@ValenceRequests/testing/anAnswer';
+import type { PageAnswer } from '@ValenceRequests/solver/PageAnswerSchema';
 import type { Cookie } from '@ValenceRequests/solver/createSiteAgent';
 import { createSolver } from './createSolver';
 
@@ -44,6 +45,12 @@ const aSolver = (page = aSitePage()) => {
 
   return { solver: createSolver({ pool }), pool, page, addCookies };
 };
+
+const THE_CHECK = anAnswer({
+  status: 403,
+  headers: { server: 'cloudflare', 'content-type': 'text/html' },
+  body: '<title>Just a moment...</title>',
+});
 
 const A_GET = {
   url: 'https://example.org/search?q=a',
@@ -170,5 +177,172 @@ describe('createSolver', () => {
     await failing;
 
     expect(page.close).toHaveBeenCalled();
+  });
+
+  it('goes through one check at a time, across every site and session', async () => {
+    const page = aSitePage();
+    let answerTheFirst: (answer: PageAnswer) => void = () => {};
+
+    page.fetch.mockImplementationOnce(
+      () =>
+        new Promise<PageAnswer>((resolve) => {
+          answerTheFirst = resolve;
+        }),
+    );
+
+    const { solver } = aSolver(page);
+    const first = solver.fetch(A_GET, {}, 'one');
+    const second = solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two');
+
+    await vi.waitFor(() => {
+      expect(page.fetch).toHaveBeenCalledTimes(1);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(page.fetch).toHaveBeenCalledTimes(1);
+
+    answerTheFirst(anAnswer());
+    await first;
+    await second;
+
+    expect(page.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('starts a request’s time when its turn comes, not while it waits behind another', async () => {
+    const page = aSitePage();
+    const answerAfter = (ms: number) => () =>
+      new Promise<PageAnswer>((resolve) => {
+        setTimeout(() => {
+          resolve(anAnswer());
+        }, ms);
+      });
+
+    page.fetch.mockImplementationOnce(answerAfter(4000)).mockImplementationOnce(answerAfter(3000));
+
+    const { pool } = aSolver(page);
+
+    vi.useFakeTimers();
+
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+    const first = solver.fetch(A_GET, {}, 'one');
+    const second = solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two');
+
+    await vi.advanceTimersByTimeAsync(7500);
+    vi.useRealTimers();
+
+    await expect(first).resolves.toMatchObject({ status: 200 });
+    await expect(second).resolves.toMatchObject({ status: 200 });
+  });
+
+  it('gives the next request its turn when one runs out of time', async () => {
+    const page = aSitePage();
+
+    page.visit.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const { pool } = aSolver(page);
+
+    vi.useFakeTimers();
+
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+    const stuck = expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow('Timed out');
+    const next = solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two');
+
+    await vi.advanceTimersByTimeAsync(5000);
+    vi.useRealTimers();
+
+    await stuck;
+    await expect(next).resolves.toMatchObject({ status: 200 });
+  });
+
+  it('asks straight away of a site the session is through, while another waits on its check', async () => {
+    const page = aSitePage();
+    const { pool } = aSolver(page);
+
+    vi.useFakeTimers();
+
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+
+    await solver.fetch(A_GET, {}, 'one');
+    page.visit.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const stuck = expect(
+      solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two'),
+    ).rejects.toThrow('Timed out');
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(page.visit).toHaveBeenCalledTimes(2);
+
+    const through = solver.fetch(A_GET, {}, 'one');
+
+    await vi.advanceTimersByTimeAsync(0);
+    await expect(through).resolves.toMatchObject({ status: 200 });
+
+    await vi.advanceTimersByTimeAsync(5000);
+    vi.useRealTimers();
+    await stuck;
+  });
+
+  it('waits its turn and goes through the check where it shows again on a site it was through', async () => {
+    const page = aSitePage({ answers: [anAnswer(), THE_CHECK, THE_CHECK] });
+    const { solver } = aSolver(page);
+
+    await solver.fetch(A_GET, {}, 'one');
+
+    await expect(solver.fetch(A_GET, {}, 'one')).resolves.toMatchObject({ status: 200 });
+    expect(page.visit).toHaveBeenCalledTimes(2);
+    expect(page.fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it('fails the requests already waiting for a site whose check just failed, untried', async () => {
+    const page = aSitePage({ standings: ['blocked'] });
+    const { solver } = aSolver(page);
+
+    const first = expect(solver.fetch(A_GET, {}, 'one')).rejects.toMatchObject({
+      problemCode: 'CloudflareRefusesAddress',
+    });
+    const waiting = expect(
+      solver.fetch({ ...A_GET, url: 'https://example.org/other' }, {}, 'two'),
+    ).rejects.toMatchObject({ problemCode: 'CloudflareRefusesAddress' });
+    const elsewhere = solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'one');
+
+    await first;
+    await waiting;
+    await expect(elsewhere).resolves.toMatchObject({ status: 200 });
+    expect(page.visit).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives a request asked after a site’s check failed a fresh try', async () => {
+    const { solver } = aSolver(aSitePage({ standings: ['blocked'] }));
+
+    await expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow();
+    await expect(solver.fetch(A_GET, {}, 'one')).resolves.toMatchObject({ status: 200 });
+  });
+
+  it('fails no waiting request where a site already through only answered slowly', async () => {
+    const page = aSitePage();
+    const { pool } = aSolver(page);
+
+    vi.useFakeTimers();
+
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+
+    await solver.fetch(A_GET, {}, 'one');
+    page.fetch.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const slow = expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow('Timed out');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    page.visit.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const stuck = expect(
+      solver.fetch({ ...A_GET, url: 'https://example.net/search?q=a' }, {}, 'two'),
+    ).rejects.toThrow('Timed out');
+    const waiting = solver.fetch({ ...A_GET, url: 'https://example.org/other' }, {}, 'three');
+
+    await vi.advanceTimersByTimeAsync(6000);
+    vi.useRealTimers();
+    await slow;
+    await stuck;
+    await expect(waiting).resolves.toMatchObject({ status: 200 });
   });
 });

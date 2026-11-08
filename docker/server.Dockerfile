@@ -90,11 +90,6 @@ FROM node:24.21.0-bookworm-slim AS runtime
 # first, so mesa-va-drivers is no longer installed — it only ever supplied
 # radeonsi, and Debian's ffmpeg that needed it is gone.
 #
-# `pci.ids` is the table that turns 8086:4680 into "UHD Graphics 770". Only
-# amdgpu writes its own name into sysfs, so without this an Intel card can be
-# measured and not named, and the admin page would report a figure against a
-# pair of hex numbers. About a megabyte, and it is the same table lspci reads.
-#
 # Downloaded with ADD rather than curl so the image needs no download tool of
 # its own. Worth pinning `--checksum` here once the version settles.
 # The build itself is published from a repository of its own and is still named for what it was
@@ -137,7 +132,7 @@ COPY --from=mysql:8.4.11 /usr/bin/mysqldump /usr/bin/mysql /usr/local/bin/
 ADD https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-bookworm_${TARGETARCH}.deb /tmp/valence-ffmpeg.deb
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates pci.ids /tmp/valence-ffmpeg.deb \
+  && apt-get install -y --no-install-recommends ca-certificates /tmp/valence-ffmpeg.deb \
   && rm /tmp/valence-ffmpeg.deb \
   && rm -rf /var/lib/apt/lists/*
 
@@ -191,6 +186,20 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends fuse3 \
   && rm -rf /var/lib/apt/lists/*
 COPY --from=rclone/rclone:1.71.2 /usr/local/bin/rclone /usr/local/bin/rclone
+
+# `pci.ids` is the table that turns 8086:4680 into "UHD Graphics 770". Only amdgpu writes its own
+# name into sysfs, so without this an Intel card can be measured and not named, and the admin page
+# would report a figure against a pair of hex numbers. About a megabyte and a half, and it is the
+# same table lspci reads, at the path lspci reads it from.
+#
+# Taken from the table's own repository rather than from Debian. Bookworm's copy is from April 2023
+# and still calls 8086:4680 "AlderLake-S GT1" with no product name, so every UHD 770 of that kind
+# reported a codename while the same GPU elsewhere reported "UHD Graphics 770". Pinned to a commit
+# with its checksum; moving it means updating both. After every apt install, so that nothing a
+# package brings can put Debian's copy back over it.
+ARG PCI_IDS_COMMIT=da5f125daee69ad443c16d07dc0472a5ac523bb2
+ADD --chmod=644 --checksum=sha256:496f33fdbd012bf69917488221ef71e785294a523ac1409b8fde314d076dd872 \
+  https://raw.githubusercontent.com/pciutils/pciids/${PCI_IDS_COMMIT}/pci.ids /usr/share/misc/pci.ids
 
 WORKDIR /app
 RUN corepack enable
