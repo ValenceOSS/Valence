@@ -136,6 +136,7 @@ describe('PROTOCOL_OF_CLIENT', () => {
       transmission: 'torrent',
       sabnzbd: 'usenet',
       nzbget: 'usenet',
+      direct: 'direct',
     });
   });
 });
