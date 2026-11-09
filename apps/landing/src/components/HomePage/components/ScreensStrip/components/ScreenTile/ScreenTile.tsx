@@ -123,7 +123,7 @@ const ScreenTile = ({ screen, index, count }: ScreenTileProps) => {
                   }
                 },
               })}
-          className="block text-text"
+          className="flex text-text"
         >
           {typeof screen.mark === 'string' ? (
             <BrandGlyph of={screen.mark} size={MARK_SIZE} />
