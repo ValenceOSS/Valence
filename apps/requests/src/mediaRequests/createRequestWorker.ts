@@ -12,6 +12,7 @@ import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
 import type { AnimeAnswer, AnimeFacts, AnimeNumbering } from '@ValenceContracts/schemas/Anime';
 import type { JudgedForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import { blockHasLapsed } from '@ValenceRequests/mediaRequests/blockHasLapsed';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
@@ -528,7 +529,9 @@ const createRequestWorker = ({
     new Map((await indexers.list()).map((indexer) => [indexer.id, indexer.priority]));
 
   const blockedFor = async (requestId: string) =>
-    (await blocked.list()).filter((block) => block.requestId === requestId);
+    (await blocked.list()).filter(
+      (block) => block.requestId === requestId && !blockHasLapsed(block, now()),
+    );
 
   const block = async (
     requestId: string,
