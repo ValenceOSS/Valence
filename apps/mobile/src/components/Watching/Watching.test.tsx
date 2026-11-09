@@ -6,6 +6,7 @@ import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import {
   heartbeatPlaybackSession,
+  sendPresenceHeartbeat,
   startPlaybackSession,
   stopPlaybackSession,
   stopWatching,
@@ -402,6 +403,31 @@ describe('Watching', () => {
     });
 
     expect(jest.mocked(heartbeatPlaybackSession).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('tells the sessions page where it is and how far it has buffered', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    theFakePlayer.currentTime = 120;
+    theFakePlayer.bufferedPosition = 150;
+
+    await act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
+
+    expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith(
+      expect.any(String),
+      true,
+      expect.objectContaining({ positionSeconds: 120, bufferedAheadSeconds: 30 }),
+    );
   });
 
   it('tells presence it has stopped, rather than leaving a viewer on the sessions page', async () => {

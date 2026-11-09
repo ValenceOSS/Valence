@@ -16,6 +16,7 @@ import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
+import type { PresenceHealth } from '@ValenceNative/playback/presenceHealthOfExpo';
 
 type Session =
   | { kind: 'starting' }
@@ -51,6 +52,8 @@ const PRESENCE_HEARTBEAT_MS = 15_000;
  * @param converted - What to have converted rather than copied, after a copy of it failed to play.
  * @param attempt - How many times it has been asked for again, after the server was lost; a new
  *   number asks again.
+ * @param measure - What the player can say of the stream, asked at each heartbeat to the household,
+ *   where it can say anything.
  * @returns Whether the session is starting, failed and why, lost because the server forgot it, or
  *   ready with what the player opens.
  */
@@ -62,12 +65,15 @@ const usePlaybackSession = (
   requestedQuality?: QualityPreference,
   converted?: Converted,
   attempt = 0,
+  measure: () => PresenceHealth | undefined = () => undefined,
 ): Session => {
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
+  const measuring = useRef(measure);
 
   useEffect(() => {
     asking.current = isPlaying;
+    measuring.current = measure;
   });
 
   useEffect(() => {
@@ -142,7 +148,7 @@ const usePlaybackSession = (
 
       timers.push(
         setInterval(() => {
-          void sendPresenceHeartbeat(clientId, asking.current());
+          void sendPresenceHeartbeat(clientId, asking.current(), measuring.current());
         }, PRESENCE_HEARTBEAT_MS),
       );
 
