@@ -1,7 +1,7 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { useCallback, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -108,6 +108,12 @@ const ObservabilityPage = ({
   const travel = useTravelDirection([...OBSERVABILITY_VIEWS], view);
   const working = useMemo(() => monitor?.queue.jobs ?? [], [monitor]);
   const failures = useQuery(adminQueries.recentFailures()).data?.total ?? 0;
+  const cache = useQueryClient();
+  const isQueuePaused = monitor?.queue.paused ?? false;
+
+  useEffect(() => {
+    void cache.invalidateQueries({ queryKey: adminQueries.jobHistory({}).queryKey.slice(0, 2) });
+  }, [cache, isQueuePaused]);
   const viewing =
     viewingJobKind === null
       ? null

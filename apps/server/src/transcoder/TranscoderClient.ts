@@ -679,9 +679,11 @@ const createTranscoderClient = ({
           return fetcher(url, init);
         };
 
-  const call2 = presentingTheSecret(
-    waitingFirst(fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath))),
-  );
+  const quickFetch = fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath));
+
+  const call2 = presentingTheSecret(waitingFirst(quickFetch));
+
+  const callAtOnce = presentingTheSecret(quickFetch);
 
   const callSlowly = presentingTheSecret(
     waitingFirst(
@@ -787,6 +789,27 @@ const createTranscoderClient = ({
     });
 
   /**
+   * Asks for something that is about the work rather than part of it — whether the service answers,
+   * what it is doing, stopping or holding it — at once, without waiting on a paused job's turn.
+   */
+  const askAtOnce = async (path: string, init?: HttpRequestInit): Promise<HttpResponse> => {
+    const response = await callAtOnce(`${origin}${path}`, init);
+
+    if (!response.ok) {
+      throw new TranscoderError(`The media service rejected ${path}.`, response.status);
+    }
+
+    return response;
+  };
+
+  const postJsonAtOnce = (path: string, body: object): Promise<HttpResponse> =>
+    askAtOnce(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+  /**
    * Asks for something that is worked out rather than read, and waits for as long as it takes.
    *
    * No clock at all. A preview is an encode, a sheet is a thumbnail a minute across a whole film, and
@@ -820,13 +843,13 @@ const createTranscoderClient = ({
 
   const controlQueue: QueueControl = {
     setConcurrency: async (concurrency) => {
-      await postJson('/queue/concurrency', { concurrency });
+      await postJsonAtOnce('/queue/concurrency', { concurrency });
     },
     pause: async () => {
-      await postJson('/queue/pause', {});
+      await postJsonAtOnce('/queue/pause', {});
     },
     resume: async () => {
-      await postJson('/queue/resume', {});
+      await postJsonAtOnce('/queue/resume', {});
     },
     runNow: async (jobId) => {
       const response = await call2(`${origin}/queue/jobs/${jobId.toString()}/run-now`, {
@@ -836,15 +859,16 @@ const createTranscoderClient = ({
       return response.ok;
     },
     stopJob: async (correlationId) =>
-      RendersStoppedSchema.parse(await (await postJson('/renders/stop', { correlationId })).json())
-        .stopped,
+      RendersStoppedSchema.parse(
+        await (await postJsonAtOnce('/renders/stop', { correlationId })).json(),
+      ).stopped,
   };
 
   return {
     controlQueue,
     isReachable: async () => {
       const response = await Promise.race([
-        call2(`${origin}/health`).catch(() => null),
+        callAtOnce(`${origin}/health`).catch(() => null),
         new Promise<null>((resolve) => {
           setTimeout(() => {
             resolve(null);
@@ -1075,7 +1099,7 @@ const createTranscoderClient = ({
 
     readFont: async (request) => (await postRender('/fonts/read', request)).arrayBuffer(),
 
-    readMonitor: async () => (await call('/monitor')).json(),
+    readMonitor: async () => (await askAtOnce('/monitor')).json(),
 
     openMonitorSocket: () => openSocket(),
 
