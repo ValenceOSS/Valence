@@ -264,6 +264,7 @@ import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfile
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
 import { createMangaTitles } from '@ValenceServer/requests/anilist/createMangaTitles';
 import { createDatabaseJobPauseStore } from '@ValenceServer/jobs/createDatabaseJobPauseStore';
+import { untilReachable } from '@ValenceServer/transcoder/untilReachable';
 import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
 import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
 import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
@@ -326,6 +327,8 @@ import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/W
 import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 import { webhookBrandOf } from '@ValenceServer/webhooks/webhookBrandOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+
+const MEDIA_SERVICE_START_MS = 60_000;
 
 const heldJobs: { untilResumed: () => Promise<void> } = {
   untilResumed: () => Promise.resolve(),
@@ -5907,6 +5910,10 @@ const seededKinds = await seedDefaultJobTriggers({ schedules, settings });
 
 if (seededKinds.length > 0) {
   log.info('server', `schedule: default triggers set for ${seededKinds.join(', ')}`);
+}
+
+if (!(await untilReachable(() => transcoder.isReachable(), MEDIA_SERVICE_START_MS))) {
+  log.warn('transcoder', 'the media service did not answer at start-up; jobs start without it');
 }
 
 await jobs.startWorking();
