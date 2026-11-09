@@ -209,6 +209,94 @@ describe('createQbittorrentAdapter', () => {
     );
   });
 
+  it('fetches one file of a torrent, waiting for qBittorrent to know it, and leaves the rest out', async () => {
+    let filesAsked = 0;
+    const { fetch, asked } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'POST /api/v2/torrents/createCategory': () => new Response(''),
+      'POST /api/v2/torrents/add': () => new Response('Ok.'),
+      'GET /api/v2/torrents/files': () => {
+        filesAsked += 1;
+
+        return filesAsked === 1
+          ? new Response('Not Found', { status: 404 })
+          : Response.json([
+              { index: 0, name: '381000/a.epub', priority: 1 },
+              { index: 1, name: '381000/b.epub', priority: 1 },
+              { index: 2, name: '381000/c.epub', priority: 1 },
+            ]);
+      },
+      'POST /api/v2/torrents/filePrio': () => new Response(''),
+      'POST /api/v2/torrents/renameFile': () => new Response(''),
+      'POST /api/v2/torrents/start': () => new Response(''),
+    });
+    const bytes = new TextEncoder().encode(
+      'd4:infod6:lengthi5e4:name3:abc12:piece lengthi16384e6:pieces0:ee',
+    );
+
+    await createQbittorrentAdapter(SETTINGS, fetch).add(
+      { kind: 'torrent', bytes, onlyFile: { path: '381000/b.epub', name: 'Dune.epub' } },
+      'Dune',
+      'valence',
+    );
+
+    const said = (ending: string) =>
+      asked.filter((request) => request.url.pathname.endsWith(ending)).map(formOf);
+
+    expect(filesAsked).toBe(2);
+    expect(said('/filePrio').map((form) => [form.get('id'), form.get('priority')])).toEqual([
+      ['0|2', '0'],
+      ['1', '1'],
+    ]);
+    expect(said('/renameFile')[0]?.get('newPath')).toBe('381000/Dune.epub');
+    expect(said('/start')).toHaveLength(1);
+  });
+
+  it('leaves out the rest of a torrent it already had whose files were never narrowed, and only lets this one in where they were', async () => {
+    const asking = (priorities: number[]) =>
+      aFakeClient({
+        'POST /api/v2/auth/login': loggingIn(),
+        'POST /api/v2/torrents/createCategory': () => new Response('', { status: 409 }),
+        'POST /api/v2/torrents/add': () => new Response('Conflict', { status: 409 }),
+        'POST /api/v2/torrents/setCategory': () => new Response(''),
+        'GET /api/v2/torrents/files': () =>
+          Response.json(
+            priorities.map((priority, index) => ({
+              index,
+              name: `f/${index.toString()}`,
+              priority,
+            })),
+          ),
+        'POST /api/v2/torrents/filePrio': () => new Response(''),
+        'POST /api/v2/torrents/start': () => new Response(''),
+      });
+    const priorities = async (given: number[]) => {
+      const { fetch, asked } = asking(given);
+
+      await createQbittorrentAdapter(SETTINGS, fetch).add(
+        {
+          kind: 'torrent',
+          bytes: new TextEncoder().encode(
+            'd4:infod6:lengthi5e4:name3:abc12:piece lengthi16384e6:pieces0:ee',
+          ),
+          onlyFile: { path: 'f/1', name: '1' },
+        },
+        'Dune',
+        'valence',
+      );
+
+      return asked
+        .filter((request) => request.url.pathname.endsWith('/filePrio'))
+        .map((request) => [formOf(request).get('id'), formOf(request).get('priority')]);
+    };
+
+    expect(await priorities([1, 1, 1])).toEqual([
+      ['0|2', '0'],
+      ['1', '1'],
+    ]);
+    expect(await priorities([1, 0, 0])).toEqual([['1', '1']]);
+  });
+
   it('refuses an NZB, and a torrent it cannot read', async () => {
     const adapter = createQbittorrentAdapter(SETTINGS, aFakeClient({}).fetch);
 

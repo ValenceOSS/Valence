@@ -48,7 +48,7 @@ const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.nu
 
 const NEVER_SECONDS = 8_640_000;
 
-const FILE_LIST_TRIES = 10;
+const FILE_LIST_TRIES = 60;
 
 const FILE_LIST_WAIT_MS = 500;
 
@@ -284,22 +284,39 @@ const createQbittorrentAdapter = (
   /**
    * Fetches one file of a torrent and none of the rest — a book out of a collection of thousands —
    * naming it as it should be called, then starts it. A torrent new to the client has every other
-   * file left out; one it already had, for another file, has this one let in beside it.
+   * file left out; one it already had, for another file, has this one let in beside it, unless none
+   * of its files was ever left out, when the rest are left out now. The client takes a while to
+   * know a large torrent it was just given, so its files are asked for until it does.
    *
    * @param hash - The torrent.
    * @param only - The file to fetch, by its path in the torrent, and what to call it.
    * @param isNew - Whether the torrent was only just added.
    */
   const keepOnly = async (hash: string, only: OneFileOf, isNew: boolean): Promise<void> => {
-    let listed: { index: number; name: string }[] = [];
+    let listed: { index: number; name: string; priority: number }[] = [];
 
     for (let tries = 0; tries < FILE_LIST_TRIES && listed.length === 0; tries += 1) {
-      listed = z
-        .array(FileSchema)
-        .parse(
-          await (await answered(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`)).json(),
-        )
-        .map((one, position) => ({ index: one.index ?? position, name: one.name }));
+      const response = await ask(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`);
+
+      if (response.status !== 404) {
+        if (!response.ok) {
+          throw new DownloadClientFailure(
+            saying('requests.downloads.clientAnsweredStatus', {
+              name: settings.name,
+              status: response.status,
+            }),
+          );
+        }
+
+        listed = z
+          .array(FileSchema)
+          .parse(await response.json())
+          .map((one, position) => ({
+            index: one.index ?? position,
+            name: one.name,
+            priority: one.priority ?? 1,
+          }));
+      }
 
       if (listed.length === 0) {
         await new Promise((resolve) => {
@@ -316,7 +333,9 @@ const createQbittorrentAdapter = (
       );
     }
 
-    const others = isNew ? listed.filter((one) => one !== wanted).map((one) => one.index) : [];
+    const isNarrowed = listed.some((one) => one.priority === 0);
+    const others =
+      isNew || !isNarrowed ? listed.filter((one) => one !== wanted).map((one) => one.index) : [];
 
     for (let at = 0; at < others.length; at += FILE_PRIORITIES_AT_ONCE) {
       await answered(
