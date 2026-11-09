@@ -48,7 +48,7 @@ const describeBookSeriesForRequest = async (
     books.push({
       ...book,
       openLibraryId: match?.openLibraryId ?? null,
-      coverUrl: match?.coverUrl ?? null,
+      coverUrl: match?.coverUrl ?? book.coverUrl,
     });
   }
 
