@@ -11,6 +11,7 @@ import { siteLinkFor } from '@ValenceRequests/cardigann/siteLinkFor';
 import { addressToLog } from '@ValenceRequests/indexers/addressToLog';
 import { createOpdsCatalogue } from '@ValenceRequests/opds/createOpdsCatalogue';
 import { createAnnasArchive } from '@ValenceRequests/annas/createAnnasArchive';
+import { asksForBooks } from '@ValenceRequests/indexers/asksForBooks';
 import type { AnnasLibrary, ArchiveFetch } from '@ValenceRequests/annas/createAnnasArchive';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import type { Pacer } from '@ValenceRequests/indexers/createPacer';
@@ -227,6 +228,10 @@ const createIndexerClient = ({
       isUrgent = false,
     ): Promise<Release[]> => {
       if (indexer.kind === 'opds' || indexer.kind === 'annas') {
+        if (!asksForBooks(search)) {
+          return [];
+        }
+
         const releases = await (indexer.kind === 'opds' ? catalogues : archive).search(
           indexer,
           search.query ?? '',
