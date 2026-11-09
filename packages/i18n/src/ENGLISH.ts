@@ -4708,6 +4708,10 @@ const ENGLISH = {
   'screens.adminArea.encodingPanel.theReEncodingQueueCouldNot':
     'Couldn’t load the re-encoding queue from the server. It may not be empty.',
   'screens.adminArea.encodingPanel.whatHappened': 'Result',
+  'screens.adminArea.encodingSettings.fastThumbnailsAbout':
+    'On a server with a GPU, seek-bar thumbnails usually come from every frame of a file, so each one shows the exact moment it’s for. With this on, SDR files use keyframes only, on the CPU. That’s several times faster, but a thumbnail can show a moment several seconds away from where you’re pointing. HDR files are made as before. Thumbnails that already exist stay as they are until you regenerate them.',
+  'screens.adminArea.encodingSettings.fastThumbnailsDetail':
+    'Makes seek-bar thumbnails much faster, but some show a nearby scene instead.',
   'screens.adminArea.encodingSettings.gaplessEpisodesAbout':
     'In the last moments of an episode, Valence starts preparing the next one, so it follows with no pause, black screen or fade. It starts the next stream a little early, so turn it off on a server that struggles to transcode.',
   'screens.adminArea.encodingSettings.gaplessEpisodesDetail':
@@ -6337,6 +6341,10 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.drawsTheHouseholdsFacesOnThe':
     'Shows every profile on the sign-in screen, so people sign in by choosing theirs. When off, the sign-in screen asks for a username or email and a password, and no one who isn’t signed in can see the names, pictures or IDs of people on this server.',
   'screens.adminArea.settingsPanel.fanartTvKeySaved': 'fanart.tv key saved',
+  'screens.adminArea.settingsPanel.fastThumbnails': 'Fast thumbnails',
+  'screens.adminArea.settingsPanel.fastThumbnailsCouldNotBeSaved':
+    'Fast thumbnails could not be saved',
+  'screens.adminArea.settingsPanel.fastThumbnailsSaved': 'Fast thumbnails saved',
   'screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb':
     'Download music metadata from the web',
   'screens.adminArea.settingsPanel.fetchTrailersFromTheCatalogue':

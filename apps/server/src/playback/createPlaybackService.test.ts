@@ -753,7 +753,10 @@ const build = (
   transcoderOverrides: Partial<Transcoder> = {},
   found: Awaited<ReturnType<MediaLookup['findForPlayback']>> | undefined = undefined,
   previewQuality: PreviewQuality | undefined = undefined,
-  fromDisk: Pick<CreatePlaybackServiceOptions, 'readSessionFromDisk'> = {},
+  options: Pick<
+    CreatePlaybackServiceOptions,
+    'readSessionFromDisk' | 'usesKeyframeThumbnails'
+  > = {},
 ) => {
   const transcoder: Transcoder = {
     ...anything(),
@@ -800,7 +803,7 @@ const build = (
       sessionUrlPrefix: '/api/playback/session',
       directUrlPrefix: '/api/media',
       trickplayUrlPrefix: '/api/trickplay',
-      ...fromDisk,
+      ...options,
       ...(previewQuality === undefined
         ? {}
         : { previewQuality: () => Promise.resolve(previewQuality) }),
@@ -1194,6 +1197,31 @@ describe('the files a player asks for while it is watching', () => {
       id: 'sheet-1',
       url: '/api/trickplay/sheet-1/thumbnails.vtt',
     });
+  });
+
+  it('asks for thumbnails from keyframes only where the operator chose them', async () => {
+    const sheet = {
+      id: 'sheet-1',
+      intervalSeconds: 10,
+      tileWidth: 160,
+      tileHeight: 90,
+      columns: 5,
+      rows: 5,
+      sheets: [],
+      index: 'thumbnails.vtt',
+      isReady: true,
+    };
+    const requestTrickplay = vi.fn((_request: { keyframesOnly?: boolean }) =>
+      Promise.resolve(sheet),
+    );
+
+    await build({ requestTrickplay }).service.trickplay(MEDIA_ID);
+    await build({ requestTrickplay }, undefined, undefined, {
+      usesKeyframeThumbnails: () => Promise.resolve(true),
+    }).service.trickplay(MEDIA_ID);
+
+    expect(requestTrickplay.mock.calls[0]?.[0]).not.toHaveProperty('keyframesOnly');
+    expect(requestTrickplay.mock.calls[1]?.[0]).toMatchObject({ keyframesOnly: true });
   });
 
   it('offers no sheet while one is still being drawn', async () => {

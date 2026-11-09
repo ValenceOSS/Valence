@@ -16,6 +16,7 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   hardwareDevices: say('screens.adminArea.graphicsDevices'),
   whenDevicesFull: say('screens.adminArea.devicePlacement.whenEveryDeviceIsFull'),
   previewQuality: say('screens.adminArea.settingsPanel.previewQuality'),
+  usesKeyframeThumbnails: say('screens.adminArea.settingsPanel.fastThumbnails'),
   certificationRegion: say('screens.adminArea.settingsPanel.ageCertificates'),
   showsProfilesBeforeSignIn: say('screens.adminArea.settingsPanel.showWhoLivesHere'),
   allowedApps: say('screens.adminArea.settingsPanel.appsThatCanSignIn'),

@@ -12,32 +12,33 @@ The Settings panel is four cards: **Server**, **Sign-in screen**, **Online servi
 
 ## Settings at a glance
 
-| Setting                 | Where                                         | Default                  | What it controls                                                                                 |
-| ----------------------- | --------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
-| Name, Description, Logo | Settings › Server                             | Valence's own            | What the server calls itself.                                                                    |
-| Accent colour           | Settings › Server                             | Valence's own            | The colour of buttons, highlights and emails.                                                    |
-| Corners                 | Settings › Server                             | Default                  | How rounded every corner is, for everybody.                                                      |
-| Age ratings             | Settings › Server                             | United Kingdom (`GB`)    | Whose age ratings Valence reads.                                                                 |
-| Show profiles           | Settings › Sign-in screen                     | On                       | Whether the sign in screen shows the household's faces.                                          |
-| Background              | Settings › Sign-in screen                     | None                     | A background for the profile picker.                                                             |
-| Message                 | Settings › Sign-in screen                     | None                     | A message under the question on the sign in screen.                                              |
-| Apps                    | Settings › Sign-in screen                     | All of them              | Which of Valence's apps can be used with this server. The web is always on.                      |
-| The Movie Database      | Settings › Online services › API keys         | Empty                    | The key that fetches titles, years and artwork.                                                  |
-| OMDb                    | Settings › Online services › API keys         | Empty                    | A key for Rotten Tomatoes scores.                                                                |
-| fanart.tv               | Settings › Online services › API keys         | Empty                    | A key for more posters, backgrounds and logos.                                                   |
-| TheAudioDB              | Settings › Online services › API keys         | Empty                    | A personal key for artist lookups.                                                               |
-| Trailers                | Settings › Online services › Features         | Off                      | Offers trailers for titles that have none on disk.                                               |
-| Music details           | Settings › Online services › Features         | Off                      | Cover art, artist photos, music videos and lyrics.                                               |
-| Phone notifications     | Settings › Online services › Features         | Off                      | Whether the phone app is woken through Valence's push relay.                                     |
-| Usage statistics        | Settings › Online services › Features         | Off                      | Whether the server sends one anonymous report a day, and what is in it.                          |
-| Play a clip first       | Settings › Pre-roll                           | Off                      | A clip from a folder played before a title.                                                      |
-| Hardware acceleration   | Encoding › Hardware                           | Automatic                | Which encoder transcodes use.                                                                    |
-| Short segments          | Encoding › Streaming                          | On                       | Video sent in pieces of about two seconds rather than four, so playback starts and seeks sooner. |
-| Gapless episodes        | Encoding › Streaming                          | On                       | Whether the next episode is got ready before this one ends.                                      |
-| Preview quality         | Encoding › Streaming                          | High                     | Size and sharpness of hover previews.                                                            |
-| Keep prepared downloads | Encoding › Streaming                          | 14 days                  | How long a file prepared for download is kept after it was last asked for.                       |
-| Background trailers     | Requests › Overview › Request page            | Off                      | A muted trailer behind a title on its request page.                                              |
-| Artist releases         | Requests › Quality profiles › Artist requests | Albums, mixtapes and EPs | Which releases an artist request follows.                                                        |
+| Setting                 | Where                                         | Default                  | What it controls                                                                                            |
+| ----------------------- | --------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Name, Description, Logo | Settings › Server                             | Valence's own            | What the server calls itself.                                                                               |
+| Accent colour           | Settings › Server                             | Valence's own            | The colour of buttons, highlights and emails.                                                               |
+| Corners                 | Settings › Server                             | Default                  | How rounded every corner is, for everybody.                                                                 |
+| Age ratings             | Settings › Server                             | United Kingdom (`GB`)    | Whose age ratings Valence reads.                                                                            |
+| Show profiles           | Settings › Sign-in screen                     | On                       | Whether the sign in screen shows the household's faces.                                                     |
+| Background              | Settings › Sign-in screen                     | None                     | A background for the profile picker.                                                                        |
+| Message                 | Settings › Sign-in screen                     | None                     | A message under the question on the sign in screen.                                                         |
+| Apps                    | Settings › Sign-in screen                     | All of them              | Which of Valence's apps can be used with this server. The web is always on.                                 |
+| The Movie Database      | Settings › Online services › API keys         | Empty                    | The key that fetches titles, years and artwork.                                                             |
+| OMDb                    | Settings › Online services › API keys         | Empty                    | A key for Rotten Tomatoes scores.                                                                           |
+| fanart.tv               | Settings › Online services › API keys         | Empty                    | A key for more posters, backgrounds and logos.                                                              |
+| TheAudioDB              | Settings › Online services › API keys         | Empty                    | A personal key for artist lookups.                                                                          |
+| Trailers                | Settings › Online services › Features         | Off                      | Offers trailers for titles that have none on disk.                                                          |
+| Music details           | Settings › Online services › Features         | Off                      | Cover art, artist photos, music videos and lyrics.                                                          |
+| Phone notifications     | Settings › Online services › Features         | Off                      | Whether the phone app is woken through Valence's push relay.                                                |
+| Usage statistics        | Settings › Online services › Features         | Off                      | Whether the server sends one anonymous report a day, and what is in it.                                     |
+| Play a clip first       | Settings › Pre-roll                           | Off                      | A clip from a folder played before a title.                                                                 |
+| Hardware acceleration   | Encoding › Hardware                           | Automatic                | Which encoder transcodes use.                                                                               |
+| Short segments          | Encoding › Streaming                          | On                       | Video sent in pieces of about two seconds rather than four, so playback starts and seeks sooner.            |
+| Gapless episodes        | Encoding › Streaming                          | On                       | Whether the next episode is got ready before this one ends.                                                 |
+| Preview quality         | Encoding › Streaming                          | High                     | Size and sharpness of hover previews.                                                                       |
+| Fast thumbnails         | Encoding › Streaming                          | Off                      | SDR seek-bar thumbnails made from keyframes on the CPU: much faster, but less exact. Shown only with a GPU. |
+| Keep prepared downloads | Encoding › Streaming                          | 14 days                  | How long a file prepared for download is kept after it was last asked for.                                  |
+| Background trailers     | Requests › Overview › Request page            | Off                      | A muted trailer behind a title on its request page.                                                         |
+| Artist releases         | Requests › Quality profiles › Artist requests | Albums, mixtapes and EPs | Which releases an artist request follows.                                                                   |
 
 ## Announcements
 
@@ -193,6 +194,12 @@ Previews are the short clips that play when you hover a title. They are made onc
 
 Changing it makes every preview again in the background, so expect a burst of work on a large library. Watch it in [Jobs and logs](/use/jobs-and-logs). A toast reads "Preview quality saved."
 
+#### Fast thumbnails
+
+Off by default, and shown only on a server with a GPU that isn't set to Software only. On such a server, seek-bar thumbnails are usually made from every frame of a file on the GPU, so each one shows the exact moment it is for. A file the GPU can't decode falls back to keyframes on the CPU. With this on, SDR files are made from keyframes only, on the CPU. That is several times faster and leaves the GPU alone, but keyframes can be ten seconds or more apart, so a thumbnail often shows a nearby shot rather than the moment you are pointing at. In our tests on 1080p episodes, about half to three quarters of thumbnails showed a different shot.
+
+A server without a GPU already makes every thumbnail from keyframes on the CPU, which is why the switch isn't shown there. HDR files aren't affected by this setting: they are made as before. Turning it on or off doesn't redraw any thumbnails that already exist. To redraw a title's thumbnails, use the rebuild action in its menu. The toast reads "Fast thumbnails saved."
+
 #### Keep prepared downloads
 
 How long a file prepared for download is kept after it was last asked for, 14 days by default. Anyone who downloads the same title in that time gets the same file without waiting. The toast reads "Saved how long prepared downloads are kept."
@@ -293,6 +300,6 @@ Small confirmations appear at the corner of the screen after most admin actions.
 | Jobs      | "Asked (job name) to stop.", "Schedule added.", "Schedule removed."                                                                                                                                                                                                                                                                                           |
 | Links     | "Withdrew the link."                                                                                                                                                                                                                                                                                                                                          |
 | Webhooks  | "Webhook created.", "Webhook saved.", "Webhook turned on.", "Webhook turned off.", "Webhook deleted.", "Sent a test delivery.", "Delivered it again."                                                                                                                                                                                                         |
-| Encoding  | "Hardware encoding saved.", "Preview quality saved.", "Segment length saved.", "Saved how long prepared downloads are kept.", "Started re-encoding.", "Stopped the re-encode.", "Kept the new encode and removed the original.", "Put the original back."                                                                                                     |
+| Encoding  | "Hardware encoding saved.", "Preview quality saved.", "Fast thumbnails saved.", "Segment length saved.", "Saved how long prepared downloads are kept.", "Started re-encoding.", "Stopped the re-encode.", "Kept the new encode and removed the original.", "Put the original back."                                                                           |
 
 A failure shows the reason in place of the confirmation, for example that a key could not be saved.

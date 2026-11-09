@@ -18736,6 +18736,16 @@
     "context": "Shown in the encoding panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.encodingSettings.fastThumbnailsAbout",
+    "text": "On a server with a GPU, seek-bar thumbnails usually come from every frame of a file, so each one shows the exact moment it’s for. With this on, SDR files use keyframes only, on the CPU. That’s several times faster, but a thumbnail can show a moment several seconds away from where you’re pointing. HDR files are made as before. Thumbnails that already exist stay as they are until you regenerate them.",
+    "context": "The info hover beside the fast thumbnails setting, which only shows on a server with a GPU."
+  },
+  {
+    "handler": "screens.adminArea.encodingSettings.fastThumbnailsDetail",
+    "text": "Makes seek-bar thumbnails much faster, but some show a nearby scene instead.",
+    "context": "Under the fast thumbnails setting."
+  },
+  {
     "handler": "screens.adminArea.encodingSettings.gaplessEpisodesAbout",
     "text": "In the last moments of an episode, Valence starts preparing the next one, so it follows with no pause, black screen or fade. It starts the next stream a little early, so turn it off on a server that struggles to transcode.",
     "context": "The info hover beside the gapless episodes setting."
@@ -24949,6 +24959,21 @@
     "handler": "screens.adminArea.settingsPanel.fanartTvKeySaved",
     "text": "fanart.tv key saved",
     "context": "Notice after the fanart.tv key was saved."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.fastThumbnails",
+    "text": "Fast thumbnails",
+    "context": "Shown in the settings panel in the admin area: whether seek-bar thumbnails are made from keyframes only, which is faster but less exact."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.fastThumbnailsCouldNotBeSaved",
+    "text": "Fast thumbnails could not be saved",
+    "context": "Shown in the settings panel in the admin area when the fast thumbnails switch could not be saved."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.fastThumbnailsSaved",
+    "text": "Fast thumbnails saved",
+    "context": "Shown in the settings panel in the admin area once the fast thumbnails switch is saved."
   },
   {
     "handler": "screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb",

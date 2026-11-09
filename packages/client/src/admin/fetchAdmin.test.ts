@@ -12,6 +12,7 @@ import {
   saveCatalogueKey,
   saveControlsConnectedApps,
   savePlaysEpisodesGapless,
+  saveUsesKeyframeThumbnails,
   saveTelemetryEnabled,
   fetchActiveSessions,
   stopSession,
@@ -71,6 +72,7 @@ const OVERVIEW = {
     hardwareDevices: [],
     whenDevicesFull: 'software' as const,
     previewQuality: 'high',
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     playsCatalogueTrailers: false,
@@ -275,6 +277,21 @@ describe('saveControlsConnectedApps', () => {
     answerWith({}, false);
 
     await expect(saveControlsConnectedApps(false)).resolves.toBe(false);
+  });
+});
+
+describe('saveUsesKeyframeThumbnails', () => {
+  it('saves whether thumbnails are made from keyframes alone', async () => {
+    answerWith({});
+
+    await expect(saveUsesKeyframeThumbnails(true)).resolves.toBe(true);
+    expect(sentBody()).toEqual({ usesKeyframeThumbnails: true });
+  });
+
+  it('reports failure rather than pretending it saved', async () => {
+    answerWith({}, false);
+
+    await expect(saveUsesKeyframeThumbnails(false)).resolves.toBe(false);
   });
 });
 

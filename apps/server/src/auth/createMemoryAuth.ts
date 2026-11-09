@@ -95,6 +95,7 @@ const createMemoryAuth = (
     hardwareDevices: [],
     whenDevicesFull: 'software',
     previewQuality: 'high',
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: true,
     allowedApps: EVERY_APP_ALLOWED,
     seededJobTriggerKinds: [],

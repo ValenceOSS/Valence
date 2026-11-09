@@ -71,6 +71,7 @@ const AdminOverviewSchema = z.object({
     hardwareDevices: HardwareDeviceSettingsSchema.default([]),
     whenDevicesFull: WhenDevicesFullSchema.default('software'),
     previewQuality: PreviewQualitySchema.default('high'),
+    usesKeyframeThumbnails: z.boolean().default(false),
     showsProfilesBeforeSignIn: z.boolean().default(false),
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
@@ -1027,6 +1028,24 @@ const savePlaysEpisodesGapless = async (playsEpisodesGapless: boolean): Promise<
 };
 
 /**
+ * Sets whether seek-bar thumbnails are made from keyframes alone, which is much faster but can show
+ * a moment a few seconds away from the one they are for.
+ *
+ * @param usesKeyframeThumbnails - Whether thumbnails are made from keyframes alone.
+ * @returns Whether the setting was written.
+ */
+const saveUsesKeyframeThumbnails = async (usesKeyframeThumbnails: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ usesKeyframeThumbnails }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether the server sends its one anonymous report a day.
  *
  * @param telemetryEnabled - Whether to send it.
@@ -1371,6 +1390,7 @@ export {
   saveHiddenAlerts,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
+  saveUsesKeyframeThumbnails,
   saveFetchesMusicDetails,
   saveTelemetryEnabled,
   saveUsesPushRelay,
