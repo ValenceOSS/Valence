@@ -4709,7 +4709,7 @@ const ENGLISH = {
     'Couldn’t load the re-encoding queue from the server. It may not be empty.',
   'screens.adminArea.encodingPanel.whatHappened': 'Result',
   'screens.adminArea.encodingSettings.fastThumbnailsAbout':
-    'On a server with a GPU, seek-bar thumbnails come from every frame of a file, so each one shows the exact moment it’s for. With this on, SDR files use keyframes only, on the CPU. That’s several times faster, but a thumbnail can show a moment several seconds away from where you’re pointing. HDR files aren’t affected, so their colours are still converted. Thumbnails that already exist stay as they are until you regenerate them.',
+    'On a server with a GPU, seek-bar thumbnails usually come from every frame of a file, so each one shows the exact moment it’s for. With this on, SDR files use keyframes only, on the CPU. That’s several times faster, but a thumbnail can show a moment several seconds away from where you’re pointing. HDR files are made as before. Thumbnails that already exist stay as they are until you regenerate them.',
   'screens.adminArea.encodingSettings.fastThumbnailsDetail':
     'Makes seek-bar thumbnails much faster, but some show a nearby scene instead.',
   'screens.adminArea.encodingSettings.gaplessEpisodesAbout':

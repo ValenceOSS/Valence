@@ -196,9 +196,9 @@ Changing it makes every preview again in the background, so expect a burst of wo
 
 #### Fast thumbnails
 
-Off by default, and shown only on a server with a GPU that isn't set to Software only. On such a server, seek-bar thumbnails are made from every frame of a file on the GPU, so each one shows the exact moment it is for. With this on, SDR files are made from keyframes only, on the CPU. That is several times faster and leaves the GPU alone, but keyframes can be ten seconds or more apart, so a thumbnail often shows a nearby shot rather than the moment you are pointing at. In our tests on 1080p episodes, about half to three quarters of thumbnails showed a different shot.
+Off by default, and shown only on a server with a GPU that isn't set to Software only. On such a server, seek-bar thumbnails are usually made from every frame of a file on the GPU, so each one shows the exact moment it is for. A file the GPU can't decode falls back to keyframes on the CPU. With this on, SDR files are made from keyframes only, on the CPU. That is several times faster and leaves the GPU alone, but keyframes can be ten seconds or more apart, so a thumbnail often shows a nearby shot rather than the moment you are pointing at. In our tests on 1080p episodes, about half to three quarters of thumbnails showed a different shot.
 
-A server without a GPU already makes every thumbnail from keyframes on the CPU, which is why the switch isn't shown there. HDR files aren't affected by this setting: they are made as before, so their colours are still converted. Turning it on or off doesn't redraw any thumbnails that already exist. To redraw a title's thumbnails, use the rebuild action in its menu. The toast reads "Fast thumbnails saved."
+A server without a GPU already makes every thumbnail from keyframes on the CPU, which is why the switch isn't shown there. HDR files aren't affected by this setting: they are made as before. Turning it on or off doesn't redraw any thumbnails that already exist. To redraw a title's thumbnails, use the rebuild action in its menu. The toast reads "Fast thumbnails saved."
 
 #### Keep prepared downloads
 
