@@ -4,24 +4,11 @@ import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { pictureOf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { artworkColourOf } from '@ValenceScreens/library/artworkColourOf';
 import type { MixArtworkProps } from './MixArtwork.types';
 import { say } from '@ValenceI18n/say';
 
-const COLOURS = 6;
-
 const WORDS = '@container relative block aspect-square w-full overflow-hidden rounded-xl';
-
-/**
- * Which of the mix colours belongs to a mix, the same one every time it is drawn.
- *
- * @param id - The mix.
- * @returns The colour, as CSS can read it.
- */
-const colourOf = (id: string): string => {
-  const at = [...id].reduce((sum, letter) => (sum * 31 + letter.charCodeAt(0)) % 9973, 7);
-
-  return `var(--mix-colour-${((at % COLOURS) + 1).toString()})`;
-};
 
 /**
  * The picture Valence makes for a mix out of the artists in it. A daily mix is its main artist with
@@ -35,7 +22,7 @@ const colourOf = (id: string): string => {
  */
 const MixArtwork = ({ mix, number = 1 }: MixArtworkProps) => {
   const artists = useQuery(musicQueries.artists());
-  const colour = colourOf(mix.id);
+  const colour = artworkColourOf(mix.id);
   const label = mix.title;
 
   const pictures = mix.faces.map((face) => {

@@ -49,6 +49,7 @@ const SessionsPicture = ({ isActed = false }: SessionsPictureProps) => (
     <PanelCard title={say('common.sessions')} hasFace={false} className="w-full text-left">
       <SessionCards
         sessions={isActed ? [ARRIVING, ...WATCHING] : WATCHING}
+        size="small"
         busyClientId={null}
         onStop={nothing}
         onPause={nothing}
