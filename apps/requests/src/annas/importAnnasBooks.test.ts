@@ -5,6 +5,7 @@ import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { torrentKeyOf } from './torrentKeyOf';
 import { importAnnasBooks } from './importAnnasBooks';
+import { readAnnasIndexFile } from './readAnnasIndexFile';
 import type { AnnasBookRecord } from './AnnasBookRecord';
 
 const aRecord = (md5: string, title: string, extension: string, language: string, path: string) =>
@@ -62,11 +63,56 @@ describe('importAnnasBooks', () => {
       torrentKeys: new Set([torrentKeyOf('libgen_rs_fic', 'f_381000.torrent')]),
       languages: new Set(['en', 'ja']),
       formats: new Set(['epub', 'pdf']),
+      readFile: readAnnasIndexFile,
     });
 
-    expect(counted).toEqual({ read: 5, kept: 1 });
+    expect(counted).toEqual({ read: 5, kept: 1, skipped: 0, failedFiles: [] });
     expect(kept.map((book) => [book.md5, book.torrent, book.fileInTorrent])).toEqual([
       [md5('a'), 'f_381000.torrent', `381000/${md5('a')}.epub`],
     ]);
+  });
+
+  it('drops NUL characters, keeps a refused batch a book at a time, and reads on past a bad file', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'annas-'));
+    const file = join(folder, 'aarecords__0.json.gz');
+    const missing = join(folder, 'aarecords__1.json.gz');
+    const md5 = (letter: string) => letter.repeat(32);
+
+    await writeFile(
+      file,
+      gzipSync(
+        [
+          aRecord(md5('a'), 'The Eye\u0000 of the World', 'epub', 'en', FICTION(md5('a'))),
+          aRecord(md5('b'), 'Refused', 'epub', 'en', FICTION(md5('b'))),
+        ].join('\n'),
+      ),
+    );
+
+    const kept: AnnasBookRecord[] = [];
+    const notes: string[] = [];
+    const counted = await importAnnasBooks({
+      files: [file, missing],
+      keep: (books) => {
+        if (books.some((book) => book.title === 'Refused')) {
+          return Promise.reject(new Error('refused'));
+        }
+
+        kept.push(...books);
+
+        return Promise.resolve();
+      },
+      torrentKeys: new Set([torrentKeyOf('libgen_rs_fic', 'f_381000.torrent')]),
+      languages: new Set(['en']),
+      formats: new Set(['epub']),
+      threads: 1,
+      readFile: readAnnasIndexFile,
+      onNote: (note) => {
+        notes.push(note);
+      },
+    });
+
+    expect(counted).toEqual({ read: 2, kept: 1, skipped: 1, failedFiles: [missing] });
+    expect(kept.map((book) => book.title)).toEqual(['The Eye of the World']);
+    expect(notes.some((note) => note.startsWith('could not read'))).toBe(true);
   });
 });

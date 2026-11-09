@@ -10,11 +10,14 @@ import { refuse } from '@ValenceI18n/refuse';
 
 const INDEX_FILE = /^aarecords__\d+\.json\.gz$/;
 
+const SAYS_HOW_FAR_EVERY = 1_000_000;
+
 const ImportSchema = z.object({
   folder: z.string().min(1),
   mirror: z.string().url(),
   languages: z.array(z.string().min(2).max(8)).min(1).max(20),
   formats: z.array(z.string().min(2).max(8)).min(1).max(20),
+  threads: z.number().int().min(1).max(64).optional(),
 });
 
 type CreateAnnasRoutesOptions = {
@@ -72,14 +75,26 @@ const createAnnasRoutes = ({ books, torrents, log }: CreateAnnasRoutesOptions) =
       torrentKeys: keys,
       languages: new Set(asked.languages),
       formats: new Set(asked.formats),
+      ...(asked.threads === undefined ? {} : { threads: asked.threads }),
       onProgress: (read, kept) => {
+        const isNewMillion =
+          Math.floor(read / SAYS_HOW_FAR_EVERY) > Math.floor(progress.read / SAYS_HOW_FAR_EVERY);
+
         progress.read = read;
         progress.kept = kept;
-        log(`Anna's Archive: read ${read.toString()} records, kept ${kept.toString()} books.`);
+
+        if (isNewMillion) {
+          log(`Anna's Archive: read ${read.toString()} records, kept ${kept.toString()} books.`);
+        }
+      },
+      onNote: (note) => {
+        log(`Anna's Archive: ${note}`);
       },
     })
-      .then(({ read, kept }) => {
-        log(`Anna's Archive: finished, ${kept.toString()} books kept of ${read.toString()} read.`);
+      .then(({ read, kept, skipped, failedFiles }) => {
+        log(
+          `Anna's Archive: finished, ${kept.toString()} books kept of ${read.toString()} read, ${skipped.toString()} passed over, ${failedFiles.length.toString()} files unread.`,
+        );
       })
       .catch((error: Error) => {
         log(`Anna's Archive: the import stopped: ${error.message}`);
