@@ -32,6 +32,40 @@ const PLAYBACK = {
 };
 
 describe('createPresenceService', () => {
+  it('says how long ago a player measured its stream, and forgets once the viewing ends', () => {
+    let nowMs = 10_000;
+    const presence = createPresenceService({}, () => nowMs);
+
+    presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: 'account-1',
+      profileId: 'profile-1',
+      profileName: 'Dan',
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+    presence.startPlayback('tab-1', PLAYBACK);
+    presence.heartbeatPlayback('tab-1', true);
+
+    expect(presence.healthAgeOf('tab-1')).toBeNull();
+
+    presence.heartbeatPlayback('tab-1', true, {
+      positionSeconds: 30,
+      durationSeconds: 6000,
+      bufferedAheadSeconds: 10,
+      presentedWidth: 1920,
+      presentedHeight: 1080,
+    });
+    nowMs = 14_500;
+
+    expect(presence.healthAgeOf('tab-1')).toBe(4500);
+
+    presence.stopPlayback('tab-1');
+
+    expect(presence.healthAgeOf('tab-1')).toBeNull();
+  });
+
   it('lists nobody before anyone connects', () => {
     const presence = createPresenceService();
 

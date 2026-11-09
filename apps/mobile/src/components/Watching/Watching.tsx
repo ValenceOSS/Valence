@@ -1067,21 +1067,26 @@ const Watching = ({
       return;
     }
 
+    const tellPresence = () => {
+      void sendPresenceHeartbeat(
+        clientId,
+        player.playing,
+        castAt.current === null ? presenceHealthOfExpo(player, knownLength.current) : undefined,
+      );
+    };
     const beat = setInterval(() => {
       void heartbeatPlaybackSession(sessionId, player.playing, clientId).then((answer) => {
         if (answer === 'gone') {
           reconnectRef.current();
         }
       });
-      void sendPresenceHeartbeat(
-        clientId,
-        player.playing,
-        castAt.current === null ? presenceHealthOfExpo(player, knownLength.current) : undefined,
-      );
+      tellPresence();
     }, SAY_IT_IS_ALIVE_EVERY);
+    const pausing = player.addListener('playingChange', tellPresence);
 
     return () => {
       clearInterval(beat);
+      pausing.remove();
     };
   }, [sessionId, clientId, player]);
 

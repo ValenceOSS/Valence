@@ -430,6 +430,30 @@ describe('Watching', () => {
     );
   });
 
+  it('tells the sessions page at once when it pauses, rather than at the next heartbeat', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    jest.mocked(sendPresenceHeartbeat).mockClear();
+
+    await act(() => {
+      theFakePlayer.currentTime = 42;
+      theFakePlayer.playing = false;
+      theFakePlayer.say('playingChange', { isPlaying: false });
+    });
+
+    expect(sendPresenceHeartbeat).toHaveBeenCalledWith(
+      expect.any(String),
+      false,
+      expect.objectContaining({ positionSeconds: 42 }),
+    );
+  });
+
   it('tells presence it has stopped, rather than leaving a viewer on the sessions page', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 

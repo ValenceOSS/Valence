@@ -30,7 +30,7 @@ type Session =
 
 const SESSION_HEARTBEAT_MS = 30_000;
 
-const PRESENCE_HEARTBEAT_MS = 15_000;
+const PRESENCE_HEARTBEAT_MS = 1000;
 
 /**
  * Asks the server to play a title on this television, and keeps the session it opens alive for as

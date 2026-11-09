@@ -134,6 +134,7 @@ type PresenceService = {
     health?: PresencePlaybackHealth,
   ) => void;
   list: () => PresenceEntry[];
+  healthAgeOf: (clientId: string) => number | null;
   renameDevice: (accountId: string, deviceId: string, renamed: string | null) => void;
   watch: (listener: () => void) => () => void;
   pause: (clientId: string, reason: string) => boolean;
@@ -170,6 +171,7 @@ const createPresenceService = (
   const connections = new Map<string, Connection>();
   const listeners = new Set<() => void>();
   const progressedAt = new Map<string, number>();
+  const healthHeardAt = new Map<string, number>();
 
   const announce = () => {
     for (const listener of listeners) {
@@ -216,6 +218,7 @@ const createPresenceService = (
 
     connection.entry.playback = null;
     progressedAt.delete(connection.entry.clientId);
+    healthHeardAt.delete(connection.entry.clientId);
     watchers.onPlaybackStopped?.(viewing(connection.entry, playback));
   };
 
@@ -367,6 +370,7 @@ const createPresenceService = (
 
       if (health !== undefined) {
         playback.health = health;
+        healthHeardAt.set(clientId, at);
       }
 
       if (isDue || wasPlaying !== isPlaying) {
@@ -387,6 +391,12 @@ const createPresenceService = (
     },
 
     list: () => Array.from(connections.values(), (connection) => connection.entry),
+
+    healthAgeOf: (clientId) => {
+      const heardAt = healthHeardAt.get(clientId);
+
+      return heardAt === undefined ? null : Math.max(0, now() - heardAt);
+    },
 
     renameDevice: (accountId, deviceId, renamed) => {
       const named = [...connections.values()].filter(

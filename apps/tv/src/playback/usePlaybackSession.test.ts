@@ -210,7 +210,7 @@ describe('usePlaybackSession', () => {
     jest.advanceTimersByTime(30_000);
 
     expect(heartbeatPlaybackSession).toHaveBeenCalledWith('session-1', false, 'client-1');
-    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(2);
+    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(30);
     expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith('client-1', false, undefined);
   });
 
@@ -239,7 +239,7 @@ describe('usePlaybackSession', () => {
     );
     await settle();
 
-    jest.advanceTimersByTime(15_000);
+    jest.advanceTimersByTime(1000);
 
     expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith('client-1', true, health);
   });
@@ -253,7 +253,7 @@ describe('usePlaybackSession', () => {
     jest.advanceTimersByTime(30_000);
 
     expect(heartbeatPlaybackSession).not.toHaveBeenCalled();
-    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(2);
+    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(30);
   });
 
   it('ends the session and the watching when the player goes', async () => {

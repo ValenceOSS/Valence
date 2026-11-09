@@ -15,6 +15,7 @@ import { BRAND_OPTICS } from '@ValenceUI/tokens/BRAND_OPTICS';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { useRunningPosition } from '@ValenceScreens/admin/useRunningPosition';
 import { PLAYBACK_DELIVERIES } from '@ValenceScreens/admin/PLAYBACK_DELIVERIES';
 import { marksOfDevice } from '@ValenceScreens/devices/marksOfDevice';
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
@@ -37,16 +38,19 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
   const heard = listening ?? bookListening;
   const [logoMissingFor, setLogoMissingFor] = useState<string | null>(null);
   const at = playback?.health ?? heard;
+  const running = useRunningPosition(playback);
   const through =
     at !== null && at.durationSeconds > 0
-      ? Math.min(at.positionSeconds / at.durationSeconds, 1)
+      ? Math.min((running ?? at.positionSeconds) / at.durationSeconds, 1)
       : (reading?.fraction ?? null);
   const buffered =
     playback?.health === null || playback?.health === undefined || through === null
       ? null
       : Math.min(
-          (playback.health.positionSeconds + playback.health.bufferedAheadSeconds) /
-            playback.health.durationSeconds,
+          Math.max(
+            running ?? 0,
+            playback.health.positionSeconds + playback.health.bufferedAheadSeconds,
+          ) / playback.health.durationSeconds,
           1,
         );
   const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;

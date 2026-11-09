@@ -292,6 +292,7 @@ const AdminSessionSchema = z
             bufferedAheadSeconds: z.number(),
             presentedWidth: z.number(),
             presentedHeight: z.number(),
+            ageMs: z.number().nullable(),
           })
           .nullable(),
       })
