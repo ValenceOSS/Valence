@@ -2763,10 +2763,13 @@ const jobs = createJobQueue({
 
             return rows.filter((row) => !split.has(row.id) && readStreamedPath(row.path) === null);
           },
-          readAhead: async (path) => readAhead(path, jobId),
+          readAhead: async (path, signal) => readAhead(path, jobId, signal),
           markRead: async (id) => markJobComplete(db, id, READ_KEYFRAMES_AHEAD_JOB),
           onUnreadable: (path) => {
             log.warn('scanner', `keyframes ahead: ${path} could not be read`);
+          },
+          onFailed: (path, failure) => {
+            log.warn('scanner', `keyframes ahead: passed over ${path}: ${failure.message}`);
           },
           onProgress: (done, total) => {
             jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), done, total);

@@ -30,6 +30,7 @@ type HttpRequestInit = {
   method?: string;
   headers?: Record<string, string>;
   body?: string;
+  signal?: AbortSignal;
 };
 
 type FetchLike = (url: string, init?: HttpRequestInit) => Promise<HttpResponse>;
@@ -444,7 +445,11 @@ type Transcoder = {
   ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
   measureLoudness?: (path: string) => Promise<MeasuredLoudness | null>;
-  readKeyframesAhead?: (inputPath: string, correlationId?: string) => Promise<KeyframesAhead>;
+  readKeyframesAhead?: (
+    inputPath: string,
+    correlationId?: string,
+    signal?: AbortSignal,
+  ) => Promise<KeyframesAhead>;
   creditFrames?: (request: CreditFramesRequest) => Promise<CreditFrame[]>;
   readSubtitle: (request: {
     inputPath: MediaInput;
@@ -589,6 +594,19 @@ const narrow = <TBody>(response: {
  */
 const httpFetch: FetchLike = async (url, init) => narrow(await fetch(url, init));
 
+/**
+ * A fetch over the network that waits as long as the media service takes to answer, rather than the
+ * five minutes Node's own fetch gives up after — the time a piece of work can spend queued behind
+ * others before it is even started.
+ *
+ * @returns The fetch.
+ */
+const createPatientHttpFetch = (): FetchLike => {
+  const agent = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
+
+  return async (url, init) => narrow(await undiciFetch(url, { ...init, dispatcher: agent }));
+};
+
 const REQUEST_TIMEOUT_MILLISECONDS = 60_000;
 
 const NO_TIMEOUT = 0;
@@ -687,7 +705,10 @@ const createTranscoderClient = ({
 
   const callSlowly = presentingTheSecret(
     waitingFirst(
-      fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath, NO_TIMEOUT)),
+      fetchImpl ??
+        (socketPath === null
+          ? createPatientHttpFetch()
+          : createSocketFetch(socketPath, NO_TIMEOUT)),
     ),
   );
   const call = async (path: string, init?: HttpRequestInit): Promise<HttpResponse> => {
@@ -1015,9 +1036,10 @@ const createTranscoderClient = ({
     fingerprint: async (request) =>
       FingerprintSchema.parse(await (await postRender('/fingerprint', request)).json()),
 
-    readKeyframesAhead: async (inputPath, correlationId) => {
+    readKeyframesAhead: async (inputPath, correlationId, signal) => {
       const response = await callSlowly(`${origin}/keyframes`, {
         method: 'POST',
+        ...(signal === undefined ? {} : { signal }),
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           inputPath,
