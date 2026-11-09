@@ -3052,7 +3052,6 @@ fn sheet_source(video: &crate::media::VideoStream, duration_seconds: f64) -> She
         height: video.height,
         range: video.range,
         range_base: video.range_base,
-        frames_per_second: video.frame_rate,
         bit_depth: video.bit_depth,
         duration_seconds,
     }
@@ -4143,7 +4142,6 @@ mod tests {
             height: 2160,
             duration_seconds: 60.0,
             bit_depth: Some(10),
-            frames_per_second: Some(24.0),
             range: crate::media::VideoRange::DolbyVision,
             range_base: crate::media::VideoRange::DolbyVision,
         };
