@@ -239,10 +239,16 @@ const viewerProfile = pgTable(
     pinFailures: integer('pinFailures').notNull().default(0),
     pinLockedUntil: timestamp('pinLockedUntil'),
     mayRequest: boolean('mayRequest').notNull().default(true),
+    ownerOf: text('ownerOf').generatedAlwaysAs(
+      sql`case when ${sql.identifier('isOwner')} then ${sql.identifier('userId')} end`,
+    ),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
-  (table) => [index('viewer_profile_user_idx').on(table.userId)],
+  (table) => [
+    index('viewer_profile_user_idx').on(table.userId),
+    uniqueIndex('viewer_profile_owner_idx').on(table.ownerOf),
+  ],
 );
 
 const sessionProfile = pgTable('session_profile', {

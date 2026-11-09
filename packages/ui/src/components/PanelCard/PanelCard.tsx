@@ -27,6 +27,8 @@ import type { PanelCardProps } from './PanelCard.types';
  *   or needs looking at.
  * @param isCompact - Whether the heading is drawn smaller, for a block one of many in a tight grid,
  *   as the figures at the top of the overview are.
+ * @param hasFace - Whether the block sits on one panel of its own, or brings several, each drawn
+ *   with the card face, for content gathered into groups.
  * @param className - Extra classes for the caller's own layout.
  */
 const PanelCard = ({
@@ -38,6 +40,7 @@ const PanelCard = ({
   isFlush = false,
   isHighlighted = false,
   isCompact = false,
+  hasFace = true,
   className,
 }: PanelCardProps) => {
   const heading = useId();
@@ -85,13 +88,17 @@ const PanelCard = ({
       </header>
 
       <div
-        className={cn(
-          'valence-card-face flex flex-1 flex-col overflow-hidden',
-          'ring-1 ring-transparent transition-[box-shadow] duration-[var(--duration-base)] ease-[var(--ease-out)]',
-          'group-hover/card:shadow-[var(--shadow-lifted)] group-hover/card:ring-[var(--surface-divider)]',
-          'motion-reduce:transition-none',
-          isFlush ? '' : 'p-4',
-        )}
+        className={
+          hasFace
+            ? cn(
+                'valence-card-face flex flex-1 flex-col overflow-hidden',
+                'ring-1 ring-transparent transition-[box-shadow] duration-[var(--duration-base)] ease-[var(--ease-out)]',
+                'group-hover/card:shadow-[var(--shadow-lifted)] group-hover/card:ring-[var(--surface-divider)]',
+                'motion-reduce:transition-none',
+                isFlush ? '' : 'p-4',
+              )
+            : 'flex flex-1 flex-col gap-2'
+        }
       >
         {children}
       </div>

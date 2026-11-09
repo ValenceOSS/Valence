@@ -23,6 +23,7 @@ import { Sidebar } from '@ValenceUI/Sidebar';
 import { Switch } from '@ValenceUI/Switch';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
+import { TruncatedText } from '@ValenceUI/TruncatedText';
 import { Well } from '@ValenceUI/Well';
 import { ExampleSiteLink } from '@ValenceLanding/components/UiLibraryPage/examples/demos/ExampleSiteLink';
 import { StepperDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/StepperDemo';
@@ -206,6 +207,21 @@ const LAYOUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
           it, and Read less folds it away again, so a long description never pushes everything else
           off the screen before somebody asks to see it.
         </ReadMore>
+      ),
+    },
+  ],
+  TruncatedText: [
+    {
+      title: 'Cut short, and in full on hover',
+      render: () => (
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="w-40 rounded-xl border border-[var(--surface-line)] px-3 py-2">
+            <TruncatedText text="MacBook Pro in the upstairs study" />
+          </div>
+          <div className="w-80 rounded-xl border border-[var(--surface-line)] px-3 py-2">
+            <TruncatedText text="Living room TV" />
+          </div>
+        </div>
       ),
     },
   ],

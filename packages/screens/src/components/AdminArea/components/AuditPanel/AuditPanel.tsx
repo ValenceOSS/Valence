@@ -378,7 +378,7 @@ const AuditPanel = () => {
           ) : (
             <span className="flex max-w-[16rem] min-w-0 flex-col gap-0.5">
               {device === null || row.original.userAgent === null ? null : (
-                <span className="truncate text-text" title={row.original.userAgent}>
+                <span className="truncate text-text">
                   <DeviceLabel
                     device={sayAgain(
                       nameTheDevice(identifyDevice({ userAgent: row.original.userAgent })),

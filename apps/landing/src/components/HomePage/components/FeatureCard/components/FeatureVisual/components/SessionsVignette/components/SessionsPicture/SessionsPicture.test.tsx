@@ -15,7 +15,7 @@ describe('SessionsPicture', () => {
   it('brings in somebody else starting to watch once acted out', () => {
     render(<SessionsPicture isActed />);
 
-    expect(screen.getByRole('heading', { name: 'Theo' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Theo' })).toBeInTheDocument();
     expect(screen.getByText('Northbound')).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(3);
   });

@@ -1098,7 +1098,7 @@ const ENGLISH = {
   'common.linkTo': 'Link to',
   'common.linkWorksFor': 'Link expires after',
   'common.linux': 'Linux',
-  'common.linuxComputer': 'Linux computer',
+  'common.linuxComputer': 'Linux PC',
   'common.list.andAlso': '{first}; {rest}',
   'common.list.andMore.one': '{listed} and {count} more',
   'common.list.andMore.other': '{listed} and {count} more',
@@ -6333,11 +6333,18 @@ const ENGLISH = {
   'screens.adminArea.sessionCard.message': 'Message',
   'screens.adminArea.sessionCard.messagesShowOnlyWhileWatching':
     'Messages show only while they’re watching a video.',
+  'screens.adminArea.sessionCard.nothingIsPlayingToPause': 'Nothing is playing to pause.',
+  'screens.adminArea.sessionCard.nothingIsPlayingToStop': 'Nothing is playing to stop.',
   'screens.adminArea.sessionCard.nothingPlaying': 'Nothing playing',
   'screens.adminArea.sessionCard.notWatchingAnything': 'Not watching anything',
   'screens.adminArea.sessionCard.shared': 'Shared',
+  'screens.adminArea.sessionCard.streamStatsShowOnlyForVideos':
+    'Stream stats show only for videos.',
   'screens.adminArea.sessionCard.theTvAppCannotShowMessages': 'The TV app can’t show messages.',
   'screens.adminArea.sessionHardware.deviceAccel': '{device} · {accel}',
+  'screens.adminArea.sessionLane.backThroughTheSessionsOfName':
+    'Back through the sessions of {name}',
+  'screens.adminArea.sessionLane.onThroughTheSessionsOfName': 'On through the sessions of {name}',
   'screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH':
     '{length} of {SESSION_MESSAGE_MAX_LENGTH} characters. This won’t pause what they’re watching.',
   'screens.adminArea.sessionMessageDialog.messageWatcher': 'Message {watcher}',

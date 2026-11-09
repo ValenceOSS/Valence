@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { BRAND_OPTICS } from '@ValenceUI/tokens/BRAND_OPTICS';
 import { BrandGlyph } from './BrandGlyph';
 
 describe('BrandGlyph', () => {
@@ -29,6 +30,27 @@ describe('BrandGlyph', () => {
     expect(container.firstElementChild).toHaveAttribute(
       'style',
       expect.stringContaining('width: 1.5rem'),
+    );
+  });
+
+  it('moves a mark whose weight sits off the middle of its square, so its weight is centred', () => {
+    const middle = BRAND_OPTICS.apple?.middle ?? 0.5;
+    const { container } = render(<BrandGlyph of="apple" />);
+
+    expect(middle).not.toBe(0.5);
+    expect(container.firstElementChild).toHaveAttribute(
+      'style',
+      expect.stringContaining(`translate: 0 ${((0.5 - middle) * 100).toFixed(1)}%`),
+    );
+  });
+
+  it('leaves a mark that sits in the middle of its square where it is', () => {
+    const { container } = render(<BrandGlyph of="chrome" />);
+
+    expect(BRAND_OPTICS.chrome).toBeUndefined();
+    expect(container.firstElementChild).toHaveAttribute(
+      'style',
+      expect.stringContaining('translate: 0 0.0%'),
     );
   });
 

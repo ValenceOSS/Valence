@@ -57,6 +57,16 @@ const isDoingSomething = (session: ActiveSession): boolean =>
   session.reading !== null;
 
 /**
+ * Whether a session has a player that can be paused and stopped from here — video, music or an
+ * audiobook, but not a book being read.
+ *
+ * @param session - The session.
+ * @returns Whether it has.
+ */
+const hasAPlayer = (session: ActiveSession): boolean =>
+  session.playback !== null || session.listening !== null || session.bookListening !== null;
+
+/**
  * Every open session as a row of a table: who has it, with their picture, what they have open, on what, whether it is
  * playing, how far through they are and how it reaches them, with the controls for intervening in
  * a menu at its end. A viewer with more than one session open is one row, with their sessions
@@ -306,10 +316,13 @@ const SessionTable = ({
 
         const session = row.original.session;
         const isBusy = busyClientId === session.clientId;
-        const isPlaying = session.playback?.isPlaying ?? false;
+        const isPlaying =
+          session.playback?.isPlaying ??
+          (session.listening ?? session.bookListening)?.isPlaying ??
+          false;
 
         const items = [
-          ...(session.playback === null
+          ...(!hasAPlayer(session)
             ? []
             : [
                 isPlaying
@@ -348,7 +361,7 @@ const SessionTable = ({
                   },
                 },
               ]),
-          ...(!isDoingSomething(session)
+          ...(!hasAPlayer(session)
             ? []
             : [
                 {

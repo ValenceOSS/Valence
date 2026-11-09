@@ -28,6 +28,28 @@ describe('Tooltip', () => {
     expect(await screen.findByText('Pop out')).toBeInTheDocument();
   });
 
+  it('says more beneath the name, past a line, where it is given more to say', async () => {
+    const user = userEvent.setup();
+    const detail = 'Mozilla/5.0 (X11; Linux x86_64) Firefox/140.0';
+
+    render(
+      <Tooltip label="Firefox" detail={detail}>
+        <button type="button" aria-label="Device" />
+      </Tooltip>,
+    );
+
+    await user.hover(screen.getByRole('button', { name: 'Device' }));
+
+    const said = (await screen.findAllByText(detail)).find(
+      (found) => found.closest('[data-slot="tooltip-content"]') !== null,
+    );
+    const chip = said?.closest('[data-slot="tooltip-content"]');
+
+    expect(chip).toHaveTextContent('Firefox');
+    expect(said?.previousElementSibling).toHaveAttribute('aria-hidden');
+    expect(said?.previousElementSibling).toHaveClass('h-px');
+  });
+
   it('leaves the control exactly as its caller built it', () => {
     render(
       <Tooltip label="Pop out">

@@ -23,6 +23,20 @@ describe('readGridSize', () => {
     expect(readGridSize()).toBe(DEFAULT_GRID_SIZE);
   });
 
+  it('keeps a choice made under another key apart from the library’s', () => {
+    saveGridSize('small', 'valence.sessionCardSize');
+    saveGridSize('large');
+
+    expect(readGridSize('valence.sessionCardSize')).toBe('small');
+    expect(readGridSize()).toBe('large');
+  });
+
+  it('starts another key at the middle size, whatever the library has chosen', () => {
+    saveGridSize('large');
+
+    expect(readGridSize('valence.sessionCardSize')).toBe(DEFAULT_GRID_SIZE);
+  });
+
   it('still draws the page when the browser refuses to be read', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('Storage is disabled.');
@@ -37,6 +51,13 @@ describe('saveGridSize', () => {
     saveGridSize('small');
 
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('small');
+  });
+
+  it('writes a choice under the key it is given, leaving the library’s alone', () => {
+    saveGridSize('small', 'valence.sessionCardSize');
+
+    expect(window.localStorage.getItem('valence.sessionCardSize')).toBe('small');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
   it('says nothing when the browser refuses to be written to', () => {

@@ -93,6 +93,9 @@ const MONITOR: Monitor = {
     deploymentMemory: null,
     apiMemoryBytes: null,
     requestsMemoryBytes: null,
+    deploymentCpuPercent: null,
+    apiCpuPercent: null,
+    requestsCpuPercent: null,
     loadAverage: 1.5,
     disks: [
       { mountPoint: '/', totalBytes: 500 * 1024 ** 3, availableBytes: 100 * 1024 ** 3 },

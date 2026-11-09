@@ -70,9 +70,20 @@ describe('Requests', () => {
     });
   });
 
-  it('reads what the requests service costs in memory, and nothing below zero', () => {
-    expect(RequestsMemorySchema.parse({ bytes: 3_200_000_000 })).toEqual({ bytes: 3_200_000_000 });
+  it('reads what the requests service costs in memory and processor, and nothing below zero', () => {
+    expect(RequestsMemorySchema.parse({ bytes: 3_200_000_000, cpuPercent: 42.5 })).toEqual({
+      bytes: 3_200_000_000,
+      cpuPercent: 42.5,
+    });
     expect(RequestsMemorySchema.safeParse({ bytes: -1 }).success).toBe(false);
+    expect(RequestsMemorySchema.safeParse({ bytes: 1, cpuPercent: -1 }).success).toBe(false);
+  });
+
+  it('reads no processor figure from a requests service too old to give one', () => {
+    expect(RequestsMemorySchema.parse({ bytes: 3_200_000_000 })).toEqual({
+      bytes: 3_200_000_000,
+      cpuPercent: null,
+    });
   });
 
   it('reads whether requesting is on at all', () => {

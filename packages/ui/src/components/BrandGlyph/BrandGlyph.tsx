@@ -17,6 +17,7 @@ import valence from '@ValenceBrands/valence.svg';
 import vivaldi from '@ValenceBrands/vivaldi.svg';
 import windows from '@ValenceBrands/windows.svg';
 import { cn } from '@ValenceUI/cn';
+import { BRAND_OPTICS } from '@ValenceUI/tokens/BRAND_OPTICS';
 import type { BrandGlyphProps, BrandMarkName } from './BrandGlyph.types';
 
 const MARKS: Readonly<Record<BrandMarkName, string>> = {
@@ -46,7 +47,8 @@ const BASE_TEXT_PX = 16;
  * The mark of a browser, a system or a television's maker, for saying at a glance what something
  * runs in, where the icon set has only generic shapes. The mark is a file referenced by its address
  * and painted through as a mask, so it takes the colour of the text around it the way an icon does
- * and no SVG is inlined.
+ * and no SVG is inlined. A mark whose weight sits high or low in its square is moved to centre its
+ * weight rather than its square, so it lines up with what sits beside it.
  *
  * @param of - Whose mark it is.
  * @param size - How large to draw it, in pixels at the default text size.
@@ -57,6 +59,7 @@ const BASE_TEXT_PX = 16;
 const BrandGlyph = ({ of, size = 16, label, className }: BrandGlyphProps) => {
   const mark = `url("${MARKS[of]}")`;
   const side = `${(size / BASE_TEXT_PX).toString()}rem`;
+  const lift = (0.5 - (BRAND_OPTICS[of]?.middle ?? 0.5)) * 100;
 
   return (
     <span
@@ -70,6 +73,7 @@ const BrandGlyph = ({ of, size = 16, label, className }: BrandGlyphProps) => {
         maskSize: 'contain',
         maskRepeat: 'no-repeat',
         maskPosition: 'center',
+        translate: `0 ${lift.toFixed(1)}%`,
       }}
     />
   );

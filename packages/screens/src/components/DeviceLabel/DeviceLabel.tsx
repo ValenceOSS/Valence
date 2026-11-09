@@ -1,7 +1,10 @@
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { TruncatedText } from '@ValenceUI/TruncatedText';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { Icon } from '@ValenceUI/Icon';
 import { WORDMARKS, marksOfDevice } from '@ValenceScreens/devices/marksOfDevice';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
+import { cn } from '@ValenceUI/cn';
 import type { DeviceLabelProps } from './DeviceLabel.types';
 
 /**
@@ -13,7 +16,9 @@ import type { DeviceLabelProps } from './DeviceLabel.types';
  * @param client - What it reaches Valence through, such as "Valence for iOS", where it is known.
  * @param identity - What the device is, which picks its marks, where it is known.
  * @param clientKind - What kind of app it said it was, for a device that never said more.
- * @param userAgent - What the device sent as its user agent, shown on hover, where it is known.
+ * @param userAgent - What the device sent as its user agent, where it is known. Hovering the label
+ *   then names what it reaches Valence through with the user agent beneath, which says everything
+ *   a cut-off name would, so the names do not each answer a hover of their own as well.
  */
 const DeviceLabel = ({
   device,
@@ -22,24 +27,32 @@ const DeviceLabel = ({
   clientKind = 'browser',
   userAgent = null,
 }: DeviceLabelProps) => {
+  const named = (text: string) =>
+    userAgent === null ? (
+      <TruncatedText text={text} />
+    ) : (
+      <span className="block min-w-0 truncate">{text}</span>
+    );
   const { deviceGlyph, systemMark, clientGlyph, clientMark } = marksOfDevice(identity, clientKind);
   const system = systemMark === null || WORDMARKS.has(systemMark) ? null : systemMark;
   const deviceNamed = (
-    <span className="flex min-w-0 items-center gap-1.5">
+    <span
+      className={cn(
+        'flex min-w-0 items-center gap-1.5',
+        client === null ? '' : 'max-w-[60%] shrink-0',
+      )}
+    >
       {system === null ? (
         <Icon of={deviceGlyph} size={14} className="shrink-0" />
       ) : (
         <BrandGlyph of={system} size={14} />
       )}
-      <span className="truncate">{device}</span>
+      {named(device)}
     </span>
   );
 
-  return (
-    <span
-      className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-text-muted"
-      title={userAgent ?? undefined}
-    >
+  const label = (
+    <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-text-muted">
       {client === null ? (
         deviceNamed
       ) : (
@@ -54,13 +67,21 @@ const DeviceLabel = ({
                 ) : (
                   <BrandGlyph of={clientMark} size={13} />
                 )}
-                <span className="truncate">{client}</span>
+                {named(client)}
               </span>
             ),
           }}
         />
       )}
     </span>
+  );
+
+  return userAgent === null ? (
+    label
+  ) : (
+    <Tooltip label={client ?? device} detail={userAgent}>
+      {label}
+    </Tooltip>
   );
 };
 

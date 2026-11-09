@@ -23,6 +23,8 @@ import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { say } from '@ValenceI18n/say';
 import { readServiceMemory } from '@ValenceRequests/memory/readServiceMemory';
+import { readServiceCpuMicros } from '@ValenceRequests/cpu/readServiceCpuMicros';
+import { createCpuMeter } from '@ValenceCore/functions/createCpuMeter';
 
 type CreateAppOptions = {
   secret: string;
@@ -36,6 +38,7 @@ type CreateAppOptions = {
   profiles?: Pick<ProfileService, 'find'>;
   readConsole?: () => ConsoleLine[];
   readMemory?: () => Promise<number>;
+  readCpu?: () => Promise<number | null>;
 };
 
 const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
@@ -54,6 +57,7 @@ const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
  * @param routes - Everything else the service offers, mounted under `/api`.
  * @param readConsole - The last lines this service wrote to its console, for the server to show.
  * @param readMemory - What the service is costing in memory, its browser included.
+ * @param readCpu - How busy the service has been since it was last asked, its browser included.
  * @param profiles - The quality profiles a search can be judged against.
  * @returns The app.
  */
@@ -69,6 +73,7 @@ const createApp = ({
   profiles = { find: () => Promise.resolve(null) },
   readConsole = () => [],
   readMemory = () => readServiceMemory(),
+  readCpu = createCpuMeter({ read: () => readServiceCpuMicros() }),
 }: CreateAppOptions) => {
   const app = new Hono();
 
@@ -94,7 +99,10 @@ const createApp = ({
   );
 
   app.get('/api/memory', async (context) =>
-    context.json({ bytes: await readMemory() } satisfies RequestsMemory),
+    context.json({
+      bytes: await readMemory(),
+      cpuPercent: await readCpu(),
+    } satisfies RequestsMemory),
   );
 
   app.get('/api/console', (context) =>

@@ -122,7 +122,7 @@ type MusicPlayer = {
 
 const RESTART_AFTER_SECONDS = 3;
 
-const REPORT_EVERY_MS = 15_000;
+const REPORT_EVERY_MS = 1000;
 
 const COULD_NOT_PLAY = say('common.thatTrackWouldNotPlay');
 

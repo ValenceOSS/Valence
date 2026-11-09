@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { library, mediaItem, series } from '#dialect/Schema';
+import { library, linkedServer, mediaItem, series } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createTitleListService } from './createTitleListService';
 import type { TitleListQuery } from '@ValenceContracts/schemas/TitleList';
@@ -151,6 +151,46 @@ describe('createTitleListService', { timeout: STARTING_DATABASE_MS }, () => {
     await expect(service.problems()).resolves.toEqual({
       libraries: [{ libraryId: 'lib', titles: 3 }],
     });
+  });
+
+  it('flags a film twice only where both copies are on this server, not beside a linked server’s', async () => {
+    const db = await aMigratedDatabase();
+
+    await db.insert(linkedServer).values({
+      id: 'friend',
+      name: 'Friend',
+      colour: 'blue',
+      address: 'https://friend.example.com',
+      publicKey: {},
+      fingerprint: 'friend',
+      state: 'linked',
+    });
+    await db.insert(library).values([
+      { id: 'lib', name: 'Films', kind: 'movies', path: '/lib' },
+      {
+        id: 'theirs',
+        name: 'Their films',
+        kind: 'movies',
+        path: 'linked://friend/api/libraries/1',
+        linkedServerId: 'friend',
+      },
+    ]);
+    await db.insert(mediaItem).values([
+      { ...aMediaItemRow('matrix', 'lib'), title: 'The Matrix', externalId: '603' },
+      { ...aMediaItemRow('heat', 'lib'), title: 'Heat', externalId: '949' },
+      { ...aMediaItemRow('heat-again', 'lib'), title: 'Heat', externalId: '949' },
+      { ...aMediaItemRow('their-matrix', 'theirs'), title: 'The Matrix', externalId: '603' },
+    ]);
+
+    const service = createTitleListService(db);
+    const flagged = async (libraryId: string) =>
+      (await service.list({ ...QUERY, libraryId }, undefined, 100)).titles
+        .filter((title) => title.problemFiles.duplicate.length > 0)
+        .map((title) => title.lead.id)
+        .toSorted();
+
+    await expect(flagged('lib')).resolves.toEqual(['heat', 'heat-again']);
+    await expect(flagged('theirs')).resolves.toEqual([]);
   });
 
   it('reads every file of a title through any one of them, or the list’s id for a programme', async () => {
