@@ -2104,8 +2104,6 @@ const placeDevices = (): Promise<void> =>
     },
   );
 
-void placeDevices();
-
 const transcoderWatch = createReachabilityWatch({
   onLost: () => {
     log.warn('transcoder', 'transcoder: stopped answering');
@@ -5939,7 +5937,9 @@ if (seededKinds.length > 0) {
   log.info('server', `schedule: default triggers set for ${seededKinds.join(', ')}`);
 }
 
-if (!(await untilReachable(() => transcoder.isReachable(), MEDIA_SERVICE_START_MS))) {
+if (await untilReachable(() => transcoder.isReachable(), MEDIA_SERVICE_START_MS)) {
+  void placeDevices();
+} else {
   log.warn('transcoder', 'the media service did not answer at start-up; jobs start without it');
 }
 
