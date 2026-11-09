@@ -420,7 +420,7 @@ describe('Watching', () => {
     theFakePlayer.bufferedPosition = 150;
 
     await act(() => {
-      jest.advanceTimersByTime(30_000);
+      jest.advanceTimersByTime(1000);
     });
 
     expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith(
@@ -430,7 +430,9 @@ describe('Watching', () => {
     );
   });
 
-  it('tells the sessions page at once when it pauses, rather than at the next heartbeat', async () => {
+  it('tells the sessions page it has paused within a second', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
     const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
@@ -440,11 +442,11 @@ describe('Watching', () => {
     });
 
     jest.mocked(sendPresenceHeartbeat).mockClear();
+    theFakePlayer.currentTime = 42;
+    theFakePlayer.playing = false;
 
     await act(() => {
-      theFakePlayer.currentTime = 42;
-      theFakePlayer.playing = false;
-      theFakePlayer.say('playingChange', { isPlaying: false });
+      jest.advanceTimersByTime(1000);
     });
 
     expect(sendPresenceHeartbeat).toHaveBeenCalledWith(

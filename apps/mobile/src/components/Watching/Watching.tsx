@@ -131,6 +131,8 @@ import { placeToCarryOnFrom } from '@ValenceClient/offline/placeToCarryOnFrom';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
+const REPORT_PRESENCE_EVERY = 1000;
+
 const LOOK_EVERY = 1000;
 
 const HAS_PLAYED_SECONDS = 1;
@@ -1067,26 +1069,24 @@ const Watching = ({
       return;
     }
 
-    const tellPresence = () => {
-      void sendPresenceHeartbeat(
-        clientId,
-        player.playing,
-        castAt.current === null ? presenceHealthOfExpo(player, knownLength.current) : undefined,
-      );
-    };
     const beat = setInterval(() => {
       void heartbeatPlaybackSession(sessionId, player.playing, clientId).then((answer) => {
         if (answer === 'gone') {
           reconnectRef.current();
         }
       });
-      tellPresence();
     }, SAY_IT_IS_ALIVE_EVERY);
-    const pausing = player.addListener('playingChange', tellPresence);
+    const report = setInterval(() => {
+      void sendPresenceHeartbeat(
+        clientId,
+        player.playing,
+        castAt.current === null ? presenceHealthOfExpo(player, knownLength.current) : undefined,
+      );
+    }, REPORT_PRESENCE_EVERY);
 
     return () => {
       clearInterval(beat);
-      pausing.remove();
+      clearInterval(report);
     };
   }, [sessionId, clientId, player]);
 
