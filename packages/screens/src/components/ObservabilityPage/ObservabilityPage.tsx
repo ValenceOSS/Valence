@@ -59,7 +59,8 @@ const isView = (value: string): value is ObservabilityView =>
  * operator wants within reach from whichever view they are looking at.
  *
  * @param definitions - The jobs the server offers.
- * @param libraries - The libraries a job can be run against.
+ * @param libraries - The libraries, of which this server's own are the ones a job can be run against
+ *   and its logs read for; a linked server's run their jobs there.
  * @param progress - What is running now, by library.
  * @param monitor - The latest readings, or null before any have arrived.
  * @param viewingJobKind - The job whose schedule is open, if any.
@@ -77,7 +78,7 @@ const isView = (value: string): value is ObservabilityView =>
  */
 const ObservabilityPage = ({
   definitions,
-  libraries,
+  libraries: everyLibrary,
   progress,
   monitor,
   viewingJobKind,
@@ -107,6 +108,10 @@ const ObservabilityPage = ({
   const [tracing, setTracing] = useState<string | null>(null);
   const travel = useTravelDirection([...OBSERVABILITY_VIEWS], view);
   const working = useMemo(() => monitor?.queue.jobs ?? [], [monitor]);
+  const libraries = useMemo(
+    () => everyLibrary.filter((library) => (library.linkedServerId ?? null) === null),
+    [everyLibrary],
+  );
   const failures = useQuery(adminQueries.recentFailures()).data?.total ?? 0;
   const cache = useQueryClient();
   const isQueuePaused = monitor?.queue.paused ?? false;
