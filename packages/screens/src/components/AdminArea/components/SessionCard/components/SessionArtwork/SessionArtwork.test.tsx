@@ -50,6 +50,29 @@ describe('SessionArtwork', () => {
     expect(screen.getByText('Arrival')).toBeInTheDocument();
   });
 
+  it('paints a film with no artwork in a gradient of its own colour, the same for the same title', () => {
+    const backgroundOf = (title: string): string => {
+      const { container, unmount } = render(
+        <SessionArtwork
+          session={anActiveSession({
+            playback: aSessionPlayback({ mediaTitle: title, hasBackdrop: false, hasPoster: false }),
+          })}
+        />,
+      );
+      const painted = [...container.querySelectorAll('span')].find((span) =>
+        span.style.backgroundImage.includes('linear-gradient'),
+      );
+      const background = painted?.style.backgroundImage ?? '';
+
+      unmount();
+
+      return background;
+    };
+
+    expect(backgroundOf('Arrival')).toContain('var(--mix-colour-');
+    expect(backgroundOf('Arrival')).toBe(backgroundOf('Arrival'));
+  });
+
   it('tries the logo again for the next film on the same card, after one had none', () => {
     const { rerender } = render(
       <SessionArtwork session={anActiveSession({ playback: aSessionPlayback() })} />,

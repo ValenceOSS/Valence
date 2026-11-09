@@ -18,6 +18,7 @@ import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDe
 import { PLAYBACK_DELIVERIES } from '@ValenceScreens/admin/PLAYBACK_DELIVERIES';
 import { marksOfDevice } from '@ValenceScreens/devices/marksOfDevice';
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
+import { artworkColourOf } from '@ValenceScreens/library/artworkColourOf';
 import { SessionPill } from '@ValenceScreens/components/AdminArea/components/SessionCard/components/SessionPill/SessionPill';
 import type { SessionArtworkProps } from './SessionArtwork.types';
 import { say } from '@ValenceI18n/say';
@@ -92,6 +93,10 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
         ? null
         : book.authors.join(', ');
 
+  const hasPicture = playback !== null && (playback.hasBackdrop || playback.hasPoster);
+  const isOnArt = playback !== null || cover !== null;
+  const tint = artworkColourOf(shown ?? playback?.mediaId ?? '');
+
   return (
     <div
       className={cn(
@@ -101,7 +106,7 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
     >
       {playback !== null ? (
         <>
-          {playback.hasBackdrop || playback.hasPoster ? (
+          {hasPicture ? (
             <img
               src={artworkUrl(playback.mediaId, playback.hasBackdrop ? 'backdrop' : 'poster', {
                 isOfTitle: true,
@@ -110,14 +115,24 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
               alt=""
               className="absolute inset-0 -z-10 size-full object-cover"
             />
-          ) : null}
+          ) : (
+            <span
+              aria-hidden
+              className="absolute inset-0 -z-10"
+              style={{
+                backgroundImage: [
+                  `radial-gradient(circle at 85% 10%, color-mix(in oklab, ${tint} 55%, transparent), transparent 60%)`,
+                  `linear-gradient(135deg, color-mix(in oklab, ${tint} 48%, var(--color-shade)), color-mix(in oklab, ${tint} 14%, var(--color-shade)))`,
+                ].join(', '),
+              }}
+            />
+          )}
           <span
             aria-hidden
             className="absolute inset-0 -z-10 bg-linear-to-b from-transparent from-45% to-shade/80"
           />
           <span className="absolute bottom-[6cqw] left-[4.5cqw] flex max-w-[60%] flex-col items-start text-on-scrim">
-            {logoMissingFor === playback.mediaId ||
-            !(playback.hasBackdrop || playback.hasPoster) ? (
+            {logoMissingFor === playback.mediaId || !hasPicture ? (
               <span className="text-[clamp(14px,5.6cqw,26px)] font-semibold leading-tight drop-shadow-[0_2px_10px_var(--color-scrim)]">
                 {shown}
               </span>
@@ -158,7 +173,12 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
               )}
               style={cover === null ? undefined : { backgroundImage: `url("${cover}")` }}
             />
-            <span className="flex min-w-0 flex-col self-end pb-1.5 text-on-scrim">
+            <span
+              className={cn(
+                'flex min-w-0 flex-col self-end pb-1.5',
+                cover === null ? 'text-text' : 'text-on-scrim',
+              )}
+            >
               <TruncatedText
                 text={shown ?? ''}
                 className="text-[clamp(13px,5cqw,22px)] font-semibold leading-tight"
@@ -209,15 +229,21 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
       {delivery === null ? null : <SessionPill side="right">{delivery}</SessionPill>}
 
       {through === null ? null : (
-        <span role="presentation" className="absolute inset-x-0 bottom-0 z-[2] h-1 bg-on-scrim/20">
+        <span
+          role="presentation"
+          className={cn(
+            'absolute inset-x-0 bottom-0 z-[2] h-1',
+            isOnArt ? 'bg-on-scrim/20' : 'bg-text/12',
+          )}
+        >
           {buffered === null ? null : (
             <span
-              className="absolute inset-y-0 left-0 bg-on-scrim/35"
+              className={cn('absolute inset-y-0 left-0', isOnArt ? 'bg-on-scrim/35' : 'bg-text/25')}
               style={{ width: `${(buffered * 100).toString()}%` }}
             />
           )}
           <span
-            className="absolute inset-y-0 left-0 bg-on-scrim"
+            className={cn('absolute inset-y-0 left-0', isOnArt ? 'bg-on-scrim' : 'bg-text')}
             style={{ width: `${(through * 100).toString()}%` }}
           />
         </span>
