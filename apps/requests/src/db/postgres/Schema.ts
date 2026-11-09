@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  index,
   integer,
   jsonb,
   pgSchema,
@@ -9,6 +10,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import { ANIME_AUDIO_POLICIES } from '@ValenceContracts/schemas/AnimeAudioPolicy';
 import type {
@@ -415,7 +417,29 @@ const requestLog = requestsSchema.table('request_log', {
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+const annasBook = requestsSchema.table(
+  'annas_book',
+  {
+    md5: text('md5').primaryKey(),
+    title: text('title').notNull(),
+    author: text('author'),
+    language: text('language').notNull(),
+    extension: text('extension').notNull(),
+    sizeBytes: doublePrecision('size_bytes'),
+    year: integer('year'),
+    coverUrl: text('cover_url'),
+    torrentGroup: text('torrent_group').notNull(),
+    torrent: text('torrent').notNull(),
+    fileInTorrent: text('file_in_torrent').notNull(),
+    searchKey: text('search_key').notNull(),
+  },
+  (table) => [
+    index('annas_book_search').using('gin', sql`to_tsvector('simple', ${table.searchKey})`),
+  ],
+);
+
 export {
+  annasBook,
   arrApp,
   requestLog,
   blocklistedRelease,

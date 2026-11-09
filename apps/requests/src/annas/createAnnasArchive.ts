@@ -9,6 +9,9 @@ import { directBookRelease } from '@ValenceRequests/opds/directBookRelease';
 import { measureLink } from '@ValenceRequests/opds/measureLink';
 import type { Solution, Solver } from '@ValenceRequests/solver/createSolver';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
+import type { AnnasBookStore } from '@ValenceRequests/annas/createDatabaseAnnasBookStore';
+import type { AnnasTorrents } from '@ValenceRequests/annas/createAnnasTorrents';
+import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
 import { saying } from '@ValenceI18n/saying';
 
@@ -22,6 +25,11 @@ type ArchiveFetch = (
     signal: AbortSignal;
   },
 ) => Promise<Response>;
+
+type AnnasLibrary = {
+  books: Pick<AnnasBookStore, 'search' | 'find' | 'count'>;
+  torrents: Pick<AnnasTorrents, 'find'>;
+};
 
 type Archive = {
   id: string;
@@ -80,12 +88,15 @@ const originOf = (archive: Archive): string => new URL(archive.url).origin;
  * @param fetch - How to ask.
  * @param wait - Waits for the indexer's turn, so it is asked no faster than its limit allows.
  * @param solver - The browser that gets past the bot check, or nothing where there is none.
+ * @param library - Anna's Archive's books as this service keeps them, searched instead of its site
+ *   wherever any are kept, each fetched as the one file of its bulk torrent; or nothing.
  * @returns The Anna's Archive client.
  */
 const createAnnasArchive = (
   fetch: ArchiveFetch,
   wait: (archive: Archive) => Promise<void>,
   solver: Pick<Solver, 'fetch'> | null = null,
+  library: AnnasLibrary | null = null,
 ) => {
   const sessions = new Map<string, Session>();
 
@@ -262,6 +273,10 @@ const createAnnasArchive = (
 
   return {
     capabilities: async (archive: Archive): Promise<IndexerCapabilities> => {
+      if (library !== null && (await library.books.count()) > 0) {
+        return BOOK_CAPABILITIES;
+      }
+
       await page(archive, `${originOf(archive)}/search?q=`, archive.apiKey !== '');
 
       return BOOK_CAPABILITIES;
@@ -270,6 +285,42 @@ const createAnnasArchive = (
     search: async (archive: Archive, query: string): Promise<Release[]> => {
       if (query.trim() === '') {
         return [];
+      }
+
+      if (library !== null && (await library.books.count()) > 0) {
+        const origin = originOf(archive);
+        const found = await library.books.search(query, MOST_RESULTS);
+
+        return (
+          await Promise.all(
+            found.map(async (book): Promise<Release[]> => {
+              const type = BOOK_TYPES.get(book.extension);
+              const torrent = await library.torrents.find(origin, book.torrentGroup, book.torrent);
+
+              if (type === undefined || torrent === null) {
+                return [];
+              }
+
+              const release = directBookRelease(
+                {
+                  key: book.md5,
+                  title: book.title,
+                  authors: book.author === null ? [] : [book.author],
+                  label: type.label,
+                  isHeard: type.isHeard,
+                  sizeBytes: book.sizeBytes,
+                  publishedAt:
+                    book.year === null ? null : `${book.year.toString()}-01-01T00:00:00Z`,
+                  downloadUrl: `${origin}/md5/${book.md5}`,
+                  infoUrl: `${origin}/md5/${book.md5}`,
+                },
+                archive,
+              );
+
+              return [{ ...release, protocol: 'torrent', seeders: torrent.seeders }];
+            }),
+          )
+        ).flat();
       }
 
       const address = new URL('/search', originOf(archive));
@@ -310,6 +361,47 @@ const createAnnasArchive = (
         throw new IndexerFailure(saying('requests.annas.annasArchive.thatIsNotABookOnAnnas'));
       }
 
+      const kept = library === null ? null : await library.books.find(md5);
+
+      if (library !== null && kept !== null) {
+        const torrent = await library.torrents.find(
+          originOf(archive),
+          kept.torrentGroup,
+          kept.torrent,
+        );
+
+        if (torrent === null) {
+          throw new IndexerFailure(
+            saying('requests.annas.annasArchive.itsTorrentIsNoLongerOffered'),
+          );
+        }
+
+        const answer = await ask(archive, torrent.url, { headers: {} });
+
+        if (!answer.ok) {
+          await answer.body?.cancel().catch(() => undefined);
+
+          throw new IndexerFailure(
+            saying('requests.indexers.indexerClient.theIndexerAnsweredStatus', {
+              status: answer.status.toString(),
+            }),
+          );
+        }
+
+        const named = safeFileName(
+          `${kept.title}${kept.author === null ? '' : ` - ${kept.author}`}`,
+        );
+
+        return {
+          kind: 'torrent',
+          bytes: new Uint8Array(await answer.arrayBuffer()),
+          onlyFile: {
+            path: kept.fileInTorrent,
+            name: `${named === '' ? kept.md5 : named}.${kept.extension}`,
+          },
+        };
+      }
+
       if (archive.apiKey === '') {
         throw new IndexerFailure(saying('requests.annas.annasArchive.downloadingNeedsAMembersKey'));
       }
@@ -348,6 +440,6 @@ const createAnnasArchive = (
 
 type AnnasArchive = ReturnType<typeof createAnnasArchive>;
 
-export type { AnnasArchive, ArchiveFetch };
+export type { AnnasArchive, AnnasLibrary, ArchiveFetch };
 
 export { createAnnasArchive };

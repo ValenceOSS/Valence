@@ -1,6 +1,9 @@
+type OneFileOf = { path: string; name: string };
+
 type ReleaseFile =
   | { kind: 'magnet'; url: string }
-  | { kind: 'torrent' | 'nzb'; bytes: Uint8Array }
+  | { kind: 'torrent'; bytes: Uint8Array; onlyFile?: OneFileOf }
+  | { kind: 'nzb'; bytes: Uint8Array }
   | { kind: 'link'; url: string; name: string; sizeBytes: number };
 
-export type { ReleaseFile };
+export type { OneFileOf, ReleaseFile };

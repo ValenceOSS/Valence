@@ -244,6 +244,12 @@ const createTransmissionAdapter = (
         );
       }
 
+      if (file.kind === 'torrent' && file.onlyFile !== undefined) {
+        throw new DownloadClientFailure(
+          saying('common.nameCannotFetchOneFileOfATorrent', { name: settings.name }),
+        );
+      }
+
       if (file.kind === 'nzb') {
         throw new DownloadClientFailure(
           saying('common.nameTakesTorrentsNotNZBs', { name: settings.name }),

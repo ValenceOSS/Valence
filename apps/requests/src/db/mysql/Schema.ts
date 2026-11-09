@@ -478,7 +478,23 @@ const requestLog = requestsSchema(
   ],
 );
 
+const annasBook = requestsSchema('annas_book', {
+  md5: char('md5', { length: 32 }).primaryKey(),
+  title: varchar('title', { length: 1000 }).notNull(),
+  author: varchar('author', { length: 500 }),
+  language: varchar('language', { length: 8 }).notNull(),
+  extension: varchar('extension', { length: 8 }).notNull(),
+  sizeBytes: double('size_bytes'),
+  year: int('year'),
+  coverUrl: varchar('cover_url', { length: 1000 }),
+  torrentGroup: varchar('torrent_group', { length: 64 }).notNull(),
+  torrent: varchar('torrent', { length: 300 }).notNull(),
+  fileInTorrent: varchar('file_in_torrent', { length: 500 }).notNull(),
+  searchKey: varchar('search_key', { length: 1500 }).notNull(),
+});
+
 export {
+  annasBook,
   arrApp,
   requestLog,
   blocklistedRelease,

@@ -82,12 +82,14 @@ const releaseInOf = (file: ReleaseFile, title: string): ReleaseIn | null => {
     case 'magnet':
       return { kind: 'magnet', title, magnet: file.url, infoHash: readMagnetHash(file.url) };
     case 'torrent':
-      return {
-        kind: 'torrent',
-        title,
-        torrentBase64: Buffer.from(file.bytes).toString('base64'),
-        infoHash: readTorrentHash(file.bytes),
-      };
+      return file.onlyFile !== undefined
+        ? null
+        : {
+            kind: 'torrent',
+            title,
+            torrentBase64: Buffer.from(file.bytes).toString('base64'),
+            infoHash: readTorrentHash(file.bytes),
+          };
     case 'nzb':
       return { kind: 'nzb', title, nzbBase64: Buffer.from(file.bytes).toString('base64') };
     case 'link':

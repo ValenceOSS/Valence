@@ -11,7 +11,7 @@ import { siteLinkFor } from '@ValenceRequests/cardigann/siteLinkFor';
 import { addressToLog } from '@ValenceRequests/indexers/addressToLog';
 import { createOpdsCatalogue } from '@ValenceRequests/opds/createOpdsCatalogue';
 import { createAnnasArchive } from '@ValenceRequests/annas/createAnnasArchive';
-import type { ArchiveFetch } from '@ValenceRequests/annas/createAnnasArchive';
+import type { AnnasLibrary, ArchiveFetch } from '@ValenceRequests/annas/createAnnasArchive';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import type { Pacer } from '@ValenceRequests/indexers/createPacer';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
@@ -51,6 +51,7 @@ type CreateIndexerClientOptions = {
   onAsked?: (asked: { indexer: string; address: string; found: number }) => void;
   readResults?: SearchResultsReader;
   solver?: Pick<Solver, 'fetch'> | null;
+  annasLibrary?: AnnasLibrary | null;
 };
 
 /**
@@ -71,6 +72,8 @@ type CreateIndexerClientOptions = {
  *   releases it found there, so the log shows what each indexer was really asked.
  * @param readResults - What reads a page of results off the main thread, where there is one.
  * @param solver - The browser that gets past a site's bot check, for Anna's Archive.
+ * @param annasLibrary - Anna's Archive's books as this service keeps them, searched instead of its
+ *   site where any are kept.
  * @returns The client.
  */
 const createIndexerClient = ({
@@ -81,6 +84,7 @@ const createIndexerClient = ({
   onAsked,
   readResults,
   solver = null,
+  annasLibrary = null,
 }: CreateIndexerClientOptions) => {
   const catalogues = createOpdsCatalogue(fetch, (catalogue) =>
     pacer.turn(catalogue.id, catalogue.requestsPerMinute),
@@ -90,6 +94,7 @@ const createIndexerClient = ({
     fetch,
     (indexer) => pacer.turn(indexer.id, indexer.requestsPerMinute),
     solver,
+    annasLibrary,
   );
 
   const engineFor = async (indexer: IndexerConnection, isUrgent = false) => {

@@ -1164,6 +1164,8 @@ const ENGLISH = {
   'common.nameAnswered': 'Connected to {name}.',
   'common.nameCannotBeReachedRightNow':
     '{name} can’t be reached right now. You can browse its titles, but you can’t play them until it’s back online.',
+  'common.nameCannotFetchOneFileOfATorrent':
+    '{name} can’t fetch one book out of a collection torrent. Send books from Anna’s Archive to qBittorrent.',
   'common.nameCouldNotBeDeleted': 'Couldn’t delete {name}. Try again.',
   'common.nameFromServer': '{name} from {server}',
   'common.nameRefusedTheUsernameOrPassword': '{name} rejected the username or password',
@@ -2472,6 +2474,8 @@ const ENGLISH = {
   'error.requests.sayWhoIsCalledWhat': 'Say what each account is called now.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
+  'error.requests.thatIsNotAnIndexToImport':
+    'That isn’t a folder of Anna’s Archive’s index, or its list of torrents couldn’t be read.',
   'error.requests.thatIsNotARequest': 'That isn’t a valid request.',
   'error.requests.thatIsNotWhatTheCatalogue': 'That doesn’t match the catalogue.',
   'error.requests.theAppCouldNotSearchForIt':
@@ -2871,6 +2875,8 @@ const ENGLISH = {
     'Anna’s Archive answered with a bot check instead of results. Add your account key so Valence searches signed in.',
   'requests.annas.annasArchive.downloadingNeedsAMembersKey':
     'Downloading from Anna’s Archive needs a member’s account key. Add one in the indexer’s settings.',
+  'requests.annas.annasArchive.itsTorrentIsNoLongerOffered':
+    'Anna’s Archive no longer offers the torrent this book is in.',
   'requests.annas.annasArchive.noDownloadLinkWasGiven':
     'Anna’s Archive didn’t give a download link for the book (status {status}). The account may have used its downloads for today.',
   'requests.annas.annasArchive.thatIsNotABookOnAnnas': 'That isn’t a book on Anna’s Archive.',
@@ -3074,6 +3080,8 @@ const ENGLISH = {
     'qBittorrent reports an error with this torrent',
   'requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent':
     'The release isn’t a torrent Valence can read',
+  'requests.downloads.qbittorrentAdapter.theTorrentDoesNotHoldTheFile':
+    'The collection torrent doesn’t hold the book it was meant to.',
   'requests.downloads.sabnzbdAdapter.nameAnsweredButNotAsSABnzbd':
     '{name} responded, but isn’t SABnzbd',
   'requests.downloads.sabnzbdAdapter.nameRefusedTheAPIKey': '{name} rejected the API key',

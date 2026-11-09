@@ -12,6 +12,7 @@ import type {
   DownloadClientAdapter,
 } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { TorrentLayout } from '@ValenceRequests/downloads/TorrentLayout';
+import type { OneFileOf } from '@ValenceRequests/indexers/ReleaseFile';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import { saying } from '@ValenceI18n/saying';
 
@@ -46,6 +47,12 @@ const PropertiesSchema = z.object({ piece_size: z.number().int().positive() });
 const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.number() });
 
 const NEVER_SECONDS = 8_640_000;
+
+const FILE_LIST_TRIES = 10;
+
+const FILE_LIST_WAIT_MS = 500;
+
+const FILE_PRIORITIES_AT_ONCE = 1000;
 
 const STATES: Readonly<Record<string, QueuedDownloadState>> = {
   // oxlint-disable-next-line valence/no-hard-coded-strings -- qBittorrent's error state, named as ours
@@ -274,6 +281,76 @@ const createQbittorrentAdapter = (
     }
   };
 
+  /**
+   * Fetches one file of a torrent and none of the rest — a book out of a collection of thousands —
+   * naming it as it should be called, then starts it. A torrent new to the client has every other
+   * file left out; one it already had, for another file, has this one let in beside it.
+   *
+   * @param hash - The torrent.
+   * @param only - The file to fetch, by its path in the torrent, and what to call it.
+   * @param isNew - Whether the torrent was only just added.
+   */
+  const keepOnly = async (hash: string, only: OneFileOf, isNew: boolean): Promise<void> => {
+    let listed: { index: number; name: string }[] = [];
+
+    for (let tries = 0; tries < FILE_LIST_TRIES && listed.length === 0; tries += 1) {
+      listed = z
+        .array(FileSchema)
+        .parse(
+          await (await answered(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`)).json(),
+        )
+        .map((one, position) => ({ index: one.index ?? position, name: one.name }));
+
+      if (listed.length === 0) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, FILE_LIST_WAIT_MS);
+        });
+      }
+    }
+
+    const wanted = listed.find((one) => one.name === only.path);
+
+    if (wanted === undefined) {
+      throw new DownloadClientFailure(
+        saying('requests.downloads.qbittorrentAdapter.theTorrentDoesNotHoldTheFile'),
+      );
+    }
+
+    const others = isNew ? listed.filter((one) => one !== wanted).map((one) => one.index) : [];
+
+    for (let at = 0; at < others.length; at += FILE_PRIORITIES_AT_ONCE) {
+      await answered(
+        '/api/v2/torrents/filePrio',
+        new URLSearchParams({
+          hash,
+          id: others.slice(at, at + FILE_PRIORITIES_AT_ONCE).join('|'),
+          priority: '0',
+        }),
+      );
+    }
+
+    await answered(
+      '/api/v2/torrents/filePrio',
+      new URLSearchParams({ hash, id: wanted.index.toString(), priority: '1' }),
+    );
+
+    const folder = only.path.includes('/')
+      ? only.path.slice(0, only.path.lastIndexOf('/') + 1)
+      : '';
+
+    if (`${folder}${only.name}` !== only.path) {
+      await ask(
+        '/api/v2/torrents/renameFile',
+        new URLSearchParams({ hash, oldPath: only.path, newPath: `${folder}${only.name}` }),
+      );
+    }
+
+    await eitherOf(
+      ['/api/v2/torrents/start', '/api/v2/torrents/resume'],
+      new URLSearchParams({ hashes: hash }),
+    );
+  };
+
   return {
     version: async () => (await (await answered('/api/v2/app/version')).text()).trim(),
 
@@ -326,6 +403,13 @@ const createQbittorrentAdapter = (
 
       form.append('category', category);
 
+      const only = file.kind === 'torrent' ? file.onlyFile : undefined;
+
+      if (only !== undefined) {
+        form.append('stopped', 'true');
+        form.append('paused', 'true');
+      }
+
       const response = await ask('/api/v2/torrents/add', form);
 
       if (response.status === 409) {
@@ -333,6 +417,10 @@ const createQbittorrentAdapter = (
           '/api/v2/torrents/setCategory',
           new URLSearchParams({ hashes: hash, category }),
         );
+
+        if (only !== undefined) {
+          await keepOnly(hash, only, false);
+        }
 
         return hash;
       }
@@ -343,6 +431,10 @@ const createQbittorrentAdapter = (
             name: settings.name,
           }),
         );
+      }
+
+      if (only !== undefined) {
+        await keepOnly(hash, only, true);
       }
 
       return hash;

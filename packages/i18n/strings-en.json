@@ -4897,6 +4897,11 @@
     "context": "Shown on a title from a linked server that is not answering. {name} is that server."
   },
   {
+    "handler": "common.nameCannotFetchOneFileOfATorrent",
+    "text": "{name} can’t fetch one book out of a collection torrent. Send books from Anna’s Archive to qBittorrent.",
+    "context": "Shown when a download client other than qBittorrent is given a book that is one file of a large collection torrent. {name} is the download client's name."
+  },
+  {
     "handler": "common.nameCouldNotBeDeleted",
     "text": "Couldn’t delete {name}. Try again.",
     "context": "Shown, used in the admin area and in the libraries panel in the admin area. {name} is filled in by the app."
@@ -10426,6 +10431,11 @@
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
   },
   {
+    "handler": "error.requests.thatIsNotAnIndexToImport",
+    "text": "That isn’t a folder of Anna’s Archive’s index, or its list of torrents couldn’t be read.",
+    "context": "Error from the requests service when importing Anna's Archive's index finds no index files in the folder given, or cannot read the mirror's list of torrents."
+  },
+  {
     "handler": "error.requests.thatIsNotARequest",
     "text": "That isn’t a valid request.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -12016,6 +12026,11 @@
     "context": "Shown in the requests service when a book from Anna’s Archive can’t be downloaded because the indexer has no account key; only members can download without a browser."
   },
   {
+    "handler": "requests.annas.annasArchive.itsTorrentIsNoLongerOffered",
+    "text": "Anna’s Archive no longer offers the torrent this book is in.",
+    "context": "Shown in the requests service when a book kept from Anna's Archive's index is in a bulk torrent Anna's Archive's list no longer has."
+  },
+  {
     "handler": "requests.annas.annasArchive.noDownloadLinkWasGiven",
     "text": "Anna’s Archive didn’t give a download link for the book (status {status}). The account may have used its downloads for today.",
     "context": "Shown in the requests service when Anna’s Archive won’t give a fast download link for a book. {status} is the HTTP status it answered with."
@@ -12629,6 +12644,11 @@
     "handler": "requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent",
     "text": "The release isn’t a torrent Valence can read",
     "context": "Shown in the downloads in the requests service (from `createQbittorrentAdapter`)."
+  },
+  {
+    "handler": "requests.downloads.qbittorrentAdapter.theTorrentDoesNotHoldTheFile",
+    "text": "The collection torrent doesn’t hold the book it was meant to.",
+    "context": "Shown in the requests service when a book from Anna's Archive is sent to qBittorrent but its collection torrent has no file at the path the index gave."
   },
   {
     "handler": "requests.downloads.sabnzbdAdapter.nameAnsweredButNotAsSABnzbd",
