@@ -101,6 +101,27 @@ describe('JobRunnerRow', () => {
     expect(screen.getByRole('button', { name: 'Run Scan for changes' })).toBeDisabled();
   });
 
+  it('stacks into a narrow space with the button to run it first, keeping its schedule', async () => {
+    const user = userEvent.setup();
+    const { onRun, onOpenSchedule } = draw({
+      triggers: [{ id: 't1', trigger: { kind: 'daily', hour: 3, minute: 0 } }],
+      nextRunAt: NOW + 4 * 60_000 + 7_000,
+      isCompact: true,
+    });
+
+    const run = screen.getByRole('button', { name: 'Run Scan for changes' });
+    const schedule = screen.getByRole('button', { name: 'Edit the schedule for Scan for changes' });
+
+    expect(run.compareDocumentPosition(schedule) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('in 4m 07s')).toBeInTheDocument();
+
+    await user.click(run);
+    await user.click(schedule);
+
+    expect(onRun).toHaveBeenCalledWith(SCAN);
+    expect(onOpenSchedule).toHaveBeenCalledWith('library.scan');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(JobRunnerRow.displayName).toBe('JobRunnerRow');
   });

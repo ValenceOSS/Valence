@@ -37,7 +37,8 @@ const describeSchedule = (triggers: JobTrigger[]): string => {
  * One job on one line: what it is, how long until it next runs on its own, when it runs with a
  * button to change that, and a button to run or stop it now. A job that cannot be scheduled says it is run by hand only.
  * While it runs, its progress takes the place of its description, so a running job reads
- * differently from an idle one without a column of badges saying so.
+ * differently from an idle one without a column of badges saying so. Compact, it stacks into a
+ * narrow card instead, the button to run it leading its schedule on a line of their own.
  *
  * @param definition - The job.
  * @param triggers - What makes it run on its own.
@@ -45,6 +46,7 @@ const describeSchedule = (triggers: JobTrigger[]): string => {
  * @param now - The moment to count down from.
  * @param summary - How far along it is, or null while it is not running.
  * @param isRunBlocked - Whether it has to wait for other work on a library before it can start.
+ * @param isCompact - Whether it is stacked for a narrow space rather than laid out in columns.
  * @param onRun - Called to start it.
  * @param onStop - Called to stop it.
  * @param onWatch - Called to open what it is doing.
@@ -57,6 +59,7 @@ const JobRunnerRow = ({
   now,
   summary,
   isRunBlocked,
+  isCompact = false,
   onRun,
   onStop,
   onWatch,
@@ -64,124 +67,147 @@ const JobRunnerRow = ({
 }: JobRunnerRowProps) => {
   const isRunning = summary !== null;
 
-  return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_11rem_6rem]">
-      <div className="flex min-w-0 flex-col gap-1">
-        <span className="flex min-w-0 items-center gap-2">
-          {isRunning ? (
-            <span
-              aria-hidden
-              className="size-1.5 shrink-0 rounded-full bg-primary motion-safe:animate-pulse"
-            />
-          ) : null}
+  const about = (
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="flex min-w-0 items-center gap-2">
+        {isRunning ? (
+          <span
+            aria-hidden
+            className="size-1.5 shrink-0 rounded-full bg-primary motion-safe:animate-pulse"
+          />
+        ) : null}
 
-          <span className="truncate text-sm font-medium text-text">
-            {sayAgain(definition.label)}
+        <span className="truncate text-sm font-medium text-text">{sayAgain(definition.label)}</span>
+      </span>
+
+      {summary === null ? (
+        <span
+          className={cn('truncate text-xs text-text-muted', isCompact ? 'leading-5' : '')}
+          title={sayAgain(definition.description)}
+        >
+          {sayAgain(definition.description)}
+        </span>
+      ) : (
+        <span className={cn('flex min-w-0 items-center gap-1', isCompact ? 'h-5' : '')}>
+          <ScanProgressBar
+            label={sayAgain(definition.label)}
+            phase={summary.phase}
+            processed={summary.processed}
+            total={summary.total}
+            item={summary.item}
+            isStopping={summary.isStopping}
+          />
+
+          <Button
+            variant="subtle"
+            size="none"
+            isIconOnly
+            label={say('screens.jobRunner.jobRunnerRow.whatLabelIsDoing', {
+              label: sayAgain(definition.label),
+            })}
+            onClick={() => {
+              onWatch(definition);
+            }}
+          >
+            <Icon of={InfoIcon} size={14} />
+          </Button>
+        </span>
+      )}
+    </div>
+  );
+
+  const countdown = nextRunAt === null ? null : describeCountdown(nextRunAt - now);
+
+  const schedule = definition.schedulable ? (
+    <Button
+      variant="secondary"
+      size="xs"
+      className={isCompact ? 'min-w-0 justify-start' : 'w-full justify-start'}
+      label={say('screens.jobRunner.jobRunnerRow.editTheScheduleForLabel', {
+        label: sayAgain(definition.label),
+      })}
+      onClick={() => {
+        onOpenSchedule(definition.kind);
+      }}
+    >
+      <Icon of={CalendarIcon} size={13} tone="muted" />
+      <span
+        className={cn(
+          'truncate tabular-nums',
+          triggers.length === 0 ? 'text-text-muted' : 'text-text',
+        )}
+      >
+        {describeSchedule(triggers)}
+      </span>
+    </Button>
+  ) : (
+    <span className="truncate px-2 text-xs text-text-muted">
+      {say('screens.jobRunner.jobRunnerRow.runByHandOnly')}
+    </span>
+  );
+
+  const action = isRunning ? (
+    <Button
+      variant="ghost"
+      size="sm"
+      label={say('screens.jobRunner.jobRunnerRow.stopLabel', {
+        label: sayAgain(definition.label),
+      })}
+      hasTooltip={false}
+      disabled={summary.isStopping}
+      onClick={() => {
+        onStop(definition);
+      }}
+    >
+      <Icon of={StopFilledIcon} size={13} />
+      {summary.isStopping ? say('common.stopping2') : say('common.stop')}
+    </Button>
+  ) : (
+    <Button
+      variant="ghost"
+      size="sm"
+      label={say('common.runLabel', { label: sayAgain(definition.label) })}
+      hasTooltip={false}
+      disabled={isRunBlocked}
+      onClick={() => {
+        onRun(definition);
+      }}
+    >
+      <Icon of={PlayFilledIcon} size={13} />
+      {say('common.run')}
+    </Button>
+  );
+
+  if (isCompact) {
+    return (
+      <li className="flex flex-col gap-2 px-4 py-3">
+        {about}
+
+        <span className="-ml-2 flex w-full max-w-[26rem] min-w-0 items-center justify-between gap-2">
+          {action}
+
+          <span className="flex min-w-0 items-center gap-2">
+            {schedule}
+            {countdown === null ? null : (
+              <span className="shrink-0 text-xs tabular-nums text-text-muted">{countdown}</span>
+            )}
           </span>
         </span>
+      </li>
+    );
+  }
 
-        {summary === null ? (
-          <span
-            className="truncate text-xs text-text-muted"
-            title={sayAgain(definition.description)}
-          >
-            {sayAgain(definition.description)}
-          </span>
-        ) : (
-          <span className="flex min-w-0 items-center gap-1">
-            <ScanProgressBar
-              label={sayAgain(definition.label)}
-              phase={summary.phase}
-              processed={summary.processed}
-              total={summary.total}
-              item={summary.item}
-              isStopping={summary.isStopping}
-            />
-
-            <Button
-              variant="subtle"
-              size="none"
-              isIconOnly
-              label={say('screens.jobRunner.jobRunnerRow.whatLabelIsDoing', {
-                label: sayAgain(definition.label),
-              })}
-              onClick={() => {
-                onWatch(definition);
-              }}
-            >
-              <Icon of={InfoIcon} size={14} />
-            </Button>
-          </span>
-        )}
-      </div>
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_11rem_6rem]">
+      {about}
 
       <span className="hidden text-right text-xs tabular-nums text-text-muted sm:block">
-        {nextRunAt === null ? null : describeCountdown(nextRunAt - now)}
+        {countdown}
       </span>
 
-      <span className="hidden min-w-0 justify-end sm:flex">
-        {definition.schedulable ? (
-          <Button
-            variant="secondary"
-            size="xs"
-            className="w-full justify-start"
-            label={say('screens.jobRunner.jobRunnerRow.editTheScheduleForLabel', {
-              label: sayAgain(definition.label),
-            })}
-            onClick={() => {
-              onOpenSchedule(definition.kind);
-            }}
-          >
-            <Icon of={CalendarIcon} size={13} tone="muted" />
-            <span
-              className={cn(
-                'truncate tabular-nums',
-                triggers.length === 0 ? 'text-text-muted' : 'text-text',
-              )}
-            >
-              {describeSchedule(triggers)}
-            </span>
-          </Button>
-        ) : (
-          <span className="truncate px-2 text-xs text-text-muted">
-            {say('screens.jobRunner.jobRunnerRow.runByHandOnly')}
-          </span>
-        )}
-      </span>
+      <span className="hidden min-w-0 justify-end sm:flex">{schedule}</span>
 
-      <span className="flex justify-end">
-        {isRunning ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            label={say('screens.jobRunner.jobRunnerRow.stopLabel', {
-              label: sayAgain(definition.label),
-            })}
-            hasTooltip={false}
-            disabled={summary.isStopping}
-            onClick={() => {
-              onStop(definition);
-            }}
-          >
-            <Icon of={StopFilledIcon} size={13} />
-            {summary.isStopping ? say('common.stopping2') : say('common.stop')}
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            label={say('common.runLabel', { label: sayAgain(definition.label) })}
-            hasTooltip={false}
-            disabled={isRunBlocked}
-            onClick={() => {
-              onRun(definition);
-            }}
-          >
-            <Icon of={PlayFilledIcon} size={13} />
-            {say('common.run')}
-          </Button>
-        )}
-      </span>
+      <span className="flex justify-end">{action}</span>
     </li>
   );
 };

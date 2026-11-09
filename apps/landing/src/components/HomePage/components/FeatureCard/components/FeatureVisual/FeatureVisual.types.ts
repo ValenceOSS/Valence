@@ -5,7 +5,7 @@ type FeatureVisualKind =
   | 'party'
   | 'offline'
   | 'notifications'
-  | 'sessions'
+  | 'jobs'
   | 'webhooks'
   | 'setup'
   | 'contract'

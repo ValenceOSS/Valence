@@ -5,7 +5,7 @@ import { SessionLane } from '@ValenceScreens/components/AdminArea/components/Ses
 import { ShowcaseFace } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShowcaseFace/ShowcaseFace';
 import { SceneCursor } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SceneCursor/SceneCursor';
 import { ShowcaseScope } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShowcaseScope/ShowcaseScope';
-import { aShowcaseSession } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SessionsVignette/aShowcaseSession';
+import { aShowcaseSession } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/DevicesVignette/aShowcaseSession';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
 import { say } from '@ValenceI18n/say';
 

@@ -42,10 +42,10 @@ const NotificationsVignette = lazyNamed(
   'NotificationsVignette',
 );
 
-const SessionsVignette = lazyNamed(
+const JobsVignette = lazyNamed(
   () =>
-    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SessionsVignette/SessionsVignette'),
-  'SessionsVignette',
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/JobsVignette/JobsVignette'),
+  'JobsVignette',
 );
 
 const WebhooksVignette = lazyNamed(
@@ -103,7 +103,7 @@ const VIGNETTES: Record<FeatureVisualKind, Preloadable> = {
   party: PartyVignette,
   offline: OfflineVignette,
   notifications: NotificationsVignette,
-  sessions: SessionsVignette,
+  jobs: JobsVignette,
   webhooks: WebhooksVignette,
   setup: SetupVignette,
   contract: ContractVignette,
