@@ -20,6 +20,28 @@ type BookInDownload = {
 
 const IN_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
 
+const MOST_EDITIONS_OF_ONE_BOOK = 2;
+
+const NUMBERED = /(?:^|\D)\d{1,3}(?:\D|$)/;
+
+/**
+ * Books' files gathered by their names, so the same book as an epub and a mobi is one book.
+ *
+ * @param files - The files.
+ * @returns Each name's files, in the order the names first come.
+ */
+const byName = (files: readonly DownloadedFile[]): DownloadedFile[][] => {
+  const named = new Map<string, DownloadedFile[]>();
+
+  for (const file of files) {
+    const name = basename(file.name, extname(file.name)).toLowerCase();
+
+    named.set(name, [...(named.get(name) ?? []), file]);
+  }
+
+  return [...named.values()];
+};
+
 /**
  * The books a download holds. Most hold one; a pack holds several, each audiobook told apart by the
  * album its tracks are tagged with, or by its folder where they are not tagged, a disc's folder
@@ -65,6 +87,31 @@ const booksInDownload = async (
 
   const books = [...heard.values()];
 
+  const named = byName(texts);
+
+  if (
+    books.length === 0 &&
+    named.length > MOST_EDITIONS_OF_ONE_BOOK &&
+    named.every((group) => NUMBERED.test(group[0]?.name ?? ''))
+  ) {
+    return named.flatMap((group) => {
+      const [first] = group;
+
+      return first === undefined
+        ? []
+        : [
+            {
+              texts: group,
+              tracks: [],
+              title: titleFromFolderName(basename(first.name, extname(first.name))),
+              author: null,
+              folder: dirname(first.path),
+              year: null,
+            },
+          ];
+    });
+  }
+
   if (books.length <= 1) {
     return books.length === 0 && texts.length === 0
       ? []
@@ -80,7 +127,7 @@ const booksInDownload = async (
         ];
   }
 
-  const alone: BookInDownload[] = [];
+  const lone: DownloadedFile[] = [];
 
   for (const text of texts) {
     const beside = books.filter((book) => book.folder === bookFolderInDownload(text));
@@ -88,16 +135,26 @@ const booksInDownload = async (
     if (beside.length === 1 && beside[0] !== undefined) {
       beside[0].texts.push(text);
     } else {
-      alone.push({
-        texts: [text],
-        tracks: [],
-        title: basename(text.name, extname(text.name)),
-        author: null,
-        folder: dirname(text.path),
-        year: null,
-      });
+      lone.push(text);
     }
   }
+
+  const alone: BookInDownload[] = byName(lone).flatMap((group) => {
+    const [first] = group;
+
+    return first === undefined
+      ? []
+      : [
+          {
+            texts: group,
+            tracks: [],
+            title: basename(first.name, extname(first.name)),
+            author: null,
+            folder: dirname(first.path),
+            year: null,
+          },
+        ];
+  });
 
   return [
     ...books.map((book) => ({

@@ -61,6 +61,33 @@ describe('booksInDownload', () => {
     ]);
   });
 
+  it('tells a pack of numbered ebooks apart, keeping each book’s editions together', async () => {
+    const books = await booksInDownload(
+      [
+        fileAt('/dl/01 - The Eye of the World.epub'),
+        fileAt('/dl/01 - The Eye of the World.pdf'),
+        fileAt('/dl/02 - The Great Hunt.epub'),
+        fileAt('/dl/03 - The Dragon Reborn.epub'),
+      ],
+      untagged,
+    );
+
+    expect(books.map((book) => [book.title, book.texts.length])).toEqual([
+      ['The Eye of the World', 2],
+      ['The Great Hunt', 1],
+      ['The Dragon Reborn', 1],
+    ]);
+  });
+
+  it('keeps one book’s editions as one book where their names say no number', async () => {
+    const books = await booksInDownload(
+      [fileAt('/dl/Dune.epub'), fileAt('/dl/Dune (retail).pdf'), fileAt('/dl/Dune v2.epub')],
+      untagged,
+    );
+
+    expect(books).toHaveLength(1);
+  });
+
   it('finds no book in a download with nothing to read or hear', async () => {
     expect(await booksInDownload([fileAt('/dl/notes.nfo')], untagged)).toEqual([]);
   });

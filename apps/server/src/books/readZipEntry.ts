@@ -1,10 +1,7 @@
 import { open } from 'node:fs/promises';
 import { inflateSync } from 'fflate';
-import type { ZipEntry } from './readZipDirectory';
-
-const LOCAL_FILE_HEADER = 0x04_03_4b_50;
-
-const LOCAL_MINIMUM = 30;
+import { zipEntryDataAt } from '@ValenceCore/zip/zipEntryDataAt';
+import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
 
 /**
  * Reads one file out of a zip, and only that one.
@@ -25,21 +22,11 @@ const readZipEntry = async (path: string, entry: ZipEntry): Promise<Uint8Array |
   }
 
   try {
-    const header = Buffer.alloc(LOCAL_MINIMUM);
+    const at = await zipEntryDataAt(file, entry);
 
-    await file.read(header, 0, LOCAL_MINIMUM, entry.headerOffset);
-
-    const reading = new DataView(header.buffer, header.byteOffset, header.byteLength);
-
-    if (reading.getUint32(0, true) !== LOCAL_FILE_HEADER) {
+    if (at === null) {
       return null;
     }
-
-    const at =
-      entry.headerOffset +
-      LOCAL_MINIMUM +
-      reading.getUint16(26, true) +
-      reading.getUint16(28, true);
 
     const packed = Buffer.alloc(entry.compressedSize);
 

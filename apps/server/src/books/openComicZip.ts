@@ -1,9 +1,9 @@
 import { imageTypeFor } from './imageTypeFor';
 import { COMIC_INFO, readComicInfo } from './readComicInfo';
 import { inPageOrder } from './inPageOrder';
-import { readZipDirectory } from './readZipDirectory';
+import { readZipDirectory } from '@ValenceCore/zip/readZipDirectory';
 import { readZipEntry } from './readZipEntry';
-import type { ZipEntry } from './readZipDirectory';
+import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
 import type { FixedBook } from './BookFile';
 
 /**

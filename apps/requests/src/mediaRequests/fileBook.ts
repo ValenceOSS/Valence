@@ -9,6 +9,8 @@ import { partsOfAudiobook } from '@ValenceRequests/mediaRequests/partsOfAudioboo
 import { formatsHeldIn } from '@ValenceRequests/mediaRequests/formatsHeldIn';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
+import { unpackBookZips } from '@ValenceRequests/mediaRequests/unpackBookZips';
+import { forgetUnpacked } from '@ValenceRequests/mediaRequests/forgetUnpacked';
 import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import { placesInSeries, seriesNameOf } from '@ValenceRequests/mediaRequests/seriesOfPack';
 import { bookFolderInDownload } from '@ValenceRequests/mediaRequests/bookFolderInDownload';
@@ -161,39 +163,18 @@ const sharedFolderOf = (folders: readonly string[], libraryPath: string): string
 };
 
 /**
- * Files a finished download of a book into its library, where the library will find it: every file
- * for one book in one folder — the text to read under the book's own name, and the tracks to listen
- * to numbered in their order, however many folders the download split them across — with its cover
- * beside them. A download holding both a book to read and the same book to hear files them as one
- * book the library can open either way.
+ * Files the books found in a download, as fileBook says, from the files already listed.
  *
- * A pack of several audiobooks — a series in one torrent — files each as a book of its own, named
- * by what its own tags say it is, into its series in its author's folder and at its place there,
- * `Author/Series/2 - Title`, as the library reads a series, the series named as the request knows
- * it where it does. Any book the library already has — the book to read, arriving after the book to
- * hear — joins the folder it is kept in, so the library opens it either way, and a pack leaves out
- * a format that folder already holds. Every book a pack holds is said, with where it went, the
- * formats it came in and its parts; the book it was fetched for is filed where its own folder is. A
- * single book is named by the request, except one sent by hand, whose release name is a poor guide
- * to which part is the title and which the author, and which is named by its own tags.
- *
- * A single book gets a `metadata.opf` beside it, saying its title, author, narrators, year, blurb,
- * series and Open Library id, and a `cover.jpg` from Open Library where the download brought no
- * cover — each only where the folder has none of its own yet.
- *
- * Cue sheets, checksums and notes are left behind: a cue names the file it describes, and a track
- * filed under its place in the book no longer carries that name. Nothing is moved out of a torrent
- * that is still seeding; its files are linked or copied instead.
- *
+ * @param files - The download's files, with any zip's books taken out of it.
  * @param request - What was asked for, and where its library is.
  * @param items - The book the download was fetched for.
  * @param contentPath - Where the download is, as this service sees it.
  * @param isKeepingSource - Whether the download must keep its files, as a seeding torrent must.
- * @param naming - Whether a single book is named by its own tags rather than by the request, how
- *   tags are read, and how a cover is fetched where the download brought none.
+ * @param naming - How a single book is named, how tags are read, and how a cover is fetched.
  * @returns Where each book was filed, and the ones nothing in the download could be filed as.
  */
-const fileBook = async (
+const fileFoundBooks = async (
+  files: readonly DownloadedFile[],
   request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'artistName'> &
     Partial<
       Pick<MediaRequestRecord, 'year' | 'overview' | 'openLibraryId' | 'narrations' | 'posterUrl'>
@@ -203,7 +184,6 @@ const fileBook = async (
   isKeepingSource: boolean,
   { isNamedByItsFiles = false, readTags = readSoundTags, fetchCover = fetchPicture }: Naming = {},
 ): Promise<Filed> => {
-  const files = await findDownloadedFiles(contentPath);
   const books = await booksInDownload(files, readTags);
   const isPack = books.length > 1;
   const series = isPack
@@ -353,6 +333,66 @@ const fileBook = async (
     missing,
     books: [...shelved.values()],
   };
+};
+
+/**
+ * Files a finished download of a book into its library, where the library will find it: every file
+ * for one book in one folder — the text to read under the book's own name, and the tracks to listen
+ * to numbered in their order, however many folders the download split them across — with its cover
+ * beside them. A download holding both a book to read and the same book to hear files them as one
+ * book the library can open either way.
+ *
+ * A pack of several audiobooks — a series in one torrent — files each as a book of its own, named
+ * by what its own tags say it is, into its series in its author's folder and at its place there,
+ * `Author/Series/2 - Title`, as the library reads a series, the series named as the request knows
+ * it where it does. Any book the library already has — the book to read, arriving after the book to
+ * hear — joins the folder it is kept in, so the library opens it either way, and a pack leaves out
+ * a format that folder already holds. Every book a pack holds is said, with where it went, the
+ * formats it came in and its parts; the book it was fetched for is filed where its own folder is. A
+ * single book is named by the request, except one sent by hand, whose release name is a poor guide
+ * to which part is the title and which the author, and which is named by its own tags.
+ *
+ * A single book gets a `metadata.opf` beside it, saying its title, author, narrators, year, blurb,
+ * series and Open Library id, and a `cover.jpg` from Open Library where the download brought no
+ * cover — each only where the folder has none of its own yet.
+ *
+ * Cue sheets, checksums and notes are left behind: a cue names the file it describes, and a track
+ * filed under its place in the book no longer carries that name. Nothing is moved out of a torrent
+ * that is still seeding; its files are linked or copied instead.
+ *
+ * @param request - What was asked for, and where its library is.
+ * @param items - The book the download was fetched for.
+ * @param contentPath - Where the download is, as this service sees it. Books a zip in it holds
+ *   are taken out first, and taken away again once they are filed.
+ * @param isKeepingSource - Whether the download must keep its files, as a seeding torrent must.
+ * @param naming - Whether a single book is named by its own tags rather than by the request, how
+ *   tags are read, and how a cover is fetched where the download brought none.
+ * @returns Where each book was filed, and the ones nothing in the download could be filed as.
+ */
+const fileBook = async (
+  request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'artistName'> &
+    Partial<
+      Pick<MediaRequestRecord, 'year' | 'overview' | 'openLibraryId' | 'narrations' | 'posterUrl'>
+    >,
+  items: readonly Fileable[],
+  contentPath: string,
+  isKeepingSource: boolean,
+  naming: Naming = {},
+): Promise<Filed> => {
+  const unpacked = await unpackBookZips(await findDownloadedFiles(contentPath));
+
+  try {
+    return await fileFoundBooks(
+      unpacked.files,
+      request,
+      items,
+      contentPath,
+      isKeepingSource,
+      naming,
+    );
+  } finally {
+    await forgetUnpacked(unpacked.folders);
+  }
 };
 
 export { fileBook };
