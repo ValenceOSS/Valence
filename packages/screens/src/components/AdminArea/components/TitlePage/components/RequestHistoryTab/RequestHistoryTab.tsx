@@ -16,6 +16,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLine';
 import { describeTimeTaken } from '@ValenceClient/requests/describeTimeTaken';
 import { stepsOfRequestLog } from '@ValenceClient/requests/stepsOfRequestLog';
+import { TITLE_STATUS_NAMES } from '@ValenceClient/requests/TITLE_STATUS_NAMES';
 import { toneOfRequestLog } from '@ValenceClient/requests/toneOfRequestLog';
 import type { RequestStage } from '@ValenceClient/requests/RequestStage';
 import type { RequestStep, RequestStepOutcome } from '@ValenceClient/requests/RequestStep';
@@ -213,8 +214,8 @@ const liveLinesOf = (now: RequestNow): StepTrailLine[] => {
 
 /**
  * What sits at the end of a step's row: how long it took once it is done and the next began, what it
- * is doing while it is under way, and whether it failed, found nothing it would take, or waits on an
- * admin.
+ * is doing while it is under way — a search that is not asking anybody yet waiting its turn rather
+ * than searching — and whether it failed, found nothing it would take, or waits on an admin.
  *
  * @param step - The step.
  * @returns The aside, or nothing for a step still to come.
@@ -229,7 +230,15 @@ const asideOf = (step: RequestStep): StepTrailAside | undefined => {
         ? undefined
         : { kind: 'note', text: describeTimeTaken(step.startedAt, step.endedAt) };
     case 'current':
-      return { kind: 'state', text: liveAsideOf(step.now) ?? doingOf(step.stage), tone: 'accent' };
+      return {
+        kind: 'state',
+        text:
+          liveAsideOf(step.now) ??
+          (step.stage === 'search' && step.now === null
+            ? TITLE_STATUS_NAMES.queued
+            : doingOf(step.stage)),
+        tone: 'accent',
+      };
     case 'stuck':
       return {
         kind: 'state',
