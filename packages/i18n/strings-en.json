@@ -10351,6 +10351,11 @@
     "context": "Error when Search missing is pressed for a request handed to a connected app that hasn't been approved, or was declined."
   },
   {
+    "handler": "error.requests.itIsNotBeingSearchedFor",
+    "text": "It isn’t being searched for right now.",
+    "context": "Error when an admin asks to stop a request's search but no search is under way."
+  },
+  {
     "handler": "error.requests.noSuchBlockedRelease",
     "text": "No such blocked release.",
     "context": "An error the server answers with (HTTP 404) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -13056,6 +13061,11 @@
     "context": "Why a download was stopped and blocked: an admin stopped it on the title page (from `createRequestWorker`)."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.stoppedSearchingAsAsked",
+    "text": "Stopped searching, as asked.",
+    "context": "A line in a request's activity log when an admin stopped a search that was under way."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother",
     "text": "Stopped {title} and blocked it. Looking for a different release.",
     "context": "A line in a request's activity when an admin stops a download and asks for another release. {title} is the stopped release (from `createRequestWorker`)."
@@ -13099,6 +13109,11 @@
     "handler": "requests.mediaRequests.requestWorker.theRequestsServiceMayNotWrite",
     "text": "The requests service doesn’t have permission to write to the destination folder ({message}). Set its PUID and PGID to the owner of your media folders.",
     "context": "The problem in the media requests in the requests service (from `createRequestWorker`). {message} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.theSearchWasStopped",
+    "text": "The search was stopped before anything was taken. It’s searched for again later as usual.",
+    "context": "The problem shown on an episode, film or book whose search an admin stopped part way."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted",
@@ -34935,6 +34950,11 @@
     "handler": "screens.requestDetailDialog.requestHistoryTab.searchingName",
     "text": "Searching {name}",
     "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer, a site searched for releases."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.stopSearching",
+    "text": "Stop searching",
+    "context": "The label of a button on a request's activity, beside the search step while it is under way, that stops the search without taking anything."
   },
   {
     "handler": "screens.requestDetailDialog.requestReleasesTab.backToItsOwnSearch",

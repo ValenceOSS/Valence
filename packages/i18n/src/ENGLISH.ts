@@ -2455,6 +2455,7 @@ const ENGLISH = {
     'It’s already in the library, so there’s nothing to cancel.',
   'error.requests.itIsNotApprovedSoNothingIsSearched':
     'It isn’t approved, so nothing is searched for it.',
+  'error.requests.itIsNotBeingSearchedFor': 'It isn’t being searched for right now.',
   'error.requests.noSuchBlockedRelease': 'No such blocked release.',
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.onlyAFilmIsKeptInTwoVersions': 'Only a film can be kept in two versions.',
@@ -3211,6 +3212,7 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.replacedByTitlePickedByHand':
     'Replaced by {title}, picked by hand',
   'requests.mediaRequests.requestWorker.stoppedByAnAdmin': 'Stopped by an admin',
+  'requests.mediaRequests.requestWorker.stoppedSearchingAsAsked': 'Stopped searching, as asked.',
   'requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother':
     'Stopped {title} and blocked it. Looking for a different release.',
   'requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting':
@@ -3227,6 +3229,8 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.theReleaseHasNoLinkTo': 'The release has no download link',
   'requests.mediaRequests.requestWorker.theRequestsServiceMayNotWrite':
     'The requests service doesn’t have permission to write to the destination folder ({message}). Set its PUID and PGID to the owner of your media folders.',
+  'requests.mediaRequests.requestWorker.theSearchWasStopped':
+    'The search was stopped before anything was taken. It’s searched for again later as usual.',
   'requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted':
     '{title} failed: {reason}. It’s been blocklisted, and Valence is searching for the next best release.',
   'requests.mediaRequests.requestWorker.titleIsCheckedAgainBeforeFiling':
@@ -8823,6 +8827,7 @@ const ENGLISH = {
   'screens.requestDetailDialog.requestHistoryTab.nothingToTakeYet': 'Nothing yet',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
   'screens.requestDetailDialog.requestHistoryTab.searchingName': 'Searching {name}',
+  'screens.requestDetailDialog.requestHistoryTab.stopSearching': 'Stop searching',
   'screens.requestDetailDialog.requestReleasesTab.backToItsOwnSearch': 'Back to its own search',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
   'screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed':

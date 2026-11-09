@@ -642,6 +642,9 @@ const createRequestsClient = ({
     ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/retry${queryOfScope(scope)}`, readRequest, { method: 'POST' }),
 
+    stopSearching: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/stop-search`, readRequest, { method: 'POST' }),
+
     fulfilRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/fulfil`, readRequest, { method: 'POST' }),
 

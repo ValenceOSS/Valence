@@ -1414,6 +1414,15 @@ const retryMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const stopSearchingMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/stop-search',
+  tags: ['Requests'],
+  summary: 'Stop a search under way for a request, taking nothing it found',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 const fulfilMediaRequestRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/fulfil',
@@ -1579,6 +1588,7 @@ export {
   stopRequestDownloadRoute,
   followRequestItemsRoute,
   retryMediaRequestRoute,
+  stopSearchingMediaRequestRoute,
   fulfilMediaRequestRoute,
   draftReleasesRoute,
   searchMissingRoute,

@@ -244,6 +244,8 @@ const NOTHING_FOUND = saying(
   'requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet',
 );
 
+const SEARCH_STOPPED = saying('requests.mediaRequests.requestWorker.theSearchWasStopped');
+
 const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   film: 'movies',
   series: 'shows',
@@ -445,6 +447,9 @@ const createRequestWorker = ({
     told(lanes(lane, work));
 
   const waiting = new Map<string, number>();
+
+  const searchesUnderWay = new Set<string>();
+  const stopping = new Set<string>();
 
   const holding = <Result>(requestId: string, work: () => Promise<Result>) => {
     waiting.set(requestId, (waiting.get(requestId) ?? 0) + 1);
@@ -879,6 +884,9 @@ const createRequestWorker = ({
 
     const { found, fetching } = begun;
     const id = found.request.id;
+
+    stopping.delete(id);
+    searchesUnderWay.add(id);
     const begunAs = new Map(
       fetching.map((item) => [item.id, item.state === 'wanted' ? 'searching' : item.state]),
     );
@@ -902,7 +910,7 @@ const createRequestWorker = ({
       fewestHeld = 0,
     ) => {
       for (const query of asking) {
-        if (isGone) {
+        if (isGone || stopping.has(id)) {
           return true;
         }
 
@@ -916,6 +924,10 @@ const createRequestWorker = ({
           });
         } finally {
           await showSearching(id, null);
+        }
+
+        if (stopping.has(id)) {
+          return true;
         }
 
         const isSent = await holding(id, async () => {
@@ -1016,16 +1028,33 @@ const createRequestWorker = ({
       }
     }
 
+    const wasStopped = stopping.has(id);
+
     await holding(id, async () => {
       for (const item of (await items.list()).filter(isPending)) {
         await update(item, {
           state: item.state === 'searching' ? 'wanted' : item.state,
-          problem: item.state === 'searching' ? NOTHING_FOUND : item.problem,
+          problem:
+            item.state === 'searching'
+              ? wasStopped
+                ? SEARCH_STOPPED
+                : NOTHING_FOUND
+              : item.problem,
           problemCode: item.state === 'searching' ? null : item.problemCode,
           lastSearchedAt: at(),
         });
       }
+
+      if (wasStopped) {
+        await note(
+          found.request,
+          saying('requests.mediaRequests.requestWorker.stoppedSearchingAsAsked'),
+        );
+      }
     });
+
+    stopping.delete(id);
+    searchesUnderWay.delete(id);
 
     return true;
   };
@@ -2902,6 +2931,16 @@ const createRequestWorker = ({
       });
 
       return question === null ? null : worker.pick(id, question.release, false, numbering);
+    },
+
+    stopSearch: (id: string): boolean => {
+      if (!searchesUnderWay.has(id)) {
+        return false;
+      }
+
+      stopping.add(id);
+
+      return true;
     },
 
     dismiss: (id: string, questionId: string): Promise<MediaRequest | null> =>

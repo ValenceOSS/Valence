@@ -256,6 +256,16 @@ const retryMediaRequest = (
   );
 
 /**
+ * Stops a search under way for a request, taking nothing it found; what it was searching for is
+ * searched for again later as usual.
+ *
+ * @param id - Which.
+ * @returns The request, or why not.
+ */
+const stopSearchingMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/stop-search`, 'POST', undefined, readRequest);
+
+/**
  * Says a request has been met by hand — a book somebody added to the library themselves — so it
  * stops waiting.
  *
@@ -460,6 +470,7 @@ export {
   stopRequestDownload,
   followRequestItems,
   retryMediaRequest,
+  stopSearchingMediaRequest,
   searchMissing,
   searchMusicCatalogue,
 };

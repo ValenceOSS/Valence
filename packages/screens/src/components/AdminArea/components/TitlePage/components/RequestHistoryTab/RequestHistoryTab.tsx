@@ -1,7 +1,9 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@ValenceUI/Button';
+import { stopSearchingMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -323,6 +325,18 @@ const trailStepOf = (
 const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   const said = useQuery(requestsQueries.mediaRequestLog(request.id));
   const now = useQuery(requestsQueries.mediaRequestNow(request.id, true)).data ?? null;
+  const cache = useQueryClient();
+  const stopping = useMutation({
+    mutationFn: () => stopSearchingMediaRequest(request.id),
+    onSettled: () => {
+      void cache.invalidateQueries({
+        queryKey: requestsQueries.mediaRequestLog(request.id).queryKey,
+      });
+      void cache.invalidateQueries({
+        queryKey: requestsQueries.mediaRequestNow(request.id, true).queryKey,
+      });
+    },
+  });
   const turn = useTakingTurns(
     now?.stage === 'search'
       ? now.indexers.filter((indexer) => indexer.state === 'asking').length
@@ -356,10 +370,27 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   const newest = steps.findLastIndex((step) => step.lines.length > 0 || step.now !== null);
 
   return (
-    <StepTrail
-      label={say('common.history')}
-      steps={steps.map((step, at) => trailStepOf(step, at, at === newest, turn))}
-    />
+    <div className="flex flex-col gap-3">
+      {now?.stage === 'search' ? (
+        <div className="flex justify-end">
+          <Button
+            variant="subtle"
+            size="sm"
+            isLoading={stopping.isPending}
+            onClick={() => {
+              stopping.mutate();
+            }}
+          >
+            {say('screens.requestDetailDialog.requestHistoryTab.stopSearching')}
+          </Button>
+        </div>
+      ) : null}
+
+      <StepTrail
+        label={say('common.history')}
+        steps={steps.map((step, at) => trailStepOf(step, at, at === newest, turn))}
+      />
+    </div>
   );
 };
 
