@@ -23786,11 +23786,6 @@
     "context": "Shown in the admin area (from `releaseColumns`)."
   },
   {
-    "handler": "screens.adminArea.releaseColumns.direct",
-    "text": "Direct",
-    "context": "A badge on a release in the admin area’s release search, saying it is downloaded straight from a link, such as a book from an OPDS catalogue, rather than by torrent or usenet."
-  },
-  {
     "handler": "screens.adminArea.releaseColumns.narration",
     "text": "Narration",
     "context": "The heading of a column in the list of releases found for a book, saying who reads each audiobook release and how long it lasts, where its name says."

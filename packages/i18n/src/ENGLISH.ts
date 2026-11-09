@@ -6042,7 +6042,6 @@ const ENGLISH = {
   'screens.adminArea.refuseRequestDialog.shownToWhoeverAsked':
     'Shown to the person who requested it.',
   'screens.adminArea.releaseColumns.age': 'Age',
-  'screens.adminArea.releaseColumns.direct': 'Direct',
   'screens.adminArea.releaseColumns.narration': 'Narration',
   'screens.adminArea.releaseColumns.pickedScore': 'Picked · {score}',
   'screens.adminArea.releaseColumns.scoresScore': 'Scores {score}',

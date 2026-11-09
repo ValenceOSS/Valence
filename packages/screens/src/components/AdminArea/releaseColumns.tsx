@@ -60,7 +60,7 @@ const releaseColumns = ({
               ? say('screens.adminArea.releaseColumns.torrent')
               : row.original.protocol === 'usenet'
                 ? say('screens.adminArea.releaseColumns.usenet')
-                : say('screens.adminArea.releaseColumns.direct')}
+                : say('common.direct')}
           </Badge>
         </span>
       </span>
