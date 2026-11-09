@@ -79,6 +79,25 @@ describe('booksInDownload', () => {
     ]);
   });
 
+  it('takes nothing from a collection named by hashes, nor from more books than a pack holds', async () => {
+    const hashes = ['33bed9dcd93918f9fb4bd832d14b4668', 'abb1b76b4a5c09af1c1d2f7466f09ce8'];
+
+    expect(
+      await booksInDownload(
+        hashes.map((hash) => fileAt(`/dl/527000/${hash}.epub`)),
+        untagged,
+      ),
+    ).toEqual([]);
+    expect(
+      await booksInDownload(
+        Array.from({ length: 101 }, (_, at) =>
+          fileAt(`/dl/${at.toString()} - Book ${at.toString()}.epub`),
+        ),
+        untagged,
+      ),
+    ).toEqual([]);
+  });
+
   it('keeps one book’s editions as one book where their names say no number', async () => {
     const books = await booksInDownload(
       [fileAt('/dl/Dune.epub'), fileAt('/dl/Dune (retail).pdf'), fileAt('/dl/Dune v2.epub')],
