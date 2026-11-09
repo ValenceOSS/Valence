@@ -661,6 +661,36 @@ const cancelJob = async (jobId: string): Promise<boolean> => {
 };
 
 /**
+ * Holds a running job after the step it is on, until it is resumed.
+ *
+ * @param jobId - The job to hold.
+ * @returns Whether it was running to be held.
+ */
+const pauseJob = async (jobId: string): Promise<boolean> => {
+  const response = await fetch(`/api/admin/jobs/running/${jobId}/pause`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
+ * Lets a held job carry on from where it held.
+ *
+ * @param jobId - The job to let go.
+ * @returns Whether it was held to be let go.
+ */
+const resumeJob = async (jobId: string): Promise<boolean> => {
+  const response = await fetch(`/api/admin/jobs/running/${jobId}/resume`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Asks the work queue to run a different number of jobs at once. Lowering it takes effect as running
  * work finishes; nothing already started is cut short.
  *
@@ -1360,6 +1390,8 @@ export {
   fetchJobDefinitions,
   runJob,
   cancelJob,
+  pauseJob,
+  resumeJob,
   setQueueConcurrency,
   setQueuePaused,
   runQueuedJobNow,

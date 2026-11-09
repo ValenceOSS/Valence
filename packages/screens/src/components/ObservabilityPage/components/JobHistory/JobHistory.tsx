@@ -28,7 +28,7 @@ import { pinFirst } from '@ValenceScreens/admin/pinFirst';
 import { usePinnedJobRuns } from '@ValenceScreens/admin/usePinnedJobRuns';
 import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
+import { cancelJob, pauseJob, resumeJob, watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeWords } from '@ValenceClient/admin/describeWords';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
@@ -265,6 +265,9 @@ const JobHistoryPanel = ({
     ...adminQueries.jobHistory(query),
     placeholderData: keepPreviousData,
   });
+  const refreshHistory = useCallback(() => {
+    void cache.invalidateQueries({ queryKey: adminQueries.jobHistory(query).queryKey.slice(0, 2) });
+  }, [cache, query]);
   const [askedRunning, askedCompleted, askedFailed, askedStopped] = useQueries({
     queries: STATUSES_COUNTED.map((status) => ({
       ...adminQueries.jobHistory({ ...narrowing, status, limit: 1, offset: 0 }),
@@ -488,9 +491,15 @@ const JobHistoryPanel = ({
         accessorFn: (record) => record.status,
         cell: ({ row }) => (
           <span className="flex items-center gap-1.5">
-            <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
-              {describeJobStatus(row.original.status).label}
-            </Badge>
+            {row.original.isPaused === true ? (
+              <Badge size="sm" tone="waiting">
+                {say('common.paused')}
+              </Badge>
+            ) : (
+              <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
+                {describeJobStatus(row.original.status).label}
+              </Badge>
+            )}
 
             {row.original.status === 'running' ? (
               <Button
@@ -710,13 +719,43 @@ const JobHistoryPanel = ({
                     },
                   ],
                 },
+                ...(row.original.status === 'running'
+                  ? [
+                      {
+                        items: [
+                          {
+                            id: 'pause',
+                            label:
+                              row.original.isPaused === true
+                                ? say('common.resume')
+                                : say('common.pause'),
+                            onChoose: () => {
+                              void (
+                                row.original.isPaused === true
+                                  ? resumeJob(row.original.id)
+                                  : pauseJob(row.original.id)
+                              ).then(refreshHistory);
+                            },
+                          },
+                          {
+                            id: 'cancel',
+                            label: say('common.cancel'),
+                            isDestructive: true,
+                            onChoose: () => {
+                              void cancelJob(row.original.id).then(refreshHistory);
+                            },
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
               ]}
             />
           </span>
         ),
       },
     ],
-    [labels, libraries, onViewLogs, onTrace, pinned, togglePin],
+    [labels, libraries, onViewLogs, onTrace, pinned, togglePin, refreshHistory],
   );
 
   return (

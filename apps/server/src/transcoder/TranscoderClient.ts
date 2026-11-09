@@ -555,6 +555,7 @@ type CreateTranscoderClientOptions = {
   secret?: string;
   fetchImpl?: FetchLike;
   streamFetchImpl?: StreamFetchLike;
+  beforeEachCall?: () => Promise<void>;
 };
 
 const UNIX_PREFIX = 'unix:';
@@ -645,6 +646,7 @@ const createTranscoderClient = ({
   secret = '',
   fetchImpl,
   streamFetchImpl,
+  beforeEachCall,
 }: CreateTranscoderClientOptions): TranscoderWithQueueControl => {
   const socketPath = readSocketPath(baseUrl);
   const origin = socketPath === null ? baseUrl : 'http://transcoder.local';
@@ -664,12 +666,27 @@ const createTranscoderClient = ({
       ? fetcher
       : (url, init) => fetcher(url, { ...init, headers: { ...init?.headers, ...presenting } });
 
+  /**
+   * Waits for whatever must come first before each request a fetcher makes — a paused job's turn —
+   * outside the request, so no timeout runs while it waits.
+   */
+  const waitingFirst = (fetcher: FetchLike): FetchLike =>
+    beforeEachCall === undefined
+      ? fetcher
+      : async (url, init) => {
+          await beforeEachCall();
+
+          return fetcher(url, init);
+        };
+
   const call2 = presentingTheSecret(
-    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath)),
+    waitingFirst(fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath))),
   );
 
   const callSlowly = presentingTheSecret(
-    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath, NO_TIMEOUT)),
+    waitingFirst(
+      fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath, NO_TIMEOUT)),
+    ),
   );
   const call = async (path: string, init?: HttpRequestInit): Promise<HttpResponse> => {
     const response = await call2(`${origin}${path}`, init);

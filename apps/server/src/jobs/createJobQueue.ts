@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { and, asc, eq, gt, inArray, lt, lte, notInArray, sql } from 'drizzle-orm';
@@ -136,6 +137,19 @@ const createJobQueue = ({
   const progressByJobId = new Map<string, JobProgress>();
   const running = new Map<string, { kind: string; subject: string | null }>();
   const cancelled = new Set<string>();
+  const paused = new Set<string>();
+  const waking = new Set<() => void>();
+  const runningAs = new AsyncLocalStorage<string>();
+  let isEverythingPaused = false;
+
+  const isHeld = (jobId: string): boolean =>
+    !cancelled.has(jobId) && (isEverythingPaused || paused.has(jobId));
+
+  const wakeTheHeld = (): void => {
+    for (const wake of waking) {
+      wake();
+    }
+  };
   const busy = new Map<string, number>();
   const inFlight = new Set<Promise<void>>();
   const timers: NodeJS.Timeout[] = [];
@@ -258,7 +272,7 @@ const createJobQueue = ({
       await onStarted?.({ kind, jobId: job.id, subject });
 
       if (handler !== undefined) {
-        await handler(job.id, payload, { attempt: job.attempts });
+        await runningAs.run(job.id, () => handler(job.id, payload, { attempt: job.attempts }));
       }
 
       onFinished?.({
@@ -292,6 +306,7 @@ const createJobQueue = ({
       running.delete(job.id);
       progressByJobId.delete(job.id);
       cancelled.delete(job.id);
+      paused.delete(job.id);
     }
   };
 
@@ -530,6 +545,7 @@ const createJobQueue = ({
         kind: about.kind,
         subject: about.subject,
         progress: progressByJobId.get(jobId) ?? null,
+        isPaused: isHeld(jobId),
       })),
 
     liveJob: async (kind, subject) => {
@@ -558,6 +574,7 @@ const createJobQueue = ({
     cancel: async (jobId) => {
       if (running.has(jobId)) {
         cancelled.add(jobId);
+        wakeTheHeld();
 
         return true;
       }
@@ -605,6 +622,8 @@ const createJobQueue = ({
         }
       }
 
+      wakeTheHeld();
+
       const dropped = await db
         .update(queuedJob)
         .set({ state: 'cancelled', finishedAt: new Date() })
@@ -614,6 +633,51 @@ const createJobQueue = ({
     },
 
     isCancelled: (jobId) => cancelled.has(jobId),
+
+    pause: (jobId) => {
+      if (!running.has(jobId)) {
+        return false;
+      }
+
+      paused.add(jobId);
+
+      return true;
+    },
+
+    resume: (jobId) => {
+      const wasPaused = paused.delete(jobId);
+
+      wakeTheHeld();
+
+      return wasPaused;
+    },
+
+    pauseAll: () => {
+      isEverythingPaused = true;
+    },
+
+    resumeAll: () => {
+      isEverythingPaused = false;
+      wakeTheHeld();
+    },
+
+    isPaused: (jobId) => isHeld(jobId),
+
+    untilResumed: (jobId) =>
+      isHeld(jobId)
+        ? new Promise<void>((resolve) => {
+            const wake = () => {
+              if (!isHeld(jobId)) {
+                waking.delete(wake);
+                resolve();
+              }
+            };
+
+            waking.add(wake);
+          })
+        : Promise.resolve(),
+
+    currentJob: () => runningAs.getStore() ?? null,
 
     reportProgress: (jobId, phase, processed, total, item = null) => {
       progressByJobId.set(jobId, { phase, processed, total, item });

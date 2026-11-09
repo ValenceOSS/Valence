@@ -1428,9 +1428,14 @@ const running: { plugins: PluginService | null } = { plugins: null };
 
 const devHosts = readDevHosts(env.VALENCE_DEV_HOSTS, env.NODE_ENV);
 
+const heldJobs: { untilResumed: () => Promise<void> } = {
+  untilResumed: () => Promise.resolve(),
+};
+
 const mediaService = createTranscoderClient({
   baseUrl: env.TRANSCODER_URL,
   secret: env.TRANSCODER_SECRET,
+  beforeEachCall: () => heldJobs.untilResumed(),
 });
 
 const streamedFilms = createDatabaseStreamedFilms(db);
@@ -3559,6 +3564,14 @@ const jobs = createJobQueue({
       .catch(() => {});
   },
 });
+
+heldJobs.untilResumed = async () => {
+  const jobId = jobs.currentJob();
+
+  if (jobId !== null) {
+    await jobs.untilResumed(jobId);
+  }
+};
 
 const runLibraryWork = createLibraryWorkRunner({
   inProcess: libraryWork,
@@ -5771,6 +5784,17 @@ const app = createApp({
     },
   },
   cancelJob: (jobId) => jobs.cancel(jobId),
+  jobPausing: {
+    pause: (jobId) => jobs.pause(jobId),
+    resume: (jobId) => jobs.resume(jobId),
+    pauseAll: () => {
+      jobs.pauseAll();
+    },
+    resumeAll: () => {
+      jobs.resumeAll();
+    },
+    isPaused: (jobId) => jobs.isPaused(jobId),
+  },
   controlQueue: transcoder.controlQueue,
   describeForRequest,
   describeMusicForRequest,

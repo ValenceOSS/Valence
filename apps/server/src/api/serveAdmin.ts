@@ -31,6 +31,8 @@ import {
   adminJobDefinitionsRoute,
   adminRunJobRoute,
   adminCancelJobRoute,
+  adminPauseJobRoute,
+  adminResumeJobRoute,
   adminQueueConcurrencyRoute,
   adminQueuePauseRoute,
   adminQueueResumeRoute,
@@ -101,6 +103,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     transcoderAddress,
     jobDefinitions,
     cancelJob,
+    jobPausing,
     controlQueue,
     searchCatalogue,
     logs,
@@ -803,6 +806,24 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     return context.json({ jobId }, 202);
   });
 
+  for (const [route, isPausing] of [
+    [adminPauseJobRoute, true],
+    [adminResumeJobRoute, false],
+  ] as const) {
+    app.openapi(route, async (context) => {
+      if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+        return context.json(refuse('common.thatIsForAdministrators'), 403);
+      }
+
+      const { jobId } = context.req.valid('param');
+      const changed = isPausing ? jobPausing?.pause(jobId) : jobPausing?.resume(jobId);
+
+      return changed === true
+        ? context.json({ jobId, isPaused: isPausing }, 200)
+        : context.json(refuse('error.admin.nothingIsRunningUnderThatId'), 404);
+    });
+  }
+
   app.openapi(adminQueueConcurrencyRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
@@ -824,6 +845,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
+    jobPausing?.pauseAll();
+
     try {
       await controlQueue?.pause();
     } catch {
@@ -837,6 +860,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
+
+    jobPausing?.resumeAll();
 
     try {
       await controlQueue?.resume();
@@ -873,21 +898,28 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const asked = context.req.valid('query');
+    const read = await jobHistory.read({
+      kind: asked.kind ?? null,
+      status: asked.status ?? null,
+      subject: asked.subject ?? null,
+      search: asked.search ?? '',
+      sinceMs: asked.sinceMs ?? null,
+      untilMs: asked.untilMs ?? null,
+      sort: asked.sort ?? 'newest',
+      offset: asked.offset ?? 0,
+      limit: asked.limit ?? 200,
+      runningFirst: asked.runningFirst === 'true',
+      hidesRoutine: asked.hidesRoutine === 'true',
+    });
 
     return context.json(
-      await jobHistory.read({
-        kind: asked.kind ?? null,
-        status: asked.status ?? null,
-        subject: asked.subject ?? null,
-        search: asked.search ?? '',
-        sinceMs: asked.sinceMs ?? null,
-        untilMs: asked.untilMs ?? null,
-        sort: asked.sort ?? 'newest',
-        offset: asked.offset ?? 0,
-        limit: asked.limit ?? 200,
-        runningFirst: asked.runningFirst === 'true',
-        hidesRoutine: asked.hidesRoutine === 'true',
-      }),
+      {
+        ...read,
+        records: read.records.map((record) => ({
+          ...record,
+          isPaused: record.status === 'running' && (jobPausing?.isPaused(record.id) ?? false),
+        })),
+      },
       200,
     );
   });

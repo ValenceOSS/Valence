@@ -191,6 +191,76 @@ describe('createJobQueue', () => {
     });
   });
 
+  it('holds a paused job at its next step until it is resumed, alone or with everything', async () => {
+    const gate = aGate();
+    const seen: (string | null)[] = [];
+    let steps = 0;
+    const queue: JobQueue = aQueue({
+      handlers: {
+        [SCAN]: async (jobId) => {
+          seen.push(queue.currentJob());
+          await gate.passed;
+          await queue.untilResumed(jobId);
+          steps += 1;
+          await queue.untilResumed(jobId);
+          steps += 1;
+        },
+      },
+    });
+
+    await queue.startWorking();
+
+    const id = (await queue.enqueue(SCAN, { libraryId: 'films' })) ?? '';
+
+    await vi.waitFor(() => {
+      expect(seen).toEqual([id]);
+    });
+    expect(queue.pause(id)).toBe(true);
+    expect(queue.listRunning()[0]?.isPaused).toBe(true);
+    gate.open();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(steps).toBe(0);
+
+    queue.pauseAll();
+    expect(queue.resume(id)).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(steps).toBe(0);
+
+    queue.resumeAll();
+    await vi.waitFor(() => {
+      expect(steps).toBe(2);
+    });
+    expect(queue.currentJob()).toBeNull();
+  });
+
+  it('lets a paused job that is cancelled go on to stop', async () => {
+    const onFinished = vi.fn();
+    const queue: JobQueue = aQueue({
+      handlers: {
+        [SCAN]: async (jobId) => {
+          queue.pause(jobId);
+          await queue.untilResumed(jobId);
+        },
+      },
+      onFinished,
+    });
+
+    await queue.startWorking();
+
+    const id = await queue.enqueue(SCAN, { libraryId: 'films' });
+
+    await vi.waitFor(() => {
+      expect(queue.isPaused(id ?? '')).toBe(true);
+    });
+    await queue.cancel(id ?? '');
+
+    await vi.waitFor(() => {
+      expect(onFinished).toHaveBeenCalledWith(
+        expect.objectContaining({ jobId: id, wasStopped: true }),
+      );
+    });
+  });
+
   it('says what a job is about, from the library its payload names or else its subject', async () => {
     const onFinished = vi.fn();
     const handler = vi.fn(() => Promise.resolve());
