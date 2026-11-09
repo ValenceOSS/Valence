@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ActivityPanel } from './ActivityPanel';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 
@@ -39,6 +39,11 @@ const props = {
   onMessage: () => Promise.resolve(),
 };
 
+afterEach(() => {
+  window.localStorage.removeItem('valence.sessionCardSize');
+  window.localStorage.removeItem('valence.gridSize');
+});
+
 describe('ActivityPanel', () => {
   it('says nothing about who has the app open until the sessions arrive', () => {
     render(<ActivityPanel {...props} isReading />, { wrapper: CacheScope });
@@ -66,7 +71,47 @@ describe('ActivityPanel', () => {
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Show as cards' }));
 
-    expect(screen.getAllByRole('heading', { name: 'Dan' })).toHaveLength(1);
+    expect(screen.getAllByRole('region', { name: 'Dan' })).toHaveLength(1);
+    expect(screen.getAllByRole('article')).toHaveLength(2);
+  });
+
+  it('offers to size the cards only while they are showing', async () => {
+    const user = userEvent.setup();
+
+    render(<ActivityPanel {...props} sessions={[session()]} />, { wrapper: CacheScope });
+
+    await user.click(screen.getByRole('button', { name: 'Show as a table' }));
+
+    expect(screen.queryByRole('group', { name: 'Card size' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Show as cards' }));
+
+    expect(screen.getByRole('group', { name: 'Card size' })).toBeInTheDocument();
+  });
+
+  it('remembers the size chosen for the session cards apart from the library’s', async () => {
+    const user = userEvent.setup();
+
+    render(<ActivityPanel {...props} sessions={[session()]} />, { wrapper: CacheScope });
+
+    await user.click(screen.getByRole('button', { name: 'Show as cards' }));
+    await user.click(screen.getByRole('button', { name: 'Large cards, fewer per row' }));
+
+    expect(window.localStorage.getItem('valence.sessionCardSize')).toBe('large');
+    expect(window.localStorage.getItem('valence.gridSize')).toBeNull();
+    expect(screen.getByRole('article').parentElement).toHaveStyle({
+      width: 'min(29.375rem, 100%)',
+    });
+  });
+
+  it('draws the session cards at the size last chosen', async () => {
+    window.localStorage.setItem('valence.sessionCardSize', 'small');
+
+    render(<ActivityPanel {...props} sessions={[session()]} />, { wrapper: CacheScope });
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Show as cards' }));
+
+    expect(screen.getByRole('article').parentElement).toHaveStyle({ width: 'min(15rem, 100%)' });
   });
 
   it('signs a device out from the table once that is confirmed', async () => {

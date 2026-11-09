@@ -10,6 +10,8 @@ import {
   readSessionLayout,
   saveSessionLayout,
 } from '@ValenceScreens/components/AdminArea/sessionLayoutPreference';
+import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
+import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { SessionTable } from '@ValenceScreens/components/AdminArea/components/SessionTable/SessionTable';
 import { Grid2x2 as CardsIcon, Table as TableIcon } from '@keyline-icons/react';
@@ -24,6 +26,8 @@ const LAYOUTS = [
   { id: 'table', label: say('screens.adminArea.activityPanel.showAsATable'), glyph: TableIcon },
   { id: 'cards', label: say('screens.adminArea.activityPanel.showAsCards'), glyph: CardsIcon },
 ] as const;
+
+const CARD_SIZE_KEY = 'valence.sessionCardSize';
 
 /**
  * Who has the app open, what they are watching, and how well it is going for them — grouped by viewer
@@ -54,6 +58,7 @@ const ActivityPanel = ({
 }: ActivityPanelProps) => {
   const [messaging, setMessaging] = useState<string | null>(null);
   const [layout, setLayout] = useState(readSessionLayout);
+  const [size, setSize] = useState(() => readGridSize(CARD_SIZE_KEY));
   const [lastMessaged, setLastMessaged] = useState('');
   const [signingOut, setSigningOut] = useState<ActiveSession | null>(null);
   const askToSignOut = onSignOut === undefined ? {} : { onSignOut: setSigningOut };
@@ -64,33 +69,46 @@ const ActivityPanel = ({
     <PanelCard
       title={say('common.sessions')}
       isFlush={layout === 'table'}
+      hasFace={layout !== 'cards'}
       actions={
-        <div
-          role="group"
-          aria-label={say('screens.adminArea.activityPanel.showSessionsAs')}
-          className={JOINED_LOOKS.track}
-        >
-          {LAYOUTS.map((one) => (
-            <Button
-              key={one.id}
-              variant="bare"
-              size="none"
-              label={one.label}
-              aria-pressed={layout === one.id}
-              className={cn(
-                JOINED_LOOKS.segment,
-                'inline-flex items-center px-2.5',
-                layout === one.id ? 'bg-[var(--surface-active)]' : 'text-text-muted',
-              )}
-              onClick={() => {
-                setLayout(one.id);
-                saveSessionLayout(one.id);
+        <>
+          {layout === 'cards' ? (
+            <GridSizeChooser
+              look="joined"
+              value={size}
+              onValueChange={(chosen) => {
+                setSize(chosen);
+                saveGridSize(chosen, CARD_SIZE_KEY);
               }}
-            >
-              <Icon of={one.glyph} size={15} />
-            </Button>
-          ))}
-        </div>
+            />
+          ) : null}
+          <div
+            role="group"
+            aria-label={say('screens.adminArea.activityPanel.showSessionsAs')}
+            className={JOINED_LOOKS.track}
+          >
+            {LAYOUTS.map((one) => (
+              <Button
+                key={one.id}
+                variant="bare"
+                size="none"
+                label={one.label}
+                aria-pressed={layout === one.id}
+                className={cn(
+                  JOINED_LOOKS.segment,
+                  'inline-flex items-center px-2.5',
+                  layout === one.id ? 'bg-[var(--surface-active)]' : 'text-text-muted',
+                )}
+                onClick={() => {
+                  setLayout(one.id);
+                  saveSessionLayout(one.id);
+                }}
+              >
+                <Icon of={one.glyph} size={15} />
+              </Button>
+            ))}
+          </div>
+        </>
       }
     >
       {isReading ? (
@@ -111,6 +129,7 @@ const ActivityPanel = ({
       ) : (
         <SessionCards
           sessions={sessions}
+          size={size}
           busyClientId={busyClientId}
           onStop={onStop}
           onPause={onPause}

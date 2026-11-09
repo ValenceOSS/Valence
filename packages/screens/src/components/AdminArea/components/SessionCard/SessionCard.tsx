@@ -1,49 +1,36 @@
-import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
-import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
-import { describeStreamLimit } from '@ValenceClient/admin/describeStreamLimit';
-import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
-import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
-import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { Icon } from '@ValenceUI/Icon';
+import { useState } from 'react';
+import { TruncatedText } from '@ValenceUI/TruncatedText';
 import {
-  BookOpen as BookOpenIcon,
-  Headphones as HeadphonesIcon,
   Info as InfoIcon,
   LogOut as LogOutFilledIcon,
   MessageSquare as MessageSquareIcon,
-  MusicNote as MusicNoteIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
   Stop as StopIcon,
 } from '@keyline-icons/react/fill';
-import { useState } from 'react';
 import { Cast as CastIcon } from '@keyline-icons/react';
+import { describeStreamLimit } from '@ValenceClient/admin/describeStreamLimit';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
-import { Card } from '@ValenceUI/Card';
-import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import { marksOfDevice } from '@ValenceScreens/devices/marksOfDevice';
+import { Icon } from '@ValenceUI/Icon';
 import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
-import { BrandGlyph } from '@ValenceUI/BrandGlyph';
-import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
+import { DeviceLabel } from '@ValenceScreens/components/DeviceLabel/DeviceLabel';
 import { SessionStatsDialog } from '@ValenceScreens/components/AdminArea/components/SessionStatsDialog/SessionStatsDialog';
+import { SessionArtwork } from '@ValenceScreens/components/AdminArea/components/SessionCard/components/SessionArtwork/SessionArtwork';
+import { SessionTime } from '@ValenceScreens/components/AdminArea/components/SessionCard/components/SessionTime/SessionTime';
 import type { SessionCardProps } from './SessionCard.types';
-import type { BrandMarkName } from '@ValenceUI/BrandGlyph.types';
 import { say } from '@ValenceI18n/say';
 
-const WORDMARK_SIZES: Partial<Record<BrandMarkName, number>> = {
-  lg: 44,
-  samsung: 72,
-  toshiba: 72,
-  hitachi: 72,
-};
+const ACTION = 'size-8 text-text-muted hover:text-text';
+
+const DANGER = 'size-8 text-danger hover:bg-danger/12 hover:text-danger';
 
 /**
- * One open session: who has it, on what device, what they are watching, hearing or reading, how far through they are, and
- * how the stream is faring. Carries the controls for intervening in it, and a way through to
- * everything the server knows about the stream for anybody asking why it is struggling.
+ * One open session as a card: what it is playing over its own artwork, how far through it is and on
+ * what device, and the controls for intervening in it — pausing or carrying on, a message, the
+ * stream's stats, stopping it and signing the device out. The card measures itself, so the artwork
+ * scales with whatever size the cards are drawn at.
  *
  * @param session - The session.
  * @param isBusy - Whether an instruction for it is in flight.
@@ -62,313 +49,159 @@ const SessionCard = ({
   onMessage,
   onSignOut,
 }: SessionCardProps) => {
-  const { playback, listening, bookListening, reading } = session;
-  const book = bookListening ?? reading;
-  const { deviceGlyph, systemMark, clientGlyph, clientMark } = marksOfDevice(
-    session.identity,
-    session.clientKind,
-  );
-  const { device, client } = namesOfSession(session);
-  const deviceAndClient =
-    client === null ? device : say('common.deviceThroughClient', { device, client });
+  const { playback, listening, bookListening } = session;
+  const heard = listening ?? bookListening;
+  const isActive = playback !== null || heard !== null;
+  const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;
+  const isThisDevice = session.clientId === platformInUse().thisClientId();
   const limited = describeStreamLimit(session.streams);
   const [isShowingStats, setIsShowingStats] = useState(false);
 
-  const heard = listening ?? bookListening;
-  const health =
-    playback?.health ??
-    (heard === null
-      ? null
-      : {
-          positionSeconds: heard.positionSeconds,
-          durationSeconds: heard.durationSeconds,
-          bufferedAheadSeconds: 0,
-        });
-  const hasProgress = health !== null && health.durationSeconds > 0;
-  const isActive = playback !== null || heard !== null;
-  const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;
-  const episode = episodeOfSession(session);
-  const fallbackGlyph =
-    listening !== null
-      ? MusicNoteIcon
-      : bookListening !== null
-        ? HeadphonesIcon
-        : reading !== null
-          ? BookOpenIcon
-          : deviceGlyph;
-
   return (
-    <Card as="article" padding="sm" radius="md" className="flex w-full min-w-0 items-center gap-3">
-      <span className="relative flex aspect-video w-30 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-[var(--surface-hover)]">
-        {playback !== null && (playback.hasBackdrop || playback.hasPoster) ? (
-          <img
-            src={artworkUrl(playback.mediaId, playback.hasBackdrop ? 'backdrop' : 'poster', {
-              size: 'small',
-            })}
-            alt=""
-            className="h-full w-full object-cover"
+    <article className="@container flex min-w-0 flex-col overflow-hidden rounded-lg border border-[var(--surface-line)]">
+      <SessionArtwork session={session} />
+
+      <div className="flex min-w-0 flex-col gap-0.5 px-3.5 pb-3 pt-[0.6875rem]">
+        <SessionTime session={session} />
+
+        <span className="flex min-w-0 text-[0.78125rem]">
+          <DeviceLabel
+            {...namesOfSession(session)}
+            identity={session.identity}
+            clientKind={session.clientKind}
+            userAgent={session.userAgent}
           />
-        ) : listening !== null && listening.hasArtwork ? (
-          <img
-            src={albumArtworkUrl(listening.albumId)}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        ) : book !== null && book.hasCover ? (
-          <img src={bookCoverUrl(book.bookId)} alt="" className="h-full w-full object-cover" />
-        ) : fallbackGlyph === deviceGlyph && systemMark !== null ? (
-          <BrandGlyph
-            of={systemMark}
-            size={WORDMARK_SIZES[systemMark] ?? 22}
-            className="text-text-muted"
-          />
-        ) : (
-          <Icon of={fallbackGlyph} size={20} tone="muted" />
-        )}
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="flex min-w-0 items-center gap-2">
-          {playback === null &&
-          listening === null &&
-          book === null &&
-          session.remoteFor !== null ? (
-            <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-text">
-              <Icon of={CastIcon} size={14} tone="muted" className="shrink-0" />
-              <span className="truncate">
-                {say('screens.videoRemote.remoteForLabel', { label: session.remoteFor.label })}
-              </span>
-            </span>
-          ) : playback === null && listening === null && book === null ? (
-            <span className="truncate text-sm font-medium text-text-muted">
-              {say('screens.adminArea.sessionCard.nothingPlaying')}
-            </span>
-          ) : (
-            <span className="truncate text-sm font-medium text-text">
-              {titleOfSession(session)}
-            </span>
-          )}
-
-          {listening === null || playback !== null ? null : (
-            <Badge size="sm">
-              {listening.delivery === 'encoded' ? say('common.encoding') : say('common.direct')}
-            </Badge>
-          )}
-
-          {playback === null ? null : (
-            <Badge size="sm">{describeSessionDelivery(playback).label}</Badge>
-          )}
-
-          {playback?.hardware === null || playback?.hardware === undefined ? null : (
-            <Badge size="sm">{describeSessionHardware(playback.hardware)}</Badge>
-          )}
-
-          {playback === null ||
-          (playback.reuse !== 'whole' && playback.reuse !== 'shared') ? null : (
-            <Badge size="sm">
-              {playback.reuse === 'whole'
-                ? say('screens.adminArea.sessionCard.cached')
-                : say('screens.adminArea.sessionCard.shared')}
-            </Badge>
-          )}
         </span>
 
-        {session.controlledFrom === null ? null : (
+        {session.remoteFor === null && session.controlledFrom === null ? null : (
           <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
             <Icon of={CastIcon} size={13} className="shrink-0" />
-            <span className="truncate">
-              {say('screens.adminArea.sessionCard.controlledFromLabel', {
-                label: session.controlledFrom.label,
-              })}
-            </span>
-          </span>
-        )}
-
-        {episode === null ? null : (
-          <span className="truncate text-xs text-text" title={episode}>
-            {episode}
+            <TruncatedText
+              text={
+                session.remoteFor === null
+                  ? say('screens.adminArea.sessionCard.controlledFromLabel', {
+                      label: session.controlledFrom?.label ?? '',
+                    })
+                  : say('screens.videoRemote.remoteForLabel', { label: session.remoteFor.label })
+              }
+            />
           </span>
         )}
 
         {limited === null ? null : (
-          <span className="truncate text-xs text-text-muted">{limited}</span>
+          <TruncatedText text={limited} className="text-xs text-text-muted" />
         )}
+      </div>
 
-        <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
-          {clientMark === null ? (
-            <Icon of={clientGlyph} size={14} className="shrink-0" />
-          ) : (
-            <BrandGlyph of={clientMark} size={13} />
-          )}
-          <span
-            className="truncate"
-            title={
-              session.userAgent === null
-                ? deviceAndClient
-                : `${deviceAndClient}\n${session.userAgent}`
-            }
-          >
-            {deviceAndClient}
-          </span>
-
-          {session.clientId === platformInUse().thisClientId() ? (
+      {isThisDevice ? (
+        <div className="mt-auto flex items-center border-t border-[var(--surface-line)] px-3 py-1.5">
+          <span className="flex h-8 items-center">
             <Badge size="sm" tone="accent">
               {say('common.thisDevice')}
             </Badge>
-          ) : null}
-
-          {!isActive ? null : (
-            <span className="shrink-0">
-              · {isPlaying ? say('common.playing') : say('common.paused')}
-            </span>
-          )}
-
-          {reading === null || isActive ? null : (
-            <span className="shrink-0">
-              · {say('common.reading')}
-              {reading.fraction !== null
-                ? ` · ${say('common.percentRead', { percent: Math.round(reading.fraction * 100) })}`
-                : reading.pageNumber !== null
-                  ? ` · ${say('common.pageValue', { value: reading.pageNumber + 1 })}`
-                  : null}
-            </span>
-          )}
-
-          {listening === null || playback !== null ? null : (
-            <span className="shrink-0 uppercase">
-              ·{' '}
-              {[
-                listening.codec,
-                listening.kbps === null ? null : `${listening.kbps.toString()} kbps`,
-              ]
-                .filter((part) => part !== null)
-                .join(' ')}
-            </span>
-          )}
-        </span>
-
-        {!hasProgress ? null : (
-          <span className="flex items-center gap-2">
-            <span className="relative block h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--surface-hover)]">
-              <span
-                className="absolute inset-y-0 left-0 rounded-full bg-text/25"
-                style={{
-                  width: `${(
-                    Math.min(
-                      (health.positionSeconds + health.bufferedAheadSeconds) /
-                        health.durationSeconds,
-                      1,
-                    ) * 100
-                  ).toString()}%`,
-                }}
-              />
-
-              <span
-                role="presentation"
-                className="absolute inset-y-0 left-0 rounded-full bg-primary"
-                style={{
-                  width: `${(
-                    Math.min(health.positionSeconds / health.durationSeconds, 1) * 100
-                  ).toString()}%`,
-                }}
-              />
-            </span>
-
-            <span className="shrink-0 text-xs tabular-nums text-text-muted">
-              {formatDuration(health.positionSeconds)} / {formatDuration(health.durationSeconds)}
-            </span>
           </span>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="mt-auto flex items-center gap-0.5 border-t border-[var(--surface-line)] px-2 py-1.5">
+          {!isActive || isPlaying ? (
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              label={
+                isActive
+                  ? say('common.pause')
+                  : say('screens.adminArea.sessionCard.nothingIsPlayingToPause')
+              }
+              disabled={isBusy || !isActive}
+              onClick={onPause}
+              className={ACTION}
+            >
+              <Icon of={PauseFilledIcon} size={16} />
+            </Button>
+          ) : (
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              label={say('common.play')}
+              disabled={isBusy}
+              onClick={onResume}
+              className={ACTION}
+            >
+              <Icon of={PlayFilledIcon} size={16} />
+            </Button>
+          )}
 
-      <div className="flex shrink-0 items-center gap-1">
-        {!isActive && reading === null ? null : (
-          <>
-            {!isActive ? null : isPlaying ? (
-              <Button
-                isIconOnly
-                variant="ghost"
-                label={say('common.pause')}
-                size="sm"
-                disabled={isBusy}
-                onClick={onPause}
-              >
-                <Icon of={PauseFilledIcon} size={15} />
-              </Button>
-            ) : (
-              <Button
-                isIconOnly
-                variant="ghost"
-                label={say('common.play')}
-                size="sm"
-                disabled={isBusy}
-                onClick={onResume}
-              >
-                <Icon of={PlayFilledIcon} size={15} />
-              </Button>
-            )}
-
-            {!isActive ? null : (
-              <Button
-                isIconOnly
-                variant="ghost"
-                label={say('common.stop')}
-                size="sm"
-                disabled={isBusy}
-                onClick={onStop}
-              >
-                <Icon of={StopIcon} size={15} />
-              </Button>
-            )}
-
-            {session.clientId === platformInUse().thisClientId() ? null : (
-              <Button
-                isIconOnly
-                variant="ghost"
-                label={
-                  session.clientKind === 'tv'
-                    ? say('screens.adminArea.sessionCard.theTvAppCannotShowMessages')
-                    : playback === null
-                      ? say('screens.adminArea.sessionCard.messagesShowOnlyWhileWatching')
-                      : say('screens.adminArea.sessionCard.message')
-                }
-                size="sm"
-                disabled={isBusy || session.clientKind === 'tv' || playback === null}
-                onClick={onMessage}
-              >
-                <Icon of={MessageSquareIcon} size={15} />
-              </Button>
-            )}
-          </>
-        )}
-
-        {playback === null ? null : (
           <Button
             isIconOnly
             variant="ghost"
-            label={say('common.streamStats')}
             size="sm"
+            label={
+              session.clientKind === 'tv'
+                ? say('screens.adminArea.sessionCard.theTvAppCannotShowMessages')
+                : playback === null
+                  ? say('screens.adminArea.sessionCard.messagesShowOnlyWhileWatching')
+                  : say('screens.adminArea.sessionCard.message')
+            }
+            disabled={isBusy || session.clientKind === 'tv' || playback === null}
+            onClick={onMessage}
+            className={ACTION}
+          >
+            <Icon of={MessageSquareIcon} size={16} />
+          </Button>
+
+          <Button
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            label={
+              playback === null
+                ? say('screens.adminArea.sessionCard.streamStatsShowOnlyForVideos')
+                : say('common.streamStats')
+            }
+            disabled={playback === null}
             onClick={() => {
               setIsShowingStats(true);
             }}
+            className={ACTION}
           >
-            <Icon of={InfoIcon} size={15} className="opacity-80" />
+            <Icon of={InfoIcon} size={16} />
           </Button>
-        )}
 
-        {onSignOut === undefined || session.accountId === null ? null : (
-          <Button
-            isIconOnly
-            variant="ghost"
-            label={say('common.signThisOut')}
-            size="sm"
-            disabled={isBusy}
-            onClick={onSignOut}
-          >
-            <Icon of={LogOutFilledIcon} size={15} />
-          </Button>
-        )}
-      </div>
+          <span className="ml-auto flex items-center gap-0.5">
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              label={
+                isActive
+                  ? say('common.stop')
+                  : say('screens.adminArea.sessionCard.nothingIsPlayingToStop')
+              }
+              disabled={isBusy || !isActive}
+              onClick={onStop}
+              className={DANGER}
+            >
+              <Icon of={StopIcon} size={16} />
+            </Button>
+
+            {onSignOut === undefined || session.accountId === null ? null : (
+              <Button
+                isIconOnly
+                variant="ghost"
+                size="sm"
+                label={say('common.signThisOut')}
+                disabled={isBusy}
+                onClick={onSignOut}
+                className={DANGER}
+              >
+                <Icon of={LogOutFilledIcon} size={16} />
+              </Button>
+            )}
+          </span>
+        </div>
+      )}
 
       <SessionStatsDialog
         session={session}
@@ -377,7 +210,7 @@ const SessionCard = ({
           setIsShowingStats(false);
         }}
       />
-    </Card>
+    </article>
   );
 };
 

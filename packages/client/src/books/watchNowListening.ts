@@ -1,7 +1,7 @@
 import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 
-const REPORTS_EVERY_MS = 15_000;
+const REPORTS_EVERY_MS = 1000;
 
 const JUMPED_SECONDS = 5;
 

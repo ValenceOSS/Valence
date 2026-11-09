@@ -3,574 +3,151 @@ import { DeviceIdentitySchema } from '@ValenceContracts/schemas/DeviceIdentity';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { anActiveSession } from '@ValenceScreens/testing/anActiveSession';
+import { aSessionPlayback } from '@ValenceScreens/testing/aSessionPlayback';
 import { SessionCard } from './SessionCard';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
-import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 
-const reason: Reason = {
-  code: 'ClientSupportsSource',
-  detail: sayVerbatim('Client declares support'),
+const LISTENING: ActiveSession['listening'] = {
+  trackId: '00000000-0000-4000-8000-000000000001',
+  title: 'Caramel',
+  artists: ['Sleep Token'],
+  albumId: '00000000-0000-4000-8000-000000000002',
+  hasArtwork: false,
+  isPlaying: true,
+  positionSeconds: 65,
+  durationSeconds: 290,
+  reportedAtMs: 1,
+  quality: 'low',
+  delivery: 'encoded',
+  codec: 'aac',
+  kbps: 96,
 };
 
-const PLAN: PlaybackPlan = {
-  mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-  container: { kind: 'passthrough', reason },
-  video: { kind: 'passthrough', reason },
-  audio: { kind: 'passthrough', streamIndex: 1, reason },
-  subtitles: { kind: 'none', reason },
+const READING: ActiveSession['reading'] = {
+  bookId: '00000000-0000-4000-8000-0000000000b1',
+  title: 'Dune',
+  authors: ['Frank Herbert'],
+  hasCover: false,
+  fraction: 0.42,
+  pageNumber: null,
+  reportedAtMs: 1,
 };
 
-const IDLE_SESSION: ActiveSession = {
-  clientId: 'tab-1',
-  accountId: 'account-1',
-  profileId: 'profile-1',
-  profileName: 'Dan',
-  isGuest: false,
-  guestOf: null,
-  fromServer: null,
-  deviceLabel: 'Living room TV',
-  device: null,
-  client: null,
-  identity: null,
-  userAgent: null,
-  clientKind: 'browser' as const,
-  connectedAt: 1000,
-  streams: null,
-  playback: null,
-  listening: null,
-  bookListening: null,
-  reading: null,
-  controlledFrom: null,
-  remoteFor: null,
+const draw = (session: ActiveSession, options: { isBusy?: boolean; canSignOut?: boolean } = {}) => {
+  const calls = {
+    onStop: vi.fn(),
+    onPause: vi.fn(),
+    onResume: vi.fn(),
+    onMessage: vi.fn(),
+    onSignOut: vi.fn(),
+  };
+  const { onSignOut, ...always } = calls;
+
+  render(
+    <SessionCard
+      session={session}
+      isBusy={options.isBusy ?? false}
+      {...always}
+      {...(options.canSignOut === true ? { onSignOut } : {})}
+    />,
+  );
+
+  return calls;
 };
 
-const LISTENING_SESSION: ActiveSession = {
-  ...IDLE_SESSION,
-  listening: {
-    trackId: '00000000-0000-4000-8000-000000000001',
-    title: 'Caramel',
-    artists: ['Sleep Token'],
-    albumId: '00000000-0000-4000-8000-000000000002',
-    hasArtwork: false,
-    isPlaying: true,
-    positionSeconds: 65,
-    durationSeconds: 290,
-    reportedAtMs: 1,
-    quality: 'low',
-    delivery: 'encoded',
-    codec: 'aac',
-    kbps: 96,
-  },
-};
-
-const WATCHING_SESSION: ActiveSession = {
-  ...IDLE_SESSION,
-  playback: {
-    mediaId: 'media-1',
-    mediaTitle: 'Arrival',
-    seriesTitle: null,
-    seasonNumber: null,
-    episodeNumber: null,
-    hasPoster: true,
-    hasBackdrop: false,
-    mode: 'transcode',
-    plan: PLAN,
-    reuse: 'none',
-    hardware: null,
-    isPlaying: true,
-    pausedByAdmin: false,
-    startedAt: 1500,
-    health: null,
-  },
-};
+const watching = (changes: Partial<NonNullable<ActiveSession['playback']>> = {}) =>
+  anActiveSession({ playback: aSessionPlayback(changes) });
 
 describe('SessionCard', () => {
-  it('shows an audiobook being listened to, with its authors, and offers to pause it', async () => {
-    const onPause = vi.fn();
+  it('shows a film by its title logo, whether it is playing, how it is delivered and how far through it is', () => {
+    draw(watching());
 
-    render(
-      <SessionCard
-        session={{
-          ...IDLE_SESSION,
-          bookListening: {
-            bookId: '00000000-0000-4000-8000-0000000000b1',
-            title: 'Dune',
-            authors: ['Frank Herbert'],
-            hasCover: false,
-            isPlaying: true,
-            positionSeconds: 600,
-            durationSeconds: 3600,
-            reportedAtMs: 1,
-          },
-        }}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={onPause}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('Dune · Frank Herbert')).toBeInTheDocument();
-    expect(screen.getByText('10:00 / 1:00:00')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
-
-    expect(onPause).toHaveBeenCalled();
-  });
-
-  it('shows somebody reading a book and how far through, with nothing to pause or stop', () => {
-    render(
-      <SessionCard
-        session={{
-          ...IDLE_SESSION,
-          reading: {
-            bookId: '00000000-0000-4000-8000-0000000000b1',
-            title: 'Dune',
-            authors: ['Frank Herbert'],
-            hasCover: false,
-            fraction: 0.42,
-            pageNumber: null,
-            reportedAtMs: 1,
-          },
-        }}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('Dune · Frank Herbert')).toBeInTheDocument();
-    expect(screen.getByText(/Reading · 42% read/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
-  });
-
-  it('shows the device for a tab that is not watching anything', () => {
-    render(
-      <SessionCard
-        session={IDLE_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('Living room TV')).toBeInTheDocument();
-    expect(screen.getByText('Nothing playing')).toBeInTheDocument();
-  });
-
-  it('offers no playback controls when nothing is playing', () => {
-    render(
-      <SessionCard
-        session={IDLE_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
-  });
-
-  it('shows no reuse badge for a transcode this session is paying for', () => {
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByText('Cached')).not.toBeInTheDocument();
-    expect(screen.queryByText('Shared')).not.toBeInTheDocument();
-  });
-
-  it('names the graphics device a stream is encoded on', () => {
-    const session: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : {
-              ...WATCHING_SESSION.playback,
-              hardware: {
-                deviceId: 'pci:0000:01:00.0',
-                deviceName: 'NVIDIA GeForce RTX 5080',
-                accel: 'nvenc',
-              },
-            },
-    };
-
-    render(
-      <SessionCard
-        session={session}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('RTX 5080 · NVENC')).toBeInTheDocument();
-  });
-
-  it('marks a session playing a transcode that was already made', () => {
-    const session: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : { ...WATCHING_SESSION.playback, reuse: 'whole' },
-    };
-
-    render(
-      <SessionCard
-        session={session}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('Cached')).toBeInTheDocument();
-  });
-
-  it('marks a session riding on another viewer’s encoder', () => {
-    const session: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : { ...WATCHING_SESSION.playback, reuse: 'shared' },
-    };
-
-    render(
-      <SessionCard
-        session={session}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('Shared')).toBeInTheDocument();
-  });
-
-  it('shows no reuse badge for a part-finished directory, which saves no encoder', () => {
-    const session: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : { ...WATCHING_SESSION.playback, reuse: 'partial' },
-    };
-
-    render(
-      <SessionCard
-        session={session}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByText('Cached')).not.toBeInTheDocument();
-    expect(screen.queryByText('Shared')).not.toBeInTheDocument();
-  });
-
-  it('shows what a tab is watching, and how', () => {
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText(/Arrival/)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Arrival' })).toBeInTheDocument();
+    expect(screen.getByText('Playing')).toBeInTheDocument();
     expect(screen.getByText('Direct play')).toBeInTheDocument();
+    expect(screen.getByText('1:13:02 - 2:10:26')).toBeInTheDocument();
+    expect(screen.getByText('Living room TV')).toBeInTheDocument();
   });
 
-  it('names an episode by its show, then its season, number and name, then the device', () => {
-    render(
-      <SessionCard
-        session={{
-          ...WATCHING_SESSION,
-          playback:
-            WATCHING_SESSION.playback === null
-              ? null
-              : {
-                  ...WATCHING_SESSION.playback,
-                  mediaTitle: 'The Long Corridor',
-                  seriesTitle: 'Night Shift',
-                  seasonNumber: 2,
-                  episodeNumber: 5,
-                },
-        }}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
+  it('names an episode by its show, then its season, number and name', () => {
+    draw(
+      watching({
+        mediaTitle: 'The Long Corridor',
+        seriesTitle: 'Night Shift',
+        seasonNumber: 2,
+        episodeNumber: 5,
+      }),
     );
 
-    expect(screen.getByText('Night Shift')).toBeInTheDocument();
-    expect(screen.getByText('S2E5 · The Long Corridor')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Night Shift' })).toBeInTheDocument();
+    expect(screen.getByText('S02E05 - The Long Corridor')).toBeInTheDocument();
   });
 
   it('says a remux is a remux, rather than badging it as a transcode', () => {
-    const remuxing: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : {
-              ...WATCHING_SESSION.playback,
-              plan: { ...PLAN, container: { kind: 'remux', target: 'mp4', reason } },
-            },
-    };
+    const playback = aSessionPlayback();
 
-    render(
-      <SessionCard
-        session={remuxing}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
+    draw(
+      watching({
+        plan: {
+          ...playback.plan,
+          container: { kind: 'remux', target: 'mp4', reason: playback.plan.container.reason },
+        },
+      }),
     );
 
     expect(screen.getByText('Remux')).toBeInTheDocument();
     expect(screen.queryByText('Transcoding')).not.toBeInTheDocument();
   });
 
-  it('stops a stream on request', async () => {
-    const onStop = vi.fn();
+  it('says a stream is paused, and offers to let it carry on', async () => {
+    const calls = draw(watching({ isPlaying: false, pausedByAdmin: true }));
 
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={onStop}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Stop/ }));
+    expect(screen.getByText('Paused')).toBeInTheDocument();
 
-    expect(onStop).toHaveBeenCalled();
-  });
+    await userEvent.click(screen.getByRole('button', { name: 'Play' }));
 
-  it('offers to pause a stream that is playing', async () => {
-    const onPause = vi.fn();
-
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={onPause}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Pause/ }));
-
-    expect(onPause).toHaveBeenCalled();
-  });
-
-  it('offers to resume a stream an admin already paused', async () => {
-    const onResume = vi.fn();
-    const pausedSession: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : { ...WATCHING_SESSION.playback, pausedByAdmin: true, isPlaying: false },
-    };
-
-    render(
-      <SessionCard
-        session={pausedSession}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={onResume}
-        onMessage={vi.fn()}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Play/ }));
-
-    expect(onResume).toHaveBeenCalled();
-  });
-
-  it('shows no progress bar until the player has reported its position', () => {
-    const { container } = render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(container.querySelector('.bg-primary')).not.toBeInTheDocument();
-  });
-
-  it('draws the position and buffer as widths of how far through the film they are', () => {
-    const session: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : {
-              ...WATCHING_SESSION.playback,
-              health: {
-                positionSeconds: 1800,
-                durationSeconds: 7200,
-                bufferedAheadSeconds: 900,
-                presentedWidth: 1920,
-                presentedHeight: 1080,
-              },
-            },
-    };
-
-    const { container } = render(
-      <SessionCard
-        session={session}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    const position = container.querySelector('.bg-primary');
-    const buffer = container.querySelector('.bg-text\\/25');
-
-    expect(position).toHaveStyle({ width: '25%' });
-    expect(buffer).toHaveStyle({ width: '37.5%' });
+    expect(calls.onResume).toHaveBeenCalled();
   });
 
   it('offers a working play button when a viewer paused it themselves', async () => {
-    const onResume = vi.fn();
-    const selfPausedSession: ActiveSession = {
-      ...WATCHING_SESSION,
-      playback:
-        WATCHING_SESSION.playback === null
-          ? null
-          : { ...WATCHING_SESSION.playback, pausedByAdmin: false, isPlaying: false },
-    };
+    const calls = draw(watching({ isPlaying: false, pausedByAdmin: false }));
 
-    render(
-      <SessionCard
-        session={selfPausedSession}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={onResume}
-        onMessage={vi.fn()}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Play/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Play' }));
 
-    expect(onResume).toHaveBeenCalled();
+    expect(calls.onResume).toHaveBeenCalled();
   });
 
-  it('offers a way to message somebody who is watching', () => {
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
+  it('pauses a stream that is playing', async () => {
+    const calls = draw(watching());
 
-    expect(screen.getByRole('button', { name: 'Message' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(calls.onPause).toHaveBeenCalled();
+  });
+
+  it('stops a stream on request', async () => {
+    const calls = draw(watching());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+
+    expect(calls.onStop).toHaveBeenCalled();
   });
 
   it('asks to message without stopping or pausing anything', async () => {
-    const actor = userEvent.setup();
-    const onMessage = vi.fn();
-    const onStop = vi.fn();
-    const onPause = vi.fn();
+    const calls = draw(watching());
 
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={onStop}
-        onPause={onPause}
-        onResume={vi.fn()}
-        onMessage={onMessage}
-      />,
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Message' }));
 
-    await actor.click(screen.getByRole('button', { name: 'Message' }));
-
-    expect(onMessage).toHaveBeenCalled();
-    expect(onStop).not.toHaveBeenCalled();
-    expect(onPause).not.toHaveBeenCalled();
-  });
-
-  it('offers no message button for a tab watching nothing, which has no banner to draw', () => {
-    render(
-      <SessionCard
-        session={IDLE_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByRole('button', { name: 'Message' })).not.toBeInTheDocument();
+    expect(calls.onMessage).toHaveBeenCalled();
+    expect(calls.onStop).not.toHaveBeenCalled();
+    expect(calls.onPause).not.toHaveBeenCalled();
   });
 
   it('opens the stats for a stream, and closes them again', async () => {
     const actor = userEvent.setup();
 
-    render(
-      <SessionCard
-        session={WATCHING_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
+    draw(watching());
 
     await actor.click(screen.getByRole('button', { name: 'Stream stats' }));
 
@@ -583,149 +160,176 @@ describe('SessionCard', () => {
     });
   });
 
-  describe('somebody listening to music', () => {
-    it('names the song, who it is by, and how it is reaching the device', () => {
-      render(
-        <SessionCard
-          session={LISTENING_SESSION}
-          isBusy={false}
-          onStop={vi.fn()}
-          onPause={vi.fn()}
-          onResume={vi.fn()}
-          onMessage={vi.fn()}
-        />,
-      );
+  it('holds back every instruction while one is already on its way, but still shows the stats', () => {
+    draw(watching(), { isBusy: true, canSignOut: true });
 
-      expect(screen.getByText('Caramel · Sleep Token')).toBeInTheDocument();
-      expect(screen.getByText('Encoding')).toBeInTheDocument();
-      expect(screen.getByText('· aac 96 kbps')).toBeInTheDocument();
-      expect(screen.getByText('1:05 / 4:50')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Message' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sign out this device' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stream stats' })).toBeEnabled();
+  });
+
+  it('keeps every control for a tab with nothing playing, each saying why it cannot be used', () => {
+    draw(anActiveSession());
+
+    expect(screen.getByText('Nothing playing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nothing is playing to pause.' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Nothing is playing to stop.' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Stream stats show only for videos.' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Messages show only while they’re watching a video.' }),
+    ).toBeDisabled();
+  });
+
+  it('says the TV app cannot show a message, even while it plays a film', () => {
+    draw(anActiveSession({ clientKind: 'tv', playback: aSessionPlayback() }));
+
+    expect(screen.getByRole('button', { name: 'The TV app can’t show messages.' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Message' })).not.toBeInTheDocument();
+  });
+
+  it('signs a device out on request', async () => {
+    const calls = draw(watching(), { canSignOut: true });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out this device' }));
+
+    expect(calls.onSignOut).toHaveBeenCalled();
+  });
+
+  it('offers no sign-out where it is not allowed, or where nobody is signed in', () => {
+    draw(watching());
+    draw(anActiveSession({ clientId: 'tab-2', accountId: null }), { canSignOut: true });
+
+    expect(screen.queryByRole('button', { name: 'Sign out this device' })).not.toBeInTheDocument();
+  });
+
+  it('marks the device the admin is using rather than offering to act on it', () => {
+    draw(anActiveSession({ clientId: 'client-1', playback: aSessionPlayback() }), {
+      canSignOut: true,
+    });
+
+    expect(screen.getByText('This device')).toBeInTheDocument();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
+  describe('somebody listening to music', () => {
+    it('names the song, who it is by, how it is reaching the device, and where it is', () => {
+      draw(anActiveSession({ listening: LISTENING }));
+
+      expect(screen.getByText('Caramel')).toBeInTheDocument();
+      expect(screen.getByText('Sleep Token')).toBeInTheDocument();
+      expect(screen.getByText('Transcoding')).toBeInTheDocument();
+      expect(screen.getByText('1:05 - 4:50')).toBeInTheDocument();
     });
 
     it('says the file is going as it is where nothing is encoded', () => {
-      render(
-        <SessionCard
-          session={{
-            ...LISTENING_SESSION,
-            listening:
-              LISTENING_SESSION.listening === null
-                ? null
-                : { ...LISTENING_SESSION.listening, delivery: 'direct', codec: 'flac', kbps: 1492 },
-          }}
-          isBusy={false}
-          onStop={vi.fn()}
-          onPause={vi.fn()}
-          onResume={vi.fn()}
-          onMessage={vi.fn()}
-        />,
+      draw(
+        anActiveSession({
+          listening:
+            LISTENING === null
+              ? null
+              : { ...LISTENING, delivery: 'direct', codec: 'flac', kbps: 1492 },
+        }),
       );
 
-      expect(screen.getByText('Direct')).toBeInTheDocument();
+      expect(screen.getByText('Direct play')).toBeInTheDocument();
     });
 
-    it('offers the same controls as a film', () => {
-      const onPause = vi.fn();
+    it('offers pausing and stopping as for a film, but no stats and no message', async () => {
+      const calls = draw(anActiveSession({ listening: LISTENING }));
 
-      render(
-        <SessionCard
-          session={LISTENING_SESSION}
-          isBusy={false}
-          onStop={vi.fn()}
-          onPause={onPause}
-          onResume={vi.fn()}
-          onMessage={vi.fn()}
-        />,
-      );
+      await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
 
-      screen.getByRole('button', { name: 'Pause' }).click();
-
-      expect(onPause).toHaveBeenCalled();
-      expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Stream stats' })).not.toBeInTheDocument();
+      expect(calls.onPause).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Stop' })).toBeEnabled();
+      expect(
+        screen.getByRole('button', { name: 'Stream stats show only for videos.' }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: 'Messages show only while they’re watching a video.' }),
+      ).toBeDisabled();
     });
   });
 
-  it('draws a maker’s wordmark wider than a square mark, so it can be read', () => {
-    const drawn = (system: string) => {
-      const { container, unmount } = render(
-        <SessionCard
-          session={{
-            ...IDLE_SESSION,
-            clientKind: 'tv',
-            identity: DeviceIdentitySchema.parse({ app: 'tv', system, form: 'tv' }),
-          }}
-          isBusy={false}
-          onStop={vi.fn()}
-          onPause={vi.fn()}
-          onResume={vi.fn()}
-          onMessage={vi.fn()}
-        />,
-      );
-      const width = container.querySelector<HTMLElement>('[style*="mask"]')?.style.width;
+  it('shows an audiobook being listened to, with its authors, and offers to pause it', async () => {
+    const calls = draw(
+      anActiveSession({
+        bookListening: {
+          bookId: '00000000-0000-4000-8000-0000000000b1',
+          title: 'Dune',
+          authors: ['Frank Herbert'],
+          hasCover: false,
+          isPlaying: true,
+          positionSeconds: 600,
+          durationSeconds: 3600,
+          reportedAtMs: 1,
+        },
+      }),
+    );
 
-      unmount();
+    expect(screen.getByText('Dune')).toBeInTheDocument();
+    expect(screen.getByText('Frank Herbert')).toBeInTheDocument();
+    expect(screen.getByText('10:00 - 1:00:00')).toBeInTheDocument();
 
-      return width;
-    };
+    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
 
-    expect(drawn('tizen')).toBe('4.5rem');
-    expect(drawn('webos')).toBe('2.75rem');
-    expect(drawn('tvos')).toBe('1.375rem');
+    expect(calls.onPause).toHaveBeenCalled();
+  });
+
+  it('shows somebody reading a book and how far through, with nothing to pause or stop', () => {
+    draw(anActiveSession({ reading: READING }));
+
+    expect(screen.getByText('Dune')).toBeInTheDocument();
+    expect(screen.getByText('Frank Herbert')).toBeInTheDocument();
+    expect(screen.getByText('Reading')).toBeInTheDocument();
+    expect(screen.getByText('42%')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nothing is playing to pause.' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Nothing is playing to stop.' })).toBeDisabled();
   });
 
   it('names the device and what it reaches Valence through, where the server says', () => {
-    render(
-      <SessionCard
-        session={{
-          ...IDLE_SESSION,
-          deviceLabel: 'Valence (iPhone)',
-          device: sayVerbatim('iPhone 17 Pro Max'),
-          client: sayVerbatim('Valence for iOS'),
-          identity: DeviceIdentitySchema.parse({ app: 'phone', system: 'ios', form: 'phone' }),
-          clientKind: 'phone',
-        }}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
+    draw(
+      anActiveSession({
+        deviceLabel: 'Valence (iPhone)',
+        device: sayVerbatim('iPhone 17 Pro Max'),
+        client: sayVerbatim('Valence for iOS'),
+        identity: DeviceIdentitySchema.parse({ app: 'phone', system: 'ios', form: 'phone' }),
+        clientKind: 'phone',
+      }),
     );
 
-    expect(screen.getByText('iPhone 17 Pro Max · Valence for iOS')).toBeInTheDocument();
+    expect(screen.getByText('iPhone 17 Pro Max')).toBeInTheDocument();
+    expect(screen.getByText('Valence for iOS')).toBeInTheDocument();
     expect(screen.queryByText('Valence (iPhone)')).not.toBeInTheDocument();
   });
 
-  it('names the device by what it called itself where the server says no more', () => {
-    render(
-      <SessionCard
-        session={IDLE_SESSION}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
+  it('says which device a remote is driving', () => {
+    draw(anActiveSession({ remoteFor: { clientId: 'tab-9', label: 'Living room TV' } }));
+
+    expect(screen.getByText('Remote for Living room TV')).toBeInTheDocument();
+  });
+
+  it('says which device is driving a session from afar', () => {
+    draw(
+      anActiveSession({
+        playback: aSessionPlayback(),
+        controlledFrom: { clientId: 'phone-1', label: 'Dan’s phone' },
+      }),
     );
 
-    expect(screen.getByText('Living room TV')).toHaveAttribute('title', 'Living room TV');
+    expect(screen.getByText('Controlled from Dan’s phone')).toBeInTheDocument();
   });
 
   it('says what its account is limited to while it streams', () => {
-    render(
-      <SessionCard
-        session={{
-          ...IDLE_SESSION,
-          streams: { limit: { maxBitrateKbps: 8000, maxStreams: 3 }, now: 2 },
-        }}
-        isBusy={false}
-        onStop={vi.fn()}
-        onPause={vi.fn()}
-        onResume={vi.fn()}
-        onMessage={vi.fn()}
-      />,
-    );
+    draw(anActiveSession({ streams: { limit: { maxBitrateKbps: 8000, maxStreams: 3 }, now: 2 } }));
 
     expect(screen.getByText('2 of 3 streams · Up to 8 Mbps')).toBeInTheDocument();
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(SessionCard.displayName).toBe('SessionCard');
   });
 });

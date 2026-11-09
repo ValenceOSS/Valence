@@ -106,8 +106,21 @@ describe('AuditPanel', () => {
 
     expect(await screen.findByText('Amara')).toBeInTheDocument();
     expect(screen.getAllByText('Kids').length).toBeGreaterThan(0);
-    expect(screen.getAllByTitle(CHROME)[0]).toHaveTextContent('Mac');
     expect(screen.getByText('203.0.113.7')).toBeInTheDocument();
+
+    const [device] = screen.getAllByText('Mac');
+
+    if (device === undefined) {
+      throw new Error('The device the change came from is not named.');
+    }
+
+    await userEvent.hover(device);
+
+    const sent = (await screen.findAllByText(CHROME)).find(
+      (found) => found.closest('[data-slot="tooltip-content"]') !== null,
+    );
+
+    expect(sent?.closest('[data-slot="tooltip-content"]')).toHaveTextContent('Chrome');
   });
 
   it('shows a failed sign-in as nobody, with what was typed and how', async () => {

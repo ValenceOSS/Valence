@@ -10,6 +10,7 @@ type PanelCardProps = {
   isFlush?: boolean;
   isHighlighted?: boolean;
   isCompact?: boolean;
+  hasFace?: boolean;
   className?: string;
 };
 

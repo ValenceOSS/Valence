@@ -4588,7 +4588,7 @@
   },
   {
     "handler": "common.linuxComputer",
-    "text": "Linux computer",
+    "text": "Linux PC",
     "context": "Names a device signed in to Valence, in the sessions and devices lists and in notifications, where nothing better is known about it: a computer running Linux."
   },
   {
@@ -24756,6 +24756,16 @@
     "context": "Why a session cannot be sent a message: nothing is playing."
   },
   {
+    "handler": "screens.adminArea.sessionCard.nothingIsPlayingToPause",
+    "text": "Nothing is playing to pause.",
+    "context": "Why a session's pause button is greyed out on its card in the admin's sessions: nothing is playing in it, or it is a book being read."
+  },
+  {
+    "handler": "screens.adminArea.sessionCard.nothingIsPlayingToStop",
+    "text": "Nothing is playing to stop.",
+    "context": "Why a session's stop button is greyed out on its card in the admin's sessions: nothing is playing in it, or it is a book being read."
+  },
+  {
     "handler": "screens.adminArea.sessionCard.nothingPlaying",
     "text": "Nothing playing",
     "context": "A session with nothing playing."
@@ -24771,6 +24781,11 @@
     "context": "Shown in the session card in the admin area."
   },
   {
+    "handler": "screens.adminArea.sessionCard.streamStatsShowOnlyForVideos",
+    "text": "Stream stats show only for videos.",
+    "context": "Why a session's stream stats button is greyed out on its card in the admin's sessions: it is not playing a video."
+  },
+  {
     "handler": "screens.adminArea.sessionCard.theTvAppCannotShowMessages",
     "text": "The TV app can’t show messages.",
     "context": "Why a session cannot be sent a message: it is the TV app."
@@ -24779,6 +24794,16 @@
     "handler": "screens.adminArea.sessionHardware.deviceAccel",
     "text": "{device} · {accel}",
     "context": "Which graphics card a stream is encoded on and with what, on a stream in the admin area's activity list, such as “RTX 5080 · NVENC”. {device} is the card and {accel} the hardware backend."
+  },
+  {
+    "handler": "screens.adminArea.sessionLane.backThroughTheSessionsOfName",
+    "text": "Back through the sessions of {name}",
+    "context": "The label of the arrow that scrolls one viewer’s row of session cards back towards its start, in the admin’s sessions cards. {name} is the viewer."
+  },
+  {
+    "handler": "screens.adminArea.sessionLane.onThroughTheSessionsOfName",
+    "text": "On through the sessions of {name}",
+    "context": "The label of the arrow that scrolls one viewer’s row of session cards on towards its end, in the admin’s sessions cards. {name} is the viewer."
   },
   {
     "handler": "screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH",

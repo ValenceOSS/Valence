@@ -45,6 +45,8 @@ const POPUP_MOTION = [
  * use with confidence.
  *
  * @param label - What the control does.
+ * @param detail - More about it, drawn beneath the name past a hairline, such as the raw text a
+ *   friendlier name was made from.
  * @param keys - The keys that do the same from the keyboard, drawn one to a cap after the name.
  * @param children - The control being named.
  * @param side - Which side of the control to appear on.
@@ -59,6 +61,7 @@ const POPUP_MOTION = [
  */
 const Tooltip = ({
   label,
+  detail,
   keys,
   children,
   side = 'top',
@@ -100,7 +103,13 @@ const Tooltip = ({
             POPUP_MOTION,
           )}
         >
-          {keys === undefined ? (
+          {detail !== undefined ? (
+            <span className="flex flex-col gap-1.5">
+              {label}
+              <span aria-hidden className="h-px bg-surface/25" />
+              <span className="font-normal break-words opacity-80">{detail}</span>
+            </span>
+          ) : keys === undefined ? (
             label
           ) : (
             <span className="flex flex-col items-center gap-1.5">

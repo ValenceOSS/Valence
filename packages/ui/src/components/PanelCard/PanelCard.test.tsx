@@ -70,6 +70,16 @@ describe('PanelCard', () => {
     expect(face).toHaveClass('p-4');
   });
 
+  it('leaves the panel out for content that brings a face of its own to each group', () => {
+    render(
+      <PanelCard title="Sessions" hasFace={false}>
+        <p>Dan</p>
+      </PanelCard>,
+    );
+
+    expect(screen.getByText('Dan').parentElement).not.toHaveClass('valence-card-face');
+  });
+
   it('lets a table run to the panel edges when asked to', () => {
     render(
       <PanelCard title="Logs" isFlush>

@@ -1,6 +1,7 @@
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
+import { cn } from '@ValenceUI/cn';
 import type { AccountFaceProps } from './AccountFace.types';
 
 /**
@@ -9,8 +10,9 @@ import type { AccountFaceProps } from './AccountFace.types';
  * account whose household is left as an initial would otherwise hide the photo they chose.
  *
  * @param account - The account to draw.
+ * @param className - Classes for its size, where it is drawn at other than the list's.
  */
-const AccountFace = ({ account }: AccountFaceProps) => {
+const AccountFace = ({ account, className }: AccountFaceProps) => {
   const { face } = account;
   const profile = account.profile ?? null;
   const isHouseholdDrawn = face !== null && face.avatar.kind !== 'initial';
@@ -22,20 +24,31 @@ const AccountFace = ({ account }: AccountFaceProps) => {
         colour={profile.colour}
         avatar={profile.avatar}
         source={profileAvatarUrl(profile)}
-        className="size-8 shrink-0"
+        className={cn('size-8 shrink-0', className)}
       />
     );
   }
 
   if (face === null) {
     return (
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-subtle text-sm font-semibold text-text">
+      <span
+        className={cn(
+          'flex size-8 shrink-0 items-center justify-center rounded-full bg-subtle text-sm font-semibold text-text',
+          className,
+        )}
+      >
         {(account.name.trim()[0] ?? '?').toUpperCase()}
       </span>
     );
   }
 
-  return <HouseholdFace household={face} accountId={account.id} className="size-8 shrink-0" />;
+  return (
+    <HouseholdFace
+      household={face}
+      accountId={account.id}
+      className={cn('size-8 shrink-0', className)}
+    />
+  );
 };
 
 AccountFace.displayName = 'AccountFace';

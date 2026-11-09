@@ -15,12 +15,12 @@ const episodeOfSession = ({ playback }: ActiveSession): string | null =>
         playback.seasonNumber === null || playback.episodeNumber === null
           ? null
           : say('common.searchWhatEpisode', {
-              season: playback.seasonNumber.toString(),
-              episode: playback.episodeNumber.toString(),
+              season: playback.seasonNumber.toString().padStart(2, '0'),
+              episode: playback.episodeNumber.toString().padStart(2, '0'),
             }),
         playback.mediaTitle,
       ]
         .filter((part) => part !== null)
-        .join(' · ');
+        .join(' - ');
 
 export { episodeOfSession };
