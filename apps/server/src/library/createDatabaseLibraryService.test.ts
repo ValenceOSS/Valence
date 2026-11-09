@@ -85,6 +85,7 @@ const JOBS: JobQueue = {
   resume: () => false,
   pauseAll: () => {},
   resumeAll: () => {},
+  isEverythingPaused: () => false,
   isPaused: () => false,
   untilResumed: () => Promise.resolve(),
   currentJob: () => null,
