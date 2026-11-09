@@ -1469,6 +1469,8 @@ pub struct HardwarePipeline {
     /// a frame or two of where it was asked for. That is a different request
     /// from the `nokey` a software decoder is given: keyframes alone can sit
     /// seconds apart, and a scrub preview drawn from them shows the wrong shot.
+    /// That trade is the operator's to make, and where they make it an SDR film
+    /// is drawn by the processor instead, so this is never asked then.
     ///
     /// Only `NVDEC` is asked. `QSV` hangs the device when told to skip frames,
     /// and the others have not been measured, so they decode every frame as

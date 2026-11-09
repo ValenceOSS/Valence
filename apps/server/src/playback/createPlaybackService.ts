@@ -126,6 +126,7 @@ type CreatePlaybackServiceOptions = {
   placement?: () => Promise<Placement | null>;
   previewQuality?: () => Promise<PreviewQuality>;
   usesShortSegments?: () => Promise<boolean>;
+  usesKeyframeThumbnails?: () => Promise<boolean>;
   readFromDisk?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   readSessionFromDisk?: (
     paths: readonly string[],
@@ -159,6 +160,7 @@ const createPlaybackService = ({
   placement = () => Promise.resolve(null),
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
   usesShortSegments = () => Promise.resolve(false),
+  usesKeyframeThumbnails = () => Promise.resolve(false),
   readFromDisk,
   readSessionFromDisk,
   subtitles,
@@ -501,6 +503,7 @@ const createPlaybackService = ({
         columns: TRICKPLAY_COLUMNS,
         rows: TRICKPLAY_ROWS,
         ...(chosenAccel === '' ? {} : { hardwareAccel: chosenAccel }),
+        ...((await usesKeyframeThumbnails()) ? { keyframesOnly: true } : {}),
         wait: false,
       });
 

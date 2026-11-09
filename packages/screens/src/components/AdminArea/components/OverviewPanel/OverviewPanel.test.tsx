@@ -71,6 +71,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     hardwareDevices: [],
     whenDevicesFull: 'software' as const,
     previewQuality: 'high' as const,
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     playsCatalogueTrailers: false,

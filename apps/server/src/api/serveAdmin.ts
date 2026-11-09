@@ -290,6 +290,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           hardwareDevices: current.hardwareDevices,
           whenDevicesFull: current.whenDevicesFull,
           previewQuality: current.previewQuality,
+          usesKeyframeThumbnails: current.usesKeyframeThumbnails,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           allowedApps: current.allowedApps,
@@ -358,6 +359,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.hardwareDevices === undefined ? {} : { hardwareDevices: patch.hardwareDevices }),
       ...(patch.whenDevicesFull === undefined ? {} : { whenDevicesFull: patch.whenDevicesFull }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
+      ...(patch.usesKeyframeThumbnails === undefined
+        ? {}
+        : { usesKeyframeThumbnails: patch.usesKeyframeThumbnails }),
       ...(patch.certificationRegion === undefined
         ? {}
         : { certificationRegion: patch.certificationRegion.toUpperCase() }),
@@ -441,6 +445,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         hardwareDevices: updated.hardwareDevices,
         whenDevicesFull: updated.whenDevicesFull,
         previewQuality: updated.previewQuality,
+        usesKeyframeThumbnails: updated.usesKeyframeThumbnails,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         allowedApps: updated.allowedApps,

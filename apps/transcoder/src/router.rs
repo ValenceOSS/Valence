@@ -3063,13 +3063,22 @@ fn sheet_source(video: &crate::media::VideoStream, duration_seconds: f64) -> She
 /// An HDR film stays on the device only where it can be tone mapped there. Intel's VPP converts
 /// HDR10 alone; Dolby Vision and HLG stay on a `VAAPI` device only where the machine proved it can
 /// lend frames to `OpenCL`, and are otherwise drawn by the processor, which converts them.
+///
+/// Where the operator asked for thumbnails from keyframes alone, an SDR film is drawn by the
+/// processor even when a device is there, chosen or not: skipping to keyframes is what makes it
+/// fast, and only a decoder in software can be asked to. An HDR film still goes to the device that
+/// converts it, since a fast thumbnail in washed-out colour is not worth having.
 fn sheet_accel(
     capabilities: &Capabilities,
-    asked: Option<HardwareAccel>,
+    request: &TrickplayRequest,
     source: &SheetSource,
 ) -> Option<HardwareAccel> {
+    if request.keyframes_only && source.range == crate::media::VideoRange::Sdr {
+        return None;
+    }
+
     capabilities
-        .encoder_for("h264", asked)
+        .encoder_for("h264", request.hardware_accel)
         .map(|found| found.accel)
         .filter(|found| {
             crate::chains::runs_here(
@@ -3136,7 +3145,7 @@ async fn start_trickplay(
     let capabilities = detect_capabilities(&config.ffmpeg, &config.device).await;
     let source = sheet_source(video, probe.duration_seconds);
 
-    let accel = sheet_accel(&capabilities, request.hardware_accel, &source);
+    let accel = sheet_accel(&capabilities, &request, &source);
 
     if !request.wait {
         let id = request.id();
@@ -4147,16 +4156,144 @@ mod tests {
         };
 
         assert_eq!(
-            sheet_accel(&sheets_on(&["tonemap_vaapi"]), None, &source),
+            sheet_accel(
+                &sheets_on(&["tonemap_vaapi"]),
+                &crate::trickplay::TrickplayRequest::default(),
+                &source
+            ),
             None
         );
         assert_eq!(
             sheet_accel(
                 &sheets_on(&["tonemap_vaapi", crate::transcode_plan::OPENCL_TONE_MAP_NAME]),
-                None,
+                &crate::trickplay::TrickplayRequest::default(),
                 &source
             ),
             Some(crate::transcode_plan::HardwareAccel::Vaapi)
         );
+    }
+
+    fn a_1080p_film(range: crate::media::VideoRange) -> crate::trickplay::SheetSource {
+        crate::trickplay::SheetSource {
+            width: 1920,
+            height: 1080,
+            duration_seconds: 600.0,
+            bit_depth: Some(8),
+            range,
+            range_base: range,
+        }
+    }
+
+    fn from_keyframes(
+        hardware_accel: Option<crate::transcode_plan::HardwareAccel>,
+    ) -> crate::trickplay::TrickplayRequest {
+        crate::trickplay::TrickplayRequest {
+            input_path: "/media/episode.mkv".to_owned(),
+            interval_seconds: 10,
+            hardware_accel,
+            keyframes_only: true,
+            ..crate::trickplay::TrickplayRequest::default()
+        }
+    }
+
+    /// The first pass a sheet render would run, from the same choice the route makes.
+    fn first_pass_for(
+        capabilities: &crate::capability::Capabilities,
+        request: &crate::trickplay::TrickplayRequest,
+        source: &crate::trickplay::SheetSource,
+    ) -> Vec<String> {
+        let accel = sheet_accel(capabilities, request, source);
+
+        crate::trickplay::extract_arguments(
+            request,
+            180,
+            *source,
+            accel.map(|found| (found, "/dev/dri/renderD128")),
+            &crate::trickplay::sheet_encoder(capabilities, accel),
+            std::path::Path::new("/cache"),
+            capabilities.proved_tone_mappers(),
+        )
+    }
+
+    /// Only a decoder in software can be told to skip to keyframes, so an SDR film leaves the
+    /// device behind, even one the operator chose.
+    #[test]
+    fn draws_an_sdr_film_from_keyframes_on_the_processor_when_asked() {
+        let capabilities = sheets_on(&["tonemap_vaapi"]);
+        let source = a_1080p_film(crate::media::VideoRange::Sdr);
+
+        for request in [
+            from_keyframes(None),
+            from_keyframes(Some(crate::transcode_plan::HardwareAccel::Vaapi)),
+        ] {
+            assert_eq!(sheet_accel(&capabilities, &request, &source), None);
+
+            let arguments = first_pass_for(&capabilities, &request, &source);
+            let chain = arguments
+                .windows(2)
+                .find(|pair| pair[0] == "-vf")
+                .map(|pair| pair[1].clone())
+                .expect("a filter chain");
+
+            assert!(
+                arguments
+                    .windows(2)
+                    .any(|pair| pair == ["-skip_frame", "nokey"]),
+                "{arguments:?}"
+            );
+            assert!(
+                !arguments.iter().any(|argument| argument == "-hwaccel"),
+                "{arguments:?}"
+            );
+            assert_eq!(chain, "fps=1/10:eof_action=pass,scale=320:180");
+            assert!(arguments.windows(2).any(|pair| pair == ["-c:v", "mjpeg"]));
+            assert!(arguments.windows(2).any(|pair| pair == ["-qscale:v", "4"]));
+        }
+    }
+
+    /// Off unless asked: every frame is decoded on the device, so each thumbnail is its cue.
+    #[test]
+    fn keeps_an_sdr_film_on_the_device_by_default() {
+        let capabilities = sheets_on(&["tonemap_vaapi"]);
+        let source = a_1080p_film(crate::media::VideoRange::Sdr);
+        let request = crate::trickplay::TrickplayRequest {
+            keyframes_only: false,
+            ..from_keyframes(None)
+        };
+
+        assert_eq!(
+            sheet_accel(&capabilities, &request, &source),
+            Some(crate::transcode_plan::HardwareAccel::Vaapi)
+        );
+        assert!(!first_pass_for(&capabilities, &request, &source)
+            .iter()
+            .any(|argument| argument == "nokey"));
+    }
+
+    /// A fast thumbnail in washed-out colour is not worth having, so HDR still goes to the device
+    /// that converts it.
+    #[test]
+    fn keeps_an_hdr_film_on_the_device_that_converts_it_even_from_keyframes() {
+        let capabilities = sheets_on(&["tonemap_vaapi"]);
+        let source = a_1080p_film(crate::media::VideoRange::Hdr10);
+        let request = from_keyframes(None);
+
+        assert_eq!(
+            sheet_accel(&capabilities, &request, &source),
+            Some(crate::transcode_plan::HardwareAccel::Vaapi)
+        );
+
+        let arguments = first_pass_for(&capabilities, &request, &source);
+
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-hwaccel", "vaapi"]));
+        assert!(
+            arguments
+                .iter()
+                .any(|argument| argument.contains("tonemap_vaapi=")),
+            "{arguments:?}"
+        );
+        assert!(!arguments.iter().any(|argument| argument == "nokey"));
     }
 }

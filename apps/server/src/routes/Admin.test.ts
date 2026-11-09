@@ -2195,6 +2195,33 @@ describe('changing one setting without disturbing the others', () => {
     expect(remake).toHaveBeenCalledWith(LIBRARY.id);
   });
 
+  it('turns fast thumbnails on without redrawing the thumbnails already made', async () => {
+    const { app, auth, store, permissions, settings, library } = build();
+    const redraw = vi.spyOn(library, 'regenerateTrickplay');
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    expect((await settings.read()).usesKeyframeThumbnails).toBe(false);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ usesKeyframeThumbnails: true }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ usesKeyframeThumbnails: true });
+    expect((await settings.read()).usesKeyframeThumbnails).toBe(true);
+    expect(redraw).not.toHaveBeenCalled();
+
+    const overview = await app.request(`${BASE}/api/admin/overview`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    await expect(overview.json()).resolves.toMatchObject({
+      settings: { usesKeyframeThumbnails: true },
+    });
+  });
+
   it('remakes nothing when the preset is set to what it already was', async () => {
     const { app, auth, store, permissions, library } = build();
     const remake = vi.spyOn(library, 'remakePreviews');

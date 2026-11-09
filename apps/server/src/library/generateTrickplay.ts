@@ -24,6 +24,7 @@ type GenerateTrickplayOptions = {
   transcoder: Transcoder;
   trickplay: TrickplayParams;
   hardwareAccel?: string;
+  keyframesOnly?: boolean;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
@@ -46,6 +47,7 @@ const generateTrickplay = async ({
   transcoder,
   trickplay,
   hardwareAccel,
+  keyframesOnly = false,
   atOnce = 1,
   onProblem,
   onProgress,
@@ -84,6 +86,7 @@ const generateTrickplay = async ({
         generation,
         ...trickplay,
         ...(hardwareAccel === undefined || hardwareAccel === '' ? {} : { hardwareAccel }),
+        ...(keyframesOnly ? { keyframesOnly } : {}),
         wait: false,
         ...(correlationId === undefined ? {} : { correlationId }),
       };

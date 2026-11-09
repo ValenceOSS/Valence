@@ -74,6 +74,20 @@ pub struct TrickplayRequest {
     /// listed first and ignored the setting entirely, exactly as previews did.
     #[serde(default)]
     pub hardware_accel: Option<HardwareAccel>,
+    /// Whether the operator chose to draw thumbnails from keyframes alone.
+    ///
+    /// Several times faster, and the work moves from the device to a fraction of one core, because
+    /// a processor can be told to skip everything between keyframes and a device cannot be trusted
+    /// to. The price is accuracy: keyframes can sit ten seconds apart or more, so a thumbnail shows
+    /// the nearest keyframe rather than its cue. Measured on two 1080p episodes, 150 of 200 and
+    /// 149 of 305 thumbnails showed a different shot from the ones drawn from every frame. Off by
+    /// default for that reason.
+    ///
+    /// Not part of [`TrickplayRequest::id`]: sheets drawn either way fill the same grid and the
+    /// same index, so changing it leaves every finished set where it is rather than redrawing a
+    /// library. An operator who wants a set drawn the other way rebuilds it.
+    #[serde(default)]
+    pub keyframes_only: bool,
     /// Whether the caller is willing to wait for rendering to finish.
     ///
     /// A library import waits, because nobody is watching it. A player must
@@ -105,6 +119,7 @@ impl Default for TrickplayRequest {
             columns: 10,
             rows: 10,
             hardware_accel: None,
+            keyframes_only: false,
             wait: true,
             correlation_id: None,
         }
@@ -385,6 +400,11 @@ fn quality_arguments(encoder: &str) -> [String; 2] {
 /// `p010` surfaces to an encoder that cannot take them — reported as "Nothing was written into
 /// output file", the same silence the ten-bit H.264 chains gave before they were narrowed. Where
 /// the processor draws them the frames come down first and ffmpeg converts on the way.
+///
+/// A decoder in software keeps only keyframes, and `fps` at its default dropped the last of them
+/// at the end of the file, one interval short of the index: 199 thumbnails for 200 cues and 304
+/// for 305 on two 1080p episodes, so the last cue showed an empty tile. `eof_action=pass` lets
+/// that last keyframe through, and both came out exact.
 fn extract_filters(
     request: &TrickplayRequest,
     tile_height: u32,
@@ -393,7 +413,15 @@ fn extract_filters(
     draws_on_the_device: bool,
     tone_mappers: ProvedToneMappers,
 ) -> Vec<String> {
-    let mut filters = vec![format!("fps=1/{}", request.interval_seconds)];
+    let mut filters = vec![format!(
+        "fps=1/{}{}",
+        request.interval_seconds,
+        if onto_the_device.is_some() {
+            ""
+        } else {
+            ":eof_action=pass"
+        }
+    )];
 
     if let Some((accel, pipeline, _)) = onto_the_device {
         let mut carried = None;
@@ -481,7 +509,10 @@ fn extract_filters(
 /// `-skip_frame nokey` is asked only of a decoder in software. Telling a
 /// hardware decoder to throw away everything between keyframes is not a thing
 /// every one of them will do, and `QSV` does not merely refuse it: it hangs the
-/// device, which resets it and takes down whatever else was using it.
+/// device, which resets it and takes down whatever else was using it. So where
+/// the operator asks for thumbnails from keyframes alone, an SDR film is never
+/// handed here with a device at all: the route draws it in software, which is
+/// what makes it fast. See [`TrickplayRequest::keyframes_only`].
 ///
 /// `NVDEC` is asked for less instead: `-skip_frame noref`, which drops only
 /// the frames nothing is predicted from. See
@@ -491,9 +522,10 @@ fn extract_filters(
 /// to be rebuilt from a count of the frames, `setpts=N/rate`, as Jellyfin does, but the rate it
 /// divides by is the stream's base rate. A file of variable frame rate has fewer frames than its
 /// length at that rate, so the rebuilt clock ran short: a five minute clip with a quarter of its
-/// frames dropped drew 23 thumbnails rather than 30, nearly all of them on the wrong shot, and an
-/// anime library on Intel came out 143 where the index expected 150. Skipping to keyframes or
-/// dropping unreferenced frames could never count frames as a clock anyway.
+/// frames dropped drew 23 thumbnails rather than 30, nearly all of them on the wrong shot, the
+/// same shortfall as an anime library on Intel that drew 143 where the index expected 150.
+/// Skipping to keyframes or dropping unreferenced frames could never count frames as a clock
+/// anyway.
 ///
 /// `-fps_mode passthrough` at the other end: the muxer is
 /// told to write exactly the frames it is given rather than making up a
@@ -1265,6 +1297,7 @@ otherwise start a second one"
             columns: 2,
             rows: 2,
             hardware_accel: None,
+            keyframes_only: false,
             wait: true,
             correlation_id: None,
         }
@@ -1433,6 +1466,18 @@ otherwise start a second one"
         );
     }
 
+    /// Turning keyframe thumbnails on or off must not redraw every library: both fill the same
+    /// grid and the same index.
+    #[test]
+    fn drawing_from_keyframes_answers_to_the_same_address() {
+        let from_keyframes = TrickplayRequest {
+            keyframes_only: true,
+            ..request()
+        };
+
+        assert_eq!(request().id(), from_keyframes.id());
+    }
+
     #[test]
     fn a_different_interval_addresses_different_thumbnails() {
         let coarse = TrickplayRequest {
@@ -1500,7 +1545,7 @@ otherwise start a second one"
             .expect("the filter chain is passed");
 
         assert_eq!(
-            filter, "fps=1/10,scale=320:180",
+            filter, "fps=1/10:eof_action=pass,scale=320:180",
             "keyframes carry their own timing"
         );
     }
@@ -1712,7 +1757,7 @@ otherwise start a second one"
             let chain = chain_of(arguments);
 
             assert!(!chain.contains("setpts"), "{chain}");
-            assert!(chain.starts_with("fps=1/10,"), "{chain}");
+            assert!(chain.starts_with("fps=1/10"), "{chain}");
         }
     }
 

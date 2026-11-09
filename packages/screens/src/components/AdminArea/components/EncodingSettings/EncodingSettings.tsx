@@ -11,6 +11,7 @@ import {
   saveKeepsDownloadsForDays,
   savePlaysEpisodesGapless,
   savePreviewQuality,
+  saveUsesKeyframeThumbnails,
   saveUsesShortSegments,
 } from '@ValenceClient/admin/fetchAdmin';
 import { testHardware } from '@ValenceClient/admin/testHardware';
@@ -85,6 +86,16 @@ const EncodingSettings = ({ overview, devices }: EncodingSettingsProps) => {
     {
       done: say('screens.adminArea.settingsPanel.previewQualitySaved'),
       failed: say('screens.adminArea.settingsPanel.previewQualityCouldNotBeSaved'),
+      onSaved: reread,
+    },
+  );
+
+  const [fastThumbnails, changeFastThumbnails] = useSavedSetting(
+    settings?.usesKeyframeThumbnails ?? false,
+    saveUsesKeyframeThumbnails,
+    {
+      done: say('screens.adminArea.settingsPanel.fastThumbnailsSaved'),
+      failed: say('screens.adminArea.settingsPanel.fastThumbnailsCouldNotBeSaved'),
       onSaved: reread,
     },
   );
@@ -217,6 +228,16 @@ const EncodingSettings = ({ overview, devices }: EncodingSettingsProps) => {
               }}
             />
           </SettingRow>
+
+          {switchRow(
+            say('screens.adminArea.settingsPanel.fastThumbnails'),
+            say('screens.adminArea.encodingSettings.fastThumbnailsAbout'),
+            say('screens.adminArea.encodingSettings.fastThumbnailsDetail'),
+            fastThumbnails,
+            () => {
+              changeFastThumbnails(!fastThumbnails);
+            },
+          )}
 
           <SettingRow
             title={say('screens.adminArea.encodingSettings.keepPreparedDownloads')}

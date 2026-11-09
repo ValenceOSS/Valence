@@ -9,6 +9,7 @@ const saved = vi.hoisted(() => ({
   saveHardwareAccel: vi.fn(() => Promise.resolve(true)),
   saveUsesShortSegments: vi.fn(() => Promise.resolve(true)),
   savePlaysEpisodesGapless: vi.fn(() => Promise.resolve(true)),
+  saveUsesKeyframeThumbnails: vi.fn(() => Promise.resolve(true)),
   savePreviewQuality: vi.fn(() => Promise.resolve(true)),
   saveKeepsDownloadsForDays: vi.fn(() => Promise.resolve(true)),
   saveSpreadAcrossDevices: vi.fn(() => Promise.resolve(true)),
@@ -30,6 +31,20 @@ describe('EncodingSettings', () => {
     await user.click(screen.getByRole('switch', { name: 'Short segments' }));
 
     expect(saved.saveUsesShortSegments).toHaveBeenCalledWith(false);
+  });
+
+  it('turns fast thumbnails on, which are off until chosen', async () => {
+    const user = userEvent.setup();
+
+    renderWithAnswers(<EncodingSettings overview={anAdminOverview()} devices={null} />);
+
+    const fastThumbnails = screen.getByRole('switch', { name: 'Fast thumbnails' });
+
+    expect(fastThumbnails).not.toBeChecked();
+
+    await user.click(fastThumbnails);
+
+    expect(saved.saveUsesKeyframeThumbnails).toHaveBeenCalledWith(true);
   });
 
   it('tests the backend chosen, and says so where the test could not run', async () => {
