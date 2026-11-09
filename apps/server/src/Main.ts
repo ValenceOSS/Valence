@@ -263,6 +263,7 @@ import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelo
 import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfilesOf';
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
 import { createMangaTitles } from '@ValenceServer/requests/anilist/createMangaTitles';
+import { createDatabaseJobPauseStore } from '@ValenceServer/jobs/createDatabaseJobPauseStore';
 import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
 import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
 import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
@@ -325,6 +326,28 @@ import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/W
 import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 import { webhookBrandOf } from '@ValenceServer/webhooks/webhookBrandOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+
+const heldJobs: { untilResumed: () => Promise<void> } = {
+  untilResumed: () => Promise.resolve(),
+};
+
+const fetchUnheld = globalThis.fetch;
+
+/**
+ * Every request the server makes, held first where it is made for a job that is paused — so a
+ * paused job holds at its next call out, whatever it calls — and sent at once for anything else.
+ *
+ * @param input - What to ask for.
+ * @param init - How to ask.
+ * @returns The answer.
+ */
+const heldFetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+  await heldJobs.untilResumed();
+
+  return fetchUnheld(input, init);
+};
+
+globalThis.fetch = heldFetch;
 
 type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'];
 
@@ -1428,10 +1451,6 @@ const running: { plugins: PluginService | null } = { plugins: null };
 
 const devHosts = readDevHosts(env.VALENCE_DEV_HOSTS, env.NODE_ENV);
 
-const heldJobs: { untilResumed: () => Promise<void> } = {
-  untilResumed: () => Promise.resolve(),
-};
-
 const mediaService = createTranscoderClient({
   baseUrl: env.TRANSCODER_URL,
   secret: env.TRANSCODER_SECRET,
@@ -2420,6 +2439,7 @@ const nameOfJob = (job: { kind: string; subject: string | null }): string =>
 
 const jobs = createJobQueue({
   db,
+  pauses: createDatabaseJobPauseStore(db),
   perKind: {
     [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 },
     [IMPORT_PLAN_JOB]: { atOnce: 1, retries: 0 },
@@ -5890,6 +5910,10 @@ if (seededKinds.length > 0) {
 }
 
 await jobs.startWorking();
+
+if (jobs.isEverythingPaused()) {
+  await transcoder.controlQueue.pause().catch(() => undefined);
+}
 
 await running.plugins?.start();
 

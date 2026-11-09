@@ -232,6 +232,7 @@ type JobQueue = {
   resume: (jobId: string) => boolean;
   pauseAll: () => void;
   resumeAll: () => void;
+  isEverythingPaused: () => boolean;
   isPaused: (jobId: string) => boolean;
   untilResumed: (jobId: string) => Promise<void>;
   currentJob: () => string | null;

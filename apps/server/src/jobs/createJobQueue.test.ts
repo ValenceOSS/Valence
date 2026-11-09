@@ -6,6 +6,7 @@ import { jobSchedule, queuedJob } from '#dialect/Schema';
 import { createJobQueue } from './createJobQueue';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import type { JobQueue } from './JobQueue';
+import type { JobPauses } from './JobPauseStore';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -231,6 +232,42 @@ describe('createJobQueue', () => {
       expect(steps).toBe(2);
     });
     expect(queue.currentJob()).toBeNull();
+  });
+
+  it('holds again, after a restart, what was paused before it', async () => {
+    const kept: JobPauses = { isEverythingPaused: false, jobIds: [] };
+    const pauses = {
+      read: () => Promise.resolve(kept),
+      write: (next: JobPauses) => {
+        Object.assign(kept, next);
+
+        return Promise.resolve();
+      },
+    };
+    const id = (await aQueue({ handlers: {} }).enqueue(SCAN, { libraryId: 'films' })) ?? '';
+
+    kept.jobIds = [id];
+
+    const queue: JobQueue = aQueue({
+      handlers: { [SCAN]: (jobId) => queue.untilResumed(jobId) },
+      pauses,
+    });
+
+    await queue.startWorking();
+    await vi.waitFor(() => {
+      expect(queue.isPaused(id)).toBe(true);
+    });
+
+    queue.pauseAll();
+    expect(queue.isEverythingPaused()).toBe(true);
+    expect(kept.isEverythingPaused).toBe(true);
+
+    queue.resumeAll();
+    queue.resume(id);
+    await vi.waitFor(async () => {
+      expect((await rowOf(id))?.state).toBe('completed');
+    });
+    expect(kept).toEqual({ isEverythingPaused: false, jobIds: [] });
   });
 
   it('lets a paused job that is cancelled go on to stop', async () => {

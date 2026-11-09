@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import type { JobPauseStore } from '@ValenceServer/jobs/JobPauseStore';
 import { randomUUID } from 'node:crypto';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { and, asc, eq, gt, inArray, lt, lte, notInArray, sql } from 'drizzle-orm';
@@ -54,6 +55,7 @@ type CreateJobQueueOptions = {
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
   onProgress?: (entry: JobProgressEntry) => void;
   onFinished?: (finished: FinishedJob) => void;
+  pauses?: JobPauseStore;
 };
 
 type QueuedJobRow = typeof queuedJob.$inferSelect;
@@ -132,6 +134,7 @@ const createJobQueue = ({
   onStarted,
   onProgress,
   onFinished,
+  pauses,
 }: CreateJobQueueOptions): JobQueue => {
   const kinds = Object.keys(handlers);
   const progressByJobId = new Map<string, JobProgress>();
@@ -141,6 +144,14 @@ const createJobQueue = ({
   const waking = new Set<() => void>();
   const runningAs = new AsyncLocalStorage<string>();
   let isEverythingPaused = false;
+
+  const pausedOnRecord = new Set<string>();
+
+  const keepThePauses = (): void => {
+    void pauses
+      ?.write({ isEverythingPaused, jobIds: [...paused, ...pausedOnRecord] })
+      .catch(() => undefined);
+  };
 
   const isHeld = (jobId: string): boolean =>
     !cancelled.has(jobId) && (isEverythingPaused || paused.has(jobId));
@@ -268,6 +279,10 @@ const createJobQueue = ({
 
     running.set(job.id, { kind, subject });
 
+    if (pausedOnRecord.delete(job.id)) {
+      paused.add(job.id);
+    }
+
     try {
       await onStarted?.({ kind, jobId: job.id, subject });
 
@@ -306,7 +321,10 @@ const createJobQueue = ({
       running.delete(job.id);
       progressByJobId.delete(job.id);
       cancelled.delete(job.id);
-      paused.delete(job.id);
+
+      if (paused.delete(job.id)) {
+        keepThePauses();
+      }
     }
   };
 
@@ -495,6 +513,14 @@ const createJobQueue = ({
 
   return {
     startWorking: async () => {
+      const kept = await pauses?.read().catch(() => null);
+
+      isEverythingPaused = kept?.isEverythingPaused ?? false;
+
+      for (const jobId of kept?.jobIds ?? []) {
+        pausedOnRecord.add(jobId);
+      }
+
       await db
         .update(queuedJob)
         .set({
@@ -640,6 +666,7 @@ const createJobQueue = ({
       }
 
       paused.add(jobId);
+      keepThePauses();
 
       return true;
     },
@@ -647,6 +674,7 @@ const createJobQueue = ({
     resume: (jobId) => {
       const wasPaused = paused.delete(jobId);
 
+      keepThePauses();
       wakeTheHeld();
 
       return wasPaused;
@@ -654,12 +682,16 @@ const createJobQueue = ({
 
     pauseAll: () => {
       isEverythingPaused = true;
+      keepThePauses();
     },
 
     resumeAll: () => {
       isEverythingPaused = false;
+      keepThePauses();
       wakeTheHeld();
     },
+
+    isEverythingPaused: () => isEverythingPaused,
 
     isPaused: (jobId) => isHeld(jobId),
 
