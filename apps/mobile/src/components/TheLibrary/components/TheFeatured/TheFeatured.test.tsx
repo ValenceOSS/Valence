@@ -1,4 +1,5 @@
 import { act, render, userEvent } from '@testing-library/react-native';
+import { AppState } from 'react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -141,6 +142,40 @@ describe('TheFeatured', () => {
       { wrapper: CacheScope },
     );
 
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(onShowing).not.toHaveBeenCalledWith(next);
+    jest.useRealTimers();
+  });
+
+  it('stays where it is while the app is behind the app switcher', async () => {
+    jest.useFakeTimers();
+    installPlatform(aFakePlatform());
+    const listening = jest.spyOn(AppState, 'addEventListener');
+    const onShowing = jest.fn();
+    const first = aTitle();
+    const next = aTitle({ id: '3fa85f64-5717-4562-b3fc-2c963f66afb0', title: 'Dune' });
+
+    await render(
+      <TheFeatured
+        items={[first, next]}
+        onWatch={jest.fn()}
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+        onShowing={onShowing}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await act(() => {
+      for (const [kind, told] of listening.mock.calls) {
+        if (kind === 'change') {
+          told('inactive');
+        }
+      }
+    });
     await act(async () => {
       await jest.advanceTimersByTimeAsync(30_000);
     });
