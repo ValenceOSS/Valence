@@ -1078,6 +1078,28 @@ describe('following a title nobody asked for', () => {
     ).toBeNull();
   });
 
+  it('keeps two book series apart, and joins the same one asked for twice', async () => {
+    const { service } = aService();
+    const seriesOf = (seriesAsin: string, title: string): MediaRequestDraft => ({
+      kind: 'bookSeries',
+      seriesAsin,
+      libraryId: 'books',
+      libraryPath: '/media/Books',
+      requestedBy: { id: 'someone', name: 'Someone' },
+      isApproved: true,
+      catalogue: { title, year: 2020, books: [] },
+    });
+
+    const first = await service.add(seriesOf('B0SERIESAA', 'The Completionist Chronicles'));
+    const second = await service.add(seriesOf('B0SERIESBB', 'The Wheel of Time'));
+    const again = await service.add(seriesOf('B0SERIESAA', 'The Completionist Chronicles'));
+
+    expect(second.request.id).not.toBe(first.request.id);
+    expect(second.request.title).toBe('The Wheel of Time');
+    expect(again.request.id).toBe(first.request.id);
+    expect((await service.find(first.request.id))?.title).toBe('The Completionist Chronicles');
+  });
+
   it('asks for every main book of a series, and the companions ticked, each as a book of its own', async () => {
     const { service } = aService();
     const narration = (asin: string, narrators: string[]) => ({
