@@ -11,6 +11,7 @@ import { say } from '@ValenceI18n/say';
 const PART_ORDER: readonly TitlePart[] = [
   'library',
   'downloading',
+  'searching',
   'queued',
   'missing',
   'failed',

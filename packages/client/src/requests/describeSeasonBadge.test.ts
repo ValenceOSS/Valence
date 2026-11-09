@@ -39,6 +39,15 @@ describe('describeSeasonBadge', () => {
     ).toMatchObject({ label: 'Downloading', detail: '1 of 3 available' });
   });
 
+  it('says a season is being searched for while that is all it is doing', () => {
+    expect(
+      describeSeasonBadge([episode('available'), episode('searching'), episode('wanted')], TODAY),
+    ).toMatchObject({ label: 'Searching', detail: '1 of 3 available' });
+    expect(describeSeasonBadge([episode('searching'), episode('downloading')], TODAY).label).toBe(
+      'Downloading',
+    );
+  });
+
   it('says a season is wanted where an episode could not be found', () => {
     expect(describeSeasonBadge([episode('available'), episode('failed')], TODAY).label).toBe(
       'Missing',
