@@ -18737,8 +18737,8 @@
   },
   {
     "handler": "screens.adminArea.encodingSettings.fastThumbnailsAbout",
-    "text": "Seek-bar thumbnails normally come from every frame of a file, so each one shows the exact moment it’s for. With this on, they come from keyframes only. They’re made several times faster, on the CPU instead of the GPU, but a thumbnail can show a moment several seconds away from where you’re pointing. HDR files still use the GPU so their colours stay right. Thumbnails that already exist stay as they are until you regenerate them.",
-    "context": "The info hover beside the fast thumbnails setting."
+    "text": "On a server with a GPU, seek-bar thumbnails come from every frame of a file, so each one shows the exact moment it’s for. With this on, SDR files use keyframes only, on the CPU. That’s several times faster, but a thumbnail can show a moment several seconds away from where you’re pointing. HDR files aren’t affected, so their colours are still converted. Thumbnails that already exist stay as they are until you regenerate them.",
+    "context": "The info hover beside the fast thumbnails setting, which only shows on a server with a GPU."
   },
   {
     "handler": "screens.adminArea.encodingSettings.fastThumbnailsDetail",

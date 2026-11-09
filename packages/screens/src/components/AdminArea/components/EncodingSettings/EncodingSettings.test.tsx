@@ -35,8 +35,17 @@ describe('EncodingSettings', () => {
 
   it('turns fast thumbnails on, which are off until chosen', async () => {
     const user = userEvent.setup();
+    const overview = anAdminOverview();
 
-    renderWithAnswers(<EncodingSettings overview={anAdminOverview()} devices={null} />);
+    renderWithAnswers(
+      <EncodingSettings
+        overview={{
+          ...overview,
+          transcoder: { ...overview.transcoder, hardwareAccels: ['vaapi'] },
+        }}
+        devices={null}
+      />,
+    );
 
     const fastThumbnails = screen.getByRole('switch', { name: 'Fast thumbnails' });
 
@@ -45,6 +54,24 @@ describe('EncodingSettings', () => {
     await user.click(fastThumbnails);
 
     expect(saved.saveUsesKeyframeThumbnails).toHaveBeenCalledWith(true);
+  });
+
+  it('offers fast thumbnails only where a GPU would otherwise draw them', () => {
+    const overview = anAdminOverview({ hardwareAccel: 'none' });
+    const withGraphics = { ...overview.transcoder, hardwareAccels: ['vaapi'] };
+
+    const { unmount } = renderWithAnswers(
+      <EncodingSettings overview={anAdminOverview()} devices={null} />,
+    );
+
+    expect(screen.queryByRole('switch', { name: 'Fast thumbnails' })).not.toBeInTheDocument();
+    unmount();
+
+    renderWithAnswers(
+      <EncodingSettings overview={{ ...overview, transcoder: withGraphics }} devices={null} />,
+    );
+
+    expect(screen.queryByRole('switch', { name: 'Fast thumbnails' })).not.toBeInTheDocument();
   });
 
   it('tests the backend chosen, and says so where the test could not run', async () => {

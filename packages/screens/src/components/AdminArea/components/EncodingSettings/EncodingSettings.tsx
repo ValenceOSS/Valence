@@ -110,6 +110,8 @@ const EncodingSettings = ({ overview, devices }: EncodingSettingsProps) => {
     },
   );
 
+  const hasGraphics = (overview?.transcoder.hardwareAccels.length ?? 0) > 0 && accel !== 'none';
+
   const about = (title: string, detail: string): ReactNode => (
     <PanelCardInfo
       label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
@@ -229,15 +231,16 @@ const EncodingSettings = ({ overview, devices }: EncodingSettingsProps) => {
             />
           </SettingRow>
 
-          {switchRow(
-            say('screens.adminArea.settingsPanel.fastThumbnails'),
-            say('screens.adminArea.encodingSettings.fastThumbnailsAbout'),
-            say('screens.adminArea.encodingSettings.fastThumbnailsDetail'),
-            fastThumbnails,
-            () => {
-              changeFastThumbnails(!fastThumbnails);
-            },
-          )}
+          {hasGraphics &&
+            switchRow(
+              say('screens.adminArea.settingsPanel.fastThumbnails'),
+              say('screens.adminArea.encodingSettings.fastThumbnailsAbout'),
+              say('screens.adminArea.encodingSettings.fastThumbnailsDetail'),
+              fastThumbnails,
+              () => {
+                changeFastThumbnails(!fastThumbnails);
+              },
+            )}
 
           <SettingRow
             title={say('screens.adminArea.encodingSettings.keepPreparedDownloads')}
