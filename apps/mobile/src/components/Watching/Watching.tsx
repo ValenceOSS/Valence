@@ -100,6 +100,7 @@ import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
+import { presenceHealthOfExpo } from '@ValenceNative/playback/presenceHealthOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
 import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
@@ -1066,17 +1067,26 @@ const Watching = ({
       return;
     }
 
+    const tellPresence = () => {
+      void sendPresenceHeartbeat(
+        clientId,
+        player.playing,
+        castAt.current === null ? presenceHealthOfExpo(player, knownLength.current) : undefined,
+      );
+    };
     const beat = setInterval(() => {
       void heartbeatPlaybackSession(sessionId, player.playing, clientId).then((answer) => {
         if (answer === 'gone') {
           reconnectRef.current();
         }
       });
-      void sendPresenceHeartbeat(clientId, player.playing);
+      tellPresence();
     }, SAY_IT_IS_ALIVE_EVERY);
+    const pausing = player.addListener('playingChange', tellPresence);
 
     return () => {
       clearInterval(beat);
+      pausing.remove();
     };
   }, [sessionId, clientId, player]);
 

@@ -578,7 +578,19 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           userAgent: entry.userAgent,
           clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,
-          playback: entry.playback,
+          playback:
+            entry.playback === null
+              ? null
+              : {
+                  ...entry.playback,
+                  health:
+                    entry.playback.health === null
+                      ? null
+                      : {
+                          ...entry.playback.health,
+                          ageMs: presence.healthAgeOf(entry.clientId),
+                        },
+                },
           listening: await listeningOn(entry.clientId),
           bookListening: await bookListeningOn(entry.clientId),
           reading: await readingOn(entry.clientId),

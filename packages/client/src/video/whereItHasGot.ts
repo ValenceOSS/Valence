@@ -8,7 +8,13 @@ import type { VideoNowWatching } from '@ValenceContracts/schemas/VideoRemote';
  * @param now - The time now, in milliseconds.
  * @returns How far through it is, in seconds.
  */
-const whereItHasGot = (watching: VideoNowWatching, now: number): number => {
+const whereItHasGot = (
+  watching: Pick<
+    VideoNowWatching,
+    'positionSeconds' | 'durationSeconds' | 'isPlaying' | 'reportedAtMs'
+  >,
+  now: number,
+): number => {
   const moved = watching.isPlaying ? Math.max(now - watching.reportedAtMs, 0) / 1000 : 0;
   const at = watching.positionSeconds + moved;
 

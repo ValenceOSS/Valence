@@ -401,6 +401,40 @@ describe('fetchActiveSessions', () => {
     expect(read?.identity).toMatchObject({ app: 'browser', system: null });
   });
 
+  it('turns how long ago a player measured its stream into a time on this device', async () => {
+    const health = {
+      positionSeconds: 600,
+      durationSeconds: 7200,
+      bufferedAheadSeconds: 30,
+      presentedWidth: 1920,
+      presentedHeight: 1080,
+    };
+
+    answerWith([
+      { ...SESSION, playback: { ...SESSION.playback, health: { ...health, ageMs: 4000 } } },
+    ]);
+
+    const [read] = await fetchActiveSessions(() => 50_000);
+
+    expect(read?.playback?.health?.reportedAtMs).toBe(46_000);
+  });
+
+  it('leaves a measurement untimed where an older server does not say how old it is', async () => {
+    const health = {
+      positionSeconds: 600,
+      durationSeconds: 7200,
+      bufferedAheadSeconds: 30,
+      presentedWidth: 1920,
+      presentedHeight: 1080,
+    };
+
+    answerWith([{ ...SESSION, playback: { ...SESSION.playback, health } }]);
+
+    const [read] = await fetchActiveSessions(() => 50_000);
+
+    expect(read?.playback?.health?.reportedAtMs).toBeUndefined();
+  });
+
   it('takes a session from a server that says nothing of its kind for a browser', async () => {
     answerWith([SESSION]);
 

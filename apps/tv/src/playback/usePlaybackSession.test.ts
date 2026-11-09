@@ -210,8 +210,38 @@ describe('usePlaybackSession', () => {
     jest.advanceTimersByTime(30_000);
 
     expect(heartbeatPlaybackSession).toHaveBeenCalledWith('session-1', false, 'client-1');
-    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(2);
-    expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith('client-1', false);
+    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(30);
+    expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith('client-1', false, undefined);
+  });
+
+  it('tells the household what the player measures of the stream', async () => {
+    starting({ kind: 'started', session: DIRECT });
+
+    const health = {
+      positionSeconds: 120,
+      durationSeconds: 7200,
+      bufferedAheadSeconds: 30,
+      presentedWidth: 1920,
+      presentedHeight: 1080,
+    };
+
+    await renderHook(() =>
+      usePlaybackSession(
+        MEDIA,
+        0,
+        () => true,
+        undefined,
+        undefined,
+        undefined,
+        0,
+        () => health,
+      ),
+    );
+    await settle();
+
+    jest.advanceTimersByTime(1000);
+
+    expect(sendPresenceHeartbeat).toHaveBeenLastCalledWith('client-1', true, health);
   });
 
   it('does not keep a file sent as it is alive, but still tells the household', async () => {
@@ -223,7 +253,7 @@ describe('usePlaybackSession', () => {
     jest.advanceTimersByTime(30_000);
 
     expect(heartbeatPlaybackSession).not.toHaveBeenCalled();
-    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(2);
+    expect(sendPresenceHeartbeat).toHaveBeenCalledTimes(30);
   });
 
   it('ends the session and the watching when the player goes', async () => {

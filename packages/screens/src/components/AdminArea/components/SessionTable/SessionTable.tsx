@@ -12,7 +12,6 @@ import { Badge } from '@ValenceUI/Badge';
 import { Cast as CastIcon } from '@keyline-icons/react';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
-import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { DeviceLabel } from '@ValenceScreens/components/DeviceLabel/DeviceLabel';
 import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
@@ -22,6 +21,7 @@ import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHa
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
+import { SessionProgress } from '@ValenceScreens/components/AdminArea/components/SessionTable/components/SessionProgress/SessionProgress';
 import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
 import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
 import { say } from '@ValenceI18n/say';
@@ -258,23 +258,8 @@ const SessionTable = ({
       meta: { hidesOnPhones: true },
       header: say('common.progress'),
       enableSorting: false,
-      cell: ({ row }) => {
-        if (row.original.group !== null) {
-          return null;
-        }
-
-        const { playback, listening, bookListening } = row.original.session;
-        const heard = listening ?? bookListening;
-        const health = playback?.health ?? heard;
-
-        return health === null || health.durationSeconds <= 0 ? (
-          <span className="text-text-muted">—</span>
-        ) : (
-          <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {formatDuration(health.positionSeconds)} / {formatDuration(health.durationSeconds)}
-          </span>
-        );
-      },
+      cell: ({ row }) =>
+        row.original.group !== null ? null : <SessionProgress session={row.original.session} />,
     },
     {
       id: 'delivery',

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TruncatedText } from '@ValenceUI/TruncatedText';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { useRunningPosition } from '@ValenceScreens/admin/useRunningPosition';
 import type { SessionTimeProps } from './SessionTime.types';
 import { say } from '@ValenceI18n/say';
 
@@ -18,6 +19,7 @@ const SessionTime = ({ session, now = Date.now }: SessionTimeProps) => {
   const { playback, listening, bookListening, reading } = session;
   const heard = listening ?? bookListening;
   const at = playback?.health ?? heard;
+  const running = useRunningPosition(playback);
   const isIdle = playback === null && heard === null && reading === null;
   const [clock, setClock] = useState(now);
 
@@ -38,7 +40,7 @@ const SessionTime = ({ session, now = Date.now }: SessionTimeProps) => {
   const said =
     at !== null
       ? [
-          formatDuration(at.positionSeconds),
+          formatDuration(running ?? at.positionSeconds),
           at.durationSeconds > 0 ? formatDuration(at.durationSeconds) : null,
         ]
       : playback !== null

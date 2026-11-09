@@ -308,6 +308,8 @@ const ActiveSessionSchema = z.object({
           bufferedAheadSeconds: z.number(),
           presentedWidth: z.number(),
           presentedHeight: z.number(),
+          ageMs: z.number().nonnegative().nullable().optional(),
+          reportedAtMs: z.number().optional(),
         })
         .nullable(),
     })
@@ -530,9 +532,33 @@ const watchActiveSessions = (
 /**
  * Reads every tab that has the app open right now, with who has it and what they are watching. This
  * is presence rather than history: a session appears while it is open and is gone once it is not.
+ *
+ * The server says how long ago each player last measured its stream, and that becomes a time on
+ * this device's own clock, so a position can be moved on from it however far the two clocks differ.
+ *
+ * @param now - The clock, in milliseconds.
  */
-const fetchActiveSessions = async (): Promise<ActiveSession[]> => {
-  return readFromServer('/api/admin/sessions', z.array(ActiveSessionSchema));
+const fetchActiveSessions = async (now: () => number = Date.now): Promise<ActiveSession[]> => {
+  const sessions = await readFromServer('/api/admin/sessions', z.array(ActiveSessionSchema));
+  const heard = now();
+
+  return sessions.map((session) => {
+    const health = session.playback?.health;
+
+    return session.playback === null ||
+      health === null ||
+      health === undefined ||
+      health.ageMs === null ||
+      health.ageMs === undefined
+      ? session
+      : {
+          ...session,
+          playback: {
+            ...session.playback,
+            health: { ...health, reportedAtMs: heard - health.ageMs },
+          },
+        };
+  });
 };
 
 /**
