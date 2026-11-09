@@ -35,6 +35,7 @@ const ENGLISH = {
   'client.admin.describePermission.downloadMedia': 'Download media',
   'client.admin.describePermission.everythingIncludingAnythingAddedLater':
     'Everything, including anything added later',
+  'client.admin.describePermission.findSubtitles': 'Find subtitles',
   'client.admin.describePermission.haveRequestsGoStraightThrough': 'Auto-approve requests',
   'client.admin.describePermission.haveTheServerCallOutWhen': 'Manage webhooks',
   'client.admin.describePermission.hideAnItemFromEverybody': 'Hide an item from everyone',
@@ -129,6 +130,8 @@ const ENGLISH = {
     'Run a reset or a full rebuild, which deletes stored data and starts again.',
   'client.admin.describePermissionDetail.saveACopyOfMediaTo':
     'Download media to a device to watch offline.',
+  'client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne':
+    'Search for subtitles while watching and fetch one, without being able to change anything else about the item.',
   'client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas':
     'See every share link anyone has created, and revoke any of them.',
   'client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor':

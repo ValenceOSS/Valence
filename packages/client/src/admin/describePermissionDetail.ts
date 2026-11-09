@@ -18,6 +18,7 @@ const DETAILS: Record<Permission, string> = {
   'media.override': say('client.admin.describePermissionDetail.correctAnItemsMetadataByHand'),
   'media.artwork': say('client.admin.describePermissionDetail.replaceAnItemsPosterOrBackdrop'),
   'media.hide': say('client.admin.describePermissionDetail.hideAnItemFromEveryProfile'),
+  'media.subtitles': say('client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne'),
 
   'sharing.link': say('client.admin.describePermissionDetail.createALinkThatLetsSomebody'),
   'sharing.party': say('client.admin.describePermissionDetail.startAWatchPartyPlayingOne'),

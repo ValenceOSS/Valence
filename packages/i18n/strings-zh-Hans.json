@@ -140,6 +140,11 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
+    "handler": "client.admin.describePermission.findSubtitles",
+    "text": "Find subtitles",
+    "context": "The name of the permission to search subtitle sites for a film or episode and fetch one, in the list of a role's permissions in the admin (from `describePermission`)."
+  },
+  {
     "handler": "client.admin.describePermission.haveRequestsGoStraightThrough",
     "text": "Auto-approve requests",
     "context": "Shown in the admin (from `describePermission`)."
@@ -428,6 +433,11 @@
     "handler": "client.admin.describePermissionDetail.saveACopyOfMediaTo",
     "text": "Download media to a device to watch offline.",
     "context": "Shown in the admin (from `describePermissionDetail`)."
+  },
+  {
+    "handler": "client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne",
+    "text": "Search for subtitles while watching and fetch one, without being able to change anything else about the item.",
+    "context": "What the Find subtitles permission allows, under its name in the list of a role's permissions in the admin (from `describePermissionDetail`)."
   },
   {
     "handler": "client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas",

@@ -14,6 +14,7 @@ const PERMISSIONS_EVERY_APP_READS: ReadonlySet<GrantedPermission> = new Set<Gran
   'media.override',
   'media.artwork',
   'media.hide',
+  'media.subtitles',
   'sharing.link',
   'sharing.party',
   'sharing.manage',

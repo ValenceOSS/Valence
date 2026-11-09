@@ -415,7 +415,8 @@ const VideoPlayer = ({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
   const [isFindingSubtitles, setIsFindingSubtitles] = useState(false);
-  const { mayAdminister } = useWhatIMayDo();
+  const { may, mayAdminister } = useWhatIMayDo();
+  const mayFindSubtitles = mayAdminister || may('media.subtitles') || may('media.override');
   const [selectedSubtitleId, setSelectedSubtitleId] = useState(SUBTITLES_OFF);
   const defaultedForRef = useRef<string | null>(null);
   const [captionStyle, setCaptionStyle] = useState(readCaptionStyle);
@@ -3222,7 +3223,7 @@ const VideoPlayer = ({
             onFetchSubtitle={(code) => {
               void subtitleFetching.fetchIn(code);
             }}
-            {...(mayAdminister
+            {...(mayFindSubtitles
               ? {
                   onFindSubtitles: () => {
                     setIsFindingSubtitles(true);
