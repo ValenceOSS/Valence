@@ -46,7 +46,7 @@ const ARRIVING = aShowcaseSession({
  */
 const SessionsPicture = ({ isActed = false }: SessionsPictureProps) => (
   <ShowcaseScope>
-    <PanelCard title={say('common.sessions')} className="w-full text-left">
+    <PanelCard title={say('common.sessions')} hasFace={false} className="w-full text-left">
       <SessionCards
         sessions={isActed ? [ARRIVING, ...WATCHING] : WATCHING}
         busyClientId={null}

@@ -102,26 +102,31 @@ describe('watchNowListening', () => {
     const { become, wait, reports } = watching();
 
     become({ ...PLAYING, bookPositionSeconds: 0 });
-    wait(5);
-    become({ bookPositionSeconds: 5 });
-    wait(10);
-    become({ bookPositionSeconds: 15 });
+    wait(0.25);
+    become({ bookPositionSeconds: 0.25 });
+    wait(0.5);
+    become({ bookPositionSeconds: 0.75 });
+
+    expect(reports).toHaveLength(1);
+
+    wait(0.25);
+    become({ bookPositionSeconds: 1 });
 
     expect(reports).toHaveLength(2);
-    expect(reports[1]?.positionSeconds).toBe(15);
+    expect(reports[1]?.positionSeconds).toBe(1);
   });
 
   it('says at once when it pauses, moves to another track or jumps', () => {
     const { become, wait, reports } = watching();
 
     become({ ...PLAYING, bookPositionSeconds: 0 });
-    wait(1);
-    become({ isPlaying: false, bookPositionSeconds: 1 });
+    wait(0.5);
+    become({ isPlaying: false, bookPositionSeconds: 0.5 });
     become({ isPlaying: true, trackAt: 1, bookPositionSeconds: 1800 });
-    wait(1);
+    wait(0.5);
     become({ bookPositionSeconds: 2400 });
 
-    expect(reports.map((report) => report?.positionSeconds)).toEqual([0, 1, 1800, 2400]);
+    expect(reports.map((report) => report?.positionSeconds)).toEqual([0, 0.5, 1800, 2400]);
   });
 
   it('says it is playing nothing once the book is closed, and only once', () => {

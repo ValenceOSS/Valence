@@ -4,6 +4,7 @@ type ControlProperties = Record<string, string | number | boolean | object | nul
 
 type TooltipProps = {
   label: string;
+  detail?: string | undefined;
   keys?: readonly string[];
   children: ReactElement<ControlProperties>;
   side?: 'top' | 'bottom' | 'left' | 'right';

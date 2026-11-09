@@ -110,4 +110,14 @@ describe('how the sizes are drawn', () => {
 
     expect(screen.getByRole('group', { name: 'Card size' })).toHaveClass('h-8');
   });
+
+  it('joins its sizes like the toggles beside it in a panel heading, when asked to', () => {
+    render(<GridSizeChooser value="medium" onValueChange={vi.fn()} look="joined" />);
+
+    const track = screen.getByRole('group', { name: 'Card size' });
+
+    expect(track).toHaveClass('divide-x');
+    expect(track).toHaveClass('bg-[var(--surface-hover)]');
+    expect(screen.getByRole('button', { name: 'Medium cards' })).toHaveClass('h-[calc(2rem-2px)]');
+  });
 });

@@ -3,6 +3,7 @@ import type { MediaGridSize } from '@ValenceScreens/components/MediaGrid/MediaGr
 type GridSizeChooserProps = {
   value: MediaGridSize;
   onValueChange: (size: MediaGridSize) => void;
+  look?: 'track' | 'joined';
   className?: string;
 };
 

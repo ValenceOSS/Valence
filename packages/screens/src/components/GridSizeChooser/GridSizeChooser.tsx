@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { SEGMENTED } from '@ValenceUI/tokens/segmented';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import {
   Grid2x2 as Grid2x2Icon,
   Grid3x3 as Grid3x3Icon,
@@ -32,9 +33,17 @@ const SIZES: readonly {
  *
  * @param value - The size in force.
  * @param onValueChange - Told which size was chosen.
+ * @param look - Whether it sits in the solid track the other segmented controls use, or is joined
+ *   like the toggles it stands beside in a panel's heading.
  * @param className - Extra classes for the caller's own layout.
  */
-const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserProps) => {
+const GridSizeChooser = ({
+  value,
+  onValueChange,
+  look = 'track',
+  className,
+}: GridSizeChooserProps) => {
+  const isJoined = look === 'joined';
   const [pointedAt, setPointedAt] = useState<MediaGridSize | null>(null);
 
   const lit = pointedAt ?? value;
@@ -50,8 +59,9 @@ const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserPro
         setPointedAt(null);
       }}
       className={cn(
-        'flex h-8 items-center gap-0.5 rounded-md p-0.5',
-        SEGMENTED.tones.inverted.track,
+        isJoined
+          ? cn(JOINED_LOOKS.track, 'relative isolate')
+          : cn('flex h-8 items-center gap-0.5 rounded-md p-0.5', SEGMENTED.tones.inverted.track),
         className,
       )}
     >
@@ -73,12 +83,19 @@ const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserPro
             onValueChange(id);
           }}
           className={cn(
-            'relative flex size-7 items-center justify-center rounded-[5px]',
+            isJoined
+              ? 'relative flex h-[calc(2rem-2px)] w-[2.125rem] items-center justify-center'
+              : 'relative flex size-7 items-center justify-center rounded-[5px]',
             'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
             lit === id ? 'text-text' : 'text-text-muted',
           )}
         >
-          {lit === id ? <SlidingMark group="grid-size-mark" className="rounded-[5px]" /> : null}
+          {lit === id ? (
+            <SlidingMark
+              group={isJoined ? 'grid-size-joined-mark' : 'grid-size-mark'}
+              className={isJoined ? 'rounded-none' : 'rounded-[5px]'}
+            />
+          ) : null}
 
           <Icon of={glyph} size={16} />
         </Button>
