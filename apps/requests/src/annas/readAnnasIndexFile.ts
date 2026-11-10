@@ -14,7 +14,9 @@ const READ_AT_ONCE_BYTES = 8 * 1024 * 1024;
  * Reads one gzipped file of Anna's Archive's index, one record to a line, and hands on the books
  * wanted from it a batch at a time, saying how many records it has read as it goes. The file is read
  * in large pieces, so several read side by side from one spinning disk do not keep it seeking. Lines
- * are split on line breaks alone, since a description can hold a carriage return of its own.
+ * are split on line breaks alone, since a description can hold a carriage return of its own. A file
+ * that cannot be read fails the read rather than leaving it waiting on a decompressor that was
+ * never told.
  *
  * @param file - The file.
  * @param wanted - Which languages, formats and torrents are kept.
@@ -25,9 +27,12 @@ const readAnnasIndexFile: AnnasIndexReader = async (file, wanted, sink) => {
   let read = 0;
   let rest = '';
   let batch: AnnasBookRecord[] = [];
-  const stream = createReadStream(file, { highWaterMark: READ_AT_ONCE_BYTES }).pipe(
-    createGunzip({ chunkSize: 1024 * 1024 }),
-  );
+  const source = createReadStream(file, { highWaterMark: READ_AT_ONCE_BYTES });
+  const stream = source.pipe(createGunzip({ chunkSize: 1024 * 1024 }));
+
+  source.on('error', (error) => {
+    stream.destroy(error);
+  });
 
   for await (const chunk of stream) {
     const lines = (rest + String(chunk)).split('\n');

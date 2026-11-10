@@ -1,0 +1,1 @@
+CREATE INDEX `annas_book_search` ON `requests_annas_book` (`search_key`(255));
