@@ -506,6 +506,18 @@ fn chosen_background_jobs() -> Option<usize> {
         .filter(|count: &usize| *count > 0)
 }
 
+/// How many background renders may run while anybody is watching, where the
+/// operator asked: one otherwise, so a film being watched never shares the
+/// device with more than one render. A machine whose device has room to spare
+/// can be told to keep more, or all of them, going.
+fn chosen_jobs_while_watching() -> usize {
+    env::var("VALENCE_BACKGROUND_JOBS_WHILE_WATCHING")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .filter(|count: &usize| *count > 0)
+        .unwrap_or(1)
+}
+
 /// The most background renders the device's own measurement is trusted for.
 ///
 /// Measured on an RTX 5080, eight episodes each drawn as a sheet and a
@@ -548,7 +560,7 @@ fn background_width(chosen: Option<usize>, measured: u32) -> usize {
 }
 
 /// Widens the queue once the device has been measured, and narrows what it
-/// uses to one while anybody is watching.
+/// uses while anybody is watching — to one, unless the operator chose more.
 ///
 /// A background render shares the decode and encode engines with the film
 /// being watched, and [`valence_transcoder::steps_aside::steps_aside`] answers only for the
@@ -579,10 +591,13 @@ fn spawn_width_keeper(
             queue.set_concurrency(width);
         }
 
+        let while_watching = chosen_jobs_while_watching();
+
         tracing::info!(
             target: "service",
-            "running up to {} background jobs at once, and one while anybody is watching",
-            queue.concurrency()
+            "running up to {} background jobs at once, and {} while anybody is watching",
+            queue.concurrency(),
+            while_watching.min(queue.concurrency())
         );
 
         let mut held = None;
@@ -591,7 +606,7 @@ fn spawn_width_keeper(
             let watching = !registry.is_empty().await;
 
             if watching && held.is_none() {
-                held = queue.hold_all_but_one().await;
+                held = queue.hold_all_but(while_watching).await;
             } else if !watching && held.is_some() {
                 held = None;
             }
