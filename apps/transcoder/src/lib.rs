@@ -18,6 +18,7 @@ pub mod codec_string;
 pub mod concurrency;
 pub mod credit_frames;
 pub mod dash;
+pub mod device_decode;
 pub mod devices;
 pub mod download;
 pub mod drive_activity;

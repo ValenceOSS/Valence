@@ -132,6 +132,12 @@ pub struct VideoStream {
     pub range_base: VideoRange,
     pub bitrate_kbps: Option<u32>,
     pub bit_depth: Option<u8>,
+    /// How the picture's samples are laid out, as ffprobe names it: `yuv420p10le`, `yuv444p`.
+    ///
+    /// What decides whether a graphics chip can decode it at all, which its depth alone does
+    /// not. See [`crate::device_decode::device_decodes`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pixel_format: Option<String>,
     /// The codec level, as the codec itself numbers it.
     ///
     /// Not comparable across codecs: H.264 reports level 5.1 as 51 and HEVC

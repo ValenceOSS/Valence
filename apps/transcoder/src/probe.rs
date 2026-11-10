@@ -331,6 +331,7 @@ fn video_stream_of(output: &FfprobeOutput) -> Option<VideoStream> {
                     .as_ref()
                     .and_then(|value| value.parse::<u8>().ok())
                     .or_else(|| stream.pix_fmt.as_deref().and_then(bit_depth_from_pix_fmt)),
+                pixel_format: stream.pix_fmt.clone().filter(|format| !format.is_empty()),
             }
         })
 }

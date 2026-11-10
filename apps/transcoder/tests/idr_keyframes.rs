@@ -281,6 +281,7 @@ fn copy_spec(input: &Path, needs_idr_keyframes: bool) -> SessionSpec {
         source_size: Some((320, 180)),
         container: SegmentContainer::Fmp4,
         source_video_codec: Some("hevc".to_owned()),
+        source_pixel_format: None,
         track: Track::Both,
         source_range: None,
         source_range_base: None,
