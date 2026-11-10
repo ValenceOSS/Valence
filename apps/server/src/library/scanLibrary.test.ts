@@ -110,6 +110,7 @@ const harness = (options: {
   onAdded?: (item: ScannedItem) => void;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
+  promoteVersions?: (libraryId: string, paths: string[]) => Promise<void>;
   root?: string;
   kind?: 'movies' | 'shows';
   within?: string;
@@ -247,6 +248,9 @@ const harness = (options: {
         ...(options.forgetStaleVersions === undefined
           ? {}
           : { forgetStaleVersions: options.forgetStaleVersions }),
+        ...(options.promoteVersions === undefined
+          ? {}
+          : { promoteVersions: options.promoteVersions }),
         markScanned,
       },
       transcoder,
@@ -1845,6 +1849,29 @@ describe('a library holding extras', () => {
     }).run();
 
     expect(linkExtras).not.toHaveBeenCalled();
+  });
+
+  it('makes a copy fetched again the episode itself, not a version of the copy it replaced', async () => {
+    const linkExtras = vi.fn().mockResolvedValue(undefined);
+    const promoteVersions = vi.fn().mockResolvedValue(undefined);
+    const folder = '/media/shows/Love and Lies (2017)/Season 01';
+    const replaced = `${folder}/Love and Lies (2017) - S01E01 - First Love [1080p][x264][AC3 2.0].mkv`;
+    const fetched = `${folder}/Love and Lies (2017) - S01E01 - First Love [1080p][x265][Opus 2.0].mkv`;
+
+    await harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [file(fetched)],
+      existing: [stored(replaced, { missingSince: new Date('2026-11-10') }), stored(fetched)],
+      linkExtras,
+      promoteVersions,
+    }).run();
+
+    expect(promoteVersions).toHaveBeenCalledWith(LIBRARY_ID, [fetched]);
+    expect(linkExtras).not.toHaveBeenCalledWith(
+      LIBRARY_ID,
+      expect.arrayContaining([{ path: fetched, parentPath: replaced }]),
+    );
   });
 
   it('lets go of nothing on a scan of part of the library, which cannot see every version', async () => {

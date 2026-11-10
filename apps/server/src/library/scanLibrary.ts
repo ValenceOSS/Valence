@@ -1,4 +1,5 @@
 import { withExtraChoices } from './withExtraChoices';
+import { releaseVersionsOfGone } from '@ValenceServer/library/placement/releaseVersionsOfGone';
 import type { ExtraChoice } from './withExtraChoices';
 import { orderOf } from './orderOf';
 import type { EpisodePin } from './EpisodePin.types';
@@ -123,6 +124,7 @@ type MediaStore = {
   ) => Promise<{ probe: MediaProbe; probeVersion: number | null } | null>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
+  promoteVersions?: (libraryId: string, paths: string[]) => Promise<void>;
   linkSameFilms?: (libraryId: string) => Promise<void>;
   applyVersionChoices?: (libraryId: string) => Promise<void>;
   listEpisodePins?: (libraryId: string) => Promise<EpisodePin[]>;
@@ -576,9 +578,15 @@ const scanLibrary = async ({
     joined.set(first, read);
   }
 
-  const placed = withExtraChoices(
-    unjoined.size === 0 ? firstPlaced : placeInLibrary(kind, placeable, root, unjoined),
-    (await store.listExtraChoices?.(libraryId)) ?? [],
+  const missingBefore = new Set(
+    stored.filter((item) => (item.missingSince ?? null) !== null).map((item) => item.path),
+  );
+  const { placed, released } = releaseVersionsOfGone(
+    withExtraChoices(
+      unjoined.size === 0 ? firstPlaced : placeInLibrary(kind, placeable, root, unjoined),
+      (await store.listExtraChoices?.(libraryId)) ?? [],
+    ),
+    (path) => listedPaths.has(path) || (!path.startsWith(`${within}/`) && !missingBefore.has(path)),
   );
   const laterParts = new Set(
     [...placed.values()].flatMap((placement) => placement.parts?.slice(1) ?? []),
@@ -944,6 +952,10 @@ const scanLibrary = async ({
       .filter((one): one is { path: string; parentPath: string } => one.parentPath !== null),
     ...[...versions].map(([path, one]) => ({ path, parentPath: one.parentPath })),
   ];
+
+  if (released.length > 0) {
+    await store.promoteVersions?.(libraryId, released);
+  }
 
   if (links.length > 0) {
     await store.linkExtras?.(libraryId, links);
