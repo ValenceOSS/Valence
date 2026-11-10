@@ -74,6 +74,26 @@ type CatalogueHit = {
 
 type Reading = { profileId: string };
 
+type AlbumOrder = 'added' | 'title' | 'artist' | 'year' | 'recentlyPlayed' | 'mostPlayed' | 'rated';
+
+type AlbumAsk = {
+  order: AlbumOrder;
+  genre?: string;
+  years?: { from: number; to: number };
+  offset?: number;
+  limit?: number;
+};
+
+type Genre = { name: string; albums: number; songs: number };
+
+type Lyrics = { isSynced: boolean; lines: { atMs: number | null; text: string }[] };
+
+type AboutArtist = { bio: string | null; sourceUrl: string | null };
+
+type Kept = { isKept: boolean };
+
+type NowPlaying = { trackId: string; client: string };
+
 type FetchInit = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
@@ -174,6 +194,9 @@ type ValenceHost = {
     markWatched: (profileId: string, mediaId: string, watchedAt?: string) => Promise<void>;
     markUnwatched: (profileId: string, mediaId: string) => Promise<void>;
     state: (profileId: string, mediaIds: string[]) => Promise<ViewingState[]>;
+    favourite: (profileId: string, mediaId: string, isFavourite: boolean) => Promise<Kept>;
+    rate: (profileId: string, mediaId: string, stars: number | null) => Promise<Kept>;
+    favourites: (profileId: string, kind: 'track' | 'artist') => Promise<string[]>;
   };
   requests: {
     searchCatalogue: (query: string, kind: CatalogueHit['kind']) => Promise<CatalogueHit[]>;
@@ -195,6 +218,12 @@ type ValenceHost = {
     add: (profileId: string, playlistId: string, items: (string | MissingSong)[]) => Promise<void>;
     read: (profileId: string, playlistId: string) => Promise<PlaylistContents | null>;
     drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
+    rename: (
+      profileId: string,
+      playlistId: string,
+      playlist: { name: string; description?: string },
+    ) => Promise<void>;
+    remove: (profileId: string, playlistId: string) => Promise<void>;
   };
   music: {
     findTrack: (
@@ -206,6 +235,19 @@ type ValenceHost = {
       },
       reading?: Reading,
     ) => Promise<MediaRef | null>;
+    albums: (ask: AlbumAsk, reading?: Reading) => Promise<MediaRef[]>;
+    genres: (reading?: Reading) => Promise<Genre[]>;
+    inGenre: (
+      genre: string,
+      page?: { offset?: number; limit?: number },
+      reading?: Reading,
+    ) => Promise<MediaRef[]>;
+    lyrics: (trackId: string, reading?: Reading) => Promise<Lyrics | null>;
+    similar: (seedIds: string[], limit?: number, reading?: Reading) => Promise<MediaRef[]>;
+    topSongs: (artistId: string, reading?: Reading) => Promise<MediaRef[]>;
+    aboutArtist: (artistId: string, reading?: Reading) => Promise<AboutArtist | null>;
+    recordPlay: (profileId: string, trackId: string, playedAt?: string) => Promise<void>;
+    nowPlaying: (profileId: string, playing: NowPlaying | null) => Promise<void>;
   };
   notifications: {
     send: (profileId: string, note: { title: string; body: string }) => Promise<void>;
@@ -213,15 +255,22 @@ type ValenceHost = {
 };
 
 export type {
+  AboutArtist,
+  AlbumAsk,
+  AlbumOrder,
   CatalogueHit,
   FetchInit,
   Fetched,
   FormPart,
+  Genre,
   JobOptions,
+  Kept,
   LibraryPage,
+  Lyrics,
   MediaDetails,
   MediaRef,
   MissingSong,
+  NowPlaying,
   PlaylistContents,
   ProgressEntry,
   Reading,

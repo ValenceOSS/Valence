@@ -44,6 +44,7 @@ import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
 import { ROUTE_LIMITS } from '@ValenceSDK/routes/ROUTE_LIMITS';
 import { renditionFor } from '@ValenceServer/music/renditionFor';
+import { artistPictureOf } from '@ValenceServer/music/artistPictureOf';
 import type { Context } from 'hono';
 import type { RouteOutcome } from '@ValenceServer/plugins/routes/createPluginRoutes';
 import { gatherParameters } from '@ValenceServer/plugins/routes/gatherParameters';
@@ -852,7 +853,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     const path =
       serve.kind === 'albumArtwork'
         ? await music.library.readAlbumArtwork(viewer, serve.albumId)
-        : await music.library.readArtistImage(viewer, serve.artistId);
+        : await artistPictureOf(music.library, viewer, serve.artistId);
     const bytes = path === null ? null : await music.readImage(path);
 
     if (bytes === null) {

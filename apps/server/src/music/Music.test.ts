@@ -106,6 +106,8 @@ const fakeMusic = () => {
     listPicks: vi.fn(() => Promise.resolve([TRACK])),
     listCatalogue: vi.fn(() => Promise.resolve([])),
     listGenres: vi.fn(() => Promise.resolve(['Indie'])),
+    countGenres: vi.fn(() => Promise.resolve([{ name: 'Indie', albums: 1, songs: 1 }])),
+    listInGenre: vi.fn(() => Promise.resolve([])),
     search: vi.fn(() => Promise.resolve({ tracks: [TRACK], albums: [], artists: [] })),
     readLyrics: vi.fn(() =>
       Promise.resolve({ isSynced: true, lines: [{ atMs: 1000, text: 'Words' }] }),
@@ -165,6 +167,7 @@ const fakeMusic = () => {
     },
     stories: {
       about: vi.fn(() => Promise.resolve({ bio: null, sourceUrl: null, missing: [] })),
+      knows: vi.fn(() => false),
     },
     stream: vi.fn(() =>
       Promise.resolve({

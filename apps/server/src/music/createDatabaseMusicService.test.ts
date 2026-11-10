@@ -2,6 +2,8 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { mediaItem } from '#dialect/Schema';
 import { createDatabaseFavouriteService } from '@ValenceServer/favourites/createDatabaseFavouriteService';
+import { createDatabaseMusicPlays } from '@ValenceServer/music/mixes/createDatabaseMusicPlays';
+import { createDatabaseRatingService } from '@ValenceServer/ratings/createDatabaseRatingService';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { aTrackRow } from '@ValenceServer/testing/aTrackRow';
 import { createDatabaseMusicService } from './createDatabaseMusicService';
@@ -73,6 +75,9 @@ const aShelf = async () => {
     low: low.id,
     other: other.id,
     newest,
+    oldest,
+    undated,
+    others,
     seed,
     kin,
   };
@@ -244,5 +249,61 @@ describe('createDatabaseMusicService', { timeout: STARTING_POSTGRES_MS }, () => 
       genres: ['slowcore'],
       artists: [{ id: low, name: 'Low' }],
     });
+  });
+  it('lists albums of a genre, of years either way round, and by their artist', async () => {
+    const { viewer, music, newest, oldest, undated, others } = await aShelf();
+    const ids = async (options: Parameters<typeof music.listAlbums>[1]) =>
+      (await music.listAlbums(viewer, options)).map((album) => album.id);
+
+    expect(await ids({ order: 'title', genre: 'slowcore' })).toEqual([others, newest]);
+    expect(await ids({ order: 'year', years: { from: 2000, to: 2021 } })).toEqual([
+      oldest,
+      others,
+      newest,
+    ]);
+    expect(await ids({ order: 'year', years: { from: 2021, to: 2000 } })).toEqual([
+      newest,
+      others,
+      oldest,
+    ]);
+    expect(await ids({ order: 'artist' })).toEqual([newest, oldest, undated, others]);
+  });
+
+  it('ranks albums by how lately and how often the person played them, and by their stars', async () => {
+    const { db, viewer, music, newest, oldest, others, seed, kin } = await aShelf();
+    const plays = createDatabaseMusicPlays(db);
+    const ratings = createDatabaseRatingService(db);
+    const ids = async (order: 'played' | 'mostPlayed' | 'rated') =>
+      (await music.listAlbums(viewer, { order })).map((album) => album.id);
+
+    await plays.record('pat', seed, Date.parse('2026-11-01T12:00:00Z'));
+    await plays.record('pat', seed, Date.parse('2026-11-02T12:00:00Z'));
+    await plays.record('pat', kin, Date.parse('2026-11-05T12:00:00Z'));
+    await ratings.set('pat', { mediaId: kin }, 2);
+    await ratings.set('pat', { mediaId: seed }, 5);
+
+    expect(await ids('played')).toEqual([others, newest]);
+    expect(await ids('mostPlayed')).toEqual([newest, others]);
+    expect(await ids('rated')).toEqual([newest, others]);
+    expect(await ids('rated')).not.toContain(oldest);
+    await expect(
+      music.listAlbums({ ...viewer, profileId: null }, { order: 'mostPlayed' }),
+    ).resolves.toEqual([]);
+  });
+
+  it('counts the albums and songs in each genre, and lists the songs in one', async () => {
+    const { viewer, music, seed, kin } = await aShelf();
+
+    const genres = await music.countGenres(viewer);
+    const songs = await music.listInGenre(viewer, 'slowcore', { limit: 10, offset: 0 });
+    const second = await music.listInGenre(viewer, 'slowcore', { limit: 10, offset: 1 });
+
+    expect(genres).toEqual([
+      { name: 'indie', albums: 1, songs: 1 },
+      { name: 'slowcore', albums: 2, songs: 3 },
+    ]);
+    expect(await music.listGenres(viewer)).toEqual(['indie', 'slowcore']);
+    expect(songs.map((track) => track.id)).toEqual([kin, expect.any(String), seed]);
+    expect(second).toHaveLength(2);
   });
 });

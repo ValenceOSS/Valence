@@ -13,6 +13,8 @@ import type { PluginHost } from './PluginHost';
 import { asPersonLooking } from './asPersonLooking';
 import { multipartOf } from './multipartOf';
 import { verifiesSignature } from './verifiesSignature';
+import { fitsInWindow } from '@ValenceServer/plugins/routes/fitsInWindow';
+import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
 import { LocalIdSchema } from '@ValenceSDK/manifest/LocalIdSchema';
 import { JOB_LIMITS } from '@ValenceSDK/jobs/JOB_LIMITS';
 
@@ -28,6 +30,7 @@ type CreatePluginBrokerOptions = {
   open: (sealed: string) => string | null;
   log: (level: 'info' | 'warn' | 'error', message: string) => void;
   emitted?: number[];
+  lookedUp?: Map<string, number[]>;
 };
 
 type PluginBroker = (method: string, args: string, scope: BrokerScope | null) => Promise<string>;
@@ -63,6 +66,20 @@ const ExternalSource = z.enum(['tmdb', 'tvdb', 'imdb', 'anilist', 'mal', 'musicb
 const Moment = z.iso.datetime({ offset: true });
 
 const Reading = z.object({ profileId: Id }).strict().nullish();
+
+const Year = z.number().int().min(0).max(9999);
+
+const Offset = z.number().int().min(0).max(1_000_000);
+
+const MOST_SEEDS = 50;
+
+const SIMILAR_SONGS = 50;
+
+const LOOKUPS_PER_WINDOW = 20;
+
+const LOOKUP_WINDOW_MILLISECONDS = 60_000;
+
+const OLDEST_PLAY_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 
 const Detail = z.record(
   z.string().max(60),
@@ -178,6 +195,9 @@ const ARGS = {
   'viewing.markWatched': z.tuple([Id, Id, Moment.optional()]),
   'viewing.markUnwatched': z.tuple([Id, Id]),
   'viewing.state': z.tuple([Id, z.array(Id).max(MOST_AT_ONCE)]),
+  'viewing.favourite': z.tuple([Id, Id, z.boolean()]),
+  'viewing.rate': z.tuple([Id, Id, z.number().int().min(1).max(5).nullable()]),
+  'viewing.favourites': z.tuple([Id, z.enum(['track', 'artist'])]),
   'requests.searchCatalogue': z.tuple([z.string().min(1).max(200), CatalogueKind]),
   'requests.create': z.tuple([Id, z.object({ catalogueId: Id, kind: CatalogueKind })]),
   'requests.missingAlbums': z.tuple([Id, Id]),
@@ -205,6 +225,17 @@ const ARGS = {
   ]),
   'playlists.read': z.tuple([Id, Id]),
   'playlists.drop': z.tuple([Id, Id, Id]),
+  'playlists.rename': z.tuple([
+    Id,
+    Id,
+    z
+      .object({
+        name: z.string().trim().min(1).max(100),
+        description: z.string().trim().max(500).nullish(),
+      })
+      .strict(),
+  ]),
+  'playlists.remove': z.tuple([Id, Id]),
   'music.findTrack': z.tuple([
     z.object({
       title: z.string().min(1).max(300),
@@ -213,6 +244,54 @@ const ARGS = {
       isrc: z.string().max(20).optional(),
     }),
     Reading.optional(),
+  ]),
+  'music.albums': z.tuple([
+    z
+      .object({
+        order: z.enum([
+          'added',
+          'title',
+          'artist',
+          'year',
+          'recentlyPlayed',
+          'mostPlayed',
+          'rated',
+        ]),
+        genre: z.string().min(1).max(200).nullish(),
+        years: z.object({ from: Year, to: Year }).strict().nullish(),
+        offset: Offset.nullish(),
+        limit: z.number().int().min(1).max(MOST_LISTED).nullish(),
+      })
+      .strict(),
+    Reading.optional(),
+  ]),
+  'music.genres': z.tuple([Reading.optional()]),
+  'music.inGenre': z.tuple([
+    z.string().min(1).max(200),
+    z
+      .object({
+        offset: Offset.nullish(),
+        limit: z.number().int().min(1).max(MOST_LISTED).nullish(),
+      })
+      .strict()
+      .nullish(),
+    Reading.optional(),
+  ]),
+  'music.lyrics': z.tuple([Id, Reading.optional()]),
+  'music.similar': z.tuple([
+    z.array(Id).min(1).max(MOST_SEEDS),
+    z.number().int().min(1).max(MOST_LISTED).nullish(),
+    Reading.optional(),
+  ]),
+  'music.topSongs': z.tuple([Id, Reading.optional()]),
+  'music.aboutArtist': z.tuple([Id, Reading.optional()]),
+  'music.recordPlay': z.tuple([Id, Id, Moment.nullish()]),
+  'music.nowPlaying': z.tuple([
+    Id,
+    z
+      .object({ trackId: Id, client: z.string().max(200) })
+      .strict()
+      .nullable(),
   ]),
   'notifications.send': z.tuple([
     Id,
@@ -263,7 +342,8 @@ const asRefusal = (error: Error | string): never => {
  * Refusals are thrown as sentences the plugin sees as ordinary errors.
  *
  * @param options - The plugin, where it keeps things, what it may reach, how it logs, and when it
- * last emitted events, which outlives one sandbox so a restart does not reset the limit.
+ * last emitted events and looked up artists, which outlive one sandbox so a restart does not reset
+ * either limit.
  * @returns The broker, answering one question at a time as JSON.
  */
 const createPluginBroker = ({
@@ -276,6 +356,7 @@ const createPluginBroker = ({
   open,
   log,
   emitted = [],
+  lookedUp = new Map(),
 }: CreatePluginBrokerOptions): PluginBroker => {
   const granted = installation.manifest.permissions;
   const name = installation.manifest.name;
@@ -360,6 +441,24 @@ const createPluginBroker = ({
     }
 
     return asPersonLooking({ accountId: checked.accountId, profileId }, checked.reads);
+  };
+
+  const viewingAs = async (profileId: string, scope: BrokerScope | null): Promise<Viewer> => {
+    const checked = await actsFor(profileId, scope, true);
+
+    return checked.kind === 'viewer'
+      ? asPersonLooking({ accountId: checked.accountId, profileId }, checked.reads)
+      : host.viewerOf(profileId);
+  };
+
+  const seenBy = async (mediaId: string, viewer: Viewer): Promise<MediaRef> => {
+    const found = await host.library.get(mediaId, viewer);
+
+    if (found === null) {
+      throw new PluginRefusalError('There is no such thing in their library.');
+    }
+
+    return found;
   };
 
   const readingAs = async (
@@ -816,6 +915,29 @@ const createPluginBroker = ({
 
         return host.viewing.state(profileId, mediaIds);
       }
+      case 'viewing.favourite': {
+        needs('viewing', 'write');
+
+        const [profileId, mediaId, isFavourite] = ARGS[method].parse(args);
+        const viewer = await viewingAs(profileId, scope);
+
+        return host.viewing.favourite(viewer, await seenBy(mediaId, viewer), isFavourite);
+      }
+      case 'viewing.rate': {
+        needs('viewing', 'write');
+
+        const [profileId, mediaId, stars] = ARGS[method].parse(args);
+        const viewer = await viewingAs(profileId, scope);
+
+        return host.viewing.rate(viewer, await seenBy(mediaId, viewer), stars);
+      }
+      case 'viewing.favourites': {
+        needs('viewing');
+
+        const [profileId, kind] = ARGS[method].parse(args);
+
+        return host.viewing.favourites(await viewingAs(profileId, scope), kind);
+      }
       case 'requests.searchCatalogue': {
         needs('requests');
 
@@ -903,6 +1025,27 @@ const createPluginBroker = ({
 
         return null;
       }
+      case 'playlists.rename': {
+        needs('playlists', 'write');
+
+        const [profileId, playlistId, playlist] = ARGS[method].parse(args);
+
+        await host.playlists.rename(await asThePerson(profileId, scope), playlistId, {
+          name: playlist.name,
+          description: playlist.description ?? null,
+        });
+
+        return null;
+      }
+      case 'playlists.remove': {
+        needs('playlists', 'write');
+
+        const [profileId, playlistId] = ARGS[method].parse(args);
+
+        await host.playlists.remove(await asThePerson(profileId, scope), playlistId);
+
+        return null;
+      }
       case 'music.findTrack': {
         needs('library');
 
@@ -917,6 +1060,129 @@ const createPluginBroker = ({
           },
           await readingAs(scope, reading),
         );
+      }
+      case 'music.albums': {
+        needs('library');
+
+        const [ask, reading] = ARGS[method].parse(args);
+
+        return host.music.albums(
+          {
+            order: ask.order,
+            genre: ask.genre ?? null,
+            years: ask.years ?? null,
+            offset: ask.offset ?? 0,
+            limit: ask.limit ?? MOST_LISTED,
+          },
+          await readingAs(scope, reading),
+        );
+      }
+      case 'music.genres': {
+        needs('library');
+
+        const [reading] = ARGS[method].parse(args);
+
+        return host.music.genres(await readingAs(scope, reading));
+      }
+      case 'music.inGenre': {
+        needs('library');
+
+        const [genre, page, reading] = ARGS[method].parse(args);
+
+        return host.music.inGenre(
+          genre,
+          { offset: page?.offset ?? 0, limit: page?.limit ?? MOST_LISTED },
+          await readingAs(scope, reading),
+        );
+      }
+      case 'music.lyrics': {
+        needs('library');
+
+        const [trackId, reading] = ARGS[method].parse(args);
+
+        return host.music.lyrics(trackId, await readingAs(scope, reading));
+      }
+      case 'music.similar': {
+        needs('library');
+
+        const [seedIds, limit, reading] = ARGS[method].parse(args);
+
+        return host.music.similar(seedIds, limit ?? SIMILAR_SONGS, await readingAs(scope, reading));
+      }
+      case 'music.topSongs': {
+        needs('library');
+
+        const [artistId, reading] = ARGS[method].parse(args);
+
+        return host.music.topSongs(artistId, await readingAs(scope, reading));
+      }
+      case 'music.aboutArtist': {
+        needs('library');
+
+        const [artistId, reading] = ARGS[method].parse(args);
+
+        return host.music.aboutArtist(artistId, await readingAs(scope, reading), () =>
+          fitsInWindow(
+            lookedUp,
+            'artists',
+            LOOKUPS_PER_WINDOW,
+            LOOKUP_WINDOW_MILLISECONDS,
+            Date.now(),
+          ),
+        );
+      }
+      case 'music.recordPlay': {
+        needs('viewing', 'write');
+
+        const [profileId, trackId, playedAt] = ARGS[method].parse(args);
+        const viewer = await viewingAs(profileId, scope);
+        const track = await seenBy(trackId, viewer);
+        const nowMs = Date.now();
+        const atMs = Math.min(
+          playedAt === null || playedAt === undefined ? nowMs : Date.parse(playedAt),
+          nowMs,
+        );
+
+        if (track.kind !== 'track') {
+          throw new PluginRefusalError('Only a song can be played.');
+        }
+
+        if (nowMs - atMs > OLDEST_PLAY_MILLISECONDS) {
+          throw new PluginRefusalError('A play more than 30 days old is not counted.');
+        }
+
+        await host.music.recordPlay(profileId, track.id, atMs);
+
+        return null;
+      }
+      case 'music.nowPlaying': {
+        needs('viewing', 'write');
+
+        const [profileId, playing] = ARGS[method].parse(args);
+        const running = stillRunning(scope);
+
+        if (running.kind !== 'viewer' || running.app === undefined) {
+          throw new PluginRefusalError(
+            `${name} may only say what is playing while answering an app signed in with an app password.`,
+          );
+        }
+
+        const viewer = await viewingAs(profileId, running);
+        const client = playing?.client.trim() ?? '';
+
+        await host.music.nowPlaying(
+          {
+            appPasswordId: running.app.id,
+            accountId: running.accountId,
+            profileId,
+            profileName: running.app.profileName,
+            label: client === '' ? running.app.label : client,
+          },
+          playing === null ? null : playing.trackId,
+          viewer,
+        );
+
+        return null;
       }
       case 'notifications.send': {
         needs('notifications');

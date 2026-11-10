@@ -50,7 +50,7 @@ With `read`, every read is made as a person and sees only what they may see: the
 { "kind": "viewing", "access": "write" }
 ```
 
-`access` is `read` or `write`. `read` opens `valence.viewing.progress` and `valence.viewing.state`. `write` also opens `valence.viewing.markWatched` and `valence.viewing.markUnwatched`.
+`access` is `read` or `write`. `read` opens `valence.viewing.progress`, `valence.viewing.state` and `valence.viewing.favourites`. `write` also opens `valence.viewing.markWatched`, `valence.viewing.markUnwatched`, `valence.viewing.favourite`, `valence.viewing.rate`, `valence.music.recordPlay` and `valence.music.nowPlaying`.
 
 ```json
 { "kind": "viewing", "access": "read", "household": true }
@@ -72,7 +72,7 @@ With `household`, the plugin hears [playback and session events](/plugins/schedu
 { "kind": "playlists", "access": "write" }
 ```
 
-`access` is `read` or `write`. `read` opens `valence.playlists.list` and `valence.playlists.read`. `write` also opens `valence.playlists.create`, `valence.playlists.add` and `valence.playlists.drop`. A plugin sees and changes only the playlists of the person it is acting for.
+`access` is `read` or `write`. `read` opens `valence.playlists.list` and `valence.playlists.read`. `write` also opens `valence.playlists.create`, `valence.playlists.add`, `valence.playlists.drop`, `valence.playlists.rename` and `valence.playlists.remove`. A plugin sees and changes only the playlists of the person it is acting for.
 
 ## storage
 

@@ -30,6 +30,16 @@ describe('createMemoryMusicPlays', () => {
     ]);
   });
 
+  it('counts a song heard at the time it says, rather than now', async () => {
+    const plays = createMemoryMusicPlays(() => 9_000);
+
+    await plays.record('pat', 'one', 3_000);
+
+    await expect(plays.countsSince('pat', 0)).resolves.toEqual([
+      { trackId: 'one', plays: 1, lastPlayedAtMs: 3_000 },
+    ]);
+  });
+
   it('keeps each profile’s hearing to itself', async () => {
     const plays = createMemoryMusicPlays(() => 1_000);
 

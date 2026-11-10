@@ -8,13 +8,17 @@ import type {
 } from '@ValenceContracts/schemas/Music';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
-type AlbumOrder = 'recent' | 'title' | 'year' | 'played';
+type AlbumOrder = 'recent' | 'title' | 'artist' | 'year' | 'played' | 'mostPlayed' | 'rated';
 
 type ListAlbumsOptions = {
   order?: AlbumOrder;
+  genre?: string;
+  years?: { from: number; to: number };
   limit?: number;
   offset?: number;
 };
+
+type GenreCount = { name: string; albums: number; songs: number };
 
 type ListArtistsOptions = {
   onlyFavourites?: boolean;
@@ -55,6 +59,12 @@ type MusicService = {
   listPicks: (viewer: Viewer, seedIds: readonly string[], limit: number) => Promise<MusicTrack[]>;
   listCatalogue: (viewer: Viewer) => Promise<CatalogueSong[]>;
   listGenres: (viewer: Viewer) => Promise<string[]>;
+  countGenres: (viewer: Viewer) => Promise<GenreCount[]>;
+  listInGenre: (
+    viewer: Viewer,
+    genre: string,
+    page: { limit: number; offset: number },
+  ) => Promise<MusicTrack[]>;
   search: (viewer: Viewer, query: string) => Promise<MusicSearch>;
   readLyrics: (viewer: Viewer, trackId: string) => Promise<Lyrics | null>;
   readTrackFile: (viewer: Viewer, trackId: string) => Promise<TrackFile | null>;
@@ -67,6 +77,7 @@ type MusicService = {
 export type {
   AlbumOrder,
   CatalogueSong,
+  GenreCount,
   ListAlbumsOptions,
   ListArtistsOptions,
   MusicSearch,

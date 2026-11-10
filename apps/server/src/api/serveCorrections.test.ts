@@ -62,6 +62,8 @@ const aMusic = () =>
       listPicks: vi.fn(none),
       listCatalogue: vi.fn(() => Promise.resolve([])),
       listGenres: vi.fn(() => Promise.resolve([])),
+      countGenres: vi.fn(() => Promise.resolve([])),
+      listInGenre: vi.fn(() => Promise.resolve([])),
       search: vi.fn(() => Promise.resolve({ tracks: [], albums: [], artists: [] })),
       readLyrics: vi.fn(nothing),
       readTrackFile: vi.fn(nothing),
@@ -117,7 +119,10 @@ const aMusic = () =>
       correct: vi.fn((albumId: string) => Promise.resolve(albumId === ALBUM_ID)),
       forget: vi.fn((albumId: string) => Promise.resolve(albumId === ALBUM_ID)),
     },
-    stories: { about: vi.fn(() => Promise.resolve({ bio: null, sourceUrl: null, missing: [] })) },
+    stories: {
+      about: vi.fn(() => Promise.resolve({ bio: null, sourceUrl: null, missing: [] })),
+      knows: vi.fn(() => false),
+    },
     stream: vi.fn(nothing),
     readImage: vi.fn(nothing),
   }) satisfies MusicServices;

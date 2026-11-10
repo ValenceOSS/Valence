@@ -281,6 +281,15 @@ const createPluginRoutes = ({
             accountId: person.accountId,
             isAdmin: false,
             reads: viewer,
+            ...(signedIn.kind === 'person'
+              ? {
+                  app: {
+                    id: signedIn.credential.id,
+                    label: signedIn.credential.label,
+                    profileName: person.name,
+                  },
+                }
+              : {}),
           };
 
     try {
@@ -288,7 +297,10 @@ const createPluginRoutes = ({
         found,
         {
           id: routeId,
-          person: person === null ? null : { profileId: person.id, name: person.name },
+          person:
+            person === null || signedIn.kind !== 'person'
+              ? null
+              : { profileId: person.id, name: person.name, login: signedIn.credential.login },
           request,
         },
         scope,
