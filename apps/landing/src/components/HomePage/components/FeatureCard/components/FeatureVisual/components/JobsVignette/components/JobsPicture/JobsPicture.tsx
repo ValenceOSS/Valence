@@ -76,7 +76,7 @@ const JOBS: ShowcaseJob[] = [
     triggers: [
       { id: 'weekly-sweep', trigger: { kind: 'weekly', dayOfWeek: 0, hour: 5, minute: 0 } },
     ],
-    nextRunIn: 54 * HOUR + 59 * MINUTE,
+    nextRunIn: 126 * HOUR + 59 * MINUTE,
   },
 ];
 
