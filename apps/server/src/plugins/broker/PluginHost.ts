@@ -80,6 +80,7 @@ type PluginHost = {
     ) => Promise<void>;
     read: (viewer: Viewer, playlistId: string) => Promise<PlaylistContents | null>;
     drop: (viewer: Viewer, playlistId: string, entryId: string) => Promise<void>;
+    dropMany: (viewer: Viewer, playlistId: string, entryIds: readonly string[]) => Promise<void>;
     rename: (
       viewer: Viewer,
       playlistId: string,

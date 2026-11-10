@@ -36,6 +36,7 @@ type LibraryPage = { items: MediaRef[]; next: string | null };
 type ViewingState = {
   mediaId: string;
   isFavourite: boolean;
+  favouritedAt: string | null;
   stars: number | null;
   plays: number;
   lastPlayedAt: string | null;
@@ -218,6 +219,7 @@ type ValenceHost = {
     add: (profileId: string, playlistId: string, items: (string | MissingSong)[]) => Promise<void>;
     read: (profileId: string, playlistId: string) => Promise<PlaylistContents | null>;
     drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
+    dropMany: (profileId: string, playlistId: string, entryIds: string[]) => Promise<void>;
     rename: (
       profileId: string,
       playlistId: string,

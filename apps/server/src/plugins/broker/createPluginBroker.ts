@@ -73,6 +73,8 @@ const Offset = z.number().int().min(0).max(1_000_000);
 
 const MOST_SEEDS = 50;
 
+const MOST_DROPPED = 500;
+
 const SIMILAR_SONGS = 50;
 
 const LOOKUPS_PER_WINDOW = 5;
@@ -225,6 +227,7 @@ const ARGS = {
   ]),
   'playlists.read': z.tuple([Id, Id]),
   'playlists.drop': z.tuple([Id, Id, Id]),
+  'playlists.dropMany': z.tuple([Id, Id, z.array(Id).max(MOST_DROPPED)]),
   'playlists.rename': z.tuple([
     Id,
     Id,
@@ -1022,6 +1025,15 @@ const createPluginBroker = ({
         const [profileId, playlistId, entryId] = ARGS[method].parse(args);
 
         await host.playlists.drop(await asThePerson(profileId, scope), playlistId, entryId);
+
+        return null;
+      }
+      case 'playlists.dropMany': {
+        needs('playlists', 'write');
+
+        const [profileId, playlistId, entryIds] = ARGS[method].parse(args);
+
+        await host.playlists.dropMany(await asThePerson(profileId, scope), playlistId, entryIds);
 
         return null;
       }

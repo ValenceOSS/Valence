@@ -264,6 +264,13 @@ const createPluginHost = ({
           throw new PluginRefusalError('There is no such entry in a playlist of theirs.');
         }
       },
+      dropMany: async (viewer, playlistId, entryIds) => {
+        await refusesWhereItFillsItself(viewer, playlistId);
+
+        if ((await playlists.dropMany(viewer, playlistId, entryIds)) === null) {
+          throw new PluginRefusalError('There is no such playlist of theirs.');
+        }
+      },
       rename: async (viewer, playlistId, playlist) => {
         const renamed = await playlists.update(viewer, playlistId, {
           name: playlist.name,

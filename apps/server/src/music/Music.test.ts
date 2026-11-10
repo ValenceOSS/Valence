@@ -137,6 +137,7 @@ const fakeMusic = () => {
     remove: vi.fn(() => Promise.resolve(false)),
     add: vi.fn(() => Promise.resolve(1)),
     move: vi.fn(() => Promise.resolve(true)),
+    dropMany: vi.fn(() => Promise.resolve(0)),
     drop: vi.fn(() => Promise.resolve(true)),
     readArtwork: vi.fn(() => Promise.resolve(null)),
     saveArtwork: vi.fn(() => Promise.resolve(null)),

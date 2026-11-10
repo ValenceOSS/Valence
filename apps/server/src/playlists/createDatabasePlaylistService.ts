@@ -837,6 +837,30 @@ const createDatabasePlaylistService = (
       return isDropped;
     },
 
+    dropMany: async (viewer, playlistId, entryIds) => {
+      if (!(await owned(viewer, playlistId)) || (await isSmart(playlistId))) {
+        return null;
+      }
+
+      if (entryIds.length === 0) {
+        return 0;
+      }
+
+      const dropped = countAffected(
+        await db
+          .delete(playlistEntry)
+          .where(
+            and(inArray(playlistEntry.id, [...entryIds]), eq(playlistEntry.playlistId, playlistId)),
+          ),
+      );
+
+      if (dropped > 0) {
+        await touch(playlistId);
+      }
+
+      return dropped;
+    },
+
     readArtwork: async (viewer, playlistId) => {
       const [row] = await db
         .select({ artworkPath: playlist.artworkPath })

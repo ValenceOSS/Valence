@@ -60,6 +60,7 @@ const aPluginHostForTest = (): PluginHost => ({
       }),
     ),
     drop: vi.fn(() => Promise.resolve()),
+    dropMany: vi.fn(() => Promise.resolve()),
     rename: vi.fn(() => Promise.resolve()),
     remove: vi.fn(() => Promise.resolve()),
   },

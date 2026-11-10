@@ -339,12 +339,13 @@ type ProgressEntry = {
 
 `since` is an ISO date and time; only entries updated after it are returned. `watchedAt` defaults to now.
 
-`state` reads where a person stands with up to 200 things at once, one answer for each different id asked about, in order: whether they kept it as a favourite (a film, episode, song, book or artist), the stars they gave it (a film, episode, song, series or book), and how many times and how lately they played a song or finished a film or an episode. Books always read as never played. It reads the person's own record whatever is in their reach now, so an id they can no longer see still answers. New in plugin API 1.4.
+`state` reads where a person stands with up to 200 things at once, one answer for each different id asked about, in order: whether they kept it as a favourite (a film, episode, song, book or artist), the stars they gave it (a film, episode, song, series or book), and how many times and how lately they played a song or finished a film or an episode. Books always read as never played. It reads the person's own record whatever is in their reach now, so an id they can no longer see still answers. New in plugin API 1.4. `favouritedAt`, new in plugin API 1.5, is when they kept it, or `null`.
 
 ```ts
 type ViewingState = {
   mediaId: string;
   isFavourite: boolean;
+  favouritedAt: string | null;
   stars: number | null;
   plays: number;
   lastPlayedAt: string | null;
@@ -386,6 +387,7 @@ type CatalogueHit = {
 | `playlists.add(profileId, playlistId, items)`                     | `Promise<void>`                           | `playlists: write` |
 | `playlists.read(profileId, playlistId)`                           | `Promise<PlaylistContents \| null>`       | `playlists`        |
 | `playlists.drop(profileId, playlistId, entryId)`                  | `Promise<void>`                           | `playlists: write` |
+| `playlists.dropMany(profileId, playlistId, entryIds)`             | `Promise<void>`                           | `playlists: write` |
 | `playlists.rename(profileId, playlistId, { name, description? })` | `Promise<void>`                           | `playlists: write` |
 | `playlists.remove(profileId, playlistId)`                         | `Promise<void>`                           | `playlists: write` |
 
@@ -408,7 +410,7 @@ type PlaylistContents = {
 
 `read` gives a playlist's entries in order, or `null` where it is not one of theirs. An entry's `mediaId` is `null` where the thing it named has left the library, or where it is a song still missing, which `missing` then names. `drop` takes one entry out by its `entryId`, so a playlist holding the same song twice loses only the one named. Both are new in plugin API 1.1.
 
-`rename` changes a playlist's name, and its description where one is given. `remove` deletes the playlist. Both are new in plugin API 1.5. A playlist that fills itself from its rules can be renamed and removed, but `add` and `drop` refuse it.
+`rename` changes a playlist's name, and its description where one is given. `remove` deletes the playlist. `dropMany` takes up to 500 entries out at once, as an app replacing a playlist's songs needs. All three are new in plugin API 1.5. A playlist that fills itself from its rules can be renamed and removed, but `add` and `drop` refuse it.
 
 ### music
 

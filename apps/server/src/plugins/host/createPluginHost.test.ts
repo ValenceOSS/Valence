@@ -94,6 +94,9 @@ const build = (locked: readonly string[] = []) => {
       Promise.resolve(playlistId === PLAYLIST.id ? 2 : null),
     ),
     move: unused,
+    dropMany: vi.fn((_viewer: Viewer, playlistId: string, entryIds: readonly string[]) =>
+      Promise.resolve(playlistId === PLAYLIST.id ? entryIds.length : null),
+    ),
     drop: vi.fn((_viewer: Viewer, playlistId: string, entryId: string) =>
       Promise.resolve(playlistId === PLAYLIST.id && entryId === 'e1'),
     ),
@@ -248,7 +251,7 @@ describe('what Valence does when a plugin asks', () => {
     await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e9')).rejects.toThrow('no such entry');
   });
 
-  it('renames and removes a playlist of theirs, and refuses to fill one that fills itself', async () => {
+  it('renames, empties and removes a playlist of theirs, and refuses to fill one that fills itself', async () => {
     const { host, playlists } = build();
 
     await host.playlists.rename(SAM, PLAYLIST.id, { name: 'Renamed', description: null });
@@ -266,10 +269,18 @@ describe('what Valence does when a plugin asks', () => {
     ).rejects.toThrow('no such playlist');
     await expect(host.playlists.remove(SAM, 'not-theirs')).rejects.toThrow('no such playlist');
 
+    await host.playlists.dropMany(SAM, PLAYLIST.id, ['e1', 'e2']);
+
+    expect(playlists.dropMany).toHaveBeenCalledWith(SAM, PLAYLIST.id, ['e1', 'e2']);
+    await expect(host.playlists.dropMany(SAM, 'not-theirs', ['e1'])).rejects.toThrow(
+      'no such playlist',
+    );
+
     vi.mocked(playlists.fillsItself).mockResolvedValue(true);
 
     await expect(host.playlists.add(SAM, PLAYLIST.id, ['m1'])).rejects.toThrow('fills itself');
     await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e1')).rejects.toThrow('fills itself');
+    await expect(host.playlists.dropMany(SAM, PLAYLIST.id, ['e1'])).rejects.toThrow('fills itself');
   });
 
   it('likes songs, follows artists and stars songs as the person, and keeps nothing for an album', async () => {

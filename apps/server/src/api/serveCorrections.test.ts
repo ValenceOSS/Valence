@@ -82,6 +82,7 @@ const aMusic = () =>
       remove: vi.fn(no),
       add: vi.fn(() => Promise.resolve(0)),
       move: vi.fn(no),
+      dropMany: vi.fn(() => Promise.resolve(0)),
       drop: vi.fn(no),
       readArtwork: vi.fn(nothing),
       saveArtwork: vi.fn(nothing),

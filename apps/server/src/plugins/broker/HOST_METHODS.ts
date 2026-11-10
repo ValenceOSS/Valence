@@ -46,6 +46,7 @@ const HOST_METHODS = [
   'playlists.add',
   'playlists.read',
   'playlists.drop',
+  'playlists.dropMany',
   'playlists.rename',
   'playlists.remove',
   'music.findTrack',

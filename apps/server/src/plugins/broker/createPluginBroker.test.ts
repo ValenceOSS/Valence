@@ -860,13 +860,16 @@ describe('the plugin broker', () => {
     );
   });
 
-  it('renames and removes playlists only with playlists write', async () => {
+  it('renames, empties and removes playlists only with playlists write', async () => {
     const reader = build([{ kind: 'playlists', access: 'read' }]);
 
     await expect(reader.ask('playlists.rename', ['p1', 'pl1', { name: 'X' }])).rejects.toThrow(
       'not write',
     );
     await expect(reader.ask('playlists.remove', ['p1', 'pl1'])).rejects.toThrow('not write');
+    await expect(reader.ask('playlists.dropMany', ['p1', 'pl1', ['e1']])).rejects.toThrow(
+      'not write',
+    );
 
     const { ask, host } = build([{ kind: 'playlists', access: 'write' }]);
 
@@ -877,6 +880,11 @@ describe('the plugin broker', () => {
       description: null,
     });
     expect(host.playlists.remove).toHaveBeenCalledWith(AS_P1, 'pl1');
+    expect(await ask('playlists.dropMany', ['p1', 'pl1', ['e1', 'e2']])).toBeNull();
+    expect(host.playlists.dropMany).toHaveBeenCalledWith(AS_P1, 'pl1', ['e1', 'e2']);
+    await expect(
+      ask('playlists.dropMany', ['p1', 'pl1', Array.from({ length: 501 }, (_, at) => `e${at}`)]),
+    ).rejects.toThrow('could not read');
   });
 
   it('reads music only with the library permission, as the person, with sensible defaults', async () => {

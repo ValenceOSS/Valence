@@ -49,6 +49,7 @@ const aValenceHost = (parts: Partial<ValenceHost> = {}): ValenceHost => {
       add: refuse,
       read: refuse,
       drop: refuse,
+      dropMany: refuse,
       rename: refuse,
       remove: refuse,
     },

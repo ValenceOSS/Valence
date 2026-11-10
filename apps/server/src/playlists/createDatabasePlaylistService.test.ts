@@ -100,6 +100,22 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
     await expect(playlists.drop(viewer, id, entryId)).resolves.toBe(false);
   });
 
+  it('drops many entries at once, only from a playlist of theirs that doesn’t fill itself', async () => {
+    const { viewer, playlists, id } = await aPlaylist();
+    const entries = (await playlists.read(viewer, id))?.entries ?? [];
+    const made = await playlists.create(viewer, { name: 'Every song', rules: EVERY_SONG });
+
+    await expect(
+      playlists.dropMany(viewer, id, [...entries.map((entry) => entry.id), 'gone']),
+    ).resolves.toBe(entries.length);
+    await expect(playlists.read(viewer, id)).resolves.toMatchObject({ entries: [] });
+    await expect(playlists.dropMany(viewer, id, [])).resolves.toBe(0);
+    await expect(
+      playlists.dropMany({ ...viewer, profileId: 'sam' }, id, ['x']),
+    ).resolves.toBeNull();
+    await expect(playlists.dropMany(viewer, made?.id ?? '', ['x'])).resolves.toBeNull();
+  });
+
   it('keeps a song the library does not have in its place, counted apart from what has gone', async () => {
     const { db, viewer, playlists, id } = await aPlaylist();
 

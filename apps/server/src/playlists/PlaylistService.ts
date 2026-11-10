@@ -36,6 +36,11 @@ type PlaylistService = {
     afterEntryId: string | null,
   ) => Promise<boolean>;
   drop: (viewer: Viewer, playlistId: string, entryId: string) => Promise<boolean>;
+  dropMany: (
+    viewer: Viewer,
+    playlistId: string,
+    entryIds: readonly string[],
+  ) => Promise<number | null>;
   readArtwork: (viewer: Viewer, playlistId: string) => Promise<PlaylistArtwork | null>;
   saveArtwork: (
     viewer: Viewer,
