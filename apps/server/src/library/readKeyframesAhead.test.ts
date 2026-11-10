@@ -89,6 +89,10 @@ describe('readKeyframesAhead', () => {
     vi.useFakeTimers();
 
     let isCancelled = false;
+    let startedReading = (): void => undefined;
+    const reading = new Promise<void>((resolve) => {
+      startedReading = resolve;
+    });
     const abandoned: boolean[] = [];
     const running = readKeyframesAhead({
       waiting: () => Promise.resolve(FILMS),
@@ -98,6 +102,7 @@ describe('readKeyframesAhead', () => {
             abandoned.push(true);
             reject(new Error('abandoned'));
           });
+          startedReading();
         }),
       markRead: () => Promise.resolve(),
       onUnreadable: () => undefined,
@@ -105,6 +110,7 @@ describe('readKeyframesAhead', () => {
       isCancelled: () => isCancelled,
     });
 
+    await reading;
     isCancelled = true;
     await vi.advanceTimersByTimeAsync(1000);
 

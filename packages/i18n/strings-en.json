@@ -141,7 +141,7 @@
   },
   {
     "handler": "client.admin.describePermission.findSubtitles",
-    "text": "Find subtitles",
+    "text": "Find subtitles while watching",
     "context": "The name of the permission to search subtitle sites for a film or episode and fetch one, in the list of a role's permissions in the admin (from `describePermission`)."
   },
   {

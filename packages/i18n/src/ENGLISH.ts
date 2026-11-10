@@ -35,7 +35,7 @@ const ENGLISH = {
   'client.admin.describePermission.downloadMedia': 'Download media',
   'client.admin.describePermission.everythingIncludingAnythingAddedLater':
     'Everything, including anything added later',
-  'client.admin.describePermission.findSubtitles': 'Find subtitles',
+  'client.admin.describePermission.findSubtitles': 'Find subtitles while watching',
   'client.admin.describePermission.haveRequestsGoStraightThrough': 'Auto-approve requests',
   'client.admin.describePermission.haveTheServerCallOutWhen': 'Manage webhooks',
   'client.admin.describePermission.hideAnItemFromEverybody': 'Hide an item from everyone',
