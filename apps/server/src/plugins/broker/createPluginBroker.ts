@@ -75,7 +75,7 @@ const MOST_SEEDS = 50;
 
 const SIMILAR_SONGS = 50;
 
-const LOOKUPS_PER_WINDOW = 20;
+const LOOKUPS_PER_WINDOW = 5;
 
 const LOOKUP_WINDOW_MILLISECONDS = 60_000;
 
@@ -1151,7 +1151,11 @@ const createPluginBroker = ({
           throw new PluginRefusalError('A play more than 30 days old is not counted.');
         }
 
-        await host.music.recordPlay(profileId, track.id, atMs);
+        await host.music.recordPlay(
+          profileId,
+          { id: track.id, durationSeconds: track.durationSeconds },
+          atMs,
+        );
 
         return null;
       }

@@ -69,6 +69,7 @@ const aMusic = () =>
       readTrackFile: vi.fn(nothing),
       readAlbumArtwork: vi.fn(nothing),
       readArtistImage: vi.fn(nothing),
+      readArtistPicture: vi.fn(() => Promise.resolve(null)),
       keepArtist: vi.fn(no),
       dropArtist: vi.fn(no),
     },

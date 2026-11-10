@@ -70,6 +70,7 @@ type MusicService = {
   readTrackFile: (viewer: Viewer, trackId: string) => Promise<TrackFile | null>;
   readAlbumArtwork: (viewer: Viewer, albumId: string) => Promise<string | null>;
   readArtistImage: (viewer: Viewer, artistId: string) => Promise<string | null>;
+  readArtistPicture: (viewer: Viewer, artistId: string) => Promise<string | null>;
   keepArtist: (profileId: string, artistId: string) => Promise<boolean>;
   dropArtist: (profileId: string, artistId: string) => Promise<boolean>;
 };

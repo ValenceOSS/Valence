@@ -16,6 +16,10 @@ type PluginMusicOptions = {
   listening: AppListening;
 };
 
+const FEWEST_SECONDS_APART = 30;
+
+const MOST_REMEMBERED = 10_000;
+
 /**
  * The order the music pages call the one a plugin asks for.
  *
@@ -34,7 +38,9 @@ const orderOf = (order: Parameters<PluginHost['music']['albums']>[0]['order']): 
  * What a plugin may ask of the music library for a person: albums in the orders their own music
  * pages offer, genres, lyrics, songs like others, what is known about an artist, and the songs they
  * play in an app outside Valence. Each read goes through the same music service those pages do, so
- * it sees exactly what the person would.
+ * it sees exactly what the person would. A play of a song heard within half its length (and at
+ * least 30 seconds) of the last one counted is taken as the same play said again, as an app
+ * retrying its scrobble does, and isn't counted twice.
  *
  * @param options - The music service, how to describe what it finds, where plays are kept, what is
  *   known of artists, and where an app's listening is shown.
@@ -48,6 +54,8 @@ const createPluginMusic = ({
   stories,
   listening,
 }: PluginMusicOptions): PluginHost['music'] => {
+  const lastPlayed = new Map<string, number>();
+
   const refsOf = async (ids: readonly string[], viewer: Viewer): Promise<MediaRef[]> => {
     if (ids.length === 0) {
       return [];
@@ -110,7 +118,28 @@ const createPluginMusic = ({
 
       return { bio: story.bio, sourceUrl: story.sourceUrl };
     },
-    recordPlay: (profileId, trackId, playedAtMs) => plays.record(profileId, trackId, playedAtMs),
+    recordPlay: async (profileId, track, playedAtMs) => {
+      const key = `${profileId}:${track.id}`;
+      const last = lastPlayed.get(key);
+      const apartMs = Math.max(FEWEST_SECONDS_APART, (track.durationSeconds ?? 0) / 2) * 1000;
+
+      if (last !== undefined && Math.abs(playedAtMs - last) < apartMs) {
+        return;
+      }
+
+      lastPlayed.delete(key);
+      lastPlayed.set(key, playedAtMs);
+
+      if (lastPlayed.size > MOST_REMEMBERED) {
+        const [oldest] = lastPlayed.keys();
+
+        if (oldest !== undefined) {
+          lastPlayed.delete(oldest);
+        }
+      }
+
+      await plays.record(profileId, track.id, playedAtMs);
+    },
     nowPlaying: async (app, trackId, viewer) => {
       if (trackId === null) {
         listening.report(app, null);

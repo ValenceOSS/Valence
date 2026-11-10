@@ -306,4 +306,16 @@ describe('createDatabaseMusicService', { timeout: STARTING_POSTGRES_MS }, () => 
     expect(songs.map((track) => track.id)).toEqual([kin, expect.any(String), seed]);
     expect(second).toHaveLength(2);
   });
+
+  it('pictures an artist by their own picture, or else their newest dated album cover', async () => {
+    const { db, viewer, music, low, other } = await aShelf();
+    const store = createDatabaseMusicStore(db);
+
+    await expect(music.readArtistPicture(viewer, low)).resolves.toBe('/art/Hey What.jpg');
+
+    await store.setArtistImage(other, '/art/other.webp');
+
+    await expect(music.readArtistPicture(viewer, other)).resolves.toBe('/art/other.webp');
+    await expect(music.readArtistPicture(viewer, 'nobody')).resolves.toBeNull();
+  });
 });

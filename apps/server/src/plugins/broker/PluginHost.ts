@@ -116,7 +116,11 @@ type PluginHost = {
       viewer: Viewer,
       mayLookUp: () => boolean,
     ) => Promise<AboutArtist | null>;
-    recordPlay: (profileId: string, trackId: string, playedAtMs: number) => Promise<void>;
+    recordPlay: (
+      profileId: string,
+      track: { id: string; durationSeconds: number | null },
+      playedAtMs: number,
+    ) => Promise<void>;
     nowPlaying: (app: App, trackId: string | null, viewer: Viewer) => Promise<void>;
   };
   notifications: {

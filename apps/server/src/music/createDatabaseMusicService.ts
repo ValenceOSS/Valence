@@ -587,7 +587,26 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       );
     },
 
-    listGenres: async (viewer) => (await countGenres(viewer)).map((genre) => genre.name),
+    listGenres: async (viewer) => {
+      const genre = jsonTextElements(musicAlbum.genres, 'genre');
+      const rows = await db
+        .select({ value: genre.value })
+        .from(sql`${musicAlbum}, ${genre.rows}`)
+        .where(
+          exists(
+            db
+              .select({ one: sql`1` })
+              .from(musicTrack)
+              .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+              .innerJoin(library, eq(library.id, mediaItem.libraryId))
+              .where(and(eq(musicTrack.albumId, musicAlbum.id), trackVisible(viewer))),
+          ),
+        )
+        .groupBy(genre.value)
+        .orderBy(asc(genre.value));
+
+      return rows.map((row) => row.value);
+    },
 
     countGenres,
 
@@ -800,6 +819,20 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         .limit(1);
 
       return row?.path ?? null;
+    },
+
+    readArtistPicture: async (viewer, artistId) => {
+      const coverAlbum = sql<
+        string | null
+      >`(select ${musicAlbum.artworkPath} from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id} and ${musicAlbum.artworkPath} is not null order by ${nullsLast(musicAlbum.year, 'desc')} limit 1)`;
+      const [row] = await db
+        .select({ own: musicArtist.imagePath, cover: coverAlbum })
+        .from(musicArtist)
+        .innerJoin(library, eq(library.id, musicArtist.libraryId))
+        .where(and(eq(musicArtist.id, artistId), librariesVisibleToViewer(db, viewer)))
+        .limit(1);
+
+      return row?.own ?? row?.cover ?? null;
     },
 
     keepArtist: async (profileId, artistId) => {

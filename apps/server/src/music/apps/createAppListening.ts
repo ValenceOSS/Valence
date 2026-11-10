@@ -49,8 +49,9 @@ const wait = (run: () => void, afterMs: number): (() => void) => {
 /**
  * Listening in an app outside Valence, signed in with an app password, shown as a device of the
  * person's own: it appears where their other devices do while a song plays, and goes once the song
- * would have ended, since such an app never says it stopped. Its plays are counted by the app's own
- * scrobble, never by the device.
+ * would have ended, since such an app never says it stopped. It says what it plays at most once a
+ * second. It can't be controlled, and its plays are counted by the app's own scrobble, never by the
+ * device.
  *
  * @param options - The presence and music devices to appear in, and the clock.
  * @returns How an app says what it is playing.
@@ -87,7 +88,7 @@ const createAppListening = ({
         return;
       }
 
-      if (was !== undefined && was.trackId === track.id && atMs - was.atMs < FEWEST_MS_BETWEEN) {
+      if (was !== undefined && atMs - was.atMs < FEWEST_MS_BETWEEN) {
         return;
       }
 

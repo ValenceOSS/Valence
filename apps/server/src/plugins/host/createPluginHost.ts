@@ -11,6 +11,8 @@ import type { MusicService } from '@ValenceServer/music/MusicService';
 
 type Profile = { id: string; name: string; accountId: string };
 
+const MOST_FAVOURITES = 2000;
+
 /**
  * The profile a person reading as themselves is, which every viewer a plugin acts for has.
  *
@@ -182,9 +184,12 @@ const createPluginHost = ({
       favourites: async (viewer, kind) =>
         kind === 'track'
           ? (await musicLibrary.listLiked(viewer)).map((track) => track.id)
-          : (await musicLibrary.listArtists(viewer, { onlyFavourites: true })).map(
-              (artist) => artist.id,
-            ),
+          : (
+              await musicLibrary.listArtists(viewer, {
+                onlyFavourites: true,
+                limit: MOST_FAVOURITES,
+              })
+            ).map((artist) => artist.id),
     },
     requests,
     playlists: {

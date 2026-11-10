@@ -80,12 +80,13 @@ describe('createAppListening', () => {
     );
   });
 
-  it('connects once while an app keeps playing, and passes over the same song said again at once', () => {
+  it('connects once while an app keeps playing, and hears it at most once a second', () => {
     const { listening, presence, devices, tick } = built();
 
     listening.report(APP, A_MUSIC_TRACK_FOR_TEST);
     tick(200);
     listening.report(APP, A_MUSIC_TRACK_FOR_TEST);
+    listening.report(APP, { ...A_MUSIC_TRACK_FOR_TEST, id: 'skipped-past' });
     tick(2_000);
     listening.report(APP, { ...A_MUSIC_TRACK_FOR_TEST, id: 'another' });
 
@@ -94,9 +95,10 @@ describe('createAppListening', () => {
   });
 
   it('goes once the song would have ended, a minute after, and waits again for each new song', () => {
-    const { listening, presence, waits } = built();
+    const { listening, presence, waits, tick } = built();
 
     listening.report(APP, A_MUSIC_TRACK_FOR_TEST);
+    tick(5_000);
     listening.report(APP, { ...A_MUSIC_TRACK_FOR_TEST, id: 'another', durationSeconds: 100 });
 
     expect(waits.map((wait) => [wait.afterMs, wait.cancelled])).toEqual([

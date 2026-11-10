@@ -372,7 +372,6 @@ import { createDatabaseFavouriteService } from '@ValenceServer/favourites/create
 import { createDatabaseRatingService } from '@ValenceServer/ratings/createDatabaseRatingService';
 import { createPluginMusic } from '@ValenceServer/plugins/host/createPluginMusic';
 import { createAppListening } from '@ValenceServer/music/apps/createAppListening';
-import { APP_CLIENT_PREFIX } from '@ValenceServer/music/apps/APP_CLIENT_PREFIX';
 import { getCookie } from 'hono/cookie';
 import { createDatabaseShareService } from '@ValenceServer/sharing/createDatabaseShareService';
 import { createDatabaseCalendarFeedService } from '@ValenceServer/calendarFeed/createDatabaseCalendarFeedService';
@@ -1782,11 +1781,7 @@ const musicServices: MusicServices = {
           reached.positionSeconds >=
           Math.min(PLAY_COUNTS_AFTER_SECONDS, reached.durationSeconds / 2);
 
-        if (
-          profileId !== null &&
-          heardEnough &&
-          !play.device.clientId.startsWith(APP_CLIENT_PREFIX)
-        ) {
+        if (profileId !== null && heardEnough) {
           void musicPlays.record(profileId, play.report.trackId).catch(() => undefined);
         }
 

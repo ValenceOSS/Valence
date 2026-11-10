@@ -123,6 +123,7 @@ const fakeMusic = () => {
     ),
     readAlbumArtwork: vi.fn(() => Promise.resolve('/cache/music/album.webp')),
     readArtistImage: vi.fn(() => Promise.resolve(null)),
+    readArtistPicture: vi.fn(() => Promise.resolve(null)),
     keepArtist: vi.fn(() => Promise.resolve(true)),
     dropArtist: vi.fn(() => Promise.resolve(true)),
   };

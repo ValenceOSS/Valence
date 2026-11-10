@@ -1,3 +1,4 @@
+import { isAppClient } from '@ValenceServer/music/apps/isAppClient';
 import { pickerLabelOf } from '@ValenceServer/devices/pickerLabelOf';
 import { createDeviceRegistry } from '@ValenceServer/devices/createDeviceRegistry';
 import { createPlayTracker } from '@ValenceServer/devices/createPlayTracker';
@@ -59,18 +60,32 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
   const devices = createDeviceRegistry<MusicNowPlaying>({
     presence,
     ...(onChanged === undefined ? {} : { onChanged }),
-    ...(tracker === null ? {} : { onReport: tracker.report }),
+    ...(tracker === null
+      ? {}
+      : {
+          onReport: (
+            device: Parameters<typeof tracker.report>[0],
+            report: MusicNowPlaying | null,
+          ) => {
+            if (!isAppClient(device.clientId)) {
+              tracker.report(device, report);
+            }
+          },
+        }),
   });
 
   return {
     list: (listener) =>
-      devices.owned(listener).map((entry) => ({
-        clientId: entry.clientId,
-        label: pickerLabelOf(entry),
-        clientKind: entry.clientKind ?? null,
-        nowPlaying: devices.reportOf(entry.clientId),
-        ageMs: devices.ageOf(entry.clientId),
-      })),
+      devices
+        .owned(listener)
+        .filter((entry) => !isAppClient(entry.clientId))
+        .map((entry) => ({
+          clientId: entry.clientId,
+          label: pickerLabelOf(entry),
+          clientKind: entry.clientKind ?? null,
+          nowPlaying: devices.reportOf(entry.clientId),
+          ageMs: devices.ageOf(entry.clientId),
+        })),
 
     report: devices.report,
 
@@ -81,6 +96,7 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
     remoteFor: devices.remoteFor,
 
     order: (clientId, command) =>
+      !isAppClient(clientId) &&
       devices.reportOf(clientId) !== null &&
       presence.tell(clientId, {
         kind: 'music',
@@ -90,6 +106,7 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
       }),
 
     command: (listener, fromClientId, toClientId, command) =>
+      !isAppClient(toClientId) &&
       devices.tell(listener, fromClientId, toClientId, (fromLabel) => ({
         kind: 'music',
         command,

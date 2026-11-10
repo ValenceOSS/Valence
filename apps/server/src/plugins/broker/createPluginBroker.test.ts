@@ -837,7 +837,7 @@ describe('the plugin broker', () => {
       build([{ kind: 'emits' }], declared, emitted).ask('events.emit', ['imported'], BACKGROUND),
     ).rejects.toThrow('too many events');
   });
-  it('likes, stars and lists liked things only with viewing write, for something the person can see', async () => {
+  it('lists liked things with viewing read, and likes and stars only with write, for something the person can see', async () => {
     const reader = build([{ kind: 'viewing', access: 'read' }]);
 
     expect(await reader.ask('viewing.favourites', ['p1', 'track'])).toEqual([]);
@@ -913,7 +913,7 @@ describe('the plugin broker', () => {
     await expect(ask('music.similar', [[]])).rejects.toThrow('could not read');
   });
 
-  it('looks up at most twenty artists a minute that Valence doesn’t already know', async () => {
+  it('looks up at most five artists a minute that Valence doesn’t already know', async () => {
     const { ask, host } = build([{ kind: 'library', access: 'read' }]);
     const allowed: boolean[] = [];
 
@@ -923,11 +923,11 @@ describe('the plugin broker', () => {
       return Promise.resolve(null);
     });
 
-    for (let at = 0; at < 21; at += 1) {
+    for (let at = 0; at < 6; at += 1) {
       await ask('music.aboutArtist', ['ar1']);
     }
 
-    expect(allowed.filter(Boolean)).toHaveLength(20);
+    expect(allowed.filter(Boolean)).toHaveLength(5);
     expect(allowed.at(-1)).toBe(false);
   });
 
@@ -947,7 +947,7 @@ describe('the plugin broker', () => {
     };
     const first = lookingUp();
 
-    for (let at = 0; at < 20; at += 1) {
+    for (let at = 0; at < 5; at += 1) {
       await first.ask('music.aboutArtist', ['ar1']);
     }
 
@@ -969,7 +969,11 @@ describe('the plugin broker', () => {
     vi.mocked(host.library.get).mockResolvedValue(song);
 
     expect(await ask('music.recordPlay', ['p1', 't1', heard])).toBeNull();
-    expect(host.music.recordPlay).toHaveBeenCalledWith('p1', 't1', Date.parse(heard));
+    expect(host.music.recordPlay).toHaveBeenCalledWith(
+      'p1',
+      { id: 't1', durationSeconds: 1440 },
+      Date.parse(heard),
+    );
 
     const before = Date.now();
 

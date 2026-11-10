@@ -305,7 +305,10 @@ describe('what Valence does when a plugin asks', () => {
       A_MUSIC_TRACK_FOR_TEST.id,
     ]);
     await expect(host.viewing.favourites(SAM, 'artist')).resolves.toEqual([]);
-    expect(musicLibrary.listArtists).toHaveBeenCalledWith(SAM, { onlyFavourites: true });
+    expect(musicLibrary.listArtists).toHaveBeenCalledWith(SAM, {
+      onlyFavourites: true,
+      limit: 2000,
+    });
   });
 
   it('tells the one profile it is for, saying which plugin it is from', async () => {

@@ -81,6 +81,7 @@ const built = () => {
     readTrackFile: unused,
     readAlbumArtwork: unused,
     readArtistImage: unused,
+    readArtistPicture: unused,
     keepArtist: unused,
     dropArtist: unused,
   };
@@ -185,7 +186,7 @@ describe('createPluginMusic', () => {
       label: 'Feishin',
     };
 
-    await music.recordPlay('p1', TRACK.id, 5_000);
+    await music.recordPlay('p1', { id: TRACK.id, durationSeconds: 240 }, 5_000);
     await music.nowPlaying(app, TRACK.id, SAM);
     await music.nowPlaying(app, null, SAM);
 
@@ -193,5 +194,26 @@ describe('createPluginMusic', () => {
     expect(listening.report).toHaveBeenNthCalledWith(1, app, A_MUSIC_TRACK_FOR_TEST);
     expect(listening.report).toHaveBeenNthCalledWith(2, app, null);
     await expect(music.nowPlaying(app, 'hidden', SAM)).rejects.toThrow('There is no such song.');
+  });
+
+  it('counts a play said again within half the song once, and a later play again', async () => {
+    const { music, plays } = built();
+    const song = { id: TRACK.id, durationSeconds: 240 };
+
+    await music.recordPlay('p1', song, 1_000_000);
+    await music.recordPlay('p1', song, 1_050_000);
+    await music.recordPlay('p2', song, 1_050_000);
+    await music.recordPlay('p1', song, 1_200_000);
+    await music.recordPlay('p1', { id: 'short', durationSeconds: 10 }, 2_000_000);
+    await music.recordPlay('p1', { id: 'short', durationSeconds: 10 }, 2_020_000);
+    await music.recordPlay('p1', { id: 'short', durationSeconds: null }, 2_040_000);
+
+    expect(vi.mocked(plays.record).mock.calls).toEqual([
+      ['p1', TRACK.id, 1_000_000],
+      ['p2', TRACK.id, 1_050_000],
+      ['p1', TRACK.id, 1_200_000],
+      ['p1', 'short', 2_000_000],
+      ['p1', 'short', 2_040_000],
+    ]);
   });
 });
