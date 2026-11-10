@@ -41,6 +41,7 @@ const ServerSettingsSchema = z.object({
   hardwareDevices: HardwareDeviceSettingsSchema.default([]),
   whenDevicesFull: WhenDevicesFullSchema.default('software'),
   previewQuality: PreviewQualitySchema.default('high'),
+  usesKeyframeThumbnails: z.boolean().default(false),
   showsProfilesBeforeSignIn: z.boolean().default(true),
   allowedApps: AllowedAppsSchema.default(EVERY_APP_ALLOWED),
   seededJobTriggerKinds: z.array(z.string()).default([]),

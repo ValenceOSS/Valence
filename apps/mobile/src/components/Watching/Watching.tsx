@@ -100,6 +100,7 @@ import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
+import { presenceHealthOfExpo } from '@ValenceNative/playback/presenceHealthOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
 import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
@@ -129,6 +130,8 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { placeToCarryOnFrom } from '@ValenceClient/offline/placeToCarryOnFrom';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
+
+const REPORT_PRESENCE_EVERY = 1000;
 
 const LOOK_EVERY = 1000;
 
@@ -1072,11 +1075,18 @@ const Watching = ({
           reconnectRef.current();
         }
       });
-      void sendPresenceHeartbeat(clientId, player.playing);
     }, SAY_IT_IS_ALIVE_EVERY);
+    const report = setInterval(() => {
+      void sendPresenceHeartbeat(
+        clientId,
+        player.playing,
+        castAt.current === null ? presenceHealthOfExpo(player, knownLength.current) : undefined,
+      );
+    }, REPORT_PRESENCE_EVERY);
 
     return () => {
       clearInterval(beat);
+      clearInterval(report);
     };
   }, [sessionId, clientId, player]);
 

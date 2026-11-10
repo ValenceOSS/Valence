@@ -658,6 +658,7 @@ const settings = createDatabaseSettingsStore({
     hardwareDevices: [],
     whenDevicesFull: 'software',
     previewQuality: 'high',
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: true,
     allowedApps: EVERY_APP_ALLOWED,
     seededJobTriggerKinds: [],
@@ -3742,6 +3743,7 @@ const libraryService = createDatabaseLibraryService({
   },
   atOnce: env.MEDIA_JOBS,
   previewQuality: async () => (await settings.read()).previewQuality,
+  usesKeyframeThumbnails: async () => (await settings.read()).usesKeyframeThumbnails,
   certificationRegion: async () => (await settings.read()).certificationRegion,
   onProblem: (path, reason) => {
     log.warn('scanner', `skipped ${path}: ${reason.message}`);
@@ -4693,6 +4695,7 @@ const playbackService = createPlaybackService({
   placement: () => readPlacement(() => settings.read(), transcoder),
   previewQuality: async () => (await settings.read()).previewQuality,
   usesShortSegments: async () => (await settings.read()).usesShortSegments,
+  usesKeyframeThumbnails: async () => (await settings.read()).usesKeyframeThumbnails,
 });
 
 const downloadService = createDownloadService({

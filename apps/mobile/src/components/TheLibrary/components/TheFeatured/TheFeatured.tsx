@@ -13,6 +13,7 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { AFeature } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/AFeature/AFeature';
 import { TheDots } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/TheDots/TheDots';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
+import { useIsInTheForeground } from '@ValenceMobile/hooks/useIsInTheForeground';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
@@ -111,8 +112,8 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * @param onLookAtShow - Told to open a programme.
  * @param onShowing - Told which title is showing, whenever that changes.
  * @param onClip - Told the showing title's clip while it plays.
- * @param isInView - Whether the page is scrolled to show it; away from it, nothing plays or moves
- *   on.
+ * @param isInView - Whether the page is scrolled to show it; away from it, or with the app behind
+ *   another, nothing plays or moves on.
  */
 const TheFeaturedTitles = ({
   items,
@@ -121,8 +122,9 @@ const TheFeaturedTitles = ({
   onLookAtShow,
   onShowing,
   onClip,
-  isInView = true,
+  isInView: isScrolledTo = true,
 }: TheFeaturedProps) => {
+  const isInView = useIsInTheForeground() && isScrolledTo;
   const { width, height } = useWindowDimensions();
   const hasStrip = useTheSideStrip() !== null;
   const isStill = usePrefersStillness();

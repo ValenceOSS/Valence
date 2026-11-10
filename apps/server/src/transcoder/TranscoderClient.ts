@@ -333,6 +333,7 @@ type TrickplayRequest = {
   rows: number;
   wait?: boolean;
   hardwareAccel?: string;
+  keyframesOnly?: boolean;
   correlationId?: string;
 };
 type SessionResponse = z.infer<typeof SessionResponseSchema>;

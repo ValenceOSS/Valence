@@ -68,7 +68,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
         title: 'An admin area built for a real library',
         detail:
           'Accounts, roles and permissions, live session control, background jobs and scheduling, a metadata match-picker, cache breakdown by artifact kind, a live log viewer.',
-        visual: 'sessions',
+        visual: 'jobs',
       },
       {
         title: 'Webhooks with a real event catalogue',

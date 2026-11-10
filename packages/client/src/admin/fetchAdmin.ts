@@ -71,6 +71,7 @@ const AdminOverviewSchema = z.object({
     hardwareDevices: HardwareDeviceSettingsSchema.default([]),
     whenDevicesFull: WhenDevicesFullSchema.default('software'),
     previewQuality: PreviewQualitySchema.default('high'),
+    usesKeyframeThumbnails: z.boolean().default(false),
     showsProfilesBeforeSignIn: z.boolean().default(false),
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
@@ -308,6 +309,8 @@ const ActiveSessionSchema = z.object({
           bufferedAheadSeconds: z.number(),
           presentedWidth: z.number(),
           presentedHeight: z.number(),
+          ageMs: z.number().nonnegative().nullable().optional(),
+          reportedAtMs: z.number().optional(),
         })
         .nullable(),
     })
@@ -530,9 +533,33 @@ const watchActiveSessions = (
 /**
  * Reads every tab that has the app open right now, with who has it and what they are watching. This
  * is presence rather than history: a session appears while it is open and is gone once it is not.
+ *
+ * The server says how long ago each player last measured its stream, and that becomes a time on
+ * this device's own clock, so a position can be moved on from it however far the two clocks differ.
+ *
+ * @param now - The clock, in milliseconds.
  */
-const fetchActiveSessions = async (): Promise<ActiveSession[]> => {
-  return readFromServer('/api/admin/sessions', z.array(ActiveSessionSchema));
+const fetchActiveSessions = async (now: () => number = Date.now): Promise<ActiveSession[]> => {
+  const sessions = await readFromServer('/api/admin/sessions', z.array(ActiveSessionSchema));
+  const heard = now();
+
+  return sessions.map((session) => {
+    const health = session.playback?.health;
+
+    return session.playback === null ||
+      health === null ||
+      health === undefined ||
+      health.ageMs === null ||
+      health.ageMs === undefined
+      ? session
+      : {
+          ...session,
+          playback: {
+            ...session.playback,
+            health: { ...health, reportedAtMs: heard - health.ageMs },
+          },
+        };
+  });
 };
 
 /**
@@ -1031,6 +1058,24 @@ const savePlaysEpisodesGapless = async (playsEpisodesGapless: boolean): Promise<
 };
 
 /**
+ * Sets whether seek-bar thumbnails are made from keyframes alone, which is much faster but can show
+ * a moment a few seconds away from the one they are for.
+ *
+ * @param usesKeyframeThumbnails - Whether thumbnails are made from keyframes alone.
+ * @returns Whether the setting was written.
+ */
+const saveUsesKeyframeThumbnails = async (usesKeyframeThumbnails: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ usesKeyframeThumbnails }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether the server sends its one anonymous report a day.
  *
  * @param telemetryEnabled - Whether to send it.
@@ -1375,6 +1420,7 @@ export {
   saveHiddenAlerts,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
+  saveUsesKeyframeThumbnails,
   saveFetchesMusicDetails,
   saveTelemetryEnabled,
   saveUsesPushRelay,

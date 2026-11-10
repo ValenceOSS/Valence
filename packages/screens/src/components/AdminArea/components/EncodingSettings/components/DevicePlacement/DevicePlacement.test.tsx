@@ -39,6 +39,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     hardwareDevices: [],
     whenDevicesFull: 'software',
     previewQuality: 'high',
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     playsCatalogueTrailers: false,

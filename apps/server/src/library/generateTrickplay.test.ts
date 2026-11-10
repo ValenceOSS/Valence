@@ -478,6 +478,38 @@ describe('generateTrickplay', () => {
     expect(asked[0]?.hardwareAccel).toBe('vaapi');
   });
 
+  it('asks for thumbnails from keyframes only where the operator chose them', async () => {
+    const asked: { keyframesOnly?: boolean }[] = [];
+    const transcoder = stubTranscoder((request) => {
+      asked.push(request);
+
+      return Promise.resolve(TRICKPLAY_INDEX);
+    });
+    const store = (id: string) => ({
+      listOutstanding: () => Promise.resolve([{ id, path: `/media/${id}.mkv` }]),
+      markComplete: () => Promise.resolve(),
+    });
+
+    await generateTrickplay({
+      libraryId: LIBRARY_ID,
+      generation: 0,
+      store: store('every-frame'),
+      transcoder,
+      trickplay: PARAMS,
+    });
+    await generateTrickplay({
+      libraryId: LIBRARY_ID,
+      generation: 0,
+      store: store('keyframes'),
+      transcoder,
+      trickplay: PARAMS,
+      keyframesOnly: true,
+    });
+
+    expect(asked[0]).not.toHaveProperty('keyframesOnly');
+    expect(asked[1]?.keyframesOnly).toBe(true);
+  });
+
   it('says nothing about a backend where none was chosen', async () => {
     const asked: { hardwareAccel?: string }[] = [];
     const transcoder = stubTranscoder((request) => {

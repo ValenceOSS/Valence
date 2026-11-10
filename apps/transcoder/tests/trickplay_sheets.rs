@@ -441,7 +441,6 @@ async fn draws_the_sheets_in_software_when_the_device_will_not_take_the_file() {
             height: 360,
             duration_seconds: 12.0,
             bit_depth: Some(8),
-            frames_per_second: Some(25.0),
             range: VideoRange::Sdr,
             range_base: VideoRange::Sdr,
         },

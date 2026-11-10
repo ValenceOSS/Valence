@@ -74,6 +74,20 @@ pub struct TrickplayRequest {
     /// listed first and ignored the setting entirely, exactly as previews did.
     #[serde(default)]
     pub hardware_accel: Option<HardwareAccel>,
+    /// Whether the operator chose to draw thumbnails from keyframes alone.
+    ///
+    /// Several times faster, and the work moves from the device to a fraction of one core, because
+    /// a processor can be told to skip everything between keyframes and a device cannot be trusted
+    /// to. The price is accuracy: keyframes can sit ten seconds apart or more, so a thumbnail shows
+    /// the nearest keyframe rather than its cue. Measured on two 1080p episodes, 150 of 200 and
+    /// 149 of 305 thumbnails showed a different shot from the ones drawn from every frame. Off by
+    /// default for that reason.
+    ///
+    /// Not part of [`TrickplayRequest::id`]: sheets drawn either way fill the same grid and the
+    /// same index, so changing it leaves every finished set where it is rather than redrawing a
+    /// library. An operator who wants a set drawn the other way rebuilds it.
+    #[serde(default)]
+    pub keyframes_only: bool,
     /// Whether the caller is willing to wait for rendering to finish.
     ///
     /// A library import waits, because nobody is watching it. A player must
@@ -105,6 +119,7 @@ impl Default for TrickplayRequest {
             columns: 10,
             rows: 10,
             hardware_accel: None,
+            keyframes_only: false,
             wait: true,
             correlation_id: None,
         }
@@ -254,10 +269,6 @@ pub struct SheetSource {
     pub duration_seconds: f64,
     /// What the source says it is, which decides what its frames come down as.
     pub bit_depth: Option<u8>,
-    /// How many frames a second the source really runs at, where it says.
-    ///
-    /// Only used to normalise its timestamps. See [`extract_arguments`].
-    pub frames_per_second: Option<f64>,
     /// Whether it needs converting to something a browser draws.
     ///
     /// Sheets were never converted at all, on any path, so every HDR film in a
@@ -299,9 +310,6 @@ const JPEG_QUALITY: u32 = 4;
 
 /// The steps between the scales, which is what the conversions below divide by.
 const QUALITY_STEPS: u32 = 30;
-
-/// What a source that will not say its frame rate is taken to run at.
-const ASSUMED_RATE: f64 = 30.0;
 
 /// How many threads a thumbnail render may use.
 ///
@@ -392,6 +400,11 @@ fn quality_arguments(encoder: &str) -> [String; 2] {
 /// `p010` surfaces to an encoder that cannot take them — reported as "Nothing was written into
 /// output file", the same silence the ten-bit H.264 chains gave before they were narrowed. Where
 /// the processor draws them the frames come down first and ffmpeg converts on the way.
+///
+/// A decoder in software keeps only keyframes, and `fps` at its default dropped the last of them
+/// at the end of the file, one interval short of the index: 199 thumbnails for 200 cues and 304
+/// for 305 on two 1080p episodes, so the last cue showed an empty tile. `eof_action=pass` lets
+/// that last keyframe through, and both came out exact.
 fn extract_filters(
     request: &TrickplayRequest,
     tile_height: u32,
@@ -400,21 +413,15 @@ fn extract_filters(
     draws_on_the_device: bool,
     tone_mappers: ProvedToneMappers,
 ) -> Vec<String> {
-    let decodes_every_frame =
-        onto_the_device.is_some_and(|(_, pipeline, _)| !pipeline.skips_unreferenced_frames);
-    let mut filters = Vec::new();
-
-    if decodes_every_frame {
-        filters.push(format!(
-            "setpts=N/{:.3}/TB",
-            source
-                .frames_per_second
-                .filter(|rate| *rate > 0.0)
-                .unwrap_or(ASSUMED_RATE)
-        ));
-    }
-
-    filters.push(format!("fps=1/{}", request.interval_seconds));
+    let mut filters = vec![format!(
+        "fps=1/{}{}",
+        request.interval_seconds,
+        if onto_the_device.is_some() {
+            ""
+        } else {
+            ":eof_action=pass"
+        }
+    )];
 
     if let Some((accel, pipeline, _)) = onto_the_device {
         let mut carried = None;
@@ -502,23 +509,25 @@ fn extract_filters(
 /// `-skip_frame nokey` is asked only of a decoder in software. Telling a
 /// hardware decoder to throw away everything between keyframes is not a thing
 /// every one of them will do, and `QSV` does not merely refuse it: it hangs the
-/// device, which resets it and takes down whatever else was using it.
+/// device, which resets it and takes down whatever else was using it. So where
+/// the operator asks for thumbnails from keyframes alone, an SDR film is never
+/// handed here with a device at all: the route draws it in software, which is
+/// what makes it fast. See [`TrickplayRequest::keyframes_only`].
 ///
 /// `NVDEC` is asked for less instead: `-skip_frame noref`, which drops only
 /// the frames nothing is predicted from. See
 /// [`HardwarePipeline::skips_unreferenced_frames`].
 ///
-/// Where every frame is decoded, the timestamps are rebuilt from the frame
-/// count before they are sampled. A container that lies about its timestamps —
-/// and plenty do — otherwise hands `fps` a clock that jumps, and what comes out
-/// is thumbnails that do not land where the index says they do. Jellyfin
-/// inserts the same filter immediately before `fps`, and only in this mode,
-/// because skipping to keyframes takes its timing from the keyframes instead.
-/// Skipping unreferenced frames is the same: a count of the frames kept is no
-/// longer a clock, so `NVDEC` trusts the container's timestamps as software
-/// decoding already does — the price of decoding a third of the frames.
+/// Every path samples on the container's own timestamps. Where every frame was decoded they used
+/// to be rebuilt from a count of the frames, `setpts=N/rate`, as Jellyfin does, but the rate it
+/// divides by is the stream's base rate. A file of variable frame rate has fewer frames than its
+/// length at that rate, so the rebuilt clock ran short: a five minute clip with a quarter of its
+/// frames dropped drew 23 thumbnails rather than 30, nearly all of them on the wrong shot, the
+/// same shortfall as an anime library on Intel that drew 143 where the index expected 150.
+/// Skipping to keyframes or dropping unreferenced frames could never count frames as a clock
+/// anyway.
 ///
-/// `-fps_mode passthrough` for the same reason at the other end: the muxer is
+/// `-fps_mode passthrough` at the other end: the muxer is
 /// told to write exactly the frames it is given rather than making up a
 /// constant rate, so the count matches what the index was built for.
 ///
@@ -1219,7 +1228,6 @@ otherwise start a second one"
             height: 1080,
             duration_seconds: 600.0,
             bit_depth: Some(8),
-            frames_per_second: Some(23.976),
             range,
             range_base: range,
         }
@@ -1289,6 +1297,7 @@ otherwise start a second one"
             columns: 2,
             rows: 2,
             hardware_accel: None,
+            keyframes_only: false,
             wait: true,
             correlation_id: None,
         }
@@ -1457,6 +1466,18 @@ otherwise start a second one"
         );
     }
 
+    /// Turning keyframe thumbnails on or off must not redraw every library: both fill the same
+    /// grid and the same index.
+    #[test]
+    fn drawing_from_keyframes_answers_to_the_same_address() {
+        let from_keyframes = TrickplayRequest {
+            keyframes_only: true,
+            ..request()
+        };
+
+        assert_eq!(request().id(), from_keyframes.id());
+    }
+
     #[test]
     fn a_different_interval_addresses_different_thumbnails() {
         let coarse = TrickplayRequest {
@@ -1487,8 +1508,7 @@ otherwise start a second one"
             .windows(2)
             .any(|pair| pair == ["-hwaccel_output_format", "vaapi"]));
         assert_eq!(
-            chain,
-            "setpts=N/23.976/TB,fps=1/10,hwmap=derive_device=qsv,format=qsv,vpp_qsv=w=320:h=180:format=nv12",
+            chain, "fps=1/10,hwmap=derive_device=qsv,format=qsv,vpp_qsv=w=320:h=180:format=nv12",
             "nothing comes down: the device draws the thumbnails too"
         );
         assert!(arguments
@@ -1525,7 +1545,7 @@ otherwise start a second one"
             .expect("the filter chain is passed");
 
         assert_eq!(
-            filter, "fps=1/10,scale=320:180",
+            filter, "fps=1/10:eof_action=pass,scale=320:180",
             "keyframes carry their own timing"
         );
     }
@@ -1605,7 +1625,7 @@ otherwise start a second one"
 
         assert_eq!(
             chain,
-            "setpts=N/23.976/TB,fps=1/10,procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=320:h=180:format=nv12"
+            "fps=1/10,procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=320:h=180:format=nv12"
         );
     }
 
@@ -1721,8 +1741,10 @@ otherwise start a second one"
             .any(|pair| pair == ["-fps_mode", "passthrough"]));
     }
 
+    /// A file of variable frame rate has fewer frames than its length at its base rate, so a clock
+    /// counted from frames ran short and drew too few thumbnails, each later than its cue.
     #[test]
-    fn rebuilds_the_timestamps_only_where_every_frame_is_decoded() {
+    fn samples_on_the_container_clock_whatever_decodes() {
         let chain_of = |arguments: Vec<String>| {
             arguments
                 .windows(2)
@@ -1731,31 +1753,12 @@ otherwise start a second one"
                 .expect("a filter chain")
         };
 
-        assert!(chain_of(on_qsv()).starts_with("setpts=N/"));
-        assert!(
-            !chain_of(in_software()).contains("setpts"),
-            "keyframes carry their own timing"
-        );
-    }
+        for arguments in [on_qsv(), on_nvenc(), in_software()] {
+            let chain = chain_of(arguments);
 
-    #[test]
-    fn takes_a_source_that_will_not_say_its_rate_as_thirty() {
-        let arguments = extract_arguments(
-            &request(),
-            180,
-            SheetSource {
-                frames_per_second: None,
-                ..source_of(VideoRange::Sdr)
-            },
-            Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
-            &SheetEncoder::Hardware("mjpeg_vaapi".to_owned()),
-            Path::new("/cache"),
-            ToneMapping::Tonemapx,
-        );
-
-        assert!(arguments
-            .iter()
-            .any(|argument| argument.starts_with("setpts=N/30.000/TB")));
+            assert!(!chain.contains("setpts"), "{chain}");
+            assert!(chain.starts_with("fps=1/10"), "{chain}");
+        }
     }
 
     /// A machine with both Intel paths verified could otherwise be handed VAAPI

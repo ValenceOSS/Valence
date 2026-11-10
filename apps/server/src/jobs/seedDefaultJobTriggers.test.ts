@@ -23,6 +23,7 @@ const SETTINGS: ServerSettings = {
   hardwareDevices: [],
   whenDevicesFull: 'software',
   previewQuality: 'high' as const,
+  usesKeyframeThumbnails: false,
   showsProfilesBeforeSignIn: false,
   allowedApps: EVERY_APP_ALLOWED,
   seededJobTriggerKinds: [],

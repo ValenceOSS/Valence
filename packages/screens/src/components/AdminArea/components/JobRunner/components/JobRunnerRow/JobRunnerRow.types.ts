@@ -8,6 +8,7 @@ type JobRunnerRowProps = {
   now: number;
   summary: ProgressSummary | null;
   isRunBlocked: boolean;
+  isCompact?: boolean;
   onRun: (definition: JobDefinition) => void;
   onStop: (definition: JobDefinition) => void;
   onWatch: (definition: JobDefinition) => void;

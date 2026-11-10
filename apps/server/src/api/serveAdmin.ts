@@ -293,6 +293,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           hardwareDevices: current.hardwareDevices,
           whenDevicesFull: current.whenDevicesFull,
           previewQuality: current.previewQuality,
+          usesKeyframeThumbnails: current.usesKeyframeThumbnails,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           allowedApps: current.allowedApps,
@@ -361,6 +362,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.hardwareDevices === undefined ? {} : { hardwareDevices: patch.hardwareDevices }),
       ...(patch.whenDevicesFull === undefined ? {} : { whenDevicesFull: patch.whenDevicesFull }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
+      ...(patch.usesKeyframeThumbnails === undefined
+        ? {}
+        : { usesKeyframeThumbnails: patch.usesKeyframeThumbnails }),
       ...(patch.certificationRegion === undefined
         ? {}
         : { certificationRegion: patch.certificationRegion.toUpperCase() }),
@@ -444,6 +448,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         hardwareDevices: updated.hardwareDevices,
         whenDevicesFull: updated.whenDevicesFull,
         previewQuality: updated.previewQuality,
+        usesKeyframeThumbnails: updated.usesKeyframeThumbnails,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         allowedApps: updated.allowedApps,
@@ -581,7 +586,19 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           userAgent: entry.userAgent,
           clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,
-          playback: entry.playback,
+          playback:
+            entry.playback === null
+              ? null
+              : {
+                  ...entry.playback,
+                  health:
+                    entry.playback.health === null
+                      ? null
+                      : {
+                          ...entry.playback.health,
+                          ageMs: presence.healthAgeOf(entry.clientId),
+                        },
+                },
           listening: await listeningOn(entry.clientId),
           bookListening: await bookListeningOn(entry.clientId),
           reading: await readingOn(entry.clientId),

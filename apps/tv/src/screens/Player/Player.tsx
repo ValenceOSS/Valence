@@ -60,6 +60,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { UpNext } from '@ValenceTv/screens/Player/components/UpNext/UpNext';
 import { PartyPanel } from '@ValenceTv/components/PartyPanel/PartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
+import { presenceHealthOfExpo } from '@ValenceNative/playback/presenceHealthOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -347,6 +348,7 @@ const Player = ({
     quality,
     converted,
     attempt,
+    () => presenceHealthOfExpo(player, detail.data?.durationSeconds ?? 0),
   );
   const tryingNext = useRef({ session, converted });
 

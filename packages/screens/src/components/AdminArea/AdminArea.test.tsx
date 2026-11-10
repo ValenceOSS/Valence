@@ -43,6 +43,7 @@ const OVERVIEW: AdminOverview = {
     hardwareDevices: [],
     whenDevicesFull: 'software' as const,
     previewQuality: 'high' as const,
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     playsCatalogueTrailers: false,

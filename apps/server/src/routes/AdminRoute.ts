@@ -78,6 +78,7 @@ const AdminSettingsSchema = z
     hardwareDevices: HardwareDeviceSettingsSchema,
     whenDevicesFull: WhenDevicesFullSchema,
     previewQuality: z.enum(PREVIEW_QUALITIES),
+    usesKeyframeThumbnails: z.boolean().default(false),
     certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
     allowedApps: AllowedAppsSchema,
@@ -182,6 +183,7 @@ const AdminSettingsRequestSchema = z
     hardwareDevices: HardwareDeviceSettingsSchema.optional(),
     whenDevicesFull: WhenDevicesFullSchema.optional(),
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
+    usesKeyframeThumbnails: z.boolean().optional(),
     certificationRegion: z.string().length(2).optional(),
     showsProfilesBeforeSignIn: z.boolean().optional(),
     allowedApps: AllowedAppsSchema.optional(),
@@ -292,6 +294,7 @@ const AdminSessionSchema = z
             bufferedAheadSeconds: z.number(),
             presentedWidth: z.number(),
             presentedHeight: z.number(),
+            ageMs: z.number().nullable(),
           })
           .nullable(),
       })

@@ -9,6 +9,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeTranscodeReuse } from '@ValenceCore/functions/describeTranscodeReuse';
 import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { useRunningPosition } from '@ValenceScreens/admin/useRunningPosition';
 import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
@@ -36,6 +37,7 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
   const { playback } = session;
   const names = namesOfSession(session);
   const health = playback?.health ?? null;
+  const running = useRunningPosition(playback);
   const plan = playback?.plan ?? null;
   const episode = episodeOfSession(session);
   const drawn =
@@ -77,7 +79,7 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
                 { label: say('common.status'), value: status },
                 {
                   label: say('common.position'),
-                  value: health === null ? null : formatDuration(health.positionSeconds),
+                  value: running === null ? null : formatDuration(running),
                 },
                 {
                   label: say('tv.player.streamStats.bufferedAhead'),
@@ -164,9 +166,9 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
               <StatsFact
                 name="Position"
                 value={
-                  health === null
+                  health === null || running === null
                     ? say('screens.adminArea.sessionStatsDialog.notReportedYet')
-                    : `${formatDuration(health.positionSeconds)} / ${formatDuration(health.durationSeconds)}`
+                    : `${formatDuration(running)} / ${formatDuration(health.durationSeconds)}`
                 }
               />
               <StatsFact

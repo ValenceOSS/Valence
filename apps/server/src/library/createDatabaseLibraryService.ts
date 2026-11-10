@@ -204,6 +204,7 @@ type CreateDatabaseLibraryServiceOptions = {
   forcedAccel?: () => Promise<string>;
   jobs: JobQueue;
   previewQuality?: () => Promise<PreviewQuality>;
+  usesKeyframeThumbnails?: () => Promise<boolean>;
   certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
@@ -398,6 +399,7 @@ const createDatabaseLibraryService = ({
   music,
   atOnce = 1,
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
+  usesKeyframeThumbnails = () => Promise.resolve(false),
   certificationRegion = (): Promise<string> => Promise.resolve('GB'),
   onProblem,
   onArrived,
@@ -3614,6 +3616,7 @@ const createDatabaseLibraryService = ({
         },
         transcoder,
         ...(chosenAccel === undefined ? {} : { hardwareAccel: chosenAccel }),
+        keyframesOnly: await usesKeyframeThumbnails(),
         trickplay: {
           intervalSeconds: TRICKPLAY_INTERVAL_SECONDS,
           tileWidth: TRICKPLAY_TILE_WIDTH,

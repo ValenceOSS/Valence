@@ -21,6 +21,7 @@ const anAdminOverview = (overrides: Partial<AdminOverview['settings']> = {}): Ad
     hardwareDevices: [],
     whenDevicesFull: 'software' as const,
     previewQuality: 'high' as const,
+    usesKeyframeThumbnails: false,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     playsCatalogueTrailers: false,
