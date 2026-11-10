@@ -7,6 +7,7 @@ type BrokerScope =
       accountId: string;
       isAdmin: boolean;
       reads: Viewer;
+      app?: { id: string; label: string; profileName: string };
     }
   | {
       kind: 'background';

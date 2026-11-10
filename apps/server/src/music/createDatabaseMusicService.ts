@@ -7,11 +7,14 @@ import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHa
 import {
   and,
   asc,
+  count,
   desc,
   eq,
   exists,
+  gte,
   inArray,
   isNotNull,
+  lte,
   ne,
   notInArray,
   or,
@@ -28,6 +31,7 @@ import {
   musicPlay,
   musicTrack,
   musicTrackArtist,
+  rating,
 } from '#dialect/Schema';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -47,7 +51,7 @@ import { parseLyrics } from './parseLyrics';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MusicAlbum, MusicArtist, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
-import type { MusicService } from './MusicService';
+import type { AlbumOrder, GenreCount, MusicService } from './MusicService';
 import { loudnessOfRow } from '@ValenceServer/music/loudnessOfRow';
 import type { LoudnessColumns } from '@ValenceServer/music/loudnessOfRow';
 
@@ -56,6 +60,8 @@ const SEARCH_LIMIT = 20;
 const POPULAR_LIMIT = 10;
 
 const LIKED_LIMIT = 2000;
+
+const PERSONAL_ORDERS: ReadonlySet<AlbumOrder> = new Set(['played', 'mostPlayed', 'rated']);
 
 /**
  * The profile a viewer is acting as, where they are acting as one.
@@ -193,6 +199,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     condition: SQL | undefined,
     order: SQL[],
     limit: number,
+    offset = 0,
   ): Promise<MusicTrack[]> => {
     const rows = await db
       .select(trackColumns)
@@ -202,7 +209,8 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
       .where(and(condition, trackVisible(viewer)))
       .orderBy(...order)
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
     return dressTracks(viewer, rows);
   };
@@ -347,38 +355,87 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     return row ?? null;
   };
 
+  const countGenres = async (viewer: Viewer): Promise<GenreCount[]> => {
+    const genre = jsonTextElements(musicAlbum.genres, 'genre');
+    const [shelved, seen] = await Promise.all([
+      db
+        .select({ name: genre.value, albumId: sql<string>`${musicAlbum.id}` })
+        .from(sql`${musicAlbum}, ${genre.rows}`),
+      db
+        .select({ albumId: musicTrack.albumId, songs: count() })
+        .from(musicTrack)
+        .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .where(trackVisible(viewer))
+        .groupBy(musicTrack.albumId),
+    ]);
+    const songsOn = new Map(seen.map((row) => [row.albumId, row.songs]));
+    const counted = new Map<string, GenreCount>();
+
+    for (const { name, albumId } of shelved) {
+      const songs = songsOn.get(albumId) ?? 0;
+
+      if (songs > 0) {
+        const soFar = counted.get(name) ?? { name, albums: 0, songs: 0 };
+
+        counted.set(name, { name, albums: soFar.albums + 1, songs: soFar.songs + songs });
+      }
+    }
+
+    return [...counted.values()].toSorted((one, other) => one.name.localeCompare(other.name));
+  };
+
   return {
     listAlbums: async (viewer, options = {}) => {
-      if (options.order === 'played') {
-        const profileId = profileOf(viewer);
+      const order = options.order ?? 'recent';
+      const profileId = profileOf(viewer);
 
-        if (profileId === null) {
-          return [];
-        }
-
-        const lastPlayed = sql`(select max(${musicPlay.playedAt}) from ${musicPlay} inner join ${musicTrack} on ${musicTrack.mediaItemId} = ${musicPlay.trackId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${musicPlay.profileId} = ${profileId})`;
-
-        return albumsWhere(
-          viewer,
-          isNotNull(lastPlayed),
-          [desc(lastPlayed), asc(musicAlbum.id)],
-          options.limit ?? 200,
-          options.offset ?? 0,
-        );
+      if (profileId === null && PERSONAL_ORDERS.has(order)) {
+        return [];
       }
+
+      const ofThisAlbum = sql`${musicTrack.albumId} = ${musicAlbum.id} and ${musicPlay.profileId} = ${profileId}`;
+      const lastPlayed = sql`(select max(${musicPlay.playedAt}) from ${musicPlay} inner join ${musicTrack} on ${musicTrack.mediaItemId} = ${musicPlay.trackId} where ${ofThisAlbum})`;
+      const timesPlayed = sql`(select count(*) from ${musicPlay} inner join ${musicTrack} on ${musicTrack.mediaItemId} = ${musicPlay.trackId} where ${ofThisAlbum})`;
+      const averageStars = sql`(select avg(${rating.stars}) from ${rating} inner join ${musicTrack} on ${musicTrack.mediaItemId} = ${rating.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${rating.profileId} = ${profileId})`;
+      const genre = jsonTextElements(musicAlbum.genres, 'genre');
+      const { years } = options;
+      const isRising = years === undefined || years.from <= years.to;
+      const yearOrder = isRising
+        ? asc(sql`coalesce(${musicAlbum.year}, 0)`)
+        : desc(sql`coalesce(${musicAlbum.year}, 0)`);
+      const byName = [asc(musicAlbum.titleKey), asc(musicAlbum.id)];
+      const orders: Record<AlbumOrder, { where?: SQL; by: SQL[] }> = {
+        recent: { by: [desc(musicAlbum.addedAt), ...byName] },
+        title: { by: byName },
+        artist: { by: [asc(musicArtist.sortName), ...byName] },
+        year: {
+          by: [
+            years === undefined ? desc(sql`coalesce(${musicAlbum.year}, 0)`) : yearOrder,
+            ...byName,
+          ],
+        },
+        played: { where: isNotNull(lastPlayed), by: [desc(lastPlayed), asc(musicAlbum.id)] },
+        mostPlayed: { where: sql`${timesPlayed} > 0`, by: [desc(timesPlayed), ...byName] },
+        rated: { where: isNotNull(averageStars), by: [desc(averageStars), ...byName] },
+      };
+      const chosen = orders[order];
 
       return albumsWhere(
         viewer,
-        undefined,
-        options.order === 'title'
-          ? [asc(musicAlbum.titleKey), asc(musicAlbum.id)]
-          : options.order === 'year'
-            ? [
-                desc(sql`coalesce(${musicAlbum.year}, 0)`),
-                asc(musicAlbum.titleKey),
-                asc(musicAlbum.id),
-              ]
-            : [desc(musicAlbum.addedAt), asc(musicAlbum.titleKey), asc(musicAlbum.id)],
+        and(
+          chosen.where,
+          options.genre === undefined
+            ? undefined
+            : sql`(select count(*) from ${genre.rows} where ${genre.value} = ${options.genre}) > 0`,
+          years === undefined
+            ? undefined
+            : and(
+                gte(musicAlbum.year, Math.min(years.from, years.to)),
+                lte(musicAlbum.year, Math.max(years.from, years.to)),
+              ),
+        ),
+        chosen.by,
         options.limit ?? 200,
         options.offset ?? 0,
       );
@@ -549,6 +606,20 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         .orderBy(asc(genre.value));
 
       return rows.map((row) => row.value);
+    },
+
+    countGenres,
+
+    listInGenre: (viewer, genre, page) => {
+      const named = jsonTextElements(musicAlbum.genres, 'genre');
+
+      return tracksWhere(
+        viewer,
+        sql`(select count(*) from ${named.rows} where ${named.value} = ${genre}) > 0`,
+        [asc(musicAlbum.titleKey), asc(musicAlbum.id), ...inAlbumOrder],
+        page.limit,
+        page.offset,
+      );
     },
 
     listCatalogue: async (viewer) => {
@@ -748,6 +819,20 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         .limit(1);
 
       return row?.path ?? null;
+    },
+
+    readArtistPicture: async (viewer, artistId) => {
+      const coverAlbum = sql<
+        string | null
+      >`(select ${musicAlbum.artworkPath} from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id} and ${musicAlbum.artworkPath} is not null order by ${nullsLast(musicAlbum.year, 'desc')} limit 1)`;
+      const [row] = await db
+        .select({ own: musicArtist.imagePath, cover: coverAlbum })
+        .from(musicArtist)
+        .innerJoin(library, eq(library.id, musicArtist.libraryId))
+        .where(and(eq(musicArtist.id, artistId), librariesVisibleToViewer(db, viewer)))
+        .limit(1);
+
+      return row?.own ?? row?.cover ?? null;
     },
 
     keepArtist: async (profileId, artistId) => {

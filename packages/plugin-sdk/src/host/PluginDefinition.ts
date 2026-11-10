@@ -76,7 +76,7 @@ type RouteRequest = {
 
 type RouteContext = {
   valence: ValenceHost;
-  person: { profileId: string; name: string } | null;
+  person: { profileId: string; name: string; login: string } | null;
 };
 
 type RouteHandler = (

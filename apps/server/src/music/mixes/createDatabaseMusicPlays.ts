@@ -13,8 +13,13 @@ import type { MusicPlays } from './MusicPlays';
  * @returns The record of hearings.
  */
 const createDatabaseMusicPlays = (db: AnyValenceDatabase): MusicPlays => ({
-  record: async (profileId, trackId) => {
-    await db.insert(musicPlay).values({ id: randomUUID(), profileId, trackId });
+  record: async (profileId, trackId, playedAtMs) => {
+    await db.insert(musicPlay).values({
+      id: randomUUID(),
+      profileId,
+      trackId,
+      ...(playedAtMs === undefined ? {} : { playedAt: new Date(playedAtMs) }),
+    });
   },
 
   countsSince: async (profileId, sinceMs) => {

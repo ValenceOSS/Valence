@@ -23,6 +23,7 @@ type Known = {
 
 type ArtistStories = {
   about: (artist: { name: string }, have: readonly string[]) => Promise<ArtistStory>;
+  knows: (artist: { name: string }) => boolean;
 };
 
 /**
@@ -93,6 +94,8 @@ const createArtistStories = (web: MusicWeb): ArtistStories => {
           })),
       };
     },
+
+    knows: (artist) => kept.holds(nameKey(artist.name)),
   };
 };
 

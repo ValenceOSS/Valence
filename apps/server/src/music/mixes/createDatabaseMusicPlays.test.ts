@@ -61,6 +61,17 @@ describe('createDatabaseMusicPlays', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(counted?.lastPlayedAtMs).toBeGreaterThanOrEqual(before);
   });
 
+  it('counts a song heard at the time it says, rather than now', async () => {
+    const { plays, trackId } = await aSongToHear();
+    const heardAt = Date.parse('2026-11-01T12:00:00.000Z');
+
+    await plays.record('pat', trackId, heardAt);
+
+    await expect(plays.countsSince('pat', 0)).resolves.toEqual([
+      { trackId, plays: 1, lastPlayedAtMs: heardAt },
+    ]);
+  });
+
   it('leaves out what was heard before the time asked about, and other profiles’ hearing', async () => {
     const { plays, trackId } = await aSongToHear();
 

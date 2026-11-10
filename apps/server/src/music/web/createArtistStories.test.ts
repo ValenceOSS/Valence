@@ -88,6 +88,15 @@ describe('createArtistStories', () => {
     expect(findArtistOnMusicBrainz).toHaveBeenCalledTimes(1);
   });
 
+  it('says whether it already knows about an artist, whatever the case of their name', async () => {
+    const stories = createArtistStories(aWebThatAnswers({}));
+
+    expect(stories.knows({ name: 'Bloc Party' })).toBe(false);
+    await stories.about({ name: 'Bloc Party' }, []);
+    expect(stories.knows({ name: 'bloc party' })).toBe(true);
+    expect(findArtistOnMusicBrainz).toHaveBeenCalledTimes(1);
+  });
+
   it('asks again after a question that failed', async () => {
     vi.mocked(findArtistOnMusicBrainz).mockRejectedValueOnce(new Error('offline'));
     const stories = createArtistStories(aWebThatAnswers({}));

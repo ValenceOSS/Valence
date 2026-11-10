@@ -106,6 +106,8 @@ const fakeMusic = () => {
     listPicks: vi.fn(() => Promise.resolve([TRACK])),
     listCatalogue: vi.fn(() => Promise.resolve([])),
     listGenres: vi.fn(() => Promise.resolve(['Indie'])),
+    countGenres: vi.fn(() => Promise.resolve([{ name: 'Indie', albums: 1, songs: 1 }])),
+    listInGenre: vi.fn(() => Promise.resolve([])),
     search: vi.fn(() => Promise.resolve({ tracks: [TRACK], albums: [], artists: [] })),
     readLyrics: vi.fn(() =>
       Promise.resolve({ isSynced: true, lines: [{ atMs: 1000, text: 'Words' }] }),
@@ -121,6 +123,7 @@ const fakeMusic = () => {
     ),
     readAlbumArtwork: vi.fn(() => Promise.resolve('/cache/music/album.webp')),
     readArtistImage: vi.fn(() => Promise.resolve(null)),
+    readArtistPicture: vi.fn(() => Promise.resolve(null)),
     keepArtist: vi.fn(() => Promise.resolve(true)),
     dropArtist: vi.fn(() => Promise.resolve(true)),
   };
@@ -134,6 +137,7 @@ const fakeMusic = () => {
     remove: vi.fn(() => Promise.resolve(false)),
     add: vi.fn(() => Promise.resolve(1)),
     move: vi.fn(() => Promise.resolve(true)),
+    dropMany: vi.fn(() => Promise.resolve(0)),
     drop: vi.fn(() => Promise.resolve(true)),
     readArtwork: vi.fn(() => Promise.resolve(null)),
     saveArtwork: vi.fn(() => Promise.resolve(null)),
@@ -165,6 +169,7 @@ const fakeMusic = () => {
     },
     stories: {
       about: vi.fn(() => Promise.resolve({ bio: null, sourceUrl: null, missing: [] })),
+      knows: vi.fn(() => false),
     },
     stream: vi.fn(() =>
       Promise.resolve({

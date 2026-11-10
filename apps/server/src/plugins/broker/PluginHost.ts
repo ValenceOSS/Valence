@@ -1,5 +1,10 @@
 import type {
+  AboutArtist,
+  AlbumOrder,
   CatalogueHit,
+  Genre,
+  Kept,
+  Lyrics,
   LibraryPage,
   MediaDetails,
   MediaRef,
@@ -9,6 +14,7 @@ import type {
   ViewingState,
 } from '@ValenceSDK/host/ValenceHost';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import type { App } from '@ValenceServer/music/apps/createAppListening';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { PanelPlace } from '@ValenceSDK/manifest/PanelPlace';
 
@@ -46,6 +52,9 @@ type PluginHost = {
     markWatched: (profileId: string, mediaId: string, watchedAt: string | null) => Promise<void>;
     markUnwatched: (profileId: string, mediaId: string) => Promise<void>;
     state: (profileId: string, mediaIds: readonly string[]) => Promise<ViewingState[]>;
+    favourite: (viewer: Viewer, subject: MediaRef, isFavourite: boolean) => Promise<Kept>;
+    rate: (viewer: Viewer, subject: MediaRef, stars: number | null) => Promise<Kept>;
+    favourites: (viewer: Viewer, kind: 'track' | 'artist') => Promise<string[]>;
   };
   requests: {
     searchCatalogue: (query: string, kind: CatalogueHit['kind']) => Promise<CatalogueHit[]>;
@@ -71,12 +80,49 @@ type PluginHost = {
     ) => Promise<void>;
     read: (viewer: Viewer, playlistId: string) => Promise<PlaylistContents | null>;
     drop: (viewer: Viewer, playlistId: string, entryId: string) => Promise<void>;
+    dropMany: (viewer: Viewer, playlistId: string, entryIds: readonly string[]) => Promise<void>;
+    rename: (
+      viewer: Viewer,
+      playlistId: string,
+      playlist: { name: string; description: string | null },
+    ) => Promise<void>;
+    remove: (viewer: Viewer, playlistId: string) => Promise<void>;
   };
   music: {
     findTrack: (
       track: { title: string; artist: string; album: string | null; isrc: string | null },
       viewer: Viewer,
     ) => Promise<MediaRef | null>;
+    albums: (
+      ask: {
+        order: AlbumOrder;
+        genre: string | null;
+        years: { from: number; to: number } | null;
+        offset: number;
+        limit: number;
+      },
+      viewer: Viewer,
+    ) => Promise<MediaRef[]>;
+    genres: (viewer: Viewer) => Promise<Genre[]>;
+    inGenre: (
+      genre: string,
+      page: { offset: number; limit: number },
+      viewer: Viewer,
+    ) => Promise<MediaRef[]>;
+    lyrics: (trackId: string, viewer: Viewer) => Promise<Lyrics | null>;
+    similar: (seedIds: readonly string[], limit: number, viewer: Viewer) => Promise<MediaRef[]>;
+    topSongs: (artistId: string, viewer: Viewer) => Promise<MediaRef[]>;
+    aboutArtist: (
+      artistId: string,
+      viewer: Viewer,
+      mayLookUp: () => boolean,
+    ) => Promise<AboutArtist | null>;
+    recordPlay: (
+      profileId: string,
+      track: { id: string; durationSeconds: number | null },
+      playedAtMs: number,
+    ) => Promise<void>;
+    nowPlaying: (app: App, trackId: string | null, viewer: Viewer) => Promise<void>;
   };
   notifications: {
     send: (profileId: string, note: { title: string; body: string; from: string }) => Promise<void>;

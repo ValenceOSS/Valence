@@ -370,6 +370,8 @@ import { detectLibrarySegments } from '@ValenceServer/segments/detectLibrarySegm
 import { createDatabaseWatchProgressService } from '@ValenceServer/progress/createDatabaseWatchProgressService';
 import { createDatabaseFavouriteService } from '@ValenceServer/favourites/createDatabaseFavouriteService';
 import { createDatabaseRatingService } from '@ValenceServer/ratings/createDatabaseRatingService';
+import { createPluginMusic } from '@ValenceServer/plugins/host/createPluginMusic';
+import { createAppListening } from '@ValenceServer/music/apps/createAppListening';
 import { getCookie } from 'hono/cookie';
 import { createDatabaseShareService } from '@ValenceServer/sharing/createDatabaseShareService';
 import { createDatabaseCalendarFeedService } from '@ValenceServer/calendarFeed/createDatabaseCalendarFeedService';
@@ -4994,6 +4996,17 @@ const startPlugins = (
       readProfile,
       lockedLibraries: async () => Object.keys(await readLibraryLocks(settings)),
       media,
+      music: createPluginMusic({
+        library: musicLibrary,
+        details: media.details,
+        findTrack: media.findTrack,
+        plays: musicPlays,
+        stories: musicServices.stories,
+        listening: createAppListening({ presence, devices: musicServices.devices }),
+      }),
+      musicLibrary,
+      favourites: createDatabaseFavouriteService(db),
+      ratings: createDatabaseRatingService(db),
       durationOf: async (mediaId) => {
         const [found] = await db
           .select({ durationSeconds: mediaItem.durationSeconds })

@@ -6,7 +6,7 @@ import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 
 /**
  * Where a person stands with things in the library, for a plugin acting for them: what they kept as
- * a favourite, the stars they gave, and how many times and how lately they played a song or
+ * a favourite and when, the stars they gave, and how many times and how lately they played a song or
  * finished a film or an episode.
  *
  * @param db - The database.
@@ -23,7 +23,11 @@ const createDatabaseViewingState =
 
     const [kept, keptArtists, rated, played, watched] = await Promise.all([
       db
-        .select({ mediaItemId: favourite.mediaItemId, bookId: favourite.bookId })
+        .select({
+          mediaItemId: favourite.mediaItemId,
+          bookId: favourite.bookId,
+          keptAt: favourite.keptAt,
+        })
         .from(favourite)
         .where(
           and(
@@ -32,7 +36,7 @@ const createDatabaseViewingState =
           ),
         ),
       db
-        .select({ artistId: favouriteArtist.artistId })
+        .select({ artistId: favouriteArtist.artistId, keptAt: favouriteArtist.keptAt })
         .from(favouriteArtist)
         .where(
           and(eq(favouriteArtist.profileId, profileId), inArray(favouriteArtist.artistId, ids)),
@@ -77,9 +81,13 @@ const createDatabaseViewingState =
         .groupBy(watchHistory.mediaItemId),
     ]);
     const playsOf = new Map([...played, ...watched].map((row) => [row.id, row]));
-    const favourites = new Set([
-      ...kept.flatMap((row) => [row.mediaItemId, row.bookId].filter((id) => id !== null)),
-      ...keptArtists.map((row) => row.artistId),
+    const favourites = new Map<string, Date>([
+      ...kept.flatMap((row) =>
+        [row.mediaItemId, row.bookId].flatMap((id): [string, Date][] =>
+          id === null ? [] : [[id, row.keptAt]],
+        ),
+      ),
+      ...keptArtists.map((row): [string, Date] => [row.artistId, row.keptAt]),
     ]);
 
     return ids.map((mediaId): ViewingState => {
@@ -88,6 +96,7 @@ const createDatabaseViewingState =
       return {
         mediaId,
         isFavourite: favourites.has(mediaId),
+        favouritedAt: favourites.get(mediaId)?.toISOString() ?? null,
         stars:
           rated.find(
             (row) =>

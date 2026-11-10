@@ -17,6 +17,10 @@ import {
 } from '#dialect/Schema';
 import { createDatabaseViewingState } from './createDatabaseViewingState';
 
+const FILM_KEPT_AT = '2026-09-30T08:00:00.000Z';
+
+const BAND_KEPT_AT = '2026-09-29T19:30:00.000Z';
+
 const STARTING_POSTGRES_MS = 60_000;
 
 /**
@@ -79,8 +83,12 @@ const aHousehold = async () => {
     titleKey: 'album',
   });
   await db.insert(musicTrack).values({ mediaItemId: 'song', albumId: 'album', codec: 'flac' });
-  await db.insert(favourite).values({ id: 'f1', profileId: 'sam', mediaItemId: 'film' });
-  await db.insert(favouriteArtist).values({ profileId: 'sam', artistId: 'band' });
+  await db
+    .insert(favourite)
+    .values({ id: 'f1', profileId: 'sam', mediaItemId: 'film', keptAt: new Date(FILM_KEPT_AT) });
+  await db
+    .insert(favouriteArtist)
+    .values({ profileId: 'sam', artistId: 'band', keptAt: new Date(BAND_KEPT_AT) });
   await db.insert(rating).values({ id: 'r1', profileId: 'sam', seriesId: 'show', stars: 4 });
   await db.insert(musicPlay).values([
     { id: 'p1', profileId: 'sam', trackId: 'song', playedAt: new Date('2026-10-01T10:00:00Z') },
@@ -107,13 +115,14 @@ const aHousehold = async () => {
 };
 
 describe('createDatabaseViewingState', { timeout: STARTING_POSTGRES_MS }, () => {
-  it('reads what a person kept, rated and played, for each thing asked about', async () => {
+  it('reads what a person kept and when, rated and played, for each thing asked about', async () => {
     const state = await aHousehold();
 
     await expect(state('sam', ['film', 'song', 'show', 'band', 'nothing'])).resolves.toEqual([
       {
         mediaId: 'film',
         isFavourite: true,
+        favouritedAt: FILM_KEPT_AT,
         stars: null,
         plays: 1,
         lastPlayedAt: '2026-10-02T21:00:00.000Z',
@@ -121,13 +130,35 @@ describe('createDatabaseViewingState', { timeout: STARTING_POSTGRES_MS }, () => 
       {
         mediaId: 'song',
         isFavourite: false,
+        favouritedAt: null,
         stars: null,
         plays: 2,
         lastPlayedAt: '2026-10-03T10:00:00.000Z',
       },
-      { mediaId: 'show', isFavourite: false, stars: 4, plays: 0, lastPlayedAt: null },
-      { mediaId: 'band', isFavourite: true, stars: null, plays: 0, lastPlayedAt: null },
-      { mediaId: 'nothing', isFavourite: false, stars: null, plays: 0, lastPlayedAt: null },
+      {
+        mediaId: 'show',
+        isFavourite: false,
+        favouritedAt: null,
+        stars: 4,
+        plays: 0,
+        lastPlayedAt: null,
+      },
+      {
+        mediaId: 'band',
+        isFavourite: true,
+        favouritedAt: BAND_KEPT_AT,
+        stars: null,
+        plays: 0,
+        lastPlayedAt: null,
+      },
+      {
+        mediaId: 'nothing',
+        isFavourite: false,
+        favouritedAt: null,
+        stars: null,
+        plays: 0,
+        lastPlayedAt: null,
+      },
     ]);
   });
 
@@ -135,8 +166,22 @@ describe('createDatabaseViewingState', { timeout: STARTING_POSTGRES_MS }, () => 
     const state = await aHousehold();
 
     await expect(state('alex', ['film', 'song'])).resolves.toEqual([
-      { mediaId: 'film', isFavourite: false, stars: null, plays: 0, lastPlayedAt: null },
-      { mediaId: 'song', isFavourite: false, stars: null, plays: 0, lastPlayedAt: null },
+      {
+        mediaId: 'film',
+        isFavourite: false,
+        favouritedAt: null,
+        stars: null,
+        plays: 0,
+        lastPlayedAt: null,
+      },
+      {
+        mediaId: 'song',
+        isFavourite: false,
+        favouritedAt: null,
+        stars: null,
+        plays: 0,
+        lastPlayedAt: null,
+      },
     ]);
     await expect(state('sam', [])).resolves.toEqual([]);
   });
@@ -148,6 +193,7 @@ describe('createDatabaseViewingState', { timeout: STARTING_POSTGRES_MS }, () => 
       {
         mediaId: 'film',
         isFavourite: true,
+        favouritedAt: FILM_KEPT_AT,
         stars: null,
         plays: 1,
         lastPlayedAt: '2026-10-02T21:00:00.000Z',

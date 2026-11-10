@@ -1,3 +1,5 @@
+import { A_PLUGIN_MEDIA_FOR_TEST } from '@ValenceServer/plugins/broker/A_PLUGIN_MEDIA_FOR_TEST';
+import { A_MUSIC_TRACK_FOR_TEST } from '@ValenceServer/music/A_MUSIC_TRACK_FOR_TEST';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryHistoryService } from '@ValenceServer/history/createMemoryHistoryService';
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
@@ -82,18 +84,39 @@ const build = (locked: readonly string[] = []) => {
     ),
     fillsItself: vi.fn(() => Promise.resolve(false)),
     create: vi.fn(() => Promise.resolve(PLAYLIST)),
-    update: unused,
-    remove: unused,
+    update: vi.fn((_viewer: Viewer, playlistId: string) =>
+      Promise.resolve(playlistId === PLAYLIST.id ? PLAYLIST : null),
+    ),
+    remove: vi.fn((_viewer: Viewer, playlistId: string) =>
+      Promise.resolve(playlistId === PLAYLIST.id),
+    ),
     add: vi.fn((_viewer: Viewer, playlistId: string) =>
       Promise.resolve(playlistId === PLAYLIST.id ? 2 : null),
     ),
     move: unused,
+    dropMany: vi.fn((_viewer: Viewer, playlistId: string, entryIds: readonly string[]) =>
+      Promise.resolve(playlistId === PLAYLIST.id ? entryIds.length : null),
+    ),
     drop: vi.fn((_viewer: Viewer, playlistId: string, entryId: string) =>
       Promise.resolve(playlistId === PLAYLIST.id && entryId === 'e1'),
     ),
     readArtwork: unused,
     saveArtwork: unused,
     dropArtwork: unused,
+  };
+  const musicLibrary = {
+    listLiked: vi.fn(() => Promise.resolve([A_MUSIC_TRACK_FOR_TEST])),
+    listArtists: vi.fn(() => Promise.resolve([])),
+    keepArtist: vi.fn(() => Promise.resolve(true)),
+    dropArtist: vi.fn(() => Promise.resolve(true)),
+  };
+  const favourites = {
+    keep: vi.fn(() => Promise.resolve()),
+    drop: vi.fn(() => Promise.resolve()),
+  };
+  const ratings = {
+    set: vi.fn(() => Promise.resolve()),
+    clear: vi.fn(() => Promise.resolve()),
   };
   const notify = vi.fn(() => Promise.resolve());
   const publish = vi.fn(() => Promise.resolve());
@@ -104,7 +127,11 @@ const build = (locked: readonly string[] = []) => {
         profileId === 'p1' ? { id: 'p1', name: 'Sam', accountId: 'account-1' } : null,
       ),
     lockedLibraries: () => Promise.resolve(locked),
-    media: { ...fake.library, findTrack: fake.music.findTrack },
+    media: fake.library,
+    music: fake.music,
+    musicLibrary,
+    favourites,
+    ratings,
     durationOf: (mediaId) => Promise.resolve(mediaId === 'm1' ? 1440 : null),
     progress,
     viewingState: fake.viewing.state,
@@ -116,7 +143,18 @@ const build = (locked: readonly string[] = []) => {
     jobs: fake.jobs,
   });
 
-  return { host, progress, history, playlists, seen, notify, publish };
+  return {
+    host,
+    progress,
+    history,
+    playlists,
+    seen,
+    notify,
+    publish,
+    musicLibrary,
+    favourites,
+    ratings,
+  };
 };
 
 describe('what Valence does when a plugin asks', () => {
@@ -211,6 +249,77 @@ describe('what Valence does when a plugin asks', () => {
     await expect(host.playlists.read(SAM, 'not-theirs')).resolves.toBeNull();
     await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e1')).resolves.toBeUndefined();
     await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e9')).rejects.toThrow('no such entry');
+  });
+
+  it('renames, empties and removes a playlist of theirs, and refuses to fill one that fills itself', async () => {
+    const { host, playlists } = build();
+
+    await host.playlists.rename(SAM, PLAYLIST.id, { name: 'Renamed', description: null });
+    await host.playlists.rename(SAM, PLAYLIST.id, { name: 'Again', description: 'Notes' });
+    await host.playlists.remove(SAM, PLAYLIST.id);
+
+    expect(playlists.update).toHaveBeenNthCalledWith(1, SAM, PLAYLIST.id, { name: 'Renamed' });
+    expect(playlists.update).toHaveBeenNthCalledWith(2, SAM, PLAYLIST.id, {
+      name: 'Again',
+      description: 'Notes',
+    });
+    expect(playlists.remove).toHaveBeenCalledWith(SAM, PLAYLIST.id, false);
+    await expect(
+      host.playlists.rename(SAM, 'not-theirs', { name: 'X', description: null }),
+    ).rejects.toThrow('no such playlist');
+    await expect(host.playlists.remove(SAM, 'not-theirs')).rejects.toThrow('no such playlist');
+
+    await host.playlists.dropMany(SAM, PLAYLIST.id, ['e1', 'e2']);
+
+    expect(playlists.dropMany).toHaveBeenCalledWith(SAM, PLAYLIST.id, ['e1', 'e2']);
+    await expect(host.playlists.dropMany(SAM, 'not-theirs', ['e1'])).rejects.toThrow(
+      'no such playlist',
+    );
+
+    vi.mocked(playlists.fillsItself).mockResolvedValue(true);
+
+    await expect(host.playlists.add(SAM, PLAYLIST.id, ['m1'])).rejects.toThrow('fills itself');
+    await expect(host.playlists.drop(SAM, PLAYLIST.id, 'e1')).rejects.toThrow('fills itself');
+    await expect(host.playlists.dropMany(SAM, PLAYLIST.id, ['e1'])).rejects.toThrow('fills itself');
+  });
+
+  it('likes songs, follows artists and stars songs as the person, and keeps nothing for an album', async () => {
+    const { host, favourites, ratings, musicLibrary } = build();
+    const song = { ...A_PLUGIN_MEDIA_FOR_TEST, id: 't1', kind: 'track' as const };
+    const artist = { ...A_PLUGIN_MEDIA_FOR_TEST, id: 'ar1', kind: 'artist' as const };
+    const album = { ...A_PLUGIN_MEDIA_FOR_TEST, id: 'al1', kind: 'album' as const };
+
+    await expect(host.viewing.favourite(SAM, song, true)).resolves.toEqual({ isKept: true });
+    await expect(host.viewing.favourite(SAM, song, false)).resolves.toEqual({ isKept: true });
+    await expect(host.viewing.favourite(SAM, artist, true)).resolves.toEqual({ isKept: true });
+    await expect(host.viewing.favourite(SAM, artist, false)).resolves.toEqual({ isKept: true });
+    await expect(host.viewing.favourite(SAM, album, true)).resolves.toEqual({ isKept: false });
+    await expect(host.viewing.rate(SAM, song, 4)).resolves.toEqual({ isKept: true });
+    await expect(host.viewing.rate(SAM, song, null)).resolves.toEqual({ isKept: true });
+    await expect(host.viewing.rate(SAM, album, 4)).resolves.toEqual({ isKept: false });
+
+    expect(favourites.keep).toHaveBeenCalledWith('p1', 't1');
+    expect(favourites.drop).toHaveBeenCalledWith('p1', 't1');
+    expect(musicLibrary.keepArtist).toHaveBeenCalledWith('p1', 'ar1');
+    expect(musicLibrary.dropArtist).toHaveBeenCalledWith('p1', 'ar1');
+    expect(ratings.set).toHaveBeenCalledWith('p1', { mediaId: 't1' }, 4);
+    expect(ratings.clear).toHaveBeenCalledWith('p1', { mediaId: 't1' });
+    await expect(host.viewing.favourite({ kind: 'server' }, song, true)).rejects.toThrow(
+      'a person to act for',
+    );
+  });
+
+  it('lists the songs a person likes and the artists they follow', async () => {
+    const { host, musicLibrary } = build();
+
+    await expect(host.viewing.favourites(SAM, 'track')).resolves.toEqual([
+      A_MUSIC_TRACK_FOR_TEST.id,
+    ]);
+    await expect(host.viewing.favourites(SAM, 'artist')).resolves.toEqual([]);
+    expect(musicLibrary.listArtists).toHaveBeenCalledWith(SAM, {
+      onlyFavourites: true,
+      limit: 2000,
+    });
   });
 
   it('tells the one profile it is for, saying which plugin it is from', async () => {
