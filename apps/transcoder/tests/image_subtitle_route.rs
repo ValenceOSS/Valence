@@ -213,6 +213,7 @@ fn burn_in_spec(path: &Path, subtitle_index: u32, accel: HardwareAccel) -> Sessi
         source_size: video_size(path),
         container: SegmentContainer::default(),
         source_video_codec: None,
+        source_pixel_format: None,
         track: Track::Both,
         source_range: None,
         source_range_base: None,

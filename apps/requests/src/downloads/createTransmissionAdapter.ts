@@ -238,6 +238,18 @@ const createTransmissionAdapter = (
       z.string().parse((await rpc('session-get', { fields: ['version'] }))['version']),
 
     add: async (file, _title, category) => {
+      if (file.kind === 'link') {
+        throw new DownloadClientFailure(
+          saying('common.nameTakesNoDirectDownloads', { name: settings.name }),
+        );
+      }
+
+      if (file.kind === 'torrent' && file.onlyFile !== undefined) {
+        throw new DownloadClientFailure(
+          saying('common.nameCannotFetchOneFileOfATorrent', { name: settings.name }),
+        );
+      }
+
       if (file.kind === 'nzb') {
         throw new DownloadClientFailure(
           saying('common.nameTakesTorrentsNotNZBs', { name: settings.name }),

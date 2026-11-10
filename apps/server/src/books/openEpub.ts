@@ -3,10 +3,10 @@ import { cleanBookDocument } from './cleanBookDocument';
 import { imageTypeFor } from './imageTypeFor';
 import { readEpubContents } from './readEpubContents';
 import { insideTheBook, packagePathIn, readEpubPackage } from './readEpubPackage';
-import { readZipDirectory } from './readZipDirectory';
+import { readZipDirectory } from '@ValenceCore/zip/readZipDirectory';
 import { readZipEntry } from './readZipEntry';
 import type { ContentsPlace, ReflowBook, SpineEntry } from './BookFile';
-import type { ZipEntry } from './readZipDirectory';
+import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
 import { say } from '@ValenceI18n/say';
 
 const CONTAINER = 'META-INF/container.xml';

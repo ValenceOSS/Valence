@@ -25,6 +25,7 @@ const KIND_LABELS: Readonly<Record<DownloadClientKind, string>> = {
   transmission: say('common.transmission'),
   sabnzbd: 'SABnzbd',
   nzbget: 'NZBGet',
+  direct: say('screens.downloadClientDialog.readDownloadClientForm.directDownloads'),
   plugin: say('common.plugin'),
 };
 
@@ -66,7 +67,9 @@ const DownloadClientsTable = ({
             </span>
 
             <span className="truncate text-xs text-text-muted">
-              {row.original.kind === 'plugin' ? row.original.localPath : row.original.url}
+              {row.original.kind === 'plugin' || row.original.kind === 'direct'
+                ? row.original.localPath
+                : row.original.url}
             </span>
           </span>
         ),

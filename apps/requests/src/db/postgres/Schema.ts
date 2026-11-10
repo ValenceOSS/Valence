@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  index,
   integer,
   jsonb,
   pgSchema,
@@ -9,6 +10,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import { ANIME_AUDIO_POLICIES } from '@ValenceContracts/schemas/AnimeAudioPolicy';
 import type {
@@ -51,6 +53,7 @@ import type {
   DownloadClientPlugin,
 } from '@ValenceContracts/schemas/DownloadClient';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
+import { INDEXER_KINDS, RELEASE_PROTOCOLS } from '@ValenceContracts/schemas/Indexer';
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
@@ -96,7 +99,7 @@ const indexer = requestsSchema.table(
   {
     id: uuid('id').primaryKey(),
     name: text('name').notNull(),
-    kind: text('kind', { enum: ['torznab', 'newznab', 'cardigann'] }).notNull(),
+    kind: text('kind', { enum: INDEXER_KINDS }).notNull(),
     definitionId: text('definition_id'),
     settings: jsonb('settings').$type<IndexerSettings>().notNull().default({}),
     session: jsonb('session').$type<SiteSession>(),
@@ -186,7 +189,7 @@ const sentDownload = requestsSchema.table(
       .references(() => downloadClient.id, { onDelete: 'cascade' }),
     remoteId: text('remote_id').notNull(),
     contentPath: text('content_path'),
-    protocol: text('protocol', { enum: ['torrent', 'usenet'] }).notNull(),
+    protocol: text('protocol', { enum: RELEASE_PROTOCOLS }).notNull(),
     libraryKind: text('library_kind', { enum: LIBRARY_KINDS }).notNull().default('movies'),
     title: text('title').notNull(),
     indexerName: text('indexer_name'),
@@ -414,7 +417,29 @@ const requestLog = requestsSchema.table('request_log', {
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+const annasBook = requestsSchema.table(
+  'annas_book',
+  {
+    md5: text('md5').primaryKey(),
+    title: text('title').notNull(),
+    author: text('author'),
+    language: text('language').notNull(),
+    extension: text('extension').notNull(),
+    sizeBytes: doublePrecision('size_bytes'),
+    year: integer('year'),
+    coverUrl: text('cover_url'),
+    torrentGroup: text('torrent_group').notNull(),
+    torrent: text('torrent').notNull(),
+    fileInTorrent: text('file_in_torrent').notNull(),
+    searchKey: text('search_key').notNull(),
+  },
+  (table) => [
+    index('annas_book_search').using('gin', sql`to_tsvector('simple', ${table.searchKey})`),
+  ],
+);
+
 export {
+  annasBook,
   arrApp,
   requestLog,
   blocklistedRelease,

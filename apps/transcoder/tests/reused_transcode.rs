@@ -169,6 +169,7 @@ fn spec(input: &std::path::Path) -> SessionSpec {
         source_size: None,
         container: SegmentContainer::Fmp4,
         source_video_codec: None,
+        source_pixel_format: None,
         track: Track::Both,
         source_range: None,
         source_range_base: None,

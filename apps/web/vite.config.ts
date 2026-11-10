@@ -148,13 +148,6 @@ export default defineConfig({
     pushWorker(),
     aliasesAsTheyChange(),
   ],
-  optimizeDeps: {
-    exclude: ['jassub'],
-    include: [
-      '@valence/screens > jassub > throughput',
-      '@valence/screens > jassub > rvfc-polyfill',
-    ],
-  },
   worker: { format: 'es' },
   server: {
     port: 5173,

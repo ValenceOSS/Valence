@@ -45,6 +45,7 @@ const aLookup = (
           }),
         ),
       ),
+    booksAt: () => Promise.resolve(new Map()),
   };
 };
 

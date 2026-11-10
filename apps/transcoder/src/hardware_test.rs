@@ -100,6 +100,7 @@ pub fn sample_plan(
             source_size: Some(SAMPLE_SIZE),
             container: SegmentContainer::default(),
             source_video_codec: Some("h264".to_owned()),
+            source_pixel_format: None,
             track: Track::Video,
             source_range: None,
             source_range_base: None,

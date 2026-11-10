@@ -80,6 +80,7 @@ const theRoutes = (
     unblock: vi.fn((id: string) => Promise.resolve(id !== 'missing')),
     answer: vi.fn(() => Promise.resolve(picked)),
     dismiss: vi.fn((_id: string) => Promise.resolve(null)),
+    stopSearch: vi.fn((id: string) => id === 'under-way'),
   };
   const log = createMemoryRequestLogStore();
   const now = vi.fn((): Promise<RequestNow> =>
@@ -471,6 +472,14 @@ describe('createRequestRoutes', () => {
     ).toBe(204);
     expect(worker.unblock).toHaveBeenCalledWith('0b1d2c3e-4f56-4a78-9b01-23456789abcd');
     expect((await ask(`/requests/${id}/blocklist/missing`, 'DELETE')).status).toBe(404);
+  });
+
+  it('stops a search under way, and refuses where none is', async () => {
+    const { ask, worker } = theRoutes();
+
+    expect((await ask('/requests/idle/stop-search', 'POST')).status).toBe(409);
+    expect((await ask('/requests/under-way/stop-search', 'POST')).status).toBe(404);
+    expect(worker.stopSearch).toHaveBeenCalledWith('under-way');
   });
 
   it('searches for what is missing, and by hand, and sends a pick', async () => {

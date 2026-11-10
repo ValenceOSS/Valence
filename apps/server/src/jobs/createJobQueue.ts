@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import type { JobPauseStore } from '@ValenceServer/jobs/JobPauseStore';
 import { randomUUID } from 'node:crypto';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { and, asc, eq, gt, inArray, lt, lte, notInArray, sql } from 'drizzle-orm';
@@ -53,6 +55,7 @@ type CreateJobQueueOptions = {
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
   onProgress?: (entry: JobProgressEntry) => void;
   onFinished?: (finished: FinishedJob) => void;
+  pauses?: JobPauseStore;
 };
 
 type QueuedJobRow = typeof queuedJob.$inferSelect;
@@ -131,11 +134,33 @@ const createJobQueue = ({
   onStarted,
   onProgress,
   onFinished,
+  pauses,
 }: CreateJobQueueOptions): JobQueue => {
   const kinds = Object.keys(handlers);
   const progressByJobId = new Map<string, JobProgress>();
   const running = new Map<string, { kind: string; subject: string | null }>();
   const cancelled = new Set<string>();
+  const paused = new Set<string>();
+  const waking = new Set<() => void>();
+  const runningAs = new AsyncLocalStorage<string>();
+  let isEverythingPaused = false;
+
+  const pausedOnRecord = new Set<string>();
+
+  const keepThePauses = (): void => {
+    void pauses
+      ?.write({ isEverythingPaused, jobIds: [...paused, ...pausedOnRecord] })
+      .catch(() => undefined);
+  };
+
+  const isHeld = (jobId: string): boolean =>
+    !cancelled.has(jobId) && (isEverythingPaused || paused.has(jobId));
+
+  const wakeTheHeld = (): void => {
+    for (const wake of waking) {
+      wake();
+    }
+  };
   const busy = new Map<string, number>();
   const inFlight = new Set<Promise<void>>();
   const timers: NodeJS.Timeout[] = [];
@@ -254,11 +279,15 @@ const createJobQueue = ({
 
     running.set(job.id, { kind, subject });
 
+    if (pausedOnRecord.delete(job.id)) {
+      paused.add(job.id);
+    }
+
     try {
       await onStarted?.({ kind, jobId: job.id, subject });
 
       if (handler !== undefined) {
-        await handler(job.id, payload, { attempt: job.attempts });
+        await runningAs.run(job.id, () => handler(job.id, payload, { attempt: job.attempts }));
       }
 
       onFinished?.({
@@ -292,6 +321,10 @@ const createJobQueue = ({
       running.delete(job.id);
       progressByJobId.delete(job.id);
       cancelled.delete(job.id);
+
+      if (paused.delete(job.id)) {
+        keepThePauses();
+      }
     }
   };
 
@@ -480,6 +513,14 @@ const createJobQueue = ({
 
   return {
     startWorking: async () => {
+      const kept = await pauses?.read().catch(() => null);
+
+      isEverythingPaused = kept?.isEverythingPaused ?? false;
+
+      for (const jobId of kept?.jobIds ?? []) {
+        pausedOnRecord.add(jobId);
+      }
+
       await db
         .update(queuedJob)
         .set({
@@ -530,6 +571,7 @@ const createJobQueue = ({
         kind: about.kind,
         subject: about.subject,
         progress: progressByJobId.get(jobId) ?? null,
+        isPaused: isHeld(jobId),
       })),
 
     liveJob: async (kind, subject) => {
@@ -558,6 +600,7 @@ const createJobQueue = ({
     cancel: async (jobId) => {
       if (running.has(jobId)) {
         cancelled.add(jobId);
+        wakeTheHeld();
 
         return true;
       }
@@ -605,6 +648,8 @@ const createJobQueue = ({
         }
       }
 
+      wakeTheHeld();
+
       const dropped = await db
         .update(queuedJob)
         .set({ state: 'cancelled', finishedAt: new Date() })
@@ -614,6 +659,57 @@ const createJobQueue = ({
     },
 
     isCancelled: (jobId) => cancelled.has(jobId),
+
+    pause: (jobId) => {
+      if (!running.has(jobId)) {
+        return false;
+      }
+
+      paused.add(jobId);
+      keepThePauses();
+
+      return true;
+    },
+
+    resume: (jobId) => {
+      const wasPaused = paused.delete(jobId);
+
+      keepThePauses();
+      wakeTheHeld();
+
+      return wasPaused;
+    },
+
+    pauseAll: () => {
+      isEverythingPaused = true;
+      keepThePauses();
+    },
+
+    resumeAll: () => {
+      isEverythingPaused = false;
+      keepThePauses();
+      wakeTheHeld();
+    },
+
+    isEverythingPaused: () => isEverythingPaused,
+
+    isPaused: (jobId) => isHeld(jobId),
+
+    untilResumed: (jobId) =>
+      isHeld(jobId)
+        ? new Promise<void>((resolve) => {
+            const wake = () => {
+              if (!isHeld(jobId)) {
+                waking.delete(wake);
+                resolve();
+              }
+            };
+
+            waking.add(wake);
+          })
+        : Promise.resolve(),
+
+    currentJob: () => runningAs.getStore() ?? null,
 
     reportProgress: (jobId, phase, processed, total, item = null) => {
       progressByJobId.set(jobId, { phase, processed, total, item });

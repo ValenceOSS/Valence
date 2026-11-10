@@ -18,6 +18,14 @@ const LOOKUP = {
     Promise.resolve(
       new Map(ids.filter((id) => id === ALBUM).map((id) => [id, 'mp3-320' as const])),
     ),
+  booksAt: (folders: readonly string[]) =>
+    Promise.resolve(
+      new Map(
+        folders
+          .filter((folder) => folder === '/books/Douglas Adams/Hitchhiker')
+          .map((folder) => [folder, 'hitchhiker']),
+      ),
+    ),
 };
 
 /**
@@ -89,6 +97,19 @@ describe('matchArrivals', () => {
     });
 
     expect(await matchArrivals({ requests: [artist], lookup: LOOKUP, heldEpisodes })).toEqual([]);
+  });
+
+  it('finds a book by the folder it was filed into', async () => {
+    const book = aShownRequest({
+      kind: 'book',
+      tmdbId: null,
+      openLibraryId: 1,
+      items: [aShownRequestItem({ state: 'filed', filePath: '/books/Douglas Adams/Hitchhiker/' })],
+    });
+
+    expect(await matchArrivals({ requests: [book], lookup: LOOKUP, heldEpisodes })).toEqual([
+      { request: book, arrivals: { mediaId: 'hitchhiker', episodes: null, albums: null } },
+    ]);
   });
 
   it('passes over what is not there, already there, unapproved, a book or has no id', async () => {

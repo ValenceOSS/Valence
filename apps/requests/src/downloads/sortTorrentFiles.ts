@@ -18,7 +18,15 @@ const WANTED: Readonly<Record<LibraryKind, ReadonlySet<string>>> = {
   shows: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
   anime: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
   music: new Set([...AUDIO_FILE_EXTENSIONS, 'jpg', 'jpeg', 'png']),
-  books: new Set([...BOOK_FORMATS, ...AUDIOBOOK_FILE_EXTENSIONS, 'cue', 'jpg', 'jpeg', 'png']),
+  books: new Set([
+    ...BOOK_FORMATS,
+    ...AUDIOBOOK_FILE_EXTENSIONS,
+    'zip',
+    'cue',
+    'jpg',
+    'jpeg',
+    'png',
+  ]),
 };
 
 const ALONGSIDE: ReadonlySet<string> = new Set([

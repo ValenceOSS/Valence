@@ -45,7 +45,9 @@ const isSeriesPack = (
   return (
     (range !== null || PACKED.test(rest)) &&
     isInRange &&
-    matchBook({ title: series, aliases: [], artistName: request.artistName }, releaseTitle)
+    matchBook({ title: series, aliases: [], artistName: request.artistName }, releaseTitle, {
+      checksVolume: false,
+    })
   );
 };
 

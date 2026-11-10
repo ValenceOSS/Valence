@@ -183,6 +183,20 @@
       "when": 1793201701556,
       "tag": "0025_requests_say_what_they_are_searching",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1794186951496,
+      "tag": "0026_keep_anna_archives_books",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1794343238103,
+      "tag": "0027_index_anna_archives_search",
+      "breakpoints": true
     }
   ]
 }

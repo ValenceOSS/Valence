@@ -27,6 +27,7 @@ const JobRunRecordSchema = z.object({
   startedAtMs: z.number().int().nonnegative().nullable(),
   finishedAtMs: z.number().int().nonnegative().nullable(),
   progress: JobRunProgressSchema.nullable(),
+  isPaused: z.boolean().optional(),
   errorMessage: SaidSchema.nullable(),
   createdAtMs: z.number().int().nonnegative(),
 });

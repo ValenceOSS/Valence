@@ -66,11 +66,57 @@ describe('readKeyframesAhead', () => {
     expect(run.markRead).toHaveBeenCalledWith('newest');
   });
 
-  it('marks nothing it was not answered about when the media service fails', async () => {
+  it('passes over a film whose read fails, marking nothing for it, and reads the rest', async () => {
     const run = reading({ '/media/Older.mkv': new Error('The media service is not answering') });
 
+    expect(await run.run()).toMatchObject({ read: 2 });
+    expect(run.markRead.mock.calls).toEqual([['newest'], ['oldest']]);
+  });
+
+  it('stops when every film’s read fails, since the media service is not answering', async () => {
+    const failing = new Error('The media service is not answering');
+    const run = reading({
+      '/media/Newest.mkv': failing,
+      '/media/Older.mkv': failing,
+      '/media/Oldest.mkv': failing,
+    });
+
     await expect(run.run()).rejects.toThrow('not answering');
-    expect(run.markRead.mock.calls).toEqual([['newest']]);
+    expect(run.markRead).not.toHaveBeenCalled();
+  });
+
+  it('abandons the film being read the moment the job is cancelled', async () => {
+    vi.useFakeTimers();
+
+    let isCancelled = false;
+    let startedReading = (): void => undefined;
+    const reading = new Promise<void>((resolve) => {
+      startedReading = resolve;
+    });
+    const abandoned: boolean[] = [];
+    const running = readKeyframesAhead({
+      waiting: () => Promise.resolve(FILMS),
+      readAhead: (_path, signal) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            abandoned.push(true);
+            reject(new Error('abandoned'));
+          });
+          startedReading();
+        }),
+      markRead: () => Promise.resolve(),
+      onUnreadable: () => undefined,
+      onProgress: () => undefined,
+      isCancelled: () => isCancelled,
+    });
+
+    await reading;
+    isCancelled = true;
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(await running).toMatchObject({ read: 0 });
+    expect(abandoned).toEqual([true]);
+    vi.useRealTimers();
   });
 
   it('stops when the job is cancelled', async () => {

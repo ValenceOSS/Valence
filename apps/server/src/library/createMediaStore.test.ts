@@ -870,4 +870,60 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(parents.find((row) => row.id === same)?.parentId).toBe(film);
     expect(parents.find((row) => row.id === other)?.parentId).toBeNull();
   });
+
+  it('lets go of a version whose film is no longer on disk', async () => {
+    const { db, store } = await aStore();
+    const gone = await store.upsert(anEpisode('/shows/film.mkv', 'Show', null));
+    const kept = await store.upsert(anEpisode('/shows/film-x265.mkv', 'Show', null));
+
+    await db
+      .update(mediaItem)
+      .set({ externalId: 'tmdb:1', missingSince: new Date('2026-11-10') })
+      .where(eq(mediaItem.id, gone ?? ''));
+    await db
+      .update(mediaItem)
+      .set({ externalId: 'tmdb:1', parentId: gone, versionLabel: 'x265' })
+      .where(eq(mediaItem.id, kept ?? ''));
+
+    await store.forgetStaleVersions?.(SHOWS_ID, []);
+
+    const [row] = await db
+      .select({ parentId: mediaItem.parentId, versionLabel: mediaItem.versionLabel })
+      .from(mediaItem)
+      .where(eq(mediaItem.id, kept ?? ''));
+
+    expect(row).toEqual({ parentId: null, versionLabel: null });
+  });
+
+  it('makes the versions it is told of stand on their own, and leaves an extra with its film', async () => {
+    const { db, store } = await aStore();
+    const film = await store.upsert(anEpisode('/shows/film.mkv', 'Show', null));
+    const version = await store.upsert(anEpisode('/shows/film-x265.mkv', 'Show', null));
+    const extra = await store.upsert(anEpisode('/shows/film-trailer.mkv', 'Show', null));
+
+    await db
+      .update(mediaItem)
+      .set({ parentId: film, versionLabel: 'x265' })
+      .where(eq(mediaItem.id, version ?? ''));
+    await db
+      .update(mediaItem)
+      .set({ parentId: film, extraKind: 'trailer' })
+      .where(eq(mediaItem.id, extra ?? ''));
+
+    await store.promoteVersions?.(SHOWS_ID, ['/shows/film-x265.mkv', '/shows/film-trailer.mkv']);
+
+    const rows = await db
+      .select({
+        id: mediaItem.id,
+        parentId: mediaItem.parentId,
+        versionLabel: mediaItem.versionLabel,
+      })
+      .from(mediaItem);
+
+    expect(rows.find((row) => row.id === version)).toMatchObject({
+      parentId: null,
+      versionLabel: null,
+    });
+    expect(rows.find((row) => row.id === extra)?.parentId).toBe(film);
+  });
 });

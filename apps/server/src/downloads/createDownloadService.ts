@@ -16,7 +16,7 @@ import { savesEnough } from '@ValenceCore/functions/savesEnough';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { DownloadQualitySchema, DownloadStateSchema } from '@ValenceContracts/schemas/Download';
-import { downloadHolding, preparedDownload, viewerProfile } from '#dialect/Schema';
+import { downloadHolding, mediaItem, preparedDownload, viewerProfile } from '#dialect/Schema';
 import { theEpisodesAskedFor } from './theEpisodesAskedFor';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -696,6 +696,16 @@ const createDownloadService = ({
     },
 
     hold: async (profileId, clientId, mediaId, quality) => {
+      const [stillHere] = await db
+        .select({ id: mediaItem.id })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (stillHere === undefined) {
+        return;
+      }
+
       await insertUnlessPresent(db, downloadHolding, {
         values: [{ id: randomUUID(), profileId, clientId, mediaItemId: mediaId, quality }],
         target: [

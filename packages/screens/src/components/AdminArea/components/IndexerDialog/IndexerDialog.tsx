@@ -40,6 +40,8 @@ const KEEPING: readonly { id: IndexerForm['removesWhenDone']; label: string }[] 
 const KINDS = [
   { id: 'torznab', label: say('common.torznab') },
   { id: 'newznab', label: say('common.newznab') },
+  { id: 'opds', label: say('screens.adminArea.indexerDialog.oPDS') },
+  { id: 'annas', label: say('screens.adminArea.indexerDialog.annasArchive') },
 ] as const;
 
 const INDEXER_FORM_KEYS = [
@@ -354,22 +356,42 @@ const IndexerDialog = ({
                     onValueChange={(next) => {
                       change({ url: next });
                     }}
-                    placeholder="http://jackett:9117/api/v2.0/indexers/all/results/torznab/"
-                    description={say('screens.adminArea.indexerDialog.theIndexersSiteOrTheTorznab')}
+                    placeholder={
+                      values.kind === 'opds'
+                        ? 'https://www.gutenberg.org/ebooks.opds/'
+                        : values.kind === 'annas'
+                          ? 'https://annas-archive.gd/'
+                          : 'http://jackett:9117/api/v2.0/indexers/all/results/torznab/'
+                    }
+                    description={
+                      values.kind === 'opds'
+                        ? say('screens.adminArea.indexerDialog.theCataloguesOPDSFeed')
+                        : values.kind === 'annas'
+                          ? say('screens.adminArea.indexerDialog.theAddressOfAnAnnasArchive')
+                          : say('screens.adminArea.indexerDialog.theIndexersSiteOrTheTorznab')
+                    }
                     required
                   />
 
-                  <TextField
-                    label={say('common.aPIKey')}
-                    type="password"
-                    {...field('apiKey')}
-                    description={
-                      indexer?.hasApiKey === true
-                        ? say('screens.adminArea.indexerDialog.aKeyIsKeptTypeA')
-                        : say('screens.adminArea.indexerDialog.leaveThisEmptyForAnIndexer')
-                    }
-                    autoComplete="off"
-                  />
+                  {values.kind === 'opds' ? null : (
+                    <TextField
+                      label={
+                        values.kind === 'annas'
+                          ? say('screens.adminArea.indexerDialog.accountKey')
+                          : say('common.aPIKey')
+                      }
+                      type="password"
+                      {...field('apiKey')}
+                      description={
+                        indexer?.hasApiKey === true
+                          ? say('screens.adminArea.indexerDialog.aKeyIsKeptTypeA')
+                          : values.kind === 'annas'
+                            ? say('screens.adminArea.indexerDialog.theSecretKeyOnYourAnnas')
+                            : say('screens.adminArea.indexerDialog.leaveThisEmptyForAnIndexer')
+                      }
+                      autoComplete="off"
+                    />
+                  )}
                 </>
               )}
 

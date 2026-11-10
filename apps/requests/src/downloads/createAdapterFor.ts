@@ -1,3 +1,4 @@
+import { createDirectAdapter } from '@ValenceRequests/downloads/createDirectAdapter';
 import { createNzbgetAdapter } from '@ValenceRequests/downloads/createNzbgetAdapter';
 import { createPluginAdapter } from '@ValenceRequests/downloads/createPluginAdapter';
 import { createQbittorrentAdapter } from '@ValenceRequests/downloads/createQbittorrentAdapter';
@@ -23,7 +24,7 @@ type AdapterNeeds = {
 
 /**
  * The adapter that speaks to a download client: in its own way for each kind Valence knows, and
- * through its plugin for one a plugin provides.
+ * through its plugin for one a plugin provides; direct downloads it fetches itself.
  *
  * @param record - The client.
  * @param needs - How to ask a client over the network, and how to reach a plugin.
@@ -44,6 +45,12 @@ const createAdapterFor = (
       return createSabnzbdAdapter(settings, fetch);
     case 'nzbget':
       return createNzbgetAdapter(settings, fetch);
+    case 'direct':
+      return createDirectAdapter({
+        client: record,
+        fetcher: plugins.fetcher,
+        sent: () => plugins.sent(record.id),
+      });
     case 'plugin':
       return createPluginAdapter({
         client: record,

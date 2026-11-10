@@ -18,9 +18,7 @@ import { useAutoQuality } from '@ValenceScreens/playback/useAutoQuality';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { SubtitleCues } from '@ValenceScreens/components/SubtitleCues/SubtitleCues';
-import { isStyledSubtitle } from '@ValenceScreens/playback/isStyledSubtitle';
 import { useSubtitleFetching } from '@ValenceScreens/playback/useSubtitleFetching';
-import { AssSubtitles } from '@ValenceScreens/components/VideoPlayer/components/AssSubtitles/AssSubtitles';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
 import { castDeviceProfile } from '@ValenceClient/playback/castDeviceProfile';
@@ -326,9 +324,6 @@ const VideoPlayer = ({
   const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
   const engineRefusedRef = useRef(false);
   const enginePictureRef = useRef<DrawnPicture | null>(null);
-  const [enginePicture, setEnginePicture] = useState<{ width: number; height: number } | null>(
-    null,
-  );
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
   const brightenRef = useRef<((brightness: number) => void) | null>(null);
   const switchCopyRef = useRef<((rung: AutoRung) => Promise<void>) | null>(null);
@@ -420,7 +415,8 @@ const VideoPlayer = ({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
   const [isFindingSubtitles, setIsFindingSubtitles] = useState(false);
-  const { mayAdminister } = useWhatIMayDo();
+  const { may, mayAdminister } = useWhatIMayDo();
+  const mayFindSubtitles = mayAdminister || may('media.subtitles') || may('media.override');
   const [selectedSubtitleId, setSelectedSubtitleId] = useState(SUBTITLES_OFF);
   const defaultedForRef = useRef<string | null>(null);
   const [captionStyle, setCaptionStyle] = useState(readCaptionStyle);
@@ -962,7 +958,6 @@ const VideoPlayer = ({
   useEffect(() => {
     setSession(null);
     setIsDrawnByTheEngine(false);
-    setEnginePicture(null);
     enginePictureRef.current = null;
     engineStatsRef.current = null;
     brightenRef.current = null;
@@ -1349,7 +1344,6 @@ const VideoPlayer = ({
               shown.height !== null
                 ? { canvas: pictureRef.current, width: shown.width, height: shown.height }
                 : null;
-            setEnginePicture(enginePictureRef.current);
             teardown = playing.detach;
             releaseRef.current = playing.detach;
             deliveredRef.current = playing.readDelivered;
@@ -3043,17 +3037,7 @@ const VideoPlayer = ({
           style={{ opacity: 1 - fade }}
         />
 
-        {fetchableTrack === null || !isStyledSubtitle(fetchableTrack.format) ? null : (
-          <AssSubtitles
-            video={videoRef}
-            mediaId={media.id}
-            trackId={fetchableTrack.id}
-            offsetSeconds={subtitleOffset}
-            picture={isDrawnByTheEngine ? enginePicture : null}
-          />
-        )}
-
-        {fetchableTrack === null || isStyledSubtitle(fetchableTrack.format) ? null : (
+        {fetchableTrack === null ? null : (
           <SubtitleCues
             src={subtitleTrackUrl(media.id, fetchableTrack.id)}
             cuesSrc={subtitleCuesUrl(media.id, fetchableTrack.id)}
@@ -3239,7 +3223,7 @@ const VideoPlayer = ({
             onFetchSubtitle={(code) => {
               void subtitleFetching.fetchIn(code);
             }}
-            {...(mayAdminister
+            {...(mayFindSubtitles
               ? {
                   onFindSubtitles: () => {
                     setIsFindingSubtitles(true);

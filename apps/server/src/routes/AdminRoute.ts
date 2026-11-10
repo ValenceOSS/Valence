@@ -545,6 +545,58 @@ const adminCancelJobRoute = createRoute({
   },
 });
 
+const adminPauseJobRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/jobs/running/{jobId}/pause',
+  tags: ['Admin'],
+  summary: 'Hold a running job after the step it is on',
+  request: {
+    params: z.object({ jobId: z.string().min(1) }),
+  },
+  responses: {
+    200: {
+      description: 'The job holds after the step it is on until it is resumed',
+      content: {
+        'application/json': { schema: z.object({ jobId: z.string(), isPaused: z.boolean() }) },
+      },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    404: {
+      description: 'Nothing running under that id',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminResumeJobRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/jobs/running/{jobId}/resume',
+  tags: ['Admin'],
+  summary: 'Let a held job carry on',
+  request: {
+    params: z.object({ jobId: z.string().min(1) }),
+  },
+  responses: {
+    200: {
+      description: 'The job carries on from where it held',
+      content: {
+        'application/json': { schema: z.object({ jobId: z.string(), isPaused: z.boolean() }) },
+      },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    404: {
+      description: 'Nothing running under that id',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 const adminQueueConcurrencyRoute = createRoute({
   method: 'post',
   path: '/api/admin/jobs/queue/concurrency',
@@ -1036,6 +1088,8 @@ export {
   adminJobDefinitionsRoute,
   adminRunJobRoute,
   adminCancelJobRoute,
+  adminPauseJobRoute,
+  adminResumeJobRoute,
   adminQueueConcurrencyRoute,
   adminQueuePauseRoute,
   adminQueueResumeRoute,

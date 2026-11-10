@@ -23,7 +23,7 @@
     "bundle:postgres": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Main.ts --outdir=dist --entry-names=[name].postgres",
     "bundle:mysql": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external --conditions=mysql src/Main.ts --outdir=dist --entry-names=[name].mysql",
     "bundle:launch": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Launch.ts --outfile=dist/Main.js",
-    "bundle:threads": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/cardigann/searchResultsThread.ts --outfile=dist/searchResultsThread.js",
+    "bundle:threads": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/cardigann/searchResultsThread.ts src/annas/annasIndexThread.ts --outdir=dist --entry-names=[name]",
     "dev:mysql": "tsx watch --conditions=mysql --env-file-if-exists=../../.env src/Main.ts"
   },
   "dependencies": {

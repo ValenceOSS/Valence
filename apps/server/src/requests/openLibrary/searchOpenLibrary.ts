@@ -8,6 +8,8 @@ const MOST_FOUND = 20;
 
 const FIELDS = 'key,title,author_name,first_publish_year,cover_i';
 
+const A_DUPLICATE = /\(Duplicate of OL\d+W\)\s*$/;
+
 const SearchSchema = z.object({
   docs: z
     .array(
@@ -28,7 +30,8 @@ const SearchSchema = z.object({
 /**
  * Searches Open Library for books by what somebody typed — a title, an author, or both — which
  * needs no key. Each is a work, the book as a whole rather than one printing of it, since it is
- * the work somebody wants and any edition of it will do.
+ * the work somebody wants and any edition of it will do. A work Open Library has marked as a
+ * duplicate of another is left out, since the other is listed too.
  *
  * @param web - The way out to the web.
  * @param query - What was typed.
@@ -48,7 +51,7 @@ const searchOpenLibrary = async (web: MusicWeb, query: string): Promise<OpenLibr
     ? read.data.docs.flatMap((doc) => {
         const openLibraryId = doc === null ? null : openLibraryIdOf(doc.key);
 
-        return doc === null || openLibraryId === null
+        return doc === null || openLibraryId === null || A_DUPLICATE.test(doc.title)
           ? []
           : [
               {

@@ -40,6 +40,11 @@ const CLIENT_KINDS = [
     label: say('screens.downloadClientDialog.readDownloadClientForm.nZBGet'),
     address: 'http://nzbget:6789',
   },
+  {
+    id: 'direct',
+    label: say('screens.downloadClientDialog.readDownloadClientForm.directDownloads'),
+    address: '',
+  },
 ] as const satisfies readonly { id: DownloadClientKind; label: string; address: string }[];
 
 type OfferedClient = PluginContributions['downloadClients'][number];

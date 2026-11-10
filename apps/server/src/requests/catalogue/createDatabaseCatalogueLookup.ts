@@ -58,7 +58,7 @@ const NarratorsSchema = z.array(z.string());
  * every episode file of a series with where it is, every title held for the admin Catalogue and
  * the files of each; artists by their MusicBrainz ids or names,
  * albums by their release groups or by their artist and title together, and books by their author
- * and title together.
+ * and title together or by the folder they are in.
  *
  * @param db - The database.
  * @returns The lookup.
@@ -366,6 +366,15 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
 
     return found;
   },
+
+  booksAt: (folders) =>
+    byKey(folders, (wanted) =>
+      db
+        .select({ key: book.path, id: book.id })
+        .from(book)
+        .innerJoin(library, eq(library.id, book.libraryId))
+        .where(and(inArray(book.path, wanted), heldOnThisServer(), bookHasSomethingStillThere(db))),
+    ),
 });
 
 export { createDatabaseCatalogueLookup };

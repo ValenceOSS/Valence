@@ -1,3 +1,4 @@
+import { BROWSER_USER_AGENT } from '@ValenceRequests/cardigann/BROWSER_USER_AGENT';
 import { randomUUID } from 'node:crypto';
 import iconv from 'iconv-lite';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
@@ -39,10 +40,6 @@ type CreateSiteClientOptions = {
   fetch: SiteFetch;
   solver?: Pick<Solver, 'fetch'> | null;
 };
-
-const USER_AGENT =
-  // oxlint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
 const MOST_REDIRECTS = 10;
 
@@ -184,7 +181,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
         response = await fetch(current.url, {
           method: current.method,
           headers: {
-            'user-agent': options.session.userAgent ?? USER_AGENT,
+            'user-agent': options.session.userAgent ?? BROWSER_USER_AGENT,
             accept:
               'text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7',
             ...(options.referer === undefined || options.referer === null

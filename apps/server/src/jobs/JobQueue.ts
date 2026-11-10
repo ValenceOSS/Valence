@@ -197,6 +197,7 @@ type RunningJob = {
   kind: string;
   subject: string | null;
   progress: JobProgress | null;
+  isPaused: boolean;
 };
 
 type JobQueue = {
@@ -227,6 +228,14 @@ type JobQueue = {
   cancel: (jobId: string) => Promise<boolean>;
   cancelFor: (subject: string) => Promise<number>;
   isCancelled: (jobId: string) => boolean;
+  pause: (jobId: string) => boolean;
+  resume: (jobId: string) => boolean;
+  pauseAll: () => void;
+  resumeAll: () => void;
+  isEverythingPaused: () => boolean;
+  isPaused: (jobId: string) => boolean;
+  untilResumed: (jobId: string) => Promise<void>;
+  currentJob: () => string | null;
   setSchedule: (queueName: string, key: string, cron: string, timezone: string) => Promise<void>;
   clearSchedule: (queueName: string, key: string) => Promise<void>;
   listSchedules: () => Promise<

@@ -506,15 +506,23 @@ impl WorkQueue {
     /// engines as the film somebody is watching, and niceness answers only for
     /// the processor. So while anyone is watching, background work goes back to
     /// one at a time — which is what this queue ran unconditionally before it
-    /// could be measured.
+    /// could be measured. See [`Self::hold_all_but`].
+    pub async fn hold_all_but_one(&self) -> Option<OwnedSemaphorePermit> {
+        self.hold_all_but(1).await
+    }
+
+    /// Holds every place but `keep` until the returned guard is dropped.
     ///
     /// Waits for work already running to finish rather than stopping it: the
     /// semaphore is fair, so nothing new starts in the places being held while
     /// this waits for them. The guard is ordinary permits, so a change of
     /// [`Self::set_concurrency`] while it is held settles when it is let go.
-    /// `None` where there is only one place to begin with.
-    pub async fn hold_all_but_one(&self) -> Option<OwnedSemaphorePermit> {
-        let extra = self.concurrency.load(Ordering::Acquire).saturating_sub(1);
+    /// `None` where there are no more places than `keep` to begin with.
+    pub async fn hold_all_but(&self, keep: usize) -> Option<OwnedSemaphorePermit> {
+        let extra = self
+            .concurrency
+            .load(Ordering::Acquire)
+            .saturating_sub(keep.max(1));
         let extra = u32::try_from(extra).ok().filter(|count| *count > 0)?;
 
         Arc::clone(&self.permits)
@@ -1308,6 +1316,19 @@ timestamps up by eye"
 
         assert!(queue.hold_all_but_one().await.is_none());
         assert_eq!(queue.permits.available_permits(), 1);
+    }
+
+    #[tokio::test]
+    async fn keeps_as_many_places_as_it_is_asked_to_while_holding_the_rest() {
+        let queue = WorkQueue::new(6);
+
+        let held = queue.hold_all_but(4).await;
+
+        assert_eq!(queue.permits.available_permits(), 4);
+        drop(held);
+        assert_eq!(queue.permits.available_permits(), 6);
+        assert!(queue.hold_all_but(6).await.is_none());
+        assert!(queue.hold_all_but(12).await.is_none());
     }
 
     /// Work already running finishes: the hold waits for it rather than

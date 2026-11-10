@@ -20,12 +20,40 @@ type BookInDownload = {
 
 const IN_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
 
+const MOST_EDITIONS_OF_ONE_BOOK = 2;
+
+const MOST_BOOKS_IN_A_PACK = 100;
+
+const ONLY_A_HASH = /^[0-9a-f]{32}$/i;
+
+const NUMBERED = /(?:^|\D)\d{1,3}(?:\D|$)/;
+
+/**
+ * Books' files gathered by their names, so the same book as an epub and a mobi is one book.
+ *
+ * @param files - The files.
+ * @returns Each name's files, in the order the names first come.
+ */
+const byName = (files: readonly DownloadedFile[]): DownloadedFile[][] => {
+  const named = new Map<string, DownloadedFile[]>();
+
+  for (const file of files) {
+    const name = basename(file.name, extname(file.name)).toLowerCase();
+
+    named.set(name, [...(named.get(name) ?? []), file]);
+  }
+
+  return [...named.values()];
+};
+
 /**
  * The books a download holds. Most hold one; a pack holds several, each audiobook told apart by the
  * album its tracks are tagged with, or by its folder where they are not tagged, a disc's folder
  * being part of the book around it. Text to read goes with the audiobook in its own folder, so a
  * book to read and the same book to hear are still one book; where there is no audiobook, all the
- * text is one book, as it is several formats of it.
+ * text is one book, as it is several formats of it. A file named by nothing but a hash — a whole
+ * collection's worth of them, fetched where one book was wanted — is not taken for a book, and text
+ * by more names than any pack of one series would hold is taken for none.
  *
  * @param files - Every file in the download.
  * @param readTags - How a track's tags are read.
@@ -38,7 +66,11 @@ const booksInDownload = async (
   const texts = files.filter((file) => {
     const format = BOOK_FILE_FORMATS.get(extensionOf(file.name));
 
-    return format !== undefined && !isAudiobookFormat(format);
+    return (
+      format !== undefined &&
+      !isAudiobookFormat(format) &&
+      !ONLY_A_HASH.test(basename(file.name, extname(file.name)))
+    );
   });
   const tracks = files
     .filter((file) => AUDIOBOOK_FILE_EXTENSIONS.has(extensionOf(file.name)))
@@ -65,6 +97,35 @@ const booksInDownload = async (
 
   const books = [...heard.values()];
 
+  const named = byName(texts);
+
+  if (books.length === 0 && named.length > MOST_BOOKS_IN_A_PACK) {
+    return [];
+  }
+
+  if (
+    books.length === 0 &&
+    named.length > MOST_EDITIONS_OF_ONE_BOOK &&
+    named.every((group) => NUMBERED.test(group[0]?.name ?? ''))
+  ) {
+    return named.flatMap((group) => {
+      const [first] = group;
+
+      return first === undefined
+        ? []
+        : [
+            {
+              texts: group,
+              tracks: [],
+              title: titleFromFolderName(basename(first.name, extname(first.name))),
+              author: null,
+              folder: dirname(first.path),
+              year: null,
+            },
+          ];
+    });
+  }
+
   if (books.length <= 1) {
     return books.length === 0 && texts.length === 0
       ? []
@@ -80,7 +141,7 @@ const booksInDownload = async (
         ];
   }
 
-  const alone: BookInDownload[] = [];
+  const lone: DownloadedFile[] = [];
 
   for (const text of texts) {
     const beside = books.filter((book) => book.folder === bookFolderInDownload(text));
@@ -88,16 +149,26 @@ const booksInDownload = async (
     if (beside.length === 1 && beside[0] !== undefined) {
       beside[0].texts.push(text);
     } else {
-      alone.push({
-        texts: [text],
-        tracks: [],
-        title: basename(text.name, extname(text.name)),
-        author: null,
-        folder: dirname(text.path),
-        year: null,
-      });
+      lone.push(text);
     }
   }
+
+  const alone: BookInDownload[] = byName(lone).flatMap((group) => {
+    const [first] = group;
+
+    return first === undefined
+      ? []
+      : [
+          {
+            texts: group,
+            tracks: [],
+            title: basename(first.name, extname(first.name)),
+            author: null,
+            folder: dirname(first.path),
+            year: null,
+          },
+        ];
+  });
 
   return [
     ...books.map((book) => ({

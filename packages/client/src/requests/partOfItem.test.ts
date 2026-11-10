@@ -13,7 +13,7 @@ describe('partOfItem', () => {
     expect(at('filing')).toBe('downloading');
     expect(at('failed')).toBe('failed');
     expect(at('wanted')).toBe('queued');
-    expect(at('searching')).toBe('queued');
+    expect(at('searching')).toBe('searching');
     expect(at('waiting')).toBe('waiting');
   });
 

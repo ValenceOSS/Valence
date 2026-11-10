@@ -315,6 +315,13 @@ type CreateAppOptions = {
     isStreamed: (mediaId: string) => Promise<boolean>;
   } | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
+  jobPausing?: {
+    pause: (jobId: string) => boolean;
+    resume: (jobId: string) => boolean;
+    pauseAll: () => void;
+    resumeAll: () => void;
+    isPaused: (jobId: string) => boolean;
+  } | null;
   controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;

@@ -44,6 +44,7 @@ type CreateRequestRoutesOptions = {
     | 'unfinishedDownloadsOf'
     | 'answer'
     | 'dismiss'
+    | 'stopSearch'
     | 'stopDownload'
     | 'deleteFiled'
     | 'blockedFor'
@@ -289,6 +290,14 @@ const createRequestRoutes = ({
   routes.get('/requests/:id/handed-to', async (context) =>
     answer((await handOff?.handedTo(context.req.param('id'))) ?? null),
   );
+
+  routes.post('/requests/:id/stop-search', async (context) => {
+    const id = context.req.param('id');
+
+    return worker.stopSearch(id)
+      ? answer(await service.find(id))
+      : context.json(refuse('error.requests.itIsNotBeingSearchedFor'), 409);
+  });
 
   routes.post('/requests/:id/retry', async (context) => {
     const id = context.req.param('id');

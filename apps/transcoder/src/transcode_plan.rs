@@ -409,6 +409,14 @@ pub struct SessionSpec {
     /// which is right for every codec that has only one.
     #[serde(default)]
     pub source_video_codec: Option<String>,
+    /// How the source picture's samples are laid out, as ffprobe names it, where the media
+    /// service has read it.
+    ///
+    /// Not sent by the server: the media service reads it itself for a session about to decode
+    /// on a graphics chip, since a picture the chip cannot decode comes out as its garbage rather
+    /// than as an error. See [`crate::device_decode::device_decodes`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_pixel_format: Option<String>,
     /// Which streams the segments carry.
     ///
     /// Absent means both, which is what every caller outside the media service
@@ -631,6 +639,17 @@ impl SubtitleAction {
 const TONE_MAP_RECIPE: u32 = 1;
 
 impl SessionSpec {
+    /// Whether a graphics chip can decode this session's source picture.
+    ///
+    /// A source whose pixel format was not read is taken to be decodable, as every source was.
+    #[must_use]
+    pub fn decodes_on_a_device(&self) -> bool {
+        crate::device_decode::device_decodes(
+            self.source_video_codec.as_deref(),
+            self.source_pixel_format.as_deref(),
+        )
+    }
+
     /// A stable identifier for the output this specification produces.
     ///
     /// Content addressed rather than random so that a client reconnecting, or
@@ -650,6 +669,10 @@ impl SessionSpec {
         hasher.update(self.subtitles.addressed().as_bytes());
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
+
+        if !self.decodes_on_a_device() {
+            hasher.update(b"decoded by the processor");
+        }
         self.hash_track(&mut hasher);
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
@@ -701,6 +724,10 @@ impl SessionSpec {
         hasher.update(self.subtitles.addressed().as_bytes());
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
+
+        if !self.decodes_on_a_device() {
+            hasher.update(b"decoded by the processor");
+        }
         self.hash_track(&mut hasher);
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
@@ -1225,6 +1252,10 @@ fn device_chain(
 #[must_use]
 pub fn frame_route(spec: &SessionSpec, filters: DeviceFilters) -> FrameRoute {
     if !filters.scaler || spec.hardware_accel.pipeline().is_none() {
+        return FrameRoute::InSoftware;
+    }
+
+    if !spec.decodes_on_a_device() {
         return FrameRoute::InSoftware;
     }
 
@@ -3363,6 +3394,7 @@ mod tests {
             source_size: None,
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
+            source_pixel_format: None,
             track: Track::Both,
             source_range: None,
             source_range_base: None,
@@ -3910,6 +3942,37 @@ mod tests {
 
         assert!(!args.iter().any(|argument| argument == "-init_hw_device"));
         assert!(!video_filter_of(&args).contains("hwupload"));
+    }
+    #[cfg(unix)]
+    #[test]
+    fn decodes_a_picture_the_device_cannot_on_the_processor_under_an_address_of_its_own() {
+        let encoded = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: None,
+                deinterlace: false,
+                square_pixels: false,
+            },
+            source_video_codec: Some("h264".to_owned()),
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+        let ordinary = SessionSpec {
+            source_pixel_format: Some("yuv420p".to_owned()),
+            ..encoded.clone()
+        };
+        let four_four_four = SessionSpec {
+            source_pixel_format: Some("yuv444p10le".to_owned()),
+            ..encoded.clone()
+        };
+
+        assert_eq!(frame_route(&ordinary, FULL), FrameRoute::OnDevice);
+        assert_eq!(frame_route(&four_four_four, FULL), FrameRoute::InSoftware);
+        assert_eq!(ordinary.plan_id(), encoded.plan_id());
+        assert_ne!(four_four_four.plan_id(), encoded.plan_id());
+        assert_ne!(four_four_four.session_id(), encoded.session_id());
     }
 
     /// Deciding to convert in software has to reach the decoder as well.

@@ -157,7 +157,10 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
   }, [saved, isEdited]);
 
   const videoLibraries = useMemo(
-    () => libraries.filter((one) => VIDEO_LIBRARY_KINDS.includes(one.kind)),
+    () =>
+      libraries.filter(
+        (one) => VIDEO_LIBRARY_KINDS.includes(one.kind) && (one.linkedServerId ?? null) === null,
+      ),
     [libraries],
   );
 

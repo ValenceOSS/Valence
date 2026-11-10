@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { fingerprintOfText } from '@ValenceContracts/functions/fingerprintOfText';
 
 const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 
@@ -125,6 +126,8 @@ const DEFAULT_LEVELS: readonly LogLevel[] = ['warn', 'error'];
 
 const SEPARATOR = '\u001f';
 
+const MOST_KEY_CHARACTERS = 600;
+
 /**
  * Whether a level is at least as serious as another, for reading a floor like "warnings and worse"
  * rather than listing every level above it.
@@ -166,6 +169,9 @@ const forgottenAfterMs = (level: LogLevel, atMs: number): number =>
  * The context is part of the identity: the same message about two different files is two events, not
  * one seen twice.
  *
+ * A key longer than an index can hold, from a message that carries a whole query or a stack, keeps its
+ * start and a fingerprint of the whole, so it is still stored, and still matches its repeats.
+ *
  * @param record - The record about to be written.
  * @returns A key that repeats share.
  */
@@ -174,8 +180,8 @@ const sameEventKey = (record: {
   source: LogSource;
   message: string;
   context: LogContext;
-}): string =>
-  [
+}): string => {
+  const key = [
     record.level,
     record.source,
     record.message,
@@ -184,6 +190,11 @@ const sameEventKey = (record: {
     record.context.mediaId ?? '',
     record.context.sessionId ?? '',
   ].join(SEPARATOR);
+
+  return key.length <= MOST_KEY_CHARACTERS
+    ? key
+    : `${key.slice(0, MOST_KEY_CHARACTERS - 17)}#${fingerprintOfText(key)}`;
+};
 
 export type {
   LogLevel,

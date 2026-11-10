@@ -1,7 +1,9 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@ValenceUI/Button';
+import { stopSearchingMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -16,6 +18,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLine';
 import { describeTimeTaken } from '@ValenceClient/requests/describeTimeTaken';
 import { stepsOfRequestLog } from '@ValenceClient/requests/stepsOfRequestLog';
+import { TITLE_STATUS_NAMES } from '@ValenceClient/requests/TITLE_STATUS_NAMES';
 import { toneOfRequestLog } from '@ValenceClient/requests/toneOfRequestLog';
 import type { RequestStage } from '@ValenceClient/requests/RequestStage';
 import type { RequestStep, RequestStepOutcome } from '@ValenceClient/requests/RequestStep';
@@ -213,8 +216,8 @@ const liveLinesOf = (now: RequestNow): StepTrailLine[] => {
 
 /**
  * What sits at the end of a step's row: how long it took once it is done and the next began, what it
- * is doing while it is under way, and whether it failed, found nothing it would take, or waits on an
- * admin.
+ * is doing while it is under way — a search that is not asking anybody yet waiting its turn rather
+ * than searching — and whether it failed, found nothing it would take, or waits on an admin.
  *
  * @param step - The step.
  * @returns The aside, or nothing for a step still to come.
@@ -229,7 +232,15 @@ const asideOf = (step: RequestStep): StepTrailAside | undefined => {
         ? undefined
         : { kind: 'note', text: describeTimeTaken(step.startedAt, step.endedAt) };
     case 'current':
-      return { kind: 'state', text: liveAsideOf(step.now) ?? doingOf(step.stage), tone: 'accent' };
+      return {
+        kind: 'state',
+        text:
+          liveAsideOf(step.now) ??
+          (step.stage === 'search' && step.now === null
+            ? TITLE_STATUS_NAMES.queued
+            : doingOf(step.stage)),
+        tone: 'accent',
+      };
     case 'stuck':
       return {
         kind: 'state',
@@ -314,6 +325,18 @@ const trailStepOf = (
 const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   const said = useQuery(requestsQueries.mediaRequestLog(request.id));
   const now = useQuery(requestsQueries.mediaRequestNow(request.id, true)).data ?? null;
+  const cache = useQueryClient();
+  const stopping = useMutation({
+    mutationFn: () => stopSearchingMediaRequest(request.id),
+    onSettled: () => {
+      void cache.invalidateQueries({
+        queryKey: requestsQueries.mediaRequestLog(request.id).queryKey,
+      });
+      void cache.invalidateQueries({
+        queryKey: requestsQueries.mediaRequestNow(request.id, true).queryKey,
+      });
+    },
+  });
   const turn = useTakingTurns(
     now?.stage === 'search'
       ? now.indexers.filter((indexer) => indexer.state === 'asking').length
@@ -347,10 +370,27 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   const newest = steps.findLastIndex((step) => step.lines.length > 0 || step.now !== null);
 
   return (
-    <StepTrail
-      label={say('common.history')}
-      steps={steps.map((step, at) => trailStepOf(step, at, at === newest, turn))}
-    />
+    <div className="flex flex-col gap-3">
+      {now?.stage === 'search' ? (
+        <div className="flex justify-end">
+          <Button
+            variant="subtle"
+            size="sm"
+            isLoading={stopping.isPending}
+            onClick={() => {
+              stopping.mutate();
+            }}
+          >
+            {say('screens.requestDetailDialog.requestHistoryTab.stopSearching')}
+          </Button>
+        </div>
+      ) : null}
+
+      <StepTrail
+        label={say('common.history')}
+        steps={steps.map((step, at) => trailStepOf(step, at, at === newest, turn))}
+      />
+    </div>
   );
 };
 

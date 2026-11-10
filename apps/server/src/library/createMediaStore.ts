@@ -918,7 +918,7 @@ const createMediaStore = (
             eq(mediaItem.libraryId, libraryId),
             isNull(mediaItem.extraKind),
             isNotNull(mediaItem.parentId),
-            sql`not exists (select 1 from ${mediaItem} as ${parent} where ${onCopy(parent, mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(parent, mediaItem.externalId)} = ${mediaItem.externalId})`,
+            sql`not exists (select 1 from ${mediaItem} as ${parent} where ${onCopy(parent, mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(parent, mediaItem.externalId)} = ${mediaItem.externalId} and ${onCopy(parent, mediaItem.missingSince)} is null)`,
             stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
           ),
         );
@@ -934,6 +934,23 @@ const createMediaStore = (
             ),
           );
       }
+    },
+
+    promoteVersions: async (libraryId, paths) => {
+      if (paths.length === 0) {
+        return;
+      }
+
+      await db
+        .update(mediaItem)
+        .set({ parentId: null, versionLabel: null })
+        .where(
+          and(
+            eq(mediaItem.libraryId, libraryId),
+            isNull(mediaItem.extraKind),
+            inArray(mediaItem.path, paths),
+          ),
+        );
     },
 
     applyVersionChoices: (libraryId) => versionChoices.apply(libraryId),

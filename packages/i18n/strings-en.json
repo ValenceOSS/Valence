@@ -140,6 +140,11 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
+    "handler": "client.admin.describePermission.findSubtitles",
+    "text": "Find subtitles while watching",
+    "context": "The name of the permission to search subtitle sites for a film or episode and fetch one, in the list of a role's permissions in the admin (from `describePermission`)."
+  },
+  {
     "handler": "client.admin.describePermission.haveRequestsGoStraightThrough",
     "text": "Auto-approve requests",
     "context": "Shown in the admin (from `describePermission`)."
@@ -428,6 +433,11 @@
     "handler": "client.admin.describePermissionDetail.saveACopyOfMediaTo",
     "text": "Download media to a device to watch offline.",
     "context": "Shown in the admin (from `describePermissionDetail`)."
+  },
+  {
+    "handler": "client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne",
+    "text": "Search for subtitles while watching and fetch one, without being able to change anything else about the item.",
+    "context": "What the Find subtitles permission allows, under its name in the list of a role's permissions in the admin (from `describePermissionDetail`)."
   },
   {
     "handler": "client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas",
@@ -4897,6 +4907,11 @@
     "context": "Shown on a title from a linked server that is not answering. {name} is that server."
   },
   {
+    "handler": "common.nameCannotFetchOneFileOfATorrent",
+    "text": "{name} can’t fetch one book out of a collection torrent. Send books from Anna’s Archive to qBittorrent.",
+    "context": "Shown when a download client other than qBittorrent is given a book that is one file of a large collection torrent. {name} is the download client's name."
+  },
+  {
     "handler": "common.nameCouldNotBeDeleted",
     "text": "Couldn’t delete {name}. Try again.",
     "context": "Shown, used in the admin area and in the libraries panel in the admin area. {name} is filled in by the app."
@@ -4925,6 +4940,11 @@
     "handler": "common.namesWantItToo.other",
     "text": "{names} want it too",
     "context": "On a title the viewer requested, naming the other people who also want it, such as \"Priya and Sam\"."
+  },
+  {
+    "handler": "common.nameTakesNoDirectDownloads",
+    "text": "{name} can’t take direct downloads",
+    "context": "Shown in the downloads in the requests service when a direct download, such as a book from an OPDS catalogue, is sent to a torrent, usenet or plugin download client. {name} is filled in by the app."
   },
   {
     "handler": "common.nameTakesNZBsNotTorrents",
@@ -10346,6 +10366,11 @@
     "context": "Error when Search missing is pressed for a request handed to a connected app that hasn't been approved, or was declined."
   },
   {
+    "handler": "error.requests.itIsNotBeingSearchedFor",
+    "text": "It isn’t being searched for right now.",
+    "context": "Error when an admin asks to stop a request's search but no search is under way."
+  },
+  {
     "handler": "error.requests.noSuchBlockedRelease",
     "text": "No such blocked release.",
     "context": "An error the server answers with (HTTP 404) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10414,6 +10439,11 @@
     "handler": "error.requests.thatIsNotAChangeTo",
     "text": "That isn’t a valid change to a request.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
+  },
+  {
+    "handler": "error.requests.thatIsNotAnIndexToImport",
+    "text": "That isn’t a folder of Anna’s Archive’s index, or its list of torrents couldn’t be read.",
+    "context": "Error from the requests service when importing Anna's Archive's index finds no index files in the folder given, or cannot read the mirror's list of torrents."
   },
   {
     "handler": "error.requests.thatIsNotARequest",
@@ -11996,6 +12026,41 @@
     "context": "Text shown in the where is your valence of the phone app."
   },
   {
+    "handler": "requests.annas.annasArchive.aBotCheckStoodInTheWay",
+    "text": "Anna’s Archive answered with a bot check instead of results. Add your account key so Valence searches signed in.",
+    "context": "Shown in the requests service when Anna’s Archive, a book indexer, answers a search with its bot check. Anna’s Archive is a name; keep it as it is."
+  },
+  {
+    "handler": "requests.annas.annasArchive.downloadingNeedsAMembersKey",
+    "text": "Downloading from Anna’s Archive needs a member’s account key. Add one in the indexer’s settings.",
+    "context": "Shown in the requests service when a book from Anna’s Archive can’t be downloaded because the indexer has no account key; only members can download without a browser."
+  },
+  {
+    "handler": "requests.annas.annasArchive.itsTorrentIsNoLongerOffered",
+    "text": "Anna’s Archive no longer offers the torrent this book is in.",
+    "context": "Shown in the requests service when a book kept from Anna's Archive's index is in a bulk torrent Anna's Archive's list no longer has."
+  },
+  {
+    "handler": "requests.annas.annasArchive.noDownloadLinkWasGiven",
+    "text": "Anna’s Archive didn’t give a download link for the book (status {status}). The account may have used its downloads for today.",
+    "context": "Shown in the requests service when Anna’s Archive won’t give a fast download link for a book. {status} is the HTTP status it answered with."
+  },
+  {
+    "handler": "requests.annas.annasArchive.thatIsNotABookOnAnnas",
+    "text": "That isn’t a book on Anna’s Archive.",
+    "context": "Shown in the requests service when a release to be downloaded from Anna’s Archive doesn’t point at one of its books."
+  },
+  {
+    "handler": "requests.annas.annasArchive.theAccountKeyWasRefused",
+    "text": "Anna’s Archive refused the account key. Check it in the indexer’s settings.",
+    "context": "Shown in the requests service when Anna’s Archive, a book indexer, doesn’t accept the secret key of the account Valence signs in with."
+  },
+  {
+    "handler": "requests.annas.annasArchive.tooManyRedirects",
+    "text": "Anna’s Archive sent Valence round in circles instead of answering.",
+    "context": "Shown in the requests service when Anna’s Archive, a book indexer, redirects a request too many times."
+  },
+  {
     "handler": "requests.app.theDatabaseIsNotAnswering",
     "text": "The database isn’t responding",
     "context": "The problem in the app in the requests service."
@@ -12371,6 +12436,11 @@
     "context": "Why a download client refused something, followed by its own words, which are not translated. Shown in the admin area's downloads panel. {name} is the download client's name; {said} is what it said."
   },
   {
+    "handler": "requests.downloads.directAdapter.nameOnlyTakesDirectDownloads",
+    "text": "{name} only takes direct downloads, not torrents or NZBs",
+    "context": "Shown in the downloads in the requests service when a torrent or NZB is sent to the built-in direct download client. {name} is the client’s name."
+  },
+  {
     "handler": "requests.downloads.downloadQueue.aClientThatHasGone",
     "text": "A removed download client",
     "context": "Shown in the downloads in the requests service (from `createDownloadQueue`)."
@@ -12584,6 +12654,11 @@
     "handler": "requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent",
     "text": "The release isn’t a torrent Valence can read",
     "context": "Shown in the downloads in the requests service (from `createQbittorrentAdapter`)."
+  },
+  {
+    "handler": "requests.downloads.qbittorrentAdapter.theTorrentDoesNotHoldTheFile",
+    "text": "The collection torrent doesn’t hold the book it was meant to.",
+    "context": "Shown in the requests service when a book from Anna's Archive is sent to qBittorrent but its collection torrent has no file at the path the index gave."
   },
   {
     "handler": "requests.downloads.sabnzbdAdapter.nameAnsweredButNotAsSABnzbd",
@@ -13016,6 +13091,11 @@
     "context": "Why a download was stopped and blocked: an admin stopped it on the title page (from `createRequestWorker`)."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.stoppedSearchingAsAsked",
+    "text": "Stopped searching, as asked.",
+    "context": "A line in a request's activity log when an admin stopped a search that was under way."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother",
     "text": "Stopped {title} and blocked it. Looking for a different release.",
     "context": "A line in a request's activity when an admin stops a download and asks for another release. {title} is the stopped release (from `createRequestWorker`)."
@@ -13059,6 +13139,11 @@
     "handler": "requests.mediaRequests.requestWorker.theRequestsServiceMayNotWrite",
     "text": "The requests service doesn’t have permission to write to the destination folder ({message}). Set its PUID and PGID to the owner of your media folders.",
     "context": "The problem in the media requests in the requests service (from `createRequestWorker`). {message} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.theSearchWasStopped",
+    "text": "The search was stopped before anything was taken. It’s searched for again later as usual.",
+    "context": "The problem shown on an episode, film or book whose search an admin stopped part way."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted",
@@ -13109,6 +13194,26 @@
     "handler": "requests.mediaRequests.searchWhat.season",
     "text": "season {season}",
     "context": "What a search was for, in the middle of a sentence: one season of a series. Fills {what} in Searched for {what}. {season} is the season's number."
+  },
+  {
+    "handler": "requests.opds.opdsCatalogue.theBookCouldNotBeSized",
+    "text": "The catalogue didn’t say how big the book is (status {status}), so it can’t be downloaded safely.",
+    "context": "Shown in the requests service when a book from an OPDS catalogue can’t be measured before downloading. {status} is the HTTP status the catalogue answered with."
+  },
+  {
+    "handler": "requests.opds.opdsCatalogue.theCatalogueOffersNoSearch",
+    "text": "The catalogue doesn’t offer a search, so books can’t be found in it.",
+    "context": "Shown in the requests service when an OPDS catalogue’s feed names no search."
+  },
+  {
+    "handler": "requests.opds.opdsCatalogue.theCatalogueWantsASignIn",
+    "text": "The catalogue wants a sign-in, which Valence can’t give it.",
+    "context": "Shown in the requests service when an OPDS catalogue refuses to answer without signing in."
+  },
+  {
+    "handler": "requests.opds.readOpdsFeed.theAddressIsNotAnOPDS",
+    "text": "The address doesn’t answer with an OPDS catalogue.",
+    "context": "Shown in the requests service when an OPDS indexer’s address answers with something that isn’t an OPDS catalogue feed."
   },
   {
     "handler": "requests.pluginCalls.thePluginDidNotAnswerIn",
@@ -19726,6 +19831,11 @@
     "context": "Shown in the indexer catalogue dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexerDialog.accountKey",
+    "text": "Account key",
+    "context": "The label of a form field in the indexer dialog in the admin area: the secret key of an Anna’s Archive account."
+  },
+  {
     "handler": "screens.adminArea.indexerDialog.addIndexer",
     "text": "Add indexer",
     "context": "Shown in the indexer dialog in the admin area."
@@ -19749,6 +19859,11 @@
     "handler": "screens.adminArea.indexerDialog.alwaysDelete",
     "text": "Always delete",
     "context": "The label in the indexer dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.indexerDialog.annasArchive",
+    "text": "Anna’s Archive",
+    "context": "The label of a kind of indexer in the indexer dialog in the admin area: Anna’s Archive, a search engine for books, downloaded from directly. A name; keep it as it is."
   },
   {
     "handler": "screens.adminArea.indexerDialog.anyTorznabOrNewznabIndexerA",
@@ -19821,6 +19936,11 @@
     "context": "The description of a form field in the indexer dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexerDialog.oPDS",
+    "text": "OPDS",
+    "context": "The label of a kind of indexer in the indexer dialog in the admin area: an OPDS catalogue of books, searched for books and downloaded from directly. OPDS is a standard name; keep it as it is."
+  },
+  {
     "handler": "screens.adminArea.indexerDialog.publicTrackersDefaultToDeletingThe",
     "text": "Public trackers delete the torrent by default. Private trackers keep seeding so you don’t lose your account.",
     "context": "The description of a form field in the indexer dialog in the admin area."
@@ -19861,6 +19981,16 @@
     "context": "The label of a text field in the indexer dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexerDialog.theAddressOfAnAnnasArchive",
+    "text": "The address of an Anna’s Archive mirror. The account key is sent to it, so use one you trust.",
+    "context": "The description of the address field in the indexer dialog in the admin area, when the indexer is Anna’s Archive."
+  },
+  {
+    "handler": "screens.adminArea.indexerDialog.theCataloguesOPDSFeed",
+    "text": "The catalogue’s OPDS feed. Its books are downloaded by a Direct downloads client, over HTTPS.",
+    "context": "The description of the address field in the indexer dialog in the admin area, when the indexer is an OPDS catalogue of books."
+  },
+  {
     "handler": "screens.adminArea.indexerDialog.theCharactersToType",
     "text": "Captcha image",
     "context": "Describes a picture to screen readers in the indexer dialog in the admin area."
@@ -19869,6 +19999,11 @@
     "handler": "screens.adminArea.indexerDialog.theIndexersSiteOrTheTorznab",
     "text": "The indexer’s URL, or the Torznab feed URL from Jackett or Prowlarr.",
     "context": "The description of a text field in the indexer dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.indexerDialog.theSecretKeyOnYourAnnas",
+    "text": "The secret key on your Anna’s Archive account page. Searching works best signed in, and downloading needs a membership.",
+    "context": "The description of the account key field in the indexer dialog in the admin area, when the indexer is Anna’s Archive."
   },
   {
     "handler": "screens.adminArea.indexerDialog.thisSitesDefinitionIsNoLonger",
@@ -19882,7 +20017,7 @@
   },
   {
     "handler": "screens.adminArea.indexerDialog.torznabForTorrentsNewznabForUsenet",
-    "text": "Torznab for torrents, Newznab for usenet.",
+    "text": "Torznab for torrents, Newznab for usenet, OPDS for a catalogue of books to download directly.",
     "context": "The description of a form field in the indexer dialog in the admin area."
   },
   {
@@ -29366,6 +29501,11 @@
     "context": "The problem in the download client dialog (from `readDownloadClientForm`)."
   },
   {
+    "handler": "screens.downloadClientDialog.readDownloadClientForm.directDownloads",
+    "text": "Direct downloads",
+    "context": "The name of the built-in download client that downloads a release from a plain link itself, such as a book from an OPDS catalogue, offered beside qBittorrent and SABnzbd when adding a download client in the admin area."
+  },
+  {
     "handler": "screens.downloadClientDialog.readDownloadClientForm.giveTheClientAName",
     "text": "Give the client a name.",
     "context": "The problem in the download client dialog (from `readDownloadClientForm`)."
@@ -34885,6 +35025,11 @@
     "handler": "screens.requestDetailDialog.requestHistoryTab.searchingName",
     "text": "Searching {name}",
     "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer, a site searched for releases."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.stopSearching",
+    "text": "Stop searching",
+    "context": "The label of a button on a request's activity, beside the search step while it is under way, that stops the search without taking anything."
   },
   {
     "handler": "screens.requestDetailDialog.requestReleasesTab.backToItsOwnSearch",

@@ -1,4 +1,5 @@
 import {
+  annasBook,
   arrApp,
   blocklistedRelease,
   downloadClient,
@@ -14,6 +15,7 @@ import {
 } from '@ValenceRequests/db/mysql/Schema';
 
 const REQUESTS_SCHEMA = {
+  annasBook,
   arrApp,
   blocklistedRelease,
   downloadClient,

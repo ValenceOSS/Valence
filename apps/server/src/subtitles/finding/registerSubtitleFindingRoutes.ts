@@ -23,7 +23,8 @@ type SubtitleFindingRouteOptions = {
 
 /**
  * Registers the routes that set up where subtitles are found, look for them for one film or
- * episode, and fetch the one chosen.
+ * episode, and fetch the one chosen — the last two for anybody who may find subtitles, or may
+ * correct an item, which always let them.
  *
  * @param app - The application to register them on.
  * @param options - The finder, and how to tell what the person asking may do.
@@ -32,6 +33,9 @@ const registerSubtitleFindingRoutes = (
   app: OpenAPIHono,
   { finder, requires, recordAudit }: SubtitleFindingRouteOptions,
 ): void => {
+  const mayFind = async (headers: Headers): Promise<boolean> =>
+    (await requires(headers, 'media.subtitles')) || requires(headers, 'media.override');
+
   app.openapi(readSubtitleSetupRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
       return context.json(MAY_NOT, 403);
@@ -61,7 +65,7 @@ const registerSubtitleFindingRoutes = (
   });
 
   app.openapi(findSubtitlesRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+    if (!(await mayFind(context.req.raw.headers))) {
       return context.json(MAY_NOT, 403);
     }
 
@@ -79,7 +83,7 @@ const registerSubtitleFindingRoutes = (
   });
 
   app.openapi(fetchSubtitleRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+    if (!(await mayFind(context.req.raw.headers))) {
       return context.json(MAY_NOT, 403);
     }
 

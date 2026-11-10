@@ -3,8 +3,8 @@ import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';
 
 /**
  * Where one episode, album or film a request waits for stands, as a title page draws it: waiting on
- * approval, not followed, here, on its way, failed, waiting to be searched for, searched for with
- * nothing found, or not out yet.
+ * approval, not followed, here, on its way, failed, being searched for, waiting to be searched for,
+ * searched for with nothing found, or not out yet.
  *
  * @param item - What the request waits for.
  * @param approval - Whether the request is approved.
@@ -34,7 +34,7 @@ const partOfItem = (
     case 'failed':
       return 'failed';
     case 'searching':
-      return 'queued';
+      return 'searching';
     case 'wanted':
       return item.lastSearchedAt === null ? 'queued' : 'missing';
     case 'waiting':

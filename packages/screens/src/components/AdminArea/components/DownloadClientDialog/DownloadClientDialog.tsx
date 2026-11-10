@@ -131,6 +131,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
   const kind = CLIENT_KINDS.find((one) => one.id === values.kind);
   const isSabnzbd = values.kind === 'sabnzbd';
   const isPlugin = values.kind === 'plugin';
+  const keepsFilesHere = isPlugin || values.kind === 'direct';
   const pluginChosen = values.plugin;
   const isOffMeanwhile =
     isPlugin &&
@@ -276,7 +277,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             />
           </div>
 
-          {isPlugin ? null : (
+          {keepsFilesHere ? null : (
             <HeadedSection title={say('common.connection')}>
               <div className="flex flex-col gap-4">
                 <TextField
@@ -358,7 +359,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                 </div>
               </FormField>
 
-              {isPlugin ? (
+              {keepsFilesHere ? (
                 <TextField
                   label={say('screens.adminArea.downloadClientDialog.whereItSavesDownloads')}
                   {...form.text('localPath')}

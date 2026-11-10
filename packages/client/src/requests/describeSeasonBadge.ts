@@ -28,8 +28,12 @@ const describeSeasonBadge = (
     return { ...STATUS_LOOK.done, label: REQUEST_STATE_NAMES.available, detail: null };
   }
 
-  if (has(['searching', 'chosen', 'downloading', 'filing', 'filed'])) {
+  if (has(['chosen', 'downloading', 'filing', 'filed'])) {
     return { ...STATUS_LOOK.working, label: say('common.downloading'), detail };
+  }
+
+  if (has(['searching'])) {
+    return { ...STATUS_LOOK.working, label: REQUEST_STATE_NAMES.searching, detail };
   }
 
   if (has(['wanted', 'failed'])) {

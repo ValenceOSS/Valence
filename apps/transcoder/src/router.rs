@@ -918,9 +918,11 @@ struct StartSessionRequest {
 
 async fn start_session(
     State(state): State<AppState>,
-    Json(request): Json<StartSessionRequest>,
+    Json(mut request): Json<StartSessionRequest>,
 ) -> Response {
     let began = std::time::Instant::now();
+
+    read_picture_format(&state, &mut request.spec).await;
 
     match start_from(&state, &request).await {
         Ok(started) => {
@@ -1150,6 +1152,47 @@ async fn let_go(state: &AppState, id: &str, device_id: Option<&str>) -> bool {
     }
 
     true
+}
+
+/// Reads the source picture's pixel format for a session about to decode on a graphics chip, so a
+/// picture the chip cannot decode is decoded by the processor rather than drawn as its garbage.
+///
+/// Asked only where it can matter — an encode on a device, of an H.264 picture or one whose codec
+/// was not said — so every other session starts exactly as quickly as it did. See
+/// [`crate::device_decode`].
+async fn read_picture_format(state: &AppState, spec: &mut SessionSpec) {
+    let decodes_on_a_device = matches!(
+        spec.video,
+        crate::transcode_plan::VideoAction::Encode { .. }
+    ) && spec.hardware_accel.pipeline().is_some()
+        && spec.source_pixel_format.is_none();
+    let may_not_be_decodable = spec
+        .source_video_codec
+        .as_deref()
+        .is_none_or(|codec| codec == "h264");
+
+    if !decodes_on_a_device || !may_not_be_decodable {
+        return;
+    }
+
+    let Some((codec, format)) =
+        crate::device_decode::picture_format_of(&state.ffprobe, Path::new(&spec.input_path)).await
+    else {
+        return;
+    };
+
+    if crate::device_decode::device_decodes(Some(&codec), Some(&format)) {
+        return;
+    }
+
+    tracing::info!(
+        target: "session",
+        "{} is {codec} {format}, which a graphics chip cannot decode, so the processor decodes it",
+        spec.input_path
+    );
+
+    spec.source_pixel_format = Some(format);
+    spec.source_video_codec.get_or_insert(codec);
 }
 
 /// Starts whatever a request to start a session asks for: one session, or a picture, its sound and
@@ -2002,7 +2045,7 @@ fn already_drawn(id: String) -> Response {
 
 async fn start_preview(
     State(state): State<AppState>,
-    Json(request): Json<PreviewRequest>,
+    Json(mut request): Json<PreviewRequest>,
 ) -> Response {
     let path = PathBuf::from(&request.input_path);
 
@@ -2030,7 +2073,7 @@ async fn start_preview(
         Err(failure) => return error(StatusCode::BAD_REQUEST, &failure.to_string()),
     };
 
-    let Some(video) = probe.video.as_ref() else {
+    let Some(video) = decoded_video(&probe, &path, &mut request.hardware_accel) else {
         return error(StatusCode::BAD_REQUEST, "That file has no video stream.");
     };
 
@@ -3045,6 +3088,49 @@ fn draw_in_the_background(
     });
 }
 
+/// Whether a graphics chip can decode this picture, saying so in the log where it cannot.
+///
+/// A preview or a sheet of one the device cannot decode is drawn entirely by the processor rather
+/// than coming out as the device's garbage. See [`crate::device_decode`].
+fn decodes_on_a_device(video: &crate::media::VideoStream, input_path: &Path) -> bool {
+    let decodes = crate::device_decode::device_decodes(
+        Some(video.codec.as_str()),
+        video.pixel_format.as_deref(),
+    );
+
+    if !decodes {
+        tracing::info!(
+            target: "preview",
+            "{} is {} {}, which a graphics chip cannot decode, so it is drawn by the processor",
+            input_path.display(),
+            video.codec,
+            video.pixel_format.as_deref().unwrap_or("?")
+        );
+    }
+
+    decodes
+}
+
+/// A probed file's picture, with the backend to draw a preview or a sheet of it settled: the one
+/// asked for where a graphics chip can decode the picture, and the processor where it cannot.
+///
+/// # Returns
+///
+/// The picture, or nothing where the file has none.
+fn decoded_video<'probe>(
+    probe: &'probe crate::media::MediaProbe,
+    input_path: &Path,
+    asked: &mut Option<HardwareAccel>,
+) -> Option<&'probe crate::media::VideoStream> {
+    let video = probe.video.as_ref()?;
+
+    if !decodes_on_a_device(video, input_path) {
+        *asked = Some(HardwareAccel::None);
+    }
+
+    Some(video)
+}
+
 /// What a probed file is, as far as drawing its thumbnails cares.
 fn sheet_source(video: &crate::media::VideoStream, duration_seconds: f64) -> SheetSource {
     SheetSource {
@@ -3114,7 +3200,7 @@ const PLAY_STARTING_FOR: Duration = Duration::from_secs(30);
 
 async fn start_trickplay(
     State(state): State<AppState>,
-    Json(request): Json<TrickplayRequest>,
+    Json(mut request): Json<TrickplayRequest>,
 ) -> Response {
     let path = PathBuf::from(&request.input_path);
 
@@ -3137,7 +3223,7 @@ async fn start_trickplay(
         Err(failure) => return error(StatusCode::BAD_REQUEST, &failure.to_string()),
     };
 
-    let Some(video) = probe.video.as_ref() else {
+    let Some(video) = decoded_video(&probe, &path, &mut request.hardware_accel) else {
         return error(StatusCode::BAD_REQUEST, "That file has no video stream.");
     };
 

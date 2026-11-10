@@ -6,6 +6,7 @@ import { jobSchedule, queuedJob } from '#dialect/Schema';
 import { createJobQueue } from './createJobQueue';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import type { JobQueue } from './JobQueue';
+import type { JobPauses } from './JobPauseStore';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -187,6 +188,112 @@ describe('createJobQueue', () => {
     await vi.waitFor(() => {
       expect(onFinished).toHaveBeenCalledWith(
         expect.objectContaining({ jobId: id, reason: null, wasStopped: true }),
+      );
+    });
+  });
+
+  it('holds a paused job at its next step until it is resumed, alone or with everything', async () => {
+    const gate = aGate();
+    const seen: (string | null)[] = [];
+    let steps = 0;
+    const queue: JobQueue = aQueue({
+      handlers: {
+        [SCAN]: async (jobId) => {
+          seen.push(queue.currentJob());
+          await gate.passed;
+          await queue.untilResumed(jobId);
+          steps += 1;
+          await queue.untilResumed(jobId);
+          steps += 1;
+        },
+      },
+    });
+
+    await queue.startWorking();
+
+    const id = (await queue.enqueue(SCAN, { libraryId: 'films' })) ?? '';
+
+    await vi.waitFor(() => {
+      expect(seen).toEqual([id]);
+    });
+    expect(queue.pause(id)).toBe(true);
+    expect(queue.listRunning()[0]?.isPaused).toBe(true);
+    gate.open();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(steps).toBe(0);
+
+    queue.pauseAll();
+    expect(queue.resume(id)).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(steps).toBe(0);
+
+    queue.resumeAll();
+    await vi.waitFor(() => {
+      expect(steps).toBe(2);
+    });
+    expect(queue.currentJob()).toBeNull();
+  });
+
+  it('holds again, after a restart, what was paused before it', async () => {
+    const kept: JobPauses = { isEverythingPaused: false, jobIds: [] };
+    const pauses = {
+      read: () => Promise.resolve(kept),
+      write: (next: JobPauses) => {
+        Object.assign(kept, next);
+
+        return Promise.resolve();
+      },
+    };
+    const id = (await aQueue({ handlers: {} }).enqueue(SCAN, { libraryId: 'films' })) ?? '';
+
+    kept.jobIds = [id];
+
+    const queue: JobQueue = aQueue({
+      handlers: { [SCAN]: (jobId) => queue.untilResumed(jobId) },
+      pauses,
+    });
+
+    await queue.startWorking();
+    await vi.waitFor(() => {
+      expect(queue.isPaused(id)).toBe(true);
+    });
+
+    queue.pauseAll();
+    expect(queue.isEverythingPaused()).toBe(true);
+    expect(kept.isEverythingPaused).toBe(true);
+
+    queue.resumeAll();
+    queue.resume(id);
+    await vi.waitFor(async () => {
+      expect((await rowOf(id))?.state).toBe('completed');
+    });
+    expect(kept).toEqual({ isEverythingPaused: false, jobIds: [] });
+  });
+
+  it('lets a paused job that is cancelled go on to stop', async () => {
+    const onFinished = vi.fn();
+    const queue: JobQueue = aQueue({
+      handlers: {
+        [SCAN]: async (jobId) => {
+          queue.pause(jobId);
+          await queue.untilResumed(jobId);
+        },
+      },
+      onFinished,
+    });
+
+    await queue.startWorking();
+
+    const id = await queue.enqueue(SCAN, { libraryId: 'films' });
+
+    await vi.waitFor(() => {
+      expect(queue.isPaused(id ?? '')).toBe(true);
+    });
+    await queue.cancel(id ?? '');
+
+    await vi.waitFor(() => {
+      expect(onFinished).toHaveBeenCalledWith(
+        expect.objectContaining({ jobId: id, wasStopped: true }),
       );
     });
   });

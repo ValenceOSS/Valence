@@ -58,7 +58,9 @@ const releaseColumns = ({
           <Badge size="sm">
             {row.original.protocol === 'torrent'
               ? say('screens.adminArea.releaseColumns.torrent')
-              : say('screens.adminArea.releaseColumns.usenet')}
+              : row.original.protocol === 'usenet'
+                ? say('screens.adminArea.releaseColumns.usenet')
+                : say('common.direct')}
           </Badge>
         </span>
       </span>
@@ -185,11 +187,13 @@ const releaseColumns = ({
     accessorFn: (release) => release.seeders ?? release.grabs ?? -1,
     cell: ({ row }) => (
       <span className="whitespace-nowrap text-sm text-text">
-        {row.original.protocol === 'usenet'
-          ? row.original.grabs === null
-            ? '—'
-            : sayCount('common.count.grabs', row.original.grabs)
-          : `${row.original.seeders?.toString() ?? '?'} / ${row.original.leechers?.toString() ?? '?'}`}
+        {row.original.protocol === 'direct'
+          ? '—'
+          : row.original.protocol === 'usenet'
+            ? row.original.grabs === null
+              ? '—'
+              : sayCount('common.count.grabs', row.original.grabs)
+            : `${row.original.seeders?.toString() ?? '?'} / ${row.original.leechers?.toString() ?? '?'}`}
       </span>
     ),
   },

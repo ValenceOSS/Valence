@@ -18,6 +18,7 @@ const LABELS: Record<Permission, string> = {
   'media.override': say('client.admin.describePermission.correctMetadata'),
   'media.artwork': say('client.admin.describePermission.changeArtwork'),
   'media.hide': say('client.admin.describePermission.hideAnItemFromEverybody'),
+  'media.subtitles': say('client.admin.describePermission.findSubtitles'),
 
   'sharing.link': say('client.admin.describePermission.createShareLinks'),
   'sharing.party': say('client.admin.describePermission.startWatchParties'),

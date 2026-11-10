@@ -171,6 +171,7 @@ describe('what the server says it is working on', () => {
         kind: 'library.scan',
         subject: 'library-1',
         progress: { phase: sayVerbatim('probing'), processed: 3, total: 10, item: 'Arrival' },
+        isPaused: false,
       },
     ]);
 
@@ -184,7 +185,9 @@ describe('what the server says it is working on', () => {
   });
 
   it('reports a job that has not said anything about itself yet', async () => {
-    const app = build([{ jobId: 'job-1', kind: 'library.scan', subject: null, progress: null }]);
+    const app = build([
+      { jobId: 'job-1', kind: 'library.scan', subject: null, progress: null, isPaused: false },
+    ]);
 
     const response = await app.request(`${TEST_ORIGIN}/api/libraries/scans`);
 

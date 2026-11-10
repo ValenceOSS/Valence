@@ -263,6 +263,9 @@ import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
 import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfilesOf';
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
+import { createMangaTitles } from '@ValenceServer/requests/anilist/createMangaTitles';
+import { createDatabaseJobPauseStore } from '@ValenceServer/jobs/createDatabaseJobPauseStore';
+import { untilReachable } from '@ValenceServer/transcoder/untilReachable';
 import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
 import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
 import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
@@ -325,6 +328,30 @@ import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/W
 import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 import { webhookBrandOf } from '@ValenceServer/webhooks/webhookBrandOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+
+const MEDIA_SERVICE_START_MS = 60_000;
+
+const heldJobs: { untilResumed: () => Promise<void> } = {
+  untilResumed: () => Promise.resolve(),
+};
+
+const fetchUnheld = globalThis.fetch;
+
+/**
+ * Every request the server makes, held first where it is made for a job that is paused — so a
+ * paused job holds at its next call out, whatever it calls — and sent at once for anything else.
+ *
+ * @param input - What to ask for.
+ * @param init - How to ask.
+ * @returns The answer.
+ */
+const heldFetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+  await heldJobs.untilResumed();
+
+  return fetchUnheld(input, init);
+};
+
+globalThis.fetch = heldFetch;
 
 type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'];
 
@@ -1434,6 +1461,7 @@ const devHosts = readDevHosts(env.VALENCE_DEV_HOSTS, env.NODE_ENV);
 const mediaService = createTranscoderClient({
   baseUrl: env.TRANSCODER_URL,
   secret: env.TRANSCODER_SECRET,
+  beforeEachCall: () => heldJobs.untilResumed(),
 });
 
 const streamedFilms = createDatabaseStreamedFilms(db);
@@ -2077,8 +2105,6 @@ const placeDevices = (): Promise<void> =>
     },
   );
 
-void placeDevices();
-
 const transcoderWatch = createReachabilityWatch({
   onLost: () => {
     log.warn('transcoder', 'transcoder: stopped answering');
@@ -2440,6 +2466,7 @@ const nameOfJob = (job: { kind: string; subject: string | null }): string =>
 
 const jobs = createJobQueue({
   db,
+  pauses: createDatabaseJobPauseStore(db),
   perKind: {
     [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 },
     [IMPORT_PLAN_JOB]: { atOnce: 1, retries: 0 },
@@ -2735,10 +2762,13 @@ const jobs = createJobQueue({
 
             return rows.filter((row) => !split.has(row.id) && readStreamedPath(row.path) === null);
           },
-          readAhead: async (path) => readAhead(path, jobId),
+          readAhead: async (path, signal) => readAhead(path, jobId, signal),
           markRead: async (id) => markJobComplete(db, id, READ_KEYFRAMES_AHEAD_JOB),
           onUnreadable: (path) => {
             log.warn('scanner', `keyframes ahead: ${path} could not be read`);
+          },
+          onFailed: (path, failure) => {
+            log.warn('scanner', `keyframes ahead: passed over ${path}: ${failure.message}`);
           },
           onProgress: (done, total) => {
             jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), done, total);
@@ -3585,6 +3615,14 @@ const jobs = createJobQueue({
   },
 });
 
+heldJobs.untilResumed = async () => {
+  const jobId = jobs.currentJob();
+
+  if (jobId !== null) {
+    await jobs.untilResumed(jobId);
+  }
+};
+
 const runLibraryWork = createLibraryWorkRunner({
   inProcess: libraryWork,
   acrossProcesses: librariesAcrossProcesses,
@@ -3892,7 +3930,27 @@ const charted = createAnswerKeeper<DeezerCharts>(CHARTS_LIVE_FOR_MS);
 
 const shelved = createAnswerKeeper<OpenLibraryShelf[]>(CHARTS_LIVE_FOR_MS);
 
-const describeBook = (openLibraryId: number) => describeBookForRequest(musicWeb, openLibraryId);
+const mangaTitles = createMangaTitles(musicWeb);
+
+/**
+ * What Open Library says of a book, for a request, with a manga volume it only knows in Japanese,
+ * Chinese or Korean named in English, and its other names kept to search by.
+ *
+ * @param openLibraryId - The number the work goes by.
+ * @returns What it says, or null where Open Library does not know the work.
+ */
+const describeBook = async (openLibraryId: number) => {
+  const described = await describeBookForRequest(musicWeb, openLibraryId);
+  const manga = described === null ? null : await mangaTitles.of(described.title);
+
+  return described === null || manga === null
+    ? described
+    : {
+        ...described,
+        title: manga.title,
+        aliases: [...new Set([...described.aliases, ...manga.aliases])],
+      };
+};
 
 const SERIES_KEPT_FOR_MS = 24 * 60 * 60 * 1000;
 
@@ -3956,7 +4014,7 @@ const discovery: Discovery = {
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
     ),
   bookShelves: () => shelved.keep('books', () => readOpenLibraryShelves(musicWeb)),
-  searchBooks: (query) => searchOpenLibrary(askedWeb, query),
+  searchBooks: async (query) => mangaTitles.retitled(await searchOpenLibrary(askedWeb, query)),
   aboutBook: (title, author) =>
     booksAbout.keep(`${author ?? ''}\n${title}`, () =>
       readOpenLibraryAbout(askedWeb, title, author),
@@ -5777,6 +5835,17 @@ const app = createApp({
     },
   },
   cancelJob: (jobId) => jobs.cancel(jobId),
+  jobPausing: {
+    pause: (jobId) => jobs.pause(jobId),
+    resume: (jobId) => jobs.resume(jobId),
+    pauseAll: () => {
+      jobs.pauseAll();
+    },
+    resumeAll: () => {
+      jobs.resumeAll();
+    },
+    isPaused: (jobId) => jobs.isPaused(jobId),
+  },
   controlQueue: transcoder.controlQueue,
   describeForRequest,
   describeMusicForRequest,
@@ -5871,7 +5940,17 @@ if (seededKinds.length > 0) {
   log.info('server', `schedule: default triggers set for ${seededKinds.join(', ')}`);
 }
 
+if (await untilReachable(() => transcoder.isReachable(), MEDIA_SERVICE_START_MS)) {
+  void placeDevices();
+} else {
+  log.warn('transcoder', 'the media service did not answer at start-up; jobs start without it');
+}
+
 await jobs.startWorking();
+
+if (jobs.isEverythingPaused()) {
+  await transcoder.controlQueue.pause().catch(() => undefined);
+}
 
 await running.plugins?.start();
 

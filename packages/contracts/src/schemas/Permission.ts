@@ -17,6 +17,7 @@ const PERMISSIONS = [
   'media.override',
   'media.artwork',
   'media.hide',
+  'media.subtitles',
 
   'sharing.link',
   'sharing.party',

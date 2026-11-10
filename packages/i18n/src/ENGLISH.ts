@@ -35,6 +35,7 @@ const ENGLISH = {
   'client.admin.describePermission.downloadMedia': 'Download media',
   'client.admin.describePermission.everythingIncludingAnythingAddedLater':
     'Everything, including anything added later',
+  'client.admin.describePermission.findSubtitles': 'Find subtitles while watching',
   'client.admin.describePermission.haveRequestsGoStraightThrough': 'Auto-approve requests',
   'client.admin.describePermission.haveTheServerCallOutWhen': 'Manage webhooks',
   'client.admin.describePermission.hideAnItemFromEverybody': 'Hide an item from everyone',
@@ -129,6 +130,8 @@ const ENGLISH = {
     'Run a reset or a full rebuild, which deletes stored data and starts again.',
   'client.admin.describePermissionDetail.saveACopyOfMediaTo':
     'Download media to a device to watch offline.',
+  'client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne':
+    'Search for subtitles while watching and fetch one, without being able to change anything else about the item.',
   'client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas':
     'See every share link anyone has created, and revoke any of them.',
   'client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor':
@@ -1164,12 +1167,15 @@ const ENGLISH = {
   'common.nameAnswered': 'Connected to {name}.',
   'common.nameCannotBeReachedRightNow':
     '{name} can’t be reached right now. You can browse its titles, but you can’t play them until it’s back online.',
+  'common.nameCannotFetchOneFileOfATorrent':
+    '{name} can’t fetch one book out of a collection torrent. Send books from Anna’s Archive to qBittorrent.',
   'common.nameCouldNotBeDeleted': 'Couldn’t delete {name}. Try again.',
   'common.nameFromServer': '{name} from {server}',
   'common.nameRefusedTheUsernameOrPassword': '{name} rejected the username or password',
   'common.nameSettings': '{name} settings',
   'common.namesWantItToo.one': '{names} wants it too',
   'common.namesWantItToo.other': '{names} want it too',
+  'common.nameTakesNoDirectDownloads': '{name} can’t take direct downloads',
   'common.nameTakesNZBsNotTorrents': '{name} accepts NZBs, not torrents',
   'common.nameTakesTorrentsNotNZBs': '{name} accepts torrents, not NZBs',
   'common.nameWillBeSignedOutAnd':
@@ -2454,6 +2460,7 @@ const ENGLISH = {
     'It’s already in the library, so there’s nothing to cancel.',
   'error.requests.itIsNotApprovedSoNothingIsSearched':
     'It isn’t approved, so nothing is searched for it.',
+  'error.requests.itIsNotBeingSearchedFor': 'It isn’t being searched for right now.',
   'error.requests.noSuchBlockedRelease': 'No such blocked release.',
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.onlyAFilmIsKeptInTwoVersions': 'Only a film can be kept in two versions.',
@@ -2470,6 +2477,8 @@ const ENGLISH = {
   'error.requests.sayWhoIsCalledWhat': 'Say what each account is called now.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
+  'error.requests.thatIsNotAnIndexToImport':
+    'That isn’t a folder of Anna’s Archive’s index, or its list of torrents couldn’t be read.',
   'error.requests.thatIsNotARequest': 'That isn’t a valid request.',
   'error.requests.thatIsNotWhatTheCatalogue': 'That doesn’t match the catalogue.',
   'error.requests.theAppCouldNotSearchForIt':
@@ -2865,6 +2874,19 @@ const ENGLISH = {
   'phone.whereIsYourValence.theAddressYouOpenItOn':
     'Your server’s address, such as valence.example.com',
   'phone.whereIsYourValence.whereIsYourValence': 'Connect to your server',
+  'requests.annas.annasArchive.aBotCheckStoodInTheWay':
+    'Anna’s Archive answered with a bot check instead of results. Add your account key so Valence searches signed in.',
+  'requests.annas.annasArchive.downloadingNeedsAMembersKey':
+    'Downloading from Anna’s Archive needs a member’s account key. Add one in the indexer’s settings.',
+  'requests.annas.annasArchive.itsTorrentIsNoLongerOffered':
+    'Anna’s Archive no longer offers the torrent this book is in.',
+  'requests.annas.annasArchive.noDownloadLinkWasGiven':
+    'Anna’s Archive didn’t give a download link for the book (status {status}). The account may have used its downloads for today.',
+  'requests.annas.annasArchive.thatIsNotABookOnAnnas': 'That isn’t a book on Anna’s Archive.',
+  'requests.annas.annasArchive.theAccountKeyWasRefused':
+    'Anna’s Archive refused the account key. Check it in the indexer’s settings.',
+  'requests.annas.annasArchive.tooManyRedirects':
+    'Anna’s Archive sent Valence round in circles instead of answering.',
   'requests.app.theDatabaseIsNotAnswering': 'The database isn’t responding',
   'requests.app.theReleaseCouldNotBeFetched': 'Couldn’t download the release.',
   'requests.arrApps.arrAppService.onlyProwlarrHasIndexersToImport':
@@ -2984,6 +3006,8 @@ const ENGLISH = {
   'requests.downloads.clientCaller.nameDidNotAnswerWithinWaitSeconds':
     '{name} didn’t respond within {waitSeconds} seconds',
   'requests.downloads.clientSaid': '{name} said: {said}',
+  'requests.downloads.directAdapter.nameOnlyTakesDirectDownloads':
+    '{name} only takes direct downloads, not torrents or NZBs',
   'requests.downloads.downloadQueue.aClientThatHasGone': 'A removed download client',
   'requests.downloads.downloadQueue.clientNameSaysItFailed': '{clientName} reports that it failed',
   'requests.downloads.downloadQueue.itHoldsAProgramProgramWhich':
@@ -3059,6 +3083,8 @@ const ENGLISH = {
     'qBittorrent reports an error with this torrent',
   'requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent':
     'The release isn’t a torrent Valence can read',
+  'requests.downloads.qbittorrentAdapter.theTorrentDoesNotHoldTheFile':
+    'The collection torrent doesn’t hold the book it was meant to.',
   'requests.downloads.sabnzbdAdapter.nameAnsweredButNotAsSABnzbd':
     '{name} responded, but isn’t SABnzbd',
   'requests.downloads.sabnzbdAdapter.nameRefusedTheAPIKey': '{name} rejected the API key',
@@ -3197,6 +3223,7 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.replacedByTitlePickedByHand':
     'Replaced by {title}, picked by hand',
   'requests.mediaRequests.requestWorker.stoppedByAnAdmin': 'Stopped by an admin',
+  'requests.mediaRequests.requestWorker.stoppedSearchingAsAsked': 'Stopped searching, as asked.',
   'requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother':
     'Stopped {title} and blocked it. Looking for a different release.',
   'requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting':
@@ -3213,6 +3240,8 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.theReleaseHasNoLinkTo': 'The release has no download link',
   'requests.mediaRequests.requestWorker.theRequestsServiceMayNotWrite':
     'The requests service doesn’t have permission to write to the destination folder ({message}). Set its PUID and PGID to the owner of your media folders.',
+  'requests.mediaRequests.requestWorker.theSearchWasStopped':
+    'The search was stopped before anything was taken. It’s searched for again later as usual.',
   'requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted':
     '{title} failed: {reason}. It’s been blocklisted, and Valence is searching for the next best release.',
   'requests.mediaRequests.requestWorker.titleIsCheckedAgainBeforeFiling':
@@ -3227,6 +3256,14 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.album': '“{album}”',
   'requests.mediaRequests.searchWhat.it': 'it',
   'requests.mediaRequests.searchWhat.season': 'season {season}',
+  'requests.opds.opdsCatalogue.theBookCouldNotBeSized':
+    'The catalogue didn’t say how big the book is (status {status}), so it can’t be downloaded safely.',
+  'requests.opds.opdsCatalogue.theCatalogueOffersNoSearch':
+    'The catalogue doesn’t offer a search, so books can’t be found in it.',
+  'requests.opds.opdsCatalogue.theCatalogueWantsASignIn':
+    'The catalogue wants a sign-in, which Valence can’t give it.',
+  'requests.opds.readOpdsFeed.theAddressIsNotAnOPDS':
+    'The address doesn’t answer with an OPDS catalogue.',
   'requests.pluginCalls.thePluginDidNotAnswerIn': 'The plugin didn’t answer in time.',
   'requests.pluginCalls.valenceIsNotConnectedSoThe':
     'The Valence server isn’t connected, so the plugin can’t be reached.',
@@ -4954,12 +4991,14 @@ const ENGLISH = {
     'Couldn’t update the catalogue. Try again.',
   'screens.adminArea.indexerCatalogueDialog.theCatalogueIsEmptyBringIt':
     'No indexers are listed yet. Select Update catalogue to download the list of indexers Valence can search.',
+  'screens.adminArea.indexerDialog.accountKey': 'Account key',
   'screens.adminArea.indexerDialog.addIndexer': 'Add indexer',
   'screens.adminArea.indexerDialog.addName': 'Add {name}',
   'screens.adminArea.indexerDialog.afterDownloading': 'After downloading',
   'screens.adminArea.indexerDialog.aKeyIsKeptTypeA':
     'An API key is saved. Enter a new one to replace it, or leave this empty to keep it.',
   'screens.adminArea.indexerDialog.alwaysDelete': 'Always delete',
+  'screens.adminArea.indexerDialog.annasArchive': 'Anna’s Archive',
   'screens.adminArea.indexerDialog.anyTorznabOrNewznabIndexerA':
     'Any Torznab or Newznab indexer: a usenet indexer, a tracker, or a feed from Jackett or Prowlarr.',
   'screens.adminArea.indexerDialog.captcha': 'Captcha',
@@ -4979,6 +5018,7 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.neverDelete': 'Never delete',
   'screens.adminArea.indexerDialog.onlySearchTheseChooseNoneTo':
     'Only search these categories. Choose none to search all of the indexer’s categories.',
+  'screens.adminArea.indexerDialog.oPDS': 'OPDS',
   'screens.adminArea.indexerDialog.publicTrackersDefaultToDeletingThe':
     'Public trackers delete the torrent by default. Private trackers keep seeding so you don’t lose your account.',
   'screens.adminArea.indexerDialog.readingWhatThisSiteNeeds': 'Loading indexer settings',
@@ -4989,14 +5029,20 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.seedLimits': 'Seed limits',
   'screens.adminArea.indexerDialog.seedRatio': 'Seed ratio',
   'screens.adminArea.indexerDialog.seedTimeSeconds': 'Seed time (seconds)',
+  'screens.adminArea.indexerDialog.theAddressOfAnAnnasArchive':
+    'The address of an Anna’s Archive mirror. The account key is sent to it, so use one you trust.',
+  'screens.adminArea.indexerDialog.theCataloguesOPDSFeed':
+    'The catalogue’s OPDS feed. Its books are downloaded by a Direct downloads client, over HTTPS.',
   'screens.adminArea.indexerDialog.theCharactersToType': 'Captcha image',
   'screens.adminArea.indexerDialog.theIndexersSiteOrTheTorznab':
     'The indexer’s URL, or the Torznab feed URL from Jackett or Prowlarr.',
+  'screens.adminArea.indexerDialog.theSecretKeyOnYourAnnas':
+    'The secret key on your Anna’s Archive account page. Searching works best signed in, and downloading needs a membership.',
   'screens.adminArea.indexerDialog.thisSitesDefinitionIsNoLonger':
     'This indexer’s definition is no longer in the catalogue.',
   'screens.adminArea.indexerDialog.timeoutSeconds': 'Timeout (seconds)',
   'screens.adminArea.indexerDialog.torznabForTorrentsNewznabForUsenet':
-    'Torznab for torrents, Newznab for usenet.',
+    'Torznab for torrents, Newznab for usenet, OPDS for a catalogue of books to download directly.',
   'screens.adminArea.indexerDialog.typeTheCharactersInThePicture':
     'Type the characters in the image, then try again.',
   'screens.adminArea.indexerDialog.whatTheTrackerAsks': 'What the tracker asks',
@@ -7442,6 +7488,7 @@ const ENGLISH = {
   'screens.discordSettings.whilePaused': 'While paused',
   'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces':
     'A category can only contain letters, numbers, spaces, dots, dashes and underscores.',
+  'screens.downloadClientDialog.readDownloadClientForm.directDownloads': 'Direct downloads',
   'screens.downloadClientDialog.readDownloadClientForm.giveTheClientAName':
     'Give the client a name.',
   'screens.downloadClientDialog.readDownloadClientForm.nZBGet': 'NZBGet',
@@ -8805,6 +8852,7 @@ const ENGLISH = {
   'screens.requestDetailDialog.requestHistoryTab.nothingToTakeYet': 'Nothing yet',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
   'screens.requestDetailDialog.requestHistoryTab.searchingName': 'Searching {name}',
+  'screens.requestDetailDialog.requestHistoryTab.stopSearching': 'Stop searching',
   'screens.requestDetailDialog.requestReleasesTab.backToItsOwnSearch': 'Back to its own search',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
   'screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed':

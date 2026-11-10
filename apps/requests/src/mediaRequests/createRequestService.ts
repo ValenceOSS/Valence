@@ -424,8 +424,9 @@ const createRequestService = ({
   };
 
   /**
-   * Keeps a request for what was asked, or joins the request already kept for the same title, and
-   * for a series asks for each of its books.
+   * Keeps a request for what was asked, or joins the request already kept for the same title — a
+   * book series being the same only where Audible's id for it is — and for a series asks for each
+   * of its books.
    *
    * @param asked - What was asked, as the server drafted it.
    * @returns The request, and whether it is new.
@@ -438,11 +439,13 @@ const createRequestService = ({
     const kept = (await requests.list()).find(
       (record) =>
         record.kind === draft.kind &&
-        (isBookRequest(draft.kind)
-          ? record.openLibraryId === draft.openLibraryId
-          : isMusicRequest(draft.kind)
-            ? record.musicBrainzId === draft.musicBrainzId
-            : record.tmdbId === draft.tmdbId),
+        (draft.kind === 'bookSeries'
+          ? record.seriesAsin === draft.seriesAsin
+          : isBookRequest(draft.kind)
+            ? record.openLibraryId === draft.openLibraryId
+            : isMusicRequest(draft.kind)
+              ? record.musicBrainzId === draft.musicBrainzId
+              : record.tmdbId === draft.tmdbId),
     );
 
     if (kept !== undefined) {

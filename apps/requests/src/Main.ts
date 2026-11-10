@@ -1,3 +1,6 @@
+import { createDatabaseAnnasBookStore } from '@ValenceRequests/annas/createDatabaseAnnasBookStore';
+import { createAnnasTorrents } from '@ValenceRequests/annas/createAnnasTorrents';
+import { createAnnasRoutes } from '@ValenceRequests/annas/createAnnasRoutes';
 import { createConsoleWindow } from '@ValenceRequests/createConsoleWindow';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
@@ -180,6 +183,12 @@ const sites = createSitePool({
   retire: browser.retire,
 });
 
+const solver = solverWatch.watching(createSolver({ pool: sites }));
+
+const annasBooks = createDatabaseAnnasBookStore(db);
+
+const annasTorrents = createAnnasTorrents(fetch);
+
 const indexers = createIndexerService({
   store: indexerStore,
   definitions: definitions.definition,
@@ -190,8 +199,10 @@ const indexers = createIndexerService({
     readResults: createThreadedSearchReader(),
     site: createSiteClient({
       fetch,
-      solver: solverWatch.watching(createSolver({ pool: sites })),
+      solver,
     }),
+    solver,
+    annasLibrary: { books: annasBooks, torrents: annasTorrents },
     onAsked: ({ indexer, address, found }) => {
       log(`${indexer} asked ${address}: ${found.toString()} found.`);
     },
@@ -364,6 +375,7 @@ const app = createApp({
   definitions,
   profiles,
   routes: [
+    createAnnasRoutes({ books: annasBooks, torrents: annasTorrents, log }),
     createDownloadRoutes({
       clients: downloadClients,
       queue: downloadQueue,

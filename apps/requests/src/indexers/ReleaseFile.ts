@@ -1,3 +1,9 @@
-type ReleaseFile = { kind: 'magnet'; url: string } | { kind: 'torrent' | 'nzb'; bytes: Uint8Array };
+type OneFileOf = { path: string; name: string };
 
-export type { ReleaseFile };
+type ReleaseFile =
+  | { kind: 'magnet'; url: string }
+  | { kind: 'torrent'; bytes: Uint8Array; onlyFile?: OneFileOf }
+  | { kind: 'nzb'; bytes: Uint8Array }
+  | { kind: 'link'; url: string; name: string; sizeBytes: number };
+
+export type { OneFileOf, ReleaseFile };

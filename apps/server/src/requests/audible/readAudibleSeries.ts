@@ -7,6 +7,8 @@ const AUDIBLE = 'https://api.audible.com/1.0/catalog/products';
 
 const AT_ONCE = 50;
 
+const COVER_SIZE = '500';
+
 const NamedSchema = z.object({ name: z.string() });
 
 const SeriesSchema = z.object({
@@ -40,6 +42,7 @@ const ProductsSchema = z.object({
         release_date: z.string().nullish(),
         content_delivery_type: z.string().nullish(),
         content_type: z.string().nullish(),
+        product_images: z.record(z.string(), z.string()).nullish().catch(null),
       }),
     )
     .catch([]),
@@ -81,7 +84,7 @@ const isMainPlace = (position: string | null): boolean =>
  * A series as Audible sells it: its name, and each of its books in order — its title, author, the
  * year it came out, its place in the series, whether it is a companion rather than a main book, and
  * each unabridged narration of it in English, with who reads it and how long it lasts. Audible lists
- * a book once for every edition and region it sells; they are taken together as one book, and as
+ * a book once for every edition and region it sells, each with its cover; they are taken together as one book, and as
  * one narration where the same people read it, in whatever order they are named. Nothing where Audible does not know the series.
  *
  * @param web - The way out to the web.
@@ -115,7 +118,8 @@ const readAudibleSeries = async (
             .slice(at, at + AT_ONCE)
             .map((one) => one.asin)
             .join(','),
-          response_groups: 'contributors,product_attrs,product_desc',
+          response_groups: 'contributors,product_attrs,product_desc,media',
+          image_sizes: COVER_SIZE,
         }).toString()}`,
       ),
     );
@@ -182,7 +186,12 @@ const readAudibleSeries = async (
           ? null
           : Number(first.release_date.slice(0, 4)) || null,
       openLibraryId: null,
-      coverUrl: null,
+      coverUrl:
+        editions.flatMap((edition) => {
+          const cover = edition.product_images?.[COVER_SIZE];
+
+          return cover === undefined ? [] : [cover];
+        })[0] ?? null,
       narrations,
     };
   });

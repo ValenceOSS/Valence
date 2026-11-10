@@ -30,6 +30,7 @@ type HttpRequestInit = {
   method?: string;
   headers?: Record<string, string>;
   body?: string;
+  signal?: AbortSignal;
 };
 
 type FetchLike = (url: string, init?: HttpRequestInit) => Promise<HttpResponse>;
@@ -445,7 +446,11 @@ type Transcoder = {
   ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
   measureLoudness?: (path: string) => Promise<MeasuredLoudness | null>;
-  readKeyframesAhead?: (inputPath: string, correlationId?: string) => Promise<KeyframesAhead>;
+  readKeyframesAhead?: (
+    inputPath: string,
+    correlationId?: string,
+    signal?: AbortSignal,
+  ) => Promise<KeyframesAhead>;
   creditFrames?: (request: CreditFramesRequest) => Promise<CreditFrame[]>;
   readSubtitle: (request: {
     inputPath: MediaInput;
@@ -556,6 +561,7 @@ type CreateTranscoderClientOptions = {
   secret?: string;
   fetchImpl?: FetchLike;
   streamFetchImpl?: StreamFetchLike;
+  beforeEachCall?: () => Promise<void>;
 };
 
 const UNIX_PREFIX = 'unix:';
@@ -588,6 +594,19 @@ const narrow = <TBody>(response: {
  * The ordinary network fetch, narrowed to what Valence uses.
  */
 const httpFetch: FetchLike = async (url, init) => narrow(await fetch(url, init));
+
+/**
+ * A fetch over the network that waits as long as the media service takes to answer, rather than the
+ * five minutes Node's own fetch gives up after — the time a piece of work can spend queued behind
+ * others before it is even started.
+ *
+ * @returns The fetch.
+ */
+const createPatientHttpFetch = (): FetchLike => {
+  const agent = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
+
+  return async (url, init) => narrow(await undiciFetch(url, { ...init, dispatcher: agent }));
+};
 
 const REQUEST_TIMEOUT_MILLISECONDS = 60_000;
 
@@ -646,6 +665,7 @@ const createTranscoderClient = ({
   secret = '',
   fetchImpl,
   streamFetchImpl,
+  beforeEachCall,
 }: CreateTranscoderClientOptions): TranscoderWithQueueControl => {
   const socketPath = readSocketPath(baseUrl);
   const origin = socketPath === null ? baseUrl : 'http://transcoder.local';
@@ -665,12 +685,32 @@ const createTranscoderClient = ({
       ? fetcher
       : (url, init) => fetcher(url, { ...init, headers: { ...init?.headers, ...presenting } });
 
-  const call2 = presentingTheSecret(
-    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath)),
-  );
+  /**
+   * Waits for whatever must come first before each request a fetcher makes — a paused job's turn —
+   * outside the request, so no timeout runs while it waits.
+   */
+  const waitingFirst = (fetcher: FetchLike): FetchLike =>
+    beforeEachCall === undefined
+      ? fetcher
+      : async (url, init) => {
+          await beforeEachCall();
+
+          return fetcher(url, init);
+        };
+
+  const quickFetch = fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath));
+
+  const call2 = presentingTheSecret(waitingFirst(quickFetch));
+
+  const callAtOnce = presentingTheSecret(quickFetch);
 
   const callSlowly = presentingTheSecret(
-    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath, NO_TIMEOUT)),
+    waitingFirst(
+      fetchImpl ??
+        (socketPath === null
+          ? createPatientHttpFetch()
+          : createSocketFetch(socketPath, NO_TIMEOUT)),
+    ),
   );
   const call = async (path: string, init?: HttpRequestInit): Promise<HttpResponse> => {
     const response = await call2(`${origin}${path}`, init);
@@ -771,6 +811,27 @@ const createTranscoderClient = ({
     });
 
   /**
+   * Asks for something that is about the work rather than part of it — whether the service answers,
+   * what it is doing, stopping or holding it — at once, without waiting on a paused job's turn.
+   */
+  const askAtOnce = async (path: string, init?: HttpRequestInit): Promise<HttpResponse> => {
+    const response = await callAtOnce(`${origin}${path}`, init);
+
+    if (!response.ok) {
+      throw new TranscoderError(`The media service rejected ${path}.`, response.status);
+    }
+
+    return response;
+  };
+
+  const postJsonAtOnce = (path: string, body: object): Promise<HttpResponse> =>
+    askAtOnce(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+  /**
    * Asks for something that is worked out rather than read, and waits for as long as it takes.
    *
    * No clock at all. A preview is an encode, a sheet is a thumbnail a minute across a whole film, and
@@ -804,13 +865,13 @@ const createTranscoderClient = ({
 
   const controlQueue: QueueControl = {
     setConcurrency: async (concurrency) => {
-      await postJson('/queue/concurrency', { concurrency });
+      await postJsonAtOnce('/queue/concurrency', { concurrency });
     },
     pause: async () => {
-      await postJson('/queue/pause', {});
+      await postJsonAtOnce('/queue/pause', {});
     },
     resume: async () => {
-      await postJson('/queue/resume', {});
+      await postJsonAtOnce('/queue/resume', {});
     },
     runNow: async (jobId) => {
       const response = await call2(`${origin}/queue/jobs/${jobId.toString()}/run-now`, {
@@ -820,15 +881,16 @@ const createTranscoderClient = ({
       return response.ok;
     },
     stopJob: async (correlationId) =>
-      RendersStoppedSchema.parse(await (await postJson('/renders/stop', { correlationId })).json())
-        .stopped,
+      RendersStoppedSchema.parse(
+        await (await postJsonAtOnce('/renders/stop', { correlationId })).json(),
+      ).stopped,
   };
 
   return {
     controlQueue,
     isReachable: async () => {
       const response = await Promise.race([
-        call2(`${origin}/health`).catch(() => null),
+        callAtOnce(`${origin}/health`).catch(() => null),
         new Promise<null>((resolve) => {
           setTimeout(() => {
             resolve(null);
@@ -975,9 +1037,10 @@ const createTranscoderClient = ({
     fingerprint: async (request) =>
       FingerprintSchema.parse(await (await postRender('/fingerprint', request)).json()),
 
-    readKeyframesAhead: async (inputPath, correlationId) => {
+    readKeyframesAhead: async (inputPath, correlationId, signal) => {
       const response = await callSlowly(`${origin}/keyframes`, {
         method: 'POST',
+        ...(signal === undefined ? {} : { signal }),
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           inputPath,
@@ -1059,7 +1122,7 @@ const createTranscoderClient = ({
 
     readFont: async (request) => (await postRender('/fonts/read', request)).arrayBuffer(),
 
-    readMonitor: async () => (await call('/monitor')).json(),
+    readMonitor: async () => (await askAtOnce('/monitor')).json(),
 
     openMonitorSocket: () => openSocket(),
 
