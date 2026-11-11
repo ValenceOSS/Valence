@@ -247,7 +247,7 @@ const viewerProfile = mysqlTable(
     mayRequest: boolean('mayRequest').notNull().default(true),
     ownerOf: identifier('ownerOf').generatedAlwaysAs(
       sql`case when ${sql.identifier('isOwner')} then ${sql.identifier('userId')} end`,
-      { mode: 'stored' },
+      { mode: 'virtual' },
     ),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
