@@ -32,7 +32,7 @@ import type { RailCardProps } from './RailCard.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
-const HOVER_DELAY_MILLISECONDS = 250;
+const HOVER_DELAY_MILLISECONDS = 180;
 
 const FRAME = 6;
 
@@ -42,27 +42,27 @@ const GROWS_BY = 1.3;
 
 const STILL_FADES_MS = 700;
 
-const UNFOLDS_OVER_MS = 220;
+const UNFOLDS_OVER_MS = 170;
 
 const UNFOLDS_ALONG = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
 const AT_REST = 'inset(0px 0px 0px 0px round 12px)';
 
-const DETAILS_RISE = { duration: 0.2, delay: 0.1, ease: [0.32, 0.72, 0, 1] } as const;
+const DETAILS_RISE = { duration: 0.16, delay: 0.06, ease: [0.32, 0.72, 0, 1] } as const;
 
-const FRAME_WAITS_MS = 40;
+const FRAME_WAITS_MS = 25;
 
-const SHIFTS_OVER_MS = 220;
+const SHIFTS_OVER_MS = 180;
 
 const MARK_STAYS_PLAYING_MS = 500;
 
 const MARK_FADES_MS = 320;
 
-const FOLDS_OVER_MS = 190;
+const FOLDS_OVER_MS = 150;
 
 const FADES_AT = 0.85;
 
-const LIFTS_OVER_MS = 260;
+const LIFTS_OVER_MS = 200;
 
 const LIFTS_FROM = '0 0px 0px 0px color-mix(in oklab, var(--color-shade) 0%, transparent)';
 
@@ -70,7 +70,7 @@ const LIFTS_TO = '0 24px 48px -16px color-mix(in oklab, var(--color-shade) 70%, 
 
 const SETTLES_TO = '0 12px 28px -16px color-mix(in oklab, var(--color-shade) 55%, transparent)';
 
-const QUICK_DELAY_MILLISECONDS = 80;
+const QUICK_DELAY_MILLISECONDS = 50;
 
 const STILL_WARM_MILLISECONDS = 500;
 
