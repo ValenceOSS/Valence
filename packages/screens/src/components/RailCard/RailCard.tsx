@@ -20,7 +20,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { showSlug } from '@ValenceCore/functions/showSlug';
@@ -474,6 +474,8 @@ const RailCard = ({
 
   const named = media.seriesId ?? showSlug(media.seriesTitle ?? '');
 
+  const cache = useQueryClient();
+
   const asked = useQuery({
     ...libraryQueries.detail(media.id),
     enabled: anchor !== null && !isSeries,
@@ -749,6 +751,14 @@ const RailCard = ({
       onPointerEnter={(event) => {
         if (event.pointerType !== 'mouse') {
           return;
+        }
+
+        if (isSeries) {
+          if (named !== '') {
+            void cache.prefetchQuery(libraryQueries.show(media.libraryId, named));
+          }
+        } else {
+          void cache.prefetchQuery(libraryQueries.detail(media.id));
         }
 
         cancel();
