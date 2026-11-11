@@ -1121,6 +1121,8 @@ const mediaItem = pgTable(
     uniqueIndex('media_item_path_idx').on(table.libraryId, table.path),
     index('media_item_library_idx').on(table.libraryId),
     index('media_item_title_idx').on(table.title),
+    index('media_item_added_at_idx').on(table.addedAt),
+    index('media_item_rating_idx').on(table.rating.desc().nullsLast()),
     index('media_item_genres_idx').using('gin', table.genres),
     index('media_item_cast_idx').using('gin', table.castMembers),
     index('media_item_series_idx').on(table.seriesTitle, table.seasonNumber),

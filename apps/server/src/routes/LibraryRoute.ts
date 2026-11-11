@@ -140,6 +140,26 @@ const listFacetsRoute = createRoute({
   },
 });
 
+const ItemsQuery = z.object({
+  search: z.string().optional(),
+  kind: z.enum(['films', 'shows']).optional(),
+  genre: z.string().optional(),
+  genres: z.string().optional(),
+  decades: z.string().optional(),
+  audioLanguages: z.string().optional(),
+  audioCodecs: z.string().optional(),
+  audioChannels: z.string().optional(),
+  yearFrom: z.coerce.number().int().optional(),
+  yearTo: z.coerce.number().int().optional(),
+  minRating: z.coerce.number().min(0).max(10).optional(),
+  ids: z.string().optional(),
+  order: z.enum(['title', 'newest', 'rated', 'yourRating']).optional(),
+  minYourStars: z.coerce.number().int().min(1).max(5).optional(),
+  versions: z.enum(['all']).optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
+
 const listItemsRoute = createRoute({
   method: 'get',
   path: '/api/libraries/{id}/items',
@@ -147,25 +167,7 @@ const listItemsRoute = createRoute({
   summary: 'List the items in a library',
   request: {
     params: z.object({ id: z.string().uuid() }),
-    query: z.object({
-      search: z.string().optional(),
-      kind: z.enum(['films', 'shows']).optional(),
-      genre: z.string().optional(),
-      genres: z.string().optional(),
-      decades: z.string().optional(),
-      audioLanguages: z.string().optional(),
-      audioCodecs: z.string().optional(),
-      audioChannels: z.string().optional(),
-      yearFrom: z.coerce.number().int().optional(),
-      yearTo: z.coerce.number().int().optional(),
-      minRating: z.coerce.number().min(0).max(10).optional(),
-      ids: z.string().optional(),
-      order: z.enum(['title', 'newest', 'yourRating']).optional(),
-      minYourStars: z.coerce.number().int().min(1).max(5).optional(),
-      versions: z.enum(['all']).optional(),
-      limit: z.coerce.number().int().positive().max(200).optional(),
-      offset: z.coerce.number().int().nonnegative().optional(),
-    }),
+    query: ItemsQuery,
   },
   responses: {
     200: {
@@ -183,6 +185,33 @@ const listItemsRoute = createRoute({
     404: {
       description: 'No such library',
       content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
+const listItemsAcrossRoute = createRoute({
+  method: 'get',
+  path: '/api/library-items',
+  tags: ['Library'],
+  summary: 'List the items of several libraries at once',
+  request: {
+    query: ItemsQuery.extend({
+      libraryIds: z.string(),
+      counted: z.enum(['no']).optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'A page of items',
+      content: {
+        'application/json': {
+          schema: z.object({ items: z.array(MediaSummary), total: z.number().int() }),
+        },
+      },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -836,9 +865,11 @@ const bringBackRoute = createRoute({
 export { ScanAccepted };
 
 export {
+  ItemsQuery,
   listLibrariesRoute,
   createLibraryRoute,
   updateLibraryRoute,
+  listItemsAcrossRoute,
   listItemsRoute,
   listFacetsRoute,
   getMediaRoute,

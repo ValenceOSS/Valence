@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import {
   fetchLibraries,
+  fetchItemsAcross,
   fetchLibraryItems,
   fetchMediaDetail,
 } from '@ValenceClient/library/fetchLibrary';
@@ -13,7 +14,9 @@ import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPer
 import { findPeople } from '@ValenceClient/library/findPeople';
 import { fetchLikeThis } from '@ValenceClient/library/fetchLikeThis';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
+import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
 
 const FIRST_PAGE = 120;
 
@@ -171,14 +174,33 @@ const credits = (personId: number | null) =>
   });
 
 /**
+ * Reads what every library holds together, in one request ordered across them all and left
+ * uncounted, so a rail costs the server one read rather than one for each library. A list of ids too
+ * long for one address is still read a library at a time, a group of ids at a time.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked.
+ * @returns What was found.
+ */
+const readAcross = async (
+  libraryIds: readonly string[],
+  options: ListItemsOptions,
+): Promise<MediaSummary[]> =>
+  options.ids !== undefined && options.ids.length > MOST_IDS_IN_AN_ADDRESS
+    ? readEachLibrary(libraryIds, async (libraryId) =>
+        fetchLibraryItems(libraryId, options).then((page) => page.items),
+      )
+    : fetchItemsAcross(libraryIds, options, false).then((page) => page.items);
+
+/**
  * The same question asked of every library at once, which is what a page showing the whole server
  * rather than one folder of it wants — the films page, the newest page, and the hero.
  *
- * One query rather than one per library, because these pages want a single answer: a grid that
+ * One answer rather than one per library, because these pages want a single answer: a grid that
  * renders when three of five libraries have replied is a grid that reorders itself while somebody
- * is reading it. A library that fails answers with nothing rather than failing the whole page, but
- * every library failing fails it, so a server that cannot be read is not shown as an empty one. A
- * search is ranked across every library at once, so the best answer leads wherever it was found.
+ * is reading it. The limit is of the whole answer, the best across every library rather than the
+ * best of each. A search is ranked across every library at once, so the best answer leads wherever
+ * it was found.
  *
  * @param libraryIds - The libraries to ask.
  * @param options - What is being asked of each.
@@ -188,9 +210,7 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
   queryOptions({
     queryKey: [...LIBRARY, 'across', [...libraryIds].sort(), options],
     queryFn: async () => {
-      const found = await readEachLibrary(libraryIds, async (libraryId) =>
-        fetchLibraryItems(libraryId, options).then((page) => page.items),
-      );
+      const found = await readAcross(libraryIds, options);
 
       return options.search === undefined || options.search.trim() === ''
         ? found
@@ -214,12 +234,7 @@ const beginningOfEverything = (
 ) =>
   queryOptions({
     queryKey: [...LIBRARY, 'everything', 'beginning', [...libraryIds].sort(), options],
-    queryFn: async () =>
-      readEachLibrary(libraryIds, async (libraryId) =>
-        fetchLibraryItems(libraryId, { ...options, limit: FIRST_PAGE, offset: 0 }).then(
-          (page) => page.items,
-        ),
-      ),
+    queryFn: async () => readAcross(libraryIds, { ...options, limit: FIRST_PAGE, offset: 0 }),
     enabled: libraryIds.length > 0,
   });
 
@@ -227,8 +242,8 @@ const beginningOfEverything = (
  * Everything that matches a question in every library at once, however many that is, for the pages
  * that list a whole library rather than a taste of it.
  *
- * Asked as one query for the same reason as `across`, and answering with nothing for a library that
- * fails, and failing where every library does, for the same reasons too.
+ * Asked of every library together for the same reason as `across`, so the whole list is in one
+ * order rather than one library after another.
  *
  * @param libraryIds - The libraries to ask.
  * @param options - What is being asked of each, without a limit, since a limit is what this is for
@@ -241,9 +256,7 @@ const everything = (
 ) =>
   queryOptions({
     queryKey: [...LIBRARY, 'everything', [...libraryIds].sort(), options],
-    queryFn: async () => {
-      return readEachLibrary(libraryIds, async (libraryId) => readEveryItem(libraryId, options));
-    },
+    queryFn: async () => readEveryItem(libraryIds, options),
     enabled: libraryIds.length > 0,
   });
 

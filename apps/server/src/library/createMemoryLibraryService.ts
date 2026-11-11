@@ -327,6 +327,85 @@ const matchesFilters = (item: MediaDetail, options: ListItemsOptions): boolean =
 };
 
 /**
+ * The items of some libraries that survive what was asked for, in the order asked for, before any
+ * paging.
+ *
+ * @param state - The libraries and items held.
+ * @param viewer - Who is asking.
+ * @param libraryIds - The libraries to read, each already known to be within the viewer's reach.
+ * @param options - What was asked for.
+ * @returns The matching items.
+ */
+const itemsIn = (
+  state: MemoryState,
+  viewer: Viewer,
+  libraryIds: readonly string[],
+  options: ListItemsOptions,
+): MediaDetail[] => {
+  const search = options.search?.toLowerCase() ?? '';
+
+  const matching = state.media
+    .filter((item) => libraryIds.includes(item.libraryId))
+    .filter((item) => visible(state, viewer, item))
+    .filter((item) => search === '' || matchesSearch(item, search))
+    .filter(
+      (item) =>
+        options.kind === undefined ||
+        (options.kind === 'shows'
+          ? (item.metadata.seriesTitle ?? null) !== null
+          : (item.metadata.seriesTitle ?? null) === null),
+    )
+    .filter(
+      (item) => options.genre === undefined || (item.metadata.genres ?? []).includes(options.genre),
+    )
+    .filter((item) => matchesFilters(item, options))
+    .filter((item) =>
+      options.ids === undefined
+        ? (item.extraKind ?? null) === null &&
+          (options.withVersions === true || (item.parentId ?? null) === null)
+        : options.ids.includes(item.id),
+    )
+    .filter(
+      (item) =>
+        options.minYourStars === undefined ||
+        (state.starsFor?.(item.id) ?? 0) >= options.minYourStars,
+    )
+    .sort((left, right) => {
+      if (search !== '') {
+        const ranked =
+          searchRankOf([left.title, left.metadata.seriesTitle], search) -
+          searchRankOf([right.title, right.metadata.seriesTitle], search);
+
+        if (ranked !== 0) {
+          return ranked;
+        }
+
+        const rated = (right.metadata.rating ?? -1) - (left.metadata.rating ?? -1);
+
+        return rated === 0 ? left.title.localeCompare(right.title) : rated;
+      }
+
+      if (options.order === 'yourRating') {
+        const given = (state.starsFor?.(right.id) ?? 0) - (state.starsFor?.(left.id) ?? 0);
+
+        return given === 0 ? left.title.localeCompare(right.title) : given;
+      }
+
+      if (options.order === 'rated') {
+        const rated = (right.metadata.rating ?? -1) - (left.metadata.rating ?? -1);
+
+        return rated === 0 ? left.title.localeCompare(right.title) : rated;
+      }
+
+      return options.order === 'newest'
+        ? right.addedAt.localeCompare(left.addedAt)
+        : left.title.localeCompare(right.title);
+    });
+
+  return matching;
+};
+
+/**
  * A library held in memory, so the HTTP surface can be exercised without Postgres. Models the
  * behaviour the routes depend on — searching, filtering, paging, missing identifiers — in step with
  * the database version, since a test passing against different behaviour describes a server that
@@ -659,61 +738,17 @@ const createMemoryLibraryService = (
       return Promise.resolve(null);
     }
 
-    const search = options.search?.toLowerCase() ?? '';
+    const matching = itemsIn(state, viewer, [libraryId], options);
+    const items = matching.slice(options.offset, options.offset + options.limit).map(toSummary);
 
-    const matching = state.media
-      .filter((item) => item.libraryId === libraryId)
-      .filter((item) => visible(state, viewer, item))
-      .filter((item) => search === '' || matchesSearch(item, search))
-      .filter(
-        (item) =>
-          options.kind === undefined ||
-          (options.kind === 'shows'
-            ? (item.metadata.seriesTitle ?? null) !== null
-            : (item.metadata.seriesTitle ?? null) === null),
-      )
-      .filter(
-        (item) =>
-          options.genre === undefined || (item.metadata.genres ?? []).includes(options.genre),
-      )
-      .filter((item) => matchesFilters(item, options))
-      .filter((item) =>
-        options.ids === undefined
-          ? (item.extraKind ?? null) === null &&
-            (options.withVersions === true || (item.parentId ?? null) === null)
-          : options.ids.includes(item.id),
-      )
-      .filter(
-        (item) =>
-          options.minYourStars === undefined ||
-          (state.starsFor?.(item.id) ?? 0) >= options.minYourStars,
-      )
-      .sort((left, right) => {
-        if (search !== '') {
-          const ranked =
-            searchRankOf([left.title, left.metadata.seriesTitle], search) -
-            searchRankOf([right.title, right.metadata.seriesTitle], search);
+    return Promise.resolve({ items, total: matching.length });
+  },
 
-          if (ranked !== 0) {
-            return ranked;
-          }
-
-          const rated = (right.metadata.rating ?? -1) - (left.metadata.rating ?? -1);
-
-          return rated === 0 ? left.title.localeCompare(right.title) : rated;
-        }
-
-        if (options.order === 'yourRating') {
-          const given = (state.starsFor?.(right.id) ?? 0) - (state.starsFor?.(left.id) ?? 0);
-
-          return given === 0 ? left.title.localeCompare(right.title) : given;
-        }
-
-        return options.order === 'newest'
-          ? right.addedAt.localeCompare(left.addedAt)
-          : left.title.localeCompare(right.title);
-      });
-
+  listItemsAcross: (viewer, libraryIds, options) => {
+    const reached = state.libraries
+      .filter((entry) => libraryIds.includes(entry.id) && reaches(state, viewer, entry.id))
+      .map((entry) => entry.id);
+    const matching = itemsIn(state, viewer, reached, options);
     const items = matching.slice(options.offset, options.offset + options.limit).map(toSummary);
 
     return Promise.resolve({ items, total: matching.length });

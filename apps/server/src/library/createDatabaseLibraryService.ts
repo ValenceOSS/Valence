@@ -138,7 +138,6 @@ import {
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
   Library,
-  LibraryKind,
   MediaDetail,
   MediaSummary,
   PreviewMoment,
@@ -368,6 +367,10 @@ const orderingFor = (options: ListItemsOptions) => {
 
   if (options.order === 'yourRating' && options.profileId !== undefined) {
     return [nullsLast(yourStars(options.profileId), 'desc'), byTitle, asc(mediaItem.id)];
+  }
+
+  if (options.order === 'rated') {
+    return [nullsLast(mediaItem.rating, 'desc'), byTitle, asc(mediaItem.id)];
   }
 
   return [options.order === 'newest' ? desc(mediaItem.addedAt) : byTitle, asc(mediaItem.id)];
@@ -1089,65 +1092,126 @@ const createDatabaseLibraryService = ({
   };
 
   /**
-   * Whether a library exists as far as this viewer is concerned.
-   *
-   * Asked before a library's contents are listed, so that one an account may not reach — or one the
-   * person watching has hidden — answers as though it were never there rather than as an empty
-   * shelf. An empty shelf still says something exists, which is the thing this is for.
+   * The items of some libraries that survive what was asked for, checking every library in one
+   * read: a library the viewer cannot reach is left out, the hidden library of streamed films is
+   * read only for titles asked for by id, and a library of programmes holds no films.
    *
    * @param viewer - Who is asking.
-   * @param id - The library.
-   * @returns Whether to admit it exists.
+   * @param libraryIds - The libraries to read.
+   * @param options - What was asked for.
+   * @param isCounted - Whether to count every match, rather than only those on the page.
+   * @returns The libraries read, and the page of items with its total.
    */
-  /**
-   * What a library reads, so that asking it for the wrong sort of thing can answer with nothing.
-   *
-   * @param id - The library.
-   * @returns What it holds, or null where there is no such library.
-   */
-  const kindOfLibrary = async (id: string): Promise<LibraryKind | null> => {
-    const rows = await db
-      .select({ kind: library.kind })
-      .from(library)
-      .where(eq(library.id, id))
-      .limit(1);
-
-    const held = rows[0]?.kind;
-
-    if (held === undefined) {
-      return null;
+  const listItemsIn = async (
+    viewer: Viewer,
+    libraryIds: readonly string[],
+    options: ListItemsOptions,
+    isCounted: boolean,
+  ): Promise<{ read: string[]; items: MediaSummary[]; total: number }> => {
+    if (libraryIds.length === 0) {
+      return { read: [], items: [], total: 0 };
     }
 
-    const read = LibraryKindSchema.safeParse(held);
-
-    return read.success ? read.data : null;
-  };
-
-  /**
-   * Whether a library is the hidden one streamed films are kept in, which is listed only for the
-   * titles somebody asks for by id — what they are part way through and have watched.
-   *
-   * @param id - The library.
-   * @returns Whether it is.
-   */
-  const isStreamedLibrary = async (id: string): Promise<boolean> => {
-    const [row] = await db
-      .select({ isStreamed: library.isStreamed })
+    const libraries = await db
+      .select({ id: library.id, kind: library.kind, isStreamed: library.isStreamed })
       .from(library)
-      .where(eq(library.id, id))
-      .limit(1);
+      .where(
+        and(
+          inArray(library.id, [...libraryIds]),
+          or(
+            options.ids === undefined ? sql`false` : eq(library.isStreamed, true),
+            librariesVisibleToViewer(db, viewer),
+          ),
+        ),
+      );
 
-    return row?.isStreamed === true;
-  };
+    const kept = libraries.filter(
+      (one) =>
+        (options.ids !== undefined || !one.isStreamed) &&
+        !(options.kind === 'films' && one.kind === 'shows'),
+    );
+    const read = libraries.map((one) => one.id);
 
-  const libraryVisible = async (viewer: Viewer, id: string): Promise<boolean> => {
-    const rows = await db
-      .select({ one: sql<number>`1` })
-      .from(library)
-      .where(and(eq(library.id, id), librariesVisibleToViewer(db, viewer)))
-      .limit(1);
+    if (kept.length === 0) {
+      return { read, items: [], total: 0 };
+    }
 
-    return rows.length > 0;
+    const asksForStreamed = kept.some((one) => one.isStreamed);
+    const tracksWanted = audioTracksWanted(
+      options.audio ?? { languages: [], codecs: [], channels: [] },
+    );
+
+    const asked = [
+      inArray(
+        mediaItem.libraryId,
+        kept.map((one) => one.id),
+      ),
+      isNotATrack(db),
+      visibleToViewer(db, viewer, { includesStreamed: asksForStreamed }),
+      ...(options.search === undefined || options.search.trim() === ''
+        ? []
+        : [matchesSearch(options.search)]),
+      ...(options.kind === undefined
+        ? []
+        : options.kind === 'shows'
+          ? [isNotNull(mediaItem.seriesTitle)]
+          : [isNull(mediaItem.seriesTitle)]),
+      ...(options.genre === undefined || options.genre === ''
+        ? []
+        : [jsonContains(mediaItem.genres, [options.genre])]),
+      ...(options.genres === undefined || options.genres.length === 0
+        ? []
+        : [or(...options.genres.map((one) => jsonContains(mediaItem.genres, [one])))]),
+      ...(options.decades === undefined || options.decades.length === 0
+        ? []
+        : [
+            or(
+              ...options.decades.map((decade) =>
+                and(gte(mediaItem.year, decade), lte(mediaItem.year, decade + DECADE - 1)),
+              ),
+            ),
+          ]),
+      ...(tracksWanted.length === 0
+        ? []
+        : [or(...tracksWanted.map((one) => jsonContains(mediaItem.audioStreams, [one])))]),
+      ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
+      ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
+      ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
+      ...(options.seriesId === undefined ? [] : [eq(mediaItem.seriesId, options.seriesId)]),
+      ...(options.ids === undefined
+        ? [
+            isNull(mediaItem.extraKind),
+            ...(options.withVersions === true ? [] : [isNull(mediaItem.parentId)]),
+          ]
+        : options.ids.length === 0
+          ? [sql`false`]
+          : [inArray(mediaItem.id, options.ids)]),
+      ...(options.minYourStars === undefined || options.profileId === undefined
+        ? []
+        : [gte(yourStars(options.profileId), options.minYourStars)]),
+    ];
+
+    const filters = and(...asked);
+
+    const [rows, totals] = await Promise.all([
+      db
+        .select({
+          ...SUMMARY_COLUMNS,
+          sizeBytes: mediaItem.sizeBytes,
+          parentId: mediaItem.parentId,
+          versionLabel: mediaItem.versionLabel,
+        })
+        .from(mediaItem)
+        .where(filters)
+        .orderBy(...orderingFor(options))
+        .limit(options.limit)
+        .offset(options.offset),
+      isCounted ? db.select({ total: count() }).from(mediaItem).where(filters) : null,
+    ]);
+
+    const items = rows.map(summaryOfRow) satisfies MediaSummary[];
+
+    return { read, items, total: totals?.[0]?.total ?? options.offset + items.length };
   };
 
   /**
@@ -1857,86 +1921,20 @@ const createDatabaseLibraryService = ({
     },
 
     listItems: async (viewer, libraryId, options) => {
-      const asksForStreamed = options.ids !== undefined && (await isStreamedLibrary(libraryId));
+      const { read, items, total } = await listItemsIn(viewer, [libraryId], options, true);
 
-      if (!asksForStreamed && !(await libraryVisible(viewer, libraryId))) {
-        return null;
-      }
+      return read.length === 0 ? null : { items, total };
+    },
 
-      const holds = await kindOfLibrary(libraryId);
-      const tracksWanted = audioTracksWanted(
-        options.audio ?? { languages: [], codecs: [], channels: [] },
+    listItemsAcross: async (viewer, libraryIds, options) => {
+      const { items, total } = await listItemsIn(
+        viewer,
+        libraryIds,
+        options,
+        options.counted !== false,
       );
 
-      const asked = [
-        eq(mediaItem.libraryId, libraryId),
-        isNotATrack(db),
-        visibleToViewer(db, viewer, { includesStreamed: asksForStreamed }),
-        ...(options.search === undefined || options.search.trim() === ''
-          ? []
-          : [matchesSearch(options.search)]),
-        ...(options.kind === undefined
-          ? []
-          : options.kind === 'shows'
-            ? [isNotNull(mediaItem.seriesTitle)]
-            : holds === 'shows'
-              ? [sql`false`]
-              : [isNull(mediaItem.seriesTitle)]),
-        ...(options.genre === undefined || options.genre === ''
-          ? []
-          : [jsonContains(mediaItem.genres, [options.genre])]),
-        ...(options.genres === undefined || options.genres.length === 0
-          ? []
-          : [or(...options.genres.map((one) => jsonContains(mediaItem.genres, [one])))]),
-        ...(options.decades === undefined || options.decades.length === 0
-          ? []
-          : [
-              or(
-                ...options.decades.map((decade) =>
-                  and(gte(mediaItem.year, decade), lte(mediaItem.year, decade + DECADE - 1)),
-                ),
-              ),
-            ]),
-        ...(tracksWanted.length === 0
-          ? []
-          : [or(...tracksWanted.map((one) => jsonContains(mediaItem.audioStreams, [one])))]),
-        ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
-        ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
-        ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
-        ...(options.seriesId === undefined ? [] : [eq(mediaItem.seriesId, options.seriesId)]),
-        ...(options.ids === undefined
-          ? [
-              isNull(mediaItem.extraKind),
-              ...(options.withVersions === true ? [] : [isNull(mediaItem.parentId)]),
-            ]
-          : options.ids.length === 0
-            ? [sql`false`]
-            : [inArray(mediaItem.id, options.ids)]),
-        ...(options.minYourStars === undefined || options.profileId === undefined
-          ? []
-          : [gte(yourStars(options.profileId), options.minYourStars)]),
-      ];
-
-      const filters = and(...asked);
-
-      const [totals] = await db.select({ total: count() }).from(mediaItem).where(filters);
-
-      const rows = await db
-        .select({
-          ...SUMMARY_COLUMNS,
-          sizeBytes: mediaItem.sizeBytes,
-          parentId: mediaItem.parentId,
-          versionLabel: mediaItem.versionLabel,
-        })
-        .from(mediaItem)
-        .where(filters)
-        .orderBy(...orderingFor(options))
-        .limit(options.limit)
-        .offset(options.offset);
-
-      const items = rows.map(summaryOfRow) satisfies MediaSummary[];
-
-      return { items, total: totals?.total ?? 0 };
+      return { items, total };
     },
 
     correctMatch: async (mediaId, reference, by) => {
