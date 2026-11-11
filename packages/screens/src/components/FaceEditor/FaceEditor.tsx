@@ -23,8 +23,8 @@ const UNFRAMED: PhotoFrame = { zoom: 1, x: 0, y: 0 };
 
 /**
  * Where making a face begins: the kind of face somebody has now, so opening the editor shows what
- * they already have rather than a blank slate. An orb or a drawing, which can no longer be made, is
- * the picture it was saved as, so it opens on the photo studio.
+ * they already have rather than a blank slate. An orb or a drawing, which the editor does not make,
+ * is the picture it was saved as, so it opens on the photo studio.
  *
  * @param avatar - The face they have.
  */

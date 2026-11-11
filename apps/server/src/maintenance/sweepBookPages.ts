@@ -47,8 +47,8 @@ const isKeptPage = (name: string): boolean => {
  * on the shelf any more. A page is kept the first time it is read and nothing else ever removes one,
  * so without this the cache grows toward the size of the library it serves.
  *
- * Inside a chapter still being read, it also removes pages the cache no longer makes — full-size
- * copies, and widths from before they were rounded — and then puts the chapter's last-read time back,
+ * Inside a chapter still being read, it also removes pages the cache does not make — full-size
+ * copies, and widths that are not rounded — and then puts the chapter's last-read time back,
  * since tidying a folder is not somebody reading it.
  *
  * @param options - Where pages are kept, the shelf saying which chapters are still on it, and how

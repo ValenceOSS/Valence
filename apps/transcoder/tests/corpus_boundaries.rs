@@ -358,11 +358,10 @@ fn predicts_the_segments_ffmpeg_actually_writes() {
 /// Copying is refused exactly when the segments it would produce are unusable.
 ///
 /// The segments that count are the ones the muxer writes, which is one per
-/// keyframe whether or not that keyframe carries leading pictures. This test
-/// used to measure the other thing — the lengths left after passing those
-/// keyframes over — and a fixture with open GOPs far apart failed it at 60s
-/// while its real segments are well inside the limit. Valence no longer passes
-/// them over, so neither does this. See VAL-145.
+/// keyframe whether or not that keyframe carries leading pictures. Valence does
+/// not pass those keyframes over, so neither does this: measuring the lengths
+/// left after passing them over would fail a fixture with open GOPs far apart
+/// at 60s while its real segments are well inside the limit. See VAL-145.
 ///
 /// A closed-GOP source with keyframes every two seconds should never trip it.
 #[test]

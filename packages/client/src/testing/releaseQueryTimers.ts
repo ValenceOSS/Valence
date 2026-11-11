@@ -23,9 +23,9 @@ const unreferenced = <TTimer>(timer: TTimer): TTimer => {
  *
  * A cache clears out what nobody is using after five minutes, on a timer set the moment data goes
  * in. A test that fills a cache and finishes leaves those timers behind, and Jest will not exit
- * while one is pending: the run finished in a minute and a half and then sat, finished, until the
- * last of them fired, and the push it was part of sat with it. The clearing out still happens
- * whenever a process lasts that long; it is only no longer a reason for one to last.
+ * while one is pending, so a run that finishes in a minute and a half would sit, finished, until the
+ * last of them fired. The clearing out still happens whenever a process lasts that long; it is just
+ * never a reason for one to last.
  */
 const releaseQueryTimers = (): void => {
   timeoutManager.setTimeoutProvider({

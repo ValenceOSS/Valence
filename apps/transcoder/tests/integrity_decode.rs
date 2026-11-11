@@ -80,8 +80,8 @@ async fn accepts_a_clip_that_plays() {
 /// Halfway through lands inside the encoded frames rather than the container,
 /// so the file still describes a whole clip of the right length and dimensions
 /// and still reports a plausible size. That is the shape of the fault this
-/// guards against: everything the old check looked at stays correct, and only
-/// decoding reveals it.
+/// guards against: the container, the length and the size all stay correct,
+/// and only decoding reveals it.
 fn damage_the_bitstream(path: &Path) {
     let size = std::fs::metadata(path).expect("reads the fixture").len();
 

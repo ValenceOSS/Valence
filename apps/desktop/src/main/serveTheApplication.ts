@@ -277,8 +277,8 @@ const aPage = (page: Buffer): Response =>
  * release will.
  *
  * Vite serves its own inline module scripts, so those are allowed here and nowhere else. Every other
- * rule is the release's own: a page that only drew its cast portraits in development, because nothing
- * there refused them, is how a release went out without any.
+ * rule is the release's own, so anything a release refuses, such as a picture from a host it does
+ * not allow, is refused in development too rather than first being missed in a release.
  *
  * A page that arrived packed has already been unpacked on the way, so it no longer is what its
  * encoding and length say, and both are dropped.

@@ -73,9 +73,8 @@ const HOME: Place = {
  * edit, share and keep, and a bad one should arrive somewhere sensible.
  *
  * An account is a dialog rather than a section, so `/account` arrives at the home page with the
- * dialog open rather than at a page that is no longer there. Search is a page of its own, and the
- * `?search=open` links people already hold arrive there rather than raising a sheet that no longer
- * exists. `/admin` is a real page of its own now, handled by the router before this is ever asked.
+ * dialog open. Search is a page of its own, and `?search=open` links arrive there. `/admin` is a
+ * real page of its own, handled by the router before this is ever asked.
  *
  * @param pathname - The path, which decides the section and what is playing.
  * @param query - What sat after the question mark, however the router handed it over.

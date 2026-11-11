@@ -286,11 +286,11 @@ pub fn parse_cuts(csv: &str, duration_seconds: f64) -> Keyframes {
 /// That is not a rule anybody would choose. It is `hlsenc.c`'s, and the
 /// playlist has to describe what ffmpeg will really write rather than what
 /// would be tidy. Catching the target up to the last cut — which is the
-/// obvious reading, and what this did — predicted the film's first seventeen
-/// segments exactly and then drifted: 621 seconds declared against 497 seconds
-/// produced across 94 segments, so the playlist ran out before the film did
-/// and every seek landed further from where it was dropped. Following the
-/// muxer instead matches all 94.
+/// obvious reading — predicts one film's first seventeen segments exactly and
+/// then drifts: 621 seconds declared against 497 seconds produced across 94
+/// segments, so the playlist runs out before the film does and every seek lands
+/// further from where it was dropped. Following the muxer instead matches all
+/// 94.
 ///
 /// The result is what the playlist must declare. Declaring the requested
 /// length instead would be a lie the player discovers one segment in.
@@ -441,7 +441,7 @@ pub fn group_span(groups: &[u32], offered: usize) -> Option<(u64, u64)> {
 /// Measured on the Bluray remux: a run restarted at segment 596 agreed with a
 /// run from the beginning for nine segments and then diverged, and one
 /// restarted at segment 400 diverged immediately — so after a seek the
-/// playlist described a film the transcode was no longer producing.
+/// playlist would describe a film the transcode is not producing.
 ///
 /// Asking for less than the closest pair of keyframes takes the target out of
 /// it: every keyframe then satisfies it, so every run cuts at every keyframe

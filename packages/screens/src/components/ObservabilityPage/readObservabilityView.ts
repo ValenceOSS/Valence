@@ -4,8 +4,8 @@ import type { ObservabilityView } from '@ValenceClient/admin/ObservabilitySearch
 /**
  * Reads which view of the jobs and logs page an address asked to open on.
  *
- * The page is served at `/admin/jobs` now, and what used to be `/admin/logs` opens its log, so a
- * link or a bookmark made before the two were joined still lands where it meant to.
+ * The page is served at `/admin/jobs`, and `/admin/logs` opens its log, so a link or a bookmark to
+ * either lands where it meant to.
  *
  * @param view - What the address's `view` said, if it said anything.
  * @param panel - Which panel the address named.

@@ -9,11 +9,10 @@ import type { TrickplayPreviewProps } from './TrickplayPreview.types';
  * comes from the sprite sheet built when the item was scanned — one image holding every thumbnail,
  * so the right frame is found by offsetting the background rather than by fetching anything.
  *
- * The time is always shown and the frame is not. Sheets are built in the background, a position
- * part-way through a sheet still being written has no thumbnail, and both used to remove the whole
- * panel — so the one piece of information that never needs a sheet went missing along with the one
- * that does, and hovering the bar appeared to do nothing at all. An empty frame of the right size
- * also keeps the panel from changing shape as sheets arrive.
+ * The time is always shown and the frame is not. Sheets are built in the background, and a position
+ * part-way through a sheet still being written has no thumbnail; neither takes the time away with
+ * it, since the time never needs a sheet. An empty frame of the right size keeps the panel from
+ * changing shape as sheets arrive.
  *
  * The marked stretch the pointer is over, an intro or the credits, is named beside the time, in the
  * colour it is shaded on the timeline.

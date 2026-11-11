@@ -9,10 +9,10 @@ const CHUNK_BYTES = 1024 * 1024;
 /**
  * Reads a media file straight off the disk for direct play, a mebibyte at a time.
  *
- * Direct play used to ask the media service for the file and pass along what came back, so every
- * byte crossed a socket and three kinds of stream inside this process. On a NAS with a slow
- * processor that cost most of the speed: the media service read a file at 143 MB/s and the server
- * passed it on at 8 MB/s, which a player fetching ahead runs short on. The server and the media
+ * Passing along what the media service reads would send every byte across a socket and three kinds
+ * of stream inside this process, which on a NAS with a slow processor costs most of the speed: a
+ * file the media service reads at 143 MB/s reaches the player at 8 MB/s, which a player fetching
+ * ahead runs short on. The server and the media
  * service share the library's folders, so the server reads the file itself, in chunks big enough
  * that the work per chunk stops mattering.
  *

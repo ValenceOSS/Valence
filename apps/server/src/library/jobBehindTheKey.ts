@@ -4,10 +4,9 @@ import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
  * Answers with the job that will do this work, whether this call is what started it.
  *
  * A queue holds one job of a kind for a library at a time, so asking twice gets nothing back the
- * second time. The answer used to be an invented id — `pending-<library>` — which was worse than
- * no answer: nothing has that id, so reading its state says "unknown", the client treats unknown
- * as finished and stops watching, and the work carries on untracked. Cancelling it answered 404
- * while it ran.
+ * second time. An invented id in its place would be worse than no answer: nothing would have that
+ * id, so reading its state would say "unknown", the client treats unknown as finished and stops
+ * watching, and the work would carry on untracked, with cancelling it answering 404 while it ran.
  *
  * So the job already holding the key is found and returned instead. The caller asked who is doing
  * this, and there is always a real answer.

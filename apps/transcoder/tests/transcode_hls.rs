@@ -579,10 +579,8 @@ async fn starts_one_transcode_when_two_viewers_ask_at_once() {
 /// Scrubbing must not leave two requests fighting over the transcode.
 ///
 /// A request that has been abandoned — the viewer scrubbed on, but its wait
-/// has not run out — used to drag the run back to itself on every poll, while
-/// the live request dragged it forward. Measured in one scrubbing session:
-/// 1750 runs, the last dozen alternating between segment 355 and segment 570,
-/// and both requests refused in the end.
+/// has not run out — must not drag the run back to itself on every poll while
+/// the live request drags it forward, or the two fight until both are refused.
 ///
 /// The newest asker steers. The older one takes what it can get.
 #[tokio::test]
@@ -890,8 +888,8 @@ async fn reports_capabilities_over_http() {
 /// The playlist describes the film, not the part of it that has been made.
 ///
 /// A player given a playlist that grows as segments appear can only seek
-/// within what has already been transcoded, which is why seeking used to start
-/// a second transcode of the remainder. This one names every segment of a two
+/// within what has already been transcoded, and seeking past it starts a second
+/// transcode of the remainder. This one names every segment of a two
 /// minute source while almost none of them exist, and declares how long the
 /// film runs before any of it has been produced.
 #[tokio::test]
