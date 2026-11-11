@@ -47,7 +47,6 @@ const ArtCard = ({
         <img
           src={imageUrl}
           alt=""
-          loading="lazy"
           decoding="async"
           draggable={false}
           className={`absolute inset-0 size-full object-cover ${
@@ -64,7 +63,6 @@ const ArtCard = ({
         <img
           src={logoUrl}
           alt=""
-          loading="lazy"
           decoding="async"
           draggable={false}
           className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
