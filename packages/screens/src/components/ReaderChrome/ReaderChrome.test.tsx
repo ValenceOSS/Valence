@@ -11,17 +11,16 @@ const draw = (overrides: Partial<Parameters<typeof ReaderChrome>[0]> = {}) => {
     onForward: vi.fn(),
     onBack: vi.fn(),
     onClose: vi.fn(),
-    onPanelOpenChange: vi.fn(),
+    onToggle: vi.fn(),
   };
 
   render(
     <ReaderChrome
-      title="Emma — Chapter I."
+      title="Emma"
+      place="Chapter I."
       isShown
       isRightToLeft={false}
-      panel={<span>The panel</span>}
-      isPanelOpen={false}
-      isPanelPinned={false}
+      actions={<span>The menus</span>}
       footer={<span>The footer</span>}
       {...handlers}
       {...overrides}
@@ -38,11 +37,12 @@ afterEach(() => {
 });
 
 describe('ReaderChrome', () => {
-  it('shows the title, the page and the footer, and keeps the panel away until asked', () => {
+  it('shows the title, the place, the menus, the page and the footer', () => {
     draw();
 
-    expect(screen.getByText('Emma — Chapter I.')).toBeInTheDocument();
-    expect(screen.queryByText('The panel')).not.toBeInTheDocument();
+    expect(screen.getByText('Emma')).toBeInTheDocument();
+    expect(screen.getByText('Chapter I.')).toBeInTheDocument();
+    expect(screen.getByText('The menus')).toBeInTheDocument();
     expect(screen.getByText('The page')).toBeInTheDocument();
     expect(screen.getByText('The footer')).toBeInTheDocument();
   });
@@ -88,37 +88,20 @@ describe('ReaderChrome', () => {
     expect(ReaderChrome.displayName).toBe('ReaderChrome');
   });
 
-  it('brings out the panel when asked', async () => {
-    const { onPanelOpenChange } = draw();
+  it('puts the bars away or brings them back when the page itself is clicked', async () => {
+    const { onToggle } = draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+    await userEvent.click(screen.getByText('The page'));
 
-    expect(onPanelOpenChange).toHaveBeenCalledWith(true);
+    expect(onToggle).toHaveBeenCalledOnce();
   });
 
-  it('shows a pinned panel beside the page, with nothing over the page to put it away', () => {
-    draw({ isPanelOpen: true, isPanelPinned: true });
+  it('leaves the bars alone when a control on the page is pressed', async () => {
+    const { onToggle } = draw();
 
-    expect(screen.getByText('The panel')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Close panel' })).toHaveLength(1);
-  });
+    await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
 
-  it('puts a loose panel away when the page is touched', async () => {
-    const { onPanelOpenChange } = draw({ isPanelOpen: true, isPanelPinned: false });
-
-    const [, overThePage] = screen.getAllByRole('button', { name: 'Close panel' });
-
-    if (overThePage !== undefined) {
-      await userEvent.click(overThePage);
-    }
-
-    expect(onPanelOpenChange).toHaveBeenCalledWith(false);
-  });
-
-  it('keeps the bars showing while the panel is out', () => {
-    draw({ isShown: false, isPanelOpen: true, isPanelPinned: true });
-
-    expect(screen.getByRole('banner', { hidden: true })).not.toHaveClass('pointer-events-none');
+    expect(onToggle).not.toHaveBeenCalled();
   });
 
   it('has no edges to turn from where the page is a strip to scroll', () => {

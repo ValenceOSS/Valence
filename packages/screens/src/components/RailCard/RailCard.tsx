@@ -18,7 +18,6 @@ import { MediaCard } from '@ValenceUI/MediaCard';
 import { ArtCard } from '@ValenceUI/ArtCard';
 import { Badge } from '@ValenceUI/Badge';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { liquidSpring } from '@ValenceUI/animations/reveal';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { useQuery } from '@tanstack/react-query';
@@ -33,16 +32,62 @@ import type { RailCardProps } from './RailCard.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
-const HOVER_DELAY_MILLISECONDS = 600;
+const HOVER_DELAY_MILLISECONDS = 350;
 
-const GROWTH = 1.18;
+const FRAME = 6;
 
 const MARGIN = 12;
 
-const POSTER_POPOUT_REM = 22;
+const GROWS_BY = 1.3;
+
+const STILL_FADES_MS = 700;
+
+const UNFOLDS_OVER_MS = 280;
+
+const UNFOLDS_ALONG = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
+const AT_REST = 'inset(0px 0px 0px 0px round 12px)';
+
+const DETAILS_RISE = { duration: 0.26, delay: 0.14, ease: [0.32, 0.72, 0, 1] } as const;
+
+const FRAME_WAITS_MS = 60;
+
+const SHIFTS_OVER_MS = 300;
+
+const MARK_STAYS_PLAYING_MS = 500;
+
+const MARK_FADES_MS = 320;
+
+const FOLDS_OVER_MS = 260;
+
+const FADES_AT = 0.85;
+
+const LIFTS_OVER_MS = 340;
+
+const LIFTS_FROM = '0 0px 0px 0px color-mix(in oklab, var(--color-shade) 0%, transparent)';
+
+const LIFTS_TO = '0 24px 48px -16px color-mix(in oklab, var(--color-shade) 70%, transparent)';
+
+const SETTLES_TO = '0 12px 28px -16px color-mix(in oklab, var(--color-shade) 55%, transparent)';
+
+const QUICK_DELAY_MILLISECONDS = 120;
+
+const STILL_WARM_MILLISECONDS = 500;
+
+const OPENED: { lastClosedAt: number; isOpen: boolean; owner: symbol | null } = {
+  lastClosedAt: 0,
+  isOpen: false,
+  owner: null,
+};
+
+const WAITS_ITS_TURN_MS = 60;
+
+const SLACK = 1;
 
 const GENRE_LIMIT = 3;
-type Anchor = { left: number; top: number; width: number };
+type Spot = { left: number; top: number; width: number; picture: number };
+
+type Anchor = Spot & { card: Spot };
 
 type Extra = {
   id: string;
@@ -53,23 +98,102 @@ type Extra = {
 };
 
 /**
- * Places an opened card over the one it grew from, so it expands from where the pointer already is
- * rather than appearing somewhere else.
+ * Places an opened card centred over the one it grew from and larger than it, a thin frame wider
+ * all round, so the picture grows out of where it was and what the card has to say unfolds from it.
  *
  * @param rect - Where the resting card sits.
- * @returns Where to put the opened one.
- * @param fewest - The narrowest it may be, for a card too narrow to hold a picture that lies flat.
+ * @param picture - How tall the resting card's picture is, so the opened one keeps its shape.
+ * @returns Where to put the opened one, how tall its picture is, and where the resting card was.
  */
-const placeOver = (rect: DOMRect, fewest = 0): Anchor => {
-  const width = Math.max(rect.width * GROWTH, fewest);
-  const centred = rect.left + rect.width / 2 - width / 2;
+const placeOver = (rect: DOMRect, picture: number): Anchor => {
+  const grown = Math.min(rect.width * GROWS_BY, window.innerWidth - (MARGIN + FRAME) * 2);
+  const width = grown + FRAME * 2;
   const furthest = window.innerWidth - width - MARGIN;
+  const tall = picture * (grown / rect.width);
 
   return {
     width,
-    left: Math.min(Math.max(centred, MARGIN), Math.max(furthest, MARGIN)),
-    top: rect.top - (rect.height * (GROWTH - 1)) / 2,
+    left: Math.min(
+      Math.max(rect.left + rect.width / 2 - width / 2, MARGIN),
+      Math.max(furthest, MARGIN),
+    ),
+    top: rect.top + picture / 2 - tall / 2 - FRAME,
+    picture: tall,
+    card: { left: rect.left, top: rect.top, width: rect.width, picture },
   };
+};
+
+/**
+ * Where a frame's clip leaves only the resting card's picture showing, inside an opened card's box.
+ *
+ * @param card - Where the resting card's picture is.
+ * @param box - Where the opened card is.
+ * @returns The clip.
+ */
+const clipAround = (card: DOMRectReadOnly, box: DOMRectReadOnly): string =>
+  `inset(${(card.top - box.top).toString()}px ${(box.right - card.right).toString()}px ${Math.max(
+    box.bottom - card.bottom,
+    0,
+  ).toString()}px ${(card.left - box.left).toString()}px round 6px)`;
+
+/**
+ * How far to move and shrink an opened card's picture, pinned at its top left corner, to lie over the
+ * resting card's.
+ *
+ * @param card - Where the resting card's picture is.
+ * @param laid - Where the opened card's picture is laid out, unmoved.
+ * @param share - How much of the way to go, from none to all of it.
+ * @returns The transform.
+ */
+const shrinkOnto = (card: DOMRectReadOnly, laid: DOMRectReadOnly, share = 1): string => {
+  const scale = 1 + (card.width / laid.width - 1) * share;
+
+  return `translate(${((card.left - laid.left) * share).toString()}px, ${(
+    (card.top - laid.top) *
+    share
+  ).toString()}px) scale(${scale.toString()})`;
+};
+
+/**
+ * Whether a card can be seen whole: inside the window and inside every box around it that cuts off
+ * what overflows, such as the row it scrolls in. A card half off the end of a row is not one a
+ * pointer meant to open.
+ *
+ * @param element - The resting card.
+ * @returns Whether every edge of it is in view.
+ */
+const isWhollyInView = (element: HTMLElement): boolean => {
+  const rect = element.getBoundingClientRect();
+
+  if (
+    rect.left < -SLACK ||
+    rect.top < -SLACK ||
+    rect.right > window.innerWidth + SLACK ||
+    rect.bottom > window.innerHeight + SLACK
+  ) {
+    return false;
+  }
+
+  for (let around = element.parentElement; around !== null; around = around.parentElement) {
+    const style = getComputedStyle(around);
+
+    if (style.overflowX === 'visible' && style.overflowY === 'visible') {
+      continue;
+    }
+
+    const box = around.getBoundingClientRect();
+
+    if (
+      rect.left < box.left - SLACK ||
+      rect.right > box.right + SLACK ||
+      rect.top < box.top - SLACK ||
+      rect.bottom > box.bottom + SLACK
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 /**
@@ -174,19 +298,140 @@ const RailCard = ({
   const cardOrigin = useCardOrigin();
   const prefersReducedMotion = useReducedMotionConfig();
 
-  const close = useCallback(() => {
-    setAnchor(null);
-  }, []);
+  const closingRef = useRef(0);
 
-  useEffect(() => {
-    if (anchor === null) {
+  const selfRef = useRef(Symbol('rail-card'));
+  const isClosingRef = useRef(false);
+
+  const close = useCallback(() => {
+    OPENED.isOpen = false;
+    OPENED.lastClosedAt = performance.now();
+
+    const panel = panelRef.current;
+    const frame = frameRef.current;
+    const picture = pictureRef.current;
+    const details = detailsRef.current;
+    const holder = holderRef.current;
+
+    if (isClosingRef.current) {
       return;
     }
 
-    window.addEventListener('scroll', close, { capture: true, passive: true });
+    if (
+      panel === null ||
+      frame === null ||
+      picture === null ||
+      holder === null ||
+      prefersReducedMotion === true
+    ) {
+      setAnchor(null);
+
+      return;
+    }
+
+    isClosingRef.current = true;
+
+    const closing = closingRef.current + 1;
+
+    closingRef.current = closing;
+
+    for (const running of [panel, frame, picture, markRef.current, stillRef.current, details]) {
+      if (running === null) {
+        continue;
+      }
+
+      for (const animation of running.getAnimations()) {
+        animation.commitStyles();
+        animation.cancel();
+      }
+    }
+
+    panel.style.setProperty('pointer-events', 'none');
+
+    const resting = (holder.querySelector('[class*="aspect-"]') ?? holder).getBoundingClientRect();
+    const box = panel.getBoundingClientRect();
+    const laid = new DOMRectReadOnly(
+      box.left + picture.offsetLeft,
+      box.top + picture.offsetTop,
+      picture.offsetWidth,
+      picture.offsetHeight,
+    );
+    const now = getComputedStyle(picture);
+    const along = { duration: FOLDS_OVER_MS, easing: UNFOLDS_ALONG, fill: 'forwards' } as const;
+    const shownNow = (element: HTMLElement) => Number(getComputedStyle(element).opacity);
+    const panelShown = shownNow(panel);
+
+    const folding = [
+      frame.animate(
+        [{ clipPath: getComputedStyle(frame).clipPath }, { clipPath: clipAround(resting, box) }],
+        along,
+      ),
+      picture.animate(
+        [
+          { transform: now.transform, boxShadow: now.boxShadow },
+          { transform: shrinkOnto(resting, laid), boxShadow: LIFTS_FROM },
+        ],
+        along,
+      ),
+      panel.animate(
+        [{ opacity: panelShown }, { opacity: panelShown, offset: FADES_AT }, { opacity: 0 }],
+        { duration: FOLDS_OVER_MS, fill: 'forwards' },
+      ),
+      ...(details === null
+        ? []
+        : [
+            details.animate([{ opacity: shownNow(details) }, { opacity: 0 }], {
+              duration: 100,
+              fill: 'forwards',
+            }),
+          ]),
+      ...[markRef.current, stillRef.current].flatMap((cover) =>
+        cover === null
+          ? []
+          : [
+              cover.animate([{ opacity: shownNow(cover) }, { opacity: 1 }], {
+                duration: FOLDS_OVER_MS * 0.7,
+                easing: 'ease-out',
+                fill: 'forwards',
+              }),
+            ],
+      ),
+    ];
+
+    void Promise.all(folding.map((animation) => animation.finished))
+      .catch(() => undefined)
+      .then(() => {
+        if (closingRef.current === closing) {
+          isClosingRef.current = false;
+          setAnchor(null);
+        }
+      });
+  }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    const holder = holderRef.current;
+
+    if (anchor === null || holder === null) {
+      return;
+    }
+
+    const scrolled = () => {
+      const panel = panelRef.current;
+      const rect = holder.getBoundingClientRect();
+
+      panel?.style.setProperty(
+        'translate',
+        [rect.left - anchor.card.left, rect.top - anchor.card.top]
+          .map((moved) => `${moved.toString()}px`)
+          .join(' '),
+      );
+      close();
+    };
+
+    window.addEventListener('scroll', scrolled, { capture: true, passive: true });
 
     return () => {
-      window.removeEventListener('scroll', close, { capture: true });
+      window.removeEventListener('scroll', scrolled, { capture: true });
     };
   }, [anchor, close]);
 
@@ -212,11 +457,28 @@ const RailCard = ({
     isWatchedThrough(show, () => true, new Date().toISOString().slice(0, 10));
   const shownFraction = isSeries ? (isSeenThrough ? 1 : undefined) : watchedFraction;
 
-  const told = isSeries ? null : (detail?.metadata.overview ?? null);
+  const told = isSeries ? (show?.overview ?? null) : (detail?.metadata.overview ?? null);
+
+  const rated = isSeries ? show : (detail?.metadata ?? null);
+  const ageRating =
+    rated === null ||
+    rated.certification === null ||
+    rated.certification === undefined ||
+    rated.certification === '' ||
+    rated.certificationRegion === null ||
+    rated.certificationRegion === undefined
+      ? null
+      : { certification: rated.certification, region: rated.certificationRegion };
 
   const genres = isSeries ? (show?.genres ?? []) : (detail?.metadata.genres ?? []);
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLSpanElement>(null);
+  const pictureRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const stillRef = useRef<HTMLImageElement>(null);
+  const markRef = useRef<HTMLSpanElement>(null);
+  const markTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMenuOpenRef = useRef(false);
 
   const extras: Extra[] = [
@@ -253,7 +515,6 @@ const RailCard = ({
             label: say('screens.railCard.removeFromContinueWatching'),
             icon: <Icon of={XIcon} size={17} />,
             onChoose: () => {
-              close();
               onDismiss(media);
             },
           },
@@ -279,38 +540,121 @@ const RailCard = ({
       return;
     }
 
-    const fit = () => {
-      const fitted = fitInside(anchor.top, panel.offsetHeight);
+    const place = () => {
+      const top = fitInside(anchor.top, panel.offsetHeight);
 
-      if (Math.abs(fitted - anchor.top) > 1) {
-        setAnchor({ ...anchor, top: fitted });
-      }
+      panel.style.setProperty('top', `${top.toString()}px`);
+
+      return top;
     };
 
-    fit();
+    const top = place();
 
-    const watcher = new ResizeObserver(fit);
+    const frame = frameRef.current;
+    const picture = pictureRef.current;
+
+    if (prefersReducedMotion !== true && frame !== null && picture !== null) {
+      const card = new DOMRectReadOnly(
+        anchor.card.left,
+        anchor.card.top,
+        anchor.card.width,
+        anchor.card.picture,
+      );
+      const box = new DOMRectReadOnly(anchor.left, top, anchor.width, panel.offsetHeight);
+      const laid = new DOMRectReadOnly(
+        anchor.left + FRAME,
+        top + FRAME,
+        anchor.width - FRAME * 2,
+        anchor.picture,
+      );
+
+      picture.animate(
+        [
+          { transform: shrinkOnto(card, laid), boxShadow: LIFTS_FROM },
+          { transform: shrinkOnto(card, laid, 0.6), boxShadow: LIFTS_TO, offset: 0.4 },
+          { transform: 'translate(0px, 0px) scale(1)', boxShadow: SETTLES_TO },
+        ],
+        { duration: LIFTS_OVER_MS, easing: UNFOLDS_ALONG, fill: 'forwards' },
+      );
+
+      frame.animate([{ clipPath: clipAround(card, box) }, { clipPath: AT_REST }], {
+        duration: UNFOLDS_OVER_MS,
+        delay: FRAME_WAITS_MS,
+        easing: UNFOLDS_ALONG,
+        fill: 'backwards',
+      });
+    }
+
+    let placedAt = top;
+
+    const watcher = new ResizeObserver(() => {
+      const was = placedAt;
+
+      placedAt = place();
+
+      if (prefersReducedMotion !== true && Math.abs(was - placedAt) > SLACK) {
+        panel.animate(
+          [
+            { transform: `translateY(${(was - placedAt).toString()}px)` },
+            { transform: 'translateY(0px)' },
+          ],
+          { duration: SHIFTS_OVER_MS, easing: UNFOLDS_ALONG, composite: 'add' },
+        );
+      }
+    });
 
     watcher.observe(panel);
 
     return () => {
       watcher.disconnect();
     };
-  }, [anchor]);
+  }, [anchor, prefersReducedMotion]);
 
   const open = useCallback(() => {
     const holder = holderRef.current;
 
-    if (holder === null || !growsOnHover || prefersReducedMotion === true || !hasFinePointer()) {
-      return;
+    if (holder === null || !growsOnHover || !hasFinePointer() || !isWhollyInView(holder)) {
+      return true;
     }
 
-    const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    if (isClosingRef.current || (OPENED.owner !== null && OPENED.owner !== selfRef.current)) {
+      return !holder.matches(':hover');
+    }
+
+    if (panelRef.current !== null) {
+      return true;
+    }
+
+    OPENED.owner = selfRef.current;
+
+    const rect = holder.getBoundingClientRect();
+
+    OPENED.isOpen = true;
 
     setAnchor(
-      placeOver(holder.getBoundingClientRect(), shape === 'poster' ? POSTER_POPOUT_REM * rem : 0),
+      placeOver(
+        rect,
+        holder.querySelector('[class*="aspect-"]')?.getBoundingClientRect().height ?? rect.height,
+      ),
     );
-  }, [growsOnHover, prefersReducedMotion, shape]);
+
+    return true;
+  }, [growsOnHover]);
+
+  useEffect(() => {
+    if (anchor === null && OPENED.owner === selfRef.current) {
+      OPENED.owner = null;
+    }
+  }, [anchor]);
+
+  useEffect(
+    () => () => {
+      if (OPENED.owner === selfRef.current) {
+        OPENED.owner = null;
+      }
+    },
+    [],
+  );
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -335,6 +679,8 @@ const RailCard = ({
       ? artworkUrl(media.id, 'poster', drawsLarge ? {} : { size: 'small' })
       : wideUrl;
 
+  const coversOpening = look === 'art' || restingUrl === wideUrl;
+
   return (
     <div
       ref={holderRef}
@@ -345,7 +691,17 @@ const RailCard = ({
         }
 
         cancel();
-        timerRef.current = setTimeout(open, hoverDelayMilliseconds);
+
+        const tryOpening = () => {
+          timerRef.current = open() ? null : setTimeout(tryOpening, WAITS_ITS_TURN_MS);
+        };
+
+        timerRef.current = setTimeout(
+          tryOpening,
+          OPENED.isOpen || performance.now() - OPENED.lastClosedAt < STILL_WARM_MILLISECONDS
+            ? Math.min(QUICK_DELAY_MILLISECONDS, hoverDelayMilliseconds)
+            : hoverDelayMilliseconds,
+        );
       }}
       onPointerLeave={() => {
         cancel();
@@ -360,6 +716,7 @@ const RailCard = ({
           {...(shownFraction === undefined ? {} : { watchedFraction: shownFraction })}
           {...(href === undefined ? {} : { href })}
           onSelect={inspect}
+          isStill={growsOnHover}
           className="w-full"
         />
       ) : (
@@ -387,6 +744,7 @@ const RailCard = ({
           })}
           {...(href === undefined ? {} : { href })}
           onSelect={inspect}
+          isStill={growsOnHover}
           className="w-full"
         />
       )}
@@ -397,10 +755,8 @@ const RailCard = ({
             <motion.div
               key={media.id}
               ref={panelRef}
-              initial={{ opacity: 0, scale: 1 / GROWTH }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1 / GROWTH }}
-              transition={liquidSpring}
+              initial={false}
+              animate={{ opacity: 1 }}
               onPointerLeave={() => {
                 if (!isMenuOpenRef.current) {
                   close();
@@ -411,8 +767,15 @@ const RailCard = ({
                 top: anchor.top,
                 width: anchor.width,
               }}
-              className="fixed z-40 flex max-h-[calc(100svh_-_1.5rem)] flex-col overflow-hidden rounded-lg valence-float p-1.5"
+              className="fixed z-40 flex max-h-[calc(100svh_-_1.5rem)] flex-col p-1.5"
             >
+              <motion.span
+                ref={frameRef}
+                aria-hidden
+                style={{ clipPath: AT_REST }}
+                className="pointer-events-none absolute inset-0 rounded-[12px] valence-float"
+              />
+
               <Button
                 variant="bare"
                 size="none"
@@ -423,19 +786,85 @@ const RailCard = ({
                 className="absolute inset-0 z-0 rounded-lg"
               />
 
-              <div className="pointer-events-none aspect-video max-h-[42svh] w-full shrink-0 overflow-hidden rounded-md">
+              <div
+                ref={pictureRef}
+                className="pointer-events-none relative w-full shrink-0 origin-top-left overflow-hidden rounded-md"
+                style={{ height: anchor.picture }}
+              >
                 <MediaPreview
                   mediaId={media.id}
                   backdropUrl={wideUrl ?? null}
                   durationSeconds={media.durationSeconds}
                   settleMilliseconds={0}
                   fills
+                  onPlayingChange={(playing) => {
+                    if (markTimerRef.current !== null) {
+                      clearTimeout(markTimerRef.current);
+                      markTimerRef.current = null;
+                    }
+
+                    if (!playing || isClosingRef.current) {
+                      return;
+                    }
+
+                    if (coversOpening) {
+                      stillRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+                        duration: STILL_FADES_MS,
+                        fill: 'forwards',
+                      });
+                    }
+
+                    markTimerRef.current = setTimeout(() => {
+                      markTimerRef.current = null;
+
+                      if (!isClosingRef.current) {
+                        markRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+                          duration: MARK_FADES_MS,
+                          easing: 'ease-out',
+                          fill: 'forwards',
+                        });
+                      }
+                    }, MARK_STAYS_PLAYING_MS);
+                  }}
                 />
+
+                {(look === 'art' ? wideUrl : restingUrl) === undefined ? null : (
+                  <img
+                    ref={stillRef}
+                    src={look === 'art' ? wideUrl : restingUrl}
+                    alt=""
+                    aria-hidden
+                    className={`absolute inset-0 size-full object-cover ${
+                      coversOpening ? '' : 'opacity-0'
+                    }`}
+                  />
+                )}
+
+                {look === 'art' && media.hasLogo ? (
+                  <span ref={markRef} aria-hidden className="absolute inset-0">
+                    <span className="absolute inset-0 bg-linear-to-tr from-shade/70 via-shade/10 to-transparent" />
+                    <img
+                      src={artworkUrl(media.id, 'logo', { size: 'medium' })}
+                      alt=""
+                      className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+                    />
+                  </span>
+                ) : null}
               </div>
 
-              <div className="flex min-h-0 w-full flex-1 flex-col gap-3 px-4 pb-4 pt-4 text-left">
+              <motion.div
+                ref={detailsRef}
+                initial={
+                  prefersReducedMotion === true
+                    ? { opacity: 0 }
+                    : { opacity: 0, transform: 'translateY(6px)' }
+                }
+                animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                transition={prefersReducedMotion === true ? { duration: 0.12 } : DETAILS_RISE}
+                className="relative flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-4 pb-4 pt-4 text-left"
+              >
                 <span className="flex items-start justify-between gap-3">
-                  <span className="min-w-0 text-xs font-medium text-text-muted">
+                  <span className="min-w-0 truncate text-xs font-medium text-text-muted">
                     {isSeries
                       ? show === null
                         ? null
@@ -489,6 +918,7 @@ const RailCard = ({
                         : media
                     }
                     hasEpisode={!isSeries}
+                    ageRating={ageRating}
                     size="xs"
                     tone="muted"
                   />
@@ -575,7 +1005,7 @@ const RailCard = ({
                     </Button>
                   ))}
                 </span>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>,

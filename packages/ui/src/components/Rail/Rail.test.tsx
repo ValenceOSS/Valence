@@ -298,8 +298,8 @@ describe('Rail', () => {
     );
 
     expect(container.querySelector('section')).toHaveClass(
-      '[--rail-lane:1.25rem]',
-      'sm:[--rail-lane:2.5rem]',
+      '[--rail-lane:1rem]',
+      'sm:[--rail-lane:1.5rem]',
     );
   });
 

@@ -68,7 +68,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param onSelect - Told when the card was pressed.
  * @param href - Where the card goes, which makes it a link that can be middle-clicked or opened in
  *   a new tab; a plain click still goes through onSelect.
- * @param isStill - Whether to hold the card still rather than letting it lift under a pointer.
+ * @param isStill - Whether to hold the card still rather than letting it lift or its picture zoom
+ *   under a pointer.
  * @param className - Extra classes for the caller's own layout.
  */
 const MediaCard = ({
@@ -131,7 +132,9 @@ const MediaCard = ({
               'relative block overflow-hidden bg-card',
               'shadow-[var(--shadow-artwork)] ring-1 ring-line',
               'transition-shadow duration-[var(--duration-base)] ease-[var(--ease-out)]',
-              'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
+              isStill
+                ? ''
+                : 'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
               isBook ? 'valence-book__cover rounded-l-[3px] rounded-r-md' : 'rounded-md',
               SHAPE_CLASSES[shape],
             )}
@@ -153,7 +156,7 @@ const MediaCard = ({
                 }}
                 className={cn(
                   'h-full w-full object-cover',
-                  isBook
+                  isBook || isStill
                     ? ''
                     : 'transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.04]',
                 )}

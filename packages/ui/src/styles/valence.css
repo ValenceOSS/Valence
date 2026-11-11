@@ -582,68 +582,6 @@ body :is(input, textarea, [contenteditable]) {
   -webkit-user-select: text;
 }
 
-@property --bloom-color {
-  syntax: '<color>';
-  inherits: false;
-  initial-value: transparent;
-}
-
-@property --bloom-x {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 50%;
-}
-
-@property --bloom-y {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 45%;
-}
-
-@property --bloom-mix {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 0%;
-}
-
-.valence-bloom {
-  position: absolute;
-  inset: 0;
-  opacity: var(--bloom-strength);
-  background-image: radial-gradient(
-    48vw 46vh at var(--bloom-x) var(--bloom-y),
-    color-mix(in oklab, var(--bloom-color) var(--bloom-mix), transparent),
-    transparent 70%
-  );
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-position: 50% 50%;
-  transition:
-    --bloom-color 1.6s var(--ease-out),
-    --bloom-x 1.6s var(--ease-out),
-    --bloom-y 1.6s var(--ease-out),
-    --bloom-mix 1.6s var(--ease-out);
-}
-
-.valence-bloom--drift {
-  animation: valence-bloom-drift 40s ease-in-out infinite alternate;
-}
-
-@keyframes valence-bloom-drift {
-  0% {
-    background-position: 34% 32%;
-  }
-  33% {
-    background-position: 62% 44%;
-  }
-  66% {
-    background-position: 44% 64%;
-  }
-  100% {
-    background-position: 60% 36%;
-  }
-}
-
 .valence-logo-edge {
   filter: drop-shadow(1px 0 0 var(--color-accent)) drop-shadow(-1px 0 0 var(--color-accent))
     drop-shadow(0 1px 0 var(--color-accent)) drop-shadow(0 -1px 0 var(--color-accent));
@@ -720,28 +658,12 @@ body :is(input, textarea, [contenteditable]) {
     opacity: 0.35;
     transform: scale(1);
   }
-
-  :root:not([data-motion='full']) .valence-bloom {
-    transition: none;
-  }
-
-  :root:not([data-motion='full']) .valence-bloom--drift {
-    animation: none;
-  }
 }
 
 :root[data-motion='reduced'] .valence-logo-wave {
   animation: none;
   opacity: 0.35;
   transform: scale(1);
-}
-
-:root[data-motion='reduced'] .valence-bloom {
-  transition: none;
-}
-
-:root[data-motion='reduced'] .valence-bloom--drift {
-  animation: none;
 }
 
 .valence-navbar {

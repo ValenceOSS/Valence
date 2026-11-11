@@ -409,7 +409,7 @@ const LibraryBrowser = ({
           className={cn(
             'flex flex-col gap-5 px-4 sm:px-6',
             hasSheet
-              ? 'valence-sheet relative z-10 min-h-[calc(100svh-var(--nav-clearance,0px))] pb-16 pt-8'
+              ? 'valence-sheet relative z-10 min-h-[calc(100svh-var(--nav-clearance,0px))] pb-16 pt-2'
               : '',
           )}
         >

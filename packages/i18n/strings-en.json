@@ -695,6 +695,31 @@
     "context": "Shown in the books (from `listenLabel`)."
   },
   {
+    "handler": "client.books.nameReadingTheme.bold",
+    "text": "Bold",
+    "context": "The name of a reading theme: a black page with heavier white text."
+  },
+  {
+    "handler": "client.books.nameReadingTheme.calm",
+    "text": "Calm",
+    "context": "The name of a reading theme: a dark olive page with cream text."
+  },
+  {
+    "handler": "client.books.nameReadingTheme.focus",
+    "text": "Focus",
+    "context": "The name of a reading theme: a near-black page with pale grey text."
+  },
+  {
+    "handler": "client.books.nameReadingTheme.paper",
+    "text": "Paper",
+    "context": "The name of a reading theme: a pale grey page with near-black text."
+  },
+  {
+    "handler": "client.books.nameReadingTheme.quiet",
+    "text": "Quiet",
+    "context": "The name of a reading theme: a soft sepia page with brown text."
+  },
+  {
     "handler": "client.calendar.describeCalendarEntry.inCinemas",
     "text": "In cinemas",
     "context": "The line under a film's title on the release calendar, on the day it opens in cinemas."
@@ -33497,6 +33522,11 @@
     "context": "The label of a segmented row in the page reader."
   },
   {
+    "handler": "screens.pageReader.layoutSettings",
+    "text": "Layout",
+    "context": "The button in the comic and PDF reader that opens how pages are laid out."
+  },
+  {
     "handler": "screens.pageReader.oneLongStripAsAWebtoon",
     "text": "One long vertical strip, like a webtoon",
     "context": "The description in the page reader."
@@ -34587,6 +34617,11 @@
     "context": "Shown in the reader chrome."
   },
   {
+    "handler": "screens.readerContents.goToTitle",
+    "text": "Go to {title}",
+    "context": "The label read out for an entry in a book's contents. {title} is the chapter or volume it opens."
+  },
+  {
     "handler": "screens.readerPanel.keepThePanelBesideThePage",
     "text": "Pin panel",
     "context": "Shown in the reader panel."
@@ -34605,6 +34640,41 @@
     "handler": "screens.readingHero.youAreReading",
     "text": "You’re reading",
     "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
+  },
+  {
+    "handler": "screens.readingLook.largerText",
+    "text": "Larger text",
+    "context": "A button in the book reader that makes the words larger."
+  },
+  {
+    "handler": "screens.readingLook.letter",
+    "text": "A",
+    "context": "A single letter drawn small and large on the buttons that shrink and grow the text. Use the first letter of your alphabet."
+  },
+  {
+    "handler": "screens.readingLook.sample",
+    "text": "Aa",
+    "context": "A short sample of type drawn on each reading theme swatch, in its page and ink colours."
+  },
+  {
+    "handler": "screens.readingLook.smallerText",
+    "text": "Smaller text",
+    "context": "A button in the book reader that makes the words smaller."
+  },
+  {
+    "handler": "screens.readingLook.textAndPage",
+    "text": "Text and page",
+    "context": "The button in the book reader that opens the settings for how text and the page look."
+  },
+  {
+    "handler": "screens.readingLook.themes",
+    "text": "Themes",
+    "context": "The heading above the reading themes to choose from."
+  },
+  {
+    "handler": "screens.readingLook.useNameTheme",
+    "text": "Use the {name} theme",
+    "context": "The label read out for a reading theme swatch. {name} is the theme, such as Quiet or Focus."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",

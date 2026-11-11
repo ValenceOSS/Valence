@@ -170,8 +170,8 @@ const Rail = ({
           {!hasPages ? null : (
             <>
               <Button
-                variant="secondary"
-                size="xs"
+                variant="glass"
+                size="lg"
                 isIconOnly
                 label={say('ui.rail.backAPageOfTitle', { title })}
                 hasTooltip={false}
@@ -180,12 +180,12 @@ const Rail = ({
                   scrollTo(pages.at - 1);
                 }}
               >
-                <Icon of={ChevronLeftIcon} size={16} />
+                <Icon of={ChevronLeftIcon} size={18} />
               </Button>
 
               <Button
-                variant="secondary"
-                size="xs"
+                variant="glass"
+                size="lg"
                 isIconOnly
                 label={say('ui.rail.forwardAPageOfTitle', { title })}
                 hasTooltip={false}
@@ -194,7 +194,7 @@ const Rail = ({
                   scrollTo(pages.at + 1);
                 }}
               >
-                <Icon of={ChevronRightIcon} size={16} />
+                <Icon of={ChevronRightIcon} size={18} />
               </Button>
             </>
           )}

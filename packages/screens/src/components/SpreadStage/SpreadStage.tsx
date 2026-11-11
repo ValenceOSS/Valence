@@ -280,8 +280,16 @@ const SpreadStage = ({
     <Fragment key={number}>{renderPage(number, isShown)}</Fragment>
   );
 
+  const isDoubled = spreads.some((pages) => pages.length === 2);
+
+  const isPadded = (pages: readonly number[]): boolean =>
+    isDoubled && pages.length === 1 && pages[0] !== spreads[0]?.[0];
+
   const spreadOf = (pages: readonly number[], showing: 'all' | 'outer' | 'inner' = 'all') => {
-    const laid = isRightToLeft ? [...pages].reverse() : pages;
+    const [only] = pages;
+    const filled: readonly (number | null)[] =
+      isPadded(pages) && only !== undefined ? [only, null] : pages;
+    const laid = isRightToLeft ? [...filled].reverse() : filled;
     const outer = isRightToLeft ? 0 : laid.length - 1;
 
     return (
@@ -290,10 +298,14 @@ const SpreadStage = ({
         style={{ gap: `${gap.toString()}px` }}
       >
         {laid.map((number, at) =>
-          page(
-            number,
-            showing === 'all' ||
-              (showing === 'outer' ? at === outer : at !== outer || laid.length === 1),
+          number === null ? (
+            <Fragment key="room">{renderPage(only ?? 0, false)}</Fragment>
+          ) : (
+            page(
+              number,
+              showing === 'all' ||
+                (showing === 'outer' ? at === outer : at !== outer || laid.length === 1),
+            )
           ),
         )}
       </div>
@@ -309,7 +321,7 @@ const SpreadStage = ({
 
     const upper = spreads[turning.base] ?? [];
     const lower = spreads[turning.base + 1] ?? [];
-    const isPaired = upper.length === 2 && lower.length === 2;
+    const isPaired = upper.length === 2 && (lower.length === 2 || isPadded(lower));
 
     return (
       <PageCurl

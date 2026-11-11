@@ -23,6 +23,7 @@ import type { ArtCardProps } from './ArtCard.types';
  * @param onSelect - Told it was pressed.
  * @param href - Where it goes, which makes it a link that can be opened in a new tab; a plain click
  *   still goes through onSelect.
+ * @param isStill - Whether to hold the picture still rather than letting it zoom under a pointer.
  * @param className - Extra classes for the caller's own layout.
  */
 const ArtCard = ({
@@ -33,6 +34,7 @@ const ArtCard = ({
   watchedFraction,
   onSelect,
   href,
+  isStill = false,
   className,
 }: ArtCardProps) => {
   const [isLogoMissing, setIsLogoMissing] = useState(false);
@@ -47,7 +49,11 @@ const ArtCard = ({
           alt=""
           loading="lazy"
           draggable={false}
-          className="absolute inset-0 size-full object-cover transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.03]"
+          className={`absolute inset-0 size-full object-cover ${
+            isStill
+              ? ''
+              : 'transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.03]'
+          }`}
         />
       )}
 
