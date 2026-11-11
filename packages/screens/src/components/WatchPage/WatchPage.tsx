@@ -30,6 +30,10 @@ const PROGRESS_EVERY_SECONDS = 5;
  * for the loading screen. The first title still waits for where to begin. A pre-roll clip plays
  * first where the server has one, before the title it was opened on, from the beginning and
  * outside a watch party.
+ *
+ * Where the profile asks whether anybody is still watching after so many episodes have followed on
+ * their own, the player's paused screen asks it over the last frame, in place of starting the
+ * next, and waits for an answer.
  */
 const WatchPage = () => {
   useQuietMusic();
@@ -44,7 +48,6 @@ const WatchPage = () => {
     watchParty,
     household,
     watcher,
-    setAskingAbout,
   } = useShell();
 
   const { place, go } = usePlace();
@@ -52,6 +55,7 @@ const WatchPage = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   const markedAtRef = useRef(0);
+  const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
   const [carriedOn, setCarriedOn] = useState(0);
   const carriedOnToRef = useRef<string | null>(null);
 
@@ -217,6 +221,21 @@ const WatchPage = () => {
           go({ playing: episode.id });
         }}
         willCarryOn={decided.kind === 'play'}
+        {...(askingAbout === null
+          ? {}
+          : {
+              stillWatching: {
+                upNext: askingAbout,
+                onCarryOn: () => {
+                  setAskingAbout(null);
+                  go({ playing: askingAbout.id, inspecting: null });
+                },
+                onStop: () => {
+                  setAskingAbout(null);
+                  go({ playing: null, inspecting: shown.id });
+                },
+              },
+            })}
         watchedFractionFor={(mediaId) => {
           const held = progress.get(mediaId);
 

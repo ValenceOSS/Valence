@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
+import { Button } from '@ValenceUI/Button';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import type { PausedScreenProps } from './PausedScreen.types';
 import { say } from '@ValenceI18n/say';
@@ -21,23 +22,32 @@ const LOGO_BOX =
  * The programme is named by its logo where it has one, as its hero does, and in type where it has
  * none or the logo will not load.
  *
+ * Where enough episodes have followed on by themselves for the profile to ask whether anybody is
+ * still watching, the same screen asks it over the episode just finished, naming the one up next
+ * and what happens in it, with a way to carry on and a way to stop. It stays until it is answered,
+ * since nothing plays while it waits.
+ *
  * @param media - What is playing.
  * @param isShown - Whether it has been left long enough to show.
+ * @param asking - The episode up next and who to tell the answer, while asking whether anybody is
+ *   still watching.
  */
-const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
+const PausedScreen = ({ media, isShown, asking }: PausedScreenProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const asked = useQuery({ ...libraryQueries.detail(media.id), enabled: isShown });
+  const told = asking?.upNext ?? media;
+  const isOn = isShown || asking !== undefined;
+  const asked = useQuery({ ...libraryQueries.detail(told.id), enabled: isOn });
   const overview = asked.data?.metadata.overview ?? null;
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const isLettered =
     (media.hasLogo === true || asked.data?.metadata.hasLogo === true) && unlettered !== media.id;
   const isAnEpisode = typeof media.seriesTitle === 'string' && media.seriesTitle !== '';
   const episode =
-    isAnEpisode && typeof media.episodeNumber === 'number'
+    isAnEpisode && typeof told.episodeNumber === 'number'
       ? say('screens.videoPlayer.pausedScreen.titleEpEpisodeNumber', {
-          title: media.title,
+          title: told.title,
           episodeNumber: describeEpisodeNumbers(
-            media.episodeNumber,
+            told.episodeNumber,
             asked.data?.metadata.episodeNumberEnd,
           ),
         })
@@ -45,7 +55,7 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
 
   return (
     <AnimatePresence>
-      {isShown ? (
+      {isOn ? (
         <motion.div
           key="paused"
           aria-live="polite"
@@ -53,7 +63,7 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: prefersReducedMotion === true ? 0 : 0.6, ease: 'easeOut' }}
-          className="pointer-events-none absolute inset-0 z-30 flex flex-col justify-center bg-linear-to-r from-shade/90 via-shade/70 to-shade/40 px-[clamp(1.5rem,12vw,14rem)] text-on-scrim"
+          className={`${asking === undefined ? 'pointer-events-none ' : ''}absolute inset-0 z-30 flex flex-col justify-center bg-linear-to-r from-shade/90 via-shade/70 to-shade/40 px-[clamp(1.5rem,12vw,14rem)] text-on-scrim`}
         >
           <motion.div
             initial={prefersReducedMotion === true ? false : { y: 12, opacity: 0 }}
@@ -62,7 +72,9 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
             className="flex max-w-3xl flex-col gap-2"
           >
             <span className="text-base text-on-scrim/75 sm:text-lg">
-              {say('screens.videoPlayer.pausedScreen.youReWatching')}
+              {asking === undefined
+                ? say('screens.videoPlayer.pausedScreen.youReWatching')
+                : say('common.areYouStillWatching')}
             </span>
 
             {isLettered ? (
@@ -80,14 +92,18 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
               </span>
             )}
 
-            {isAnEpisode && typeof media.seasonNumber === 'number' ? (
+            {isAnEpisode && typeof told.seasonNumber === 'number' ? (
               <span className="text-xl font-semibold sm:text-2xl">
-                {say('common.seasonSeasonNumber', { seasonNumber: media.seasonNumber })}
+                {say('common.seasonSeasonNumber', { seasonNumber: told.seasonNumber })}
               </span>
             ) : null}
 
             {episode === null ? null : (
-              <span className="mt-4 text-lg font-semibold sm:text-2xl">{episode}</span>
+              <span className="mt-4 text-lg font-semibold sm:text-2xl">
+                {asking === undefined
+                  ? episode
+                  : say('screens.videoPlayer.pausedScreen.upNextEpisode', { episode })}
+              </span>
             )}
 
             {overview === null || overview === '' ? null : (
@@ -95,11 +111,24 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
                 {overview}
               </p>
             )}
+
+            {asking === undefined ? null : (
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button variant="confirm" size="xl" autoFocus onClick={asking.onCarryOn}>
+                  {say('common.continueWatching')}
+                </Button>
+                <Button variant="overlay" size="xl" onClick={asking.onStop}>
+                  {say('common.stop')}
+                </Button>
+              </div>
+            )}
           </motion.div>
 
-          <span className="absolute bottom-[clamp(1.5rem,8vh,6rem)] right-[clamp(1.5rem,8vw,8rem)] text-lg text-on-scrim/80">
-            {say('common.paused')}
-          </span>
+          {asking === undefined ? (
+            <span className="absolute bottom-[clamp(1.5rem,8vh,6rem)] right-[clamp(1.5rem,8vw,8rem)] text-lg text-on-scrim/80">
+              {say('common.paused')}
+            </span>
+          ) : null}
         </motion.div>
       ) : null}
     </AnimatePresence>
