@@ -204,6 +204,31 @@ const shareInView = (element: HTMLElement): number => {
 };
 
 /**
+ * The row a card scrolls in, so a sideways swipe over its opened card can still move the row.
+ *
+ * @param element - The resting card.
+ * @returns The nearest box around it that scrolls sideways, where there is one.
+ */
+const scrollerOf = (element: HTMLElement | null): HTMLElement | null => {
+  for (
+    let around = element?.parentElement ?? null;
+    around !== null;
+    around = around.parentElement
+  ) {
+    const { overflowX } = getComputedStyle(around);
+
+    if (
+      (overflowX === 'auto' || overflowX === 'scroll') &&
+      around.scrollWidth > around.clientWidth
+    ) {
+      return around;
+    }
+  }
+
+  return null;
+};
+
+/**
  * Moves an opened card back inside the window when expanding it would take it off an edge — the
  * cards at the ends of a row are exactly the ones a pointer reaches first.
  *
@@ -797,6 +822,13 @@ const RailCard = ({
                 if (!isMenuOpenRef.current) {
                   close();
                 }
+              }}
+              onWheel={(event) => {
+                if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
+                  return;
+                }
+
+                scrollerOf(holderRef.current)?.scrollBy({ left: event.deltaX });
               }}
               style={{
                 left: anchor.left,
