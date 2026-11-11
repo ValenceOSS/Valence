@@ -296,7 +296,8 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param willCarryOn - Whether the next episode starts on its own when this one ends, rather than
  *   asking first, so the offer of it counts down only when it will.
  * @param stillWatching - The episode up next and who to tell the answer, while the paused screen
- *   asks whether anybody is still watching in place of playing it.
+ *   asks whether anybody is still watching in place of playing it. Its own shortcuts are off while
+ *   it asks, so a key can only answer the question.
  * @param watchedFractionFor - How to ask how far through a given episode the viewer already is.
  * @param party - The watch party this viewing is part of, where it is part of one.
  * @param partyNotice - Something the party has to say, which may outlive the party itself.
@@ -1956,6 +1957,7 @@ const VideoPlayer = ({
           ? null
           : nextEpisode(episodes, playingEpisode);
   const isHeldAtTheEnd = heldAtTheEndOf === media.id;
+  const isAsking = stillWatching !== undefined;
   const followsGapless =
     session?.playsEpisodesGapless === true &&
     willCarryOn &&
@@ -2662,6 +2664,10 @@ const VideoPlayer = ({
       setIsIdle(false);
       setActivity((count) => count + 1);
 
+      if (isAsking) {
+        return;
+      }
+
       const target = event.target;
 
       if (
@@ -2730,7 +2736,7 @@ const VideoPlayer = ({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [isImmersive, togglePlay, stepFrame, toggleFullscreen, subtitleTracks]);
+  }, [isImmersive, isAsking, togglePlay, stepFrame, toggleFullscreen, subtitleTracks]);
 
   useEffect(() => {
     if (!isImmersive) {

@@ -40,7 +40,7 @@ const PausedScreen = ({ media, isShown, asking }: PausedScreenProps) => {
   const overview = asked.data?.metadata.overview ?? null;
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const isLettered =
-    (media.hasLogo === true || asked.data?.metadata.hasLogo === true) && unlettered !== media.id;
+    (told.hasLogo === true || asked.data?.metadata.hasLogo === true) && unlettered !== told.id;
   const isAnEpisode = typeof media.seriesTitle === 'string' && media.seriesTitle !== '';
   const episode =
     isAnEpisode && typeof told.episodeNumber === 'number'
@@ -79,11 +79,11 @@ const PausedScreen = ({ media, isShown, asking }: PausedScreenProps) => {
 
             {isLettered ? (
               <TitleLogo
-                src={titleLogoUrl(media.id)}
+                src={titleLogoUrl(told.id)}
                 alt={(isAnEpisode ? media.seriesTitle : null) ?? media.title}
                 className={LOGO_BOX}
                 onError={() => {
-                  setUnlettered(media.id);
+                  setUnlettered(told.id);
                 }}
               />
             ) : (
