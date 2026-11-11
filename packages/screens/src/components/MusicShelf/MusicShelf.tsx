@@ -1,9 +1,7 @@
-import { motion } from 'motion/react';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { VirtualGrid } from '@ValenceUI/VirtualGrid';
-import { useArrivals } from '@ValenceScreens/motion/useArrivals';
 import type { MusicShelfProps } from './MusicShelf.types';
 
 const LEAST_TILE_WIDTH = 168;
@@ -36,8 +34,6 @@ const MusicShelf = ({
   action,
   tiles,
 }: MusicShelfProps) => {
-  const arrivalOf = useArrivals();
-
   if (layout === 'rail') {
     return (
       <Rail
@@ -79,11 +75,7 @@ const MusicShelf = ({
         {(at) => {
           const one = tiles[at];
 
-          return one === undefined ? null : (
-            <motion.div key={one.key} {...arrivalOf(one.key)}>
-              {one.tile}
-            </motion.div>
-          );
+          return one === undefined ? null : <div key={one.key}>{one.tile}</div>;
         }}
       </VirtualGrid>
     </section>

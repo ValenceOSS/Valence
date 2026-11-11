@@ -1,15 +1,15 @@
+import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
+import { useArtworkWarming } from '@ValenceScreens/library/useArtworkWarming';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FolderOpen as FolderOpenIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
-import { staggerVariants } from '@ValenceUI/animations/reveal';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { Rail } from '@ValenceUI/Rail';
 import { ComingUp } from '@ValenceScreens/components/ComingUp/ComingUp';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { SplashScreenWithBrand } from '@ValenceScreens/components/SplashScreenWithBrand/SplashScreenWithBrand';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Hero } from '@ValenceScreens/components/Hero/Hero';
@@ -35,6 +35,8 @@ import type { LibraryBrowserProps } from './LibraryBrowser.types';
 import { say } from '@ValenceI18n/say';
 
 const HERO_COUNT = 5;
+
+const WARMED_PER_RAIL = 10;
 
 const PAGE_SIZE = 60;
 
@@ -173,6 +175,21 @@ const LibraryBrowser = ({
 
   const rails = isHome ? home.rails : groupIntoRails(items, openedAt, progress);
   const shown = rails.flatMap((rail) => rail.items);
+
+  useArtworkWarming(
+    rails.flatMap(({ standsForShows = false, items: railItems }) =>
+      railItems.slice(0, WARMED_PER_RAIL).map((media) => {
+        const isShow = isHome && standsForShows && showIdOf(media) !== null;
+        const picture = cardArtworkOf(media, {
+          shape: isShow ? 'poster' : 'wide',
+          isSeries: isShow,
+          drawsLarge: false,
+        });
+
+        return isHome ? picture.wide : picture.resting;
+      }),
+    ),
+  );
   const shownKey = shown.map((media) => media.id).join(',');
 
   const flagOf = useMemo(
@@ -365,13 +382,7 @@ const LibraryBrowser = ({
     <>
       <BackToTop />
 
-      <motion.div
-        variants={staggerVariants}
-        initial="hidden"
-        animate="shown"
-        exit="gone"
-        className="flex flex-col gap-8"
-      >
+      <motion.div initial="hidden" animate="shown" exit="gone" className="flex flex-col gap-8">
         {hasSheet ? (
           <Hero
             items={heroPicks}
@@ -414,12 +425,7 @@ const LibraryBrowser = ({
           )}
         >
           <AnimatePresence>
-            <motion.div
-              key={appliedSearch}
-              variants={staggerVariants}
-              initial="hidden"
-              animate="shown"
-            >
+            <motion.div key={appliedSearch} initial="hidden" animate="shown">
               {rails.length === 0 ? (
                 <EmptyLibrary
                   search={appliedSearch}
@@ -446,11 +452,11 @@ const LibraryBrowser = ({
                             },
                           })}
                     >
-                      {rail.items.map((media, at) => {
+                      {rail.items.map((media) => {
                         const isShow = isHome && standsForShows && showIdOf(media) !== null;
 
                         return (
-                          <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                          <div key={media.id} className="shrink-0 snap-start">
                             <RailCard
                               media={media}
                               look={isHome ? 'art' : 'card'}
@@ -492,7 +498,7 @@ const LibraryBrowser = ({
                                 ? {}
                                 : { onDismiss: dismiss })}
                             />
-                          </RevealItem>
+                          </div>
                         );
                       })}
                     </Rail>

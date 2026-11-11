@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
@@ -697,17 +698,11 @@ const RailCard = ({
     );
   }, [cancel, open, hoverDelayMilliseconds]);
 
-  const wideSize = { size: 'medium' as const };
-  const wideUrl = media.hasBackdrop
-    ? artworkUrl(media.id, 'backdrop', { isOfTitle: isSeries, ...wideSize })
-    : media.hasPoster
-      ? artworkUrl(media.id, 'poster', wideSize)
-      : undefined;
-
-  const restingUrl =
-    shape === 'poster' && media.hasPoster
-      ? artworkUrl(media.id, 'poster', { size: drawsLarge ? 'medium' : 'small' })
-      : wideUrl;
+  const { wide: wideUrl, resting: restingUrl } = cardArtworkOf(media, {
+    shape,
+    isSeries,
+    drawsLarge,
+  });
 
   const coversOpening = look === 'art' || restingUrl === wideUrl;
 

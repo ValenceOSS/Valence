@@ -15,6 +15,8 @@ import { fetchLikeThis } from '@ValenceClient/library/fetchLikeThis';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
 
+const FIRST_PAGE = 120;
+
 const LIBRARY = ['library'] as const;
 
 /**
@@ -198,6 +200,30 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
   });
 
 /**
+ * The first page of what matches a question in every library at once, for a page that lists a whole
+ * library to draw while the rest is still coming, so its first cards and their pictures are asked
+ * for at once rather than after every page of every library has arrived.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked of each, without a limit, which is this query's.
+ * @returns The query.
+ */
+const beginningOfEverything = (
+  libraryIds: readonly string[],
+  options: Omit<ListItemsOptions, 'limit' | 'offset'> = {},
+) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'everything', 'beginning', [...libraryIds].sort(), options],
+    queryFn: async () =>
+      readEachLibrary(libraryIds, async (libraryId) =>
+        fetchLibraryItems(libraryId, { ...options, limit: FIRST_PAGE, offset: 0 }).then(
+          (page) => page.items,
+        ),
+      ),
+    enabled: libraryIds.length > 0,
+  });
+
+/**
  * Everything that matches a question in every library at once, however many that is, for the pages
  * that list a whole library rather than a taste of it.
  *
@@ -241,6 +267,7 @@ const libraryQueries = {
   shows,
   show,
   everything,
+  beginningOfEverything,
   comingUp,
   facets,
   person,

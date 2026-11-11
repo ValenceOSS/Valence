@@ -1589,28 +1589,39 @@ const createDatabaseLibraryService = ({
 
   const service: DatabaseLibraryService = {
     list: async (viewer) => {
-      const rows = await db
-        .select({
-          ...LIBRARY_COLUMNS,
-          itemCount:
-            sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
-              Number,
-            ),
-          sizeBytes:
-            sql<number>`case when ${library.kind} = 'books' then coalesce(sum(${bookChapter.sizeBytes}), 0) else coalesce(sum(${mediaItem.sizeBytes}), 0) end`.mapWith(
-              Number,
-            ),
-        })
-        .from(library)
-        .leftJoin(mediaItem, and(eq(mediaItem.libraryId, library.id), isStillThere()))
-        .leftJoin(book, eq(book.libraryId, library.id))
-        .leftJoin(
-          bookChapter,
-          and(eq(bookChapter.bookId, book.id), isNull(bookChapter.missingSince)),
-        )
-        .where(librariesVisibleToViewer(db, viewer))
-        .groupBy(...Object.values(LIBRARY_COLUMNS))
-        .orderBy(asc(library.name));
+      const [rows, titles, chapters] = await Promise.all([
+        db
+          .select(LIBRARY_COLUMNS)
+          .from(library)
+          .where(librariesVisibleToViewer(db, viewer))
+          .orderBy(asc(library.name)),
+        db
+          .select({
+            libraryId: mediaItem.libraryId,
+            itemCount:
+              sql<number>`count(case when ${mediaItem.parentId} is null then 1 end)`.mapWith(
+                Number,
+              ),
+            sizeBytes: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)`.mapWith(Number),
+          })
+          .from(mediaItem)
+          .where(isStillThere())
+          .groupBy(mediaItem.libraryId),
+        db
+          .select({
+            libraryId: book.libraryId,
+            itemCount: sql<number>`count(${bookChapter.id})`.mapWith(Number),
+            sizeBytes: sql<number>`coalesce(sum(${bookChapter.sizeBytes}), 0)`.mapWith(Number),
+          })
+          .from(bookChapter)
+          .innerJoin(book, eq(bookChapter.bookId, book.id))
+          .where(isNull(bookChapter.missingSince))
+          .groupBy(book.libraryId),
+      ]);
+      const titlesIn = new Map(titles.map((total) => [total.libraryId, total]));
+      const chaptersIn = new Map(chapters.map((total) => [total.libraryId, total]));
+      const totalOf = (id: string, kind: string) =>
+        (kind === 'books' ? chaptersIn : titlesIn).get(id) ?? { itemCount: 0, sizeBytes: 0 };
 
       return rows.map((row) => ({
         id: row.id,
@@ -1618,8 +1629,8 @@ const createDatabaseLibraryService = ({
         kind: LibraryKindSchema.parse(row.kind),
         flavour: row.flavour,
         path: row.path,
-        itemCount: row.itemCount,
-        sizeBytes: row.sizeBytes,
+        itemCount: totalOf(row.id, row.kind).itemCount,
+        sizeBytes: totalOf(row.id, row.kind).sizeBytes,
         lastScannedAt: toIso(row.lastScannedAt),
         ...readLastScan(row),
         defaultAudioLanguage: row.defaultAudioLanguage,

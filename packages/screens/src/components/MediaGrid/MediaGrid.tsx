@@ -1,6 +1,6 @@
-import { motion } from 'motion/react';
+import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
+import { useArtworkWarming } from '@ValenceScreens/library/useArtworkWarming';
 import { VirtualGrid } from '@ValenceUI/VirtualGrid';
-import { useArrivals } from '@ValenceScreens/motion/useArrivals';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { groupCopies } from '@ValenceScreens/library/groupCopies';
@@ -16,6 +16,8 @@ const POSTER_TO_WIDTH = 1.5;
 const WIDE_TO_WIDTH = 0.5625;
 
 const UNDER_A_CARD = 64;
+
+const WARMED_AHEAD = 72;
 
 /**
  * Lays a page of items out as a grid of cards, at whichever size a viewer chose. Each card carries
@@ -53,9 +55,20 @@ const MediaGrid = ({
   onOpenShow,
   shape = 'wide',
 }: MediaGridProps) => {
-  const arrivalOf = useArrivals();
   const originOf = useOriginOf();
   const titles = groupCopies(items, (media) => originOf(media.libraryId) === null);
+
+  useArtworkWarming(
+    titles.slice(0, WARMED_AHEAD).map(({ media }) => {
+      const standsForShow = typeof isSeries === 'function' ? isSeries(media) : isSeries;
+
+      return cardArtworkOf(media, {
+        shape: standsForShow ? 'poster' : shape,
+        isSeries: standsForShow,
+        drawsLarge: true,
+      }).resting;
+    }),
+  );
 
   return (
     <VirtualGrid
@@ -78,7 +91,7 @@ const MediaGrid = ({
         const { media, copies } = title;
 
         return (
-          <motion.div key={media.id} {...arrivalOf(media.id)}>
+          <div key={media.id}>
             <RailCard
               media={media}
               copies={copies}
@@ -101,7 +114,7 @@ const MediaGrid = ({
               {...(onToggleKept === undefined ? {} : { onToggleKept })}
               {...(onHide === undefined ? {} : { onHide })}
             />
-          </motion.div>
+          </div>
         );
       }}
     </VirtualGrid>
