@@ -74,11 +74,23 @@ const QUICK_DELAY_MILLISECONDS = 50;
 
 const STILL_WARM_MILLISECONDS = 500;
 
-const OPENED: { lastClosedAt: number; isOpen: boolean; owner: symbol | null } = {
+const OPENED: {
+  lastClosedAt: number;
+  lastScrolledAt: number;
+  isOpen: boolean;
+  isWatchingScroll: boolean;
+  owner: symbol | null;
+} = {
   lastClosedAt: 0,
+  lastScrolledAt: 0,
   isOpen: false,
+  isWatchingScroll: false,
   owner: null,
 };
+
+const SCROLL_SETTLES_MS = 160;
+
+const CLOSE_GIVES_UP_AFTER_MS = 120;
 
 const WAITS_ITS_TURN_MS = 60;
 
@@ -393,14 +405,19 @@ const RailCard = ({
       ),
     ];
 
+    const finish = () => {
+      if (closingRef.current === closing) {
+        closingRef.current += 1;
+        isClosingRef.current = false;
+        setAnchor(null);
+      }
+    };
+
+    setTimeout(finish, FOLDS_OVER_MS + CLOSE_GIVES_UP_AFTER_MS);
+
     void Promise.all(folding.map((animation) => animation.finished))
       .catch(() => undefined)
-      .then(() => {
-        if (closingRef.current === closing) {
-          isClosingRef.current = false;
-          setAnchor(null);
-        }
-      });
+      .then(finish);
   }, [prefersReducedMotion]);
 
   useEffect(() => {
@@ -617,7 +634,11 @@ const RailCard = ({
       return true;
     }
 
-    if (isClosingRef.current || (OPENED.owner !== null && OPENED.owner !== selfRef.current)) {
+    if (
+      isClosingRef.current ||
+      performance.now() - OPENED.lastScrolledAt < SCROLL_SETTLES_MS ||
+      (OPENED.owner !== null && OPENED.owner !== selfRef.current)
+    ) {
       return !holder.matches(':hover');
     }
 
@@ -646,6 +667,21 @@ const RailCard = ({
       OPENED.owner = null;
     }
   }, [anchor]);
+
+  useEffect(() => {
+    if (OPENED.isWatchingScroll) {
+      return;
+    }
+
+    OPENED.isWatchingScroll = true;
+    window.addEventListener(
+      'scroll',
+      () => {
+        OPENED.lastScrolledAt = performance.now();
+      },
+      { capture: true, passive: true },
+    );
+  }, []);
 
   useEffect(
     () => () => {
