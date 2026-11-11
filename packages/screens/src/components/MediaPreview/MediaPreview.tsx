@@ -11,7 +11,7 @@ import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { frameUrl } from '@ValenceClient/playback/frameUrl';
-import { readLights } from '@ValenceScreens/library/readLights';
+import { readLightsQuietly } from '@ValenceScreens/library/readLightsQuietly';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playback/soundPreference';
 import { fadeAudioOut } from '@ValenceScreens/playback/fadeAudioOut';
@@ -279,20 +279,31 @@ const MediaPreview = ({
       return;
     }
 
+    let isReading = false;
+
     const look = () => {
       const element = videoRef.current;
       const still = stillRef.current;
-
-      const found =
+      const source =
         element !== null && !isShowingFrame && element.readyState > 1
-          ? readLights(element)
+          ? element
           : still !== null && still.complete
-            ? readLights(still)
-            : [];
+            ? still
+            : null;
 
-      if (found.length > 0) {
-        onPalette(found);
+      if (source === null || isReading) {
+        return;
       }
+
+      isReading = true;
+
+      void readLightsQuietly(source).then((found) => {
+        isReading = false;
+
+        if (found.length > 0) {
+          onPalette(found);
+        }
+      });
     };
 
     look();
