@@ -203,12 +203,12 @@ const MediaCard = ({
             )}
 
             {count === undefined || count <= 0 || corner !== undefined ? null : (
-              <span className="absolute right-3 top-3">
+              <span className="absolute right-0 top-0">
                 <Tooltip label={countLabel ?? count.toString()}>
                   <span
                     role="img"
                     aria-label={countLabel ?? count.toString()}
-                    className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-xs font-semibold tabular-nums text-primary-foreground shadow-sm"
+                    className="flex items-center justify-center rounded-bl-lg bg-on-scrim px-3 py-1 text-xs font-bold tabular-nums text-on-white"
                   >
                     {count > 99 ? '99+' : count.toString()}
                   </span>
