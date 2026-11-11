@@ -2,8 +2,11 @@ import { createElement as mockCreateElement } from 'react';
 import { Text as mockText } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { aCatalogueTitle } from '@ValenceClient/testing/aCatalogueTitle';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { APersonTimeline } from './APersonTimeline';
 import type { PersonCredit } from '@ValenceContracts/schemas/CatalogueTitle';
+
+jest.mock('@ValenceClient/requests/useRequestableKinds');
 
 jest.mock('@keyline-icons/react-native', () => ({
   ...jest.requireActual<object>('@keyline-icons/react-native'),
@@ -27,6 +30,13 @@ const aCredit = (at: number, overrides: Partial<PersonCredit> = {}): PersonCredi
 const HERE = { status: 'library', mediaId: 'm-1', requestId: null, requestState: null } as const;
 
 const EIGHT = Array.from({ length: 8 }, (_, at) => aCredit(at + 1));
+
+beforeEach(() => {
+  jest
+    .mocked(useRequestableKinds)
+    .mockReset()
+    .mockReturnValue(new Set(['film', 'series']));
+});
 
 describe('APersonTimeline', () => {
   it('shows the first six credits until more are asked for', async () => {
@@ -78,6 +88,26 @@ describe('APersonTimeline', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Film 1' }));
 
     expect(onAsk).toHaveBeenCalledWith('series', 'film-1');
+  });
+
+  it('leaves shut a credit of a kind the server takes no requests for, unless it is here', async () => {
+    jest.mocked(useRequestableKinds).mockReturnValue(new Set(['film']));
+    const onAsk = jest.fn();
+    const drawn = await render(
+      <APersonTimeline
+        credits={[
+          aCredit(1),
+          aCredit(2, { kind: 'series' }),
+          aCredit(3, { kind: 'series', standing: HERE }),
+        ]}
+        onAsk={onAsk}
+      />,
+    );
+
+    expect(drawn.getByRole('button', { name: 'Film 1' })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Film 2' })).toBeNull();
+    expect(drawn.getByText('Film 2')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Film 3' })).toBeTruthy();
   });
 
   it('opens nothing for whoever may not', async () => {

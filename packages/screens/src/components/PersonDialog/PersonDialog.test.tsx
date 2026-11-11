@@ -109,6 +109,26 @@ describe('PersonDialog', () => {
     expect(screen.queryByText('Severance')).not.toBeInTheDocument();
   });
 
+  it('leaves shut a credit on the timeline of a kind the server takes no requests for', async () => {
+    availabilityMock.mockResolvedValue({ isEnabled: true, kinds: ['film'] });
+    workMock.mockResolvedValue({
+      titles: [],
+      timeline: [
+        { ...aCatalogueTitle(), role: null, episodeCount: null },
+        {
+          ...aCatalogueTitle({ kind: 'series', id: '95396', title: 'Severance' }),
+          role: null,
+          episodeCount: null,
+        },
+      ],
+    });
+    draw({ onAsk: vi.fn() });
+
+    expect(await screen.findByRole('button', { name: /Dune/u })).toBeInTheDocument();
+    expect(screen.getByText('Severance')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Severance/u })).not.toBeInTheDocument();
+  });
+
   it('opens nothing while nobody is named', () => {
     draw({ personId: null });
 

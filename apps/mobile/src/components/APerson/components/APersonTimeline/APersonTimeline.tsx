@@ -2,6 +2,8 @@ import { useContext, useState } from 'react';
 import { Check, ChevronDown } from '@keyline-icons/react-native';
 import { StyleSheet, View } from 'react-native';
 import { describeCredit } from '@ValenceClient/people/describeCredit';
+import { opensFromTheTimeline } from '@ValenceClient/people/opensFromTheTimeline';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -49,7 +51,8 @@ const styles = StyleSheet.create({
  * where it is, a thin line joining each mark to the next, green below one that is here, the title
  * and how they were credited on it beside the mark, and the year at the far right. The first six
  * show until Show more is pressed. Where somebody may ask for things, pressing one opens the page to
- * ask for it, or its page here where it is already here.
+ * ask for it, or its page here where it is already here; one of a kind the server takes no requests
+ * for, and that is not here, does not open.
  *
  * @param credits - The credits, newest first.
  * @param onAsk - Told to open a title, for whoever may ask for things.
@@ -58,6 +61,7 @@ const APersonTimeline = ({ credits, onAsk }: APersonTimelineProps) => {
   const colours = useTheColours();
   const ground = useContext(GROUND);
   const [isAll, setIsAll] = useState(false);
+  const kinds = useRequestableKinds();
   const success =
     ground !== null || colours.surface === theColours.dark.surface ? BRIGHT_SUCCESS : SUCCESS;
   const line = withAlpha(colours.text, 0.14);
@@ -122,7 +126,7 @@ const APersonTimeline = ({ credits, onAsk }: APersonTimelineProps) => {
             </View>
           );
 
-          return onAsk === undefined ? (
+          return onAsk === undefined || !opensFromTheTimeline(credit, kinds) ? (
             <View key={`${credit.kind}:${credit.id}`}>{row}</View>
           ) : (
             <Button

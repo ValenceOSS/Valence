@@ -35,6 +35,7 @@ import type { PersonCredits } from '@ValenceContracts/schemas/Person';
 import type { PersonDialogProps } from './PersonDialog.types';
 import { say } from '@ValenceI18n/say';
 import { describeCredit } from '@ValenceClient/people/describeCredit';
+import { opensFromTheTimeline } from '@ValenceClient/people/opensFromTheTimeline';
 import { describePersonFacts } from '@ValenceClient/people/describePersonFacts';
 
 const NOTHING: PersonCredits = { films: [], shows: [], episodes: [] };
@@ -392,7 +393,7 @@ const PersonDialog = ({
                       ...(credit.year === null
                         ? {}
                         : { aside: { kind: 'note', text: credit.year.toString() } as const }),
-                      ...(onAsk === undefined
+                      ...(onAsk === undefined || !opensFromTheTimeline(credit, kinds)
                         ? {}
                         : {
                             onSelect: () => {
