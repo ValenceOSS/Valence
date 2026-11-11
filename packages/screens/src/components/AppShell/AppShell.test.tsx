@@ -83,12 +83,10 @@ describe('AppShell', () => {
     expect(screen.getByText('Now playing').parentElement).toHaveClass('h-0');
   });
 
-  it('leaves an Escape something else has already answered alone', () => {
+  it('stays in a section when Escape is pressed, which only closes what is open', () => {
     const { props } = draw({ section: 'music' });
-    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
 
-    escape.preventDefault();
-    window.dispatchEvent(escape);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }));
 
     expect(props.onSectionChange).not.toHaveBeenCalled();
   });

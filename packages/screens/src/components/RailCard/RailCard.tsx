@@ -460,10 +460,19 @@ const RailCard = ({
       close();
     };
 
+    const pressed = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) {
+        event.preventDefault();
+        close();
+      }
+    };
+
     window.addEventListener('scroll', scrolled, { capture: true, passive: true });
+    window.addEventListener('keydown', pressed);
 
     return () => {
       window.removeEventListener('scroll', scrolled, { capture: true });
+      window.removeEventListener('keydown', pressed);
     };
   }, [anchor, close]);
 

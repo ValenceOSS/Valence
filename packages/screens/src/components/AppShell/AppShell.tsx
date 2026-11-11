@@ -298,24 +298,6 @@ const AppShell = ({
     reach(window.scrollY);
   }, [reach, section]);
 
-  useEffect(() => {
-    if (section === 'home') {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.defaultPrevented) {
-        onSectionChange('home');
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [section, onSectionChange]);
-
   const placesRef = useRef<Record<string, number>>({});
   const leavingRef = useRef(section);
 
