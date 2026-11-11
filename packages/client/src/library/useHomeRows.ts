@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { streamQueries } from '@ValenceClient/query/streamQueries';
@@ -27,7 +27,7 @@ const DECADE_BATCH = 4;
 
 const DECADE_SPAN = 9;
 
-const ENCORE_BATCH = 3;
+const ENCORE_BATCH = 6;
 
 const ENCORE_ORDERS = ['newest', 'title'] as const;
 
@@ -133,13 +133,14 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * What somebody is part way through and has liked is read from the hidden library films played
  * from sources are kept in as well, since those are theirs to resume though they are in no library.
  *
- * Each question is put to every library and the answers laid end to end, so each row is sorted
- * again once they are together — otherwise the first library's newest would fill the row before
- * the second's newest were looked at.
+ * Each question is put to every library at once and answered in one order across them all, the
+ * genre and decade rows best-rated first.
  *
  * Past the genres and decades it goes on with the same genres in other orders and eras, each once:
  * a row already shown is not shown again, and once every one has been, there are no more to ask
- * for.
+ * for. Asking for more asks for a number of rows to show rather than of questions to put, so a genre,
+ * decade or angle with too little in it to make a row is passed over and the next asked for in its
+ * place, and the page never stops short because the last few questions came back empty.
  *
  * @param viewerId - Whose front page it is, whose favourites and ratings decide what is offered.
  * @param watchable - The libraries holding something to watch.
@@ -175,6 +176,7 @@ const useHomeRows = (
   const [genreLimit, setGenreLimit] = useState(FIRST_GENRES);
   const [decadeLimit, setDecadeLimit] = useState(0);
   const [encoreLimit, setEncoreLimit] = useState(0);
+  const [tailWanted, setTailWanted] = useState(FIRST_GENRES);
 
   const favourites = useQuery(viewingQueries.favourites(viewerId));
   const ratings = useQuery({
@@ -261,7 +263,7 @@ const useHomeRows = (
   const genres = useMemo(() => everyGenre.slice(0, genreLimit), [everyGenre, genreLimit]);
 
   const byGenre = useQueries({
-    queries: genres.map((genre) => rowOf({ genre, limit: ROW_LIMIT })),
+    queries: genres.map((genre) => rowOf({ genre, order: 'rated', limit: ROW_LIMIT })),
     combine: answersOf,
   });
 
@@ -275,7 +277,7 @@ const useHomeRows = (
 
   const byDecade = useQueries({
     queries: decades.map((decade) =>
-      rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, limit: ROW_LIMIT }),
+      rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, order: 'rated', limit: ROW_LIMIT }),
     ),
     combine: answersOf,
   });
@@ -286,7 +288,7 @@ const useHomeRows = (
   useQueries({
     queries: [
       ...everyGenre.slice(genreLimit, genreLimit + GENRE_BATCH * BATCHES_AHEAD).map((genre) => ({
-        ...rowOf({ genre, limit: ROW_LIMIT }),
+        ...rowOf({ genre, order: 'rated', limit: ROW_LIMIT }),
         enabled: canAsk && areGenresSettled,
       })),
       ...(everyGenre.length > genreLimit
@@ -294,7 +296,12 @@ const useHomeRows = (
         : everyDecade
             .slice(decadeLimit, decadeLimit + DECADE_BATCH * BATCHES_AHEAD)
             .map((decade) => ({
-              ...rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, limit: ROW_LIMIT }),
+              ...rowOf({
+                yearFrom: decade,
+                yearTo: decade + DECADE_SPAN,
+                order: 'rated',
+                limit: ROW_LIMIT,
+              }),
               enabled: canAsk && areGenresSettled && areDecadesSettled,
             }))),
     ],
@@ -481,31 +488,48 @@ const useHomeRows = (
 
   const hasMoreGenres = everyGenre.length > genreLimit;
   const hasMoreDecades = everyDecade.length > decadeLimit;
+  const hasMoreTail = hasMoreGenres || hasMoreDecades || hasMoreEncores;
+  const isFull = (one: { data: MediaSummary[] | undefined }) =>
+    (one.data ?? NOTHING).length >= MIN_ROW;
+  const tailShown =
+    shownGenres.length + byDecade.filter(isFull).length + byEncore.filter(isFull).length;
+  const isTailSettled = areGenresSettled && areDecadesSettled && areEncoresSettled;
 
-  const showMore = useCallback(() => {
+  useEffect(() => {
+    if (!canAsk || !hasDrawn || !isTailSettled || tailShown >= tailWanted) {
+      return;
+    }
+
     if (hasMoreGenres) {
       setGenreLimit((limit) => limit + GENRE_BATCH);
-
-      return;
-    }
-
-    if (hasMoreDecades) {
+    } else if (hasMoreDecades) {
       setDecadeLimit((limit) => limit + DECADE_BATCH);
-
-      return;
+    } else if (hasMoreEncores) {
+      setEncoreLimit((limit) => limit + ENCORE_BATCH);
     }
+  }, [
+    canAsk,
+    hasDrawn,
+    isTailSettled,
+    tailShown,
+    tailWanted,
+    genreLimit,
+    decadeLimit,
+    encoreLimit,
+    hasMoreGenres,
+    hasMoreDecades,
+    hasMoreEncores,
+  ]);
 
-    setEncoreLimit((limit) => limit + ENCORE_BATCH);
-  }, [hasMoreGenres, hasMoreDecades]);
+  const showMore = useCallback(() => {
+    setTailWanted((wanted) => Math.max(wanted, tailShown) + GENRE_BATCH);
+  }, [tailShown]);
 
   return {
     rails,
     isReading: !hasDrawn && isReadingFirst,
-    hasMore: hasMoreGenres || hasMoreDecades || hasMoreEncores,
-    isReadingMore:
-      byGenre.some((one) => one.isLoading) ||
-      byDecade.some((one) => one.isLoading) ||
-      byEncore.some((one) => one.isLoading),
+    hasMore: hasMoreTail,
+    isReadingMore: hasMoreTail && (!isTailSettled || tailShown < tailWanted),
     showMore,
   };
 };

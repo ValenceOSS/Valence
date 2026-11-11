@@ -145,6 +145,23 @@ const LibraryBrowser = ({
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
   const [reached, setReached] = useState(0);
+  const [isAtEnd, setIsAtEnd] = useState(false);
+
+  useEffect(() => {
+    if (end === null || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const watching = new IntersectionObserver(([entry]) => {
+      setIsAtEnd(entry?.isIntersecting === true);
+    });
+
+    watching.observe(end);
+
+    return () => {
+      watching.disconnect();
+    };
+  }, [end]);
   const [openedAt] = useState(() => Date.now());
 
   useEffect(() => {
@@ -382,7 +399,7 @@ const LibraryBrowser = ({
     <>
       <BackToTop />
 
-      <motion.div initial="hidden" animate="shown" exit="gone" className="flex flex-col gap-8">
+      <motion.div initial={false} animate="shown" exit="gone" className="flex flex-col gap-8">
         {hasSheet ? (
           <Hero
             items={heroPicks}
@@ -425,7 +442,7 @@ const LibraryBrowser = ({
           )}
         >
           <AnimatePresence>
-            <motion.div key={appliedSearch} initial="hidden" animate="shown">
+            <motion.div key={appliedSearch} initial={false} animate="shown">
               {rails.length === 0 ? (
                 <EmptyLibrary
                   search={appliedSearch}
@@ -506,7 +523,7 @@ const LibraryBrowser = ({
 
                   {isHome && hasMore ? (
                     <div ref={setEnd} className="flex h-16 items-center justify-center">
-                      {isReadingMore ? (
+                      {isReadingMore && isAtEnd ? (
                         <Spinner
                           size="sm"
                           label={say('screens.libraryBrowser.findingMoreToWatch')}

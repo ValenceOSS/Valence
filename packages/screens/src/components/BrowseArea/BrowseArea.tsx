@@ -304,7 +304,7 @@ const BrowseArea = ({
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="shown"
       exit="gone"
       className="flex flex-col gap-6 px-5 pb-16 pt-6 sm:px-10"
