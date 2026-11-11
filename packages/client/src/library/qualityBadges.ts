@@ -1,19 +1,8 @@
-import { describeChannels } from '@ValenceCore/functions/describeTrack';
-import { describeAudioCodec } from '@ValenceClient/library/describeAudioCodec';
-import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { describeRange } from '@ValenceClient/library/describeRange';
+import { sharpnessOf } from '@ValenceClient/library/sharpnessOf';
+import { soundOf } from '@ValenceClient/library/soundOf';
+import type { AudioStreamFacts } from '@ValenceClient/library/soundOf.types';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
-
-type AudioStreamFacts = Pick<
-  MediaItem['audioStreams'][number],
-  'codec' | 'channels' | 'isAtmos'
-> & {
-  profile?: string | null | undefined;
-};
-
-const HIGH_DEFINITION: ReadonlySet<string> = new Set(['1440p', '1080p', '720p']);
-
-const NAMED_SOUNDS: ReadonlySet<string> = new Set(['truehd', 'eac3', 'ac3']);
 
 /**
  * The badges a title earns for how it looks and sounds, as a streaming service shows them beside
@@ -36,29 +25,14 @@ const qualityBadges = (
     audioStreams?: readonly AudioStreamFacts[] | undefined;
   },
 ): string[] => {
-  const step = sharpestStepOf(item);
-  const sharpness =
-    step === null ? null : step.id === '2160p' ? '4K' : HIGH_DEFINITION.has(step.id) ? 'HD' : 'SD';
   const richest = [...(item.audioStreams ?? [])].sort(
     (left, right) => Number(right.isAtmos) - Number(left.isAtmos) || right.channels - left.channels,
   )[0];
-  const sound =
-    richest === undefined
-      ? []
-      : richest.isAtmos
-        ? [describeAudioCodec('atmos')]
-        : [
-            richest.codec === 'dts'
-              ? richest.profile?.includes('MA') === true
-                ? 'DTS-HD MA'
-                : 'DTS'
-              : NAMED_SOUNDS.has(richest.codec)
-                ? describeAudioCodec(richest.codec)
-                : null,
-            richest.channels > 2 ? describeChannels(richest.channels) : null,
-          ];
+  const { format, channels } = soundOf(richest);
 
-  return [sharpness, describeRange(item.videoRange), ...sound].filter((badge) => badge !== null);
+  return [sharpnessOf(item), describeRange(item.videoRange), format, channels].filter(
+    (badge) => badge !== null,
+  );
 };
 
 export { qualityBadges };

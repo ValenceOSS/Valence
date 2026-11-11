@@ -258,6 +258,7 @@ const ENGLISH = {
   'client.library.describeTitleDetails.rottenTomatoes': 'Rotten Tomatoes',
   'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
     '/api/libraries/{libraryId}/items?{query}',
+  'client.library.freshFlags.new': 'New',
   'client.library.freshFlags.newEpisode': 'New episode',
   'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',
@@ -284,6 +285,7 @@ const ENGLISH = {
   'client.library.sayRatingMeans.underSeventeenWithAnAdult':
     'Under 17s need a parent or guardian with them',
   'client.library.sayRatingMeans.youngChildren': 'Made for young children',
+  'client.library.showQualityBadges.standardRange': 'SDR',
   'client.library.theVersionsOf.anotherVersion': 'Another version',
   'client.library.useHomeRows.genreFromTheDecadeS': '{genre} from the {decade}s',
   'client.library.useHomeRows.newInGenre': 'New in {genre}',

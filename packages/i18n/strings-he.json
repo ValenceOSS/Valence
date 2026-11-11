@@ -935,6 +935,11 @@
     "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
   },
   {
+    "handler": "client.library.freshFlags.new",
+    "text": "New",
+    "context": "A small tab in the corner of a title's artwork on the home page, saying it was added to the library recently. Keep it to one short word."
+  },
+  {
     "handler": "client.library.freshFlags.newEpisode",
     "text": "New episode",
     "context": "Shown in the library (from `freshFlags`)."
@@ -1048,6 +1053,11 @@
     "handler": "client.library.sayRatingMeans.youngChildren",
     "text": "Made for young children",
     "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.showQualityBadges.standardRange",
+    "text": "SDR",
+    "context": "On a programme's badges, standard dynamic range, said only beside HDR10 or Dolby Vision when some episodes have one and some do not, as in \"HDR10 / SDR\"."
   },
   {
     "handler": "client.library.theVersionsOf.anotherVersion",

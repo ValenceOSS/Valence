@@ -6,7 +6,7 @@ import { scrollMarginIn } from '@ValenceUI/scrollMarginIn';
 import { scrollerAbove } from '@ValenceUI/scrollerAbove';
 import type { VirtualGridProps } from './VirtualGrid.types';
 
-const OVERSCAN_ROWS = 2;
+const OVERSCAN_ROWS = 6;
 
 const ROWS_BEFORE_MEASURED = 6;
 

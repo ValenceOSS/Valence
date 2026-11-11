@@ -11,7 +11,7 @@ import type { ArtCardProps } from './ArtCard.types';
  * there is no logo the name is written into the picture in its place, so the card still says what
  * it is.
  *
- * A flag along the bottom edge says what is new about it — just added, or a new episode — on a white
+ * A flag in the top left corner says what is new about it — just added, or a new episode — on a white
  * tab that reads against any picture, and a thin bar beneath the picture says how far through it
  * this viewer is.
  *
@@ -48,6 +48,7 @@ const ArtCard = ({
           src={imageUrl}
           alt=""
           loading="lazy"
+          decoding="async"
           draggable={false}
           className={`absolute inset-0 size-full object-cover ${
             isStill
@@ -64,6 +65,7 @@ const ArtCard = ({
           src={logoUrl}
           alt=""
           loading="lazy"
+          decoding="async"
           draggable={false}
           className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
           onError={() => {
@@ -77,7 +79,7 @@ const ArtCard = ({
       )}
 
       {flag === undefined ? null : (
-        <span className="absolute bottom-0 left-1/2 bg-on-scrim text-on-white -translate-x-1/2 whitespace-nowrap rounded-t-lg px-3 py-1 text-xs font-semibold">
+        <span className="absolute top-0 left-0 bg-on-scrim text-on-white whitespace-nowrap rounded-br-lg px-3 py-1 text-xs font-bold">
           {flag}
         </span>
       )}

@@ -151,6 +151,7 @@ const MediaCard = ({
                 src={imageUrl}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 onError={() => {
                   setMissingImageUrl(imageUrl);
                 }}
@@ -186,6 +187,7 @@ const MediaCard = ({
                 src={logoUrl}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 draggable={false}
                 className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
                 onError={() => {

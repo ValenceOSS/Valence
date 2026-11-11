@@ -43,6 +43,12 @@ const UNFOLDS_ALONG = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
 const AT_REST = 'inset(0px 0px 0px 0px round 18px)';
 
+const PICTURE_ROUND = 12;
+
+const PICTURE_AT_REST = `inset(0px 0px 0px 0px round ${PICTURE_ROUND.toString()}px)`;
+
+const WIDE = 9 / 16;
+
 const DETAILS_RISE = { duration: 0.16, delay: 0.06, ease: [0.32, 0.72, 0, 1] } as const;
 
 const FRAME_WAITS_MS = 25;
@@ -101,10 +107,13 @@ type Anchor = Spot & { card: Spot };
  * @returns Where to put the opened one, how tall its picture is, and where the resting card was.
  */
 const placeOver = (rect: DOMRect, picture: number): Anchor => {
-  const grown = Math.min(rect.width * GROWS_BY, window.innerWidth - (MARGIN + FRAME) * 2);
+  const grown = Math.min(
+    Math.max(rect.width, picture) * GROWS_BY,
+    window.innerWidth - (MARGIN + FRAME) * 2,
+  );
   const width = grown + FRAME * 2;
   const furthest = window.innerWidth - width - MARGIN;
-  const tall = picture * (grown / rect.width);
+  const tall = grown * WIDE;
 
   return {
     width,
@@ -112,7 +121,7 @@ const placeOver = (rect: DOMRect, picture: number): Anchor => {
       Math.max(rect.left + rect.width / 2 - width / 2, MARGIN),
       Math.max(furthest, MARGIN),
     ),
-    top: rect.top + picture / 2 - tall / 2 - FRAME,
+    top: rect.top + Math.min((picture - tall) / 2, 0) - FRAME,
     picture: tall,
     card: { left: rect.left, top: rect.top, width: rect.width, picture },
   };
@@ -133,20 +142,32 @@ const clipAround = (card: DOMRectReadOnly, box: DOMRectReadOnly): string =>
 
 /**
  * How far to move and shrink an opened card's picture, pinned at its top left corner, to lie over the
- * resting card's.
+ * resting card's, and how much of it to cut away so that only the resting card's shape shows: a wide
+ * picture shrunk until it covers an upright poster, cropped to the poster at its middle, rather than
+ * squeezed, so the picture opens out of the poster into its own shape.
  *
  * @param card - Where the resting card's picture is.
  * @param laid - Where the opened card's picture is laid out, unmoved.
  * @param share - How much of the way to go, from none to all of it.
- * @returns The transform.
+ * @returns The transform and the clip.
  */
-const shrinkOnto = (card: DOMRectReadOnly, laid: DOMRectReadOnly, share = 1): string => {
-  const scale = 1 + (card.width / laid.width - 1) * share;
+const coverOnto = (
+  card: DOMRectReadOnly,
+  laid: DOMRectReadOnly,
+  share = 1,
+): { transform: string; clipPath: string } => {
+  const fit = Math.max(card.width / laid.width, card.height / laid.height);
+  const scale = 1 + (fit - 1) * share;
+  const left = card.left + card.width / 2 - (laid.left + (laid.width * fit) / 2);
+  const top = card.top + card.height / 2 - (laid.top + (laid.height * fit) / 2);
+  const across = (Math.max(laid.width - card.width / fit, 0) / 2) * share;
+  const down = (Math.max(laid.height - card.height / fit, 0) / 2) * share;
+  const corner = PICTURE_ROUND * (1 + (1 / fit - 1) * share);
 
-  return `translate(${((card.left - laid.left) * share).toString()}px, ${(
-    (card.top - laid.top) *
-    share
-  ).toString()}px) scale(${scale.toString()})`;
+  return {
+    transform: `translate(${(left * share).toString()}px, ${(top * share).toString()}px) scale(${scale.toString()})`,
+    clipPath: `inset(${down.toString()}px ${across.toString()}px ${down.toString()}px ${across.toString()}px round ${corner.toString()}px)`,
+  };
 };
 
 /**
@@ -376,7 +397,7 @@ const RailCard = ({
         along,
       ),
       picture.animate(
-        [{ transform: now.transform }, { transform: shrinkOnto(resting, laid) }],
+        [{ transform: now.transform, clipPath: now.clipPath }, coverOnto(resting, laid)],
         along,
       ),
       panel.animate(
@@ -530,7 +551,10 @@ const RailCard = ({
       );
 
       picture.animate(
-        [{ transform: shrinkOnto(card, laid) }, { transform: 'translate(0px, 0px) scale(1)' }],
+        [
+          coverOnto(card, laid),
+          { transform: 'translate(0px, 0px) scale(1)', clipPath: PICTURE_AT_REST },
+        ],
         { duration: LIFTS_OVER_MS, easing: UNFOLDS_ALONG, fill: 'forwards' },
       );
 
@@ -649,7 +673,7 @@ const RailCard = ({
 
   useEffect(() => cancel, [cancel]);
 
-  const wideSize = drawsLarge ? {} : { size: 'medium' as const };
+  const wideSize = { size: 'medium' as const };
   const wideUrl = media.hasBackdrop
     ? artworkUrl(media.id, 'backdrop', { isOfTitle: isSeries, ...wideSize })
     : media.hasPoster
@@ -658,7 +682,7 @@ const RailCard = ({
 
   const restingUrl =
     shape === 'poster' && media.hasPoster
-      ? artworkUrl(media.id, 'poster', drawsLarge ? {} : { size: 'small' })
+      ? artworkUrl(media.id, 'poster', { size: drawsLarge ? 'medium' : 'small' })
       : wideUrl;
 
   const coversOpening = look === 'art' || restingUrl === wideUrl;
@@ -795,7 +819,7 @@ const RailCard = ({
                 <div
                   ref={pictureRef}
                   className="pointer-events-none relative w-full shrink-0 origin-top-left overflow-hidden rounded-[12px] shadow-[var(--shadow-lifted)] will-change-transform"
-                  style={{ height: anchor.picture }}
+                  style={{ height: anchor.picture, clipPath: PICTURE_AT_REST }}
                 >
                   <MediaPreview
                     mediaId={media.id}
