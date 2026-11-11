@@ -19,7 +19,9 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 
 const FIRST_GENRES = 6;
 
-const GENRE_BATCH = 4;
+const GENRE_BATCH = 6;
+
+const BATCHES_AHEAD = 2;
 
 const DECADE_BATCH = 4;
 
@@ -279,6 +281,25 @@ const useHomeRows = (
   });
 
   const areGenresSettled = byGenre.every((one) => !one.isLoading);
+  const areDecadesSettled = byDecade.every((one) => !one.isLoading);
+
+  useQueries({
+    queries: [
+      ...everyGenre.slice(genreLimit, genreLimit + GENRE_BATCH * BATCHES_AHEAD).map((genre) => ({
+        ...rowOf({ genre, limit: ROW_LIMIT }),
+        enabled: canAsk && areGenresSettled,
+      })),
+      ...(everyGenre.length > genreLimit
+        ? []
+        : everyDecade
+            .slice(decadeLimit, decadeLimit + DECADE_BATCH * BATCHES_AHEAD)
+            .map((decade) => ({
+              ...rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, limit: ROW_LIMIT }),
+              enabled: canAsk && areGenresSettled && areDecadesSettled,
+            }))),
+    ],
+    combine: () => null,
+  });
 
   const shownGenres = useMemo(
     () =>
@@ -288,9 +309,9 @@ const useHomeRows = (
     [areGenresSettled, genres, byGenre],
   );
 
-  const encores = useMemo(
-    () =>
-      Array.from({ length: encoreLimit }, (_, at) => {
+  const encoresUpTo = useCallback(
+    (limit: number) =>
+      Array.from({ length: limit }, (_, at) => {
         const step = Math.floor(at / 2);
 
         if (at % 2 === 0) {
@@ -322,8 +343,10 @@ const useHomeRows = (
                 other.decade === one.decade,
             ) === index,
         ),
-    [encoreLimit, shownGenres, everyGenre, everyDecade],
+    [shownGenres, everyGenre, everyDecade],
   );
+
+  const encores = useMemo(() => encoresUpTo(encoreLimit), [encoresUpTo, encoreLimit]);
 
   const encoreRoom =
     2 *
@@ -343,6 +366,26 @@ const useHomeRows = (
       }),
     ),
     combine: answersOf,
+  });
+
+  const areEncoresSettled = byEncore.every((one) => !one.isLoading);
+
+  useQueries({
+    queries:
+      everyGenre.length > genreLimit || everyDecade.length > decadeLimit
+        ? []
+        : encoresUpTo(encoreLimit + ENCORE_BATCH * BATCHES_AHEAD)
+            .slice(encores.length)
+            .map(({ genre, order, decade }) => ({
+              ...rowOf({
+                genre,
+                limit: ROW_LIMIT,
+                ...(order === null ? {} : { order }),
+                ...(decade === null ? {} : { yearFrom: decade, yearTo: decade + DECADE_SPAN }),
+              }),
+              enabled: canAsk && areEncoresSettled,
+            })),
+    combine: () => null,
   });
 
   const hasPluginRows = useServerHas('plugins.homeRows');

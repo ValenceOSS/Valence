@@ -163,7 +163,7 @@ const LibraryBrowser = ({
           setReached((count) => count + 1);
         }
       },
-      { rootMargin: '0px 0px 800px 0px' },
+      { rootMargin: '0px 0px 3000px 0px' },
     );
 
     watching.observe(end);

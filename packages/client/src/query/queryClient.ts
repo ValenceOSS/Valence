@@ -4,7 +4,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 
 const STALE_FOR_MS = 60_000;
 
-const KEPT_FOR_MS = 10 * 60_000;
+const KEPT_FOR_MS = 60 * 60_000;
 
 const TRIES = 2;
 
@@ -20,7 +20,7 @@ const UNAVAILABLE = 503;
  * The defaults are the whole argument for having it. An answer is treated as fresh for a minute, so
  * moving between pages shows what is already known instead of asking again and waiting — which is
  * the bug that produced a splash screen between every page and a hand-written cache to hide it. It
- * is kept for ten minutes after nothing is looking at it, so a viewer who wanders off and comes back
+ * is kept for an hour after nothing is looking at it, so a viewer who wanders off and comes back
  * finds the library where they left it.
  *
  * Being stale means asking again, not showing nothing. Every screen renders the last answer and
