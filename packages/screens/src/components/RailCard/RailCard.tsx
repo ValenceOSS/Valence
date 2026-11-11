@@ -84,6 +84,8 @@ const WAITS_ITS_TURN_MS = 60;
 
 const SLACK = 1;
 
+const OPENS_FROM_SHARE = 0.25;
+
 const GENRE_LIMIT = 3;
 type Spot = { left: number; top: number; width: number; picture: number };
 
@@ -155,24 +157,19 @@ const shrinkOnto = (card: DOMRectReadOnly, laid: DOMRectReadOnly, share = 1): st
 };
 
 /**
- * Whether a card can be seen whole: inside the window and inside every box around it that cuts off
- * what overflows, such as the row it scrolls in. A card half off the end of a row is not one a
- * pointer meant to open.
+ * How much of a card can be seen: the part of it inside the window and inside every box around it
+ * that cuts off what overflows, such as the row it scrolls in. A card mostly off the end of a row is
+ * not one a pointer meant to open, but one a good part of the way in is.
  *
  * @param element - The resting card.
- * @returns Whether every edge of it is in view.
+ * @returns The share of it in view, from none to all of it.
  */
-const isWhollyInView = (element: HTMLElement): boolean => {
+const shareInView = (element: HTMLElement): number => {
   const rect = element.getBoundingClientRect();
-
-  if (
-    rect.left < -SLACK ||
-    rect.top < -SLACK ||
-    rect.right > window.innerWidth + SLACK ||
-    rect.bottom > window.innerHeight + SLACK
-  ) {
-    return false;
-  }
+  let left = Math.max(rect.left, 0);
+  let top = Math.max(rect.top, 0);
+  let right = Math.min(rect.right, window.innerWidth);
+  let bottom = Math.min(rect.bottom, window.innerHeight);
 
   for (let around = element.parentElement; around !== null; around = around.parentElement) {
     const style = getComputedStyle(around);
@@ -183,17 +180,15 @@ const isWhollyInView = (element: HTMLElement): boolean => {
 
     const box = around.getBoundingClientRect();
 
-    if (
-      rect.left < box.left - SLACK ||
-      rect.right > box.right + SLACK ||
-      rect.top < box.top - SLACK ||
-      rect.bottom > box.bottom + SLACK
-    ) {
-      return false;
-    }
+    left = Math.max(left, box.left);
+    top = Math.max(top, box.top);
+    right = Math.min(right, box.right);
+    bottom = Math.min(bottom, box.bottom);
   }
 
-  return true;
+  const seen = Math.max(right - left, 0) * Math.max(bottom - top, 0);
+
+  return seen / Math.max(rect.width * rect.height, 1);
 };
 
 /**
@@ -613,7 +608,12 @@ const RailCard = ({
   const open = useCallback(() => {
     const holder = holderRef.current;
 
-    if (holder === null || !growsOnHover || !hasFinePointer() || !isWhollyInView(holder)) {
+    if (
+      holder === null ||
+      !growsOnHover ||
+      !hasFinePointer() ||
+      shareInView(holder) < OPENS_FROM_SHARE
+    ) {
       return true;
     }
 
