@@ -400,6 +400,7 @@
       "@ValenceUI/tokens/AURORA": ["./packages/ui/src/tokens/AURORA.ts"],
       "@ValenceUI/tokens/LIT_TEXT": ["./packages/ui/src/tokens/LIT_TEXT.ts"],
       "@ValenceUI/tokens/PLAY_FACE": ["./packages/ui/src/tokens/PLAY_FACE.ts"],
+      "@ValenceUI/tokens/PLAY_FACE_SMALL": ["./packages/ui/src/tokens/PLAY_FACE_SMALL.ts"],
       "@ValenceUI/tokens/GROUP_LABEL": ["./packages/ui/src/tokens/GROUP_LABEL.ts"],
       "@ValenceUI/tokens/FIELD_TEXT": ["./packages/ui/src/tokens/FIELD_TEXT.ts"],
       "@ValenceUI/tokens/FIELD_SURFACE": ["./packages/ui/src/tokens/FIELD_SURFACE.ts"],

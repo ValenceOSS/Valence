@@ -1,23 +1,18 @@
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import {
-  ArrowUTurnRight as ArrowUTurnRightIcon,
-  EyeOff as EyeOffIcon,
-  Heart as HeartIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  X as XIcon,
-} from '@keyline-icons/react';
-import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
-import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { ArtCard } from '@ValenceUI/ArtCard';
 import { Badge } from '@ValenceUI/Badge';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { WatchedBar } from '@ValenceUI/WatchedBar';
+import { PLAY_FACE_SMALL } from '@ValenceUI/tokens/PLAY_FACE_SMALL';
+import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
+import { TitleBadges } from '@ValenceScreens/components/TitleBadges/TitleBadges';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -102,14 +97,6 @@ const GENRE_LIMIT = 3;
 type Spot = { left: number; top: number; width: number; picture: number };
 
 type Anchor = Spot & { card: Spot };
-
-type Extra = {
-  id: string;
-  label: string;
-  icon: ReactNode;
-  isActive?: boolean;
-  onChoose: () => void;
-};
 
 /**
  * Places an opened card centred over the one it grew from and larger than it, a thin frame wider
@@ -261,9 +248,6 @@ const fitInside = (top: number, height: number): number => {
  * @param resumeSeconds - Where they left it.
  * @param hoverDelayMilliseconds - How long a pointer rests before it opens.
  * @param onOpenShow - Told to open the programme an episode belongs to.
- * @param isKept - Whether it is kept.
- * @param onToggleKept - Told to keep it, or stop.
- * @param onDismiss - Told to take it off continue watching, on the row of it.
  * @param isSeries - Whether this card stands for a whole programme rather than for the episode that
  *   happens to represent it, in which case the episode's own name and number are not what a reader
  *   is looking at — and pressing it opens the programme rather than that one episode.
@@ -293,10 +277,6 @@ const RailCard = ({
   resumeSeconds,
   hoverDelayMilliseconds = HOVER_DELAY_MILLISECONDS,
   onOpenShow,
-  isKept = false,
-  onToggleKept,
-  onHide,
-  onDismiss,
   isSeries = false,
   shape: askedShape = 'wide',
   look = 'card',
@@ -519,58 +499,6 @@ const RailCard = ({
   const markRef = useRef<HTMLSpanElement>(null);
   const markTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMenuOpenRef = useRef(false);
-
-  const extras: Extra[] = [
-    ...(resumeSeconds === undefined
-      ? []
-      : [
-          {
-            id: 'again',
-            label: say('common.startAgain'),
-            icon: <Icon of={ArrowUTurnRightIcon} size={17} />,
-            onChoose: () => {
-              onPlay(media, 0);
-            },
-          },
-        ]),
-    ...(onToggleKept === undefined
-      ? []
-      : [
-          {
-            id: 'keep',
-            label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
-            icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
-            isActive: isKept,
-            onChoose: () => {
-              onToggleKept(media);
-            },
-          },
-        ]),
-    ...(onDismiss === undefined
-      ? []
-      : [
-          {
-            id: 'dismiss',
-            label: say('screens.railCard.removeFromContinueWatching'),
-            icon: <Icon of={XIcon} size={17} />,
-            onChoose: () => {
-              onDismiss(media);
-            },
-          },
-        ]),
-    ...(onHide === undefined
-      ? []
-      : [
-          {
-            id: 'hide',
-            label: say('common.hide'),
-            icon: <Icon of={EyeOffIcon} size={17} />,
-            onChoose: () => {
-              onHide(media);
-            },
-          },
-        ]),
-  ];
 
   useLayoutEffect(() => {
     const panel = panelRef.current;
@@ -993,13 +921,19 @@ const RailCard = ({
                     media={
                       isSeries && show !== null
                         ? { ...media, rating: show.rating ?? null, year: show.year ?? null }
-                        : media
+                        : detail === null
+                          ? media
+                          : { ...media, sizeBytes: detail.sizeBytes }
                     }
                     hasEpisode={!isSeries}
-                    ageRating={ageRating}
+                    hasRuntime={!isSeries}
+                    hasSize={!isSeries}
+                    ageRating={isSeries ? ageRating : null}
                     size="xs"
                     tone="muted"
                   />
+
+                  {isSeries ? null : <TitleBadges detail={detail} />}
 
                   {told === null || told === '' ? null : (
                     <span className="line-clamp-3 min-h-0 shrink overflow-hidden text-xs leading-relaxed text-text-muted">
@@ -1018,70 +952,42 @@ const RailCard = ({
                   )}
                 </span>
 
-                <span className="@container relative z-10 flex shrink-0 items-center gap-2 pt-1">
-                  <Button
-                    variant="confirm"
+                <span className="relative z-10 flex shrink-0 pt-1">
+                  <PlayWithRestart
                     size="md"
-                    className="min-w-0 flex-1"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onPlay(media, resumeSeconds ?? 0);
-                    }}
+                    {...(resumeSeconds === undefined
+                      ? {}
+                      : {
+                          onStartAgain: () => {
+                            onPlay(media, 0);
+                          },
+                        })}
                   >
-                    <Icon of={PlayFilledIcon} size={15} />
-                    <span className="truncate">
-                      {resumeSeconds === undefined
-                        ? say('common.play')
-                        : say('screens.railCard.resumeFromResumeSeconds', {
-                            resumeSeconds: formatDuration(resumeSeconds),
-                          })}
-                    </span>
-                  </Button>
-
-                  {extras.length <= 1 ? null : (
-                    <ActionMenu
-                      label={say('screens.railCard.moreToDoWithTitle', { title: media.title })}
-                      align="end"
-                      look="raised"
-                      className="size-9 @sm:hidden"
-                      trigger={<Icon of={MoreHorizontalIcon} size={17} />}
-                      onOpenChange={(isOpen) => {
-                        isMenuOpenRef.current = isOpen;
-
-                        if (!isOpen && panelRef.current?.matches(':hover') !== true) {
-                          close();
-                        }
-                      }}
-                      groups={[
-                        {
-                          items: extras.map((extra) => ({
-                            id: extra.id,
-                            label: extra.label,
-                            icon: extra.icon,
-                            onChoose: extra.onChoose,
-                          })),
-                        },
-                      ]}
-                    />
-                  )}
-
-                  {extras.map((extra) => (
                     <Button
-                      key={extra.id}
-                      isIconOnly
-                      variant="secondary"
-                      size="md"
-                      label={extra.label}
-                      {...(extra.isActive === undefined ? {} : { isActive: extra.isActive })}
-                      className={extras.length <= 1 ? '' : 'hidden @sm:inline-flex'}
+                      variant="confirm"
+                      size="none"
+                      className={PLAY_FACE_SMALL}
                       onClick={(event) => {
                         event.stopPropagation();
-                        extra.onChoose();
+                        onPlay(media, resumeSeconds ?? 0);
                       }}
                     >
-                      {extra.icon}
+                      <Icon of={PlayFilledIcon} size={15} />
+                      <span className="truncate">
+                        {resumeSeconds === undefined
+                          ? say('common.play')
+                          : say('screens.railCard.resumeFromResumeSeconds', {
+                              resumeSeconds: formatDuration(resumeSeconds),
+                            })}
+                      </span>
+                      {resumeSeconds === undefined || shownFraction === undefined ? null : (
+                        <WatchedBar
+                          watched={shownFraction}
+                          className="mx-0 w-8 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+                        />
+                      )}
                     </Button>
-                  ))}
+                  </PlayWithRestart>
                 </span>
               </motion.div>
             </motion.div>
