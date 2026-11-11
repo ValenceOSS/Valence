@@ -41,7 +41,7 @@ const UNFOLDS_OVER_MS = 170;
 
 const UNFOLDS_ALONG = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
-const AT_REST = 'inset(0px 0px 0px 0px round 12px)';
+const AT_REST = 'inset(0px 0px 0px 0px round 18px)';
 
 const DETAILS_RISE = { duration: 0.16, delay: 0.06, ease: [0.32, 0.72, 0, 1] } as const;
 
@@ -135,7 +135,7 @@ const clipAround = (card: DOMRectReadOnly, box: DOMRectReadOnly): string =>
   `inset(${(card.top - box.top).toString()}px ${(box.right - card.right).toString()}px ${Math.max(
     box.bottom - card.bottom,
     0,
-  ).toString()}px ${(card.left - box.left).toString()}px round 6px)`;
+  ).toString()}px ${(card.left - box.left).toString()}px round 12px)`;
 
 /**
  * How far to move and shrink an opened card's picture, pinned at its top left corner, to lie over the
@@ -307,6 +307,7 @@ const RailCard = ({
 
   const holderRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const [isRaised, setIsRaised] = useState(false);
   const cardOrigin = useCardOrigin();
   const prefersReducedMotion = useReducedMotionConfig();
 
@@ -336,12 +337,14 @@ const RailCard = ({
       holder === null ||
       prefersReducedMotion === true
     ) {
+      setIsRaised(false);
       setAnchor(null);
 
       return;
     }
 
     isClosingRef.current = true;
+    setIsRaised(false);
 
     const closing = closingRef.current + 1;
 
@@ -606,6 +609,7 @@ const RailCard = ({
     const rect = holder.getBoundingClientRect();
 
     OPENED.isOpen = true;
+    setIsRaised(true);
 
     setAnchor(
       placeOver(
@@ -749,250 +753,261 @@ const RailCard = ({
       )}
 
       {createPortal(
-        <AnimatePresence>
+        <>
           {anchor === null ? null : (
-            <motion.div
-              key={media.id}
-              ref={panelRef}
-              initial={false}
-              animate={{ opacity: 1 }}
-              onPointerLeave={() => {
-                if (!isMenuOpenRef.current) {
-                  close();
-                }
-              }}
-              onWheel={(event) => {
-                if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
-                  return;
-                }
+            <div
+              aria-hidden
+              className={`pointer-events-none fixed inset-0 z-[39] bg-shade/25 backdrop-blur-[3px] transition-opacity duration-200 ease-out starting:opacity-0 motion-reduce:backdrop-blur-none ${
+                isRaised ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          )}
+          <AnimatePresence>
+            {anchor === null ? null : (
+              <motion.div
+                key={media.id}
+                ref={panelRef}
+                initial={false}
+                animate={{ opacity: 1 }}
+                onPointerLeave={() => {
+                  if (!isMenuOpenRef.current) {
+                    close();
+                  }
+                }}
+                onWheel={(event) => {
+                  if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
+                    return;
+                  }
 
-                scrollerOf(holderRef.current)?.scrollBy({ left: event.deltaX });
-              }}
-              style={{
-                left: anchor.left,
-                top: anchor.top,
-                width: anchor.width,
-              }}
-              className="fixed z-40 flex max-h-[calc(100svh_-_1.5rem)] flex-col p-1.5"
-            >
-              <motion.span
-                ref={frameRef}
-                aria-hidden
-                style={{ clipPath: AT_REST }}
-                className="pointer-events-none absolute inset-0 rounded-[12px] valence-float"
-              />
-
-              <Button
-                variant="bare"
-                size="none"
-                aria-label={say('screens.railCard.moreAboutValue', {
-                  value: media.seriesTitle ?? media.title,
-                })}
-                onClick={inspect}
-                className="absolute inset-0 z-0 rounded-lg"
-              />
-
-              <div
-                ref={pictureRef}
-                className="pointer-events-none relative w-full shrink-0 origin-top-left overflow-hidden rounded-md"
-                style={{ height: anchor.picture }}
+                  scrollerOf(holderRef.current)?.scrollBy({ left: event.deltaX });
+                }}
+                style={{
+                  left: anchor.left,
+                  top: anchor.top,
+                  width: anchor.width,
+                }}
+                className="fixed z-40 flex max-h-[calc(100svh_-_1.5rem)] flex-col p-1.5"
               >
-                <MediaPreview
-                  mediaId={media.id}
-                  backdropUrl={wideUrl ?? null}
-                  durationSeconds={media.durationSeconds}
-                  settleMilliseconds={0}
-                  fills
-                  onPlayingChange={(playing) => {
-                    if (markTimerRef.current !== null) {
-                      clearTimeout(markTimerRef.current);
-                      markTimerRef.current = null;
-                    }
+                <motion.span
+                  ref={frameRef}
+                  aria-hidden
+                  style={{ clipPath: AT_REST }}
+                  className="pointer-events-none absolute inset-0 rounded-[18px] valence-float"
+                />
 
-                    if (!playing || isClosingRef.current) {
-                      return;
-                    }
+                <Button
+                  variant="bare"
+                  size="none"
+                  aria-label={say('screens.railCard.moreAboutValue', {
+                    value: media.seriesTitle ?? media.title,
+                  })}
+                  onClick={inspect}
+                  className="absolute inset-0 z-0 rounded-lg"
+                />
 
-                    if (coversOpening) {
-                      stillRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
-                        duration: STILL_FADES_MS,
-                        fill: 'forwards',
-                      });
-                    }
+                <div
+                  ref={pictureRef}
+                  className="pointer-events-none relative w-full shrink-0 origin-top-left overflow-hidden rounded-[12px]"
+                  style={{ height: anchor.picture }}
+                >
+                  <MediaPreview
+                    mediaId={media.id}
+                    backdropUrl={wideUrl ?? null}
+                    durationSeconds={media.durationSeconds}
+                    settleMilliseconds={0}
+                    fills
+                    onPlayingChange={(playing) => {
+                      if (markTimerRef.current !== null) {
+                        clearTimeout(markTimerRef.current);
+                        markTimerRef.current = null;
+                      }
 
-                    markTimerRef.current = setTimeout(() => {
-                      markTimerRef.current = null;
+                      if (!playing || isClosingRef.current) {
+                        return;
+                      }
 
-                      if (!isClosingRef.current) {
-                        markRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
-                          duration: MARK_FADES_MS,
-                          easing: 'ease-out',
+                      if (coversOpening) {
+                        stillRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+                          duration: STILL_FADES_MS,
                           fill: 'forwards',
                         });
                       }
-                    }, MARK_STAYS_PLAYING_MS);
-                  }}
-                />
 
-                {(look === 'art' ? wideUrl : restingUrl) === undefined ? null : (
-                  <img
-                    ref={stillRef}
-                    src={look === 'art' ? wideUrl : restingUrl}
-                    alt=""
-                    aria-hidden
-                    className={`absolute inset-0 size-full object-cover ${
-                      coversOpening ? '' : 'opacity-0'
-                    }`}
-                  />
-                )}
+                      markTimerRef.current = setTimeout(() => {
+                        markTimerRef.current = null;
 
-                {look === 'art' && media.hasLogo ? (
-                  <span ref={markRef} aria-hidden className="absolute inset-0">
-                    <span className="absolute inset-0 bg-linear-to-tr from-shade/70 via-shade/10 to-transparent" />
-                    <img
-                      src={artworkUrl(media.id, 'logo', { size: 'medium' })}
-                      alt=""
-                      className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
-                    />
-                  </span>
-                ) : null}
-              </div>
-
-              <motion.div
-                ref={detailsRef}
-                initial={
-                  prefersReducedMotion === true
-                    ? { opacity: 0 }
-                    : { opacity: 0, transform: 'translateY(6px)' }
-                }
-                animate={{ opacity: 1, transform: 'translateY(0px)' }}
-                transition={prefersReducedMotion === true ? { duration: 0.12 } : DETAILS_RISE}
-                className="relative flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-4 pb-4 pt-4 text-left"
-              >
-                <span className="flex items-start justify-between gap-3">
-                  <span className="min-w-0 truncate text-xs font-medium text-text-muted">
-                    {isSeries
-                      ? show === null
-                        ? null
-                        : [
-                            show.seasonCount === 1
-                              ? null
-                              : sayCount('common.count.seasons', show.seasonCount),
-                            sayCount('common.count.episodes', show.episodeCount),
-                            unwatchedCount === undefined || (unwatchedCount === 0 && !isSeenThrough)
-                              ? null
-                              : unwatchedCount === 0
-                                ? say('screens.railCard.allWatched')
-                                : sayCount('screens.railCard.episodesLeft', unwatchedCount),
-                          ]
-                            .filter((part) => part !== null)
-                            .join(' · ')
-                      : media.seriesTitle === null || media.seriesTitle === undefined
-                        ? null
-                        : media.title}
-                  </span>
-                </span>
-
-                {onOpenShow === undefined ||
-                media.seriesTitle === null ||
-                media.seriesTitle === undefined ? (
-                  <span className="text-xl font-semibold leading-tight tracking-[-0.02em] text-text">
-                    {media.seriesTitle ?? media.title}
-                  </span>
-                ) : (
-                  <Button
-                    variant="bare"
-                    size="none"
-                    aria-label={say('screens.railCard.aboutSeriesTitle', {
-                      seriesTitle: media.seriesTitle,
-                    })}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenShow(media);
+                        if (!isClosingRef.current) {
+                          markRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+                            duration: MARK_FADES_MS,
+                            easing: 'ease-out',
+                            fill: 'forwards',
+                          });
+                        }
+                      }, MARK_STAYS_PLAYING_MS);
                     }}
-                    className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-[-0.02em] text-text underline-offset-4 hover:underline"
-                  >
-                    {media.seriesTitle}
-                  </Button>
-                )}
-
-                <span className="pointer-events-none flex min-h-0 shrink flex-col gap-3 text-left">
-                  <MediaFacts
-                    media={
-                      isSeries && show !== null
-                        ? { ...media, rating: show.rating ?? null, year: show.year ?? null }
-                        : detail === null
-                          ? media
-                          : { ...media, sizeBytes: detail.sizeBytes }
-                    }
-                    hasEpisode={!isSeries}
-                    hasRuntime={!isSeries}
-                    hasSize={!isSeries}
-                    ageRating={isSeries ? ageRating : null}
-                    size="xs"
-                    tone="muted"
                   />
 
-                  {isSeries ? null : <TitleBadges detail={detail} />}
-
-                  {told === null || told === '' ? null : (
-                    <span className="line-clamp-3 min-h-0 shrink overflow-hidden text-xs leading-relaxed text-text-muted">
-                      {told}
-                    </span>
+                  {(look === 'art' ? wideUrl : restingUrl) === undefined ? null : (
+                    <img
+                      ref={stillRef}
+                      src={look === 'art' ? wideUrl : restingUrl}
+                      alt=""
+                      aria-hidden
+                      className={`absolute inset-0 size-full object-cover ${
+                        coversOpening ? '' : 'opacity-0'
+                      }`}
+                    />
                   )}
 
-                  {genres.length === 0 ? null : (
-                    <span className="flex shrink-0 flex-wrap gap-1.5">
-                      {genres.slice(0, GENRE_LIMIT).map((genre) => (
-                        <Badge key={genre} size="sm">
-                          {genre}
-                        </Badge>
-                      ))}
+                  {look === 'art' && media.hasLogo ? (
+                    <span ref={markRef} aria-hidden className="absolute inset-0">
+                      <span className="absolute inset-0 bg-linear-to-tr from-shade/70 via-shade/10 to-transparent" />
+                      <img
+                        src={artworkUrl(media.id, 'logo', { size: 'medium' })}
+                        alt=""
+                        className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+                      />
                     </span>
-                  )}
-                </span>
+                  ) : null}
+                </div>
 
-                <span className="relative z-10 flex shrink-0 pt-1">
-                  <PlayWithRestart
-                    size="md"
-                    {...(resumeSeconds === undefined
-                      ? {}
-                      : {
-                          onStartAgain: () => {
-                            onPlay(media, 0);
-                          },
-                        })}
-                  >
+                <motion.div
+                  ref={detailsRef}
+                  initial={
+                    prefersReducedMotion === true
+                      ? { opacity: 0 }
+                      : { opacity: 0, transform: 'translateY(6px)' }
+                  }
+                  animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                  transition={prefersReducedMotion === true ? { duration: 0.12 } : DETAILS_RISE}
+                  className="relative flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-4 pb-4 pt-4 text-left"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 truncate text-xs font-medium text-text-muted">
+                      {isSeries
+                        ? show === null
+                          ? null
+                          : [
+                              show.seasonCount === 1
+                                ? null
+                                : sayCount('common.count.seasons', show.seasonCount),
+                              sayCount('common.count.episodes', show.episodeCount),
+                              unwatchedCount === undefined ||
+                              (unwatchedCount === 0 && !isSeenThrough)
+                                ? null
+                                : unwatchedCount === 0
+                                  ? say('screens.railCard.allWatched')
+                                  : sayCount('screens.railCard.episodesLeft', unwatchedCount),
+                            ]
+                              .filter((part) => part !== null)
+                              .join(' · ')
+                        : media.seriesTitle === null || media.seriesTitle === undefined
+                          ? null
+                          : media.title}
+                    </span>
+                  </span>
+
+                  {onOpenShow === undefined ||
+                  media.seriesTitle === null ||
+                  media.seriesTitle === undefined ? (
+                    <span className="text-xl font-semibold leading-tight tracking-[-0.02em] text-text">
+                      {media.seriesTitle ?? media.title}
+                    </span>
+                  ) : (
                     <Button
-                      variant="confirm"
+                      variant="bare"
                       size="none"
-                      className={PLAY_FACE_SMALL}
+                      aria-label={say('screens.railCard.aboutSeriesTitle', {
+                        seriesTitle: media.seriesTitle,
+                      })}
                       onClick={(event) => {
                         event.stopPropagation();
-                        onPlay(media, resumeSeconds ?? 0);
+                        onOpenShow(media);
                       }}
+                      className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-[-0.02em] text-text underline-offset-4 hover:underline"
                     >
-                      <Icon of={PlayFilledIcon} size={15} />
-                      <span className="truncate">
-                        {resumeSeconds === undefined
-                          ? say('common.play')
-                          : say('screens.railCard.resumeFromResumeSeconds', {
-                              resumeSeconds: formatDuration(resumeSeconds),
-                            })}
-                      </span>
-                      {resumeSeconds === undefined || shownFraction === undefined ? null : (
-                        <WatchedBar
-                          watched={shownFraction}
-                          className="mx-0 w-8 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
-                        />
-                      )}
+                      {media.seriesTitle}
                     </Button>
-                  </PlayWithRestart>
-                </span>
+                  )}
+
+                  <span className="pointer-events-none flex min-h-0 shrink flex-col gap-3 text-left">
+                    <MediaFacts
+                      media={
+                        isSeries && show !== null
+                          ? { ...media, rating: show.rating ?? null, year: show.year ?? null }
+                          : detail === null
+                            ? media
+                            : { ...media, sizeBytes: detail.sizeBytes }
+                      }
+                      hasEpisode={!isSeries}
+                      hasRuntime={!isSeries}
+                      hasSize={!isSeries}
+                      ageRating={isSeries ? ageRating : null}
+                      size="xs"
+                      tone="muted"
+                    />
+
+                    {isSeries ? null : <TitleBadges detail={detail} />}
+
+                    {told === null || told === '' ? null : (
+                      <span className="line-clamp-3 min-h-0 shrink overflow-hidden text-xs leading-relaxed text-text-muted">
+                        {told}
+                      </span>
+                    )}
+
+                    {genres.length === 0 ? null : (
+                      <span className="flex shrink-0 flex-wrap gap-1.5">
+                        {genres.slice(0, GENRE_LIMIT).map((genre) => (
+                          <Badge key={genre} size="sm">
+                            {genre}
+                          </Badge>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+
+                  <span className="relative z-10 flex shrink-0 pt-1">
+                    <PlayWithRestart
+                      size="md"
+                      {...(resumeSeconds === undefined
+                        ? {}
+                        : {
+                            onStartAgain: () => {
+                              onPlay(media, 0);
+                            },
+                          })}
+                    >
+                      <Button
+                        variant="confirm"
+                        size="none"
+                        className={PLAY_FACE_SMALL}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onPlay(media, resumeSeconds ?? 0);
+                        }}
+                      >
+                        <Icon of={PlayFilledIcon} size={15} />
+                        <span className="truncate">
+                          {resumeSeconds === undefined
+                            ? say('common.play')
+                            : say('screens.railCard.resumeFromResumeSeconds', {
+                                resumeSeconds: formatDuration(resumeSeconds),
+                              })}
+                        </span>
+                        {resumeSeconds === undefined || shownFraction === undefined ? null : (
+                          <WatchedBar
+                            watched={shownFraction}
+                            className="mx-0 w-8 shrink-0 rounded-[2px] bg-on-white/20 [&>span]:rounded-[2px] [&>span]:bg-on-white"
+                          />
+                        )}
+                      </Button>
+                    </PlayWithRestart>
+                  </span>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
+            )}
+          </AnimatePresence>
+        </>,
         document.body,
       )}
     </div>
