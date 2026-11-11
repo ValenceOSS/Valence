@@ -40,6 +40,8 @@ const PREVIEW_ABSENT = say('screens.mediaPreview.noPreviewAvailable');
 
 const LOOK_EVERY_MILLISECONDS = 250;
 
+const OFF_SCREEN_BELOW = 0.05;
+
 const FADE_MILLISECONDS = 700;
 
 const SETTLE_BACK_MILLISECONDS = 700;
@@ -115,6 +117,9 @@ const MediaPreview = ({
   const wasHeld = useRef(false);
   const isFallingQuiet = useRef(false);
   const stillRef = useRef<HTMLImageElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [isOffScreen, setIsOffScreen] = useState(false);
+  const isKeptStill = isHeld || isOffScreen;
   const [hasEnded, setHasEnded] = useState(false);
   const [, setHasFrame] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -236,7 +241,7 @@ const MediaPreview = ({
       return;
     }
 
-    if (isHeld) {
+    if (isKeptStill) {
       wasHeld.current = true;
       element.pause();
 
@@ -262,7 +267,7 @@ const MediaPreview = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [isHeld, hasStarted, hasEnded]);
+  }, [isKeptStill, hasStarted, hasEnded]);
 
   useEffect(() => {
     const element = videoRef.current;
@@ -275,7 +280,28 @@ const MediaPreview = ({
   }, [isMuted, mayBeHeard, isMusicOn]);
 
   useEffect(() => {
-    if (onPalette === undefined) {
+    const element = rootRef.current;
+
+    if (element === null || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const watcher = new IntersectionObserver(
+      ([entry]) => {
+        setIsOffScreen(entry !== undefined && !entry.isIntersecting);
+      },
+      { threshold: OFF_SCREEN_BELOW },
+    );
+
+    watcher.observe(element);
+
+    return () => {
+      watcher.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (onPalette === undefined || isOffScreen) {
       return;
     }
 
@@ -313,10 +339,11 @@ const MediaPreview = ({
     return () => {
       clearInterval(timer);
     };
-  }, [onPalette, isShowingFrame, mediaId]);
+  }, [onPalette, isShowingFrame, mediaId, isOffScreen]);
 
   return (
     <div
+      ref={rootRef}
       className={`relative overflow-hidden bg-shade ${
         fills ? 'h-full w-full' : 'aspect-video w-full'
       }`}
