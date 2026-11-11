@@ -10981,6 +10981,11 @@
     "context": "A message in an alert in the askable of the phone app."
   },
   {
+    "handler": "phone.aPerson.theirWorkCouldNotBeRead",
+    "text": "Couldn’t load the rest of their work.",
+    "context": "Shown on the phone's page about a person in the cast or crew where their work not on this server and their credits could not be read, above a button to try again."
+  },
+  {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
     "text": "Couldn’t load that playlist.",
     "context": "Text shown in the playlist of the phone app."
@@ -11264,6 +11269,11 @@
     "handler": "phone.aShow.playSeasonEpisode",
     "text": "Play S{season} E{episode}",
     "context": "The button on a programme's page in the phone app that plays the next episode from its start. {season} is the season number and {episode} the episode number."
+  },
+  {
+    "handler": "phone.aShow.statusNextEpisode",
+    "text": "{status} · S{seasonNumber} E{episodeNumber} · {airDate}",
+    "context": "A programme's status chip on its page on the open inside of a folding phone, with the next episode folded into it. {status} is the status, such as Returning; {seasonNumber} and {episodeNumber} are the next episode's; {airDate} says when it airs, such as Airs today."
   },
   {
     "handler": "phone.aShow.thatProgrammeCouldNotBeRead",

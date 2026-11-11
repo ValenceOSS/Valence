@@ -9,6 +9,7 @@ import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
 import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
+import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
 import { AShow } from './AShow';
 import { useLikeThis } from '@ValenceClient/library/useLikeThis';
 import type { ReactNode } from 'react';
@@ -72,7 +73,19 @@ const TWO_SEASONS = aShow([
   { seasonNumber: 2, episodes: [anEpisode(LATER, 'Hello, Ms. Cobel', 2, 1)] },
 ]);
 
+const RETURNING = {
+  ...TWO_SEASONS,
+  status: 'Returning Series',
+  nextEpisode: {
+    seasonNumber: 3,
+    episodeNumber: 1,
+    title: 'Hello, Again',
+    airDate: new Date().toISOString().slice(0, 10),
+  },
+};
+
 beforeEach(() => {
+  holdAWindowOf(393, 852);
   jest.mocked(useLikeThis).mockReset().mockReturnValue([]);
   jest.mocked(fetchShow).mockReset();
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
@@ -428,5 +441,68 @@ describe('AShow', () => {
     await drawn.findByLabelText('More');
 
     expect(theAMenuItems()).not.toContain('Request more…');
+  });
+
+  it('says where the programme stands and its next episode apart, on a phone', async () => {
+    jest.mocked(fetchShow).mockResolvedValue(RETURNING);
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('Returning')).toBeTruthy();
+    expect(drawn.getByText('Next: S3 E1 · Airs today')).toBeTruthy();
+    expect(drawn.queryByText('Returning · S3 E1 · Airs today')).toBeNull();
+  });
+
+  it('folds the next episode into where the programme stands, opened out', async () => {
+    holdAWindowOf(669, 871);
+    jest.mocked(fetchShow).mockResolvedValue(RETURNING);
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('Returning · S3 E1 · Airs today')).toBeTruthy();
+    expect(drawn.getByText('2022 · 2 seasons')).toBeTruthy();
+    expect(drawn.queryByText('Next: S3 E1 · Airs today')).toBeNull();
+  });
+
+  it('still says what is next, opened out, where it cannot say where the programme stands', async () => {
+    holdAWindowOf(669, 871);
+    jest.mocked(fetchShow).mockResolvedValue({ ...RETURNING, status: null });
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('Next: S3 E1 · Airs today')).toBeTruthy();
   });
 });

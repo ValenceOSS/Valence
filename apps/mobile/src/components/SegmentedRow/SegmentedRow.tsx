@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { AFadedEdge } from '@ValenceMobile/components/AFadedEdge/AFadedEdge';
 import { ACapsuleRow } from '@ValenceMobile/components/SegmentedRow/components/ACapsuleRow/ACapsuleRow';
 import type { SegmentedRowProps } from './SegmentedRow.types';
@@ -7,6 +7,7 @@ import type { SegmentedRowProps } from './SegmentedRow.types';
 const FADE = 24;
 
 const styles = StyleSheet.create({
+  clipped: { borderRadius: 999, overflow: 'hidden' },
   filling: { flexGrow: 1 },
   sideways: { paddingRight: FADE },
 });
@@ -19,9 +20,11 @@ const styles = StyleSheet.create({
  *
  * Every one of them is drawn as the row across the head of the library is: one capsule on liquid
  * glass where the phone has it, with a highlight that springs to the one picked, sat in a row that
- * swipes sideways and fades out at its edges where it holds more than fits — so the choices on
- * every page look and move as the library's do. Where everything fits it keeps no room at its end
- * for a fade, so it sits flush with whatever it is lined up against.
+ * swipes sideways where it holds more than fits, fading out at its edges and its capsule rounded
+ * off where it is cut, since glass does not fade — so the choices on every page look and move as
+ * the library's do. Where everything fits it keeps no room at its end for a fade, so it sits flush
+ * with whatever it is lined up against, and one asked to fill its width only does so where its
+ * choices fit across it.
  *
  * @param label - What is being chosen, for anyone who cannot see the row.
  * @param items - What there is to choose from.
@@ -42,7 +45,7 @@ const SegmentedRow = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const [room, setRoom] = useState(0);
   const [wanted, setWanted] = useState(0);
-  const isOverflowing = !fills && wanted > room;
+  const isOverflowing = room > 0 && wanted > room + 1;
 
   if (items.length === 0) {
     return null;
@@ -50,30 +53,32 @@ const SegmentedRow = ({
 
   return (
     <AFadedEdge leading={isScrolled ? FADE : 0} trailing={isOverflowing ? FADE : 0}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={fills ? styles.filling : isOverflowing ? styles.sideways : null}
-        scrollEventThrottle={32}
-        onLayout={(event) => {
-          setRoom(event.nativeEvent.layout.width);
-        }}
-        onContentSizeChange={(width) => {
-          setWanted(width - (isOverflowing ? FADE : 0));
-        }}
-        onScroll={(event) => {
-          setIsScrolled(event.nativeEvent.contentOffset.x > 1);
-        }}
-      >
-        <ACapsuleRow
-          label={label}
-          items={items}
-          value={value}
-          onSelect={onSelect}
-          fills={fills}
-          isShown={isShown}
-        />
-      </ScrollView>
+      <View style={isOverflowing ? styles.clipped : null}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={isOverflowing ? styles.sideways : fills ? styles.filling : null}
+          scrollEventThrottle={32}
+          onLayout={(event) => {
+            setRoom(event.nativeEvent.layout.width);
+          }}
+          onContentSizeChange={(width) => {
+            setWanted(width - (isOverflowing ? FADE : 0));
+          }}
+          onScroll={(event) => {
+            setIsScrolled(event.nativeEvent.contentOffset.x > 1);
+          }}
+        >
+          <ACapsuleRow
+            label={label}
+            items={items}
+            value={value}
+            onSelect={onSelect}
+            fills={fills}
+            isShown={isShown}
+          />
+        </ScrollView>
+      </View>
     </AFadedEdge>
   );
 };

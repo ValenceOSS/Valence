@@ -67,6 +67,8 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
+import { AnOpenedHeadline } from '@ValenceMobile/components/AnOpenedHeadline/AnOpenedHeadline';
+import { useIsOpenedOut } from '@ValenceMobile/hooks/useIsOpenedOut';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { describeShowStatus } from '@ValenceClient/library/describeShowStatus';
 import type { ShowStatusKind } from '@ValenceClient/library/describeShowStatus';
@@ -171,6 +173,7 @@ const AShow = ({
   );
 
   useConfirmHiding(hiding, onBack);
+  const isOpenedOut = useIsOpenedOut();
 
   if (asking.isPending) {
     return (
@@ -285,6 +288,14 @@ const AShow = ({
         ? []
         : [{ label: show.status, tone: 'quiet' as const }]
       : [{ label: status.label, tone: status.tone, icon: STATUS_ICONS[status.kind] }];
+  const quality =
+    sharpest === null ? [] : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange });
+  const rating =
+    typeof show.certification === 'string' &&
+    show.certification !== '' &&
+    typeof show.certificationRegion === 'string'
+      ? { certification: show.certification, region: show.certificationRegion }
+      : null;
   const genres = (show.genres ?? [])
     .slice(0, 3)
     .map((genre) => ({ label: genre, tone: 'solid' as const }));
@@ -360,30 +371,41 @@ const AShow = ({
       >
         <ARising>
           <View style={styles.headline}>
-            <Words size="lead" tone="muted" isCentred>
-              {facts.join(' · ')}
-            </Words>
+            {isOpenedOut ? null : (
+              <Words size="lead" tone="muted" isCentred>
+                {facts.join(' · ')}
+              </Words>
+            )}
 
-            <View style={styles.badges}>
-              <TheBadges
-                isLarge
-                badges={
-                  sharpest === null
-                    ? []
-                    : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange })
-                }
-                rating={
-                  typeof show.certification === 'string' &&
-                  show.certification !== '' &&
-                  typeof show.certificationRegion === 'string'
-                    ? { certification: show.certification, region: show.certificationRegion }
-                    : null
+            {isOpenedOut ? (
+              <AnOpenedHeadline
+                facts={facts.join(' · ')}
+                rating={rating}
+                quality={quality}
+                statuses={
+                  next === null || status === null
+                    ? badges
+                    : [
+                        {
+                          ...badges[0],
+                          label: say('phone.aShow.statusNextEpisode', {
+                            status: status.label,
+                            seasonNumber: next.seasonNumber.toString(),
+                            episodeNumber: next.episodeNumber.toString(),
+                            airDate: describeAirDate(next.airDate, today),
+                          }),
+                        },
+                      ]
                 }
               />
-              <ABadgeRow badges={badges} isLarge />
-            </View>
+            ) : (
+              <View style={styles.badges}>
+                <TheBadges isLarge badges={quality} rating={rating} />
+                <ABadgeRow badges={badges} isLarge />
+              </View>
+            )}
 
-            {next === null ? null : (
+            {next === null || (isOpenedOut && status !== null) ? null : (
               <Words tone="muted" isCentred>
                 {say('common.nextSSeasonNumberEEpisodeNumberAirDate', {
                   seasonNumber: next.seasonNumber.toString(),
