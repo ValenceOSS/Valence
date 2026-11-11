@@ -14,6 +14,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { PersonPortraits } from './components/PersonPortraits/PersonPortraits';
 import { SeasonMate } from '@ValenceScreens/components/SeasonMate/SeasonMate';
@@ -75,6 +76,7 @@ const PersonDialog = ({
   backLabel,
 }: PersonDialogProps) => {
   const heldBadgesOf = useHeldBadges();
+  const kinds = useRequestableKinds();
   const [lastOpened, setLastOpened] = useState<number | null>(null);
 
   const asked = useQuery(libraryQueries.person(personId));
@@ -115,18 +117,18 @@ const PersonDialog = ({
   );
   const moreRows = [
     {
-      kind: 'film',
+      kind: 'film' as const,
       heading:
         credits.films.length === 0 ? say('common.films') : say('screens.personDialog.moreFilms'),
     },
     {
-      kind: 'series',
+      kind: 'series' as const,
       heading:
         credits.shows.length === 0
           ? say('common.programmes')
           : say('screens.personDialog.moreShows'),
     },
-  ];
+  ].filter((row) => kinds.has(row.kind));
   const isEmpty =
     !isLoading && !couldNotRead && !hasAnythingToShow(person, credits) && notHeld.length === 0;
 

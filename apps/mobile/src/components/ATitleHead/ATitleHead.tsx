@@ -151,7 +151,12 @@ const ATitleHead = (props: ATitleHeadProps) => {
         </View>
       ) : null}
 
-      <View style={[styles.logo, { bottom: high * (1 - INTO_THE_PAGE_FROM) - LOGO_HIGH / 2 }]}>
+      <View
+        style={[
+          styles.logo,
+          { bottom: Math.max(high * (1 - INTO_THE_PAGE_FROM) - LOGO_HIGH / 2, 0) },
+        ]}
+      >
         <ATitleLogo
           {...('mediaId' in props
             ? { mediaId: props.letteredBy }

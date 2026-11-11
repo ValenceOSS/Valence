@@ -10981,6 +10981,11 @@
     "context": "A message in an alert in the askable of the phone app."
   },
   {
+    "handler": "phone.aPerson.theirWorkCouldNotBeRead",
+    "text": "Couldn’t load the rest of their work.",
+    "context": "Shown on the phone's page about a person in the cast or crew where their work not on this server and their credits could not be read, above a button to try again."
+  },
+  {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
     "text": "Couldn’t load that playlist.",
     "context": "Text shown in the playlist of the phone app."

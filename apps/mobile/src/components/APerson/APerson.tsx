@@ -3,6 +3,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { describePersonFacts } from '@ValenceClient/people/describePersonFacts';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
 import { ACardPart } from '@ValenceMobile/components/ACardPart/ACardPart';
@@ -13,6 +14,7 @@ import { APersonHead } from '@ValenceMobile/components/APerson/components/APerso
 import { APersonTimeline } from '@ValenceMobile/components/APerson/components/APersonTimeline/APersonTimeline';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
+import { Button } from '@ValenceMobile/components/Button/Button';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
@@ -52,6 +54,10 @@ const styles = StyleSheet.create({
  * server a row each for films, programmes and episodes, the rest of their work for whoever may ask
  * for it, and every credit they have, newest first.
  *
+ * The rest of their work is offered only as far as the server takes requests for its kind, and
+ * where it could not be read the page says so and offers to try again, as it does when nothing
+ * about them could be read.
+ *
  * On a phone held as phones are, their portrait runs edge to edge with their name over it, and
  * everything else follows down the page. On the open inside of a folding phone, which has the room
  * the web does, the portrait stands as a card at the left with their name and what is known about
@@ -69,12 +75,32 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onAsk, onBack }: APersonPro
   const isOpenedOut = useIsOpenedOut();
   const { may } = useWhatIMayDo();
   const askFor = may('requests.ask') ? onAsk : undefined;
+  const kinds = useRequestableKinds();
   const person = useQuery(libraryQueries.person(personId));
   const credits = useQuery(libraryQueries.credits(personId));
   const catalogued = useQuery(requestsQueries.personWork(personId, askFor !== undefined));
   const who = person.data ?? null;
   const portraitUrl = who?.portraitUrl ?? null;
   const tint = usePictureTint(portraitUrl);
+
+  if (person.isError) {
+    return (
+      <Screen centres onBack={onBack}>
+        <Words tone="muted" isCentred>
+          {say('common.anythingAboutThemCouldNotBeRead')}
+        </Words>
+        <Button
+          tone="ghost"
+          onPress={() => {
+            void person.refetch();
+            void credits.refetch();
+          }}
+        >
+          {say('common.tryAgain')}
+        </Button>
+      </Screen>
+    );
+  }
 
   if (person.isPending) {
     return (
@@ -103,11 +129,11 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onAsk, onBack }: APersonPro
   const toAskFor = [
     {
       title: films.length === 0 ? say('common.films') : say('screens.personDialog.moreFilms'),
-      items: notHeld.filter((title) => title.kind === 'film'),
+      items: kinds.has('film') ? notHeld.filter((title) => title.kind === 'film') : NO_WORK,
     },
     {
       title: shows.length === 0 ? say('common.programmes') : say('screens.personDialog.moreShows'),
-      items: notHeld.filter((title) => title.kind === 'series'),
+      items: kinds.has('series') ? notHeld.filter((title) => title.kind === 'series') : NO_WORK,
     },
   ].filter((shelf) => shelf.items.length > 0);
   const isBeside = isOpenedOut && portraitUrl !== null;
@@ -144,19 +170,43 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onAsk, onBack }: APersonPro
         </ACardPart>
       ))}
 
-      {askFor === undefined
-        ? null
-        : toAskFor.map((shelf) => (
-            <ACardPart key={shelf.title}>
-              <AShelf title={shelf.title}>
-                {shelf.items.map((title) => (
-                  <ACatalogueCard key={title.id} title={title} onAsk={askFor} wide={CARD_WIDE} />
-                ))}
-              </AShelf>
-            </ACardPart>
-          ))}
+      {catalogued.isError ? (
+        <View style={styles.part}>
+          <Words tone="muted">{say('phone.aPerson.theirWorkCouldNotBeRead')}</Words>
+          <Button
+            tone="ghost"
+            onPress={() => {
+              void catalogued.refetch();
+            }}
+          >
+            {say('common.tryAgain')}
+          </Button>
+        </View>
+      ) : (
+        <>
+          {askFor === undefined
+            ? null
+            : toAskFor.map((shelf) => (
+                <ACardPart key={shelf.title}>
+                  <AShelf title={shelf.title}>
+                    {shelf.items.map((title) => (
+                      <ACatalogueCard
+                        key={title.id}
+                        title={title}
+                        onAsk={askFor}
+                        wide={CARD_WIDE}
+                      />
+                    ))}
+                  </AShelf>
+                </ACardPart>
+              ))}
 
-      <APersonTimeline credits={timeline} {...(askFor === undefined ? {} : { onAsk: askFor })} />
+          <APersonTimeline
+            credits={timeline}
+            {...(askFor === undefined ? {} : { onAsk: askFor })}
+          />
+        </>
+      )}
     </>
   );
 

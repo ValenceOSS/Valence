@@ -4,6 +4,7 @@ import { aCatalogueTitle } from '@ValenceClient/testing/aCatalogueTitle';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { fetchPersonWork } from '@ValenceClient/requests/fetchAskable';
+import { fetchRequestsAvailability } from '@ValenceClient/requests/fetchRequests';
 import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { aTitle } from '@ValenceMobile/testing/aTitle';
 import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
@@ -14,6 +15,10 @@ import type { APersonProps } from './APerson.types';
 jest.mock('@ValenceClient/library/fetchPerson');
 jest.mock('@ValenceClient/requests/fetchAskable');
 jest.mock('@ValenceClient/session/fetchMyPermissions');
+jest.mock('@ValenceClient/requests/fetchRequests', () => ({
+  ...jest.requireActual<object>('@ValenceClient/requests/fetchRequests'),
+  fetchRequestsAvailability: jest.fn(),
+}));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -61,6 +66,10 @@ beforeEach(() => {
     .mockResolvedValue({ films: [], shows: [], episodes: [] });
   jest.mocked(fetchPersonWork).mockReset().mockResolvedValue({ titles: [], timeline: [] });
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
+  jest
+    .mocked(fetchRequestsAvailability)
+    .mockReset()
+    .mockResolvedValue({ isEnabled: true, kinds: ['film', 'series'] });
   jest
     .mocked(fetchMyPermissions)
     .mockReset()
@@ -174,6 +183,47 @@ describe('APerson', () => {
     expect(await drawn.findByRole('button', { name: 'Dune' })).toBeTruthy();
     expect(drawn.getByText('Films')).toBeTruthy();
     expect(drawn.queryByText('More films')).toBeNull();
+  });
+
+  it('offers only the kinds of title the server takes requests for', async () => {
+    jest.mocked(fetchRequestsAvailability).mockResolvedValue({ isEnabled: true, kinds: ['film'] });
+    jest.mocked(fetchPersonWork).mockResolvedValue({
+      titles: [
+        aCatalogueTitle(),
+        aCatalogueTitle({ kind: 'series', id: '95396', title: 'Severance' }),
+      ],
+      timeline: [],
+    });
+    const drawn = await drawAmy({ onAsk: jest.fn() });
+
+    expect(await drawn.findByRole('button', { name: 'Dune' })).toBeTruthy();
+    expect(drawn.queryByText('Programmes')).toBeNull();
+    expect(drawn.queryByRole('button', { name: 'Severance' })).toBeNull();
+  });
+
+  it('says where the rest of their work could not be read, and tries again', async () => {
+    jest.mocked(fetchPersonWork).mockRejectedValue(new Error('down'));
+    const drawn = await drawAmy({ onAsk: jest.fn() });
+
+    expect(await drawn.findByText('Couldn’t load the rest of their work.')).toBeTruthy();
+    expect(drawn.getByText('An actor.')).toBeTruthy();
+
+    jest.mocked(fetchPersonWork).mockResolvedValue({ titles: [aCatalogueTitle()], timeline: [] });
+    await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
+
+    expect(await drawn.findByRole('button', { name: 'Dune' })).toBeTruthy();
+  });
+
+  it('says where nothing about them could be read, and tries again', async () => {
+    jest.mocked(fetchPerson).mockRejectedValue(new Error('down'));
+    const drawn = await drawAmy();
+
+    expect(await drawn.findByText('Couldn’t load their details.')).toBeTruthy();
+
+    jest.mocked(fetchPerson).mockResolvedValue(AMY);
+    await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
+
+    expect(await drawn.findByText('An actor.')).toBeTruthy();
   });
 
   it('shows every credit they have, each opening for whoever may ask', async () => {

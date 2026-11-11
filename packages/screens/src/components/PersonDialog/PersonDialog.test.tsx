@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { aCatalogueTitle } from '@ValenceClient/testing/aCatalogueTitle';
 import { PersonDialog } from './PersonDialog';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Person, PersonCredits } from '@ValenceContracts/schemas/Person';
@@ -12,6 +13,19 @@ const creditsMock = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/library/fetchPerson', () => ({
   fetchPerson: personMock,
   fetchPersonCredits: creditsMock,
+}));
+
+const workMock = vi.hoisted(() => vi.fn());
+const availabilityMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchAskable', async (actual) => ({
+  ...(await actual<object>()),
+  fetchPersonWork: workMock,
+}));
+
+vi.mock('@ValenceClient/requests/fetchRequests', async (actual) => ({
+  ...(await actual<object>()),
+  fetchRequestsAvailability: availabilityMock,
 }));
 
 type CardShown = { media: MediaSummary; isSeries?: boolean; growsOnHover?: boolean };
@@ -75,9 +89,26 @@ beforeEach(() => {
   cardsShown.cards = [];
   personMock.mockReset().mockResolvedValue(SOMEBODY);
   creditsMock.mockReset().mockResolvedValue(NOTHING);
+  workMock.mockReset().mockResolvedValue({ titles: [], timeline: [] });
+  availabilityMock.mockReset().mockResolvedValue({ isEnabled: true, kinds: ['film', 'series'] });
 });
 
 describe('PersonDialog', () => {
+  it('offers their other work only of the kinds the server takes requests for', async () => {
+    availabilityMock.mockResolvedValue({ isEnabled: true, kinds: ['film'] });
+    workMock.mockResolvedValue({
+      titles: [
+        aCatalogueTitle(),
+        aCatalogueTitle({ kind: 'series', id: '95396', title: 'Severance' }),
+      ],
+      timeline: [],
+    });
+    draw({ onAsk: vi.fn() });
+
+    expect(await screen.findByText('Dune')).toBeInTheDocument();
+    expect(screen.queryByText('Severance')).not.toBeInTheDocument();
+  });
+
   it('opens nothing while nobody is named', () => {
     draw({ personId: null });
 
