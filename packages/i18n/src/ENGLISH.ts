@@ -2685,6 +2685,7 @@ const ENGLISH = {
   'phone.aShow.episodesAppearAsTheyAreScanned': 'Episodes appear as the library is scanned.',
   'phone.aShow.noEpisodesYet': 'No episodes yet',
   'phone.aShow.playSeasonEpisode': 'Play S{season} E{episode}',
+  'phone.aShow.statusNextEpisode': '{status} · S{seasonNumber} E{episodeNumber} · {airDate}',
   'phone.aShow.thatProgrammeCouldNotBeRead': 'Couldn’t load that series.',
   'phone.askForTheCode.oneMoreStep': 'One more step',
   'phone.askForThePassword.aLinkIsOnItsWay':

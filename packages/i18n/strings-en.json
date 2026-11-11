@@ -11266,6 +11266,11 @@
     "context": "The button on a programme's page in the phone app that plays the next episode from its start. {season} is the season number and {episode} the episode number."
   },
   {
+    "handler": "phone.aShow.statusNextEpisode",
+    "text": "{status} · S{seasonNumber} E{episodeNumber} · {airDate}",
+    "context": "A programme's status chip on its page on the open inside of a folding phone, with the next episode folded into it. {status} is the status, such as Returning; {seasonNumber} and {episodeNumber} are the next episode's; {airDate} says when it airs, such as Airs today."
+  },
+  {
     "handler": "phone.aShow.thatProgrammeCouldNotBeRead",
     "text": "Couldn’t load that series.",
     "context": "Text shown in the show of the phone app."

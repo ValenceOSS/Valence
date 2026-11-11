@@ -18,6 +18,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
+import { useIsOpenedOut } from '@ValenceMobile/hooks/useIsOpenedOut';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
@@ -42,8 +43,6 @@ const THUMB_PIXELS = 160;
 const SEAM = 5;
 
 const PANEL_ROUND = 12;
-
-const OPENED_FROM = 600;
 
 const NEAR_THE_END = 4;
 
@@ -117,6 +116,7 @@ const APageReader = ({
   marks,
 }: APageReaderProps) => {
   const { width, height } = useWindowDimensions();
+  const isOpenedOut = useIsOpenedOut();
   const room = useSafeAreaInsets();
   const strip = useTheSideStrip();
   const ordered = [...chapters].sort((one, other) => one.number - other.number);
@@ -131,7 +131,7 @@ const APageReader = ({
   const [isLocked, setIsLocked] = useState(false);
   const [scrubbing, setScrubbing] = useState<{ from: number; over: number } | null>(null);
   const shownPage = scrubbing?.from === page ? scrubbing.over : page;
-  const posture = Math.min(width, height) < OPENED_FROM ? 'folded' : 'opened';
+  const posture = isOpenedOut ? 'opened' : 'folded';
   const tuning = RAIL_TUNINGS[posture];
   const [preferences, setPreferences] = useState(() =>
     readReaderPreferences(book.direction, book.id),

@@ -8,6 +8,8 @@ import type { ABookHeadProps } from './ABookHead.types';
 
 const COVER_WIDTH = 0.46;
 
+const COVER_AT_MOST_OF_THE_HEIGHT = 0.28;
+
 const styles = StyleSheet.create({
   cover: {
     alignItems: 'center',
@@ -39,7 +41,9 @@ const styles = StyleSheet.create({
 
 /**
  * The head of a book's page, drawn as a film's is: its cover blurred edge to edge behind, the cover
- * itself standing in the middle, lifted off it, and all of it fading into the page's colour.
+ * itself standing in the middle, lifted off it, and all of it fading into the page's colour. The
+ * cover is a share of the screen's width, but never more than a share of its height, so it stays a
+ * cover on the wide inside of a folding phone.
  *
  * @param title - The book's title, for somebody who cannot see the cover.
  * @param cover - Where its cover is, or nothing where it has none.
@@ -47,8 +51,8 @@ const styles = StyleSheet.create({
  */
 const ABookHead = ({ title, cover, ground }: ABookHeadProps) => {
   const colours = useTheColours();
-  const { width } = useWindowDimensions();
-  const wide = width * COVER_WIDTH;
+  const { width, height } = useWindowDimensions();
+  const wide = Math.min(width * COVER_WIDTH, height * COVER_AT_MOST_OF_THE_HEIGHT);
 
   return (
     <ATitleHead

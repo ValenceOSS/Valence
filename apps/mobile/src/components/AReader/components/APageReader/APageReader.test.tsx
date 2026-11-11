@@ -360,6 +360,23 @@ describe('APageReader', () => {
     expect(theRail().onReadOn).not.toBeNull();
   });
 
+  it('lines the strip’s controls up under the clock of a folding phone’s outside screen', async () => {
+    jest.mocked(useTheSideStrip).mockReturnValue(A_STRIP);
+
+    await render(aReader());
+
+    expect(theRail().tuning).toMatchObject({ buttonsX: -5, top: 166 });
+  });
+
+  it('lines the strip’s controls up under the clock of a folding phone’s open inside', async () => {
+    jest.mocked(useTheSideStrip).mockReturnValue(A_STRIP);
+    holdAWindowOf(669, 871);
+
+    await render(aReader());
+
+    expect(theRail().tuning).toMatchObject({ buttonsX: -6, top: 118 });
+  });
+
   it('opened out to two pages, puts a panel on the far side that turns, holds, marks and fits them', async () => {
     jest.mocked(useTheSideStrip).mockReturnValue(A_STRIP);
     holdAWindowOf(852, 600);

@@ -5,6 +5,7 @@ type ATitleLogoProps = {
   high: number;
   widest: number;
   isOnArtwork?: boolean;
+  isCentred?: boolean;
 };
 
 export type { ATitleLogoProps };

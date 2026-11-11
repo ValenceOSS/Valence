@@ -14,6 +14,8 @@ import type { ATitleHeadProps } from './ATitleHead.types';
 
 const TALL = 1.05;
 
+const AT_MOST_OF_THE_HEIGHT = 0.6;
+
 const LOGO_HIGH = 88;
 
 const LOGO_AT_MOST = 0.7;
@@ -54,6 +56,9 @@ const styles = StyleSheet.create({
  * light, so both read over a bright picture. Pulled down past the top of its page, the top of
  * the picture softens into the colour above it, so it never ends in a hard edge.
  *
+ * It stands a little taller than the screen is wide, but never more than six tenths of the screen's
+ * height, so the open inside of a folding phone still shows the title beneath the picture.
+ *
  * Something the library does not hold, such as a film somebody may ask for, is drawn the same way
  * from where its backdrop and lettering are, with its trailer fading in over the backdrop in place
  * of the library's clip where the server streams one, heard or not as the library's clips are.
@@ -69,11 +74,11 @@ const ATitleHead = (props: ATitleHeadProps) => {
   const { title, ground } = props;
   const colours = useTheColours();
   const into = ground ?? colours.surface;
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const { isMuted, toggle } = useSoundPreference();
   const [isPlaying, setIsPlaying] = useState(false);
   const scrolled = useContext(SCROLLED_BY);
-  const high = width * TALL;
+  const high = Math.min(width * TALL, height * AT_MOST_OF_THE_HEIGHT);
   const intoThePage = `linear-gradient(to bottom, ${withAlpha(into, 0)} ${(FADES_FROM * 100).toString()}%, ${withAlpha(into, 0.55)} ${(INTO_THE_PAGE_FROM * 100).toString()}%, ${into} 100%)`;
 
   return (
