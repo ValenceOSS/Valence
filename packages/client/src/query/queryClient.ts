@@ -1,4 +1,5 @@
-import { QueryCache, QueryClient } from '@tanstack/react-query';
+import { notifyManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import { gatheredScheduler } from '@ValenceClient/query/gatheredScheduler';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 
@@ -13,6 +14,8 @@ const REFUSED = 401;
 const SETTLED = new Set([400, 401, 403, 404, 405, 409, 422]);
 
 const UNAVAILABLE = 503;
+
+const NOTICES_GATHERED_MS = 50;
 
 /**
  * Builds the one cache the application answers from.
@@ -40,9 +43,15 @@ const UNAVAILABLE = 503;
  * application shows the way in. Only that key is dropped, so the read that failed is not immediately
  * made again against the same refusal.
  *
+ * What the cache tells the screens is gathered and passed on every fiftieth of a second at most, so
+ * a page asking a hundred small questions at once is drawn again a handful of times as they are
+ * answered rather than once for every answer.
+ *
  * @returns The cache, ready to be handed to the application.
  */
 const buildQueryClient = (): QueryClient => {
+  notifyManager.setScheduler(gatheredScheduler(NOTICES_GATHERED_MS));
+
   const client: QueryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {

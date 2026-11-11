@@ -2,7 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -283,7 +283,7 @@ const fitInside = (top: number, height: number): number => {
  * @param growsOnHover - Whether it grows when a pointer rests on it, which a card inside a dialog does
  *   not.
  */
-const RailCard = ({
+const RailCardFace = ({
   media,
   copies = [],
   watchedFraction,
@@ -1037,6 +1037,8 @@ const RailCard = ({
     </div>
   );
 };
+
+const RailCard = memo(RailCardFace);
 
 RailCard.displayName = 'RailCard';
 

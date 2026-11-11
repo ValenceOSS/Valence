@@ -220,6 +220,21 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
   });
 
 /**
+ * The same question asked of every library at once, answered with how many match in all as well as
+ * the page asked for, for a row that needs to know how much more there is behind it.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked.
+ * @returns The query.
+ */
+const acrossCounted = (libraryIds: readonly string[], options: ListItemsOptions = {}) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'across', 'counted', [...libraryIds].sort(), options],
+    queryFn: async () => fetchItemsAcross(libraryIds, options),
+    enabled: libraryIds.length > 0,
+  });
+
+/**
  * The first page of what matches a question in every library at once, for a page that lists a whole
  * library to draw while the rest is still coming, so its first cards and their pictures are asked
  * for at once rather than after every page of every library has arrived.
@@ -287,6 +302,7 @@ const libraryQueries = {
   people,
   credits,
   across,
+  acrossCounted,
   leftOut,
   key: LIBRARY,
 };

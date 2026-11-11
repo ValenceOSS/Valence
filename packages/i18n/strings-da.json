@@ -1070,6 +1070,11 @@
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app; {decade} is filled in by the app."
   },
   {
+    "handler": "client.library.useHomeRows.moreGenre",
+    "text": "More {genre}",
+    "context": "The heading of a row deep in the home page that carries on past a genre's own row with more of its best-rated titles (from `useHomeRows`). {genre} is the genre's name."
+  },
+  {
     "handler": "client.library.useHomeRows.newInGenre",
     "text": "New in {genre}",
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app."

@@ -9,7 +9,7 @@ const AT_ONCE = 16;
 /**
  * Reads everything in some libraries that matches a question, however many that is, ordered across
  * them all, by asking for the first page to learn the total and then the rest of them a few at a
- * time.
+ * time, uncounted, since the first page already said how many there are.
  *
  * For the pages that list a whole library. Reading only the first page of them showed the first
  * hundred and twenty films alphabetically and the shows among the first hundred and twenty
@@ -38,7 +38,7 @@ const readEveryItem = async (
         offsets
           .slice(start, start + AT_ONCE)
           .map((offset) =>
-            fetchItemsAcross(libraryIds, { ...options, limit: PAGE_SIZE, offset }).then(
+            fetchItemsAcross(libraryIds, { ...options, limit: PAGE_SIZE, offset }, false).then(
               (page) => page.items,
             ),
           ),

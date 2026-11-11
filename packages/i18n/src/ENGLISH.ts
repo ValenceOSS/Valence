@@ -288,6 +288,7 @@ const ENGLISH = {
   'client.library.showQualityBadges.standardRange': 'SDR',
   'client.library.theVersionsOf.anotherVersion': 'Another version',
   'client.library.useHomeRows.genreFromTheDecadeS': '{genre} from the {decade}s',
+  'client.library.useHomeRows.moreGenre': 'More {genre}',
   'client.library.useHomeRows.newInGenre': 'New in {genre}',
   'client.library.useHomeRows.titleFromPluginName': '{title}, from {pluginName}',
   'client.library.useLibraryFilters.audioLanguage': 'Audio language',
