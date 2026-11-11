@@ -9,6 +9,7 @@ import {
   findBooks,
 } from '@ValenceClient/books/fetchBooks';
 import { fetchListening, fetchListeningProgress } from '@ValenceClient/books/fetchListening';
+import { fetchBookmarks } from '@ValenceClient/books/fetchBookmarks';
 
 const BOOKS = ['books'] as const;
 
@@ -46,6 +47,18 @@ const progress = (bookId: string) =>
   queryOptions({
     queryKey: [...BOOKS, 'progress', bookId],
     queryFn: () => fetchReadingProgress(bookId),
+  });
+
+/**
+ * The places this profile has marked in a book.
+ *
+ * @param bookId - The book.
+ * @returns The query.
+ */
+const bookmarks = (bookId: string) =>
+  queryOptions({
+    queryKey: [...BOOKS, 'bookmarks', bookId],
+    queryFn: () => fetchBookmarks(bookId),
   });
 
 /**
@@ -135,6 +148,7 @@ const bookQueries = {
   inLibrary,
   one,
   progress,
+  bookmarks,
   contents,
   document,
   find,

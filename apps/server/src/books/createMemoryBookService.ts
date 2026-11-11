@@ -8,6 +8,7 @@ import type {
   Book,
   BookChapter,
   BookContents,
+  Bookmark,
   ListeningProgress,
   ReadingProgress,
 } from '@ValenceContracts/schemas/Book';
@@ -37,6 +38,7 @@ type MemoryBooks = {
 const createMemoryBookService = (given: MemoryBooks): BookService => {
   const progress: { profileId: string; entry: ReadingProgress }[] = [];
   const listened: { profileId: string; entry: ListeningProgress }[] = [];
+  const marks: { profileId: string; entry: Bookmark }[] = [];
   const bytes = { bytes: new Uint8Array([1, 2, 3]), contentType: 'image/png' };
   const chapterOf = (chapterId: string) =>
     given.chapters.find((chapter) => chapter.id === chapterId);
@@ -211,6 +213,55 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
         if (one?.profileId === profileId && (bookId === undefined || one.entry.bookId === bookId)) {
           progress.splice(at, 1);
         }
+      }
+
+      return Promise.resolve();
+    },
+
+    readBookmarks: (profileId, bookId) =>
+      Promise.resolve(
+        marks
+          .filter((one) => one.profileId === profileId && one.entry.bookId === bookId)
+          .map((one) => one.entry),
+      ),
+
+    saveBookmark: (profileId, bookmarkId, where) => {
+      const chapter = chapterOf(where.chapterId);
+      const kept = marks.find((one) => one.entry.id === bookmarkId);
+
+      if (chapter === undefined) {
+        return Promise.resolve(false);
+      }
+
+      if (kept !== undefined) {
+        return Promise.resolve(kept.profileId === profileId);
+      }
+
+      marks.push({
+        profileId,
+        entry: {
+          id: bookmarkId,
+          bookId: chapter.bookId,
+          chapterId: chapter.id,
+          pageNumber: where.pageNumber,
+          fraction: where.fraction,
+          pageShown: where.pageShown,
+          excerpt: where.excerpt,
+          picture: where.picture,
+          createdAt: new Date().toISOString(),
+        },
+      });
+
+      return Promise.resolve(true);
+    },
+
+    forgetBookmark: (profileId, bookmarkId) => {
+      const at = marks.findIndex(
+        (one) => one.profileId === profileId && one.entry.id === bookmarkId,
+      );
+
+      if (at !== -1) {
+        marks.splice(at, 1);
       }
 
       return Promise.resolve();

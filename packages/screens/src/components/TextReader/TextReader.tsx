@@ -22,6 +22,7 @@ import { TEXT_LOOK } from '@ValenceClient/books/TEXT_LOOK';
 import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
 import { bookPageNumber } from '@ValenceClient/books/bookPageNumber';
 import { placeInBook } from '@ValenceClient/books/placeInBook';
+import { bookmarkPreviewOf } from '@ValenceClient/books/bookmarkPreviewOf';
 import {
   TEXT_MARGINS,
   TEXT_PAGES,
@@ -69,6 +70,8 @@ const SCROLL_WIDTH = 760;
 const MOST_SCROLL_INSET = 24;
 
 const PICTURE_SHARE = 0.8;
+
+const MARK_SLACK = 0.000_001;
 
 const PAGE: Record<TextPreferences['page'], string> = {
   light: 'bg-paper-light text-ink-light',
@@ -121,8 +124,18 @@ const NAMES: Record<string, string> = {
  * @param startAt - How far through to open, as a fraction of the whole book.
  * @param onPlaceChange - Told how far through somebody is after every turn, for remembering.
  * @param onClose - Told to leave.
+ * @param marks - The bookmarks in this file and the way to add and remove them, where the book keeps
+ *   bookmarks. A bookmark is a fraction of the way through, like where somebody is up to, and shows
+ *   the words that start there, or the picture there in a book made of pictures.
  */
-const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: TextReaderProps) => {
+const TextReader = ({
+  book,
+  chapterId,
+  startAt = 0,
+  onPlaceChange,
+  onClose,
+  marks,
+}: TextReaderProps) => {
   const cache = useQueryClient();
   const contents = useQuery(bookQueries.contents(book.id, chapterId));
   const sizes = useMemo(
@@ -143,6 +156,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [dragged, setDragged] = useState<number | null>(null);
   const [scrolledWithin, setScrolledWithin] = useState(0);
+  const [scrolledEnd, setScrolledEnd] = useState(0);
   const [scrollFrom, setScrollFrom] = useState<{
     part: number;
     landing: Landing;
@@ -285,6 +299,45 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     part === null
       ? startAt
       : fractionOfBook(sizes, part, isScrolling ? scrolledWithin : page / pages);
+  const shownEnd =
+    part === null
+      ? fraction
+      : fractionOfBook(
+          sizes,
+          part,
+          isScrolling ? scrolledEnd : Math.min((page + showing.length) / pages, 1),
+        );
+  const markedHere = (marks?.here ?? []).filter(
+    (bookmark) =>
+      bookmark.fraction !== null &&
+      bookmark.fraction >= fraction - MARK_SLACK &&
+      bookmark.fraction < Math.max(shownEnd, fraction + MARK_SLACK),
+  );
+
+  const mark = () => {
+    if (marks === undefined || part === null) {
+      return;
+    }
+
+    if (markedHere.length > 0) {
+      marks.onUnmark(markedHere.map((bookmark) => bookmark.id));
+
+      return;
+    }
+
+    const within = isScrolling ? scrolledWithin : page / pages;
+    const at = fraction;
+    const pageShown = isScrolling ? null : bookPageNumber(sizes, part, pages, page);
+
+    void cache
+      .ensureQueryData(bookQueries.document(book.id, chapterId, part))
+      .then((html) => bookmarkPreviewOf(html ?? '', within))
+      .catch(() => ({ excerpt: null, picture: null }))
+      .then((preview) => {
+        marks.onMark({ pageNumber: null, fraction: at, pageShown, ...preview });
+      });
+  };
+
   const isFinished = isScrolling
     ? part === lastPart && scrolledWithin > FINISHED_WITHIN
     : part === lastPart && at >= spreads.length - 1;
@@ -456,6 +509,9 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         onForward={forward}
         onBack={back}
         onClose={onClose}
+        {...(marks === undefined
+          ? {}
+          : { mark: { isMarked: markedHere.length > 0, onMark: mark } })}
         className="items-center justify-center"
         isPanelOpen={isPanelOpen}
         isPanelPinned={isPanelPinned}
@@ -516,6 +572,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               )
             }
+            bookmarks={marks?.list}
           >
             <SettingList isInset>
               <SettingRow title={say('common.pages')}>
@@ -682,9 +739,10 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 Math.min(box.width, SCROLL_WIDTH) * TEXT_LOOK.margin[settings.margins] * 1.6,
               )}
               textStyle={scrollStyle}
-              onPlace={(reading, within) => {
+              onPlace={(reading, within, withinEnd) => {
                 setPart(reading);
                 setScrolledWithin(within);
+                setScrolledEnd(withinEnd);
               }}
               onFollow={follow}
               onScroller={setScroller}

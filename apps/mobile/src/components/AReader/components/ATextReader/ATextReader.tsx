@@ -32,8 +32,7 @@ import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
 import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
 import { placeInBook } from '@ValenceClient/books/placeInBook';
 import { readBookDocument } from '@ValenceCore/books/readBookDocument';
-import { readBookmarks } from '@ValenceClient/books/readBookmarks';
-import { writeBookmarks } from '@ValenceClient/books/writeBookmarks';
+import { bookmarkPreviewOf } from '@ValenceClient/books/bookmarkPreviewOf';
 import {
   TEXT_MARGINS,
   TEXT_SIZES,
@@ -43,12 +42,12 @@ import {
 } from '@ValenceClient/books/textPreferences';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { AReaderChrome } from '@ValenceMobile/components/AReader/components/AReaderChrome/AReaderChrome';
-import { AReaderPanel } from '@ValenceMobile/components/AReader/components/AReaderPanel/AReaderPanel';
+import { AReaderSheet } from '@ValenceMobile/components/AReader/components/AReaderSheet/AReaderSheet';
+import { ATextSettings } from '@ValenceMobile/components/AReader/components/ATextReader/components/ATextSettings/ATextSettings';
+import { ATextLook } from '@ValenceMobile/components/AReader/components/ATextReader/components/ATextLook/ATextLook';
 import { TheBookText } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/TheBookText';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { ALabelledToggle } from '@ValenceMobile/components/ALabelledToggle/ALabelledToggle';
 import { readableTitle } from '@ValenceCore/books/readableTitle';
-import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
@@ -62,9 +61,7 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SLIDER_STEPS = 1000;
 
-const MARK_STEPS = 1_000_000;
-
-const MARKS_OF_TEXT = ':text';
+const MARK_SLACK = 0.000_001;
 
 const NO_PICTURES: readonly string[] = [];
 
@@ -142,7 +139,6 @@ const styles = StyleSheet.create({
   },
   marker: { justifyContent: 'center', left: 0, position: 'absolute', right: 0 },
   readings: { flexDirection: 'row', justifyContent: 'space-between' },
-  setting: { gap: 10 },
   leaf: { shadowOffset: { height: 0, width: 4 }, shadowRadius: 12 },
   waiting: {
     alignItems: 'center',
@@ -193,6 +189,9 @@ const choicesOf = (ids: readonly string[]) => ids.map((id) => ({ id, label: NAME
  * @param onChapter - Told to open another of its files.
  * @param onFraction - Told how far through it somebody is, and whether they have finished.
  * @param onBack - Told somebody is done reading.
+ * @param marks - The book's bookmarks and the way to add, remove and go to them, where it keeps
+ *   bookmarks. A bookmark is a fraction of the way through, and keeps the words that start there,
+ *   or the picture there in a book made of pictures.
  */
 const ATextReader = ({
   book,
@@ -202,6 +201,7 @@ const ATextReader = ({
   onChapter,
   onFraction,
   onBack,
+  marks,
 }: ATextReaderProps) => {
   const { width, height } = useWindowDimensions();
   const room = useSafeAreaInsets();
@@ -242,9 +242,6 @@ const ATextReader = ({
   const longAnchors = useRef(new Map<string, number>());
   const [longTall, setLongTall] = useState(0);
   const [longShown, setLongShown] = useState(0);
-  const [bookmarks, setBookmarks] = useState(() =>
-    readBookmarks(book.id, `${chapterId}${MARKS_OF_TEXT}`),
-  );
   const [laid, setLaid] = useState<{
     count: number;
     anchors: Readonly<Record<string, number>>;
@@ -378,15 +375,21 @@ const ATextReader = ({
     : isLong
       ? isLongLaid && longY + longShown >= longTall - 2
       : opened === last && page >= pages - 1;
-  const pageStarts = part === null ? 0 : Math.round(fraction * MARK_STEPS);
-  const pageEnds = isWhole
+  const markFrom = part === null ? 0 : fraction;
+  const markTo = isWhole
     ? endHere === null
       ? 0
-      : Math.round(fractionOfBook(sizes, endHere.part, endHere.within) * MARK_STEPS)
+      : fractionOfBook(sizes, endHere.part, endHere.within)
     : opened === null
       ? 0
-      : Math.round(fractionOfBook(sizes, opened, throughEnd) * MARK_STEPS);
-  const isMarked = bookmarks.some((at) => at >= pageStarts && at < pageEnds);
+      : fractionOfBook(sizes, opened, throughEnd);
+  const markedHere = (marks?.here ?? []).filter(
+    (bookmark) =>
+      bookmark.fraction !== null &&
+      bookmark.fraction >= markFrom - MARK_SLACK &&
+      bookmark.fraction < Math.max(markTo, markFrom + MARK_SLACK),
+  );
+  const isMarked = markedHere.length > 0;
   const isLaidOut = isLong
     ? isLongLaid && aim === null
     : isNative
@@ -812,17 +815,34 @@ const ATextReader = ({
       paper={colours.paper}
       ink={colours.ink}
       isDarkPage={colours.isDark}
-      mark={{
-        isMarked,
-        onMark: () => {
-          const marked = isMarked
-            ? bookmarks.filter((at) => at < pageStarts || at >= pageEnds)
-            : [...bookmarks, pageStarts].sort((one, other) => one - other);
+      {...(marks === undefined
+        ? {}
+        : {
+            mark: {
+              isMarked,
+              onMark: () => {
+                if (isMarked) {
+                  marks.onUnmark(markedHere.map((bookmark) => bookmark.id));
 
-          writeBookmarks(book.id, `${chapterId}${MARKS_OF_TEXT}`, marked);
-          setBookmarks(marked);
-        },
-      }}
+                  return;
+                }
+
+                if (part === null) {
+                  return;
+                }
+
+                const within = isWhole ? (startHere?.within ?? 0) : through;
+                const source = isWhole ? (wholeBlocks[part] ?? []) : (document.data ?? '');
+
+                marks.onMark({
+                  pageNumber: null,
+                  fraction: markFrom,
+                  pageShown: isLong ? null : page + 1,
+                  ...bookmarkPreviewOf(source, within),
+                });
+              },
+            },
+          })}
       isShown={isShowingChrome}
       onBack={onBack}
       onPanel={() => {
@@ -1166,9 +1186,74 @@ const ATextReader = ({
         </View>
       )}
 
-      <AReaderPanel
+      <AReaderSheet
         isOpen={isPanelOpen}
+        onClose={() => {
+          setIsPanelOpen(false);
+        }}
         title={book.title}
+        look={
+          <ATextLook>
+            <AReadingLook
+              theme={theme}
+              onTheme={(chosen) => {
+                choose({ theme: chosen });
+              }}
+              onSmaller={
+                sizeAt <= 0
+                  ? null
+                  : () => {
+                      const smaller = TEXT_SIZES[sizeAt - 1];
+
+                      if (smaller !== undefined) {
+                        choose({ size: smaller });
+                      }
+                    }
+              }
+              onLarger={
+                sizeAt >= TEXT_SIZES.length - 1
+                  ? null
+                  : () => {
+                      const larger = TEXT_SIZES[sizeAt + 1];
+
+                      if (larger !== undefined) {
+                        choose({ size: larger });
+                      }
+                    }
+              }
+            />
+          </ATextLook>
+        }
+        settings={
+          <ATextSettings
+            isScrolling={settings.isScrolling}
+            onScrolling={(isScrolling) => {
+              choose({ isScrolling });
+            }}
+            isAnimated={settings.isAnimated}
+            onAnimated={(isAnimated) => {
+              choose({ isAnimated });
+            }}
+            spacings={choicesOf(TEXT_SPACINGS)}
+            spacing={settings.spacing}
+            onSpacing={(id) => {
+              const chosen = TEXT_SPACINGS.find((one) => one === id);
+
+              if (chosen !== undefined) {
+                choose({ spacing: chosen });
+              }
+            }}
+            margins={choicesOf(TEXT_MARGINS)}
+            margin={settings.margins}
+            onMargin={(id) => {
+              const chosen = TEXT_MARGINS.find((one) => one === id);
+
+              if (chosen !== undefined) {
+                choose({ margins: chosen });
+              }
+            }}
+          />
+        }
         placesAre={say('common.contents')}
         places={entries.map((entry, at) => ({
           id: at.toString(),
@@ -1185,101 +1270,14 @@ const ATextReader = ({
             goTo(entry.part, entry.anchor === null ? { within: 0 } : { anchor: entry.anchor });
           }
         }}
-        onClose={() => {
-          setIsPanelOpen(false);
-        }}
-      >
-        <AReadingLook
-          theme={theme}
-          onTheme={(chosen) => {
-            choose({ theme: chosen });
-          }}
-          onSmaller={
-            sizeAt <= 0
-              ? null
-              : () => {
-                  const smaller = TEXT_SIZES[sizeAt - 1];
-
-                  if (smaller !== undefined) {
-                    choose({ size: smaller });
-                  }
-                }
-          }
-          onLarger={
-            sizeAt >= TEXT_SIZES.length - 1
-              ? null
-              : () => {
-                  const larger = TEXT_SIZES[sizeAt + 1];
-
-                  if (larger !== undefined) {
-                    choose({ size: larger });
-                  }
-                }
-          }
-        />
-        <View style={styles.setting}>
-          <Words size="small" tone="muted" isStrong>
-            {say('phone.aReader.aReaderSheet.turningPages')}
-          </Words>
-          <SegmentedRow
-            label={say('phone.aReader.aReaderSheet.turningPages')}
-            fills
-            items={[
-              { id: 'pages', label: say('common.pages') },
-              { id: 'scroll', label: say('common.scroll') },
-            ]}
-            value={settings.isScrolling ? 'scroll' : 'pages'}
-            onSelect={(id) => {
-              choose({ isScrolling: id === 'scroll' });
-            }}
-          />
-          {settings.isScrolling ? null : (
-            <ALabelledToggle
-              label={say('screens.pageReader.animateTurningPages')}
-              isOn={settings.isAnimated}
-              onToggle={(isOn) => {
-                choose({ isAnimated: isOn });
-              }}
-            />
-          )}
-        </View>
-        <View style={styles.setting}>
-          <Words size="small" tone="muted" isStrong>
-            {say('phone.aReader.aTextReader.lineSpacing')}
-          </Words>
-          <SegmentedRow
-            label={say('phone.aReader.aTextReader.lineSpacing')}
-            fills
-            items={choicesOf(TEXT_SPACINGS)}
-            value={settings.spacing}
-            onSelect={(id) => {
-              const chosen = TEXT_SPACINGS.find((one) => one === id);
-
-              if (chosen !== undefined) {
-                choose({ spacing: chosen });
-              }
-            }}
-          />
-        </View>
-        <View style={styles.setting}>
-          <Words size="small" tone="muted" isStrong>
-            {say('common.margins')}
-          </Words>
-          <SegmentedRow
-            label={say('common.margins')}
-            fills
-            items={choicesOf(TEXT_MARGINS)}
-            value={settings.margins}
-            onSelect={(id) => {
-              const chosen = TEXT_MARGINS.find((one) => one === id);
-
-              if (chosen !== undefined) {
-                choose({ margins: chosen });
-              }
-            }}
-          />
-        </View>
-      </AReaderPanel>
+        {...(marks === undefined
+          ? {}
+          : {
+              bookmarks: marks.all,
+              onBookmark: marks.onOpen,
+              onRemoveBookmarks: marks.onUnmark,
+            })}
+      />
     </AReaderChrome>
   );
 };

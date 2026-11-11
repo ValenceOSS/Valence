@@ -83,6 +83,8 @@ const describePages = (pages: readonly number[]): string => {
  * @param onChapterChange - Told when another chapter is chosen.
  * @param onPageChange - Told where somebody is up to, for remembering.
  * @param onClose - Told to leave.
+ * @param marks - The bookmarks in this chapter and the way to add and remove them, where the book
+ *   keeps bookmarks.
  */
 const PageReader = ({
   book,
@@ -92,6 +94,7 @@ const PageReader = ({
   onChapterChange,
   onPageChange,
   onClose,
+  marks,
 }: PageReaderProps) => {
   const chapter = chapters.find((one) => one.id === chapterId) ?? null;
   const pageCount = chapter?.pageCount ?? 0;
@@ -224,6 +227,11 @@ const PageReader = ({
     setWide((was) => (was.has(page) ? was : new Set([...was, page])));
   };
 
+  const shownPages = settings.isScrolling ? [visiblePage] : showing;
+  const markedHere = (marks?.here ?? []).filter(
+    (bookmark) => bookmark.pageNumber !== null && shownPages.includes(bookmark.pageNumber),
+  );
+
   usePageWarming(first ?? 0, pageCount, (page) =>
     bookPageUrl(book.id, chapterId, page, widthFor(settings.isDouble ? 2 : 1)),
   );
@@ -284,6 +292,26 @@ const PageReader = ({
         onForward={forward}
         onBack={back}
         onClose={onClose}
+        {...(marks === undefined
+          ? {}
+          : {
+              mark: {
+                isMarked: markedHere.length > 0,
+                onMark: () => {
+                  if (markedHere.length > 0) {
+                    marks.onUnmark(markedHere.map((bookmark) => bookmark.id));
+                  } else if (first !== undefined) {
+                    marks.onMark({
+                      pageNumber: first,
+                      fraction: null,
+                      pageShown: null,
+                      excerpt: null,
+                      picture: null,
+                    });
+                  }
+                },
+              },
+            })}
         className="items-center justify-center"
         isPanelOpen={isPanelOpen}
         isPanelPinned={isPanelPinned}
@@ -362,6 +390,7 @@ const PageReader = ({
                 ) : null}
               </>
             }
+            bookmarks={marks?.list}
           >
             <SettingList isInset>
               <SettingRow
