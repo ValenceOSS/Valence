@@ -8,11 +8,13 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import type { NextEpisodeCardProps } from './NextEpisodeCard.types';
 
-const ARRIVES = { duration: 0.45, ease: [0.16, 1, 0.3, 1] } as const;
+const ARRIVES = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
 
-const LEAVES = { duration: 0.2, ease: [0.4, 0, 1, 1] } as const;
+const LEAVES = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
 
-const OFF_TO_THE_SIDE = { opacity: 0, x: 48, scale: 0.96 } as const;
+const OFF_TO_THE_SIDE = { opacity: 0, transform: 'translateX(24px) scale(0.97)' } as const;
+
+const IN_PLACE = { opacity: 1, transform: 'translateX(0px) scale(1)' } as const;
 
 const COUNTS_BETWEEN_TICKS = { duration: 0.3, ease: 'linear' } as const;
 
@@ -41,51 +43,59 @@ const NextEpisodeCard = ({
   return (
     <motion.div
       initial={prefersReducedMotion ? { opacity: 0 } : OFF_TO_THE_SIDE}
-      animate={{ opacity: 1, x: 0, scale: 1, transition: ARRIVES }}
+      animate={{ ...IN_PLACE, transition: ARRIVES }}
       exit={{ ...(prefersReducedMotion ? { opacity: 0 } : OFF_TO_THE_SIDE), transition: LEAVES }}
-      className="valence-solid flex w-64 origin-bottom-right flex-col gap-2 rounded-lg p-2 text-text sm:w-80"
+      className="valence-solid flex w-[min(24rem,calc(100vw-2rem))] origin-bottom-right flex-col gap-3 rounded-2xl p-2.5 text-text"
     >
-      <div className="relative aspect-video w-full overflow-hidden rounded-md bg-shade">
-        {episode.hasBackdrop === true ? (
-          <img
-            src={artworkUrl(episode.id, 'backdrop', { size: 'medium' })}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        ) : null}
+      <div className="flex items-center gap-3">
+        <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-shade">
+          {episode.hasBackdrop === true ? (
+            <img
+              src={artworkUrl(episode.id, 'backdrop', { size: 'medium' })}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : null}
+        </div>
 
-        {isCounting && !prefersReducedMotion ? (
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-on-scrim/25">
-            <motion.div
-              className="h-full origin-left bg-on-scrim"
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="flex items-baseline gap-2 text-xs font-medium text-text-muted">
+            {say('common.nextEpisode')}
+            {isCounting && prefersReducedMotion ? (
+              <span className="tabular-nums">
+                {sayCount('common.startsInCountSeconds', Math.ceil(offer.secondsLeft))}
+              </span>
+            ) : null}
+          </p>
+
+          <p className="line-clamp-2 text-sm font-semibold leading-snug">
+            {nameTheNextEpisode(episode)}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button
+          variant="confirm"
+          size="md"
+          isPill
+          onClick={onPlay}
+          className="relative flex-1 overflow-hidden"
+        >
+          {isCounting && !prefersReducedMotion ? (
+            <motion.span
+              aria-hidden
+              className="absolute inset-0 origin-left bg-shade/10"
               initial={false}
-              animate={{ scaleX: offer.counted }}
+              animate={{ transform: `scaleX(${offer.counted.toString()})` }}
               transition={COUNTS_BETWEEN_TICKS}
             />
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex flex-col gap-0.5 px-1">
-        <p className="flex items-baseline justify-between gap-2 text-xs font-medium text-text-muted">
-          {say('common.nextEpisode')}
-          {isCounting && prefersReducedMotion ? (
-            <span className="tabular-nums">
-              {sayCount('common.startsInCountSeconds', Math.ceil(offer.secondsLeft))}
-            </span>
           ) : null}
-        </p>
-
-        <p className="line-clamp-1 text-sm font-medium">{nameTheNextEpisode(episode)}</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant="confirm" size="sm" onClick={onPlay}>
           <Icon of={PlayFilledIcon} size={14} />
           {say('common.playNextEpisode')}
         </Button>
 
-        <Button variant="secondary" size="sm" onClick={onWatchCredits}>
+        <Button variant="secondary" size="md" isPill onClick={onWatchCredits}>
           {say('common.watchCredits')}
         </Button>
       </div>

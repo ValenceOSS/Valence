@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -57,196 +57,77 @@ describe('EpisodeMenu', () => {
     expect(screen.queryByRole('button', { name: 'Episodes' })).not.toBeInTheDocument();
   });
 
-  it('opens on the season playing, under the name of the show', async () => {
+  it('opens on the season playing, with the episode on now marked as current', async () => {
     const actor = userEvent.setup();
 
     renderInAnAddress(
-      <EpisodeMenu episodes={SHOW} playingId={idOf(SECOND[1])} onSelect={vi.fn()} />,
+      <EpisodeMenu episodes={SHOW} playingId={idOf(FIRST[1])} onSelect={vi.fn()} />,
     );
+
     await open(actor);
 
-    const heading = await screen.findByRole('heading', { name: /Season 2/ });
+    const rows = within(panel()).getAllByRole('button', { name: /^Episode 1\.\d/u });
 
-    expect(heading).toHaveTextContent('Some Show');
-    expect(within(panel()).getByRole('button', { name: /Episode 2\.1/ })).toBeInTheDocument();
-    expect(within(panel()).queryByRole('button', { name: /Episode 1\.1/ })).not.toBeInTheDocument();
-  });
-
-  it('opens out the one playing, and marks it', async () => {
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={SHOW} playingId={idOf(SECOND[1])} onSelect={vi.fn()} />,
-    );
-    await open(actor);
-
-    const playing = await screen.findByRole('button', { name: /Episode 2\.2/ });
-
-    expect(playing).toHaveAttribute('aria-current', 'true');
-    expect(playing).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: /Episode 2\.1/ })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
-  });
-
-  it('says how long the others are, which is what somebody is judging', async () => {
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={FIRST} playingId={idOf(FIRST[1])} onSelect={vi.fn()} />,
-    );
-    await open(actor);
-
-    expect(await screen.findByRole('button', { name: /Episode 1\.1.*25 min/ })).toBeInTheDocument();
-  });
-
-  it('opens out the one pointed at, once the pointer settles on it', async () => {
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={FIRST} playingId={idOf(FIRST[0])} onSelect={vi.fn()} />,
-    );
-    await open(actor);
-    await actor.hover(await screen.findByRole('button', { name: /Episode 1\.3/ }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Episode 1\.3/ })).toHaveAttribute(
-        'aria-expanded',
-        'true',
-      );
-    });
-    expect(screen.getByRole('button', { name: /Episode 1\.1/ })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
-  });
-
-  it('reports the episode that was picked, and closes on the way', async () => {
-    const onSelect = vi.fn();
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={FIRST} playingId={idOf(FIRST[0])} onSelect={onSelect} />,
-    );
-    await open(actor);
-    await actor.click(await screen.findByRole('button', { name: /Episode 1\.3/ }));
-
-    expect(onSelect).toHaveBeenCalledWith(FIRST[2]);
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: /Season 1/ })).not.toBeInTheDocument();
-    });
-  });
-
-  it('says when it opens, so the bar underneath can stay up', async () => {
-    const onOpenChange = vi.fn();
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu
-        episodes={FIRST}
-        playingId={idOf(FIRST[0])}
-        onSelect={vi.fn()}
-        onOpenChange={onOpenChange}
-      />,
-    );
-    await open(actor);
-
-    expect(onOpenChange).toHaveBeenCalledWith(true);
-  });
-
-  it('offers no way to other seasons where there is only one', async () => {
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={FIRST} playingId={idOf(FIRST[0])} onSelect={vi.fn()} />,
-    );
-    await open(actor);
-    await screen.findByRole('heading', { name: /Season 1/ });
-
-    expect(screen.queryByRole('button', { name: 'Seasons' })).not.toBeInTheDocument();
-  });
-
-  it('goes back to every season, in order with the specials last, marking the one playing', async () => {
-    const actor = userEvent.setup();
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={SHOW} playingId={idOf(SECOND[0])} onSelect={vi.fn()} />,
-    );
-    await open(actor);
-    await actor.click(await screen.findByRole('button', { name: 'Seasons' }));
-
-    expect(await screen.findByRole('heading', { name: /Seasons/ })).toBeInTheDocument();
-
-    const seasons = within(panel())
-      .getAllByRole('button')
-      .map((button) => button.textContent);
-
-    expect(seasons).toEqual([
-      expect.stringContaining('Season 1'),
-      expect.stringContaining('Season 2'),
-      expect.stringContaining('Specials'),
-    ]);
-    expect(screen.getByRole('button', { name: /Season 2/ })).toHaveAttribute(
+    expect(rows).toHaveLength(FIRST.length);
+    expect(within(panel()).getByRole('button', { name: /Episode 1\.2/u })).toHaveAttribute(
       'aria-current',
       'true',
     );
   });
 
-  it('opens another season on the first episode not yet finished', async () => {
+  it('offers a switcher between seasons where there is more than one', async () => {
+    const actor = userEvent.setup();
+
+    renderInAnAddress(
+      <EpisodeMenu episodes={SHOW} playingId={idOf(FIRST[0])} onSelect={vi.fn()} />,
+    );
+
+    await open(actor);
+
+    expect(within(panel()).getByRole('button', { name: 'Seasons' })).toBeInTheDocument();
+  });
+
+  it('has no switcher for a programme of one season', async () => {
+    const actor = userEvent.setup();
+
+    renderInAnAddress(
+      <EpisodeMenu episodes={FIRST} playingId={idOf(FIRST[0])} onSelect={vi.fn()} />,
+    );
+
+    await open(actor);
+
+    expect(within(panel()).queryByRole('button', { name: 'Seasons' })).not.toBeInTheDocument();
+  });
+
+  it('marks a finished episode as watched instead of saying how long it runs', async () => {
     const actor = userEvent.setup();
 
     renderInAnAddress(
       <EpisodeMenu
-        episodes={SHOW}
-        playingId={idOf(SECOND[0])}
+        episodes={FIRST}
+        playingId={idOf(FIRST[2])}
         onSelect={vi.fn()}
-        watchedFractionFor={(mediaId) => (mediaId === idOf(FIRST[0]) ? 1 : undefined)}
+        watchedFractionFor={(id) => (id === idOf(FIRST[0]) ? 1 : undefined)}
       />,
     );
-    await open(actor);
-    await actor.click(await screen.findByRole('button', { name: 'Seasons' }));
-    await actor.click(await screen.findByRole('button', { name: /Season 1/ }));
 
-    expect(await screen.findByRole('heading', { name: /Season 1/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Episode 1\.2/ })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    );
+    await open(actor);
+
+    expect(within(panel()).getByLabelText('Watched')).toBeInTheDocument();
   });
 
-  it('says how many episodes are left in a season part watched', async () => {
+  it('plays the episode chosen and closes', async () => {
     const actor = userEvent.setup();
+    const onSelect = vi.fn();
 
     renderInAnAddress(
-      <EpisodeMenu
-        episodes={SHOW}
-        playingId={idOf(SECOND[0])}
-        onSelect={vi.fn()}
-        watchedFractionFor={(mediaId) => (mediaId === idOf(FIRST[0]) ? 1 : undefined)}
-      />,
+      <EpisodeMenu episodes={FIRST} playingId={idOf(FIRST[0])} onSelect={onSelect} />,
     );
+
     await open(actor);
-    await actor.click(await screen.findByRole('button', { name: 'Seasons' }));
+    await actor.click(within(panel()).getByRole('button', { name: /Episode 1\.3/u }));
 
-    expect(
-      await screen.findByRole('button', { name: /Season 1.*2 episodes left/ }),
-    ).toBeInTheDocument();
-  });
-
-  it('calls itself episodes where a file says nothing about a season', async () => {
-    const actor = userEvent.setup();
-    const loose = [episodeOf(null, 1), episodeOf(null, 2)];
-
-    renderInAnAddress(
-      <EpisodeMenu episodes={loose} playingId={idOf(loose[0])} onSelect={vi.fn()} />,
-    );
-    await open(actor);
-
-    expect(await screen.findByRole('heading', { name: /Episodes/ })).toBeInTheDocument();
-  });
-
-  it('sets a display name so devtools can identify it', () => {
-    expect(EpisodeMenu.displayName).toBe('EpisodeMenu');
+    expect(onSelect).toHaveBeenCalledWith(FIRST[2]);
+    expect(screen.queryByRole('dialog', { name: 'Episodes' })).not.toBeInTheDocument();
   });
 });

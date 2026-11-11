@@ -12,6 +12,7 @@ type NoticeCardProps = {
   action?: { label: string; onPress: () => void };
   tags?: readonly string[];
   countdown?: NoticeCountdown;
+  isCompact?: boolean;
   onDismiss: () => void;
 };
 

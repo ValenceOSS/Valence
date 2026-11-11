@@ -101,6 +101,7 @@ import {
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { TrickplayPreview } from './components/TrickplayPreview/TrickplayPreview';
@@ -116,6 +117,9 @@ import type { DrawnPicture, PoppedOut } from '@ValenceScreens/playback/popOutWit
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
 import { PausedScreen } from './components/PausedScreen/PausedScreen';
+import { StageCue } from './components/StageCue/StageCue';
+import { TrickplayFrame } from './components/TrickplayFrame/TrickplayFrame';
+import type { StageCueProps } from './components/StageCue/StageCue.types';
 import { NextEpisodeCard } from './components/NextEpisodeCard/NextEpisodeCard';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
@@ -213,6 +217,8 @@ const JUMP_SECONDS = 30;
 const CLEAR_OF_THE_CONTROLS = 12;
 
 const CLEAR_OF_THE_EDGE = 24;
+
+const CONTROLS_TALL_AT_LEAST = 72;
 
 const HEALTH_INTERVAL_MILLISECONDS = 500;
 
@@ -395,6 +401,7 @@ const VideoPlayer = ({
     detail.videoRange !== 'SDR' &&
     !window.matchMedia('(dynamic-range: high)').matches;
   const [isMuted, setIsMuted] = useState(() => readPlaybackPreferences().isMuted);
+  const loudestRef = useRef(volume > 0 ? volume : 1);
   const [isShowingRemaining, setIsShowingRemaining] = useState(
     () => readPlaybackPreferences().showsRemaining,
   );
@@ -409,6 +416,7 @@ const VideoPlayer = ({
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
   const [isResting, setIsResting] = useState(false);
+  const [cue, setCue] = useState<StageCueProps['cue']>(null);
   const pointRef = useRef<{ x: number; y: number } | null>(null);
   const hasFinishedRef = useRef(false);
   const [activity, setActivity] = useState(0);
@@ -443,6 +451,11 @@ const VideoPlayer = ({
   });
   const [heldFrame, setHeldFrame] = useState<{ url: string; isItemChange: boolean } | null>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const [controlsElement, setControlsElement] = useState<HTMLDivElement | null>(null);
+  const holdControls = useCallback((element: HTMLDivElement | null) => {
+    controlsRef.current = element;
+    setControlsElement(element);
+  }, []);
   const [controlsTall, setControlsTall] = useState(0);
 
   const isAWindowOfOurOwn = isTheDesktopClient();
@@ -465,12 +478,13 @@ const VideoPlayer = ({
   const frameSkewRef = useRef(0);
 
   const sayWhatTheRoomDid = useCallback((said: string) => {
-    notify.say(said, { where: PLAYER_TOASTS, id: PARTY_NOTICE });
+    notify.say(said, { where: PLAYER_TOASTS, isCompact: true, id: PARTY_NOTICE });
   }, []);
 
   const sayItWillNotStart = useCallback(() => {
     notify.say(say('screens.videoPlayer.yourBrowserWillNotStartThis'), {
       where: PLAYER_TOASTS,
+      isCompact: true,
       id: PARTY_NOTICE,
     });
   }, []);
@@ -550,7 +564,7 @@ const VideoPlayer = ({
 
   useEffect(() => {
     if (partyNotice !== null) {
-      notify.say(partyNotice, { where: PLAYER_TOASTS });
+      notify.say(partyNotice, { where: PLAYER_TOASTS, isCompact: true });
     }
   }, [partyNotice]);
   const releaseRef = useRef<(() => Promise<void>) | null>(null);
@@ -749,6 +763,7 @@ const VideoPlayer = ({
         if (!accepted) {
           notify.failed(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'), {
             where: PLAYER_TOASTS,
+            isCompact: true,
           });
 
           return;
@@ -1074,9 +1089,23 @@ const VideoPlayer = ({
         audioStreamIndex === undefined
           ? null
           : (film?.audioStreams.find((stream) => stream.index === audioStreamIndex) ?? null);
-      const isWhole =
-        request.requestedQuality === 'original' ||
-        (request.requestedQuality === 'auto' && request.autoRung === 'original');
+      const pinned =
+        request.requestedQuality === 'auto' || request.requestedQuality === 'original'
+          ? null
+          : request.requestedQuality;
+      const sized =
+        pinned === null
+          ? null
+          : (film ??
+            (await cache
+              .ensureQueryData(libraryQueries.detail(request.mediaId))
+              .catch(() => null)));
+      const isTheOriginalsRung = sized !== null && sharpestStepOf(sized)?.id === pinned;
+      const quality =
+        request.requestedQuality === 'auto' || isTheOriginalsRung
+          ? request.autoRung
+          : request.requestedQuality;
+      const isWhole = quality === 'original';
       const mayPickSound =
         isWhole && engine !== null && (asked === null || engine.audioCodecs.includes(asked.codec));
       const ask = (heardIndex: number | undefined, picksSound: boolean) =>
@@ -1096,7 +1125,7 @@ const VideoPlayer = ({
           clientId,
           request.startSeconds,
           heardIndex,
-          request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
+          quality,
           request.subtitleStreamIndex,
           request.converted,
           request.burnInSubtitleId,
@@ -1115,8 +1144,7 @@ const VideoPlayer = ({
               startSeconds: request.startSeconds,
               audioStreamIndex,
               subtitleStreamIndex: request.subtitleStreamIndex,
-              quality:
-                request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
+              quality: quality,
             })
           : null;
 
@@ -1627,6 +1655,7 @@ const VideoPlayer = ({
           notify.say(event.reason, {
             id: ADMIN_NOTICE,
             where: PLAYER_TOASTS,
+            isCompact: true,
             staysUntilDismissed: true,
           });
 
@@ -1634,7 +1663,11 @@ const VideoPlayer = ({
         }
 
         if (event.kind === 'message') {
-          notify.say(event.text, { where: PLAYER_TOASTS, staysUntilDismissed: true });
+          notify.say(event.text, {
+            where: PLAYER_TOASTS,
+            isCompact: true,
+            staysUntilDismissed: true,
+          });
 
           return;
         }
@@ -2469,6 +2502,7 @@ const VideoPlayer = ({
 
       if (isAgain && zone !== 'middle') {
         skipRef.current(zone === 'back' ? -SKIP_SECONDS : SKIP_SECONDS);
+        setCue({ kind: zone === 'back' ? 'back' : 'forward', at: now });
 
         return;
       }
@@ -2477,6 +2511,7 @@ const VideoPlayer = ({
         pendingTapRef.current = setTimeout(() => {
           pendingTapRef.current = null;
           togglePlayRef.current();
+          setCue({ kind: 'toggle', at: Date.now() });
         }, DOUBLE_TAP_MILLISECONDS);
       }
     },
@@ -2505,6 +2540,7 @@ const VideoPlayer = ({
     pendingTapRef.current = setTimeout(() => {
       pendingTapRef.current = null;
       togglePlayRef.current();
+      setCue({ kind: 'toggle', at: Date.now() });
     }, DOUBLE_TAP_MILLISECONDS);
   };
 
@@ -2568,11 +2604,13 @@ const VideoPlayer = ({
   });
 
   useEffect(() => {
-    const controls = controlsRef.current;
+    const controls = controlsElement;
 
     if (controls === null) {
       return;
     }
+
+    setControlsTall(Math.round(controls.getBoundingClientRect().height));
 
     const watching = new ResizeObserver(([seen]) => {
       const tall = Math.round(seen?.contentRect.height ?? 0);
@@ -2585,7 +2623,7 @@ const VideoPlayer = ({
     return () => {
       watching.disconnect();
     };
-  }, []);
+  }, [controlsElement]);
 
   const isBarUp = (!isIdle && !isResting) || isShowingStats || isMenuOpen || state === 'failed';
   const isBarUpRef = useRef(isBarUp);
@@ -2886,33 +2924,34 @@ const VideoPlayer = ({
       data-slot="player-header"
       className={
         isImmersive
-          ? `absolute inset-x-0 top-0 z-40 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-text transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-              isBarUp ? 'translate-y-0' : 'pointer-events-none -translate-y-full'
+          ? `valence-on-film absolute inset-x-0 top-0 z-40 flex items-start gap-4 bg-linear-to-b from-shade/70 via-shade/25 to-transparent px-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-16 pl-[calc(1.25rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] text-on-scrim transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
+              isBarUp
+                ? 'translate-y-0 opacity-100 duration-[var(--duration-base)]'
+                : 'pointer-events-none -translate-y-2 opacity-0 duration-[var(--duration-leaving)]'
             }`
           : 'flex items-center gap-4'
       }
     >
-      <div className="w-24 shrink-0" aria-hidden />
-
       <h2
-        className={`flex-1 truncate text-center text-lg font-medium ${
+        data-slot="film-text"
+        className={`min-w-0 flex-1 truncate pt-1.5 text-base font-semibold tracking-tight sm:text-lg ${
           isImmersive ? '' : 'text-text'
         }`}
       >
         {describePlaying(media)}
       </h2>
 
-      <div className="flex w-24 shrink-0 justify-end">
-        <Button
-          isIconOnly
-          variant="overlay"
-          label={say('common.close')}
-          onClick={onClose}
-          size="md"
-        >
-          <Icon of={XIcon} size={20} />
-        </Button>
-      </div>
+      <Button
+        isIconOnly
+        isPill
+        variant={isImmersive ? 'ghost' : 'overlay'}
+        label={say('common.close')}
+        onClick={onClose}
+        size="lg"
+        className={isImmersive ? 'size-10 text-on-scrim' : ''}
+      >
+        <Icon of={XIcon} size={22} />
+      </Button>
     </header>
   );
 
@@ -2986,7 +3025,7 @@ const VideoPlayer = ({
           <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">
             <span
               role="status"
-              className="rounded-full border border-overlay-line bg-overlay px-4 py-2 text-sm font-medium text-on-scrim backdrop-blur-md"
+              className="rounded-full bg-shade/60 px-4 py-2 text-sm font-medium text-on-scrim backdrop-blur-md"
             >
               {say('client.playback.playbackProblems.reconnecting')}
             </span>
@@ -3063,6 +3102,8 @@ const VideoPlayer = ({
           </div>
         )}
 
+        <StageCue cue={cue} isPlaying={isPlaying} />
+
         <Toaster id={PLAYER_TOASTS} position="top-center" />
 
         {castState !== 'connected' ? null : (
@@ -3102,7 +3143,7 @@ const VideoPlayer = ({
               size="lg"
             />
 
-            <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
+            <p className="rounded-full bg-shade/60 px-4 py-1.5 text-sm font-medium text-on-scrim backdrop-blur-md">
               {party?.isHeld === true
                 ? waitingWord(party.waitingFor)
                 : say(WAITING_FOR_MORE[whatIsPlaying(media)])}
@@ -3172,24 +3213,25 @@ const VideoPlayer = ({
         ) : null}
 
         <div
-          className="absolute right-[calc(0.75rem+env(safe-area-inset-right,0px))] z-10 flex flex-col items-end gap-3 transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
+          className="pointer-events-none absolute left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-[15] flex flex-col items-end gap-3 *:pointer-events-auto transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
           style={{
             bottom: isBarUp
-              ? `calc(${(controlsTall + CLEAR_OF_THE_CONTROLS * 2).toString()}px + env(safe-area-inset-bottom, 0px))`
+              ? `calc(${(Math.max(controlsTall, CONTROLS_TALL_AT_LEAST) + CLEAR_OF_THE_CONTROLS * 2).toString()}px + env(safe-area-inset-bottom, 0px))`
               : CLEAR_OF_THE_EDGE,
           }}
         >
           {skippable === null ? null : (
             <Button
-              size="xl"
-              variant="overlay"
-              className="px-7"
+              size="lg"
+              variant="confirm"
+              isPill
+              className="px-5"
               onClick={() => {
                 seek(skippable.endSeconds);
               }}
             >
               {describeSkip(skippable)}
-              <Icon of={SkipForwardFilledIcon} size={20} />
+              <Icon of={SkipForwardFilledIcon} size={18} />
             </Button>
           )}
 
@@ -3210,9 +3252,20 @@ const VideoPlayer = ({
         </div>
 
         <div
-          ref={controlsRef}
-          className={`absolute z-[15] bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(0.75rem+env(safe-area-inset-left,0px))] right-[calc(0.75rem+env(safe-area-inset-right,0px))] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-            isBarUp ? 'translate-y-0' : 'pointer-events-none translate-y-[calc(100%_+_1.5rem)]'
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[14] h-56 bg-linear-to-t from-shade/80 via-shade/35 to-transparent transition-opacity ease-[var(--ease-out)] motion-reduce:transition-none ${
+            isBarUp
+              ? 'opacity-100 duration-[var(--duration-base)]'
+              : 'opacity-0 duration-[var(--duration-leaving)]'
+          }`}
+        />
+
+        <div
+          ref={holdControls}
+          className={`absolute z-[15] bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
+            isBarUp
+              ? 'translate-y-0 opacity-100 duration-[var(--duration-base)]'
+              : 'pointer-events-none translate-y-2 opacity-0 duration-[var(--duration-leaving)]'
           }`}
         >
           <PlayerControls
@@ -3263,9 +3316,14 @@ const VideoPlayer = ({
             selectedAudioIndex={selectedAudioIndex}
             availableQualitySteps={availableQualitySteps}
             originalLabel={detail === null ? say('common.original') : originalLabel(detail)}
+            originalStep={detail === null ? null : (sharpestStepOf(detail)?.id ?? null)}
             qualityStepsSavingNothing={qualityStepsSavingNothing}
             qualityStepCosts={qualityStepCosts}
-            selectedQuality={request.requestedQuality}
+            selectedQuality={
+              detail !== null && sharpestStepOf(detail)?.id === request.requestedQuality
+                ? 'auto'
+                : request.requestedQuality
+            }
             autoRung={
               isOnALadder && typeof ladder?.activeHeight === 'number'
                 ? rungOfHeight(ladder.activeHeight)
@@ -3294,13 +3352,28 @@ const VideoPlayer = ({
               setCaptionStyle(DEFAULT_CAPTION_STYLE);
             }}
             onVolumeChange={(next) => {
+              if (next > 0) {
+                loudestRef.current = next;
+              }
+
               setVolume(next);
               isSilencedByPolicyRef.current = false;
               setIsMuted(next === 0);
             }}
             onToggleMute={() => {
               isSilencedByPolicyRef.current = false;
-              setIsMuted((muted) => !muted);
+
+              if (isMuted || volume === 0) {
+                if (volume === 0) {
+                  setVolume(loudestRef.current);
+                }
+
+                setIsMuted(false);
+
+                return;
+              }
+
+              setIsMuted(true);
             }}
             onToggleFullscreen={toggleFullscreen}
             {...(hasTelevision
@@ -3324,6 +3397,7 @@ const VideoPlayer = ({
               if (!isReachableOrigin(window.location.origin)) {
                 notify.failed(say('screens.videoPlayer.openValenceAtItsAddressOn'), {
                   where: PLAYER_TOASTS,
+                  isCompact: true,
                   id: CAST_NOTICE,
                 });
 
@@ -3349,7 +3423,7 @@ const VideoPlayer = ({
                   window.location.protocol === 'https:'
                     ? say('screens.videoPlayer.thisBrowserOfferedNoDeviceSafari')
                     : say('screens.videoPlayer.thisBrowserOnlyCastsOverA'),
-                  { where: PLAYER_TOASTS, id: CAST_NOTICE },
+                  { where: PLAYER_TOASTS, isCompact: true, id: CAST_NOTICE },
                 );
               });
             }}
@@ -3360,6 +3434,9 @@ const VideoPlayer = ({
             }}
             subtitleOffsetSeconds={subtitleOffset}
             onSubtitleOffsetChange={setSubtitleOffset}
+            renderChapterFrame={(seconds: number) => (
+              <TrickplayFrame trickplay={trickplay} seconds={seconds} isFluid />
+            )}
             renderPreview={(seconds: number) => (
               <TrickplayPreview
                 trickplay={trickplay}
@@ -3370,10 +3447,22 @@ const VideoPlayer = ({
           />
         </div>
 
-        {isImmersive && isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
+        {isImmersive && isFullscreen ? (
+          <PausedScreen
+            media={media}
+            isShown={isResting}
+            secondsLeft={Math.max(duration - position, 0)}
+          />
+        ) : null}
       </div>
 
-      {isImmersive && !isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
+      {isImmersive && !isFullscreen ? (
+        <PausedScreen
+          media={media}
+          isShown={isResting}
+          secondsLeft={Math.max(duration - position, 0)}
+        />
+      ) : null}
 
       <PlayOnDialog
         media={sendingAt === null ? null : { id: media.id, title: media.title }}

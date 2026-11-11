@@ -78,6 +78,8 @@ type PlayerControlsProps = {
   onPlayOnTv?: () => void;
   onPopOut?: () => void;
   isPoppedOut?: boolean;
+  originalStep?: QualityStepId | null;
+  renderChapterFrame?: (seconds: number) => ReactNode;
   renderPreview?: (seconds: number) => ReactNode;
   segments?: readonly MediaSegment[];
   chapters?: readonly VideoChapter[];

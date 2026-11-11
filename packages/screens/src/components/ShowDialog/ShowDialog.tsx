@@ -9,7 +9,6 @@ import {
   ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
-  Info as InfoIcon,
   Layers as LayersIcon,
   Plus as PlusIcon,
   Share as ShareIcon,
@@ -356,18 +355,6 @@ const ShowDialog = ({
               }
 
               onPlay(trailer, 0);
-            },
-          },
-        ]),
-    ...(carryingOn === null || onInspect === undefined
-      ? []
-      : [
-          {
-            id: 'episode',
-            label: say('screens.showDialog.aboutThisEpisode'),
-            icon: <Icon of={InfoIcon} size={18} />,
-            onChoose: () => {
-              onInspect(carryingOn.episode);
             },
           },
         ]),

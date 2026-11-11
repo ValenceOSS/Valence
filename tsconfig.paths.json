@@ -302,6 +302,10 @@
       "@ValenceUI/SplitButton.types": [
         "./packages/ui/src/components/SplitButton/SplitButton.types.ts"
       ],
+      "@ValenceUI/ScrollFade": ["./packages/ui/src/components/ScrollFade/ScrollFade.tsx"],
+      "@ValenceUI/ScrollFade.types": [
+        "./packages/ui/src/components/ScrollFade/ScrollFade.types.ts"
+      ],
       "@ValenceUI/Sidebar": ["./packages/ui/src/components/Sidebar/Sidebar.tsx"],
       "@ValenceUI/Sidebar.types": ["./packages/ui/src/components/Sidebar/Sidebar.types.ts"],
       "@ValenceUI/SidebarToggle": ["./packages/ui/src/components/SidebarToggle/SidebarToggle.tsx"],

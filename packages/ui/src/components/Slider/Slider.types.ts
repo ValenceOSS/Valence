@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type SliderTone = 'default' | 'overlay' | 'glass';
+type SliderTone = 'default' | 'overlay' | 'glass' | 'film';
 
 type SliderProps = {
   label: string;

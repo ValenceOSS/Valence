@@ -1,3 +1,4 @@
+import { showSlug } from '@ValenceCore/functions/showSlug';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { accountsHere } from '@ValenceClient/session/accountsHere';
 import { switchAccount } from '@ValenceClient/session/switchAccount';
@@ -245,7 +246,9 @@ const ValenceShell = () => {
       topDialog,
       place,
       inspecting,
-      openShow?.id === place.show ? openShow.title : null,
+      openShow !== null && (openShow.id === place.show || showSlug(openShow.title) === place.show)
+        ? openShow.title
+        : null,
       openPerson.data?.name ?? null,
     ),
   );
@@ -266,7 +269,10 @@ const ValenceShell = () => {
       return;
     }
 
-    if (openShow?.id === place.show) {
+    if (
+      openShow !== null &&
+      (openShow.id === place.show || showSlug(openShow.title) === place.show)
+    ) {
       return;
     }
 
@@ -277,7 +283,9 @@ const ValenceShell = () => {
       .then(async (found) => {
         for (const entry of found) {
           const shows = await cache.ensureQueryData(libraryQueries.shows(entry.id));
-          const wanted = shows.find((one) => one.id === place.show);
+          const wanted = shows.find(
+            (one) => one.id === place.show || showSlug(one.title) === place.show,
+          );
 
           if (wanted !== undefined) {
             return wanted;
@@ -288,15 +296,21 @@ const ValenceShell = () => {
       })
       .catch(() => null)
       .then((found) => {
-        if (!abandoned) {
-          setOpenShow(found);
+        if (abandoned) {
+          return;
+        }
+
+        setOpenShow(found);
+
+        if (found !== null && found.id !== place.show) {
+          replace({ show: found.id });
         }
       });
 
     return () => {
       abandoned = true;
     };
-  }, [place.show, openShow, cache]);
+  }, [place.show, openShow, cache, replace]);
 
   return (
     <HrefOf.Provider value={hrefOf}>

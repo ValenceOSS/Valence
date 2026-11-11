@@ -15,6 +15,7 @@ type PopoverPanelProps = {
   tone?: 'default' | 'overlay';
   isOverDialogs?: boolean;
   hasSurface?: boolean;
+  offset?: number;
   className?: string;
 };
 

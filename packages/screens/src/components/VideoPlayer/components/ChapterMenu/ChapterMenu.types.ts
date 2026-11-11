@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 type ChapterMenuProps = {
@@ -6,6 +7,7 @@ type ChapterMenuProps = {
   onSeek: (seconds: number) => void;
   onOpenChange?: (isOpen: boolean) => void;
   isDisabled?: boolean;
+  renderFrame?: (seconds: number) => ReactNode;
 };
 
 export type { ChapterMenuProps };

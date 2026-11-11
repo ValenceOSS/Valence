@@ -47,6 +47,7 @@ const markOf = (tone: NoticeTone) => {
  * @param action - The one thing to do about it, such as undoing it.
  * @param tags - Short facts worth reading at a glance.
  * @param countdown - How long until it acts on its own, and what it says beside the count.
+ * @param isCompact - Whether it is drawn as one slim line, as it is over a film.
  * @param onDismiss - Told to take it away.
  */
 const NoticeCard = ({
@@ -56,6 +57,7 @@ const NoticeCard = ({
   action,
   tags,
   countdown,
+  isCompact = false,
   onDismiss,
 }: NoticeCardProps) => {
   const [left, setLeft] = useState(countdown?.seconds ?? 0);
@@ -111,6 +113,54 @@ const NoticeCard = ({
   }, [countdown, isPaused]);
 
   const hasFooter = countdown !== undefined || action !== undefined;
+
+  if (isCompact) {
+    return (
+      <div
+        ref={shell}
+        className={cn(
+          'mx-auto flex w-fit max-w-[min(30rem,calc(100vw-2rem))] items-center gap-2.5 rounded-full border py-1.5 pr-1.5 pl-3.5 text-text',
+          'border-[var(--menu-line)] bg-surface-raised shadow-[var(--shadow-overlay)]',
+          isDanger && 'border-danger/30',
+        )}
+      >
+        <span className="flex shrink-0 items-center [&_svg]:size-4">{markOf(tone)}</span>
+
+        <p className="min-w-0 text-[0.8125rem] font-medium leading-5 [overflow-wrap:anywhere]">
+          {title}
+          {description === undefined ? null : (
+            <span className="font-normal text-text-muted"> · {description}</span>
+          )}
+        </p>
+
+        {action === undefined ? null : (
+          <Button
+            variant="secondary"
+            size="xs"
+            isPill
+            onClick={() => {
+              action.onPress();
+              onDismiss();
+            }}
+          >
+            {action.label}
+          </Button>
+        )}
+
+        <Button
+          variant="subtle"
+          size="xs"
+          isIconOnly
+          isPill
+          label={say('common.dismiss')}
+          onClick={onDismiss}
+          className="shrink-0"
+        >
+          <Icon of={XIcon} size={14} />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div

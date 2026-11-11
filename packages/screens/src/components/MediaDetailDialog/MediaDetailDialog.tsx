@@ -586,6 +586,24 @@ const MediaDetailDialog = ({
 
             <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
               <div className="flex min-w-0 flex-col gap-4">
+                {shown.seriesTitle === null ||
+                shown.seriesTitle === undefined ||
+                onOpenShow === undefined ? null : (
+                  <DialogHeadlinePart as="span" className="-mb-3">
+                    <Button
+                      variant="subtle"
+                      size="none"
+                      hasTooltip={false}
+                      onClick={() => {
+                        onOpenShow(shown);
+                      }}
+                      className="text-sm font-medium"
+                    >
+                      {shown.seriesTitle}
+                    </Button>
+                  </DialogHeadlinePart>
+                )}
+
                 {shown.seriesTitle === null || shown.seriesTitle === undefined ? null : (
                   <DialogHeadlinePart as="span" className="text-lg font-semibold text-text">
                     {shown.title}

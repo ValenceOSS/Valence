@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 type SettingsChoice = {
   id: string;
   label: string;
+  icon?: ReactNode;
   detail?: string;
   isDisabled?: boolean;
 };
@@ -68,6 +69,7 @@ type SettingsMenuProps = {
   onOpenChange?: (isOpen: boolean) => void;
   isDisabled?: boolean;
   tone?: 'default' | 'overlay';
+  offset?: number;
   className?: string;
 };
 

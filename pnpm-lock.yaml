@@ -176,7 +176,7 @@ overrides:
 packageExtensionsChecksum: sha256-daeow0RbvsNSfXgFeWt5IjB1z9nAowZ5ANJJJUWas+8=
 
 patchedDependencies:
-  '@keyline-icons/react@1.8.0': 35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0
+  '@keyline-icons/react@1.8.0': e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170
   expo-glass-tabs@0.1.1: 606af01e3bf3d06989f3def95dd5c5d95b74de62671d3c2438db4145c86ca466
   expo-video@57.0.4: 71f95119ba3dec49ec5b599ef312e5abb4ce1264fadf8bc5c3ab59815fee4bb5
   mediabunny@1.62.0: 2fa90e108a260e4ef4b4aae3cd4dfe2fdcdcf29814dafafa5ccbb1eb9dbaa469
@@ -227,7 +227,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
+        version: 1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.3.0)
@@ -330,7 +330,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
+        version: 1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)
       '@scalar/api-reference-react':
         specifier: 0.9.70
         version: 0.9.70(qrcode@1.5.4)(react@19.3.0)(supports-color@8.1.1)(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.6.7)
@@ -430,7 +430,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
+        version: 1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)
       '@remotion/player':
         specifier: 4.0.533
         version: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -533,7 +533,7 @@ importers:
     dependencies:
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
+        version: 1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)
       '@valence/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -1409,7 +1409,7 @@ importers:
         version: 1.7.4(@better-auth/core@1.7.4(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.6.7))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.4(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(better-sqlite3@13.0.3)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(kysely@0.29.4)(mysql2@3.24.5(@types/node@24.13.4))(pg@8.23.0)(postgres@3.4.9))(mysql2@3.24.5(@types/node@24.13.4))(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.0)(@types/node@24.13.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@4.1.11)(vue@3.5.43(typescript@7.0.2)))(better-call@1.4.0(zod@4.6.7))(nanostores@1.4.2)
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
+        version: 1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)
       '@mediabunny/ac3':
         specifier: 1.62.0
         version: 1.62.0(mediabunny@1.62.0(patch_hash=2fa90e108a260e4ef4b4aae3cd4dfe2fdcdcf29814dafafa5ccbb1eb9dbaa469))
@@ -1527,7 +1527,7 @@ importers:
         version: 5.3.0
       '@keyline-icons/react':
         specifier: 1.8.0
-        version: 1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)
+        version: 1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)
       '@paper-design/shaders-react':
         specifier: 0.0.80
         version: 0.0.80(@types/react@19.3.0)(react@19.3.0)
@@ -15531,7 +15531,7 @@ snapshots:
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1)
       react-native-svg: 15.16.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
 
-  '@keyline-icons/react@1.8.0(patch_hash=35a45d04405edcfa3625523c257f419d3f7094e161edcd2b8cafd95b959a4da0)(react@19.3.0)':
+  '@keyline-icons/react@1.8.0(patch_hash=e3c339570e040423321a94ef1dae130b2617905a763c2474c87daa5ae8245170)(react@19.3.0)':
     dependencies:
       react: 19.3.0
 

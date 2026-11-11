@@ -912,6 +912,11 @@ body[data-scroll-locked] .valence-navbar {
   color: var(--color-on-scrim);
 }
 
+.valence-on-film :is(button, [role='slider']) svg,
+.valence-on-film [data-slot='film-text'] {
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.45));
+}
+
 .valence-surface {
   background: var(--card-face);
   border: 1px solid var(--surface-card-line);
@@ -1046,6 +1051,28 @@ body[data-scroll-locked] .valence-navbar {
 
 .valence-rail {
   scrollbar-width: none;
+}
+
+.valence-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-text) 22%, transparent) transparent;
+}
+
+.valence-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.valence-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.valence-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-text) 22%, transparent);
+}
+
+.valence-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-text) 36%, transparent);
 }
 
 .valence-rail::-webkit-scrollbar {
