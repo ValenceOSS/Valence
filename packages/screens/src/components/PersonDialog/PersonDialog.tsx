@@ -8,7 +8,6 @@ import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { Link } from '@ValenceUI/Link';
 import { StepTrail } from '@ValenceUI/StepTrail';
-import { sayCount } from '@ValenceI18n/sayCount';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { hasAnythingToShow } from '@ValenceContracts/schemas/Person';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -34,83 +33,14 @@ import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePar
 import type { PersonCredits } from '@ValenceContracts/schemas/Person';
 import type { PersonDialogProps } from './PersonDialog.types';
 import { say } from '@ValenceI18n/say';
+import { describeCredit } from '@ValenceClient/people/describeCredit';
+import { describePersonFacts } from '@ValenceClient/people/describePersonFacts';
 
 const NOTHING: PersonCredits = { films: [], shows: [], episodes: [] };
 
 const NO_WORK: readonly CatalogueTitle[] = [];
 
 const NO_CREDITS: readonly PersonCredit[] = [];
-
-const GENDER_WORDS = {
-  female: 'screens.personDialog.genderFemale',
-  male: 'screens.personDialog.genderMale',
-  nonBinary: 'screens.personDialog.genderNonBinary',
-} as const;
-
-/**
- * Works out how old somebody is, or was when they died.
- *
- * @param bornOn - The date they were born, as the catalogue gives it.
- * @param until - The date to count to.
- * @returns Their age in whole years, or null where a date could not be read.
- */
-const ageOn = (bornOn: string, until: Date): number | null => {
-  const born = new Date(bornOn);
-
-  if (Number.isNaN(born.getTime()) || Number.isNaN(until.getTime())) {
-    return null;
-  }
-
-  const hasHadBirthday =
-    until.getMonth() > born.getMonth() ||
-    (until.getMonth() === born.getMonth() && until.getDate() >= born.getDate());
-
-  return until.getFullYear() - born.getFullYear() - (hasHadBirthday ? 0 : 1);
-};
-
-/**
- * Says how somebody is credited on a title, leaving out what the catalogue does not know.
- *
- * @param credit - The credit.
- * @returns The line under its title, or nothing where the catalogue gives neither.
- */
-const describeCredit = (credit: PersonCredit): string | undefined => {
-  const episodes =
-    credit.kind !== 'series' || credit.episodeCount === null
-      ? null
-      : sayCount('common.count.episodes', credit.episodeCount);
-
-  if (credit.role === null) {
-    return episodes ?? undefined;
-  }
-
-  return episodes === null
-    ? say('screens.personDialog.asRole', { role: credit.role })
-    : say('screens.personDialog.creditEpisodes', { episodes, role: credit.role });
-};
-
-/**
- * Writes a birth date the way somebody says it rather than the way a catalogue stores it, and leaves
- * an unreadable one out rather than showing the raw string back.
- *
- * @param bornOn - The date as the catalogue gave it.
- * @returns The date in words, or null where it could not be read.
- */
-const describeBirth = (bornOn: string | null): string | null => {
-  if (bornOn === null) {
-    return null;
-  }
-
-  const at = Date.parse(bornOn);
-
-  return Number.isNaN(at)
-    ? null
-    : new Date(at).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-};
 
 /**
  * Everything Valence knows about somebody in its cast, and everything of theirs this server can play.
@@ -176,54 +106,10 @@ const PersonDialog = ({
     return null;
   }
 
-  const born = describeBirth(person?.bornOn ?? null);
   const couldNotRead = personId !== null && (asked.isError || theirs.isError);
   const work = personId === null ? NO_WORK : (catalogued.data?.titles ?? NO_WORK);
   const timeline = personId === null ? NO_CREDITS : (catalogued.data?.timeline ?? NO_CREDITS);
-  const birthAge =
-    person?.bornOn === null || person?.bornOn === undefined
-      ? null
-      : ageOn(
-          person.bornOn,
-          person.diedOn === null || person.diedOn === undefined
-            ? new Date()
-            : new Date(person.diedOn),
-        );
-  const facts = [
-    { label: say('screens.personDialog.knownFor'), value: person?.knownFor ?? null },
-    {
-      label: say('screens.personDialog.knownCredits'),
-      value: timeline.length === 0 ? null : timeline.length.toString(),
-    },
-    {
-      label: say('screens.personDialog.gender'),
-      value:
-        person?.gender === null || person?.gender === undefined
-          ? null
-          : say(GENDER_WORDS[person.gender]),
-    },
-    {
-      label: say('screens.personDialog.birthdate'),
-      value:
-        born !== null && birthAge !== null
-          ? say('screens.personDialog.age', { date: born, age: birthAge.toString() })
-          : born,
-    },
-    {
-      label: say('screens.personDialog.diedOn'),
-      value: describeBirth(person?.diedOn ?? null),
-    },
-    { label: say('screens.personDialog.placeOfBirth'), value: person?.bornIn ?? null },
-    {
-      label: say('screens.adminArea.titlePage.animeSettingsCard.searchedAs'),
-      value:
-        person?.alsoKnownAs === null ||
-        person?.alsoKnownAs === undefined ||
-        person.alsoKnownAs.length === 0
-          ? null
-          : person.alsoKnownAs.join(', '),
-    },
-  ].filter((fact) => fact.value !== null);
+  const facts = describePersonFacts(person, timeline.length);
   const notHeld = work.filter(
     (title) => title.standing.status !== 'library' && title.standing.status !== 'linked',
   );
