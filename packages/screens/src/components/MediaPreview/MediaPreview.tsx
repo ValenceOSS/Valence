@@ -38,7 +38,7 @@ const PREVIEW_PENDING = say('screens.mediaPreview.previewIsBeingMadeCheckBack');
 
 const PREVIEW_ABSENT = say('screens.mediaPreview.noPreviewAvailable');
 
-const LOOK_EVERY_MILLISECONDS = 66;
+const LOOK_EVERY_MILLISECONDS = 250;
 
 const FADE_MILLISECONDS = 700;
 

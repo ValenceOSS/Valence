@@ -59,12 +59,6 @@ const FADES_AT = 0.85;
 
 const LIFTS_OVER_MS = 200;
 
-const LIFTS_FROM = '0 0px 0px 0px color-mix(in oklab, var(--color-shade) 0%, transparent)';
-
-const LIFTS_TO = '0 24px 48px -16px color-mix(in oklab, var(--color-shade) 70%, transparent)';
-
-const SETTLES_TO = '0 12px 28px -16px color-mix(in oklab, var(--color-shade) 55%, transparent)';
-
 const QUICK_DELAY_MILLISECONDS = 50;
 
 const STILL_WARM_MILLISECONDS = 500;
@@ -382,10 +376,7 @@ const RailCard = ({
         along,
       ),
       picture.animate(
-        [
-          { transform: now.transform, boxShadow: now.boxShadow },
-          { transform: shrinkOnto(resting, laid), boxShadow: LIFTS_FROM },
-        ],
+        [{ transform: now.transform }, { transform: shrinkOnto(resting, laid) }],
         along,
       ),
       panel.animate(
@@ -539,11 +530,7 @@ const RailCard = ({
       );
 
       picture.animate(
-        [
-          { transform: shrinkOnto(card, laid), boxShadow: LIFTS_FROM },
-          { transform: shrinkOnto(card, laid, 0.6), boxShadow: LIFTS_TO, offset: 0.4 },
-          { transform: 'translate(0px, 0px) scale(1)', boxShadow: SETTLES_TO },
-        ],
+        [{ transform: shrinkOnto(card, laid) }, { transform: 'translate(0px, 0px) scale(1)' }],
         { duration: LIFTS_OVER_MS, easing: UNFOLDS_ALONG, fill: 'forwards' },
       );
 
@@ -757,7 +744,7 @@ const RailCard = ({
           {anchor === null ? null : (
             <div
               aria-hidden
-              className={`pointer-events-none fixed inset-0 z-[39] bg-shade/12 backdrop-blur-[1.5px] transition-opacity duration-200 ease-out starting:opacity-0 motion-reduce:backdrop-blur-none ${
+              className={`pointer-events-none fixed inset-0 z-[39] bg-shade/15 transition-opacity duration-200 ease-out starting:opacity-0 ${
                 isRaised ? 'opacity-100' : 'opacity-0'
               }`}
             />
@@ -807,7 +794,7 @@ const RailCard = ({
 
                 <div
                   ref={pictureRef}
-                  className="pointer-events-none relative w-full shrink-0 origin-top-left overflow-hidden rounded-[12px]"
+                  className="pointer-events-none relative w-full shrink-0 origin-top-left overflow-hidden rounded-[12px] shadow-[var(--shadow-lifted)] will-change-transform"
                   style={{ height: anchor.picture }}
                 >
                   <MediaPreview

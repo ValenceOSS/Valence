@@ -36,7 +36,7 @@ const DEFAULT_LIGHTS: MoodLight[] = HOUSE_LIGHTS.map((color) => ({ color }));
 
 const PARALLAX = 0.34;
 
-const PIXEL_BUDGET = 960 * 640;
+const PIXEL_BUDGET = 640 * 400;
 
 type Orbs = number[][];
 
