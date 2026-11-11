@@ -65,7 +65,7 @@ const FADES_AT = 0.85;
 
 const LIFTS_OVER_MS = 200;
 
-const QUICK_DELAY_MILLISECONDS = 50;
+const QUICK_DELAY_MILLISECONDS = 150;
 
 const STILL_WARM_MILLISECONDS = 500;
 
@@ -682,6 +682,21 @@ const RailCard = ({
 
   useEffect(() => cancel, [cancel]);
 
+  const waitForRest = useCallback(() => {
+    cancel();
+
+    const tryOpening = () => {
+      timerRef.current = open() ? null : setTimeout(tryOpening, WAITS_ITS_TURN_MS);
+    };
+
+    timerRef.current = setTimeout(
+      tryOpening,
+      OPENED.isOpen || performance.now() - OPENED.lastClosedAt < STILL_WARM_MILLISECONDS
+        ? Math.min(QUICK_DELAY_MILLISECONDS, hoverDelayMilliseconds)
+        : hoverDelayMilliseconds,
+    );
+  }, [cancel, open, hoverDelayMilliseconds]);
+
   const wideSize = { size: 'medium' as const };
   const wideUrl = media.hasBackdrop
     ? artworkUrl(media.id, 'backdrop', { isOfTitle: isSeries, ...wideSize })
@@ -713,18 +728,12 @@ const RailCard = ({
           void cache.prefetchQuery(libraryQueries.detail(media.id));
         }
 
-        cancel();
-
-        const tryOpening = () => {
-          timerRef.current = open() ? null : setTimeout(tryOpening, WAITS_ITS_TURN_MS);
-        };
-
-        timerRef.current = setTimeout(
-          tryOpening,
-          OPENED.isOpen || performance.now() - OPENED.lastClosedAt < STILL_WARM_MILLISECONDS
-            ? Math.min(QUICK_DELAY_MILLISECONDS, hoverDelayMilliseconds)
-            : hoverDelayMilliseconds,
-        );
+        waitForRest();
+      }}
+      onPointerMove={(event) => {
+        if (event.pointerType === 'mouse' && timerRef.current !== null && anchor === null) {
+          waitForRest();
+        }
       }}
       onPointerLeave={() => {
         cancel();
