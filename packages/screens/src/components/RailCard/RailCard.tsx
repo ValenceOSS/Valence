@@ -757,7 +757,7 @@ const RailCard = ({
           {anchor === null ? null : (
             <div
               aria-hidden
-              className={`pointer-events-none fixed inset-0 z-[39] bg-shade/25 backdrop-blur-[3px] transition-opacity duration-200 ease-out starting:opacity-0 motion-reduce:backdrop-blur-none ${
+              className={`pointer-events-none fixed inset-0 z-[39] bg-shade/12 backdrop-blur-[1.5px] transition-opacity duration-200 ease-out starting:opacity-0 motion-reduce:backdrop-blur-none ${
                 isRaised ? 'opacity-100' : 'opacity-0'
               }`}
             />
