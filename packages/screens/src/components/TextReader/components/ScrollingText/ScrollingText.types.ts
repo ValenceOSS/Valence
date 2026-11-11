@@ -15,7 +15,7 @@ type ScrollingTextProps = {
   pageClassName: string;
   textStyle: CSSProperties;
   inset: number;
-  onPlace: (part: number, within: number) => void;
+  onPlace: (part: number, within: number, withinEnd: number) => void;
   onFollow: (place: { part: number; anchor: string | null }) => void;
   onScroller: (scroller: HTMLDivElement | null) => void;
 };

@@ -147,9 +147,7 @@ const AReaderChrome = ({
             {mark === undefined ? null : (
               <AReaderControl
                 label={
-                  mark.isMarked
-                    ? say('phone.aReader.aReaderSide.unmarkThesePages')
-                    : say('phone.aReader.aReaderSide.markThesePages')
+                  mark.isMarked ? say('common.removeBookmark') : say('common.bookmarkThisPage')
                 }
                 onPress={mark.onMark}
               >

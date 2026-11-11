@@ -9,6 +9,7 @@ const SERVER_FEATURES = [
   'requests.searchPages',
   'library.barePosters',
   'plugins.homeRows',
+  'books.bookmarks',
 ] as const;
 
 export { SERVER_FEATURES };

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
-import { readBookmarks } from './readBookmarks';
-import { writeBookmarks } from './writeBookmarks';
+import { readKeptBookmarks } from './readKeptBookmarks';
+import { writeKeptBookmarks } from './writeKeptBookmarks';
 
 const held = new Map<string, string>();
 
@@ -27,18 +27,17 @@ afterEach(() => {
   forgetPlatform();
 });
 
-describe('writeBookmarks', () => {
-  it('keeps the marked pages of a chapter, once each and in order', () => {
-    writeBookmarks('book', 'chapter', [9, 2, 9, 5]);
+describe('writeKeptBookmarks', () => {
+  it('keeps a book’s bookmarks where they are read back from, apart from other books', () => {
+    const kept = {
+      known: [],
+      waiting: [{ kind: 'remove' as const, bookmarkId: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0b01' }],
+    };
 
-    expect(held.get('valence.reader.bookmarks.book.chapter')).toBe('[2,5,9]');
-  });
+    writeKeptBookmarks('book', kept);
 
-  it('keeps each chapter to itself', () => {
-    writeBookmarks('book', 'first', [1]);
-    writeBookmarks('book', 'second', [4]);
-
-    expect(readBookmarks('book', 'first')).toEqual([1]);
-    expect(readBookmarks('book', 'second')).toEqual([4]);
+    expect(readKeptBookmarks('book')).toEqual(kept);
+    expect(readKeptBookmarks('other')).toEqual({ known: [], waiting: [] });
+    expect([...held.keys()]).toEqual(['valence.books.bookmarks.book']);
   });
 });

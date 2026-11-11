@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { PageReader } from './PageReader';
-import type { Book, BookChapter } from '@ValenceContracts/schemas/Book';
+import type { Book, BookChapter, Bookmark } from '@ValenceContracts/schemas/Book';
+import { aReaderMarks } from '@ValenceScreens/testing/aReaderMarks';
 import { alwaysReachable } from '@ValenceClient/platform/alwaysReachable';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 
@@ -60,6 +61,21 @@ const draw = (overrides: Partial<Parameters<typeof PageReader>[0]> = {}) =>
       {...overrides}
     />,
   );
+
+/**
+ * A bookmark on a page of the first chapter.
+ */
+const markOn = (pageNumber: number, id = `mark-${pageNumber.toString()}`): Bookmark => ({
+  id,
+  bookId: 'a-book',
+  chapterId: 'one',
+  pageNumber,
+  fraction: null,
+  pageShown: null,
+  excerpt: null,
+  picture: null,
+  createdAt: '2026-11-11T00:00:00.000Z',
+});
 
 const shown = (): string => screen.getByRole('img', { name: /^Page/ }).getAttribute('alt') ?? '';
 
@@ -325,5 +341,68 @@ describe('PageReader', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Pin panel' }));
 
     expect(held.get('valence.reader.panel')).toBe('pinned');
+  });
+  it('offers no bookmark where the book keeps none', () => {
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Bookmark this page' })).not.toBeInTheDocument();
+  });
+
+  it('bookmarks the page showing', async () => {
+    const marks = aReaderMarks([]);
+
+    draw({ startAtPage: 3, marks });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bookmark this page' }));
+
+    expect(marks.onMark).toHaveBeenCalledWith({
+      pageNumber: 3,
+      fraction: null,
+      pageShown: null,
+      excerpt: null,
+      picture: null,
+    });
+    expect(marks.onUnmark).not.toHaveBeenCalled();
+  });
+
+  it('removes the bookmark on a page that has one, and leaves the others', async () => {
+    const marks = aReaderMarks([markOn(3), markOn(7)]);
+
+    draw({ startAtPage: 3, marks });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+
+    expect(marks.onUnmark).toHaveBeenCalledWith(['mark-3']);
+    expect(marks.onMark).not.toHaveBeenCalled();
+  });
+
+  it('shows a page as unmarked once it is turned away from', async () => {
+    draw({ startAtPage: 3, marks: aReaderMarks([markOn(3)]) });
+
+    await userEvent.keyboard('{ArrowLeft}');
+
+    expect(screen.getByRole('button', { name: 'Bookmark this page' })).toBeInTheDocument();
+  });
+
+  it('bookmarks the page in view while the chapter is a strip to scroll', async () => {
+    const marks = aReaderMarks([markOn(0)]);
+
+    draw({ marks });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+
+    expect(marks.onUnmark).toHaveBeenCalledWith(['mark-0']);
+  });
+
+  it('lists the bookmarks in the panel', async () => {
+    draw({ marks: aReaderMarks([]) });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+
+    expect(
+      within(screen.getByRole('complementary', { name: 'Reading' })).getByText('The bookmarks'),
+    ).toBeInTheDocument();
   });
 });

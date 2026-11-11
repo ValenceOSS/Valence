@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import {
+  Bookmark as BookmarkIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Maximize as MaximizeIcon,
@@ -8,7 +9,10 @@ import {
   PanelRight as PanelRightIcon,
   X as XIcon,
 } from '@keyline-icons/react';
-import { PanelRight as PanelRightFilledIcon } from '@keyline-icons/react/fill';
+import {
+  Bookmark as BookmarkFilledIcon,
+  PanelRight as PanelRightFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -54,6 +58,8 @@ const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.e
  * @param onForward - Turns on.
  * @param onBack - Turns back.
  * @param onClose - Leaves.
+ * @param mark - Whether the page showing is bookmarked, and the way to bookmark it or take the
+ *   bookmark away, where the reader keeps bookmarks.
  * @param className - Extra classes for where the page sits, such as how it is aligned.
  */
 const ReaderChrome = ({
@@ -70,6 +76,7 @@ const ReaderChrome = ({
   onForward,
   onBack,
   onClose,
+  mark,
   className,
 }: ReaderChromeProps) => {
   const isStill = useReducedMotionConfig() === true;
@@ -98,6 +105,25 @@ const ReaderChrome = ({
           </Button>
 
           <span className="min-w-0 flex-1 truncate text-sm text-on-scrim">{title}</span>
+
+          {mark === undefined ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              isActive={mark.isMarked}
+              aria-label={
+                mark.isMarked ? say('common.removeBookmark') : say('common.bookmarkThisPage')
+              }
+              onClick={mark.onMark}
+            >
+              <Icon
+                of={BookmarkIcon}
+                whenActive={BookmarkFilledIcon}
+                isActive={mark.isMarked}
+                size={18}
+              />
+            </Button>
+          )}
 
           {isAvailable ? (
             <Button

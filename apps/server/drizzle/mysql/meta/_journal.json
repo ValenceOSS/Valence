@@ -456,6 +456,13 @@
       "when": 1794169651213,
       "tag": "0064_an_account_has_one_owner_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "5",
+      "when": 1794423782311,
+      "tag": "0065_bookmarks_are_kept_per_profile",
+      "breakpoints": true
     }
   ]
 }

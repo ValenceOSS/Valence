@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BOOKMARK_EXCERPT_MOST,
+  BOOKMARK_PICTURE_MOST,
   BOOK_DOCUMENT_TAGS,
+  BookmarkListSchema,
+  BookmarkSchema,
   BookChapterSchema,
   BookContentsSchema,
   bookPlaceIn,
@@ -8,6 +12,7 @@ import {
   directionFor,
   linkToBookPlace,
   ReadingProgressSchema,
+  SaveBookmarkSchema,
   SaveReadingProgressSchema,
 } from './Book';
 
@@ -119,6 +124,106 @@ describe('SaveReadingProgressSchema', () => {
     const read = SaveReadingProgressSchema.safeParse({ pageNumber: 3, fraction: null });
 
     expect(read.success && read.data.isFinished).toBe(false);
+  });
+});
+
+const A_CHAPTER_ID = '5f1b6c9e-1a2b-4c3d-8e4f-5a6b7c8d9e0f';
+
+describe('SaveBookmarkSchema', () => {
+  it('takes a page on its own, with nothing to show beside it', () => {
+    const read = SaveBookmarkSchema.safeParse({
+      chapterId: A_CHAPTER_ID,
+      pageNumber: 4,
+      fraction: null,
+    });
+
+    expect(read.success && read.data).toEqual({
+      chapterId: A_CHAPTER_ID,
+      pageNumber: 4,
+      fraction: null,
+      pageShown: null,
+      excerpt: null,
+      picture: null,
+    });
+  });
+
+  it('takes a fraction with the words or the picture there', () => {
+    const read = SaveBookmarkSchema.safeParse({
+      chapterId: A_CHAPTER_ID,
+      pageNumber: null,
+      fraction: 0.4,
+      pageShown: null,
+      excerpt: 'It was the best of times',
+      picture: 'OEBPS/images/p2.png',
+    });
+
+    expect(read.success).toBe(true);
+  });
+
+  it('refuses a bookmark with neither a page nor a fraction', () => {
+    const read = SaveBookmarkSchema.safeParse({
+      chapterId: A_CHAPTER_ID,
+      pageNumber: null,
+      fraction: null,
+    });
+
+    expect(read.success).toBe(false);
+  });
+
+  it('refuses an excerpt or a picture longer than it keeps, or empty', () => {
+    const place = { chapterId: A_CHAPTER_ID, pageNumber: null, fraction: 0.5 };
+
+    expect(
+      SaveBookmarkSchema.safeParse({ ...place, excerpt: 'a'.repeat(BOOKMARK_EXCERPT_MOST + 1) })
+        .success,
+    ).toBe(false);
+    expect(
+      SaveBookmarkSchema.safeParse({ ...place, picture: 'a'.repeat(BOOKMARK_PICTURE_MOST + 1) })
+        .success,
+    ).toBe(false);
+    expect(SaveBookmarkSchema.safeParse({ ...place, excerpt: '' }).success).toBe(false);
+  });
+
+  it('refuses a fraction past the end of the book', () => {
+    expect(
+      SaveBookmarkSchema.safeParse({ chapterId: A_CHAPTER_ID, pageNumber: null, fraction: 1.2 })
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe('BookmarkSchema', () => {
+  it('reads a list of bookmarks as the server sends it', () => {
+    const bookmark = {
+      id: '6f1b6c9e-1a2b-4c3d-8e4f-5a6b7c8d9e0f',
+      bookId: A_BOOK.id,
+      chapterId: A_CHAPTER_ID,
+      pageNumber: null,
+      fraction: 0.25,
+      pageShown: null,
+      excerpt: null,
+      picture: 'OEBPS/images/p2.png',
+      createdAt: '2026-11-11T00:00:00.000Z',
+    };
+
+    expect(BookmarkSchema.parse(bookmark)).toEqual(bookmark);
+    expect(BookmarkListSchema.parse({ bookmarks: [bookmark] }).bookmarks).toHaveLength(1);
+  });
+
+  it('refuses a bookmark whose id is not one', () => {
+    expect(
+      BookmarkSchema.safeParse({
+        id: 'one',
+        bookId: A_BOOK.id,
+        chapterId: A_CHAPTER_ID,
+        pageNumber: 1,
+        fraction: null,
+        pageShown: null,
+        excerpt: null,
+        picture: null,
+        createdAt: '2026-11-11T00:00:00.000Z',
+      }).success,
+    ).toBe(false);
   });
 });
 

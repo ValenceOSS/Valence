@@ -22,7 +22,14 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
-import { book, bookChapter, library, listeningProgress, readingProgress } from '#dialect/Schema';
+import {
+  book,
+  bookChapter,
+  library,
+  listeningProgress,
+  readingBookmark,
+  readingProgress,
+} from '#dialect/Schema';
 import { z } from 'zod';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -55,8 +62,10 @@ import type {
   BookFormat,
   BookListening,
   BookReading,
+  Bookmark,
   ListeningProgress,
   ReadingProgress,
+  SaveBookmark,
   SaveListeningProgress,
   SaveReadingProgress,
 } from '@ValenceContracts/schemas/Book';
@@ -125,6 +134,9 @@ type BookService = BookStore &
     readProgress: (profileId: string, bookId: string) => Promise<ReadingProgress[]>;
     listReading: (viewer: Viewer, profileId: string, limit: number) => Promise<BookReading[]>;
     forgetReading: (profileId: string, bookId?: string) => Promise<void>;
+    readBookmarks: (profileId: string, bookId: string) => Promise<Bookmark[]>;
+    saveBookmark: (profileId: string, bookmarkId: string, where: SaveBookmark) => Promise<boolean>;
+    forgetBookmark: (profileId: string, bookmarkId: string) => Promise<void>;
     readChapterFile: (chapterId: string) => Promise<{ path: string; format: BookFormat } | null>;
     saveListening: (
       profileId: string,
@@ -978,6 +990,87 @@ const createDatabaseBookService = (
             bookId === undefined ? undefined : eq(readingProgress.bookId, bookId),
           ),
         );
+    },
+
+    readBookmarks: async (profileId, bookId) => {
+      const rows = await db
+        .select({
+          id: readingBookmark.id,
+          bookId: readingBookmark.bookId,
+          chapterId: readingBookmark.chapterId,
+          chapterNumber: bookChapter.number,
+          pageNumber: readingBookmark.pageNumber,
+          fraction: readingBookmark.fraction,
+          pageShown: readingBookmark.pageShown,
+          excerpt: readingBookmark.excerpt,
+          picture: readingBookmark.picture,
+          createdAt: readingBookmark.createdAt,
+        })
+        .from(readingBookmark)
+        .innerJoin(bookChapter, eq(bookChapter.id, readingBookmark.chapterId))
+        .where(
+          and(
+            eq(readingBookmark.profileId, profileId),
+            eq(readingBookmark.bookId, bookId),
+            isNull(bookChapter.missingSince),
+          ),
+        );
+
+      return rows
+        .sort(
+          (one, other) =>
+            one.chapterNumber - other.chapterNumber ||
+            (one.pageNumber ?? one.fraction ?? 0) - (other.pageNumber ?? other.fraction ?? 0),
+        )
+        .map((row) => ({
+          id: row.id,
+          bookId: row.bookId,
+          chapterId: row.chapterId,
+          pageNumber: row.pageNumber,
+          fraction: row.fraction,
+          pageShown: row.pageShown,
+          excerpt: row.excerpt,
+          picture: row.picture,
+          createdAt: row.createdAt.toISOString(),
+        }));
+    },
+
+    saveBookmark: async (profileId, bookmarkId, where) => {
+      const chapter = await chapterFor(where.chapterId);
+
+      if (chapter === null) {
+        return false;
+      }
+
+      const [kept] = await db
+        .select({ profileId: readingBookmark.profileId })
+        .from(readingBookmark)
+        .where(eq(readingBookmark.id, bookmarkId))
+        .limit(1);
+
+      if (kept !== undefined) {
+        return kept.profileId === profileId;
+      }
+
+      await db.insert(readingBookmark).values({
+        id: bookmarkId,
+        profileId,
+        bookId: chapter.bookId,
+        chapterId: chapter.id,
+        pageNumber: where.pageNumber,
+        fraction: where.fraction,
+        pageShown: where.pageShown,
+        excerpt: where.excerpt,
+        picture: where.picture,
+      });
+
+      return true;
+    },
+
+    forgetBookmark: async (profileId, bookmarkId) => {
+      await db
+        .delete(readingBookmark)
+        .where(and(eq(readingBookmark.id, bookmarkId), eq(readingBookmark.profileId, profileId)));
     },
 
     readChapterFile: async (chapterId) => {

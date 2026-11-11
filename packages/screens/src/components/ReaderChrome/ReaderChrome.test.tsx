@@ -152,4 +152,38 @@ describe('ReaderChrome', () => {
 
     expect(onForward).toHaveBeenCalledOnce();
   });
+  it('offers no bookmark where the reader keeps none', () => {
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Bookmark this page' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove bookmark' })).not.toBeInTheDocument();
+  });
+
+  it('bookmarks the page showing', async () => {
+    const onMark = vi.fn();
+
+    draw({ mark: { isMarked: false, onMark } });
+
+    const button = screen.getByRole('button', { name: 'Bookmark this page' });
+
+    expect(button).not.toHaveAttribute('aria-pressed');
+
+    await userEvent.click(button);
+
+    expect(onMark).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers to remove the bookmark on a page that has one', async () => {
+    const onMark = vi.fn();
+
+    draw({ mark: { isMarked: true, onMark } });
+
+    const button = screen.getByRole('button', { name: 'Remove bookmark' });
+
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(button);
+
+    expect(onMark).toHaveBeenCalledTimes(1);
+  });
 });

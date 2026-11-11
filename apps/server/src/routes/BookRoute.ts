@@ -5,7 +5,9 @@ import {
   BookDetailSchema,
   BookReadingListSchema,
   BookSchema,
+  BookmarkListSchema,
   ReadingProgressSchema,
+  SaveBookmarkSchema,
   SaveReadingProgressSchema,
 } from '@ValenceContracts/schemas/Book';
 
@@ -20,6 +22,10 @@ const ProgressListSchema = z
   .openapi('ReadingProgressList');
 
 const Readings = BookReadingListSchema.openapi('BookReadingList');
+
+const Bookmarks = BookmarkListSchema.openapi('BookmarkList');
+
+const SaveBookmark = SaveBookmarkSchema.openapi('SaveBookmark');
 
 const findBooksRoute = createRoute({
   method: 'get',
@@ -245,11 +251,53 @@ const readReadingProgressRoute = createRoute({
   },
 });
 
+const listBookmarksRoute = createRoute({
+  method: 'get',
+  path: '/api/books/{bookId}/bookmarks',
+  tags: ['Books'],
+  summary: 'The places this profile has marked in a book',
+  request: { params: z.object({ bookId: z.string().uuid() }) },
+  responses: {
+    200: { description: 'The bookmarks', content: { 'application/json': { schema: Bookmarks } } },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+  },
+});
+
+const saveBookmarkRoute = createRoute({
+  method: 'put',
+  path: '/api/books/{bookId}/bookmarks/{bookmarkId}',
+  tags: ['Books'],
+  summary: 'Mark a place in a book, under an id the client chose so a retry marks it once',
+  request: {
+    params: z.object({ bookId: z.string().uuid(), bookmarkId: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: SaveBookmark } } },
+  },
+  responses: {
+    204: { description: 'Marked' },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+    404: { description: 'No such chapter', content: { 'application/json': { schema: BookError } } },
+  },
+});
+
+const forgetBookmarkRoute = createRoute({
+  method: 'delete',
+  path: '/api/books/{bookId}/bookmarks/{bookmarkId}',
+  tags: ['Books'],
+  summary: 'Take a bookmark away',
+  request: { params: z.object({ bookId: z.string().uuid(), bookmarkId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Gone, or never there' },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+  },
+});
+
 export {
   findBooksRoute,
   forgetBookReadingRoute,
+  forgetBookmarkRoute,
   forgetReadingRoute,
   listReadingRoute,
+  listBookmarksRoute,
   listBooksRoute,
   readBookContentsRoute,
   readBookCoverRoute,
@@ -259,5 +307,6 @@ export {
   readBookTextRoute,
   readBookRoute,
   readReadingProgressRoute,
+  saveBookmarkRoute,
   saveReadingProgressRoute,
 };

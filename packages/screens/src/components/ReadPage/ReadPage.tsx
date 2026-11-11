@@ -8,9 +8,16 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { saveReadingProgress } from '@ValenceClient/books/fetchBooks';
 import { whereToOpen } from '@ValenceClient/books/whereToOpen';
 import { useNowReading } from '@ValenceClient/books/useNowReading';
+import { useBookmarks } from '@ValenceClient/books/useBookmarks';
+import { describeBookmark } from '@ValenceClient/books/describeBookmark';
+import { ReaderBookmarks } from '@ValenceScreens/components/ReaderBookmarks/ReaderBookmarks';
 import { PageReader } from '@ValenceScreens/components/PageReader/PageReader';
 import { TextReader } from '@ValenceScreens/components/TextReader/TextReader';
 import { say } from '@ValenceI18n/say';
+import type { Bookmark } from '@ValenceContracts/schemas/Book';
+import type { BookmarkPlace } from '@ValenceClient/books/useBookmarks';
+
+const BOOKMARK_PICTURE_WIDTH = 120;
 
 /**
  * Reading one book.
@@ -27,7 +34,9 @@ import { say } from '@ValenceI18n/say';
  *
  * The reader is given the chapter as its key, so moving to another chapter is a new reader rather
  * than the same one told to move. A reader that kept its place across that would open the next
- * chapter on page ninety.
+ * chapter on page ninety. Going to a bookmark is the same: a new reader, opened where it points.
+ *
+ * The book's bookmarks are kept here, for every chapter, and listed in the reader's side panel.
  */
 const ReadPage = () => {
   const { bookId } = useParams({ strict: false });
@@ -39,16 +48,28 @@ const ReadPage = () => {
   const isPlaceKnown = read.data !== undefined && read.isFetchedAfterMount;
   const { chapter: fromTheAddress } = useSearch({ strict: false });
   const [chosen, setChosen] = useState<string | null>(fromTheAddress ?? null);
+  const [jump, setJump] = useState<{ to: Bookmark; arrival: number } | null>(null);
 
   const chapters = useMemo(
     () => (asked.data?.chapters ?? []).filter((chapter) => !isAudiobookFormat(chapter.format)),
     [asked.data],
   );
-  const { chapterId, startAtPage, startAtFraction } = whereToOpen(
-    chapters,
-    read.data ?? [],
-    chosen,
+  const opening = whereToOpen(chapters, read.data ?? [], chosen);
+  const jumped = jump !== null && jump.to.chapterId === opening.chapterId ? jump.to : null;
+  const { chapterId } = opening;
+  const startAtPage = jumped?.pageNumber ?? opening.startAtPage;
+  const startAtFraction = jumped?.fraction ?? opening.startAtFraction;
+  const chapterIds = useMemo(
+    () =>
+      [...chapters].sort((one, other) => one.number - other.number).map((chapter) => chapter.id),
+    [chapters],
   );
+  const { bookmarks, add, remove } = useBookmarks(id, chapterIds);
+
+  const changeChapter = useCallback((to: string) => {
+    setJump(null);
+    setChosen(to);
+  }, []);
 
   const isReading =
     asked.data !== undefined && asked.data !== null && isPlaceKnown && chapterId !== '';
@@ -69,6 +90,33 @@ const ReadPage = () => {
     },
     [chapterId, id, tellReading],
   );
+
+  const marks = {
+    here: bookmarks.filter((bookmark) => bookmark.chapterId === chapterId),
+    list: (
+      <ReaderBookmarks
+        bookmarks={bookmarks.map((bookmark) =>
+          describeBookmark(bookmark, chapters, BOOKMARK_PICTURE_WIDTH),
+        )}
+        onOpen={(bookmarkId) => {
+          const to = bookmarks.find((bookmark) => bookmark.id === bookmarkId);
+
+          if (to !== undefined) {
+            setChosen(to.chapterId);
+            setJump((was) => ({ to, arrival: (was?.arrival ?? 0) + 1 }));
+          }
+        }}
+        onRemove={(bookmarkId) => {
+          remove([bookmarkId]);
+        }}
+      />
+    ),
+    onMark: (place: Omit<BookmarkPlace, 'chapterId'>) => {
+      add({ ...place, chapterId });
+    },
+    onUnmark: remove,
+  };
+  const readerKey = `${chapterId}:${(jumped === null ? 0 : (jump?.arrival ?? 0)).toString()}`;
 
   const close = useCallback(() => {
     void go({ to: '/read' });
@@ -111,26 +159,28 @@ const ReadPage = () => {
   if (asked.data.book.layout === 'reflow') {
     return (
       <TextReader
-        key={chapterId}
+        key={readerKey}
         book={asked.data.book}
         chapterId={chapterId}
         startAt={startAtFraction}
         onPlaceChange={rememberFraction}
         onClose={close}
+        marks={marks}
       />
     );
   }
 
   return (
     <PageReader
-      key={chapterId}
+      key={readerKey}
       book={asked.data.book}
       chapters={chapters}
       chapterId={chapterId}
       startAtPage={startAtPage}
-      onChapterChange={setChosen}
+      onChapterChange={changeChapter}
       onPageChange={remember}
       onClose={close}
+      marks={marks}
     />
   );
 };

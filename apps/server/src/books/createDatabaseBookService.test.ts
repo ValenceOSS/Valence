@@ -256,6 +256,120 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
     expect((await db.select().from(book).where(eq(book.id, bookId))).length).toBe(1);
   });
 
+  it('keeps bookmarks in the order they come in the book, and none in a chapter gone missing', async () => {
+    const { service } = await aShelf();
+    const bookId = (await service.upsertBook(DUNE)) ?? '';
+
+    await service.upsertChapter('books', chapterOf('/books/Dune/2.epub', 2));
+    await service.upsertChapter('books', chapterOf('/books/Dune/1.epub', 1));
+
+    const [one, two] = ((await service.read(bookId))?.chapters ?? []).map((chapter) => chapter.id);
+    const bare = { pageShown: null, excerpt: null, picture: null };
+
+    await expect(
+      service.saveBookmark('reader', 'mark-c', {
+        chapterId: two ?? '',
+        pageNumber: null,
+        fraction: 0.1,
+        ...bare,
+      }),
+    ).resolves.toBe(true);
+    await service.saveBookmark('reader', 'mark-b', {
+      chapterId: one ?? '',
+      pageNumber: null,
+      fraction: 0.75,
+      pageShown: null,
+      excerpt: 'The spice must flow.',
+      picture: null,
+    });
+    await service.saveBookmark('reader', 'mark-a', {
+      chapterId: one ?? '',
+      pageNumber: null,
+      fraction: 0.25,
+      ...bare,
+    });
+
+    const marks = await service.readBookmarks('reader', bookId);
+
+    expect(marks.map((mark) => mark.id)).toEqual(['mark-a', 'mark-b', 'mark-c']);
+    expect(marks[1]).toMatchObject({
+      bookId,
+      chapterId: one,
+      pageNumber: null,
+      fraction: 0.75,
+      pageShown: null,
+      excerpt: 'The spice must flow.',
+      picture: null,
+    });
+    expect(Number.isNaN(Date.parse(marks[1]?.createdAt ?? ''))).toBe(false);
+
+    await service.setAside('books', ['/books/Dune/2.epub'], new Date('2026-10-01T00:00:00.000Z'));
+
+    expect((await service.readBookmarks('reader', bookId)).map((mark) => mark.id)).toEqual([
+      'mark-a',
+      'mark-b',
+    ]);
+    await expect(
+      service.saveBookmark('reader', 'mark-d', {
+        chapterId: two ?? '',
+        pageNumber: 1,
+        fraction: null,
+        ...bare,
+      }),
+    ).resolves.toBe(false);
+  });
+
+  it('keeps a bookmark once, to the profile that made it, and removes it for that profile alone', async () => {
+    const { db, service } = await aShelf();
+    const bookId = (await service.upsertBook(DUNE)) ?? '';
+
+    await db
+      .insert(viewerProfile)
+      .values({ id: 'another', userId: 'ada', name: 'Another', colour: 'blue' });
+    await service.upsertChapter('books', chapterOf('/books/Dune/1.epub', 1));
+
+    const [one] = ((await service.read(bookId))?.chapters ?? []).map((chapter) => chapter.id);
+    const place = {
+      chapterId: one ?? '',
+      pageNumber: 3,
+      fraction: null,
+      pageShown: null,
+      excerpt: null,
+      picture: null,
+    };
+
+    await expect(service.saveBookmark('reader', 'mark', place)).resolves.toBe(true);
+    await expect(service.saveBookmark('reader', 'mark', place)).resolves.toBe(true);
+    await expect(
+      service.saveBookmark('another', 'mark', { ...place, pageNumber: 9 }),
+    ).resolves.toBe(false);
+    await service.forgetBookmark('another', 'mark');
+
+    expect((await service.readBookmarks('reader', bookId)).map((mark) => mark.pageNumber)).toEqual([
+      3,
+    ]);
+    await expect(service.readBookmarks('another', bookId)).resolves.toEqual([]);
+
+    await service.forgetBookmark('reader', 'mark');
+
+    await expect(service.readBookmarks('reader', bookId)).resolves.toEqual([]);
+  });
+
+  it('says there is no chapter to bookmark where there is none', async () => {
+    const { service } = await aShelf();
+
+    await expect(
+      service.saveBookmark('reader', 'mark', {
+        chapterId: 'nowhere',
+        pageNumber: 1,
+        fraction: null,
+        pageShown: null,
+        excerpt: null,
+        picture: null,
+      }),
+    ).resolves.toBe(false);
+  });
+
   it('keeps one place in an audiobook, moved on each time it is saved', async () => {
     const { service } = await aShelf();
     const bookId = (await service.upsertBook(DUNE)) ?? '';

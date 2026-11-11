@@ -17,6 +17,7 @@ import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryP
 import { DEFAULT_ROLE_NAME } from '@ValenceCore/functions/defaultRoles';
 import {
   BookContentsSchema,
+  BookmarkListSchema,
   BookReadingListSchema,
   BookSchema,
   ReadingProgressSchema,
@@ -138,10 +139,12 @@ const build = (options: { refusesEveryAccount?: boolean } = {}) => {
 /**
  * Somebody signed in, and the cookie that says so.
  */
-const signedIn = async (built: ReturnType<typeof build>): Promise<string> => {
+const signedIn = async (
+  built: ReturnType<typeof build>,
+  who: { name: string; email: string } = { name: 'Marques', email: 'marques@valence.local' },
+): Promise<string> => {
   const cookie = await signUpForTest(built.app, built.auth, {
-    name: 'Marques',
-    email: 'marques@valence.local',
+    ...who,
     password: 'a-long-enough-password',
   });
   const session = await built.app.request(`${BASE}/api/auth/get-session`, {
@@ -369,6 +372,173 @@ describe('what somebody is reading, over HTTP', () => {
     expect(
       BookReadingListSchema.parse(await (await asking('/api/reading')).json()).readings,
     ).toEqual([]);
+  });
+});
+
+const A_BOOKMARK = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0b01';
+
+const ANOTHER_BOOKMARK = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0b02';
+
+/**
+ * Two people signed in to one server, and a way to ask it things as each of them.
+ */
+const twoPeople = async () => {
+  const built = build();
+  const cookies = [
+    await signedIn(built),
+    await signedIn(built, { name: 'Dan', email: 'dan@valence.local' }),
+  ];
+
+  return cookies.map(
+    (cookie) =>
+      (path: string, init: RequestInit = {}) =>
+        built.app.request(`${BASE}${path}`, {
+          ...init,
+          headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+        }),
+  );
+};
+
+/**
+ * The bookmarks somebody has in a book, as the server lists them.
+ */
+const bookmarksIn = async (
+  asking: (path: string) => Promise<Response> | Response,
+  bookId: string,
+) =>
+  BookmarkListSchema.parse(await (await asking(`/api/books/${bookId}/bookmarks`)).json()).bookmarks;
+
+describe('bookmarks over HTTP', () => {
+  it('has none in a book nobody has marked', async () => {
+    const asking = await asSomebody();
+
+    expect(await bookmarksIn(asking, MANGA_ID)).toEqual([]);
+  });
+
+  it('keeps a page bookmark, and keeps it once however often it is sent', async () => {
+    const asking = await asSomebody();
+    const marking = {
+      method: 'PUT',
+      body: JSON.stringify({ chapterId: MANGA_CHAPTER, pageNumber: 4, fraction: null }),
+    };
+
+    const first = await asking(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, marking);
+    const again = await asking(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, marking);
+
+    expect([first.status, again.status]).toEqual([204, 204]);
+    expect(await bookmarksIn(asking, MANGA_ID)).toEqual([
+      expect.objectContaining({
+        id: A_BOOKMARK,
+        bookId: MANGA_ID,
+        chapterId: MANGA_CHAPTER,
+        pageNumber: 4,
+        fraction: null,
+        pageShown: null,
+        excerpt: null,
+        picture: null,
+      }),
+    ]);
+  });
+
+  it('keeps a place in the text with the words there', async () => {
+    const asking = await asSomebody();
+
+    await asking(`/api/books/${NOVEL_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        chapterId: NOVEL_CHAPTER,
+        pageNumber: null,
+        fraction: 0.4,
+        pageShown: null,
+        excerpt: 'It is a truth universally acknowledged',
+      }),
+    });
+
+    expect(await bookmarksIn(asking, NOVEL_ID)).toEqual([
+      expect.objectContaining({
+        fraction: 0.4,
+        pageShown: null,
+        excerpt: 'It is a truth universally acknowledged',
+      }),
+    ]);
+  });
+
+  it('refuses a bookmark with no place in the book', async () => {
+    const asking = await asSomebody();
+    const refused = await asking(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapterId: MANGA_CHAPTER, pageNumber: null, fraction: null }),
+    });
+
+    expect(refused.status).toBe(400);
+  });
+
+  it('refuses a bookmark in a chapter of another book', async () => {
+    const asking = await asSomebody();
+    const refused = await asking(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapterId: NOVEL_CHAPTER, pageNumber: 1, fraction: null }),
+    });
+
+    expect(refused.status).toBe(404);
+    expect(await bookmarksIn(asking, MANGA_ID)).toEqual([]);
+  });
+
+  it('removes a bookmark, and says the same of one already gone', async () => {
+    const asking = await asSomebody();
+
+    await asking(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapterId: MANGA_CHAPTER, pageNumber: 4, fraction: null }),
+    });
+
+    const removed = await asking(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'DELETE',
+    });
+    const again = await asking(`/api/books/${MANGA_ID}/bookmarks/${ANOTHER_BOOKMARK}`, {
+      method: 'DELETE',
+    });
+
+    expect([removed.status, again.status]).toEqual([204, 204]);
+    expect(await bookmarksIn(asking, MANGA_ID)).toEqual([]);
+  });
+
+  it('keeps each person’s bookmarks to themselves', async () => {
+    const [marques, dan] = await twoPeople();
+
+    if (marques === undefined || dan === undefined) {
+      throw new Error('Two people should have signed in.');
+    }
+
+    await marques(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapterId: MANGA_CHAPTER, pageNumber: 4, fraction: null }),
+    });
+
+    const takenOver = await dan(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapterId: MANGA_CHAPTER, pageNumber: 9, fraction: null }),
+    });
+    await dan(`/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`, { method: 'DELETE' });
+
+    expect(takenOver.status).toBe(404);
+    expect(await bookmarksIn(dan, MANGA_ID)).toEqual([]);
+    expect((await bookmarksIn(marques, MANGA_ID)).map((one) => one.pageNumber)).toEqual([4]);
+  });
+
+  it('asks somebody to sign in first', async () => {
+    const built = build();
+    const listing = await built.app.request(`${BASE}/api/books/${MANGA_ID}/bookmarks`);
+    const marking = await built.app.request(
+      `${BASE}/api/books/${MANGA_ID}/bookmarks/${A_BOOKMARK}`,
+      {
+        method: 'PUT',
+        headers: { origin: BASE, 'content-type': 'application/json' },
+        body: JSON.stringify({ chapterId: MANGA_CHAPTER, pageNumber: 4, fraction: null }),
+      },
+    );
+
+    expect([listing.status, marking.status]).toEqual([401, 401]);
   });
 });
 

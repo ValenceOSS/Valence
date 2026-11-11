@@ -24,6 +24,7 @@ import { say } from '@ValenceI18n/say';
  * @param onPinnedChange - Told to pin the panel, or let it go.
  * @param onClose - Told to put the panel away.
  * @param pickers - The ways to move to another place in the book.
+ * @param bookmarks - The places marked in it, where the reader keeps bookmarks.
  * @param children - The settings for how the book is shown.
  */
 const ReaderPanel = ({
@@ -33,6 +34,7 @@ const ReaderPanel = ({
   onPinnedChange,
   onClose,
   pickers,
+  bookmarks,
   children,
 }: ReaderPanelProps) => (
   <aside
@@ -85,6 +87,8 @@ const ReaderPanel = ({
         </div>
 
         <div className="flex flex-col gap-2">{pickers}</div>
+
+        {bookmarks}
 
         <div className="-mx-4 border-t border-[var(--surface-line)]" />
 

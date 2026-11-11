@@ -66,4 +66,9 @@ describe('ReaderPanel', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(ReaderPanel.displayName).toBe('ReaderPanel');
   });
+  it('lists the bookmarks under the pickers, where the reader keeps them', () => {
+    draw({ bookmarks: <span>The bookmarks</span> });
+
+    expect(screen.getByText('The bookmarks')).toBeInTheDocument();
+  });
 });

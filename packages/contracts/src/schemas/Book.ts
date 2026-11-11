@@ -191,6 +191,35 @@ const SaveReadingProgressSchema = z.object({
   isFinished: z.boolean().default(false),
 });
 
+const BOOKMARK_EXCERPT_MOST = 200;
+
+const BOOKMARK_PICTURE_MOST = 1024;
+
+const SaveBookmarkSchema = z
+  .object({
+    chapterId: z.string().uuid(),
+    pageNumber: z.number().int().nonnegative().nullable(),
+    fraction: z.number().min(0).max(1).nullable(),
+    pageShown: z.number().int().positive().nullable().default(null),
+    excerpt: z.string().min(1).max(BOOKMARK_EXCERPT_MOST).nullable().default(null),
+    picture: z.string().min(1).max(BOOKMARK_PICTURE_MOST).nullable().default(null),
+  })
+  .refine((one) => one.pageNumber !== null || one.fraction !== null);
+
+const BookmarkSchema = z.object({
+  id: z.string().uuid(),
+  bookId: z.string().uuid(),
+  chapterId: z.string().uuid(),
+  pageNumber: z.number().int().nonnegative().nullable(),
+  fraction: z.number().min(0).max(1).nullable(),
+  pageShown: z.number().int().positive().nullable(),
+  excerpt: z.string().nullable(),
+  picture: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+const BookmarkListSchema = z.object({ bookmarks: z.array(BookmarkSchema) });
+
 /**
  * Which way a book is read where nobody has said, decided by what it is.
  *
@@ -227,6 +256,8 @@ export type BookContents = z.infer<typeof BookContentsSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
 export type BookReading = z.infer<typeof BookReadingSchema>;
 export type SaveReadingProgress = z.infer<typeof SaveReadingProgressSchema>;
+export type Bookmark = z.infer<typeof BookmarkSchema>;
+export type SaveBookmark = z.infer<typeof SaveBookmarkSchema>;
 export type ListeningProgress = z.infer<typeof ListeningProgressSchema>;
 export type SaveListeningProgress = z.infer<typeof SaveListeningProgressSchema>;
 export type BookListening = z.infer<typeof BookListeningSchema>;
@@ -258,6 +289,8 @@ const bookPlaceIn = (href: string): { part: number; anchor: string | null } | nu
 
 export {
   AUDIOBOOK_FORMATS,
+  BOOKMARK_EXCERPT_MOST,
+  BOOKMARK_PICTURE_MOST,
   BOOK_DOCUMENT_TAGS,
   BOOK_FORMATS,
   TEXT_BOOK_FORMATS,
@@ -267,6 +300,8 @@ export {
   READING_DIRECTIONS,
   BookChapterSchema,
   BookContentsSchema,
+  BookmarkListSchema,
+  BookmarkSchema,
   BookDetailSchema,
   BookFormatSchema,
   BookLayoutSchema,
@@ -280,6 +315,7 @@ export {
   BookSchema,
   ReadingDirectionSchema,
   ReadingProgressSchema,
+  SaveBookmarkSchema,
   SaveReadingProgressSchema,
   bookPlaceIn,
   directionFor,

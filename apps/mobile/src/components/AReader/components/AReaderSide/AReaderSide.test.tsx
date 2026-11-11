@@ -34,7 +34,7 @@ describe('AReaderSide', () => {
 
     await render(aSide({ onForward, onMark, onLock, onFit }));
     await userEvent.press(screen.getByRole('button', { name: 'Next page' }));
-    await userEvent.press(screen.getByRole('button', { name: 'Bookmark these pages' }));
+    await userEvent.press(screen.getByRole('button', { name: 'Bookmark this page' }));
     await userEvent.press(screen.getByRole('button', { name: 'Lock page turning' }));
     await userEvent.press(
       screen.getByRole('button', { name: 'Fit to page. Switch to fit to width' }),

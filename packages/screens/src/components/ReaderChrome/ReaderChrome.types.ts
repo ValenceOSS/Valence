@@ -14,6 +14,7 @@ type ReaderChromeProps = {
   onForward: () => void;
   onBack: () => void;
   onClose: () => void;
+  mark?: { isMarked: boolean; onMark: () => void };
   className?: string;
 };
 

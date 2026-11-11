@@ -39,6 +39,7 @@ const COUNTED_KEYS = [
   'common.count.others',
   'common.count.pages',
   'common.count.permissions',
+  'common.count.removeBookmarks',
   'common.count.removed',
   'common.count.requestAlbums',
   'common.count.results',

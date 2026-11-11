@@ -1379,6 +1379,37 @@ const readingProgress = pgTable(
   ],
 );
 
+const readingBookmark = pgTable(
+  'reading_bookmark',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    bookId: text('bookId')
+      .notNull()
+      .references(() => book.id, { onDelete: 'cascade' }),
+    chapterId: text('chapterId')
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: 'cascade' }),
+    pageNumber: integer('pageNumber'),
+    fraction: real('fraction'),
+    pageShown: integer('pageShown'),
+    excerpt: text('excerpt'),
+    picture: text('picture'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [
+    index('reading_bookmark_book_id_idx').on(table.bookId),
+    index('reading_bookmark_chapter_idx').on(table.chapterId),
+    index('reading_bookmark_book_idx').on(table.profileId, table.bookId),
+    check(
+      'reading_bookmark_somewhere',
+      sql`${table.pageNumber} is not null or ${table.fraction} is not null`,
+    ),
+  ],
+);
+
 const listeningProgress = pgTable(
   'listening_progress',
   {
@@ -2468,6 +2499,7 @@ export {
   book,
   bookChapter,
   readingProgress,
+  readingBookmark,
   listeningProgress,
   musicArtist,
   musicAlbum,
