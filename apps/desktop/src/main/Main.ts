@@ -102,7 +102,7 @@ const askValence: AskingTheServer = (where, how) => net.fetch(where, how);
 app.setName(say('common.valence'));
 
 /**
- * Keeps this client's own files where they already are, under the name it used to have.
+ * Keeps this client's own files where they already are, under the application's first name.
  *
  * The application's name decides where Electron puts its user data, and its user data is where the
  * session cookie lives. Renaming it therefore signs everybody out and forgets which server they had

@@ -271,10 +271,10 @@ const medianOf = (durations: number[]): number | null => {
 /**
  * Keeps job runs in the database, so what a job did survives the job finishing and a restart.
  *
- * The queue forgets a job once it settles, which is why the "Running" badge could show nothing was
- * queued while work was genuinely happening: there was nowhere to read it back from. This is that
- * place, plus the per-item issues a bulk job accumulates, which previously only ever became a log
- * line and were never gathered against the run that produced them.
+ * The queue forgets a job once it settles, so without this there is nowhere to read back what ran,
+ * and the "Running" badge could show nothing queued while work was genuinely happening. This is
+ * that place, plus the per-item issues a bulk job accumulates, gathered against the run that
+ * produced them rather than left as log lines.
  *
  * @param db - The database.
  * @returns The store.

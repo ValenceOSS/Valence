@@ -458,10 +458,10 @@ const createDatabaseLibraryService = ({
    * Which of some programmes a profile has not yet finished every episode of.
    *
    * Up next looks for the episode after the last one finished, and a programme with every episode
-   * finished has none. Those used to be asked for one at a time, every episode read four queries
-   * at a time, and they never leave a profile's history, so a long-standing viewer paid for every
-   * programme they had ever finished each time the home page opened. One counting query answers
-   * for all of them. Other versions of an episode and extras are left out of the count, so watching
+   * finished has none. Those never leave a profile's history, so asking after them one at a time
+   * would have a long-standing viewer pay for every programme they had ever finished each time the
+   * home page opened; one counting query answers for all of them. Other versions of an episode and
+   * extras are left out of the count, so watching
    * one of those leaves a programme in rather than wrongly out.
    *
    * @param profileId - Whose watching.
@@ -862,8 +862,8 @@ const createDatabaseLibraryService = ({
    * reaches ninety episodes is something to watch rather than a request that hangs for as long as a
    * series takes to fetch.
    *
-   * Where the queue already holds a re-read for this library it used to do the work in the request
-   * after all, which is the one case it exists to avoid: a re-read with no job id appears in no
+   * Where the queue already holds a re-read for this library, it does not fall back to the work in
+   * the request, which is the one case it exists to avoid: a re-read with no job id appears in no
    * list of running work, reports no progress and cannot be stopped. It answers with the job that
    * is already reading instead, and the paths are picked up by the scan that follows — a re-read
    * works from what the files say, not from a list it was handed.

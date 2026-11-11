@@ -55,9 +55,8 @@ const mayBeHandedOver = (item: MediaItem): boolean => {
  *
  * A file whose codec tag would stop a player decoding it does not count either, whatever the rest
  * of the plan says: it goes through a session, which copies the picture and marks it properly on
- * the way out. Valence used to refuse every HEVC file on the grounds that it could not tell `hvc1`
- * from `hev1` — true of the catalogue and false of the file, since ffprobe had been reporting the
- * tag all along.
+ * the way out. The tag is the file's own, as ffprobe reports it, which tells `hvc1` from `hev1`
+ * where the catalogue cannot.
  *
  * @param plan - What the negotiator decided.
  * @param item - The file it decided about.

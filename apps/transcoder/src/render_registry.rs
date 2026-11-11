@@ -161,8 +161,8 @@ impl RenderRegistry {
     ///
     /// A render that fails in the background has nobody to tell. Without this
     /// the next ask finds no claim and nothing drawn, starts another render,
-    /// and fails the same way for ever — which is what a deadline used to stand
-    /// in for. Kept until it is read so the answer reaches whoever asks next,
+    /// and fails the same way for ever. Kept until it is read so the answer
+    /// reaches whoever asks next,
     /// and cleared by reading so a later ask is free to try again.
     pub async fn remember_failure(&self, id: &str, reason: String) {
         self.failures.lock().await.insert(id.to_owned(), reason);

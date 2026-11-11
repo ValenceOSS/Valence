@@ -66,7 +66,7 @@ const MARKS_PLACE = 'valence-admin-mark';
 const ROOM_FOR_THE_SIDEBAR = '(min-width: 48rem)';
 /**
  * The server, as a page of its own rather than something raised over whatever was on screen. Eleven
- * sections is not a row of tabs any more — it is a sidebar, foldable the way any of them are, with
+ * sections is too many for a row of tabs, so it is a sidebar, foldable the way any of them are, with
  * every section a real address that can be linked to, refreshed on, and left with the back button.
  *
  * On a phone the sidebar is a drawer instead: closed until the button in the bar across the top opens
@@ -77,8 +77,8 @@ const ROOM_FOR_THE_SIDEBAR = '(min-width: 48rem)';
  * The sidebar is where its own sliding highlight and the brand's mark measure from. It stands still
  * while the page scrolls past it, and a notice turning up or going away above the panel makes the
  * browser scroll the page by its height to hold what is being read in place. Measured against the
- * page, that read as the sidebar having moved, and the highlight and the mark slid back to where
- * they already were.
+ * page, that would read as the sidebar having moved, and the highlight and the mark would slide
+ * back to where they already are.
  *
  * Gated on being told no, not on not yet being told: while the permission answer is still on its
  * way every question reads as "no", and leaving on that basis would throw an administrator back out

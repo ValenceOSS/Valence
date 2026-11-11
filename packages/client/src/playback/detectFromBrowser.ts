@@ -13,7 +13,7 @@ const STEREO = 2;
  *
  * It describes the device rather than the browser, so it is read once when the profile is built and
  * goes stale the moment somebody plugs in headphones or connects a receiver. That is a worse answer
- * than renegotiating on every device change and a far better one than the two this used to assume.
+ * than renegotiating on every device change and a far better one than assuming two.
  *
  * @param page - The browser's window.
  * @returns What the output accepts, never fewer than two.

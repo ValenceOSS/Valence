@@ -9,8 +9,8 @@ const CHUNK_BYTES = 1024 * 1024;
  * the single response a player asked for — a segment, or several short ones offered as one.
  *
  * The media service still decides when a segment is ready and which files make it; this only reads
- * them, so a remux's large segments no longer cross the media service's socket and this process's
- * streams on the way to the player, which on a slow processor cost most of their speed.
+ * them, so a remux's large segments do not cross the media service's socket and this process's
+ * streams on the way to the player, which on a slow processor would cost most of their speed.
  *
  * Each file is opened only while it is read, and closed as soon as it is read through, the player
  * goes, or a read fails. Nothing is read ahead of being asked for, which a stream does by default

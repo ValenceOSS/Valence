@@ -106,9 +106,8 @@ const styles = StyleSheet.create({
  * on, which is remembered for the next.
  *
  * The backdrop and its clip are rounded and clipped by themselves as well as by the card around
- * them: as one title gives way to the next, the card's own clipping was dropped for the length of
- * the move and the picture showed square corners, so the picture keeps its corners whatever the
- * card does.
+ * them: as one title gives way to the next, the card's own clipping lapses for the length of the
+ * move, and the picture keeps its corners whatever the card does.
  *
  * @param media - The title.
  * @param width - How wide to draw it.

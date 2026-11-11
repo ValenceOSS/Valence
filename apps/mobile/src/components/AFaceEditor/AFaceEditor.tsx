@@ -27,7 +27,7 @@ type Mode = (typeof FACE_MODES)[number]['id'];
 
 /**
  * The profile picture editor, as the web's: a photo, an avatar or a letter, with a live preview
- * above the chosen studio. A face that can no longer be made — an orb or a drawing — opens on the
+ * above the chosen studio. A face this editor does not make — an orb or a drawing — opens on the
  * photo studio. Nothing is changed until Use this picture is pressed.
  *
  * @param isOpen - Whether the editor is out.

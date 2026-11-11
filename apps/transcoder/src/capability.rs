@@ -19,10 +19,9 @@ pub struct EncoderCandidate {
 /// prefers hardware, but each is still verified independently.
 ///
 /// The thumbnails a scrub bar is drawn from are JPEG, and four of these
-/// backends encode JPEG on the device. This build said otherwise for a long
-/// time — a comment claimed "JPEG is not something these encoders make" — which
-/// meant every thumbnail in a library was encoded by the processor and every
-/// frame had to come off the device to reach it. There is no `mjpeg_nvenc` or
+/// backends encode JPEG on the device, so a library's thumbnails need not be
+/// encoded by the processor with every frame brought off the device to reach
+/// it. There is no `mjpeg_nvenc` or
 /// `mjpeg_amf`: NVIDIA and AMD have no JPEG encoder here, and Jellyfin's own
 /// map lists the same four and no more. Those two fall to software, as they do
 /// there, and so does Media Foundation, which has no JPEG encoder either.
@@ -34,24 +33,22 @@ pub struct EncoderCandidate {
 /// them is.
 ///
 /// On Intel, `VAAPI` is listed before `QSV`, and the order is the whole of what
-/// picks a backend for a machine that was left on automatic. It was put that
-/// way for two reasons, and **neither of them still holds**:
+/// picks a backend for a machine that was left on automatic. It is not a
+/// judgement that `VAAPI` is better:
 ///
-/// * `QSV` was said to have no hardware tone mapper. It had none then. It
-///   reaches `tonemap_vaapi` now, converting before the frames are mapped onto
-///   its own device, so an HDR film stays where it is either way. See
+/// * `QSV` reaches `tonemap_vaapi`, converting before the frames are mapped
+///   onto its own device, so an HDR film stays where it is either way. See
 ///   [`crate::transcode_plan::HardwareAccel::pipeline`].
-/// * `QSV` decoding returned "GPU Hang (-21)" on an i5-13500 against a library
-///   `VAAPI` read start to finish. That was diagnosed afterwards as the `QSV`
-///   decoder wrappers rather than `QSV`: the path decodes on `VAAPI` and
-///   encodes on `QSV` now, which is what Jellyfin does by default and has not
-///   asked those wrappers for a frame since.
+/// * The `QSV` path decodes on `VAAPI` and encodes on `QSV`, which is what
+///   Jellyfin does by default, so the `QSV` decoder wrappers — which return
+///   "GPU Hang (-21)" on an i5-13500 against a library `VAAPI` reads start to
+///   finish — are never asked for a frame.
 ///
 /// What is left between them on Intel is the scaler and the encoder, the rest
-/// of the chain being the same filters in the same order. So the order below is
-/// no longer a judgement that `VAAPI` is better — it is the order nothing has
-/// yet been measured against. Moving it is a change to what every Intel machine
-/// gets by default and wants a comparison behind it, not a tidy-up.
+/// of the chain being the same filters in the same order, so the order below is
+/// the one nothing has yet been measured against. Moving it is a change to what
+/// every Intel machine gets by default and wants a comparison behind it, not a
+/// tidy-up.
 pub const ENCODER_CANDIDATES: &[EncoderCandidate] = &[
     EncoderCandidate {
         codec: "h264",
@@ -790,9 +787,9 @@ pub fn opencl_tone_map_probe_arguments(device: &str) -> Vec<String> {
 /// therefore lists the filter and fails every HDR transcode that uses it.
 ///
 /// Measured on an RX 580 with Mesa 26.0.8: the filter is present and the chain
-/// does not run. Presence was what this originally asked, which is the same
-/// mistake `verify_encoder` exists to avoid — see VAL-85, and VAL-111 for
-/// this instance of it.
+/// does not run. Asking only whether it is present is the same mistake
+/// `verify_encoder` exists to avoid — see VAL-85, and VAL-111 for this
+/// instance of it.
 async fn verify_tone_map(ffmpeg: &str, accel: HardwareAccel, filter: &str, device: &str) -> bool {
     runs(ffmpeg, tone_map_probe_arguments(accel, filter, device)).await
 }
@@ -862,13 +859,12 @@ pub fn software_tone_map_probe_arguments(filter: &str) -> Vec<String> {
 /// `VK_ERROR_INITIALIZATION_FAILED`, then "Failed creating Vulkan device!".
 ///
 /// This is the same mistake [`verify_tone_map`] exists to avoid, one layer up:
-/// presence answered for a hardware tone mapper and had to be replaced by a
-/// run, and presence was still answering here. See VAL-85 and VAL-111 for the
-/// hardware instances.
+/// presence cannot answer for a tone mapper, only a run can. See VAL-85 and
+/// VAL-111 for the hardware instances.
 ///
 /// Measured in the published container on an RTX 5080: `libplacebo` is listed,
-/// `EnumeratePhysicalDevices` fails, and every preview clip of an HDR film was
-/// lost until the choice was verified rather than assumed. `zscale` is what it
+/// `EnumeratePhysicalDevices` fails, and every preview clip of an HDR film is
+/// lost unless the choice is verified rather than assumed. `zscale` is what it
 /// falls back to, which is pure software and runs anywhere.
 async fn verify_software_tone_map(ffmpeg: &str, filter: &str) -> bool {
     let Ok(outcome) = Command::new(ffmpeg)

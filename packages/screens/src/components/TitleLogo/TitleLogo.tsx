@@ -7,9 +7,9 @@ import type { TitleLogoProps } from './TitleLogo.types';
  * phone and the television draw it. It fades in once it has loaded rather than appearing a piece at
  * a time.
  *
- * Logos lettered in black used to be turned white here so they would read over a darkened frame,
- * but that turned every coloured part of them white too, a studio's red box among them; a logo that
- * does not read over its artwork is better chosen again than repainted.
+ * A logo is never recoloured here, even one lettered in black over a darkened frame: turning it
+ * white would turn every coloured part of it white too, a studio's red box among them, and a logo
+ * that does not read over its artwork is better chosen again than repainted.
  *
  * @param src - Where the logo is served from.
  * @param alt - The title, for anybody who cannot see it.

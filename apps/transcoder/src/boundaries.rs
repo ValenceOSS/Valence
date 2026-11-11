@@ -107,27 +107,22 @@ const LONGEST_COPYABLE_SEGMENT: f64 = 16.0;
 /// Whether a source's own keyframes can yield segments a player will take.
 ///
 /// One way they cannot: keyframes so far apart that the segments between them
-/// are more than anything can be asked to fetch and append in one piece. This
-/// used to answer yes to any source whose cuts were all safe, without looking
-/// at what they produced — so a closed GOP with keyframes a minute apart was
-/// copied into minute-long segments. Found by a fixture whose container
-/// declared a duration of ninety-nine days.
+/// are more than anything can be asked to fetch and append in one piece. Cuts
+/// that are all safe are not enough on their own — a closed GOP with keyframes
+/// a minute apart would be copied into minute-long segments — so what the cuts
+/// produce is measured too, which also refuses a container that declares a
+/// duration of ninety-nine days.
 ///
-/// It used to refuse a second thing as well: a keyframe carrying pictures shown
-/// before it, which a decoder cannot start at on its own. Those were passed
-/// over, merging their GOPs into the segment before, and where they ran
-/// consecutively the result was segments long enough to fail the length test —
-/// so an open-GOP film was encoded in full rather than copied at all. Measured
-/// on the Bluray remux that rule was written against: 154 such keyframes, and
-/// avoiding them made segments of up to 131.8s.
-///
-/// That refusal was wrong, and the measurements are worth keeping. A segment
-/// only has to be decodable on its own where a decoder starts cold at it, and
-/// in fragmented MP4 it does not: the fragments go into one buffer and the
-/// decoder runs through them, and a seek still has the fragment before to hand.
-/// Both paths were tested against that film with segments deliberately opened on
-/// 15 of those keyframes — sequential play lost no frames, and ten seeks landed
-/// on frames matching a correct decode of the same instant, worst 7.3 through
+/// A keyframe carrying pictures shown before it, which a decoder cannot start
+/// at on its own, is not refused. A segment only has to be decodable on its own
+/// where a decoder starts cold at it, and in fragmented MP4 it does not: the
+/// fragments go into one buffer and the decoder runs through them, and a seek
+/// still has the fragment before to hand. Passing such keyframes over would
+/// merge their GOPs into the segment before, and where they run consecutively
+/// make segments long enough to fail the length test — 154 of them in one
+/// Blu-ray remux, giving segments of up to 131.8s. With segments opened on 15
+/// of those keyframes, sequential play loses no frames, and ten seeks land on
+/// frames matching a correct decode of the same instant, worst 7.3 through
 /// Chromium and 12.8 through Safari's own HLS, against 70 for unrelated footage.
 ///
 /// Asked by the media service before it starts a session, and by the library
@@ -489,9 +484,9 @@ fn from_keyframes(
 /// is still for is the next viewer: it finishes in its own time, is kept, and
 /// the next session copies the film as it was always meant to.
 ///
-/// Detached deliberately. The scan that used to run here died with the request
-/// that asked for it, so every attempt began again from nothing and a large
-/// source was never read at all.
+/// Detached deliberately: a scan tied to the request that asked for it would
+/// die with that request, so every attempt would begin again from nothing and
+/// a large source would never be read at all.
 ///
 /// One read runs per source at a time, and a source whose reads keep failing
 /// is given [`INDEX_TRIES`] of them before it is left to encode until Valence
@@ -815,24 +810,15 @@ async fn compute_boundaries(
     }
 }
 
-/// The boundaries of this plan's segments, computing them if nobody has yet.
-///
-/// Writes the playlist as well, because the two are the same fact: the lengths
-/// are what the playlist declares, and a playlist written from anything else
-/// would be a promise the segments break.
-///
-/// An empty answer means the source could not be read at all, which the caller
-/// should refuse to start a session over rather than serve a playlist naming
-/// nothing.
 /// Throws away segments that describe a film this plan no longer produces.
 ///
 /// Boundaries are only worked out afresh when none were cached, which means
 /// either nothing has played this yet or the ones on disk were written by a
 /// Valence that cut differently. In the second case every segment beside them is
-/// the wrong length and the completion marker is a lie: a source that used to
-/// be copied in ten second pieces and is now encoded in four second ones would
-/// otherwise serve the old pieces against the new playlist, or serve nothing at
-/// all because the directory claims to be finished.
+/// the wrong length and the completion marker is a lie: a source once copied in
+/// ten second pieces and now encoded in four second ones would otherwise serve
+/// the old pieces against the new playlist, or serve nothing at all because the
+/// directory claims to be finished.
 ///
 /// The names are positional, so a stale `segment00001.ts` is indistinguishable
 /// from a fresh one by anything except what wrote it. Removing them costs the
@@ -864,6 +850,15 @@ async fn discard_segments(directory: &Path) {
     }
 }
 
+/// The boundaries of this plan's segments, computing them if nobody has yet.
+///
+/// Writes the playlist as well, because the two are the same fact: the lengths
+/// are what the playlist declares, and a playlist written from anything else
+/// would be a promise the segments break.
+///
+/// An empty answer means the source could not be read at all, which the caller
+/// should refuse to start a session over rather than serve a playlist naming
+/// nothing.
 pub async fn ensure_boundaries(
     ffprobe: &str,
     artefact_root: &Path,
@@ -1193,18 +1188,13 @@ mod tests {
         assert!(can_copy_segments(&every(4.0, 15, 60.0), 4.0));
     }
 
-    /// Safe cuts are not on their own enough.
-    ///
-    /// This answered yes to any source whose cuts were all safe, without
-    /// looking at what they produced, so a closed GOP with keyframes a minute
-    /// apart was copied into minute-long segments — the size the limit exists
-    /// An open GOP is no longer a reason to encode a whole film.
+    /// An open GOP is not a reason to encode a whole film.
     ///
     /// A keyframe carrying pictures shown before it cannot be started at cold,
     /// and every one of these is. It is still copied: in fragmented MP4 the
     /// fragments go into one buffer and the decoder runs through them, and a
-    /// seek has the fragment before it to hand. Measured on the film this rule
-    /// was written against — sequential play lost no frames with 15 of 24
+    /// seek has the fragment before it to hand. Measured on a film full of
+    /// them — sequential play lost no frames with 15 of 24
     /// segments opened on such a keyframe, and ten seeks onto them landed on
     /// frames matching a correct decode, through Chromium and through Safari's
     /// own HLS alike. See VAL-145.
@@ -1220,6 +1210,10 @@ mod tests {
         assert!(can_copy_segments(&open_gop, 4.0));
     }
 
+    /// Safe cuts are not on their own enough.
+    ///
+    /// A closed GOP with keyframes a minute apart has only safe cuts, and
+    /// copying it would make minute-long segments — the size the limit exists
     /// to prevent, whatever put it there. See VAL-132.
     #[test]
     fn refuses_a_source_whose_safe_keyframes_are_still_too_far_apart() {
@@ -1344,9 +1338,9 @@ mod tests {
         assert!((total - 296.045_996).abs() < 1e-9, "total was {total}");
     }
 
-    /// A scan that never answers used to be indistinguishable from one still
-    /// working, and a viewer waited on it until they gave up. Giving up killed
-    /// it, so the film never played at all and nothing was ever logged.
+    /// A scan that never answers must be told apart from one still working:
+    /// otherwise a viewer waits on it until they give up, giving up kills it,
+    /// and the film never plays at all with nothing logged.
     #[test]
     fn waits_less_for_keyframes_than_a_person_will() {
         assert!(DEFAULT_KEYFRAME_DEADLINE <= std::time::Duration::from_secs(3));

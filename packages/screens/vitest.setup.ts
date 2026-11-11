@@ -199,8 +199,8 @@ MotionGlobalConfig.skipAnimations = true;
  * immediately, so nothing is ever genuinely pending; what runs out is the time to do the rendering,
  * on a machine running four shards at once.
  *
- * It buys tolerance and not silence: an element that never arrives still fails, a few seconds later
- * than it used to.
+ * It buys tolerance and not silence: an element that never arrives still fails, just a few seconds
+ * later.
  */
 const waitLongEnoughForAScreen = (): void => {
   configure({ asyncUtilTimeout: 5_000 });

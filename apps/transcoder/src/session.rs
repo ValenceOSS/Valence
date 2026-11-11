@@ -1826,10 +1826,10 @@ impl SessionRegistry {
     /// more of them.
     ///
     /// The count follows the same attribution the device map does, by
-    /// [`releases_a_hold`]. It used to be lowered by every stop whatever it
-    /// named, which left the guard on the map deciding nothing: repeating a
-    /// stop that belonged to nobody reached zero holders and took the transcode
-    /// from the viewers who were still watching it.
+    /// [`releases_a_hold`]. Lowered by every stop whatever it named, it would
+    /// leave the guard on the map deciding nothing: repeating a stop that
+    /// belonged to nobody would reach zero holders and take the transcode from
+    /// the viewers still watching it.
     pub async fn stop(&self, id: &str, device: Option<&str>) -> bool {
         let mut sessions = self.sessions.lock().await;
 
@@ -2273,11 +2273,10 @@ fn describe_signal(_status: std::process::ExitStatus) -> String {
 /// Whether a failed attempt is worth trying again without hardware.
 ///
 /// Any hardware encode that did not finish is retried in software, whatever
-/// the error said. This used to require the error to match one of seven
-/// phrases in ffmpeg's output, which meant a failure phrased any other way
-/// read as a bad file and the retry never happened — an encoder rejecting a
-/// source's caption SEI killed the stream outright, and the viewer was told
-/// their browser could not play it.
+/// the error said. Matching the error against phrases in ffmpeg's output would
+/// read a failure phrased any other way as a bad file and never retry it — an
+/// encoder rejecting a source's caption SEI would kill the stream outright, and
+/// the viewer would be told their browser cannot play it.
 ///
 /// A retry that turns out to be pointless costs one attempt. A retry that
 /// should have happened costs the stream, so the doubt is spent on trying.
