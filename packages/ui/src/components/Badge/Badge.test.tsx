@@ -55,6 +55,23 @@ describe('Badge', () => {
     expect(badgeOf('TV-14')).toHaveClass('bg-overlay');
   });
 
+  it('gives a count room either side, and tucks its icon into the round end', () => {
+    render(
+      <>
+        <Badge tone="danger" size="count">
+          76
+        </Badge>
+        <Badge tone="quiet" size="count">
+          20
+        </Badge>
+      </>,
+    );
+
+    expect(badgeOf('76')).toHaveClass('gap-1', 'pr-0.5');
+    expect(badgeOf('20')).toHaveClass('px-1.5');
+    expect(badgeOf('20')).not.toHaveClass('pr-0.5');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Badge.displayName).toBe('Badge');
   });

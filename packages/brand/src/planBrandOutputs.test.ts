@@ -11,7 +11,7 @@ describe('planBrandOutputs', () => {
           output.kind === 'copy' && output.to.startsWith('apps/') && output.from.endsWith('.svg'),
       ),
     ).toEqual(
-      ['web', 'desktop', 'docs', 'landing'].map((app) => ({
+      ['web', 'desktop', 'docs', 'landing', 'metrics'].map((app) => ({
         kind: 'copy',
         from: 'assets/valence-logo.svg',
         to: `apps/${app}/public/valence-logo.svg`,
@@ -27,11 +27,11 @@ describe('planBrandOutputs', () => {
     });
   });
 
-  it('renders the browser tab icon for the web, docs and landing pages', () => {
+  it('renders the browser tab icon for the web, docs, landing and metrics pages', () => {
     expect(
       outputs.filter((output) => output.kind === 'icon' && output.to.endsWith('public/icon.png')),
     ).toEqual(
-      ['web', 'docs', 'landing'].map((app) => ({
+      ['web', 'docs', 'landing', 'metrics'].map((app) => ({
         kind: 'icon',
         from: 'assets/valence-icon.icon',
         to: `apps/${app}/public/icon.png`,

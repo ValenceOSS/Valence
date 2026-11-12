@@ -382,203 +382,205 @@ const CataloguePanel = ({
         }}
       />
 
-      <div className="flex flex-col gap-5">
-        <CatalogueTiles
-          counts={counts}
-          total={inTab.length}
-          value={status}
-          onChange={(next) => {
-            setStatus(next);
-            setChosen(new Set());
-          }}
-        />
+      <div className="flex flex-col gap-4">
+        <div className="sticky top-[calc(var(--valence-window-bar,0px)+var(--admin-chrome,0px))] z-20 -mx-4 -mt-4 flex flex-col gap-3 rounded-t-xl bg-[var(--card-face)] px-4 pb-3 pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <ScopedField
+              label={say('common.findATitle')}
+              isLabelHidden
+              value={query}
+              onValueChange={setQuery}
+              placeholder={PLACEHOLDERS[tab]}
+              choices={
+                tabs.length < 2
+                  ? []
+                  : [
+                      {
+                        label: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
+                        options: tabs.map((id) => {
+                          const failed = new Set(
+                            (catalogue.data ?? [])
+                              .filter((entry) => entry.tab === id && entry.requestId !== null)
+                              .map((entry) => entry.requestId)
+                              .filter((requestId) => failedRequests.has(requestId)),
+                          ).size;
 
-        <div className="flex flex-wrap items-center gap-2">
-          <ScopedField
-            label={say('common.findATitle')}
-            isLabelHidden
-            value={query}
-            onValueChange={setQuery}
-            placeholder={PLACEHOLDERS[tab]}
-            choices={
-              tabs.length < 2
-                ? []
-                : [
-                    {
-                      label: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
-                      options: tabs.map((id) => {
-                        const failed = new Set(
-                          (catalogue.data ?? [])
-                            .filter((entry) => entry.tab === id && entry.requestId !== null)
-                            .map((entry) => entry.requestId)
-                            .filter((requestId) => failedRequests.has(requestId)),
-                        ).size;
+                          return {
+                            id,
+                            label:
+                              failed === 0
+                                ? TAB_NAMES[id]
+                                : sayCount(
+                                    'screens.adminArea.cataloguePanel.count.nameFailed',
+                                    failed,
+                                    {
+                                      name: TAB_NAMES[id],
+                                    },
+                                  ),
+                          };
+                        }),
+                        value: tab,
+                        onChange: (next) => {
+                          const found = tabs.find((one) => one === next);
 
-                        return {
-                          id,
-                          label:
-                            failed === 0
-                              ? TAB_NAMES[id]
-                              : sayCount(
-                                  'screens.adminArea.cataloguePanel.count.nameFailed',
-                                  failed,
-                                  {
-                                    name: TAB_NAMES[id],
-                                  },
-                                ),
-                        };
-                      }),
-                      value: tab,
-                      onChange: (next) => {
-                        const found = tabs.find((one) => one === next);
-
-                        if (found !== undefined) {
-                          setKind('all');
-                          setLibraryId(null);
-                          setChosen(new Set());
-                          onTab(found);
-                        }
+                          if (found !== undefined) {
+                            setKind('all');
+                            setLibraryId(null);
+                            setChosen(new Set());
+                            onTab(found);
+                          }
+                        },
                       },
-                    },
-                  ]
-            }
-            className="w-full sm:w-96"
-          />
+                    ]
+              }
+              className="w-full sm:w-96"
+            />
 
-          <span className="flex-1" />
+            <span className="flex-1" />
 
-          {counts.toApprove === 0 ? null : isChoosing ? (
-            <span className="flex items-center gap-2">
-              <span className="text-sm text-text-muted">
-                {sayCount('common.count.selected', chosenRequests.length)}
+            {counts.toApprove === 0 ? null : isChoosing ? (
+              <span className="flex items-center gap-2">
+                <span className="text-sm text-text-muted">
+                  {sayCount('common.count.selected', chosenRequests.length)}
+                </span>
+
+                <Button
+                  variant="secondary"
+                  size="md"
+                  isLoading={isDeciding}
+                  disabled={chosenRequests.length === 0}
+                  onClick={() => {
+                    decide('approve');
+                  }}
+                >
+                  {say('common.approve')}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="md"
+                  disabled={isDeciding || chosenRequests.length === 0}
+                  onClick={() => {
+                    setIsDeclining(true);
+                  }}
+                >
+                  {say('common.refuse')}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="md"
+                  onClick={() => {
+                    setIsChoosing(false);
+                    setChosen(new Set());
+                  }}
+                >
+                  {say('common.done')}
+                </Button>
               </span>
-
-              <Button
-                variant="secondary"
-                size="md"
-                isLoading={isDeciding}
-                disabled={chosenRequests.length === 0}
-                onClick={() => {
-                  decide('approve');
-                }}
-              >
-                {say('common.approve')}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="md"
-                disabled={isDeciding || chosenRequests.length === 0}
-                onClick={() => {
-                  setIsDeclining(true);
-                }}
-              >
-                {say('common.refuse')}
-              </Button>
-
+            ) : (
               <Button
                 variant="ghost"
                 size="md"
                 onClick={() => {
-                  setIsChoosing(false);
-                  setChosen(new Set());
+                  setIsChoosing(true);
                 }}
               >
-                {say('common.done')}
+                {say('screens.adminArea.cataloguePanel.chooseSeveral')}
               </Button>
-            </span>
-          ) : (
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={() => {
-                setIsChoosing(true);
-              }}
-            >
-              {say('screens.adminArea.cataloguePanel.chooseSeveral')}
-            </Button>
-          )}
+            )}
 
-          {tabLibraries.length < 2 ? null : (
+            {tabLibraries.length < 2 ? null : (
+              <OptionMenu
+                label={say('common.whichLibrary')}
+                triggerShape="field"
+                className="w-auto"
+                trigger={fieldTrigger(
+                  library?.name ?? say('screens.adminArea.cataloguePanel.allLibraries'),
+                )}
+                groups={menuGroupsOf(
+                  say('common.whichLibrary'),
+                  [
+                    { id: 'all', label: say('screens.adminArea.cataloguePanel.allLibraries') },
+                    ...librariesByPlace(tabLibraries, faces.data ?? []).map((one) => ({
+                      id: one.library.id,
+                      label: one.library.name,
+                      group: one.group,
+                    })),
+                  ],
+                  library?.id ?? 'all',
+                  (next) => {
+                    setLibraryId(next === 'all' ? null : next);
+                    setChosen(new Set());
+                  },
+                )}
+              />
+            )}
+
+            {kinds === null ? null : (
+              <OptionMenu
+                label={say('common.kind')}
+                triggerShape="field"
+                className="w-auto"
+                trigger={fieldTrigger(kinds.find((one) => one.id === kind)?.label ?? '')}
+                groups={[
+                  {
+                    name: say('common.kind'),
+                    selectedId: kind,
+                    onSelect: (next) => {
+                      const found = kinds.find((one) => one.id === next);
+
+                      if (found !== undefined) {
+                        setKind(found.id);
+                      }
+                    },
+                    options: [...kinds],
+                  },
+                ]}
+              />
+            )}
+
             <OptionMenu
-              label={say('common.whichLibrary')}
+              label={say('screens.adminArea.cataloguePanel.sort')}
               triggerShape="field"
               className="w-auto"
               trigger={fieldTrigger(
-                library?.name ?? say('screens.adminArea.cataloguePanel.allLibraries'),
+                say('screens.adminArea.cataloguePanel.sortSort', {
+                  sort: SORTS.find((one) => one.id === sort)?.label ?? '',
+                }),
               )}
-              groups={menuGroupsOf(
-                say('common.whichLibrary'),
-                [
-                  { id: 'all', label: say('screens.adminArea.cataloguePanel.allLibraries') },
-                  ...librariesByPlace(tabLibraries, faces.data ?? []).map((one) => ({
-                    id: one.library.id,
-                    label: one.library.name,
-                    group: one.group,
-                  })),
-                ],
-                library?.id ?? 'all',
-                (next) => {
-                  setLibraryId(next === 'all' ? null : next);
-                  setChosen(new Set());
-                },
-              )}
-            />
-          )}
-
-          {kinds === null ? null : (
-            <OptionMenu
-              label={say('common.kind')}
-              triggerShape="field"
-              className="w-auto"
-              trigger={fieldTrigger(kinds.find((one) => one.id === kind)?.label ?? '')}
               groups={[
                 {
-                  name: say('common.kind'),
-                  selectedId: kind,
+                  name: say('screens.adminArea.cataloguePanel.sort'),
+                  selectedId: sort,
                   onSelect: (next) => {
-                    const found = kinds.find((one) => one.id === next);
+                    const found = SORTS.find((one) => one.id === next);
 
                     if (found !== undefined) {
-                      setKind(found.id);
+                      setSort(found.id);
                     }
                   },
-                  options: [...kinds],
+                  options: [...SORTS],
                 },
               ]}
             />
-          )}
 
-          <OptionMenu
-            label={say('screens.adminArea.cataloguePanel.sort')}
-            triggerShape="field"
-            className="w-auto"
-            trigger={fieldTrigger(
-              say('screens.adminArea.cataloguePanel.sortSort', {
-                sort: SORTS.find((one) => one.id === sort)?.label ?? '',
-              }),
-            )}
-            groups={[
-              {
-                name: say('screens.adminArea.cataloguePanel.sort'),
-                selectedId: sort,
-                onSelect: (next) => {
-                  const found = SORTS.find((one) => one.id === next);
+            <GridSizeChooser
+              value={size}
+              onValueChange={(next) => {
+                setSize(next);
+                saveGridSize(next);
+              }}
+            />
+          </div>
 
-                  if (found !== undefined) {
-                    setSort(found.id);
-                  }
-                },
-                options: [...SORTS],
-              },
-            ]}
-          />
-
-          <GridSizeChooser
-            value={size}
-            onValueChange={(next) => {
-              setSize(next);
-              saveGridSize(next);
+          <CatalogueTiles
+            counts={counts}
+            total={inTab.length}
+            value={status}
+            onChange={(next) => {
+              setStatus(next);
+              setChosen(new Set());
             }}
           />
         </div>

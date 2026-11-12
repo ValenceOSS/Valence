@@ -31,4 +31,26 @@ describe('PlayWithRestart', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(PlayWithRestart.displayName).toBe('PlayWithRestart');
   });
+
+  it('joins anything more on at the end, shaped to close the control', () => {
+    render(
+      <PlayWithRestart
+        onStartAgain={vi.fn()}
+        size="md"
+        more={(shape) => (
+          <button type="button" className={shape}>
+            More
+          </button>
+        )}
+      >
+        <span>Play</span>
+      </PlayWithRestart>,
+    );
+
+    expect(screen.getByRole('button', { name: 'More' })).toHaveClass(
+      'rounded-l-[4px]',
+      'rounded-r-[0.75rem]',
+    );
+    expect(screen.getByRole('button', { name: 'Start again' })).toHaveClass('rounded-r-[4px]');
+  });
 });

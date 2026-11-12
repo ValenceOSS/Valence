@@ -106,4 +106,12 @@ describe('SplashScreen', () => {
 
     expect(screen.getByText('their mark')).toBeInTheDocument();
   });
+
+  it('sets the name in semibold, the weight of the name in the bar', () => {
+    render(<SplashScreen name="Valence" />);
+
+    expect(
+      screen.getAllByText('Valence').some((node) => node.closest('.font-semibold') !== null),
+    ).toBe(true);
+  });
 });

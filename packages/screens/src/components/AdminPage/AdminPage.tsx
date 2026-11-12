@@ -1,3 +1,4 @@
+import { Badge } from '@ValenceUI/Badge';
 import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { mergeObservabilitySearch } from '@ValenceClient/admin/mergeObservabilitySearch';
 import { readObservabilityView } from '@ValenceScreens/components/ObservabilityPage/readObservabilityView';
@@ -431,7 +432,7 @@ const AdminPage = () => {
         }}
       >
         <div className="mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] flex-col bg-[var(--frame-back)] [--admin-chrome:7.25rem]">
-          <header className="sticky top-[var(--valence-window-bar)] z-40 flex flex-col bg-[var(--frame-back)]">
+          <header className="sticky top-[var(--valence-window-bar)] z-40 flex flex-col border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--frame-back)_72%,transparent)] backdrop-blur-xl backdrop-saturate-150">
             <div className="flex h-16 items-center gap-1 border-b border-[var(--surface-line)] px-4 sm:px-6">
               <Button
                 variant="bare"
@@ -491,6 +492,9 @@ const AdminPage = () => {
                   (sum, item) => sum + (counts[item.id]?.count ?? 0),
                   0,
                 );
+                const isUrgent = section.items.some(
+                  (item) => (counts[item.id]?.count ?? 0) > 0 && counts[item.id]?.isUrgent === true,
+                );
                 const name = section.label ?? first.label;
                 const nameOf = (item: (typeof section.items)[number]) =>
                   item.label === say('screens.adminArea.adminSections.overview') &&
@@ -516,9 +520,9 @@ const AdminPage = () => {
                     />
                     {name}
                     {count === 0 ? null : (
-                      <span className="text-xs tabular-nums text-text-muted">
+                      <Badge size="count" tone={isUrgent ? 'danger' : 'quiet'}>
                         {count.toLocaleString()}
-                      </span>
+                      </Badge>
                     )}
                   </Button>
                 );
@@ -550,7 +554,16 @@ const AdminPage = () => {
                           ),
                           ...((counts[item.id]?.count ?? 0) === 0
                             ? {}
-                            : { detail: (counts[item.id]?.count ?? 0).toLocaleString() }),
+                            : {
+                                detail: (
+                                  <Badge
+                                    size="count"
+                                    tone={counts[item.id]?.isUrgent === true ? 'danger' : 'quiet'}
+                                  >
+                                    {(counts[item.id]?.count ?? 0).toLocaleString()}
+                                  </Badge>
+                                ),
+                              }),
                         })),
                         selectedId: showing,
                         onSelect: (id) => {
@@ -568,7 +581,7 @@ const AdminPage = () => {
             </nav>
           </header>
 
-          <div className="mx-2 mb-2 flex min-w-0 flex-1 flex-col overflow-clip rounded-2xl border border-[var(--surface-line)] bg-[var(--frame-panel)] shadow-[var(--shadow-raised)] [--card-shell:var(--frame-card)]">
+          <div className="mx-2 mb-2 mt-2 flex min-w-0 flex-1 flex-col overflow-clip rounded-2xl border border-[var(--surface-line)] bg-[var(--frame-panel)] shadow-[var(--shadow-raised)] [--card-shell:var(--frame-card)]">
             <div className="flex-1 p-4">{area}</div>
           </div>
         </div>

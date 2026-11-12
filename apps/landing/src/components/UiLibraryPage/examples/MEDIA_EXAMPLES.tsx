@@ -17,6 +17,7 @@ import { Rail } from '@ValenceUI/Rail';
 import { VideoSurfaceDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VideoSurfaceDemo';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { ReaderVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette';
+import { DeckMark } from '@ValenceUI/DeckMark';
 import type { UiExample } from './UiExample.types';
 
 const ART = '/valence.jpg';
@@ -138,6 +139,12 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
           <Logo size={56} isDotted />
         </div>
       ),
+    },
+  ],
+  DeckMark: [
+    {
+      title: 'The deck, fanning out as it arrives',
+      render: () => <DeckMark size={96} isAnimated label="Valence" />,
     },
   ],
   Icon: [

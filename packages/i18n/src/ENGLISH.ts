@@ -4202,6 +4202,8 @@ const ENGLISH = {
   'screens.adminArea.busyHoursGrid.nothingWasStarted': 'Nothing was started in this range.',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
   'screens.adminArea.cacheBreakdown.estimatedSizeOfDownloads': 'Estimated size of downloads',
+  'screens.adminArea.cacheBreakdown.howItSplits':
+    'How the files Valence keeps are split between each kind',
   'screens.adminArea.cacheBreakdown.keptByValence': 'Kept by Valence, not counting the library',
   'screens.adminArea.cacheBreakdown.stillToDownload.one':
     '{left} still to download, {count} download',
@@ -5729,16 +5731,33 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
+  'screens.adminArea.overviewPanel.diskUsageCard.driveFull': '{mount} · {share} full',
+  'screens.adminArea.overviewPanel.diskUsageCard.elseIs':
+    'On the disk, but not in a library or Valence’s.',
+  'screens.adminArea.overviewPanel.diskUsageCard.everythingElse': 'Everything else',
+  'screens.adminArea.overviewPanel.diskUsageCard.free': 'Free',
+  'screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed': 'How {mount} is used',
+  'screens.adminArea.overviewPanel.diskUsageCard.notMeasured':
+    'This disk hasn’t been measured yet.',
+  'screens.adminArea.overviewPanel.diskUsageCard.rescan': 'Rescan',
+  'screens.adminArea.overviewPanel.diskUsageCard.roomLeft': 'Room left on {mount}.',
+  'screens.adminArea.overviewPanel.diskUsageCard.shareOfTheDisk': '{share} of the disk.',
+  'screens.adminArea.overviewPanel.diskUsageCard.valenceKeeps':
+    'Previews {previews}, scrub thumbnails {trickplay}, transcodes {sessions}, artwork {artwork}.',
+  'screens.adminArea.overviewPanel.diskUsageCard.valencesFiles': 'Valence’s files',
+  'screens.adminArea.overviewPanel.diskUsageCard.valencesOnTheDrive':
+    "is Valence's, of {used} used on a {total} drive",
+  'screens.adminArea.overviewPanel.diskUsageCard.whichDrive': 'Which drive to show',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
     'How much space each library takes up',
   'screens.adminArea.overviewPanel.inTheLibraries': 'in libraries',
   'screens.adminArea.overviewPanel.kindOfWork': 'Kind of work',
-  'screens.adminArea.overviewPanel.loadAgainstCores': 'Load (share of cores)',
   'screens.adminArea.overviewPanel.loadFigures.average': 'Average',
   'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
+  'screens.adminArea.overviewPanel.loadOfTheCores': '{load} · {share} of the cores',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',

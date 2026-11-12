@@ -37,6 +37,20 @@ describe('CatalogueTiles', () => {
     expect(onChange).toHaveBeenCalledWith('notFollowed');
   });
 
+  it('reds the count of failures, and leaves the rest quiet', () => {
+    render(
+      <CatalogueTiles
+        counts={{ ...COUNTS, failed: 5 }}
+        total={15}
+        value="all"
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('5')).toHaveClass('bg-danger/15');
+    expect(screen.getByText('2')).not.toHaveClass('bg-danger/15');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(CatalogueTiles.displayName).toBe('CatalogueTiles');
   });

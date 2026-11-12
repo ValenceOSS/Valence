@@ -4,7 +4,7 @@ type MenuOption = {
   id: string;
   label: string;
   icon?: ReactNode;
-  detail?: string;
+  detail?: ReactNode;
   group?: string | null;
   isNested?: boolean;
 };

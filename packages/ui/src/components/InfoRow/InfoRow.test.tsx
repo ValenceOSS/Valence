@@ -17,6 +17,24 @@ describe('InfoRow', () => {
     expect(screen.getByText('Memory').parentElement).toHaveClass('min-h-7');
   });
 
+  it('draws a dotted key before the label where the fact is read off a line on a chart', () => {
+    render(
+      <InfoRow label="Processor" keyClassName="text-accent">
+        42%
+      </InfoRow>,
+    );
+
+    const key = screen.getByText('Processor').querySelector('[aria-hidden]');
+
+    expect(key).toHaveClass('border-dotted', 'text-accent');
+  });
+
+  it('draws no key where it is given none', () => {
+    render(<InfoRow label="Memory">8 GB</InfoRow>);
+
+    expect(screen.getByText('Memory').querySelector('[aria-hidden]')).toBeNull();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(InfoRow.displayName).toBe('InfoRow');
   });

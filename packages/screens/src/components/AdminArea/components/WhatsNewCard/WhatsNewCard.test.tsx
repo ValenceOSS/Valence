@@ -86,6 +86,9 @@ describe('WhatsNewCard', () => {
     );
 
     expect(await screen.findByText('Asked Film')).toBeInTheDocument();
+    expect(screen.getByText('Asked Film').closest('[data-slot="scroll-fade"]')).toHaveClass(
+      'max-h-[12.5rem]',
+    );
     expect(screen.getByText('Asked for by Kids from Sam')).toBeInTheDocument();
     expect(screen.queryByText(/4K/)).not.toBeInTheDocument();
     expect(screen.queryByText('Followed Show')).not.toBeInTheDocument();
