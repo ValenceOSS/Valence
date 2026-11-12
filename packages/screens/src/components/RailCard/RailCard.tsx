@@ -1063,6 +1063,62 @@ const RailCardFace = ({
                   <span className="relative z-10 flex shrink-0 pt-1">
                     <PlayWithRestart
                       size="md"
+                      {...(extras.length === 0
+                        ? {}
+                        : {
+                            more: (shape: string) =>
+                              extras.length > 1 ? (
+                                <ActionMenu
+                                  label={say('screens.railCard.moreToDoWithTitle', {
+                                    title: media.title,
+                                  })}
+                                  align="end"
+                                  className={shape}
+                                  trigger={<Icon of={MoreHorizontalIcon} size={17} />}
+                                  onOpenChange={(isOpen) => {
+                                    isMenuOpenRef.current = isOpen;
+
+                                    if (!isOpen && panelRef.current?.matches(':hover') !== true) {
+                                      close();
+                                    }
+                                  }}
+                                  groups={[
+                                    {
+                                      items: extras.map((extra) => ({
+                                        id: extra.id,
+                                        label: extra.label,
+                                        icon: extra.icon,
+                                        onChoose: extra.onChoose,
+                                      })),
+                                    },
+                                  ]}
+                                />
+                              ) : (
+                                extras.map((extra) => (
+                                  <Button
+                                    key={extra.id}
+                                    isIconOnly
+                                    variant="ghost"
+                                    size="none"
+                                    label={extra.label}
+                                    {...(extra.isActive === undefined
+                                      ? {}
+                                      : { isActive: extra.isActive })}
+                                    className={shape}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      extra.onChoose();
+
+                                      if (extra.closes) {
+                                        close();
+                                      }
+                                    }}
+                                  >
+                                    {extra.icon}
+                                  </Button>
+                                ))
+                              ),
+                          })}
                       {...(resumeSeconds === undefined
                         ? {}
                         : {
@@ -1096,55 +1152,6 @@ const RailCardFace = ({
                         )}
                       </Button>
                     </PlayWithRestart>
-
-                    {extras.length > 1 ? (
-                      <ActionMenu
-                        label={say('screens.railCard.moreToDoWithTitle', { title: media.title })}
-                        align="end"
-                        look="raised"
-                        className="ml-2 size-9 shrink-0"
-                        trigger={<Icon of={MoreHorizontalIcon} size={17} />}
-                        onOpenChange={(isOpen) => {
-                          isMenuOpenRef.current = isOpen;
-
-                          if (!isOpen && panelRef.current?.matches(':hover') !== true) {
-                            close();
-                          }
-                        }}
-                        groups={[
-                          {
-                            items: extras.map((extra) => ({
-                              id: extra.id,
-                              label: extra.label,
-                              icon: extra.icon,
-                              onChoose: extra.onChoose,
-                            })),
-                          },
-                        ]}
-                      />
-                    ) : (
-                      extras.map((extra) => (
-                        <Button
-                          key={extra.id}
-                          isIconOnly
-                          variant="secondary"
-                          size="md"
-                          label={extra.label}
-                          {...(extra.isActive === undefined ? {} : { isActive: extra.isActive })}
-                          className="ml-2 shrink-0"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            extra.onChoose();
-
-                            if (extra.closes) {
-                              close();
-                            }
-                          }}
-                        >
-                          {extra.icon}
-                        </Button>
-                      ))
-                    )}
                   </span>
                 </motion.div>
               </motion.div>

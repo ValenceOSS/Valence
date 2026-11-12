@@ -444,6 +444,10 @@
       "@ValenceUI/VirtualStack.types": [
         "./packages/ui/src/components/VirtualStack/VirtualStack.types.ts"
       ],
+      "@ValenceUI/DeckMark": ["./packages/ui/src/components/DeckMark/DeckMark.tsx"],
+      "@ValenceUI/DeckMark.types": ["./packages/ui/src/components/DeckMark/DeckMark.types.ts"],
+      "@ValenceUI/DotBar": ["./packages/ui/src/components/DotBar/DotBar.tsx"],
+      "@ValenceUI/DotBar.types": ["./packages/ui/src/components/DotBar/DotBar.types.ts"],
       "@ValenceUI/VirtualGrid": ["./packages/ui/src/components/VirtualGrid/VirtualGrid.tsx"],
       "@ValenceUI/VirtualGrid.types": [
         "./packages/ui/src/components/VirtualGrid/VirtualGrid.types.ts"

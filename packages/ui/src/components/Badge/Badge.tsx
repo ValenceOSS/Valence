@@ -41,7 +41,7 @@ const TONE_ICONS: Partial<Record<BadgeTone, IconGlyph>> = {
 const SIZE_CLASSES: Record<BadgeSize, string> = {
   sm: 'h-6 gap-1 px-2 text-xs',
   md: 'h-7 gap-1.5 px-2.5 text-[0.8125rem]',
-  count: 'h-4 min-w-4 rounded-full px-1 text-[0.625rem]',
+  count: 'h-4 min-w-4 gap-1 rounded-full px-1.5 text-[0.625rem]',
 };
 
 /**
@@ -89,6 +89,7 @@ const Badge = ({
         'leading-none whitespace-nowrap',
         colour === null ? TONE_CLASSES[tone] : '',
         SIZE_CLASSES[size],
+        size === 'count' && (mark !== undefined || tone === 'busy') && 'pr-0.5',
         className,
       )}
     >
@@ -100,7 +101,7 @@ const Badge = ({
       {colour === null && tone === 'busy' ? (
         <Spinner size="xs" label={say('common.inProgress')} />
       ) : mark === undefined ? null : (
-        <Icon of={mark} size={size === 'sm' ? 13 : 14} />
+        <Icon of={mark} size={size === 'count' ? 11 : size === 'sm' ? 13 : 14} />
       )}
     </span>
   );

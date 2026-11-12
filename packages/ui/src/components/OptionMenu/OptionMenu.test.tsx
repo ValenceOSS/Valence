@@ -350,4 +350,15 @@ describe('OptionMenu anchored to something that does its own job', () => {
 
     expect(await screen.findByRole('menuitem', { name: /Genre/ })).toBeInTheDocument();
   });
+
+  it('draws whatever detail it is given beside an option, such as a count badge', async () => {
+    await open([
+      {
+        ...speed(),
+        options: [{ id: '1', label: 'Jobs', detail: <span data-testid="count">76</span> }],
+      },
+    ]);
+
+    expect(await screen.findByTestId('count')).toHaveTextContent('76');
+  });
 });

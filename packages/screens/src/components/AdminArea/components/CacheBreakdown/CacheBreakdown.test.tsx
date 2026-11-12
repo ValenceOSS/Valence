@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { CacheBreakdown } from './CacheBreakdown';
 
@@ -58,5 +58,23 @@ describe('CacheBreakdown', () => {
     );
 
     expect(screen.getByText('Book pages')).toBeInTheDocument();
+  });
+  it('splits the total in one bar, each kind keyed by colour with its share', () => {
+    render(<CacheBreakdown cache={CACHE} artwork={null} liveSessions={1} library={null} />);
+
+    expect(
+      screen.getByRole('img', { name: 'How the files Valence keeps are split between each kind' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.getByText(/^8[45](\.\d)?%$/)).toBeInTheDocument();
+  });
+
+  it('lights a kind in the bar while its row is pointed at', () => {
+    render(<CacheBreakdown cache={CACHE} artwork={null} liveSessions={1} library={null} />);
+    const bar = screen.getByRole('img', { name: /split between each kind/ });
+
+    fireEvent.pointerEnter(screen.getByText('Preview clips').closest('div')?.parentElement ?? bar);
+
+    expect(bar.querySelectorAll('.opacity-40').length).toBeGreaterThan(0);
   });
 });

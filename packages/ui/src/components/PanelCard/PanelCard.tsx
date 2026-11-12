@@ -91,7 +91,7 @@ const PanelCard = ({
         className={
           hasFace
             ? cn(
-                'valence-card-face flex flex-1 flex-col overflow-hidden',
+                'valence-card-face flex flex-1 flex-col overflow-clip',
                 'ring-1 ring-transparent transition-[box-shadow] duration-[var(--duration-base)] ease-[var(--ease-out)]',
                 'group-hover/card:shadow-[var(--shadow-lifted)] group-hover/card:ring-[var(--surface-divider)]',
                 'motion-reduce:transition-none',

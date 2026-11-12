@@ -1,3 +1,4 @@
+import { ScrollFade } from '@ValenceUI/ScrollFade';
 import { Spinner } from '@ValenceUI/Spinner';
 import { useQuery } from '@tanstack/react-query';
 import { Film as FilmIcon } from '@keyline-icons/react/fill';
@@ -100,20 +101,22 @@ const WhatsNewCard = ({
           title={say('screens.adminArea.whatsNewCard.nothingHasArrivedYet')}
         />
       ) : (
-        <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-          {arrivals.map((arrival) => (
-            <li key={arrival.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-sm font-medium text-text">{arrival.title}</span>
-                <span className="truncate text-xs text-text-muted">{arrival.detail}</span>
-              </span>
+        <ScrollFade className="max-h-[12.5rem]">
+          <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+            {arrivals.map((arrival) => (
+              <li key={arrival.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium text-text">{arrival.title}</span>
+                  <span className="truncate text-xs text-text-muted">{arrival.detail}</span>
+                </span>
 
-              <span className="shrink-0 text-xs tabular-nums text-text-muted">
-                {describeSince(new Date(arrival.atMs).toISOString(), now)}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <span className="shrink-0 text-xs tabular-nums text-text-muted">
+                  {describeSince(new Date(arrival.atMs).toISOString(), now)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </ScrollFade>
       )}
     </DashboardRegion>
   );

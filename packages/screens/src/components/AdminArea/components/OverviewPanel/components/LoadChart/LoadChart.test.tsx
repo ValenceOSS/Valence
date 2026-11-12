@@ -36,6 +36,13 @@ describe('LoadChart', () => {
     expect(figure('Peak')).toHaveTextContent('—');
   });
 
+  it('keeps the key to its lines in the tooltip, not in a list beneath the chart', () => {
+    render(<LoadChart readings={[reading(0, 20), reading(1, 80)]} range="24h" />);
+
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.queryByText('Graphics')).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LoadChart.displayName).toBe('LoadChart');
   });
