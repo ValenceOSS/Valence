@@ -147,6 +147,8 @@ const LibraryBrowser = ({
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
   const [isNearTheEnd, setIsNearTheEnd] = useState(false);
+  const endTop = useRef<number | null>(null);
+  const askedAtTop = useRef<number | null>(null);
   const [isAtEnd, setIsAtEnd] = useState(false);
 
   useEffect(() => {
@@ -177,8 +179,11 @@ const LibraryBrowser = ({
     let frame = 0;
 
     const measure = () => {
+      const { top } = end.getBoundingClientRect();
+
       frame = 0;
-      setIsNearTheEnd(end.getBoundingClientRect().top < window.innerHeight + NEAR_THE_END_PX);
+      endTop.current = top;
+      setIsNearTheEnd(top < window.innerHeight + NEAR_THE_END_PX);
     };
 
     const measureSoon = () => {
@@ -199,7 +204,14 @@ const LibraryBrowser = ({
   }, [end, rails.length]);
 
   useEffect(() => {
-    if (isHome && isNearTheEnd && hasMore && !isReadingMore) {
+    if (
+      isHome &&
+      isNearTheEnd &&
+      hasMore &&
+      !isReadingMore &&
+      endTop.current !== askedAtTop.current
+    ) {
+      askedAtTop.current = endTop.current;
       showMore();
     }
   }, [isHome, isNearTheEnd, hasMore, isReadingMore, showMore]);

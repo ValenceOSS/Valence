@@ -35,22 +35,11 @@ const {
 }));
 
 vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHasMock }));
-vi.mock('@ValenceClient/library/fetchLibrary', () => ({
-  fetchLibraryItems: itemsMock,
-  fetchItemsAcross: async (
-    libraryIds: readonly string[],
-    options: { order?: string; minRating?: number; genre?: string; ids?: string[] },
-  ) => {
-    const pages = await Promise.all(
-      libraryIds.map(async (libraryId) => itemsMock(libraryId, options)),
-    );
+vi.mock('@ValenceClient/library/fetchLibrary', async () => {
+  const { askedOfEachLibrary } = await import('@ValenceClient/testing/askedOfEachLibrary');
 
-    return {
-      items: pages.flatMap((page) => page.items),
-      total: pages.reduce((sum, page) => sum + page.total, 0),
-    };
-  },
-}));
+  return { fetchLibraryItems: itemsMock, fetchItemsAcross: askedOfEachLibrary(itemsMock) };
+});
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
 vi.mock('@ValenceClient/streams/fetchStreamedLibrary', () => ({
   fetchStreamedLibrary: streamedLibraryMock,

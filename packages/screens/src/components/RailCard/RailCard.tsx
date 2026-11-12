@@ -84,8 +84,8 @@ const OPENED: {
   isWatchingScroll: boolean;
   owner: symbol | null;
 } = {
-  lastClosedAt: 0,
-  lastScrolledAt: 0,
+  lastClosedAt: Number.NEGATIVE_INFINITY,
+  lastScrolledAt: Number.NEGATIVE_INFINITY,
   isOpen: false,
   isWatchingScroll: false,
   owner: null,
@@ -738,6 +738,8 @@ const RailCardFace = ({
             id: 'keep',
             label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
             icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
+            isActive: isKept,
+            closes: false,
             onChoose: () => {
               onToggleKept(media);
             },
@@ -750,6 +752,7 @@ const RailCardFace = ({
             id: 'dismiss',
             label: say('screens.railCard.removeFromContinueWatching'),
             icon: <Icon of={XIcon} size={17} />,
+            closes: true,
             onChoose: () => {
               onDismiss(media);
             },
@@ -762,6 +765,7 @@ const RailCardFace = ({
             id: 'hide',
             label: say('common.hide'),
             icon: <Icon of={EyeOffIcon} size={17} />,
+            closes: true,
             onChoose: () => {
               onHide(media);
             },
@@ -1089,7 +1093,7 @@ const RailCardFace = ({
                       </Button>
                     </PlayWithRestart>
 
-                    {extras.length === 0 ? null : (
+                    {extras.length > 1 ? (
                       <ActionMenu
                         label={say('screens.railCard.moreToDoWithTitle', { title: media.title })}
                         align="end"
@@ -1114,6 +1118,28 @@ const RailCardFace = ({
                           },
                         ]}
                       />
+                    ) : (
+                      extras.map((extra) => (
+                        <Button
+                          key={extra.id}
+                          isIconOnly
+                          variant="secondary"
+                          size="md"
+                          label={extra.label}
+                          {...(extra.isActive === undefined ? {} : { isActive: extra.isActive })}
+                          className="ml-2 shrink-0"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            extra.onChoose();
+
+                            if (extra.closes) {
+                              close();
+                            }
+                          }}
+                        >
+                          {extra.icon}
+                        </Button>
+                      ))
                     )}
                   </span>
                 </motion.div>

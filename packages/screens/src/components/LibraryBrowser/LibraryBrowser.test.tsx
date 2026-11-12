@@ -16,7 +16,11 @@ import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 const RECENTLY = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
 const fetchLibrariesMock = vi.hoisted(() => vi.fn());
-const fetchItemsMock = vi.hoisted(() => vi.fn());
+const fetchItemsMock = vi.hoisted(() =>
+  vi.fn<
+    (libraryId: string, options: object) => Promise<{ items: MediaSummary[]; total: number }>
+  >(),
+);
 const fetchDetailMock = vi.hoisted(() => vi.fn(() => Promise.resolve(null)));
 const fetchFacetsMock = vi.hoisted(() => vi.fn());
 
@@ -25,11 +29,16 @@ vi.mock('@ValenceClient/books/fetchBooks', () => ({
   bookCoverUrl: (bookId: string) => `/api/books/${bookId}/cover`,
 }));
 
-vi.mock('@ValenceClient/library/fetchLibrary', () => ({
-  fetchLibraries: fetchLibrariesMock,
-  fetchLibraryItems: fetchItemsMock,
-  fetchMediaDetail: fetchDetailMock,
-}));
+vi.mock('@ValenceClient/library/fetchLibrary', async () => {
+  const { askedOfEachLibrary } = await import('@ValenceClient/testing/askedOfEachLibrary');
+
+  return {
+    fetchLibraries: fetchLibrariesMock,
+    fetchLibraryItems: fetchItemsMock,
+    fetchItemsAcross: askedOfEachLibrary(fetchItemsMock),
+    fetchMediaDetail: fetchDetailMock,
+  };
+});
 
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: fetchFacetsMock }));
 
@@ -98,10 +107,15 @@ const draw = (ui: ReactElement) => renderInAnAddress(inShell(ui));
 /**
  * The card for an item, in the row that is being asked about.
  */
-const cardIn = (rail: string, title: string) =>
-  within(screen.getByRole('region', { name: rail })).getByRole('button', {
-    name: new RegExp(title),
-  });
+const cardIn = (rail: string, title: string) => {
+  const [first] = screen.getAllByRole('region', { name: rail });
+
+  if (first === undefined) {
+    throw new Error(`There is no row called ${rail}.`);
+  }
+
+  return within(first).getByRole('button', { name: new RegExp(title) });
+};
 
 const arrival: MediaSummary = {
   id: '9c858901-8a57-4791-81fe-4c455b099bc9',
@@ -205,13 +219,9 @@ describe('LibraryBrowser', () => {
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
     await waitFor(() => {
-      expect(
-        within(rail).getAllByRole('button', { name: /, Recently added$/ }).length,
-      ).toBeGreaterThan(0);
+      expect(within(rail).getAllByRole('button', { name: /, New$/ }).length).toBeGreaterThan(0);
     });
-    expect(
-      within(rail).getAllByRole('button', { name: /, Recently added$/ }).length,
-    ).toBeLessThanOrEqual(6);
+    expect(within(rail).getAllByRole('button', { name: /, New$/ }).length).toBeLessThanOrEqual(6);
   });
 
   it('flags nothing that arrived weeks ago', async () => {
@@ -226,9 +236,7 @@ describe('LibraryBrowser', () => {
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
     expect(within(rail).getByRole('button', { name: 'Arrival' })).toBeInTheDocument();
-    expect(
-      within(rail).queryByRole('button', { name: /, Recently added$/ }),
-    ).not.toBeInTheDocument();
+    expect(within(rail).queryByRole('button', { name: /, New$/ })).not.toBeInTheDocument();
   });
 
   it('leaves the collections to the films and shows pages', async () => {
@@ -433,7 +441,7 @@ describe('LibraryBrowser', () => {
 
     draw(<LibraryBrowser onPlay={vi.fn()} />);
 
-    expect(await screen.findByRole('region', { name: 'Drama' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('region', { name: 'Drama' })).not.toHaveLength(0);
     expect(cardIn('Drama', 'Drama 0')).toBeInTheDocument();
   });
 
