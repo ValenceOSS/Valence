@@ -300,6 +300,8 @@ const fitInside = (top: number, height: number): number => {
  *   whole rather than at the size a rail's card needs.
  * @param growsOnHover - Whether it grows when a pointer rests on it, which a card inside a dialog does
  *   not.
+ * @param isLazy - Whether its picture waits until it comes near the screen, as a card far along a row
+ *   does.
  */
 const RailCardFace = ({
   media,
@@ -322,6 +324,7 @@ const RailCardFace = ({
   badges,
   drawsLarge = false,
   growsOnHover = true,
+  isLazy = false,
 }: RailCardProps) => {
   const shape = isSeries ? 'poster' : askedShape;
 
@@ -810,6 +813,7 @@ const RailCardFace = ({
           {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           isStill={growsOnHover}
+          isLazy={isLazy}
           className="w-full"
         />
       ) : (

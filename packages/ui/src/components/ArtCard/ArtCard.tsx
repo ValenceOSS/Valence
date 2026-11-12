@@ -24,6 +24,8 @@ import type { ArtCardProps } from './ArtCard.types';
  * @param href - Where it goes, which makes it a link that can be opened in a new tab; a plain click
  *   still goes through onSelect.
  * @param isStill - Whether to hold the picture still rather than letting it zoom under a pointer.
+ * @param isLazy - Whether its pictures wait until the card comes near the screen, as a card far
+ *   along a row does, rather than being asked for at once.
  * @param className - Extra classes for the caller's own layout.
  */
 const ArtCard = ({
@@ -35,6 +37,7 @@ const ArtCard = ({
   onSelect,
   href,
   isStill = false,
+  isLazy = false,
   className,
 }: ArtCardProps) => {
   const [isLogoMissing, setIsLogoMissing] = useState(false);
@@ -47,6 +50,7 @@ const ArtCard = ({
         <img
           src={imageUrl}
           alt=""
+          {...(isLazy ? { loading: 'lazy' } : {})}
           decoding="async"
           draggable={false}
           className={`absolute inset-0 size-full object-cover ${
@@ -63,6 +67,7 @@ const ArtCard = ({
         <img
           src={logoUrl}
           alt=""
+          {...(isLazy ? { loading: 'lazy' } : {})}
           decoding="async"
           draggable={false}
           className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
