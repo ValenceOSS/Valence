@@ -1,39 +1,38 @@
 <div align="center">
-
-<img src="assets/readme/banner.jpg" alt="Valence" width="100%" />
-
 <br/>
 <br/>
 
-**A self hosted streaming platform for your own library.**<br/>
+<img src="assets/valence-icon.png" alt="Valence" width="112" />
+
+<br/>
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N3S428DF40)
+
+# Valence
+
+**A self hosted streaming platform for your own library.**
+
 Your films, programmes, music and books, on every screen in the house, from a server you own.
 
-<br/>
+[![CI](https://github.com/ValenceOSS/Valence/actions/workflows/ci.yml/badge.svg)](https://github.com/ValenceOSS/Valence/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ValenceOSS/Valence?display_name=tag&sort=semver)](https://github.com/ValenceOSS/Valence/releases)
+[![Image](https://img.shields.io/badge/ghcr.io-valence-blue?logo=docker&logoColor=white)](https://github.com/ValenceOSS/Valence/pkgs/container/valence)
+[![Licence](https://img.shields.io/github/license/ValenceOSS/Valence)](LICENSE.md)
+[![Stars](https://img.shields.io/github/stars/ValenceOSS/Valence?style=flat)](https://github.com/ValenceOSS/Valence/stargazers)
 
 [Website](https://getvalence.app) · [Demo](https://demo.getvalence.app) · [Documentation](https://docs.getvalence.app) · [Changelog](https://getvalence.app/changelog) · [Plugins](https://getvalence.app/plugins)
 
-<br/>
+</div>
 
-[![CI](https://github.com/ValenceOSS/Valence/actions/workflows/ci.yml/badge.svg)](https://github.com/ValenceOSS/Valence/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/ValenceOSS/Valence?display_name=tag&sort=semver&color=7c5cff)](https://github.com/ValenceOSS/Valence/releases)
-[![Image](https://img.shields.io/badge/ghcr.io-valence-7c5cff?logo=docker&logoColor=white)](https://github.com/ValenceOSS/Valence/pkgs/container/valence)
-[![Licence](https://img.shields.io/github/license/ValenceOSS/Valence?color=7c5cff)](LICENSE.md)
-[![Stars](https://img.shields.io/github/stars/ValenceOSS/Valence?style=flat&color=7c5cff)](https://github.com/ValenceOSS/Valence/stargazers)
-[![ko-fi](https://img.shields.io/badge/Ko--fi-support-7c5cff?logo=kofi&logoColor=white)](https://ko-fi.com/N3S428DF40)
+<div align="center">
 
-<br/>
-
-<img src="assets/valence.jpg" alt="The Valence home page: Charlie's Angels in the hero with Play and More info, above the Continue watching row, with Shows, Films, Music, Books, Discover and Calendar along the top" width="100%" />
+<img src="assets/valence.jpg" alt="The Valence home page: Charlie's Angels in the hero with Play and More info, above the Continue watching row, with Shows, Films, Music, Books, Discover and Calendar along the top" width="900" />
 
 </div>
 
 ## What it does
 
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### Watch
+**Watch**
 
 - **Plays what you already have.** Point it at a folder. It reads what is there, finds the artwork
   and the details, and leaves your files exactly as it found them. Your media is mounted read only.
@@ -47,10 +46,13 @@ Your films, programmes, music and books, on every screen in the house, from a se
 - **Collections.** Group films and programmes the way you think of them, and they show up as
   shelves on every client.
 
-</td>
-<td width="50%" valign="top">
+**Listen and read**
 
-### Everybody in the house
+- **Music** with albums, artists, playlists, liked songs, lyrics and a queue.
+- **Books and audiobooks**, read in the browser or on a phone, or listened to with chapters, speed
+  and a sleep timer.
+
+**Everybody in the house**
 
 - **A household, not a single account.** Everybody gets a face, their own continue watching,
   favourites, ratings and history. Sign in by username, email or a passkey, with two-step sign-in.
@@ -63,43 +65,25 @@ Your films, programmes, music and books, on every screen in the house, from a se
   same song, with the picture staying in step rather than drifting.
 - **Share a link.** One title or one series, to somebody with no account, for as long as you decide.
 
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### Listen and read
-
-- **Music** with albums, artists, playlists, liked songs, lyrics and a queue.
-- **Books and audiobooks**, read in the browser or on a phone, or listened to with chapters, speed
-  and a sleep timer.
-
-### Moving in
-
-- **Bring everything across** from Jellyfin, Emby or Plex during setup: accounts, watch history,
-  favourites, ratings, playlists, collections, access and intro markers, along with your Radarr,
-  Sonarr, Prowlarr and Seerr setup. It only ever reads from the old server.
-
-</td>
-<td width="50%" valign="top">
-
-### Getting things
+**Getting things**
 
 - **Ask for what is missing.** Requests for films, programmes, music and books, with approval,
   quality profiles and download clients built in.
 - **Or keep the setup you have.** Hand requests to Radarr, Sonarr or Lidarr, sync indexers from
   Prowlarr, and let Overseerr or Jellyseerr send their requests straight in.
 
-### Make it yours
+**Moving in**
+
+- **Bring everything across** from Jellyfin, Emby or Plex during setup: accounts, watch history,
+  favourites, ratings, playlists, collections, access and intro markers, along with your Radarr,
+  Sonarr, Prowlarr and Seerr setup. It only ever reads from the old server.
+
+**Make it yours**
 
 - **Plugins and themes** from a signed catalogue, each running in its own sandbox.
 - **23 languages**, every word of every client read from one strings file.
 - **An API you can build on.** Every endpoint has a contract, and the reference is generated from it
   and served by the server itself. Webhooks tell other things what happened.
-
-</td>
-</tr>
-</table>
 
 ## Every screen
 
@@ -165,9 +149,6 @@ make, and we have no access to, sight of or responsibility for any server you or
 
 ## Develop it
 
-<details>
-<summary>Set up a development copy, and where everything runs</summary>
-
 ```bash
 pnpm install
 docker compose --project-directory . -f docker/compose.dev.yaml up -d db
@@ -190,12 +171,7 @@ one Valence was built against.
 The documentation site runs locally with `pnpm --filter @valence/docs spec` followed by
 `pnpm --filter @valence/docs dev`.
 
-</details>
-
 ## Layout
-
-<details>
-<summary>How the repository is laid out</summary>
 
 ```
 apps/
@@ -223,12 +199,7 @@ packages/
   lint/              Valence's own oxlint rules, and the comment and branch checks
 ```
 
-</details>
-
 ## Commands
-
-<details>
-<summary>Test, typecheck, lint and build</summary>
 
 ```bash
 pnpm test         # every package
@@ -240,8 +211,6 @@ pnpm i18n:write   # after editing packages/i18n/strings-en.json
 pnpm rust:test    # cargo test
 pnpm rust:check   # cargo clippy and cargo fmt
 ```
-
-</details>
 
 ## Contributing
 
@@ -263,9 +232,3 @@ public issue.
 
 MIT. See [`LICENSE.md`](LICENSE.md). Use it, change it, ship it, sell it; keep the copyright
 notice with it and expect no warranty.
-
-<br/>
-
-<div align="center">
-  <img src="assets/readme/mark.png" alt="" width="56" />
-</div>
