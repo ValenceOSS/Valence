@@ -2,7 +2,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { createHash } from 'node:crypto';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
-import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { narrowPicture } from '@ValenceServer/images/narrowPicture';
 import { rasterOfCataloguePicture } from '@ValenceServer/images/rasterOfCataloguePicture';
@@ -26,7 +26,7 @@ type ImageFetcher = (url: string) => Promise<{
 
 type Publishing = {
   directory: string;
-  nameOf: (url: string) => string;
+  nameOf: (url: string) => string | null;
 };
 
 type CreateImageCacheOptions = {
@@ -152,10 +152,13 @@ const createImageCache = ({
 
   const published = new Set<string>();
 
-  const publicPathOf = (url: string, width: number): string | null =>
-    publish === undefined
+  const publicPathOf = (url: string, width: number): string | null => {
+    const name = publish?.nameOf(url) ?? null;
+
+    return publish === undefined || name === null
       ? null
-      : join(publish.directory, `${publish.nameOf(url)}-w${width.toString()}.webp`);
+      : join(publish.directory, `${name}-w${width.toString()}.webp`);
+  };
 
   const publishCopy = async (url: string, width: number, body: Uint8Array): Promise<void> => {
     const path = publicPathOf(url, width);
@@ -170,8 +173,11 @@ const createImageCache = ({
     );
 
     if (!isThere) {
+      const partial = `${path}.${process.pid.toString()}.part`;
+
       await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, body);
+      await writeFile(partial, body);
+      await rename(partial, path);
     }
 
     published.add(path);

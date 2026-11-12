@@ -2990,6 +2990,8 @@ const jobs = createJobQueue({
         const { made, failed } = await narrowEveryPicture({
           listArtworkUrls,
           read: (url, width) => images.read(url, width),
+          isCancelled: () => jobs.isCancelled(jobId),
+          untilResumed: () => jobs.untilResumed(jobId),
           onProblem: (url) => {
             void jobHistory
               .recordIssue({
@@ -3723,10 +3725,14 @@ const artworkNames = createArtworkNames(
  * Valence where nothing is.
  *
  * @param url - The picture.
- * @returns Its address, to which a width and `.webp` are added.
+ * @returns Its address, to which a width and `.webp` are added, or nothing for a picture that is
+ *   not named.
  */
-const artworkAddressOf = (url: string): string =>
-  `${env.ARTWORK_URL}/api/artwork/${artworkNames.nameOf(url)}`;
+const artworkAddressOf = (url: string): string | null => {
+  const name = artworkNames.nameOf(url);
+
+  return name === null ? null : `${env.ARTWORK_URL}/api/artwork/${name}`;
+};
 
 /**
  * Lists every picture the libraries show: each file's poster, backdrop and logo, and every picture

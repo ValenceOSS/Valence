@@ -69,4 +69,28 @@ describe('narrowEveryPicture', () => {
 
     expect(onProgress).not.toHaveBeenCalled();
   });
+
+  it('stops once the job is cancelled, and waits while it is paused', async () => {
+    const read = vi.fn(() => Promise.resolve({}));
+    const state = { cancelled: false, waited: 0 };
+
+    await narrowEveryPicture({
+      listArtworkUrls: () => Promise.resolve(['a', 'b', 'c']),
+      read: (url, width) => {
+        state.cancelled = url === 'b';
+
+        return read(url, width);
+      },
+      atOnce: 1,
+      isCancelled: () => state.cancelled,
+      untilResumed: () => {
+        state.waited += 1;
+
+        return Promise.resolve();
+      },
+    });
+
+    expect(read.mock.calls.map(([url]) => url)).toEqual(['a', 'a', 'b']);
+    expect(state.waited).toBe(4);
+  });
 });

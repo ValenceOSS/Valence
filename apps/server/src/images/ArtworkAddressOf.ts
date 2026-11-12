@@ -1,3 +1,3 @@
-type ArtworkAddressOf = (url: string) => string;
+type ArtworkAddressOf = (url: string) => string | null;
 
 export type { ArtworkAddressOf };

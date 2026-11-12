@@ -49,9 +49,9 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.image.noArtworkForThatItem'), 404);
     }
 
-    if (size !== undefined && artworkNames !== undefined) {
-      const name = artworkNames.nameOf(url);
+    const name = size === undefined ? null : (artworkNames?.nameOf(url) ?? null);
 
+    if (size !== undefined && name !== null) {
       context.header('cache-control', REDIRECT_CACHING);
 
       return context.redirect(

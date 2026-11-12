@@ -1,4 +1,4 @@
-const DISK = 'valence-disk:';
+import { DISK_PICTURE } from '@ValenceServer/library/DISK_PICTURE';
 
 /**
  * The address a picture beside a title's files on the disk is chosen and kept under, so it is drawn
@@ -8,6 +8,6 @@ const DISK = 'valence-disk:';
  * @returns The address.
  */
 const diskPictureAddress = (path: string): string =>
-  `${DISK}${Buffer.from(path, 'utf8').toString('base64url')}`;
+  `${DISK_PICTURE}${Buffer.from(path, 'utf8').toString('base64url')}`;
 
 export { diskPictureAddress };

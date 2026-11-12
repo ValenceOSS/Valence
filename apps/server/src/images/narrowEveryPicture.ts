@@ -6,6 +6,8 @@ type NarrowEveryPictureOptions = {
   listArtworkUrls: () => Promise<(string | null)[]>;
   read: (url: string, width: number) => Promise<object | null>;
   atOnce?: number;
+  isCancelled?: () => boolean;
+  untilResumed?: () => Promise<void>;
   onProblem?: (url: string) => void;
   onProgress?: (processed: number, total: number) => void;
 };
@@ -14,15 +16,18 @@ type NarrowEveryPictureOptions = {
  * Makes the narrowed copy of every picture the libraries show, at every width a card asks for,
  * so the first person to scroll past a title finds its picture already made and served from disk
  * rather than fetched and narrowed while they wait. A copy already made is read back and kept, so
- * running it again costs little.
+ * running it again costs little. It waits while the job is paused, and stops once it is cancelled.
  *
- * @param options - Which pictures there are, how one is narrowed, and how many at once.
+ * @param options - Which pictures there are, how one is narrowed, how many at once, and whether the
+ *   job has been paused or cancelled.
  * @returns How many copies were made or found, and how many could not be.
  */
 const narrowEveryPicture = async ({
   listArtworkUrls,
   read,
   atOnce = AT_ONCE,
+  isCancelled = () => false,
+  untilResumed = () => Promise.resolve(),
   onProblem,
   onProgress,
 }: NarrowEveryPictureOptions): Promise<{ made: number; failed: number }> => {
@@ -37,6 +42,12 @@ const narrowEveryPicture = async ({
    */
   const work = async (): Promise<void> => {
     while (tally.next < asks.length) {
+      await untilResumed();
+
+      if (isCancelled()) {
+        return;
+      }
+
       const ask = asks[tally.next];
 
       tally.next += 1;

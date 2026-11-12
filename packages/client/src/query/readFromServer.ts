@@ -53,9 +53,11 @@ const readFromServer = async <Value>(
 
   const body = JsonValueSchema.parse(await response.json());
 
+  const parsed = schema.parse(body);
+
   artworkAddresses.learnFrom(body);
 
-  return schema.parse(body);
+  return parsed;
 };
 
 export { readFromServer };

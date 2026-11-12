@@ -221,6 +221,22 @@ describe('pictures served by name', () => {
     );
   });
 
+  it('sends a picture that could not be narrowed whole, kept only for an hour', async () => {
+    const { ask, askAnyone, readImage } = await build({});
+    const named = (await ask(`${POSTER}?size=small`)).headers.get('location') ?? '';
+
+    readImage.mockResolvedValueOnce({
+      body: new TextEncoder().encode('whole').buffer,
+      contentType: 'image/jpeg',
+    });
+
+    const response = await askAnyone(named);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/jpeg');
+    expect(response.headers.get('cache-control')).toBe('public, max-age=3600');
+  });
+
   it('has nothing under a name it never gave out, or at a width it does not make', async () => {
     const { ask, askAnyone } = await build({});
     const named = (await ask(`${POSTER}?size=small`)).headers.get('location') ?? '';

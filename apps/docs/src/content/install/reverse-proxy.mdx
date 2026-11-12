@@ -209,7 +209,9 @@ valence.example.com {
     route @artwork {
         root * /valence-cache/images/public
         try_files /{re.artwork.1}
-        header Cache-Control "public, max-age=31536000, immutable"
+        header Cache-Control "public, max-age=31536000, immutable" {
+            match status 2xx
+        }
         file_server {
             pass_thru
         }
@@ -229,7 +231,7 @@ valence.example.com {
 Mount the volume where nginx can read it, then add this beside the existing `location /`:
 
 ```nginx
-location ~ ^/api/artwork/([0-9a-f]{32}-w[0-9]+\.webp)$ {
+location ~ "^/api/artwork/([0-9a-f]{32}-w[0-9]+\.webp)$" {
     root /valence-cache/images/public;
     try_files /$1 @valence;
     add_header Cache-Control "public, max-age=31536000, immutable";

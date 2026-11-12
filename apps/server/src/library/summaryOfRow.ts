@@ -60,9 +60,11 @@ const artworkOf = (
     ? {}
     : {
         artwork: Object.fromEntries(
-          Object.entries(urls).flatMap(([kind, url]) =>
-            url === null ? [] : [[kind, addressOf(url)]],
-          ),
+          Object.entries(urls).flatMap(([kind, url]) => {
+            const address = url === null ? null : addressOf(url);
+
+            return address === null ? [] : [[kind, address]];
+          }),
         ),
       };
 

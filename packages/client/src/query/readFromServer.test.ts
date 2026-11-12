@@ -32,6 +32,14 @@ describe('readFromServer', () => {
     expect(artworkAddresses.of('deep', 'poster', 0)).toBe('/api/artwork/p');
   });
 
+  it('notes nothing from an answer that is not the shape it was promised', async () => {
+    fetchMock.mockResolvedValue(said({ id: 'malformed', artwork: { poster: '/api/artwork/x' } }));
+
+    await expect(readFromServer('/api/profiles', Schema)).rejects.toThrow();
+
+    expect(artworkAddresses.of('malformed', 'poster', 0)).toBeUndefined();
+  });
+
   it('answers with what the server said, parsed', async () => {
     fetchMock.mockResolvedValue(said({ profiles: ['Marques'] }));
 
