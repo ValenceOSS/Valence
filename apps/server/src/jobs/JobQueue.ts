@@ -81,6 +81,8 @@ const ClearLibraryPartsJobSchema = z.object({
 
 const CLEANUP_IMAGE_CACHE_JOB = 'server.cleanupImageCache';
 
+const NARROW_ARTWORK_JOB = 'server.narrowArtwork';
+
 const CLEANUP_ARTEFACT_CACHE_JOB = 'server.cleanupArtefactCache';
 
 const CLEANUP_SESSIONS_JOB = 'server.cleanupSessions';
@@ -269,6 +271,7 @@ export {
   CLEAR_LIBRARY_PARTS_JOB,
   ClearLibraryPartsJobSchema,
   CLEANUP_IMAGE_CACHE_JOB,
+  NARROW_ARTWORK_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CLEAR_OLD_DOWNLOADS_JOB,

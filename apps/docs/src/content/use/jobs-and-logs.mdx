@@ -63,6 +63,7 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 | Label                            | Kind                                | What it does                                                                                                                                                         |
 | -------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Clean up cached images           | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days.                                                            |
+| Make card artwork ahead          | `server.narrowArtwork`              | Makes the small copy of every poster, backdrop and logo, so cards load them at once from disk, or from the proxy in front.                                           |
 | Clean up cached previews         | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                                                                                 |
 | Clean up sessions                | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                                                                                      |
 | Clear out old downloads          | `server.clearOldDownloads`          | Deletes files prepared for keeping once nobody has asked for them for as long as the server keeps them.                                                              |
@@ -148,6 +149,7 @@ The first time Valence sees a job it gives it a default schedule. It never does 
 | Pre-transcode the libraries            | Every 15 minutes |
 | Write missing subtitles                | Daily at 03:15   |
 | Clean up cached images                 | Sundays at 06:00 |
+| Make card artwork ahead                | Daily at 05:15   |
 | Clean up cached previews               | Sundays at 06:30 |
 | Back up the database                   | Sundays at 04:30 |
 | Update linked servers' libraries       | Every 15 minutes |

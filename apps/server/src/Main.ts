@@ -430,6 +430,7 @@ import {
   CLEAR_LIBRARY_PARTS_JOB,
   ClearLibraryPartsJobSchema,
   CLEANUP_IMAGE_CACHE_JOB,
+  NARROW_ARTWORK_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CLEAR_OLD_DOWNLOADS_JOB,
@@ -503,6 +504,7 @@ import {
 } from '@ValenceServer/maintenance/findDisksUnderPressure';
 import { createDatabaseMaintenanceService } from '@ValenceServer/maintenance/createDatabaseMaintenanceService';
 import { cleanupImageCache } from '@ValenceServer/maintenance/cleanupImageCache';
+import { narrowEveryPicture } from '@ValenceServer/images/narrowEveryPicture';
 import { sweepBookPages } from '@ValenceServer/maintenance/sweepBookPages';
 import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
@@ -2984,6 +2986,29 @@ const jobs = createJobQueue({
           runDetectSegments(parsed.data.libraryId, jobId),
         );
       },
+      [NARROW_ARTWORK_JOB]: async (jobId) => {
+        const { made, failed } = await narrowEveryPicture({
+          listArtworkUrls,
+          read: (url, width) => images.read(url, width),
+          onProblem: (url) => {
+            void jobHistory
+              .recordIssue({
+                jobRunId: jobId,
+                path: url,
+                reason: saying('error.image.thatArtworkCouldNotBeRead'),
+              })
+              .catch(() => {});
+          },
+          onProgress: (processed, total) => {
+            jobs.reportProgress(jobId, saying('server.jobs.phase.artwork'), processed, total);
+          },
+        });
+
+        log.info(
+          'jobs',
+          `card artwork: ${made.toString()} ready, ${failed.toString()} could not be made`,
+        );
+      },
       [CLEANUP_IMAGE_CACHE_JOB]: async (jobId) => {
         const removed = await cleanupImageCache({
           imageCacheDir: env.IMAGE_CACHE_DIR,
@@ -2997,23 +3022,7 @@ const jobs = createJobQueue({
             remove: (path) => unlink(path),
           },
           nameFor: images.nameFor,
-          listArtworkUrls: async () => {
-            const items = await db
-              .select({
-                posterUrl: mediaItem.posterUrl,
-                backdropUrl: mediaItem.backdropUrl,
-                logoUrl: mediaItem.logoUrl,
-              })
-              .from(mediaItem);
-            const chosen = await db
-              .select({ url: mediaArtworkChoice.url })
-              .from(mediaArtworkChoice);
-
-            return [
-              ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
-              ...chosen.map((row) => row.url),
-            ];
-          },
+          listArtworkUrls,
           listKeptPictures: async () => {
             const faces = await db
               .select({ photoPath: viewerProfile.photoPath })
@@ -3718,6 +3727,28 @@ const artworkNames = createArtworkNames(
  */
 const artworkAddressOf = (url: string): string =>
   `${env.ARTWORK_URL}/api/artwork/${artworkNames.nameOf(url)}`;
+
+/**
+ * Lists every picture the libraries show: each file's poster, backdrop and logo, and every picture
+ * chosen for a title in place of the catalogue's.
+ *
+ * @returns Their addresses, with nothing where a file has no such picture.
+ */
+const listArtworkUrls = async (): Promise<(string | null)[]> => {
+  const items = await db
+    .select({
+      posterUrl: mediaItem.posterUrl,
+      backdropUrl: mediaItem.backdropUrl,
+      logoUrl: mediaItem.logoUrl,
+    })
+    .from(mediaItem);
+  const chosen = await db.select({ url: mediaArtworkChoice.url }).from(mediaArtworkChoice);
+
+  return [
+    ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
+    ...chosen.map((row) => row.url),
+  ];
+};
 
 const libraryService = createDatabaseLibraryService({
   db,

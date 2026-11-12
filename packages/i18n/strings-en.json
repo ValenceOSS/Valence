@@ -38257,6 +38257,16 @@
     "context": "Description of the job that reads what linked servers share."
   },
   {
+    "handler": "server.jobs.jobDefinitions.makeArtworkAhead",
+    "text": "Make card artwork ahead",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.makesEveryCardPictureAhead",
+    "text": "Makes the small copy of every poster, backdrop and logo ahead of time, so cards load them at once.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator",
     "text": "Runs the re-encodes an administrator requested.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -38410,6 +38420,11 @@
     "handler": "server.jobs.phase.arrived.other",
     "text": "{count} added",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: how many things arrived in the library since the last digest. {count} is how many."
+  },
+  {
+    "handler": "server.jobs.phase.artwork",
+    "text": "card artwork",
+    "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: making the small copies of every poster, backdrop and logo."
   },
   {
     "handler": "server.jobs.phase.books",
