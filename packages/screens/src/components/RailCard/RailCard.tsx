@@ -11,6 +11,7 @@ import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import { useHereMark } from '@ValenceScreens/linking/useHereMark';
+import { useIsHere } from '@ValenceScreens/linking/useIsHere';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -353,8 +354,9 @@ const RailCardFace = ({
   const [isRaised, setIsRaised] = useState(false);
   const cardOrigin = useCardOrigin();
   const hereMark = useHereMark();
+  const isHere = useIsHere();
   const marks = [media, ...copies].flatMap((one) => {
-    const mark = cardOrigin(one.libraryId).origin ?? hereMark;
+    const mark = cardOrigin(one.libraryId).origin ?? (isHere(one.libraryId) ? hereMark : null);
 
     return mark === null ? [] : [mark];
   });

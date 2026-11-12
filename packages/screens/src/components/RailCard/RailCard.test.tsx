@@ -17,6 +17,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', async (importOriginal) => ({
     Promise.resolve([
       aLibrary({ id: '00000000-0000-4000-8000-000000000000' }),
       aLibrary({ id: 'theirs', linkedServerId: DUMMY.id }),
+      aLibrary({ id: 'stranger', linkedServerId: '00000000-0000-4000-8000-00000000dead' }),
     ]),
 }));
 
@@ -212,6 +213,20 @@ describe('RailCard', () => {
     await flush();
 
     expect(screen.queryByRole('img', { name: /^From / })).not.toBeInTheDocument();
+  });
+
+  it('never takes a linked library whose server it cannot name for this server’s own', async () => {
+    renderInAnAddress(
+      <RailCard
+        media={{ ...MEDIA, libraryId: 'stranger' }}
+        copies={[{ ...MEDIA, id: 'their-copy', libraryId: 'theirs' }]}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'From Valence' })).not.toBeInTheDocument();
   });
 
   it('marks only the linked server on a title only it has', async () => {

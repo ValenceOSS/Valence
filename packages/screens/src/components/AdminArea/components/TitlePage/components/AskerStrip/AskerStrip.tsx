@@ -35,7 +35,7 @@ const AskerStrip = ({ request }: AskerStripProps) => {
     <span className="flex w-fit max-w-full items-center gap-3 rounded-full border border-[var(--surface-line)] bg-[var(--surface-hover)] py-1.5 pl-1.5 pr-4 backdrop-blur-xl">
       <AskerFace asker={first} accounts={accounts} size="md" />
 
-      <span className="shrink-0 text-sm text-text-muted">
+      <span className="min-w-0 truncate text-sm text-text-muted">
         {say('screens.adminArea.titlePage.titleHero.askedForByNameWhen', {
           name: nameOfAskerFor(first, null),
           when: describeSince(request.createdAt, Date.now()),
