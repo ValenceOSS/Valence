@@ -19,7 +19,7 @@ const GROUND = { dark: '#1c1c1c', light: '#ffffff' } as const;
 
 const MARK_HIGH = 36;
 
-const WIDER_BY = 624 / 458;
+const WIDER_BY = 484.56 / 363.62;
 
 const NAME_SIZE = 38;
 

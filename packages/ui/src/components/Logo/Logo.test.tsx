@@ -151,6 +151,6 @@ describe('the shape of the mark', () => {
   it('holds its proportions where a class sets the size instead', () => {
     const { container } = render(<Logo className="h-8" />);
 
-    expect(container.firstElementChild).toHaveStyle({ aspectRatio: String(624 / 458) });
+    expect(container.firstElementChild).toHaveStyle({ aspectRatio: String(484.56 / 363.62) });
   });
 });
