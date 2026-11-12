@@ -650,6 +650,78 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     expect(titlesIn(found)).toEqual(['Alien']);
   });
 
+  describe('across libraries', () => {
+    /**
+     * A library holding films and an episode of a programme, rated above every film.
+     *
+     * @returns The service and the database under it.
+     */
+    const withAnEpisode = async () => {
+      const made = await aLibrary();
+
+      await made.db.insert(mediaItem).values(
+        aFilm('pilot', 'Pilot', {
+          libraryId: SHOWS_ID,
+          path: '/shows/pilot.mkv',
+          seriesId: 'a-show',
+          seasonNumber: 1,
+          episodeNumber: 1,
+          rating: 9.1,
+        }),
+      );
+
+      return made;
+    };
+
+    it('reads every library asked for in one answer, the best rated first and the unrated last', async () => {
+      const { service } = await withAnEpisode();
+      const found = await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], {
+        order: 'rated',
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(titlesIn(found)).toEqual(['Pilot', 'Alien', 'Arrival', 'Brazil']);
+      expect(found.total).toBe(4);
+    });
+
+    it('counts what matched only where asked, and otherwise says how far it has read', async () => {
+      const { service } = await withAnEpisode();
+      const asked = { order: 'title', limit: 2, offset: 1 } as const;
+
+      expect((await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], asked)).total).toBe(4);
+      expect(
+        (await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], { ...asked, counted: false }))
+          .total,
+      ).toBe(3);
+    });
+
+    it('leaves a library of programmes out where films are asked for', async () => {
+      const { service } = await withAnEpisode();
+      const found = await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], {
+        kind: 'films',
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(titlesIn(found)).not.toContain('Pilot');
+    });
+
+    it('reads nothing from a library the account may not reach', async () => {
+      const { db, service } = await withAnEpisode();
+
+      await db.insert(libraryBlock).values({ userId: 'ada', libraryId: SHOWS_ID });
+
+      const found = await service.listItemsAcross(ADA, [FILMS_ID, SHOWS_ID], {
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(titlesIn(found)).not.toContain('Pilot');
+      expect(titlesIn(found)).toContain('Arrival');
+    });
+  });
+
   it('puts what the profile rated first and the unrated after, by title', async () => {
     const { service } = await aLibrary();
     const found = await service.listItems(SERVER, FILMS_ID, {

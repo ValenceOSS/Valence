@@ -52,6 +52,10 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
             : { corrected: 6, jobId: 'job' },
       ),
   );
+  const listItemsAcross = vi.fn(
+    (_viewer: object, _libraryIds: readonly string[], _options: object) =>
+      Promise.resolve({ items: [], total: 7 }),
+  );
   const readImage = vi.fn((_url: string, _width?: number) =>
     Promise.resolve({ body: new TextEncoder().encode('picture').buffer, contentType: 'image/png' }),
   );
@@ -67,6 +71,7 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
     library: {
       ...createMemoryLibraryService({ libraries: [], media: [] }),
       uploadArtwork,
+      listItemsAcross,
       isOwnArtwork: (_mediaId, url) => Promise.resolve(url === ON_DISK),
       chooseVersion,
       pinEpisode,
@@ -118,10 +123,37 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
       headers: { cookie, origin: TEST_ORIGIN, ...init.headers },
     });
 
-  return { ask, uploadArtwork, readImage, chooseVersion, pinEpisode, chooseSeasonSource };
+  return {
+    ask,
+    uploadArtwork,
+    readImage,
+    chooseVersion,
+    pinEpisode,
+    chooseSeasonSource,
+    listItemsAcross,
+  };
 };
 
 describe('serveLibrary', () => {
+  it('reads every library asked for in one request, counted unless told not to', async () => {
+    const { ask, listItemsAcross } = await build();
+    const counted = await ask('/api/library-items?libraryIds=films,shows&limit=5&order=rated');
+
+    expect(counted.status).toBe(200);
+    expect(await counted.json()).toEqual({ items: [], total: 7 });
+    expect(listItemsAcross.mock.calls[0]?.[1]).toEqual(['films', 'shows']);
+    expect(listItemsAcross.mock.calls[0]?.[2]).toMatchObject({
+      limit: 5,
+      offset: 0,
+      order: 'rated',
+      counted: true,
+    });
+
+    await ask('/api/library-items?libraryIds=films&counted=no');
+
+    expect(listItemsAcross.mock.calls[1]?.[2]).toMatchObject({ counted: false });
+  });
+
   it('keeps an uploaded poster for a title, saying who chose it', async () => {
     const { ask, uploadArtwork } = await build();
     const response = await ask(`/api/media/${MEDIA_ID}/artwork/poster/upload`, {
