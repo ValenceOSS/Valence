@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { processFace } from '@ValenceServer/pictures/processFace';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_DEFAULT } from '@ValenceContracts/schemas/StillWatching';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
@@ -297,10 +298,16 @@ const createMemoryProfileService = (
         return wrong;
       }
 
-      held.photo = photo.body;
+      const processed = await processFace(photo.body).catch(() => null);
+
+      if (processed === null) {
+        return 'unreadable';
+      }
+
+      held.photo = processed;
       held.profile = {
         ...held.profile,
-        avatar: { kind: 'photo', isVideo: false, frame: null },
+        avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true },
         updatedAt: stamp(),
       };
 

@@ -1,11 +1,14 @@
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { extname } from 'node:path';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
+import { keepFace } from '@ValenceServer/pictures/keepFace';
+import { readFace } from '@ValenceServer/pictures/readFace';
+import { reframeFace } from '@ValenceServer/pictures/reframeFace';
+import { MOVING_FACE_TYPES } from '@ValenceServer/pictures/MOVING_FACE_TYPES';
 import { pickOneFaceEach } from './pickOneFaceEach';
 import { viewerProfile, user } from '#dialect/Schema';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
@@ -29,18 +32,6 @@ import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence'
 import { say } from '@ValenceI18n/say';
 import { MOST_PROFILES } from '@ValenceContracts/constants/MOST_PROFILES';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
-
-const MOVING_FORMATS = new Set(['.webm', '.mp4']);
-
-const PHOTO_CONTENT_TYPES: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
-  '.gif': 'image/gif',
-  '.webm': 'video/webm',
-  '.mp4': 'video/mp4',
-};
 
 const [DEFAULT_COLOUR] = PROFILE_COLOURS;
 
@@ -95,8 +86,9 @@ const readAvatarChoice = (row: ProfileRow): ViewerProfile['avatar'] => {
   if (row.photoPath !== null) {
     return {
       kind: 'photo',
-      isVideo: MOVING_FORMATS.has(extname(row.photoPath)),
+      isVideo: MOVING_FACE_TYPES[extname(row.photoPath)] !== undefined,
       frame: look?.kind === 'photo' ? look.frame : null,
+      hasFramedPicture: MOVING_FACE_TYPES[extname(row.photoPath)] === undefined,
     };
   }
 
@@ -326,6 +318,18 @@ const createDatabaseProfileService = (
           .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId))),
       );
 
+      if (changed > 0 && request.avatar?.kind === 'photo') {
+        const [framed] = await db
+          .select({ photoPath: viewerProfile.photoPath })
+          .from(viewerProfile)
+          .where(eq(viewerProfile.id, profileId))
+          .limit(1);
+
+        if (framed?.photoPath !== null && framed?.photoPath !== undefined) {
+          await reframeFace(photoDirectory, framed.photoPath, request.avatar.frame);
+        }
+      }
+
       return changed > 0;
     },
 
@@ -486,7 +490,7 @@ const createDatabaseProfileService = (
       return rows[0] ?? null;
     },
 
-    readAvatar: async (profileId) => {
+    readAvatar: async (profileId, isFramed = false) => {
       const rows = await db
         .select(COLUMNS)
         .from(viewerProfile)
@@ -507,28 +511,19 @@ const createDatabaseProfileService = (
         };
       }
 
-      if (choice.kind !== 'initial' && face.photoPath !== null) {
-        const body = await readFile(join(photoDirectory, face.photoPath)).catch(() => null);
-
-        if (body !== null) {
-          return {
-            body,
-            contentType: PHOTO_CONTENT_TYPES[extname(face.photoPath)] ?? 'image/jpeg',
-          };
-        }
-      }
-
-      return null;
+      return choice.kind !== 'initial' && face.photoPath !== null
+        ? readFace(photoDirectory, face.photoPath, isFramed)
+        : null;
     },
 
     savePhoto: async (userId, profileId, photo) => {
-      const owned = await db
-        .select({ id: viewerProfile.id })
+      const [owned] = await db
+        .select({ avatarLook: viewerProfile.avatarLook })
         .from(viewerProfile)
         .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId)))
         .limit(1);
 
-      if (owned.length === 0) {
+      if (owned === undefined) {
         return 'notYours';
       }
 
@@ -538,13 +533,17 @@ const createDatabaseProfileService = (
         return wrong;
       }
 
-      const extension = extensionFor(photo.contentType) ?? '.png';
+      const name = `${profileId}${extensionFor(photo.contentType) ?? '.png'}`;
+      const unkept = await keepFace(
+        photoDirectory,
+        name,
+        photo.body,
+        owned.avatarLook?.kind === 'photo' ? owned.avatarLook.frame : null,
+      );
 
-      await mkdir(photoDirectory, { recursive: true });
-
-      const name = `${profileId}${extension}`;
-
-      await writeFile(join(photoDirectory, name), photo.body);
+      if (unkept !== null) {
+        return unkept;
+      }
 
       await db
         .update(viewerProfile)

@@ -3,6 +3,7 @@ import { useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPicture } from '@ValenceScreens/library/framedPicture';
+import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
 import type { FaceCircleProps } from './FaceCircle.types';
@@ -25,6 +26,8 @@ const RETRY_AFTER_MS = 1500;
  *
  * Takes the address to load from rather than working it out, because a person's picture and a
  * household's are served by two different routes and everything else about drawing them is the same.
+ * A photograph the server has framed is asked for as that square and drawn as it comes; one being
+ * chosen, or one from a server that does not frame them, is framed here.
  *
  * @param name - Whose initial to fall back to.
  * @param colour - The background behind that initial.
@@ -88,11 +91,13 @@ const FaceCircle = ({
     chosen === null
       ? avatar.kind === 'photo' && avatar.isVideo
       : pending?.type.startsWith('video/') === true;
+  const isServerFramed = chosen === null && avatar.kind === 'photo' && avatar.hasFramedPicture;
+  const asked = isServerFramed ? framedPictureUrl(source) : source;
   const address =
     chosen ??
-    (tries === 0 ? source : `${source}${source.includes('?') ? '&' : '?'}try=${tries.toString()}`);
+    (tries === 0 ? asked : `${asked}${asked.includes('?') ? '&' : '?'}try=${tries.toString()}`);
   const showsPicture = chosen !== null || (avatar.kind !== 'initial' && !isMissing);
-  const frame = chosen === null && avatar.kind === 'photo' ? framedPicture(avatar.frame) : {};
+  const frame = avatar.kind === 'photo' && !isServerFramed ? framedPicture(avatar.frame) : {};
   const letter = avatar.kind === 'initial' ? LETTER_FONT_LOOKS[avatar.font] : null;
   const paint = facePaint(colour, avatar.kind === 'initial' ? avatar.colourTo : null);
 

@@ -150,7 +150,12 @@ describe('createMemoryProfileService', () => {
 
     const [changed] = await profiles.list('marques');
 
-    expect(changed?.avatar).toEqual({ kind: 'photo', isVideo: false, frame: null });
+    expect(changed?.avatar).toEqual({
+      kind: 'photo',
+      isVideo: false,
+      frame: null,
+      hasFramedPicture: true,
+    });
   });
 
   it('turns away a clip, since a face is a still picture', async () => {

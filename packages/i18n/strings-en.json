@@ -11013,7 +11013,7 @@
   {
     "handler": "phone.aFaceEditor.chooseAPhotoOrGIF",
     "text": "Choose a photo or GIF",
-    "context": "The button in the phone's profile picture editor that opens the photo library."
+    "context": "The button in the profile picture editor, on the phone and on the web, that opens the photo library or the file picker."
   },
   {
     "handler": "phone.anAlbum.thatAlbumCouldNotBeRead",
@@ -30211,14 +30211,9 @@
     "context": "The label of a slider in the photo studio in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.aPhotographAGIFOrA",
-    "text": "A photo, a GIF or a short video.",
-    "context": "Shown in the photo studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo",
-    "text": "Choose a photo, GIF or video",
-    "context": "The label of a file picker in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoStudio.aPhotoOrAGIF",
+    "text": "A photo or a GIF.",
+    "context": "Shown beside the file picker in the photo studio in the face editor, before a picture is chosen."
   },
   {
     "handler": "screens.faceEditor.photoStudio.fitTheWholePicture",

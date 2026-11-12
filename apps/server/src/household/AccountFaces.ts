@@ -3,7 +3,10 @@ import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePic
 
 type AccountFaces = {
   read: (accountId: string, accountName: string) => Promise<Household>;
-  readPicture: (accountId: string) => Promise<{ body: Uint8Array; contentType: string } | null>;
+  readPicture: (
+    accountId: string,
+    isFramed?: boolean,
+  ) => Promise<{ body: Uint8Array; contentType: string } | null>;
   change: (accountId: string, request: HouseholdRequest) => Promise<'changed' | 'tooLong' | 'gone'>;
   savePhoto: (
     accountId: string,

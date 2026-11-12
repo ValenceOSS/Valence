@@ -99,7 +99,10 @@ describe('GetStartedHost', () => {
 
   it('marks the picture step done once the profile has a picture', () => {
     renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
-      watcher: { ...aWatcher(false), avatar: { kind: 'photo', isVideo: false, frame: null } },
+      watcher: {
+        ...aWatcher(false),
+        avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+      },
     });
 
     expect(screen.getByText('Add a profile picture')).toHaveClass('line-through');

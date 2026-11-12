@@ -6,12 +6,12 @@ import { Slider } from '@ValenceUI/Slider';
 import type { PhotoStudioProps } from './PhotoStudio.types';
 import { say } from '@ValenceI18n/say';
 
-const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
+const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 
 const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 
 /**
- * A picture of one's own — a photograph, a GIF or a short video — and where it sits in the circle:
+ * A picture of one's own — a photograph or a GIF — and where it sits in the circle:
  * how far in it is drawn, and which part of it is in the middle.
  *
  * @param fileName - The picture chosen here and not saved yet, where there is one.
@@ -26,7 +26,7 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
       <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.picture')}</h3>
       <div className="flex items-center gap-3">
         <FilePicker
-          label={say('screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo')}
+          label={say('phone.aFaceEditor.chooseAPhotoOrGIF')}
           accept={PHOTO_TYPES}
           size="sm"
           onPick={onPick}
@@ -38,7 +38,7 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
           {fileName ??
             (hasPicture
               ? say('screens.faceEditor.photoStudio.yourCurrentPicture')
-              : say('screens.faceEditor.photoStudio.aPhotographAGIFOrA'))}
+              : say('screens.faceEditor.photoStudio.aPhotoOrAGIF'))}
         </span>
       </div>
     </section>

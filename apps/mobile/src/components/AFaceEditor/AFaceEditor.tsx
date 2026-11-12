@@ -64,6 +64,7 @@ const AFaceEditor = ({ isOpen, profile, onClose, onUse }: AFaceEditorProps) => {
             kind: 'photo',
             isVideo: picked === null ? hadPhoto && start.isVideo : picked.isVideo,
             frame,
+            hasFramedPicture: false,
           };
 
   const canUse = mode !== 'photo' || picked !== null || hadPhoto;

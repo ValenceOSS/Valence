@@ -376,7 +376,7 @@ describe('profiles over HTTP', () => {
     expect(wayIn.data?.profiles[0]?.name.endsWith('…')).toBe(true);
   });
 
-  it('serves a household’s picture on the way in, by its owner’s face', async () => {
+  it('serves a household’s processed picture on the way in, by its owner’s face', async () => {
     const { app, auth, settings, profiles, households } = build();
     const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [owner] = await read(app, cookie);
@@ -389,7 +389,7 @@ describe('profiles over HTTP', () => {
     const response = await app.request(`${BASE}/api/profiles/${owner?.id ?? ''}/household`);
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('content-type')).toBe('image/png');
+    expect(response.headers.get('content-type')).toBe('image/webp');
   });
 
   it('serves no household picture by a face that is not an account’s owner', async () => {

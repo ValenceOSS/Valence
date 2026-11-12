@@ -57,7 +57,11 @@ describe('AFace', () => {
 
   it('keeps the initial until the picture has been read, then draws the picture alone', async () => {
     const drawn = await render(
-      <AFace profile={aProfile({ avatar: { kind: 'photo', isVideo: false, frame: null } })} />,
+      <AFace
+        profile={aProfile({
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+        })}
+      />,
     );
 
     expect(drawn.getByText('D')).toBeTruthy();
@@ -72,8 +76,54 @@ describe('AFace', () => {
       <AFace
         profile={aProfile({
           id: 'framed',
-          avatar: { kind: 'photo', isVideo: false, frame: { zoom: 2, x: 1, y: 0 } },
+          avatar: {
+            kind: 'photo',
+            isVideo: false,
+            frame: { zoom: 2, x: 1, y: 0 },
+            hasFramedPicture: false,
+          },
         })}
+      />,
+    );
+
+    expect(thePicture().parent).toHaveStyle({
+      transform: [{ scale: 2 }, { translateX: -24 }, { translateY: -0 }],
+    });
+  });
+
+  it('draws a photograph the server framed as it comes, without moving it again', async () => {
+    await render(
+      <AFace
+        profile={aProfile({
+          id: 'server-framed',
+          avatar: {
+            kind: 'photo',
+            isVideo: false,
+            frame: { zoom: 2, x: 1, y: 0 },
+            hasFramedPicture: true,
+          },
+        })}
+      />,
+    );
+
+    expect(thePicture().parent).not.toHaveStyle({
+      transform: [{ scale: 2 }, { translateX: -24 }, { translateY: -0 }],
+    });
+  });
+
+  it('moves a photograph being chosen as its frame is moved, before it is sent', async () => {
+    await render(
+      <AFace
+        profile={aProfile({
+          id: 'being-chosen',
+          avatar: {
+            kind: 'photo',
+            isVideo: false,
+            frame: { zoom: 2, x: 1, y: 0 },
+            hasFramedPicture: false,
+          },
+        })}
+        picked="file:///chosen.jpg"
       />,
     );
 

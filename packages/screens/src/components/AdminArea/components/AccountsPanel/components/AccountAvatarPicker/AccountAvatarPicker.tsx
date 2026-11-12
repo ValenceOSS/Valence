@@ -66,7 +66,12 @@ const AccountAvatarPicker = ({
             onPick={(file) => {
               onDraft({
                 photo: file,
-                avatar: { kind: 'photo', isVideo: file.type.startsWith('video/'), frame: null },
+                avatar: {
+                  kind: 'photo',
+                  isVideo: file.type.startsWith('video/'),
+                  frame: null,
+                  hasFramedPicture: false,
+                },
               });
             }}
           >

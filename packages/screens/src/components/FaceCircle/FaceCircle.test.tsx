@@ -51,7 +51,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/somewhere/else"
       />,
     );
@@ -64,7 +64,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: true, frame: null }}
+        avatar={{ kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false }}
         source="/api/somewhere/else"
       />,
     );
@@ -77,7 +77,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: true, frame: null }}
+        avatar={{ kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false }}
         source="/api/somewhere/else"
       />,
     );
@@ -92,7 +92,7 @@ describe('FaceCircle', () => {
         <FaceCircle
           name="Marques"
           colour="#3a8ee8"
-          avatar={{ kind: 'photo', isVideo: true, frame: null }}
+          avatar={{ kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false }}
           source="/api/somewhere/else"
         />
       </MotionConfig>,
@@ -122,7 +122,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/gone"
       />,
     );
@@ -155,7 +155,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/gone?v=1"
       />,
     );
@@ -172,7 +172,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/gone?v=2"
       />,
     );
@@ -192,5 +192,66 @@ describe('FaceCircle', () => {
     );
 
     expect(container.querySelector('img')?.getAttribute('src')).toBe('blob:chosen');
+  });
+
+  it('asks the server for the square it framed, and draws it as it comes', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 2, x: 1, y: 0 },
+          hasFramedPicture: true,
+        }}
+        source="/api/profiles/p1/avatar?v=1"
+      />,
+    );
+    const picture = container.querySelector('img');
+
+    expect(picture?.getAttribute('src')).toBe('/api/profiles/p1/avatar?v=1&framed=1');
+    expect(picture?.style.transform).toBe('');
+  });
+
+  it('frames a picture itself where the server does not', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 2, x: 1, y: 0 },
+          hasFramedPicture: false,
+        }}
+        source="/api/profiles/p1/avatar?v=1"
+      />,
+    );
+    const picture = container.querySelector('img');
+
+    expect(picture?.getAttribute('src')).toBe('/api/profiles/p1/avatar?v=1');
+    expect(picture?.style.transform).toContain('scale(2)');
+  });
+
+  it('moves a picture being chosen as its frame is moved, before it is uploaded', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 3, x: 0, y: -1 },
+          hasFramedPicture: true,
+        }}
+        source="/api/profiles/p1/avatar?v=1"
+        pending={new File(['bytes'], 'face.png', { type: 'image/png' })}
+      />,
+    );
+    const picture = container.querySelector('img');
+
+    expect(picture?.getAttribute('src')).toBe('blob:chosen');
+    expect(picture?.style.transform).toContain('scale(3)');
   });
 });

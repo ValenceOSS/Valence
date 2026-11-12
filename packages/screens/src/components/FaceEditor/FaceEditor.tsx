@@ -87,7 +87,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
 
   const avatar: Avatar =
     mode === 'photo'
-      ? { kind: 'photo', isVideo: photoIsVideo, frame }
+      ? { kind: 'photo', isVideo: photoIsVideo, frame, hasFramedPicture: false }
       : mode === 'drawn'
         ? { kind: 'drawn', ...drawn }
         : { kind: 'initial', font, ...(colourTo === null ? {} : { colourTo }) };

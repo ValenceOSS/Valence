@@ -10,7 +10,7 @@ import type { Household, HouseholdRequest, Onboarding } from '@ValenceContracts/
 const FOLLOWING: Household = {
   name: 'Dan',
   colour: '#3a8ee8',
-  avatar: { kind: 'photo', isVideo: false, frame: null },
+  avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
   updatedAt: '2026-10-20T00:00:00.000Z',
   hasOwnName: false,
   hasOwnPicture: false,

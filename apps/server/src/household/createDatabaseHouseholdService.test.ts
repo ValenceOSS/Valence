@@ -1,3 +1,7 @@
+import { mkdtemp, readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { user, userProfile } from '#dialect/Schema';
@@ -105,6 +109,53 @@ describe('createDatabaseHouseholdService', () => {
 
       await expect(service.finishOnboarding('ada')).resolves.toBe(true);
       await expect(service.isOnboarded('ada')).resolves.toBe(true);
+    },
+    STARTING_POSTGRES_MS,
+  );
+  it(
+    'keeps an account’s uploaded picture as it came, and keeps and frames it where it is placed',
+    async () => {
+      const db = await aMigratedDatabase();
+      const directory = await mkdtemp(join(tmpdir(), 'valence-households-'));
+
+      await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+      await db.insert(userProfile).values({ userId: 'ada' });
+
+      const service = createDatabaseHouseholdService(db, directory);
+      const upload = new Uint8Array(
+        await sharp({ create: { width: 3000, height: 2000, channels: 3, background: '#3a8ee8' } })
+          .jpeg()
+          .toBuffer(),
+      );
+
+      await expect(
+        service.savePhoto('ada', { body: upload, contentType: 'image/jpeg' }),
+      ).resolves.toBeNull();
+      expect(await readdir(join(directory, 'originals'))).toEqual(['household-ada.jpg']);
+
+      const shown = await service.readAvatar('ada');
+
+      expect(shown?.contentType).toBe('image/webp');
+      expect((await sharp(shown?.body).metadata()).width).toBe(1024);
+
+      await service.change('ada', {
+        avatar: {
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 4, x: 0, y: 0 },
+          hasFramedPicture: false,
+        },
+      });
+
+      const framed = await sharp((await service.readAvatar('ada', true))?.body).metadata();
+
+      expect([framed.width, framed.height]).toEqual([500, 500]);
+      expect((await service.read('ada')).avatar).toEqual({
+        kind: 'photo',
+        isVideo: false,
+        frame: { zoom: 4, x: 0, y: 0 },
+        hasFramedPicture: true,
+      });
     },
     STARTING_POSTGRES_MS,
   );

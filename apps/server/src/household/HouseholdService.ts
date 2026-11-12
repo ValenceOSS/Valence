@@ -9,7 +9,10 @@ type HouseholdService = {
   finishOnboarding: (userId: string) => Promise<boolean>;
   wayInOf: (userId: string) => Promise<string | null>;
   accountOfWayIn: (wayInId: string) => Promise<string | null>;
-  readAvatar: (userId: string) => Promise<{ body: Uint8Array; contentType: string } | null>;
+  readAvatar: (
+    userId: string,
+    isFramed?: boolean,
+  ) => Promise<{ body: Uint8Array; contentType: string } | null>;
   savePhoto: (
     userId: string,
     photo: { body: Uint8Array; contentType: string },

@@ -19,7 +19,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
@@ -2005,6 +2005,7 @@ const userProfile = pgTable('user_profile', {
   avatarStyle: text('avatarStyle'),
   avatarSeed: text('avatarSeed'),
   photoPath: text('photoPath'),
+  photoFrame: jsonb('photoFrame').$type<PhotoFrame>(),
   wayInId: text('wayInId').unique(),
   onboardedAt: timestamp('onboardedAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),

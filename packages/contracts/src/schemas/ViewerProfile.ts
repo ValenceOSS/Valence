@@ -61,6 +61,7 @@ const AvatarSchema = z.discriminatedUnion('kind', [
     kind: z.literal('photo'),
     isVideo: z.boolean().default(false),
     frame: PhotoFrameSchema.nullable().default(null),
+    hasFramedPicture: z.boolean().default(false),
   }),
   z.object({
     kind: z.literal('orb'),
@@ -152,6 +153,7 @@ export {
   PROFILE_COLOURS,
   AvatarSchema,
   AvatarStyleSchema,
+  PhotoFrameSchema,
   AVATAR_STYLES,
   NAME_MAX,
   profileInitial,

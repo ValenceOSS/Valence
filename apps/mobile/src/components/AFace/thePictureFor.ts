@@ -1,4 +1,5 @@
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
+import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.types';
@@ -9,7 +10,7 @@ import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.typ
  * A drawn face is read from the drawing itself rather than the profile's picture, so a face somebody
  * has just chosen shows before it is saved. An orb or a sketch is shown as the picture the server keeps of it,
  * since a phone draws no shaders. A photograph that moves has nothing a phone can show in
- * a tile, so it gives way to the initial.
+ * a tile, so it gives way to the initial. A photograph the server framed is read as that square.
  *
  * @param profile - Whose picture to read.
  * @param picked - A photograph chosen on this phone and not yet sent, which shows instead.
@@ -39,7 +40,14 @@ const thePictureFor = (
     case 'photo':
       return profile.avatar.isVideo
         ? null
-        : { uri: onThisServer(profileAvatarUrl(profile)), isDrawn: false };
+        : {
+            uri: onThisServer(
+              profile.avatar.hasFramedPicture
+                ? framedPictureUrl(profileAvatarUrl(profile))
+                : profileAvatarUrl(profile),
+            ),
+            isDrawn: false,
+          };
   }
 };
 

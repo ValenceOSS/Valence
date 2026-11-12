@@ -1,6 +1,9 @@
 import { countAffected } from '@ValenceDatabase/countAffected';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { keepFace } from '@ValenceServer/pictures/keepFace';
+import { readFace } from '@ValenceServer/pictures/readFace';
+import { reframeFace } from '@ValenceServer/pictures/reframeFace';
+import { MOVING_FACE_TYPES } from '@ValenceServer/pictures/MOVING_FACE_TYPES';
+import { extname } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { userProfile } from '#dialect/Schema';
 import { drawAvatar, isAvatarStyle } from '@ValenceServer/profiles/drawAvatar';
@@ -8,24 +11,12 @@ import {
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import { ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import { PhotoFrameSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { HOUSEHOLD_LIMITS, householdPhotoName } from './HouseholdPicture';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { HouseholdRequest } from '@ValenceContracts/schemas/Household';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HouseholdService } from './HouseholdService';
-
-const MOVING_FORMATS = new Set(['.webm', '.mp4']);
-
-const PHOTO_CONTENT_TYPES: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
-  '.gif': 'image/gif',
-  '.webm': 'video/webm',
-  '.mp4': 'video/mp4',
-};
 
 type HouseholdRow = {
   displayName: string | null;
@@ -33,6 +24,7 @@ type HouseholdRow = {
   avatarStyle: string | null;
   avatarSeed: string | null;
   photoPath: string | null;
+  photoFrame: PhotoFrame | null;
   onboardedAt: Date | null;
   updatedAt: Date;
 };
@@ -43,6 +35,7 @@ const COLUMNS = {
   avatarStyle: userProfile.avatarStyle,
   avatarSeed: userProfile.avatarSeed,
   photoPath: userProfile.photoPath,
+  photoFrame: userProfile.photoFrame,
   onboardedAt: userProfile.onboardedAt,
   updatedAt: userProfile.updatedAt,
 };
@@ -56,7 +49,14 @@ const COLUMNS = {
  */
 const readAvatarChoice = (row: HouseholdRow): Avatar | null => {
   if (row.photoPath !== null) {
-    return { kind: 'photo', isVideo: MOVING_FORMATS.has(extname(row.photoPath)), frame: null };
+    const isMoving = MOVING_FACE_TYPES[extname(row.photoPath)] !== undefined;
+
+    return {
+      kind: 'photo',
+      isVideo: isMoving,
+      frame: PhotoFrameSchema.nullable().catch(null).parse(row.photoFrame),
+      hasFramedPicture: !isMoving,
+    };
   }
 
   if (row.avatarStyle !== null && row.avatarSeed !== null && isAvatarStyle(row.avatarStyle)) {
@@ -69,21 +69,30 @@ const readAvatarChoice = (row: HouseholdRow): Avatar | null => {
 /**
  * Turns a chosen avatar into the columns that hold it, so that choosing one kind clears whatever
  * another kind left behind, and choosing none, or an initial, leaves the household drawn as its
- * owner is.
+ * owner is. Choosing a photograph keeps the one uploaded and says only where it sits in its circle.
  *
  * @param avatar - What the household should be drawn with, or null for nothing of its own.
  * @returns The columns to write, or nothing where the picture is not being changed.
  */
 const avatarColumns = (
   avatar: HouseholdRequest['avatar'],
-): { avatarStyle: string | null; avatarSeed: string | null; photoPath: string | null } | null => {
-  if (avatar === undefined || avatar?.kind === 'photo') {
+): {
+  avatarStyle?: string | null;
+  avatarSeed?: string | null;
+  photoPath?: string | null;
+  photoFrame?: PhotoFrame | null;
+} | null => {
+  if (avatar === undefined) {
     return null;
   }
 
+  if (avatar?.kind === 'photo') {
+    return { photoFrame: avatar.frame };
+  }
+
   return avatar?.kind === 'drawn'
-    ? { avatarStyle: avatar.style, avatarSeed: avatar.seed, photoPath: null }
-    : { avatarStyle: null, avatarSeed: null, photoPath: null };
+    ? { avatarStyle: avatar.style, avatarSeed: avatar.seed, photoPath: null, photoFrame: null }
+    : { avatarStyle: null, avatarSeed: null, photoPath: null, photoFrame: null };
 };
 
 /**
@@ -150,6 +159,14 @@ const createDatabaseHouseholdService = (
           .where(eq(userProfile.userId, userId)),
       );
 
+      if (changed > 0 && request.avatar?.kind === 'photo') {
+        const row = await rowFor(userId);
+
+        if (row?.photoPath !== null && row?.photoPath !== undefined) {
+          await reframeFace(pictureDirectory, row.photoPath, request.avatar.frame);
+        }
+      }
+
       return changed > 0;
     },
 
@@ -184,7 +201,7 @@ const createDatabaseHouseholdService = (
       return row?.userId ?? null;
     },
 
-    readAvatar: async (userId) => {
+    readAvatar: async (userId, isFramed = false) => {
       const row = await rowFor(userId);
 
       if (row === undefined) {
@@ -200,18 +217,9 @@ const createDatabaseHouseholdService = (
         };
       }
 
-      if (choice?.kind === 'photo' && row.photoPath !== null) {
-        const body = await readFile(join(pictureDirectory, row.photoPath)).catch(() => null);
-
-        if (body !== null) {
-          return {
-            body,
-            contentType: PHOTO_CONTENT_TYPES[extname(row.photoPath)] ?? 'image/jpeg',
-          };
-        }
-      }
-
-      return null;
+      return choice?.kind === 'photo' && row.photoPath !== null
+        ? readFace(pictureDirectory, row.photoPath, isFramed)
+        : null;
     },
 
     savePhoto: async (userId, photo) => {
@@ -221,11 +229,17 @@ const createDatabaseHouseholdService = (
         return wrong;
       }
 
-      await mkdir(pictureDirectory, { recursive: true });
-
       const name = householdPhotoName(userId, extensionFor(photo.contentType) ?? '.png');
+      const unkept = await keepFace(
+        pictureDirectory,
+        name,
+        photo.body,
+        (await rowFor(userId))?.photoFrame ?? null,
+      );
 
-      await writeFile(join(pictureDirectory, name), photo.body);
+      if (unkept !== null) {
+        return unkept;
+      }
 
       const changed = countAffected(
         await db

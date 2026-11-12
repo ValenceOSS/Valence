@@ -122,7 +122,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const picture = await faces.readPicture(account.id);
+    const picture = await faces.readPicture(account.id, context.req.query('framed') !== undefined);
 
     if (picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -142,7 +142,10 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const picture = await faces?.readPicture(context.req.param('userId'));
+    const picture = await faces?.readPicture(
+      context.req.param('userId'),
+      context.req.query('framed') !== undefined,
+    );
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -188,7 +191,10 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
     }
 
-    const picture = await profiles?.readAvatar(profileId);
+    const picture = await profiles?.readAvatar(
+      profileId,
+      context.req.query('framed') !== undefined,
+    );
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
@@ -212,7 +218,9 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
           ? await profiles?.accountOf(profileId)
           : null;
     const picture =
-      accountId === null || accountId === undefined ? null : await faces?.readPicture(accountId);
+      accountId === null || accountId === undefined
+        ? null
+        : await faces?.readPicture(accountId, context.req.query('framed') !== undefined);
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);

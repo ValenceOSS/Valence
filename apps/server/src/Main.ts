@@ -216,6 +216,7 @@ import { createLiveRelay } from '@ValenceServer/live/createLiveRelay';
 import { createLiveRoutes } from '@ValenceServer/live/createLiveRoutes';
 import { createIptvOrgCatalogue } from '@ValenceServer/live/createIptvOrgCatalogue';
 import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
+import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
@@ -1416,6 +1417,35 @@ const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 
 const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
 
+const upgradedFaces = await upgradeFaces(
+  env.PROFILE_IMAGE_DIR,
+  [
+    ...(
+      await db
+        .select({ photoPath: viewerProfile.photoPath, look: viewerProfile.avatarLook })
+        .from(viewerProfile)
+    ).map((row) => ({
+      photoPath: row.photoPath,
+      frame: row.look?.kind === 'photo' ? row.look.frame : null,
+    })),
+    ...(
+      await db
+        .select({ photoPath: userProfile.photoPath, frame: userProfile.photoFrame })
+        .from(userProfile)
+    ).map((row) => ({ photoPath: row.photoPath, frame: row.frame })),
+  ].flatMap((row) => (row.photoPath === null ? [] : [{ name: row.photoPath, frame: row.frame }])),
+  (name, reason) => {
+    log.error('server', `profiles: ${name} could not be processed — ${reason.message}`);
+  },
+);
+
+if (upgradedFaces.moved + upgradedFaces.processed > 0) {
+  log.info(
+    'server',
+    `profiles: ${upgradedFaces.moved.toString()} picture(s) kept as originals, ${upgradedFaces.processed.toString()} processed`,
+  );
+}
+
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 const brandLogo = createFilePictureStore({
   directory: env.PROFILE_IMAGE_DIR,
@@ -1967,6 +1997,14 @@ const linkedTitleOf = createLinkedTitleReader(db);
 
 const serverPictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'servers'));
 
+const livePictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live'));
+
+for (const pictures of [serverPictures, livePictures]) {
+  await pictures.upgrade((name, reason) => {
+    log.error('server', `pictures: ${name} could not be processed — ${reason.message}`);
+  });
+}
+
 const tellLinkedOfChange = createChangeTeller({
   links: linkStore,
   sharing: linkSharingStore,
@@ -2004,7 +2042,7 @@ const liveTv: LiveTvOptions = {
   relay: createLiveRelay(),
   iptvOrg: createIptvOrgCatalogue(),
   routes: liveRoutes,
-  pictures: createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live')),
+  pictures: livePictures,
   startTranscoded: async (channel, proxy) => {
     const liveId =
       (await transcoder.startLive?.(channel.streamUrl, {

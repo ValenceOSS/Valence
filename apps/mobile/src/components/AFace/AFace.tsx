@@ -39,7 +39,9 @@ const styles = StyleSheet.create({
 
 /**
  * How a framed photograph sits in its tile, as the web frames it: grown by its zoom and slid by its
- * position, where a position of one moves it as far as the zoom leaves room to.
+ * position, where a position of one moves it as far as the zoom leaves room to. Only a photograph
+ * being chosen, or one from a server that does not frame them, is moved here; one the server framed
+ * comes as the square its frame chose.
  *
  * @param avatar - The face, which only a photograph with a frame is moved for.
  * @param side - How wide the tile is.
@@ -150,7 +152,19 @@ const AFace = ({
         )}
 
         {picture === null ? null : (
-          <View style={[styles.picture, framed(picked === null ? profile.avatar : null, side)]}>
+          <View
+            style={[
+              styles.picture,
+              framed(
+                picked === null &&
+                  profile.avatar.kind === 'photo' &&
+                  profile.avatar.hasFramedPicture
+                  ? null
+                  : profile.avatar,
+                side,
+              ),
+            ]}
+          >
             <APicture
               picture={picture}
               onLoad={() => {

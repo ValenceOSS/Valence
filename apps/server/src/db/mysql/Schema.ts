@@ -19,7 +19,7 @@ import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
@@ -2001,6 +2001,7 @@ const userProfile = mysqlTable('user_profile', {
   avatarStyle: mediumtext('avatarStyle'),
   avatarSeed: mediumtext('avatarSeed'),
   photoPath: mediumtext('photoPath'),
+  photoFrame: jsonColumn('photoFrame').$type<PhotoFrame>(),
   wayInId: varchar('wayInId', { length: 36 }).unique(),
   onboardedAt: moment('onboardedAt'),
   createdAt: momentNow('createdAt').notNull(),
