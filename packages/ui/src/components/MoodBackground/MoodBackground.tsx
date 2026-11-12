@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
 import { ShaderMount } from '@paper-design/shaders-react';
+import { canDrawShaders } from '@ValenceUI/canDrawShaders';
 import { HOUSE_LIGHTS } from '@ValenceCore/tokens/houseLights';
 import { moodOrbShader } from './moodOrbShader';
 import { tintOf } from './tintOf';
@@ -141,6 +142,7 @@ const MoodBackground = ({
   const [shown, setShown] = useState<Orbs>(() => orbsOf(lit));
   const shownRef = useRef(shown);
   const driftingRef = useRef<HTMLDivElement | null>(null);
+  const [canDraw] = useState(canDrawShaders);
 
   useLayoutEffect(() => {
     litRef.current = lit;
@@ -221,14 +223,16 @@ const MoodBackground = ({
         data-slot="mood-orbs"
         className="absolute inset-0 opacity-[var(--bloom-strength)] will-change-transform"
       >
-        <ShaderMount
-          fragmentShader={moodOrbShader}
-          uniforms={uniforms}
-          speed={isMoving ? (isLively ? 1 / LIVELY : 1) : 0}
-          maxPixelCount={PIXEL_BUDGET}
-          minPixelRatio={1}
-          className="block h-full w-full"
-        />
+        {canDraw ? (
+          <ShaderMount
+            fragmentShader={moodOrbShader}
+            uniforms={uniforms}
+            speed={isMoving ? (isLively ? 1 / LIVELY : 1) : 0}
+            maxPixelCount={PIXEL_BUDGET}
+            minPixelRatio={1}
+            className="block h-full w-full"
+          />
+        ) : null}
       </div>
 
       <span className="valence-mood-fade" />

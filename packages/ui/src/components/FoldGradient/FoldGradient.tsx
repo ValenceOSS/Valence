@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ShaderMount } from '@paper-design/shaders-react';
+import { canDrawShaders } from '@ValenceUI/canDrawShaders';
 import { cn } from '@ValenceUI/cn';
 import {
   DEFAULT_FOLD_GRADIENT_BACKGROUND,
@@ -61,6 +62,7 @@ const FoldGradient = ({
   pixelBudget = 1600 * 900,
   className,
 }: FoldGradientProps) => {
+  const [canDraw] = useState(canDrawShaders);
   const uniforms = useMemo(
     () => ({
       u_colors: colors.map(hexToLinearRgba),
@@ -89,6 +91,10 @@ const FoldGradient = ({
       isAscii,
     ],
   );
+
+  if (!canDraw) {
+    return null;
+  }
 
   return (
     <ShaderMount

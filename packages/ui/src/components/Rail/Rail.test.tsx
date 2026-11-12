@@ -322,7 +322,7 @@ describe('Rail', () => {
     expect(container.querySelector('header')).toHaveClass('relative', 'z-10');
   });
 
-  it('paints the arrows as every other default button is painted', () => {
+  it('paints the arrows in glass, so the row shows through them', () => {
     const { container } = render(<Rail title="Recently added">{items}</Rail>);
     const track = container.querySelector('ul');
 
@@ -332,7 +332,7 @@ describe('Rail', () => {
     }
 
     expect(screen.getByRole('button', { name: 'Forward a page of Recently added' })).toHaveClass(
-      'bg-[var(--surface-hover)]',
+      'bg-[var(--color-glass)]',
     );
   });
 

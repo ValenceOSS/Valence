@@ -61,7 +61,7 @@ const freshFlags = (
         key,
         now - (oldest.get(key) ?? 0) > FRESH_FOR_MS
           ? say('client.library.freshFlags.newEpisode')
-          : say('client.library.freshFlags.new'),
+          : say('screens.profileEditor.readProfileForm.new'),
       ]),
   );
 

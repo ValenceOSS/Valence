@@ -4,6 +4,10 @@ import type { ShaderMountProps } from '@paper-design/shaders-react';
 import { MoodBackground } from './MoodBackground';
 import type * as MotionReact from 'motion/react';
 
+const graphics = vi.hoisted(() => ({ canDraw: true }));
+
+vi.mock('@ValenceUI/canDrawShaders', () => ({ canDrawShaders: () => graphics.canDraw }));
+
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
 const tints = vi.hoisted(() => new Map<string, number>());
@@ -69,6 +73,24 @@ afterEach(() => {
 });
 
 describe('MoodBackground', () => {
+  it('lights the page as strongly as the theme says, a glow over black being a wash over white', () => {
+    const { container } = render(<MoodBackground lights={[{ color: '#ff0000' }]} />);
+
+    expect(container.querySelector('[data-slot="mood-orbs"]')).toHaveClass(
+      'opacity-[var(--bloom-strength)]',
+    );
+  });
+
+  it('leaves the plain colour behind where the browser cannot draw shaders', () => {
+    graphics.canDraw = false;
+
+    render(<MoodBackground lights={[{ color: '#ff0000' }]} />);
+
+    expect(screen.queryByTestId('shader-mount')).not.toBeInTheDocument();
+
+    graphics.canDraw = true;
+  });
+
   it('puts a light where the picture said it came from', () => {
     render(<MoodBackground lights={[{ color: 'rgb(10, 20, 30)', at: '77% 12%' }]} />);
 

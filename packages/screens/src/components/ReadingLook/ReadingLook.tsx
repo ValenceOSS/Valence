@@ -56,33 +56,37 @@ const ReadingLook = ({
             <Button
               variant="ghost"
               size="none"
-              label={say('screens.readingLook.smallerText')}
+              label={say('phone.aReader.aReadingLook.smallerText')}
               disabled={onSmaller === null}
               onClick={() => {
                 onSmaller?.();
               }}
               className="flex-1 text-sm"
             >
-              <span style={{ fontFamily: READER_SERIF }}>{say('screens.readingLook.letter')}</span>
+              <span style={{ fontFamily: READER_SERIF }}>
+                {say('phone.aReader.aReadingLook.letter')}
+              </span>
             </Button>
             <span aria-hidden className="my-2.5 w-px bg-line" />
             <Button
               variant="ghost"
               size="none"
-              label={say('screens.readingLook.largerText')}
+              label={say('phone.aReader.aReadingLook.largerText')}
               disabled={onLarger === null}
               onClick={() => {
                 onLarger?.();
               }}
               className="flex-1 text-xl"
             >
-              <span style={{ fontFamily: READER_SERIF }}>{say('screens.readingLook.letter')}</span>
+              <span style={{ fontFamily: READER_SERIF }}>
+                {say('phone.aReader.aReadingLook.letter')}
+              </span>
             </Button>
           </div>
 
           <div className="flex flex-col gap-2.5">
             <span className="text-xs font-medium text-text-muted">
-              {say('screens.readingLook.themes')}
+              {say('phone.aReader.aReadingLook.themes')}
             </span>
 
             <div className="grid grid-cols-3 gap-2.5">
@@ -96,7 +100,9 @@ const ReadingLook = ({
                     variant="bare"
                     size="none"
                     hasTooltip={false}
-                    label={say('screens.readingLook.useNameTheme', { name: nameReadingTheme(id) })}
+                    label={say('phone.aReader.aReadingLook.useNameTheme', {
+                      name: nameReadingTheme(id),
+                    })}
                     aria-pressed={isChosen}
                     onClick={() => {
                       onTheme(id);
@@ -117,7 +123,7 @@ const ReadingLook = ({
                         className={cn('text-2xl', look.isBold ? 'font-bold' : 'font-normal')}
                         style={{ fontFamily: READER_SERIF }}
                       >
-                        {say('screens.readingLook.sample')}
+                        {say('phone.aReader.aReadingLook.sample')}
                       </span>
 
                       {isChosen ? (

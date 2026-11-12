@@ -348,7 +348,7 @@ const PageReader = ({
             <PopoverPanel
               tone="default"
               align="end"
-              label={say('screens.pageReader.layoutSettings')}
+              label={say('screens.pageReader.layout')}
               isOpen={isLayoutOpen}
               onOpenChange={setIsLayoutOpen}
               trigger={

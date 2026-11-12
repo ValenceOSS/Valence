@@ -10,11 +10,11 @@ import { say } from '@ValenceI18n/say';
 const nameReadingTheme = (theme: (typeof READING_THEME_IDS)[number]): string =>
   ({
     original: say('common.original'),
-    quiet: say('client.books.nameReadingTheme.quiet'),
-    paper: say('client.books.nameReadingTheme.paper'),
-    bold: say('client.books.nameReadingTheme.bold'),
-    calm: say('client.books.nameReadingTheme.calm'),
-    focus: say('client.books.nameReadingTheme.focus'),
+    quiet: say('phone.aReader.aReadingLook.quiet'),
+    paper: say('phone.aReader.aReadingLook.paper'),
+    bold: say('client.playback.nameCaptionWeight.bold'),
+    calm: say('phone.aReader.aReadingLook.calm'),
+    focus: say('phone.aReader.aReadingLook.focus'),
   })[theme];
 
 export { nameReadingTheme };
