@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { FACE_FOLDERS } from './FACE_FOLDERS';
+import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
 import { cropFace } from './cropFace';
 import { framedNameOf } from './framedNameOf';
 import { processFace } from './processFace';
@@ -32,11 +32,11 @@ const keepFace = async (
 
   const [whole, framed] = made;
 
-  await mkdir(join(directory, FACE_FOLDERS.originals), { recursive: true });
-  await mkdir(join(directory, FACE_FOLDERS.processed), { recursive: true });
-  await writeFile(join(directory, FACE_FOLDERS.originals, name), body);
-  await writeFile(join(directory, FACE_FOLDERS.processed, processedNameOf(name)), whole);
-  await writeFile(join(directory, FACE_FOLDERS.processed, framedNameOf(name)), framed);
+  await mkdir(join(directory, PICTURE_FOLDERS.originals), { recursive: true });
+  await mkdir(join(directory, PICTURE_FOLDERS.processed), { recursive: true });
+  await writeFile(join(directory, PICTURE_FOLDERS.originals, name), body);
+  await writeFile(join(directory, PICTURE_FOLDERS.processed, processedNameOf(name)), whole);
+  await writeFile(join(directory, PICTURE_FOLDERS.processed, framedNameOf(name)), framed);
 
   return null;
 };

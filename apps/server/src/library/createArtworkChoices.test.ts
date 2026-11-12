@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import sharp from 'sharp';
-import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { diskPictureAddress } from './diskPictureAddress';
@@ -277,7 +277,10 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     await expect(
       choices.upload('film', 'poster', { body: png, contentType: 'image/png' }, null),
     ).resolves.toEqual({ jobId: null });
-    expect((await readdir(uploads)).filter((name) => name.endsWith('.type'))).toHaveLength(1);
+    expect(await readdir(uploads)).toHaveLength(1);
+    expect(await readFile(join(uploads, (await readdir(uploads))[0] ?? ''))).toEqual(
+      Buffer.from(png),
+    );
   });
 
   it('shows the pictures the catalogue would pick itself, beside the ones to choose from', async () => {

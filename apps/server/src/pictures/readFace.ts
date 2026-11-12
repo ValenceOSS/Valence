@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { FACE_FOLDERS } from './FACE_FOLDERS';
+import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
 import { MOVING_FACE_TYPES } from './MOVING_FACE_TYPES';
 import { framedNameOf } from './framedNameOf';
 import { processedNameOf } from './processedNameOf';
@@ -23,13 +23,17 @@ const readFace = async (
   const moving = MOVING_FACE_TYPES[extname(name)];
 
   if (moving !== undefined) {
-    const body = await readFile(join(directory, FACE_FOLDERS.originals, name)).catch(() => null);
+    const body = await readFile(join(directory, PICTURE_FOLDERS.originals, name)).catch(() => null);
 
     return body === null ? null : { body, contentType: moving };
   }
 
   const body = await readFile(
-    join(directory, FACE_FOLDERS.processed, isFramed ? framedNameOf(name) : processedNameOf(name)),
+    join(
+      directory,
+      PICTURE_FOLDERS.processed,
+      isFramed ? framedNameOf(name) : processedNameOf(name),
+    ),
   ).catch(() => null);
 
   return body === null ? null : { body, contentType: 'image/webp' };

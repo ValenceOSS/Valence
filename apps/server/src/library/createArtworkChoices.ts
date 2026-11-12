@@ -523,7 +523,6 @@ const createArtworkChoices = ({
 
     await mkdir(uploads, { recursive: true });
     await writeFile(join(uploads, id), artwork.body);
-    await writeFile(join(uploads, `${id}.type`), artwork.contentType);
 
     return choose(mediaId, kind, uploadPictureAddress(id), by);
   };

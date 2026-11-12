@@ -5,7 +5,7 @@ import {
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import { FACE_FOLDERS } from '@ValenceServer/pictures/FACE_FOLDERS';
+import { PICTURE_FOLDERS } from '@ValenceServer/pictures/PICTURE_FOLDERS';
 import { keepFace } from '@ValenceServer/pictures/keepFace';
 import { framedNameOf } from '@ValenceServer/pictures/framedNameOf';
 import { processedNameOf } from '@ValenceServer/pictures/processedNameOf';
@@ -37,10 +37,10 @@ const createServerPictures = (directory: string): ServerPictures => {
     await Promise.all([
       ...KEPT_AS.flatMap((extension) => [
         rm(join(directory, `${key}${extension}`), { force: true }),
-        rm(join(directory, FACE_FOLDERS.originals, `${key}${extension}`), { force: true }),
+        rm(join(directory, PICTURE_FOLDERS.originals, `${key}${extension}`), { force: true }),
       ]),
-      rm(join(directory, FACE_FOLDERS.processed, processedNameOf(key)), { force: true }),
-      rm(join(directory, FACE_FOLDERS.processed, framedNameOf(key)), { force: true }),
+      rm(join(directory, PICTURE_FOLDERS.processed, processedNameOf(key)), { force: true }),
+      rm(join(directory, PICTURE_FOLDERS.processed, framedNameOf(key)), { force: true }),
     ]);
   };
 
@@ -63,9 +63,9 @@ const createServerPictures = (directory: string): ServerPictures => {
     },
 
     read: async (key) => {
-      const body = await readFile(join(directory, FACE_FOLDERS.processed, framedNameOf(key))).catch(
-        () => null,
-      );
+      const body = await readFile(
+        join(directory, PICTURE_FOLDERS.processed, framedNameOf(key)),
+      ).catch(() => null);
 
       return body === null ? null : { body, contentType: 'image/webp' };
     },
@@ -83,7 +83,7 @@ const createServerPictures = (directory: string): ServerPictures => {
         directory,
         [
           ...(await picturesIn(directory)),
-          ...(await picturesIn(join(directory, FACE_FOLDERS.originals))),
+          ...(await picturesIn(join(directory, PICTURE_FOLDERS.originals))),
         ].map((name) => ({ name, frame: null })),
         onProblem,
       );

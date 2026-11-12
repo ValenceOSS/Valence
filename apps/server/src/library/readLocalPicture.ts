@@ -1,20 +1,18 @@
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
+import { cleanPicture } from '@ValenceServer/pictures/cleanPicture';
 
 const DISK = /^valence-disk:([A-Za-z0-9_-]+)$/u;
 
 const UPLOAD = /^valence-upload:([0-9a-f-]{36})$/u;
 
-const TYPES: Readonly<Record<string, string>> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-};
+const PICTURE_EXTENSIONS: ReadonlySet<string> = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 /**
  * Reads a picture kept on this server rather than at the catalogue: one beside a title's files on
- * the disk, or one an administrator uploaded, answering as the catalogue's address would.
+ * the disk, or one an administrator uploaded, answering as the catalogue's address would, with a
+ * cleaned copy rather than the file itself, so nothing the file carried about where it came from is
+ * handed out.
  *
  * @param url - The picture's address.
  * @param uploads - Where uploaded pictures are kept.
@@ -28,20 +26,21 @@ const readLocalPicture = async (url: string, uploads: string): Promise<Response 
     return null;
   }
 
+  const path =
+    disk?.[1] === undefined
+      ? join(uploads, upload?.[1] ?? '')
+      : Buffer.from(disk[1], 'base64url').toString('utf8');
+
+  if (disk !== null && !PICTURE_EXTENSIONS.has(extname(path).toLowerCase())) {
+    return new Response(null, { status: 415 });
+  }
+
   try {
-    if (disk?.[1] !== undefined) {
-      const path = Buffer.from(disk[1], 'base64url').toString('utf8');
-      const type = TYPES[extname(path).toLowerCase()];
+    const cleaned = await cleanPicture(new Uint8Array(await readFile(path))).catch(() => null);
 
-      return type === undefined
-        ? new Response(null, { status: 415 })
-        : new Response(await readFile(path), { headers: { 'content-type': type } });
-    }
-
-    const id = upload?.[1] ?? '';
-    const type = await readFile(join(uploads, `${id}.type`), 'utf8');
-
-    return new Response(await readFile(join(uploads, id)), { headers: { 'content-type': type } });
+    return cleaned === null
+      ? new Response(null, { status: 415 })
+      : new Response(cleaned, { headers: { 'content-type': 'image/webp' } });
   } catch {
     return new Response(null, { status: 404 });
   }

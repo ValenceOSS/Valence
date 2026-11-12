@@ -1,41 +1,14 @@
-import { copyFile, mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { FACE_FOLDERS } from './FACE_FOLDERS';
+import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
 import { processFace } from './processFace';
 import { MOVING_FACE_TYPES } from './MOVING_FACE_TYPES';
 import { cropFace } from './cropFace';
 import { framedNameOf } from './framedNameOf';
 import { processedNameOf } from './processedNameOf';
+import { isThere } from './isThere';
+import { moveFile } from './moveFile';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
-
-/**
- * Whether a file is there.
- *
- * @param path - Where to look.
- * @returns Whether it is.
- */
-const isThere = (path: string): Promise<boolean> =>
-  stat(path).then(
-    () => true,
-    () => false,
-  );
-
-/**
- * Moves a file, copying it across where it would have to cross from one disk to another.
- *
- * @param from - Where it is.
- * @param to - Where it goes.
- */
-const move = async (from: string, to: string): Promise<void> => {
-  await rename(from, to).catch(async (error: NodeJS.ErrnoException) => {
-    if (error.code !== 'EXDEV') {
-      throw error;
-    }
-
-    await copyFile(from, to);
-    await unlink(from);
-  });
-};
 
 /**
  * Brings faces kept before they were processed up to date: each upload still loose in the folder is
@@ -53,8 +26,8 @@ const upgradeFaces = async (
   faces: readonly { name: string; frame: PhotoFrame | null }[],
   onProblem: (name: string, reason: Error) => void,
 ): Promise<{ moved: number; processed: number }> => {
-  const originals = join(directory, FACE_FOLDERS.originals);
-  const processedFolder = join(directory, FACE_FOLDERS.processed);
+  const originals = join(directory, PICTURE_FOLDERS.originals);
+  const processedFolder = join(directory, PICTURE_FOLDERS.processed);
   const seen = new Set<string>();
   let moved = 0;
   let processed = 0;
@@ -74,7 +47,7 @@ const upgradeFaces = async (
     try {
       if ((await isThere(loose)) && !(await isThere(original))) {
         await mkdir(originals, { recursive: true });
-        await move(loose, original);
+        await moveFile(loose, original);
         moved += 1;
       }
 

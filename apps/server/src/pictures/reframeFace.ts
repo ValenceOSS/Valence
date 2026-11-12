@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { FACE_FOLDERS } from './FACE_FOLDERS';
+import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
 import { MOVING_FACE_TYPES } from './MOVING_FACE_TYPES';
 import { cropFace } from './cropFace';
 import { framedNameOf } from './framedNameOf';
@@ -24,7 +24,9 @@ const reframeFace = async (
     return false;
   }
 
-  const original = await readFile(join(directory, FACE_FOLDERS.originals, name)).catch(() => null);
+  const original = await readFile(join(directory, PICTURE_FOLDERS.originals, name)).catch(
+    () => null,
+  );
   const framed =
     original === null ? null : await cropFace(new Uint8Array(original), frame).catch(() => null);
 
@@ -32,8 +34,8 @@ const reframeFace = async (
     return false;
   }
 
-  await mkdir(join(directory, FACE_FOLDERS.processed), { recursive: true });
-  await writeFile(join(directory, FACE_FOLDERS.processed, framedNameOf(name)), framed);
+  await mkdir(join(directory, PICTURE_FOLDERS.processed), { recursive: true });
+  await writeFile(join(directory, PICTURE_FOLDERS.processed, framedNameOf(name)), framed);
 
   return true;
 };

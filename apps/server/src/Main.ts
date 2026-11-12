@@ -185,6 +185,8 @@ import {
   library,
   mediaItem,
   mediaArtworkChoice,
+  collection,
+  playlist,
   mediaPart,
   mediaRendition,
   mediaItemJob,
@@ -217,6 +219,8 @@ import { createLiveRoutes } from '@ValenceServer/live/createLiveRoutes';
 import { createIptvOrgCatalogue } from '@ValenceServer/live/createIptvOrgCatalogue';
 import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
 import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
+import { upgradePictures } from '@ValenceServer/pictures/upgradePictures';
+import { forgetRawLocalCopies } from '@ValenceServer/images/forgetRawLocalCopies';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
@@ -1446,6 +1450,46 @@ if (upgradedFaces.moved + upgradedFaces.processed > 0) {
   );
 }
 
+const collectionArtworkDir = join(env.PROFILE_IMAGE_DIR, '..', 'collections');
+
+const playlistArtworkDir = join(env.PROFILE_IMAGE_DIR, '..', 'playlists');
+
+const keptSettings = await settings.read();
+
+const keptUploads = [
+  {
+    directory: env.PROFILE_IMAGE_DIR,
+    names: [keptSettings.splashscreenFile, keptSettings.brandLogoFile],
+  },
+  {
+    directory: collectionArtworkDir,
+    names: (await db.select({ path: collection.artworkPath }).from(collection)).map(
+      (row) => row.path,
+    ),
+  },
+  {
+    directory: playlistArtworkDir,
+    names: (await db.select({ path: playlist.artworkPath }).from(playlist)).map((row) => row.path),
+  },
+];
+
+for (const { directory, names } of keptUploads) {
+  const upgraded = await upgradePictures(
+    directory,
+    names.filter((name) => name !== null),
+    (name, reason) => {
+      log.error('server', `pictures: ${name} could not be cleaned — ${reason.message}`);
+    },
+  );
+
+  if (upgraded.moved + upgraded.processed > 0) {
+    log.info(
+      'server',
+      `pictures: ${upgraded.moved.toString()} upload(s) in ${directory} kept as originals, ${upgraded.processed.toString()} cleaned`,
+    );
+  }
+}
+
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 const brandLogo = createFilePictureStore({
   directory: env.PROFILE_IMAGE_DIR,
@@ -1781,11 +1825,7 @@ const musicServices: MusicServices = {
     web: musicWeb,
     readImage: (url) => cataloguePictureCache.read(url),
   }),
-  playlists: createDatabasePlaylistService(
-    db,
-    musicLibrary,
-    join(env.PROFILE_IMAGE_DIR, '..', 'playlists'),
-  ),
+  playlists: createDatabasePlaylistService(db, musicLibrary, playlistArtworkDir),
   devices: createMusicDevices({
     presence,
     onChanged: (accountId) => {
@@ -3872,7 +3912,7 @@ const libraryService = createDatabaseLibraryService({
 const collectionService = createDatabaseCollectionService({
   db,
   library: libraryService,
-  artworkDirectory: join(env.PROFILE_IMAGE_DIR, '..', 'collections'),
+  artworkDirectory: collectionArtworkDir,
   onChanged: () => {
     realtime.publish('media', { event: 'collections' }, { kind: 'everyone' });
   },
@@ -4705,6 +4745,19 @@ const images = createImageCache({
     }
   },
 });
+
+const forgottenRawCopies = await forgetRawLocalCopies(await listArtworkUrls(), {
+  directory: env.IMAGE_CACHE_DIR,
+  nameFor: images.nameFor,
+  forget: images.forget,
+});
+
+if (forgottenRawCopies > 0) {
+  log.info(
+    'server',
+    `image cache: ${forgottenRawCopies.toString()} copied picture(s) from this server let go, to be cleaned`,
+  );
+}
 
 const bookPagesDir = join(env.IMAGE_CACHE_DIR, 'books');
 

@@ -2,7 +2,7 @@ import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { join } from 'node:path';
-import { FACE_FOLDERS } from '@ValenceServer/pictures/FACE_FOLDERS';
+import { PICTURE_FOLDERS } from '@ValenceServer/pictures/PICTURE_FOLDERS';
 import { framedNameOf } from '@ValenceServer/pictures/framedNameOf';
 import { processedNameOf } from '@ValenceServer/pictures/processedNameOf';
 
@@ -153,11 +153,11 @@ const cleanupImageCache = async ({
     [
       { directory: profilesDir, isValid: (name) => validPhotoNames.has(name) },
       {
-        directory: join(profilesDir, FACE_FOLDERS.originals),
+        directory: join(profilesDir, PICTURE_FOLDERS.originals),
         isValid: (name) => validPhotoNames.has(name),
       },
       {
-        directory: join(profilesDir, FACE_FOLDERS.processed),
+        directory: join(profilesDir, PICTURE_FOLDERS.processed),
         isValid: (name) => validProcessedNames.has(name),
       },
     ],

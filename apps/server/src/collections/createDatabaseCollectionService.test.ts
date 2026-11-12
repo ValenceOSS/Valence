@@ -372,7 +372,7 @@ describe('createDatabaseCollectionService', { timeout: STARTING_POSTGRES_MS }, (
       collections.saveArtwork(made.id, { body: picture, contentType: 'image/png' }),
     ).resolves.toBeNull();
     await expect(collections.readArtwork(ADMIN, made.id)).resolves.toMatchObject({
-      contentType: 'image/png',
+      contentType: 'image/webp',
     });
     expect((await collections.list(ADMIN, { withEmpty: true }))[0]?.hasOwnArtwork).toBe(true);
     await expect(collections.dropArtwork(made.id)).resolves.toBe(true);
