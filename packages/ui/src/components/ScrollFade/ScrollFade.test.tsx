@@ -58,4 +58,14 @@ describe('ScrollFade', () => {
 
     expect(screen.getByText('Short').parentElement).not.toHaveAttribute('tabindex');
   });
+
+  it('is a region named for what it holds, where it is given a name', () => {
+    render(
+      <ScrollFade label="What has arrived">
+        <p>Film</p>
+      </ScrollFade>,
+    );
+
+    expect(screen.getByRole('region', { name: 'What has arrived' })).toBeInTheDocument();
+  });
 });

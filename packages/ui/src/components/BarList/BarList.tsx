@@ -47,7 +47,7 @@ const BarList = ({
       {items.length === 0 ? (
         <p className="px-2 py-3 font-body text-xs text-text-muted">{emptyMessage}</p>
       ) : (
-        <ScrollFade className="min-h-0">
+        <ScrollFade className="min-h-0" label={label}>
           <ul aria-label={label} className="flex flex-col gap-0.5">
             {items.map((item) => {
               const isChosen = chosen?.has(item.id) === true;

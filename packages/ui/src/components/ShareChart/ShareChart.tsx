@@ -75,7 +75,7 @@ const ShareChart = ({ label, slices, total, totalLabel, emptyMessage }: ShareCha
         </span>
       </div>
 
-      <ScrollFade className="max-h-40 pr-1">
+      <ScrollFade className="max-h-40 pr-1" label={label}>
         <ul className="flex flex-col gap-2 font-body text-sm">
           {slices.map((slice, at) => (
             <li key={slice.id} className="flex items-center gap-2.5">

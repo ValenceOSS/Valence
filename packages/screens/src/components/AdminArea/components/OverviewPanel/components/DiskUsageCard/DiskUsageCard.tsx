@@ -228,7 +228,12 @@ const DiskUsageCard = ({ disks, libraries, cache, artwork, bookPages }: DiskUsag
         }))}
       />
 
-      <ScrollFade className="max-h-44 pr-1">
+      <ScrollFade
+        className="max-h-44 pr-1"
+        label={say('screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed', {
+          mount: disk.mountPoint,
+        })}
+      >
         <div
           ref={containerRef}
           onPointerMove={follow}

@@ -101,7 +101,10 @@ const WhatsNewCard = ({
           title={say('screens.adminArea.whatsNewCard.nothingHasArrivedYet')}
         />
       ) : (
-        <ScrollFade className="max-h-[12.5rem]">
+        <ScrollFade
+          className="max-h-[12.5rem]"
+          label={say('screens.adminArea.updatesPanel.whatsNew')}
+        >
           <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
             {arrivals.map((arrival) => (
               <li key={arrival.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
