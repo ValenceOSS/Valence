@@ -19,7 +19,8 @@ describe('ReaderScene', () => {
   it('opens on a spread of the book, with its chapter and how far through', () => {
     atFrame(0);
 
-    expect(screen.getByText('A Christmas Carol — Stave I: Marley’s Ghost')).toBeInTheDocument();
+    expect(screen.getByText('A Christmas Carol')).toBeInTheDocument();
+    expect(screen.getByText('Stave I: Marley’s Ghost')).toBeInTheDocument();
     expect(screen.getByText('“And a happy new year!”')).toBeInTheDocument();
     expect(screen.getByText('8%')).toBeInTheDocument();
   });
