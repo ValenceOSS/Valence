@@ -30,6 +30,10 @@ const mediaImageRoute = createRoute({
   },
   responses: {
     200: { description: 'The artwork' },
+    302: {
+      description:
+        'The narrowed artwork is served by name, from the address given, where the server names its pictures',
+    },
     304: { description: 'The artwork has not changed since it was last fetched' },
     404: {
       description: 'No such item, or no artwork for it',

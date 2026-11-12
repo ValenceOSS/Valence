@@ -1,3 +1,4 @@
+import type { ArtworkNames } from '@ValenceServer/images/createArtworkNames';
 import type { CataloguePerson } from '@ValenceContracts/schemas/CataloguePeople';
 import type { Candidates } from '@ValenceServer/metadata/findCandidates';
 import type { CatalogueSearching, CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
@@ -300,6 +301,8 @@ type CreateAppOptions = {
     url: string,
     width?: number,
   ) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
+  artworkNames?: ArtworkNames;
+  artworkAddress?: string;
   folderDisk?: FolderDisk;
   uploadDisk?: UploadDisk;
   uploadSessions?: UploadSessions;
