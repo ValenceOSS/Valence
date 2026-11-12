@@ -59,4 +59,20 @@ describe('diskShares', () => {
     expect(shares.find((share) => share.id === 'valence')?.bytes).toBe(10);
     expect(shares.find((share) => share.id === 'else')?.bytes).toBe(0);
   });
+
+  it('scales the libraries down together where they are counted as more than the disk has used', () => {
+    const shares = diskShares(
+      DISK,
+      [
+        { id: 'films', name: 'Films', kind: 'movies', sizeBytes: 600 },
+        { id: 'shows', name: 'Shows', kind: 'shows', sizeBytes: 200 },
+      ],
+      50,
+      NAMES,
+    );
+
+    expect(shares.find((share) => share.id === 'films')?.bytes).toBeCloseTo(450);
+    expect(shares.find((share) => share.id === 'shows')?.bytes).toBeCloseTo(150);
+    expect(shares.reduce((sum, share) => sum + share.bytes, 0)).toBeCloseTo(DISK.totalBytes);
+  });
 });

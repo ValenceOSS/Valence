@@ -21,7 +21,10 @@ const CORNERS = SHARES.map((share) => placeCard(share)).flatMap((card) =>
     [DECK.width, 0],
     [0, DECK.height],
     [DECK.width, DECK.height],
-  ].map(([x = 0, y = 0]) => [card[0] * x + card[2] * y + card[4], card[1] * x + card[3] * y + card[5]]),
+  ].map(([x = 0, y = 0]) => [
+    card[0] * x + card[2] * y + card[4],
+    card[1] * x + card[3] * y + card[5],
+  ]),
 );
 
 const LEFT = Math.min(...CORNERS.map(([x = 0]) => x));
@@ -88,7 +91,10 @@ const DeckMark = ({ size, isAnimated = false, label, className }: DeckMarkProps)
     >
       <span
         className="absolute left-0 top-0 block"
-        style={{ transformOrigin: '0 0', transform: `translate(${shiftX}px, ${shiftY}px) scale(${scale})` }}
+        style={{
+          transformOrigin: '0 0',
+          transform: `translate(${shiftX}px, ${shiftY}px) scale(${scale})`,
+        }}
       >
         {SHARES.map((share, index) => {
           const isSmile = share === 0;
@@ -106,7 +112,11 @@ const DeckMark = ({ size, isAnimated = false, label, className }: DeckMarkProps)
                 transform: `matrix(${placeCard(share * progress).join(',')})`,
               }}
             >
-              <DeckFace face={faceOf(isSmile)} thickness={DECK.thickness} opacity={isSmile ? 1 : frowns} />
+              <DeckFace
+                face={faceOf(isSmile)}
+                thickness={DECK.thickness}
+                opacity={isSmile ? 1 : frowns}
+              />
             </span>
           );
         })}

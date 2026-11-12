@@ -12,7 +12,8 @@ type DiskShare = {
  * Divides a disk between what is on it: each library on it, largest first, then the files Valence
  * keeps for itself, then whatever else the disk holds, then the room left. What is not a library or
  * Valence's is what remains of the used space once those are taken off, so the shares always add up
- * to the disk.
+ * to the disk. Where the libraries are counted as holding more than the disk has used, as a library
+ * reaching onto another disk would be, they are scaled down together to fit.
  *
  * @param disk - How big the disk is and how much of it is free.
  * @param libraries - The libraries on it, each with how much it holds.
@@ -42,12 +43,15 @@ const diskShares = (
     }))
     .filter((share) => share.bytes > 0)
     .sort((one, other) => other.bytes - one.bytes);
-  const inLibraries = held.reduce((sum, share) => sum + share.bytes, 0);
+  const counted = held.reduce((sum, share) => sum + share.bytes, 0);
+  const fits = counted > used && counted > 0 ? used / counted : 1;
+  const fitted = held.map((share) => ({ ...share, bytes: share.bytes * fits }));
+  const inLibraries = counted * fits;
   const valence = Math.min(valenceBytes, Math.max(0, used - inLibraries));
   const rest = Math.max(0, used - inLibraries - valence);
 
   return [
-    ...held,
+    ...fitted,
     { id: 'valence', label: names.valence, bytes: valence, is: 'valence' as const },
     { id: 'else', label: names.else, bytes: rest, is: 'else' as const },
     { id: 'free', label: names.free, bytes: disk.availableBytes, is: 'free' as const },

@@ -86,7 +86,9 @@ const CatalogueGrid = ({
                       tone: TITLE_STATUS_TONES[entry.status].badge,
                     },
                   })}
-              {...(meter.fraction < 1 ? { meter } : {})}
+              {...(meter.fraction < 1 && (entry.held > 0 || entry.status === 'missing')
+                ? { meter }
+                : {})}
               onSelect={() => {
                 if (isChoosable) {
                   onChoose(entry.key, !chosen.has(entry.key));

@@ -2,6 +2,7 @@ import { SelectionBar } from '@ValenceUI/SelectionBar';
 import { Button } from '@ValenceUI/Button';
 import { BarList } from '@ValenceUI/BarList';
 import { DataTable } from '@ValenceUI/DataTable';
+import { DotBar } from '@ValenceUI/DotBar';
 import { ShareChart } from '@ValenceUI/ShareChart';
 import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { SpanPicker } from '@ValenceUI/SpanPicker';
@@ -173,6 +174,24 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             Refresh
           </Button>
         </SelectionBar>
+      ),
+    },
+  ],
+  DotBar: [
+    {
+      title: 'How a disk is shared',
+      render: () => (
+        <DotBar
+          label="How the disk is used"
+          className="w-full max-w-md"
+          litId="films"
+          segments={[
+            { id: 'films', share: 0.42, colour: 'var(--color-accent)' },
+            { id: 'shows', share: 0.31, colour: 'var(--color-success)' },
+            { id: 'music', share: 0.02, colour: 'var(--color-highlight)' },
+            { id: 'free', share: 0.25, colour: 'var(--color-border)' },
+          ]}
+        />
       ),
     },
   ],

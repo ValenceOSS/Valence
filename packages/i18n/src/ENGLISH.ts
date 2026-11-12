@@ -5757,6 +5757,7 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
+  'screens.adminArea.overviewPanel.loadOfTheCores': '{load} · {share} of the cores',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',

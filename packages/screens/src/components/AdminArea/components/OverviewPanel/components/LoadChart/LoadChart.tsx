@@ -31,7 +31,9 @@ const GRAPHICS_COLOUR = 'var(--color-busy)';
  * How hard the server has been working over the range chosen: where the processor stands now (or
  * last stood), its average and its peak, the load and the memory beside them, and the processor
  * drawn over time against quarter lines, with every reading under the pointer saying when it was
- * taken and what the machine was doing then.
+ * taken and what the machine was doing then. The key to its lines is in that tooltip, each line drawn
+ * in its own colour beside its figure, and the load as a share of the cores the line is drawn at; a
+ * list of the lines stays for anybody who cannot see the chart.
  *
  * Past the last minute, the whole week kept is drawn small beneath the chart, with a window over
  * the part shown. Choosing a range moves the window to the end of the week and the lines move with
@@ -191,7 +193,10 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
                 label={say('screens.adminArea.overviewPanel.loadFigures.loadAverage')}
                 keyClassName="text-highlight"
               >
-                {reading.loadAverage.toFixed(2)}
+                {say('screens.adminArea.overviewPanel.loadOfTheCores', {
+                  load: reading.loadAverage.toFixed(2),
+                  share: `${Math.round(reading.cpuCount === 0 ? 0 : Math.min(100, (reading.loadAverage / reading.cpuCount) * 100)).toString()}%`,
+                })}
               </InfoRow>
               <InfoRow label={say('screens.adminArea.memory')} keyClassName="text-success">
                 {say('screens.adminArea.overviewPanel.memoryUsedOfTotal', {
@@ -208,6 +213,17 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           );
         }}
       />
+
+      <ul className="sr-only">
+        {[
+          say('screens.adminArea.processor'),
+          say('screens.adminArea.overviewPanel.loadFigures.loadAverage'),
+          say('screens.adminArea.memory'),
+          say('screens.adminArea.graphics'),
+        ].map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
 
       {isLive || drawn.length < 2 ? null : (
         <SpanPicker

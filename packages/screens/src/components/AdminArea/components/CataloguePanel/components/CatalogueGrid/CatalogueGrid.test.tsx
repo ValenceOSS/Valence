@@ -102,12 +102,20 @@ describe('CatalogueGrid', () => {
           total: 10,
         }),
         aCatalogueEntry({ key: 'film:3', title: 'Here', status: 'library', held: 1, total: 1 }),
+        aCatalogueEntry({
+          key: 'series:2',
+          title: 'Not Yet',
+          status: 'downloading',
+          held: 0,
+          total: 8,
+        }),
       ],
     });
 
     expect(screen.getByText(/3 of 10/)).toBeInTheDocument();
     expect(screen.getAllByRole('img', { name: /3 of 10/ })).toHaveLength(1);
     expect(screen.queryByRole('img', { name: /In library|Here/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /0 of 8/ })).not.toBeInTheDocument();
   });
 
   it('ticks a title waiting on approval while choosing, and only those', async () => {

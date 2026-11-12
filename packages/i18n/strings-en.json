@@ -22746,6 +22746,11 @@
     "context": "Above the processor share in use at this moment, over the server load chart on the admin overview."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.loadOfTheCores",
+    "text": "{load} · {share} of the cores",
+    "context": "In the tooltip on the admin overview's server load chart, the load average at that moment. {load} is the load average, such as 3.85; {share} is that load against how many processor cores the machine has, such as 48%, which is where the load line is drawn."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.memoryUsedOfTotal",
     "text": "{used} of {total}",
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."

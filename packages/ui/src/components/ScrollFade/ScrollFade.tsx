@@ -7,7 +7,9 @@ const SLACK = 1;
 /**
  * A box that scrolls up and down and fades its top and bottom edges into nothing only where there is
  * more to scroll to, beside a slim scrollbar, so a list cut off by its height says so, and one that
- * fits shows no fade at all. The caller gives it the height it may reach.
+ * fits shows no fade at all. The caller gives it the height it may reach. While there is more to
+ * scroll to it can be focused, so the keyboard can scroll it in Safari, which does not focus a box
+ * that scrolls by itself.
  *
  * @param children - What scrolls.
  * @param fade - How far into the box each edge fades, in pixels.
@@ -61,7 +63,11 @@ const ScrollFade = ({ children, fade = 32, className }: ScrollFadeProps) => {
       onScroll={measure}
       {...(hidden.isAbove ? { 'data-more-above': '' } : {})}
       {...(hidden.isBelow ? { 'data-more-below': '' } : {})}
-      className={cn('valence-scrollbar min-h-0 overflow-y-auto overscroll-contain', className)}
+      {...(hidden.isAbove || hidden.isBelow ? { tabIndex: 0 } : {})}
+      className={cn(
+        'valence-scrollbar min-h-0 overflow-y-auto overscroll-contain outline-none focus-visible:focus-ring',
+        className,
+      )}
       style={{
         maskImage: `linear-gradient(to bottom, ${hidden.isAbove ? 'transparent' : 'black'} 0, black ${(hidden.isAbove ? fade : 0).toString()}px, black calc(100% - ${(hidden.isBelow ? fade : 0).toString()}px), ${hidden.isBelow ? 'transparent' : 'black'} 100%)`,
       }}
