@@ -45,4 +45,27 @@ describe('artworkAddresses', () => {
 
     expect(artworkAddresses.of('redone', 'backdrop', 2)).toBeUndefined();
   });
+
+  it('finds the names anywhere in an answer, a programme’s under its cover', () => {
+    artworkAddresses.learnFrom({
+      shows: [
+        {
+          show: { id: 'show', coverMediaId: 'cover', artwork: { poster: '/cover' } },
+          episode: { id: 'next', artwork: { backdrop: '/still', logo: 7 } },
+        },
+      ],
+      stray: 'text',
+    });
+
+    expect(artworkAddresses.of('cover', 'poster', 0)).toBe('/cover');
+    expect(artworkAddresses.of('show', 'poster', 0)).toBeUndefined();
+    expect(artworkAddresses.of('next', 'backdrop', 0)).toBe('/still');
+    expect(artworkAddresses.of('next', 'logo', 0)).toBeUndefined();
+  });
+
+  it('passes over an item naming no pictures, and pictures with nobody to belong to', () => {
+    artworkAddresses.learnFrom([{ id: 'plain' }, { artwork: { poster: '/orphan' } }, null, 3]);
+
+    expect(artworkAddresses.of('plain', 'poster', 0)).toBeUndefined();
+  });
 });

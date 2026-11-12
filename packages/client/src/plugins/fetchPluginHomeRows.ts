@@ -1,4 +1,3 @@
-import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { PluginHomeRowsSchema } from '@ValenceContracts/schemas/Plugin';
 import type { PluginHomeRows } from '@ValenceContracts/schemas/Plugin';
@@ -8,12 +7,7 @@ import type { PluginHomeRows } from '@ValenceContracts/schemas/Plugin';
  *
  * @returns The rows.
  */
-const fetchPluginHomeRows = async (): Promise<PluginHomeRows> => {
-  const answer = await readFromServer('/api/plugins/home-rows', PluginHomeRowsSchema);
-
-  artworkAddresses.learn(answer.rows.flatMap((row) => row.items));
-
-  return answer;
-};
+const fetchPluginHomeRows = (): Promise<PluginHomeRows> =>
+  readFromServer('/api/plugins/home-rows', PluginHomeRowsSchema);
 
 export { fetchPluginHomeRows };

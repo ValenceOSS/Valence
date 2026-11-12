@@ -379,7 +379,6 @@ const fetchMediaDetail = async (mediaId: string): Promise<MediaDetail | null> =>
   artworkRevisions.learn(
     detail === null ? [] : [detail, ...(detail.extras ?? []), ...(detail.versions ?? [])],
   );
-  artworkAddresses.learn([...(detail?.extras ?? []), ...(detail?.versions ?? [])]);
 
   return detail;
 };
