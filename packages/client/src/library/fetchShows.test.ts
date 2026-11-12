@@ -41,13 +41,16 @@ describe('fetchShows', () => {
     });
   });
 
-  it('notes where each programme’s poster is served by name, against its cover', async () => {
-    fetchMock.mockResolvedValue(said({ shows: [{ ...A_SHOW, artwork: { poster: '/named' } }] }));
+  it('notes where each programme’s pictures are served by name, against its cover', async () => {
+    fetchMock.mockResolvedValue(
+      said({ shows: [{ ...A_SHOW, artwork: { poster: '/named', titleBackdrop: '/show' } }] }),
+    );
 
     await fetchShows(LIBRARY);
 
     expect(artworkAddresses.of(A_SHOW.coverMediaId, 'poster', 0)).toBe('/named');
-    expect(artworkAddresses.of(A_SHOW.coverMediaId, 'poster', 0, true)).toBeUndefined();
+    expect(artworkAddresses.of(A_SHOW.coverMediaId, 'backdrop', 0, true)).toBe('/show');
+    expect(artworkAddresses.of(A_SHOW.coverMediaId, 'backdrop', 0)).toBeUndefined();
   });
 
   it('says so when the server cannot be reached', async () => {

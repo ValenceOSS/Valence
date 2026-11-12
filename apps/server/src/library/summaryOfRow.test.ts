@@ -93,6 +93,17 @@ describe('turning a stored row into the summary a client lists it by', () => {
     });
   });
 
+  it('names the backdrop chosen for a programme as the title’s, and the item’s own otherwise', () => {
+    const named = (url: string) => `/api/artwork/${url}`;
+
+    expect(
+      summaryOfRow({ ...ROW, backdropUrl: 'still', titleBackdropUrl: 'chosen' }, named).artwork,
+    ).toMatchObject({ backdrop: '/api/artwork/still', titleBackdrop: '/api/artwork/chosen' });
+    expect(
+      summaryOfRow({ ...ROW, backdropUrl: 'still', titleBackdropUrl: null }, named).artwork,
+    ).toMatchObject({ backdrop: '/api/artwork/still', titleBackdrop: '/api/artwork/still' });
+  });
+
   it('says nothing of names where the server does not name its pictures', () => {
     expect(summaryOfRow(ROW)).not.toHaveProperty('artwork');
   });

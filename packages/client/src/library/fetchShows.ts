@@ -16,7 +16,6 @@ const coverOf = (show: ShowSummary) => ({
   id: show.coverMediaId,
   artworkRevision: show.artworkRevision,
   artwork: show.artwork,
-  seriesId: show.seriesId ?? show.id,
 });
 
 /**

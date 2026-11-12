@@ -22,15 +22,14 @@ describe('artworkAddresses', () => {
     expect(artworkAddresses.of('changed', 'poster', 9)).toBeUndefined();
   });
 
-  it('gives the title’s own picture for a film but not for an episode', () => {
+  it('gives the title’s own backdrop where the title’s is asked for, and the item’s otherwise', () => {
     artworkAddresses.learn([
-      { id: 'a-film', seriesId: null, artwork: { backdrop: '/film' } },
-      { id: 'an-episode', seriesId: 'show', artwork: { backdrop: '/still' } },
+      { id: 'an-episode', artwork: { backdrop: '/still', titleBackdrop: '/show', poster: '/p' } },
     ]);
 
-    expect(artworkAddresses.of('a-film', 'backdrop', 0, true)).toBe('/film');
-    expect(artworkAddresses.of('an-episode', 'backdrop', 0, true)).toBeUndefined();
+    expect(artworkAddresses.of('an-episode', 'backdrop', 0, true)).toBe('/show');
     expect(artworkAddresses.of('an-episode', 'backdrop', 0)).toBe('/still');
+    expect(artworkAddresses.of('an-episode', 'poster', 0, true)).toBe('/p');
   });
 
   it('keeps what it knew of the same revision beside what it is told', () => {

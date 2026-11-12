@@ -36,8 +36,8 @@ const gather = (items: MediaSummary[]): Map<string, MediaSummary[]> => {
  * Describes a programme from what its episodes agree on: its title, how many there are, when the
  * most recent arrived, and which episode's artwork should stand for the whole thing — the first in
  * broadcast order that has any, so one episode the catalogue knew nothing about cannot leave the
- * whole programme blank. Its poster and logo are served by the names that episode's are, which are
- * the programme's own; its backdrop is not, since a programme may have one chosen for it as a whole.
+ * whole programme blank. Its poster, logo and programme backdrop are served by the names that
+ * episode's are, which are the programme's own; the episode's still is not.
  * A programme is not stored anywhere, so everything about it is derived from
  * the files that belong to it.
  *
@@ -77,7 +77,13 @@ const describeShow = (
     ...(cover.artworkRevision === undefined ? {} : { artworkRevision: cover.artworkRevision }),
     ...(cover.artwork === undefined
       ? {}
-      : { artwork: { poster: cover.artwork.poster, logo: cover.artwork.logo } }),
+      : {
+          artwork: {
+            poster: cover.artwork.poster,
+            titleBackdrop: cover.artwork.titleBackdrop,
+            logo: cover.artwork.logo,
+          },
+        }),
     seriesId: inOrder.find((episode) => episode.seriesId !== null)?.seriesId ?? null,
     year: inOrder.find((episode) => episode.year !== null)?.year ?? null,
     rating: inOrder.find((episode) => (episode.rating ?? null) !== null)?.rating ?? null,

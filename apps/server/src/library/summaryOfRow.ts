@@ -6,7 +6,10 @@ import type { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import type { mediaItem } from '#dialect/Schema';
 import type { ArtworkAddressOf } from '@ValenceServer/images/ArtworkAddressOf';
 
-type SummaryRow = Pick<typeof mediaItem.$inferSelect, keyof typeof SUMMARY_COLUMNS>;
+type SummaryRow = Pick<
+  typeof mediaItem.$inferSelect,
+  Exclude<keyof typeof SUMMARY_COLUMNS, 'titleBackdropUrl'>
+> & { titleBackdropUrl?: string | null };
 
 const MainAudioSchema = z
   .array(
@@ -37,14 +40,20 @@ const mainAudioOf = (streams: SummaryRow['audioStreams']) => {
 
 /**
  * Where each of an item's pictures is served by name, for those it has, so a card can ask for one
- * straight from where it is kept rather than being sent there.
+ * straight from where it is kept rather than being sent there. The title's backdrop is the one
+ * chosen for a programme as a whole where there is one, and otherwise the item's own.
  *
  * @param urls - The item's pictures.
  * @param addressOf - Where a picture is served by name, where the server names its pictures.
  * @returns Each picture's address, or nothing where the server does not name them.
  */
 const artworkOf = (
-  urls: { poster: string | null; backdrop: string | null; logo: string | null },
+  urls: {
+    poster: string | null;
+    backdrop: string | null;
+    titleBackdrop: string | null;
+    logo: string | null;
+  },
   addressOf: ArtworkAddressOf | undefined,
 ) =>
   addressOf === undefined
@@ -67,11 +76,28 @@ const artworkOf = (
  * @returns The summary, carrying those further columns as they were.
  */
 const summaryOfRow = <Row extends SummaryRow>(
-  { posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, audioStreams, ...row }: Row,
+  {
+    posterUrl,
+    backdropUrl,
+    titleBackdropUrl,
+    logoUrl,
+    genres,
+    artworkChangedAt,
+    audioStreams,
+    ...row
+  }: Row,
   addressOf?: ArtworkAddressOf,
 ) => ({
   ...row,
-  ...artworkOf({ poster: posterUrl, backdrop: backdropUrl, logo: logoUrl }, addressOf),
+  ...artworkOf(
+    {
+      poster: posterUrl,
+      backdrop: backdropUrl,
+      titleBackdrop: titleBackdropUrl ?? backdropUrl,
+      logo: logoUrl,
+    },
+    addressOf,
+  ),
   audio: mainAudioOf(audioStreams),
   ...artworkRevisionOf(artworkChangedAt),
   addedAt: row.addedAt.toISOString(),

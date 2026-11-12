@@ -183,12 +183,14 @@ describe('the ordering an episode list is read in', () => {
     expect(shows[0]?.coverMediaId).toBe(identified(1));
   });
 
-  it('serves its poster and logo by the names its cover’s are, but not the cover’s still', () => {
+  it('serves its poster, logo and backdrop by the names its cover’s are, but not the cover’s still', () => {
     const [show] = groupIntoShows([
-      episode({ artwork: { poster: '/api/artwork/p', backdrop: '/api/artwork/b', logo: '/l' } }),
+      episode({
+        artwork: { poster: '/p', backdrop: '/still', titleBackdrop: '/show', logo: '/l' },
+      }),
     ]);
 
-    expect(show?.artwork).toEqual({ poster: '/api/artwork/p', logo: '/l' });
+    expect(show?.artwork).toEqual({ poster: '/p', titleBackdrop: '/show', logo: '/l' });
   });
 
   it('names no pictures where its cover’s were not named', () => {
