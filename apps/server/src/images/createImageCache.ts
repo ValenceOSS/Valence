@@ -26,7 +26,7 @@ type ImageFetcher = (url: string) => Promise<{
 
 type Publishing = {
   directory: string;
-  nameOf: (url: string) => Promise<string>;
+  nameOf: (url: string) => string;
 };
 
 type CreateImageCacheOptions = {
@@ -59,7 +59,12 @@ const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avi
  * @param options - Where to keep the files, and how to fetch what is missing.
  * @returns The cache, which fetches on a miss and serves from disk thereafter.
  */
-const createImageCache = ({ directory, fetchImpl, onProblem, publish }: CreateImageCacheOptions) => {
+const createImageCache = ({
+  directory,
+  fetchImpl,
+  onProblem,
+  publish,
+}: CreateImageCacheOptions) => {
   const fetchOut: ImageFetcher = fetchImpl ?? ((url: string) => fetch(url));
 
   const call: ImageFetcher = async (url) => {
@@ -147,13 +152,13 @@ const createImageCache = ({ directory, fetchImpl, onProblem, publish }: CreateIm
 
   const published = new Set<string>();
 
-  const publicPathOf = async (url: string, width: number): Promise<string | null> =>
+  const publicPathOf = (url: string, width: number): string | null =>
     publish === undefined
       ? null
-      : join(publish.directory, `${await publish.nameOf(url)}-w${width.toString()}.webp`);
+      : join(publish.directory, `${publish.nameOf(url)}-w${width.toString()}.webp`);
 
   const publishCopy = async (url: string, width: number, body: Uint8Array): Promise<void> => {
-    const path = await publicPathOf(url, width);
+    const path = publicPathOf(url, width);
 
     if (path === null || published.has(path)) {
       return;
@@ -217,7 +222,7 @@ const createImageCache = ({ directory, fetchImpl, onProblem, publish }: CreateIm
       await rm(`${path}.type`, { force: true });
       await Promise.all(
         Object.values(ARTWORK_WIDTHS).map(async (width) => {
-          const copy = await publicPathOf(url, width);
+          const copy = publicPathOf(url, width);
 
           if (copy !== null) {
             published.delete(copy);

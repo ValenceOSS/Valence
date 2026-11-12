@@ -3704,8 +3704,24 @@ const scanRuns = collectScanRuns({
 
 const artworkUploads = join(dirname(env.PROFILE_IMAGE_DIR), 'artwork');
 
+const artworkNames = createArtworkNames(
+  `${env.BETTER_AUTH_SECRET}:artwork-names`,
+  join(env.IMAGE_CACHE_DIR, 'names'),
+);
+
+/**
+ * Where a picture is served by name, for anybody to fetch from the proxy or CDN in front, or from
+ * Valence where nothing is.
+ *
+ * @param url - The picture.
+ * @returns Its address, to which a width and `.webp` are added.
+ */
+const artworkAddressOf = (url: string): string =>
+  `${env.ARTWORK_URL}/api/artwork/${artworkNames.nameOf(url)}`;
+
 const libraryService = createDatabaseLibraryService({
   db,
+  artworkAddressOf,
   files: createMediaFileSystem(),
   transcoder,
   forgetKeptCopies: async (paths) => {
@@ -3868,7 +3884,7 @@ const animeIds = createDatabaseAnimeIds(db);
 
 const likenessStore = createDatabaseLikenessStore(db);
 
-const likenessService = createLikenessService({ db, store: likenessStore });
+const likenessService = createLikenessService({ db, store: likenessStore, artworkAddressOf });
 
 const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -4596,11 +4612,6 @@ const creditProviders = [
   }),
 ];
 
-const artworkNames = createArtworkNames(
-  `${env.BETTER_AUTH_SECRET}:artwork-names`,
-  join(env.IMAGE_CACHE_DIR, 'names'),
-);
-
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
   publish: { directory: join(env.IMAGE_CACHE_DIR, 'public'), nameOf: artworkNames.nameOf },
@@ -5083,7 +5094,7 @@ const startPlugins = (
       await jobs.cancelFor(`plugin:${pluginId}`);
     },
     isJobCancelled: (jobId) => jobs.isCancelled(jobId),
-    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids),
+    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids, artworkAddressOf),
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,
@@ -5279,6 +5290,7 @@ const signedInSockets = createSignedInSockets();
 const titleEdits = createTitleEditStore(db);
 
 const titleListService = createTitleListService(db, {
+  artworkAddressOf,
   certificationRegion: async () => (await settings.read()).certificationRegion,
 });
 

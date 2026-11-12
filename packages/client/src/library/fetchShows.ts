@@ -1,3 +1,4 @@
+import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
@@ -5,14 +6,17 @@ import { ComingUpSchema, ShowListSchema, ShowDetailSchema } from '@ValenceContra
 import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 
 /**
- * Stands a programme's revision against the item its pictures are asked for by.
+ * Stands a programme's revision, and where its pictures are served by name, against the item its
+ * pictures are asked for by.
  *
  * @param show - The programme.
- * @returns Its cover, with the programme's revision.
+ * @returns Its cover, with the programme's revision and picture addresses.
  */
-const coverOf = (show: ShowSummary): { id: string; artworkRevision?: number | undefined } => ({
+const coverOf = (show: ShowSummary) => ({
   id: show.coverMediaId,
   artworkRevision: show.artworkRevision,
+  artwork: show.artwork,
+  seriesId: show.seriesId ?? show.id,
 });
 
 /**
@@ -26,6 +30,7 @@ const fetchShows = async (libraryId: string): Promise<ShowSummary[]> => {
   const { shows } = await readFromServer(`/api/libraries/${libraryId}/shows`, ShowListSchema);
 
   artworkRevisions.learn(shows.map(coverOf));
+  artworkAddresses.learn(shows.map(coverOf));
 
   return shows;
 };
@@ -63,7 +68,12 @@ const fetchShow = async (libraryId: string, showId: string): Promise<ShowDetail 
  *
  * @returns The programmes and their next episodes.
  */
-const fetchComingUp = async (): Promise<ComingUp['shows']> =>
-  (await readFromServer('/api/coming-up', ComingUpSchema)).shows;
+const fetchComingUp = async (): Promise<ComingUp['shows']> => {
+  const { shows } = await readFromServer('/api/coming-up', ComingUpSchema);
+
+  artworkAddresses.learn(shows.map(({ show }) => coverOf(show)));
+
+  return shows;
+};
 
 export { fetchComingUp, fetchShows, fetchShow };

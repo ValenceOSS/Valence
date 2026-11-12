@@ -15,6 +15,7 @@ import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
 import { artworkRevisionOf } from '@ValenceServer/library/artworkRevisionOf';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
+import type { ArtworkAddressOf } from '@ValenceServer/images/ArtworkAddressOf';
 import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
 import { createTitleEditStore } from '@ValenceServer/metadata/createTitleEditStore';
 import { overlayShowEdits } from '@ValenceServer/metadata/overlayShowEdits';
@@ -221,6 +222,7 @@ type CreateDatabaseLibraryServiceOptions = {
   onDeleted?: (libraryId: string, removed: number) => void;
   onArtworkChanged?: (mediaIds: string[]) => void;
   forgetKeptCopies?: (paths: string[]) => Promise<void>;
+  artworkAddressOf?: ArtworkAddressOf;
 };
 
 const LIBRARY_COLUMNS = {
@@ -410,6 +412,7 @@ const createDatabaseLibraryService = ({
   onDeleted,
   onArtworkChanged,
   forgetKeptCopies = () => Promise.resolve(),
+  artworkAddressOf,
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
   const store = createMediaStore(db, certificationRegion, forgetKeptCopies);
 
@@ -1209,7 +1212,7 @@ const createDatabaseLibraryService = ({
       isCounted ? db.select({ total: count() }).from(mediaItem).where(filters) : null,
     ]);
 
-    const items = rows.map(summaryOfRow) satisfies MediaSummary[];
+    const items = rows.map((row) => summaryOfRow(row, artworkAddressOf)) satisfies MediaSummary[];
 
     return { read, items, total: totals?.[0]?.total ?? options.offset + items.length };
   };
@@ -2238,7 +2241,7 @@ const createDatabaseLibraryService = ({
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber), asc(mediaItem.title))
         .limit(MOST_EPISODES_SHARED);
 
-      return rows.map(summaryOfRow) satisfies MediaSummary[];
+      return rows.map((row) => summaryOfRow(row, artworkAddressOf)) satisfies MediaSummary[];
     },
 
     findPeople: async (viewer, search, limit) => {
@@ -2291,7 +2294,7 @@ const createDatabaseLibraryService = ({
         .orderBy(asc(mediaItem.title))
         .limit(CREDITS_LIMIT);
 
-      return rows.map(summaryOfRow) satisfies MediaSummary[];
+      return rows.map((row) => summaryOfRow(row, artworkAddressOf)) satisfies MediaSummary[];
     },
 
     readPerson: async (personId) => {

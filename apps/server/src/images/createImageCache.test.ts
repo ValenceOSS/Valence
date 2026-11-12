@@ -340,7 +340,7 @@ describe('pictures kept where anybody may fetch them', () => {
               ),
           }),
         ),
-        publish: { directory: shown, nameOf: () => Promise.resolve('a'.repeat(32)) },
+        publish: { directory: shown, nameOf: () => 'a'.repeat(32) },
       }),
     };
   };

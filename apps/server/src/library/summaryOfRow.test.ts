@@ -85,4 +85,15 @@ describe('turning a stored row into the summary a client lists it by', () => {
       }),
     ).toMatchObject({ artworkRevision: 1000, genres: null, versionLabel: '4K' });
   });
+
+  it('says where each picture it has is served by name, where the server names them', () => {
+    expect(summaryOfRow(ROW, (url) => `/api/artwork/${url.length.toString()}`).artwork).toEqual({
+      poster: '/api/artwork/42',
+      logo: '/api/artwork/44',
+    });
+  });
+
+  it('says nothing of names where the server does not name its pictures', () => {
+    expect(summaryOfRow(ROW)).not.toHaveProperty('artwork');
+  });
 });

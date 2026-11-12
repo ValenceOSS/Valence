@@ -50,7 +50,7 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (size !== undefined && artworkNames !== undefined) {
-      const name = await artworkNames.nameOf(url);
+      const name = artworkNames.nameOf(url);
 
       context.header('cache-control', REDIRECT_CACHING);
 
