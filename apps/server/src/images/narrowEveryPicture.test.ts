@@ -71,7 +71,7 @@ describe('narrowEveryPicture', () => {
   });
 
   it('stops once the job is cancelled, and waits while it is paused', async () => {
-    const read = vi.fn(() => Promise.resolve({}));
+    const read = vi.fn((_url: string, _width: number) => Promise.resolve({}));
     const state = { cancelled: false, waited: 0 };
 
     await narrowEveryPicture({
