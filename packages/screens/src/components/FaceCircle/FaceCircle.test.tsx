@@ -10,6 +10,20 @@ const revokeObjectURL = vi.fn();
 Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
 Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
 
+const loaded = (container: HTMLElement, width: number, height: number): HTMLImageElement => {
+  const picture = container.querySelector('img');
+
+  if (picture === null) {
+    throw new Error('Nothing is drawing a picture.');
+  }
+
+  Object.defineProperty(picture, 'naturalWidth', { configurable: true, value: width });
+  Object.defineProperty(picture, 'naturalHeight', { configurable: true, value: height });
+  fireEvent.load(picture);
+
+  return picture;
+};
+
 beforeEach(() => {
   createObjectURL.mockClear().mockReturnValue('blob:chosen');
   revokeObjectURL.mockClear();
@@ -222,16 +236,17 @@ describe('FaceCircle', () => {
         avatar={{
           kind: 'photo',
           isVideo: false,
-          frame: { zoom: 2, x: 1, y: 0 },
+          frame: { zoom: 1, x: 1, y: 0 },
           hasFramedPicture: false,
         }}
         source="/api/profiles/p1/avatar?v=1"
       />,
     );
-    const picture = container.querySelector('img');
+    const picture = loaded(container, 2000, 1000);
 
-    expect(picture?.getAttribute('src')).toBe('/api/profiles/p1/avatar?v=1');
-    expect(picture?.style.transform).toContain('scale(2)');
+    expect(picture.getAttribute('src')).toBe('/api/profiles/p1/avatar?v=1');
+    expect(picture.style.left).toBe('-100%');
+    expect(picture.style.width).toBe('200%');
   });
 
   it('moves a picture being chosen as its frame is moved, before it is uploaded', () => {
@@ -242,16 +257,16 @@ describe('FaceCircle', () => {
         avatar={{
           kind: 'photo',
           isVideo: false,
-          frame: { zoom: 3, x: 0, y: -1 },
+          frame: { zoom: 1, x: -1, y: 0 },
           hasFramedPicture: true,
         }}
         source="/api/profiles/p1/avatar?v=1"
         pending={new File(['bytes'], 'face.png', { type: 'image/png' })}
       />,
     );
-    const picture = container.querySelector('img');
+    const picture = loaded(container, 2000, 1000);
 
-    expect(picture?.getAttribute('src')).toBe('blob:chosen');
-    expect(picture?.style.transform).toContain('scale(3)');
+    expect(picture.getAttribute('src')).toBe('blob:chosen');
+    expect(picture.style.left).toBe('0%');
   });
 });

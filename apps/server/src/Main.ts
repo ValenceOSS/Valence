@@ -220,6 +220,7 @@ import { createIptvOrgCatalogue } from '@ValenceServer/live/createIptvOrgCatalog
 import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
 import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
 import { upgradePictures } from '@ValenceServer/pictures/upgradePictures';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
 import { forgetRawLocalCopies } from '@ValenceServer/images/forgetRawLocalCopies';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
@@ -1459,28 +1460,34 @@ const keptSettings = await settings.read();
 const keptUploads = [
   {
     directory: env.PROFILE_IMAGE_DIR,
-    names: [keptSettings.splashscreenFile, keptSettings.brandLogoFile],
+    pictures: [keptSettings.splashscreenFile, keptSettings.brandLogoFile].flatMap((name) =>
+      name === null ? [] : [{ name, cropping: null }],
+    ),
   },
   {
     directory: collectionArtworkDir,
-    names: (await db.select({ path: collection.artworkPath }).from(collection)).map(
-      (row) => row.path,
+    pictures: (
+      await db
+        .select({ name: collection.artworkPath, frame: collection.artworkFrame })
+        .from(collection)
+    ).flatMap(({ name, frame }) =>
+      name === null ? [] : [{ name, cropping: { crop: CROPS.poster, frame } }],
     ),
   },
   {
     directory: playlistArtworkDir,
-    names: (await db.select({ path: playlist.artworkPath }).from(playlist)).map((row) => row.path),
+    pictures: (
+      await db.select({ name: playlist.artworkPath, frame: playlist.artworkFrame }).from(playlist)
+    ).flatMap(({ name, frame }) =>
+      name === null ? [] : [{ name, cropping: { crop: CROPS.cover, frame } }],
+    ),
   },
 ];
 
-for (const { directory, names } of keptUploads) {
-  const upgraded = await upgradePictures(
-    directory,
-    names.filter((name) => name !== null),
-    (name, reason) => {
-      log.error('server', `pictures: ${name} could not be cleaned — ${reason.message}`);
-    },
-  );
+for (const { directory, pictures } of keptUploads) {
+  const upgraded = await upgradePictures(directory, pictures, (name, reason) => {
+    log.error('server', `pictures: ${name} could not be cleaned — ${reason.message}`);
+  });
 
   if (upgraded.moved + upgraded.processed > 0) {
     log.info(
@@ -2037,7 +2044,7 @@ const linkedTitleOf = createLinkedTitleReader(db);
 
 const serverPictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'servers'));
 
-const livePictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live'));
+const livePictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live'), false);
 
 for (const pictures of [serverPictures, livePictures]) {
   await pictures.upgrade((name, reason) => {

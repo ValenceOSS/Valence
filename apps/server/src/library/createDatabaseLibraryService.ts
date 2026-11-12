@@ -2645,8 +2645,8 @@ const createDatabaseLibraryService = ({
       artworkChoices.choosePart(mediaId, part, url, by),
 
     chooseArtwork: (mediaId, kind, url, by) => artworkChoices.choose(mediaId, kind, url, by),
-    uploadArtwork: (mediaId, kind, artwork, by) =>
-      artworkChoices.upload(mediaId, kind, artwork, by),
+    uploadArtwork: (mediaId, kind, artwork, by, frame) =>
+      artworkChoices.upload(mediaId, kind, artwork, by, frame),
     chooseVersion: (mediaId, choice) => versionChoices.choose(mediaId, choice),
     planPatternRenames: (mediaIds) => patternRenames.plan(mediaIds),
     renameToPattern: (mediaIds, whenTaken) => patternRenames.apply(mediaIds, whenTaken),

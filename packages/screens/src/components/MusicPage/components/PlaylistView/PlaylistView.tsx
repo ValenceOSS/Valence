@@ -1,3 +1,5 @@
+import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
 import { useState } from 'react';
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
@@ -87,6 +89,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
   const { may } = useWhatIMayDo();
   const detail = asked.data;
   const [isSendingCover, setIsSendingCover] = useState(false);
+  const [framing, setFraming] = useState<File | null>(null);
   const [askingAbout, setAskingAbout] = useState<PlaylistMissingSong | null>(null);
   const [isAskingForMissing, setIsAskingForMissing] = useState(false);
   const mayRequestMusic = useMayRequestMusic();
@@ -253,32 +256,44 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
             ) : null}
 
             {playlist.isMine ? (
-              <FilePicker
-                label={say('common.chooseACover')}
-                accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-                variant="ghost"
-                size="md"
-                isLoading={isSendingCover}
-                onPick={(file) => {
-                  setIsSendingCover(true);
-                  void savePlaylistArtwork(playlist.id, file).then((wrong) => {
-                    setIsSendingCover(false);
-                    refresh();
+              <>
+                <FilePicker
+                  label={say('common.chooseACover')}
+                  accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                  variant="ghost"
+                  size="md"
+                  isLoading={isSendingCover}
+                  onPick={setFraming}
+                >
+                  <Icon of={ImagePlusIcon} size={22} />
+                </FilePicker>
 
-                    if (wrong === null) {
-                      notify.worked(
-                        say('screens.musicPage.playlistView.nameHasANewCover', {
-                          name: playlist.name,
-                        }),
-                      );
-                    } else {
-                      notify.failed(wrong);
-                    }
-                  });
-                }}
-              >
-                <Icon of={ImagePlusIcon} size={22} />
-              </FilePicker>
+                <FramePictureDialog
+                  file={framing}
+                  aspect={PICTURE_ASPECTS.cover}
+                  onClose={() => {
+                    setFraming(null);
+                  }}
+                  onUse={(file, frame) => {
+                    setFraming(null);
+                    setIsSendingCover(true);
+                    void savePlaylistArtwork(playlist.id, file, frame).then((wrong) => {
+                      setIsSendingCover(false);
+                      refresh();
+
+                      if (wrong === null) {
+                        notify.worked(
+                          say('screens.musicPage.playlistView.nameHasANewCover', {
+                            name: playlist.name,
+                          }),
+                        );
+                      } else {
+                        notify.failed(wrong);
+                      }
+                    });
+                  }}
+                />
+              </>
             ) : null}
 
             {playlist.isMine || mayClearAbandoned ? (

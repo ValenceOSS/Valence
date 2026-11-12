@@ -150,6 +150,26 @@ describe('createDatabaseHouseholdService', () => {
       const framed = await sharp((await service.readAvatar('ada', true))?.body).metadata();
 
       expect([framed.width, framed.height]).toEqual([500, 500]);
+
+      await service.savePhoto(
+        'ada',
+        { body: upload, contentType: 'image/jpeg' },
+        { zoom: 2, x: 1, y: 0 },
+      );
+
+      expect((await service.read('ada')).avatar).toMatchObject({ frame: { zoom: 2, x: 1, y: 0 } });
+      expect((await sharp((await service.readAvatar('ada', true))?.body).metadata()).width).toBe(
+        512,
+      );
+
+      await service.change('ada', {
+        avatar: {
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 4, x: 0, y: 0 },
+          hasFramedPicture: false,
+        },
+      });
       expect((await service.read('ada')).avatar).toEqual({
         kind: 'photo',
         isVideo: false,

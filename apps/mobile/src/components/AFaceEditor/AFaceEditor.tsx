@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FACE_MODES } from '@ValenceClient/profiles/FACE_MODES';
 import { AFace } from '@ValenceMobile/components/AFace/AFace';
+import { AFramer } from '@ValenceMobile/components/AFramer/AFramer';
+import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
+import { FACE_ROUNDNESS } from '@ValenceMobile/components/AFace/FACE_ROUNDNESS';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import { ADrawnStudio } from '@ValenceMobile/components/AFaceEditor/components/ADrawnStudio/ADrawnStudio';
 import { ALetterStudio } from '@ValenceMobile/components/AFaceEditor/components/ALetterStudio/ALetterStudio';
 import { APhotoStudio } from '@ValenceMobile/components/AFaceEditor/components/APhotoStudio/APhotoStudio';
@@ -68,6 +72,11 @@ const AFaceEditor = ({ isOpen, profile, onClose, onUse }: AFaceEditorProps) => {
           };
 
   const canUse = mode !== 'photo' || picked !== null || hadPhoto;
+  const whole = thePictureFor({ ...profile, avatar });
+  const framing =
+    mode !== 'photo' || picked?.isVideo === true || avatar.kind !== 'photo' || avatar.isVideo
+      ? null
+      : (picked?.uri ?? (hadPhoto ? (whole?.uri ?? null) : null));
 
   return (
     <ASheet
@@ -87,11 +96,22 @@ const AFaceEditor = ({ isOpen, profile, onClose, onUse }: AFaceEditorProps) => {
     >
       <View style={styles.editor}>
         <View style={styles.preview}>
-          <AFace
-            profile={{ ...profile, colour, avatar }}
-            picked={mode === 'photo' && picked !== null && !picked.isVideo ? picked.uri : null}
-            isLarge
-          />
+          {framing === null ? (
+            <AFace
+              profile={{ ...profile, colour, avatar }}
+              picked={mode === 'photo' && picked !== null && !picked.isVideo ? picked.uri : null}
+              isLarge
+            />
+          ) : (
+            <AFramer
+              uri={framing}
+              frame={frame}
+              aspect={PICTURE_ASPECTS.face}
+              width={PREVIEW}
+              roundness={FACE_ROUNDNESS}
+              onFrame={setFrame}
+            />
+          )}
         </View>
 
         <SegmentedRow

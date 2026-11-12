@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
@@ -423,10 +424,15 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    const wrong = await music.playlists.saveArtwork(viewer, context.req.param('playlistId'), {
-      body: new Uint8Array(await context.req.arrayBuffer()),
-      contentType: context.req.header('content-type') ?? '',
-    });
+    const wrong = await music.playlists.saveArtwork(
+      viewer,
+      context.req.param('playlistId'),
+      {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      },
+      frameFromQuery(context.req.query()),
+    );
 
     if (wrong === 'notYours') {
       return context.json(refuse('error.music.thatPlaylistIsNotYoursTo'), 404);

@@ -85,12 +85,12 @@ const createAccountFaces = ({
     return changed ? 'changed' : 'gone';
   },
 
-  savePhoto: async (accountId, photo) => {
+  savePhoto: async (accountId, photo, frame) => {
     const everyone = await profiles.list(accountId);
     const [owner] = everyone;
 
     if (owner === undefined || everyone.length > 1) {
-      return households.savePhoto(accountId, photo);
+      return households.savePhoto(accountId, photo, frame);
     }
 
     const wrong = await profiles.savePhoto(accountId, owner.id, photo);
@@ -102,7 +102,7 @@ const createAccountFaces = ({
         avatar: {
           kind: 'photo',
           isVideo: photo.contentType.startsWith('video/'),
-          frame: null,
+          frame: frame ?? null,
           hasFramedPicture: true,
         },
       });

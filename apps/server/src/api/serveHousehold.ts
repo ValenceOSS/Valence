@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
@@ -167,10 +168,14 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const wrong = await faces.savePhoto(account.id, {
-      body: new Uint8Array(await context.req.arrayBuffer()),
-      contentType: context.req.header('content-type') ?? '',
-    });
+    const wrong = await faces.savePhoto(
+      account.id,
+      {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      },
+      frameFromQuery(context.req.query()),
+    );
 
     if (wrong !== null) {
       const said = describePictureFault(wrong, HOUSEHOLD_LIMITS);

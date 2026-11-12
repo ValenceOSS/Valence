@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { forgetPicture } from '@ValenceServer/pictures/forgetPicture';
 import { keepPicture } from '@ValenceServer/pictures/keepPicture';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
 import { readPicture } from '@ValenceServer/pictures/readPicture';
 import {
   and,
@@ -875,7 +876,7 @@ const createDatabasePlaylistService = (
       return readPicture(artworkDirectory, row.artworkPath);
     },
 
-    saveArtwork: async (viewer, playlistId, artwork) => {
+    saveArtwork: async (viewer, playlistId, artwork, frame = null) => {
       if (!(await owned(viewer, playlistId))) {
         return 'notYours';
       }
@@ -893,7 +894,10 @@ const createDatabasePlaylistService = (
         .where(eq(playlist.id, playlistId))
         .limit(1);
 
-      const unkept = await keepPicture(artworkDirectory, name, artwork.body);
+      const unkept = await keepPicture(artworkDirectory, name, artwork.body, {
+        crop: CROPS.cover,
+        frame,
+      });
 
       if (unkept !== null) {
         return unkept;
@@ -901,7 +905,7 @@ const createDatabasePlaylistService = (
 
       await db
         .update(playlist)
-        .set({ artworkPath: name, updatedAt: new Date() })
+        .set({ artworkPath: name, artworkFrame: frame, updatedAt: new Date() })
         .where(eq(playlist.id, playlistId));
 
       if (was?.artworkPath !== null && was?.artworkPath !== undefined) {
@@ -924,7 +928,7 @@ const createDatabasePlaylistService = (
 
       await db
         .update(playlist)
-        .set({ artworkPath: null, updatedAt: new Date() })
+        .set({ artworkPath: null, artworkFrame: null, updatedAt: new Date() })
         .where(eq(playlist.id, playlistId));
 
       if (was?.artworkPath !== null && was?.artworkPath !== undefined) {

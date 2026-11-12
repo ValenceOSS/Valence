@@ -1,3 +1,5 @@
+import { withFrameQuery } from '@ValenceContracts/functions/withFrameQuery';
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { HouseholdSchema, OnboardingSchema } from '@ValenceContracts/schemas/Household';
@@ -37,10 +39,14 @@ const saveHousehold = async (request: HouseholdRequest): Promise<Household | nul
  * Puts a picture on the household.
  *
  * @param file - The picture somebody chose.
+ * @param frame - Where it sits in its circle, or nothing for its middle.
  * @returns What was wrong with it, or null where it was kept.
  */
-const uploadHouseholdPhoto = async (file: File): Promise<string | null> => {
-  const response = await fetch('/api/account/photo', {
+const uploadHouseholdPhoto = async (
+  file: File,
+  frame: PhotoFrame | null = null,
+): Promise<string | null> => {
+  const response = await fetch(withFrameQuery('/api/account/photo', frame), {
     method: 'PUT',
     credentials: 'same-origin',
     headers: { 'content-type': file.type },

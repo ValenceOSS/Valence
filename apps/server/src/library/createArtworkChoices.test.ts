@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { diskPictureAddress } from './diskPictureAddress';
 import { describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { library, mediaItem } from '#dialect/Schema';
+import { library, mediaArtworkChoice, mediaItem } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createArtworkChoices } from './createArtworkChoices';
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
@@ -281,6 +281,36 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
     expect(await readFile(join(uploads, (await readdir(uploads))[0] ?? ''))).toEqual(
       Buffer.from(png),
     );
+  });
+
+  it('keeps where a framed poster sits in the address it is chosen under, and leaves a logo whole', async () => {
+    const db = await aScratchDatabase();
+    const uploads = await mkdtemp(join(tmpdir(), 'valence-uploads-'));
+    const choices = createArtworkChoices({
+      db,
+      readOptions: () => Promise.resolve(OFFERED),
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
+      uploads,
+    });
+    const png = new Uint8Array(
+      await sharp({ create: { width: 8, height: 6, channels: 3, background: '#3a8ee8' } })
+        .png()
+        .toBuffer(),
+    );
+    const frame = { zoom: 1.5, x: -0.5, y: 0 };
+
+    await choices.upload('film', 'poster', { body: png, contentType: 'image/png' }, null, frame);
+    await choices.upload('film', 'logo', { body: png, contentType: 'image/png' }, null, frame);
+
+    const urls = await db
+      .select({ url: mediaArtworkChoice.url, kind: mediaArtworkChoice.kind })
+      .from(mediaArtworkChoice);
+
+    expect(urls.find((row) => row.kind === 'poster')?.url).toMatch(
+      /#poster:1\.5000:-0\.5000:0\.0000$/u,
+    );
+    expect(urls.find((row) => row.kind === 'logo')?.url).toMatch(/^valence-upload:[0-9a-f-]{36}$/u);
   });
 
   it('shows the pictures the catalogue would pick itself, beside the ones to choose from', async () => {

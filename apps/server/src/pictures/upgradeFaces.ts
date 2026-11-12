@@ -3,7 +3,8 @@ import { extname, join } from 'node:path';
 import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
 import { processFace } from './processFace';
 import { MOVING_FACE_TYPES } from './MOVING_FACE_TYPES';
-import { cropFace } from './cropFace';
+import { cropPicture } from './cropPicture';
+import { CROPS } from './CROPS';
 import { framedNameOf } from './framedNameOf';
 import { processedNameOf } from './processedNameOf';
 import { isThere } from './isThere';
@@ -62,7 +63,10 @@ const upgradeFaces = async (
       }
 
       const body = new Uint8Array(await readFile(original));
-      const [madeWhole, madeFramed] = await Promise.all([processFace(body), cropFace(body, frame)]);
+      const [madeWhole, madeFramed] = await Promise.all([
+        processFace(body),
+        cropPicture(body, frame, CROPS.face),
+      ]);
 
       await mkdir(processedFolder, { recursive: true });
       await writeFile(whole, madeWhole);

@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
@@ -28,6 +28,41 @@ describe('createServerPictures', () => {
     expect(shown?.contentType).toBe('image/webp');
     expect((await sharp(shown?.body).metadata()).width).toBe(512);
     expect(await readdir(join(directory, 'originals'))).toEqual(['own.png']);
+  });
+
+  it('cuts the part of a server’s picture its frame chose, and cuts it again the same way', async () => {
+    const directory = await aFolder();
+    const pictures = createServerPictures(directory);
+    const wide = new Uint8Array(
+      await sharp({ create: { width: 1600, height: 800, channels: 3, background: '#3a8ee8' } })
+        .png()
+        .toBuffer(),
+    );
+
+    await pictures.save('own', { body: wide, contentType: 'image/png' }, { zoom: 2, x: 1, y: 0 });
+
+    expect(await readdir(directory)).toContain('own.frame.json');
+
+    await rm(join(directory, 'processed', 'own.framed.webp'));
+    await pictures.upgrade(vi.fn());
+
+    expect((await sharp((await pictures.read('own'))?.body).metadata()).width).toBe(400);
+  });
+
+  it('hands out a picture drawn whole as it is, rather than its middle', async () => {
+    const pictures = createServerPictures(await aFolder(), false);
+    const wide = new Uint8Array(
+      await sharp({ create: { width: 1600, height: 400, channels: 3, background: '#3a8ee8' } })
+        .png()
+        .toBuffer(),
+    );
+
+    await pictures.save('channel', { body: wide, contentType: 'image/png' });
+
+    expect(await sharp((await pictures.read('channel'))?.body).metadata()).toMatchObject({
+      width: 1600,
+      height: 400,
+    });
   });
 
   it('replaces a picture kept as another kind', async () => {

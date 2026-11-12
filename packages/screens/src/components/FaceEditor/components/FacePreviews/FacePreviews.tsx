@@ -1,6 +1,12 @@
 import { cn } from '@ValenceUI/cn';
+import { PictureFramer } from '@ValenceUI/PictureFramer';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
+import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
+import { useFileAddress } from '@ValenceScreens/pictures/useFileAddress';
 import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
 import type { FacePreviewsProps } from './FacePreviews.types';
+
+const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -13,14 +19,43 @@ import { say } from '@ValenceI18n/say';
  * @param avatar - The face as it stands in the editor.
  * @param source - Where the saved picture is served from.
  * @param pending - A picture chosen here and not saved yet.
+ * @param onFrame - Told where a photograph sits once it is dragged or drawn nearer in the large
+ *   face, which can only be framed by hand where this is given.
  * @param className - Extra classes for the caller's own layout.
  */
-const FacePreviews = ({ name, colour, avatar, source, pending, className }: FacePreviewsProps) => {
+const FacePreviews = ({
+  name,
+  colour,
+  avatar,
+  source,
+  pending,
+  onFrame,
+  className,
+}: FacePreviewsProps) => {
   const face = { name, colour, avatar, source, pending };
+  const chosen = useFileAddress(pending);
+  const picture = chosen ?? (pending === null ? source : null);
+  const framed =
+    onFrame !== undefined && avatar.kind === 'photo' && !avatar.isVideo && picture !== null
+      ? { onFrame, picture, frame: avatar.frame ?? UNFRAMED }
+      : null;
 
   return (
     <div className={cn('flex flex-col items-center gap-8', className)}>
-      <FaceCircle {...face} isLifted className="size-48 text-6xl" />
+      {framed === null ? (
+        <FaceCircle {...face} isLifted className="size-48 text-6xl" />
+      ) : (
+        <PictureFramer
+          src={framed.picture}
+          frame={framed.frame}
+          aspect={PICTURE_ASPECTS.face}
+          mostZoom={MOST_FRAME_ZOOM}
+          label={say('common.wherePictureSits')}
+          shape="circle"
+          onFrame={framed.onFrame}
+          className="size-48 shadow-lg"
+        />
+      )}
 
       <div className="flex w-full flex-col gap-3">
         <p className="text-center text-[0.65rem] font-medium text-text-muted">

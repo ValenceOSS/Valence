@@ -5,14 +5,15 @@ import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
 import type { PhotoStudioProps } from './PhotoStudio.types';
 import { say } from '@ValenceI18n/say';
+import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 
 const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 
 /**
- * A picture of one's own — a photograph or a GIF — and where it sits in the circle:
- * how far in it is drawn, and which part of it is in the middle.
+ * A picture of one's own — a photograph or a GIF — and how near it is drawn in the circle; which
+ * part of it shows is chosen by dragging it in the large face beside this.
  *
  * @param fileName - The picture chosen here and not saved yet, where there is one.
  * @param hasPicture - Whether there is a picture to frame at all, chosen here or saved before.
@@ -45,49 +46,22 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
 
     {hasPicture ? (
       <section className="flex flex-col gap-5">
-        <h3 className="text-[0.65rem] font-medium text-text-muted">
-          {say('screens.faceEditor.photoStudio.framing')}
-        </h3>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-[0.65rem] font-medium text-text-muted">
+            {say('screens.faceEditor.photoStudio.framing')}
+          </h3>
+          <p className="text-xs text-text-muted">{say('common.dragToMoveScrollToZoom')}</p>
+        </div>
 
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-text">{say('common.zoom')}</span>
           <Slider
             label={say('common.zoom')}
             value={Math.round((frame.zoom - 1) * 100)}
-            max={300}
+            max={(MOST_FRAME_ZOOM - 1) * 100}
             valueLabel={(at) => `${(1 + at / 100).toFixed(2)}×`}
             onValueChange={(at) => {
               onFrame({ ...frame, zoom: 1 + at / 100 });
-            }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-text">{say('screens.faceEditor.photoStudio.across')}</span>
-          <Slider
-            label={say('screens.faceEditor.photoStudio.across')}
-            value={Math.round((frame.x + 1) * 100)}
-            max={200}
-            valueLabel={(at) => `${(at - 100).toString()}%`}
-            isDisabled={frame.zoom === 1}
-            onValueChange={(at) => {
-              onFrame({ ...frame, x: at / 100 - 1 });
-            }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-text">
-            {say('screens.faceEditor.photoStudio.upAndDown')}
-          </span>
-          <Slider
-            label={say('screens.faceEditor.photoStudio.upAndDown')}
-            value={Math.round((frame.y + 1) * 100)}
-            max={200}
-            valueLabel={(at) => `${(at - 100).toString()}%`}
-            isDisabled={frame.zoom === 1}
-            onValueChange={(at) => {
-              onFrame({ ...frame, y: at / 100 - 1 });
             }}
           />
         </div>
@@ -101,7 +75,7 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
             }}
           >
             <Icon of={ResetIcon} size={15} />
-            {say('screens.faceEditor.photoStudio.fitTheWholePicture')}
+            {say('common.resetPosition')}
           </Button>
         </div>
       </section>

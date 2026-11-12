@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { cleanPicture } from '@ValenceServer/pictures/cleanPicture';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
+import { handedOutCopyOf } from '@ValenceServer/pictures/handedOutCopyOf';
+import { UPLOAD_ADDRESS } from './UPLOAD_ADDRESS';
 
 const DISK = /^valence-disk:([A-Za-z0-9_-]+)$/u;
-
-const UPLOAD = /^valence-upload:([0-9a-f-]{36})$/u;
 
 const PICTURE_EXTENSIONS: ReadonlySet<string> = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
@@ -12,7 +12,7 @@ const PICTURE_EXTENSIONS: ReadonlySet<string> = new Set(['.jpg', '.jpeg', '.png'
  * Reads a picture kept on this server rather than at the catalogue: one beside a title's files on
  * the disk, or one an administrator uploaded, answering as the catalogue's address would, with a
  * cleaned copy rather than the file itself, so nothing the file carried about where it came from is
- * handed out.
+ * handed out, cut to the part of it chosen where an upload was framed.
  *
  * @param url - The picture's address.
  * @param uploads - Where uploaded pictures are kept.
@@ -20,7 +20,7 @@ const PICTURE_EXTENSIONS: ReadonlySet<string> = new Set(['.jpg', '.jpeg', '.png'
  */
 const readLocalPicture = async (url: string, uploads: string): Promise<Response | null> => {
   const disk = DISK.exec(url);
-  const upload = UPLOAD.exec(url);
+  const upload = UPLOAD_ADDRESS.exec(url);
 
   if (disk === null && upload === null) {
     return null;
@@ -36,7 +36,14 @@ const readLocalPicture = async (url: string, uploads: string): Promise<Response 
   }
 
   try {
-    const cleaned = await cleanPicture(new Uint8Array(await readFile(path))).catch(() => null);
+    const [, , kind, zoom, x, y] = upload ?? [];
+    const cropping =
+      kind === 'poster' || kind === 'backdrop'
+        ? { crop: CROPS[kind], frame: { zoom: Number(zoom), x: Number(x), y: Number(y) } }
+        : null;
+    const cleaned = await handedOutCopyOf(new Uint8Array(await readFile(path)), cropping).catch(
+      () => null,
+    );
 
     return cleaned === null
       ? new Response(null, { status: 415 })

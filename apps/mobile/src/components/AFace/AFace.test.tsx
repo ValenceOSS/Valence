@@ -24,6 +24,8 @@ const aProfile = (overrides: Partial<ViewerProfile> = {}): ViewerProfile => ({
   ...overrides,
 });
 
+const PLACED = { position: 'absolute', left: -288, top: -48, width: 384, height: 192 } as const;
+
 const thePicture = () => {
   const [picture] = theDrawnRoot().queryAll((node) => node.type === 'Image');
 
@@ -86,9 +88,11 @@ describe('AFace', () => {
       />,
     );
 
-    expect(thePicture().parent).toHaveStyle({
-      transform: [{ scale: 2 }, { translateX: -24 }, { translateY: -0 }],
+    await fireEvent(thePicture(), 'load', {
+      nativeEvent: { source: { width: 2000, height: 1000 } },
     });
+
+    expect(thePicture().parent).toHaveStyle(PLACED);
   });
 
   it('draws a photograph the server framed as it comes, without moving it again', async () => {
@@ -106,9 +110,11 @@ describe('AFace', () => {
       />,
     );
 
-    expect(thePicture().parent).not.toHaveStyle({
-      transform: [{ scale: 2 }, { translateX: -24 }, { translateY: -0 }],
+    await fireEvent(thePicture(), 'load', {
+      nativeEvent: { source: { width: 2000, height: 1000 } },
     });
+
+    expect(thePicture().parent).not.toHaveStyle(PLACED);
   });
 
   it('moves a photograph being chosen as its frame is moved, before it is sent', async () => {
@@ -127,8 +133,10 @@ describe('AFace', () => {
       />,
     );
 
-    expect(thePicture().parent).toHaveStyle({
-      transform: [{ scale: 2 }, { translateX: -24 }, { translateY: -0 }],
+    await fireEvent(thePicture(), 'load', {
+      nativeEvent: { source: { width: 2000, height: 1000 } },
     });
+
+    expect(thePicture().parent).toHaveStyle(PLACED);
   });
 });

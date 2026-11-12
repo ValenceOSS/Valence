@@ -142,6 +142,8 @@
         "./packages/ui/src/components/EmbeddedVideo/EmbeddedVideo.types.ts"
       ],
       "@ValenceUI/FilePicker": ["./packages/ui/src/components/FilePicker/FilePicker.tsx"],
+      "@ValenceUI/FramedPicture": ["./packages/ui/src/components/FramedPicture/FramedPicture.tsx"],
+      "@ValenceUI/PictureFramer": ["./packages/ui/src/components/PictureFramer/PictureFramer.tsx"],
       "@ValenceUI/GlassPanel": ["./packages/ui/src/components/GlassPanel/GlassPanel.tsx"],
       "@ValenceUI/HistoryArrows": ["./packages/ui/src/components/HistoryArrows/HistoryArrows.tsx"],
       "@ValenceUI/HistoryArrows.types": [

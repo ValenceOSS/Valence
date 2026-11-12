@@ -4,6 +4,7 @@ import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingSt
 import { randomUUID } from 'node:crypto';
 import { forgetPicture } from '@ValenceServer/pictures/forgetPicture';
 import { keepPicture } from '@ValenceServer/pictures/keepPicture';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
 import { readPicture } from '@ValenceServer/pictures/readPicture';
 import {
   and,
@@ -885,7 +886,7 @@ const createDatabaseCollectionService = ({
       return readPicture(artworkDirectory, artworkPath);
     },
 
-    saveArtwork: async (collectionId, artwork) => {
+    saveArtwork: async (collectionId, artwork, frame = null) => {
       const was = await artworkPathOf(collectionId);
 
       if (was === undefined) {
@@ -900,7 +901,10 @@ const createDatabaseCollectionService = ({
 
       const name = `${collectionId}-${Date.now().toString()}${extensionFor(artwork.contentType) ?? '.png'}`;
 
-      const unkept = await keepPicture(artworkDirectory, name, artwork.body);
+      const unkept = await keepPicture(artworkDirectory, name, artwork.body, {
+        crop: CROPS.poster,
+        frame,
+      });
 
       if (unkept !== null) {
         return unkept;
@@ -908,7 +912,7 @@ const createDatabaseCollectionService = ({
 
       await db
         .update(collection)
-        .set({ artworkPath: name, updatedAt: new Date() })
+        .set({ artworkPath: name, artworkFrame: frame, updatedAt: new Date() })
         .where(eq(collection.id, collectionId));
       await forgetArtwork(was);
       onChanged();
@@ -925,7 +929,7 @@ const createDatabaseCollectionService = ({
 
       await db
         .update(collection)
-        .set({ artworkPath: null, updatedAt: new Date() })
+        .set({ artworkPath: null, artworkFrame: null, updatedAt: new Date() })
         .where(eq(collection.id, collectionId));
       await forgetArtwork(was);
       onChanged();

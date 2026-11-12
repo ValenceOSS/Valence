@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { ImagePlus, Maximize } from '@keyline-icons/react-native';
+import { ImagePlus, RotateCcw } from '@keyline-icons/react-native';
 import {
   UIImagePickerPreferredAssetRepresentationMode,
   launchImageLibraryAsync,
@@ -9,6 +9,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { APhotoStudioProps } from './APhotoStudio.types';
 import { say } from '@ValenceI18n/say';
+import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
 
 const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 
@@ -58,41 +59,26 @@ const APhotoStudio = ({ frame, onPick, onFrame }: APhotoStudioProps) => {
       <Words size="small" tone="muted">
         {say('screens.faceEditor.photoStudio.framing')}
       </Words>
+      <Words size="small" tone="muted">
+        {say('common.dragToMovePinchToZoom')}
+      </Words>
       <ASettingSlider
         label={say('common.zoom')}
         value={frame.zoom}
         min={1}
-        max={4}
+        max={MOST_FRAME_ZOOM}
         onChange={(zoom) => {
           onFrame({ ...frame, zoom });
         }}
       />
-      <ASettingSlider
-        label={say('screens.faceEditor.photoStudio.across')}
-        value={frame.x}
-        min={-1}
-        max={1}
-        onChange={(x) => {
-          onFrame({ ...frame, x });
-        }}
-      />
-      <ASettingSlider
-        label={say('screens.faceEditor.photoStudio.upAndDown')}
-        value={frame.y}
-        min={-1}
-        max={1}
-        onChange={(y) => {
-          onFrame({ ...frame, y });
-        }}
-      />
       <Button
         tone="ghost"
-        icon={Maximize}
+        icon={RotateCcw}
         onPress={() => {
           onFrame(UNFRAMED);
         }}
       >
-        {say('screens.faceEditor.photoStudio.fitTheWholePicture')}
+        {say('common.resetPosition')}
       </Button>
     </View>
   );

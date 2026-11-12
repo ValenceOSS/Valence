@@ -45,6 +45,25 @@ describe('readLocalPicture', () => {
     expect((await readBack(read)).exif).toBeUndefined();
   });
 
+  it('cuts a framed upload to its shape, at the part chosen', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'valence-uploads-'));
+    const id = '00000000-0000-4000-8000-000000000002';
+
+    await writeFile(
+      join(folder, id),
+      await sharp({ create: { width: 1600, height: 900, channels: 3, background: '#3a8ee8' } })
+        .png()
+        .toBuffer(),
+    );
+
+    const read = await readLocalPicture(
+      uploadPictureAddress(id, { kind: 'poster', frame: { zoom: 1, x: -1, y: 0 } }),
+      folder,
+    );
+
+    expect(await readBack(read)).toMatchObject({ width: 600, height: 900 });
+  });
+
   it('turns away a file beside a title’s files that is not a picture, or will not read as one', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'valence-pictures-'));
 

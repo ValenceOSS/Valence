@@ -1,4 +1,4 @@
-import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 
 type FacePreviewsProps = {
   name: string;
@@ -6,6 +6,7 @@ type FacePreviewsProps = {
   avatar: Avatar;
   source: string;
   pending: File | null;
+  onFrame?: (frame: PhotoFrame) => void;
   className?: string;
 };
 

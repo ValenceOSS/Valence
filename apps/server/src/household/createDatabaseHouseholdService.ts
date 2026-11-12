@@ -222,7 +222,7 @@ const createDatabaseHouseholdService = (
         : null;
     },
 
-    savePhoto: async (userId, photo) => {
+    savePhoto: async (userId, photo, frame) => {
       const wrong = await whatIsWrongWithThePicture(photo, HOUSEHOLD_LIMITS);
 
       if (wrong !== null) {
@@ -230,12 +230,8 @@ const createDatabaseHouseholdService = (
       }
 
       const name = householdPhotoName(userId, extensionFor(photo.contentType) ?? '.png');
-      const unkept = await keepFace(
-        pictureDirectory,
-        name,
-        photo.body,
-        (await rowFor(userId))?.photoFrame ?? null,
-      );
+      const framed = frame === undefined ? ((await rowFor(userId))?.photoFrame ?? null) : frame;
+      const unkept = await keepFace(pictureDirectory, name, photo.body, framed);
 
       if (unkept !== null) {
         return unkept;
@@ -244,7 +240,13 @@ const createDatabaseHouseholdService = (
       const changed = countAffected(
         await db
           .update(userProfile)
-          .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
+          .set({
+            photoPath: name,
+            photoFrame: framed,
+            avatarStyle: null,
+            avatarSeed: null,
+            updatedAt: new Date(),
+          })
           .where(eq(userProfile.userId, userId)),
       );
 

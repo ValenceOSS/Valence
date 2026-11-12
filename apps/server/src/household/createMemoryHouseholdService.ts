@@ -117,7 +117,7 @@ const createMemoryHouseholdService = (
       );
     },
 
-    savePhoto: async (userId, photo) => {
+    savePhoto: async (userId, photo, frame) => {
       const wrong = await whatIsWrongWithThePicture(photo, HOUSEHOLD_LIMITS);
 
       if (wrong !== null) {
@@ -133,7 +133,7 @@ const createMemoryHouseholdService = (
       const one = held(userId);
 
       one.picture = processed;
-      one.avatar = { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true };
+      one.avatar = { kind: 'photo', isVideo: false, frame: frame ?? null, hasFramedPicture: true };
       one.updatedAt = new Date().toISOString();
 
       return null;

@@ -119,6 +119,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
             avatar={avatar}
             source={profileAvatarUrl(profile)}
             pending={mode === 'photo' ? photo : null}
+            onFrame={setFrame}
             className="md:sticky md:top-0 md:self-start md:pt-4"
           />
 

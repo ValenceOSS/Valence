@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { FramedPicture } from '@ValenceUI/FramedPicture';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
+import { useFileAddress } from '@ValenceScreens/pictures/useFileAddress';
 import { useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
-import { framedPicture } from '@ValenceScreens/library/framedPicture';
 import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
@@ -46,26 +48,10 @@ const FaceCircle = ({
   isLifted = false,
   className,
 }: FaceCircleProps) => {
-  const [chosen, setChosen] = useState<string | null>(null);
+  const chosen = useFileAddress(pending);
   const [isMissing, setIsMissing] = useState(false);
   const [tries, setTries] = useState(0);
   const isStill = useReducedMotionConfig() === true;
-
-  useEffect(() => {
-    if (pending === null) {
-      setChosen(null);
-
-      return;
-    }
-
-    const address = URL.createObjectURL(pending);
-
-    setChosen(address);
-
-    return () => {
-      URL.revokeObjectURL(address);
-    };
-  }, [pending]);
 
   useEffect(() => {
     setIsMissing(false);
@@ -97,7 +83,7 @@ const FaceCircle = ({
     chosen ??
     (tries === 0 ? asked : `${asked}${asked.includes('?') ? '&' : '?'}try=${tries.toString()}`);
   const showsPicture = chosen !== null || (avatar.kind !== 'initial' && !isMissing);
-  const frame = avatar.kind === 'photo' && !isServerFramed ? framedPicture(avatar.frame) : {};
+  const frame = avatar.kind === 'photo' && !isServerFramed ? avatar.frame : null;
   const letter = avatar.kind === 'initial' ? LETTER_FONT_LOOKS[avatar.font] : null;
   const paint = facePaint(colour, avatar.kind === 'initial' ? avatar.colourTo : null);
 
@@ -108,7 +94,7 @@ const FaceCircle = ({
         ...(letter === null ? {} : { fontFamily: letter.family, fontWeight: letter.weight }),
       }}
       className={cn(
-        'flex items-center justify-center overflow-hidden bg-subtle font-semibold',
+        'relative flex items-center justify-center overflow-hidden bg-subtle font-semibold',
         !showsPicture && paint.ink === 'dark' ? 'text-letter-dark' : 'text-letter-light',
         shape === 'circle' ? 'rounded-full' : 'rounded-lg',
         isLifted && 'shadow-lg',
@@ -126,18 +112,11 @@ const FaceCircle = ({
           preload={isStill ? 'auto' : undefined}
           playsInline
           aria-hidden
-          style={frame}
           className="h-full w-full object-cover"
           onError={failed}
         />
       ) : (
-        <img
-          src={address}
-          alt=""
-          style={frame}
-          className="h-full w-full object-cover"
-          onError={failed}
-        />
+        <FramedPicture src={address} frame={frame} aspect={PICTURE_ASPECTS.face} onError={failed} />
       )}
     </span>
   );

@@ -3031,6 +3031,11 @@
     "context": "The label, used in several places, among them the media panel in the admin area and the media detail dialog."
   },
   {
+    "handler": "common.chooseWhatShows",
+    "text": "Choose the part of the picture that shows.",
+    "context": "The line under the title of the window that opens after a picture is chosen for an upload."
+  },
+  {
     "handler": "common.chrome",
     "text": "Chrome",
     "context": "The name of the Google Chrome browser, as a device is labelled with it."
@@ -3891,6 +3896,16 @@
     "context": "The label of the handle a table row is dragged by to change the order."
   },
   {
+    "handler": "common.dragToMovePinchToZoom",
+    "text": "Drag the picture to move it. Pinch to zoom.",
+    "context": "A hint beside a picture being framed after an upload, on a phone."
+  },
+  {
+    "handler": "common.dragToMoveScrollToZoom",
+    "text": "Drag the picture to move it. Scroll or pinch to zoom.",
+    "context": "A hint beside a picture being framed after an upload, on a computer: it can be dragged into place and drawn nearer."
+  },
+  {
     "handler": "common.duckDuckGo",
     "text": "DuckDuckGo",
     "context": "The DuckDuckGo web browser, as a product name."
@@ -4249,6 +4264,11 @@
     "handler": "common.foundOnYourNetwork",
     "text": "Found on your network",
     "context": "Text shown, used in the where is your valence of the phone app and in the connect to server."
+  },
+  {
+    "handler": "common.framePicture",
+    "text": "Frame the picture",
+    "context": "The title of the window that opens after a picture is chosen for an upload, for placing it in its shape before it is sent."
   },
   {
     "handler": "common.fromName",
@@ -6466,6 +6486,11 @@
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
   },
   {
+    "handler": "common.resetPosition",
+    "text": "Reset position",
+    "context": "The label of a button that puts a picture being framed back in the middle, at its smallest, wherever a picture is uploaded."
+  },
+  {
     "handler": "common.resolution",
     "text": "Resolution",
     "context": "A video's resolution, such as 1080p: a custom format condition in the quality profile editor, and wherever a resolution is named."
@@ -7879,6 +7904,11 @@
     "handler": "common.where",
     "text": "Where",
     "context": "The label in the webhook fields (from `webhookPanes`)."
+  },
+  {
+    "handler": "common.wherePictureSits",
+    "text": "Where the picture sits. Use the arrow keys to move it, and plus or minus to zoom.",
+    "context": "What a screen reader says of a picture being framed after an upload, which can be dragged into place."
   },
   {
     "handler": "common.whereYouAre",
@@ -30206,29 +30236,14 @@
     "context": "The label of the swatch that picks any colour for a letter face's gradient to end on."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.across",
-    "text": "Horizontal position",
-    "context": "The label of a slider in the photo studio in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.photoStudio.aPhotoOrAGIF",
     "text": "A photo or a GIF.",
     "context": "Shown beside the file picker in the photo studio in the face editor, before a picture is chosen."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.fitTheWholePicture",
-    "text": "Fit the whole picture",
-    "context": "The label of a button in the photo studio in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.photoStudio.framing",
     "text": "Framing",
     "context": "A heading in the photo studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.photoStudio.upAndDown",
-    "text": "Vertical position",
-    "context": "The label of a slider in the photo studio in the face editor."
   },
   {
     "handler": "screens.faceEditor.photoStudio.yourCurrentPicture",

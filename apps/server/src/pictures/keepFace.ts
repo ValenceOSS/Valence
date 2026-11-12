@@ -1,7 +1,8 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
-import { cropFace } from './cropFace';
+import { cropPicture } from './cropPicture';
+import { CROPS } from './CROPS';
 import { framedNameOf } from './framedNameOf';
 import { processFace } from './processFace';
 import { processedNameOf } from './processedNameOf';
@@ -24,7 +25,9 @@ const keepFace = async (
   body: Uint8Array,
   frame: PhotoFrame | null,
 ): Promise<'unreadable' | null> => {
-  const made = await Promise.all([processFace(body), cropFace(body, frame)]).catch(() => null);
+  const made = await Promise.all([processFace(body), cropPicture(body, frame, CROPS.face)]).catch(
+    () => null,
+  );
 
   if (made === null) {
     return 'unreadable';

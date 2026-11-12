@@ -2,7 +2,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { PICTURE_FOLDERS } from './PICTURE_FOLDERS';
 import { MOVING_FACE_TYPES } from './MOVING_FACE_TYPES';
-import { cropFace } from './cropFace';
+import { cropPicture } from './cropPicture';
+import { CROPS } from './CROPS';
 import { framedNameOf } from './framedNameOf';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 
@@ -28,7 +29,9 @@ const reframeFace = async (
     () => null,
   );
   const framed =
-    original === null ? null : await cropFace(new Uint8Array(original), frame).catch(() => null);
+    original === null
+      ? null
+      : await cropPicture(new Uint8Array(original), frame, CROPS.face).catch(() => null);
 
   if (framed === null) {
     return false;

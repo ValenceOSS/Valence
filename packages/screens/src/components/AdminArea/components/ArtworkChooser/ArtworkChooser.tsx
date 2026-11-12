@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
@@ -100,6 +103,7 @@ const ArtworkChooser = ({ subject, onChanged, part }: ArtworkChooserProps) => {
   );
   const [order, setOrder] = useState<(typeof ARTWORK_ORDERS)[number]>('catalogue');
   const [busy, setBusy] = useState<string | null>(null);
+  const [framing, setFraming] = useState<File | null>(null);
   const { mediaId } = subject;
   const choices = useQuery({
     queryKey: ['artwork-choices', mediaId, part ?? null],
@@ -142,10 +146,10 @@ const ArtworkChooser = ({ subject, onChanged, part }: ArtworkChooserProps) => {
     );
   };
 
-  const upload = async (file: File) => {
+  const upload = async (file: File, frame: PhotoFrame | null = null) => {
     setBusy('upload');
 
-    const outcome = await uploadArtwork(mediaId, kind, file);
+    const outcome = await uploadArtwork(mediaId, kind, file, frame);
 
     setBusy(null);
 
@@ -213,12 +217,27 @@ const ArtworkChooser = ({ subject, onChanged, part }: ArtworkChooserProps) => {
               size="sm"
               isLoading={busy === 'upload'}
               onPick={(file) => {
-                void upload(file);
+                if (kind === 'logo') {
+                  void upload(file);
+                } else {
+                  setFraming(file);
+                }
               }}
             >
               {say('screens.adminArea.artworkChooser.uploadAPicture')}
             </FilePicker>
           ) : null}
+          <FramePictureDialog
+            file={framing}
+            aspect={kind === 'backdrop' ? PICTURE_ASPECTS.backdrop : PICTURE_ASPECTS.poster}
+            onClose={() => {
+              setFraming(null);
+            }}
+            onUse={(file, frame) => {
+              setFraming(null);
+              void upload(file, frame);
+            }}
+          />
         </div>
       </div>
 

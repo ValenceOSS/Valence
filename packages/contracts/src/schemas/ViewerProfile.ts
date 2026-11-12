@@ -4,6 +4,7 @@ import { LetterFontSchema, PLUS_JAKARTA_SANS_AS_STORED } from './LetterFont';
 import { SketchSceneSchema } from './SketchScene';
 import { HowOftenToAskSchema, StillWatchingSchema } from './StillWatching';
 import { DEFAULT_DISCORD_PRESENCE, DiscordPresenceSchema } from './DiscordPresence';
+import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
 
 const PROFILE_COLOURS = [
   '#e8503a',
@@ -45,7 +46,7 @@ const AVATAR_STYLES = [
 const AvatarStyleSchema = z.enum(AVATAR_STYLES);
 
 const PhotoFrameSchema = z.object({
-  zoom: z.number().min(1).max(4),
+  zoom: z.number().min(1).max(MOST_FRAME_ZOOM),
   x: z.number().min(-1).max(1),
   y: z.number().min(-1).max(1),
 });

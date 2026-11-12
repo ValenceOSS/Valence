@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { WordRule } from '@ValenceContracts/schemas/WordRule';
 import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
 import type {
@@ -267,6 +268,7 @@ type LibraryService = ShowService & {
     kind: ArtworkKind,
     artwork: { body: Uint8Array; contentType: string },
     by: string | null,
+    frame?: PhotoFrame | null,
   ) => Promise<
     | { jobId: string | null }
     | 'missing'

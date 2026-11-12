@@ -1135,6 +1135,13 @@
       "when": 1794492892628,
       "tag": "0161_account_pictures_keep_their_framing",
       "breakpoints": true
+    },
+    {
+      "idx": 162,
+      "version": "7",
+      "when": 1794523129299,
+      "tag": "0162_uploaded_artwork_keeps_its_framing",
+      "breakpoints": true
     }
   ]
 }

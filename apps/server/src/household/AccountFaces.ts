@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Household, HouseholdRequest } from '@ValenceContracts/schemas/Household';
 import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 
@@ -11,6 +12,7 @@ type AccountFaces = {
   savePhoto: (
     accountId: string,
     photo: { body: Uint8Array; contentType: string },
+    frame?: PhotoFrame | null,
   ) => Promise<PictureFault | null>;
   forgetOwn: (accountId: string) => Promise<void>;
 };

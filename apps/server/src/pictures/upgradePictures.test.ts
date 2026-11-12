@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
+import { CROPS } from './CROPS';
 import { upgradePictures } from './upgradePictures';
 
 const aPhoto = () =>
@@ -20,7 +21,13 @@ describe('upgradePictures', () => {
 
     await writeFile(join(folder, 'a.jpg'), photo);
 
-    await expect(upgradePictures(folder, ['a.jpg'], vi.fn())).resolves.toEqual({
+    await expect(
+      upgradePictures(
+        folder,
+        ['a.jpg'].map((name) => ({ name, cropping: null })),
+        vi.fn(),
+      ),
+    ).resolves.toEqual({
       moved: 1,
       processed: 1,
     });
@@ -37,9 +44,19 @@ describe('upgradePictures', () => {
     const folder = await aFolder();
 
     await writeFile(join(folder, 'a.jpg'), await aPhoto());
-    await upgradePictures(folder, ['a.jpg'], vi.fn());
+    await upgradePictures(
+      folder,
+      ['a.jpg'].map((name) => ({ name, cropping: null })),
+      vi.fn(),
+    );
 
-    await expect(upgradePictures(folder, ['a.jpg', 'a.jpg'], vi.fn())).resolves.toEqual({
+    await expect(
+      upgradePictures(
+        folder,
+        ['a.jpg', 'a.jpg'].map((name) => ({ name, cropping: null })),
+        vi.fn(),
+      ),
+    ).resolves.toEqual({
       moved: 0,
       processed: 0,
     });
@@ -51,9 +68,31 @@ describe('upgradePictures', () => {
     await mkdir(join(folder, 'originals'));
     await writeFile(join(folder, 'originals', 'a.jpg'), await aPhoto());
 
-    await expect(upgradePictures(folder, ['a.jpg'], vi.fn())).resolves.toEqual({
+    await expect(
+      upgradePictures(
+        folder,
+        ['a.jpg'].map((name) => ({ name, cropping: null })),
+        vi.fn(),
+      ),
+    ).resolves.toEqual({
       moved: 0,
       processed: 1,
+    });
+  });
+
+  it('cuts a picture shown in a shape as its frame chose', async () => {
+    const folder = await aFolder();
+
+    await writeFile(join(folder, 'a.jpg'), await aPhoto());
+    await upgradePictures(
+      folder,
+      [{ name: 'a.jpg', cropping: { crop: CROPS.cover, frame: { zoom: 2, x: 0, y: 0 } } }],
+      vi.fn(),
+    );
+
+    expect(await sharp(join(folder, 'processed', 'a.webp')).metadata()).toMatchObject({
+      width: 500,
+      height: 500,
     });
   });
 
@@ -65,7 +104,11 @@ describe('upgradePictures', () => {
     await writeFile(join(folder, 'b.jpg'), await aPhoto());
 
     await expect(
-      upgradePictures(folder, ['broken.jpg', 'b.jpg', 'gone.jpg'], onProblem),
+      upgradePictures(
+        folder,
+        ['broken.jpg', 'b.jpg', 'gone.jpg'].map((name) => ({ name, cropping: null })),
+        onProblem,
+      ),
     ).resolves.toEqual({
       moved: 2,
       processed: 1,

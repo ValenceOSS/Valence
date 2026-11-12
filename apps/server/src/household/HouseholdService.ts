@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HouseholdRequest } from '@ValenceContracts/schemas/Household';
 import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { StoredHousehold } from './StoredHousehold';
@@ -16,6 +17,7 @@ type HouseholdService = {
   savePhoto: (
     userId: string,
     photo: { body: Uint8Array; contentType: string },
+    frame?: PhotoFrame | null,
   ) => Promise<PictureFault | null>;
 };
 

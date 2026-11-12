@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { readDevicesOf } from '@ValenceServer/devices/readDevicesOf';
@@ -643,10 +644,14 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       }
     }
 
-    const wrong = await faces?.savePhoto(userId, {
-      body: new Uint8Array(await context.req.arrayBuffer()),
-      contentType: context.req.header('content-type') ?? '',
-    });
+    const wrong = await faces?.savePhoto(
+      userId,
+      {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      },
+      frameFromQuery(context.req.query()),
+    );
 
     if (wrong !== undefined && wrong !== null) {
       const said = describePictureFault(wrong);

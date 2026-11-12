@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
   ageCeiling,
+  collection,
   hidden,
   library,
   libraryBlock,
@@ -377,6 +378,36 @@ describe('createDatabaseCollectionService', { timeout: STARTING_POSTGRES_MS }, (
     expect((await collections.list(ADMIN, { withEmpty: true }))[0]?.hasOwnArtwork).toBe(true);
     await expect(collections.dropArtwork(made.id)).resolves.toBe(true);
     await expect(collections.readArtwork(ADMIN, made.id)).resolves.toBeNull();
+  });
+
+  it('cuts artwork to a poster at the part chosen, and keeps where it sits', async () => {
+    const { db, collections } = await aServer();
+    const made = await collections.create({ name: 'Saga', createdBy: null });
+    const wide = new Uint8Array(
+      await sharp({ create: { width: 1600, height: 900, channels: 3, background: '#3a8ee8' } })
+        .png()
+        .toBuffer(),
+    );
+
+    await collections.saveArtwork(
+      made.id,
+      { body: wide, contentType: 'image/png' },
+      {
+        zoom: 1,
+        x: 1,
+        y: 0,
+      },
+    );
+
+    const [row] = await db
+      .select({ frame: collection.artworkFrame })
+      .from(collection)
+      .where(eq(collection.id, made.id));
+
+    expect(row?.frame).toEqual({ zoom: 1, x: 1, y: 0 });
+    expect(
+      await sharp((await collections.readArtwork(ADMIN, made.id))?.body).metadata(),
+    ).toMatchObject({ width: 600, height: 900 });
   });
 
   it('refuses artwork that is not a picture, or for a collection that is not there', async () => {

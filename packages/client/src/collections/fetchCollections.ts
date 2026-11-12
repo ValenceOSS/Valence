@@ -1,3 +1,5 @@
+import { withFrameQuery } from '@ValenceContracts/functions/withFrameQuery';
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
   CollectionDetailReadSchema,
@@ -172,13 +174,15 @@ const collectionArtworkUrl = (
  *
  * @param collectionId - The collection.
  * @param picture - The picture, and what kind it is.
+ * @param frame - Where it sits in its shape, or nothing for its middle.
  * @returns What was wrong with it, or nothing where it was kept.
  */
 const saveCollectionArtwork = async (
   collectionId: string,
   picture: Blob,
+  frame: PhotoFrame | null = null,
 ): Promise<string | null> => {
-  const response = await fetch(`/api/collections/${collectionId}/artwork`, {
+  const response = await fetch(withFrameQuery(`/api/collections/${collectionId}/artwork`, frame), {
     method: 'PUT',
     credentials: 'same-origin',
     headers: { 'content-type': picture.type },

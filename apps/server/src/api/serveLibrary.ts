@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { ExtraChoiceRequestSchema } from '@ValenceContracts/schemas/ExtraChoice';
 import {
   PatternRenamePlanRequestSchema,
@@ -612,6 +613,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
         contentType: context.req.header('content-type') ?? '',
       },
       (await readAccount(context.req.raw.headers))?.id ?? null,
+      frameFromQuery(context.req.query()),
     );
 
     if (typeof uploaded === 'string') {

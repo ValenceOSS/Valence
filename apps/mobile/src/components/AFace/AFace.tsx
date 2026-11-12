@@ -11,7 +11,9 @@ import { inkFor } from '@ValenceClient/library/inkFor';
 import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import { LETTER_FACES } from '@ValenceMobile/theme/LETTER_FACES';
 import type { ViewStyle } from 'react-native';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
+import { placedPicture } from '@ValenceCore/pictures/placedPicture';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import type { AFaceProps } from './AFace.types';
 import { backdropOfAFace } from '@ValenceMobile/components/AFace/backdropOfAFace';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -38,49 +40,35 @@ const styles = StyleSheet.create({
 });
 
 /**
- * How a framed photograph sits in its tile, as the web frames it: grown by its zoom and slid by its
- * position, where a position of one moves it as far as the zoom leaves room to. Only a photograph
- * being chosen, or one from a server that does not frame them, is moved here; one the server framed
- * comes as the square its frame chose.
+ * Where a photograph is drawn in its tile so the tile shows the part its frame chose, once the
+ * photograph's size is known; until then, or where there is no frame to follow, it fills the tile
+ * from its middle.
  *
- * @param avatar - The face, which only a photograph with a frame is moved for.
+ * @param frame - Where it sits, or nothing to fill the tile.
+ * @param size - How large the photograph is, once it has loaded.
  * @param side - How wide the tile is.
- * @returns The movement to draw the picture with, or nothing.
+ * @returns How to place it.
  */
-const framed = (avatar: Avatar | null, side: number): ViewStyle | null => {
-  if (avatar?.kind !== 'photo' || avatar.frame === null) {
-    return null;
+const placedIn = (
+  frame: PhotoFrame | null,
+  size: { width: number; height: number } | null,
+  side: number,
+): ViewStyle => {
+  if (frame === null || size === null) {
+    return styles.picture;
   }
 
-  const { zoom, x, y } = avatar.frame;
-  const room = ((zoom - 1) / (2 * zoom)) * side;
+  const at = placedPicture(size, PICTURE_ASPECTS.face, frame);
 
-  return { transform: [{ scale: zoom }, { translateX: -x * room }, { translateY: -y * room }] };
+  return {
+    left: at.left * side,
+    top: at.top * side,
+    width: at.width * side,
+    height: at.height * side,
+    position: 'absolute',
+  };
 };
 
-/**
- * Draws what somebody looks like on the way in — their picture where they have one, and the first
- * letter of their name where they have not.
- *
- * A picture the server cannot produce falls back to the initial, the same way the browser client
- * does and for the same reason: a face says it has one whenever a filename is stored against it,
- * and the file behind that name can be gone. Until a picture has been read the tile shows its
- * colour and initial rather than nothing, and what became of each picture is remembered while the
- * app is open, so a wall drawn again neither waits on one it has shown nor asks again for one that
- * was not there.
- *
- * The initial is drawn in the letter the profile chose, in dark or light ink by whichever reads on
- * the colour it sits on rather than by the theme, since that colour is the same in both themes, as
- * the web draws it. A photograph sits in its tile the way its owner framed it.
- *
- * @param profile - Whose face to draw.
- * @param picked - A photograph chosen on this phone and not yet sent, to show in its place.
- * @param isLarge - Whether it is the one face on the screen, drawn larger and without its name, for a
- *   screen that names them itself.
- * @param isSmall - Whether it is an avatar beside somebody's name, drawn small and without the name.
- * @param tileMotion - A movement for the picture alone, leaving its name where it is, for a face
- *   flying into its place.
- */
 const AFace = ({
   profile,
   picked = null,
@@ -90,6 +78,10 @@ const AFace = ({
 }: AFaceProps) => {
   const colours = useTheColours();
   const [told, setTold] = useState<{ uri: string; seen: 'here' | 'missing' } | null>(null);
+  const [measured, setMeasured] = useState<{
+    uri: string;
+    size: { width: number; height: number };
+  } | null>(null);
   const found = thePictureFor(profile, picked);
   const seen =
     found === null ? undefined : told?.uri === found.uri ? told.seen : PICTURES_SEEN.get(found.uri);
@@ -125,7 +117,7 @@ const AFace = ({
         ]}
       >
         {profile.avatar.kind === 'photo' && profile.avatar.isVideo && picked === null ? (
-          <View style={[styles.picture, framed(profile.avatar, side)]}>
+          <View style={styles.picture}>
             <AMovingFace uri={onThisServer(profileAvatarUrl(profile))} />
           </View>
         ) : null}
@@ -154,21 +146,24 @@ const AFace = ({
         {picture === null ? null : (
           <View
             style={[
-              styles.picture,
-              framed(
-                picked === null &&
-                  profile.avatar.kind === 'photo' &&
-                  profile.avatar.hasFramedPicture
+              placedIn(
+                profile.avatar.kind !== 'photo' ||
+                  (picked === null && profile.avatar.hasFramedPicture)
                   ? null
-                  : profile.avatar,
+                  : profile.avatar.frame,
+                measured?.uri === picture.uri ? measured.size : null,
                 side,
               ),
             ]}
           >
             <APicture
               picture={picture}
-              onLoad={() => {
+              onLoad={(size) => {
                 tell(picture.uri, 'here');
+
+                if (size !== undefined && size.width > 0 && size.height > 0) {
+                  setMeasured({ uri: picture.uri, size });
+                }
               }}
               onMissing={() => {
                 tell(picture.uri, 'missing');
