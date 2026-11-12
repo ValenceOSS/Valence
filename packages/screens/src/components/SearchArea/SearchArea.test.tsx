@@ -26,11 +26,17 @@ const fetchLibraryItems = vi.fn<(libraryId: string, options?: Options) => Promis
 
 const fetchFacets = vi.fn<() => Promise<LibraryFacets>>();
 
-vi.mock('@ValenceClient/library/fetchLibrary', () => ({
-  fetchLibraries: () => fetchLibraries(),
-  fetchLibraryItems: (libraryId: string, options?: Options) =>
-    fetchLibraryItems(libraryId, options),
-}));
+vi.mock('@ValenceClient/library/fetchLibrary', async () => {
+  const { askedOfEachLibrary } = await import('@ValenceClient/testing/askedOfEachLibrary');
+  const ofOne = async (libraryId: string, options?: Options) =>
+    fetchLibraryItems(libraryId, options);
+
+  return {
+    fetchLibraries: async () => fetchLibraries(),
+    fetchLibraryItems: ofOne,
+    fetchItemsAcross: askedOfEachLibrary(ofOne),
+  };
+});
 
 const findBooks = vi.fn<(query: { search?: string }) => Promise<Book[]>>();
 

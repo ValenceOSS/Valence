@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -236,14 +236,14 @@ describe('ReadPage', () => {
 
     expect(await screen.findByRole('img', { name: 'Page 1' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Bookmarks' }));
 
     const bookmarks = await screen.findByRole('region', { name: 'Bookmarks' });
 
     await userEvent.click(await within(bookmarks).findByRole('button', { name: /^Page 6/ }));
 
     expect(await screen.findByRole('img', { name: 'Page 6' })).toBeInTheDocument();
-    expect(screen.getByText(/— Two$/)).toBeInTheDocument();
+    expect(document.querySelector('header')).toHaveTextContent('Two');
     expect(screen.getByRole('button', { name: 'Remove bookmark' })).toBeInTheDocument();
 
     await userEvent.keyboard('{ArrowRight}');
@@ -253,12 +253,16 @@ describe('ReadPage', () => {
     await userEvent.keyboard('{ArrowRight}');
     await userEvent.keyboard('{ArrowRight}');
 
-    expect(await screen.findByText(/— One$/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('header')).toHaveTextContent('One');
+    });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Chapter' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Go to Two' }));
 
-    expect(await screen.findByText(/— Two$/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('header')).toHaveTextContent('Two');
+    });
     expect(screen.getByRole('img', { name: 'Page 1' })).toBeInTheDocument();
   });
 
