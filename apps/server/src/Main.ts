@@ -363,6 +363,7 @@ import { createFilenameMetadataProvider } from '@ValenceServer/library/createFil
 import { createMediaFileSystem } from '@ValenceServer/library/createMediaFileSystem';
 import { createTranscoderClient } from '@ValenceServer/transcoder/TranscoderClient';
 import { createImageCache } from '@ValenceServer/images/createImageCache';
+import { createArtworkNames } from '@ValenceServer/images/createArtworkNames';
 import { createDiskUsage } from '@ValenceServer/maintenance/createDiskUsage';
 import { measureArtwork } from '@ValenceServer/images/measureArtwork';
 import { measureBookPages } from '@ValenceServer/books/measureBookPages';
@@ -4595,8 +4596,14 @@ const creditProviders = [
   }),
 ];
 
+const artworkNames = createArtworkNames(
+  `${env.BETTER_AUTH_SECRET}:artwork-names`,
+  join(env.IMAGE_CACHE_DIR, 'names'),
+);
+
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
+  publish: { directory: join(env.IMAGE_CACHE_DIR, 'public'), nameOf: artworkNames.nameOf },
   fetchImpl: async (url) =>
     (await readLocalPicture(url, artworkUploads)) ??
     (readLinkedAddress(url) === null
@@ -5832,6 +5839,8 @@ const app = createApp({
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
   readImage: (url, width) => images.read(url, width),
+  artworkNames,
+  artworkAddress: env.ARTWORK_URL,
   isTranscoderReachable: () => transcoder.isReachable(),
   transcoderAddress: env.TRANSCODER_URL,
   listRunningJobs: () => jobs.listRunning(),
