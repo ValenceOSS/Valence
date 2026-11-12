@@ -146,9 +146,8 @@ const LibraryBrowser = ({
   const { hasMore, isReadingMore, showMore } = home;
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
-  const [isNearTheEnd, setIsNearTheEnd] = useState(false);
-  const endTop = useRef<number | null>(null);
-  const askedAtTop = useRef<number | null>(null);
+  const [nearEndAt, setNearEndAt] = useState<number | null>(null);
+  const askedAt = useRef<number | null>(null);
   const [isAtEnd, setIsAtEnd] = useState(false);
 
   useEffect(() => {
@@ -182,8 +181,9 @@ const LibraryBrowser = ({
       const { top } = end.getBoundingClientRect();
 
       frame = 0;
-      endTop.current = top;
-      setIsNearTheEnd(top < window.innerHeight + NEAR_THE_END_PX);
+      setNearEndAt(
+        top < window.innerHeight + NEAR_THE_END_PX ? Math.round(top + window.scrollY) : null,
+      );
     };
 
     const measureSoon = () => {
@@ -206,15 +206,15 @@ const LibraryBrowser = ({
   useEffect(() => {
     if (
       isHome &&
-      isNearTheEnd &&
+      nearEndAt !== null &&
       hasMore &&
       !isReadingMore &&
-      endTop.current !== askedAtTop.current
+      nearEndAt !== askedAt.current
     ) {
-      askedAtTop.current = endTop.current;
+      askedAt.current = nearEndAt;
       showMore();
     }
-  }, [isHome, isNearTheEnd, hasMore, isReadingMore, showMore]);
+  }, [isHome, nearEndAt, hasMore, isReadingMore, showMore]);
   const shown = rails.flatMap((rail) => rail.items);
 
   useArtworkWarming(
