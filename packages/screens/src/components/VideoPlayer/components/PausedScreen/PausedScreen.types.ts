@@ -1,10 +1,19 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
-type PausedScreenProps = {
-  media: Pick<MediaSummary, 'id' | 'title'> &
-    Partial<Pick<MediaSummary, 'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'hasLogo'>>;
-  isShown: boolean;
-  secondsLeft?: number;
+type PausedMedia = Pick<MediaSummary, 'id' | 'title'> &
+  Partial<Pick<MediaSummary, 'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'hasLogo'>>;
+
+type StillWatchingAsk = {
+  upNext: PausedMedia;
+  onCarryOn: () => void;
+  onStop: () => void;
 };
 
-export type { PausedScreenProps };
+type PausedScreenProps = {
+  media: PausedMedia;
+  isShown: boolean;
+  secondsLeft?: number;
+  asking?: StillWatchingAsk;
+};
+
+export type { PausedMedia, PausedScreenProps, StillWatchingAsk };

@@ -36652,11 +36652,6 @@
     "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for how many stars this profile gave a film or show."
   },
   {
-    "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",
-    "text": "{title} is up next. Nothing will play or be marked as watched until you confirm.",
-    "context": "Text shown in the still watching dialog. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.streamStats.planAxis.burnIn",
     "text": "burn in",
     "context": "Shown in the plan axis in the stream stats."
@@ -36885,6 +36880,11 @@
     "handler": "screens.videoPlayer.pausedScreen.titleEpEpisodeNumber",
     "text": "{title}: Ep. {episodeNumber}",
     "context": "Shown in the paused screen in the video player. {title} is filled in by the app; {episodeNumber} is filled in by the app."
+  },
+  {
+    "handler": "screens.videoPlayer.pausedScreen.upNextEpisode",
+    "text": "Up next: {episode}",
+    "context": "On the player's paused screen while it asks whether anybody is still watching, naming the episode that plays if they carry on. {episode} is its name and number, such as Chapter 6: Ep. 6."
   },
   {
     "handler": "screens.videoPlayer.pausedScreen.youReWatching",

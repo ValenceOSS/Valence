@@ -9258,8 +9258,6 @@ const ENGLISH = {
     'With no rules, it holds every film and show you can see.',
   'screens.smartRules.yes': 'Yes',
   'screens.smartRules.yourStars': 'Your stars',
-  'screens.stillWatchingDialog.titleIsUpNextNothingWill':
-    '{title} is up next. Nothing will play or be marked as watched until you confirm.',
   'screens.streamStats.planAxis.burnIn': 'burn in',
   'screens.streamStats.statsSummary.atAGlance': 'At a glance',
   'screens.televisionHandoff.askForAnotherCode': 'Get a new code',
@@ -9312,6 +9310,7 @@ const ENGLISH = {
   'screens.videoPlayer.openValenceAtItsAddressOn':
     'Open Valence using its network address instead of localhost, so the device can reach it.',
   'screens.videoPlayer.pausedScreen.titleEpEpisodeNumber': '{title}: Ep. {episodeNumber}',
+  'screens.videoPlayer.pausedScreen.upNextEpisode': 'Up next: {episode}',
   'screens.videoPlayer.pausedScreen.youReWatching': 'You’re watching',
   'screens.videoPlayer.playerControls.audioTrack': 'Audio track',
   'screens.videoPlayer.playerControls.backSKIPSECONDSSeconds': 'Back {SKIP_SECONDS} seconds',
