@@ -3,7 +3,9 @@ import { sayRatingMeans } from './sayRatingMeans';
 
 describe('sayRatingMeans', () => {
   it('says what a British rating means', () => {
-    expect(sayRatingMeans('GB', '12A')).toBe('For ages 12 and up, or younger with an adult');
+    expect(sayRatingMeans('GB', '12A')).toBe(
+      'For ages 12 and up, and younger children with an adult',
+    );
     expect(sayRatingMeans('GB', '18')).toBe('For adults only');
   });
 
