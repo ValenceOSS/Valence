@@ -5,6 +5,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { RailCard } from './RailCard';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { aLibrary } from '@ValenceClient/testing/aLibrary';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import type * as FetchLibrary from '@ValenceClient/library/fetchLibrary';
+
+const DUMMY = aLinkedServerFace({ name: 'Dummy' });
+
+vi.mock('@ValenceClient/library/fetchLibrary', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchLibrary>()),
+  fetchLibraries: () =>
+    Promise.resolve([
+      aLibrary({ id: '00000000-0000-4000-8000-000000000000' }),
+      aLibrary({ id: 'theirs', linkedServerId: DUMMY.id }),
+      aLibrary({ id: 'stranger', linkedServerId: '00000000-0000-4000-8000-00000000dead' }),
+    ]),
+}));
+
+vi.mock('@ValenceClient/linking/fetchLinkedServerFaces', () => ({
+  fetchLinkedServerFaces: () => Promise.resolve([DUMMY]),
+}));
+
+vi.mock('@ValenceClient/linking/fetchThisServerFace', () => ({
+  fetchThisServerFace: () =>
+    Promise.resolve({ name: 'Valence', colour: '#3a8ee8', pictureAt: null }),
+}));
 
 const MEDIA: MediaSummary = {
   id: '9c858901-8a57-4791-81fe-4c455b099bc9',
@@ -168,6 +192,50 @@ describe('RailCard', () => {
     renderInAnAddress(<RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     expect(screen.getByText('Parasite')).toBeInTheDocument();
+  });
+
+  it('marks this server beside a linked one where both have the title', async () => {
+    renderInAnAddress(
+      <RailCard
+        media={MEDIA}
+        copies={[{ ...MEDIA, id: 'their-copy', libraryId: 'theirs' }]}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Valence' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+  });
+
+  it('marks nothing on a title only this server has', async () => {
+    renderInAnAddress(<RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />);
+    await flush();
+
+    expect(screen.queryByRole('img', { name: /^From / })).not.toBeInTheDocument();
+  });
+
+  it('never takes a linked library whose server it cannot name for this server’s own', async () => {
+    renderInAnAddress(
+      <RailCard
+        media={{ ...MEDIA, libraryId: 'stranger' }}
+        copies={[{ ...MEDIA, id: 'their-copy', libraryId: 'theirs' }]}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'From Valence' })).not.toBeInTheDocument();
+  });
+
+  it('marks only the linked server on a title only it has', async () => {
+    renderInAnAddress(
+      <RailCard media={{ ...MEDIA, libraryId: 'theirs' }} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'From Valence' })).not.toBeInTheDocument();
   });
 
   it('says how many episodes of a programme are left to watch, and nothing for none', () => {

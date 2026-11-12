@@ -10,6 +10,8 @@ import {
 import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
+import { useHereMark } from '@ValenceScreens/linking/useHereMark';
+import { useIsHere } from '@ValenceScreens/linking/useIsHere';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -294,7 +296,8 @@ const fitInside = (top: number, height: number): number => {
  *   page lays titles out.
  * @param flag - What is new about it, across the picture where it rests as the picture alone.
  * @param badges - Words in the corner of its picture, such as that it is in the library.
- * @param copies - Other servers' copies of the same title, each marked beside its own.
+ * @param copies - Other servers' copies of the same title, each marked beside its own; where one
+ *   of them, or the card itself, is this server's own, this server is marked among them too.
  * @param drawsLarge - Whether the card is drawn wider than a rail draws one, as a grid that
  *   stretches its cards to fill the row does, so its picture, upright or lying flat, is asked for
  *   whole rather than at the size a rail's card needs.
@@ -350,6 +353,14 @@ const RailCardFace = ({
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [isRaised, setIsRaised] = useState(false);
   const cardOrigin = useCardOrigin();
+  const hereMark = useHereMark();
+  const isHere = useIsHere();
+  const marks = [media, ...copies].flatMap((one) => {
+    const mark = cardOrigin(one.libraryId).origin ?? (isHere(one.libraryId) ? hereMark : null);
+
+    return mark === null ? [] : [mark];
+  });
+  const [firstMark, ...otherMarks] = marks.some((mark) => mark !== hereMark) ? marks : [];
   const prefersReducedMotion = useReducedMotionConfig();
 
   const closingRef = useRef(0);
@@ -833,12 +844,8 @@ const RailCardFace = ({
                 countLabel: sayCount('common.countEpisodesLeft', unwatchedCount),
               })}
           {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
-          {...cardOrigin(media.libraryId)}
-          alsoFrom={copies.flatMap((copy) => {
-            const { origin } = cardOrigin(copy.libraryId);
-
-            return origin === undefined ? [] : [origin];
-          })}
+          {...(firstMark === undefined ? {} : { origin: firstMark })}
+          alsoFrom={otherMarks}
           {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           isStill={growsOnHover}

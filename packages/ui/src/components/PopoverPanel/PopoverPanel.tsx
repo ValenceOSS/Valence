@@ -83,7 +83,7 @@ const PopoverPanel = ({
                       FIELD_TRIGGER.md,
                     )
                   : triggerLook === 'inline'
-                    ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:focus-ring'
+                    ? 'inline-flex min-w-0 items-center rounded-full text-current outline-none focus-visible:focus-ring'
                     : cn(
                         'inline-flex shrink-0 items-center justify-center rounded-md',
                         triggerLook === 'smallIcon' ? 'size-6' : 'size-10',

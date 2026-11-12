@@ -2,7 +2,7 @@ type LibraryOption = {
   id: string;
   label: string;
   shortLabel: string;
-  group: string | null;
+  isNested: boolean;
 };
 
 export type { LibraryOption };

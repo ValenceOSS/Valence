@@ -26936,6 +26936,16 @@
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
   },
   {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.one",
+    "text": "{count} more person wants it",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.other",
+    "text": "{count} more people want it",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
+  },
+  {
     "handler": "screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one",
     "text": "{count} person wants this",
     "context": "The heading of the list of everybody who asked for a title, at the top of its page in the admin area. {count} is how many."
@@ -41221,6 +41231,16 @@
     "text": "The server may be unreachable, or your session may have expired.",
     "context": "Shown after a sentence saying something could not be read from the server, above a button to try again."
   },
+  {
+    "handler": "ui.countMark.plusCount.one",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
+  },
+  {
+    "handler": "ui.countMark.plusCount.other",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
+  },
   { "handler": "ui.dataTable.filter", "text": "Filter", "context": "The name in the data table." },
   {
     "handler": "ui.dataTable.filterById",
@@ -41261,6 +41281,16 @@
     "handler": "ui.freshnessNote.couldNotCheckForChanges",
     "text": "Couldn’t check for changes",
     "context": "A note in a panel’s heading in the admin area when it is showing what it read last time and the server didn’t answer when asked for anything newer."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.one",
+    "text": "{count} more server has it",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.other",
+    "text": "{count} more servers have it",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
   },
   {
     "handler": "ui.noticeCard.thisWillCloseIn",

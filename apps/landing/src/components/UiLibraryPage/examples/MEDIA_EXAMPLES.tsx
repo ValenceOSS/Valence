@@ -5,6 +5,7 @@ import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { DiscordStatusCard } from '@ValenceUI/DiscordStatusCard';
 import { OriginMark } from '@ValenceUI/OriginMark';
+import { CountMark } from '@ValenceUI/CountMark';
 import { PictureCanvas } from '@ValenceUI/PictureCanvas';
 import { ROLE_COLOURS } from '@ValenceUI/tokens/roleColours';
 import { Icon } from '@ValenceUI/Icon';
@@ -274,6 +275,30 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             ink="dark"
             label="From the cabin server"
           />
+        </div>
+      ),
+    },
+  ],
+  CountMark: [
+    {
+      title: 'How many more than a row of marks draws',
+      render: () => (
+        <div className="flex -space-x-2">
+          <OriginMark
+            initial="L"
+            colour={ROLE_COLOURS[2]}
+            ink="light"
+            label="From the loft server"
+            className="ring-2 ring-shade"
+          />
+          <OriginMark
+            initial="C"
+            colour={ROLE_COLOURS[6]}
+            ink="dark"
+            label="From the cabin server"
+            className="ring-2 ring-shade"
+          />
+          <CountMark count={3} label="3 more servers have it" className="ring-2 ring-shade" />
         </div>
       ),
     },

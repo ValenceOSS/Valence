@@ -7,6 +7,7 @@ import { Check as CheckIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { OriginMark } from '@ValenceUI/OriginMark';
+import { CountMark } from '@ValenceUI/CountMark';
 import { CardStatus } from './components/CardStatus/CardStatus';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
@@ -14,6 +15,7 @@ import { WatchedBar } from '@ValenceUI/WatchedBar';
 import { Link } from '@ValenceUI/Link';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const METER_TONES = {
   busy: ['bg-busy/25', 'bg-busy'],
@@ -32,6 +34,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
   square: 'aspect-square',
 };
 
+const MOST_MARKS = 3;
+
 /**
  * One thing in a library, drawn as artwork with its name beneath. Carries how far through it
  * somebody is as a bar across the foot, and takes its shape from what it holds — a poster stands
@@ -46,10 +50,12 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  *   with the card, such as who asked for it.
  * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
  *   icon than said, such as that it is already in the library.
- * @param origin - Where the thing comes from, where that is another server: its initial in its colour,
- *   in the bottom left corner of the artwork, named on hover. Nothing is drawn for this server's own.
+ * @param origin - Where the thing comes from, where that is another server, or this one among others
+ *   that have it too: its initial in its colour, in the bottom left corner of the artwork, named on
+ *   hover. Nothing is drawn for this server's own alone.
  * @param alsoFrom - The other servers that have it too, each drawn as its own mark beside the first,
- *   overlapping, where the thing is one title several servers have.
+ *   overlapping, where the thing is one title several servers have; past three, the first two and
+ *   how many more.
  * @param status - Where the thing stands, such as a request downloading, as a badge in its tone in
  *   the bottom left corner of the artwork, beside where it comes from.
  * @param count - A number to show in the top right corner of the artwork, such as how many episodes
@@ -98,6 +104,8 @@ const MediaCard = ({
   const marks = [...(origin === undefined ? [] : [origin]), ...alsoFrom].filter(
     (mark, at, every) => every.findIndex((other) => other.label === mark.label) === at,
   );
+  const drawnMarks = marks.length > MOST_MARKS ? marks.slice(0, MOST_MARKS - 1) : marks;
+  const marksLeftOut = marks.length - drawnMarks.length;
   const prefersReducedMotion = useReducedMotionConfig();
   const isLead = emphasis === 'lead';
   const isBook = shape === 'book';
@@ -234,9 +242,16 @@ const MediaCard = ({
               <span className="absolute bottom-3 left-3 flex items-center gap-2">
                 {marks.length === 0 ? null : (
                   <span className="flex -space-x-2">
-                    {marks.map((mark) => (
+                    {drawnMarks.map((mark) => (
                       <OriginMark key={mark.label} {...mark} />
                     ))}
+                    {marksLeftOut === 0 ? null : (
+                      <CountMark
+                        count={marksLeftOut}
+                        label={sayCount('ui.mediaCard.countMoreServersHaveIt', marksLeftOut)}
+                        className="ring-2 ring-shade"
+                      />
+                    )}
                   </span>
                 )}
 

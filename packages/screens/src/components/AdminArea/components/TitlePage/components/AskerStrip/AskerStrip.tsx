@@ -1,6 +1,7 @@
 import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { useQuery } from '@tanstack/react-query';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
+import { CountMark } from '@ValenceUI/CountMark';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { AskerFace } from './components/AskerFace/AskerFace';
@@ -15,7 +16,9 @@ const NAMED = 3;
 
 /**
  * Who asked for a title and how long ago, as a pill at the top of its page, and beside it everybody
- * else who wants it too: their faces overlapping and their names, which open the whole list.
+ * else who wants it too: their faces overlapping, up to three or two and how many more, and their
+ * names, which open the whole list. It
+ * keeps to one line, cutting the names short where there is no room for them all.
  *
  * @param request - The request.
  */
@@ -24,13 +27,15 @@ const AskerStrip = ({ request }: AskerStripProps) => {
   const first = request.requestedBy;
   const others = request.alsoAskedBy;
   const named = others.slice(0, NAMED);
+  const drawn = others.length > NAMED ? others.slice(0, NAMED - 1) : others;
+  const leftOut = others.length - drawn.length;
   const [one, ...rest] = named.map((asker) => nameOfAskerFor(asker, null));
 
   return (
-    <span className="flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-full border border-[var(--surface-line)] bg-[var(--surface-hover)] py-1.5 pl-1.5 pr-4 backdrop-blur-xl">
+    <span className="flex w-fit max-w-full items-center gap-3 rounded-full border border-[var(--surface-line)] bg-[var(--surface-hover)] py-1.5 pl-1.5 pr-4 backdrop-blur-xl">
       <AskerFace asker={first} accounts={accounts} size="md" />
 
-      <span className="text-sm text-text-muted">
+      <span className="min-w-0 truncate text-sm text-text-muted">
         {say('screens.adminArea.titlePage.titleHero.askedForByNameWhen', {
           name: nameOfAskerFor(first, null),
           when: describeSince(request.createdAt, Date.now()),
@@ -39,7 +44,7 @@ const AskerStrip = ({ request }: AskerStripProps) => {
 
       {one === undefined ? null : (
         <>
-          <span aria-hidden className="h-4 w-px bg-[var(--surface-line)]" />
+          <span aria-hidden className="h-4 w-px shrink-0 bg-[var(--surface-line)]" />
 
           <PopoverPanel
             label={say('screens.adminArea.titlePage.askerStrip.everybodyWhoWantsIt')}
@@ -51,9 +56,9 @@ const AskerStrip = ({ request }: AskerStripProps) => {
             align="start"
             className="w-72"
             trigger={
-              <span className="flex items-center gap-2 py-0.5 pr-1 hover:text-text">
-                <span className="flex -space-x-1.5">
-                  {named.map((asker) => (
+              <span className="flex min-w-0 items-center gap-2 py-0.5 pr-1 hover:text-text">
+                <span className="flex shrink-0 -space-x-1.5">
+                  {drawn.map((asker) => (
                     <AskerFace
                       key={`${asker.id}/${asker.askingProfile?.profileId ?? ''}`}
                       asker={asker}
@@ -61,8 +66,18 @@ const AskerStrip = ({ request }: AskerStripProps) => {
                       size="sm"
                     />
                   ))}
+                  {leftOut === 0 ? null : (
+                    <CountMark
+                      count={leftOut}
+                      label={sayCount(
+                        'screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt',
+                        leftOut,
+                      )}
+                      className="shadow-none ring-2 ring-[var(--card-face)]"
+                    />
+                  )}
                 </span>
-                <span className="text-sm text-text-muted underline decoration-[var(--surface-line)] underline-offset-4">
+                <span className="truncate text-sm text-text-muted underline decoration-[var(--surface-line)] underline-offset-4">
                   {sayCount('common.namesWantItToo', others.length, {
                     names: sayAgain(
                       others.length > NAMED

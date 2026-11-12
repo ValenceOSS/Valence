@@ -6846,6 +6846,10 @@ const ENGLISH = {
     'The catalogue’s “{name}” episode group',
   'screens.adminArea.titlePage.animeSettingsCard.workedOutForYou': 'Worked out for you',
   'screens.adminArea.titlePage.askerStrip.askedFirst': 'Asked first',
+  'screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.one':
+    '{count} more person wants it',
+  'screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.other':
+    '{count} more people want it',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one': '{count} person wants this',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other': '{count} people want this',
   'screens.adminArea.titlePage.askerStrip.everybodyWhoWantsIt': 'Everybody who wants it',
@@ -10451,6 +10455,8 @@ const ENGLISH = {
   'ui.commandPalette.escape': 'Esc',
   'ui.couldNotRead.theServerMayBeUnreachable':
     'The server may be unreachable, or your session may have expired.',
+  'ui.countMark.plusCount.one': '+{count}',
+  'ui.countMark.plusCount.other': '+{count}',
   'ui.dataTable.filter': 'Filter',
   'ui.dataTable.filterById': 'Filter by {id}',
   'ui.dataTable.nothingHereYet': 'Nothing here yet.',
@@ -10461,6 +10467,8 @@ const ENGLISH = {
   'ui.filterMenu.clearFilters': 'Clear filters',
   'ui.freshnessNote.checkingForChanges': 'Checking for changes',
   'ui.freshnessNote.couldNotCheckForChanges': 'Couldn’t check for changes',
+  'ui.mediaCard.countMoreServersHaveIt.one': '{count} more server has it',
+  'ui.mediaCard.countMoreServersHaveIt.other': '{count} more servers have it',
   'ui.noticeCard.thisWillCloseIn': 'This message will close in',
   'ui.pageCurl.xPxYPx': '{x}px {y}px',
   'ui.pageDots.showName': 'Show {name}',

@@ -330,6 +330,7 @@ const BrowseArea = ({
 
           {isFilterable || isReading || items.length === 0 ? null : (
             <GridSizeChooser
+              look="joined"
               value={size}
               onValueChange={(next) => {
                 setSize(next);
@@ -399,6 +400,7 @@ const BrowseArea = ({
 
             {isReading || items.length === 0 ? null : (
               <GridSizeChooser
+                look="joined"
                 className="shrink-0"
                 value={size}
                 onValueChange={(next) => {
