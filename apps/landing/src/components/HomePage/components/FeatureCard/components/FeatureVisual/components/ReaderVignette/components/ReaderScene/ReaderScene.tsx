@@ -94,13 +94,12 @@ const ReaderScene = () => {
     <AbsoluteFill className="font-body text-text">
       <div className="absolute right-6 top-6 flex h-[19rem] w-[37.5rem] overflow-hidden rounded-xl bg-surface shadow-[var(--shadow-lifted)]">
         <ReaderChrome
-          title="A Christmas Carol — Stave I: Marley’s Ghost"
+          title="A Christmas Carol"
+          place="Stave I: Marley’s Ghost"
           isShown
           isRightToLeft={false}
-          panel={null}
-          isPanelOpen={false}
-          isPanelPinned={false}
-          onPanelOpenChange={nothing}
+          actions={null}
+          onToggle={nothing}
           onForward={nothing}
           onBack={nothing}
           onClose={nothing}
@@ -108,14 +107,15 @@ const ReaderScene = () => {
             <>
               <Slider
                 label={say('screens.bookDialog.howFarThrough')}
-                tone="overlay"
+                tone="glass"
+                isSlim
                 value={readTo}
                 max={100}
                 onValueChange={nothing}
                 className="flex-1"
               />
 
-              <span className="w-16 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
+              <span className="w-12 shrink-0 text-right text-xs tabular-nums text-text-muted">
                 {`${readTo.toString()}%`}
               </span>
             </>

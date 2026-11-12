@@ -38,7 +38,7 @@ const TitleBadges = ({ detail, isBrief = false, className }: TitleBadgesProps) =
         )}
 
         {badges.map((badge) => (
-          <Badge key={badge} tone="bright">
+          <Badge key={badge} tone="outline" className="bg-text/30 font-bold text-text">
             {badge}
           </Badge>
         ))}

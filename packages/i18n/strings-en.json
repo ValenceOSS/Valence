@@ -965,6 +965,71 @@
     "context": "Shown in the library (from `qualityBadges`)."
   },
   {
+    "handler": "client.library.sayRatingMeans.adultsOnly",
+    "text": "For adults only",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.allAges",
+    "text": "Fine for all ages",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fifteenAndUp",
+    "text": "For ages 15 and up",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fourteenAndUp",
+    "text": "May not suit children under 14",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.parentalGuidance",
+    "text": "Parental guidance suggested",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.sevenAndUp",
+    "text": "For ages 7 and up",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.seventeenAndUp",
+    "text": "Not suitable for anyone 17 or under",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.thirteenAndUp",
+    "text": "Some of it may not suit children under 13",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveAndUp",
+    "text": "For ages 12 and up",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveWithAnAdult",
+    "text": "For ages 12 and up, and younger children with an adult",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.underSeventeenWithAnAdult",
+    "text": "Under 17s should watch with a parent or guardian",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.youngChildren",
+    "text": "Made for young children",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.showQualityBadges.standardRange",
+    "text": "SDR",
+    "context": "On a programme's badges, standard dynamic range, said only beside HDR10 or Dolby Vision when some episodes have one and some do not, as in \"HDR10 / SDR\"."
+  },
+  {
     "handler": "client.library.theVersionsOf.anotherVersion",
     "text": "Another version",
     "context": "Shown in the library (from `theVersionsOf`)."
@@ -973,6 +1038,11 @@
     "handler": "client.library.useHomeRows.genreFromTheDecadeS",
     "text": "{genre} from the {decade}s",
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app; {decade} is filled in by the app."
+  },
+  {
+    "handler": "client.library.useHomeRows.moreGenre",
+    "text": "More {genre}",
+    "context": "The heading of a row deep in the home page that carries on past a genre's own row with more of its best-rated titles (from `useHomeRows`). {genre} is the genre's name."
   },
   {
     "handler": "client.library.useHomeRows.newInGenre",
@@ -34577,6 +34647,11 @@
     "context": "Shown in the reader chrome."
   },
   {
+    "handler": "screens.readerContents.goToTitle",
+    "text": "Go to {title}",
+    "context": "The label read out for an entry in a book's contents. {title} is the chapter or volume it opens."
+  },
+  {
     "handler": "screens.readerPanel.keepThePanelBesideThePage",
     "text": "Pin panel",
     "context": "Shown in the reader panel."
@@ -34595,6 +34670,11 @@
     "handler": "screens.readingHero.youAreReading",
     "text": "You’re reading",
     "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
+  },
+  {
+    "handler": "screens.readingLook.textAndPage",
+    "text": "Text and page",
+    "context": "The button in the book reader that opens the settings for how text and the page look."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",
@@ -36182,11 +36262,6 @@
     "context": "The detail in the sharing (from `describeShareEnding`)."
   },
   {
-    "handler": "screens.showDialog.aboutThisEpisode",
-    "text": "About this episode",
-    "context": "The label in the show dialog."
-  },
-  {
     "handler": "screens.showDialog.chooseEpisodes.chooseEpisodesOfTitle",
     "text": "Choose episodes of {title}",
     "context": "The label of a dialog in the choose episodes in the show dialog. {title} is filled in by the app."
@@ -36220,6 +36295,11 @@
     "handler": "screens.showDialog.nothingHereYetEpisodesAppearAs",
     "text": "No episodes yet. Episodes appear as they’re scanned.",
     "context": "Text shown in the show dialog."
+  },
+  {
+    "handler": "screens.showDialog.onSomeEpisodes",
+    "text": "{label} on some episodes",
+    "context": "A badge on a programme's page for a picture or sound format only some of its episodes have, such as Dolby Atmos. {label} is the format, filled in by the app."
   },
   {
     "handler": "screens.showDialog.playValueEpisodeValue2",

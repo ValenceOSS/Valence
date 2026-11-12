@@ -202,7 +202,7 @@ const ScrollingText = ({
       )}
     >
       <div
-        className={cn('mx-auto min-h-full shadow-[var(--shadow-lifted)]', pageClassName)}
+        className={cn('mx-auto min-h-full', pageClassName)}
         style={{ maxWidth: MOST_WIDTH, paddingInline: inset, paddingBlock: inset }}
       >
         <div ref={top} aria-hidden className="h-px" />

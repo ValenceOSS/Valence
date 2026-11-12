@@ -21,6 +21,7 @@ import { firstToShow } from '@ValenceClient/books/firstToShow';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { READING_THEMES } from '@ValenceCore/tokens/READING_THEMES';
+import { readingThemeOf } from '@ValenceClient/books/readingThemeOf';
 import { READING_SERIF } from '@ValenceMobile/theme/READING_SERIF';
 import { AReadingLook } from '@ValenceMobile/components/AReader/components/ATextReader/components/AReadingLook/AReadingLook';
 import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
@@ -250,9 +251,7 @@ const ATextReader = ({
   } | null>(null);
   const beneath = useRef<ComponentRef<typeof ScrollView>>(null);
   const scrolling = useRef<ComponentRef<typeof ScrollView>>(null);
-  const theme =
-    settings.theme ??
-    (settings.page === 'dark' ? 'focus' : settings.page === 'sepia' ? 'quiet' : 'original');
+  const theme = readingThemeOf(settings);
   const colours = READING_THEMES[theme];
   const sizeAt = TEXT_SIZES.indexOf(settings.size);
   const face = useMemo(

@@ -237,7 +237,10 @@ const serverState = (options: {
       return Promise.resolve(ok(options.setup));
     }
 
-    if (input.startsWith('/api/libraries/') && input.includes('/items')) {
+    if (
+      input.startsWith('/api/library-items') ||
+      (input.startsWith('/api/libraries/') && input.includes('/items'))
+    ) {
       return Promise.resolve(ok(options.items ?? { items: [], total: 0 }));
     }
 

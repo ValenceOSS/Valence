@@ -77,14 +77,24 @@ beforeEach(() => {
   vi.stubGlobal('fetch', answer('Kyotaro panics in class.'));
 });
 
+/**
+ * Finds the line that says the season and the episode, which holds both in one.
+ *
+ * @param parts - What the line says, in pieces.
+ * @returns The line.
+ */
+const theLineSaying = (...parts: string[]) =>
+  screen.getByText(
+    (_, element) =>
+      element?.tagName === 'P' && parts.every((part) => element.textContent.includes(part)),
+  );
+
 describe('PausedScreen', () => {
   it('says which programme, season and episode is paused, and what happens in it', async () => {
     renderInAnAddress(<PausedScreen media={EPISODE} isShown />);
 
-    expect(screen.getByText('You’re watching')).toBeInTheDocument();
     expect(screen.getByText('The Dangers in My Heart')).toBeInTheDocument();
-    expect(screen.getByText('Season 2')).toBeInTheDocument();
-    expect(screen.getByText('We’ve Been Searching: Ep. 2')).toBeInTheDocument();
+    expect(theLineSaying('Season 2', 'We’ve Been Searching: Ep. 2')).toBeInTheDocument();
     expect(await screen.findByText('Kyotaro panics in class.')).toBeInTheDocument();
     expect(screen.getByText('Paused')).toBeInTheDocument();
   });
@@ -100,7 +110,7 @@ describe('PausedScreen', () => {
     expect(screen.getByText('Are you still watching?')).toBeInTheDocument();
     expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
     expect(screen.getByText('The Dangers in My Heart')).toBeInTheDocument();
-    expect(screen.getByText('Up next: The Next One: Ep. 3')).toBeInTheDocument();
+    expect(theLineSaying('Up next: The Next One: Ep. 3')).toBeInTheDocument();
     expect(await screen.findByText('The class goes on a trip.')).toBeInTheDocument();
     expect(screen.queryByText('Paused')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue watching' })).toHaveFocus();
@@ -110,6 +120,26 @@ describe('PausedScreen', () => {
 
     expect(onCarryOn).toHaveBeenCalledTimes(1);
     expect(onStop).toHaveBeenCalledTimes(1);
+  });
+
+  it('says how much is left to watch, but not while asking whether anybody is still watching', () => {
+    const { unmount } = renderInAnAddress(
+      <PausedScreen media={EPISODE} isShown secondsLeft={600} />,
+    );
+
+    expect(screen.getByText(/left$/)).toBeInTheDocument();
+
+    unmount();
+    renderInAnAddress(
+      <PausedScreen
+        media={EPISODE}
+        isShown
+        secondsLeft={600}
+        asking={{ upNext: NEXT, onCarryOn: vi.fn(), onStop: vi.fn() }}
+      />,
+    );
+
+    expect(screen.queryByText(/left$/)).not.toBeInTheDocument();
   });
 
   it('names a film by itself, with no season or episode', () => {
@@ -138,7 +168,7 @@ describe('PausedScreen', () => {
       'src',
       expect.stringContaining(`/api/media/${EPISODE.id}/image/logo`),
     );
-    expect(screen.getByText('Season 2')).toBeInTheDocument();
+    expect(theLineSaying('Season 2')).toBeInTheDocument();
   });
 
   it('names the programme in type where its logo will not load', () => {

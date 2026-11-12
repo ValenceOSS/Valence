@@ -1107,6 +1107,8 @@ const mediaItem = mysqlTable(
     uniqueIndex('media_item_path_idx').on(table.libraryId, table.pathHash),
     index('media_item_library_idx').on(table.libraryId),
     index('media_item_title_idx').on(table.title),
+    index('media_item_added_at_idx').on(table.addedAt),
+    index('media_item_rating_idx').on(table.rating),
     index('media_item_series_idx').on(table.seriesTitle, table.seasonNumber),
     index('media_item_series_id_idx').on(table.seriesId, table.seasonNumber),
     index('media_item_parent_idx').on(table.parentId),

@@ -8,10 +8,12 @@ import { forgetPlatform, installPlatform } from '@ValenceClient/platform/install
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { fetchSession, signOut } from '@ValenceClient/session/auth';
 import {
+  fetchItemsAcross,
   fetchLibraries,
   fetchLibraryItems,
   fetchMediaDetail,
 } from '@ValenceClient/library/fetchLibrary';
+import { askedOfEachLibrary } from '@ValenceClient/testing/askedOfEachLibrary';
 import { startPlaybackSession } from '@ValenceClient/playback/startPlaybackSession';
 import { fetchShow, fetchShows } from '@ValenceClient/library/fetchShows';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
@@ -117,6 +119,10 @@ beforeEach(() => {
   jest.mocked(fetchSession).mockReset().mockResolvedValue(A_SESSION);
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLibraryItems).mockReset().mockResolvedValue({ items: [], total: 0 });
+  jest
+    .mocked(fetchItemsAcross)
+    .mockReset()
+    .mockImplementation(askedOfEachLibrary(jest.mocked(fetchLibraryItems)));
   jest.mocked(fetchMediaDetail).mockReset();
   jest
     .mocked(fetchProfileList)

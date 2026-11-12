@@ -37,6 +37,7 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param hasSurface - Whether it draws its own floating surface, or leaves that to what it holds,
  *   such as a card that is already one — which is then set on the frame's solid colour, so its
  *   shell reads as a dialog's does rather than letting the page show through.
+ * @param offset - How far from its trigger it opens.
  * @param className - Extra classes for the caller's own layout.
  */
 const PopoverPanel = ({
@@ -54,6 +55,7 @@ const PopoverPanel = ({
   tone = 'default',
   isOverDialogs = false,
   hasSurface = true,
+  offset = 12,
   className,
 }: PopoverPanelProps) => {
   const portalContainer = usePortalContainer();
@@ -104,7 +106,7 @@ const PopoverPanel = ({
         <RadixPopover.Content
           aria-label={label}
           side={side}
-          sideOffset={12}
+          sideOffset={offset}
           align={align}
           collisionPadding={12}
           data-slot="popover-content"

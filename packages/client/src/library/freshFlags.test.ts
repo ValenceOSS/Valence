@@ -20,7 +20,7 @@ describe('freshFlags', () => {
   it('says a film added this week was recently added', () => {
     const film = aTitle('film', 2);
 
-    expect(freshFlags([film], NOW)(film)).toBe('Recently added');
+    expect(freshFlags([film], NOW)(film)).toBe('New');
   });
 
   it('flags nothing added more than two weeks ago', () => {
@@ -51,7 +51,7 @@ describe('freshFlags', () => {
     const first = aTitle('e1', 3, { seriesTitle: 'Severance' });
     const second = aTitle('e2', 2, { seriesTitle: 'Severance' });
 
-    expect(freshFlags([first, second], NOW)(second)).toBe('Recently added');
+    expect(freshFlags([first, second], NOW)(second)).toBe('New');
   });
 
   it('passes over a title whose date cannot be read', () => {

@@ -41,20 +41,13 @@ import {
   Tv as TvFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useReducedMotionConfig,
-  useScroll,
-} from 'motion/react';
+import { useMotionValue, useMotionValueEvent, useScroll } from 'motion/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { NavBar } from '@ValenceUI/NavBar';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
-import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { useTheme } from '@ValenceClient/shell/useTheme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
@@ -273,7 +266,6 @@ const AppShell = ({
   onOpenMyRequests,
   notifications,
 }: AppShellProps) => {
-  const prefersReducedMotion = useReducedMotionConfig();
   const { scrollY } = useScroll();
   const solidity = useMotionValue(0);
   const { theme, choose } = useTheme();
@@ -297,24 +289,6 @@ const AppShell = ({
   useEffect(() => {
     reach(window.scrollY);
   }, [reach, section]);
-
-  useEffect(() => {
-    if (section === 'home') {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.defaultPrevented) {
-        onSectionChange('home');
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [section, onSectionChange]);
 
   const placesRef = useRef<Record<string, number>>({});
   const leavingRef = useRef(section);
@@ -695,24 +669,16 @@ const AppShell = ({
           }}
         />
 
-        <motion.main
+        <main
           key={section}
-          variants={staggerVariants}
-          initial="hidden"
-          animate="shown"
           className={
             isFitted
               ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip pt-[var(--nav-clearance)]'
               : 'min-h-[calc(100svh-var(--valence-window-bar))] pb-[calc(4rem+var(--floor-clearance,0px))] pt-[var(--nav-clearance)]'
           }
         >
-          <motion.div
-            variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion, 'heavy')}
-          >
-            {children}
-          </motion.div>
-        </motion.main>
+          {children}
+        </main>
 
         {isFitted ? <div className="h-0 overflow-hidden">{dock}</div> : dock}
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { Button } from '@ValenceUI/Button';
 import { PartyPanel } from '@ValenceScreens/components/PartyPanel/PartyPanel';
+import { PLAYER_MENU_OFFSET } from '@ValenceScreens/components/VideoPlayer/PLAYER_MENU_OFFSET';
 import type { PartyMenuProps } from './PartyMenu.types';
 import { say } from '@ValenceI18n/say';
 
@@ -73,6 +74,7 @@ const PartyMenu = ({
   return (
     <PopoverPanel
       tone="default"
+      offset={PLAYER_MENU_OFFSET}
       label={
         party === null
           ? say('common.partyMenu.watchParty')

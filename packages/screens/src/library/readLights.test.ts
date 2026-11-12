@@ -56,11 +56,11 @@ afterEach(() => {
 });
 
 describe('readLights', () => {
-  it('reads the picture as a grid four across and three down, each light where its cell is', () => {
-    expect(ZONES).toHaveLength(12);
-    expect(ZONES[0]?.from).toEqual([0, 0, 0.25, 1 / 3]);
-    expect(ZONES[11]?.from).toEqual([0.75, 2 / 3, 0.25, 1 / 3]);
-    expect(new Set(ZONES.map((zone) => zone.at)).size).toBe(12);
+  it('reads the picture as a grid six across and four down, each light where its cell is', () => {
+    expect(ZONES).toHaveLength(24);
+    expect(ZONES[0]?.from).toEqual([0, 0, 1 / 6, 0.25]);
+    expect(ZONES[23]?.from).toEqual([5 / 6, 0.75, 1 / 6, 0.25]);
+    expect(new Set(ZONES.map((zone) => zone.at)).size).toBe(24);
   });
 
   it('answers with one light per part of the picture', () => {
@@ -94,7 +94,7 @@ describe('readLights', () => {
             : 'blue';
     };
 
-    expect([hue(0), hue(3), hue(8), hue(11)]).toEqual(['red', 'green', 'blue', 'white']);
+    expect([hue(0), hue(5), hue(18), hue(23)]).toEqual(['red', 'green', 'blue', 'white']);
   });
 
   it('reads the picture back once, however many parts it is cut into', () => {
@@ -115,6 +115,15 @@ describe('readLights', () => {
     expect(read).not.toBeNull();
     expect(Number(read?.[1])).toBeGreaterThan(Number(read?.[2]));
     expect(Number(read?.[1])).toBeGreaterThan(Number(read?.[3]));
+  });
+
+  it('lets a vivid colour shine and keeps white from lighting the page', () => {
+    withCanvas(() => painted());
+
+    const lights = readLights(document.createElement('img'));
+
+    expect(lights[0]?.weight).toBe(1);
+    expect(lights[23]?.weight).toBe(0);
   });
 
   it('reads at a size a page can afford', () => {

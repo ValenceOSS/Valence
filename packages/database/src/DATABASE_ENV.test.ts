@@ -6,7 +6,7 @@ const Schema = z.object(DATABASE_ENV);
 
 describe('DATABASE_ENV', () => {
   it('holds ten connections in plain text unless told otherwise', () => {
-    expect(Schema.parse({})).toEqual({ DATABASE_POOL_MAX: 10, DATABASE_SSL: 'off' });
+    expect(Schema.parse({})).toEqual({ DATABASE_POOL_MAX: 25, DATABASE_SSL: 'off' });
   });
 
   it('reads the settings as the environment gives them, as text', () => {

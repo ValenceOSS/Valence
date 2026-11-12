@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  CaptionsOff as CaptionsOffIcon,
   Cast as CastIcon,
   CircleActivity as CircleActivityIcon,
   Clock as ClockIcon,
@@ -12,8 +13,8 @@ import {
   PictureInPicture as PictureInPictureIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
-  RotateCcw as RotateCcwIcon,
-  RotateCw as RotateCwIcon,
+  RotateCcw10s as RotateCcw10sIcon,
+  RotateCw10s as RotateCw10sIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
   SignalHigh as SignalHighIcon,
@@ -27,11 +28,11 @@ import {
   VolumePlus as VolumePlusIcon,
 } from '@keyline-icons/react';
 import {
+  Captions as CaptionsFilledIcon,
   Cast as CastFilledIcon,
   Pause as PauseFilledIcon,
   PictureInPicture as PictureInPictureFilledIcon,
   Play as PlayFilledIcon,
-  Subtitles as SubtitlesFilledIcon,
 } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
@@ -42,6 +43,7 @@ import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
 import { ChapterMenu } from '@ValenceScreens/components/VideoPlayer/components/ChapterMenu/ChapterMenu';
 import { chapterAt } from '@ValenceClient/playback/chapterAt';
@@ -49,10 +51,12 @@ import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
 import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { EpisodeMenu } from '@ValenceScreens/components/VideoPlayer/components/EpisodeMenu/EpisodeMenu';
 import { SKIP_SECONDS, BOOST_STEPS } from './PlayerControls.types';
+import { resolutionIconOf } from './resolutionIconOf';
 import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
 import { SUBTITLE_STEP_SECONDS } from '@ValenceClient/playback/SUBTITLE_STEP_SECONDS';
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
+import { PLAYER_MENU_OFFSET } from '@ValenceScreens/components/VideoPlayer/PLAYER_MENU_OFFSET';
 import type { PlayerControlsProps } from './PlayerControls.types';
 import { say } from '@ValenceI18n/say';
 
@@ -67,6 +71,15 @@ const HDR_BRIGHTNESS_PERCENT = { least: 50, most: 300, step: 10 } as const;
  * @param rate - The rate.
  * @returns What the menu shows.
  */
+/**
+ * The tier icon a quality choice carries, where its rung is known.
+ *
+ * @param step - The rung, if known.
+ * @returns The icon to set on the choice, or nothing.
+ */
+const tierOf = (step: QualityStepId | null) =>
+  step === null ? null : { icon: <Icon of={resolutionIconOf(step)} size={18} /> };
+
 const rateLabel = (rate: number): string => `${rate.toString()}x`;
 
 /**
@@ -96,6 +109,7 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param selectedAudioIndex - The audio track in use, if the player has settled on one.
  * @param availableQualitySteps - The rungs of the ladder this session offers.
  * @param originalLabel - What the file as it is on the server is called, with its resolution.
+ * @param originalStep - The rung the file as it is on the server matches, for its tier icon.
  * @param qualityStepsSavingNothing - Smaller qualities that would cost about what the original does,
  *   shown but not offered.
  * @param qualityStepCosts - What each rung would actually cost, where the session has worked it out.
@@ -144,6 +158,7 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param chapters - The chapters the file marks, broken out along the timeline, named while
  *   scrubbing and listed beside the episodes.
  * @param renderPreview - How to draw the frame under the pointer while scrubbing.
+ * @param renderChapterFrame - How to draw the picture where a chapter starts, in the chapter grid.
  */
 const PlayerControls = ({
   title,
@@ -166,6 +181,7 @@ const PlayerControls = ({
   selectedAudioIndex,
   availableQualitySteps,
   originalLabel = say('common.original'),
+  originalStep = null,
   qualityStepsSavingNothing = [],
   qualityStepCosts = {},
   selectedQuality,
@@ -206,6 +222,7 @@ const PlayerControls = ({
   onSubtitleOffsetChange,
   onFindSubtitles,
   renderPreview,
+  renderChapterFrame,
   partyMenu,
   segments = [],
   chapters = [],
@@ -228,14 +245,22 @@ const PlayerControls = ({
 
   const shownPosition = scrubbedTo ?? position;
   const marks = timelineMarks(segments, chapters, duration);
+  const originalName =
+    originalStep === null
+      ? originalLabel
+      : (QUALITY_STEPS.find((entry) => entry.id === originalStep)?.label ?? originalLabel);
+  const qualityRungs = availableQualitySteps.filter((step) => step !== originalStep);
   const previewOf = (seconds: number) => {
     const found = chapterAt(chapters, seconds);
 
     return (
-      <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-col items-center">
         {renderPreview?.(seconds)}
         {found === null ? null : (
-          <span className="valence-solid max-w-56 truncate rounded-md px-2 py-0.5 text-xs font-medium text-text">
+          <span
+            data-slot="film-text"
+            className="-mt-2 mb-3 max-w-64 truncate text-xs font-medium text-on-scrim/75"
+          >
             {nameOfChapter(found.chapter, found.number)}
           </span>
         )}
@@ -243,11 +268,33 @@ const PlayerControls = ({
     );
   };
 
+  const clock = (
+    <Button
+      variant="ghost"
+      size="none"
+      isPill
+      aria-label={
+        isShowingRemaining
+          ? say('screens.videoPlayer.playerControls.showTheTimePlayed')
+          : say('screens.videoPlayer.playerControls.showTheTimeRemaining')
+      }
+      onClick={onToggleTimeDisplay}
+      className="h-9 shrink-0 px-2.5 text-[0.8125rem] font-medium tabular-nums"
+    >
+      <span data-slot="film-text">
+        {isShowingRemaining
+          ? `-${formatDuration(Math.max(duration - shownPosition, 0))}`
+          : formatDuration(shownPosition)}
+        <span className="text-text-muted"> / {formatDuration(duration)}</span>
+      </span>
+    </Button>
+  );
+
   return (
-    <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
+    <div className="valence-glass--film valence-on-film flex flex-col gap-1 text-on-scrim">
       {isLive ? (
-        <div className="flex items-center gap-3">
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-danger/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-danger">
+        <div className="flex items-center gap-3 px-1">
+          <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider">
             <span
               aria-hidden
               className="size-1.5 rounded-full bg-danger motion-safe:animate-pulse"
@@ -259,60 +306,62 @@ const PlayerControls = ({
             value={Math.min(Math.max(position, 0), Math.max(duration, 1))}
             max={Math.max(duration, 1)}
             onValueChange={() => undefined}
-            tone="glass"
+            tone="film"
+            isSlim
             isDisabled
             className="min-w-0 flex-1"
           />
           {liveDetail === undefined ? null : (
-            <span className="shrink-0 px-1 text-xs tabular-nums sm:text-sm">{liveDetail}</span>
+            <span data-slot="film-text" className="shrink-0 text-xs tabular-nums sm:text-sm">
+              {liveDetail}
+            </span>
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3">
-          <Slider
-            label={say('common.moveThroughTitle', { title })}
-            value={shownPosition}
-            max={duration}
-            onArrowKey={(direction) => {
-              onSkip(direction * SKIP_SECONDS);
-            }}
-            onValueChange={setScrubbedTo}
-            onValueCommit={(seconds) => {
-              setScrubbedTo(null);
-              onSeek(seconds);
-            }}
-            tone="glass"
-            className="min-w-0 flex-1"
-            stretches={marks.stretches}
-            notches={marks.notches}
-            {...(renderPreview === undefined && chapters.length < 2
-              ? {}
-              : { renderPreview: previewOf })}
-          />
-
-          <Button
-            variant="ghost"
-            size="none"
-            aria-label={
-              isShowingRemaining
-                ? say('screens.videoPlayer.playerControls.showTheTimePlayed')
-                : say('screens.videoPlayer.playerControls.showTheTimeRemaining')
-            }
-            onClick={onToggleTimeDisplay}
-            className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
-          >
-            {isShowingRemaining
-              ? `-${formatDuration(Math.max(duration - shownPosition, 0))}`
-              : formatDuration(shownPosition)}{' '}
-            <span className="text-text-muted">/ {formatDuration(duration)}</span>
-          </Button>
-        </div>
+        <Slider
+          label={say('common.moveThroughTitle', { title })}
+          value={shownPosition}
+          max={duration}
+          onArrowKey={(direction) => {
+            onSkip(direction * SKIP_SECONDS);
+          }}
+          onValueChange={setScrubbedTo}
+          onValueCommit={(seconds) => {
+            setScrubbedTo(null);
+            onSeek(seconds);
+          }}
+          tone="film"
+          className="px-1"
+          stretches={marks.stretches}
+          notches={marks.notches}
+          {...(renderPreview === undefined && chapters.length < 2
+            ? {}
+            : { renderPreview: previewOf })}
+        />
       )}
 
-      <div className="flex items-center gap-1 sm:gap-2">
+      <div className="flex items-center gap-0.5 sm:gap-1">
+        <Button
+          isIconOnly
+          isPill
+          variant="ghost"
+          label={isPlaying ? say('common.pause') : say('common.play')}
+          onClick={onTogglePlay}
+          disabled={isDisabled}
+          size="lg"
+          className="size-10"
+        >
+          {isPlaying ? (
+            <Icon of={PauseFilledIcon} size={24} />
+          ) : (
+            <Icon of={PlayFilledIcon} size={24} />
+          )}
+        </Button>
+
         {isLive ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={say('screens.videoPlayer.playerControls.backSKIPSECONDSSeconds', {
               SKIP_SECONDS: SKIP_SECONDS.toString(),
@@ -321,30 +370,16 @@ const PlayerControls = ({
               onSkip(-SKIP_SECONDS);
             }}
             disabled={isDisabled}
-            size="md"
+            size="lg"
           >
-            <Icon of={RotateCcwIcon} size={22} />
+            <Icon of={RotateCcw10sIcon} size={20} />
           </Button>
         )}
-
-        <Button
-          isIconOnly
-          variant="ghost"
-          label={isPlaying ? say('common.pause') : say('common.play')}
-          onClick={onTogglePlay}
-          disabled={isDisabled}
-          size="md"
-        >
-          {isPlaying ? (
-            <Icon of={PauseFilledIcon} size={22} />
-          ) : (
-            <Icon of={PlayFilledIcon} size={22} />
-          )}
-        </Button>
 
         {isLive ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={say('screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds', {
               SKIP_SECONDS: SKIP_SECONDS.toString(),
@@ -353,15 +388,50 @@ const PlayerControls = ({
               onSkip(SKIP_SECONDS);
             }}
             disabled={isDisabled}
-            size="md"
+            size="lg"
           >
-            <Icon of={RotateCwIcon} size={22} />
+            <Icon of={RotateCw10sIcon} size={20} />
           </Button>
         )}
+
+        <div className="group/volume hidden items-center sm:flex">
+          <Button
+            isIconOnly
+            isPill
+            variant="ghost"
+            label={isMuted ? say('common.unmute') : say('common.mute')}
+            onClick={onToggleMute}
+            size="lg"
+          >
+            {isMuted || volume === 0 ? (
+              <Icon of={VolumeOffIcon} size={20} />
+            ) : (
+              <Icon of={VolumeIcon} size={20} />
+            )}
+          </Button>
+
+          <Slider
+            label={say('common.volume')}
+            value={isMuted ? 0 : Math.round(volume * 100)}
+            max={100}
+            tone="film"
+            isSlim
+            onValueChange={(next) => {
+              onVolumeChange(next / 100);
+            }}
+            valueLabel={(loudness) => `${Math.round(loudness).toString()}%`}
+            className="w-0 overflow-hidden px-0 opacity-0 transition-[width,padding,opacity] duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none group-hover/volume:w-24 group-hover/volume:px-2 group-hover/volume:opacity-100 group-focus-within/volume:w-24 group-focus-within/volume:px-2 group-focus-within/volume:opacity-100"
+          />
+        </div>
+
+        {isLive ? null : clock}
+
+        <span className="flex-1" />
 
         {following === null || onSelectEpisode === undefined ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={
               following.episodeNumber === null || following.episodeNumber === undefined
@@ -380,41 +450,11 @@ const PlayerControls = ({
               onSelectEpisode(following);
             }}
             disabled={isDisabled}
-            size="md"
+            size="lg"
           >
             <Icon of={SkipForwardIcon} size={22} />
           </Button>
         )}
-
-        <span className="flex-1" />
-
-        <div className="group/volume hidden items-center gap-1 sm:flex">
-          <Button
-            isIconOnly
-            variant="ghost"
-            label={isMuted ? say('common.unmute') : say('common.mute')}
-            onClick={onToggleMute}
-            size="md"
-          >
-            {isMuted || volume === 0 ? (
-              <Icon of={VolumeOffIcon} size={20} />
-            ) : (
-              <Icon of={VolumeIcon} size={20} />
-            )}
-          </Button>
-
-          <Slider
-            label={say('common.volume')}
-            value={isMuted ? 0 : Math.round(volume * 100)}
-            max={100}
-            tone="glass"
-            onValueChange={(next) => {
-              onVolumeChange(next / 100);
-            }}
-            valueLabel={(loudness) => `${Math.round(loudness).toString()}%`}
-            className="w-0 overflow-hidden px-0 transition-[width,padding] duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none group-hover/volume:w-24 group-hover/volume:px-2 group-focus-within/volume:w-24 group-focus-within/volume:px-2"
-          />
-        </div>
 
         {partyMenu}
 
@@ -425,6 +465,7 @@ const PlayerControls = ({
             position={position}
             onSeek={onSeek}
             isDisabled={isDisabled}
+            {...(renderChapterFrame === undefined ? {} : { renderFrame: renderChapterFrame })}
           />
         )}
 
@@ -443,6 +484,7 @@ const PlayerControls = ({
         {subtitleTracks.length === 0 ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={
               selectedSubtitleId === SUBTITLES_OFF
@@ -458,11 +500,11 @@ const PlayerControls = ({
               );
             }}
             disabled={isDisabled}
-            size="md"
+            size="lg"
           >
             <Icon
-              of={SubtitlesIcon}
-              whenActive={SubtitlesFilledIcon}
+              of={CaptionsOffIcon}
+              whenActive={CaptionsFilledIcon}
               isActive={selectedSubtitleId !== SUBTITLES_OFF}
               size={20}
             />
@@ -473,6 +515,8 @@ const PlayerControls = ({
           <SettingsMenu
             label={say('common.settings')}
             tone="default"
+            offset={PLAYER_MENU_OFFSET}
+            className="rounded-full"
             {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
             isDisabled={isDisabled}
             trigger={<Icon of={SettingsIcon} size={20} />}
@@ -561,6 +605,7 @@ const PlayerControls = ({
                         <span className="flex items-center gap-1">
                           <Button
                             isIconOnly
+                            isPill
                             variant="ghost"
                             label={say('screens.videoPlayer.playerControls.subtitlesEarlier')}
                             size="sm"
@@ -573,6 +618,7 @@ const PlayerControls = ({
 
                           <Button
                             isIconOnly
+                            isPill
                             variant="ghost"
                             label={say('screens.videoPlayer.playerControls.subtitlesInTime')}
                             size="sm"
@@ -585,6 +631,7 @@ const PlayerControls = ({
 
                           <Button
                             isIconOnly
+                            isPill
                             variant="ghost"
                             label={say('screens.videoPlayer.playerControls.subtitlesLater')}
                             size="sm"
@@ -688,20 +735,22 @@ const PlayerControls = ({
                         {
                           id: 'auto',
                           label: say('common.auto'),
+                          ...tierOf(autoRung === 'original' ? originalStep : autoRung),
                           detail:
                             autoRung === 'original'
-                              ? originalLabel
+                              ? originalName
                               : (QUALITY_STEPS.find((entry) => entry.id === autoRung)?.label ??
                                 autoRung),
                         },
                         {
                           id: 'original',
-                          label: originalLabel,
+                          label: originalName,
+                          ...tierOf(originalStep),
                           ...(qualityStepCosts.original === undefined
                             ? {}
                             : { detail: qualityStepCosts.original }),
                         },
-                        ...availableQualitySteps.map((id) => {
+                        ...qualityRungs.map((id) => {
                           const isNoSmaller = qualityStepsSavingNothing.includes(id);
                           const detail = qualityStepDetail({
                             cost: qualityStepCosts[id],
@@ -711,6 +760,7 @@ const PlayerControls = ({
                           return {
                             id,
                             label: QUALITY_STEPS.find((entry) => entry.id === id)?.label ?? id,
+                            ...tierOf(id),
                             ...(detail === undefined ? {} : { detail }),
                             ...(isNoSmaller ? { isDisabled: true } : {}),
                           };
@@ -733,10 +783,11 @@ const PlayerControls = ({
         {onPlayOnTv === undefined ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={say('common.playOnTV')}
             onClick={onPlayOnTv}
-            size="md"
+            size="lg"
           >
             <Icon of={TvIcon} size={20} />
           </Button>
@@ -745,6 +796,7 @@ const PlayerControls = ({
         {onCast === undefined || castState === 'unavailable' ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={
               castState === 'connected'
@@ -754,7 +806,7 @@ const PlayerControls = ({
             isActive={castState === 'connected'}
             disabled={castState === 'connecting'}
             onClick={onCast}
-            size="md"
+            size="lg"
           >
             <Icon
               of={CastIcon}
@@ -768,11 +820,12 @@ const PlayerControls = ({
         {onPopOut === undefined ? null : (
           <Button
             isIconOnly
+            isPill
             variant="ghost"
             label={say('screens.videoPlayer.playerControls.popOut')}
             onClick={onPopOut}
             isActive={isPoppedOut}
-            size="md"
+            size="lg"
           >
             <Icon
               of={PictureInPictureIcon}
@@ -785,6 +838,7 @@ const PlayerControls = ({
 
         <Button
           isIconOnly
+          isPill
           variant="ghost"
           label={
             isFullscreen
@@ -792,7 +846,7 @@ const PlayerControls = ({
               : say('screens.readerChrome.fillTheScreen')
           }
           onClick={onToggleFullscreen}
-          size="md"
+          size="lg"
         >
           {isFullscreen ? (
             <Icon of={MinimizeIcon} size={20} />

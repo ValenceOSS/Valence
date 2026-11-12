@@ -6,7 +6,8 @@ describe('ReaderVignette', () => {
   it('shows a book open in the reader, two columns side by side', () => {
     render(<ReaderVignette />);
 
-    expect(screen.getByText('A Christmas Carol — Stave I: Marley’s Ghost')).toBeInTheDocument();
+    expect(screen.getByText('A Christmas Carol')).toBeInTheDocument();
+    expect(screen.getByText('Stave I: Marley’s Ghost')).toBeInTheDocument();
     expect(screen.getByText('“Are there no prisons?” asked Scrooge.')).toBeInTheDocument();
   });
 

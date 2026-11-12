@@ -85,7 +85,7 @@ const StreamStats = ({
   return (
     <section
       aria-label={say('common.statsForNerds')}
-      className="valence-rail valence-solid pointer-events-auto max-h-[calc(100svh-11rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-lg p-3 text-xs text-text"
+      className="valence-rail pointer-events-auto border border-[var(--surface-line)] bg-[var(--frame-back)] shadow-[var(--shadow-overlay)] max-h-[calc(100svh-11rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-lg p-3 text-xs text-text"
     >
       <header
         onPointerDown={(event) => {

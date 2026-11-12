@@ -14,7 +14,7 @@ import { PlayerControls } from '@ValenceScreens/components/VideoPlayer/component
 import { ChannelTags } from '@ValenceScreens/components/LiveTvPage/components/ChannelTags/ChannelTags';
 import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { attachShaka } from '@ValenceScreens/playback/attachShaka';
-import { readLights } from '@ValenceScreens/library/readLights';
+import { readLightsQuietly } from '@ValenceScreens/library/readLightsQuietly';
 import { setLiveLights } from '@ValenceScreens/library/liveLights';
 import { say } from '@ValenceI18n/say';
 import type { LivePlayerProps } from './LivePlayer.types';
@@ -164,20 +164,30 @@ const LivePlayer = ({
   }, [channel.id]);
 
   useEffect(() => {
+    let isReading = false;
+    let isDisposed = false;
+
     const look = () => {
       const element = videoRef.current;
 
-      if (element !== null && element.readyState > 1 && !element.paused) {
-        const found = readLights(element);
+      if (element === null || element.readyState <= 1 || element.paused || isReading) {
+        return;
+      }
 
-        if (found.length > 0) {
+      isReading = true;
+
+      void readLightsQuietly(element).then((found) => {
+        isReading = false;
+
+        if (!isDisposed && found.length > 0) {
           setLiveLights(found);
         }
-      }
+      });
     };
     const timer = setInterval(look, LOOKS_EVERY_MS);
 
     return () => {
+      isDisposed = true;
       clearInterval(timer);
       setLiveLights([]);
     };

@@ -11,12 +11,14 @@ import { cn } from '@ValenceUI/cn';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookText } from '@ValenceScreens/components/BookText/BookText';
 import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
-import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel';
-import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
+import { ReaderContents } from '@ValenceScreens/components/ReaderContents/ReaderContents';
+import { ReadingLook } from '@ValenceScreens/components/ReadingLook/ReadingLook';
+import { READER_SERIF } from '@ValenceScreens/reading/READER_SERIF';
+import { READING_THEMES } from '@ValenceCore/tokens/READING_THEMES';
+import { readingThemeOf } from '@ValenceClient/books/readingThemeOf';
 import { SpreadStage } from '@ValenceScreens/components/SpreadStage/SpreadStage';
 import { groupHolding, spreadsFor } from '@ValenceClient/books/spreadsFor';
 import { MOST_GAP } from '@ValenceClient/books/readerPreferences';
-import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
 import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
 import { TEXT_LOOK } from '@ValenceClient/books/TEXT_LOOK';
 import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
@@ -25,7 +27,6 @@ import { placeInBook } from '@ValenceClient/books/placeInBook';
 import { bookmarkPreviewOf } from '@ValenceClient/books/bookmarkPreviewOf';
 import {
   TEXT_MARGINS,
-  TEXT_PAGES,
   TEXT_SIZES,
   TEXT_SPACINGS,
   readTextPreferences,
@@ -57,8 +58,6 @@ const TEXT_TOP = 44;
 
 const TEXT_BOTTOM = 52;
 
-const SERIF = 'ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif';
-
 const SLIDER_STEPS = 1000;
 
 const SCREEN_STEP = 0.9;
@@ -73,12 +72,6 @@ const PICTURE_SHARE = 0.8;
 
 const MARK_SLACK = 0.000_001;
 
-const PAGE: Record<TextPreferences['page'], string> = {
-  light: 'bg-paper-light text-ink-light',
-  sepia: 'bg-paper-sepia text-ink-sepia',
-  dark: 'bg-paper-dark text-ink-dark',
-};
-
 const FLOW = TEXT_FLOW;
 
 const NAMES: Record<string, string> = {
@@ -91,9 +84,6 @@ const NAMES: Record<string, string> = {
   loose: say('common.loose'),
   narrow: say('common.narrow'),
   wide: say('common.wide'),
-  light: say('common.light'),
-  sepia: say('common.sepia'),
-  dark: say('common.dark'),
 };
 
 /**
@@ -143,9 +133,8 @@ const TextReader = ({
     [contents.data],
   );
   const [settings, setSettings] = useState<TextPreferences>(() => readTextPreferences());
-  const { isShown, wake, keep } = useChromeThatHides();
-  const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
-  const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
+  const { isShown, wake, hide, toggle, follow: followPointer } = useChromeThatHides();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [part, setPart] = useState<number | null>(null);
   const [at, setAt] = useState(0);
   const [pages, setPages] = useState(1);
@@ -366,7 +355,7 @@ const TextReader = ({
 
   const turn = useCallback(
     (by: number) => {
-      keep();
+      hide();
 
       if (part === null) {
         return;
@@ -401,7 +390,7 @@ const TextReader = ({
       setLanding(null);
       setAt(next);
     },
-    [at, goTo, isScrolling, keep, lastPart, part, spreads.length],
+    [at, goTo, isScrolling, hide, lastPart, part, spreads.length],
   );
 
   const forward = useCallback(() => {
@@ -453,6 +442,18 @@ const TextReader = ({
     wake();
   };
 
+  const theme = readingThemeOf(settings);
+  const look = READING_THEMES[theme];
+  const sizeAt = TEXT_SIZES.indexOf(settings.size);
+  const smallerSize = TEXT_SIZES[sizeAt - 1];
+  const largerSize = TEXT_SIZES[sizeAt + 1];
+
+  const paperStyle = {
+    colorScheme: look.isDark ? 'dark' : 'light',
+    '--reader-paper': look.paper,
+    '--reader-ink': look.ink,
+  } as const;
+
   const flowStyle = {
     width: `${textWidth.toString()}px`,
     height: `${textHeight.toString()}px`,
@@ -461,14 +462,16 @@ const TextReader = ({
     columnFill: 'auto',
     fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
     lineHeight: TEXT_LOOK.leading[settings.spacing],
-    fontFamily: SERIF,
+    fontFamily: READER_SERIF,
+    fontWeight: look.isBold ? 600 : 400,
     '--page-height': `${textHeight.toString()}px`,
   } as const;
 
   const scrollStyle = {
     fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
     lineHeight: TEXT_LOOK.leading[settings.spacing],
-    fontFamily: SERIF,
+    fontFamily: READER_SERIF,
+    fontWeight: look.isBold ? 600 : 400,
     '--page-height': `${Math.round(box.height * PICTURE_SHARE).toString()}px`,
   } as const;
 
@@ -501,203 +504,163 @@ const TextReader = ({
   }
 
   return (
-    <div className="valence-below-the-bar z-50 flex flex-col bg-shade" onPointerMove={wake}>
+    <div
+      className="valence-below-the-bar z-50 flex flex-col bg-surface"
+      onPointerMove={followPointer}
+    >
       <ReaderChrome
-        title={heading === null ? book.title : `${book.title} — ${heading}`}
-        isShown={isShown}
+        title={book.title}
+        place={heading}
+        isShown={isShown || isMenuOpen}
         isRightToLeft={book.direction === 'rightToLeft'}
         onForward={forward}
         onBack={back}
         onClose={onClose}
+        onToggle={toggle}
         {...(marks === undefined
           ? {}
-          : { mark: { isMarked: markedHere.length > 0, onMark: mark } })}
+          : {
+              mark: { isMarked: markedHere.length > 0, onMark: mark },
+              bookmarks: marks.list,
+            })}
         className="items-center justify-center"
-        isPanelOpen={isPanelOpen}
-        isPanelPinned={isPanelPinned}
-        onPanelOpenChange={setIsPanelOpen}
-        panel={
-          <ReaderPanel
-            bookTitle={book.title}
-            placeTitle={heading}
-            isPinned={isPanelPinned}
-            onPinnedChange={(isPinned) => {
-              setIsPanelPinned(isPinned);
-              writePanelPinned(isPinned);
-            }}
-            onClose={() => {
-              setIsPanelOpen(false);
-            }}
-            pickers={
-              entries.length === 0 ? null : (
-                <ReaderPicker
-                  label={say('common.contents')}
-                  value={heading ?? say('screens.textReader.theBeginning')}
-                  selectedId={current === null ? '' : current.toString()}
-                  options={entries.map((entry, at) => ({
-                    id: at.toString(),
-                    label: `${'\u2003'.repeat(entry.depth)}${entry.title}`,
-                  }))}
-                  onSelect={(id) => {
-                    const entry = entries[Number(id)];
+        actions={
+          <>
+            <ReaderContents
+              label={say('common.contents')}
+              entries={entries.map((entry, at) => ({
+                id: at.toString(),
+                label: entry.title,
+                depth: entry.depth,
+              }))}
+              currentId={current === null ? null : current.toString()}
+              onOpenChange={setIsMenuOpen}
+              onSelect={(id) => {
+                const entry = entries[Number(id)];
 
-                    if (entry !== undefined) {
-                      follow({ part: entry.part, anchor: entry.anchor });
+                if (entry !== undefined) {
+                  follow({ part: entry.part, anchor: entry.anchor });
+                }
+              }}
+            />
+
+            <ReadingLook
+              theme={theme}
+              onOpenChange={setIsMenuOpen}
+              onTheme={(chosen) => {
+                change({ theme: chosen });
+              }}
+              onSmaller={
+                smallerSize === undefined
+                  ? null
+                  : () => {
+                      change({ size: smallerSize });
                     }
-                  }}
-                  previousLabel={say('common.chapterBefore')}
-                  nextLabel={say('common.nextChapter')}
-                  {...(current !== null && current > 0
-                    ? {
-                        onPrevious: () => {
-                          const entry = entries[current - 1];
-
-                          if (entry !== undefined) {
-                            follow({ part: entry.part, anchor: entry.anchor });
-                          }
-                        },
-                      }
-                    : {})}
-                  {...((current ?? -1) < entries.length - 1
-                    ? {
-                        onNext: () => {
-                          const entry = entries[(current ?? -1) + 1];
-
-                          if (entry !== undefined) {
-                            follow({ part: entry.part, anchor: entry.anchor });
-                          }
-                        },
-                      }
-                    : {})}
-                />
-              )
-            }
-            bookmarks={marks?.list}
-          >
-            <SettingList isInset>
-              <SettingRow title={say('common.pages')}>
-                <SegmentedRow
-                  label={say('common.pages')}
-                  size="sm"
-                  items={[
-                    { id: 'single', label: say('screens.pageReader.onePage') },
-                    { id: 'double', label: say('screens.pageReader.twoPages') },
-                    { id: 'scroll', label: say('common.scroll') },
-                  ]}
-                  value={isScrolling ? 'scroll' : settings.isDouble ? 'double' : 'single'}
-                  onSelect={(id) => {
-                    change(
-                      id === 'scroll'
-                        ? { isScrolling: true }
-                        : { isScrolling: false, isDouble: id === 'double' },
-                    );
-                  }}
-                />
-              </SettingRow>
-
-              {settings.isDouble && !isScrolling ? (
-                <SettingRow
-                  title={say('screens.pageReader.gapBetweenPages')}
-                  description={say('screens.pageReader.gapPx', {
-                    gap: settings.gap.toString(),
-                  })}
-                >
-                  <Slider
-                    label={say('screens.pageReader.gapBetweenPages')}
-                    value={settings.gap}
-                    max={MOST_GAP}
-                    onValueChange={(next) => {
-                      change({ gap: next });
-                    }}
-                    className="w-40"
-                  />
-                </SettingRow>
-              ) : null}
-
-              {isScrolling ? null : (
-                <SettingRow title={say('screens.pageReader.animateTurningPages')}>
-                  <Switch
-                    label={say('screens.pageReader.animateTurningPages')}
-                    isLabelHidden
-                    isOn={settings.isAnimated}
-                    onToggle={() => {
-                      change({ isAnimated: !settings.isAnimated });
+              }
+              onLarger={
+                largerSize === undefined
+                  ? null
+                  : () => {
+                      change({ size: largerSize });
+                    }
+              }
+            >
+              <SettingList isInset>
+                <SettingRow title={say('common.pages')}>
+                  <SegmentedRow
+                    label={say('common.pages')}
+                    size="sm"
+                    items={[
+                      { id: 'single', label: say('screens.pageReader.onePage') },
+                      { id: 'double', label: say('screens.pageReader.twoPages') },
+                      { id: 'scroll', label: say('common.scroll') },
+                    ]}
+                    value={isScrolling ? 'scroll' : settings.isDouble ? 'double' : 'single'}
+                    onSelect={(id) => {
+                      change(
+                        id === 'scroll'
+                          ? { isScrolling: true }
+                          : { isScrolling: false, isDouble: id === 'double' },
+                      );
                     }}
                   />
                 </SettingRow>
-              )}
 
-              <SettingRow title={say('common.size')}>
-                <SegmentedRow
-                  label={say('common.size')}
-                  size="sm"
-                  items={TEXT_SIZES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
-                  value={settings.size}
-                  onSelect={(id) => {
-                    const size = TEXT_SIZES.find((one) => one === id);
+                {settings.isDouble && !isScrolling ? (
+                  <SettingRow
+                    title={say('screens.pageReader.gapBetweenPages')}
+                    description={say('screens.pageReader.gapPx', {
+                      gap: settings.gap.toString(),
+                    })}
+                  >
+                    <Slider
+                      label={say('screens.pageReader.gapBetweenPages')}
+                      value={settings.gap}
+                      max={MOST_GAP}
+                      onValueChange={(next) => {
+                        change({ gap: next });
+                      }}
+                      tone="glass"
+                      isSlim
+                      className="w-full min-w-48"
+                    />
+                  </SettingRow>
+                ) : null}
 
-                    if (size !== undefined) {
-                      change({ size });
-                    }
-                  }}
-                />
-              </SettingRow>
+                {isScrolling ? null : (
+                  <SettingRow title={say('screens.pageReader.animateTurningPages')}>
+                    <Switch
+                      label={say('screens.pageReader.animateTurningPages')}
+                      isLabelHidden
+                      isOn={settings.isAnimated}
+                      onToggle={() => {
+                        change({ isAnimated: !settings.isAnimated });
+                      }}
+                    />
+                  </SettingRow>
+                )}
 
-              <SettingRow title={say('screens.textReader.spacing')}>
-                <SegmentedRow
-                  label={say('screens.textReader.spacing')}
-                  size="sm"
-                  items={TEXT_SPACINGS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
-                  value={settings.spacing}
-                  onSelect={(id) => {
-                    const spacing = TEXT_SPACINGS.find((one) => one === id);
+                <SettingRow title={say('screens.textReader.spacing')}>
+                  <SegmentedRow
+                    label={say('screens.textReader.spacing')}
+                    size="sm"
+                    items={TEXT_SPACINGS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                    value={settings.spacing}
+                    onSelect={(id) => {
+                      const spacing = TEXT_SPACINGS.find((one) => one === id);
 
-                    if (spacing !== undefined) {
-                      change({ spacing });
-                    }
-                  }}
-                />
-              </SettingRow>
+                      if (spacing !== undefined) {
+                        change({ spacing });
+                      }
+                    }}
+                  />
+                </SettingRow>
 
-              <SettingRow title={say('common.margins')}>
-                <SegmentedRow
-                  label={say('common.margins')}
-                  size="sm"
-                  items={TEXT_MARGINS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
-                  value={settings.margins}
-                  onSelect={(id) => {
-                    const margins = TEXT_MARGINS.find((one) => one === id);
+                <SettingRow title={say('common.margins')}>
+                  <SegmentedRow
+                    label={say('common.margins')}
+                    size="sm"
+                    items={TEXT_MARGINS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                    value={settings.margins}
+                    onSelect={(id) => {
+                      const margins = TEXT_MARGINS.find((one) => one === id);
 
-                    if (margins !== undefined) {
-                      change({ margins });
-                    }
-                  }}
-                />
-              </SettingRow>
-
-              <SettingRow title={say('common.page')}>
-                <SegmentedRow
-                  label={say('common.page')}
-                  size="sm"
-                  items={TEXT_PAGES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
-                  value={settings.page}
-                  onSelect={(id) => {
-                    const chosen = TEXT_PAGES.find((one) => one === id);
-
-                    if (chosen !== undefined) {
-                      change({ page: chosen });
-                    }
-                  }}
-                />
-              </SettingRow>
-            </SettingList>
-          </ReaderPanel>
+                      if (margins !== undefined) {
+                        change({ margins });
+                      }
+                    }}
+                  />
+                </SettingRow>
+              </SettingList>
+            </ReadingLook>
+          </>
         }
         footer={
           <>
             <Slider
               label={say('screens.bookDialog.howFarThrough')}
-              tone="overlay"
+              tone="glass"
+              isSlim
               value={dragged ?? Math.round(fraction * SLIDER_STEPS)}
               max={SLIDER_STEPS}
               onValueChange={(value) => {
@@ -718,13 +681,13 @@ const TextReader = ({
               className="flex-1"
             />
 
-            <span className="w-16 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
+            <span className="w-12 shrink-0 text-right text-xs tabular-nums text-text-muted">
               {`${Math.round(((dragged ?? fraction * SLIDER_STEPS) / SLIDER_STEPS) * 100).toString()}%`}
             </span>
           </>
         }
       >
-        <div ref={stage} className="relative h-full w-full">
+        <div ref={stage} className="relative h-full w-full" style={paperStyle}>
           {isScrolling && part !== null ? (
             <ScrollingText
               key={scrollFrom?.key ?? 0}
@@ -733,7 +696,7 @@ const TextReader = ({
               startPart={scrollFrom?.part ?? part}
               landing={scrollFrom?.landing ?? landing ?? { kind: 'start' }}
               lastPart={lastPart}
-              pageClassName={PAGE[settings.page]}
+              pageClassName="bg-[var(--reader-paper)] text-[var(--reader-ink)] shadow-[var(--shadow-lifted)]"
               inset={Math.max(
                 MOST_SCROLL_INSET,
                 Math.min(box.width, SCROLL_WIDTH) * TEXT_LOOK.margin[settings.margins] * 1.6,
@@ -782,8 +745,10 @@ const TextReader = ({
                       data-reader-page
                       aria-hidden={!isPageShown}
                       className={cn(
-                        'relative shrink-0 overflow-hidden rounded-md shadow-[var(--shadow-lifted)]',
-                        PAGE[settings.page],
+                        'relative shrink-0 overflow-hidden bg-[var(--reader-paper)] text-[var(--reader-ink)]',
+                        settings.isDouble && settings.gap === 0
+                          ? ''
+                          : 'rounded-md shadow-[var(--shadow-lifted)]',
                         isPageShown ? '' : 'invisible',
                       )}
                       style={{ width: sheetWidth, height: sheetHeight }}
@@ -810,7 +775,7 @@ const TextReader = ({
 
                       <span
                         className="absolute inset-x-0 text-center text-xs tabular-nums opacity-55"
-                        style={{ bottom: TEXT_BOTTOM / 2 - 8, fontFamily: SERIF }}
+                        style={{ bottom: TEXT_BOTTOM / 2 - 8, fontFamily: READER_SERIF }}
                       >
                         {bookPageNumber(sizes, part, pages, number).toString()}
                       </span>

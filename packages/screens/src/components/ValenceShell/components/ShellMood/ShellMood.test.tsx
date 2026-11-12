@@ -1,5 +1,7 @@
 import { act, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
+import type { MoodBackgroundProps } from '@ValenceUI/MoodBackground.types';
 import { setHomeLights } from '@ValenceScreens/library/homeLights';
 import { setMusicLights } from '@ValenceScreens/music/musicLights';
 import { ShellMood } from './ShellMood';
@@ -8,8 +10,20 @@ const HOME = [{ color: 'rgb(90 60 140)', at: '20% 30%' }];
 
 const MUSIC = [{ color: 'rgb(140 60 20)', at: '70% 40%' }];
 
-const firstBloomOf = (container: HTMLElement) =>
-  container.querySelector<HTMLElement>('.valence-bloom')?.style.getPropertyValue('--bloom-color');
+vi.mock('@ValenceUI/MoodBackground', () => ({
+  MoodBackground: ({ lights = [] }: MoodBackgroundProps) => (
+    <div data-testid="mood" data-lights={JSON.stringify(lights)} />
+  ),
+}));
+
+const LIGHTS = z.array(z.object({ color: z.string(), at: z.string().optional() }));
+
+const firstBloomOf = (container: HTMLElement): string | undefined =>
+  LIGHTS.parse(
+    JSON.parse(
+      container.querySelector('[data-testid="mood"]')?.getAttribute('data-lights') ?? '[]',
+    ),
+  )[0]?.color;
 
 afterEach(() => {
   setHomeLights([]);

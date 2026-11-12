@@ -13,6 +13,7 @@ type Notice = {
   id?: string;
   where?: string;
   staysUntilDismissed?: boolean;
+  isCompact?: boolean;
 };
 
 /**
@@ -44,6 +45,7 @@ const show = (tone: NoticeTone, message: string, notice: Notice | undefined): st
         ...(notice?.action === undefined ? {} : { action: notice.action }),
         ...(notice?.tags === undefined ? {} : { tags: notice.tags }),
         ...(countdown === undefined ? {} : { countdown }),
+        ...(notice?.isCompact === true ? { isCompact: true } : {}),
         onDismiss: () => {
           toast.dismiss(id);
         },

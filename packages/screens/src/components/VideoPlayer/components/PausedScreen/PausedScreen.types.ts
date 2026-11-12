@@ -12,6 +12,7 @@ type StillWatchingAsk = {
 type PausedScreenProps = {
   media: PausedMedia;
   isShown: boolean;
+  secondsLeft?: number;
   asking?: StillWatchingAsk;
 };
 

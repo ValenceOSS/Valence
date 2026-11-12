@@ -302,6 +302,10 @@
       "@ValenceUI/SplitButton.types": [
         "./packages/ui/src/components/SplitButton/SplitButton.types.ts"
       ],
+      "@ValenceUI/ScrollFade": ["./packages/ui/src/components/ScrollFade/ScrollFade.tsx"],
+      "@ValenceUI/ScrollFade.types": [
+        "./packages/ui/src/components/ScrollFade/ScrollFade.types.ts"
+      ],
       "@ValenceUI/Sidebar": ["./packages/ui/src/components/Sidebar/Sidebar.tsx"],
       "@ValenceUI/Sidebar.types": ["./packages/ui/src/components/Sidebar/Sidebar.types.ts"],
       "@ValenceUI/SidebarToggle": ["./packages/ui/src/components/SidebarToggle/SidebarToggle.tsx"],
@@ -396,6 +400,7 @@
       "@ValenceUI/tokens/AURORA": ["./packages/ui/src/tokens/AURORA.ts"],
       "@ValenceUI/tokens/LIT_TEXT": ["./packages/ui/src/tokens/LIT_TEXT.ts"],
       "@ValenceUI/tokens/PLAY_FACE": ["./packages/ui/src/tokens/PLAY_FACE.ts"],
+      "@ValenceUI/tokens/PLAY_FACE_SMALL": ["./packages/ui/src/tokens/PLAY_FACE_SMALL.ts"],
       "@ValenceUI/tokens/GROUP_LABEL": ["./packages/ui/src/tokens/GROUP_LABEL.ts"],
       "@ValenceUI/tokens/FIELD_TEXT": ["./packages/ui/src/tokens/FIELD_TEXT.ts"],
       "@ValenceUI/tokens/FIELD_SURFACE": ["./packages/ui/src/tokens/FIELD_SURFACE.ts"],
@@ -440,6 +445,7 @@
         "./packages/ui/src/components/VirtualGrid/VirtualGrid.types.ts"
       ],
       "@ValenceUI/VirtualStrip": ["./packages/ui/src/components/VirtualStrip/VirtualStrip.tsx"],
+      "@ValenceUI/DrawnWhenNear": ["./packages/ui/src/components/DrawnWhenNear/DrawnWhenNear.tsx"],
       "@ValenceUI/columnsIn": ["./packages/ui/src/components/VirtualGrid/columnsIn.ts"],
       "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"],
       "@ValenceUI/useHasScrolledPast": ["./packages/ui/src/functions/useHasScrolledPast.ts"],
@@ -456,6 +462,7 @@
       "@ValenceUI/hasFinePointer": ["./packages/ui/src/functions/hasFinePointer.ts"],
       "@ValenceUI/askForWebGlRenderer": ["./packages/ui/src/functions/askForWebGlRenderer.ts"],
       "@ValenceUI/hasHardwareGraphics": ["./packages/ui/src/functions/hasHardwareGraphics.ts"],
+      "@ValenceUI/canDrawShaders": ["./packages/ui/src/functions/canDrawShaders.ts"],
       "@ValenceUI/reloadWhenCodeIsGone": ["./packages/ui/src/functions/reloadWhenCodeIsGone.ts"],
       "@ValenceUI/useRoomBeside": ["./packages/ui/src/functions/useRoomBeside.ts"],
       "@ValenceUI/notify": ["./packages/ui/src/functions/notify.ts"],

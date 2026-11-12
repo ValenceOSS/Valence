@@ -22,14 +22,24 @@ const {
   serverHasMock: vi.fn<(feature: string) => boolean | null>(),
   upNextMock: vi.fn(),
   becauseMock: vi.fn(),
-  itemsMock: vi.fn(),
+  itemsMock:
+    vi.fn<
+      (
+        libraryId: string,
+        options: { order?: string; minRating?: number; genre?: string; ids?: string[] },
+      ) => Promise<{ items: MediaSummary[]; total: number }>
+    >(),
   facetsMock: vi.fn(),
   favouritesMock: vi.fn(),
   ratingsMock: vi.fn(),
 }));
 
 vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHasMock }));
-vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraryItems: itemsMock }));
+vi.mock('@ValenceClient/library/fetchLibrary', async () => {
+  const { askedOfEachLibrary } = await import('@ValenceClient/testing/askedOfEachLibrary');
+
+  return { fetchLibraryItems: itemsMock, fetchItemsAcross: askedOfEachLibrary(itemsMock) };
+});
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
 vi.mock('@ValenceClient/streams/fetchStreamedLibrary', () => ({
   fetchStreamedLibrary: streamedLibraryMock,
@@ -98,6 +108,12 @@ const halfWay = (mediaId: string): WatchProgress => ({
  * Draws the hook inside a cache of its own.
  */
 const inACache = ({ children }: { children: ReactNode }) => <CacheScope>{children}</CacheScope>;
+
+/**
+ * The rows drawn, by id, leaving out those that come round again once every row has been shown.
+ */
+const firstTime = (rails: readonly { id: string }[]): string[] =>
+  rails.map((rail) => rail.id).filter((id) => !id.startsWith('again:'));
 
 /**
  * A library that answers each question the rows ask with the films given for it.
@@ -537,7 +553,7 @@ describe('useHomeRows', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.rails.map((rail) => rail.id)).toEqual(['recent', 'genre:Drama']);
+      expect(firstTime(result.current.rails)).toEqual(['recent', 'genre:Drama']);
     });
 
     itemsMock.mockImplementation(
@@ -551,7 +567,7 @@ describe('useHomeRows', () => {
     rerender();
 
     expect(result.current.isReading).toBe(false);
-    expect(result.current.rails.map((rail) => rail.id)).toEqual(['recent', 'genre:Drama']);
+    expect(firstTime(result.current.rails)).toEqual(['recent', 'genre:Drama']);
 
     act(() => {
       for (const answer of answers) {
@@ -616,7 +632,8 @@ describe('useHomeRows', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.rails.map((rail) => rail.id)).toEqual(['recent', 'genre:Comedy']);
+      expect(firstTime(result.current.rails)).toEqual(['recent', 'genre:Comedy']);
+      expect(result.current.isReadingMore).toBe(false);
     });
 
     const before = result.current.rails;
@@ -696,26 +713,40 @@ describe('useHomeRows', () => {
     );
   });
 
-  it('asks for a handful of genres first, and the rest a few at a time when told', async () => {
+  it('reads the next genres ahead of the reader without drawing them until told', async () => {
     const genres = Array.from({ length: 9 }, (_, at) => `Genre ${at.toString()}`);
 
     facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
 
-    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+    renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
       wrapper: inACache,
     });
 
     await waitFor(() => {
       expect(itemsMock).toHaveBeenCalledWith(
         LIBRARY,
-        expect.objectContaining({ genre: 'Genre 5' }),
+        expect.objectContaining({ genre: 'Genre 6' }),
       );
     });
+  });
 
-    expect(itemsMock).not.toHaveBeenCalledWith(
-      LIBRARY,
-      expect.objectContaining({ genre: 'Genre 6' }),
-    );
+  it('draws a handful of genres first, and the rest a few at a time when told', async () => {
+    const genres = Array.from({ length: 9 }, (_, at) => `Genre ${at.toString()}`);
+
+    facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
+    aLibrary({
+      byGenre: Object.fromEntries(genres.map((genre) => [genre, films(genre, 5, genre)])),
+    });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(firstTime(result.current.rails)).toContain('genre:Genre 5');
+    });
+
+    expect(firstTime(result.current.rails)).not.toContain('genre:Genre 6');
     expect(result.current.hasMore).toBe(true);
 
     act(() => {
@@ -723,14 +754,7 @@ describe('useHomeRows', () => {
     });
 
     await waitFor(() => {
-      expect(itemsMock).toHaveBeenCalledWith(
-        LIBRARY,
-        expect.objectContaining({ genre: 'Genre 8' }),
-      );
-    });
-
-    await waitFor(() => {
-      expect(result.current.hasMore).toBe(false);
+      expect(firstTime(result.current.rails)).toContain('genre:Genre 8');
     });
   });
 
@@ -787,7 +811,7 @@ describe('useHomeRows', () => {
     });
   });
 
-  it('never offers the same row twice, however far somebody scrolls', async () => {
+  it('offers no row twice before every row has been shown', async () => {
     facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
     aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });
 
@@ -809,12 +833,15 @@ describe('useHomeRows', () => {
       expect(result.current.isReadingMore).toBe(false);
     });
 
-    const titles = result.current.rails.map((rail) => rail.title);
+    const shown = result.current.rails.filter((rail) => !rail.id.startsWith('again:'));
+    const titles = shown.map((rail) => rail.title);
+    const ids = result.current.rails.map((rail) => rail.id);
 
     expect(new Set(titles).size).toBe(titles.length);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('stops offering more once every row there is has been shown', async () => {
+  it('comes round to the rows again once every row there is has been shown', async () => {
     facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
     aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });
 
@@ -833,8 +860,14 @@ describe('useHomeRows', () => {
     }
 
     await waitFor(() => {
-      expect(result.current.hasMore).toBe(false);
+      expect(result.current.rails.some((rail) => rail.id.startsWith('again:'))).toBe(true);
     });
+
+    const drama = result.current.rails.find((rail) => rail.id === 'genre:Drama');
+    const again = result.current.rails.find((rail) => rail.id.startsWith('again:'));
+
+    expect(again?.title).toBe(drama?.title);
+    expect(result.current.hasMore).toBe(true);
   });
 
   it('asks for nothing more where no row was worth showing in the first place', async () => {

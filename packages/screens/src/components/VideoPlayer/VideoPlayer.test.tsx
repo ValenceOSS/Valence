@@ -2260,14 +2260,13 @@ describe('VideoPlayer', () => {
       fireEvent.play(element);
       fireEvent.pause(element);
 
-      expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+      expect(screen.queryByText('Paused')).not.toBeInTheDocument();
 
       act(() => {
         vi.advanceTimersByTime(11_000);
       });
 
-      expect(await screen.findByText('You’re watching')).toBeInTheDocument();
-      expect(screen.getByText('Paused')).toBeInTheDocument();
+      expect(await screen.findByText('Paused')).toBeInTheDocument();
 
       const stage = stageOf(screen.getByLabelText('Arrival'));
 
@@ -2276,7 +2275,7 @@ describe('VideoPlayer', () => {
       }
 
       await waitFor(() => {
-        expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+        expect(screen.queryByText('Paused')).not.toBeInTheDocument();
       });
     } finally {
       vi.useRealTimers();
@@ -2297,7 +2296,7 @@ describe('VideoPlayer', () => {
         vi.advanceTimersByTime(20_000);
       });
 
-      expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+      expect(screen.queryByText('Paused')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

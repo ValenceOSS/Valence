@@ -57,7 +57,6 @@ describe('the Valence stylesheet', () => {
   it('scales the blooms by theme, a glow over black being a wash over white', () => {
     expect(stylesheet).toContain('--bloom-strength: 0.9');
     expect(stylesheet).toContain('--bloom-strength: 1');
-    expect(stylesheet).toContain('opacity: var(--bloom-strength)');
   });
 
   it('draws every floating surface flat, in one colour with a hairline and a shadow', () => {

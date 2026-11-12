@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
+import { useArtworkWarming } from '@ValenceScreens/library/useArtworkWarming';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FolderOpen as FolderOpenIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
-import { staggerVariants } from '@ValenceUI/animations/reveal';
-import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { BackToTop } from '@ValenceUI/BackToTop';
-import { Rail } from '@ValenceUI/Rail';
 import { ComingUp } from '@ValenceScreens/components/ComingUp/ComingUp';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { SplashScreenWithBrand } from '@ValenceScreens/components/SplashScreenWithBrand/SplashScreenWithBrand';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Hero } from '@ValenceScreens/components/Hero/Hero';
@@ -22,9 +20,9 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { pickFeatured } from '@ValenceClient/library/pickFeatured';
 import { cn } from '@ValenceUI/cn';
+import { LibraryRail } from '@ValenceScreens/components/LibraryBrowser/components/LibraryRail/LibraryRail';
 import { EmptyLibrary } from '@ValenceScreens/components/LibraryBrowser/components/EmptyLibrary/EmptyLibrary';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
-import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { useDismissWithUndo } from '@ValenceScreens/library/useDismissWithUndo';
@@ -35,6 +33,12 @@ import type { LibraryBrowserProps } from './LibraryBrowser.types';
 import { say } from '@ValenceI18n/say';
 
 const HERO_COUNT = 5;
+
+const WARMED_PER_RAIL = 10;
+
+const WARMED_RAILS = 10;
+
+const NEAR_THE_END_PX = 3000;
 
 const PAGE_SIZE = 60;
 
@@ -142,49 +146,100 @@ const LibraryBrowser = ({
   const { hasMore, isReadingMore, showMore } = home;
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
-  const [reached, setReached] = useState(0);
-  const [openedAt] = useState(() => Date.now());
+  const [isNearTheEnd, setIsNearTheEnd] = useState(false);
+  const endTop = useRef<number | null>(null);
+  const askedAtTop = useRef<number | null>(null);
+  const [isAtEnd, setIsAtEnd] = useState(false);
 
   useEffect(() => {
-    if (end === null || !isHome || !hasMore || isReadingMore) {
+    if (end === null || typeof IntersectionObserver === 'undefined') {
       return;
     }
 
-    if (typeof IntersectionObserver === 'undefined') {
-      return;
-    }
-
-    const watching = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting === true) {
-          showMore();
-          setReached((count) => count + 1);
-        }
-      },
-      { rootMargin: '0px 0px 800px 0px' },
-    );
+    const watching = new IntersectionObserver(([entry]) => {
+      setIsAtEnd(entry?.isIntersecting === true);
+    });
 
     watching.observe(end);
 
     return () => {
       watching.disconnect();
     };
-  }, [end, isHome, hasMore, isReadingMore, showMore, reached]);
+  }, [end]);
+  const [openedAt] = useState(() => Date.now());
 
-  const rails = isHome ? home.rails : groupIntoRails(items, openedAt, progress);
+  const homeRails = home.rails;
+  const rails = isHome ? homeRails : groupIntoRails(items, openedAt, progress);
+
+  useEffect(() => {
+    if (end === null) {
+      return;
+    }
+
+    let frame = 0;
+
+    const measure = () => {
+      const { top } = end.getBoundingClientRect();
+
+      frame = 0;
+      endTop.current = top;
+      setIsNearTheEnd(top < window.innerHeight + NEAR_THE_END_PX);
+    };
+
+    const measureSoon = () => {
+      if (frame === 0) {
+        frame = requestAnimationFrame(measure);
+      }
+    };
+
+    measure();
+    window.addEventListener('scroll', measureSoon, { passive: true });
+    window.addEventListener('resize', measureSoon);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', measureSoon);
+      window.removeEventListener('resize', measureSoon);
+    };
+  }, [end, rails.length]);
+
+  useEffect(() => {
+    if (
+      isHome &&
+      isNearTheEnd &&
+      hasMore &&
+      !isReadingMore &&
+      endTop.current !== askedAtTop.current
+    ) {
+      askedAtTop.current = endTop.current;
+      showMore();
+    }
+  }, [isHome, isNearTheEnd, hasMore, isReadingMore, showMore]);
   const shown = rails.flatMap((rail) => rail.items);
+
+  useArtworkWarming(
+    [
+      ...rails.slice(0, WARMED_RAILS),
+      ...rails.slice(Math.max(WARMED_RAILS, rails.length - WARMED_RAILS)),
+    ].flatMap(({ standsForShows = false, items: railItems }) =>
+      railItems.slice(0, WARMED_PER_RAIL).map((media) => {
+        const isShow = isHome && standsForShows && showIdOf(media) !== null;
+        const picture = cardArtworkOf(media, {
+          shape: isShow ? 'poster' : 'wide',
+          isSeries: isShow,
+          drawsLarge: false,
+        });
+
+        return isHome ? picture.wide : picture.resting;
+      }),
+    ),
+  );
   const shownKey = shown.map((media) => media.id).join(',');
 
   const flagOf = useMemo(
     () => freshFlags([...heroItems, ...rails.flatMap((rail) => rail.items)], openedAt),
     [heroItems, rails, openedAt],
   );
-
-  const flagFor = (media: MediaSummary) => {
-    const flag = isHome ? flagOf(media) : null;
-
-    return flag === null ? {} : { flag };
-  };
 
   const reportItems = useRef(onItemsLoaded);
   const shownRef = useRef(shown);
@@ -229,6 +284,60 @@ const LibraryBrowser = ({
       tellTheScreen.current?.(false);
     };
   }, [isReading]);
+
+  const start = useCallback(
+    (media: MediaSummary, startSeconds: number) => {
+      if (onWatch === undefined) {
+        onPlay(media);
+
+        return;
+      }
+
+      onWatch(media, startSeconds);
+    },
+    [onWatch, onPlay],
+  );
+
+  const playShow = useCallback(
+    async (media: MediaSummary) => {
+      const series = showIdOf(media);
+      const detail =
+        series === null
+          ? null
+          : await queryClient
+              .fetchQuery(libraryQueries.show(media.libraryId, series))
+              .catch(() => null);
+      const pickedUp =
+        detail === null
+          ? null
+          : pickUpFrom(detail, {
+              resumeFor: (mediaId) => resumeFor(progress, mediaId),
+              isFinished: (mediaId) => progress.get(mediaId)?.isFinished === true,
+            });
+
+      if (pickedUp !== null) {
+        start(pickedUp.episode, pickedUp.startSeconds);
+
+        return;
+      }
+
+      if (series !== null && onShow !== undefined) {
+        onShow(series);
+
+        return;
+      }
+
+      onPlay(media);
+    },
+    [queryClient, progress, start, onShow, onPlay],
+  );
+
+  const playShowCard = useCallback(
+    (media: MediaSummary) => {
+      void playShow(media);
+    },
+    [playShow],
+  );
 
   if (askedFor.isError || page.isError) {
     return (
@@ -306,72 +415,11 @@ const LibraryBrowser = ({
 
   const hasSheet = hasHero && heroItems.length > 0;
 
-  /**
-   * Starts something, straight away where this page can, or on the page about it where it cannot.
-   *
-   * @param media - What to start.
-   * @param startSeconds - Where to start it.
-   */
-  const start = (media: MediaSummary, startSeconds: number) => {
-    if (onWatch === undefined) {
-      onPlay(media);
-
-      return;
-    }
-
-    onWatch(media, startSeconds);
-  };
-
-  /**
-   * Starts a programme from a card or the hero standing for it — at the episode its own page would
-   * start, which is where this viewer is in it, or its first episode — rather than at whichever
-   * episode happened to be read to represent it. Where the programme cannot be read, its page opens
-   * instead.
-   *
-   * @param media - The episode standing for the programme.
-   */
-  const playShow = async (media: MediaSummary) => {
-    const series = showIdOf(media);
-    const detail =
-      series === null
-        ? null
-        : await queryClient
-            .fetchQuery(libraryQueries.show(media.libraryId, series))
-            .catch(() => null);
-    const pickedUp =
-      detail === null
-        ? null
-        : pickUpFrom(detail, {
-            resumeFor: (mediaId) => resumeFor(progress, mediaId),
-            isFinished: (mediaId) => progress.get(mediaId)?.isFinished === true,
-          });
-
-    if (pickedUp !== null) {
-      start(pickedUp.episode, pickedUp.startSeconds);
-
-      return;
-    }
-
-    if (series !== null && onShow !== undefined) {
-      onShow(series);
-
-      return;
-    }
-
-    onPlay(media);
-  };
-
   return (
     <>
       <BackToTop />
 
-      <motion.div
-        variants={staggerVariants}
-        initial="hidden"
-        animate="shown"
-        exit="gone"
-        className="flex flex-col gap-8"
-      >
+      <motion.div initial={false} animate="shown" exit="gone" className="flex flex-col gap-8">
         {hasSheet ? (
           <Hero
             items={heroPicks}
@@ -409,17 +457,12 @@ const LibraryBrowser = ({
           className={cn(
             'flex flex-col gap-5 px-4 sm:px-6',
             hasSheet
-              ? 'valence-sheet relative z-10 min-h-[calc(100svh-var(--nav-clearance,0px))] pb-16 pt-8'
+              ? 'valence-sheet relative z-10 min-h-[calc(100svh-var(--nav-clearance,0px))] pb-16 pt-2'
               : '',
           )}
         >
-          <AnimatePresence>
-            <motion.div
-              key={appliedSearch}
-              variants={staggerVariants}
-              initial="hidden"
-              animate="shown"
-            >
+          <AnimatePresence presenceAffectsLayout={false}>
+            <motion.div key={appliedSearch} initial={false} animate="shown">
               {rails.length === 0 ? (
                 <EmptyLibrary
                   search={appliedSearch}
@@ -432,75 +475,27 @@ const LibraryBrowser = ({
                 <div className="flex flex-col gap-10">
                   {isHome && onShow !== undefined ? <ComingUp onOpenShow={onShow} /> : null}
 
-                  {rails.map(({ showOf, standsForShows = false, ...rail }) => (
-                    <Rail
+                  {rails.map((rail) => (
+                    <LibraryRail
                       key={rail.id}
-                      title={rail.title}
-                      sizesCards
-                      className="-mx-4 sm:-mx-6"
-                      {...(showOf === undefined || onOpenShow === undefined
-                        ? {}
-                        : {
-                            onOpenTitle: () => {
-                              onOpenShow(showOf);
-                            },
-                          })}
-                    >
-                      {rail.items.map((media, at) => {
-                        const isShow = isHome && standsForShows && showIdOf(media) !== null;
-
-                        return (
-                          <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                            <RailCard
-                              media={media}
-                              look={isHome ? 'art' : 'card'}
-                              isSeries={isShow}
-                              {...flagFor(media)}
-                              {...(!isShow && progress.has(media.id)
-                                ? {
-                                    watchedFraction: watchedFraction(
-                                      progress.get(media.id) ?? {
-                                        mediaId: media.id,
-                                        positionSeconds: 0,
-                                        durationSeconds: media.durationSeconds,
-                                        isFinished: false,
-                                        updatedAt: media.addedAt,
-                                      },
-                                    ),
-                                  }
-                                : {})}
-                              {...(isShow || resumeFor(progress, media.id) === null
-                                ? {}
-                                : {
-                                    resumeSeconds: Math.floor(resumeFor(progress, media.id) ?? 0),
-                                  })}
-                              onPlay={(media, startSeconds) => {
-                                if (isShow) {
-                                  void playShow(media);
-
-                                  return;
-                                }
-
-                                start(media, startSeconds);
-                              }}
-                              onInspect={onPlay}
-                              {...(onOpenShow === undefined ? {} : { onOpenShow })}
-                              {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
-                              {...(onToggleKept === undefined ? {} : { onToggleKept })}
-                              {...(onHide === undefined ? {} : { onHide })}
-                              {...(dismiss === null || rail.id !== RESUMING
-                                ? {}
-                                : { onDismiss: dismiss })}
-                            />
-                          </RevealItem>
-                        );
-                      })}
-                    </Rail>
+                      rail={rail}
+                      isHome={isHome}
+                      progress={progress}
+                      flagOf={flagOf}
+                      onPlayFilm={start}
+                      onPlayShow={playShowCard}
+                      onInspect={onPlay}
+                      {...(onOpenShow === undefined ? {} : { onOpenShow })}
+                      {...(isKept === undefined ? {} : { isKept })}
+                      {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                      {...(onHide === undefined ? {} : { onHide })}
+                      {...(dismiss === null || rail.id !== RESUMING ? {} : { onDismiss: dismiss })}
+                    />
                   ))}
 
                   {isHome && hasMore ? (
                     <div ref={setEnd} className="flex h-16 items-center justify-center">
-                      {isReadingMore ? (
+                      {isReadingMore && isAtEnd ? (
                         <Spinner
                           size="sm"
                           label={say('screens.libraryBrowser.findingMoreToWatch')}

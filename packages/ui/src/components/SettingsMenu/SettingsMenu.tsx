@@ -65,6 +65,7 @@ const opensSomething = (row: SettingsRow): row is SettingsChoiceRow | SettingsPa
  * @param onOpenChange - Told when the menu opens or closes.
  * @param isDisabled - Whether it can be opened at all.
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
+ * @param offset - How far from its trigger it opens.
  * @param className - Extra classes for the caller's own layout.
  */
 const SettingsMenu = ({
@@ -75,6 +76,7 @@ const SettingsMenu = ({
   onOpenChange,
   isDisabled = false,
   tone = 'default',
+  offset = 12,
   className,
 }: SettingsMenuProps) => {
   const portalContainer = usePortalContainer();
@@ -131,7 +133,7 @@ const SettingsMenu = ({
         <RadixPopover.Content
           aria-label={label}
           side="top"
-          sideOffset={12}
+          sideOffset={offset}
           align="end"
           collisionPadding={12}
           data-slot="settings-menu"
@@ -269,6 +271,10 @@ const SettingsMenu = ({
                                 <span className={MENU.dot} />
                               ) : null}
                             </span>
+
+                            {choice.icon === undefined ? null : (
+                              <span className="shrink-0 text-text-muted">{choice.icon}</span>
+                            )}
 
                             <span className={MENU.itemLabel}>{choice.label}</span>
 

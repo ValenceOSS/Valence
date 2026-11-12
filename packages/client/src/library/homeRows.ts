@@ -15,6 +15,7 @@ type HomeRowsInput = {
   decades: { decade: number; items: MediaSummary[] }[];
   more: { id: string; title: string; items: MediaSummary[] }[];
   fromPlugins?: { id: string; title: string; items: MediaSummary[] }[];
+  again?: number;
 };
 
 const ROW_LIMIT = 20;
@@ -80,6 +81,51 @@ const categoryRows = (
 };
 
 /**
+ * Puts some rows in an order of their own for one time round, the same each time that round is
+ * asked for, so rows coming round again do not come in the order they first did.
+ *
+ * @param count - How many rows there are.
+ * @param round - Which time round it is.
+ * @returns Each row's place in this round.
+ */
+const roundOrder = (count: number, round: number): number[] => {
+  const order = Array.from({ length: count }, (_, at) => at);
+  let seed = round * 2_654_435_761;
+
+  for (let at = count - 1; at > 0; at -= 1) {
+    seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
+    const other = seed % (at + 1);
+    const held = order[at] ?? at;
+
+    order[at] = order[other] ?? other;
+    order[other] = held;
+  }
+
+  return order;
+};
+
+/**
+ * The category rows again, round after round, each round in an order of its own, so the page goes on
+ * for as long as somebody keeps scrolling once every row the library can make has been shown.
+ *
+ * @param rows - The category rows as first drawn.
+ * @param count - How many rows to draw again.
+ * @returns The rows drawn again, each known by its round and place.
+ */
+const comeRoundAgain = (rows: readonly Rail[], count: number): Rail[] =>
+  rows.length === 0
+    ? []
+    : Array.from({ length: count }, (_, at) => {
+        const round = Math.floor(at / rows.length) + 1;
+        const place = at % rows.length;
+        const drawn = rows[roundOrder(rows.length, round)[place] ?? place];
+
+        return drawn === undefined
+          ? []
+          : [{ ...drawn, id: ['again', round.toString(), place.toString()].join(':') }];
+      }).flat();
+
+/**
  * Names a decade the way somebody says it rather than as the year it happens to start on.
  *
  * @param decade - The year the decade begins.
@@ -103,6 +149,7 @@ const decadeTitle = (decade: number): string =>
  * happened to be read to represent it.
  * Recently added is drawn with even one thing in it, since it is the row every library has — a
  * server holding three films would otherwise open on a hero over nothing.
+ * Once every category row has been shown, they come round again, as many as are asked for.
  *
  * @param input - What each row was asked to hold.
  * @returns The rows to draw, in the order they should appear.
@@ -117,20 +164,9 @@ const homeRows = ({
   decades,
   more,
   fromPlugins = [],
-}: HomeRowsInput): Rail[] => [
-  ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
-  ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
-  ...row('recent', say('common.recentlyAdded'), recent, true, 1),
-  ...because.flatMap(({ watched, items }) =>
-    row(
-      `because:${watched.seriesId ?? watched.mediaId}`,
-      say('client.library.homeRows.becauseYouWatchedTitle', { title: watched.title }),
-      items,
-    ),
-  ),
-  ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),
-  ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
-  ...categoryRows([
+  again = 0,
+}: HomeRowsInput): Rail[] => {
+  const categories = categoryRows([
     ...genres.map(({ genre, items }) => ({ id: `genre:${genre}`, title: genre, items })),
     ...decades.map(({ decade, items }) => ({
       id: `decade:${decade.toString()}`,
@@ -138,8 +174,25 @@ const homeRows = ({
       items,
     })),
     ...more,
-  ]),
-];
+  ]);
+
+  return [
+    ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
+    ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
+    ...row('recent', say('common.recentlyAdded'), recent, true, 1),
+    ...because.flatMap(({ watched, items }) =>
+      row(
+        `because:${watched.seriesId ?? watched.mediaId}`,
+        say('client.library.homeRows.becauseYouWatchedTitle', { title: watched.title }),
+        items,
+      ),
+    ),
+    ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),
+    ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
+    ...categories,
+    ...comeRoundAgain(categories, again),
+  ];
+};
 
 export type { HomeRowsInput };
 

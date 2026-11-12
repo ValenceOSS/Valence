@@ -220,8 +220,8 @@ describe('TextReader', () => {
     open();
 
     await screen.findAllByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Contents' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Go to Chapter II.' }));
 
     expect(
       (await screen.findAllByText('Mr. Bennet was among the earliest.'))[0],
@@ -233,17 +233,18 @@ describe('TextReader', () => {
 
     await screen.findAllByText('It is a truth universally acknowledged.');
 
-    expect(screen.getByText('Pride and Prejudice — Chapter I.')).toBeInTheDocument();
+    expect(document.querySelector('header')).toHaveTextContent('Pride and Prejudice');
+    expect(document.querySelector('header')).toHaveTextContent('Chapter I.');
   });
 
   it('remembers how somebody likes text set, on the device', async () => {
     open();
 
     await screen.findAllByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Sepia' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Text and page' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Use the Paper theme' }));
 
-    expect(held.get('valence.reader.text')).toContain('"page":"sepia"');
+    expect(held.get('valence.reader.text')).toContain('"theme":"paper"');
   });
 
   it('leaves on escape', async () => {
@@ -306,12 +307,12 @@ describe('TextReader', () => {
     expect(await screen.findByRole('button', { name: 'Remove bookmark' })).toBeInTheDocument();
   });
 
-  it('lists the bookmarks in the panel', async () => {
+  it('lists the bookmarks from beside the bookmark', async () => {
     open({ marks: aReaderMarks([]) });
 
     await screen.findAllByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Bookmarks' }));
 
-    expect(screen.getByText('The bookmarks')).toBeInTheDocument();
+    expect(await screen.findByText('The bookmarks')).toBeInTheDocument();
   });
 });

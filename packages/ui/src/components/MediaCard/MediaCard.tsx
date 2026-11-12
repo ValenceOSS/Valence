@@ -68,7 +68,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param onSelect - Told when the card was pressed.
  * @param href - Where the card goes, which makes it a link that can be middle-clicked or opened in
  *   a new tab; a plain click still goes through onSelect.
- * @param isStill - Whether to hold the card still rather than letting it lift under a pointer.
+ * @param isStill - Whether to hold the card still rather than letting it lift or its picture zoom
+ *   under a pointer.
  * @param className - Extra classes for the caller's own layout.
  */
 const MediaCard = ({
@@ -131,7 +132,9 @@ const MediaCard = ({
               'relative block overflow-hidden bg-card',
               'shadow-[var(--shadow-artwork)] ring-1 ring-line',
               'transition-shadow duration-[var(--duration-base)] ease-[var(--ease-out)]',
-              'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
+              isStill
+                ? ''
+                : 'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
               isBook ? 'valence-book__cover rounded-l-[3px] rounded-r-md' : 'rounded-md',
               SHAPE_CLASSES[shape],
             )}
@@ -148,12 +151,13 @@ const MediaCard = ({
                 src={imageUrl}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 onError={() => {
                   setMissingImageUrl(imageUrl);
                 }}
                 className={cn(
                   'h-full w-full object-cover',
-                  isBook
+                  isBook || isStill
                     ? ''
                     : 'transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.04]',
                 )}
@@ -183,6 +187,7 @@ const MediaCard = ({
                 src={logoUrl}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 draggable={false}
                 className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
                 onError={() => {
@@ -198,12 +203,12 @@ const MediaCard = ({
             )}
 
             {count === undefined || count <= 0 || corner !== undefined ? null : (
-              <span className="absolute right-3 top-3">
+              <span className="absolute right-0 top-0">
                 <Tooltip label={countLabel ?? count.toString()}>
                   <span
                     role="img"
                     aria-label={countLabel ?? count.toString()}
-                    className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-xs font-semibold tabular-nums text-primary-foreground shadow-sm"
+                    className="flex items-center justify-center rounded-bl-lg bg-shade/55 px-3 py-1 text-xs font-bold tabular-nums text-on-scrim"
                   >
                     {count > 99 ? '99+' : count.toString()}
                   </span>

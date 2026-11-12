@@ -13,8 +13,9 @@ import type { PlayWithRestartProps } from './PlayWithRestart.types';
  *
  * @param children - The play button itself.
  * @param onStartAgain - Told to play it from the start, where there is somewhere to carry on from.
+ * @param size - How large it is drawn: large under a title's artwork, smaller in a card.
  */
-const PlayWithRestart = ({ children, onStartAgain }: PlayWithRestartProps) => (
+const PlayWithRestart = ({ children, onStartAgain, size = 'lg' }: PlayWithRestartProps) => (
   <div className="flex w-full items-stretch gap-[3px]">
     <div
       className={cn(
@@ -31,12 +32,13 @@ const PlayWithRestart = ({ children, onStartAgain }: PlayWithRestartProps) => (
         size="none"
         label={say('common.startAgain')}
         className={cn(
-          'flex h-[3.25rem] w-14 shrink-0 items-center justify-center rounded-l-[4px] rounded-r-[0.875rem]',
+          'flex shrink-0 items-center justify-center rounded-l-[4px]',
+          size === 'lg' ? 'h-[3.25rem] w-14 rounded-r-[0.875rem]' : 'h-10 w-11 rounded-r-[0.75rem]',
           glassOnArtwork,
         )}
         onClick={onStartAgain}
       >
-        <Icon of={RotateCcwIcon} size={20} />
+        <Icon of={RotateCcwIcon} size={size === 'lg' ? 20 : 17} />
       </Button>
     )}
   </div>

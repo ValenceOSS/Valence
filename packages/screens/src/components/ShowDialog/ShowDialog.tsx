@@ -9,7 +9,6 @@ import {
   ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
-  Info as InfoIcon,
   Layers as LayersIcon,
   Plus as PlusIcon,
   Share as ShareIcon,
@@ -33,6 +32,8 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { useHasScrolledPast } from '@ValenceUI/useHasScrolledPast';
 import { ScrolledTitle } from '@ValenceScreens/components/ScrolledTitle/ScrolledTitle';
 import { Badge } from '@ValenceUI/Badge';
+import { AgeRating } from '@ValenceUI/AgeRating';
+import { showQualityBadges } from '@ValenceClient/library/showQualityBadges';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { waysToDownloadAProgramme } from '@ValenceClient/downloads/waysToDownloadAProgramme';
@@ -359,18 +360,6 @@ const ShowDialog = ({
             },
           },
         ]),
-    ...(carryingOn === null || onInspect === undefined
-      ? []
-      : [
-          {
-            id: 'episode',
-            label: say('screens.showDialog.aboutThisEpisode'),
-            icon: <Icon of={InfoIcon} size={18} />,
-            onChoose: () => {
-              onInspect(carryingOn.episode);
-            },
-          },
-        ]),
     ...(!canKeepFiles() || (shown.seriesId ?? null) === null || detail === null
       ? []
       : [
@@ -552,6 +541,34 @@ const ShowDialog = ({
                       ].join(' · ')}
                 </span>
 
+                {detail === null ||
+                detail.certification === null ||
+                detail.certification === undefined ||
+                detail.certification === '' ? null : (
+                  <AgeRating
+                    certification={detail.certification}
+                    region={detail.certificationRegion ?? ''}
+                  />
+                )}
+
+                {showQualityBadges(
+                  (detail?.seasons ?? []).flatMap((season) => season.episodes),
+                ).map((badge) => (
+                  <Badge
+                    key={badge.label}
+                    tone="outline"
+                    className={
+                      badge.isMixed
+                        ? 'bg-highlight/30 font-bold text-highlight'
+                        : 'bg-text/30 font-bold text-text'
+                    }
+                  >
+                    {badge.isMixed && !badge.label.includes(' / ')
+                      ? say('screens.showDialog.onSomeEpisodes', { label: badge.label })
+                      : badge.label}
+                  </Badge>
+                ))}
+
                 {isSeenThrough ? (
                   <Badge tone="success" size="sm">
                     {say('common.watched')}
@@ -561,7 +578,10 @@ const ShowDialog = ({
                 {detail?.status === undefined ||
                 detail.status === null ||
                 detail.status === '' ? null : (
-                  <ShowStatusBadge status={detail.status} />
+                  <ShowStatusBadge
+                    status={detail.status}
+                    className="border border-current/60 bg-current/30 font-bold backdrop-blur-none"
+                  />
                 )}
               </DialogHeadlinePart>
 

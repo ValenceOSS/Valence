@@ -5,11 +5,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { chosenTheme } from '@ValenceClient/shell/theme';
 import { chosenMotion } from '@ValenceClient/shell/motion';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
+import type { MoodBackgroundProps } from '@ValenceUI/MoodBackground.types';
 import { AppShell } from './AppShell';
 
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import type { AppShellProps } from './AppShell.types';
+
+vi.mock('@ValenceUI/MoodBackground', () => ({
+  MoodBackground: ({ lights = [] }: MoodBackgroundProps) => (
+    <div data-testid="mood" data-first-light={lights[0]?.color ?? ''} />
+  ),
+}));
 
 const draw = (overrides: Partial<AppShellProps> = {}) => {
   const props: AppShellProps = {
@@ -76,12 +83,10 @@ describe('AppShell', () => {
     expect(screen.getByText('Now playing').parentElement).toHaveClass('h-0');
   });
 
-  it('leaves an Escape something else has already answered alone', () => {
+  it('stays in a section when Escape is pressed, which only closes what is open', () => {
     const { props } = draw({ section: 'music' });
-    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
 
-    escape.preventDefault();
-    window.dispatchEvent(escape);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }));
 
     expect(props.onSectionChange).not.toHaveBeenCalled();
   });
@@ -408,15 +413,11 @@ describe('AppShell', () => {
   });
 
   it('lights the page from behind with whatever it is given', () => {
-    const { view } = draw({
+    draw({
       background: <MoodBackground lights={[{ color: '#5a3c8c', at: '20% 30%' }]} />,
     });
 
-    const bloom = view.container.querySelector<HTMLElement>('.valence-bloom');
-
-    expect(bloom?.style.getPropertyValue('--bloom-color')).toBe('#5a3c8c');
-    expect(bloom?.style.getPropertyValue('--bloom-x')).toBe('20%');
-    expect(bloom?.style.getPropertyValue('--bloom-y')).toBe('30%');
+    expect(screen.getByTestId('mood')).toHaveAttribute('data-first-light', '#5a3c8c');
   });
 
   it('leaves room above every page for the bar laid over its top', () => {

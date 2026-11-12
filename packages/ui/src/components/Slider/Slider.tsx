@@ -1,20 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as RadixSlider from '@radix-ui/react-slider';
 import {
   AnimatePresence,
   motion,
   useMotionValue,
+  useMotionValueEvent,
   useReducedMotionConfig,
   useSpring,
 } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { Tooltip } from '@ValenceUI/Tooltip';
+import { liquidOutline } from './liquidOutline';
 import type { SliderProps, SliderTone } from './Slider.types';
 
 const TRACK_CLASSES: Record<SliderTone, string> = {
   default: 'bg-surface-raised',
   overlay: 'bg-on-scrim/30',
   glass: 'bg-text/15',
+  film: 'bg-on-scrim/25',
+};
+
+const SEGMENT_GAP = 2;
+
+const SWELLS_TO = 1.5;
+
+const BULGE_PX = 3;
+
+const LIFT_FADES_PX = 24;
+
+const SWELL_SPRING = { stiffness: 420, damping: 28, mass: 0.6 };
+
+const POINTED_SEGMENT_CLASSES: Record<SliderTone, string> = {
+  default: 'bg-text/35',
+  overlay: 'bg-on-scrim/55',
+  glass: 'bg-text/35',
+  film: 'bg-on-scrim/55',
 };
 
 const STRETCH_SPRING = { stiffness: 360, damping: 24, mass: 0.6 };
@@ -32,17 +52,15 @@ const KEY_DIRECTIONS: Readonly<Partial<Record<string, 1 | -1>>> = {
   ArrowDown: -1,
 };
 
-const NOTCH_CLASSES: Record<SliderTone, string> = {
-  default: 'bg-surface',
-  overlay: 'bg-scrim',
-  glass: 'bg-surface',
-};
-
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-text',
   overlay: 'bg-on-scrim',
   glass: 'bg-text',
+  film: 'bg-on-scrim',
 };
+
+const GROWS_ON_HOVER =
+  'origin-center transition-[scale] duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:group-hover/slider:scale-y-[1.6] motion-reduce:transition-none';
 
 /**
  * A track with a handle on it, for choosing one number from a range — a volume, a position in a
@@ -111,6 +129,61 @@ const Slider = ({
   const anchor = useMotionValue(0.5);
   const lastMoveRef = useRef<{ x: number; atMs: number } | null>(null);
   const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thickness = isSlim ? 3 : 6;
+  const liquidX = useMotionValue(0);
+  const swell = useSpring(0, SWELL_SPRING);
+  const swollen = thickness * SWELLS_TO;
+  const boxHeight = swollen + BULGE_PX * 2;
+  const trackWidthRef = useRef(0);
+  const segmentRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const cuts = [...new Set(notches.filter((notch) => notch > 0 && notch < 1))].sort(
+    (left, right) => left - right,
+  );
+  const isSegmented = cuts.length > 0 || renderPreview !== undefined;
+  const segments = [0, ...cuts].map((from, index): [number, number] => [from, cuts[index] ?? 1]);
+  const filled = max <= min ? 0 : (value - min) / (max - min);
+  const pointedSegment =
+    !isSegmented || hover === null
+      ? null
+      : segments.findIndex(([from, to]) => hover.ratio >= from && hover.ratio < to);
+  const restOutline = `inset(${((boxHeight - thickness) / 2).toString()}px 0 round 2px)`;
+
+  const drawLiquid = () => {
+    const across = trackWidthRef.current;
+    const reach = swell.get();
+    const pointer = liquidX.get();
+
+    segments.forEach(([from, to], index) => {
+      const element = segmentRefs.current[index];
+
+      if (element === null || element === undefined) {
+        return;
+      }
+
+      const left = from * across + (index === 0 ? 0 : SEGMENT_GAP / 2);
+      const width =
+        (to - from) * across -
+        (index === 0 ? 0 : SEGMENT_GAP / 2) -
+        (index === segments.length - 1 ? 0 : SEGMENT_GAP / 2);
+      const away = Math.max(left - pointer, pointer - (left + width), 0);
+      const lift = reach * Math.max(1 - away / LIFT_FADES_PX, 0);
+
+      element.style.clipPath =
+        across === 0 || reach < 0.01 || away > LIFT_FADES_PX * 2
+          ? restOutline
+          : liquidOutline(
+              width,
+              boxHeight,
+              thickness + (swollen - thickness) * lift,
+              BULGE_PX * reach,
+              pointer - left,
+            );
+    });
+  };
+
+  useMotionValueEvent(liquidX, 'change', drawLiquid);
+  useMotionValueEvent(swell, 'change', drawLiquid);
+  useLayoutEffect(drawLiquid);
 
   const drag = (clientX: number, atMs: number): void => {
     const last = lastMoveRef.current;
@@ -178,8 +251,13 @@ const Slider = ({
       const left = Math.min(Math.max(ratio * box.width, half), Math.max(box.width - half, half));
 
       setHover({ value: min + ratio * (max - min), ratio, left });
+
+      trackWidthRef.current = box.width;
+
+      liquidX.set(ratio * box.width);
+      swell.set(prefersReducedMotion === true ? 0 : 1);
     },
-    [min, max],
+    [min, max, swell, liquidX, prefersReducedMotion],
   );
 
   const handle = (
@@ -242,7 +320,7 @@ const Slider = ({
         step={step}
         disabled={isDisabled || max <= min}
         data-slot="slider"
-        className="group/slider flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
+        className="group/slider relative flex w-full cursor-pointer touch-none items-center py-2 select-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
         onValueChange={(next) => {
           onValueChange(next[0] ?? 0);
         }}
@@ -276,6 +354,7 @@ const Slider = ({
         }}
         onPointerLeave={() => {
           setHover(null);
+          swell.set(0);
         }}
       >
         <RadixSlider.Track
@@ -284,37 +363,96 @@ const Slider = ({
             isSlim
               ? 'relative h-[3px] w-full grow overflow-hidden rounded-full select-none'
               : 'relative h-1.5 w-full grow overflow-hidden rounded-full select-none',
-            TRACK_CLASSES[tone],
+            isSegmented ? 'overflow-visible rounded-[2px] bg-transparent' : TRACK_CLASSES[tone],
+            tone === 'film' && !isSegmented ? GROWS_ON_HOVER : '',
           )}
         >
           <RadixSlider.Range
-            className={cn('absolute h-full rounded-full select-none', FILL_CLASSES[tone])}
+            className={cn(
+              'absolute h-full rounded-full select-none',
+              isSegmented ? 'opacity-0' : FILL_CLASSES[tone],
+            )}
           />
-          {stretches.map((stretch) => (
-            <span
-              key={`${stretch.from.toString()}-${stretch.to.toString()}`}
-              data-slot="slider-stretch"
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 bg-warning/80"
-              style={{
-                left: `${(stretch.from * 100).toString()}%`,
-                width: `${((stretch.to - stretch.from) * 100).toString()}%`,
-              }}
-            />
-          ))}
-          {notches.map((notch) => (
-            <span
-              key={notch}
-              data-slot="slider-notch"
-              aria-hidden
-              className={cn(
-                'pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2',
-                NOTCH_CLASSES[tone],
-              )}
-              style={{ left: `${(notch * 100).toString()}%` }}
-            />
-          ))}
+          {isSegmented ? (
+            <>
+              {segments.map(([from, to], index) => (
+                <span
+                  key={`${from.toString()}-${to.toString()}`}
+                  data-slot="slider-segment"
+                  data-pointed={pointedSegment === index ? '' : undefined}
+                  aria-hidden
+                  className={cn(
+                    'pointer-events-none absolute top-1/2 -translate-y-1/2 overflow-hidden',
+                    'transition-[background-color] ease-[var(--ease-out)]',
+                    pointedSegment === index
+                      ? cn(POINTED_SEGMENT_CLASSES[tone], 'duration-[120ms]')
+                      : cn(TRACK_CLASSES[tone], 'duration-[240ms]'),
+                  )}
+                  style={{
+                    left: `calc(${(from * 100).toString()}% + ${(index === 0 ? 0 : SEGMENT_GAP / 2).toString()}px)`,
+                    width: `calc(${((to - from) * 100).toString()}% - ${((index === 0 ? 0 : SEGMENT_GAP / 2) + (index === segments.length - 1 ? 0 : SEGMENT_GAP / 2)).toString()}px)`,
+                    height: `${boxHeight.toString()}px`,
+                  }}
+                  ref={(element: HTMLSpanElement | null) => {
+                    segmentRefs.current[index] = element;
+                  }}
+                >
+                  {stretches
+                    .filter((stretch) => stretch.to > from && stretch.from < to)
+                    .map((stretch) => (
+                      <span
+                        key={`${stretch.from.toString()}-${stretch.to.toString()}`}
+                        data-slot="slider-stretch"
+                        className="absolute inset-y-0 bg-warning/80"
+                        style={{
+                          left: `${(((Math.max(stretch.from, from) - from) / (to - from)) * 100).toString()}%`,
+                          width: `${(((Math.min(stretch.to, to) - Math.max(stretch.from, from)) / (to - from)) * 100).toString()}%`,
+                        }}
+                      />
+                    ))}
+                  <span
+                    className={cn('absolute inset-0 origin-left', FILL_CLASSES[tone])}
+                    style={{
+                      transform: `scaleX(${Math.min(Math.max((filled - from) / (to - from), 0), 1).toString()})`,
+                    }}
+                  />
+                </span>
+              ))}
+            </>
+          ) : (
+            stretches.map((stretch) => (
+              <span
+                key={`${stretch.from.toString()}-${stretch.to.toString()}`}
+                data-slot="slider-stretch"
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 bg-warning/80"
+                style={{
+                  left: `${(stretch.from * 100).toString()}%`,
+                  width: `${((stretch.to - stretch.from) * 100).toString()}%`,
+                }}
+              />
+            ))
+          )}
         </RadixSlider.Track>
+
+        {renderPreview === undefined ? null : (
+          <span
+            data-slot="slider-pointer-line"
+            aria-hidden
+            className={cn(
+              'pointer-events-none absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full',
+              'transition-[opacity,background-color] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+              hover !== null && hover.ratio <= filled
+                ? 'bg-shade/85 shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-on-scrim)_30%,transparent)]'
+                : cn(
+                    FILL_CLASSES[tone],
+                    'shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-shade)_35%,transparent)]',
+                  ),
+              hover === null || isDragging ? 'opacity-0' : 'opacity-100',
+            )}
+            style={{ left: `${((hover?.ratio ?? 0) * 100).toString()}%` }}
+          />
+        )}
 
         {valueLabel === undefined ? (
           handle

@@ -7,6 +7,7 @@ type MediaFactsProps = {
   hasRuntime?: boolean;
   hasEpisode?: boolean;
   hasSize?: boolean;
+  ageRating?: { certification: string; region: string } | null;
 };
 
 export type { MediaFactsProps };

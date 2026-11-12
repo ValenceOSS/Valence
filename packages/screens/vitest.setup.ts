@@ -247,6 +247,31 @@ if (typeof HTMLCanvasElement !== 'undefined') {
   });
 }
 
+if (typeof HTMLImageElement !== 'undefined' && !('decode' in HTMLImageElement.prototype)) {
+  Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+    configurable: true,
+    writable: true,
+    value: async () => Promise.resolve(),
+  });
+}
+
+if (typeof Element !== 'undefined' && !('animate' in Element.prototype)) {
+  Object.defineProperty(Element.prototype, 'animate', {
+    configurable: true,
+    writable: true,
+    value: () => ({
+      finished: Promise.resolve(),
+      cancel: () => undefined,
+      commitStyles: () => undefined,
+    }),
+  });
+  Object.defineProperty(Element.prototype, 'getAnimations', {
+    configurable: true,
+    writable: true,
+    value: () => [],
+  });
+}
+
 afterEach(tidyAfterATest);
 
 quietLateRenderWarnings(console);
