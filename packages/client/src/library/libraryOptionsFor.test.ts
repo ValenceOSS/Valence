@@ -15,13 +15,13 @@ describe('libraryOptionsFor', () => {
     );
 
     expect(options).toEqual([
-      { id: 'all', label: 'All film libraries', shortLabel: 'All film libraries', group: null },
-      { id: 'a', label: 'Films', shortLabel: 'Films', group: null },
-      { id: 'b', label: 'Anime', shortLabel: 'Anime', group: null },
+      { id: 'all', label: 'All film libraries', shortLabel: 'All film libraries', isNested: false },
+      { id: 'a', label: 'Films', shortLabel: 'Films', isNested: false },
+      { id: 'b', label: 'Anime', shortLabel: 'Anime', isNested: false },
     ]);
   });
 
-  it('says where, and heads each linked library with its server after this server’s own', () => {
+  it('offers each server as a choice of all it holds, this server’s own first, its libraries beneath', () => {
     const options = libraryOptionsFor(
       [
         aLibrary({ id: 'theirs', name: 'Cinema', linkedServerId: FILMS.id }),
@@ -33,15 +33,37 @@ describe('libraryOptionsFor', () => {
     );
 
     expect(options).toEqual([
-      { id: 'all', label: 'Everywhere', shortLabel: 'Everywhere', group: null },
-      { id: 'here', label: 'Here', shortLabel: 'All', group: 'This server' },
-      { id: 'mine', label: 'Films', shortLabel: 'Films', group: 'This server' },
-      { id: `from:${FILMS.id}`, label: 'Films', shortLabel: 'All', group: 'Films' },
-      { id: 'theirs', label: 'Cinema · Films', shortLabel: 'Cinema', group: 'Films' },
+      { id: 'all', label: 'Everywhere', shortLabel: 'Everywhere', isNested: false },
+      { id: 'here', label: 'Here', shortLabel: 'This server', isNested: false },
+      { id: 'mine', label: 'Films', shortLabel: 'Films', isNested: true },
+      { id: `from:${FILMS.id}`, label: 'Films', shortLabel: 'Films', isNested: false },
+      { id: 'theirs', label: 'Cinema · Films', shortLabel: 'Cinema', isNested: true },
     ]);
   });
 
-  it('offers no choice of a server it does not know, and names its library plainly', () => {
+  it('sets every library a server holds beneath it', () => {
+    const options = libraryOptionsFor(
+      [
+        aLibrary({ id: 'mine', name: 'Shows' }),
+        aLibrary({ id: 'shows', name: 'Shows', linkedServerId: FILMS.id }),
+        aLibrary({ id: 'anime', name: 'Anime', linkedServerId: FILMS.id }),
+      ],
+      [FILMS],
+      'all',
+      'All programme libraries',
+    );
+
+    expect(options).toEqual([
+      { id: 'all', label: 'Everywhere', shortLabel: 'Everywhere', isNested: false },
+      { id: 'here', label: 'Here', shortLabel: 'This server', isNested: false },
+      { id: 'mine', label: 'Shows', shortLabel: 'Shows', isNested: true },
+      { id: `from:${FILMS.id}`, label: 'Films', shortLabel: 'Films', isNested: false },
+      { id: 'shows', label: 'Shows · Films', shortLabel: 'Shows', isNested: true },
+      { id: 'anime', label: 'Anime · Films', shortLabel: 'Anime', isNested: true },
+    ]);
+  });
+
+  it('offers no choice of a server it does not know, nor this server where it holds none', () => {
     const options = libraryOptionsFor(
       [aLibrary({ id: 'theirs', name: 'Cinema', linkedServerId: 'gone' })],
       [],
@@ -49,7 +71,7 @@ describe('libraryOptionsFor', () => {
       'All',
     );
 
-    expect(options.map((option) => option.id)).toEqual(['all', 'here', 'theirs']);
+    expect(options.map((option) => option.id)).toEqual(['all', 'theirs']);
     expect(options.at(-1)?.label).toBe('Cinema');
   });
 });

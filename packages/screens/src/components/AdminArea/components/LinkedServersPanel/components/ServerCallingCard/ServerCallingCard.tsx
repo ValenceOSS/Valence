@@ -3,7 +3,7 @@ import { CircleCheck as CircleCheckIcon, Copy as CopyIcon } from '@keyline-icons
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
-import { ServerFace } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerFace/ServerFace';
+import { ServerFace } from '@ValenceScreens/components/ServerFace/ServerFace';
 import { groupFingerprint } from '@ValenceClient/linking/groupFingerprint';
 import { say } from '@ValenceI18n/say';
 import type { ServerCallingCardProps } from './ServerCallingCard.types';

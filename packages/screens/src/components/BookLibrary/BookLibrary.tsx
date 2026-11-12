@@ -155,6 +155,7 @@ const BookLibrary = ({ libraryId, title, onOpen }: BookLibraryProps) => {
             </div>
 
             <GridSizeChooser
+              look="joined"
               className="shrink-0"
               value={size}
               onValueChange={(next) => {

@@ -34,6 +34,26 @@ describe('AskerStrip', () => {
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 
+  it('draws two faces and how many more, where more than three others want it', () => {
+    draw(
+      aMediaRequest({
+        requestedBy: { id: 'u1', name: 'Dan' },
+        alsoAskedBy: [
+          { id: 'u2', name: 'Sam' },
+          { id: 'u3', name: 'Kim' },
+          { id: 'u4', name: 'Lee' },
+          { id: 'u5', name: 'Max' },
+        ],
+        createdAt: new Date().toISOString(),
+      }),
+    );
+
+    expect(screen.getByText('K')).toBeInTheDocument();
+    expect(screen.queryByText('L')).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '2 more people want it' })).toHaveTextContent('+2');
+    expect(screen.getByText('Sam, Kim, Lee and 1 other want it too')).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(AskerStrip.displayName).toBe('AskerStrip');
   });

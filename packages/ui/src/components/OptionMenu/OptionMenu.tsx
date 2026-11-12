@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Check as CheckIcon,
@@ -83,7 +83,9 @@ const OptionText = ({ option, mark }: { option: MenuOption; mark: 'tick' | 'dot'
  * A menu of choices where one is in force, or, in a group that allows it, any number — an audio
  * track, a quality, a sort order, the apps that may sign in. Shows
  * which is chosen rather than only changing what is beneath it, each named group of choices under
- * a quiet heading, one beneath another.
+ * a quiet heading, one beneath another. A choice that falls within the one above it is set in
+ * beneath that one and said more quietly, and where a group has such choices, a line parts each
+ * choice from the one before with what falls within it.
  *
  * @param label - What is being chosen, read out to anybody who cannot see the menu.
  * @param trigger - The control that opens it.
@@ -249,7 +251,7 @@ const OptionMenu = ({
               onCheckedChange={(isChosen) => {
                 group.onToggle(option.id, isChosen === true);
               }}
-              className={OPTION_ROW}
+              className={cn(OPTION_ROW, option.isNested === true ? MENU.nested : '')}
             >
               <OptionText option={option} mark="tick" />
             </RadixMenu.CheckboxItem>
@@ -263,15 +265,22 @@ const OptionMenu = ({
           }}
           className="flex flex-col"
         >
-          {group.options.map((option) => (
-            <RadixMenu.RadioItem
-              key={option.id}
-              value={option.id}
-              data-highlight={`${group.name}:${option.id}`}
-              className={OPTION_ROW}
-            >
-              <OptionText option={option} mark="dot" />
-            </RadixMenu.RadioItem>
+          {group.options.map((option, at) => (
+            <Fragment key={option.id}>
+              {at > 0 &&
+              option.isNested !== true &&
+              group.options.some((other) => other.isNested === true) ? (
+                <RadixMenu.Separator className={MENU.separator} />
+              ) : null}
+
+              <RadixMenu.RadioItem
+                value={option.id}
+                data-highlight={`${group.name}:${option.id}`}
+                className={cn(OPTION_ROW, option.isNested === true ? MENU.nested : '')}
+              >
+                <OptionText option={option} mark="dot" />
+              </RadixMenu.RadioItem>
+            </Fragment>
           ))}
         </RadixMenu.RadioGroup>
       )}

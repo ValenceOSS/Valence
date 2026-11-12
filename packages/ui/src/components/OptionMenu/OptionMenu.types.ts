@@ -6,6 +6,7 @@ type MenuOption = {
   icon?: ReactNode;
   detail?: string;
   group?: string | null;
+  isNested?: boolean;
 };
 
 type OneOfMenuGroup = {

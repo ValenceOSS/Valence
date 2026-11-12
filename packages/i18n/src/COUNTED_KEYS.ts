@@ -161,6 +161,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.runLibraryJobDialog.runOnCountLibraries',
   'screens.adminArea.sharesPanel.count.endsInCountDays',
   'screens.adminArea.titleDetails.count.savedChanges',
+  'screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis',
   'screens.adminArea.titlePage.bookFormats.partsWhereTheyStand',
   'screens.adminArea.updatesPanel.devBuildCard.count.andMore',
@@ -232,6 +233,8 @@ const COUNTED_KEYS = [
   'server.webhooks.notice.titleEpisodes',
   'tv.askPage.courEpisodes',
   'tv.askPage.seasonEpisodes',
+  'ui.countMark.plusCount',
+  'ui.mediaCard.countMoreServersHaveIt',
   'ui.selectionBar.count.selectAll',
   'ui.stepTrail.showEarlierSteps',
 ] as const;

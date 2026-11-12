@@ -5,11 +5,11 @@ import type { LibraryOption } from './LibraryOption';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The choices between some libraries, for a page that shows several: all of them; where any come
- * from linked servers, only this server's own, or only one linked server's; and then each library,
- * this server's own first and each linked one named with the server it comes from. Each choice also
- * says which server it falls under and a shorter name for it there, for a menu that heads each
- * server's choices with its name rather than repeating it on every line.
+ * The choices between some libraries, for a page that shows several: all of them, and then each
+ * library. Where any come from linked servers, each server is a choice of everything it holds, this
+ * server's own first, with its libraries offered beneath it, each linked one named with the server
+ * it comes from. Each choice also has a shorter name, for a
+ * menu that sets the libraries beneath their server rather than naming it on every line.
  *
  * @param libraries - The libraries to choose between.
  * @param servers - The servers this one is linked with.
@@ -27,7 +27,26 @@ const libraryOptionsFor = (
   const linked = libraries.filter((library) => (library.linkedServerId ?? null) !== null);
   const nameOf = (serverId: string | null | undefined) =>
     servers.find((server) => server.id === serverId)?.name ?? null;
-  const here = linked.length === 0 ? null : say('common.thisServer');
+  const beneath = (held: readonly Library[], named: (library: Library) => string) =>
+    held.map((library) => ({
+      id: library.id,
+      label: named(library),
+      shortLabel: library.name,
+      isNested: true,
+    }));
+
+  if (linked.length === 0) {
+    return [
+      { id: every, label: everyLabel, shortLabel: everyLabel, isNested: false },
+      ...own.map((library) => ({
+        id: library.id,
+        label: library.name,
+        shortLabel: library.name,
+        isNested: false,
+      })),
+    ];
+  }
+
   const elsewhere = [...new Set(linked.map((library) => library.linkedServerId))].flatMap(
     (serverId) => {
       const name = nameOf(serverId);
@@ -41,41 +60,32 @@ const libraryOptionsFor = (
   return [
     {
       id: every,
-      label: linked.length === 0 ? everyLabel : say('common.everywhere'),
-      shortLabel: linked.length === 0 ? everyLabel : say('common.everywhere'),
-      group: null,
+      label: say('common.everywhere'),
+      shortLabel: say('common.everywhere'),
+      isNested: false,
     },
-    ...(here === null
+    ...(own.length === 0
       ? []
       : [
           {
             id: WHERE_CHOICE.here,
             label: say('common.here'),
-            shortLabel: say('common.all'),
-            group: here,
+            shortLabel: say('common.thisServer'),
+            isNested: false,
           },
+          ...beneath(own, (library) => library.name),
         ]),
-    ...own.map((library) => ({
-      id: library.id,
-      label: library.name,
-      shortLabel: library.name,
-      group: here,
-    })),
     ...elsewhere.flatMap(({ serverId, name }) => [
       {
         id: `${WHERE_CHOICE.fromPrefix}${serverId}`,
         label: name,
-        shortLabel: say('common.all'),
-        group: name,
+        shortLabel: name,
+        isNested: false,
       },
-      ...linked
-        .filter((library) => library.linkedServerId === serverId)
-        .map((library) => ({
-          id: library.id,
-          label: `${library.name} · ${name}`,
-          shortLabel: library.name,
-          group: name,
-        })),
+      ...beneath(
+        linked.filter((library) => library.linkedServerId === serverId),
+        (library) => `${library.name} · ${name}`,
+      ),
     ]),
     ...linked
       .filter((library) => nameOf(library.linkedServerId) === null)
@@ -83,7 +93,7 @@ const libraryOptionsFor = (
         id: library.id,
         label: library.name,
         shortLabel: library.name,
-        group: null,
+        isNested: false,
       })),
   ];
 };

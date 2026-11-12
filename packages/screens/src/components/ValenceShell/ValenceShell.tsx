@@ -186,18 +186,20 @@ const ValenceShell = () => {
 
   const libraryKinds = [...new Set((libraries.data ?? []).map((one) => one.kind))];
   const faces = useQuery(linkingQueries.faces());
+  const here = useQuery(linkingQueries.here());
 
   const libraryChoices = useMemo(
     () =>
       libraryChoicesFor(
         libraries.data ?? [],
         faces.data ?? [],
+        here.data ?? null,
         place.library,
         (library, section) => {
           go({ section, library });
         },
       ),
-    [libraries.data, faces.data, place.library, go],
+    [libraries.data, faces.data, here.data, place.library, go],
   );
 
   const requestableKinds = useRequestableKinds();

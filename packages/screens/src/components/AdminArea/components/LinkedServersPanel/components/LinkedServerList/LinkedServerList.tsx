@@ -21,7 +21,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
-import { ServerFace } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerFace/ServerFace';
+import { ServerFace } from '@ValenceScreens/components/ServerFace/ServerFace';
 import { answerLinkedServer } from '@ValenceClient/admin/answerLinkedServer';
 import { linkWithInvite } from '@ValenceClient/admin/linkWithInvite';
 import { makeLinkInvite } from '@ValenceClient/admin/makeLinkInvite';

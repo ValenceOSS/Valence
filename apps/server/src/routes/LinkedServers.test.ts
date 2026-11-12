@@ -558,7 +558,7 @@ describe('the linked server routes', () => {
     });
   });
 
-  it('shows anybody signed in the servers it is linked with, and asks a server to read again', async () => {
+  it('shows anybody signed in this server and the ones it is linked with, and asks a server to read again', async () => {
     const network = aNetwork();
     const anime = await network.serverAt('https://anime.example');
     const films = await network.serverAt('https://films.example', ['administrator'], [], {
@@ -583,6 +583,7 @@ describe('the linked server routes', () => {
       isReachable: false,
       takesRequests: true,
     });
+    expect(faces.here).toMatchObject({ name: 'films.example', pictureAt: null });
     expect(
       await (await films.request(`/api/linked-servers/${hostAtGuest}/sync`, 'POST')).json(),
     ).toEqual({ libraries: 1, kept: 4, forgotten: 0 });
