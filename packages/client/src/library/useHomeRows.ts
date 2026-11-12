@@ -45,6 +45,8 @@ const ENCORE_KINDS = 3;
 
 const DRY_ROUNDS = 2;
 
+const TAIL_ROW = /^(?:genre|decade|more|again):/u;
+
 const NOTHING: readonly MediaSummary[] = [];
 
 type Encore = {
@@ -664,13 +666,7 @@ const useHomeRows = (
   const hasMoreGenres = everyGenre.length > genreLimit;
   const hasMoreDecades = everyDecade.length > decadeLimit;
   const hasMoreTail = hasMoreGenres || hasMoreDecades || hasMoreEncores;
-  const isFull = (one: { data: MediaSummary[] | undefined }) =>
-    (one.data ?? NOTHING).length >= MIN_ROW;
-  const tailShown =
-    shownGenres.length +
-    byDecade.filter(isFull).length +
-    byEncore.filter(isFull).length +
-    againLimit;
+  const tailShown = rails.filter((rail) => TAIL_ROW.test(rail.id)).length;
   const canComeRoundAgain = !hasMoreTail && shownGenres.length > 0;
   const isTailSettled = areGenresSettled && areDecadesSettled && areEncoresSettled;
 
@@ -693,7 +689,7 @@ const useHomeRows = (
       }
 
       setEncoreLimit(limit);
-    } else if (canComeRoundAgain) {
+    } else if (canComeRoundAgain && tailWanted > FIRST_GENRES) {
       setAgainLimit((limit) => limit + tailWanted - tailShown);
     }
   }, [

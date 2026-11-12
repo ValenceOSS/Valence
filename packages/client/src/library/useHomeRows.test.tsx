@@ -785,6 +785,42 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('adds rows each time more is asked for, even where every further row would repeat what is shown', async () => {
+    const genres = Array.from({ length: 20 }, (_, at) => `Genre ${at.toString()}`);
+    const everything = films('shared', 5, 'Drama');
+
+    facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
+    aLibrary({ byGenre: Object.fromEntries(genres.map((genre) => [genre, everything])) });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.some((rail) => rail.id === 'genre:Genre 0')).toBe(true);
+    });
+
+    const before = result.current.rails.length;
+
+    act(() => {
+      result.current.showMore();
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.length).toBeGreaterThan(before);
+    });
+
+    const after = result.current.rails.length;
+
+    act(() => {
+      result.current.showMore();
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.length).toBeGreaterThan(after);
+    });
+  });
+
   it('goes on offering rows after the decades, so the page never simply stops', async () => {
     facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
     aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });

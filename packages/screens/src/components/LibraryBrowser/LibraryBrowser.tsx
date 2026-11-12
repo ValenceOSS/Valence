@@ -179,11 +179,11 @@ const LibraryBrowser = ({
 
     const measure = () => {
       const { top } = end.getBoundingClientRect();
+      const at = Math.round(top + window.scrollY);
+      const newest = at - (askedAt.current ?? 0);
 
       frame = 0;
-      setNearEndAt(
-        top < window.innerHeight + NEAR_THE_END_PX ? Math.round(top + window.scrollY) : null,
-      );
+      setNearEndAt(top - window.innerHeight < Math.max(NEAR_THE_END_PX, newest / 2) ? at : null);
     };
 
     const measureSoon = () => {
