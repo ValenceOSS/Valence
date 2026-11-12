@@ -82,7 +82,7 @@ const ArtCard = ({
       )}
 
       {flag === undefined ? null : (
-        <span className="absolute top-0 left-0 bg-shade/55 text-on-scrim whitespace-nowrap rounded-br-lg px-3 py-1 text-xs font-bold">
+        <span className="absolute top-0 left-0 bg-on-scrim text-shade whitespace-nowrap rounded-br-lg px-3 py-1 text-xs font-bold">
           {flag}
         </span>
       )}

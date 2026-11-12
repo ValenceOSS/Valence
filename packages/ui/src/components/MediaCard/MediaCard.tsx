@@ -208,7 +208,7 @@ const MediaCard = ({
                   <span
                     role="img"
                     aria-label={countLabel ?? count.toString()}
-                    className="flex items-center justify-center rounded-bl-lg bg-shade/55 px-3 py-1 text-xs font-bold tabular-nums text-on-scrim"
+                    className="flex items-center justify-center rounded-bl-lg bg-on-scrim px-3 py-1 text-xs font-bold tabular-nums text-shade"
                   >
                     {count > 99 ? '99+' : count.toString()}
                   </span>
