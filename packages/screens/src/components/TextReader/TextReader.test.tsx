@@ -5,7 +5,8 @@ import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { TextReader } from './TextReader';
-import type { Book } from '@ValenceContracts/schemas/Book';
+import type { Book, Bookmark } from '@ValenceContracts/schemas/Book';
+import { aReaderMarks } from '@ValenceScreens/testing/aReaderMarks';
 
 const held = new Map<string, string>();
 
@@ -104,6 +105,21 @@ const answer = (contents: object | null = CONTENTS) =>
         : new Response(html, { status: 200 }),
     );
   });
+
+/**
+ * A bookmark a fraction of the way through the book.
+ */
+const markAt = (fraction: number, id: string): Bookmark => ({
+  id,
+  bookId: 'a-book',
+  chapterId: 'a-chapter',
+  pageNumber: null,
+  fraction,
+  pageShown: null,
+  excerpt: null,
+  picture: null,
+  createdAt: '2026-11-11T00:00:00.000Z',
+});
 
 /**
  * Opens the reader on the book.
@@ -249,5 +265,53 @@ describe('TextReader', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(TextReader.displayName).toBe('TextReader');
+  });
+  it('bookmarks the place showing, with the words that start there', async () => {
+    const marks = aReaderMarks([markAt(0.5, 'later')]);
+
+    open({ marks });
+
+    await screen.findAllByText('It is a truth universally acknowledged.');
+    await userEvent.click(await screen.findByRole('button', { name: 'Bookmark this page' }));
+
+    await waitFor(() => {
+      expect(marks.onMark).toHaveBeenCalledWith({
+        pageNumber: null,
+        fraction: 0,
+        pageShown: 1,
+        excerpt: 'It is a truth universally acknowledged. Onwards',
+        picture: null,
+      });
+    });
+    expect(marks.onUnmark).not.toHaveBeenCalled();
+  });
+
+  it('removes the bookmarks that fall on the page showing', async () => {
+    const marks = aReaderMarks([markAt(0.1, 'here'), markAt(0.5, 'later')]);
+
+    open({ marks });
+
+    await screen.findAllByText('It is a truth universally acknowledged.');
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove bookmark' }));
+
+    expect(marks.onUnmark).toHaveBeenCalledWith(['here']);
+    expect(marks.onMark).not.toHaveBeenCalled();
+  });
+
+  it('finds a bookmark stored a little off where it was made', async () => {
+    open({ startAt: 0.25, marks: aReaderMarks([markAt(0.249_999_9, 'rounded')]) });
+
+    await screen.findAllByText('Mr. Bennet was among the earliest.');
+
+    expect(await screen.findByRole('button', { name: 'Remove bookmark' })).toBeInTheDocument();
+  });
+
+  it('lists the bookmarks in the panel', async () => {
+    open({ marks: aReaderMarks([]) });
+
+    await screen.findAllByText('It is a truth universally acknowledged.');
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+
+    expect(screen.getByText('The bookmarks')).toBeInTheDocument();
   });
 });

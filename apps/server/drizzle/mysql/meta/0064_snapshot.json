@@ -12430,7 +12430,7 @@
           "autoincrement": false,
           "generated": {
             "as": "case when `isOwner` then `userId` end",
-            "type": "stored"
+            "type": "virtual"
           }
         },
         "createdAt": {

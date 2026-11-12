@@ -37,7 +37,9 @@ const styles = StyleSheet.create({
  * @param pictures - A small picture of every page.
  * @param page - The page showing.
  * @param ink - The colour of the words and the ring.
- * @param tuning - Nudges to where each part sits, and whether the parts are outlined.
+ * @param tuning - Nudges to where each part sits, and whether the parts are outlined. The buttons'
+ *   nudge lines them up under the clock; on a strip on the right, where the clock is, the page
+ *   scrubber takes the same nudge so the whole column runs under it.
  * @param onPage - Told to turn to a page.
  * @param onBack - Told somebody is done reading.
  * @param onPanel - Told to bring out the contents and settings.
@@ -84,7 +86,7 @@ const AReaderRail = ({
         style={[
           styles.column,
           {
-            transform: [{ translateX: tuning.scrubberX }],
+            transform: [{ translateX: side === 'right' ? tuning.buttonsX : tuning.scrubberX }],
             width: tuning.scrubberWidth ?? breadth,
           },
           outline(OUTLINES.scrubber),

@@ -247,7 +247,7 @@ const viewerProfile = mysqlTable(
     mayRequest: boolean('mayRequest').notNull().default(true),
     ownerOf: identifier('ownerOf').generatedAlwaysAs(
       sql`case when ${sql.identifier('isOwner')} then ${sql.identifier('userId')} end`,
-      { mode: 'stored' },
+      { mode: 'virtual' },
     ),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
@@ -1369,6 +1369,37 @@ const readingProgress = mysqlTable(
   ],
 );
 
+const readingBookmark = mysqlTable(
+  'reading_bookmark',
+  {
+    id: identifier('id').primaryKey(),
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    bookId: identifier('bookId')
+      .notNull()
+      .references(() => book.id, { onDelete: 'cascade' }),
+    chapterId: identifier('chapterId')
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: 'cascade' }),
+    pageNumber: int('pageNumber'),
+    fraction: float('fraction'),
+    pageShown: int('pageShown'),
+    excerpt: mediumtext('excerpt'),
+    picture: mediumtext('picture'),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [
+    index('reading_bookmark_book_id_idx').on(table.bookId),
+    index('reading_bookmark_chapter_idx').on(table.chapterId),
+    index('reading_bookmark_book_idx').on(table.profileId, table.bookId),
+    check(
+      'reading_bookmark_somewhere',
+      sql`${table.pageNumber} is not null or ${table.fraction} is not null`,
+    ),
+  ],
+);
+
 const listeningProgress = mysqlTable(
   'listening_progress',
   {
@@ -2467,6 +2498,7 @@ export {
   book,
   bookChapter,
   readingProgress,
+  readingBookmark,
   listeningProgress,
   musicArtist,
   musicAlbum,

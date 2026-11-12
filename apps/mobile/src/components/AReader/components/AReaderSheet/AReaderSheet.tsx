@@ -1,211 +1,189 @@
+import { useState } from 'react';
 import {
   BottomSheet,
   Button,
-  Form,
   Group,
   HStack,
   Host,
   Image,
+  List,
+  NavigationDestination,
+  NavigationLink,
   NavigationStack,
-  Picker,
   Section,
   Spacer,
   Text,
-  Toggle,
   Toolbar,
   ToolbarItem,
 } from '@expo/ui/swift-ui';
 import {
+  buttonStyle,
   foregroundStyle,
+  listStyle,
+  navigationBarTitleDisplayMode,
   navigationTitle,
-  pickerStyle,
+  padding,
   presentationDetents,
   presentationDragIndicator,
-  tag,
 } from '@expo/ui/swift-ui/modifiers';
 import { StyleSheet } from 'react-native';
+import { readableTitle } from '@ValenceCore/books/readableTitle';
+import { ABookmarksPage } from '@ValenceMobile/components/AReader/components/AReaderSheet/components/ABookmarksPage/ABookmarksPage';
 import type { AReaderSheetProps } from './AReaderSheet.types';
 import { say } from '@ValenceI18n/say';
+
+const INDENT = 16;
+
+const BOOKMARKS = 'bookmarks';
+
+const SLIDES_AWAY_MS = 400;
 
 const styles = StyleSheet.create({
   anchor: { height: 1, left: 0, position: 'absolute', top: 0, width: 1 },
 });
 
-const SURROUNDS = ['edge', 'black', 'grey', 'white'] as const;
+const PRIMARY = foregroundStyle({ type: 'hierarchical', style: 'primary' });
+
+const SECONDARY = foregroundStyle({ type: 'hierarchical', style: 'secondary' });
 
 /**
- * The page reader's contents and settings as the system draws a sheet of settings: a grouped form
- * rising from the bottom, half the screen and pulled up to all of it, with which way the pages
- * turn and how many show at once as segmented controls, the cover's pairing as a switch, and the
- * chapters as a list with the open one ticked.
+ * A reader's contents and settings as the system draws a sheet of settings: a grouped list rising
+ * from the bottom, half the screen and pulled up to all of it, holding the reader's look where it has
+ * one, then a row leading to the book's bookmarks, then the reader's own settings, then its chapters
+ * or contents with the open one ticked. The page reader and the text reader both use it, each with
+ * its own settings.
+ *
+ * The bookmarks are a page of their own inside the sheet, pushed from their row as a settings page
+ * is, so picking and removing them happens there and leaves the rest of the sheet where it was.
+ * Choosing one puts the sheet away first and goes to it once the sheet has slid down, since going
+ * there opens the reader afresh and would otherwise take the sheet with it mid-slide.
  *
  * @param isOpen - Whether the sheet is up.
  * @param onClose - Told it was put away.
  * @param title - What is being read.
- * @param isRightToLeft - Whether the pages turn right to left.
- * @param onRightToLeft - Told which way the pages should turn; without it a book is read left to
- *   right and the choice is not offered, which is everything but manga.
- * @param layout - How many pages show at once, or nothing where the phone decides that itself.
- * @param onLayout - Told how many pages should show at once.
- * @param isCoverAlone - Whether the cover sits on its own.
- * @param onCoverAlone - Told whether the cover should sit on its own.
- * @param isTapToTurn - Whether a tap on either side of the page turns it.
- * @param onTapToTurn - Told whether a tap on either side should turn the page.
- * @param surround - The colour round the page: its own edge's, or one chosen.
- * @param onSurround - Told which colour to put round the page.
- * @param chapters - The chapters, with the open one marked.
- * @param onChapter - Told which chapter to open.
+ * @param look - The reader's look, as a section above the bookmarks, where it has one.
+ * @param settings - The reader's own settings, as sections of the sheet.
+ * @param placesAre - What the places are called: chapters, or contents.
+ * @param places - The places, in order, with the open one marked.
+ * @param onPlace - Told which place to go to.
+ * @param bookmarks - The book's bookmarks, where it keeps them.
+ * @param onBookmark - Told which bookmark to go to.
+ * @param onRemoveBookmarks - Told which bookmarks to remove.
  */
 const AReaderSheet = ({
   isOpen,
   onClose,
   title,
-  isRightToLeft,
-  onRightToLeft,
-  layout,
-  onLayout,
-  isCoverAlone,
-  onCoverAlone,
-  isTapToTurn,
-  onTapToTurn,
-  surround,
-  onSurround,
-  chapters,
-  onChapter,
-}: AReaderSheetProps) => (
-  <Host style={styles.anchor} colorScheme="dark">
-    <BottomSheet
-      isPresented={isOpen}
-      onIsPresentedChange={(isPresented) => {
-        if (!isPresented) {
-          onClose();
-        }
-      }}
-    >
-      <Group
-        modifiers={[presentationDetents(['medium', 'large']), presentationDragIndicator('visible')]}
+  look,
+  settings,
+  placesAre,
+  places,
+  onPlace,
+  bookmarks,
+  onBookmark,
+  onRemoveBookmarks,
+}: AReaderSheetProps) => {
+  const [path, setPath] = useState<string[]>([]);
+
+  /**
+   * Puts the sheet away, back at its first page for next time.
+   */
+  const close = () => {
+    setPath([]);
+    onClose();
+  };
+
+  return (
+    <Host style={styles.anchor} colorScheme="dark">
+      <BottomSheet
+        isPresented={isOpen}
+        onIsPresentedChange={(isPresented) => {
+          if (!isPresented) {
+            close();
+          }
+        }}
       >
-        <NavigationStack>
-          <Toolbar>
-            <Form modifiers={[navigationTitle(title)]}>
-              {onRightToLeft === undefined ? null : (
-                <Section
-                  title={say('common.readingDirection')}
-                  footer={
-                    <Text>{say('phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo')}</Text>
-                  }
-                >
-                  <Picker
-                    selection={isRightToLeft ? 'rightToLeft' : 'leftToRight'}
-                    onSelectionChange={(chosen) => {
-                      onRightToLeft(chosen === 'rightToLeft');
-                    }}
-                    modifiers={[pickerStyle('segmented')]}
-                  >
-                    <Text modifiers={[tag('leftToRight')]}>{say('common.leftToRight')}</Text>
-                    <Text modifiers={[tag('rightToLeft')]}>{say('common.rightToLeft')}</Text>
-                  </Picker>
-                </Section>
-              )}
-
-              <Section
-                title={say('phone.aReader.aReaderSheet.pagesAtOnce')}
-                footer={
-                  <Text>
-                    {layout === null
-                      ? say('phone.aReader.aReaderSheet.openThePhoneOutToRead')
-                      : say('phone.aReader.aReaderSheet.twoPagesAtOnceTurnsThe')}
-                  </Text>
-                }
+        <Group
+          modifiers={[
+            presentationDetents(['medium', 'large']),
+            presentationDragIndicator('visible'),
+          ]}
+        >
+          <NavigationStack path={path} onPathChange={setPath}>
+            <Toolbar>
+              <List
+                modifiers={[
+                  navigationTitle(title),
+                  navigationBarTitleDisplayMode('inline'),
+                  listStyle('insetGrouped'),
+                ]}
               >
-                {layout === null ? null : (
-                  <Picker
-                    selection={layout}
-                    onSelectionChange={(chosen) => {
-                      onLayout(chosen === 'two' ? 'two' : 'one');
-                    }}
-                    modifiers={[pickerStyle('segmented')]}
-                  >
-                    <Text modifiers={[tag('one')]}>
-                      {say('phone.aReader.aReaderSheet.onePage')}
-                    </Text>
-                    <Text modifiers={[tag('two')]}>
-                      {say('phone.aReader.aReaderSheet.twoPages')}
-                    </Text>
-                  </Picker>
+                {look}
+
+                {bookmarks === undefined ? null : (
+                  <Section>
+                    <NavigationLink value={BOOKMARKS}>
+                      <HStack>
+                        <Image systemName="bookmark" />
+                        <Text modifiers={[PRIMARY]}>{say('common.bookmarks')}</Text>
+                        <Spacer />
+                        <Text modifiers={[SECONDARY]}>{bookmarks.length.toString()}</Text>
+                      </HStack>
+                    </NavigationLink>
+                  </Section>
                 )}
-                <Toggle
-                  label={say('common.coverOnItsOwn')}
-                  isOn={isCoverAlone}
-                  onIsOnChange={onCoverAlone}
-                />
-              </Section>
 
-              <Section
-                title={say('phone.aReader.aReaderSheet.aroundThePage')}
-                footer={<Text>{say('phone.aReader.aReaderSheet.autoTakesTheColourOfEach')}</Text>}
-              >
-                <Picker
-                  selection={surround}
-                  onSelectionChange={(chosen) => {
-                    const picked = SURROUNDS.find((one) => one === chosen);
+                {settings}
 
-                    if (picked !== undefined) {
-                      onSurround(picked);
-                    }
-                  }}
-                  modifiers={[pickerStyle('segmented')]}
-                >
-                  <Text modifiers={[tag('edge')]}>{say('common.auto')}</Text>
-                  <Text modifiers={[tag('black')]}>{say('ui.tokens.captionColours.black')}</Text>
-                  <Text modifiers={[tag('grey')]}>{say('phone.aReader.aReaderSheet.grey')}</Text>
-                  <Text modifiers={[tag('white')]}>{say('common.white')}</Text>
-                </Picker>
-              </Section>
-
-              <Section
-                title={say('phone.aReader.aReaderSheet.turningPages')}
-                footer={<Text>{say('phone.aReader.aReaderSheet.aTapInTheMiddleAlways')}</Text>}
-              >
-                <Toggle
-                  label={say('phone.aReader.aReaderSheet.tapTheSidesToTurn')}
-                  isOn={isTapToTurn}
-                  onIsOnChange={onTapToTurn}
-                />
-              </Section>
-
-              <Section title={say('common.chapters')}>
-                {chapters.map((chapter) => (
-                  <Button
-                    key={chapter.id}
-                    onPress={() => {
-                      onChapter(chapter.id);
-                    }}
-                  >
-                    <HStack>
-                      <Text
-                        modifiers={[foregroundStyle({ type: 'hierarchical', style: 'primary' })]}
+                {places.length < 2 ? null : (
+                  <Section title={placesAre}>
+                    {places.map((place) => (
+                      <Button
+                        key={place.id}
+                        onPress={() => {
+                          onPlace(place.id);
+                        }}
+                        modifiers={[buttonStyle('plain')]}
                       >
-                        {chapter.label}
-                      </Text>
-                      <Spacer />
-                      {chapter.isHere ? <Image systemName="checkmark" /> : null}
-                    </HStack>
-                  </Button>
-                ))}
-              </Section>
-            </Form>
-            <Toolbar.Content>
-              <ToolbarItem placement="confirmationAction">
-                <Button label={say('common.done')} onPress={onClose} />
-              </ToolbarItem>
-            </Toolbar.Content>
-          </Toolbar>
-        </NavigationStack>
-      </Group>
-    </BottomSheet>
-  </Host>
-);
+                        <HStack>
+                          <Text modifiers={[PRIMARY, padding({ leading: place.depth * INDENT })]}>
+                            {readableTitle(place.label)}
+                          </Text>
+                          <Spacer />
+                          {place.isHere ? <Image systemName="checkmark" /> : null}
+                        </HStack>
+                      </Button>
+                    ))}
+                  </Section>
+                )}
+              </List>
+              <Toolbar.Content>
+                <ToolbarItem placement="confirmationAction">
+                  <Button label={say('common.done')} onPress={close} />
+                </ToolbarItem>
+              </Toolbar.Content>
+            </Toolbar>
+
+            <NavigationDestination value={BOOKMARKS}>
+              <ABookmarksPage
+                bookmarks={bookmarks ?? []}
+                onBookmark={(bookmarkId) => {
+                  close();
+                  setTimeout(() => {
+                    onBookmark?.(bookmarkId);
+                  }, SLIDES_AWAY_MS);
+                }}
+                onRemove={(bookmarkIds) => {
+                  onRemoveBookmarks?.(bookmarkIds);
+                }}
+              />
+            </NavigationDestination>
+          </NavigationStack>
+        </Group>
+      </BottomSheet>
+    </Host>
+  );
+};
 
 AReaderSheet.displayName = 'AReaderSheet';
 

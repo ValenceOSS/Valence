@@ -1,5 +1,5 @@
 {
-  "id": "6672a0a3-4819-4ce2-91d4-b54c9187004c",
+  "id": "111b7ded-4efc-4bbe-85ee-56e389bb03df",
   "prevId": "bca60971-671c-4343-b39b-6b794a133991",
   "version": "7",
   "dialect": "postgresql",
@@ -5846,36 +5846,6 @@
           "method": "btree",
           "with": {}
         },
-        "media_item_added_at_idx": {
-          "name": "media_item_added_at_idx",
-          "columns": [
-            {
-              "expression": "addedAt",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "media_item_rating_idx": {
-          "name": "media_item_rating_idx",
-          "columns": [
-            {
-              "expression": "rating",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "media_item_genres_idx": {
           "name": "media_item_genres_idx",
           "columns": [
@@ -10142,6 +10112,177 @@
         "rating_stars_range": {
           "name": "rating_stars_range",
           "value": "\"rating\".\"stars\" between 1 and 5"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.reading_bookmark": {
+      "name": "reading_bookmark",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "profileId": {
+          "name": "profileId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bookId": {
+          "name": "bookId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chapterId": {
+          "name": "chapterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pageNumber": {
+          "name": "pageNumber",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fraction": {
+          "name": "fraction",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pageShown": {
+          "name": "pageShown",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "picture": {
+          "name": "picture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reading_bookmark_book_id_idx": {
+          "name": "reading_bookmark_book_id_idx",
+          "columns": [
+            {
+              "expression": "bookId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "reading_bookmark_chapter_idx": {
+          "name": "reading_bookmark_chapter_idx",
+          "columns": [
+            {
+              "expression": "chapterId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "reading_bookmark_book_idx": {
+          "name": "reading_bookmark_book_idx",
+          "columns": [
+            {
+              "expression": "profileId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "bookId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "reading_bookmark_profileId_viewer_profile_id_fk": {
+          "name": "reading_bookmark_profileId_viewer_profile_id_fk",
+          "tableFrom": "reading_bookmark",
+          "tableTo": "viewer_profile",
+          "columnsFrom": [
+            "profileId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reading_bookmark_bookId_book_id_fk": {
+          "name": "reading_bookmark_bookId_book_id_fk",
+          "tableFrom": "reading_bookmark",
+          "tableTo": "book",
+          "columnsFrom": [
+            "bookId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reading_bookmark_chapterId_book_chapter_id_fk": {
+          "name": "reading_bookmark_chapterId_book_chapter_id_fk",
+          "tableFrom": "reading_bookmark",
+          "tableTo": "book_chapter",
+          "columnsFrom": [
+            "chapterId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "reading_bookmark_somewhere": {
+          "name": "reading_bookmark_somewhere",
+          "value": "\"reading_bookmark\".\"pageNumber\" is not null or \"reading_bookmark\".\"fraction\" is not null"
         }
       },
       "isRLSEnabled": false

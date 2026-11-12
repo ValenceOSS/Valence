@@ -1,12 +1,16 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
+  Bookmark as BookmarkIcon,
+  BookmarkPlus as BookmarkPlusIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Maximize as MaximizeIcon,
   Minimize as MinimizeIcon,
 } from '@keyline-icons/react';
+import { Bookmark as BookmarkFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { cn } from '@ValenceUI/cn';
 import { useFullscreen } from '@ValenceScreens/reading/useFullscreen';
 import type { ReaderChromeProps } from './ReaderChrome.types';
@@ -44,6 +48,10 @@ const BAR_MOTION =
  * @param onClose - Leaves.
  * @param onToggle - Puts the bars away, or brings them back, when the page itself is clicked
  *   anywhere that is not a link or a control of its own.
+ * @param mark - Whether the page showing is bookmarked, and the way to bookmark it or take the
+ *   bookmark away, where the reader keeps bookmarks.
+ * @param bookmarks - Every place marked in the book, opened from beside the bookmark, where the
+ *   reader keeps bookmarks.
  * @param className - Extra classes for where the page sits, such as how it is aligned.
  */
 const ReaderChrome = ({
@@ -59,10 +67,14 @@ const ReaderChrome = ({
   onBack,
   onClose,
   onToggle,
+  mark,
+  bookmarks,
   className,
 }: ReaderChromeProps) => {
   const holder = useRef<HTMLDivElement>(null);
   const { isFullscreen, isAvailable, toggle } = useFullscreen(holder);
+  const [isListOpen, setIsListOpen] = useState(false);
+  const isBarShown = isShown || isListOpen;
 
   return (
     <div ref={holder} className="relative flex min-h-0 flex-1 flex-col bg-surface text-text">
@@ -70,7 +82,9 @@ const ReaderChrome = ({
         className={cn(
           'absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-3 bg-surface px-3 py-2.5',
           BAR_MOTION,
-          isShown ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0',
+          isBarShown
+            ? 'translate-y-0 opacity-100'
+            : 'pointer-events-none -translate-y-full opacity-0',
         )}
       >
         <div className="flex items-center">
@@ -94,6 +108,46 @@ const ReaderChrome = ({
 
         <div className="flex items-center justify-end gap-1">
           {actions}
+
+          {mark === undefined ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              isActive={mark.isMarked}
+              aria-label={
+                mark.isMarked ? say('common.removeBookmark') : say('common.bookmarkThisPage')
+              }
+              onClick={mark.onMark}
+            >
+              <Icon
+                of={BookmarkPlusIcon}
+                whenActive={BookmarkFilledIcon}
+                isActive={mark.isMarked}
+                size={18}
+              />
+            </Button>
+          )}
+
+          {bookmarks === undefined ? null : (
+            <PopoverPanel
+              tone="default"
+              align="end"
+              label={say('common.bookmarks')}
+              isOpen={isListOpen}
+              onOpenChange={setIsListOpen}
+              trigger={
+                <Icon
+                  of={BookmarkIcon}
+                  whenActive={BookmarkFilledIcon}
+                  isActive={isListOpen}
+                  size={20}
+                />
+              }
+              className="w-[min(25rem,calc(100vw-1.5rem))] p-0 py-2"
+            >
+              {bookmarks}
+            </PopoverPanel>
+          )}
 
           {isAvailable ? (
             <Button
@@ -143,7 +197,7 @@ const ReaderChrome = ({
                   size={28}
                   className={cn(
                     'text-text-muted transition-opacity duration-[var(--duration-fast)]',
-                    isShown ? 'opacity-100' : 'opacity-0',
+                    isBarShown ? 'opacity-100' : 'opacity-0',
                   )}
                 />
               </Button>
@@ -163,7 +217,7 @@ const ReaderChrome = ({
                   size={28}
                   className={cn(
                     'text-text-muted transition-opacity duration-[var(--duration-fast)]',
-                    isShown ? 'opacity-100' : 'opacity-0',
+                    isBarShown ? 'opacity-100' : 'opacity-0',
                   )}
                 />
               </Button>
@@ -176,7 +230,9 @@ const ReaderChrome = ({
         className={cn(
           'absolute inset-x-0 bottom-0 z-10 bg-surface px-6 pt-3 pb-4',
           BAR_MOTION,
-          isShown ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-full opacity-0',
+          isBarShown
+            ? 'translate-y-0 opacity-100'
+            : 'pointer-events-none translate-y-full opacity-0',
         )}
       >
         <div className="mx-auto flex w-full max-w-3xl items-center gap-4">{footer}</div>

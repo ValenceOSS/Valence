@@ -712,6 +712,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             personId={page.personId}
             onLookAt={lookAt}
             onLookAtShow={lookAtShow}
+            onAsk={(about, id) => {
+              open(pageToAskAbout(cache, about, id));
+            }}
             onBack={back}
           />
         );

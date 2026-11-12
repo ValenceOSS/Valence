@@ -49,6 +49,8 @@ import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundActio
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
+import { AnOpenedHeadline } from '@ValenceMobile/components/AnOpenedHeadline/AnOpenedHeadline';
+import { useIsOpenedOut } from '@ValenceMobile/hooks/useIsOpenedOut';
 import { TheCast } from '@ValenceMobile/components/TheCast/TheCast';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -162,6 +164,7 @@ const ATitle = ({
   );
 
   useConfirmHiding(hiding, onBack);
+  const isOpenedOut = useIsOpenedOut();
 
   if (asking.isPending) {
     return (
@@ -185,6 +188,15 @@ const ATitle = ({
   const trailer = extras.find((extra) => extra.extraKind === 'trailer') ?? null;
   const trailerKey = title.trailerKey ?? null;
   const isKept = favourites.isKept(mediaId);
+  const rating =
+    typeof title.metadata.certification === 'string' &&
+    title.metadata.certification !== '' &&
+    typeof title.metadata.certificationRegion === 'string'
+      ? {
+          certification: title.metadata.certification,
+          region: title.metadata.certificationRegion,
+        }
+      : null;
   const facts = [
     metadata.seasonNumber === null || metadata.seasonNumber === undefined
       ? null
@@ -303,26 +315,24 @@ const ATitle = ({
               </Words>
             )}
 
-            <Words size="lead" tone="muted" isCentred>
-              {facts.join(' · ')}
-            </Words>
-
-            <View style={styles.badges}>
-              <TheBadges
-                isLarge
-                badges={qualityBadges(title)}
-                rating={
-                  typeof title.metadata.certification === 'string' &&
-                  title.metadata.certification !== '' &&
-                  typeof title.metadata.certificationRegion === 'string'
-                    ? {
-                        certification: title.metadata.certification,
-                        region: title.metadata.certificationRegion,
-                      }
-                    : null
-                }
+            {isOpenedOut ? (
+              <AnOpenedHeadline
+                facts={facts.join(' · ')}
+                rating={rating}
+                quality={qualityBadges(title)}
+                statuses={[]}
               />
-            </View>
+            ) : (
+              <>
+                <Words size="lead" tone="muted" isCentred>
+                  {facts.join(' · ')}
+                </Words>
+
+                <View style={styles.badges}>
+                  <TheBadges isLarge badges={qualityBadges(title)} rating={rating} />
+                </View>
+              </>
+            )}
 
             {origin === null ? null : (
               <Words size="small" tone={origin.isReachable ? 'muted' : 'danger'} isCentred>

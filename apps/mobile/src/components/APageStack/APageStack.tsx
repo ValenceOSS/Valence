@@ -32,6 +32,8 @@ const GOES_DOWN_FASTER_THAN = 1;
 
 const CARD_GAP = 10;
 
+const STATUS_BAR_AT_LEAST = 36;
+
 const CARD_CORNER = 38;
 
 const UNDER_A_CARD_SCALE = 0.92;
@@ -125,7 +127,8 @@ const placeIn = (
  * and can be dragged back down from anywhere on it that does not scroll or slide on its own.
  *
  * A page drawn as a card — a title — rises from below to stop just short of the status bar, its top
- * corners rounded, while the page it opened over shrinks back and dims beneath it, as a sheet does on
+ * corners rounded, and below the clock even where the screen keeps no room at its top for it, as the
+ * open inside of a folding phone does not, while the page it opened over shrinks back and dims beneath it, as a sheet does on
  * an iPhone; dragging it down follows the finger and lets the page beneath grow back with it. A card
  * swapped for another keeps its place, and its content slides across inside it: the new one in from
  * the right going deeper, the old one away to the right coming back. A small pill at its top says it
@@ -712,7 +715,7 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
               };
           const shape =
             page.isCard === true
-              ? [styles.card, { top: insets.top + CARD_GAP }]
+              ? [styles.card, { top: Math.max(insets.top, STATUS_BAR_AT_LEAST) + CARD_GAP }]
               : isUnderACard
                 ? styles.underACard
                 : null;

@@ -20,6 +20,8 @@ import type { ATitleLogoProps } from './ATitleLogo.types';
  * @param high - How tall to draw it.
  * @param widest - The widest it may be.
  * @param isOnArtwork - Whether it is drawn over a picture rather than the page.
+ * @param isCentred - Whether the title, where it is written out for want of a logo, is centred, as
+ *   on a title's page, rather than set from the left, as in the featured row.
  */
 const ATitleLogo = ({
   mediaId,
@@ -28,6 +30,7 @@ const ATitleLogo = ({
   high,
   widest,
   isOnArtwork = false,
+  isCentred = true,
 }: ATitleLogoProps) => {
   const [wide, setWide] = useState<number | null>(null);
   const [missing, setMissing] = useState<string | null>(null);
@@ -35,7 +38,12 @@ const ATitleLogo = ({
 
   if (lettering === null || missing === lettering) {
     return (
-      <Words size="title" lines={2} isCentred {...(isOnArtwork ? { tone: 'onArtwork' } : {})}>
+      <Words
+        size="title"
+        lines={2}
+        isCentred={isCentred}
+        {...(isOnArtwork ? { tone: 'onArtwork' } : {})}
+      >
         {title}
       </Words>
     );

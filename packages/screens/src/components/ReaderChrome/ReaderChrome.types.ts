@@ -13,6 +13,8 @@ type ReaderChromeProps = {
   onBack: () => void;
   onClose: () => void;
   onToggle: () => void;
+  mark?: { isMarked: boolean; onMark: () => void };
+  bookmarks?: ReactNode;
   className?: string;
 };
 

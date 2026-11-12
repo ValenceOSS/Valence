@@ -1,11 +1,16 @@
+import { isValidElement } from 'react';
 import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { AReaderRail } from '@ValenceMobile/components/AReader/components/AReaderRail/AReaderRail';
 import { AReaderSheet } from '@ValenceMobile/components/AReader/components/AReaderSheet/AReaderSheet';
+import type { APageSettingsProps } from '@ValenceMobile/components/AReader/components/APageReader/components/APageSettings/APageSettings.types';
 import { AReaderSide } from '@ValenceMobile/components/AReader/components/AReaderSide/AReaderSide';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { aBook } from '@ValenceMobile/testing/aBook';
 import { aChapter } from '@ValenceMobile/testing/aChapter';
 import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
+import { aBookmark } from '@ValenceMobile/testing/aBookmark';
+import { aReaderMarks } from '@ValenceMobile/testing/aReaderMarks';
+import type { AReaderMarks } from '@ValenceMobile/components/AReader/AReaderMarks';
 import { APageReader } from './APageReader';
 import type { Book, BookChapter } from '@ValenceContracts/schemas/Book';
 
@@ -54,6 +59,7 @@ const aReader = ({
   onChapter = jest.fn(),
   onPage = jest.fn(),
   onBack = jest.fn(),
+  marks,
 }: {
   book?: Book;
   chapters?: BookChapter[];
@@ -62,6 +68,7 @@ const aReader = ({
   onChapter?: (id: string) => void;
   onPage?: (page: number, isTheEnd: boolean) => void;
   onBack?: () => void;
+  marks?: AReaderMarks;
 } = {}) => (
   <APageReader
     book={book}
@@ -71,6 +78,7 @@ const aReader = ({
     onChapter={onChapter}
     onPage={onPage}
     onBack={onBack}
+    {...(marks === undefined ? {} : { marks })}
   />
 );
 
@@ -119,6 +127,21 @@ const theSheet = () => {
   }
 
   return props;
+};
+
+/**
+ * The page reader's own settings, as it last handed them to its sheet.
+ *
+ * @returns Their props.
+ */
+const theSettings = () => {
+  const { settings } = theSheet();
+
+  if (!isValidElement<APageSettingsProps>(settings)) {
+    throw new Error('No settings were handed to the sheet.');
+  }
+
+  return settings.props;
 };
 
 /**
@@ -268,14 +291,14 @@ describe('APageReader', () => {
     expect(theSheet().isOpen).toBe(true);
 
     await act(() => {
-      theSheet().onChapter(FIRST);
+      theSheet().onPlace(FIRST);
     });
 
     expect(onChapter).not.toHaveBeenCalled();
     expect(theSheet().isOpen).toBe(false);
 
     await act(() => {
-      theSheet().onChapter(SECOND);
+      theSheet().onPlace(SECOND);
     });
 
     expect(onChapter).toHaveBeenCalledWith(SECOND);
@@ -284,13 +307,13 @@ describe('APageReader', () => {
   it('turns the pages the way chosen in its sheet, and sits the cover alone or not', async () => {
     await render(aReader({ book: aBook({ ...COMIC, direction: 'rightToLeft' }) }));
 
-    expect(theSheet().layout).toBe('one');
+    expect(theSettings().layout).toBe('one');
 
     await act(() => {
-      theSheet().onRightToLeft?.(true);
+      theSettings().onRightToLeft?.(true);
     });
     await act(() => {
-      theSheet().onCoverAlone(false);
+      theSettings().onCoverAlone(false);
     });
 
     expect(theCurl()).toHaveProp('isRightToLeft', true);
@@ -300,8 +323,8 @@ describe('APageReader', () => {
   it('reads anything but manga left to right, without offering the choice', async () => {
     await render(aReader());
 
-    expect(theSheet().onRightToLeft).toBeUndefined();
-    expect(theSheet().isRightToLeft).toBe(false);
+    expect(theSettings().onRightToLeft).toBeUndefined();
+    expect(theSettings().isRightToLeft).toBe(false);
   });
 
   it('puts its controls in the strip down the side of a folding phone, instead of bars over the page', async () => {
@@ -321,7 +344,7 @@ describe('APageReader', () => {
       onReadOn: null,
     });
     expect(theRail().pictures).toHaveLength(3);
-    expect(theSheet().layout).toBeNull();
+    expect(theSettings().layout).toBeNull();
 
     await act(() => {
       theRail().onPanel();
@@ -337,11 +360,30 @@ describe('APageReader', () => {
     expect(theRail().onReadOn).not.toBeNull();
   });
 
+  it('lines the strip’s controls up under the clock of a folding phone’s outside screen', async () => {
+    jest.mocked(useTheSideStrip).mockReturnValue(A_STRIP);
+
+    await render(aReader());
+
+    expect(theRail().tuning).toMatchObject({ buttonsX: -5, top: 166 });
+  });
+
+  it('lines the strip’s controls up under the clock of a folding phone’s open inside', async () => {
+    jest.mocked(useTheSideStrip).mockReturnValue(A_STRIP);
+    holdAWindowOf(669, 871);
+
+    await render(aReader());
+
+    expect(theRail().tuning).toMatchObject({ buttonsX: -6, top: 118 });
+  });
+
   it('opened out to two pages, puts a panel on the far side that turns, holds, marks and fits them', async () => {
     jest.mocked(useTheSideStrip).mockReturnValue(A_STRIP);
     holdAWindowOf(852, 600);
 
-    await render(aReader());
+    const marks = aReaderMarks();
+
+    await render(aReader({ marks }));
 
     expect(theSide()).toMatchObject({ side: 'left', isMarked: false, isLocked: false });
 
@@ -354,6 +396,18 @@ describe('APageReader', () => {
     await act(() => {
       theSide().onMark();
     });
+
+    expect(marks.onMark).toHaveBeenCalledWith({
+      pageNumber: 0,
+      fraction: null,
+      pageShown: null,
+      excerpt: null,
+      picture: null,
+    });
+
+    await screen.rerender(
+      aReader({ marks: { ...marks, here: [aBookmark('1', { chapterId: FIRST, pageNumber: 1 })] } }),
+    );
 
     expect(theSide().isMarked).toBe(true);
 
@@ -369,5 +423,64 @@ describe('APageReader', () => {
 
     expect(theCurl()).toHaveProp('page', 2);
     expect(theSide().next).toMatchObject({ title: 'Chapter 2' });
+  });
+  it('offers no bookmark where the book keeps none', async () => {
+    await render(aReader());
+
+    expect(screen.queryByRole('button', { name: 'Bookmark this page' })).toBeNull();
+    expect(theSheet().bookmarks).toBeUndefined();
+  });
+
+  it('bookmarks the page showing from the bar over it', async () => {
+    const marks = aReaderMarks();
+
+    await render(aReader({ startAtPage: 2, marks }));
+    await userEvent.press(screen.getByRole('button', { name: 'Bookmark this page' }));
+
+    expect(marks.onMark).toHaveBeenCalledWith({
+      pageNumber: 2,
+      fraction: null,
+      pageShown: null,
+      excerpt: null,
+      picture: null,
+    });
+    expect(marks.onUnmark).not.toHaveBeenCalled();
+  });
+
+  it('removes the bookmark on the page showing, and only that one', async () => {
+    const marks = aReaderMarks([
+      aBookmark('1', { chapterId: FIRST, pageNumber: 1 }),
+      aBookmark('2', { chapterId: FIRST, pageNumber: 2 }),
+    ]);
+
+    await render(aReader({ startAtPage: 1, marks }));
+    await userEvent.press(screen.getByRole('button', { name: 'Remove bookmark' }));
+
+    expect(marks.onUnmark).toHaveBeenCalledWith([aBookmark('1').id]);
+    expect(marks.onMark).not.toHaveBeenCalled();
+  });
+
+  it('lists the bookmarks in its sheet, goes to one chosen there and removes one swiped away', async () => {
+    const all = [
+      { id: 'a', place: 'Page 3', chapter: 'Chapter 2', excerpt: null, picture: null },
+    ] as const;
+    const marks = aReaderMarks([], all);
+
+    await render(aReader({ marks }));
+    await userEvent.press(screen.getByRole('button', { name: 'Contents and settings' }));
+
+    expect(theSheet().bookmarks).toEqual(all);
+
+    await act(() => {
+      theSheet().onBookmark?.('a');
+    });
+
+    expect(marks.onOpen).toHaveBeenCalledWith('a');
+
+    await act(() => {
+      theSheet().onRemoveBookmarks?.(['a']);
+    });
+
+    expect(marks.onUnmark).toHaveBeenCalledWith(['a']);
   });
 });

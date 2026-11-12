@@ -72,4 +72,57 @@ describe('SegmentedRow', () => {
 
     expect(row).toHaveProp('contentContainerStyle', { paddingRight: 24 });
   });
+
+  it('fills its width where its choices fit across it, sat flush and unclipped', async () => {
+    const drawn = await render(
+      <SegmentedRow label="Season" items={TWO} value="films" onSelect={jest.fn()} fills />,
+    );
+    const row = drawn.getByLabelText('Season').parent?.parent;
+    if (row === null || row === undefined) {
+      throw new Error('The row is not inside a scroll view.');
+    }
+
+    await fireEvent(row, 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 200, height: 40 } },
+    });
+    await fireEvent(row, 'contentSizeChange', 200, 40);
+
+    expect(row).toHaveProp('contentContainerStyle', { flexGrow: 1 });
+    expect(row.parent).not.toHaveStyle({ overflow: 'hidden' });
+  });
+
+  it('scrolls one asked to fill its width where its choices run past it, its capsule clipped round', async () => {
+    const drawn = await render(
+      <SegmentedRow label="Season" items={TWO} value="films" onSelect={jest.fn()} fills />,
+    );
+    const row = drawn.getByLabelText('Season').parent?.parent;
+    if (row === null || row === undefined) {
+      throw new Error('The row is not inside a scroll view.');
+    }
+
+    await fireEvent(row, 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 200, height: 40 } },
+    });
+    await fireEvent(row, 'contentSizeChange', 320, 40);
+
+    expect(row).toHaveProp('contentContainerStyle', { paddingRight: 24 });
+    expect(row.parent).toHaveStyle({ borderRadius: 999, overflow: 'hidden' });
+  });
+
+  it('counts a choice running past by less than a point as fitting', async () => {
+    const drawn = await render(
+      <SegmentedRow label="Season" items={TWO} value="films" onSelect={jest.fn()} fills />,
+    );
+    const row = drawn.getByLabelText('Season').parent?.parent;
+    if (row === null || row === undefined) {
+      throw new Error('The row is not inside a scroll view.');
+    }
+
+    await fireEvent(row, 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 200, height: 40 } },
+    });
+    await fireEvent(row, 'contentSizeChange', 200.5, 40);
+
+    expect(row).toHaveProp('contentContainerStyle', { flexGrow: 1 });
+  });
 });

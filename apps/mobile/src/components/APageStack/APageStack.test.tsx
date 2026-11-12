@@ -1,6 +1,7 @@
 import { useContext } from 'react';
-import { act, render } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import { Animated, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_ON_TOP } from '@ValenceMobile/components/APageStack/IS_ON_TOP';
 import { APageStack } from './APageStack';
 
@@ -8,7 +9,39 @@ const Named = ({ name }: { name: string }) => (
   <Text>{`${name}${useContext(IS_ON_TOP) ? ' on top' : ' covered'}`}</Text>
 );
 
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual<object>('react-native-safe-area-context'),
+  useSafeAreaInsets: jest.fn(),
+}));
+
 const aPage = (name: string) => ({ key: name, page: <Named name={name} /> });
+
+/**
+ * The page in the stack that holds some words, as the stack placed it.
+ *
+ * @param words - Words drawn on the page.
+ * @returns Where the page was placed.
+ */
+const thePageHolding = (words: string) => {
+  let at = screen.getByText(words).parent;
+
+  while (at !== null && at.props.renderToHardwareTextureAndroid === undefined) {
+    at = at.parent;
+  }
+
+  if (at === null) {
+    throw new Error('Those words are not on a page in the stack.');
+  }
+
+  return at;
+};
+
+beforeEach(() => {
+  jest
+    .mocked(useSafeAreaInsets)
+    .mockReset()
+    .mockReturnValue({ top: 59, bottom: 34, left: 0, right: 0 });
+});
 
 describe('APageStack', () => {
   it('shows only the page on top to anybody reading the screen', async () => {
@@ -80,5 +113,29 @@ describe('APageStack', () => {
     expect(springing.mock.calls.map(([, config]) => config.toValue)).toEqual([0]);
 
     springing.mockRestore();
+  });
+
+  it('stops a card just short of the status bar', async () => {
+    await render(
+      <APageStack
+        pages={[aPage('Home'), { ...aPage('Arrival'), isCard: true }]}
+        onBack={jest.fn()}
+      />,
+    );
+
+    expect(thePageHolding('Arrival on top')).toHaveStyle({ top: 69 });
+  });
+
+  it('keeps a card below the clock where the screen keeps no room at its top for it', async () => {
+    jest.mocked(useSafeAreaInsets).mockReturnValue({ top: 0, bottom: 20, left: 0, right: 84 });
+
+    await render(
+      <APageStack
+        pages={[aPage('Home'), { ...aPage('Arrival'), isCard: true }]}
+        onBack={jest.fn()}
+      />,
+    );
+
+    expect(thePageHolding('Arrival on top')).toHaveStyle({ top: 46 });
   });
 });

@@ -193,6 +193,17 @@ const bookPageUrl = (bookId: string, chapterId: string, page: number, width?: nu
 };
 
 /**
+ * Where to find a picture from inside a book that reflows, by the address the book gives it.
+ *
+ * @param bookId - The book.
+ * @param chapterId - The file it is in.
+ * @param href - Where it is inside the book.
+ * @returns The address.
+ */
+const bookResourceUrl = (bookId: string, chapterId: string, href: string): string =>
+  `/api/books/${bookId}/chapters/${chapterId}/resource?href=${encodeURIComponent(href)}`;
+
+/**
  * Where to find the cover of a book.
  *
  * @param bookId - The book.
@@ -203,6 +214,7 @@ const bookCoverUrl = (bookId: string): string => `/api/books/${bookId}/cover`;
 export {
   bookCoverUrl,
   bookPageUrl,
+  bookResourceUrl,
   fetchBook,
   fetchBookContents,
   fetchBookDocument,

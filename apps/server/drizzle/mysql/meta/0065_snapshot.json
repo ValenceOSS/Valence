@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "3d53f06b-ba45-40cf-bceb-9e6b97a666a2",
+  "id": "d460889d-2aff-41fa-9d64-e0ab10150419",
   "prevId": "9ceef4b6-e0d6-4d26-980a-b492d2fd4630",
   "tables": {
     "account": {
@@ -5582,20 +5582,6 @@
           ],
           "isUnique": false
         },
-        "media_item_added_at_idx": {
-          "name": "media_item_added_at_idx",
-          "columns": [
-            "addedAt"
-          ],
-          "isUnique": false
-        },
-        "media_item_rating_idx": {
-          "name": "media_item_rating_idx",
-          "columns": [
-            "rating"
-          ],
-          "isUnique": false
-        },
         "media_item_series_idx": {
           "name": "media_item_series_idx",
           "columns": [
@@ -9605,6 +9591,162 @@
         }
       }
     },
+    "reading_bookmark": {
+      "name": "reading_bookmark",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "profileId": {
+          "name": "profileId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "bookId": {
+          "name": "bookId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterId": {
+          "name": "chapterId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pageNumber": {
+          "name": "pageNumber",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fraction": {
+          "name": "fraction",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pageShown": {
+          "name": "pageShown",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "picture": {
+          "name": "picture",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(current_timestamp(3))"
+        }
+      },
+      "indexes": {
+        "reading_bookmark_book_id_idx": {
+          "name": "reading_bookmark_book_id_idx",
+          "columns": [
+            "bookId"
+          ],
+          "isUnique": false
+        },
+        "reading_bookmark_chapter_idx": {
+          "name": "reading_bookmark_chapter_idx",
+          "columns": [
+            "chapterId"
+          ],
+          "isUnique": false
+        },
+        "reading_bookmark_book_idx": {
+          "name": "reading_bookmark_book_idx",
+          "columns": [
+            "profileId",
+            "bookId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "reading_bookmark_profileId_viewer_profile_id_fk": {
+          "name": "reading_bookmark_profileId_viewer_profile_id_fk",
+          "tableFrom": "reading_bookmark",
+          "tableTo": "viewer_profile",
+          "columnsFrom": [
+            "profileId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reading_bookmark_bookId_book_id_fk": {
+          "name": "reading_bookmark_bookId_book_id_fk",
+          "tableFrom": "reading_bookmark",
+          "tableTo": "book",
+          "columnsFrom": [
+            "bookId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reading_bookmark_chapterId_book_chapter_id_fk": {
+          "name": "reading_bookmark_chapterId_book_chapter_id_fk",
+          "tableFrom": "reading_bookmark",
+          "tableTo": "book_chapter",
+          "columnsFrom": [
+            "chapterId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reading_bookmark_id": {
+          "name": "reading_bookmark_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "reading_bookmark_somewhere": {
+          "name": "reading_bookmark_somewhere",
+          "value": "`reading_bookmark`.`pageNumber` is not null or `reading_bookmark`.`fraction` is not null"
+        }
+      }
+    },
     "reading_progress": {
       "name": "reading_progress",
       "columns": {
@@ -12444,7 +12586,7 @@
           "autoincrement": false,
           "generated": {
             "as": "case when `isOwner` then `userId` end",
-            "type": "stored"
+            "type": "virtual"
           }
         },
         "createdAt": {

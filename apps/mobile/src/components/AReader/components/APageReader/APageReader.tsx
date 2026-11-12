@@ -3,8 +3,6 @@ import { StatusBar } from 'expo-status-bar';
 import { PixelRatio, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
-import { readBookmarks } from '@ValenceClient/books/readBookmarks';
-import { writeBookmarks } from '@ValenceClient/books/writeBookmarks';
 import {
   readReaderPreferences,
   writeReaderPreferences,
@@ -15,10 +13,12 @@ import { AReaderChrome } from '@ValenceMobile/components/AReader/components/ARea
 import { AReaderRail } from '@ValenceMobile/components/AReader/components/AReaderRail/AReaderRail';
 import { AReaderSide } from '@ValenceMobile/components/AReader/components/AReaderSide/AReaderSide';
 import { AReaderSheet } from '@ValenceMobile/components/AReader/components/AReaderSheet/AReaderSheet';
+import { APageSettings } from '@ValenceMobile/components/AReader/components/APageReader/components/APageSettings/APageSettings';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
+import { useIsOpenedOut } from '@ValenceMobile/hooks/useIsOpenedOut';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
@@ -43,8 +43,6 @@ const THUMB_PIXELS = 160;
 const SEAM = 5;
 
 const PANEL_ROUND = 12;
-
-const OPENED_FROM = 600;
 
 const NEAR_THE_END = 4;
 
@@ -87,7 +85,7 @@ const styles = StyleSheet.create({
  * black seam, so the page has the rest of the screen to itself. Opened out to two
  * pages, the spread is kept centred on the fold, with a panel on its far side matching the strip,
  * so the pages meet where the phone bends and the page sits between two matching edges. That panel
- * holds what the other hand reaches for: a turn onwards, a bookmark kept on this device, a lock
+ * holds what the other hand reaches for: a turn onwards, a bookmark, a lock
  * that holds the pages still, how the pages fill their leaves, and how far through the chapter is,
  * with the next chapter's first page once it is near.
  *
@@ -103,6 +101,9 @@ const styles = StyleSheet.create({
  * @param onChapter - Told to open another chapter.
  * @param onPage - Told which page is showing, and whether it is the last of the book.
  * @param onBack - Told somebody is done reading.
+ * @param marks - The book's bookmarks and the way to add, remove and go to them, where it keeps
+ *   bookmarks; the page showing is bookmarked from the bar or the strip, and every bookmark is
+ *   listed in the sheet.
  */
 const APageReader = ({
   book,
@@ -112,8 +113,10 @@ const APageReader = ({
   onChapter,
   onPage,
   onBack,
+  marks,
 }: APageReaderProps) => {
   const { width, height } = useWindowDimensions();
+  const isOpenedOut = useIsOpenedOut();
   const room = useSafeAreaInsets();
   const strip = useTheSideStrip();
   const ordered = [...chapters].sort((one, other) => one.number - other.number);
@@ -128,8 +131,7 @@ const APageReader = ({
   const [isLocked, setIsLocked] = useState(false);
   const [scrubbing, setScrubbing] = useState<{ from: number; over: number } | null>(null);
   const shownPage = scrubbing?.from === page ? scrubbing.over : page;
-  const [bookmarks, setBookmarks] = useState(() => readBookmarks(book.id, chapterId));
-  const posture = Math.min(width, height) < OPENED_FROM ? 'folded' : 'opened';
+  const posture = isOpenedOut ? 'opened' : 'folded';
   const tuning = RAIL_TUNINGS[posture];
   const [preferences, setPreferences] = useState(() =>
     readReaderPreferences(book.direction, book.id),
@@ -185,18 +187,26 @@ const APageReader = ({
   };
 
   const spread = isTwoUp ? [page, page + 1] : [page];
-  const isMarked = spread.some((one) => bookmarks.includes(one));
+  const markedHere = (marks?.here ?? []).filter(
+    (bookmark) => bookmark.pageNumber !== null && spread.includes(bookmark.pageNumber),
+  );
+  const isMarked = markedHere.length > 0;
 
   /**
-   * Marks the pages showing, or unmarks them where either already is.
+   * Bookmarks the pages showing, or removes the bookmark where either already has one.
    */
   const mark = () => {
-    const marked = isMarked
-      ? bookmarks.filter((one) => !spread.includes(one))
-      : [...bookmarks, page];
-
-    writeBookmarks(book.id, chapterId, marked);
-    setBookmarks(marked);
+    if (isMarked) {
+      marks?.onUnmark(markedHere.map((bookmark) => bookmark.id));
+    } else {
+      marks?.onMark({
+        pageNumber: page,
+        fraction: null,
+        pageShown: null,
+        excerpt: null,
+        picture: null,
+      });
+    }
   };
 
   if (chapter === undefined || count === 0) {
@@ -243,42 +253,55 @@ const APageReader = ({
         setIsPanelOpen(false);
       }}
       title={book.title}
-      isRightToLeft={isRightToLeft}
-      {...(isManga
-        ? {
-            onRightToLeft: (isChosen: boolean) => {
-              choose({ direction: isChosen ? 'rightToLeft' : 'leftToRight' });
-            },
-          }
-        : {})}
-      layout={hasStrip ? null : preferences.isDouble ? 'two' : 'one'}
-      onLayout={(layout) => {
-        choose({ isDouble: layout === 'two' });
-      }}
-      isCoverAlone={preferences.isOffset}
-      onCoverAlone={(isOffset) => {
-        choose({ isOffset });
-      }}
-      isTapToTurn={preferences.isTapToTurn}
-      onTapToTurn={(isTapToTurn) => {
-        choose({ isTapToTurn });
-      }}
-      surround={preferences.surround}
-      onSurround={(surround) => {
-        choose({ surround });
-      }}
-      chapters={ordered.map((one) => ({
+      settings={
+        <APageSettings
+          isRightToLeft={isRightToLeft}
+          {...(isManga
+            ? {
+                onRightToLeft: (isChosen: boolean) => {
+                  choose({ direction: isChosen ? 'rightToLeft' : 'leftToRight' });
+                },
+              }
+            : {})}
+          layout={hasStrip ? null : preferences.isDouble ? 'two' : 'one'}
+          onLayout={(layout) => {
+            choose({ isDouble: layout === 'two' });
+          }}
+          isCoverAlone={preferences.isOffset}
+          onCoverAlone={(isOffset) => {
+            choose({ isOffset });
+          }}
+          isTapToTurn={preferences.isTapToTurn}
+          onTapToTurn={(isTapToTurn) => {
+            choose({ isTapToTurn });
+          }}
+          surround={preferences.surround}
+          onSurround={(surround) => {
+            choose({ surround });
+          }}
+        />
+      }
+      placesAre={say('common.chapters')}
+      places={ordered.map((one) => ({
         id: one.id,
         label: one.title,
+        depth: 0,
         isHere: one.id === chapterId,
       }))}
-      onChapter={(id) => {
+      onPlace={(id) => {
         setIsPanelOpen(false);
 
         if (id !== chapterId) {
           onChapter(id);
         }
       }}
+      {...(marks === undefined
+        ? {}
+        : {
+            bookmarks: marks.all,
+            onBookmark: marks.onOpen,
+            onRemoveBookmarks: marks.onUnmark,
+          })}
     />
   );
 
@@ -411,6 +434,7 @@ const APageReader = ({
       isDarkPage
       isFrosted
       isShown={isShowingChrome}
+      {...(marks === undefined ? {} : { mark: { isMarked, onMark: mark } })}
       onBack={onBack}
       onPanel={() => {
         setIsPanelOpen(true);

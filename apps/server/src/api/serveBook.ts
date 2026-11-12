@@ -13,7 +13,10 @@ import {
   readBookTextRoute,
   readBookRoute,
   readReadingProgressRoute,
+  saveBookmarkRoute,
   saveReadingProgressRoute,
+  listBookmarksRoute,
+  forgetBookmarkRoute,
 } from '@ValenceServer/routes/BookRoute';
 import { registerListeningRoutes } from '@ValenceServer/books/registerListeningRoutes';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -278,6 +281,56 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const saved = await books.saveProgress(profileId, chapterId, context.req.valid('json'));
 
     return saved ? context.body(null, 204) : context.json(refuse('error.book.noSuchChapter'), 404);
+  });
+
+  app.openapi(listBookmarksRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null || books === undefined) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const { bookId } = context.req.valid('param');
+
+    return context.json(
+      {
+        bookmarks: (await bookInReach(context.req.raw.headers, bookId))
+          ? await books.readBookmarks(profileId, bookId)
+          : [],
+      },
+      200,
+    );
+  });
+
+  app.openapi(saveBookmarkRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null || books === undefined) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const { bookId, bookmarkId } = context.req.valid('param');
+    const where = context.req.valid('json');
+
+    if (!(await bookInReach(context.req.raw.headers, bookId, where.chapterId))) {
+      return context.json(refuse('error.book.noSuchChapter'), 404);
+    }
+
+    const saved = await books.saveBookmark(profileId, bookmarkId, where);
+
+    return saved ? context.body(null, 204) : context.json(refuse('error.book.noSuchChapter'), 404);
+  });
+
+  app.openapi(forgetBookmarkRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null || books === undefined) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    await books.forgetBookmark(profileId, context.req.valid('param').bookmarkId);
+
+    return context.body(null, 204);
   });
 
   app.openapi(readReadingProgressRoute, async (context) => {

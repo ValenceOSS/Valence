@@ -2856,6 +2856,16 @@
     "context": "Shown, used in the media kind in the schemas and in the request kind names in the requests."
   },
   {
+    "handler": "common.bookmarks",
+    "text": "Bookmarks",
+    "context": "The heading over the list of bookmarks in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.bookmarkThisPage",
+    "text": "Bookmark this page",
+    "context": "The button that bookmarks the page being read, in the readers on the web, the desktop and the phone."
+  },
+  {
     "handler": "common.books",
     "text": "Books",
     "context": "The label, used in several places, among them the library of the phone app and the search of the phone app."
@@ -3474,6 +3484,16 @@
     "handler": "common.count.permissions.other",
     "text": "{count} permissions",
     "context": "How many permissions a role grants, in the list of roles."
+  },
+  {
+    "handler": "common.count.removeBookmarks.one",
+    "text": "Remove {count} bookmark",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
+    "handler": "common.count.removeBookmarks.other",
+    "text": "Remove {count} bookmarks",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
   },
   {
     "handler": "common.count.removed.one",
@@ -5192,6 +5212,11 @@
     "context": "Shown, used in the accounts panel in the admin area and in the role members in the roles panel."
   },
   {
+    "handler": "common.noBookmarksYet",
+    "text": "No bookmarks yet",
+    "context": "The title of the empty list under the Bookmarks heading in a reader, when nothing in the book is bookmarked."
+  },
+  {
     "handler": "common.noCeiling",
     "text": "No age limit",
     "context": "Shown, used in the library access in the schemas and in the admin area (from `ageChoices`)."
@@ -5607,14 +5632,24 @@
     "context": "Text shown, used in several places, among them the text reader in the reader of the phone app and the page reader."
   },
   {
+    "handler": "common.pageAndPercent",
+    "text": "Page {page} · {percent}%",
+    "context": "Names a bookmark in a book’s text in the readers’ list of bookmarks: the page the reader showed when it was made, and how far through the book it is. {page} is the page number and {percent} a whole number from 0 to 100."
+  },
+  {
     "handler": "common.pages",
     "text": "Pages",
     "context": "The label of a segmented row, used in the page reader and in the scrolling pages."
   },
   {
+    "handler": "common.pagesYouBookmarkAppearHere",
+    "text": "Pages you bookmark appear here.",
+    "context": "Under “No bookmarks yet” in a reader’s list of bookmarks, saying how to add one."
+  },
+  {
     "handler": "common.pageValue",
     "text": "Page {value}",
-    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app."
+    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app, and names a page bookmark in the list of bookmarks."
   },
   {
     "handler": "common.partlyHere",
@@ -5932,7 +5967,7 @@
   {
     "handler": "common.percent",
     "text": "{value}%",
-    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number."
+    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number. Also names a bookmark in a book’s text by how far through it is."
   },
   {
     "handler": "common.percentDone",
@@ -6321,6 +6356,16 @@
     "context": "The label of a data table, used in the release pick table in the admin area and in the release search panel in the admin area."
   },
   {
+    "handler": "common.removeBookmark",
+    "text": "Remove bookmark",
+    "context": "The button that removes the bookmark on the page being read, in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.removeBookmarkAt",
+    "text": "Remove bookmark at {place}",
+    "context": "The button beside one bookmark in a reader’s list of bookmarks, read out by screen readers. {place} is the bookmark’s name, such as Page 12 or 37%."
+  },
+  {
     "handler": "common.removedName",
     "text": "Removed {name}.",
     "context": "Shown, used in several places, among them the downloads panel in the admin area and the indexers panel in the admin area. {name} is filled in by the app."
@@ -6624,6 +6669,11 @@
     "handler": "common.seeAll",
     "text": "See all",
     "context": "The label of a button, used in the shelf of the phone app and in the music home in the music page."
+  },
+  {
+    "handler": "common.select",
+    "text": "Select",
+    "context": "The button beside the Bookmarks heading in the phone’s reader that starts picking bookmarks to remove several at once."
   },
   {
     "handler": "common.selectTitle",
@@ -11031,6 +11081,11 @@
     "context": "A message in an alert in the askable of the phone app."
   },
   {
+    "handler": "phone.aPerson.theirWorkCouldNotBeRead",
+    "text": "Couldn’t load the rest of their work.",
+    "context": "Shown on the phone's page about a person in the cast or crew where their work not on this server and their credits could not be read, above a button to try again."
+  },
+  {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
     "text": "Couldn’t load that playlist.",
     "context": "Text shown in the playlist of the phone app."
@@ -11146,11 +11201,6 @@
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
-    "handler": "phone.aReader.aReaderSide.markThesePages",
-    "text": "Bookmark these pages",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
     "handler": "phone.aReader.aReaderSide.readOn",
     "text": "Read next",
     "context": "Text shown in the reader side in the reader of the phone app."
@@ -11158,11 +11208,6 @@
   {
     "handler": "phone.aReader.aReaderSide.showingWholePagesFillTheWidth",
     "text": "Fit to page. Switch to fit to width",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
-    "handler": "phone.aReader.aReaderSide.unmarkThesePages",
-    "text": "Remove bookmark",
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
@@ -11324,6 +11369,11 @@
     "handler": "phone.aShow.playSeasonEpisode",
     "text": "Play S{season} E{episode}",
     "context": "The button on a programme's page in the phone app that plays the next episode from its start. {season} is the season number and {episode} the episode number."
+  },
+  {
+    "handler": "phone.aShow.statusNextEpisode",
+    "text": "{status} · S{seasonNumber} E{episodeNumber} · {airDate}",
+    "context": "A programme's status chip on its page on the open inside of a folding phone, with the next episode folded into it. {status} is the status, such as Returning; {seasonNumber} and {episodeNumber} are the next episode's; {airDate} says when it airs, such as Airs today."
   },
   {
     "handler": "phone.aShow.thatProgrammeCouldNotBeRead",
