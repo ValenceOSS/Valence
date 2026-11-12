@@ -12,8 +12,45 @@ const EPISODE = {
   episodeNumber: 2,
 };
 
+const NEXT = {
+  ...EPISODE,
+  id: '9c858901-8a57-4791-81fe-4c455b099bc0',
+  title: 'The Next One',
+  episodeNumber: 3,
+};
+
+/**
+ * What the server says about an episode, with what happens in it.
+ *
+ * @param id - Which episode.
+ * @param title - What it is called.
+ * @param overview - What happens in it.
+ * @returns Its details.
+ */
+const detailOf = (id: string, title: string, overview: string | null) => ({
+  id,
+  libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+  title,
+  year: 2024,
+  container: 'mkv',
+  durationSeconds: 1440,
+  videoCodec: 'hevc',
+  videoBitDepth: 10,
+  canCopySegments: true,
+  videoIsInterlaced: false,
+  width: 1920,
+  height: 1080,
+  videoRange: 'SDR',
+  bitrateKbps: 6000,
+  audioStreams: [{ index: 1, codec: 'aac', channels: 2, isDefault: true, isAtmos: false }],
+  subtitleStreams: [],
+  addedAt: '2026-09-01T00:00:00.000Z',
+  metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false, overview },
+});
+
 const answer = (overview: string | null) =>
   answerMusicRequests({
+    [`/api/media/${NEXT.id}`]: detailOf(NEXT.id, NEXT.title, 'The class goes on a trip.'),
     [`/api/media/${EPISODE.id}`]: {
       id: EPISODE.id,
       libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -50,6 +87,29 @@ describe('PausedScreen', () => {
     expect(screen.getByText('We’ve Been Searching: Ep. 2')).toBeInTheDocument();
     expect(await screen.findByText('Kyotaro panics in class.')).toBeInTheDocument();
     expect(screen.getByText('Paused')).toBeInTheDocument();
+  });
+
+  it('asks whether anybody is still watching, naming the episode up next, until answered', async () => {
+    const onCarryOn = vi.fn();
+    const onStop = vi.fn();
+
+    renderInAnAddress(
+      <PausedScreen media={EPISODE} isShown={false} asking={{ upNext: NEXT, onCarryOn, onStop }} />,
+    );
+
+    expect(screen.getByText('Are you still watching?')).toBeInTheDocument();
+    expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+    expect(screen.getByText('The Dangers in My Heart')).toBeInTheDocument();
+    expect(screen.getByText('Up next: The Next One: Ep. 3')).toBeInTheDocument();
+    expect(await screen.findByText('The class goes on a trip.')).toBeInTheDocument();
+    expect(screen.queryByText('Paused')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue watching' })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue watching' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+
+    expect(onCarryOn).toHaveBeenCalledTimes(1);
+    expect(onStop).toHaveBeenCalledTimes(1);
   });
 
   it('names a film by itself, with no season or episode', () => {

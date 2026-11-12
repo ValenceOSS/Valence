@@ -21,8 +21,6 @@ type Shell = {
   forgetReported: (mediaIds: readonly string[]) => void;
   startOverride: StartOverride;
   setStartOverride: (asked: StartOverride) => void;
-  askingAbout: MediaSummary | null;
-  setAskingAbout: (media: MediaSummary | null) => void;
   watchParty: WatchPartyState;
   refresh: () => Promise<void>;
   holdTheScreen: (isHolding: boolean) => void;

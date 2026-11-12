@@ -20,7 +20,6 @@ import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
 import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
-import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { useDeviceNotifications } from '@ValenceScreens/notifications/useDeviceNotifications';
@@ -39,7 +38,6 @@ import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
-import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWatching';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { ACCOUNT_OPENS_ON } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
@@ -110,8 +108,6 @@ const ValenceShell = () => {
     progress,
     forgetReported,
     setStartOverride,
-    askingAbout,
-    setAskingAbout,
     watchParty,
     isHoldingTheScreen,
     user,
@@ -701,27 +697,6 @@ const ValenceShell = () => {
           isOpen={sharing !== null}
           onClose={() => {
             setSharing(null);
-          }}
-        />
-
-        <StillWatchingDialog
-          isOpen={askingAbout !== null}
-          title={askingAbout?.title ?? ''}
-          secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
-          onCarryOn={() => {
-            const following = askingAbout;
-
-            setAskingAbout(null);
-
-            if (following !== null) {
-              go({ playing: following.id, inspecting: null });
-            }
-          }}
-          onGiveUp={() => {
-            const wasPlaying = place.playing;
-
-            setAskingAbout(null);
-            go({ playing: null, inspecting: wasPlaying });
           }}
         />
 
