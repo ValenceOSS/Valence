@@ -1,3 +1,4 @@
+import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
@@ -258,6 +259,7 @@ const pageOf = async (response: Response): Promise<MediaPage> => {
   const page = MediaPageSchema.parse(await response.json());
 
   artworkRevisions.learn(page.items);
+  artworkAddresses.learn(page.items);
 
   return page;
 };

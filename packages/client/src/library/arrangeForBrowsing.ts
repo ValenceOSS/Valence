@@ -1,6 +1,6 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BrowseOrder } from '@ValenceClient/library/BrowseOrder';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 

@@ -309,3 +309,56 @@ describe('what the cache does with an answer it cannot use', () => {
     expect(await readdir(directory)).toEqual([]);
   });
 });
+
+describe('pictures kept where anybody may fetch them', () => {
+  /**
+   * A cache that keeps public copies, over a catalogue answering with a real picture.
+   *
+   * @returns The cache and the folder its public copies go in.
+   */
+  const publishing = async () => {
+    const wide = await sharp({
+      create: { width: 800, height: 1200, channels: 3, background: '#669933' },
+    })
+      .jpeg()
+      .toBuffer();
+    const directory = await mkdtemp(join(tmpdir(), 'valence-images-'));
+    const shown = join(directory, 'public');
+
+    return {
+      shown,
+      instance: createImageCache({
+        directory,
+        fetchImpl: vi.fn<ImageFetcher>(() =>
+          Promise.resolve({
+            ok: true,
+            status: 200,
+            headers: { get: () => 'image/jpeg' },
+            arrayBuffer: () =>
+              Promise.resolve(
+                wide.buffer.slice(wide.byteOffset, wide.byteOffset + wide.byteLength),
+              ),
+          }),
+        ),
+        publish: { directory: shown, nameOf: () => 'a'.repeat(32) },
+      }),
+    };
+  };
+
+  it('keeps a narrow copy under the name it is served by', async () => {
+    const { shown, instance } = await publishing();
+
+    await instance.read(POSTER, 342);
+
+    expect(await readdir(shown)).toEqual([`${'a'.repeat(32)}-w342.webp`]);
+  });
+
+  it('forgets the copy it kept with the picture', async () => {
+    const { shown, instance } = await publishing();
+
+    await instance.read(POSTER, 342);
+    await instance.forget(POSTER);
+
+    expect(await readdir(shown)).toEqual([]);
+  });
+});

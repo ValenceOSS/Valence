@@ -7,6 +7,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
 const {
+  shelvesMock,
   itemsMock,
   facetsMock,
   favouritesMock,
@@ -18,6 +19,7 @@ const {
   pluginRowsMock,
 } = vi.hoisted(() => ({
   pluginRowsMock: vi.fn(),
+  shelvesMock: vi.fn(),
   streamedLibraryMock: vi.fn<() => Promise<string>>(),
   serverHasMock: vi.fn<(feature: string) => boolean | null>(),
   upNextMock: vi.fn(),
@@ -41,6 +43,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', async () => {
   return { fetchLibraryItems: itemsMock, fetchItemsAcross: askedOfEachLibrary(itemsMock) };
 });
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
+vi.mock('@ValenceClient/library/fetchHomeShelves', () => ({ fetchHomeShelves: shelvesMock }));
 vi.mock('@ValenceClient/streams/fetchStreamedLibrary', () => ({
   fetchStreamedLibrary: streamedLibraryMock,
 }));
@@ -153,7 +156,7 @@ beforeEach(() => {
   becauseMock.mockReset();
   becauseMock.mockResolvedValue([]);
   serverHasMock.mockReset();
-  serverHasMock.mockReturnValue(true);
+  serverHasMock.mockImplementation((feature) => feature !== 'library.homeShelves');
   streamedLibraryMock.mockReset();
   streamedLibraryMock.mockResolvedValue('streamed-library');
   pluginRowsMock.mockReset();
@@ -327,7 +330,9 @@ describe('useHomeRows', () => {
   });
 
   it('never asks a server too old to have rows from plugins', async () => {
-    serverHasMock.mockImplementation((feature) => feature !== 'plugins.homeRows');
+    serverHasMock.mockImplementation(
+      (feature) => feature !== 'plugins.homeRows' && feature !== 'library.homeShelves',
+    );
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
       wrapper: inACache,
@@ -340,7 +345,9 @@ describe('useHomeRows', () => {
   });
 
   it('never asks a server too old to find titles like others', async () => {
-    serverHasMock.mockImplementation((feature) => feature !== 'library.likeness');
+    serverHasMock.mockImplementation(
+      (feature) => feature !== 'library.likeness' && feature !== 'library.homeShelves',
+    );
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
       wrapper: inACache,
@@ -785,6 +792,42 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('adds rows each time more is asked for, even where every further row would repeat what is shown', async () => {
+    const genres = Array.from({ length: 20 }, (_, at) => `Genre ${at.toString()}`);
+    const everything = films('shared', 5, 'Drama');
+
+    facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
+    aLibrary({ byGenre: Object.fromEntries(genres.map((genre) => [genre, everything])) });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.some((rail) => rail.id === 'genre:Genre 0')).toBe(true);
+    });
+
+    const before = result.current.rails.length;
+
+    act(() => {
+      result.current.showMore();
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.length).toBeGreaterThan(before);
+    });
+
+    const after = result.current.rails.length;
+
+    act(() => {
+      result.current.showMore();
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.length).toBeGreaterThan(after);
+    });
+  });
+
   it('goes on offering rows after the decades, so the page never simply stops', async () => {
     facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
     aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });
@@ -904,5 +947,85 @@ describe('useHomeRows', () => {
 
     expect(result.current.isReading).toBe(true);
     expect(itemsMock).not.toHaveBeenCalledWith(LIBRARY, expect.objectContaining({ ids: [] }));
+  });
+
+  describe('where the server serves the shelves itself', () => {
+    const shelf = (genre: string, items: MediaSummary[]) => ({
+      id: `genre:${genre}`,
+      kind: 'genre' as const,
+      genre,
+      order: null,
+      decade: null,
+      page: 0,
+      items,
+    });
+
+    beforeEach(() => {
+      serverHasMock.mockReturnValue(true);
+      facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
+      aLibrary({ recent: films('new', 5, 'Comedy') });
+    });
+
+    it('draws the shelves the server sends after the rows above them, without asking genre by genre', async () => {
+      shelvesMock.mockResolvedValue({
+        shelves: [
+          shelf('Drama', films('drama', 5, 'Drama')),
+          shelf('Crime', films('crime', 5, 'Crime')),
+        ],
+        cursor: null,
+      });
+
+      const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+        wrapper: inACache,
+      });
+
+      await waitFor(() => {
+        expect(result.current.rails.map((rail) => rail.id)).toEqual([
+          'recent',
+          'genre:Drama',
+          'genre:Crime',
+        ]);
+      });
+
+      expect(result.current.rails.at(-1)?.title).toBe('Crime');
+      expect(result.current.hasMore).toBe(false);
+      expect(itemsMock).not.toHaveBeenCalledWith(
+        LIBRARY,
+        expect.objectContaining({ genre: 'Drama' }),
+      );
+    });
+
+    it('reads the next page from where the last left off when more is asked for', async () => {
+      shelvesMock
+        .mockResolvedValueOnce({
+          shelves: [shelf('Drama', films('drama', 5, 'Drama'))],
+          cursor: 'next',
+        })
+        .mockResolvedValueOnce({
+          shelves: [shelf('Crime', films('crime', 5, 'Crime'))],
+          cursor: null,
+        });
+
+      const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+        wrapper: inACache,
+      });
+
+      await waitFor(() => {
+        expect(result.current.rails.some((rail) => rail.id === 'genre:Drama')).toBe(true);
+      });
+
+      expect(result.current.hasMore).toBe(true);
+
+      act(() => {
+        result.current.showMore();
+      });
+
+      await waitFor(() => {
+        expect(result.current.rails.some((rail) => rail.id === 'genre:Crime')).toBe(true);
+      });
+
+      expect(shelvesMock).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: 'next' }));
+      expect(result.current.hasMore).toBe(false);
+    });
   });
 });

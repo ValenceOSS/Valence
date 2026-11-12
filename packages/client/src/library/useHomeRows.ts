@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { streamQueries } from '@ValenceClient/query/streamQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -14,6 +20,7 @@ import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
+import { shelfTitle } from '@ValenceClient/library/shelfTitle';
 import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 
@@ -44,6 +51,10 @@ const ACCLAIMED_FROM = 7.5;
 const ENCORE_KINDS = 3;
 
 const DRY_ROUNDS = 2;
+
+const SHELVES_A_PAGE = 10;
+
+const TAIL_ROW = /^(?:genre|decade|more|again):/u;
 
 const NOTHING: readonly MediaSummary[] = [];
 
@@ -100,38 +111,6 @@ const pageAnswersOf = (
     isLoading,
     isPlaceholderData,
   }));
-
-/**
- * What to call a shelf in the endless tail, which is a genre seen from a particular angle: the newest
- * of it, the whole of it by name, the part of it belonging to one decade, or the next of its best.
- *
- * @param genre - The genre the shelf is drawn from.
- * @param order - The order it is arranged in, where the angle is an arrangement.
- * @param decade - The decade it is narrowed to, where the angle is a decade.
- * @param page - How far past the genre's own row it reaches, where the angle is going deeper.
- * @returns What the row says it is.
- */
-const encoreTitle = (
-  genre: string,
-  order: 'newest' | 'title' | null,
-  decade: number | null,
-  page: number,
-): string => {
-  if (page > 0) {
-    return say('client.library.useHomeRows.moreGenre', { genre });
-  }
-
-  if (decade !== null) {
-    return say('client.library.useHomeRows.genreFromTheDecadeS', {
-      genre,
-      decade: decade.toString(),
-    });
-  }
-
-  return order === 'newest'
-    ? say('client.library.useHomeRows.newInGenre', { genre })
-    : `${genre} A–Z`;
-};
 
 /**
  * What to ask the server for to fill a shelf in the endless tail.
@@ -271,7 +250,8 @@ const useHomeRows = (
         rating.mediaId !== null && rating.stars >= LIKED_STARS ? [rating.mediaId] : [],
       ),
   });
-  const facets = useQuery({ ...libraryQueries.facets(), enabled: canAsk });
+  const hasShelves = useServerHas('library.homeShelves') === true;
+  const facets = useQuery({ ...libraryQueries.facets(), enabled: canAsk && !hasShelves });
 
   const resumingIds = useMemo(
     () => [...progress.values()].filter(isOnContinueWatching).map((one) => one.mediaId),
@@ -336,6 +316,16 @@ const useHomeRows = (
   }
 
   const taste = keptTaste ?? NO_TASTE;
+
+  const shelvesRead = useInfiniteQuery({
+    ...libraryQueries.homeShelves(watchable, taste, SHELVES_A_PAGE),
+    enabled: canAsk && hasShelves && keptTaste !== null,
+  });
+
+  const shelves = useMemo(
+    () => shelvesRead.data?.pages.flatMap((one) => one.shelves) ?? [],
+    [shelvesRead.data],
+  );
 
   const everyGenre = useMemo(
     () =>
@@ -576,9 +566,15 @@ const useHomeRows = (
 
   const rails = useMemo(() => {
     const leanings = new Set(taste.slice(0, TASTE_DEPTH));
-    const candidates = genres.flatMap((genre, at) =>
-      leanings.has(genre) ? (byGenre[at]?.data ?? NOTHING) : NOTHING,
-    );
+    const candidates = hasShelves
+      ? shelves.flatMap((one) =>
+          one.kind === 'genre' && one.genre !== null && leanings.has(one.genre)
+            ? one.items
+            : NOTHING,
+        )
+      : genres.flatMap((genre, at) =>
+          leanings.has(genre) ? (byGenre[at]?.data ?? NOTHING) : NOTHING,
+        );
 
     return homeRows({
       resuming: carryingOn(
@@ -603,7 +599,7 @@ const useHomeRows = (
       })),
       more: encores.map(({ at, genre, order, decade, page }, index) => ({
         id: `more:${at.toString()}`,
-        title: encoreTitle(genre, order, decade, page),
+        title: shelfTitle({ genre, order, decade, page }),
         items: [...(byEncore[index]?.data ?? NOTHING)],
       })),
       fromPlugins: (fromPlugins.data?.rows ?? []).map((one) => ({
@@ -615,9 +611,12 @@ const useHomeRows = (
         items: one.items.filter((media) => watchable.includes(media.libraryId)),
       })),
       again: againLimit,
+      shelves,
     });
   }, [
     againLimit,
+    hasShelves,
+    shelves,
     fromPlugins.data,
     taste,
     genres,
@@ -645,7 +644,8 @@ const useHomeRows = (
       acclaimed.isLoading ||
       resuming.isLoading ||
       upNext.isLoading ||
-      byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading));
+      byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading) ||
+      (hasShelves && shelvesRead.isLoading));
 
   if (!hasDrawn && canAsk && !isReadingFirst) {
     setHasDrawn(true);
@@ -664,13 +664,7 @@ const useHomeRows = (
   const hasMoreGenres = everyGenre.length > genreLimit;
   const hasMoreDecades = everyDecade.length > decadeLimit;
   const hasMoreTail = hasMoreGenres || hasMoreDecades || hasMoreEncores;
-  const isFull = (one: { data: MediaSummary[] | undefined }) =>
-    (one.data ?? NOTHING).length >= MIN_ROW;
-  const tailShown =
-    shownGenres.length +
-    byDecade.filter(isFull).length +
-    byEncore.filter(isFull).length +
-    againLimit;
+  const tailShown = rails.filter((rail) => TAIL_ROW.test(rail.id)).length;
   const canComeRoundAgain = !hasMoreTail && shownGenres.length > 0;
   const isTailSettled = areGenresSettled && areDecadesSettled && areEncoresSettled;
 
@@ -693,7 +687,7 @@ const useHomeRows = (
       }
 
       setEncoreLimit(limit);
-    } else if (canComeRoundAgain) {
+    } else if (canComeRoundAgain && tailWanted > FIRST_GENRES) {
       setAgainLimit((limit) => limit + tailWanted - tailShown);
     }
   }, [
@@ -714,15 +708,27 @@ const useHomeRows = (
     hasMoreEncores,
   ]);
 
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = shelvesRead;
+
   const showMore = useCallback(() => {
+    if (hasShelves) {
+      if (!isFetchingNextPage) {
+        void fetchNextPage();
+      }
+
+      return;
+    }
+
     setTailWanted((wanted) => Math.max(wanted, tailShown) + ENCORE_BATCH);
-  }, [tailShown]);
+  }, [hasShelves, isFetchingNextPage, fetchNextPage, tailShown]);
 
   return {
     rails,
     isReading: !hasDrawn && isReadingFirst,
-    hasMore: hasMoreTail || canComeRoundAgain,
-    isReadingMore: hasMoreTail && (!isTailSettled || tailShown < tailWanted),
+    hasMore: hasShelves ? hasNextPage : hasMoreTail || canComeRoundAgain,
+    isReadingMore: hasShelves
+      ? isFetchingNextPage
+      : hasMoreTail && (!isTailSettled || tailShown < tailWanted),
     showMore,
   };
 };

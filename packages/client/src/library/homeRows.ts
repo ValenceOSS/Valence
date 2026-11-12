@@ -1,4 +1,8 @@
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
+import { roundOrder } from '@ValenceCore/functions/roundOrder';
+import { shelfTitle } from '@ValenceClient/library/shelfTitle';
+import type { HomeShelf } from '@ValenceContracts/schemas/HomeShelves';
+import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
@@ -16,11 +20,12 @@ type HomeRowsInput = {
   more: { id: string; title: string; items: MediaSummary[] }[];
   fromPlugins?: { id: string; title: string; items: MediaSummary[] }[];
   again?: number;
+  shelves?: readonly HomeShelf[];
 };
 
-const ROW_LIMIT = 20;
+const ROW_LIMIT: number = HOME_ROW_SIZE.most;
 
-const MIN_ROW = 4;
+const MIN_ROW: number = HOME_ROW_SIZE.fewest;
 
 /**
  * Drops the second and later appearance of anything, keeping the order it was given in.
@@ -81,30 +86,6 @@ const categoryRows = (
 };
 
 /**
- * Puts some rows in an order of their own for one time round, the same each time that round is
- * asked for, so rows coming round again do not come in the order they first did.
- *
- * @param count - How many rows there are.
- * @param round - Which time round it is.
- * @returns Each row's place in this round.
- */
-const roundOrder = (count: number, round: number): number[] => {
-  const order = Array.from({ length: count }, (_, at) => at);
-  let seed = round * 2_654_435_761;
-
-  for (let at = count - 1; at > 0; at -= 1) {
-    seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
-    const other = seed % (at + 1);
-    const held = order[at] ?? at;
-
-    order[at] = order[other] ?? other;
-    order[other] = held;
-  }
-
-  return order;
-};
-
-/**
  * The category rows again, round after round, each round in an order of its own, so the page goes on
  * for as long as somebody keeps scrolling once every row the library can make has been shown.
  *
@@ -126,15 +107,6 @@ const comeRoundAgain = (rows: readonly Rail[], count: number): Rail[] =>
       }).flat();
 
 /**
- * Names a decade the way somebody says it rather than as the year it happens to start on.
- *
- * @param decade - The year the decade begins.
- * @returns What the row calls itself.
- */
-const decadeTitle = (decade: number): string =>
-  say('client.library.homeRows.fromTheDecadeS', { decade: decade.toString() });
-
-/**
  * The rows the front page is browsed by: carrying on, what somebody is likely to want, what is
  * new, what is like what they watched lately, what is well thought of, the rows plugins add that
  * this profile chose, a row for each of a handful of genres, and then the decades the library
@@ -149,7 +121,9 @@ const decadeTitle = (decade: number): string =>
  * happened to be read to represent it.
  * Recently added is drawn with even one thing in it, since it is the row every library has — a
  * server holding three films would otherwise open on a hero over nothing.
- * Once every category row has been shown, they come round again, as many as are asked for.
+ * Once every category row has been shown, they come round again, as many as are asked for. A
+ * server that serves the endless shelves itself sends them ready, already kept from repeating what
+ * is above them, and they follow the rest as they are.
  *
  * @param input - What each row was asked to hold.
  * @returns The rows to draw, in the order they should appear.
@@ -165,12 +139,13 @@ const homeRows = ({
   more,
   fromPlugins = [],
   again = 0,
+  shelves = [],
 }: HomeRowsInput): Rail[] => {
   const categories = categoryRows([
     ...genres.map(({ genre, items }) => ({ id: `genre:${genre}`, title: genre, items })),
     ...decades.map(({ decade, items }) => ({
       id: `decade:${decade.toString()}`,
-      title: decadeTitle(decade),
+      title: shelfTitle({ genre: null, order: null, decade, page: 0 }),
       items,
     })),
     ...more,
@@ -191,6 +166,12 @@ const homeRows = ({
     ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
     ...categories,
     ...comeRoundAgain(categories, again),
+    ...shelves.map(({ id, items, ...drawnFrom }) => ({
+      id,
+      title: shelfTitle(drawnFrom),
+      items,
+      standsForShows: true,
+    })),
   ];
 };
 

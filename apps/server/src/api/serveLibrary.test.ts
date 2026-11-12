@@ -154,6 +154,20 @@ describe('serveLibrary', () => {
     expect(listItemsAcross.mock.calls[1]?.[2]).toMatchObject({ counted: false });
   });
 
+  it('serves the front page’s shelves a page at a time, with nothing past the end of nothing', async () => {
+    const { ask } = await build();
+    const response = await ask('/api/home-shelves?libraryIds=films,shows&count=5');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ shelves: [], cursor: null });
+  });
+
+  it('turns away a page of shelves asked for too many at once', async () => {
+    const { ask } = await build();
+
+    expect((await ask('/api/home-shelves?libraryIds=films&count=500')).status).toBe(400);
+  });
+
   it('keeps an uploaded poster for a title, saying who chose it', async () => {
     const { ask, uploadArtwork } = await build();
     const response = await ask(`/api/media/${MEDIA_ID}/artwork/poster/upload`, {

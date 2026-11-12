@@ -363,6 +363,7 @@ import { createFilenameMetadataProvider } from '@ValenceServer/library/createFil
 import { createMediaFileSystem } from '@ValenceServer/library/createMediaFileSystem';
 import { createTranscoderClient } from '@ValenceServer/transcoder/TranscoderClient';
 import { createImageCache } from '@ValenceServer/images/createImageCache';
+import { createArtworkNames } from '@ValenceServer/images/createArtworkNames';
 import { createDiskUsage } from '@ValenceServer/maintenance/createDiskUsage';
 import { measureArtwork } from '@ValenceServer/images/measureArtwork';
 import { measureBookPages } from '@ValenceServer/books/measureBookPages';
@@ -429,6 +430,7 @@ import {
   CLEAR_LIBRARY_PARTS_JOB,
   ClearLibraryPartsJobSchema,
   CLEANUP_IMAGE_CACHE_JOB,
+  NARROW_ARTWORK_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CLEAR_OLD_DOWNLOADS_JOB,
@@ -502,6 +504,7 @@ import {
 } from '@ValenceServer/maintenance/findDisksUnderPressure';
 import { createDatabaseMaintenanceService } from '@ValenceServer/maintenance/createDatabaseMaintenanceService';
 import { cleanupImageCache } from '@ValenceServer/maintenance/cleanupImageCache';
+import { narrowEveryPicture } from '@ValenceServer/images/narrowEveryPicture';
 import { sweepBookPages } from '@ValenceServer/maintenance/sweepBookPages';
 import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
@@ -2983,6 +2986,31 @@ const jobs = createJobQueue({
           runDetectSegments(parsed.data.libraryId, jobId),
         );
       },
+      [NARROW_ARTWORK_JOB]: async (jobId) => {
+        const { made, failed } = await narrowEveryPicture({
+          listArtworkUrls,
+          read: (url, width) => images.read(url, width),
+          isCancelled: () => jobs.isCancelled(jobId),
+          untilResumed: () => jobs.untilResumed(jobId),
+          onProblem: (url) => {
+            void jobHistory
+              .recordIssue({
+                jobRunId: jobId,
+                path: url,
+                reason: saying('error.image.thatArtworkCouldNotBeRead'),
+              })
+              .catch(() => {});
+          },
+          onProgress: (processed, total) => {
+            jobs.reportProgress(jobId, saying('server.jobs.phase.artwork'), processed, total);
+          },
+        });
+
+        log.info(
+          'jobs',
+          `card artwork: ${made.toString()} ready, ${failed.toString()} could not be made`,
+        );
+      },
       [CLEANUP_IMAGE_CACHE_JOB]: async (jobId) => {
         const removed = await cleanupImageCache({
           imageCacheDir: env.IMAGE_CACHE_DIR,
@@ -2996,23 +3024,7 @@ const jobs = createJobQueue({
             remove: (path) => unlink(path),
           },
           nameFor: images.nameFor,
-          listArtworkUrls: async () => {
-            const items = await db
-              .select({
-                posterUrl: mediaItem.posterUrl,
-                backdropUrl: mediaItem.backdropUrl,
-                logoUrl: mediaItem.logoUrl,
-              })
-              .from(mediaItem);
-            const chosen = await db
-              .select({ url: mediaArtworkChoice.url })
-              .from(mediaArtworkChoice);
-
-            return [
-              ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
-              ...chosen.map((row) => row.url),
-            ];
-          },
+          listArtworkUrls,
           listKeptPictures: async () => {
             const faces = await db
               .select({ photoPath: viewerProfile.photoPath })
@@ -3703,8 +3715,50 @@ const scanRuns = collectScanRuns({
 
 const artworkUploads = join(dirname(env.PROFILE_IMAGE_DIR), 'artwork');
 
+const artworkNames = createArtworkNames(
+  `${env.BETTER_AUTH_SECRET}:artwork-names`,
+  join(env.IMAGE_CACHE_DIR, 'names'),
+);
+
+/**
+ * Where a picture is served by name, for anybody to fetch from the proxy or CDN in front, or from
+ * Valence where nothing is.
+ *
+ * @param url - The picture.
+ * @returns Its address, to which a width and `.webp` are added, or nothing for a picture that is
+ *   not named.
+ */
+const artworkAddressOf = (url: string): string | null => {
+  const name = artworkNames.nameOf(url);
+
+  return name === null ? null : `${env.ARTWORK_URL}/api/artwork/${name}`;
+};
+
+/**
+ * Lists every picture the libraries show: each file's poster, backdrop and logo, and every picture
+ * chosen for a title in place of the catalogue's.
+ *
+ * @returns Their addresses, with nothing where a file has no such picture.
+ */
+const listArtworkUrls = async (): Promise<(string | null)[]> => {
+  const items = await db
+    .select({
+      posterUrl: mediaItem.posterUrl,
+      backdropUrl: mediaItem.backdropUrl,
+      logoUrl: mediaItem.logoUrl,
+    })
+    .from(mediaItem);
+  const chosen = await db.select({ url: mediaArtworkChoice.url }).from(mediaArtworkChoice);
+
+  return [
+    ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
+    ...chosen.map((row) => row.url),
+  ];
+};
+
 const libraryService = createDatabaseLibraryService({
   db,
+  artworkAddressOf,
   files: createMediaFileSystem(),
   transcoder,
   forgetKeptCopies: async (paths) => {
@@ -3867,7 +3921,7 @@ const animeIds = createDatabaseAnimeIds(db);
 
 const likenessStore = createDatabaseLikenessStore(db);
 
-const likenessService = createLikenessService({ db, store: likenessStore });
+const likenessService = createLikenessService({ db, store: likenessStore, artworkAddressOf });
 
 const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -4597,6 +4651,7 @@ const creditProviders = [
 
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
+  publish: { directory: join(env.IMAGE_CACHE_DIR, 'public'), nameOf: artworkNames.nameOf },
   fetchImpl: async (url) =>
     (await readLocalPicture(url, artworkUploads)) ??
     (readLinkedAddress(url) === null
@@ -5076,7 +5131,7 @@ const startPlugins = (
       await jobs.cancelFor(`plugin:${pluginId}`);
     },
     isJobCancelled: (jobId) => jobs.isCancelled(jobId),
-    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids),
+    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids, artworkAddressOf),
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,
@@ -5272,6 +5327,7 @@ const signedInSockets = createSignedInSockets();
 const titleEdits = createTitleEditStore(db);
 
 const titleListService = createTitleListService(db, {
+  artworkAddressOf,
   certificationRegion: async () => (await settings.read()).certificationRegion,
 });
 
@@ -5832,6 +5888,8 @@ const app = createApp({
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
   readImage: (url, width) => images.read(url, width),
+  artworkNames,
+  artworkAddress: env.ARTWORK_URL,
   isTranscoderReachable: () => transcoder.isReachable(),
   transcoderAddress: env.TRANSCODER_URL,
   listRunningJobs: () => jobs.listRunning(),

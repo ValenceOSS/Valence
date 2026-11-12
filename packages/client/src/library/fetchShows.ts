@@ -10,7 +10,7 @@ import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schema
  * @param show - The programme.
  * @returns Its cover, with the programme's revision.
  */
-const coverOf = (show: ShowSummary): { id: string; artworkRevision?: number | undefined } => ({
+const coverOf = (show: ShowSummary) => ({
   id: show.coverMediaId,
   artworkRevision: show.artworkRevision,
 });

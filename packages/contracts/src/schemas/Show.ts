@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ArtworkAddressesSchema } from './ArtworkAddresses';
 import { MediaSummarySchema } from './Library';
 
 const ShowSummarySchema = z.object({
@@ -10,6 +11,7 @@ const ShowSummarySchema = z.object({
   latestAddedAt: z.string(),
   artworkRevision: z.number().int().nonnegative().optional(),
   coverMediaId: z.string().uuid(),
+  artwork: ArtworkAddressesSchema.omit({ backdrop: true }).optional(),
   seriesId: z.string().uuid().nullable().default(null),
   year: z.number().int().nullish(),
   rating: z.number().nullish(),

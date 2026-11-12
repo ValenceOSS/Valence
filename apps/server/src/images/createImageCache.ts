@@ -2,8 +2,8 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { createHash } from 'node:crypto';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { access, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { narrowPicture } from '@ValenceServer/images/narrowPicture';
 import { rasterOfCataloguePicture } from '@ValenceServer/images/rasterOfCataloguePicture';
 import { saying } from '@ValenceI18n/saying';
@@ -24,10 +24,16 @@ type ImageFetcher = (url: string) => Promise<{
   arrayBuffer: () => Promise<ArrayBuffer>;
 }>;
 
+type Publishing = {
+  directory: string;
+  nameOf: (url: string) => string | null;
+};
+
 type CreateImageCacheOptions = {
   directory: string;
   fetchImpl?: ImageFetcher;
   onProblem?: (url: string, reason: Said) => void;
+  publish?: Publishing;
 };
 
 const MAX_BYTES = 32 * 1024 * 1024;
@@ -46,10 +52,19 @@ const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avi
  * narrower copy is made once from the whole one and kept beside it, so a phone scrolling a library
  * neither downloads nor decodes posters several times the size it shows them.
  *
+ * Where asked to, each narrower copy is also kept under the name it is served by where anybody may
+ * fetch it, in a folder of its own, so a proxy in front of the server can hand it out straight from
+ * the disk. Forgetting a picture forgets those copies too.
+ *
  * @param options - Where to keep the files, and how to fetch what is missing.
  * @returns The cache, which fetches on a miss and serves from disk thereafter.
  */
-const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheOptions) => {
+const createImageCache = ({
+  directory,
+  fetchImpl,
+  onProblem,
+  publish,
+}: CreateImageCacheOptions) => {
   const fetchOut: ImageFetcher = fetchImpl ?? ((url: string) => fetch(url));
 
   const call: ImageFetcher = async (url) => {
@@ -135,11 +150,46 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
     }
   };
 
+  const published = new Set<string>();
+
+  const publicPathOf = (url: string, width: number): string | null => {
+    const name = publish?.nameOf(url) ?? null;
+
+    return publish === undefined || name === null
+      ? null
+      : join(publish.directory, `${name}-w${width.toString()}.webp`);
+  };
+
+  const publishCopy = async (url: string, width: number, body: Uint8Array): Promise<void> => {
+    const path = publicPathOf(url, width);
+
+    if (path === null || published.has(path)) {
+      return;
+    }
+
+    const isThere = await access(path).then(
+      () => true,
+      () => false,
+    );
+
+    if (!isThere) {
+      const partial = `${path}.${process.pid.toString()}.part`;
+
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(partial, body);
+      await rename(partial, path);
+    }
+
+    published.add(path);
+  };
+
   const readNarrowed = async (url: string, width: number): Promise<CachedImage | null> => {
     const path = join(directory, `${nameFor(url)}-w${width.toString()}`);
     const kept = await readFile(path).catch(() => null);
 
     if (kept !== null) {
+      await publishCopy(url, width, kept).catch(() => undefined);
+
       return {
         body: kept.buffer.slice(kept.byteOffset, kept.byteOffset + kept.byteLength),
         contentType: 'image/webp',
@@ -159,6 +209,7 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
     }
 
     await writeFile(path, narrowed).catch(() => null);
+    await publishCopy(url, width, narrowed).catch(() => undefined);
 
     return {
       body: narrowed.buffer.slice(narrowed.byteOffset, narrowed.byteOffset + narrowed.byteLength),
@@ -176,9 +227,18 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
       await rm(path, { force: true });
       await rm(`${path}.type`, { force: true });
       await Promise.all(
-        Object.values(ARTWORK_WIDTHS).map((width) =>
-          rm(`${path}-w${width.toString()}`, { force: true }),
-        ),
+        Object.values(ARTWORK_WIDTHS).map(async (width) => {
+          const copy = publicPathOf(url, width);
+
+          if (copy !== null) {
+            published.delete(copy);
+          }
+
+          await Promise.all([
+            rm(`${path}-w${width.toString()}`, { force: true }),
+            ...(copy === null ? [] : [rm(copy, { force: true })]),
+          ]);
+        }),
       );
     },
 

@@ -7,8 +7,11 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import type { LibraryRailProps } from './LibraryRail.types';
 
+const EAGER_CARDS = 8;
+
 /**
- * Draws one rail of a library page, its cards drawn only while it is near the screen.
+ * Draws one rail of a library page, its cards drawn only while it is near the screen, and the
+ * pictures of those far along it, past what a screen shows, left until they are scrolled near.
  *
  * @param props - The rail, how far through each of its titles the viewer is, and what its cards do.
  * @param props.rail - The rail.
@@ -55,7 +58,7 @@ const LibraryRailFace = ({
                 },
               })}
         >
-          {rail.items.map((media) => {
+          {rail.items.map((media, at) => {
             const isShow = isHome && standsForShows && showIdOf(media) !== null;
             const flag = isHome ? flagOf(media) : null;
             const resume = resumeFor(progress, media.id);
@@ -66,6 +69,7 @@ const LibraryRailFace = ({
                 <RailCard
                   media={media}
                   look={isHome ? 'art' : 'card'}
+                  isLazy={at >= EAGER_CARDS}
                   isSeries={isShow}
                   {...(flag === null ? {} : { flag })}
                   {...(isShow || watched === undefined

@@ -11,6 +11,7 @@ import { TimeBars } from '@ValenceUI/TimeBars';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { DataTableDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/DataTableDemo';
 import { VirtualGridDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VirtualGridDemo';
+import { VirtualStackDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VirtualStackDemo';
 import { VirtualStripDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VirtualStripDemo';
 import type { UiExample } from './UiExample.types';
 
@@ -218,6 +219,12 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
     {
       title: 'A hundred cards, drawn as scrolled',
       render: () => <VirtualGridDemo />,
+    },
+  ],
+  VirtualStack: [
+    {
+      title: 'Sixty blocks of differing heights, drawn as scrolled',
+      render: () => <VirtualStackDemo />,
     },
   ],
   VirtualStrip: [

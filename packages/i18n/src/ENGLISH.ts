@@ -9697,6 +9697,9 @@ const ENGLISH = {
     'Keeps the channels and programme guide of each live TV source up to date.',
   'server.jobs.jobDefinitions.keepsTheTitlesOtherValenceServers':
     'Updates the list of titles other Valence servers share with this one, so you can browse them here.',
+  'server.jobs.jobDefinitions.makeArtworkAhead': 'Make card artwork ahead',
+  'server.jobs.jobDefinitions.makesEveryCardPictureAhead':
+    'Makes the small copy of every poster, backdrop and logo ahead of time, so cards load them at once.',
   'server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator':
     'Runs the re-encodes an administrator requested.',
   'server.jobs.jobDefinitions.measureHowLoudSongsAre': 'Measure how loud songs are',
@@ -9737,6 +9740,7 @@ const ENGLISH = {
   'server.jobs.phase.added.other': 'added {count}',
   'server.jobs.phase.arrived.one': '{count} added',
   'server.jobs.phase.arrived.other': '{count} added',
+  'server.jobs.phase.artwork': 'card artwork',
   'server.jobs.phase.books': 'books',
   'server.jobs.phase.cache': 'artwork cache',
   'server.jobs.phase.checked.one': '{count} checked',

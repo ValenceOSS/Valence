@@ -4,6 +4,7 @@ import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
+import type { ArtworkAddressOf } from '@ValenceServer/images/ArtworkAddressOf';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -16,12 +17,14 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @param db - The database.
  * @param viewer - Who is looking.
  * @param ids - The items, in order.
+ * @param artworkAddressOf - Where a picture is served by name, where the server names its pictures.
  * @returns Their cards, by the ids they were asked for.
  */
 const readSummaries = async (
   db: AnyValenceDatabase,
   viewer: Viewer,
   ids: readonly string[],
+  artworkAddressOf?: ArtworkAddressOf,
 ): Promise<ReadonlyMap<string, MediaSummary>> => {
   if (ids.length === 0) {
     return new Map();
@@ -38,7 +41,7 @@ const readSummaries = async (
     .select(SUMMARY_COLUMNS)
     .from(mediaItem)
     .where(and(inArray(mediaItem.id, asked), reachable));
-  const found = new Map(items.map((row) => [row.id, summaryOfRow(row)]));
+  const found = new Map(items.map((row) => [row.id, summaryOfRow(row, artworkAddressOf)]));
   const shows = asked.filter((id) => !found.has(id));
   const episodes =
     shows.length === 0
@@ -51,7 +54,7 @@ const readSummaries = async (
 
   for (const episode of episodes) {
     if (episode.seriesId !== null && !found.has(episode.seriesId)) {
-      found.set(episode.seriesId, summaryOfRow(episode));
+      found.set(episode.seriesId, summaryOfRow(episode, artworkAddressOf));
     }
   }
 

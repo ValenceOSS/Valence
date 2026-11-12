@@ -82,6 +82,10 @@ const EnvSchema = z.object({
     .default('')
     .transform((value) => value.trim()),
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),
+  ARTWORK_URL: z
+    .string()
+    .default('')
+    .transform((value) => value.trim().replace(/\/+$/u, '')),
   PROFILE_IMAGE_DIR: z.string().default('/config/profiles'),
   SUBTITLE_DIR: z.string().optional(),
   VALENCE_BUCKET_ROOT: z.string().default('/buckets'),

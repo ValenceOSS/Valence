@@ -5,7 +5,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { useSettled } from '@ValenceClient/timing/useSettled';
 import { whySearchFailed } from '@ValenceClient/query/whySearchFailed';
 import { CatalogueShelf } from '@ValenceTv/components/CatalogueShelf/CatalogueShelf';

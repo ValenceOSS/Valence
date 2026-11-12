@@ -19,6 +19,8 @@ import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
 import { itemsOptionsOf } from '@ValenceServer/api/itemsOptionsOf';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { createHomeShelves } from '@ValenceServer/library/createHomeShelves';
 import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
@@ -29,6 +31,7 @@ import {
   createLibraryRoute,
   updateLibraryRoute,
   listItemsAcrossRoute,
+  homeShelvesRoute,
   listItemsRoute,
   listFacetsRoute,
   getMediaRoute,
@@ -84,6 +87,11 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     titleMetadata,
     readImage,
   } = context;
+  const homeShelves = createHomeShelves({
+    listItems: (viewer: Viewer, libraryIds, options) =>
+      library.listItemsAcross(viewer, libraryIds, options),
+    listFacets: (viewer: Viewer) => library.listFacets(viewer),
+  });
 
   /**
    * Names an item for the audit log, by its title and the library it is in, or by nothing where
@@ -250,6 +258,31 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(page, 200);
+  });
+
+  app.openapi(homeShelvesRoute, async (context) => {
+    const { libraryIds, leaning, cursor, count } = context.req.valid('query');
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const listOf = (joined: string | undefined) =>
+      (joined ?? '')
+        .split(',')
+        .map((one) => one.trim())
+        .filter((one) => one !== '');
+
+    return context.json(
+      await homeShelves.read(viewer, {
+        libraryIds: listOf(libraryIds),
+        leaning: listOf(leaning),
+        count,
+        ...(cursor === undefined ? {} : { cursor }),
+      }),
+      200,
+    );
   });
 
   app.openapi(listItemsAcrossRoute, async (context) => {

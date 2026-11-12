@@ -7,6 +7,7 @@ type ArtCardProps = {
   onSelect: () => void;
   href?: string;
   isStill?: boolean;
+  isLazy?: boolean;
   className?: string;
 };
 

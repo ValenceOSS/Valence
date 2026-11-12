@@ -7,6 +7,7 @@ import {
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { HomeShelvesSchema } from '@ValenceContracts/schemas/HomeShelves';
 import {
   LeaveOutRequestSchema,
   LeftOutChangeSchema,
@@ -185,6 +186,35 @@ const listItemsRoute = createRoute({
     404: {
       description: 'No such library',
       content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
+const homeShelvesRoute = createRoute({
+  method: 'get',
+  path: '/api/home-shelves',
+  tags: ['Library'],
+  summary: 'Read the next shelves of the front page',
+  description:
+    'The endless part of the front page, a page of shelves at a time: a shelf for each genre, then each decade, then each genre from other angles, then the same shelves come round again. A title is shown on one shelf only. Send the cursor from one page to read the next.',
+  request: {
+    query: z.object({
+      libraryIds: z.string(),
+      leaning: z.string().optional().openapi({
+        description: 'The genres the viewer leans towards, most first, separated by commas',
+      }),
+      cursor: z.string().max(64).optional(),
+      count: z.coerce.number().int().min(1).max(30).default(10),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'A page of shelves, and the cursor for the next',
+      content: { 'application/json': { schema: HomeShelvesSchema } },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -866,6 +896,7 @@ export { ScanAccepted };
 
 export {
   ItemsQuery,
+  homeShelvesRoute,
   listLibrariesRoute,
   createLibraryRoute,
   updateLibraryRoute,
