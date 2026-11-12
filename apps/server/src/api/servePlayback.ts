@@ -42,6 +42,8 @@ const REPORTS_AT_MOST = 20;
 
 const REPORTS_WITHIN_MS = 10 * 60 * 1000;
 
+const TRICKPLAY_CACHING = 'private, max-age=86400';
+
 /**
  * Registers the playback endpoints.
  *
@@ -419,7 +421,10 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.playback.noSuchThumbnails'), 404);
     }
 
-    return context.body(file.body, 200, { 'content-type': file.contentType });
+    return context.body(file.body, 200, {
+      'content-type': file.contentType,
+      'cache-control': TRICKPLAY_CACHING,
+    });
   });
 
   app.openapi(stopRoute, async (context) => {
