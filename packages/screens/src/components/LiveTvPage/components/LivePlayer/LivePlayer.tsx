@@ -165,6 +165,7 @@ const LivePlayer = ({
 
   useEffect(() => {
     let isReading = false;
+    let isDisposed = false;
 
     const look = () => {
       const element = videoRef.current;
@@ -178,7 +179,7 @@ const LivePlayer = ({
       void readLightsQuietly(element).then((found) => {
         isReading = false;
 
-        if (found.length > 0) {
+        if (!isDisposed && found.length > 0) {
           setLiveLights(found);
         }
       });
@@ -186,6 +187,7 @@ const LivePlayer = ({
     const timer = setInterval(look, LOOKS_EVERY_MS);
 
     return () => {
+      isDisposed = true;
       clearInterval(timer);
       setLiveLights([]);
     };

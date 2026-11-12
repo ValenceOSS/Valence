@@ -124,6 +124,7 @@ const PageReader = ({
   const [scale, setScale] = useState(CLOSEST);
   const [moved, setMoved] = useState({ x: 0, y: 0 });
   const pinch = useRef<{ from: number; base: number } | null>(null);
+  const hasGestured = useRef(false);
   const dragged = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
   const [isBeingMoved, setIsBeingMoved] = useState(false);
 
@@ -262,6 +263,7 @@ const PageReader = ({
         const pinching = pinch.current;
 
         if (pinching !== null && one !== undefined && other !== undefined) {
+          hasGestured.current = true;
           setScale(scaleFrom(pinching.base, pinching.from, distanceBetween(one, other)));
 
           return;
@@ -270,6 +272,7 @@ const PageReader = ({
         const dragging = dragged.current;
 
         if (dragging !== null && one !== undefined) {
+          hasGestured.current = true;
           const across = typeof window === 'undefined' ? 0 : window.innerWidth;
           const down = typeof window === 'undefined' ? 0 : window.innerHeight;
 
@@ -280,10 +283,16 @@ const PageReader = ({
         }
       }}
       onTouchEnd={() => {
+        const wasGesture = hasGestured.current;
+
+        hasGestured.current = false;
         pinch.current = null;
         dragged.current = null;
         setIsBeingMoved(false);
-        wake();
+
+        if (wasGesture) {
+          wake();
+        }
       }}
     >
       <ReaderChrome
@@ -523,7 +532,6 @@ const PageReader = ({
                 onChapterChange(after.id);
               }
             }}
-            onTap={toggle}
           />
         ) : (
           <div

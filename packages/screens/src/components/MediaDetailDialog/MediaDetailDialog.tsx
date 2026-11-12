@@ -1,4 +1,8 @@
 import { Icon } from '@ValenceUI/Icon';
+import { showIdOf } from '@ValenceClient/library/showIdOf';
+import { Link } from '@ValenceUI/Link';
+import { useHrefOf } from '@ValenceScreens/navigation/useHrefOf';
+import { NOTHING_OPEN } from '@ValenceScreens/navigation/NOTHING_OPEN';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
@@ -146,6 +150,7 @@ const MediaDetailDialog = ({
   onStartParty,
   onPlayOn,
 }: MediaDetailDialogProps) => {
+  const hrefOf = useHrefOf();
   const asked = useQuery(libraryQueries.detail(media?.id ?? null));
   const detail = useHeldWhileLeaving(asked.data ?? null, media !== null);
   const isLoading = media !== null && asked.isPending;
@@ -586,21 +591,34 @@ const MediaDetailDialog = ({
 
             <DialogHeadline className="grid gap-x-12 gap-y-5 px-1 pt-2 sm:px-2 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
               <div className="flex min-w-0 flex-col gap-4">
-                {shown.seriesTitle === null ||
-                shown.seriesTitle === undefined ||
+                {(shown.seriesTitle ?? '').trim() === '' ||
+                showIdOf(shown) === null ||
                 onOpenShow === undefined ? null : (
                   <DialogHeadlinePart as="span" className="-mb-3">
-                    <Button
-                      variant="subtle"
-                      size="none"
-                      hasTooltip={false}
-                      onClick={() => {
-                        onOpenShow(shown);
-                      }}
-                      className="text-sm font-medium"
-                    >
-                      {shown.seriesTitle}
-                    </Button>
+                    {hrefOf === null ? (
+                      <Button
+                        variant="subtle"
+                        size="none"
+                        hasTooltip={false}
+                        onClick={() => {
+                          onOpenShow(shown);
+                        }}
+                        className="text-sm font-medium"
+                      >
+                        {shown.seriesTitle}
+                      </Button>
+                    ) : (
+                      <Link
+                        href={hrefOf({ ...NOTHING_OPEN, show: showIdOf(shown) ?? '' })}
+                        look="bare"
+                        onNavigate={() => {
+                          onOpenShow(shown);
+                        }}
+                        className="text-sm font-medium text-text-muted transition-colors hover:text-text"
+                      >
+                        {shown.seriesTitle}
+                      </Link>
+                    )}
                   </DialogHeadlinePart>
                 )}
 

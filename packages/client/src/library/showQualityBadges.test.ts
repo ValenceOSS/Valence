@@ -34,6 +34,21 @@ describe('showQualityBadges', () => {
     expect(badges.at(-1)?.label.startsWith('5.1 / ')).toBe(true);
   });
 
+  it('says no stereo beside surround where the other episodes are Atmos, mono or silent', () => {
+    const atmos = {
+      ...episode(1920, 1080),
+      audio: { codec: 'truehd', channels: 8, isAtmos: true },
+    };
+    const badges = showQualityBadges([
+      episode(1920, 1080, 'SDR', 6),
+      atmos,
+      episode(1920, 1080, 'SDR', 1),
+      { ...episode(1920, 1080), audio: null },
+    ]);
+
+    expect(badges.at(-1)).toEqual({ label: '5.1', isMixed: true });
+  });
+
   it('gives nothing for a programme with no episodes', () => {
     expect(showQualityBadges([])).toEqual([]);
   });

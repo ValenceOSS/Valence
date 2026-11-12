@@ -278,12 +278,13 @@ const ENGLISH = {
   'client.library.sayRatingMeans.fourteenAndUp': 'May not suit children under 14',
   'client.library.sayRatingMeans.parentalGuidance': 'Parental guidance suggested',
   'client.library.sayRatingMeans.sevenAndUp': 'For ages 7 and up',
-  'client.library.sayRatingMeans.seventeenAndUp': 'No one 17 or under',
+  'client.library.sayRatingMeans.seventeenAndUp': 'Not suitable for anyone 17 or under',
   'client.library.sayRatingMeans.thirteenAndUp': 'Some of it may not suit children under 13',
   'client.library.sayRatingMeans.twelveAndUp': 'For ages 12 and up',
-  'client.library.sayRatingMeans.twelveWithAnAdult': 'For ages 12 and up, or younger with an adult',
+  'client.library.sayRatingMeans.twelveWithAnAdult':
+    'For ages 12 and up, and younger children with an adult',
   'client.library.sayRatingMeans.underSeventeenWithAnAdult':
-    'Under 17s need a parent or guardian with them',
+    'Under 17s should watch with a parent or guardian',
   'client.library.sayRatingMeans.youngChildren': 'Made for young children',
   'client.library.showQualityBadges.standardRange': 'SDR',
   'client.library.theVersionsOf.anotherVersion': 'Another version',
@@ -9197,6 +9198,7 @@ const ENGLISH = {
   'screens.showDialog.missingRow.episodeEpisodeNumber': 'Episode {episodeNumber}',
   'screens.showDialog.nothingHereYetEpisodesAppearAs':
     'No episodes yet. Episodes appear as they’re scanned.',
+  'screens.showDialog.onSomeEpisodes': '{label} on some episodes',
   'screens.showDialog.playValueEpisodeValue2': 'Play {value}, episode {value2}',
   'screens.showDialog.readingTheEpisodes': 'Loading episodes',
   'screens.showDialog.resumeStartSeconds': 'Resume {startSeconds}',

@@ -6,7 +6,7 @@ type ScrollingPagesProps = {
   hasNextChapter: boolean;
   onPageChange: (page: number) => void;
   onNextChapter: () => void;
-  onTap: () => void;
+  onTap?: () => void;
 };
 
 export type { ScrollingPagesProps };

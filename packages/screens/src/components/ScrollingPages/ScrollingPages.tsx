@@ -29,7 +29,7 @@ const A_PAGE = 1400;
  * @param hasNextChapter - Whether there is another after this one.
  * @param onPageChange - Told the page across the middle of the screen as it changes.
  * @param onNextChapter - Called to carry on into the next chapter.
- * @param onTap - Called when the strip is pressed, to bring the controls back.
+ * @param onTap - Called when the strip is pressed, where the caller does not see the press itself.
  */
 const ScrollingPages = ({
   bookId,
@@ -56,7 +56,7 @@ const ScrollingPages = ({
         setCurrent(page);
         onPageChange(page);
       }}
-      onClick={onTap}
+      {...(onTap === undefined ? {} : { onClick: onTap })}
       footer={
         <div className="mx-auto flex min-h-40 max-w-3xl items-center justify-center p-8">
           {hasNextChapter ? (

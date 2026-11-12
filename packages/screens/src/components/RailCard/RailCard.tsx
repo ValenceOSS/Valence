@@ -1,7 +1,13 @@
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import {
+  EyeOff as EyeOffIcon,
+  Heart as HeartIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
+import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import { createPortal } from 'react-dom';
@@ -10,6 +16,7 @@ import { Button } from '@ValenceUI/Button';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { ArtCard } from '@ValenceUI/ArtCard';
 import { Badge } from '@ValenceUI/Badge';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
 import { PLAY_FACE_SMALL } from '@ValenceUI/tokens/PLAY_FACE_SMALL';
 import { PlayWithRestart } from '@ValenceScreens/components/PlayWithRestart/PlayWithRestart';
@@ -95,6 +102,8 @@ const SLACK = 1;
 const OPENS_FROM_SHARE = 0.25;
 
 const GENRE_LIMIT = 3;
+
+const ROOM_FOR_THE_DETAILS = 176;
 type Spot = { left: number; top: number; width: number; picture: number };
 
 type Anchor = Spot & { card: Spot };
@@ -102,6 +111,8 @@ type Anchor = Spot & { card: Spot };
 /**
  * Places an opened card centred over the one it grew from and larger than it, a thin frame wider
  * all round, so the picture grows out of where it was and what the card has to say unfolds from it.
+ * On a screen too short for both, the picture gives way, so what is said and the way to play stay in
+ * sight.
  *
  * @param rect - Where the resting card sits.
  * @param picture - How tall the resting card's picture is, so the opened one keeps its shape.
@@ -114,7 +125,10 @@ const placeOver = (rect: DOMRect, picture: number): Anchor => {
   );
   const width = grown + FRAME * 2;
   const furthest = window.innerWidth - width - MARGIN;
-  const tall = grown * WIDE;
+  const tall = Math.max(
+    Math.min(grown * WIDE, window.innerHeight - MARGIN * 2 - FRAME * 2 - ROOM_FOR_THE_DETAILS),
+    0,
+  );
 
   return {
     width,
@@ -264,6 +278,10 @@ const fitInside = (top: number, height: number): number => {
  * @param resumeSeconds - Where they left it.
  * @param hoverDelayMilliseconds - How long a pointer rests before it opens.
  * @param onOpenShow - Told to open the programme an episode belongs to.
+ * @param isKept - Whether it is kept.
+ * @param onToggleKept - Told to keep it, or stop.
+ * @param onHide - Told to hide it.
+ * @param onDismiss - Told to take it off continue watching, on the row of it.
  * @param isSeries - Whether this card stands for a whole programme rather than for the episode that
  *   happens to represent it, in which case the episode's own name and number are not what a reader
  *   is looking at — and pressing it opens the programme rather than that one episode.
@@ -293,6 +311,10 @@ const RailCardFace = ({
   resumeSeconds,
   hoverDelayMilliseconds = HOVER_DELAY_MILLISECONDS,
   onOpenShow,
+  isKept = false,
+  onToggleKept,
+  onHide,
+  onDismiss,
   isSeries = false,
   shape: askedShape = 'wide',
   look = 'card',
@@ -667,6 +689,8 @@ const RailCardFace = ({
     () => () => {
       if (OPENED.owner === selfRef.current) {
         OPENED.owner = null;
+        OPENED.isOpen = false;
+        OPENED.lastClosedAt = performance.now();
       }
     },
     [],
@@ -706,6 +730,44 @@ const RailCardFace = ({
 
   const coversOpening = look === 'art' || restingUrl === wideUrl;
 
+  const extras = [
+    ...(onToggleKept === undefined
+      ? []
+      : [
+          {
+            id: 'keep',
+            label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
+            icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
+            onChoose: () => {
+              onToggleKept(media);
+            },
+          },
+        ]),
+    ...(onDismiss === undefined
+      ? []
+      : [
+          {
+            id: 'dismiss',
+            label: say('screens.railCard.removeFromContinueWatching'),
+            icon: <Icon of={XIcon} size={17} />,
+            onChoose: () => {
+              onDismiss(media);
+            },
+          },
+        ]),
+    ...(onHide === undefined
+      ? []
+      : [
+          {
+            id: 'hide',
+            label: say('common.hide'),
+            icon: <Icon of={EyeOffIcon} size={17} />,
+            onChoose: () => {
+              onHide(media);
+            },
+          },
+        ]),
+  ];
   return (
     <div
       ref={holderRef}
@@ -1026,6 +1088,33 @@ const RailCardFace = ({
                         )}
                       </Button>
                     </PlayWithRestart>
+
+                    {extras.length === 0 ? null : (
+                      <ActionMenu
+                        label={say('screens.railCard.moreToDoWithTitle', { title: media.title })}
+                        align="end"
+                        look="raised"
+                        className="ml-2 size-9 shrink-0"
+                        trigger={<Icon of={MoreHorizontalIcon} size={17} />}
+                        onOpenChange={(isOpen) => {
+                          isMenuOpenRef.current = isOpen;
+
+                          if (!isOpen && panelRef.current?.matches(':hover') !== true) {
+                            close();
+                          }
+                        }}
+                        groups={[
+                          {
+                            items: extras.map((extra) => ({
+                              id: extra.id,
+                              label: extra.label,
+                              icon: extra.icon,
+                              onChoose: extra.onChoose,
+                            })),
+                          },
+                        ]}
+                      />
+                    )}
                   </span>
                 </motion.div>
               </motion.div>

@@ -6,6 +6,10 @@ const MOST_KEPT = 600;
 
 const kept = new Map<string, HTMLImageElement>();
 
+const queues = new Set<string[]>();
+
+const slots = { running: 0 };
+
 /**
  * Keeps a picture that has been fetched and decoded, the oldest let go once there are too many, so a
  * card that is drawn again after scrolling away finds its picture already there.
@@ -26,10 +30,45 @@ const keep = (url: string, picture: HTMLImageElement): void => {
 };
 
 /**
+ * Starts the next pictures waiting, from every page asking, until as many are on their way as may
+ * be at once; each one that settles makes room for the next.
+ */
+const pump = (): void => {
+  for (const queue of queues) {
+    while (slots.running < AT_ONCE) {
+      const url = queue.shift();
+
+      if (url === undefined) {
+        break;
+      }
+
+      if (kept.has(url)) {
+        continue;
+      }
+
+      const picture = new Image();
+
+      picture.decoding = 'async';
+      picture.src = url;
+      keep(url, picture);
+      slots.running += 1;
+
+      void picture
+        .decode()
+        .catch(() => undefined)
+        .then(() => {
+          slots.running -= 1;
+          pump();
+        });
+    }
+  }
+};
+
+/**
  * Asks for the pictures a page is about to draw as soon as it knows them, rather than as each card
- * comes near the screen: a few at a time, in the order given, each decoded once it arrives and kept,
- * so that by the time its card is drawn the picture is already there to show at once. Pictures
- * already fetched are not asked for again.
+ * comes near the screen: a few at a time across every page asking, however often the list changes,
+ * in the order given, each decoded once it arrives and kept, so that by the time its card is drawn
+ * the picture is already there to show at once. Pictures already fetched are not asked for again.
  *
  * @param urls - The pictures, the first to be seen first.
  */
@@ -41,39 +80,13 @@ const useArtworkWarming = (urls: readonly (string | undefined)[]): void => {
       return;
     }
 
-    const waiting = wanted.split('\n').filter((url) => !kept.has(url));
-    let isStopped = false;
-    let running = 0;
+    const queue = wanted.split('\n');
 
-    const next = () => {
-      while (!isStopped && running < AT_ONCE) {
-        const url = waiting.shift();
-
-        if (url === undefined) {
-          return;
-        }
-
-        const picture = new Image();
-
-        picture.decoding = 'async';
-        picture.src = url;
-        keep(url, picture);
-        running += 1;
-
-        void picture
-          .decode()
-          .catch(() => undefined)
-          .then(() => {
-            running -= 1;
-            next();
-          });
-      }
-    };
-
-    next();
+    queues.add(queue);
+    pump();
 
     return () => {
-      isStopped = true;
+      queues.delete(queue);
     };
   }, [wanted]);
 };

@@ -13,6 +13,7 @@ describe('tintOf', () => {
         getContext() {
           return {
             fillStyle: '',
+            clearRect: () => undefined,
             fillRect: () => undefined,
             getImageData: () => ({ data: [255, 128, 0, 255] }),
           };
@@ -25,6 +26,31 @@ describe('tintOf', () => {
     expect(red).toBe(1);
     expect(green).toBeCloseTo(0.5, 1);
     expect(blue).toBe(0);
+  });
+
+  it('keeps one drawing surface for every colour it reads', () => {
+    let made = 0;
+
+    vi.stubGlobal(
+      'OffscreenCanvas',
+      class {
+        getContext() {
+          made += 1;
+
+          return {
+            fillStyle: '',
+            clearRect: () => undefined,
+            fillRect: () => undefined,
+            getImageData: () => ({ data: [0, 0, 0, 255] }),
+          };
+        }
+      },
+    );
+
+    tintOf('#000000');
+    tintOf('#ffffff');
+
+    expect(made).toBe(1);
   });
 
   it('is black where there is nothing to draw on', () => {

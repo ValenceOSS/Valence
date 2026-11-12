@@ -13,7 +13,7 @@ describe('sayRatingMeans', () => {
   });
 
   it('reads the rating and region whatever their case or spacing', () => {
-    expect(sayRatingMeans('gb', ' u ')).toBe('Fine for all ages');
+    expect(sayRatingMeans(' gb ', ' u ')).toBe('Fine for all ages');
   });
 
   it('says nothing for a rating from elsewhere or none at all', () => {

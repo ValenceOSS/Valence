@@ -242,8 +242,10 @@ const MediaPreview = ({
     }
 
     if (isKeptStill) {
-      wasHeld.current = true;
-      element.pause();
+      if (!element.paused) {
+        wasHeld.current = true;
+        element.pause();
+      }
 
       return;
     }

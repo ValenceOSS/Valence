@@ -544,12 +544,10 @@ const ShowDialog = ({
                 {detail === null ||
                 detail.certification === null ||
                 detail.certification === undefined ||
-                detail.certification === '' ||
-                detail.certificationRegion === null ||
-                detail.certificationRegion === undefined ? null : (
+                detail.certification === '' ? null : (
                   <AgeRating
                     certification={detail.certification}
-                    region={detail.certificationRegion}
+                    region={detail.certificationRegion ?? ''}
                   />
                 )}
 
@@ -565,7 +563,9 @@ const ShowDialog = ({
                         : 'bg-text/30 font-bold text-text'
                     }
                   >
-                    {badge.label}
+                    {badge.isMixed && !badge.label.includes(' / ')
+                      ? say('screens.showDialog.onSomeEpisodes', { label: badge.label })
+                      : badge.label}
                   </Badge>
                 ))}
 

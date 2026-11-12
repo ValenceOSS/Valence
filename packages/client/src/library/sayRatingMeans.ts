@@ -37,7 +37,7 @@ const sayRatingMeans = (region: string | null, certification: string | null): st
   const handler =
     region === null || certification === null
       ? undefined
-      : MEANINGS[region.toUpperCase()]?.[certification.trim().toUpperCase()];
+      : MEANINGS[region.trim().toUpperCase()]?.[certification.trim().toUpperCase()];
 
   return handler === undefined ? null : say(handler);
 };

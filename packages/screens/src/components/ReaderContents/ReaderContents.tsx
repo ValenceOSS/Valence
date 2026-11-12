@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListOrdered as ListOrderedIcon } from '@keyline-icons/react';
 import { ListOrdered as ListOrderedFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
@@ -34,6 +34,14 @@ const ReaderContents = ({
   const [isOpen, setIsOpen] = useState(false);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const currentRef = useRef<HTMLLIElement | null>(null);
+
+  const holdCurrent = useCallback((element: HTMLLIElement | null) => {
+    if (element !== null && element !== currentRef.current) {
+      element.scrollIntoView({ block: 'center' });
+    }
+
+    currentRef.current = element;
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,16 +86,7 @@ const ReaderContents = ({
               const isCurrent = entry.id === currentId;
 
               return (
-                <li
-                  key={entry.id}
-                  {...(isCurrent
-                    ? {
-                        ref: (element: HTMLLIElement | null) => {
-                          currentRef.current = element;
-                        },
-                      }
-                    : {})}
-                >
+                <li key={entry.id} {...(isCurrent ? { ref: holdCurrent } : {})}>
                   <Button
                     variant="bare"
                     size="none"

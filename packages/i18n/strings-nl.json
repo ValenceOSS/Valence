@@ -1026,7 +1026,7 @@
   },
   {
     "handler": "client.library.sayRatingMeans.seventeenAndUp",
-    "text": "No one 17 or under",
+    "text": "Not suitable for anyone 17 or under",
     "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
   },
   {
@@ -1041,12 +1041,12 @@
   },
   {
     "handler": "client.library.sayRatingMeans.twelveWithAnAdult",
-    "text": "For ages 12 and up, or younger with an adult",
+    "text": "For ages 12 and up, and younger children with an adult",
     "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
   },
   {
     "handler": "client.library.sayRatingMeans.underSeventeenWithAnAdult",
-    "text": "Under 17s need a parent or guardian with them",
+    "text": "Under 17s should watch with a parent or guardian",
     "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
   },
   {
@@ -36360,6 +36360,11 @@
     "handler": "screens.showDialog.nothingHereYetEpisodesAppearAs",
     "text": "No episodes yet. Episodes appear as they’re scanned.",
     "context": "Text shown in the show dialog."
+  },
+  {
+    "handler": "screens.showDialog.onSomeEpisodes",
+    "text": "{label} on some episodes",
+    "context": "A badge on a programme's page for a picture or sound format only some of its episodes have, such as Dolby Atmos. {label} is the format, filled in by the app."
   },
   {
     "handler": "screens.showDialog.playValueEpisodeValue2",

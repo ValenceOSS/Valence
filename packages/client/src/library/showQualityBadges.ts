@@ -81,11 +81,19 @@ const showQualityBadges = (
       sounds.map((sound) => sound.format),
       null,
     ),
-    badgeAcross(
-      sounds.map((sound) => sound.channels),
-      describeChannels(2),
-      MOST_CHANNELS_FIRST.map((count) => describeChannels(count)),
-    ),
+    sounds.every((sound) => sound.channels === null)
+      ? null
+      : badgeAcross(
+          episodes.map(
+            ({ audio }, at) =>
+              sounds[at]?.channels ??
+              (audio !== null && audio !== undefined && !audio.isAtmos && audio.channels === 2
+                ? describeChannels(2)
+                : null),
+          ),
+          null,
+          MOST_CHANNELS_FIRST.map((count) => describeChannels(count)),
+        ),
   ].filter((badge) => badge !== null);
 };
 

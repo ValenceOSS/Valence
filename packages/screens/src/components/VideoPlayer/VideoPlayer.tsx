@@ -102,6 +102,7 @@ import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
+import { qualityToAsk } from '@ValenceClient/playback/qualityToAsk';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { TrickplayPreview } from './components/TrickplayPreview/TrickplayPreview';
@@ -1100,11 +1101,11 @@ const VideoPlayer = ({
             (await cache
               .ensureQueryData(libraryQueries.detail(request.mediaId))
               .catch(() => null)));
-      const isTheOriginalsRung = sized !== null && sharpestStepOf(sized)?.id === pinned;
-      const quality =
-        request.requestedQuality === 'auto' || isTheOriginalsRung
-          ? request.autoRung
-          : request.requestedQuality;
+      const quality = qualityToAsk(
+        request.requestedQuality,
+        request.autoRung,
+        sized === null ? null : (sharpestStepOf(sized)?.id ?? null),
+      );
       const isWhole = quality === 'original';
       const mayPickSound =
         isWhole && engine !== null && (asked === null || engine.audioCodecs.includes(asked.codec));
@@ -2438,6 +2439,28 @@ const VideoPlayer = ({
     skipRef.current = skip;
   });
 
+  const toggleMute = () => {
+    isSilencedByPolicyRef.current = false;
+
+    if (isMuted || volume === 0) {
+      if (volume === 0) {
+        setVolume(loudestRef.current);
+      }
+
+      setIsMuted(false);
+
+      return;
+    }
+
+    setIsMuted(true);
+  };
+
+  const toggleMuteRef = useRef(toggleMute);
+
+  useEffect(() => {
+    toggleMuteRef.current = toggleMute;
+  });
+
   const lastTapRef = useRef<{ at: number; zone: TapZone } | null>(null);
   const pendingTapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressClosesAMenuRef = useRef(false);
@@ -2738,8 +2761,7 @@ const VideoPlayer = ({
         },
         f: toggleFullscreen,
         m: () => {
-          isSilencedByPolicyRef.current = false;
-          setIsMuted((muted) => !muted);
+          toggleMuteRef.current();
         },
         c: () => {
           setSelectedSubtitleId((current) =>
@@ -2842,16 +2864,20 @@ const VideoPlayer = ({
     }
 
     const next = following;
-    const quality =
-      request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality;
+    const { requestedQuality, autoRung } = request;
     const rememberedAudio = readPlaybackPreferences().audioLanguage;
     const clientId = platformInUse().thisClientId();
 
     readied.readyAhead(next.id, async () => {
       const known =
-        rememberedAudio === null
+        rememberedAudio === null && (requestedQuality === 'auto' || requestedQuality === 'original')
           ? null
           : await cache.ensureQueryData(libraryQueries.detail(next.id)).catch(() => null);
+      const quality = qualityToAsk(
+        requestedQuality,
+        autoRung,
+        known === null ? null : (sharpestStepOf(known)?.id ?? null),
+      );
       const audioStreamIndex =
         rememberedAudio === null
           ? undefined
@@ -3360,21 +3386,7 @@ const VideoPlayer = ({
               isSilencedByPolicyRef.current = false;
               setIsMuted(next === 0);
             }}
-            onToggleMute={() => {
-              isSilencedByPolicyRef.current = false;
-
-              if (isMuted || volume === 0) {
-                if (volume === 0) {
-                  setVolume(loudestRef.current);
-                }
-
-                setIsMuted(false);
-
-                return;
-              }
-
-              setIsMuted(true);
-            }}
+            onToggleMute={toggleMute}
             onToggleFullscreen={toggleFullscreen}
             {...(hasTelevision
               ? {

@@ -281,18 +281,15 @@ const ValenceShell = () => {
     void cache
       .ensureQueryData(libraryQueries.all())
       .then(async (found) => {
-        for (const entry of found) {
-          const shows = await cache.ensureQueryData(libraryQueries.shows(entry.id));
-          const wanted = shows.find(
-            (one) => one.id === place.show || showSlug(one.title) === place.show,
-          );
+        const shows = (
+          await Promise.all(
+            found.map((entry) => cache.ensureQueryData(libraryQueries.shows(entry.id))),
+          )
+        ).flat();
+        const byId = shows.find((one) => one.id === place.show);
+        const bySlug = shows.filter((one) => showSlug(one.title) === place.show);
 
-          if (wanted !== undefined) {
-            return wanted;
-          }
-        }
-
-        return null;
+        return byId ?? (bySlug.length === 1 ? (bySlug[0] ?? null) : null);
       })
       .catch(() => null)
       .then((found) => {
