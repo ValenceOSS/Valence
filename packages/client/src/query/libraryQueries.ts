@@ -1,4 +1,5 @@
-import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { fetchHomeShelves } from '@ValenceClient/library/fetchHomeShelves';
 import {
   fetchLibraries,
   fetchItemsAcross,
@@ -287,8 +288,28 @@ const leftOut = (libraryId: string) =>
     queryFn: () => fetchLeftOut(libraryId),
   });
 
+/**
+ * The front page's endless shelves, a page at a time, each page carrying on from where the last
+ * left off.
+ *
+ * @param libraryIds - The libraries to draw from.
+ * @param leaning - The genres the viewer leans towards, most first.
+ * @param count - How many shelves to read a page.
+ * @returns The query.
+ */
+const homeShelves = (libraryIds: readonly string[], leaning: readonly string[], count: number) =>
+  infiniteQueryOptions({
+    queryKey: [...LIBRARY, 'home-shelves', [...libraryIds].sort(), leaning, count],
+    queryFn: ({ pageParam }) => fetchHomeShelves({ libraryIds, leaning, cursor: pageParam, count }),
+    initialPageParam: '',
+    getNextPageParam: (last) => last.cursor ?? undefined,
+    enabled: libraryIds.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
 const libraryQueries = {
   all,
+  homeShelves,
   items,
   detail,
   likeThis,

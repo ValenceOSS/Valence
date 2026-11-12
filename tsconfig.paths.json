@@ -440,6 +440,10 @@
       "@ValenceUI/PageHero.types": ["./packages/ui/src/components/PageHero/PageHero.types.ts"],
       "@ValenceUI/tokens/underlined": ["./packages/ui/src/tokens/underlined.ts"],
       "@ValenceUI/animations/reveal": ["./packages/ui/src/animations/reveal.ts"],
+      "@ValenceUI/VirtualStack": ["./packages/ui/src/components/VirtualStack/VirtualStack.tsx"],
+      "@ValenceUI/VirtualStack.types": [
+        "./packages/ui/src/components/VirtualStack/VirtualStack.types.ts"
+      ],
       "@ValenceUI/VirtualGrid": ["./packages/ui/src/components/VirtualGrid/VirtualGrid.tsx"],
       "@ValenceUI/VirtualGrid.types": [
         "./packages/ui/src/components/VirtualGrid/VirtualGrid.types.ts"

@@ -38,7 +38,7 @@ import { CollectionShelf } from '@ValenceScreens/components/CollectionShelf/Coll
 import { NewCollectionButton } from '@ValenceScreens/components/NewCollectionButton/NewCollectionButton';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';

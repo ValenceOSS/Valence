@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
 import { GRID_GAP } from '@ValenceMobile/components/APosterGrid/GRID_GAP';
 import { Words } from '@ValenceMobile/components/Words/Words';

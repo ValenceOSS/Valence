@@ -8,7 +8,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { groupCopies } from '@ValenceScreens/library/groupCopies';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';

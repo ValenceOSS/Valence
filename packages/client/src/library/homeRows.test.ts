@@ -363,4 +363,30 @@ describe('the rows that come round again', () => {
       'recent',
     ]);
   });
+
+  it('puts the shelves a server sends after the rest, named and as they are', () => {
+    const rows = homeRows({
+      resuming: [],
+      picked: [],
+      recent: [],
+      because: [],
+      acclaimed: [],
+      genres: [],
+      decades: [],
+      more: [],
+      shelves: [
+        {
+          id: 'again:1:0',
+          kind: 'again',
+          genre: 'Drama',
+          order: null,
+          decade: null,
+          page: 0,
+          items: [],
+        },
+      ],
+    });
+
+    expect(rows).toEqual([{ id: 'again:1:0', title: 'Drama', items: [], standsForShows: true }]);
+  });
 });

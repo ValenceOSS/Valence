@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FolderOpen as FolderOpenIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
+import { VirtualStack } from '@ValenceUI/VirtualStack';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { BackToTop } from '@ValenceUI/BackToTop';
@@ -39,6 +40,10 @@ const WARMED_PER_RAIL = 10;
 const WARMED_RAILS = 10;
 
 const NEAR_THE_END_PX = 3000;
+
+const RAIL_HEIGHT = 360;
+
+const RAIL_GAP = 40;
 
 const PAGE_SIZE = 60;
 
@@ -285,18 +290,39 @@ const LibraryBrowser = ({
     };
   }, [isReading]);
 
-  const start = useCallback(
-    (media: MediaSummary, startSeconds: number) => {
-      if (onWatch === undefined) {
-        onPlay(media);
+  const told = useRef({ onPlay, onShow, onWatch, onOpenShow, onToggleKept, onHide });
 
-        return;
-      }
+  useEffect(() => {
+    told.current = { onPlay, onShow, onWatch, onOpenShow, onToggleKept, onHide };
+  });
 
-      onWatch(media, startSeconds);
-    },
-    [onWatch, onPlay],
-  );
+  const inspect = useCallback((media: MediaSummary) => {
+    told.current.onPlay(media);
+  }, []);
+
+  const openShow = useCallback((media: MediaSummary) => {
+    told.current.onOpenShow?.(media);
+  }, []);
+
+  const toggleKept = useCallback((media: MediaSummary) => {
+    told.current.onToggleKept?.(media);
+  }, []);
+
+  const hide = useCallback((media: MediaSummary) => {
+    told.current.onHide?.(media);
+  }, []);
+
+  const start = useCallback((media: MediaSummary, startSeconds: number) => {
+    const { onWatch: watch, onPlay: open } = told.current;
+
+    if (watch === undefined) {
+      open(media);
+
+      return;
+    }
+
+    watch(media, startSeconds);
+  }, []);
 
   const playShow = useCallback(
     async (media: MediaSummary) => {
@@ -321,15 +347,17 @@ const LibraryBrowser = ({
         return;
       }
 
-      if (series !== null && onShow !== undefined) {
-        onShow(series);
+      const { onShow: show, onPlay: open } = told.current;
+
+      if (series !== null && show !== undefined) {
+        show(series);
 
         return;
       }
 
-      onPlay(media);
+      open(media);
     },
-    [queryClient, progress, start, onShow, onPlay],
+    [queryClient, progress, start],
   );
 
   const playShowCard = useCallback(
@@ -475,23 +503,36 @@ const LibraryBrowser = ({
                 <div className="flex flex-col gap-10">
                   {isHome && onShow !== undefined ? <ComingUp onOpenShow={onShow} /> : null}
 
-                  {rails.map((rail) => (
-                    <LibraryRail
-                      key={rail.id}
-                      rail={rail}
-                      isHome={isHome}
-                      progress={progress}
-                      flagOf={flagOf}
-                      onPlayFilm={start}
-                      onPlayShow={playShowCard}
-                      onInspect={onPlay}
-                      {...(onOpenShow === undefined ? {} : { onOpenShow })}
-                      {...(isKept === undefined ? {} : { isKept })}
-                      {...(onToggleKept === undefined ? {} : { onToggleKept })}
-                      {...(onHide === undefined ? {} : { onHide })}
-                      {...(dismiss === null || rail.id !== RESUMING ? {} : { onDismiss: dismiss })}
-                    />
-                  ))}
+                  <VirtualStack
+                    count={rails.length}
+                    keyOf={(at) => rails[at]?.id ?? at.toString()}
+                    estimatedHeight={RAIL_HEIGHT}
+                    gap={RAIL_GAP}
+                  >
+                    {(at) => {
+                      const rail = rails[at];
+
+                      return rail === undefined ? null : (
+                        <LibraryRail
+                          key={rail.id}
+                          rail={rail}
+                          isHome={isHome}
+                          progress={progress}
+                          flagOf={flagOf}
+                          onPlayFilm={start}
+                          onPlayShow={playShowCard}
+                          onInspect={inspect}
+                          {...(onOpenShow === undefined ? {} : { onOpenShow: openShow })}
+                          {...(isKept === undefined ? {} : { isKept })}
+                          {...(onToggleKept === undefined ? {} : { onToggleKept: toggleKept })}
+                          {...(onHide === undefined ? {} : { onHide: hide })}
+                          {...(dismiss === null || rail.id !== RESUMING
+                            ? {}
+                            : { onDismiss: dismiss })}
+                        />
+                      );
+                    }}
+                  </VirtualStack>
 
                   {isHome && hasMore ? (
                     <div ref={setEnd} className="flex h-16 items-center justify-center">
