@@ -74,4 +74,18 @@ describe('ShareChart', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(ShareChart.displayName).toBe('ShareChart');
   });
+
+  it('scrolls a long key in a box that fades where there is more', () => {
+    render(
+      <ShareChart
+        label="Disk"
+        slices={slices}
+        total="100 GB"
+        totalLabel="in libraries"
+        emptyMessage="No libraries yet"
+      />,
+    );
+
+    expect(screen.getByText('Films').closest('[data-slot="scroll-fade"]')).toHaveClass('max-h-40');
+  });
 });

@@ -4224,6 +4224,8 @@ const ENGLISH = {
   'screens.adminArea.busyHoursGrid.nothingWasStarted': 'Nothing was started in this range.',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
   'screens.adminArea.cacheBreakdown.estimatedSizeOfDownloads': 'Estimated size of downloads',
+  'screens.adminArea.cacheBreakdown.howItSplits':
+    'How the files Valence keeps are split between each kind',
   'screens.adminArea.cacheBreakdown.keptByValence': 'Kept by Valence, not counting the library',
   'screens.adminArea.cacheBreakdown.stillToDownload.one':
     '{left} still to download, {count} download',
@@ -5751,16 +5753,33 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
+  'screens.adminArea.overviewPanel.diskUsageCard.driveFull': '{mount} · {share} full',
+  'screens.adminArea.overviewPanel.diskUsageCard.elseIs':
+    'On the disk, but not in a library or Valence’s.',
+  'screens.adminArea.overviewPanel.diskUsageCard.everythingElse': 'Everything else',
+  'screens.adminArea.overviewPanel.diskUsageCard.free': 'Free',
+  'screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed': 'How {mount} is used',
+  'screens.adminArea.overviewPanel.diskUsageCard.notMeasured':
+    'This disk hasn’t been measured yet.',
+  'screens.adminArea.overviewPanel.diskUsageCard.rescan': 'Rescan',
+  'screens.adminArea.overviewPanel.diskUsageCard.roomLeft': 'Room left on {mount}.',
+  'screens.adminArea.overviewPanel.diskUsageCard.shareOfTheDisk': '{share} of the disk.',
+  'screens.adminArea.overviewPanel.diskUsageCard.valenceKeeps':
+    'Previews {previews}, scrub thumbnails {trickplay}, transcodes {sessions}, artwork {artwork}.',
+  'screens.adminArea.overviewPanel.diskUsageCard.valencesFiles': 'Valence’s files',
+  'screens.adminArea.overviewPanel.diskUsageCard.valencesOnTheDrive':
+    "is Valence's, of {used} used on a {total} drive",
+  'screens.adminArea.overviewPanel.diskUsageCard.whichDrive': 'Which drive to show',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
     'How much space each library takes up',
   'screens.adminArea.overviewPanel.inTheLibraries': 'in libraries',
   'screens.adminArea.overviewPanel.kindOfWork': 'Kind of work',
-  'screens.adminArea.overviewPanel.loadAgainstCores': 'Load (share of cores)',
   'screens.adminArea.overviewPanel.loadFigures.average': 'Average',
   'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
+  'screens.adminArea.overviewPanel.loadOfTheCores': '{load} · {share} of the cores',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',
@@ -6868,6 +6887,10 @@ const ENGLISH = {
     'The catalogue’s “{name}” episode group',
   'screens.adminArea.titlePage.animeSettingsCard.workedOutForYou': 'Worked out for you',
   'screens.adminArea.titlePage.askerStrip.askedFirst': 'Asked first',
+  'screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.one':
+    '{count} more person wants it',
+  'screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.other':
+    '{count} more people want it',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one': '{count} person wants this',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other': '{count} people want this',
   'screens.adminArea.titlePage.askerStrip.everybodyWhoWantsIt': 'Everybody who wants it',
@@ -10479,6 +10502,8 @@ const ENGLISH = {
   'ui.commandPalette.escape': 'Esc',
   'ui.couldNotRead.theServerMayBeUnreachable':
     'The server may be unreachable, or your session may have expired.',
+  'ui.countMark.plusCount.one': '+{count}',
+  'ui.countMark.plusCount.other': '+{count}',
   'ui.dataTable.filter': 'Filter',
   'ui.dataTable.filterById': 'Filter by {id}',
   'ui.dataTable.nothingHereYet': 'Nothing here yet.',
@@ -10489,6 +10514,8 @@ const ENGLISH = {
   'ui.filterMenu.clearFilters': 'Clear filters',
   'ui.freshnessNote.checkingForChanges': 'Checking for changes',
   'ui.freshnessNote.couldNotCheckForChanges': 'Couldn’t check for changes',
+  'ui.mediaCard.countMoreServersHaveIt.one': '{count} more server has it',
+  'ui.mediaCard.countMoreServersHaveIt.other': '{count} more servers have it',
   'ui.noticeCard.thisWillCloseIn': 'This message will close in',
   'ui.pageCurl.xPxYPx': '{x}px {y}px',
   'ui.pageDots.showName': 'Show {name}',

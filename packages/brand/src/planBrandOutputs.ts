@@ -32,9 +32,10 @@ type BrandOutput =
  * Lists every picture of the Valence icon and logo that the apps carry, and how each is made from
  * the two sources in `design`: the Icon Composer bundle and the logo drawn in white.
  *
- * The web, desktop, docs and landing pages each serve the logo themselves, so each gets a copy, and
- * the web, docs and landing pages a small render of the icon for the browser's tab, as does the
- * README. The web takes a second, smaller render at 192 for a push notice's icon and badge. The
+ * The web, desktop, docs, landing and metrics pages each serve the logo themselves, so each gets a
+ * copy, and the web, docs, landing and metrics pages a small render of the icon for the browser's
+ * tab, as does the README. The web takes a second, smaller render at 192 for a push notice's icon
+ * and badge, and the landing page another at 256 for its footer. The
  * phone and television tint the logo from a picture, so they get it drawn at the sizes
  * they use. The iPhone's icon reads the bundle straight from `design`; the desktop build takes a copy
  * of it for the Mac, and a flat render for Windows, Linux and the dock while it is being worked on,
@@ -63,13 +64,13 @@ const planBrandOutputs = (): BrandOutput[] => {
   });
 
   return [
-    ...['web', 'desktop', 'docs', 'landing'].map((app): BrandOutput => ({
+    ...['web', 'desktop', 'docs', 'landing', 'metrics'].map((app): BrandOutput => ({
       kind: 'copy',
       from: LOGO,
       to: `apps/${app}/public/valence-logo.svg`,
     })),
     { kind: 'copy', from: LOGO, to: 'packages/ui/src/assets/brands/valence.svg' },
-    ...['web', 'docs', 'landing'].map((app): BrandOutput => ({
+    ...['web', 'docs', 'landing', 'metrics'].map((app): BrandOutput => ({
       kind: 'icon',
       from: ICON,
       to: `apps/${app}/public/icon.png`,
@@ -77,6 +78,13 @@ const planBrandOutputs = (): BrandOutput[] => {
       margin: 0,
     })),
     { kind: 'icon', from: ICON, to: 'apps/web/public/icon-192.png', pixels: 192, margin: 0 },
+    {
+      kind: 'icon',
+      from: ICON,
+      to: 'apps/landing/public/valence-icon.png',
+      pixels: 256,
+      margin: 0,
+    },
     { kind: 'icon', from: ICON, to: 'assets/valence-icon.png', pixels: 256, margin: 0 },
     { kind: 'copy', from: ICON, to: 'apps/desktop/build/icon.icon' },
     { kind: 'icon', from: ICON, to: 'apps/desktop/build/icon.png', pixels: 1024, margin: 0 },

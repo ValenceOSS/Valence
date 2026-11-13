@@ -786,10 +786,11 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const { servers } = await linking.linking();
+    const { identity, servers } = await linking.linking();
 
     return context.json(
       {
+        here: { name: identity.name, colour: identity.colour, pictureAt: identity.pictureAt },
         servers: servers
           .filter((server) => server.state === 'linked')
           .map((server) => ({

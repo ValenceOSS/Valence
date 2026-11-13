@@ -13,6 +13,7 @@ import type { MostWatchedListProps } from './MostWatchedList.types';
 const MostWatchedList = ({ titles, limit = 10 }: MostWatchedListProps) => (
   <BarList
     label={say('screens.adminArea.mostWatchedList.mostWatched')}
+    className="max-h-[14rem]"
     heading={say('common.title')}
     valueHeading={say('screens.importWizard.importReportView.plays')}
     emptyMessage={say('screens.adminArea.mostWatchedList.nothingWasWatched')}

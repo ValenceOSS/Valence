@@ -85,6 +85,7 @@ const STRIPES =
 
 const HEIGHT_CLASSES = {
   compact: 'max-h-[28rem]',
+  short: 'max-h-[12.5rem]',
   fill: 'max-h-[calc(100dvh-16rem)]',
   parent: 'min-h-0 flex-1',
   fills: '',
@@ -138,7 +139,8 @@ const HEIGHT_CLASSES = {
  *   viewport, for a page that is otherwise this table alone, takes whatever room its parent gives
  *   it, as in a dialog whose table is the part that scrolls, or stands exactly as tall as the room
  *   left below it, reaching the foot of the screen however little it holds, so the page stays still
- *   and only the table scrolls.
+ *   and only the table scrolls, or about four rows, for a table set among other things on a page.
+ *   Wherever it scrolls, an edge with more beyond it fades, the top one below the header row.
  * @param sorting - How the rows are sorted, where the caller sorts them itself, such as on a server.
  * @param onSortingChange - Told how to sort them instead, which makes the sorting the caller's.
  * @param filters - What each column is filtered to, where the caller filters the rows itself.
@@ -189,7 +191,13 @@ const DataTable = <Row extends RowData>({
   const [shown, setShown] = useState(pageSize);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const room = useRoomBelow(containerRef, height === 'fills');
-  const [beside, setBeside] = useState({ isBefore: false, isAfter: false, isRtl: false });
+  const [beside, setBeside] = useState({
+    isBefore: false,
+    isAfter: false,
+    isRtl: false,
+    isAbove: false,
+    isBelow: false,
+  });
 
   const measureBeside = (box: HTMLElement) => {
     const travelled = Math.abs(box.scrollLeft);
@@ -197,12 +205,16 @@ const DataTable = <Row extends RowData>({
       isBefore: travelled > 1,
       isAfter: travelled + box.clientWidth < box.scrollWidth - 1,
       isRtl: getComputedStyle(box).direction === 'rtl',
+      isAbove: box.scrollTop > 1,
+      isBelow: box.scrollTop + box.clientHeight < box.scrollHeight - 1,
     };
 
     setBeside((before) =>
       before.isBefore === next.isBefore &&
       before.isAfter === next.isAfter &&
-      before.isRtl === next.isRtl
+      before.isRtl === next.isRtl &&
+      before.isAbove === next.isAbove &&
+      before.isBelow === next.isBelow
         ? before
         : next,
     );
@@ -339,6 +351,7 @@ const DataTable = <Row extends RowData>({
 
   const drawnRows = table.getRowModel().rows;
   const head = useRef<HTMLTableSectionElement | null>(null);
+  const headHeight = head.current?.offsetHeight ?? 0;
   const virtualiser = useVirtualizer({
     count: isVirtual ? drawnRows.length : 0,
     getScrollElement: () => containerRef.current,
@@ -402,9 +415,13 @@ const DataTable = <Row extends RowData>({
         {...(beside.isAfter ? { 'data-more-after': '' } : {})}
         style={{
           ...(room === null ? {} : { height: room }),
-          ...(beside.isBefore || beside.isAfter
+          ...(beside.isBefore || beside.isAfter || beside.isAbove || beside.isBelow
             ? {
-                maskImage: `linear-gradient(to ${beside.isRtl ? 'left' : 'right'}, ${beside.isBefore ? 'transparent' : 'black'} 0, black ${(beside.isBefore ? SIDE_FADE : 0).toString()}px, black calc(100% - ${(beside.isAfter ? SIDE_FADE : 0).toString()}px), ${beside.isAfter ? 'transparent' : 'black'} 100%)`,
+                maskImage: [
+                  `linear-gradient(to ${beside.isRtl ? 'left' : 'right'}, ${beside.isBefore ? 'transparent' : 'black'} 0, black ${(beside.isBefore ? SIDE_FADE : 0).toString()}px, black calc(100% - ${(beside.isAfter ? SIDE_FADE : 0).toString()}px), ${beside.isAfter ? 'transparent' : 'black'} 100%)`,
+                  `linear-gradient(to bottom, black 0, black ${headHeight.toString()}px, ${beside.isAbove ? 'transparent' : 'black'} ${headHeight.toString()}px, black ${(headHeight + (beside.isAbove ? SIDE_FADE : 0)).toString()}px, black calc(100% - ${(beside.isBelow ? SIDE_FADE : 0).toString()}px), ${beside.isBelow ? 'transparent' : 'black'} 100%)`,
+                ].join(', '),
+                maskComposite: 'intersect',
               }
             : {}),
         }}

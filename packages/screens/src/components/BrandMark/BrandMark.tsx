@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { WordReveal } from '@ValenceUI/WordReveal';
 import { BrandLogo } from '@ValenceScreens/components/BrandLogo/BrandLogo';
+import { DeckMark } from '@ValenceUI/DeckMark';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { BrandMarkProps } from './BrandMark.types';
 import { useQuery } from '@tanstack/react-query';
@@ -33,7 +34,12 @@ const BrandMark = ({ hasMark, marksPlace, size = 'md' }: BrandMarkProps) => {
   const isFlyingRef = useRef(false);
   const brand = useQuery(appearanceQueries.appearance()).data?.brand;
   const word = brand?.name ?? say('common.valence');
-  const mark = <BrandLogo logo={brand?.logo ?? null} size={look.mark} />;
+  const mark =
+    (brand?.logo ?? null) === null ? (
+      <DeckMark size={Math.round(look.mark * 1.4)} isAnimated />
+    ) : (
+      <BrandLogo logo={brand?.logo ?? null} size={look.mark} />
+    );
 
   useEffect(() => {
     if (!hasMark || hasLanded) {

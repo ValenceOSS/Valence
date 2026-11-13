@@ -30,7 +30,7 @@ type DataTableProps<Row extends RowData> = {
   isVirtual?: boolean;
   onReachEnd?: () => void;
   canOpen?: (row: Row) => boolean;
-  height?: 'compact' | 'fill' | 'parent' | 'fills';
+  height?: 'compact' | 'short' | 'fill' | 'parent' | 'fills';
   sorting?: DataTableSorting | null;
   onSortingChange?: (sorting: DataTableSorting | null) => void;
   filters?: Readonly<Record<string, string>>;

@@ -10,7 +10,7 @@ const library = (id: string, kind: Library['kind']): Library =>
 describe('libraryChoicesFor', () => {
   it('offers nothing where there is a single library of a kind', () => {
     expect(
-      libraryChoicesFor([library('a', 'movies'), library('b', 'shows')], [], null, vi.fn()),
+      libraryChoicesFor([library('a', 'movies'), library('b', 'shows')], [], null, null, vi.fn()),
     ).toEqual({});
   });
 
@@ -18,6 +18,7 @@ describe('libraryChoicesFor', () => {
     const choices = libraryChoicesFor(
       [library('a', 'movies'), library('b', 'movies'), library('c', 'shows')],
       [],
+      null,
       null,
       vi.fn(),
     );
@@ -31,6 +32,7 @@ describe('libraryChoicesFor', () => {
       [library('a', 'shows'), library('b', 'anime')],
       [],
       null,
+      null,
       vi.fn(),
     );
 
@@ -40,9 +42,11 @@ describe('libraryChoicesFor', () => {
   it('marks the library the address names, and all of them otherwise', () => {
     const libraries = [library('a', 'movies'), library('b', 'movies')];
 
-    expect(libraryChoicesFor(libraries, [], 'b', vi.fn()).films?.selectedId).toBe('b');
-    expect(libraryChoicesFor(libraries, [], null, vi.fn()).films?.selectedId).toBe('all');
-    expect(libraryChoicesFor(libraries, [], 'elsewhere', vi.fn()).films?.selectedId).toBe('all');
+    expect(libraryChoicesFor(libraries, [], null, 'b', vi.fn()).films?.selectedId).toBe('b');
+    expect(libraryChoicesFor(libraries, [], null, null, vi.fn()).films?.selectedId).toBe('all');
+    expect(libraryChoicesFor(libraries, [], null, 'elsewhere', vi.fn()).films?.selectedId).toBe(
+      'all',
+    );
   });
 
   it('reports all of them as null, and one library by its id, with the place it was chosen for', () => {
@@ -50,6 +54,7 @@ describe('libraryChoicesFor', () => {
     const choices = libraryChoicesFor(
       [library('a', 'shows'), library('b', 'shows')],
       [],
+      null,
       null,
       onSelect,
     );
@@ -65,6 +70,7 @@ describe('libraryChoicesFor', () => {
     const choices = libraryChoicesFor(
       [library('a', 'books'), library('b', 'books'), library('c', 'movies')],
       [],
+      null,
       'b',
       vi.fn(),
     );
@@ -80,25 +86,70 @@ describe('libraryChoicesFor', () => {
   });
 
   it('offers nothing for books where there is a single book library', () => {
-    expect(libraryChoicesFor([library('a', 'books')], [], null, vi.fn()).read).toBeUndefined();
+    expect(
+      libraryChoicesFor([library('a', 'books')], [], null, null, vi.fn()).read,
+    ).toBeUndefined();
   });
 
   it('says where, where some film libraries come from a linked server', () => {
     const films = aLinkedServerFace();
     const choices = libraryChoicesFor(
-      [library('a', 'movies'), aLibrary({ id: 'b', name: 'Cinema', linkedServerId: films.id })],
+      [
+        library('a', 'movies'),
+        library('b', 'movies'),
+        aLibrary({ id: 'c', name: 'Cinema', linkedServerId: films.id }),
+      ],
       [films],
+      null,
       `from:${films.id}`,
       vi.fn(),
     );
 
-    expect(choices.films?.options.map((option) => [option.group ?? null, option.label])).toEqual([
-      [null, 'Everywhere'],
-      ['This server', 'All'],
-      ['This server', 'a'],
-      ['Films', 'All'],
-      ['Films', 'Cinema'],
+    expect(choices.films?.options.map((option) => [option.label, option.isNested])).toEqual([
+      ['Everywhere', false],
+      ['This server', false],
+      ['a', true],
+      ['b', true],
+      ['Films', false],
+      ['Cinema', true],
     ]);
     expect(choices.films?.selectedId).toBe(`from:${films.id}`);
+  });
+
+  it('shows each server by its face, and no library by one', () => {
+    const films = aLinkedServerFace();
+    const choices = libraryChoicesFor(
+      [
+        library('a', 'movies'),
+        library('b', 'movies'),
+        aLibrary({ id: 'c', name: 'Cinema', linkedServerId: films.id }),
+      ],
+      [films],
+      { name: 'Home', colour: '#3a8ee8', pictureAt: null },
+      null,
+      vi.fn(),
+    );
+
+    expect(choices.films?.options.map((option) => option.icon !== undefined)).toEqual([
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+    ]);
+  });
+
+  it('draws this server without a face, from a server too old to say how it is shown', () => {
+    const films = aLinkedServerFace();
+    const choices = libraryChoicesFor(
+      [library('a', 'movies'), aLibrary({ id: 'c', name: 'Cinema', linkedServerId: films.id })],
+      [films],
+      null,
+      null,
+      vi.fn(),
+    );
+
+    expect(choices.films?.options.find((option) => option.id === 'here')?.icon).toBeUndefined();
   });
 });

@@ -608,7 +608,11 @@ describe('AdminArea', () => {
   it('reports room left on the disk the library is on, not on the one Valence boots from', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect((await screen.findByText('2.0 TB')).parentElement).toHaveTextContent('2.0 TB free');
+    expect(
+      (await screen.findAllByText('2.0 TB')).some((size) =>
+        size.parentElement?.textContent?.includes('2.0 TB free'),
+      ),
+    ).toBe(true);
     expect((await screen.findByText('8.0 TB')).parentElement).toHaveTextContent(
       'of 8.0 TB · /media',
     );

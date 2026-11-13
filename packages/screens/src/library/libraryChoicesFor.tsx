@@ -1,7 +1,10 @@
 import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
+import { WHERE_CHOICE } from '@ValenceClient/library/WHERE_CHOICE';
 import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
-import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
+import type { LinkedServerFace, ThisServerFace } from '@ValenceContracts/schemas/LinkSharing';
+import { serverPictureUrl } from '@ValenceClient/linking/serverPictureUrl';
+import { ServerFace } from '@ValenceScreens/components/ServerFace/ServerFace';
 import { say } from '@ValenceI18n/say';
 
 const EVERY = 'all';
@@ -35,11 +38,13 @@ const PLACES = [
 /**
  * Works out, for films, programmes and books, the choice between the libraries that hold them —
  * offered only where there is more than one library to choose between. Where some of them come from
- * linked servers, the choice also says where: everything, only this server's own, or only one linked
- * server's; and the libraries are headed by the server they come from, this server's own first.
+ * linked servers, the choice is also of where: everything, only this server's own, or only one
+ * linked server's, this server's own first, each server shown by its picture or its initial with
+ * its libraries set beneath it.
  *
  * @param libraries - Every library there is.
  * @param servers - The servers this one is linked with.
+ * @param here - How this server is shown beside them, where it says.
  * @param selectedId - The library the address names, or null for all of them.
  * @param onSelect - Told which library was chosen, or null for all of them, and the place it was
  *   chosen for — which is where choosing one takes you, from anywhere.
@@ -48,6 +53,7 @@ const PLACES = [
 const libraryChoicesFor = (
   libraries: readonly Library[],
   servers: readonly LinkedServerFace[],
+  here: ThisServerFace | null,
   selectedId: string | null,
   onSelect: (libraryId: string | null, place: 'films' | 'shows' | 'read') => void,
 ): Partial<Record<'films' | 'shows' | 'read', NavBarChoices>> =>
@@ -59,12 +65,40 @@ const libraryChoicesFor = (
         return [];
       }
 
-      const options = libraryOptionsFor(held, servers, EVERY, everyLabel).map((option) => ({
-        id: option.id,
-        label: option.shortLabel,
-        group: option.group,
-      }));
+      const options = libraryOptionsFor(held, servers, EVERY, everyLabel).map((option) => {
+        const face =
+          option.id === WHERE_CHOICE.here
+            ? here === null
+              ? null
+              : { ...here, picture: serverPictureUrl(null, here.pictureAt) }
+            : option.id.startsWith(WHERE_CHOICE.fromPrefix)
+              ? (servers
+                  .filter((server) => `${WHERE_CHOICE.fromPrefix}${server.id}` === option.id)
+                  .map((server) => ({
+                    ...server,
+                    picture: serverPictureUrl(server.id, server.pictureAt),
+                  }))
+                  .at(0) ?? null)
+              : null;
 
+        return {
+          id: option.id,
+          label: option.shortLabel,
+          isNested: option.isNested,
+          ...(face === null
+            ? {}
+            : {
+                icon: (
+                  <ServerFace
+                    name={face.name}
+                    colour={face.colour}
+                    picture={face.picture}
+                    className="-m-0.5 size-5 text-[0.625rem]"
+                  />
+                ),
+              }),
+        };
+      });
       return [
         [
           place,

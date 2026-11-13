@@ -15,6 +15,11 @@ const MENU = {
     'coarse:gap-4 coarse:px-4 coarse:py-3.5',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
   ].join(' '),
+  nested: [
+    'ps-7 text-text-muted coarse:ps-8',
+    'data-[state=checked]:text-text data-[highlighted]:text-text',
+  ].join(' '),
+  separator: 'mx-3 my-1 h-px bg-[var(--surface-line)]',
   itemDestructive: 'text-danger',
   itemPlain: 'text-text',
   marker: 'flex w-3.5 shrink-0 items-center justify-center text-text',

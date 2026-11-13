@@ -22,7 +22,7 @@ import type { Restyle } from './restyleIcon';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 
-const LOGO_WIDTH = 624;
+const LOGO_WIDTH = 485;
 
 const RENDER_PIXELS = 2048;
 

@@ -4,7 +4,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheMarkProps } from './TheMark.types';
 import { say } from '@ValenceI18n/say';
 
-const WIDER_BY = 624 / 458;
+const WIDER_BY = 484.56 / 363.62;
 
 /**
  * Valence's mark, in the ink of the words around it, as the web draws it in the corner of its bar.

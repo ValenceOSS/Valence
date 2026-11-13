@@ -168,11 +168,12 @@ const Rail = ({
           {action}
 
           {!hasPages ? null : (
-            <>
+            <span className="flex items-center">
               <Button
                 variant="glass"
                 size="lg"
                 isIconOnly
+                joins="next"
                 label={say('ui.rail.backAPageOfTitle', { title })}
                 hasTooltip={false}
                 disabled={isAtStart}
@@ -187,6 +188,7 @@ const Rail = ({
                 variant="glass"
                 size="lg"
                 isIconOnly
+                joins="previous"
                 label={say('ui.rail.forwardAPageOfTitle', { title })}
                 hasTooltip={false}
                 disabled={isAtEnd}
@@ -196,7 +198,7 @@ const Rail = ({
               >
                 <Icon of={ChevronRightIcon} size={18} />
               </Button>
-            </>
+            </span>
           )}
         </div>
       </motion.header>

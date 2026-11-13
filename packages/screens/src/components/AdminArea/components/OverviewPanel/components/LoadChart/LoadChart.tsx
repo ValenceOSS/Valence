@@ -31,7 +31,9 @@ const GRAPHICS_COLOUR = 'var(--color-busy)';
  * How hard the server has been working over the range chosen: where the processor stands now (or
  * last stood), its average and its peak, the load and the memory beside them, and the processor
  * drawn over time against quarter lines, with every reading under the pointer saying when it was
- * taken and what the machine was doing then.
+ * taken and what the machine was doing then. The key to its lines is in that tooltip, each line drawn
+ * in its own colour beside its figure, and the load as a share of the cores the line is drawn at; a
+ * list of the lines stays for anybody who cannot see the chart.
  *
  * Past the last minute, the whole week kept is drawn small beneath the chart, with a window over
  * the part shown. Choosing a range moves the window to the end of the week and the lines move with
@@ -184,20 +186,26 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
               <InfoHeading>
                 {describeReadingTime(reading.atMs, isLive ? 'minute' : '7d')}
               </InfoHeading>
-              <InfoRow label={say('screens.adminArea.processor')}>
+              <InfoRow label={say('screens.adminArea.processor')} keyClassName="text-accent">
                 {`${Math.round(reading.systemCpuPercent).toString()}%`}
               </InfoRow>
-              <InfoRow label={say('screens.adminArea.overviewPanel.loadFigures.loadAverage')}>
-                {reading.loadAverage.toFixed(2)}
+              <InfoRow
+                label={say('screens.adminArea.overviewPanel.loadFigures.loadAverage')}
+                keyClassName="text-highlight"
+              >
+                {say('screens.adminArea.overviewPanel.loadOfTheCores', {
+                  load: reading.loadAverage.toFixed(2),
+                  share: `${Math.round(reading.cpuCount === 0 ? 0 : Math.min(100, (reading.loadAverage / reading.cpuCount) * 100)).toString()}%`,
+                })}
               </InfoRow>
-              <InfoRow label={say('screens.adminArea.memory')}>
+              <InfoRow label={say('screens.adminArea.memory')} keyClassName="text-success">
                 {say('screens.adminArea.overviewPanel.memoryUsedOfTotal', {
                   used: formatBytes(reading.systemMemoryUsedBytes),
                   total: formatBytes(reading.systemMemoryTotalBytes),
                 })}
               </InfoRow>
               {reading.gpuPercent === undefined || reading.gpuPercent === null ? null : (
-                <InfoRow label={say('screens.adminArea.graphics')}>
+                <InfoRow label={say('screens.adminArea.graphics')} keyClassName="text-busy">
                   {`${Math.round(reading.gpuPercent).toString()}%`}
                 </InfoRow>
               )}
@@ -205,6 +213,17 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           );
         }}
       />
+
+      <ul className="sr-only">
+        {[
+          say('screens.adminArea.processor'),
+          say('screens.adminArea.overviewPanel.loadFigures.loadAverage'),
+          say('screens.adminArea.memory'),
+          say('screens.adminArea.graphics'),
+        ].map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
 
       {isLive || drawn.length < 2 ? null : (
         <SpanPicker
@@ -223,31 +242,6 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           }}
         />
       )}
-
-      <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-text-muted">
-        {[
-          { label: say('screens.adminArea.processor'), colour: 'text-accent', isDotted: true },
-          {
-            label: say('screens.adminArea.overviewPanel.loadAgainstCores'),
-            colour: 'text-highlight',
-            isDotted: true,
-          },
-          { label: say('screens.adminArea.memory'), colour: 'text-success', isDotted: true },
-          { label: say('screens.adminArea.graphics'), colour: 'text-busy', isDotted: true },
-        ].map((key) => (
-          <li key={key.label} className="flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className={
-                key.isDotted
-                  ? `w-3 border-t-2 border-dotted border-current ${key.colour}`
-                  : `h-0.5 w-3 rounded-full bg-current ${key.colour}`
-              }
-            />
-            {key.label}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 };

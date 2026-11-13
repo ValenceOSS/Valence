@@ -108,4 +108,13 @@ describe('BarList', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(BarList.displayName).toBe('BarList');
   });
+
+  it('scrolls its rows under the headings, which stay put', () => {
+    draw({ className: 'max-h-40' });
+
+    expect(
+      screen.getByRole('list', { name: 'Top sources' }).closest('[data-slot="scroll-fade"]'),
+    ).not.toBeNull();
+    expect(screen.getByText('Source').closest('[data-slot="scroll-fade"]')).toBeNull();
+  });
 });
