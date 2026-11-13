@@ -18,6 +18,7 @@ import { createAppGate } from '@ValenceServer/access/createAppGate';
 import { createProfileGate } from '@ValenceServer/profiles/acting/createProfileGate';
 import { closedAppsIn } from '@ValenceServer/access/closedAppsIn';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers what every request passes through before any endpoint answers it — the headers, the checks on who may reach what, and the sign-in service's own paths.
@@ -109,6 +110,10 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
 
   app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
+
+  app.all('/api/auth/is-username-available', (context) =>
+    context.json(refuse('error.common.thisServerDoesNotHaveThatAddress'), 404),
+  );
 
   app.all('/api/auth/sign-up/*', createSignUpBlock());
 

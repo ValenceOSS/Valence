@@ -124,6 +124,16 @@ describe('createApp', () => {
     expect(body).toHaveProperty(['paths', '/api/playback/{mediaId}/explain', 'post']);
   });
 
+  it('tells nobody whether a username is taken', async () => {
+    const response = await app.request('/api/auth/is-username-available', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username: 'someone' }),
+    });
+
+    expect(response.status).toBe(404);
+  });
+
   it('serves no reference page of its own, which the documentation site carries instead', async () => {
     const response = await app.request('/api/reference');
 
