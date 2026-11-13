@@ -475,6 +475,7 @@
       "@ValenceUI/askForWebGlRenderer": ["./packages/ui/src/functions/askForWebGlRenderer.ts"],
       "@ValenceUI/hasHardwareGraphics": ["./packages/ui/src/functions/hasHardwareGraphics.ts"],
       "@ValenceUI/canDrawShaders": ["./packages/ui/src/functions/canDrawShaders.ts"],
+      "@ValenceUI/reloadOnceForNewCode": ["./packages/ui/src/functions/reloadOnceForNewCode.ts"],
       "@ValenceUI/reloadWhenCodeIsGone": ["./packages/ui/src/functions/reloadWhenCodeIsGone.ts"],
       "@ValenceUI/useRoomBeside": ["./packages/ui/src/functions/useRoomBeside.ts"],
       "@ValenceUI/notify": ["./packages/ui/src/functions/notify.ts"],

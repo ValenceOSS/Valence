@@ -41,7 +41,12 @@ const SplashScreenWithBrand = ({ label, ...props }: SplashScreenWithBrandProps) 
       name={name}
       mark={
         (brand?.logo ?? null) === null ? (
-          <DeckMark size={84} isAnimated label={name} />
+          <DeckMark
+            size={84}
+            isAnimated
+            loops={props.isReady !== true && (props.failure ?? null) === null}
+            label={name}
+          />
         ) : (
           <BrandLogo logo={brand?.logo ?? null} size={MARK_SIZE} label={name} />
         )

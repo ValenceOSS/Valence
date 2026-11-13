@@ -1,15 +1,8 @@
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { cn } from '@ValenceUI/cn';
 import type { ScanProgressBarProps } from './ScanProgressBar.types';
+import { describeScanPhase } from '@ValenceScreens/components/AdminArea/describeScanPhase';
 import { say } from '@ValenceI18n/say';
-
-const PHASE_LABELS: Record<string, string> = {
-  probing: say('screens.adminArea.scanProgressBar.probing'),
-  previews: say('screens.adminArea.scanProgressBar.generatingPreviews'),
-  trickplay: say('screens.adminArea.describeQueueKind.drawingScrubPreviews'),
-  segments: say('screens.adminArea.scanProgressBar.findingIntros'),
-  clearing: say('screens.adminArea.scanProgressBar.clearing'),
-};
 
 /**
  * How far through a scan something actually is: which stage it has reached, and how many files it has
@@ -39,7 +32,7 @@ const ScanProgressBar = ({
   const isKnown = processed !== null && total !== null;
   const fraction = !isKnown || total === 0 ? 0 : Math.min(processed / total, 1);
   const isEmpty = isKnown && total === 0;
-  const phaseLabel = phase === null ? null : (PHASE_LABELS[phase] ?? phase);
+  const phaseLabel = phase === null ? null : describeScanPhase(phase);
 
   return (
     <div

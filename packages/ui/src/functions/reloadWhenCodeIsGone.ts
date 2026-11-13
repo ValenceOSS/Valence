@@ -1,6 +1,4 @@
-const RELOADED_AT = 'valence-reloaded-for-new-code';
-
-const AGAIN_AFTER_MS = 10_000;
+import { reloadOnceForNewCode } from '@ValenceUI/reloadOnceForNewCode';
 
 /**
  * Reloads a page whose code was replaced by a new release while it was open, once, when part of the
@@ -11,36 +9,15 @@ const AGAIN_AFTER_MS = 10_000;
  * @param now - The time now, in milliseconds.
  */
 const reloadWhenCodeIsGone = (
-  target: {
+  target: Parameters<typeof reloadOnceForNewCode>[0] & {
     addEventListener: (type: 'vite:preloadError', listener: (event: Event) => void) => void;
-    location: { reload: () => void };
-    navigator: { onLine: boolean };
-    sessionStorage: {
-      getItem: (key: string) => string | null;
-      setItem: (key: string, value: string) => void;
-    };
   },
   now: () => number = Date.now,
 ): void => {
   target.addEventListener('vite:preloadError', (event) => {
-    if (!target.navigator.onLine) {
-      return;
+    if (reloadOnceForNewCode(target, now)) {
+      event.preventDefault();
     }
-
-    try {
-      const last = Number(target.sessionStorage.getItem(RELOADED_AT) ?? '0');
-
-      if (now() - last < AGAIN_AFTER_MS) {
-        return;
-      }
-
-      target.sessionStorage.setItem(RELOADED_AT, now().toString());
-    } catch {
-      return;
-    }
-
-    event.preventDefault();
-    target.location.reload();
   });
 };
 

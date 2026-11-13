@@ -7,14 +7,14 @@ import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { Icon } from '@ValenceUI/Icon';
 import { Link } from '@ValenceUI/Link';
 import { PageHero } from '@ValenceUI/PageHero';
+import { DeckMark } from '@ValenceUI/DeckMark';
 import { cn } from '@ValenceUI/cn';
 import { BrandSection } from '@ValenceLanding/components/BrandPage/components/BrandSection/BrandSection';
-import { WallpaperCard } from '@ValenceLanding/components/BrandPage/components/WallpaperCard/WallpaperCard';
 import { BRAND_COLOURS } from '@ValenceLanding/tokens/BRAND_COLOURS';
 
 const SAVE = cn(buttonStyles({ variant: 'confirm', size: 'lg' }), 'gap-2 no-underline');
 
-const SAVE_QUIETLY = cn(buttonStyles({ variant: 'overlay', size: 'lg' }), 'gap-2 no-underline');
+const SAVE_SMALL = cn(buttonStyles({ variant: 'secondary', size: 'sm' }), 'gap-1.5 no-underline');
 
 const TILE = 'rounded-[1.15rem] bg-[var(--frame-card)]';
 
@@ -34,6 +34,12 @@ const LOCKUPS = [
     name: 'Ink, on light',
     use: 'For light backgrounds.',
   },
+] as const;
+
+const STICKERS = [
+  { id: 'blue', name: 'Blue', ground: BRAND_COLOURS.night.hex },
+  { id: 'dark', name: 'Dark', ground: BRAND_COLOURS.night.hex },
+  { id: 'light', name: 'Light', ground: BRAND_COLOURS.paper.hex },
 ] as const;
 
 const RULES = [
@@ -56,24 +62,24 @@ const DO = [
   'Use white on dark backgrounds and ink on light ones',
   'Centre the logo, or place it in a corner with clear space',
   'Darken busy backgrounds behind the logo so it stays readable',
-  'Use the lit version on Valence gradients and wallpapers',
+  'Use the lit version on Valence gradients',
 ] as const;
 
 const DO_NOT = [
   'Add glows, outlines, bevels or coloured shadows',
   'Use colours other than white, ink, black or lit',
   'Stretch, squash, skew, rotate or crop it',
-  'Retype “Valence” or set it in another typeface',
+  'Type “Valence” out yourself or set it in another typeface',
   'Rearrange the mark and wordmark, or change the space between them',
 ] as const;
 
 const TYPEFACES = [
   {
-    name: 'Gilroy Semibold',
-    role: 'Wordmark only',
+    name: 'Plus Jakarta Sans Semibold',
+    role: 'Wordmark',
     sample: 'Valence',
-    face: 'font-semibold tracking-[-0.035em]',
-    note: 'Gilroy is a licensed font, so the brand kit includes the wordmark as images rather than the font file.',
+    face: 'font-sans font-semibold tracking-[-0.035em]',
+    note: 'The wordmark is the interface’s own typeface, set tight. Use the lockups in the brand kit rather than typing it out, so the mark and the word keep their spacing.',
     isWordmark: true,
   },
   {
@@ -104,44 +110,27 @@ const TYPEFACES = [
 
 const COLOURS = Object.values(BRAND_COLOURS);
 
-const WALLPAPERS = [
-  { id: 'signal', name: 'Signal', look: 'The home page’s ASCII background, in blue' },
-  { id: 'grain', name: 'Grain', look: 'Blue fold gradient with heavy grain' },
-  { id: 'ribbon', name: 'Ribbon', look: 'Blue gradient in thin ribbons' },
-  { id: 'shards', name: 'Shards', look: 'Sharp orange folds' },
-  { id: 'haze', name: 'Haze', look: 'Soft violet and pink' },
-  { id: 'pixel', name: 'Pixel', look: 'Fold gradient drawn in ASCII' },
-  { id: 'mono', name: 'Mono', look: 'Black and white with grain' },
-  { id: 'tide', name: 'Tide', look: 'Wide teal ribbons' },
-  { id: 'ember', name: 'Ember', look: 'Red ASCII rising from the bottom' },
-  { id: 'violet', name: 'Violet', look: 'Violet ASCII band' },
-] as const;
-
 /**
  * Valence's brand on one page: the logo and the rules around where it goes, the typefaces and what
- * each is for, the colours, and the wallpapers, with the kit and every wallpaper ready to save.
+ * each is for, the mark in motion, the sticker, and the colours, with the brand kit, the loop and the
+ * sticker ready to save.
  */
 const BrandPage = () => (
   <>
     <PageHero
       eyebrow="Branding"
       lead="Valence brand guidelines"
-      description="The logo, typefaces, colours and wallpapers, and the rules for using them."
+      description="The logo, typefaces and colours, and the rules for using them."
       actions={
-        <>
-          <Link
-            href="/brand/valence-brand-kit.zip"
-            downloadAs="Valence Brand Kit.zip"
-            look="bare"
-            className={SAVE}
-          >
-            <Icon of={DownloadIcon} size={18} />
-            Download the brand kit
-          </Link>
-          <Link href="#wallpapers" look="bare" className={SAVE_QUIETLY}>
-            Wallpapers
-          </Link>
-        </>
+        <Link
+          href="/brand/valence-brand-kit.zip"
+          downloadAs="Valence Brand Kit.zip"
+          look="bare"
+          className={SAVE}
+        >
+          <Icon of={DownloadIcon} size={18} />
+          Download the brand kit
+        </Link>
       }
       aside={
         <div
@@ -152,7 +141,7 @@ const BrandPage = () => (
             src="/brand/previews/lockup-stacked-lit.webp"
             alt="The Valence logo"
             width={1200}
-            height={768}
+            height={947}
             className="w-3/4 max-w-sm"
           />
         </div>
@@ -161,7 +150,7 @@ const BrandPage = () => (
 
     <BrandSection
       title="Logo"
-      text="The mark with the Gilroy wordmark, horizontal or stacked. The brand kit has white, ink, black and lit versions as PNG, and the mark alone as SVG."
+      text="A deck of three cards, a smile in front and frowns behind, with the wordmark beside it or beneath it. The brand kit has white, ink, black and lit versions as PNG, the mark alone as SVG, the app icon in light and dark, and the sticker."
     >
       <ul className={cn(TRAY, 'sm:grid-cols-2')}>
         {LOCKUPS.map((lockup) => (
@@ -170,7 +159,7 @@ const BrandPage = () => (
               className="flex aspect-[16/9] items-center justify-center p-10"
               style={{ background: lockup.ground }}
             >
-              <img src={lockup.src} alt="" width={1200} height={317} className="w-3/4" />
+              <img src={lockup.src} alt="" width={1200} height={272} className="w-3/4" />
             </div>
             <div className="flex flex-col gap-1 p-5">
               <h3 className="text-base font-semibold text-text">{lockup.name}</h3>
@@ -185,6 +174,75 @@ const BrandPage = () => (
           <li key={rule.name} className={cn(TILE, 'flex flex-col gap-2 p-6')}>
             <h3 className="text-base font-semibold text-text">{rule.name}</h3>
             <p className="text-sm leading-relaxed text-text-muted">{rule.rule}</p>
+          </li>
+        ))}
+      </ul>
+    </BrandSection>
+
+    <BrandSection
+      title="Motion"
+      text="The deck fans out, holds, and gathers back under the front card, over and over. Use it on screens that wait, such as a stream's starting soon, and the still logo everywhere else."
+      actions={
+        <Link
+          href="/brand/valence-loop.mp4"
+          downloadAs="Valence Loop.mp4"
+          look="bare"
+          className={SAVE}
+        >
+          <Icon of={DownloadIcon} size={18} />
+          Download the loop
+        </Link>
+      }
+    >
+      <ul className={cn(TRAY, 'sm:grid-cols-2')}>
+        <li className={cn(TILE, 'flex aspect-[16/9] items-center justify-center bg-surface')}>
+          <DeckMark size={200} loops label="The Valence mark, fanning out" />
+        </li>
+        <li className={cn(TILE, 'flex aspect-[16/9] items-center justify-center gap-5 bg-surface')}>
+          <DeckMark size={120} loops />
+          <span className="font-sans text-6xl font-semibold tracking-[-0.035em] text-text">
+            Valence
+          </span>
+        </li>
+      </ul>
+    </BrandSection>
+
+    <BrandSection
+      title="Sticker"
+      text="The deck cut out with a border around the whole of it, ready to print on a sticker or a laptop decal: blue and dark on a white border, and light on a dark one."
+    >
+      <ul className={cn(TRAY, 'sm:grid-cols-3')}>
+        {STICKERS.map((sticker) => (
+          <li key={sticker.id} className={cn(TILE, 'flex flex-col overflow-hidden')}>
+            <div
+              className="flex aspect-[4/3] items-center justify-center p-8"
+              style={{ background: sticker.ground }}
+            >
+              <img
+                src={`/brand/previews/sticker-${sticker.id}.webp`}
+                alt=""
+                width={600}
+                height={480}
+                className="h-auto max-h-40 w-auto max-w-full object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3 p-5">
+              <h3 className="text-base font-semibold text-text">{sticker.name}</h3>
+              <span className="flex gap-2">
+                {(['svg', 'png'] as const).map((format) => (
+                  <Link
+                    key={format}
+                    href={`/brand/valence-sticker-${sticker.id}.${format}`}
+                    downloadAs={`Valence Sticker - ${sticker.name}.${format}`}
+                    look="bare"
+                    className={SAVE_SMALL}
+                  >
+                    <Icon of={DownloadIcon} size={14} />
+                    {format.toUpperCase()}
+                  </Link>
+                ))}
+              </span>
+            </div>
           </li>
         ))}
       </ul>
@@ -231,7 +289,7 @@ const BrandPage = () => (
                 src="/brand/previews/lockup-horizontal-white.webp"
                 alt=""
                 width={1200}
-                height={317}
+                height={272}
                 className="w-full max-w-sm"
               />
             ) : (
@@ -261,40 +319,6 @@ const BrandPage = () => (
               <p className="text-xs text-text-muted">{colour.use}</p>
             </div>
           </li>
-        ))}
-      </ul>
-    </BrandSection>
-
-    <BrandSection
-      id="wallpapers"
-      title="Wallpapers"
-      text="Ten wallpapers for every screen: 16:9 and 16:10 desktops at 4K, 21:9 ultrawides at 5120 × 2160, and phones at 1800 × 3900."
-      actions={
-        <>
-          <Link
-            href="/brand/valence-wallpapers-desktop.zip"
-            downloadAs="Valence Wallpapers - Desktop.zip"
-            look="bare"
-            className={SAVE}
-          >
-            <Icon of={DownloadIcon} size={18} />
-            Desktop pack
-          </Link>
-          <Link
-            href="/brand/valence-wallpapers-phone.zip"
-            downloadAs="Valence Wallpapers - Phone.zip"
-            look="bare"
-            className={SAVE_QUIETLY}
-          >
-            <Icon of={DownloadIcon} size={18} />
-            Phone pack
-          </Link>
-        </>
-      }
-    >
-      <ul className={cn(TRAY, 'sm:grid-cols-2 lg:grid-cols-3')}>
-        {WALLPAPERS.map((wallpaper) => (
-          <WallpaperCard key={wallpaper.id} wallpaper={wallpaper} />
         ))}
       </ul>
     </BrandSection>

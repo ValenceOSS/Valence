@@ -1,3 +1,5 @@
+import { WhatsNewInValence } from '@ValenceScreens/components/AdminArea/components/WhatsNewInValence/WhatsNewInValence';
+import { WorkUnderWay } from '@ValenceScreens/components/AdminArea/components/WorkUnderWay/WorkUnderWay';
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { Icon } from '@ValenceUI/Icon';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react/fill';
@@ -177,7 +179,6 @@ import { sayCount } from '@ValenceI18n/sayCount';
 const HISTORY_LENGTH = 60;
 
 const CATALOGUE_AT_FIRST: CatalogueAddress = { tab: 'films', title: null };
-
 /**
  * Listens for nothing, for while the page is hidden: what is running is read again once it is shown.
  *
@@ -927,6 +928,22 @@ const AdminArea = ({
       exit="gone"
       className="flex w-full flex-col gap-4"
     >
+      {isShown ? (
+        <div className="pointer-events-none fixed right-4 bottom-4 z-40 flex flex-col items-end gap-2">
+          <WhatsNewInValence
+            onOpenUpdates={() => {
+              showPanel('updates');
+            }}
+          />
+          <WorkUnderWay
+            working={monitor?.queue.jobs ?? []}
+            progress={scanProgress}
+            definitions={jobDefinitions}
+            libraries={libraries}
+          />
+        </div>
+      ) : null}
+
       <motion.div variants={fadeVariants} transition={stillTransition} className="empty:hidden">
         {isGuideOnOverview ? (
           <div className="mb-4">

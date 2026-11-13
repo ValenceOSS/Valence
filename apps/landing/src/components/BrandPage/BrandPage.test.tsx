@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BrandPage } from './BrandPage';
 
@@ -15,36 +15,26 @@ describe('BrandPage', () => {
     );
   });
 
-  it('sets out the logo, where it goes, the typefaces, the colours and the wallpapers', () => {
+  it('sets out the logo, its motion, the sticker, where it goes, the typefaces and the colours', () => {
     render(<BrandPage />);
 
-    for (const part of ['Logo', 'Placement', 'Typography', 'Colour', 'Wallpapers']) {
+    for (const part of ['Logo', 'Motion', 'Sticker', 'Placement', 'Typography', 'Colour']) {
       expect(screen.getByRole('region', { name: part })).toBeInTheDocument();
     }
   });
 
-  it('keeps Gilroy for the wordmark alone, and names every colour by its hex', () => {
+  it('sets the wordmark in Plus Jakarta Sans, and names every colour by its hex', () => {
     render(<BrandPage />);
 
-    expect(screen.getByText('Wordmark only')).toBeInTheDocument();
+    expect(screen.getByText('Plus Jakarta Sans Semibold')).toBeInTheDocument();
+    expect(screen.getByText('Wordmark')).toBeInTheDocument();
     expect(screen.getByText('#0066FF')).toBeInTheDocument();
   });
 
-  it('offers ten wallpapers at every size, and a pack of each', () => {
+  it('offers no wallpapers', () => {
     render(<BrandPage />);
 
-    const wallpapers = screen.getByRole('region', { name: 'Wallpapers' });
-
-    expect(within(wallpapers).getAllByRole('link', { name: '16:10' })).toHaveLength(10);
-    expect(within(wallpapers).getAllByRole('link', { name: 'Phone' })).toHaveLength(10);
-    expect(within(wallpapers).getByRole('link', { name: 'Desktop pack' })).toHaveAttribute(
-      'href',
-      '/brand/valence-wallpapers-desktop.zip',
-    );
-    expect(within(wallpapers).getByRole('link', { name: 'Phone pack' })).toHaveAttribute(
-      'href',
-      '/brand/valence-wallpapers-phone.zip',
-    );
+    expect(screen.queryByRole('region', { name: 'Wallpapers' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

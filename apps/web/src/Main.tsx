@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { Toaster } from '@ValenceUI/Toaster';
+import { reloadWhenCodeIsGone } from '@ValenceUI/reloadWhenCodeIsGone';
 import { TooltipScope } from '@ValenceUI/TooltipScope';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { installBrowserPlatform } from '@ValenceWeb/platform/installBrowserPlatform';
@@ -12,6 +13,7 @@ import { KeepTheLayout } from '@ValenceScreens/components/KeepTheLayout/KeepTheL
 import './styles/main.css';
 
 installBrowserPlatform();
+reloadWhenCodeIsGone(window);
 
 const container = document.querySelector('#root');
 

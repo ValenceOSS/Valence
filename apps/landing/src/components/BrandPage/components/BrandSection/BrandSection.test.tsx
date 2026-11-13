@@ -20,12 +20,16 @@ describe('BrandSection', () => {
 
   it('sets what can be saved from it beside the title', () => {
     render(
-      <BrandSection title="Wallpapers" text="Ten wallpapers." actions={<span>Save the pack</span>}>
-        <p>Wallpapers</p>
+      <BrandSection
+        title="Logo"
+        text="The mark and the wordmark."
+        actions={<span>Save the kit</span>}
+      >
+        <p>Lockups</p>
       </BrandSection>,
     );
 
-    expect(screen.getByText('Save the pack')).toBeInTheDocument();
+    expect(screen.getByText('Save the kit')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
