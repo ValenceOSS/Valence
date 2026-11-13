@@ -2,6 +2,7 @@ import { shieldTheAnswer } from '@ValenceServer/api/shieldTheAnswer';
 import { PLUGIN_ROUTE_PATH } from '@ValenceServer/plugins/routes/PLUGIN_ROUTE_PATH';
 import { createBodyLimit } from '@ValenceServer/api/createBodyLimit';
 import { withCaller } from '@ValenceServer/web/withCaller';
+import { settleTheCaller } from '@ValenceServer/web/settleTheCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
 import { createShareCreatorCheck } from '@ValenceServer/sharing/createShareCreatorCheck';
@@ -51,6 +52,11 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
     shieldTheAnswer(context.res.headers);
   });
+
+  app.use(
+    '*',
+    settleTheCaller((context) => callerOf?.(context) ?? null),
+  );
 
   app.use(
     '/api/*',

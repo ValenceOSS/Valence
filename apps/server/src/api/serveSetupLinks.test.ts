@@ -26,7 +26,7 @@ const EXPIRES = new Date(Date.UTC(2026, 9, 9));
  *
  * @returns The application and what stands in.
  */
-const build = async () => {
+const build = async (callerOf?: () => string | null) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const setupLinks = {
@@ -93,6 +93,7 @@ const build = async () => {
     progress: createMemoryWatchProgressService(),
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
+    ...(callerOf === undefined ? {} : { callerOf }),
   });
 
   return { app, auth, store, permissions, setupLinks, email, adaId: made.id };
@@ -221,6 +222,23 @@ describe('serveSetupLinks', () => {
       await expect(
         auth.api.signInUsername({ body: { username: 'ada', password: PASSWORD } }),
       ).resolves.toMatchObject({ user: { name: 'Ada' } });
+    });
+
+    it('records the address this server worked out for the session, not one the caller wrote', async () => {
+      const { app, store } = await build(() => '203.0.113.7');
+
+      const response = await app.request(`${TEST_ORIGIN}/api/setup-links/${TOKEN}`, {
+        method: 'POST',
+        headers: {
+          origin: TEST_ORIGIN,
+          'content-type': 'application/json',
+          'x-valence-caller': '198.51.100.1',
+        },
+        body: JSON.stringify({ username: 'Ada', email: 'ada@example.com', password: PASSWORD }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(store.session.map((one) => one.ipAddress)).toEqual(['203.0.113.7']);
     });
 
     it('signs its owner in without a password, to make a passkey', async () => {
