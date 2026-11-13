@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/passkey": "1.7.4",
+    "@better-auth/passkey": "1.7.23",
     "@keyline-icons/react": "1.8.0",
     "@mediabunny/ac3": "1.62.0",
     "@mediabunny/dts": "1.62.0",
@@ -24,7 +24,7 @@
     "@valence/core": "workspace:*",
     "@valence/i18n": "workspace:*",
     "@valence/ui": "workspace:*",
-    "better-auth": "1.7.4",
+    "better-auth": "1.7.23",
     "mediabunny": "1.62.0",
     "motion": "13.5.1",
     "react": "19.3.0",
