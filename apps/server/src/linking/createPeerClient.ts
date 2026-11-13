@@ -1,3 +1,5 @@
+import { createPeerFetch } from '@ValenceServer/linking/createPeerFetch';
+import type { Resolve } from '@ValenceServer/buckets/isAcceptableEndpoint';
 import { z } from 'zod';
 import { PairAnswerSchema, ServerIdentitySchema } from '@ValenceContracts/schemas/LinkedServer';
 import {
@@ -68,9 +70,12 @@ type PeerClient = {
  * stream handed back as it comes, and runs as long as it is watched.
  *
  * @param fetcher - How a request is sent, injectable for tests.
+ * @param resolve - What a name resolves to, injectable for tests.
  * @returns The client.
  */
-const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
+const createPeerClient = (fetcher: typeof fetch = fetch, resolve?: Resolve): PeerClient => {
+  const peerFetch = createPeerFetch(fetcher, resolve);
+
   const send = async <Answer>(
     address: string,
     path: string,
@@ -78,7 +83,7 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
     schema: z.ZodType<Answer>,
   ): Promise<PeerAnswer<Answer>> => {
     try {
-      const response = await fetcher(`${address}${FEDERATION_PATH}${path}`, {
+      const response = await peerFetch(`${address}${FEDERATION_PATH}${path}`, {
         ...init,
         headers: {
           accept: 'application/json',
@@ -114,7 +119,7 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
     },
     pictureAt: async (address) => {
       try {
-        const response = await fetcher(`${address}${FEDERATION_PATH}/server/picture`, {
+        const response = await peerFetch(`${address}${FEDERATION_PATH}/server/picture`, {
           signal: AbortSignal.timeout(WAITS_MS),
         });
 
@@ -191,7 +196,7 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
 
       headers.set('authorization', `Bearer ${token}`);
 
-      return fetcher(`${address}${FEDERATION_PATH}${route}`, {
+      return peerFetch(`${address}${FEDERATION_PATH}${route}`, {
         method: init.method,
         headers,
         ...(init.body === undefined ? {} : { body: init.body }),
