@@ -12,6 +12,7 @@ import {
   watchLiveChannelRoute,
 } from '@ValenceServer/routes/LiveTvRoute';
 import { checkEmbed } from '@ValenceServer/live/checkEmbed';
+import { createPublicOnlyFetch } from '@ValenceServer/live/createPublicOnlyFetch';
 import { probeStream } from '@ValenceServer/live/probeStream';
 import { UPLOADED_LOGO } from '@ValenceServer/live/UPLOADED_LOGO';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
@@ -247,7 +248,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             channel.id,
             { u: context.req.query('u'), e: context.req.query('e'), s: context.req.query('s') },
             channel,
-            liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id)),
+            createPublicOnlyFetch(liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
           );
 
     return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
@@ -281,7 +282,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             context.req.param('token'),
             `${url.pathname.slice(prefix.length)}${url.search}`,
             channel,
-            liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id)),
+            createPublicOnlyFetch(liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
           );
 
     return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
@@ -307,18 +308,28 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     const logo =
       channel?.logoUrl === null || channel === null || channel.logoUrl.startsWith(UPLOADED_LOGO)
         ? null
-        : await (liveTv?.routes.logos ?? fetch)(channel.logoUrl, {
+        : await createPublicOnlyFetch(liveTv?.routes.logos ?? fetch)(channel.logoUrl, {
             signal: AbortSignal.timeout(10_000),
           }).catch(() => null);
 
-    if (logo === null || !logo.ok || logo.body === null) {
+    const logoType = logo?.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+
+    if (
+      logo === null ||
+      !logo.ok ||
+      logo.body === null ||
+      !/^image\/(png|jpeg|webp|gif|avif)$/u.test(logoType)
+    ) {
+      void logo?.body?.cancel();
+
       return context.json(refuse('error.live.thatChannelHasNoLogo'), 404);
     }
 
     return new Response(logo.body, {
       status: 200,
       headers: {
-        'content-type': logo.headers.get('content-type') ?? 'image/png',
+        'content-type': logoType,
+        'content-security-policy': "default-src 'none'; sandbox",
         'cache-control': 'private, max-age=86400',
       },
     });
