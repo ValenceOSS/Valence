@@ -46,4 +46,24 @@ describe('parseXmltv', () => {
     expect(parsed.programmes).toHaveLength(60_000);
     expect(beats).toBeGreaterThan(1);
   });
+
+  it('reads a guide made of openers that never close in moments, not minutes', async () => {
+    const began = Date.now();
+    const parsed = await parseXmltv(
+      `<tv>${'<programme start="x" '.repeat(30_000)}${'<channel id="a">'.repeat(30_000)}</tv>`,
+      WINDOW,
+    );
+
+    expect(parsed.programmes).toEqual([]);
+    expect(Date.now() - began).toBeLessThan(5000);
+  });
+
+  it('still reads a programme that follows an unclosed one', async () => {
+    const parsed = await parseXmltv(
+      `<tv><programme start="x" ${programme('20261028090000', '20261028100000', 'Headlines')}</tv>`,
+      WINDOW,
+    );
+
+    expect(parsed.programmes).toHaveLength(1);
+  });
 });
