@@ -1,3 +1,4 @@
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
 import sharp from 'sharp';
 
 const ACCEPTED: Record<string, string> = {
@@ -16,9 +17,9 @@ const READ_AS: Record<string, string> = {
   'image/gif': 'gif',
 };
 
-const MOST_BYTES = 6 * 1024 * 1024;
+const MOST_BYTES = PICTURE_LIMITS.face.mostBytes;
 
-const MOST_PIXELS_AN_EDGE = 4096;
+const MOST_PIXELS_AN_EDGE = PICTURE_LIMITS.face.mostPixelsAnEdge;
 
 type PictureFault = 'notAPicture' | 'tooLarge' | 'tooDetailed' | 'unreadable' | 'notYours';
 

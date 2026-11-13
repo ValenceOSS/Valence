@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { artworkAddresses } from './artworkAddresses';
 import { fetchLikeThis } from './fetchLikeThis';
 
 const fetchMock = vi.fn();
@@ -38,6 +39,14 @@ describe('fetchLikeThis', () => {
       '/api/media/9c858901-8a57-4791-81fe-4c455b099bc9/like-this',
       expect.anything(),
     );
+  });
+
+  it('notes where their pictures are served by name', async () => {
+    fetchMock.mockResolvedValue(said({ items: [{ ...A_FILM, artwork: { poster: '/named' } }] }));
+
+    await fetchLikeThis('9c858901-8a57-4791-81fe-4c455b099bc9');
+
+    expect(artworkAddresses.of(A_FILM.id, 'poster', 0)).toBe('/named');
   });
 
   it('fails where the server would not answer', async () => {

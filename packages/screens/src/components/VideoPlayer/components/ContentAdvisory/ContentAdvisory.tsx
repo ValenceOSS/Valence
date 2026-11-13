@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { AgeRating } from '@ValenceUI/AgeRating';
 import { sayContains } from '@ValenceClient/library/sayContains';
+import { sayRatingMeans } from '@ValenceClient/library/sayRatingMeans';
 import type { ContentAdvisoryProps } from './ContentAdvisory.types';
 
 /**
@@ -15,7 +16,7 @@ import type { ContentAdvisoryProps } from './ContentAdvisory.types';
  */
 const ContentAdvisory = ({ certification, region, advisories, isShown }: ContentAdvisoryProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const contains = sayContains(advisories);
+  const contains = sayContains(advisories) ?? sayRatingMeans(region, certification);
   const hasRating = certification !== null && certification !== '' && region !== null;
 
   return (

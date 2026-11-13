@@ -54,17 +54,7 @@ import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleM
 import { seasonSourcesOfFile } from '@ValenceServer/library/seasonSourcesOfFile';
 import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
-import {
-  copyFile,
-  mkdir,
-  readdir,
-  readFile,
-  rename,
-  rm,
-  stat,
-  unlink,
-  utimes,
-} from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, unlink, utimes, writeFile } from 'node:fs/promises';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -185,6 +175,8 @@ import {
   library,
   mediaItem,
   mediaArtworkChoice,
+  collection,
+  playlist,
   mediaPart,
   mediaRendition,
   mediaItemJob,
@@ -216,6 +208,12 @@ import { createLiveRelay } from '@ValenceServer/live/createLiveRelay';
 import { createLiveRoutes } from '@ValenceServer/live/createLiveRoutes';
 import { createIptvOrgCatalogue } from '@ValenceServer/live/createIptvOrgCatalogue';
 import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
+import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
+import { upgradePictures } from '@ValenceServer/pictures/upgradePictures';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
+import { forgetRawLocalCopies } from '@ValenceServer/images/forgetRawLocalCopies';
+import { isThere } from '@ValenceServer/pictures/isThere';
+import { moveFile } from '@ValenceServer/pictures/moveFile';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
@@ -363,6 +361,7 @@ import { createFilenameMetadataProvider } from '@ValenceServer/library/createFil
 import { createMediaFileSystem } from '@ValenceServer/library/createMediaFileSystem';
 import { createTranscoderClient } from '@ValenceServer/transcoder/TranscoderClient';
 import { createImageCache } from '@ValenceServer/images/createImageCache';
+import { createArtworkNames } from '@ValenceServer/images/createArtworkNames';
 import { createDiskUsage } from '@ValenceServer/maintenance/createDiskUsage';
 import { measureArtwork } from '@ValenceServer/images/measureArtwork';
 import { measureBookPages } from '@ValenceServer/books/measureBookPages';
@@ -370,6 +369,8 @@ import { detectLibrarySegments } from '@ValenceServer/segments/detectLibrarySegm
 import { createDatabaseWatchProgressService } from '@ValenceServer/progress/createDatabaseWatchProgressService';
 import { createDatabaseFavouriteService } from '@ValenceServer/favourites/createDatabaseFavouriteService';
 import { createDatabaseRatingService } from '@ValenceServer/ratings/createDatabaseRatingService';
+import { createPluginMusic } from '@ValenceServer/plugins/host/createPluginMusic';
+import { createAppListening } from '@ValenceServer/music/apps/createAppListening';
 import { getCookie } from 'hono/cookie';
 import { createDatabaseShareService } from '@ValenceServer/sharing/createDatabaseShareService';
 import { createDatabaseCalendarFeedService } from '@ValenceServer/calendarFeed/createDatabaseCalendarFeedService';
@@ -427,6 +428,7 @@ import {
   CLEAR_LIBRARY_PARTS_JOB,
   ClearLibraryPartsJobSchema,
   CLEANUP_IMAGE_CACHE_JOB,
+  NARROW_ARTWORK_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CLEAR_OLD_DOWNLOADS_JOB,
@@ -500,6 +502,7 @@ import {
 } from '@ValenceServer/maintenance/findDisksUnderPressure';
 import { createDatabaseMaintenanceService } from '@ValenceServer/maintenance/createDatabaseMaintenanceService';
 import { cleanupImageCache } from '@ValenceServer/maintenance/cleanupImageCache';
+import { narrowEveryPicture } from '@ValenceServer/images/narrowEveryPicture';
 import { sweepBookPages } from '@ValenceServer/maintenance/sweepBookPages';
 import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
@@ -1386,21 +1389,8 @@ await movePhotographsOnce({
     ensure: async (directory) => {
       await mkdir(directory, { recursive: true });
     },
-    has: (path) =>
-      stat(path).then(
-        () => true,
-        () => false,
-      ),
-    move: async (fromPath, toPath) => {
-      await rename(fromPath, toPath).catch(async (error: NodeJS.ErrnoException) => {
-        if (error.code !== 'EXDEV') {
-          throw error;
-        }
-
-        await copyFile(fromPath, toPath);
-        await unlink(fromPath);
-      });
-    },
+    has: isThere,
+    move: moveFile,
   },
   onProblem: (name, reason) => {
     log.error('server', `profiles: ${name} could not be moved — ${reason.message}`);
@@ -1410,6 +1400,84 @@ await movePhotographsOnce({
 const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 
 const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
+
+const upgradedFaces = await upgradeFaces(
+  env.PROFILE_IMAGE_DIR,
+  [
+    ...(
+      await db
+        .select({ photoPath: viewerProfile.photoPath, look: viewerProfile.avatarLook })
+        .from(viewerProfile)
+    ).map((row) => ({
+      photoPath: row.photoPath,
+      frame: row.look?.kind === 'photo' ? row.look.frame : null,
+    })),
+    ...(
+      await db
+        .select({ photoPath: userProfile.photoPath, frame: userProfile.photoFrame })
+        .from(userProfile)
+    ).map((row) => ({ photoPath: row.photoPath, frame: row.frame })),
+  ].flatMap((row) => (row.photoPath === null ? [] : [{ name: row.photoPath, frame: row.frame }])),
+  (name, reason) => {
+    log.error(
+      'server',
+      `profiles: ${name} could not be read, so it will not be shown until a new picture is uploaded — ${reason.message}`,
+    );
+  },
+);
+
+if (upgradedFaces.moved + upgradedFaces.processed > 0) {
+  log.info(
+    'server',
+    `profiles: ${upgradedFaces.moved.toString()} picture(s) kept as originals, ${upgradedFaces.processed.toString()} processed`,
+  );
+}
+
+const collectionArtworkDir = join(env.PROFILE_IMAGE_DIR, '..', 'collections');
+
+const playlistArtworkDir = join(env.PROFILE_IMAGE_DIR, '..', 'playlists');
+
+const keptSettings = await settings.read();
+
+const keptUploads = [
+  {
+    directory: env.PROFILE_IMAGE_DIR,
+    pictures: [keptSettings.splashscreenFile, keptSettings.brandLogoFile].flatMap((name) =>
+      name === null ? [] : [{ name, cropping: null }],
+    ),
+  },
+  {
+    directory: collectionArtworkDir,
+    pictures: (
+      await db
+        .select({ name: collection.artworkPath, frame: collection.artworkFrame })
+        .from(collection)
+    ).flatMap(({ name, frame }) =>
+      name === null ? [] : [{ name, cropping: { crop: CROPS.poster, frame } }],
+    ),
+  },
+  {
+    directory: playlistArtworkDir,
+    pictures: (
+      await db.select({ name: playlist.artworkPath, frame: playlist.artworkFrame }).from(playlist)
+    ).flatMap(({ name, frame }) =>
+      name === null ? [] : [{ name, cropping: { crop: CROPS.cover, frame } }],
+    ),
+  },
+];
+
+for (const { directory, pictures } of keptUploads) {
+  const upgraded = await upgradePictures(directory, pictures, (name, reason) => {
+    log.error('server', `pictures: ${name} could not be cleaned — ${reason.message}`);
+  });
+
+  if (upgraded.moved + upgraded.processed > 0) {
+    log.info(
+      'server',
+      `pictures: ${upgraded.moved.toString()} upload(s) in ${directory} kept as originals, ${upgraded.processed.toString()} cleaned`,
+    );
+  }
+}
 
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 const brandLogo = createFilePictureStore({
@@ -1746,11 +1814,7 @@ const musicServices: MusicServices = {
     web: musicWeb,
     readImage: (url) => cataloguePictureCache.read(url),
   }),
-  playlists: createDatabasePlaylistService(
-    db,
-    musicLibrary,
-    join(env.PROFILE_IMAGE_DIR, '..', 'playlists'),
-  ),
+  playlists: createDatabasePlaylistService(db, musicLibrary, playlistArtworkDir),
   devices: createMusicDevices({
     presence,
     onChanged: (accountId) => {
@@ -1962,6 +2026,17 @@ const linkedTitleOf = createLinkedTitleReader(db);
 
 const serverPictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'servers'));
 
+const livePictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live'), false);
+
+for (const pictures of [serverPictures, livePictures]) {
+  await pictures.upgrade((name, reason) => {
+    log.error(
+      'server',
+      `pictures: ${name} could not be read, so it will not be shown until a new picture is uploaded — ${reason.message}`,
+    );
+  });
+}
+
 const tellLinkedOfChange = createChangeTeller({
   links: linkStore,
   sharing: linkSharingStore,
@@ -1999,7 +2074,7 @@ const liveTv: LiveTvOptions = {
   relay: createLiveRelay(),
   iptvOrg: createIptvOrgCatalogue(),
   routes: liveRoutes,
-  pictures: createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live')),
+  pictures: livePictures,
   startTranscoded: async (channel, proxy) => {
     const liveId =
       (await transcoder.startLive?.(channel.streamUrl, {
@@ -2981,6 +3056,31 @@ const jobs = createJobQueue({
           runDetectSegments(parsed.data.libraryId, jobId),
         );
       },
+      [NARROW_ARTWORK_JOB]: async (jobId) => {
+        const { made, failed } = await narrowEveryPicture({
+          listArtworkUrls,
+          read: (url, width) => images.read(url, width),
+          isCancelled: () => jobs.isCancelled(jobId),
+          untilResumed: () => jobs.untilResumed(jobId),
+          onProblem: (url) => {
+            void jobHistory
+              .recordIssue({
+                jobRunId: jobId,
+                path: url,
+                reason: saying('error.image.thatArtworkCouldNotBeRead'),
+              })
+              .catch(() => {});
+          },
+          onProgress: (processed, total) => {
+            jobs.reportProgress(jobId, saying('server.jobs.phase.artwork'), processed, total);
+          },
+        });
+
+        log.info(
+          'jobs',
+          `card artwork: ${made.toString()} ready, ${failed.toString()} could not be made`,
+        );
+      },
       [CLEANUP_IMAGE_CACHE_JOB]: async (jobId) => {
         const removed = await cleanupImageCache({
           imageCacheDir: env.IMAGE_CACHE_DIR,
@@ -2994,23 +3094,7 @@ const jobs = createJobQueue({
             remove: (path) => unlink(path),
           },
           nameFor: images.nameFor,
-          listArtworkUrls: async () => {
-            const items = await db
-              .select({
-                posterUrl: mediaItem.posterUrl,
-                backdropUrl: mediaItem.backdropUrl,
-                logoUrl: mediaItem.logoUrl,
-              })
-              .from(mediaItem);
-            const chosen = await db
-              .select({ url: mediaArtworkChoice.url })
-              .from(mediaArtworkChoice);
-
-            return [
-              ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
-              ...chosen.map((row) => row.url),
-            ];
-          },
+          listArtworkUrls,
           listKeptPictures: async () => {
             const faces = await db
               .select({ photoPath: viewerProfile.photoPath })
@@ -3701,8 +3785,50 @@ const scanRuns = collectScanRuns({
 
 const artworkUploads = join(dirname(env.PROFILE_IMAGE_DIR), 'artwork');
 
+const artworkNames = createArtworkNames(
+  `${env.BETTER_AUTH_SECRET}:artwork-names`,
+  join(env.IMAGE_CACHE_DIR, 'names'),
+);
+
+/**
+ * Where a picture is served by name, for anybody to fetch from the proxy or CDN in front, or from
+ * Valence where nothing is.
+ *
+ * @param url - The picture.
+ * @returns Its address, to which a width and `.webp` are added, or nothing for a picture that is
+ *   not named.
+ */
+const artworkAddressOf = (url: string): string | null => {
+  const name = artworkNames.nameOf(url);
+
+  return name === null ? null : `${env.ARTWORK_URL}/api/artwork/${name}`;
+};
+
+/**
+ * Lists every picture the libraries show: each file's poster, backdrop and logo, and every picture
+ * chosen for a title in place of the catalogue's.
+ *
+ * @returns Their addresses, with nothing where a file has no such picture.
+ */
+const listArtworkUrls = async (): Promise<(string | null)[]> => {
+  const items = await db
+    .select({
+      posterUrl: mediaItem.posterUrl,
+      backdropUrl: mediaItem.backdropUrl,
+      logoUrl: mediaItem.logoUrl,
+    })
+    .from(mediaItem);
+  const chosen = await db.select({ url: mediaArtworkChoice.url }).from(mediaArtworkChoice);
+
+  return [
+    ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
+    ...chosen.map((row) => row.url),
+  ];
+};
+
 const libraryService = createDatabaseLibraryService({
   db,
+  artworkAddressOf,
   files: createMediaFileSystem(),
   transcoder,
   forgetKeptCopies: async (paths) => {
@@ -3778,7 +3904,7 @@ const libraryService = createDatabaseLibraryService({
 const collectionService = createDatabaseCollectionService({
   db,
   library: libraryService,
-  artworkDirectory: join(env.PROFILE_IMAGE_DIR, '..', 'collections'),
+  artworkDirectory: collectionArtworkDir,
   onChanged: () => {
     realtime.publish('media', { event: 'collections' }, { kind: 'everyone' });
   },
@@ -3865,7 +3991,7 @@ const animeIds = createDatabaseAnimeIds(db);
 
 const likenessStore = createDatabaseLikenessStore(db);
 
-const likenessService = createLikenessService({ db, store: likenessStore });
+const likenessService = createLikenessService({ db, store: likenessStore, artworkAddressOf });
 
 const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -4595,6 +4721,7 @@ const creditProviders = [
 
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
+  publish: { directory: join(env.IMAGE_CACHE_DIR, 'public'), nameOf: artworkNames.nameOf },
   fetchImpl: async (url) =>
     (await readLocalPicture(url, artworkUploads)) ??
     (readLinkedAddress(url) === null
@@ -4610,6 +4737,32 @@ const images = createImageCache({
     }
   },
 });
+
+const RAW_COPIES_LET_GO = join(env.IMAGE_CACHE_DIR, '.raw-local-copies-let-go');
+
+if (!(await isThere(RAW_COPIES_LET_GO))) {
+  void (async () => {
+    const forgottenRawCopies = await forgetRawLocalCopies(await listArtworkUrls(), {
+      directory: env.IMAGE_CACHE_DIR,
+      nameFor: images.nameFor,
+      forget: images.forget,
+    });
+
+    await writeFile(RAW_COPIES_LET_GO, '');
+
+    if (forgottenRawCopies > 0) {
+      log.info(
+        'server',
+        `image cache: ${forgottenRawCopies.toString()} copied picture(s) from this server let go, to be cleaned`,
+      );
+    }
+  })().catch((error: Error) => {
+    log.warn(
+      'server',
+      `image cache: copied pictures from this server could not be checked: ${error.message}`,
+    );
+  });
+}
 
 const bookPagesDir = join(env.IMAGE_CACHE_DIR, 'books');
 
@@ -4994,6 +5147,17 @@ const startPlugins = (
       readProfile,
       lockedLibraries: async () => Object.keys(await readLibraryLocks(settings)),
       media,
+      music: createPluginMusic({
+        library: musicLibrary,
+        details: media.details,
+        findTrack: media.findTrack,
+        plays: musicPlays,
+        stories: musicServices.stories,
+        listening: createAppListening({ presence, devices: musicServices.devices }),
+      }),
+      musicLibrary,
+      favourites: createDatabaseFavouriteService(db),
+      ratings: createDatabaseRatingService(db),
       durationOf: async (mediaId) => {
         const [found] = await db
           .select({ durationSeconds: mediaItem.durationSeconds })
@@ -5063,7 +5227,7 @@ const startPlugins = (
       await jobs.cancelFor(`plugin:${pluginId}`);
     },
     isJobCancelled: (jobId) => jobs.isCancelled(jobId),
-    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids),
+    summariesOf: (viewer, ids) => readSummaries(db, viewer, ids, artworkAddressOf),
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,
@@ -5259,6 +5423,7 @@ const signedInSockets = createSignedInSockets();
 const titleEdits = createTitleEditStore(db);
 
 const titleListService = createTitleListService(db, {
+  artworkAddressOf,
   certificationRegion: async () => (await settings.read()).certificationRegion,
 });
 
@@ -5819,6 +5984,8 @@ const app = createApp({
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
   readImage: (url, width) => images.read(url, width),
+  artworkNames,
+  artworkAddress: env.ARTWORK_URL,
   isTranscoderReachable: () => transcoder.isReachable(),
   transcoderAddress: env.TRANSCODER_URL,
   listRunningJobs: () => jobs.listRunning(),

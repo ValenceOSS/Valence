@@ -38,6 +38,24 @@ describe('restyleIcon', () => {
     });
   });
 
+  it('hides a layer shown only in some appearances in every one of them', () => {
+    const byAppearance = JSON.stringify({
+      groups: [
+        {
+          layers: [
+            {
+              name: 'dark logo',
+              'hidden-specializations': [{ value: true }, { appearance: 'dark', value: false }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(JSON.parse(restyleIcon(byAppearance, { isArtworkHidden: true }))).toEqual({
+      groups: [{ layers: [{ name: 'dark logo', hidden: true }] }],
+    });
+  });
+
   it('refuses something that is not an Icon Composer document', () => {
     expect(() => restyleIcon('{"layers":[]}', {})).toThrow();
   });

@@ -1,14 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { StatStrip } from './StatStrip';
 
 /**
- * How far the bar beside a figure is filled.
+ * How many ticks of the meter beside a figure are lit, or null where there is no meter.
+ *
+ * @param container - Where the strip was drawn.
+ * @returns The lit ticks.
  */
-const barWidth = (container: HTMLElement): string | null => {
-  const bar = container.querySelector('[role="presentation"]');
+const litTicks = (container: HTMLElement): number | null => {
+  const lights = [...container.querySelectorAll('span[aria-hidden] > span > span')];
 
-  return bar instanceof HTMLElement ? bar.style.width : null;
+  return lights.length === 0
+    ? null
+    : lights.filter((light) => light.className.includes('opacity-100')).length;
 };
 
 describe('StatStrip', () => {
@@ -39,7 +44,7 @@ describe('StatStrip', () => {
     expect(screen.getAllByRole('heading')).toHaveLength(2);
   });
 
-  it('draws a bar for a figure that is part of something larger', () => {
+  it('draws a meter for a figure that is part of something larger', async () => {
     const { container } = render(
       <StatStrip
         stats={[
@@ -52,16 +57,18 @@ describe('StatStrip', () => {
       />,
     );
 
-    expect(barWidth(container)).toBe('50%');
+    await waitFor(() => {
+      expect(litTicks(container)).toBe(10);
+    });
   });
 
-  it('draws no bar for a figure that is only a number', () => {
+  it('draws no meter for a figure that is only a number', () => {
     const { container } = render(<StatStrip stats={[{ label: 'Items', value: '15' }]} />);
 
-    expect(barWidth(container)).toBeNull();
+    expect(litTicks(container)).toBeNull();
   });
 
-  it('never draws a bar past full', () => {
+  it('never lights more than every tick', async () => {
     const { container } = render(
       <StatStrip
         stats={[
@@ -74,7 +81,9 @@ describe('StatStrip', () => {
       />,
     );
 
-    expect(barWidth(container)).toBe('100%');
+    await waitFor(() => {
+      expect(litTicks(container)).toBe(20);
+    });
   });
 
   it('adds a note where a figure needs one', () => {

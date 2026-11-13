@@ -217,7 +217,7 @@ const Hero = ({
   return (
     <div
       className={cn(
-        fills ? 'h-[calc(100svh-var(--valence-window-bar))]' : 'px-4 pt-4 sm:px-6',
+        fills ? 'h-[calc(100svh-var(--valence-window-bar))]' : 'px-4 sm:px-6',
         staysBehind && !fills ? 'sticky top-[var(--nav-clearance,1rem)] z-0' : '',
       )}
     >
@@ -268,6 +268,7 @@ const Hero = ({
               {...(onPalette === undefined ? {} : { onPalette })}
               hasSound
               controlsAtTop
+              isRoomy
               isHeld={isCovered || isStopped}
               fills
             />

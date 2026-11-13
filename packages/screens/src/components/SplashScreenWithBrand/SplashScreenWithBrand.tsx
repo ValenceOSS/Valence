@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { BrandLogo } from '@ValenceScreens/components/BrandLogo/BrandLogo';
+import { DeckMark } from '@ValenceUI/DeckMark';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import type { SplashScreenWithBrandProps } from './SplashScreenWithBrand.types';
 import { say } from '@ValenceI18n/say';
@@ -38,7 +39,18 @@ const SplashScreenWithBrand = ({ label, ...props }: SplashScreenWithBrandProps) 
     <SplashScreen
       {...props}
       name={name}
-      mark={<BrandLogo logo={brand?.logo ?? null} size={MARK_SIZE} label={name} />}
+      mark={
+        (brand?.logo ?? null) === null ? (
+          <DeckMark
+            size={84}
+            isAnimated
+            loops={props.isReady !== true && (props.failure ?? null) === null}
+            label={name}
+          />
+        ) : (
+          <BrandLogo logo={brand?.logo ?? null} size={MARK_SIZE} label={name} />
+        )
+      }
       label={label ?? say('common.loadingTitle', { title: name })}
     />
   );

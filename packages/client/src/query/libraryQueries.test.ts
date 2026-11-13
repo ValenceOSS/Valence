@@ -4,6 +4,7 @@ import { libraryQueries } from './libraryQueries';
 
 const fetchLibraries = vi.hoisted(() => vi.fn());
 const fetchLibraryItems = vi.hoisted(() => vi.fn());
+const fetchItemsAcross = vi.hoisted(() => vi.fn());
 const fetchMediaDetail = vi.hoisted(() => vi.fn());
 const fetchShows = vi.hoisted(() => vi.fn());
 const fetchShow = vi.hoisted(() => vi.fn());
@@ -15,6 +16,7 @@ const fetchLikeThis = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries,
   fetchLibraryItems,
+  fetchItemsAcross,
   fetchMediaDetail,
 }));
 
@@ -31,6 +33,7 @@ beforeEach(() => {
 
   fetchLibraries.mockResolvedValue([{ id: 'films' }]);
   fetchLibraryItems.mockResolvedValue({ items: [{ id: 'arrival' }], total: 1 });
+  fetchItemsAcross.mockResolvedValue({ items: [{ id: 'arrival' }], total: 1 });
   fetchMediaDetail.mockResolvedValue({ id: 'arrival' });
   fetchShows.mockResolvedValue([{ id: 'ted' }]);
   fetchShow.mockResolvedValue({ id: 'ted' });
@@ -110,26 +113,45 @@ describe('libraryQueries', () => {
     await expect(cache.fetchQuery(libraryQueries.credits(7))).resolves.toEqual({ cast: [] });
   });
 
-  it('asks every library the same question at once', async () => {
+  it('asks every library the same question in one request, uncounted', async () => {
     const found = await aCache().fetchQuery(
       libraryQueries.across(['films', 'shows'], { limit: 3 }),
     );
 
-    expect(found).toEqual([{ id: 'arrival' }, { id: 'arrival' }]);
-    expect(fetchLibraryItems).toHaveBeenCalledWith('films', { limit: 3 });
-    expect(fetchLibraryItems).toHaveBeenCalledWith('shows', { limit: 3 });
+    expect(found).toEqual([{ id: 'arrival' }]);
+    expect(fetchItemsAcross).toHaveBeenCalledWith(['films', 'shows'], { limit: 3 }, false);
+    expect(fetchLibraryItems).not.toHaveBeenCalled();
   });
 
-  it('answers with nothing for a library that failed, rather than failing the page', async () => {
+  it('asks each library in turn where too many titles are named to fit in one address', async () => {
+    const ids = Array.from({ length: 151 }, (_, at) => `title-${at.toString()}`);
+
     fetchLibraryItems.mockImplementation((libraryId: string) =>
       libraryId === 'films'
         ? Promise.reject(new Error('gone'))
         : Promise.resolve({ items: [{ id: 'arrival' }], total: 1 }),
     );
 
-    await expect(aCache().fetchQuery(libraryQueries.across(['films', 'shows']))).resolves.toEqual([
-      { id: 'arrival' },
-    ]);
+    await expect(
+      aCache().fetchQuery(libraryQueries.across(['films', 'shows'], { ids })),
+    ).resolves.toEqual([{ id: 'arrival' }]);
+    expect(fetchLibraryItems).toHaveBeenCalledWith('shows', { ids });
+    expect(fetchItemsAcross).not.toHaveBeenCalled();
+  });
+
+  it('asks every library at once and counts what matches, for a row that pages', async () => {
+    fetchItemsAcross.mockResolvedValue({ items: [{ id: 'arrival' }], total: 40 });
+
+    await expect(
+      aCache().fetchQuery(libraryQueries.acrossCounted(['shows', 'films'], { genre: 'Drama' })),
+    ).resolves.toEqual({ items: [{ id: 'arrival' }], total: 40 });
+    expect(fetchItemsAcross).toHaveBeenCalledWith(['shows', 'films'], { genre: 'Drama' });
+  });
+
+  it('holds one counted answer however the libraries were ordered when asked', () => {
+    expect(libraryQueries.acrossCounted(['b', 'a']).queryKey).toEqual(
+      libraryQueries.acrossCounted(['a', 'b']).queryKey,
+    );
   });
 
   it('holds one answer however the libraries were ordered when asked', () => {

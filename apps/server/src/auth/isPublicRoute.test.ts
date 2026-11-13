@@ -81,6 +81,12 @@ describe('isPublicRoute', () => {
       expect(isPublicRoute('DELETE', '/api/admin/splashscreen', true)).toBe(false);
     });
 
+    it('serves artwork by its keyed name to anybody, and nothing else under that address', () => {
+      expect(isPublicRoute('GET', `/api/artwork/${'a'.repeat(32)}-w342.webp`)).toBe(true);
+      expect(isPublicRoute('GET', '/api/artwork/poster.jpg')).toBe(false);
+      expect(isPublicRoute('DELETE', `/api/artwork/${'a'.repeat(32)}-w342.webp`)).toBe(false);
+    });
+
     it('draws the generated ones either way, since they say nothing about anybody', () => {
       expect(isPublicRoute('GET', '/api/profiles/avatars/rings')).toBe(true);
       expect(isPublicRoute('GET', '/api/profiles/avatars/rings', true)).toBe(true);

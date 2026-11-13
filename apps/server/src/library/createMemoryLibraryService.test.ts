@@ -413,3 +413,57 @@ describe('searching a library', () => {
     ]);
   });
 });
+
+describe('reading every library at once', () => {
+  const OTHER_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3302';
+
+  const twoLibraries = () =>
+    createMemoryLibraryService({
+      libraries: [theLibrary, { ...theLibrary, id: OTHER_ID, name: 'More films' }],
+      media: [
+        film({
+          id: 'a',
+          title: 'Arrival',
+          metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false, rating: 7.9 },
+        }),
+        film({
+          id: 'b',
+          title: 'Blade Runner',
+          metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false, rating: null },
+        }),
+        film({
+          id: 'c',
+          title: 'Contact',
+          libraryId: OTHER_ID,
+          metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false, rating: 7.4 },
+        }),
+        film({
+          id: 'd',
+          title: 'Dune',
+          libraryId: OTHER_ID,
+          metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false, rating: 8 },
+        }),
+      ],
+    });
+
+  it('answers from every library asked for, the best rated first and the unrated last', async () => {
+    const found = await twoLibraries().listItemsAcross(asTheServer, [LIBRARY_ID, OTHER_ID], {
+      ...everything,
+      order: 'rated',
+    });
+
+    expect(found.items.map((one) => one.id)).toEqual(['d', 'a', 'c', 'b']);
+    expect(found.total).toBe(4);
+  });
+
+  it('reads only the libraries asked for, a page at a time', async () => {
+    const found = await twoLibraries().listItemsAcross(asTheServer, [OTHER_ID], {
+      order: 'title',
+      limit: 1,
+      offset: 1,
+    });
+
+    expect(found.items.map((one) => one.id)).toEqual(['d']);
+    expect(found.total).toBe(2);
+  });
+});

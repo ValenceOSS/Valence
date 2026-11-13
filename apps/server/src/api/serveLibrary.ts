@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { ExtraChoiceRequestSchema } from '@ValenceContracts/schemas/ExtraChoice';
 import {
   PatternRenamePlanRequestSchema,
@@ -18,7 +19,9 @@ import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
-import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
+import { itemsOptionsOf } from '@ValenceServer/api/itemsOptionsOf';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { createHomeShelves } from '@ValenceServer/library/createHomeShelves';
 import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
@@ -28,6 +31,8 @@ import {
   listLibrariesRoute,
   createLibraryRoute,
   updateLibraryRoute,
+  listItemsAcrossRoute,
+  homeShelvesRoute,
   listItemsRoute,
   listFacetsRoute,
   getMediaRoute,
@@ -83,6 +88,11 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     titleMetadata,
     readImage,
   } = context;
+  const homeShelves = createHomeShelves({
+    listItems: (viewer: Viewer, libraryIds, options) =>
+      library.listItemsAcross(viewer, libraryIds, options),
+    listFacets: (viewer: Viewer) => library.listFacets(viewer),
+  });
 
   /**
    * Names an item for the audit log, by its title and the library it is in, or by nothing where
@@ -231,13 +241,6 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listItemsRoute, async (context) => {
     const { id } = context.req.valid('param');
-    const { search, kind, genre, yearFrom, yearTo, minRating, ids, order, limit, offset } =
-      context.req.valid('query');
-
-    const { minYourStars, versions, genres, decades } = context.req.valid('query');
-    const { audioLanguages, audioCodecs, audioChannels } = context.req.valid('query');
-    const listed = (value: string | undefined): string[] =>
-      value === undefined ? [] : value.split(',').filter((one) => one.trim() !== '');
     const askedBy = await readProfileId(context.req.raw.headers);
     const viewer = await viewerOf(context.req.raw.headers);
 
@@ -245,46 +248,58 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const page = await library.listItems(viewer, id, {
-      ...(search === undefined ? {} : { search }),
-      ...(kind === undefined ? {} : { kind }),
-      ...(genre === undefined ? {} : { genre }),
-      ...(listed(genres).length === 0 ? {} : { genres: listed(genres) }),
-      ...(listed(decades).length === 0
-        ? {}
-        : {
-            decades: listed(decades)
-              .map(Number)
-              .filter((decade) => Number.isInteger(decade)),
-          }),
-      ...(listed(audioLanguages).length === 0 &&
-      listed(audioCodecs).length === 0 &&
-      listed(audioChannels).length === 0
-        ? {}
-        : {
-            audio: {
-              languages: listed(audioLanguages),
-              codecs: listed(audioCodecs),
-              channels: listed(audioChannels)
-                .map(Number)
-                .filter((count) => Number.isInteger(count) && count > 0),
-            },
-          }),
-      ...(yearFrom === undefined ? {} : { yearFrom }),
-      ...(yearTo === undefined ? {} : { yearTo }),
-      ...(minRating === undefined ? {} : { minRating }),
-      ...(ids === undefined ? {} : { ids: ids.split(',').filter((named) => named.trim() !== '') }),
-      ...(order === undefined ? {} : { order }),
-      ...(askedBy === null ? {} : { profileId: askedBy }),
-      ...(minYourStars === undefined ? {} : { minYourStars }),
-      ...(versions === 'all' ? { withVersions: true } : {}),
-      limit: limit ?? DEFAULT_LIMIT,
-      offset: offset ?? 0,
-    });
+    const page = await library.listItems(
+      viewer,
+      id,
+      itemsOptionsOf(context.req.valid('query'), askedBy),
+    );
 
     if (page === null) {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
+
+    return context.json(page, 200);
+  });
+
+  app.openapi(homeShelvesRoute, async (context) => {
+    const { libraryIds, leaning, cursor, count } = context.req.valid('query');
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const listOf = (joined: string | undefined) =>
+      (joined ?? '')
+        .split(',')
+        .map((one) => one.trim())
+        .filter((one) => one !== '');
+
+    return context.json(
+      await homeShelves.read(viewer, {
+        libraryIds: listOf(libraryIds),
+        leaning: listOf(leaning),
+        count,
+        ...(cursor === undefined ? {} : { cursor }),
+      }),
+      200,
+    );
+  });
+
+  app.openapi(listItemsAcrossRoute, async (context) => {
+    const { libraryIds, counted, ...asked } = context.req.valid('query');
+    const askedBy = await readProfileId(context.req.raw.headers);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const page = await library.listItemsAcross(
+      viewer,
+      libraryIds.split(',').filter((one) => one.trim() !== ''),
+      { ...itemsOptionsOf(asked, askedBy), counted: counted !== 'no' },
+    );
 
     return context.json(page, 200);
   });
@@ -598,6 +613,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
         contentType: context.req.header('content-type') ?? '',
       },
       (await readAccount(context.req.raw.headers))?.id ?? null,
+      frameFromQuery(context.req.query()),
     );
 
     if (typeof uploaded === 'string') {

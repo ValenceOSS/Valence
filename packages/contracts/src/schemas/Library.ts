@@ -1,5 +1,6 @@
 import { AdvisorySchema } from './Advisory';
 import { z } from 'zod';
+import { ArtworkAddressesSchema } from './ArtworkAddresses';
 import { MediaItemSchema } from './MediaItem';
 import { FulfilmentSchema } from './ArrApp';
 import { HigherProfileAsksSchema } from './HigherProfileAsks';
@@ -113,6 +114,7 @@ const MediaSummarySchema = z.object({
   hasBackdrop: z.boolean().default(false),
   hasLogo: z.boolean().default(false),
   posterUrl: z.string().url().nullish(),
+  artwork: ArtworkAddressesSchema.optional(),
   artworkRevision: z.number().int().nonnegative().optional(),
   seriesId: z.string().nullable().default(null),
   parentId: z.string().nullish(),

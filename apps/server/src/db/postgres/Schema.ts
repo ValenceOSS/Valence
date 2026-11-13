@@ -19,7 +19,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
@@ -1121,6 +1121,8 @@ const mediaItem = pgTable(
     uniqueIndex('media_item_path_idx').on(table.libraryId, table.path),
     index('media_item_library_idx').on(table.libraryId),
     index('media_item_title_idx').on(table.title),
+    index('media_item_added_at_idx').on(table.addedAt),
+    index('media_item_rating_idx').on(table.rating.desc().nullsLast()),
     index('media_item_genres_idx').using('gin', table.genres),
     index('media_item_cast_idx').using('gin', table.castMembers),
     index('media_item_series_idx').on(table.seriesTitle, table.seasonNumber),
@@ -1379,6 +1381,37 @@ const readingProgress = pgTable(
   ],
 );
 
+const readingBookmark = pgTable(
+  'reading_bookmark',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    bookId: text('bookId')
+      .notNull()
+      .references(() => book.id, { onDelete: 'cascade' }),
+    chapterId: text('chapterId')
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: 'cascade' }),
+    pageNumber: integer('pageNumber'),
+    fraction: real('fraction'),
+    pageShown: integer('pageShown'),
+    excerpt: text('excerpt'),
+    picture: text('picture'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [
+    index('reading_bookmark_book_id_idx').on(table.bookId),
+    index('reading_bookmark_chapter_idx').on(table.chapterId),
+    index('reading_bookmark_book_idx').on(table.profileId, table.bookId),
+    check(
+      'reading_bookmark_somewhere',
+      sql`${table.pageNumber} is not null or ${table.fraction} is not null`,
+    ),
+  ],
+);
+
 const listeningProgress = pgTable(
   'listening_progress',
   {
@@ -1554,6 +1587,7 @@ const playlist = pgTable(
     isShared: boolean('isShared').notNull().default(false),
     isOrdered: boolean('isOrdered').notNull().default(false),
     artworkPath: text('artworkPath'),
+    artworkFrame: jsonb('artworkFrame').$type<PhotoFrame>(),
     rules: jsonb('rules').$type<SongRules>(),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
@@ -1972,6 +2006,8 @@ const userProfile = pgTable('user_profile', {
   avatarStyle: text('avatarStyle'),
   avatarSeed: text('avatarSeed'),
   photoPath: text('photoPath'),
+  photoFrame: jsonb('photoFrame').$type<PhotoFrame>(),
+  avatarOnColour: boolean('avatarOnColour'),
   wayInId: text('wayInId').unique(),
   onboardedAt: timestamp('onboardedAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
@@ -2142,6 +2178,7 @@ const collection = pgTable(
     name: text('name').notNull(),
     description: text('description'),
     artworkPath: text('artworkPath'),
+    artworkFrame: jsonb('artworkFrame').$type<PhotoFrame>(),
     isOrdered: boolean('isOrdered').notNull().default(false),
     createdBy: text('createdBy').references(() => user.id, { onDelete: 'set null' }),
     profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
@@ -2468,6 +2505,7 @@ export {
   book,
   bookChapter,
   readingProgress,
+  readingBookmark,
   listeningProgress,
   musicArtist,
   musicAlbum,

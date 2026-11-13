@@ -1,10 +1,11 @@
-import { QueryCache, QueryClient } from '@tanstack/react-query';
+import { notifyManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import { gatheredScheduler } from '@ValenceClient/query/gatheredScheduler';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 
 const STALE_FOR_MS = 60_000;
 
-const KEPT_FOR_MS = 10 * 60_000;
+const KEPT_FOR_MS = 60 * 60_000;
 
 const TRIES = 2;
 
@@ -14,13 +15,15 @@ const SETTLED = new Set([400, 401, 403, 404, 405, 409, 422]);
 
 const UNAVAILABLE = 503;
 
+const NOTICES_GATHERED_MS = 50;
+
 /**
  * Builds the one cache the application answers from.
  *
  * The defaults are the whole argument for having it. An answer is treated as fresh for a minute, so
  * moving between pages shows what is already known instead of asking again and waiting — which is
  * the bug that produced a splash screen between every page and a hand-written cache to hide it. It
- * is kept for ten minutes after nothing is looking at it, so a viewer who wanders off and comes back
+ * is kept for an hour after nothing is looking at it, so a viewer who wanders off and comes back
  * finds the library where they left it.
  *
  * Being stale means asking again, not showing nothing. Every screen renders the last answer and
@@ -40,9 +43,15 @@ const UNAVAILABLE = 503;
  * application shows the way in. Only that key is dropped, so the read that failed is not immediately
  * made again against the same refusal.
  *
+ * What the cache tells the screens is gathered and passed on every fiftieth of a second at most, so
+ * a page asking a hundred small questions at once is drawn again a handful of times as they are
+ * answered rather than once for every answer.
+ *
  * @returns The cache, ready to be handed to the application.
  */
 const buildQueryClient = (): QueryClient => {
+  notifyManager.setScheduler(gatheredScheduler(NOTICES_GATHERED_MS));
+
   const client: QueryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {

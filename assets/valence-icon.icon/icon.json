@@ -6,34 +6,45 @@
     {
       "layers" : [
         {
-          "fill" : {
-            "solid" : "extended-gray:1.00000,1.00000"
-          },
-          "hidden" : true,
-          "image-name" : "valence-test-logo-2.svg",
-          "name" : "valence-test-logo-2"
-        },
-        {
-          "fill" : {
-            "solid" : "extended-gray:1.00000,1.00000"
-          },
-          "glass-specializations" : [
+          "glass" : true,
+          "hidden-specializations" : [
+            {
+              "value" : false
+            },
             {
               "appearance" : "dark",
               "value" : true
             }
           ],
-          "hidden" : false,
-          "image-name" : "valence-test-logo.svg",
-          "name" : "valence-test-logo"
+          "image-name" : "valence-mark-blue.svg",
+          "name" : "valence-mark-blue",
+          "position" : {
+            "scale" : 1.5,
+            "translation-in-points" : [
+              -25,
+              19
+            ]
+          }
         },
         {
-          "fill" : {
-            "solid" : "display-p3:0.96783,0.44959,0.09846,1.00000"
-          },
-          "hidden" : true,
-          "image-name" : "valence-back.png",
-          "name" : "valence-back"
+          "hidden-specializations" : [
+            {
+              "value" : true
+            },
+            {
+              "appearance" : "dark",
+              "value" : false
+            }
+          ],
+          "image-name" : "valence-mark-black.svg",
+          "name" : "valence-mark-black",
+          "position" : {
+            "scale" : 1.5,
+            "translation-in-points" : [
+              -25,
+              19
+            ]
+          }
         }
       ],
       "shadow" : {

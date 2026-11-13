@@ -1,9 +1,9 @@
 //! Byte ranges over the files the service hands back.
 //!
 //! A preview is played by a bare video element, and a video element seeks with
-//! `Range` requests. Answering one with the whole file makes every scrub a fresh
-//! download, and previously meant the file was read into memory in full before a
-//! byte of it reached anybody.
+//! `Range` requests. Answering one with the whole file would make every scrub a
+//! fresh download, with the file read into memory in full before a byte of it
+//! reached anybody.
 //!
 //! Needs no ffmpeg: what is being tested is delivery, so the bytes on disk can be
 //! anything.

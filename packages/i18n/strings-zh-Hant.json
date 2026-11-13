@@ -965,6 +965,71 @@
     "context": "Shown in the library (from `qualityBadges`)."
   },
   {
+    "handler": "client.library.sayRatingMeans.adultsOnly",
+    "text": "僅限成人",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.allAges",
+    "text": "適合所有年齡",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fifteenAndUp",
+    "text": "適合 15 歲以上",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fourteenAndUp",
+    "text": "可能不適合 14 歲以下的兒童",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.parentalGuidance",
+    "text": "建議家長陪同觀看",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.sevenAndUp",
+    "text": "適合 7 歲以上",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.seventeenAndUp",
+    "text": "不適合 17 歲以下的觀眾",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.thirteenAndUp",
+    "text": "部分內容可能不適合 13 歲以下的兒童",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveAndUp",
+    "text": "適合 12 歲以上",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveWithAnAdult",
+    "text": "適合 12 歲以上，年幼兒童需與成人一同觀看",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.underSeventeenWithAnAdult",
+    "text": "17 歲以下者應與家長或監護人一同觀看",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.youngChildren",
+    "text": "專為幼兒製作",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.showQualityBadges.standardRange",
+    "text": "SDR",
+    "context": "On a programme's badges, standard dynamic range, said only beside HDR10 or Dolby Vision when some episodes have one and some do not, as in \"HDR10 / SDR\"."
+  },
+  {
     "handler": "client.library.theVersionsOf.anotherVersion",
     "text": "另一個版本",
     "context": "Shown in the library (from `theVersionsOf`)."
@@ -973,6 +1038,11 @@
     "handler": "client.library.useHomeRows.genreFromTheDecadeS",
     "text": "{decade} 年代的{genre}",
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app; {decade} is filled in by the app."
+  },
+  {
+    "handler": "client.library.useHomeRows.moreGenre",
+    "text": "更多{genre}",
+    "context": "The heading of a row deep in the home page that carries on past a genre's own row with more of its best-rated titles (from `useHomeRows`). {genre} is the genre's name."
   },
   {
     "handler": "client.library.useHomeRows.newInGenre",
@@ -1102,7 +1172,7 @@
   {
     "handler": "client.playback.describeRungCost.valueMbps",
     "text": "{value} Mbps",
-    "context": "What the original video costs, beside its name in the quality menu. {value} is the bitrate in megabits a second, such as 8.0."
+    "context": "A speed in megabits a second: what the original video costs, beside its name in the quality menu, and the connection's speed and the stream's bitrate in the stream stats charts. {value} is the number, such as 8.0."
   },
   {
     "handler": "client.playback.fetchSegments.skipCredits",
@@ -2745,19 +2815,35 @@
     "context": "Shown, used in the stream stats in the player of the television app and in the stream stats in the video player."
   },
   {
-    "handler": "common.block",
-    "text": "封鎖",
-    "context": "Button that blocks somebody."
+    "handler": "common.black",
+    "text": "黑色",
+    "context": "The label in the tokens (from `captionColours`)."
   },
+  { "handler": "common.block", "text": "封鎖", "context": "Button that blocks somebody." },
   {
     "handler": "common.blocked",
     "text": "已封鎖",
     "context": "Marks somebody who has been blocked."
   },
   {
+    "handler": "common.blue",
+    "text": "藍色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.book",
     "text": "書",
     "context": "Shown, used in the media kind in the schemas and in the request kind names in the requests."
+  },
+  {
+    "handler": "common.bookmarks",
+    "text": "書籤",
+    "context": "The heading over the list of bookmarks in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.bookmarkThisPage",
+    "text": "為此頁加上書籤",
+    "context": "The button that bookmarks the page being read, in the readers on the web, the desktop and the phone."
   },
   {
     "handler": "common.books",
@@ -2788,6 +2874,11 @@
     "handler": "common.bringTitleBack",
     "text": "取消隱藏 {title}",
     "context": "The label of a button, used in the hidden in the account of the phone app and in the hidden panel in the account area. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.brown",
+    "text": "棕色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.browser",
@@ -2955,6 +3046,11 @@
     "context": "The label, used in several places, among them the media panel in the admin area and the media detail dialog."
   },
   {
+    "handler": "common.chooseWhatShows",
+    "text": "選擇圖片中要顯示的部分。",
+    "context": "The line under the title of the window that opens after a picture is chosen for an upload."
+  },
+  {
     "handler": "common.chrome",
     "text": "Chrome",
     "context": "The name of the Google Chrome browser, as a device is labelled with it."
@@ -3047,7 +3143,7 @@
   {
     "handler": "common.connection",
     "text": "連線",
-    "context": "The title of a headed section, used in the download client dialog in the admin area and in the indexer dialog in the admin area."
+    "context": "The title of a headed section, used in the download client and indexer dialogs in the admin area, and in the stream stats in the video player beside the connection's speed."
   },
   {
     "handler": "common.contents",
@@ -3380,6 +3476,16 @@
     "context": "How many permissions a role grants, in the list of roles."
   },
   {
+    "handler": "common.count.removeBookmarks.one",
+    "text": "移除 {count} 個書籤",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
+    "handler": "common.count.removeBookmarks.other",
+    "text": "移除 {count} 個書籤",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
     "handler": "common.count.removed.one",
     "text": "{count} 個已移除",
     "context": "How many files a library scan found gone."
@@ -3620,6 +3726,11 @@
     "context": "The label of a toggle, used in the reader sheet in the reader of the phone app and in the page reader."
   },
   {
+    "handler": "common.cream",
+    "text": "奶油色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.create",
     "text": "建立",
     "context": "The confirm label of a name entry dialog, used in several places, among them the files panel in the admin area and the folder browser in the admin area."
@@ -3803,6 +3914,11 @@
     "handler": "common.dragToChangeTheOrder",
     "text": "拖曳以變更順序",
     "context": "The label of the handle a table row is dragged by to change the order."
+  },
+  {
+    "handler": "common.dragToMovePinchToZoom",
+    "text": "拖曳圖片即可移動，捏合即可縮放。",
+    "context": "A hint beside a picture being framed after an upload: it can be dragged into place, or moved with two fingers on a trackpad, and pinched to draw it nearer."
   },
   {
     "handler": "common.duckDuckGo",
@@ -4165,6 +4281,11 @@
     "context": "Text shown, used in the where is your valence of the phone app and in the connect to server."
   },
   {
+    "handler": "common.framePicture",
+    "text": "調整圖片範圍",
+    "context": "The title of the window that opens after a picture is chosen for an upload, for placing it in its shape before it is sent."
+  },
+  {
     "handler": "common.fromName",
     "text": "來自 {name}",
     "context": "Shown in the admin area: a badge on an indexer brought in from a connected Prowlarr. {name} is what the admin called the Prowlarr."
@@ -4240,6 +4361,11 @@
     "context": "The label, used in the bricks in the variants and in the tokens (from `captionColours`)."
   },
   {
+    "handler": "common.grey",
+    "text": "灰色",
+    "context": "A colour to put round the page in the phone reader."
+  },
+  {
     "handler": "common.heavy",
     "text": "粗體",
     "context": "The heaviest of a range, used in subtitle settings for both the thickest caption outline and the heaviest caption lettering."
@@ -4249,10 +4375,11 @@
     "text": "說明",
     "context": "The label of what opens Valence’s help and documentation in the browser: an item in the account menu, and the question mark in the desktop app’s window bar."
   },
+  { "handler": "common.here", "text": "這裡", "context": "The detail in the nav bar." },
   {
-    "handler": "common.here",
-    "text": "這裡",
-    "context": "The detail in the nav bar."
+    "handler": "common.hexCode",
+    "text": "十六進位碼",
+    "context": "The box a colour is written in as six characters after a #, such as #3a8ee8, for somebody who already knows the colour they want."
   },
   {
     "handler": "common.hidden",
@@ -4325,9 +4452,19 @@
     "context": "Text shown, used in the request in the search of the phone app and in the how to fix."
   },
   {
+    "handler": "common.hue",
+    "text": "色相",
+    "context": "The strip of every colour of the rainbow in a colour picker, which picks which colour; read out by screen readers."
+  },
+  {
     "handler": "common.indexers",
     "text": "索引站",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the indexers panel in the admin area."
+  },
+  {
+    "handler": "common.indigo",
+    "text": "靛藍色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.inProgress",
@@ -4553,6 +4690,11 @@
     "handler": "common.likeTitle",
     "text": "喜歡 {title}",
     "context": "Shown, used in several places, among them the now playing of the television app and the immersive music. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.lime",
+    "text": "萊姆綠",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.linkedServers",
@@ -5100,6 +5242,11 @@
     "context": "Shown, used in the accounts panel in the admin area and in the role members in the roles panel."
   },
   {
+    "handler": "common.noBookmarksYet",
+    "text": "尚無書籤",
+    "context": "The title of the empty list under the Bookmarks heading in a reader, when nothing in the book is bookmarked."
+  },
+  {
     "handler": "common.noCeiling",
     "text": "無年齡限制",
     "context": "Shown, used in the library access in the schemas and in the admin area (from `ageChoices`)."
@@ -5295,11 +5442,6 @@
     "context": "Shown on an empty smart collection, on the web and in the phone app."
   },
   {
-    "handler": "common.notMeasured",
-    "text": "未計量",
-    "context": "Shown, used in the admin area (from `describeCpuShare`) and in the admin area (from `describeValenceMemory`)."
-  },
-  {
     "handler": "common.notNow",
     "text": "稍後",
     "context": "Shown, used in several places, among them the desktop of the desktop app and the ask page of the television app."
@@ -5475,6 +5617,11 @@
     "context": "Shown, used in the quality labels in the profiles in the requests service and in the quality names in the admin area."
   },
   {
+    "handler": "common.orange",
+    "text": "橘色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.order",
     "text": "排序",
     "context": "The name, used in several places, among them the browse area and the job history in the observability page."
@@ -5515,14 +5662,24 @@
     "context": "Text shown, used in several places, among them the text reader in the reader of the phone app and the page reader."
   },
   {
+    "handler": "common.pageAndPercent",
+    "text": "第 {page} 頁 · {percent}%",
+    "context": "Names a bookmark in a book’s text in the readers’ list of bookmarks: the page the reader showed when it was made, and how far through the book it is. {page} is the page number and {percent} a whole number from 0 to 100."
+  },
+  {
     "handler": "common.pages",
     "text": "分頁",
     "context": "The label of a segmented row, used in the page reader and in the scrolling pages."
   },
   {
+    "handler": "common.pagesYouBookmarkAppearHere",
+    "text": "你加入書籤的頁面會顯示在這裡。",
+    "context": "Under “No bookmarks yet” in a reader’s list of bookmarks, saying how to add one."
+  },
+  {
     "handler": "common.pageValue",
     "text": "第 {value} 頁",
-    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app."
+    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app, and names a page bookmark in the list of bookmarks."
   },
   {
     "handler": "common.partlyHere",
@@ -5579,11 +5736,7 @@
     "text": "開啟連結的人需要輸入密碼。如果連結被分享到你預期之外的地方，請設定密碼。",
     "context": "Shown in the party panel."
   },
-  {
-    "handler": "common.partyPanel.ask",
-    "text": "邀請",
-    "context": "Shown in the party panel."
-  },
+  { "handler": "common.partyPanel.ask", "text": "邀請", "context": "Shown in the party panel." },
   {
     "handler": "common.partyPanel.askAlong",
     "text": "邀請他人",
@@ -5649,16 +5802,8 @@
     "text": "所有人都可以跳轉",
     "context": "The label of a switch in the party panel."
   },
-  {
-    "handler": "common.partyPanel.guest",
-    "text": "來賓",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "common.partyPanel.host",
-    "text": "主持人",
-    "context": "Shown in the party panel."
-  },
+  { "handler": "common.partyPanel.guest", "text": "來賓", "context": "Shown in the party panel." },
+  { "handler": "common.partyPanel.host", "text": "主持人", "context": "Shown in the party panel." },
   {
     "handler": "common.partyPanel.keepingTime",
     "text": "同步主導者",
@@ -5852,7 +5997,7 @@
   {
     "handler": "common.percent",
     "text": "{value}%",
-    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number."
+    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number. Also names a bookmark in a book’s text by how far through it is."
   },
   {
     "handler": "common.percentDone",
@@ -5864,11 +6009,7 @@
     "text": "已讀 {percent}%",
     "context": "How much of a book or chapter has been read. {percent} is a whole number from 0 to 100."
   },
-  {
-    "handler": "common.person",
-    "text": "人員",
-    "context": "A column heading: who it was."
-  },
+  { "handler": "common.person", "text": "人員", "context": "A column heading: who it was." },
   {
     "handler": "common.pickSomeEpisodes",
     "text": "選擇集數",
@@ -5878,6 +6019,11 @@
     "handler": "common.picture",
     "text": "圖片",
     "context": "The title of a group, used in several places, among them the profile in the account of the phone app and the account avatar picker in the accounts panel."
+  },
+  {
+    "handler": "common.pink",
+    "text": "粉紅色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.pixel",
@@ -6065,6 +6211,11 @@
     "context": "The name of Prowlarr, the indexer manager Valence can bring indexers in from. A product name; usually left as it is."
   },
   {
+    "handler": "common.purple",
+    "text": "紫色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.putTheAlbumsInOrderBy",
     "text": "依以下方式排序專輯",
     "context": "The label of a segmented row, used in the albums of the phone app and in the albums view in the music page."
@@ -6245,6 +6396,16 @@
     "context": "The label of a data table, used in the release pick table in the admin area and in the release search panel in the admin area."
   },
   {
+    "handler": "common.removeBookmark",
+    "text": "移除書籤",
+    "context": "The button that removes the bookmark on the page being read, in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.removeBookmarkAt",
+    "text": "移除位於 {place} 的書籤",
+    "context": "The button beside one bookmark in a reader’s list of bookmarks, read out by screen readers. {place} is the bookmark’s name, such as Page 12 or 37%."
+  },
+  {
     "handler": "common.removedName",
     "text": "已移除 {name}。",
     "context": "Shown, used in several places, among them the downloads panel in the admin area and the indexers panel in the admin area. {name} is filled in by the app."
@@ -6375,6 +6536,11 @@
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
   },
   {
+    "handler": "common.resetPosition",
+    "text": "重設位置",
+    "context": "The label of a button that puts a picture being framed back in the middle, at its smallest, wherever a picture is uploaded."
+  },
+  {
     "handler": "common.resolution",
     "text": "解析度",
     "context": "A video's resolution, such as 1080p: a custom format condition in the quality profile editor, and wherever a resolution is named."
@@ -6408,6 +6574,11 @@
     "handler": "common.roles",
     "text": "角色",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the accounts panel in the admin area."
+  },
+  {
+    "handler": "common.rose",
+    "text": "玫瑰色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.run",
@@ -6550,6 +6721,11 @@
     "context": "The label of a button, used in the shelf of the phone app and in the music home in the music page."
   },
   {
+    "handler": "common.select",
+    "text": "選取",
+    "context": "The button beside the Bookmarks heading in the phone’s reader that starts picking bookmarks to remove several at once."
+  },
+  {
     "handler": "common.selectTitle",
     "text": "選取 {title}",
     "context": "The tick box beside one row of an admin table, read aloud, such as a request or a download. {title} is its name."
@@ -6598,6 +6774,11 @@
     "handler": "common.setUp",
     "text": "設定",
     "context": "Shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.shade",
+    "text": "深淺",
+    "context": "The square in a colour picker that picks how pale or dark and how strong the chosen hue is; read out by screen readers."
   },
   {
     "handler": "common.shadow",
@@ -6748,6 +6929,16 @@
     "handler": "common.skip",
     "text": "略過",
     "context": "A button that skips past something optional, such as a step of the get-started checklist or a pre-roll clip played before a title."
+  },
+  {
+    "handler": "common.skyBlue",
+    "text": "天藍色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
+    "handler": "common.slate",
+    "text": "石板灰",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.sleepTimer",
@@ -6998,6 +7189,11 @@
     "handler": "common.system",
     "text": "系統",
     "context": "The label, used in several places, among them the theme choice of the phone app and the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.teal",
+    "text": "藍綠色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.test",
@@ -7435,6 +7631,11 @@
     "context": "The label, used in the download client dialog (from `readDownloadClientForm`) and in the download clients table in the downloads panel."
   },
   {
+    "handler": "common.transparent",
+    "text": "透明",
+    "context": "What a screen reader says of the first swatch in a row of colours, which leaves nothing behind a drawn face, so it shows on whatever it is drawn over."
+  },
+  {
     "handler": "common.tryAgain",
     "text": "再試一次",
     "context": "The label of a button, used in several places, among them the plugin page of the phone app and the way in of the phone app."
@@ -7585,11 +7786,6 @@
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
   },
   {
-    "handler": "common.useOption",
-    "text": "使用 {option}",
-    "context": "The label of a button, used in the profile in the account of the phone app and in the account avatar picker in the accounts panel. {option} is filled in by the app."
-  },
-  {
     "handler": "common.usePreset",
     "text": "使用 {preset}",
     "context": "The label of a button, used in the colour choice and in the colour picker. {preset} is filled in by the app."
@@ -7643,6 +7839,11 @@
     "handler": "common.view",
     "text": "檢視",
     "context": "The label, used in the main of the desktop app (from `theApplicationMenu`) and in the log explorer in the observability page."
+  },
+  {
+    "handler": "common.violet",
+    "text": "紫羅蘭色",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.vivaldi",
@@ -7783,6 +7984,11 @@
     "handler": "common.where",
     "text": "位置",
     "context": "The label in the webhook fields (from `webhookPanes`)."
+  },
+  {
+    "handler": "common.wherePictureSits",
+    "text": "圖片目前的位置。使用方向鍵移動，使用加號或減號縮放。",
+    "context": "What a screen reader says of a picture being framed after an upload, which can be dragged into place."
   },
   {
     "handler": "common.whereYouAre",
@@ -10910,14 +11116,9 @@
     "context": "The name of the Android phone in the sheet that picks where music plays, as \"This iPhone\" names an iPhone."
   },
   {
-    "handler": "phone.aFaceEditor.aPhotoOrAGIF",
-    "text": "來自你媒體庫的照片或 GIF。",
-    "context": "The line above the photo picker in the phone's profile picture editor."
-  },
-  {
     "handler": "phone.aFaceEditor.chooseAPhotoOrGIF",
     "text": "選擇照片或 GIF",
-    "context": "The button in the phone's profile picture editor that opens the photo library."
+    "context": "Read out by screen readers for the button in the picture editor, on the phone and on the web, that opens the photo library or the file picker; the button itself shows a shorter label."
   },
   {
     "handler": "phone.anAlbum.thatAlbumCouldNotBeRead",
@@ -10953,6 +11154,11 @@
     "handler": "phone.anAskable.anythingAlreadyDownloadedForItIs",
     "text": "為此已下載的任何檔案都會被刪除。",
     "context": "A message in an alert in the askable of the phone app."
+  },
+  {
+    "handler": "phone.aPerson.theirWorkCouldNotBeRead",
+    "text": "無法載入其餘作品。",
+    "context": "Shown on the phone's page about a person in the cast or crew where their work not on this server and their credits could not be read, above a button to try again."
   },
   {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
@@ -11003,11 +11209,6 @@
     "handler": "phone.aReader.aReaderSheet.autoTakesTheColourOfEach",
     "text": "「自動」會採用每頁本身邊緣的顏色。",
     "context": "Explains the Auto choice for the colour round the page in the phone reader."
-  },
-  {
-    "handler": "phone.aReader.aReaderSheet.grey",
-    "text": "灰色",
-    "context": "A colour to put round the page in the phone reader."
   },
   {
     "handler": "phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo",
@@ -11070,11 +11271,6 @@
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
-    "handler": "phone.aReader.aReaderSide.markThesePages",
-    "text": "為這些頁面加上書籤",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
     "handler": "phone.aReader.aReaderSide.readOn",
     "text": "接著閱讀",
     "context": "Text shown in the reader side in the reader of the phone app."
@@ -11082,11 +11278,6 @@
   {
     "handler": "phone.aReader.aReaderSide.showingWholePagesFillTheWidth",
     "text": "符合頁面。切換為符合寬度",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
-    "handler": "phone.aReader.aReaderSide.unmarkThesePages",
-    "text": "移除書籤",
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
@@ -11248,6 +11439,11 @@
     "handler": "phone.aShow.playSeasonEpisode",
     "text": "播放 S{season} E{episode}",
     "context": "The button on a programme's page in the phone app that plays the next episode from its start. {season} is the season number and {episode} the episode number."
+  },
+  {
+    "handler": "phone.aShow.statusNextEpisode",
+    "text": "{status} · S{seasonNumber} E{episodeNumber} · {airDate}",
+    "context": "A programme's status chip on its page on the open inside of a folding phone, with the next episode folded into it. {status} is the status, such as Returning; {seasonNumber} and {episodeNumber} are the next episode's; {airDate} says when it airs, such as Airs today."
   },
   {
     "handler": "phone.aShow.thatProgrammeCouldNotBeRead",
@@ -13760,6 +13956,11 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.languageKeptHere",
+    "text": "此設定會保存在這台裝置上。儲存後，Valence 會以新語言重新啟動。",
+    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
     "text": "在此瀏覽器中播放更多影片",
     "context": "Title of a setting on this device: decode films the browser can't play by itself in the page, using WebGPU, instead of having the server convert them."
@@ -13768,6 +13969,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "有多個版本時，優先播放較佳的版本",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
+    "text": "與裝置相同",
+    "context": "The first choice of the Language setting in a profile's settings: speak whichever of the device's own languages Valence has."
   },
   {
     "handler": "screens.accountArea.profileSettings.showsANoticeOnThisComputer",
@@ -16795,6 +17001,11 @@
     "context": "On the admin overview's storage card, the label of the estimated total size of the downloads in the queue that have not finished."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.howItSplits",
+    "text": "Valence 保存的檔案依類別劃分",
+    "context": "Read out in place of the bar on the admin overview's storage card that divides the files Valence keeps (preview clips, thumbnails, transcodes, artwork) by kind."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.keptByValence",
     "text": "由 Valence 保存，不計入媒體庫",
     "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
@@ -17565,26 +17776,6 @@
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The fast cores of a chip that has both fast and efficient ones."
   },
   {
-    "handler": "screens.adminArea.coresValenceNotMeasured.one",
-    "text": "{count} 個核心 · 未測量 Valence",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceNotMeasured.other",
-    "text": "{count} 個核心 · 未測量 Valence",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.one",
-    "text": "{count} 個核心 · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.other",
-    "text": "{count} 個核心 · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
     "handler": "screens.adminArea.correctionPicker.itWillSayWhatItsFiles",
     "text": "下次掃描後，將使用檔案中的詳細資料。",
     "context": "A short message shown once something is done in the correction picker in the admin area."
@@ -18065,9 +18256,29 @@
     "context": "Shown in the admin area (from `describeQueueKind`)."
   },
   {
+    "handler": "screens.adminArea.describeQueueKind.encodingVersions",
+    "text": "正在編碼其他畫質",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service encodes lower-quality versions of a file ahead of time."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.lookingForTheCredits",
+    "text": "正在尋找片尾",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service reads a film's frames to find where its credits start."
+  },
+  {
     "handler": "screens.adminArea.describeQueueKind.makingAPreview",
     "text": "正在產生預覽",
     "context": "Shown in the admin area (from `describeQueueKind`)."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.preparingADownload",
+    "text": "正在準備下載",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service prepares a copy of a file for somebody to keep on their device."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.readingKeyframes",
+    "text": "正在讀取關鍵影格，以加快跳轉",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service reads where a file's keyframes are ahead of time, so seeking and streaming it start faster."
   },
   {
     "handler": "screens.adminArea.describeScanKind.clearingPartsOf",
@@ -22122,7 +22333,7 @@
   {
     "handler": "screens.adminArea.mediaTitlePage.showInTheApp",
     "text": "預覽",
-    "context": "A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers."
+    "context": "Two places. A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers. And the small heading in the profile picture editor over the face shown at the sizes Valence draws it. A noun or a verb both fit; keep it to one short word."
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.unlockedEveryField",
@@ -22230,44 +22441,24 @@
     "context": "Shown in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.needsYouCard.aNewerDevBuildIsOut",
-    "text": "有較新的開發版本可用",
-    "context": "A count on the overview in the admin area, for a server running a dev build when a newer one is out."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.aNewReleaseIsOut",
-    "text": "有新版本可用",
-    "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
-  },
-  {
     "handler": "screens.adminArea.needsYouCard.failedRequests",
     "text": "失敗的請求",
-    "context": "A count on the overview in the admin area that opens the catalogue, where the failed requests are listed."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the catalogue where the failed requests are listed."
   },
   {
     "handler": "screens.adminArea.needsYouCard.libraryProblems",
     "text": "媒體庫問題",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.nothingNeedsYou",
-    "text": "沒有需要你處理的事項。Valence 已是最新版本。",
-    "context": "Shown when nothing on the server needs the admin."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the titles in the libraries that need fixing."
   },
   {
     "handler": "screens.adminArea.needsYouCard.requestsToApprove",
     "text": "待核准的請求",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.valenceIsUpToDate",
-    "text": "Valence 已是最新版本",
-    "context": "On the admin overview’s Waiting on you card, when the newest release is running."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the requests waiting for approval."
   },
   {
     "handler": "screens.adminArea.needsYouCard.waitingOnYou",
     "text": "等待你處理",
-    "context": "The card at the top of the admin overview that counts what needs an administrator."
+    "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
@@ -22303,36 +22494,6 @@
     "handler": "screens.adminArea.nothingCouldBeReEncoded",
     "text": "無法重新編碼任何內容。",
     "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.notMeasured",
-    "text": "未測量",
-    "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceNotMeasured",
-    "text": "可用上限 {total} · 未測量 Valence",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited and Valence's own use could not be measured. {total} is the memory it is allowed."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceUses",
-    "text": "可用上限 {total} · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited. {total} is the memory it is allowed, and {used} how much Valence itself uses, such as 1.2 GB."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalOnMount",
-    "text": "{total} · {mountPoint}",
-    "context": "Under the storage figure at the top of the admin area. {total} is the disk's whole size, such as 8.0 TB, and {mountPoint} is where it is mounted, such as /media."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceNotMeasured",
-    "text": "{total} · 未測量 Valence",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where Valence's own use could not be measured. {total} is all the machine's memory."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceUses",
-    "text": "{total} · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use. {total} is all the machine's memory, and {used} how much Valence itself uses, such as 1.2 GB."
   },
   {
     "handler": "screens.adminArea.onlineServicesCard.everythingValenceConnectsTo",
@@ -22540,6 +22701,71 @@
     "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.driveFull",
+    "text": "{mount} · 已使用 {share}",
+    "context": "One drive in the row of drives on the admin overview's disk usage card. {mount} is where the drive is mounted, such as /mnt/media, {share} how full it is, such as 82%."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.elseIs",
+    "text": "位於磁碟上，但不屬於媒體庫或 Valence。",
+    "context": "Said of everything else on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.everythingElse",
+    "text": "其他項目",
+    "context": "A part of the disk on the admin overview’s disk usage card: what is on the disk that is not a library or Valence’s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.free",
+    "text": "可用空間",
+    "context": "A part of the disk on the admin overview’s disk usage card: the room left."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.freeOfTheDrive",
+    "text": "可用空間，共 {total}",
+    "context": "Beside the large figure on the admin overview's disk usage card, which is how much room is left on the drive. {total} is how big the drive is."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed",
+    "text": "{mount} 的使用情況",
+    "context": "Read out in place of the bar on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.notMeasured",
+    "text": "尚未測量此磁碟。",
+    "context": "Shown on the admin overview’s disk usage card before the disk has been measured."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.rescan",
+    "text": "重新掃描",
+    "context": "Button on the admin overview’s disk usage card that counts what Valence holds on the disk again."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.roomLeft",
+    "text": "{mount} 的剩餘空間。",
+    "context": "Said of the free space on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.shareOfTheDisk",
+    "text": "占磁碟的 {share}。",
+    "context": "Said of a library on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valenceKeeps",
+    "text": "預覽 {previews}、進度列縮圖 {trickplay}、轉碼 {sessions}、封面圖 {artwork}。",
+    "context": "Said of Valence’s files on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valencesFiles",
+    "text": "Valence 的檔案",
+    "context": "A part of the disk on the admin overview’s disk usage card: the previews, thumbnails, transcodes, artwork and book pages Valence keeps."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.whichDrive",
+    "text": "選擇要顯示的磁碟",
+    "context": "Read out for the row of drives on the admin overview's disk usage card, shown where the libraries are spread over several drives."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.how",
     "text": "方式",
     "context": "A column heading in a table on the admin overview."
@@ -22560,11 +22786,6 @@
     "context": "A column heading in a table on the admin overview."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.loadAgainstCores",
-    "text": "負載（核心佔用比例）",
-    "context": "In the key beneath the server load graph: the load average, drawn as a share of how many processor cores the machine has."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.loadFigures.average",
     "text": "平均",
     "context": "Above the average processor share over the range shown, over the server load chart on the admin overview."
@@ -22583,6 +22804,11 @@
     "handler": "screens.adminArea.overviewPanel.loadFigures.now",
     "text": "現在",
     "context": "Above the processor share in use at this moment, over the server load chart on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadOfTheCores",
+    "text": "{load} · 佔處理器核心的 {share}",
+    "context": "In the tooltip on the admin overview's server load chart, the load average at that moment. {load} is the load average, such as 3.85; {share} is that load against how many processor cores the machine has, such as 48%, which is where the load line is drawn."
   },
   {
     "handler": "screens.adminArea.overviewPanel.memoryUsedOfTotal",
@@ -25715,11 +25941,6 @@
     "context": "Example shown in the empty sign-in message field."
   },
   {
-    "handler": "screens.adminArea.sizeFree",
-    "text": "可用 {size}",
-    "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
-  },
-  {
     "handler": "screens.adminArea.skipMarkers.addAMarker",
     "text": "新增標記",
     "context": "Button adding a skip marker to a file."
@@ -26838,6 +27059,16 @@
     "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
     "text": "最先請求",
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.one",
+    "text": "另有 {count} 人也想看",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.other",
+    "text": "另有 {count} 人也想看",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
   },
   {
     "handler": "screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one",
@@ -28335,6 +28566,16 @@
     "context": "Shown on the admin overview’s What’s new card when nothing has."
   },
   {
+    "handler": "screens.adminArea.whatsNewInValence.seeEverythingNew",
+    "text": "查看所有新功能",
+    "context": "On the card that comes up on the admin pages the first time somebody opens them after Valence has updated to a new release. The button that opens the full notes for the release."
+  },
+  {
+    "handler": "screens.adminArea.whatsNewInValence.title",
+    "text": "Valence {version} 有哪些新功能",
+    "context": "On the card that comes up on the admin pages the first time somebody opens them after Valence has updated to a new release. {version} is the release, such as 1.9.0."
+  },
+  {
     "handler": "screens.adminArea.whyThereIsNoFigure",
     "text": "為何沒有數字",
     "context": "Text shown in the admin area."
@@ -28413,6 +28654,36 @@
     "handler": "screens.adminArea.wordsManager.wordRenamedToNextOnTitles",
     "text": "已將 {word} 重新命名為 {next}，影響 {titles} 個作品",
     "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waiting.one",
+    "text": "{count} 等待中",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waiting.other",
+    "text": "{count} 等待中",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waitingItsTurn",
+    "text": "等待中",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. Said of a job queued behind others."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.whatValenceIsDoing",
+    "text": "Valence 正在執行的工作",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. Read out for the list of jobs."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.workingOn.one",
+    "text": "Valence 正在處理 {count} 項工作",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. {count} is how many jobs are running or waiting."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.workingOn.other",
+    "text": "Valence 正在處理 {count} 項工作",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. {count} is how many jobs are running or waiting."
   },
   {
     "handler": "screens.adminPage.adminSearch.findAPage",
@@ -28829,11 +29100,7 @@
     "text": "顯示給他們的原因",
     "context": "The label of a ban's reason, which the banned person is shown when they next try to sign in."
   },
-  {
-    "handler": "screens.bookDialog.aBook",
-    "text": "書",
-    "context": "Shown in the book dialog."
-  },
+  { "handler": "screens.bookDialog.aBook", "text": "書", "context": "Shown in the book dialog." },
   {
     "handler": "screens.bookDialog.aboutTheAuthor",
     "text": "關於作者",
@@ -29305,9 +29572,9 @@
     "context": "The placeholder in the description field of a collection."
   },
   {
-    "handler": "screens.colourChoice.anyColourForLabel",
-    "text": "{label} 的任意顏色",
-    "context": "Shown in the colour choice. {label} is filled in by the app."
+    "handler": "screens.colourChoice.customColour",
+    "text": "自訂顏色",
+    "context": "What the last swatch in a row of colours is called, which opens a picker for a colour that is not among the ready ones. Shown when it is pointed at, and read out by screen readers."
   },
   {
     "handler": "screens.confirmHiding.hideThis",
@@ -30005,11 +30272,6 @@
     "context": "Shown in the drawn studio in the face editor."
   },
   {
-    "handler": "screens.faceEditor.drawnStudio.anotherFace",
-    "text": "換一個頭像",
-    "context": "The label of a button in the drawn studio in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.drawnStudio.bottts",
     "text": "Bottts",
     "context": "Shown in the drawn studio in the face editor."
@@ -30033,6 +30295,11 @@
     "handler": "screens.faceEditor.drawnStudio.notionists",
     "text": "Notionists",
     "context": "Shown in the drawn studio in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.drawnStudio.randomise",
+    "text": "隨機產生",
+    "context": "The label of a button in the drawn studio in the face editor, which draws a new face in the same style with every part of it picked afresh at random."
   },
   {
     "handler": "screens.faceEditor.drawnStudio.style",
@@ -30060,39 +30327,39 @@
     "context": "The label in the face editor (from `faceModes`)."
   },
   {
-    "handler": "screens.faceEditor.facePreviews.aroundValence",
-    "text": "Valence 周圍",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.inAList",
-    "text": "列表中",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.theTopBar",
-    "text": "頂部欄",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.whoIsWatching",
-    "text": "誰在觀看",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.howYouAppearOnEveryScreen",
-    "text": "你的個人檔案圖片在 Valence 各處的顯示方式。",
-    "context": "The detail of a dialog title in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.kindOfFace",
     "text": "圖片類型",
     "context": "The label of a segmented row in the face editor."
   },
   {
-    "handler": "screens.faceEditor.letterStudio.gradient",
-    "text": "漸層",
-    "context": "The heading over the gradients a letter face can be painted with."
+    "handler": "screens.faceEditor.letterStudio.blaze",
+    "text": "烈焰",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.candy",
+    "text": "糖果",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.flamingo",
+    "text": "火烈鳥",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.lagoon",
+    "text": "潟湖",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.midnight",
+    "text": "午夜",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.ocean",
+    "text": "海洋",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
   },
   {
     "handler": "screens.faceEditor.letterStudio.setItInName",
@@ -30100,9 +30367,14 @@
     "context": "The label of a button in the letter studio in the face editor. {name} is filled in by the app."
   },
   {
-    "handler": "screens.faceEditor.letterStudio.useTheGradientFromTo",
-    "text": "使用從 {from} 到 {to} 的漸層",
-    "context": "The label of a swatch that paints a letter face with a gradient. {from} and {to} are colours as #rrggbb."
+    "handler": "screens.faceEditor.letterStudio.storm",
+    "text": "暴風",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.twilight",
+    "text": "暮光",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
   },
   {
     "handler": "screens.faceEditor.letterStudio.whereTheGradientEnds",
@@ -30110,44 +30382,69 @@
     "context": "The label of the swatch that picks any colour for a letter face's gradient to end on."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.across",
-    "text": "水平位置",
-    "context": "The label of a slider in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.blueprint",
+    "text": "藍圖",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.aPhotographAGIFOrA",
-    "text": "照片、GIF 或短影片。",
-    "context": "Shown in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.cool",
+    "text": "冷調",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo",
-    "text": "選擇照片、GIF 或影片",
-    "context": "The label of a file picker in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.faded",
+    "text": "褪色",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.fitTheWholePicture",
-    "text": "完整顯示圖片",
-    "context": "The label of a button in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.greyscale",
+    "text": "灰階",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.framing",
-    "text": "構圖",
-    "context": "A heading in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.inverted",
+    "text": "反相",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.upAndDown",
-    "text": "垂直位置",
-    "context": "The label of a slider in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.neon",
+    "text": "霓虹",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.yourCurrentPicture",
-    "text": "你目前的圖片",
-    "context": "Shown in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.noir",
+    "text": "黑白電影",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.psychedelic",
+    "text": "迷幻",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.retro",
+    "text": "復古",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.sunset",
+    "text": "日落",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.vivid",
+    "text": "鮮豔",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.warm",
+    "text": "暖調",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
     "handler": "screens.faceEditor.useThisFace",
     "text": "使用此圖片",
-    "context": "The label in the face editor."
+    "context": "The button that accepts a picture: in the profile picture editor, and in the window that places any uploaded picture in its shape before it is sent, such as a playlist cover, a collection's poster, a title's artwork or this server's picture."
   },
   {
     "handler": "screens.faceEditor.yourFace",
@@ -31725,6 +32022,11 @@
     "context": "The name in the letter font looks in the library."
   },
   {
+    "handler": "screens.library.letterFontLooks.pJakarta",
+    "text": "P. Jakarta",
+    "context": "Plus Jakarta Sans cut short, the font's name beneath a small circle showing a letter set in it, where the whole name does not fit. Screen readers are still told the whole name."
+  },
+  {
     "handler": "screens.library.letterFontLooks.playfair",
     "text": "Playfair",
     "context": "The name in the letter font looks in the library."
@@ -32129,11 +32431,7 @@
     "text": "錯誤",
     "context": "The level of a log record for something that went wrong, on its badge in a log list."
   },
-  {
-    "handler": "screens.lyricLines.end",
-    "text": "結束",
-    "context": "Shown in the lyric lines."
-  },
+  { "handler": "screens.lyricLines.end", "text": "結束", "context": "Shown in the lyric lines." },
   {
     "handler": "screens.lyricLines.sync",
     "text": "同步",
@@ -34555,6 +34853,11 @@
     "context": "Shown in the reader chrome."
   },
   {
+    "handler": "screens.readerContents.goToTitle",
+    "text": "前往{title}",
+    "context": "The label read out for an entry in a book's contents. {title} is the chapter or volume it opens."
+  },
+  {
     "handler": "screens.readerPanel.keepThePanelBesideThePage",
     "text": "釘選面板",
     "context": "Shown in the reader panel."
@@ -34573,6 +34876,11 @@
     "handler": "screens.readingHero.youAreReading",
     "text": "你正在閱讀",
     "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
+  },
+  {
+    "handler": "screens.readingLook.textAndPage",
+    "text": "文字與頁面",
+    "context": "The button in the book reader that opens the settings for how text and the page look."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",
@@ -36160,11 +36468,6 @@
     "context": "The detail in the sharing (from `describeShareEnding`)."
   },
   {
-    "handler": "screens.showDialog.aboutThisEpisode",
-    "text": "關於此集",
-    "context": "The label in the show dialog."
-  },
-  {
     "handler": "screens.showDialog.chooseEpisodes.chooseEpisodesOfTitle",
     "text": "選擇 {title} 的集數",
     "context": "The label of a dialog in the choose episodes in the show dialog. {title} is filled in by the app."
@@ -36198,6 +36501,11 @@
     "handler": "screens.showDialog.nothingHereYetEpisodesAppearAs",
     "text": "尚無集數。集數會在掃描時顯示。",
     "context": "Text shown in the show dialog."
+  },
+  {
+    "handler": "screens.showDialog.onSomeEpisodes",
+    "text": "部分集數提供 {label}",
+    "context": "A badge on a programme's page for a picture or sound format only some of its episodes have, such as Dolby Atmos. {label} is the format, filled in by the app."
   },
   {
     "handler": "screens.showDialog.playValueEpisodeValue2",
@@ -36485,11 +36793,6 @@
     "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for how many stars this profile gave a film or show."
   },
   {
-    "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",
-    "text": "接下來是 {title}。在你確認之前，不會播放任何內容，也不會標示為已觀看。",
-    "context": "Text shown in the still watching dialog. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.streamStats.planAxis.burnIn",
     "text": "燒錄",
     "context": "Shown in the plan axis in the stream stats."
@@ -36720,6 +37023,11 @@
     "context": "Shown in the paused screen in the video player. {title} is filled in by the app; {episodeNumber} is filled in by the app."
   },
   {
+    "handler": "screens.videoPlayer.pausedScreen.upNextEpisode",
+    "text": "接下來播放：{episode}",
+    "context": "On the player's paused screen while it asks whether anybody is still watching, naming the episode that plays if they carry on. {episode} is its name and number, such as Chapter 6: Ep. 6."
+  },
+  {
     "handler": "screens.videoPlayer.pausedScreen.youReWatching",
     "text": "你正在觀看",
     "context": "Text shown in the paused screen in the video player."
@@ -36840,6 +37148,16 @@
     "context": "Shown in the video player."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.buffer",
+    "text": "緩衝",
+    "context": "Stats for nerds: the title of the chart of how many seconds of the stream are ready ahead of the viewer, and its tooltip's label."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.bufferOverTime",
+    "text": "過去一分鐘內預先緩衝的秒數",
+    "context": "Stats for nerds: read out to anybody who cannot see the buffer chart."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.byTheBrowser",
     "text": "由瀏覽器處理",
     "context": "Stats for nerds, tone mapping row: the browser tone maps the HDR picture for this SDR screen itself."
@@ -36868,6 +37186,16 @@
     "handler": "screens.videoPlayer.streamStats.mediabunny",
     "text": "Mediabunny",
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.network",
+    "text": "網路",
+    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.networkOverTime",
+    "text": "過去一分鐘的連線速度與串流位元速率",
+    "context": "Stats for nerds: read out to anybody who cannot see the network chart."
   },
   {
     "handler": "screens.videoPlayer.streamStats.noneShownAsHdr",
@@ -36938,6 +37266,11 @@
     "handler": "screens.videoPlayer.streamStats.valencesWebGpuPlayer",
     "text": "Valence WebGPU（Mediabunny + WebCodecs）",
     "context": "Stats for nerds, which player is playing: Valence's own player, reading with Mediabunny, decoding with WebCodecs and drawing with WebGPU. Technical names; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.valueSeconds",
+    "text": "{value} 秒",
+    "context": "Stats for nerds: a number of seconds, written short. {value} is the number."
   },
   {
     "handler": "screens.videoPlayer.streamStats.widthByHeightAtKbps",
@@ -38155,6 +38488,16 @@
     "context": "Description of the job that reads what linked servers share."
   },
   {
+    "handler": "server.jobs.jobDefinitions.makeArtworkAhead",
+    "text": "預先製作卡片封面",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.makesEveryCardPictureAhead",
+    "text": "預先製作每張海報、背景圖與標誌的小尺寸版本，讓卡片能同時載入",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator",
     "text": "執行管理員要求的重新編碼。",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -38308,6 +38651,11 @@
     "handler": "server.jobs.phase.arrived.other",
     "text": "{count} 項已新增",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: how many things arrived in the library since the last digest. {count} is how many."
+  },
+  {
+    "handler": "server.jobs.phase.artwork",
+    "text": "卡片封面",
+    "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: making the small copies of every poster, backdrop and logo."
   },
   {
     "handler": "server.jobs.phase.books",
@@ -41105,10 +41453,16 @@
     "context": "Shown after a sentence saying something could not be read from the server, above a button to try again."
   },
   {
-    "handler": "ui.dataTable.filter",
-    "text": "篩選",
-    "context": "The name in the data table."
+    "handler": "ui.countMark.plusCount.one",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
   },
+  {
+    "handler": "ui.countMark.plusCount.other",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
+  },
+  { "handler": "ui.dataTable.filter", "text": "篩選", "context": "The name in the data table." },
   {
     "handler": "ui.dataTable.filterById",
     "text": "依 {id} 篩選",
@@ -41148,6 +41502,16 @@
     "handler": "ui.freshnessNote.couldNotCheckForChanges",
     "text": "無法檢查變更",
     "context": "A note in a panel’s heading in the admin area when it is showing what it read last time and the server didn’t answer when asked for anything newer."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.one",
+    "text": "另有 {count} 個伺服器也有此內容",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.other",
+    "text": "另有 {count} 個伺服器也有此內容",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
   },
   {
     "handler": "ui.noticeCard.thisWillCloseIn",
@@ -41503,11 +41867,6 @@
     "handler": "ui.timeBars.nothingInThisTime",
     "text": "此時間範圍內沒有內容。",
     "context": "Text shown in the time bars."
-  },
-  {
-    "handler": "ui.tokens.captionColours.black",
-    "text": "黑色",
-    "context": "The label in the tokens (from `captionColours`)."
   },
   {
     "handler": "ui.tokens.captionColours.cyan",

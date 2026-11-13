@@ -17,6 +17,18 @@ describe('PopoverPanel', () => {
     expect(screen.getByRole('button', { name: 'Episodes' })).toBeInTheDocument();
   });
 
+  it('shows its name on the side asked for, whichever side it opens on', async () => {
+    draw({ side: 'bottom', tooltipSide: 'top' });
+
+    await userEvent.hover(screen.getByRole('button', { name: 'Episodes' }));
+
+    const said = (await screen.findAllByText('Episodes')).find(
+      (found) => found.closest('[data-slot="tooltip-content"]') !== null,
+    );
+
+    expect(said?.closest('[data-slot="tooltip-content"]')).toHaveAttribute('data-side', 'top');
+  });
+
   it('keeps its contents away until it is opened', () => {
     draw();
 

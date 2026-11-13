@@ -221,6 +221,7 @@
     #f0f,
     #f00
   );
+  --background-image-picker-wheel: conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
 
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
@@ -582,68 +583,6 @@ body :is(input, textarea, [contenteditable]) {
   -webkit-user-select: text;
 }
 
-@property --bloom-color {
-  syntax: '<color>';
-  inherits: false;
-  initial-value: transparent;
-}
-
-@property --bloom-x {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 50%;
-}
-
-@property --bloom-y {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 45%;
-}
-
-@property --bloom-mix {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 0%;
-}
-
-.valence-bloom {
-  position: absolute;
-  inset: 0;
-  opacity: var(--bloom-strength);
-  background-image: radial-gradient(
-    48vw 46vh at var(--bloom-x) var(--bloom-y),
-    color-mix(in oklab, var(--bloom-color) var(--bloom-mix), transparent),
-    transparent 70%
-  );
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-position: 50% 50%;
-  transition:
-    --bloom-color 1.6s var(--ease-out),
-    --bloom-x 1.6s var(--ease-out),
-    --bloom-y 1.6s var(--ease-out),
-    --bloom-mix 1.6s var(--ease-out);
-}
-
-.valence-bloom--drift {
-  animation: valence-bloom-drift 40s ease-in-out infinite alternate;
-}
-
-@keyframes valence-bloom-drift {
-  0% {
-    background-position: 34% 32%;
-  }
-  33% {
-    background-position: 62% 44%;
-  }
-  66% {
-    background-position: 44% 64%;
-  }
-  100% {
-    background-position: 60% 36%;
-  }
-}
-
 .valence-logo-edge {
   filter: drop-shadow(1px 0 0 var(--color-accent)) drop-shadow(-1px 0 0 var(--color-accent))
     drop-shadow(0 1px 0 var(--color-accent)) drop-shadow(0 -1px 0 var(--color-accent));
@@ -720,28 +659,12 @@ body :is(input, textarea, [contenteditable]) {
     opacity: 0.35;
     transform: scale(1);
   }
-
-  :root:not([data-motion='full']) .valence-bloom {
-    transition: none;
-  }
-
-  :root:not([data-motion='full']) .valence-bloom--drift {
-    animation: none;
-  }
 }
 
 :root[data-motion='reduced'] .valence-logo-wave {
   animation: none;
   opacity: 0.35;
   transform: scale(1);
-}
-
-:root[data-motion='reduced'] .valence-bloom {
-  transition: none;
-}
-
-:root[data-motion='reduced'] .valence-bloom--drift {
-  animation: none;
 }
 
 .valence-navbar {
@@ -912,6 +835,11 @@ body[data-scroll-locked] .valence-navbar {
   color: var(--color-on-scrim);
 }
 
+.valence-on-film :is(button, [role='slider']) svg,
+.valence-on-film [data-slot='film-text'] {
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.45));
+}
+
 .valence-surface {
   background: var(--card-face);
   border: 1px solid var(--surface-card-line);
@@ -1046,6 +974,28 @@ body[data-scroll-locked] .valence-navbar {
 
 .valence-rail {
   scrollbar-width: none;
+}
+
+.valence-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-text) 22%, transparent) transparent;
+}
+
+.valence-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.valence-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.valence-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-text) 22%, transparent);
+}
+
+.valence-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-text) 36%, transparent);
 }
 
 .valence-rail::-webkit-scrollbar {

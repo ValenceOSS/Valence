@@ -1,8 +1,8 @@
 //! Reading the words out of picture subtitles, so they play as text.
 //!
 //! A Blu-ray's subtitles are pictures, which no phone, browser or television
-//! player draws over a stream, so choosing one used to mean burning it into
-//! the video: a new session, a pause, and an encode for as long as it was on.
+//! player draws over a stream, so choosing one would otherwise mean burning it
+//! into the video: a new session, a pause, and an encode for as long as it is on.
 //! Here each picture is read by Tesseract once, in the background, and the
 //! words are kept beside the file's other subtitles as `WebVTT`, which every
 //! player shows instantly and styles as the viewer likes.

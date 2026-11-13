@@ -145,8 +145,8 @@ const conversionRangeFor = (
  * is and it is within any ceiling asked for, or transcode it down to what it can.
  *
  * Bitrate takes the tighter of whatever ceilings exist, because that one is about what a network
- * can carry rather than a matter of taste — but a browser cannot state it and Valence stopped
- * inventing it on the browser's behalf, so in practice the only ceiling is a rung somebody pinned.
+ * can carry rather than a matter of taste — but a browser cannot state it and Valence does not
+ * invent it on the browser's behalf, so in practice the only ceiling is a rung somebody pinned.
  * Resolution is not a ceiling at all, for the same reason and more plainly: only a rung somebody
  * pinned can force the picture smaller. `profile.maxWidth` is the display's own size, which is a sensible
  * thing to encode towards once something else has decided to encode, and a poor reason to decide
@@ -154,10 +154,10 @@ const conversionRangeFor = (
  * re-encoded to fit would, which is why every streaming service offers the choice rather than
  * hiding it.
  *
- * It used to be a veto, and this comment argued against it while the code below did it anyway: a 4K
- * film was decoded, scaled and re-encoded so that a panel which cannot show 4K could be sent
- * something slightly smaller than 4K. What the device genuinely cannot decode is enforced
- * elsewhere, through codec support and level limits — a level is a real statement about a decoder,
+ * Nor is it a veto, which would decode, scale and re-encode a 4K film so that a panel which cannot
+ * show 4K could be sent something slightly smaller than 4K. What the device genuinely cannot
+ * decode is enforced elsewhere, through codec support and level limits — a level is a real
+ * statement about a decoder,
  * where a panel size is a statement about a piece of glass.
  *
  * Which leaves "original" meaning what a viewer would expect it to: as the file is, sized for the

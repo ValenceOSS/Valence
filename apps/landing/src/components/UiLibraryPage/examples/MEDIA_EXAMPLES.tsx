@@ -5,6 +5,7 @@ import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { DiscordStatusCard } from '@ValenceUI/DiscordStatusCard';
 import { OriginMark } from '@ValenceUI/OriginMark';
+import { CountMark } from '@ValenceUI/CountMark';
 import { PictureCanvas } from '@ValenceUI/PictureCanvas';
 import { ROLE_COLOURS } from '@ValenceUI/tokens/roleColours';
 import { Icon } from '@ValenceUI/Icon';
@@ -13,9 +14,12 @@ import { MediaCard } from '@ValenceUI/MediaCard';
 import { NavBar } from '@ValenceUI/NavBar';
 import { QrCode } from '@ValenceUI/QrCode';
 import { Rail } from '@ValenceUI/Rail';
+import { FramedPicture } from '@ValenceUI/FramedPicture';
+import { PictureFramerDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/PictureFramerDemo';
 import { VideoSurfaceDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VideoSurfaceDemo';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { ReaderVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette';
+import { DeckMark } from '@ValenceUI/DeckMark';
 import type { UiExample } from './UiExample.types';
 
 const ART = '/valence.jpg';
@@ -25,6 +29,33 @@ const WIDE_ART = '/downloads-header.jpg';
 const nothing = () => undefined;
 
 const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
+  PictureFramer: [
+    {
+      title: 'Dragged into a circle',
+      render: () => <PictureFramerDemo />,
+    },
+  ],
+  FramedPicture: [
+    {
+      title: 'One picture, three frames',
+      render: () => (
+        <div className="flex gap-4">
+          {[
+            { zoom: 1, x: -1, y: 0 },
+            { zoom: 1, x: 0, y: 0 },
+            { zoom: 2, x: 1, y: 1 },
+          ].map((frame) => (
+            <span
+              key={`${frame.zoom.toString()}${frame.x.toString()}`}
+              className="relative block size-24 overflow-hidden rounded-full"
+            >
+              <FramedPicture src={WIDE_ART} frame={frame} aspect={1} />
+            </span>
+          ))}
+        </div>
+      ),
+    },
+  ],
   MediaCard: [
     {
       title: 'Shapes',
@@ -137,6 +168,12 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
           <Logo size={56} isDotted />
         </div>
       ),
+    },
+  ],
+  DeckMark: [
+    {
+      title: 'The deck, fanning out as it arrives',
+      render: () => <DeckMark size={96} isAnimated label="Valence" />,
     },
   ],
   Icon: [
@@ -274,6 +311,30 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             ink="dark"
             label="From the cabin server"
           />
+        </div>
+      ),
+    },
+  ],
+  CountMark: [
+    {
+      title: 'How many more than a row of marks draws',
+      render: () => (
+        <div className="flex -space-x-2">
+          <OriginMark
+            initial="L"
+            colour={ROLE_COLOURS[2]}
+            ink="light"
+            label="From the loft server"
+            className="ring-2 ring-shade"
+          />
+          <OriginMark
+            initial="C"
+            colour={ROLE_COLOURS[6]}
+            ink="dark"
+            label="From the cabin server"
+            className="ring-2 ring-shade"
+          />
+          <CountMark count={3} label="3 more servers have it" className="ring-2 ring-shade" />
         </div>
       ),
     },

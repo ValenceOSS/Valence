@@ -39,7 +39,15 @@ describe('ATitleLogo', () => {
       <ATitleLogo mediaId={null} title="Arrival" high={60} widest={300} />,
     );
 
-    expect(drawn.getByText('Arrival')).toBeTruthy();
+    expect(drawn.getByText('Arrival')).toHaveStyle({ textAlign: 'center' });
+  });
+
+  it('sets the title out from the left where it is asked to', async () => {
+    const drawn = await render(
+      <ATitleLogo mediaId={null} title="Arrival" high={60} widest={300} isCentred={false} />,
+    );
+
+    expect(drawn.getByText('Arrival')).not.toHaveStyle({ textAlign: 'center' });
   });
 
   it('tries the lettering of the next title, after one that would not load', async () => {

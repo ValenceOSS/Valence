@@ -1,4 +1,5 @@
 import type { Book, BookChapter } from '@ValenceContracts/schemas/Book';
+import type { ReaderMarks } from '@ValenceScreens/reading/ReaderMarks';
 
 type PageReaderProps = {
   book: Book;
@@ -8,6 +9,7 @@ type PageReaderProps = {
   onChapterChange: (chapterId: string) => void;
   onPageChange?: (page: number, isFinished: boolean) => void;
   onClose: () => void;
+  marks?: ReaderMarks;
 };
 
 export type { PageReaderProps };

@@ -5,13 +5,36 @@ import type { WatchProgressService } from '@ValenceServer/progress/WatchProgress
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
+import type { FavouriteService } from '@ValenceServer/favourites/FavouriteService';
+import type { RatingService } from '@ValenceServer/ratings/RatingService';
+import type { MusicService } from '@ValenceServer/music/MusicService';
 
 type Profile = { id: string; name: string; accountId: string };
+
+const MOST_FAVOURITES = 2000;
+
+/**
+ * The profile a person reading as themselves is, which every viewer a plugin acts for has.
+ *
+ * @param viewer - Who the plugin acts for.
+ * @returns Their profile.
+ */
+const profileOfViewer = (viewer: Viewer): string => {
+  if (viewer.kind !== 'account' || viewer.profileId === null) {
+    throw new PluginRefusalError('That needs a person to act for.');
+  }
+
+  return viewer.profileId;
+};
 
 type CreatePluginHostOptions = {
   readProfile: (profileId: string) => Promise<Profile | null>;
   lockedLibraries: () => Promise<readonly string[]>;
-  media: PluginHost['library'] & { findTrack: PluginHost['music']['findTrack'] };
+  media: PluginHost['library'];
+  music: PluginHost['music'];
+  musicLibrary: Pick<MusicService, 'listLiked' | 'listArtists' | 'keepArtist' | 'dropArtist'>;
+  favourites: Pick<FavouriteService, 'keep' | 'drop'>;
+  ratings: Pick<RatingService, 'set' | 'clear'>;
   durationOf: (mediaId: string) => Promise<number | null>;
   progress: WatchProgressService;
   viewingState: PluginHost['viewing']['state'];
@@ -39,6 +62,10 @@ const createPluginHost = ({
   readProfile,
   lockedLibraries,
   media,
+  music,
+  musicLibrary,
+  favourites,
+  ratings,
   durationOf,
   progress,
   viewingState,
@@ -65,6 +92,12 @@ const createPluginHost = ({
       isAdministrator: false,
       ...(locked.length === 0 ? {} : { lockedLibraries: locked }),
     };
+  };
+
+  const refusesWhereItFillsItself = async (viewer: Viewer, playlistId: string): Promise<void> => {
+    if (await playlists.fillsItself(viewer, playlistId)) {
+      throw new PluginRefusalError('That playlist fills itself from its rules.');
+    }
   };
 
   return {
@@ -115,6 +148,48 @@ const createPluginHost = ({
       },
       markUnwatched: (profileId, mediaId) => progress.forget(profileId, mediaId),
       state: viewingState,
+      favourite: async (viewer, subject, isFavourite) => {
+        const profileId = profileOfViewer(viewer);
+
+        if (subject.kind === 'track') {
+          await (isFavourite ? favourites.keep : favourites.drop)(profileId, subject.id);
+
+          return { isKept: true };
+        }
+
+        if (subject.kind === 'artist') {
+          await (isFavourite ? musicLibrary.keepArtist : musicLibrary.dropArtist)(
+            profileId,
+            subject.id,
+          );
+
+          return { isKept: true };
+        }
+
+        return { isKept: false };
+      },
+      rate: async (viewer, subject, stars) => {
+        if (subject.kind !== 'track') {
+          return { isKept: false };
+        }
+
+        const profileId = profileOfViewer(viewer);
+
+        await (stars === null
+          ? ratings.clear(profileId, { mediaId: subject.id })
+          : ratings.set(profileId, { mediaId: subject.id }, stars));
+
+        return { isKept: true };
+      },
+      favourites: async (viewer, kind) =>
+        kind === 'track'
+          ? (await musicLibrary.listLiked(viewer)).map((track) => track.id)
+          : (
+              await musicLibrary.listArtists(viewer, {
+                onlyFavourites: true,
+                limit: MOST_FAVOURITES,
+              })
+            ).map((artist) => artist.id),
     },
     requests,
     playlists: {
@@ -136,6 +211,8 @@ const createPluginHost = ({
         return { id: made.id };
       },
       add: async (viewer, playlistId, items) => {
+        await refusesWhereItFillsItself(viewer, playlistId);
+
         const added = await playlists.add(
           viewer,
           playlistId,
@@ -179,14 +256,38 @@ const createPluginHost = ({
             };
       },
       drop: async (viewer, playlistId, entryId) => {
+        await refusesWhereItFillsItself(viewer, playlistId);
+
         const dropped = await playlists.drop(viewer, playlistId, entryId);
 
         if (!dropped) {
           throw new PluginRefusalError('There is no such entry in a playlist of theirs.');
         }
       },
+      dropMany: async (viewer, playlistId, entryIds) => {
+        await refusesWhereItFillsItself(viewer, playlistId);
+
+        if ((await playlists.dropMany(viewer, playlistId, entryIds)) === null) {
+          throw new PluginRefusalError('There is no such playlist of theirs.');
+        }
+      },
+      rename: async (viewer, playlistId, playlist) => {
+        const renamed = await playlists.update(viewer, playlistId, {
+          name: playlist.name,
+          ...(playlist.description === null ? {} : { description: playlist.description }),
+        });
+
+        if (renamed === null) {
+          throw new PluginRefusalError('There is no such playlist of theirs.');
+        }
+      },
+      remove: async (viewer, playlistId) => {
+        if (!(await playlists.remove(viewer, playlistId, false))) {
+          throw new PluginRefusalError('There is no such playlist of theirs.');
+        }
+      },
     },
-    music: { findTrack: media.findTrack },
+    music,
     notifications: {
       send: async (profileId, note) => {
         const profile = await readProfile(profileId);

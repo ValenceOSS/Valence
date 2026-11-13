@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { WordRule } from '@ValenceContracts/schemas/WordRule';
 import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
 import type {
@@ -60,7 +61,7 @@ type ListItemsOptions = {
   minRating?: number;
   ids?: string[];
   seriesId?: string;
-  order?: 'title' | 'newest' | 'yourRating';
+  order?: 'title' | 'newest' | 'rated' | 'yourRating';
   profileId?: string;
   minYourStars?: number;
   withVersions?: boolean;
@@ -144,6 +145,11 @@ type LibraryService = ShowService & {
     libraryId: string,
     options: ListItemsOptions,
   ) => Promise<{ items: MediaSummary[]; total: number } | null>;
+  listItemsAcross: (
+    viewer: Viewer,
+    libraryIds: readonly string[],
+    options: ListItemsOptions & { counted?: boolean },
+  ) => Promise<{ items: MediaSummary[]; total: number }>;
   listFacets: (viewer: Viewer) => Promise<LibraryFacets>;
   isOutOfReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
   isSeriesOutOfReach: (viewer: Viewer, seriesId: string) => Promise<boolean>;
@@ -262,6 +268,7 @@ type LibraryService = ShowService & {
     kind: ArtworkKind,
     artwork: { body: Uint8Array; contentType: string },
     by: string | null,
+    frame?: PhotoFrame | null,
   ) => Promise<
     | { jobId: string | null }
     | 'missing'

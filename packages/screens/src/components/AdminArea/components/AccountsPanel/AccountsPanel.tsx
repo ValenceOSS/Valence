@@ -560,7 +560,11 @@ const AccountsPanel = () => {
       }
 
       if (draftFace.photo !== null) {
-        const outcome = await setAccountPhoto(accountId, draftFace.photo);
+        const outcome = await setAccountPhoto(
+          accountId,
+          draftFace.photo,
+          draftFace.avatar.kind === 'photo' ? draftFace.avatar.frame : null,
+        );
 
         if (outcome !== null) {
           return outcome;

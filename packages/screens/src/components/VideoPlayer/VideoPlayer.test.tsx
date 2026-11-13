@@ -1540,6 +1540,39 @@ describe('VideoPlayer', () => {
     });
   });
 
+  it('leaves its own keys alone while it asks whether anybody is still watching', async () => {
+    renderInAnAddress(
+      <VideoPlayer
+        media={media}
+        isImmersive
+        onClose={vi.fn()}
+        stillWatching={{ upNext: media, onCarryOn: vi.fn(), onStop: vi.fn() }}
+      />,
+    );
+
+    const element = await screen.findByLabelText('Arrival');
+    seekableTo(element, 7200);
+
+    fireEvent.timeUpdate(element, { target: { currentTime: 600 } });
+    await waitFor(() => {
+      expect(screen.getByRole('slider', { name: 'Seek through Arrival' })).toHaveAttribute(
+        'aria-valuenow',
+        '600',
+      );
+    });
+
+    fireEvent.keyDown(window, { key: 'l' });
+
+    await act(async () => {
+      await new Promise((settled) => {
+        setTimeout(settled, 700);
+      });
+    });
+
+    expect(screen.getByText('Are you still watching?')).toBeInTheDocument();
+    expect(element).toHaveProperty('currentTime', 600);
+  });
+
   it('jumps back from where the film has got to', async () => {
     renderInAnAddress(<VideoPlayer media={media} isImmersive onClose={vi.fn()} />);
 
@@ -2227,14 +2260,13 @@ describe('VideoPlayer', () => {
       fireEvent.play(element);
       fireEvent.pause(element);
 
-      expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+      expect(screen.queryByText('Paused')).not.toBeInTheDocument();
 
       act(() => {
         vi.advanceTimersByTime(11_000);
       });
 
-      expect(await screen.findByText('You’re watching')).toBeInTheDocument();
-      expect(screen.getByText('Paused')).toBeInTheDocument();
+      expect(await screen.findByText('Paused')).toBeInTheDocument();
 
       const stage = stageOf(screen.getByLabelText('Arrival'));
 
@@ -2243,7 +2275,7 @@ describe('VideoPlayer', () => {
       }
 
       await waitFor(() => {
-        expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+        expect(screen.queryByText('Paused')).not.toBeInTheDocument();
       });
     } finally {
       vi.useRealTimers();
@@ -2264,7 +2296,7 @@ describe('VideoPlayer', () => {
         vi.advanceTimersByTime(20_000);
       });
 
-      expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+      expect(screen.queryByText('Paused')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

@@ -254,6 +254,41 @@ describe('MediaCard', () => {
     expect(screen.getByRole('img', { name: 'From Films' })).toHaveTextContent('F');
   });
 
+  it('draws up to three servers’ marks, and past that two and how many more', () => {
+    const mark = (name: string) => ({
+      initial: name[0] ?? '',
+      colour: '#e8503a',
+      ink: 'light' as const,
+      label: `From ${name}`,
+    });
+    const { rerender } = render(
+      <MediaCard
+        title="Arrival"
+        subtitle="2016"
+        onSelect={vi.fn()}
+        origin={mark('Films')}
+        alsoFrom={[mark('Anime'), mark('Home')]}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'From Home' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /more servers have it/ })).not.toBeInTheDocument();
+
+    rerender(
+      <MediaCard
+        title="Arrival"
+        subtitle="2016"
+        onSelect={vi.fn()}
+        origin={mark('Films')}
+        alsoFrom={[mark('Anime'), mark('Home'), mark('Cinema')]}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'From Anime' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'From Home' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '2 more servers have it' })).toHaveTextContent('+2');
+  });
+
   it('is a link where it is told where it goes, which a plain click still opens through onSelect', async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();

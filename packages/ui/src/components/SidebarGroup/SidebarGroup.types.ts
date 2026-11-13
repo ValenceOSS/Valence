@@ -8,6 +8,7 @@ type SidebarItem = {
   activeIcon?: IconGlyph;
   count?: number;
   isUrgent?: boolean;
+  isBusy?: boolean;
 };
 
 type SidebarGroupProps = {

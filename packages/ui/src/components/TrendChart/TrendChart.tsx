@@ -14,7 +14,10 @@ const MORPH_MS = 450;
  * @param values - The readings, oldest first.
  * @returns One row per reading.
  */
-const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, number | null>[] =>
+const toRows = (
+  values: (number | null)[],
+  lines: readonly TrendLine[],
+): Record<string, number | null>[] =>
   values.map((value, at) => ({
     at,
     value,
@@ -28,7 +31,7 @@ const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, n
  * throughput, sessions, cache size. The ceiling is given rather than taken from the data, so a
  * chart does not rescale itself every time a reading arrives and make a flat line look dramatic.
  *
- * @param values - The readings, oldest first.
+ * @param values - The readings, oldest first; one not taken is left as a gap.
  * @param ceiling - The top of the scale.
  * @param label - What is being measured, read out to anybody who cannot see the chart.
  * @param caption - A line beneath it, such as the period covered.

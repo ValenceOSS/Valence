@@ -1,0 +1,3 @@
+const PLAYER_MENU_OFFSET = 42;
+
+export { PLAYER_MENU_OFFSET };

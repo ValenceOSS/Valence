@@ -8,6 +8,7 @@ type PopoverPanelProps = {
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   side?: 'top' | 'bottom';
+  tooltipSide?: 'top' | 'bottom';
   align?: 'start' | 'center' | 'end';
   isDisabled?: boolean;
   isBare?: boolean;
@@ -15,6 +16,7 @@ type PopoverPanelProps = {
   tone?: 'default' | 'overlay';
   isOverDialogs?: boolean;
   hasSurface?: boolean;
+  offset?: number;
   className?: string;
 };
 

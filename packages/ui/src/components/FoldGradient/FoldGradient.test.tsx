@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ShaderMountProps } from '@paper-design/shaders-react';
 import { FoldGradient } from './FoldGradient';
 
+const graphics = vi.hoisted(() => ({ canDraw: true }));
+
+vi.mock('@ValenceUI/canDrawShaders', () => ({ canDrawShaders: () => graphics.canDraw }));
+
 const asNumberAttribute = (value: number | undefined): string =>
   typeof value === 'number' ? value.toString() : '';
 
@@ -21,6 +25,16 @@ vi.mock('@paper-design/shaders-react', () => ({
 }));
 
 describe('FoldGradient', () => {
+  it('draws nothing where the browser cannot draw shaders', () => {
+    graphics.canDraw = false;
+
+    render(<FoldGradient />);
+
+    expect(screen.queryByTestId('shader-mount')).not.toBeInTheDocument();
+
+    graphics.canDraw = true;
+  });
+
   it('builds one uniform colour stop per colour it was given', () => {
     render(<FoldGradient colors={['#ff0000', '#00ff00', '#0000ff']} />);
 

@@ -1,4 +1,4 @@
-import { fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
+import { fetchItemsAcross } from '@ValenceClient/library/fetchLibrary';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -7,22 +7,23 @@ const PAGE_SIZE = 200;
 const AT_ONCE = 16;
 
 /**
- * Reads everything in a library that matches a question, however many that is, by asking for the
- * first page to learn the total and then the rest of them a few at a time.
+ * Reads everything in some libraries that matches a question, however many that is, ordered across
+ * them all, by asking for the first page to learn the total and then the rest of them a few at a
+ * time, uncounted, since the first page already said how many there are.
  *
  * For the pages that list a whole library. Reading only the first page of them showed the first
  * hundred and twenty films alphabetically and the shows among the first hundred and twenty
  * episodes, and said nothing about the rest.
  *
- * @param libraryId - The library to read.
+ * @param libraryIds - The libraries to read.
  * @param options - What is being asked, without a limit or an offset, which are this function's.
  * @returns Everything that matched, in the order the server gave it.
  */
 const readEveryItem = async (
-  libraryId: string,
+  libraryIds: readonly string[],
   options: Omit<ListItemsOptions, 'limit' | 'offset'> = {},
 ): Promise<MediaSummary[]> => {
-  const first = await fetchLibraryItems(libraryId, { ...options, limit: PAGE_SIZE, offset: 0 });
+  const first = await fetchItemsAcross(libraryIds, { ...options, limit: PAGE_SIZE, offset: 0 });
   const offsets: number[] = [];
 
   for (let offset = PAGE_SIZE; offset < first.total; offset += PAGE_SIZE) {
@@ -37,7 +38,7 @@ const readEveryItem = async (
         offsets
           .slice(start, start + AT_ONCE)
           .map((offset) =>
-            fetchLibraryItems(libraryId, { ...options, limit: PAGE_SIZE, offset }).then(
+            fetchItemsAcross(libraryIds, { ...options, limit: PAGE_SIZE, offset }, false).then(
               (page) => page.items,
             ),
           ),

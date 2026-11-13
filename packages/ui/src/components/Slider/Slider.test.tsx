@@ -489,6 +489,6 @@ describe('Slider fill', () => {
       <Slider label="Seek" value={0} max={100} onValueChange={vi.fn()} notches={[0.5, 0.75]} />,
     );
 
-    expect(container.querySelectorAll('[data-slot="slider-notch"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-slot="slider-segment"]')).toHaveLength(3);
   });
 });

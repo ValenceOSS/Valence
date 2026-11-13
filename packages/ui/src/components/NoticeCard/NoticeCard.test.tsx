@@ -142,4 +142,14 @@ describe('NoticeCard', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(NoticeCard.displayName).toBe('NoticeCard');
   });
+
+  it('holds more beneath its tags where it is given more to say', () => {
+    render(
+      <NoticeCard tone="working" title="Scanning" tags={['2 running']} onDismiss={() => undefined}>
+        <p>Probing Films</p>
+      </NoticeCard>,
+    );
+
+    expect(screen.getByText('Probing Films')).toBeInTheDocument();
+  });
 });

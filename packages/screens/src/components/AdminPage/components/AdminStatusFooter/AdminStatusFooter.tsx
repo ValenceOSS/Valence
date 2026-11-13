@@ -1,4 +1,7 @@
-import { CircleArrowDown as CircleArrowDownFilledIcon } from '@keyline-icons/react/fill';
+import {
+  CircleArrowDown as CircleArrowDownFilledIcon,
+  CircleCheck as CircleCheckFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -16,7 +19,9 @@ const PILL_LOOKS = {
 /**
  * The foot of the admin sidebar: how this server converts video, and a pill with the release it
  * runs, coloured by how the server is doing — green, amber or red — or, when a newer release is out,
- * naming that one in the update colour. Pressing the pill opens the updates page.
+ * naming that one in the update colour. The release is followed by a mark saying which: a tick
+ * while it is current, an arrow when there is something newer. Pressing the pill opens the updates
+ * page. In a bar across the top it stands as tall as the controls beside it.
  *
  * @param version - The release this server runs, or null before it has said.
  * @param acceleration - How it converts video, or null before it has said.
@@ -82,12 +87,18 @@ const AdminStatusFooter = ({
           }
           onClick={onOpenUpdates}
           className={cn(
-            'inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-xs font-medium tabular-nums',
+            'inline-flex shrink-0 items-center rounded-full border font-medium tabular-nums',
+            isInHeader
+              ? 'h-8 gap-1.5 pr-2.5 pl-3 text-[0.8125rem]'
+              : 'h-6 gap-1 pr-1.5 pl-2 text-xs',
             PILL_LOOKS[look],
           )}
         >
-          {latest === null ? null : <Icon of={CircleArrowDownFilledIcon} size={12} />}
           {latest ?? version}
+          <Icon
+            of={latest === null ? CircleCheckFilledIcon : CircleArrowDownFilledIcon}
+            size={isInHeader ? 14 : 12}
+          />
         </Button>
       )}
     </div>

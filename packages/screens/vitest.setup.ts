@@ -199,8 +199,8 @@ MotionGlobalConfig.skipAnimations = true;
  * immediately, so nothing is ever genuinely pending; what runs out is the time to do the rendering,
  * on a machine running four shards at once.
  *
- * It buys tolerance and not silence: an element that never arrives still fails, a few seconds later
- * than it used to.
+ * It buys tolerance and not silence: an element that never arrives still fails, just a few seconds
+ * later.
  */
 const waitLongEnoughForAScreen = (): void => {
   configure({ asyncUtilTimeout: 5_000 });
@@ -244,6 +244,31 @@ if (typeof HTMLCanvasElement !== 'undefined') {
     configurable: true,
     writable: true,
     value: () => null,
+  });
+}
+
+if (typeof HTMLImageElement !== 'undefined' && !('decode' in HTMLImageElement.prototype)) {
+  Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+    configurable: true,
+    writable: true,
+    value: async () => Promise.resolve(),
+  });
+}
+
+if (typeof Element !== 'undefined' && !('animate' in Element.prototype)) {
+  Object.defineProperty(Element.prototype, 'animate', {
+    configurable: true,
+    writable: true,
+    value: () => ({
+      finished: Promise.resolve(),
+      cancel: () => undefined,
+      commitStyles: () => undefined,
+    }),
+  });
+  Object.defineProperty(Element.prototype, 'getAnimations', {
+    configurable: true,
+    writable: true,
+    value: () => [],
   });
 }
 

@@ -6,6 +6,7 @@ import {
   updateLibrary,
   deleteLibrary,
   fetchLibraryItems,
+  fetchItemsAcross,
   scanLibrary,
   readScanState,
   resetLibrary,
@@ -173,6 +174,36 @@ describe('updateLibrary', () => {
     await expect(updateLibrary(library.id, { defaultAudioLanguage: 'de' })).rejects.toThrow(
       'No such library.',
     );
+  });
+});
+
+describe('fetchItemsAcross', () => {
+  it('asks every library in one request, and reads the page it answers with', async () => {
+    fetchMock.mockResolvedValue(ok({ items: [summary], total: 1 }));
+
+    await expect(
+      fetchItemsAcross(['films', 'shows'], { genre: 'Drama', limit: 20 }),
+    ).resolves.toMatchObject({ total: 1, items: [{ title: 'Arrival' }] });
+
+    const asked = new URL(fetchMock.mock.calls[0]?.[0] ?? '', 'http://valence.local');
+
+    expect(asked.pathname).toBe('/api/library-items');
+    expect(asked.searchParams.get('libraryIds')).toBe('films,shows');
+    expect(asked.searchParams.get('genre')).toBe('Drama');
+    expect(asked.searchParams.get('limit')).toBe('20');
+    expect(asked.searchParams.has('counted')).toBe(false);
+  });
+
+  it('asks the server not to count where nothing needs the count', async () => {
+    fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
+
+    await fetchItemsAcross(['films'], {}, false);
+
+    expect(
+      new URL(fetchMock.mock.calls[0]?.[0] ?? '', 'http://valence.local').searchParams.get(
+        'counted',
+      ),
+    ).toBe('no');
   });
 });
 

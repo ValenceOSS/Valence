@@ -1,4 +1,6 @@
+import { drawnAvatarUrl } from '@ValenceContracts/functions/drawnAvatarUrl';
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
+import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.types';
@@ -9,14 +11,16 @@ import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.typ
  * A drawn face is read from the drawing itself rather than the profile's picture, so a face somebody
  * has just chosen shows before it is saved. An orb or a sketch is shown as the picture the server keeps of it,
  * since a phone draws no shaders. A photograph that moves has nothing a phone can show in
- * a tile, so it gives way to the initial.
+ * a tile, so it gives way to the initial. A photograph the server framed is read as that square.
  *
  * @param profile - Whose picture to read.
  * @param picked - A photograph chosen on this phone and not yet sent, which shows instead.
  * @returns The picture, or null where the initial is all there is.
  */
 const thePictureFor = (
-  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar'> & { pictureUrl?: string | undefined },
+  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar' | 'colour'> & {
+    pictureUrl?: string | undefined;
+  },
   picked: string | null = null,
 ): ThePicture | null => {
   if (picked !== null) {
@@ -29,7 +33,11 @@ const thePictureFor = (
     case 'drawn':
       return {
         uri: onThisServer(
-          `/api/profiles/avatars/${profile.avatar.style}?seed=${encodeURIComponent(profile.avatar.seed)}`,
+          drawnAvatarUrl(
+            profile.avatar.style,
+            profile.avatar.seed,
+            profile.avatar.isOnColour === true ? profile.colour : null,
+          ),
         ),
         isDrawn: true,
       };
@@ -39,7 +47,14 @@ const thePictureFor = (
     case 'photo':
       return profile.avatar.isVideo
         ? null
-        : { uri: onThisServer(profileAvatarUrl(profile)), isDrawn: false };
+        : {
+            uri: onThisServer(
+              profile.avatar.hasFramedPicture
+                ? framedPictureUrl(profileAvatarUrl(profile))
+                : profileAvatarUrl(profile),
+            ),
+            isDrawn: false,
+          };
   }
 };
 

@@ -5,6 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtworkChooser } from './ArtworkChooser';
 import type { ReactNode } from 'react';
 
+Object.defineProperty(URL, 'createObjectURL', {
+  configurable: true,
+  value: () => 'blob:chosen',
+});
+Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
+
 const fetchArtworkChoicesMock = vi.hoisted(() => vi.fn());
 const chooseArtworkMock = vi.hoisted(() => vi.fn());
 const bumpMock = vi.hoisted(() => vi.fn());
@@ -220,10 +226,15 @@ describe('ArtworkChooser', () => {
     await screen.findByRole('button', { name: 'Use poster 1, English' });
     await userEvent.click(screen.getByRole('button', { name: 'Backdrop' }));
     await userEvent.upload(await screen.findByLabelText(/Upload from this computer/u), picture);
+    await userEvent.click(await screen.findByRole('button', { name: 'Use this picture' }));
 
     await waitFor(() => {
       expect(onChanged).toHaveBeenCalledWith(null);
     });
-    expect(uploadArtworkMock).toHaveBeenCalledWith('ep-1', 'backdrop', picture);
+    expect(uploadArtworkMock).toHaveBeenCalledWith('ep-1', 'backdrop', picture, {
+      zoom: 1,
+      x: 0,
+      y: 0,
+    });
   });
 });

@@ -197,6 +197,7 @@ const TheProfile = () => {
         key={isEditing ? 'open' : 'shut'}
         isOpen={isEditing}
         profile={draft}
+        pickedAlready={picked}
         onClose={() => {
           setIsEditing(false);
         }}

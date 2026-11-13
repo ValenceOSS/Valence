@@ -9,7 +9,7 @@ const PROFILE = {
   id: '11111111-1111-4111-8111-111111111111',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'photo', isVideo: false, frame: null },
+  avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
   askStillWatchingAfter: 0,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -61,7 +61,10 @@ describe('AccountFace', () => {
     const { container } = render(
       <AccountFace
         account={account({
-          face: { ...HOUSEHOLD, avatar: { kind: 'photo', isVideo: false, frame: null } },
+          face: {
+            ...HOUSEHOLD,
+            avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+          },
         })}
       />,
     );

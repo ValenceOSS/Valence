@@ -4,16 +4,17 @@ import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
 import { nameOfSegment } from '@ValenceClient/playback/nameOfSegment';
 import type { TrickplayPreviewProps } from './TrickplayPreview.types';
 
+const WIDE = { width: 16, height: 9 } as const;
+
 /**
  * Shows where the pointer is while somebody scrubs, with the frame there if there is one. The frame
  * comes from the sprite sheet built when the item was scanned — one image holding every thumbnail,
  * so the right frame is found by offsetting the background rather than by fetching anything.
  *
- * The time is always shown and the frame is not. Sheets are built in the background, a position
- * part-way through a sheet still being written has no thumbnail, and both used to remove the whole
- * panel — so the one piece of information that never needs a sheet went missing along with the one
- * that does, and hovering the bar appeared to do nothing at all. An empty frame of the right size
- * also keeps the panel from changing shape as sheets arrive.
+ * The time is always shown and the frame is not. Sheets are built in the background, and a position
+ * part-way through a sheet still being written has no thumbnail; neither takes the time away with
+ * it, since the time never needs a sheet. An empty frame of the right size keeps the panel from
+ * changing shape as sheets arrive.
  *
  * The marked stretch the pointer is over, an intro or the credits, is named beside the time, in the
  * colour it is shaded on the timeline.
@@ -26,14 +27,27 @@ const TrickplayPreview = ({ trickplay, seconds, segment = null }: TrickplayPrevi
   const thumbnail = trickplay === null ? null : thumbnailAt(trickplay.thumbnails, seconds);
 
   return (
-    <figure className="valence-solid mb-2 flex flex-col gap-1 rounded-lg px-2 py-2 text-text">
-      {thumbnail === null ? null : <TrickplayFrame trickplay={trickplay} seconds={seconds} />}
+    <figure className="mb-3 flex flex-col items-center gap-2">
+      {thumbnail === null ? null : (
+        <div
+          className="grid place-items-center overflow-hidden rounded-lg bg-shade shadow-[var(--shadow-overlay)] ring-1 ring-on-scrim/20 [&_[role=img]]:rounded-none"
+          style={{
+            width: `${Math.max(thumbnail.width, (thumbnail.height * WIDE.width) / WIDE.height).toString()}px`,
+            aspectRatio: `${WIDE.width.toString()} / ${WIDE.height.toString()}`,
+          }}
+        >
+          <TrickplayFrame trickplay={trickplay} seconds={seconds} />
+        </div>
+      )}
 
-      <figcaption className="text-center text-md mt-2">
+      <figcaption
+        data-slot="film-text"
+        className="text-sm font-semibold tabular-nums text-on-scrim"
+      >
         {formatDuration(seconds)}
         {segment === null ? null : (
           <>
-            <span aria-hidden className="px-1.5 text-text-muted">
+            <span aria-hidden className="px-1.5 text-on-scrim/60">
               ·
             </span>
             <span className="text-warning">{nameOfSegment(segment.kind)}</span>

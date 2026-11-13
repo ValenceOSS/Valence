@@ -7,6 +7,7 @@ type ReaderPanelProps = {
   onPinnedChange: (isPinned: boolean) => void;
   onClose: () => void;
   pickers: ReactNode;
+  bookmarks?: ReactNode;
   children: ReactNode;
 };
 

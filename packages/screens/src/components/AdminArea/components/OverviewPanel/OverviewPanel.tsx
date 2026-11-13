@@ -1,7 +1,6 @@
 import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { Spinner } from '@ValenceUI/Spinner';
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
-import { NeedsYouCard } from '@ValenceScreens/components/AdminArea/components/NeedsYouCard/NeedsYouCard';
 import { WhatsNewCard } from '@ValenceScreens/components/AdminArea/components/WhatsNewCard/WhatsNewCard';
 import { MostWatchedList } from '@ValenceScreens/components/AdminArea/components/MostWatchedList/MostWatchedList';
 import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/components/PlaybackModeShare/PlaybackModeShare';
@@ -16,11 +15,9 @@ import {
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
-import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { DataTable } from '@ValenceUI/DataTable';
 import { describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import type { LogRecord } from '@ValenceContracts/schemas/Log';
-import { ShareChart } from '@ValenceUI/ShareChart';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import type { ActiveSession, Monitor } from '@ValenceClient/admin/fetchAdmin';
@@ -31,6 +28,7 @@ import { LogLevelBadge } from '@ValenceScreens/components/LogLevelBadge/LogLevel
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { incomingDownloads } from '@ValenceClient/requests/incomingDownloads';
+import { DiskUsageCard } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/DiskUsageCard/DiskUsageCard';
 import { StorageInfo } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/StorageInfo/StorageInfo';
 import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/CacheBreakdown/CacheBreakdown';
 import { LoadRangeToggle } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle';
@@ -249,13 +247,9 @@ const OverviewPanel = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="sm:col-span-2 lg:col-span-4">
-          <NeedsYouCard onOpenPanel={onOpenPanel} />
-        </div>
-
         <DashboardRegion
           title={say('screens.adminArea.overviewPanel.serverLoad')}
-          className="sm:col-span-2 lg:col-span-3"
+          className="sm:col-span-2 lg:col-span-2"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
           <LoadChart
@@ -270,28 +264,18 @@ const OverviewPanel = ({
           onAction={() => {
             onOpenPanel('libraries');
           }}
-          className="sm:col-span-2 lg:col-span-1"
+          className="sm:col-span-2 lg:col-span-2"
         >
           {stillReading.libraries ? (
             <Spinner isCentered size="sm" label={say('common.readingTheLibraries')} />
           ) : (
-            <ShareChart
-              label={say('screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk')}
-              slices={[...own]
-                .sort((one, other) => (other.sizeBytes ?? 0) - (one.sizeBytes ?? 0))
-                .map((library) => ({
-                  id: library.id,
-                  label: library.name,
-                  value: library.sizeBytes ?? 0,
-                  shown: <FormattedBytes bytes={library.sizeBytes ?? 0} />,
-                }))}
-              total={
-                <FormattedBytes
-                  bytes={own.reduce((sum, library) => sum + (library.sizeBytes ?? 0), 0)}
-                />
-              }
-              totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
-              emptyMessage={say('common.noLibrariesYet')}
+            <DiskUsageCard
+              disks={monitor?.resources.disks ?? []}
+              libraries={own}
+              cache={monitor?.cache ?? null}
+              artefactRoot={monitor?.resources.artefacts?.root ?? null}
+              artwork={overview?.artwork ?? null}
+              bookPages={overview?.bookPages ?? null}
             />
           )}
         </DashboardRegion>
@@ -318,7 +302,7 @@ const OverviewPanel = ({
               columns={sessionColumns}
               rows={watching}
               getRowId={(session) => session.clientId}
-              height="parent"
+              height="short"
             />
           )}
         </DashboardRegion>
@@ -352,7 +336,7 @@ const OverviewPanel = ({
               columns={jobColumns}
               rows={running}
               getRowId={(job) => job.id.toString()}
-              height="parent"
+              height="short"
             />
           )}
         </DashboardRegion>
@@ -376,7 +360,7 @@ const OverviewPanel = ({
               columns={libraryColumns}
               rows={own}
               getRowId={(library) => library.id}
-              height="parent"
+              height="short"
             />
           )}
         </DashboardRegion>

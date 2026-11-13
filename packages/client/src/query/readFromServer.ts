@@ -3,6 +3,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { isUnknownToServer } from '@ValenceClient/query/isUnknownToServer';
 import { saidInRefusal } from '@ValenceClient/query/saidInRefusal';
+import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 
 /**
  * Reads something from Valence, and throws where it could not be read.
@@ -14,6 +15,9 @@ import { saidInRefusal } from '@ValenceClient/query/saidInRefusal';
  * from there being nothing to read.
  *
  * An empty answer now means the server said there is nothing.
+ *
+ * Where the answer says where pictures are served by name, those are noted on the way, so a card
+ * drawn from any answer asks for its picture there.
  *
  * The path is put on whichever server this client watches, which is the page's own origin in a
  * browser and an address a viewer configured in a client with a window of its own.
@@ -49,7 +53,11 @@ const readFromServer = async <Value>(
 
   const body = JsonValueSchema.parse(await response.json());
 
-  return schema.parse(body);
+  const parsed = schema.parse(body);
+
+  artworkAddresses.learnFrom(body);
+
+  return parsed;
 };
 
 export { readFromServer };

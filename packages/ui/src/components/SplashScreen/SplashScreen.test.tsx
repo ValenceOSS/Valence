@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SplashScreen } from './SplashScreen';
 import { splashIntro } from './splashIntro';
@@ -87,12 +87,14 @@ describe('SplashScreen', () => {
     expect(screen.getByText('Valence')).not.toHaveClass('text-ellipsis');
   });
 
-  it('ends a name too long for the screen in an ellipsis once it is open', () => {
+  it('ends a name too long for the screen in an ellipsis once it is open', async () => {
     motion.isReduced = true;
 
-    render(<SplashScreen name="The Morgan Family Home Cinema" />);
+    render(<SplashScreen name="The Morgan Family Home Cinema" isReady />);
 
-    expect(screen.getByText('The Morgan Family Home Cinema')).toHaveClass('text-ellipsis');
+    await waitFor(() => {
+      expect(screen.getByText('The Morgan Family Home Cinema')).toHaveClass('text-ellipsis');
+    });
   });
 
   it('draws a short name at the wordmark’s own size', () => {
@@ -105,5 +107,13 @@ describe('SplashScreen', () => {
     render(<SplashScreen name="Home Cinema" mark={<span>their mark</span>} />);
 
     expect(screen.getByText('their mark')).toBeInTheDocument();
+  });
+
+  it('sets the name in semibold, the weight of the name in the bar', () => {
+    render(<SplashScreen name="Valence" />);
+
+    expect(
+      screen.getAllByText('Valence').some((node) => node.closest('.font-semibold') !== null),
+    ).toBe(true);
   });
 });

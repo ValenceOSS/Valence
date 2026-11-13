@@ -15,6 +15,4 @@ type EpisodeSeason = {
   episodes: MediaSummary[];
 };
 
-type EpisodeMenuView = { kind: 'everySeason' } | { kind: 'season'; seasonNumber: number | null };
-
-export type { EpisodeMenuProps, EpisodeMenuView, EpisodeSeason };
+export type { EpisodeMenuProps, EpisodeSeason };

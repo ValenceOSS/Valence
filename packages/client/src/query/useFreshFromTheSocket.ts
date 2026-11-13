@@ -28,9 +28,9 @@ type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
  * polling intervals go.
  *
  * Each topic throws away only what it says something about. Somebody watching moves the sessions
- * topic with every heartbeat, and it used to throw away the whole admin area with it: every open
- * list, statistic, folder size and the audit log were asked for again every second for as long as
- * anyone was watching.
+ * topic with every heartbeat, and throwing away the whole admin area with it would ask for every
+ * open list, statistic, folder size and the audit log again every second for as long as anyone was
+ * watching.
  *
  * A reconnection invalidates everything, because a tab that was asleep missed whatever happened
  * while it was gone and has no way to find out what. What is already being asked for again is left

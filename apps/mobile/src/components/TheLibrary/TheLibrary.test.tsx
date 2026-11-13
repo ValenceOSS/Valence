@@ -2,7 +2,12 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
-import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
+import {
+  fetchItemsAcross,
+  fetchLibraries,
+  fetchLibraryItems,
+} from '@ValenceClient/library/fetchLibrary';
+import { askedOfEachLibrary } from '@ValenceClient/testing/askedOfEachLibrary';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { fetchComingUp, fetchShows } from '@ValenceClient/library/fetchShows';
 import {
@@ -153,6 +158,10 @@ beforeEach(() => {
   jest.mocked(fetchLibraries).mockReset();
   jest.mocked(fetchCollections).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLibraryItems).mockReset();
+  jest
+    .mocked(fetchItemsAcross)
+    .mockReset()
+    .mockImplementation(askedOfEachLibrary(jest.mocked(fetchLibraryItems)));
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
   jest.mocked(fetchShows).mockReset().mockResolvedValue([]);
   jest.mocked(fetchComingUp).mockReset().mockResolvedValue([]);

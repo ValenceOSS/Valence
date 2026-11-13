@@ -53,6 +53,51 @@ describe('OptionMenu', () => {
     expect(onSelect).toHaveBeenCalledWith('2');
   });
 
+  it('sets a choice that falls within the one above it in beneath that one', async () => {
+    await open([
+      {
+        name: 'Library',
+        selectedId: 'here',
+        onSelect: vi.fn(),
+        options: [
+          { id: 'here', label: 'This server' },
+          { id: 'anime', label: 'Anime', isNested: true },
+        ],
+      },
+    ]);
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Anime' })).toHaveClass('ps-7');
+    expect(screen.getByRole('menuitemradio', { name: 'This server' })).not.toHaveClass('ps-7');
+  });
+
+  it('parts each choice and what falls within it from the next with a line', async () => {
+    await open([
+      {
+        name: 'Library',
+        selectedId: 'all',
+        onSelect: vi.fn(),
+        options: [
+          { id: 'all', label: 'Everywhere' },
+          { id: 'here', label: 'This server' },
+          { id: 'anime', label: 'Anime', isNested: true },
+          { id: 'theirs', label: 'Theirs' },
+        ],
+      },
+    ]);
+
+    await screen.findByRole('menuitemradio', { name: 'Theirs' });
+
+    expect(screen.getAllByRole('separator')).toHaveLength(2);
+  });
+
+  it('draws no lines in a group where nothing falls within anything', async () => {
+    await open([speed()]);
+
+    await screen.findByRole('menuitemradio', { name: '2x' });
+
+    expect(screen.queryAllByRole('separator')).toHaveLength(0);
+  });
+
   it('is drawn above a dialog, since a menu inside one is opened from inside one', async () => {
     await open([speed()]);
 
@@ -349,5 +394,16 @@ describe('OptionMenu anchored to something that does its own job', () => {
     await userEvent.keyboard('{ArrowLeft}');
 
     expect(await screen.findByRole('menuitem', { name: /Genre/ })).toBeInTheDocument();
+  });
+
+  it('draws whatever detail it is given beside an option, such as a count badge', async () => {
+    await open([
+      {
+        ...speed(),
+        options: [{ id: '1', label: 'Jobs', detail: <span data-testid="count">76</span> }],
+      },
+    ]);
+
+    expect(await screen.findByTestId('count')).toHaveTextContent('76');
   });
 });

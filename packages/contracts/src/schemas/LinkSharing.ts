@@ -105,7 +105,16 @@ const LinkedServerFaceSchema = z.object({
   pictureAt: z.string().nullable().default(null),
 });
 
-const LinkedServerFacesSchema = z.object({ servers: z.array(LinkedServerFaceSchema) });
+const ThisServerFaceSchema = z.object({
+  name: z.string(),
+  colour: z.string(),
+  pictureAt: z.string().nullable().default(null),
+});
+
+const LinkedServerFacesSchema = z.object({
+  servers: z.array(LinkedServerFaceSchema),
+  here: ThisServerFaceSchema.nullable().default(null),
+});
 
 const AskableElsewhereSchema = z.object({
   people: z.array(z.object({ id: z.string().min(1), name: z.string() })),
@@ -131,6 +140,7 @@ type TheirLibrary = z.infer<typeof TheirLibrarySchema>;
 type TheirLibraries = z.infer<typeof TheirLibrariesSchema>;
 type TheirLibraryChoice = z.infer<typeof TheirLibraryChoiceSchema>;
 type TheirActivity = z.infer<typeof TheirActivitySchema>;
+type ThisServerFace = z.infer<typeof ThisServerFaceSchema>;
 
 export type {
   AskedAlong,
@@ -146,6 +156,7 @@ export type {
   TheirLibraries,
   TheirLibrary,
   TheirLibraryChoice,
+  ThisServerFace,
 };
 
 export {
@@ -169,4 +180,5 @@ export {
   TheirLibrariesSchema,
   TheirLibraryChoiceSchema,
   TheirLibrarySchema,
+  ThisServerFaceSchema,
 };

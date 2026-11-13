@@ -1,3 +1,7 @@
+import { mkdtemp, readdir, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { user, userProfile, viewerProfile } from '#dialect/Schema';
@@ -330,6 +334,64 @@ describe('createDatabaseProfileService', () => {
       const [household] = await db.select().from(userProfile).where(eq(userProfile.userId, 'ada'));
 
       expect(household?.avatarSeed).toBe('household');
+    },
+    STARTING_POSTGRES_MS,
+  );
+  it(
+    'keeps an uploaded photo as it came, serves only what was made from it, and frames it again without another upload',
+    async () => {
+      const db = await aMigratedDatabase();
+      const directory = await mkdtemp(join(tmpdir(), 'valence-profiles-'));
+
+      await db.insert(user).values([{ id: 'ada', name: 'Ada', email: 'ada@example.com' }]);
+
+      const service = createDatabaseProfileService(db, directory);
+      const made = await service.create('ada', { name: 'Kid', colour: COLOUR });
+      const upload = new Uint8Array(
+        await sharp({ create: { width: 1290, height: 2796, channels: 3, background: '#e8503a' } })
+          .png()
+          .toBuffer(),
+      );
+
+      await expect(
+        service.savePhoto('ada', made.id, { body: upload, contentType: 'image/png' }),
+      ).resolves.toBeNull();
+
+      expect(
+        new Uint8Array(await readFile(join(directory, 'originals', `${made.id}.png`))),
+      ).toEqual(upload);
+      expect(await readdir(directory)).toEqual(['originals', 'processed']);
+
+      const shown = await service.readAvatar(made.id);
+
+      expect(shown?.contentType).toBe('image/webp');
+      expect((await sharp(shown?.body).metadata()).height).toBe(1024);
+
+      const framed = await sharp((await service.readAvatar(made.id, true))?.body).metadata();
+
+      expect([framed.width, framed.height]).toEqual([512, 512]);
+
+      await service.rename('ada', made.id, {
+        name: 'Kid',
+        colour: COLOUR,
+        avatar: {
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 4, x: 1, y: 1 },
+          hasFramedPicture: false,
+        },
+      });
+
+      const reframed = await sharp((await service.readAvatar(made.id, true))?.body).metadata();
+      const [listed] = await service.list('ada');
+
+      expect(reframed.width).toBe(323);
+      expect(listed?.avatar).toEqual({
+        kind: 'photo',
+        isVideo: false,
+        frame: { zoom: 4, x: 1, y: 1 },
+        hasFramedPicture: true,
+      });
     },
     STARTING_POSTGRES_MS,
   );

@@ -1,6 +1,7 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
+import { fetchItemsAcross, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
+import { askedOfEachLibrary } from '@ValenceClient/testing/askedOfEachLibrary';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { TheResults } from './TheResults';
@@ -45,6 +46,10 @@ const theResults = (onLookAt = jest.fn(), onLookAtShow = jest.fn()) =>
 
 beforeEach(() => {
   jest.mocked(fetchLibraryItems).mockReset();
+  jest
+    .mocked(fetchItemsAcross)
+    .mockReset()
+    .mockImplementation(askedOfEachLibrary(jest.mocked(fetchLibraryItems)));
 });
 
 describe('TheResults', () => {

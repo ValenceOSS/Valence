@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { verifyTotp } from '@ValenceClient/session/auth';
 import { Face } from '@ValenceTv/components/Face/Face';
@@ -10,7 +9,7 @@ import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
-import mark from '@ValenceTv/assets/valence-mark.png';
+import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { EnterPasswordProps } from './EnterPassword.types';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
@@ -126,7 +125,7 @@ const EnterPassword = ({
         style={[styles.mark, isArriving && styles.hidden]}
         onLayout={markLaidOut}
       >
-        <Image source={mark} style={MARK} contentFit="contain" />
+        <DeckMark width={MARK.width} height={MARK.height} />
       </View>
 
       <View style={styles.choices}>

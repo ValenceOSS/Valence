@@ -7,6 +7,8 @@ import { refuse } from '@ValenceI18n/refuse';
 
 const ARTWORK_CACHING = 'public, max-age=3600, stale-while-revalidate=604800';
 
+const REDIRECT_CACHING = 'private, max-age=3600';
+
 /**
  * Registers the image endpoints.
  *
@@ -21,11 +23,16 @@ const ARTWORK_CACHING = 'public, max-age=3600, stale-while-revalidate=604800';
  * A poster with no lettering, for a page that writes the title over it, is looked for in the
  * library's own catalogue, never the requests service's, so a server without requests has it too.
  *
+ * A narrower copy is not sent from here at all where pictures are named: the browser is sent on to
+ * the address it is served by name, which never changes and which a proxy or a CDN in front of the
+ * server can answer straight from its own copy. The browser keeps where it was sent for an hour, so
+ * a new picture chosen for a title is shown within the hour.
+ *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
  */
 const serveImage = (app: OpenAPIHono, context: AppContext): void => {
-  const { library, readImage } = context;
+  const { library, readImage, artworkNames, artworkAddress } = context;
 
   app.openapi(mediaImageRoute, async (context) => {
     const { mediaId, kind } = context.req.valid('param');
@@ -40,6 +47,17 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
 
     if (url === null || readImage === undefined) {
       return context.json(refuse('error.image.noArtworkForThatItem'), 404);
+    }
+
+    const name = size === undefined ? null : (artworkNames?.nameOf(url) ?? null);
+
+    if (size !== undefined && name !== null) {
+      context.header('cache-control', REDIRECT_CACHING);
+
+      return context.redirect(
+        `${artworkAddress}/api/artwork/${name}-w${ARTWORK_WIDTHS[size].toString()}.webp`,
+        302,
+      );
     }
 
     const tag = artworkTagOf(size === undefined ? url : `${url}#${size}`);

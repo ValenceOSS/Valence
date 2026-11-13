@@ -30,8 +30,6 @@ const aShell = (instead: Partial<Shell> = {}): Shell => ({
   forgetReported: () => {},
   startOverride: null,
   setStartOverride: () => undefined,
-  askingAbout: null,
-  setAskingAbout: () => undefined,
   watchParty: {
     party: null,
     command: null,

@@ -1,4 +1,5 @@
 import { say } from '@ValenceI18n/say';
+import { isNewCodeProblem } from './isNewCodeProblem';
 
 type ProblemWords = { headline: string; reason: string };
 
@@ -19,7 +20,7 @@ const describeProblem = (message: string | null): ProblemWords => {
 
   const said = (message ?? '').toLowerCase();
 
-  if (said.includes('dynamically imported module') || said.includes('importing a module script')) {
+  if (isNewCodeProblem(message)) {
     return {
       headline: say('screens.pageProblem.describeProblem.valenceHasBeenUpdated'),
       reason: say('screens.pageProblem.describeProblem.thisPageBelongsToAnOlder'),

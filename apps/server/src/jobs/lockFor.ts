@@ -13,8 +13,8 @@ import {
  * lettering, intros — makes artefacts for items that already exist, works from what is outstanding
  * rather than from a list it was handed, and so has a lock of its own.
  *
- * It used to be the bare library id for all of them. That is what made a scan wait for the
- * thumbnails: not the job queue, which was happy to run both, but this lock inside the process.
+ * One lock per library for all of them would make a scan wait for the thumbnails: not in the job
+ * queue, which is happy to run both, but here inside the process.
  *
  * @param kind - The job asking.
  * @param libraryId - The library it is working on.

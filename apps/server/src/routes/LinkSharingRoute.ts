@@ -220,7 +220,7 @@ const facesRoute = createRoute({
   summary: 'The servers this one is linked with, as anybody here sees them beside what they share',
   responses: {
     200: answered(
-      'Each linked server’s name and colour, and whether it can be reached',
+      'Each linked server’s name and colour, and whether it can be reached, and this server’s own',
       LinkedServerFacesSchema.openapi('LinkedServerFaces'),
     ),
     401: refused('Not signed in'),

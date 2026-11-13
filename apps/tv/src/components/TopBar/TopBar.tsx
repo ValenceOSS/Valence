@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { Search } from '@keyline-icons/react-native';
 import { Broadcast, Film, Headphones, Home, MusicNote, Tv } from '@keyline-icons/react-native/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
@@ -10,7 +9,7 @@ import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { tokens } from '@ValenceTv/theme/tokens';
-import mark from '@ValenceTv/assets/valence-mark.png';
+import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
 import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { TopBarProps } from './TopBar.types';
 import { say } from '@ValenceI18n/say';
@@ -123,7 +122,7 @@ const TopBar = ({
         style={[styles.mark, isArriving && styles.hidden]}
         onLayout={markLaidOut}
       >
-        <Image source={mark} style={MARK} contentFit="contain" />
+        <DeckMark width={MARK.width} height={MARK.height} isAnimated />
       </View>
 
       <Glass cornerRadius={tokens.radii.round} style={styles.glass}>

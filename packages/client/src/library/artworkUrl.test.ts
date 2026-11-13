@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { artworkAddresses } from './artworkAddresses';
 import { artworkRevisions } from './artworkRevisions';
 import { artworkUrl } from './artworkUrl';
 
@@ -45,6 +46,22 @@ describe('artworkUrl', () => {
   it('asks for the medium copy where a wide card draws the picture', () => {
     expect(artworkUrl('film-2', 'backdrop', { size: 'medium' })).toBe(
       '/api/media/film-2/image/backdrop?size=medium',
+    );
+  });
+
+  it('asks for a narrowed copy by name where the server has named the picture', () => {
+    artworkAddresses.learn([{ id: 'named', artwork: { poster: '/api/artwork/abc' } }]);
+
+    expect(artworkUrl('named', 'poster', { size: 'small' })).toBe('/api/artwork/abc-w342.webp');
+    expect(artworkUrl('named', 'poster', { size: 'medium' })).toBe('/api/artwork/abc-w640.webp');
+  });
+
+  it('asks at the image address for the whole picture, or one with no lettering', () => {
+    artworkAddresses.learn([{ id: 'whole', artwork: { poster: '/api/artwork/abc' } }]);
+
+    expect(artworkUrl('whole', 'poster')).toBe('/api/media/whole/image/poster');
+    expect(artworkUrl('whole', 'poster', { isBare: true, size: 'small' })).toBe(
+      '/api/media/whole/image/poster?lettering=none&size=small',
     );
   });
 });

@@ -1,21 +1,25 @@
-import type { ReaderSurround } from '@ValenceClient/books/readerPreferences';
+import type { ReactNode } from 'react';
+import type { DescribedBookmark } from '@ValenceClient/books/describeBookmark';
+
+type AReaderPlace = {
+  id: string;
+  label: string;
+  depth: number;
+  isHere: boolean;
+};
 
 type AReaderSheetProps = {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  isRightToLeft: boolean;
-  onRightToLeft?: (isRightToLeft: boolean) => void;
-  layout: 'one' | 'two' | null;
-  onLayout: (layout: 'one' | 'two') => void;
-  isCoverAlone: boolean;
-  onCoverAlone: (isCoverAlone: boolean) => void;
-  isTapToTurn: boolean;
-  onTapToTurn: (isTapToTurn: boolean) => void;
-  surround: ReaderSurround;
-  onSurround: (surround: ReaderSurround) => void;
-  chapters: readonly { id: string; label: string; isHere: boolean }[];
-  onChapter: (id: string) => void;
+  look?: ReactNode;
+  settings: ReactNode;
+  placesAre: string;
+  places: readonly AReaderPlace[];
+  onPlace: (id: string) => void;
+  bookmarks?: readonly DescribedBookmark[];
+  onBookmark?: (bookmarkId: string) => void;
+  onRemoveBookmarks?: (bookmarkIds: readonly string[]) => void;
 };
 
-export type { AReaderSheetProps };
+export type { AReaderPlace, AReaderSheetProps };

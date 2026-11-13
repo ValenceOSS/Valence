@@ -721,7 +721,9 @@ describe('collectConcerns', () => {
   describe('the library disk', () => {
     const onDisk = (totalBytes: number, availableBytes: number): Monitor => {
       const monitor = healthyMonitor();
-      monitor.resources.disks = [{ mountPoint: '/media', totalBytes, availableBytes }];
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: null, totalBytes, availableBytes },
+      ];
 
       return monitor;
     };
@@ -744,9 +746,56 @@ describe('collectConcerns', () => {
       );
     });
 
+    it('reports a ZFS dataset a quota holds nearly full, whatever room its pool has', () => {
+      const monitor = healthyMonitor();
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: 'tank/media', totalBytes: 1000, availableBytes: 10 },
+        { mountPoint: '/config', device: 'tank/apps', totalBytes: 5100, availableBytes: 5000 },
+      ];
+
+      expect(collectConcerns({ ...healthy, monitor }).map((concern) => concern.id)).toContain(
+        'disk',
+      );
+    });
+
+    it('reports a quota-held dataset in a pool behind another library dataset with room', () => {
+      const monitor = healthyMonitor();
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: 'tank/media', totalBytes: 5100, availableBytes: 5000 },
+        { mountPoint: '/shows', device: 'tank/shows', totalBytes: 1000, availableBytes: 10 },
+      ];
+
+      expect(
+        collectConcerns({
+          ...healthy,
+          monitor,
+          libraries: [library(), library({ id: 'lib_2', path: '/shows' })],
+        }).map((concern) => concern.id),
+      ).toContain('disk');
+    });
+
+    it('reports a library filesystem nearly full though another has fewer bytes left', () => {
+      const monitor = healthyMonitor();
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: null, totalBytes: 100, availableBytes: 20 },
+        { mountPoint: '/shows', device: null, totalBytes: 1000, availableBytes: 30 },
+      ];
+      const concerns = collectConcerns({
+        ...healthy,
+        monitor,
+        libraries: [library(), library({ id: 'lib_2', path: '/shows' })],
+      });
+
+      expect(concerns.find((concern) => concern.id === 'disk')?.detail).toContain(
+        '30 B left on /shows',
+      );
+    });
+
     it('stays quiet about a full disk no library is on', () => {
       const monitor = healthyMonitor();
-      monitor.resources.disks = [{ mountPoint: '/backup', totalBytes: 1000, availableBytes: 1 }];
+      monitor.resources.disks = [
+        { mountPoint: '/backup', device: null, totalBytes: 1000, availableBytes: 1 },
+      ];
 
       expect(collectConcerns({ ...healthy, monitor })).toEqual([]);
     });

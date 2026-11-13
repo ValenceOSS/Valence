@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Logo } from '@ValenceUI/Logo';
 import { liquidSpring, stillTransition, openSpring } from '@ValenceUI/animations/reveal';
 import { StatusRing } from '@ValenceUI/StatusRing';
+import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { layoutBoxOf } from '@ValenceUI/layoutBoxOf';
@@ -36,20 +37,21 @@ const NAME_AT_MILLISECONDS = MARK_RISES_MILLISECONDS + NAME_PAUSE_MILLISECONDS;
 
 const SHORT_NAME_LENGTH = 10;
 
-const DONE_AT_MILLISECONDS = NAME_AT_MILLISECONDS + CARD_OPENS_SECONDS * 1000;
+const NAME_HOLDS_MILLISECONDS = 600;
 
 /**
  * Holds the screen with the platform's own mark while the application works out what it is showing
  * — whether setup is done, who is signed in, and what was being watched. Its own mark, since this
- * is the first thing anybody sees, with a ring at the foot of the screen filling and turning while
- * it waits.
+ * is the first thing anybody sees, and little else while it waits: the mark itself moves, with a
+ * slim bar beneath it sliding along to say something is under way.
+ * Should the wait fail, a ring at the foot says so, with why and a way to try again.
  *
- * The mark rises into place and, after a beat, the name opens out beside it, letter by letter, as
- * it does at the top of the home page. That only holds while the platform is called Valence: an operator who
+ * The mark rises into place and, once everything has arrived, the name opens out beside it, letter
+ * by letter, as it does at the top of the home page, and holds a moment before the page is shown. That only holds while the platform is called Valence: an operator who
  * has renamed it gets the name set instead, since the mark is not theirs to stand for.
  *
- * Everything sits on a rounded card inset from the edges of the screen. It opens filling the screen
- * edge to edge, and as the name opens out its edges draw in to their place and its corners round,
+ * Everything sits on a rounded card inset from the edges of the screen. It fills the screen edge to
+ * edge while it waits, and as the name opens out its edges draw in to their place and its corners round,
  * rather than the whole card shrinking. When it leaves, the ground around the card fades to show
  * the page, and where the page has a card at the top marked as the place to land — the home page's
  * featured title — the splash card's edges draw in onto it before the splash card fades over it.
@@ -69,7 +71,7 @@ const DONE_AT_MILLISECONDS = NAME_AT_MILLISECONDS + CARD_OPENS_SECONDS * 1000;
  * @param name - What the platform is called, which may have been renamed by an operator.
  * @param label - What is being waited for, read out to anybody who cannot see the screen.
  * @param mark - What is held up beside the name, where it is not Valence's own mark.
- * @param isReady - Whether what was being waited for has arrived, which turns the status mark's
+ * @param isReady - Whether what was being waited for has arrived, which opens the name and turns the status mark's
  *   running arc into a tick and then fades it.
  * @param failure - Why what was being waited for could not be had, which turns the mark into a
  *   cross and says so beneath it rather than leaving the screen turning.
@@ -108,15 +110,14 @@ const SplashScreen = ({
   });
   const [isCarryingOn] = useState(() => Date.now() - startedAt > 50);
   const [hadLanded] = useState(() => Date.now() - startedAt >= NAME_AT_MILLISECONDS);
-  const [hasLanded, setHasLanded] = useState(prefersReducedMotion === true || hadLanded);
-  const [hasNameOpened, setHasNameOpened] = useState(prefersReducedMotion === true || hadLanded);
-  const [hasIntroPlayed, setHasIntroPlayed] = useState(false);
+  const [hasNameOpened, setHasNameOpened] = useState(false);
   const [isRingFull, setIsRingFull] = useState(false);
   const ringFilled = useCallback(() => {
     setIsRingFull(true);
   }, []);
   const hasFailed = failure !== null && !isTryingAgain;
   const ringStatus = hasFailed ? 'failed' : isReady ? 'done' : 'running';
+  const isNameShown = isReady && !hasFailed;
 
   useEffect(() => {
     if (!isReady || hasFailed) {
@@ -134,28 +135,7 @@ const SplashScreen = ({
   }, [isReady, hasFailed, prefersReducedMotion, ringFilled]);
 
   useEffect(() => {
-    const since = Date.now() - startedAt;
-    const lands = setTimeout(
-      () => {
-        setHasLanded(true);
-      },
-      prefersReducedMotion === true ? 0 : Math.max(0, NAME_AT_MILLISECONDS - since),
-    );
-    const finishes = setTimeout(
-      () => {
-        setHasIntroPlayed(true);
-      },
-      prefersReducedMotion === true ? 0 : Math.max(0, DONE_AT_MILLISECONDS - since),
-    );
-
-    return () => {
-      clearTimeout(lands);
-      clearTimeout(finishes);
-    };
-  }, [startedAt, prefersReducedMotion]);
-
-  useEffect(() => {
-    if (!hasIntroPlayed || !isRingFull) {
+    if (!isRingFull || (!hasNameOpened && prefersReducedMotion !== true)) {
       return undefined;
     }
 
@@ -163,13 +143,13 @@ const SplashScreen = ({
       () => {
         onIntroDone?.();
       },
-      prefersReducedMotion === true ? 0 : RING_FADES_MILLISECONDS,
+      prefersReducedMotion === true ? 0 : NAME_HOLDS_MILLISECONDS,
     );
 
     return () => {
       clearTimeout(lets);
     };
-  }, [hasIntroPlayed, isRingFull, prefersReducedMotion, onIntroDone]);
+  }, [hasNameOpened, isRingFull, prefersReducedMotion, onIntroDone]);
 
   const [landing, setLanding] = useState<{ clip: string | null } | null>(null);
 
@@ -233,7 +213,7 @@ const SplashScreen = ({
         initial={prefersReducedMotion === true || hadLanded ? false : { clipPath: EDGE_TO_EDGE }}
         animate={
           !isLeaving || landing === null
-            ? { clipPath: hasLanded || isLeaving ? INSET : EDGE_TO_EDGE, opacity: 1 }
+            ? { clipPath: isNameShown || isLeaving ? INSET : EDGE_TO_EDGE, opacity: 1 }
             : landing.clip === null
               ? { clipPath: INSET, opacity: 0 }
               : { clipPath: landing.clip, opacity: 0 }
@@ -278,15 +258,15 @@ const SplashScreen = ({
           <motion.span
             aria-hidden
             className={cn(
-              'max-w-[calc(100vw-7.5rem)] overflow-hidden whitespace-nowrap pl-5 font-normal',
+              'max-w-[calc(100vw-7.5rem)] overflow-hidden whitespace-nowrap pl-5 font-semibold',
               hasNameOpened ? 'text-ellipsis' : '',
               name.length > SHORT_NAME_LENGTH ? 'text-4xl sm:text-6xl' : 'text-6xl',
             )}
-            initial={prefersReducedMotion === true || hadLanded ? false : { width: 0 }}
-            animate={{ width: hasLanded || prefersReducedMotion === true ? 'auto' : 0 }}
-            transition={prefersReducedMotion === true || hadLanded ? { duration: 0 } : openSpring}
+            initial={{ width: 0 }}
+            animate={{ width: isNameShown ? 'auto' : 0 }}
+            transition={prefersReducedMotion === true ? { duration: 0 } : openSpring}
             onAnimationComplete={() => {
-              if (hasLanded || prefersReducedMotion === true) {
+              if (isNameShown) {
                 setHasNameOpened(true);
               }
             }}
@@ -296,7 +276,22 @@ const SplashScreen = ({
         )}
 
         <AnimatePresence>
-          {isRingFull ? null : (
+          {!hasMark || isReady || failure !== null ? null : (
+            <motion.span
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut', delay: 0.2 }}
+              className="absolute bottom-16 w-40"
+            >
+              <ProgressBar label={label} value={null} isFull isThin />
+            </motion.span>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {failure === null || isRingFull ? null : (
             <motion.span
               key="spinner"
               exit={{ opacity: 0 }}
@@ -308,34 +303,30 @@ const SplashScreen = ({
             >
               <StatusRing status={ringStatus} size={44} />
 
-              <AnimatePresence>
-                {failure === null ? null : (
-                  <motion.span
-                    key="failure"
-                    initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-                    role="alert"
-                    className="flex flex-col items-center gap-1.5"
-                  >
-                    <span className="text-base font-medium text-text">{failure.title}</span>
-                    <span className="text-sm leading-snug text-text-muted">{failure.detail}</span>
+              <motion.span
+                key="failure"
+                initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+                role="alert"
+                className="flex flex-col items-center gap-1.5"
+              >
+                <span className="text-base font-medium text-text">{failure.title}</span>
+                <span className="text-sm leading-snug text-text-muted">{failure.detail}</span>
 
-                    {onTryAgain === undefined ? null : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        isLoading={isTryingAgain}
-                        onClick={onTryAgain}
-                        className="mt-2"
-                      >
-                        {say('common.tryAgain')}
-                      </Button>
-                    )}
-                  </motion.span>
+                {onTryAgain === undefined ? null : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    isLoading={isTryingAgain}
+                    onClick={onTryAgain}
+                    className="mt-2"
+                  >
+                    {say('common.tryAgain')}
+                  </Button>
                 )}
-              </AnimatePresence>
+              </motion.span>
             </motion.span>
           )}
         </AnimatePresence>

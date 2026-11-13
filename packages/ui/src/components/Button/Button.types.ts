@@ -9,6 +9,7 @@ type ButtonVariant =
   | 'ghost'
   | 'danger'
   | 'overlay'
+  | 'glass'
   | 'link'
   | 'subtle'
   | 'discord'

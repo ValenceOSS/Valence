@@ -17,8 +17,11 @@ const listening = vi.hoisted(() => ({
   fetchListeningProgress: vi.fn(),
 }));
 
+const bookmarks = vi.hoisted(() => ({ fetchBookmarks: vi.fn() }));
+
 vi.mock('@ValenceClient/books/fetchBooks', () => books);
 vi.mock('@ValenceClient/books/fetchListening', () => listening);
+vi.mock('@ValenceClient/books/fetchBookmarks', () => bookmarks);
 
 describe('bookQueries', () => {
   it('keeps every book query under one key, so a scan can refresh them all', () => {
@@ -26,6 +29,7 @@ describe('bookQueries', () => {
       bookQueries.inLibrary('l').queryKey,
       bookQueries.one('b').queryKey,
       bookQueries.progress('b').queryKey,
+      bookQueries.bookmarks('b').queryKey,
       bookQueries.contents('b', 'c').queryKey,
       bookQueries.document('b', 'c', 0).queryKey,
       bookQueries.find({ search: 'austen' }).queryKey,
@@ -43,6 +47,15 @@ describe('bookQueries', () => {
     expect(bookQueries.find({ ids: ['b', 'a'] }).queryKey).toEqual(
       bookQueries.find({ ids: ['a', 'b'] }).queryKey,
     );
+  });
+
+  it('asks the server for one book’s bookmarks', async () => {
+    bookmarks.fetchBookmarks.mockResolvedValue([]);
+
+    await new QueryClient().fetchQuery(bookQueries.bookmarks('b'));
+
+    expect(bookmarks.fetchBookmarks).toHaveBeenCalledWith('b');
+    expect(bookQueries.bookmarks('b').queryKey).not.toEqual(bookQueries.bookmarks('c').queryKey);
   });
 
   it('asks nothing for no books at all', () => {

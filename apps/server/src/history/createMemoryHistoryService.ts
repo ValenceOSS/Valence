@@ -19,8 +19,8 @@ type MemoryHistoryState = {
  *
  * Knows nothing of libraries and so cannot work out for itself what a viewer may see, but it does
  * narrow by whatever `visibleTo` says. Without it a test would pass while describing a server that
- * names, in somebody's history, a title their account has since been refused — which is the thing
- * the database version was changed to stop.
+ * names, in somebody's history, a title their account has since been refused, which the database
+ * version never does.
  *
  * @param state - Any viewings that already happened, and what this viewer may be told about.
  * @returns The history service.

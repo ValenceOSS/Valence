@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { PartyPlayback } from '@ValenceClient/party/PartyPlayback';
+import type { StillWatchingAsk } from '@ValenceScreens/components/VideoPlayer/components/PausedScreen/PausedScreen.types';
 
 type VideoPlayerProps = {
   media: Pick<MediaSummary, 'id' | 'title' | 'durationSeconds'> &
@@ -26,6 +27,7 @@ type VideoPlayerProps = {
   following?: MediaSummary | null;
   onSelectEpisode?: (episode: MediaSummary) => void;
   willCarryOn?: boolean;
+  stillWatching?: StillWatchingAsk;
   watchedFractionFor?: (mediaId: string) => number | undefined;
   party?: PartyPlayback;
   partyNotice?: string | null;

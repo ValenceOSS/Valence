@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image as ImageIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
@@ -19,6 +20,10 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { say } from '@ValenceI18n/say';
 import type { LinkIdentityChange } from '@ValenceContracts/schemas/LinkedServer';
 import type { ThisServerCardProps } from './ThisServerCard.types';
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
+import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { SavedText } from '@ValenceScreens/components/AdminArea/components/SavedText/SavedText';
 
 const IS_LOCAL = /^https?:\/\/(localhost|127\.|\[::1\])/u;
@@ -32,6 +37,7 @@ const IS_LOCAL = /^https?:\/\/(localhost|127\.|\[::1\])/u;
  */
 const ThisServerCard = ({ identity }: ThisServerCardProps) => {
   const cache = useQueryClient();
+  const [framing, setFraming] = useState<File | null>(null);
   const reread = () => cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
 
   const save = async (change: LinkIdentityChange): Promise<boolean> => {
@@ -49,8 +55,8 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
     return true;
   };
 
-  const changePicture = (file: File | null) => {
-    void changeServerPicture(file).then(async (sent) => {
+  const changePicture = (file: File | null, frame: PhotoFrame | null = null) => {
+    void changeServerPicture(file, frame).then(async (sent) => {
       if (sent.refusal !== null) {
         notify.failed(sent.refusal);
 
@@ -99,13 +105,26 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
             label={say('common.chooseAPicture')}
             accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
             size="sm"
-            onPick={changePicture}
+            onPick={setFraming}
           >
             <Icon of={ImageIcon} size={15} />
             {identity.pictureAt === null
               ? say('common.chooseAPicture')
               : say('common.chooseAnother')}
           </FilePicker>
+          <FramePictureDialog
+            file={framing}
+            limits={PICTURE_LIMITS.face}
+            aspect={PICTURE_ASPECTS.face}
+            shape="circle"
+            onClose={() => {
+              setFraming(null);
+            }}
+            onUse={(file, frame) => {
+              setFraming(null);
+              changePicture(file, frame);
+            }}
+          />
           {identity.pictureAt === null ? null : (
             <Button
               variant="ghost"

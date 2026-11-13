@@ -618,4 +618,11 @@ describe('DataTable', () => {
     expect(container.textContent).toContain('opens');
     expect(container.textContent).toContain('shut');
   });
+  it('stands about four rows tall when asked to be short, scrolling the rest', () => {
+    const { container } = render(
+      <DataTable label="Libraries" columns={COLUMNS} rows={ROWS} height="short" />,
+    );
+
+    expect(container.querySelector('.max-h-\\[12\\.5rem\\]')).not.toBeNull();
+  });
 });

@@ -88,7 +88,7 @@ definePlugin({
 });
 ```
 
-`person` is who the app password belongs to, `{ profileId, name }`, or `null` on a public route. Every library read, playlist and viewing call acts as that person, as from one of their pages.
+`person` is who the app password belongs to, `{ profileId, name, login }`, or `null` on a public route. `login` is the app password's own login, the one the app signed in with, which an app expects to see as its user name; it is new in plugin API 1.5. Every library read, playlist and viewing call acts as that person, as from one of their pages.
 
 ```ts
 type RouteRequest = {

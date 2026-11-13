@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
+import { ScrollFade } from '@ValenceUI/ScrollFade';
 import type { ShareChartProps } from './ShareChart.types';
 
 const SLICE_COLOURS = [
@@ -74,21 +75,23 @@ const ShareChart = ({ label, slices, total, totalLabel, emptyMessage }: ShareCha
         </span>
       </div>
 
-      <ul className="flex max-h-40 flex-col gap-2 overflow-y-auto pr-1 font-body text-sm">
-        {slices.map((slice, at) => (
-          <li key={slice.id} className="flex items-center gap-2.5">
-            <span
-              aria-hidden
-              className={`size-2 shrink-0 rounded-full bg-current ${SLICE_CLASSES[at % SLICE_CLASSES.length] ?? ''}`}
-            />
-            <span className="min-w-0 flex-1 truncate text-text">{slice.label}</span>
-            <span className="shrink-0 tabular-nums text-text-muted">{slice.shown}</span>
-            <span className="w-10 shrink-0 text-right tabular-nums text-text-muted">
-              {Math.round((slice.value / sum) * 100).toString()}%
-            </span>
-          </li>
-        ))}
-      </ul>
+      <ScrollFade className="max-h-40 pr-1" label={label}>
+        <ul className="flex flex-col gap-2 font-body text-sm">
+          {slices.map((slice, at) => (
+            <li key={slice.id} className="flex items-center gap-2.5">
+              <span
+                aria-hidden
+                className={`size-2 shrink-0 rounded-full bg-current ${SLICE_CLASSES[at % SLICE_CLASSES.length] ?? ''}`}
+              />
+              <span className="min-w-0 flex-1 truncate text-text">{slice.label}</span>
+              <span className="shrink-0 tabular-nums text-text-muted">{slice.shown}</span>
+              <span className="w-10 shrink-0 text-right tabular-nums text-text-muted">
+                {Math.round((slice.value / sum) * 100).toString()}%
+              </span>
+            </li>
+          ))}
+        </ul>
+      </ScrollFade>
     </div>
   );
 };

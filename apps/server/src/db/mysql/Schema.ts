@@ -19,7 +19,7 @@ import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
@@ -247,7 +247,7 @@ const viewerProfile = mysqlTable(
     mayRequest: boolean('mayRequest').notNull().default(true),
     ownerOf: identifier('ownerOf').generatedAlwaysAs(
       sql`case when ${sql.identifier('isOwner')} then ${sql.identifier('userId')} end`,
-      { mode: 'stored' },
+      { mode: 'virtual' },
     ),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
@@ -1107,6 +1107,8 @@ const mediaItem = mysqlTable(
     uniqueIndex('media_item_path_idx').on(table.libraryId, table.pathHash),
     index('media_item_library_idx').on(table.libraryId),
     index('media_item_title_idx').on(table.title),
+    index('media_item_added_at_idx').on(table.addedAt),
+    index('media_item_rating_idx').on(table.rating),
     index('media_item_series_idx').on(table.seriesTitle, table.seasonNumber),
     index('media_item_series_id_idx').on(table.seriesId, table.seasonNumber),
     index('media_item_parent_idx').on(table.parentId),
@@ -1367,6 +1369,37 @@ const readingProgress = mysqlTable(
   ],
 );
 
+const readingBookmark = mysqlTable(
+  'reading_bookmark',
+  {
+    id: identifier('id').primaryKey(),
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    bookId: identifier('bookId')
+      .notNull()
+      .references(() => book.id, { onDelete: 'cascade' }),
+    chapterId: identifier('chapterId')
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: 'cascade' }),
+    pageNumber: int('pageNumber'),
+    fraction: float('fraction'),
+    pageShown: int('pageShown'),
+    excerpt: mediumtext('excerpt'),
+    picture: mediumtext('picture'),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [
+    index('reading_bookmark_book_id_idx').on(table.bookId),
+    index('reading_bookmark_chapter_idx').on(table.chapterId),
+    index('reading_bookmark_book_idx').on(table.profileId, table.bookId),
+    check(
+      'reading_bookmark_somewhere',
+      sql`${table.pageNumber} is not null or ${table.fraction} is not null`,
+    ),
+  ],
+);
+
 const listeningProgress = mysqlTable(
   'listening_progress',
   {
@@ -1542,6 +1575,7 @@ const playlist = mysqlTable(
     isShared: boolean('isShared').notNull().default(false),
     isOrdered: boolean('isOrdered').notNull().default(false),
     artworkPath: mediumtext('artworkPath'),
+    artworkFrame: jsonColumn('artworkFrame').$type<PhotoFrame>(),
     rules: jsonColumn('rules').$type<SongRules>(),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
@@ -1968,6 +2002,8 @@ const userProfile = mysqlTable('user_profile', {
   avatarStyle: mediumtext('avatarStyle'),
   avatarSeed: mediumtext('avatarSeed'),
   photoPath: mediumtext('photoPath'),
+  photoFrame: jsonColumn('photoFrame').$type<PhotoFrame>(),
+  avatarOnColour: boolean('avatarOnColour'),
   wayInId: varchar('wayInId', { length: 36 }).unique(),
   onboardedAt: moment('onboardedAt'),
   createdAt: momentNow('createdAt').notNull(),
@@ -2140,6 +2176,7 @@ const collection = mysqlTable(
     name: mediumtext('name').notNull(),
     description: mediumtext('description'),
     artworkPath: mediumtext('artworkPath'),
+    artworkFrame: jsonColumn('artworkFrame').$type<PhotoFrame>(),
     isOrdered: boolean('isOrdered').notNull().default(false),
     createdBy: identifier('createdBy').references(() => user.id, { onDelete: 'set null' }),
     profileId: identifier('profileId').references(() => viewerProfile.id, {
@@ -2465,6 +2502,7 @@ export {
   book,
   bookChapter,
   readingProgress,
+  readingBookmark,
   listeningProgress,
   musicArtist,
   musicAlbum,

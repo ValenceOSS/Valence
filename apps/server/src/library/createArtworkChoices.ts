@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -7,6 +8,7 @@ import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { diskPictureAddress } from './diskPictureAddress';
 import { uploadPictureAddress } from './uploadPictureAddress';
+import { uploadAddressOf } from './uploadAddressOf';
 import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm';
 import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -21,8 +23,6 @@ type PictureFault = NonNullable<Awaited<ReturnType<typeof whatIsWrongWithThePict
 const PICTURE_FILE = /\.(?:jpe?g|png|webp)$/iu;
 
 const MOST_ON_DISK = 60;
-
-const UPLOADED = /^valence-upload:[0-9a-f-]{36}$/u;
 
 type ArtworkChoicesOptions = {
   db: AnyValenceDatabase;
@@ -329,7 +329,7 @@ const createArtworkChoices = ({
     }
 
     const isKeptHere =
-      UPLOADED.test(url) || (await picturesOnDisk(title)).some((one) => one.url === url);
+      uploadAddressOf(url) !== null || (await picturesOnDisk(title)).some((one) => one.url === url);
 
     if (!isKeptHere) {
       const options = await readOptions?.({
@@ -501,6 +501,7 @@ const createArtworkChoices = ({
    * @param kind - Which picture.
    * @param artwork - The picture, and what kind of image it is.
    * @param by - Who uploaded it.
+   * @param frame - Where a poster or a backdrop sits in its shape, or nothing to show it whole.
    * @returns The choice, why the picture was turned away, or why nothing changed.
    */
   const upload = async (
@@ -508,6 +509,7 @@ const createArtworkChoices = ({
     kind: ArtworkKind,
     artwork: { body: Uint8Array; contentType: string },
     by: string | null,
+    frame: PhotoFrame | null = null,
   ): Promise<{ jobId: string | null } | ArtworkRefusal | { fault: PictureFault }> => {
     if (uploads === undefined) {
       return 'unavailable';
@@ -523,9 +525,13 @@ const createArtworkChoices = ({
 
     await mkdir(uploads, { recursive: true });
     await writeFile(join(uploads, id), artwork.body);
-    await writeFile(join(uploads, `${id}.type`), artwork.contentType);
 
-    return choose(mediaId, kind, uploadPictureAddress(id), by);
+    return choose(
+      mediaId,
+      kind,
+      uploadPictureAddress(id, kind === 'logo' || frame === null ? null : { kind, frame }),
+      by,
+    );
   };
 
   /**
@@ -541,7 +547,8 @@ const createArtworkChoices = ({
 
     return (
       typeof title !== 'string' &&
-      (UPLOADED.test(url) || (await picturesOnDisk(title)).some((one) => one.url === url))
+      (uploadAddressOf(url) !== null ||
+        (await picturesOnDisk(title)).some((one) => one.url === url))
     );
   };
 

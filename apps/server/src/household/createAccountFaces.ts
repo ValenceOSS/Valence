@@ -40,7 +40,7 @@ const createAccountFaces = ({
     return faceOfAccount({ name: accountName, stored, profiles: everyone });
   },
 
-  readPicture: async (accountId) => {
+  readPicture: async (accountId, isFramed = false) => {
     const [stored, everyone] = await Promise.all([
       households.read(accountId),
       profiles.list(accountId),
@@ -48,8 +48,8 @@ const createAccountFaces = ({
     const [owner] = everyone;
 
     return owner !== undefined && (everyone.length === 1 || stored.avatar === null)
-      ? profiles.readAvatar(owner.id)
-      : households.readAvatar(accountId);
+      ? profiles.readAvatar(owner.id, isFramed)
+      : households.readAvatar(accountId, isFramed);
   },
 
   change: async (accountId, request) => {
@@ -85,12 +85,12 @@ const createAccountFaces = ({
     return changed ? 'changed' : 'gone';
   },
 
-  savePhoto: async (accountId, photo) => {
+  savePhoto: async (accountId, photo, frame) => {
     const everyone = await profiles.list(accountId);
     const [owner] = everyone;
 
     if (owner === undefined || everyone.length > 1) {
-      return households.savePhoto(accountId, photo);
+      return households.savePhoto(accountId, photo, frame);
     }
 
     const wrong = await profiles.savePhoto(accountId, owner.id, photo);
@@ -99,7 +99,12 @@ const createAccountFaces = ({
       await profiles.rename(accountId, owner.id, {
         name: owner.name,
         colour: owner.colour,
-        avatar: { kind: 'photo', isVideo: photo.contentType.startsWith('video/'), frame: null },
+        avatar: {
+          kind: 'photo',
+          isVideo: photo.contentType.startsWith('video/'),
+          frame: frame ?? null,
+          hasFramedPicture: true,
+        },
       });
     }
 

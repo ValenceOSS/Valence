@@ -53,7 +53,12 @@ const manifestWith = (permissions: Permission[], contributes: object = {}) =>
     settings: [{ id: 'clientId', label: 'Client id', kind: 'text' }],
   });
 
-const build = (permissions: Permission[], contributes: object = {}, emitted: number[] = []) => {
+const build = (
+  permissions: Permission[],
+  contributes: object = {},
+  emitted: number[] = [],
+  lookedUp = new Map<string, number[]>(),
+) => {
   const store = createMemoryPluginStore();
   const host = aPluginHostForTest();
   const fetch = vi.fn((_url: string, _init?: PluginFetchInit) =>
@@ -77,6 +82,7 @@ const build = (permissions: Permission[], contributes: object = {}, emitted: num
     open: (sealed: string) => (sealed.startsWith('sealed:') ? sealed.slice(7) : null),
     log,
     emitted,
+    lookedUp,
   });
   const ask = async (method: string, args: JsonValue[], scope: BrokerScope | null = VIEWER) =>
     JsonValueSchema.parse(JSON.parse(await broker(method, JSON.stringify(args), scope)));
@@ -830,5 +836,210 @@ describe('the plugin broker', () => {
     await expect(
       build([{ kind: 'emits' }], declared, emitted).ask('events.emit', ['imported'], BACKGROUND),
     ).rejects.toThrow('too many events');
+  });
+  it('lists liked things with viewing read, and likes and stars only with write, for something the person can see', async () => {
+    const reader = build([{ kind: 'viewing', access: 'read' }]);
+
+    expect(await reader.ask('viewing.favourites', ['p1', 'track'])).toEqual([]);
+    await expect(reader.ask('viewing.favourite', ['p1', 'm1', true])).rejects.toThrow('not write');
+    await expect(reader.ask('viewing.rate', ['p1', 'm1', 4])).rejects.toThrow('not write');
+
+    const { ask, host } = build([{ kind: 'viewing', access: 'write' }]);
+
+    expect(await ask('viewing.favourite', ['p1', 'm1', true])).toEqual({ isKept: true });
+    expect(await ask('viewing.rate', ['p1', 'm1', null])).toEqual({ isKept: true });
+    expect(host.viewing.favourite).toHaveBeenCalledWith(AS_P1, A_PLUGIN_MEDIA_FOR_TEST, true);
+    expect(host.viewing.rate).toHaveBeenCalledWith(AS_P1, A_PLUGIN_MEDIA_FOR_TEST, null);
+    await expect(ask('viewing.rate', ['p1', 'm1', 6])).rejects.toThrow('could not read');
+    await expect(ask('viewing.favourite', ['p2', 'm1', true])).rejects.toThrow('person using it');
+
+    vi.mocked(host.library.get).mockResolvedValueOnce(null);
+
+    await expect(ask('viewing.favourite', ['p1', 'hidden', true])).rejects.toThrow(
+      'no such thing in their library',
+    );
+  });
+
+  it('renames, empties and removes playlists only with playlists write', async () => {
+    const reader = build([{ kind: 'playlists', access: 'read' }]);
+
+    await expect(reader.ask('playlists.rename', ['p1', 'pl1', { name: 'X' }])).rejects.toThrow(
+      'not write',
+    );
+    await expect(reader.ask('playlists.remove', ['p1', 'pl1'])).rejects.toThrow('not write');
+    await expect(reader.ask('playlists.dropMany', ['p1', 'pl1', ['e1']])).rejects.toThrow(
+      'not write',
+    );
+
+    const { ask, host } = build([{ kind: 'playlists', access: 'write' }]);
+
+    expect(await ask('playlists.rename', ['p1', 'pl1', { name: ' New ' }])).toBeNull();
+    expect(await ask('playlists.remove', ['p1', 'pl1'])).toBeNull();
+    expect(host.playlists.rename).toHaveBeenCalledWith(AS_P1, 'pl1', {
+      name: 'New',
+      description: null,
+    });
+    expect(host.playlists.remove).toHaveBeenCalledWith(AS_P1, 'pl1');
+    expect(await ask('playlists.dropMany', ['p1', 'pl1', ['e1', 'e2']])).toBeNull();
+    expect(host.playlists.dropMany).toHaveBeenCalledWith(AS_P1, 'pl1', ['e1', 'e2']);
+    await expect(
+      ask('playlists.dropMany', ['p1', 'pl1', Array.from({ length: 501 }, (_, at) => `e${at}`)]),
+    ).rejects.toThrow('could not read');
+  });
+
+  it('reads music only with the library permission, as the person, with sensible defaults', async () => {
+    await expect(build([]).ask('music.genres', [])).rejects.toThrow('library');
+
+    const { ask, host } = build([{ kind: 'library', access: 'read' }]);
+
+    await ask('music.albums', [{ order: 'mostPlayed' }]);
+    await ask('music.albums', [
+      { order: 'year', genre: 'Folk', years: { from: 1990, to: 1980 }, offset: 4, limit: 9 },
+    ]);
+    await ask('music.genres', []);
+    await ask('music.inGenre', ['Folk', null, { profileId: 'p1' }]);
+    await ask('music.lyrics', ['t1']);
+    await ask('music.similar', [['t1']]);
+    await ask('music.topSongs', ['ar1']);
+
+    expect(host.music.albums).toHaveBeenNthCalledWith(
+      1,
+      { order: 'mostPlayed', genre: null, years: null, offset: 0, limit: 200 },
+      AS_P1,
+    );
+    expect(host.music.albums).toHaveBeenNthCalledWith(
+      2,
+      { order: 'year', genre: 'Folk', years: { from: 1990, to: 1980 }, offset: 4, limit: 9 },
+      AS_P1,
+    );
+    expect(host.music.genres).toHaveBeenCalledWith(AS_P1);
+    expect(host.music.inGenre).toHaveBeenCalledWith('Folk', { offset: 0, limit: 200 }, AS_P1);
+    expect(host.music.lyrics).toHaveBeenCalledWith('t1', AS_P1);
+    expect(host.music.similar).toHaveBeenCalledWith(['t1'], 50, AS_P1);
+    expect(host.music.topSongs).toHaveBeenCalledWith('ar1', AS_P1);
+    await expect(ask('music.albums', [{ order: 'loudest' }])).rejects.toThrow('could not read');
+    await expect(ask('music.similar', [[]])).rejects.toThrow('could not read');
+  });
+
+  it('looks up at most five artists a minute that Valence doesn’t already know', async () => {
+    const { ask, host } = build([{ kind: 'library', access: 'read' }]);
+    const allowed: boolean[] = [];
+
+    vi.mocked(host.music.aboutArtist).mockImplementation((_id, _viewer, mayLookUp) => {
+      allowed.push(mayLookUp());
+
+      return Promise.resolve(null);
+    });
+
+    for (let at = 0; at < 6; at += 1) {
+      await ask('music.aboutArtist', ['ar1']);
+    }
+
+    expect(allowed.filter(Boolean)).toHaveLength(5);
+    expect(allowed.at(-1)).toBe(false);
+  });
+
+  it('keeps counting artists looked up across a new sandbox for the same plugin', async () => {
+    const lookedUp = new Map<string, number[]>();
+    const allowed: boolean[] = [];
+    const lookingUp = () => {
+      const made = build([{ kind: 'library', access: 'read' }], {}, [], lookedUp);
+
+      vi.mocked(made.host.music.aboutArtist).mockImplementation((_id, _viewer, mayLookUp) => {
+        allowed.push(mayLookUp());
+
+        return Promise.resolve(null);
+      });
+
+      return made;
+    };
+    const first = lookingUp();
+
+    for (let at = 0; at < 5; at += 1) {
+      await first.ask('music.aboutArtist', ['ar1']);
+    }
+
+    await lookingUp().ask('music.aboutArtist', ['ar1']);
+
+    expect(allowed.at(-1)).toBe(false);
+  });
+
+  it('counts a play of a song the person can see, at its time, within the last thirty days', async () => {
+    const song = { ...A_PLUGIN_MEDIA_FOR_TEST, id: 't1', kind: 'track' as const };
+
+    await expect(
+      build([{ kind: 'viewing', access: 'read' }]).ask('music.recordPlay', ['p1', 't1']),
+    ).rejects.toThrow('not write');
+
+    const { ask, host } = build([{ kind: 'viewing', access: 'write' }]);
+    const heard = new Date(Date.now() - 60_000).toISOString();
+
+    vi.mocked(host.library.get).mockResolvedValue(song);
+
+    expect(await ask('music.recordPlay', ['p1', 't1', heard])).toBeNull();
+    expect(host.music.recordPlay).toHaveBeenCalledWith(
+      'p1',
+      { id: 't1', durationSeconds: 1440 },
+      Date.parse(heard),
+    );
+
+    const before = Date.now();
+
+    await ask('music.recordPlay', ['p1', 't1', new Date(Date.now() + 86_400_000).toISOString()]);
+    await ask('music.recordPlay', ['p1', 't1', null]);
+
+    for (const [, , atMs] of vi.mocked(host.music.recordPlay).mock.calls.slice(1)) {
+      expect(atMs).toBeGreaterThanOrEqual(before);
+      expect(atMs).toBeLessThanOrEqual(Date.now());
+    }
+
+    await expect(
+      ask('music.recordPlay', ['p1', 't1', new Date(Date.now() - 31 * 86_400_000).toISOString()]),
+    ).rejects.toThrow('30 days');
+
+    vi.mocked(host.library.get).mockResolvedValue(A_PLUGIN_MEDIA_FOR_TEST);
+
+    await expect(ask('music.recordPlay', ['p1', 'm1'])).rejects.toThrow('Only a song');
+  });
+
+  it('says what an app is playing only while answering that app, as its app password', async () => {
+    const app: BrokerScope = {
+      ...VIEWER,
+      app: { id: 'pw1', label: 'Phone app', profileName: 'Sam' },
+    };
+    const { ask, host } = build([{ kind: 'viewing', access: 'write' }]);
+
+    await ask('music.nowPlaying', ['p1', { trackId: 't1', client: ' Feishin ' }], app);
+    await ask('music.nowPlaying', ['p1', { trackId: 't1', client: '' }], app);
+    await ask('music.nowPlaying', ['p1', null], app);
+
+    const answering = {
+      appPasswordId: 'pw1',
+      accountId: 'a1',
+      profileId: 'p1',
+      profileName: 'Sam',
+    };
+
+    expect(host.music.nowPlaying).toHaveBeenNthCalledWith(
+      1,
+      { ...answering, label: 'Feishin' },
+      't1',
+      AS_P1,
+    );
+    expect(host.music.nowPlaying).toHaveBeenNthCalledWith(
+      2,
+      { ...answering, label: 'Phone app' },
+      't1',
+      AS_P1,
+    );
+    expect(host.music.nowPlaying).toHaveBeenNthCalledWith(
+      3,
+      { ...answering, label: 'Phone app' },
+      null,
+      AS_P1,
+    );
+    await expect(ask('music.nowPlaying', ['p1', null], VIEWER)).rejects.toThrow('app password');
+    await expect(ask('music.nowPlaying', ['p1', null], ABOUT_P2)).rejects.toThrow('app password');
+    await expect(ask('music.nowPlaying', ['p2', null], app)).rejects.toThrow('person using it');
   });
 });

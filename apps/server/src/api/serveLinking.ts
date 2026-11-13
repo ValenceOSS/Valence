@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import {
   pairRoute,
   pairingStateRoute,
@@ -102,10 +103,14 @@ const serveLinking = (app: OpenAPIHono, context: AppContext): void => {
     const wrong =
       serverPictures === undefined
         ? 'unreadable'
-        : await serverPictures.save(OWN_PICTURE_KEY, {
-            body: new Uint8Array(await context.req.arrayBuffer()),
-            contentType: context.req.header('content-type') ?? '',
-          });
+        : await serverPictures.save(
+            OWN_PICTURE_KEY,
+            {
+              body: new Uint8Array(await context.req.arrayBuffer()),
+              contentType: context.req.header('content-type') ?? '',
+            },
+            frameFromQuery(context.req.query()),
+          );
 
     if (wrong !== null) {
       const said = describePictureFault(wrong);

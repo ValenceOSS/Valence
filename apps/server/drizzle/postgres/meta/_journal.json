@@ -1114,6 +1114,41 @@
       "when": 1794169650673,
       "tag": "0158_an_account_has_one_owner_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1794423781662,
+      "tag": "0159_bookmarks_are_kept_per_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 160,
+      "version": "7",
+      "when": 1794424761466,
+      "tag": "0160_media_items_are_found_newest_and_best_rated_first",
+      "breakpoints": true
+    },
+    {
+      "idx": 161,
+      "version": "7",
+      "when": 1794492892628,
+      "tag": "0161_account_pictures_keep_their_framing",
+      "breakpoints": true
+    },
+    {
+      "idx": 162,
+      "version": "7",
+      "when": 1794523129299,
+      "tag": "0162_uploaded_artwork_keeps_its_framing",
+      "breakpoints": true
+    },
+    {
+      "idx": 163,
+      "version": "7",
+      "when": 1794543359953,
+      "tag": "0163_household_drawn_faces_keep_their_colour",
+      "breakpoints": true
     }
   ]
 }

@@ -1126,31 +1126,6 @@ pub fn tone_map_format(expression: &str) -> Option<&str> {
         .next_back()
 }
 
-/// Which route this session can take.
-///
-/// `InSoftware` when:
-///
-/// - this build has no scaler for the backend's frames;
-/// - the backend has no end-to-end pipeline, which is `Amf` and no
-///   acceleration at all;
-/// - nothing is being encoded, so there is no chain to place;
-/// - HDR is being converted and neither this backend's own tone mapper nor
-///   `tonemap_opencl` will take it on the device, or the build and
-///   the machine have not proved either — the conversion has to happen before the
-///   picture is resampled, so a round trip around it would drag the scale down
-///   with it and there would be nothing left on the device to save;
-/// - the picture has to be resized and nobody said how big it is, because the
-///   hardware scalers need a number rather than an expression.
-///
-/// With subtitles to burn in, `Composited` when the build has the backend's
-/// compositor, and `DownAndBack` when it does not but the subtitles are text —
-/// the one software filter that fits in a linear chain. A bitmap subtitle
-/// cannot be drawn that way at all: it is a second stream, so without a
-/// compositor there is nowhere for it to go but software.
-///
-/// Saying `InSoftware` costs what Valence did before. Saying anything else
-/// wrongly costs a session that will not start, so each answer is a fact about
-/// the spec rather than a guess about the machine.
 /// The tone mapper this session would use without leaving the device.
 ///
 /// Two things have to hold: the backend has one at all, and this build was
@@ -1158,11 +1133,9 @@ pub fn tone_map_format(expression: &str) -> Option<&str> {
 /// build, and a package without `tonemap_vaapi` leaves a card that would
 /// otherwise manage it perfectly well.
 ///
-/// `QSV` was the example here, on the grounds that it has no tone mapper of its
-/// own. It still has none of its own and it is no longer the example, because
-/// what it has is `VAAPI`'s: the filter runs before the frames are mapped onto
-/// the `QSV` device, so the backend with no mapper has one. What is asked is
-/// what the pipeline names, not what the backend is called.
+/// `QSV` has no tone mapper of its own, yet it has one here: `VAAPI`'s, whose
+/// filter runs before the frames are mapped onto the `QSV` device. What is
+/// asked is what the pipeline names, not what the backend is called.
 ///
 /// Where the backend's own mapper will not take the source — Intel's VPP converts HDR10 alone —
 /// `tonemap_opencl` is lent the frames and hands them back, on a backend whose frames can make the
@@ -1236,6 +1209,32 @@ fn device_chain(
     }
 }
 
+/// Which route this session can take.
+///
+/// `InSoftware` when:
+///
+/// - this build has no scaler for the backend's frames;
+/// - the backend has no end-to-end pipeline, which is `Amf` and no
+///   acceleration at all;
+/// - nothing is being encoded, so there is no chain to place;
+/// - HDR is being converted and neither this backend's own tone mapper nor
+///   `tonemap_opencl` will take it on the device, or the build and
+///   the machine have not proved either — the conversion has to happen before the
+///   picture is resampled, so a round trip around it would drag the scale down
+///   with it and there would be nothing left on the device to save;
+/// - the picture has to be resized and nobody said how big it is, because the
+///   hardware scalers need a number rather than an expression.
+///
+/// With subtitles to burn in, `Composited` when the build has the backend's
+/// compositor, and `DownAndBack` when it does not but the subtitles are text —
+/// the one software filter that fits in a linear chain. A bitmap subtitle
+/// cannot be drawn that way at all: it is a second stream, so without a
+/// compositor there is nowhere for it to go but software.
+///
+/// Saying `InSoftware` wrongly costs only speed, since software always works.
+/// Saying anything else wrongly costs a session that will not start, so each
+/// answer is a fact about the spec rather than a guess about the machine.
+///
 /// Weaving fields and squaring pixels are done in software, deliberately.
 ///
 /// Both have hardware filters — `deinterlace_vaapi`, `deinterlace_qsv` — and
@@ -3745,14 +3744,13 @@ mod tests {
 
     /// A run from the beginning has the film's own clock to preserve too.
     ///
-    /// This test used to assert the opposite, on the reasoning that a run
-    /// starting at nought has nothing to keep. It has: an audio encoder's first
-    /// frame carries a priming delay that puts it before the video, and ffmpeg's
-    /// default answer is to shift the whole film forward so nothing is negative.
-    /// Measured on a real remux — the playlist, built from the source's own
-    /// keyframes, says the second segment begins at 3.458; the media ffmpeg
-    /// wrote began it at 3.626. Every boundary in the film was 167ms out of step
-    /// with the playlist describing it.
+    /// A run starting at nought still has something to keep: an audio encoder's
+    /// first frame carries a priming delay that puts it before the video, and
+    /// ffmpeg's default answer is to shift the whole film forward so nothing is
+    /// negative. Measured on a real remux — the playlist, built from the source's
+    /// own keyframes, says the second segment begins at 3.458; the media ffmpeg
+    /// writes by default begins it at 3.626, putting every boundary in the film
+    /// 167ms out of step with the playlist describing it.
     #[test]
     fn keeps_the_films_own_timestamps_from_the_beginning_as_well() {
         let args = plan(spec()).to_ffmpeg_args();
@@ -3884,8 +3882,8 @@ mod tests {
     }
 
     /// An interlaced film on `VAAPI` is worked on in system memory and still
-    /// encoded on the card, which takes nothing but its own frames. It used to
-    /// be handed system memory frames, fail, and fall back to the processor.
+    /// encoded on the card, which takes nothing but its own frames: handed
+    /// system memory frames, it would fail and fall back to the processor.
     #[cfg(unix)]
     #[test]
     fn uploads_frames_from_the_software_route_for_vaapi_to_encode() {
@@ -4065,10 +4063,10 @@ mod tests {
         );
     }
 
-    /// A burned-in subtitle used to send the whole session into software.
+    /// A burned-in subtitle does not send the whole session into software.
     ///
-    /// It now goes down for the one filter that needs system memory and comes
-    /// straight back, so the decode and the scale stay where they were.
+    /// It goes down for the one filter that needs system memory and comes
+    /// straight back, so the decode and the scale stay where they are.
     #[test]
     fn comes_down_only_for_the_subtitle_and_goes_straight_back() {
         let spec = SessionSpec {
@@ -4106,9 +4104,9 @@ subtitles='/media/film.mkv':si=2,hwupload"
         );
     }
 
-    /// HDR used to cost the whole session, and now costs nothing extra.
+    /// HDR costs the session nothing extra.
     ///
-    /// Tone mapping was the last thing that forced everything into software:
+    /// Tone mapping on the processor would force everything into software:
     /// the conversion has to precede the scale, so a round trip around it would
     /// drag the scale down too and leave nothing on the device worth having.
     #[test]
@@ -6595,11 +6593,11 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
     /// A bitmap subtitle is brought to the size of the picture first.
     ///
-    /// The software route used to overlay the subtitle stream untouched, which
-    /// places its canvas at the origin. A canvas taller than the output — 161
-    /// files in the reference library, and every file at all once a session
-    /// scales down — then carries its text below the frame, so the burn-in
-    /// encoded the whole film again and drew nothing on it.
+    /// Overlaid untouched, the subtitle stream places its canvas at the origin.
+    /// A canvas taller than the output — 161 files in the reference library, and
+    /// every file at all once a session scales down — then carries its text below
+    /// the frame, so the burn-in would encode the whole film again and draw
+    /// nothing on it.
     #[test]
     fn sizes_a_bitmap_subtitle_to_the_picture_it_is_drawn_on() {
         let args = plan(SessionSpec {

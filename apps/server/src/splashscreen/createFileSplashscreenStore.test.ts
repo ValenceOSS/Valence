@@ -1,6 +1,6 @@
 import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ServerSettingsSchema } from '@ValenceServer/settings/ServerSettings';
@@ -14,6 +14,12 @@ const aPicture = async (width = 16, height = 9): Promise<Uint8Array> =>
       .jpeg()
       .toBuffer(),
   );
+
+const filesIn = async (folder: string): Promise<string[]> =>
+  (await readdir(folder, { recursive: true, withFileTypes: true }))
+    .filter((entry) => entry.isFile())
+    .map((entry) => relative(folder, join(entry.parentPath, entry.name)))
+    .sort();
 
 let directory = '';
 let settings: SettingsStore;
@@ -37,17 +43,37 @@ describe('createFileSplashscreenStore', () => {
     await expect(store.address()).resolves.toBeNull();
   });
 
-  it('keeps a picture on disk, names it in the settings, and reads it back', async () => {
+  it('keeps the upload as it came, names it in the settings, and hands out a cleaned copy', async () => {
     const store = createFileSplashscreenStore(directory, settings);
     const body = await aPicture();
 
     await expect(store.save({ body, contentType: 'image/jpeg' })).resolves.toBeNull();
 
     const { splashscreenFile } = await settings.read();
+    const stem = (splashscreenFile ?? '').replace(/\.jpg$/u, '');
 
-    expect(await readdir(directory)).toEqual([splashscreenFile]);
+    expect(await filesIn(directory)).toEqual([
+      join('originals', `${stem}.jpg`),
+      join('processed', `${stem}.webp`),
+    ]);
     expect(await store.address()).toContain(splashscreenFile);
-    await expect(store.read()).resolves.toMatchObject({ contentType: 'image/jpeg' });
+    await expect(store.read()).resolves.toMatchObject({ contentType: 'image/webp' });
+  });
+
+  it('hands out none of what the upload carried about the camera that took it', async () => {
+    const store = createFileSplashscreenStore(directory, settings);
+    const body = new Uint8Array(
+      await sharp(await aPicture())
+        .withExif({ IFD0: { Make: 'A camera', Copyright: 'Somebody' } })
+        .jpeg()
+        .toBuffer(),
+    );
+
+    await store.save({ body, contentType: 'image/jpeg' });
+
+    const read = await store.read();
+
+    expect((await sharp(read?.body).metadata()).exif).toBeUndefined();
   });
 
   it('gives a replaced picture a new address and throws the old file away', async () => {
@@ -60,7 +86,7 @@ describe('createFileSplashscreenStore', () => {
     await store.save({ body: await aPicture(32, 18), contentType: 'image/jpeg' });
 
     expect(await store.address()).not.toBe(first);
-    expect(await readdir(directory)).toHaveLength(1);
+    expect(await filesIn(directory)).toHaveLength(2);
   });
 
   it('allows the detail a full-screen picture needs, which a face is refused', async () => {
@@ -77,7 +103,7 @@ describe('createFileSplashscreenStore', () => {
     await expect(
       store.save({ body: new TextEncoder().encode('not a picture'), contentType: 'image/jpeg' }),
     ).resolves.toBe('unreadable');
-    expect(await readdir(directory)).toEqual([]);
+    expect(await filesIn(directory)).toEqual([]);
     await expect(store.address()).resolves.toBeNull();
   });
 
@@ -88,7 +114,7 @@ describe('createFileSplashscreenStore', () => {
 
     await expect(store.remove()).resolves.toBe(true);
     await expect(store.remove()).resolves.toBe(false);
-    expect(await readdir(directory)).toEqual([]);
+    expect(await filesIn(directory)).toEqual([]);
     await expect(store.read()).resolves.toBeNull();
   });
 });

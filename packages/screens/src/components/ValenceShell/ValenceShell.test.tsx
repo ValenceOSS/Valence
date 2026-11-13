@@ -452,7 +452,10 @@ const serveLibraries = (libraries: object[], films: object[] = []) => {
   fetchMock.mockImplementation((target: string, init?: RequestInit) => {
     const url = new URL(target, 'http://localhost:3000');
 
-    if (url.pathname.startsWith('/api/libraries/') && url.pathname.includes('/items')) {
+    if (
+      url.pathname === '/api/library-items' ||
+      (url.pathname.startsWith('/api/libraries/') && url.pathname.includes('/items'))
+    ) {
       const found = url.searchParams.get('kind') === 'films' ? films : [];
 
       return Promise.resolve(ok({ items: found, total: found.length }));

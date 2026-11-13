@@ -1,3 +1,4 @@
+import { ScrollRail } from '@ValenceUI/ScrollRail';
 import { Bell, Film, Search, Settings } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
@@ -25,6 +26,8 @@ import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { TruncatedText } from '@ValenceUI/TruncatedText';
 import { Well } from '@ValenceUI/Well';
+import { DrawnWhenNear } from '@ValenceUI/DrawnWhenNear';
+import { ScrollFade } from '@ValenceUI/ScrollFade';
 import { ExampleSiteLink } from '@ValenceLanding/components/UiLibraryPage/examples/demos/ExampleSiteLink';
 import { StepperDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/StepperDemo';
 import { SidebarGroupDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/SidebarGroupDemo';
@@ -34,6 +37,27 @@ import type { UiExample } from './UiExample.types';
 const nothing = () => undefined;
 
 const LAYOUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
+  ScrollRail: [
+    {
+      title: 'A row with a track that stays in view',
+      render: () => (
+        <div className="max-w-xs">
+          <ScrollRail className="flex gap-2">
+            {['Original', 'Greyscale', 'Warm', 'Cool', 'Vivid', 'Faded', 'Inverted', 'Duotone'].map(
+              (name) => (
+                <span
+                  key={name}
+                  className="shrink-0 rounded-full bg-subtle px-3 py-1.5 text-sm text-text"
+                >
+                  {name}
+                </span>
+              ),
+            )}
+          </ScrollRail>
+        </div>
+      ),
+    },
+  ],
   Card: [
     {
       title: 'Tones',
@@ -393,6 +417,32 @@ const LAYOUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
         <div className="w-full overflow-hidden rounded-xl border border-[var(--surface-line)]">
           <SiteFooter here="landing" InSiteLink={ExampleSiteLink} logoSrc="/valence-icon.png" />
         </div>
+      ),
+    },
+  ],
+  ScrollFade: [
+    {
+      title: 'A list that fades where there is more to scroll',
+      render: () => (
+        <ScrollFade className="max-h-40 w-full">
+          {Array.from({ length: 12 }, (_, at) => (
+            <p key={at} className="py-1.5 text-sm">
+              Chapter {at + 1}
+            </p>
+          ))}
+        </ScrollFade>
+      ),
+    },
+  ],
+  DrawnWhenNear: [
+    {
+      title: 'A block drawn only while it is near the screen',
+      render: () => (
+        <DrawnWhenNear className="w-full">
+          {() => (
+            <Card className="p-4 text-sm">Drawn while near; an empty space as tall otherwise</Card>
+          )}
+        </DrawnWhenNear>
       ),
     },
   ],

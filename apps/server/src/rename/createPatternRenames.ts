@@ -182,7 +182,8 @@ const createPatternRenames = ({ db, queueReadAgain }: PatternRenameDependencies)
    *
    * @param mediaIds - The files.
    * @returns Each file found, in the order of its path. A film's standing version claims its name
-   *   before the versions hung from it, so it is the one a clash leaves unnumbered.
+   *   before the versions hung from it, so it is the one a clash leaves unnumbered, and otherwise
+   *   files claim names in the order of their paths, whatever order the database finds them in.
    */
   const planFiles = async (mediaIds: readonly string[]): Promise<PlannedFile[]> => {
     const rows = await db
@@ -252,7 +253,9 @@ const createPatternRenames = ({ db, queueReadAgain }: PatternRenameDependencies)
     const planned: PlannedFile[] = [];
 
     for (const row of rows.toSorted(
-      (one, other) => Number(one.parentId !== null) - Number(other.parentId !== null),
+      (one, other) =>
+        Number(one.parentId !== null) - Number(other.parentId !== null) ||
+        one.path.localeCompare(other.path),
     )) {
       const root = rootOf.get(row.libraryId);
 

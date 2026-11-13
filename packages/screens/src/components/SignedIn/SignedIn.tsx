@@ -99,7 +99,6 @@ const SignedIn = ({ title }: SignedInProps) => {
   const [known, setKnown] = useState(new Map<string, MediaSummary>());
   const [reported, setReported] = useState(new Map<string, WatchProgress>());
   const [startOverride, setStartOverride] = useState<StartOverride>(null);
-  const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
 
   useEffect(
     () => () => {
@@ -395,8 +394,6 @@ const SignedIn = ({ title }: SignedInProps) => {
             forgetReported,
             startOverride,
             setStartOverride,
-            askingAbout,
-            setAskingAbout,
             watchParty,
             refresh,
             holdTheScreen,
@@ -415,7 +412,6 @@ const SignedIn = ({ title }: SignedInProps) => {
       readProgress,
       forgetReported,
       startOverride,
-      askingAbout,
       watchParty,
       refresh,
       holdTheScreen,

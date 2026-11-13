@@ -851,8 +851,9 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     const path =
       serve.kind === 'albumArtwork'
-        ? await music.library.readAlbumArtwork(viewer, serve.albumId)
-        : await music.library.readArtistImage(viewer, serve.artistId);
+        ? ((await music.library.readAlbumArtwork(viewer, serve.albumId)) ??
+          (await music.library.readArtistPicture(viewer, serve.albumId)))
+        : await music.library.readArtistPicture(viewer, serve.artistId);
     const bytes = path === null ? null : await music.readImage(path);
 
     if (bytes === null) {

@@ -14,7 +14,7 @@ import { nameBrowseOrder } from '@ValenceClient/library/nameBrowseOrder';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Spinner } from '@ValenceUI/Spinner';
-import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
+import { revealVariants, revealTransition } from '@ValenceUI/animations/reveal';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
@@ -38,7 +38,7 @@ import { CollectionShelf } from '@ValenceScreens/components/CollectionShelf/Coll
 import { NewCollectionButton } from '@ValenceScreens/components/NewCollectionButton/NewCollectionButton';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
@@ -231,12 +231,25 @@ const BrowseArea = ({
     ...(isAskedAgain ? { placeholderData: keepPreviousData } : {}),
   });
 
+  const beginning = useQuery(
+    isFilterable
+      ? libraryQueries.beginningOfEverything(libraryIds, { kind, ...filters.asked })
+      : { ...libraryQueries.beginningOfEverything([]), enabled: false },
+  );
+
+  const arrived =
+    found.data !== undefined && !found.isPlaceholderData
+      ? found.data
+      : isFilterable
+        ? (beginning.data ?? found.data)
+        : found.data;
+
   if (!isAskedAgain && found.data !== undefined && !found.isPlaceholderData) {
     setAnswered(question);
   }
 
   const answer = useMemo(() => {
-    const every = found.data ?? NOTHING_FOUND;
+    const every = arrived ?? NOTHING_FOUND;
 
     if (kind !== 'favourites') {
       return every;
@@ -245,7 +258,7 @@ const BrowseArea = ({
     const stillKept = new Set(kept.split(','));
 
     return every.filter((media) => stillKept.has(media.id));
-  }, [found.data, kind, kept]);
+  }, [arrived, kind, kept]);
 
   const items = useMemo(() => collapseToShows(answer), [answer]);
   const unwatched = useMemo(
@@ -280,7 +293,7 @@ const BrowseArea = ({
 
   const isReading =
     libraries.isPending ||
-    (libraryIds.length > 0 && found.isPending) ||
+    (libraryIds.length > 0 && arrived === undefined && found.isPending) ||
     (bookIds.length > 0 && foundBooks.isPending);
 
   useEffect(() => {
@@ -291,8 +304,7 @@ const BrowseArea = ({
 
   return (
     <motion.div
-      variants={staggerVariants}
-      initial="hidden"
+      initial={false}
       animate="shown"
       exit="gone"
       className="flex flex-col gap-6 px-5 pb-16 pt-6 sm:px-10"
@@ -318,6 +330,7 @@ const BrowseArea = ({
 
           {isFilterable || isReading || items.length === 0 ? null : (
             <GridSizeChooser
+              look="joined"
               value={size}
               onValueChange={(next) => {
                 setSize(next);
@@ -387,6 +400,7 @@ const BrowseArea = ({
 
             {isReading || items.length === 0 ? null : (
               <GridSizeChooser
+                look="joined"
                 className="shrink-0"
                 value={size}
                 onValueChange={(next) => {

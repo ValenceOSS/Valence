@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
-import { useArrivals } from '@ValenceScreens/motion/useArrivals';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Compass as CompassIcon } from '@keyline-icons/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -39,7 +37,6 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
   const isWatched = useIsTitleWatched();
   const pages = useInfiniteQuery(requestsQueries.catalogueBrowse(browsing, true, filters));
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
-  const arrivalOf = useArrivals();
 
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = pages;
 
@@ -118,7 +115,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
           const key = `${title.kind}:${title.id}`;
 
           return (
-            <motion.div key={key} {...arrivalOf(key)}>
+            <div key={key}>
               <MediaCard
                 title={title.title}
                 subtitle={title.year?.toString() ?? ''}
@@ -129,7 +126,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
                   onAsk(askingOf(title));
                 }}
               />
-            </motion.div>
+            </div>
           );
         }}
       </VirtualGrid>

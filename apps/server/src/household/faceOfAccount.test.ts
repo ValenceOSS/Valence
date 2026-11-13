@@ -27,7 +27,7 @@ const aProfile = (change: Partial<ViewerProfile> = {}): ViewerProfile => ({
   id: 'p-dan',
   name: 'Dan',
   colour: '#8b5ce8',
-  avatar: { kind: 'photo', isVideo: false, frame: null },
+  avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: {
@@ -60,7 +60,7 @@ describe('faceOfAccount', () => {
     expect(faceOfAccount({ name: 'dcm', stored: CHOSEN, profiles: [aProfile()] })).toEqual({
       name: 'Dan',
       colour: '#8b5ce8',
-      avatar: { kind: 'photo', isVideo: false, frame: null },
+      avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true },
       updatedAt: '2026-10-20T00:00:00.000Z',
       hasOwnName: false,
       hasOwnPicture: false,

@@ -1,10 +1,11 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { ReadPage } from './ReadPage';
-import type { Book, BookChapter } from '@ValenceContracts/schemas/Book';
+import type { Book, BookChapter, Bookmark } from '@ValenceContracts/schemas/Book';
 import type * as Router from '@tanstack/react-router';
 
 const address = vi.hoisted((): { chapter: string | undefined } => ({ chapter: undefined }));
@@ -47,15 +48,17 @@ const A_CHAPTER: BookChapter = {
 };
 
 /**
- * Serves one book, of whichever layout, and what reading it asks for.
+ * Serves one book, of whichever layout, its bookmarks, and what reading it asks for.
  */
-const serve = (book: Book, chapters: BookChapter[]) => {
+const serve = (book: Book, chapters: BookChapter[], bookmarks: Bookmark[] = []) => {
   vi.stubGlobal(
     'fetch',
     vi.fn((input: string) => {
       const answers: Record<string, string> = {
         [`/api/books/${BOOK_ID}`]: JSON.stringify({ book, chapters }),
         [`/api/books/${BOOK_ID}/progress`]: JSON.stringify({ progress: [] }),
+        [`/api/books/${BOOK_ID}/bookmarks`]: JSON.stringify({ bookmarks }),
+        '/api/about': JSON.stringify({ features: ['books.bookmarks'] }),
         [`/api/books/${BOOK_ID}/chapters/${CHAPTER_ID}/contents`]: JSON.stringify({
           parts: [{ size: 10 }],
           contents: [{ title: 'Chapter I.', part: 0, anchor: null, depth: 0 }],
@@ -203,6 +206,64 @@ describe('ReadPage', () => {
     await screen.findByText('This book has no chapters yet');
 
     expect(readingReported()).toEqual([]);
+  });
+
+  it('opens a bookmark in another chapter at its page, and forgets it on moving chapter', async () => {
+    const two = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0009';
+
+    serve(
+      { ...A_BOOK, layout: 'fixed', direction: 'rightToLeft' },
+      [
+        { ...A_CHAPTER, format: 'cbz', pageCount: 12, title: 'One' },
+        { ...A_CHAPTER, id: two, number: 2, format: 'cbz', pageCount: 8, title: 'Two' },
+      ],
+      [
+        {
+          id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0010',
+          bookId: BOOK_ID,
+          chapterId: two,
+          pageNumber: 5,
+          fraction: null,
+          pageShown: null,
+          excerpt: null,
+          picture: null,
+          createdAt: '2026-11-11T00:00:00.000Z',
+        },
+      ],
+    );
+
+    renderInAnAddress(<ReadPage />);
+
+    expect(await screen.findByRole('img', { name: 'Page 1' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bookmarks' }));
+
+    const bookmarks = await screen.findByRole('region', { name: 'Bookmarks' });
+
+    await userEvent.click(await within(bookmarks).findByRole('button', { name: /^Page 6/ }));
+
+    expect(await screen.findByRole('img', { name: 'Page 6' })).toBeInTheDocument();
+    expect(document.querySelector('header')).toHaveTextContent('Two');
+    expect(screen.getByRole('button', { name: 'Remove bookmark' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}');
+
+    await waitFor(() => {
+      expect(document.querySelector('header')).toHaveTextContent('One');
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Chapter' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Go to Two' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('header')).toHaveTextContent('Two');
+    });
+    expect(screen.getByRole('img', { name: 'Page 1' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -52,6 +52,7 @@ import { servePreRoll } from '@ValenceServer/api/servePreRoll';
 import { serveBook } from '@ValenceServer/api/serveBook';
 import { serveCollections } from '@ValenceServer/api/serveCollections';
 import { serveImage } from '@ValenceServer/api/serveImage';
+import { serveArtwork } from '@ValenceServer/api/serveArtwork';
 import { serveCataloguePicture } from '@ValenceServer/api/serveCataloguePicture';
 import { serveSubtitle } from '@ValenceServer/api/serveSubtitle';
 import { servePresence } from '@ValenceServer/api/servePresence';
@@ -129,6 +130,7 @@ const createApp = (options: CreateAppOptions) => {
   serveCorrections(app, context);
   serveMetadata(app, context);
   serveImage(app, context);
+  serveArtwork(app, context);
   serveCataloguePicture(app, context);
   serveSubtitle(app, context);
   servePresence(app, context);

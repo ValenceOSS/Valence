@@ -22,6 +22,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param isOpen - Whether it is open, for a caller holding that state itself.
  * @param onOpenChange - Told when it opens or closes.
  * @param side - Which side of the trigger to prefer.
+ * @param tooltipSide - Which side its name shows on when pointed at; the side it opens on where not
+ *   given.
  * @param align - Which part of the trigger the panel lines up with, matching `ActionMenu`.
  * @param isDisabled - Whether it can be opened at all.
  * @param isBare - Whether the surrounding chrome already draws the hover, so this must not draw a
@@ -37,6 +39,7 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param hasSurface - Whether it draws its own floating surface, or leaves that to what it holds,
  *   such as a card that is already one — which is then set on the frame's solid colour, so its
  *   shell reads as a dialog's does rather than letting the page show through.
+ * @param offset - How far from its trigger it opens.
  * @param className - Extra classes for the caller's own layout.
  */
 const PopoverPanel = ({
@@ -47,6 +50,7 @@ const PopoverPanel = ({
   isOpen,
   onOpenChange,
   side = 'top',
+  tooltipSide = side,
   align = 'end',
   isDisabled = false,
   isBare = false,
@@ -54,6 +58,7 @@ const PopoverPanel = ({
   tone = 'default',
   isOverDialogs = false,
   hasSurface = true,
+  offset = 12,
   className,
 }: PopoverPanelProps) => {
   const portalContainer = usePortalContainer();
@@ -63,7 +68,7 @@ const PopoverPanel = ({
       {...(isOpen === undefined ? {} : { open: isOpen })}
       {...(onOpenChange === undefined ? {} : { onOpenChange })}
     >
-      <Tooltip label={label} side={side === 'top' ? 'top' : 'bottom'}>
+      <Tooltip label={label} side={tooltipSide}>
         <RadixPopover.Trigger
           aria-label={label}
           disabled={isDisabled}
@@ -81,7 +86,7 @@ const PopoverPanel = ({
                       FIELD_TRIGGER.md,
                     )
                   : triggerLook === 'inline'
-                    ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:focus-ring'
+                    ? 'inline-flex min-w-0 items-center rounded-full text-current outline-none focus-visible:focus-ring'
                     : cn(
                         'inline-flex shrink-0 items-center justify-center rounded-md',
                         triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
@@ -104,7 +109,7 @@ const PopoverPanel = ({
         <RadixPopover.Content
           aria-label={label}
           side={side}
-          sideOffset={12}
+          sideOffset={offset}
           align={align}
           collisionPadding={12}
           data-slot="popover-content"
@@ -132,7 +137,15 @@ const PopoverPanel = ({
             <h3 className="shrink-0 px-1 pb-3 text-base font-medium tracking-tight">{heading}</h3>
           )}
 
-          <div className="valence-rail min-h-0 flex-1 overflow-y-auto">{children}</div>
+          <div
+            className={cn(
+              'valence-rail min-h-0 flex-1 overflow-y-auto',
+              hasSurface && '-mx-3 -mb-3 px-3 pb-3',
+              hasSurface && heading === undefined && '-mt-3 pt-3',
+            )}
+          >
+            {children}
+          </div>
         </RadixPopover.Content>
       </RadixPopover.Portal>
     </RadixPopover.Root>

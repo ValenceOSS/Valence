@@ -80,15 +80,42 @@ describe('CatalogueGrid', () => {
     expect(askedFor.at(-1)).toBe(170);
   });
 
-  it('draws each title with a bar saying where it stands, and opens one', async () => {
+  it('badges each title with where it stands, leaves one nobody follows bare, and opens one', async () => {
     const { onOpen } = aGrid();
 
-    expect(screen.getByRole('img', { name: 'Not followed' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'To approve' })).toBeInTheDocument();
+    expect(screen.getByText('To approve')).toBeInTheDocument();
+    expect(screen.queryByText('Not followed')).not.toBeInTheDocument();
 
     await userEvent.setup().click(screen.getByRole('button', { name: /Held Film/ }));
 
     expect(onOpen).toHaveBeenCalledWith(FILM);
+  });
+
+  it('draws a bar along the foot only while a title is part of the way here', () => {
+    aGrid({
+      entries: [
+        aCatalogueEntry({
+          key: 'series:1',
+          title: 'Arriving',
+          status: 'downloading',
+          held: 3,
+          total: 10,
+        }),
+        aCatalogueEntry({ key: 'film:3', title: 'Here', status: 'library', held: 1, total: 1 }),
+        aCatalogueEntry({
+          key: 'series:2',
+          title: 'Not Yet',
+          status: 'downloading',
+          held: 0,
+          total: 8,
+        }),
+      ],
+    });
+
+    expect(screen.getByText(/3 of 10/)).toBeInTheDocument();
+    expect(screen.getAllByRole('img', { name: /3 of 10/ })).toHaveLength(1);
+    expect(screen.queryByRole('img', { name: /In library|Here/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /0 of 8/ })).not.toBeInTheDocument();
   });
 
   it('ticks a title waiting on approval while choosing, and only those', async () => {

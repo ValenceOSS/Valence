@@ -115,11 +115,7 @@ const AReaderSide = ({
         />
         <AGlassCircle
           of={isMarked ? BookmarkFilled : Bookmark}
-          label={
-            isMarked
-              ? say('phone.aReader.aReaderSide.unmarkThesePages')
-              : say('phone.aReader.aReaderSide.markThesePages')
-          }
+          label={isMarked ? say('common.removeBookmark') : say('common.bookmarkThisPage')}
           onPress={onMark}
           ink={ink}
         />

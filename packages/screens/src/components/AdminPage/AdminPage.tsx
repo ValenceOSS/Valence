@@ -1,3 +1,4 @@
+import { Badge } from '@ValenceUI/Badge';
 import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { mergeObservabilitySearch } from '@ValenceClient/admin/mergeObservabilitySearch';
 import { readObservabilityView } from '@ValenceScreens/components/ObservabilityPage/readObservabilityView';
@@ -52,6 +53,7 @@ import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 import { setAdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
 import { useAdminAttention } from '@ValenceScreens/admin/useAdminAttention';
 import { countsByPanel } from '@ValenceScreens/admin/countsByPanel';
+import { busyPanels } from '@ValenceScreens/admin/busyPanels';
 import { togglePinned } from '@ValenceScreens/admin/togglePinned';
 import {
   readPinnedPanels,
@@ -60,13 +62,15 @@ import {
 import { AdminStatusFooter } from './components/AdminStatusFooter/AdminStatusFooter';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { AdminSearch } from './components/AdminSearch/AdminSearch';
+import { WaitingOnYou } from './components/WaitingOnYou/WaitingOnYou';
+import { BarButtonGroup } from './components/BarButtonGroup/BarButtonGroup';
 
 const MARKS_PLACE = 'valence-admin-mark';
 
 const ROOM_FOR_THE_SIDEBAR = '(min-width: 48rem)';
 /**
  * The server, as a page of its own rather than something raised over whatever was on screen. Eleven
- * sections is not a row of tabs any more — it is a sidebar, foldable the way any of them are, with
+ * sections is too many for a row of tabs, so it is a sidebar, foldable the way any of them are, with
  * every section a real address that can be linked to, refreshed on, and left with the back button.
  *
  * On a phone the sidebar is a drawer instead: closed until the button in the bar across the top opens
@@ -77,8 +81,8 @@ const ROOM_FOR_THE_SIDEBAR = '(min-width: 48rem)';
  * The sidebar is where its own sliding highlight and the brand's mark measure from. It stands still
  * while the page scrolls past it, and a notice turning up or going away above the panel makes the
  * browser scroll the page by its height to hold what is being read in place. Measured against the
- * page, that read as the sidebar having moved, and the highlight and the mark slid back to where
- * they already were.
+ * page, that would read as the sidebar having moved, and the highlight and the mark would slide
+ * back to where they already are.
  *
  * Gated on being told no, not on not yet being told: while the permission answer is still on its
  * way every question reads as "no", and leaving on that basis would throw an administrator back out
@@ -119,6 +123,8 @@ const AdminPage = () => {
   const [navPlace, setNavPlace] = useState(readAdminNavPlace);
   const attention = useAdminAttention();
   const counts = countsByPanel(attention);
+  const askedMonitor = useQuery(adminQueries.monitor());
+  const busy = busyPanels(askedMonitor.data?.queue.jobs ?? []);
   const hasRoomForTheSidebar = useMatchesMedia(ROOM_FOR_THE_SIDEBAR);
   const isClosed = hasRoomForTheSidebar ? isCollapsed : !isDrawerOpen;
   const isFolded = hasRoomForTheSidebar && isCollapsed;
@@ -148,6 +154,7 @@ const AdminPage = () => {
   const withCount = <Item extends { id: string }>(item: Item) => ({
     ...item,
     href: `/admin/${item.id}`,
+    ...(busy.has(item.id) ? { isBusy: true } : {}),
     ...(counts[item.id] === undefined
       ? {}
       : { count: counts[item.id]?.count ?? 0, isUrgent: counts[item.id]?.isUrgent ?? false }),
@@ -431,7 +438,7 @@ const AdminPage = () => {
         }}
       >
         <div className="mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] flex-col bg-[var(--frame-back)] [--admin-chrome:7.25rem]">
-          <header className="sticky top-[var(--valence-window-bar)] z-40 flex flex-col bg-[var(--frame-back)]">
+          <header className="sticky top-[var(--valence-window-bar)] z-40 flex flex-col border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--frame-back)_72%,transparent)] backdrop-blur-xl backdrop-saturate-150">
             <div className="flex h-16 items-center gap-1 border-b border-[var(--surface-line)] px-4 sm:px-6">
               <Button
                 variant="bare"
@@ -458,7 +465,14 @@ const AdminPage = () => {
                     }}
                   />
                 </span>
-                <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+                <BarButtonGroup>
+                  <WaitingOnYou
+                    onOpenPanel={(next) => {
+                      void go({ to: '/admin/$panel', params: { panel: next } });
+                    }}
+                  />
+                  <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+                </BarButtonGroup>
                 <AdminStatusFooter
                   isPillOnly
                   version={version}
@@ -491,6 +505,10 @@ const AdminPage = () => {
                   (sum, item) => sum + (counts[item.id]?.count ?? 0),
                   0,
                 );
+                const isBusy = section.items.some((item) => busy.has(item.id));
+                const isUrgent = section.items.some(
+                  (item) => (counts[item.id]?.count ?? 0) > 0 && counts[item.id]?.isUrgent === true,
+                );
                 const name = section.label ?? first.label;
                 const nameOf = (item: (typeof section.items)[number]) =>
                   item.label === say('screens.adminArea.adminSections.overview') &&
@@ -516,10 +534,15 @@ const AdminPage = () => {
                     />
                     {name}
                     {count === 0 ? null : (
-                      <span className="text-xs tabular-nums text-text-muted">
+                      <Badge size="count" tone={isUrgent ? 'danger' : 'quiet'}>
                         {count.toLocaleString()}
-                      </span>
+                      </Badge>
                     )}
+                    {isBusy ? (
+                      <span className="flex scale-75 opacity-50">
+                        <Spinner size="xs" label={say('common.running')} />
+                      </span>
+                    ) : null}
                   </Button>
                 );
 
@@ -548,9 +571,29 @@ const AdminPage = () => {
                               size={16}
                             />
                           ),
-                          ...((counts[item.id]?.count ?? 0) === 0
+                          ...((counts[item.id]?.count ?? 0) === 0 && !busy.has(item.id)
                             ? {}
-                            : { detail: (counts[item.id]?.count ?? 0).toLocaleString() }),
+                            : {
+                                detail: (
+                                  <span className="flex items-center gap-2">
+                                    {(counts[item.id]?.count ?? 0) === 0 ? null : (
+                                      <Badge
+                                        size="count"
+                                        tone={
+                                          counts[item.id]?.isUrgent === true ? 'danger' : 'quiet'
+                                        }
+                                      >
+                                        {(counts[item.id]?.count ?? 0).toLocaleString()}
+                                      </Badge>
+                                    )}
+                                    {busy.has(item.id) ? (
+                                      <span className="flex opacity-60">
+                                        <Spinner size="sm" label={say('common.running')} />
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                ),
+                              }),
                         })),
                         selectedId: showing,
                         onSelect: (id) => {
@@ -568,7 +611,7 @@ const AdminPage = () => {
             </nav>
           </header>
 
-          <div className="mx-2 mb-2 flex min-w-0 flex-1 flex-col overflow-clip rounded-2xl border border-[var(--surface-line)] bg-[var(--frame-panel)] shadow-[var(--shadow-raised)] [--card-shell:var(--frame-card)]">
+          <div className="mx-2 mb-2 mt-2 flex min-w-0 flex-1 flex-col overflow-clip rounded-2xl border border-[var(--surface-line)] bg-[var(--frame-panel)] shadow-[var(--shadow-raised)] [--card-shell:var(--frame-card)]">
             <div className="flex-1 p-4">{area}</div>
           </div>
         </div>
@@ -739,7 +782,14 @@ const AdminPage = () => {
             </h1>
 
             <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
-            <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+            <BarButtonGroup>
+              <WaitingOnYou
+                onOpenPanel={(next) => {
+                  void go({ to: '/admin/$panel', params: { panel: next } });
+                }}
+              />
+              <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+            </BarButtonGroup>
 
             {!isClosed ? null : (
               <span className="hidden sm:flex">

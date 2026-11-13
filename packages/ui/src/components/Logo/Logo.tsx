@@ -3,7 +3,7 @@ import type { LogoProps } from './Logo.types';
 
 const MARK = '/valence-logo.svg';
 
-const MARK_IS_WIDER_BY = 624 / 458;
+const MARK_IS_WIDER_BY = 484.56 / 363.62;
 
 const BASE_TEXT_PX = 16;
 

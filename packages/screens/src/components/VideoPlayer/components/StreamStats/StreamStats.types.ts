@@ -25,6 +25,12 @@ type PartyHealth = {
   members: number;
 };
 
+type StatsReading = {
+  connectionKbps: number | null;
+  bitrateKbps: number | null;
+  bufferedAheadSeconds: number;
+};
+
 type StreamStatsProps = {
   media: Pick<MediaSummary, 'id' | 'title' | 'durationSeconds'>;
   session: StartedSession | null;
@@ -33,9 +39,10 @@ type StreamStatsProps = {
   delivered: DeliveredFormat | null;
   engine?: EngineStats | null;
   sessionStartSeconds: number;
+  history?: readonly StatsReading[];
   party?: PartyHealth;
   onClose: () => void;
   onGrab?: (event: PointerEvent<HTMLElement>) => void;
 };
 
-export type { PlaybackHealth, PartyHealth, StreamStatsProps };
+export type { PlaybackHealth, PartyHealth, StatsReading, StreamStatsProps };

@@ -189,6 +189,7 @@ const createPluginService = ({
   const unpacked = new Map<string, PluginPackage>();
   const upgrading = new Map<string, Promise<void>>();
   const emitted = new Map<string, number[]>();
+  const lookedUp = new Map<string, Map<string, number[]>>();
 
   const hostsOf = (record: Pick<InstalledRecord, 'manifest'>): string[] =>
     record.manifest.permissions.flatMap((permission) =>
@@ -351,6 +352,14 @@ const createPluginService = ({
     return fresh;
   };
 
+  const lookedUpBy = (pluginId: string): Map<string, number[]> => {
+    const known = lookedUp.get(pluginId) ?? new Map<string, number[]>();
+
+    lookedUp.set(pluginId, known);
+
+    return known;
+  };
+
   const runtime = createPluginRuntime({
     brokerFor: (record) =>
       createPluginBroker({
@@ -375,6 +384,7 @@ const createPluginService = ({
           log(level, `plugin ${record.id}: ${message}`);
         },
         emitted: emittedBy(record.id),
+        lookedUp: lookedUpBy(record.id),
       }),
     onProblem: (pluginId, problem) => {
       log('warn', `plugin ${pluginId}: ${problem.message}`);

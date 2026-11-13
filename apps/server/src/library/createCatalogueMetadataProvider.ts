@@ -859,9 +859,9 @@ const createCatalogueMetadataProvider = ({
    * What is remembered is the promise rather than the answer, so files being read at the same time
    * share one request in flight instead of each starting their own.
    *
-   * An answer is kept for six hours rather than for as long as the process runs. It used to be the
-   * latter, which made a catalogue the server had once read unchangeable until it was restarted: a
-   * season that aired afterwards never appeared, and neither did a correction made upstream. Six
+   * An answer is kept for six hours rather than for as long as the process runs, which would make a
+   * catalogue the server had once read unchangeable until it was restarted: a season that aired
+   * afterwards would never appear, and neither would a correction made upstream. Six
    * hours is long enough that one scan of a large library asks each question once, which is the
    * burst this is for and which can run for hours, and short enough that a season airing today is
    * on the show's page today. See VAL-221.
@@ -869,7 +869,7 @@ const createCatalogueMetadataProvider = ({
    * Only an answer is kept: what the catalogue said, or that it has no such thing. A rate limit, a
    * fault, a refused key or an unreachable network is forgotten once the request is over, so the
    * next one asks again, and whoever asked hears what went wrong. Kept, one throttled moment in a
-   * scan left that film's exact name searching to nothing for six hours.
+   * scan would leave a film's exact name searching to nothing for six hours.
    *
    * @param path - The catalogue path being asked for.
    * @param key - The credential to ask with.

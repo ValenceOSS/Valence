@@ -90,4 +90,21 @@ describe('AReaderRail', () => {
 
     expect(onPage).toHaveBeenCalledWith(3);
   });
+
+  it('runs the page scrubber under the buttons, beneath the clock, on a strip on the right', async () => {
+    await render(aRail({ side: 'right' }));
+
+    expect(theHostWith((one) => 'onLayout' in one.props).parent).toHaveStyle({
+      transform: [{ translateX: -5 }],
+      width: 70,
+    });
+  });
+
+  it('nudges the page scrubber by its own amount on a strip on the left', async () => {
+    await render(aRail({ side: 'left' }));
+
+    expect(theHostWith((one) => 'onLayout' in one.props).parent).toHaveStyle({
+      transform: [{ translateX: 31 }],
+    });
+  });
 });

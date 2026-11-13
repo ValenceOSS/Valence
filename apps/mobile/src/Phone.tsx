@@ -121,6 +121,7 @@ const Phone = () => {
                 isHomeReady={isHomeReady}
                 onReady={splashDone}
               />
+              <TheFlyingMark />
             </THE_FIRST_SCREEN_IS_READY.Provider>
           </QueryClientProvider>
         ) : null}
@@ -138,7 +139,6 @@ const Phone = () => {
             onGone={splashGone}
           />
         )}
-        {isReady ? <TheFlyingMark /> : null}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { PlayerControls } from './PlayerControls';
 import { SKIP_SECONDS } from './PlayerControls.types';
 import type { PlayerControlsProps } from './PlayerControls.types';
@@ -81,7 +82,11 @@ const propsOf = (overrides: Partial<PlayerControlsProps> = {}): PlayerControlsPr
 const draw = (overrides: Partial<PlayerControlsProps> = {}) => {
   const props = propsOf(overrides);
 
-  render(<PlayerControls {...props} />);
+  render(
+    <CacheScope>
+      <PlayerControls {...props} />
+    </CacheScope>,
+  );
 
   return props;
 };
@@ -274,7 +279,7 @@ describe('PlayerControls', () => {
       />,
     );
 
-    expect(container.querySelectorAll('[data-tone="glass"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-tone="film"]')).toHaveLength(2);
     expect(container.querySelector('[data-tone="default"]')).not.toBeInTheDocument();
   });
 
@@ -638,9 +643,9 @@ describe('PlayerControls', () => {
       });
 
       expect(document.querySelector('[data-slot="slider-stretch"]')).toHaveStyle({
-        width: '10%',
+        width: '20%',
       });
-      expect(document.querySelectorAll('[data-slot="slider-notch"]')).toHaveLength(1);
+      expect(document.querySelectorAll('[data-slot="slider-segment"]')).toHaveLength(2);
     });
 
     it('lists the chapters beside the episodes', () => {

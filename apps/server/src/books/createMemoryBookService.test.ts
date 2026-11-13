@@ -114,4 +114,44 @@ describe('createMemoryBookService', () => {
       }),
     ).toBe(false);
   });
+
+  it('keeps a bookmark once, to whoever made it, and removes it for them alone', async () => {
+    const books = shelf();
+    const place = {
+      chapterId: 'c1',
+      pageNumber: null,
+      fraction: 0.3,
+      pageShown: null,
+      excerpt: 'Emma',
+      picture: null,
+    };
+
+    expect(await books.saveBookmark('p1', 'm1', place)).toBe(true);
+    expect(await books.saveBookmark('p1', 'm1', place)).toBe(true);
+    expect(await books.saveBookmark('p2', 'm1', { ...place, fraction: 0.9 })).toBe(false);
+
+    await books.forgetBookmark('p2', 'm1');
+
+    expect(await books.readBookmarks('p1', 'b1')).toEqual([
+      expect.objectContaining({ id: 'm1', bookId: 'b1', chapterId: 'c1', fraction: 0.3 }),
+    ]);
+    expect(await books.readBookmarks('p2', 'b1')).toEqual([]);
+
+    await books.forgetBookmark('p1', 'm1');
+
+    expect(await books.readBookmarks('p1', 'b1')).toEqual([]);
+  });
+
+  it('keeps no bookmark in a chapter it does not have', async () => {
+    expect(
+      await shelf().saveBookmark('p1', 'm1', {
+        chapterId: 'elsewhere',
+        pageNumber: 1,
+        fraction: null,
+        pageShown: null,
+        excerpt: null,
+        picture: null,
+      }),
+    ).toBe(false);
+  });
 });

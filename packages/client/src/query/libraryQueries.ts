@@ -1,6 +1,8 @@
-import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { fetchHomeShelves } from '@ValenceClient/library/fetchHomeShelves';
 import {
   fetchLibraries,
+  fetchItemsAcross,
   fetchLibraryItems,
   fetchMediaDetail,
 } from '@ValenceClient/library/fetchLibrary';
@@ -13,7 +15,11 @@ import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPer
 import { findPeople } from '@ValenceClient/library/findPeople';
 import { fetchLikeThis } from '@ValenceClient/library/fetchLikeThis';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
+import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
+
+const FIRST_PAGE = 120;
 
 const LIBRARY = ['library'] as const;
 
@@ -169,14 +175,33 @@ const credits = (personId: number | null) =>
   });
 
 /**
+ * Reads what every library holds together, in one request ordered across them all and left
+ * uncounted, so a rail costs the server one read rather than one for each library. A list of ids too
+ * long for one address is still read a library at a time, a group of ids at a time.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked.
+ * @returns What was found.
+ */
+const readAcross = async (
+  libraryIds: readonly string[],
+  options: ListItemsOptions,
+): Promise<MediaSummary[]> =>
+  options.ids !== undefined && options.ids.length > MOST_IDS_IN_AN_ADDRESS
+    ? readEachLibrary(libraryIds, async (libraryId) =>
+        fetchLibraryItems(libraryId, options).then((page) => page.items),
+      )
+    : fetchItemsAcross(libraryIds, options, false).then((page) => page.items);
+
+/**
  * The same question asked of every library at once, which is what a page showing the whole server
  * rather than one folder of it wants — the films page, the newest page, and the hero.
  *
- * One query rather than one per library, because these pages want a single answer: a grid that
+ * One answer rather than one per library, because these pages want a single answer: a grid that
  * renders when three of five libraries have replied is a grid that reorders itself while somebody
- * is reading it. A library that fails answers with nothing rather than failing the whole page, but
- * every library failing fails it, so a server that cannot be read is not shown as an empty one. A
- * search is ranked across every library at once, so the best answer leads wherever it was found.
+ * is reading it. The limit is of the whole answer, the best across every library rather than the
+ * best of each. A search is ranked across every library at once, so the best answer leads wherever
+ * it was found.
  *
  * @param libraryIds - The libraries to ask.
  * @param options - What is being asked of each.
@@ -186,9 +211,7 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
   queryOptions({
     queryKey: [...LIBRARY, 'across', [...libraryIds].sort(), options],
     queryFn: async () => {
-      const found = await readEachLibrary(libraryIds, async (libraryId) =>
-        fetchLibraryItems(libraryId, options).then((page) => page.items),
-      );
+      const found = await readAcross(libraryIds, options);
 
       return options.search === undefined || options.search.trim() === ''
         ? found
@@ -198,11 +221,45 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
   });
 
 /**
+ * The same question asked of every library at once, answered with how many match in all as well as
+ * the page asked for, for a row that needs to know how much more there is behind it.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked.
+ * @returns The query.
+ */
+const acrossCounted = (libraryIds: readonly string[], options: ListItemsOptions = {}) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'across', 'counted', [...libraryIds].sort(), options],
+    queryFn: async () => fetchItemsAcross(libraryIds, options),
+    enabled: libraryIds.length > 0,
+  });
+
+/**
+ * The first page of what matches a question in every library at once, for a page that lists a whole
+ * library to draw while the rest is still coming, so its first cards and their pictures are asked
+ * for at once rather than after every page of every library has arrived.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked of each, without a limit, which is this query's.
+ * @returns The query.
+ */
+const beginningOfEverything = (
+  libraryIds: readonly string[],
+  options: Omit<ListItemsOptions, 'limit' | 'offset'> = {},
+) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'everything', 'beginning', [...libraryIds].sort(), options],
+    queryFn: async () => readAcross(libraryIds, { ...options, limit: FIRST_PAGE, offset: 0 }),
+    enabled: libraryIds.length > 0,
+  });
+
+/**
  * Everything that matches a question in every library at once, however many that is, for the pages
  * that list a whole library rather than a taste of it.
  *
- * Asked as one query for the same reason as `across`, and answering with nothing for a library that
- * fails, and failing where every library does, for the same reasons too.
+ * Asked of every library together for the same reason as `across`, so the whole list is in one
+ * order rather than one library after another.
  *
  * @param libraryIds - The libraries to ask.
  * @param options - What is being asked of each, without a limit, since a limit is what this is for
@@ -215,9 +272,7 @@ const everything = (
 ) =>
   queryOptions({
     queryKey: [...LIBRARY, 'everything', [...libraryIds].sort(), options],
-    queryFn: async () => {
-      return readEachLibrary(libraryIds, async (libraryId) => readEveryItem(libraryId, options));
-    },
+    queryFn: async () => readEveryItem(libraryIds, options),
     enabled: libraryIds.length > 0,
   });
 
@@ -233,20 +288,42 @@ const leftOut = (libraryId: string) =>
     queryFn: () => fetchLeftOut(libraryId),
   });
 
+/**
+ * The front page's endless shelves, a page at a time, each page carrying on from where the last
+ * left off.
+ *
+ * @param libraryIds - The libraries to draw from.
+ * @param leaning - The genres the viewer leans towards, most first.
+ * @param count - How many shelves to read a page.
+ * @returns The query.
+ */
+const homeShelves = (libraryIds: readonly string[], leaning: readonly string[], count: number) =>
+  infiniteQueryOptions({
+    queryKey: [...LIBRARY, 'home-shelves', [...libraryIds].sort(), leaning, count],
+    queryFn: ({ pageParam }) => fetchHomeShelves({ libraryIds, leaning, cursor: pageParam, count }),
+    initialPageParam: '',
+    getNextPageParam: (last) => last.cursor ?? undefined,
+    enabled: libraryIds.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
 const libraryQueries = {
   all,
+  homeShelves,
   items,
   detail,
   likeThis,
   shows,
   show,
   everything,
+  beginningOfEverything,
   comingUp,
   facets,
   person,
   people,
   credits,
   across,
+  acrossCounted,
   leftOut,
   key: LIBRARY,
 };

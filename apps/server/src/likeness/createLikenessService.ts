@@ -5,6 +5,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
+import type { ArtworkAddressOf } from '@ValenceServer/images/ArtworkAddressOf';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -63,14 +64,18 @@ const heldTitleOf = (row: {
  * @param options - The database, and where what each title is like is kept.
  * @param options.db - The database.
  * @param options.store - Where what each title is like is kept.
+ * @param options.artworkAddressOf - Where a picture is served by name, where the server names its
+ *   pictures.
  * @returns The service.
  */
 const createLikenessService = ({
   db,
   store,
+  artworkAddressOf,
 }: {
   db: AnyValenceDatabase;
   store: Pick<LikenessStore, 'readAll'>;
+  artworkAddressOf?: ArtworkAddressOf;
 }): LikenessService => {
   let held: Promise<LikenessIndex> | null = null;
 
@@ -171,7 +176,7 @@ const createLikenessService = ({
       const key = title === null ? null : titleKey(title.kind, title.catalogueId);
 
       if (key !== null && !standing.has(key)) {
-        standing.set(key, summaryOfRow(row));
+        standing.set(key, summaryOfRow(row, artworkAddressOf));
       }
     }
 

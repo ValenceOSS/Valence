@@ -13,6 +13,10 @@ const SHADE_DEPTH = 0.16;
 
 const NOWHERE = 'polygon(0 0, 0 0, 0 0)';
 
+const SHADE_FADES_FROM = 0.75;
+
+const GLOW_PX = 14;
+
 /**
  * Writes a shape as a CSS clip path.
  *
@@ -55,6 +59,23 @@ const stripAlong = (fold: CurlFold, length: number): string => {
 };
 
 /**
+ * How much of a page a lifted flap covers, so the shade around it can fade as the page lies down.
+ *
+ * @param points - The flap's corners.
+ * @param area - The whole page's area.
+ * @returns The share, from none to all of it.
+ */
+const shareOf = (points: readonly CurlPoint[], area: number): number => {
+  const twice = points.reduce((sum, point, at) => {
+    const next = points[(at + 1) % points.length] ?? point;
+
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0);
+
+  return Math.min(Math.abs(twice) / 2 / Math.max(area, 1), 1);
+};
+
+/**
  * A page lifted by a corner and carried over, drawn as UIKit's page curl draws it: the page stays
  * bound along its spine and folds where the corner has been taken, the part of it still lying flat
  * cut along the crease, the flap's back laid over it mirrored across the crease and lit pale with a
@@ -92,6 +113,7 @@ const PageCurl = ({
   const shadowRef = useRef<HTMLDivElement | null>(null);
   const shadowStripRef = useRef<HTMLDivElement | null>(null);
   const liftRef = useRef<HTMLDivElement | null>(null);
+  const glowRef = useRef<HTMLDivElement | null>(null);
   const backRef = useRef<HTMLDivElement | null>(null);
   const backStripRef = useRef<HTMLDivElement | null>(null);
   const spine = mirrorAcrossSpine(leaf);
@@ -143,8 +165,17 @@ const PageCurl = ({
         }
       : curl.fold;
 
+    const covered = shareOf(curl.flap, leaf.width * leaf.height);
+    const shade = Math.min(Math.max((1 - covered) / (1 - SHADE_FADES_FROM), 0), 1);
+
     shown.style.clipPath = clipOf(curl.front);
     shadow.style.visibility = 'visible';
+    shadow.style.opacity = shade.toString();
+    backStrip.style.opacity = shade.toString();
+    glowRef.current?.style.setProperty(
+      'filter',
+      `drop-shadow(0 0 ${GLOW_PX.toString()}px color-mix(in oklab, var(--color-scrim) ${(shade * 100).toString()}%, transparent))`,
+    );
     shadow.style.clipPath = clipOf(curl.flap);
     shadowStrip.style.transform = stripAlong(curl.fold, reach);
     lift.style.visibility = 'visible';
@@ -187,7 +218,7 @@ const PageCurl = ({
         className="pointer-events-none absolute inset-0"
         style={{ clipPath: bounds }}
       >
-        <div className="absolute inset-0 drop-shadow-[0_0_14px_var(--color-scrim)]">
+        <div ref={glowRef} className="absolute inset-0 drop-shadow-[0_0_14px_var(--color-scrim)]">
           <div ref={backRef} className="absolute inset-0 origin-top-left">
             {back}
             {isBackFacing ? null : <div className="absolute inset-0 bg-plate/80" />}

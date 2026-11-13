@@ -2,15 +2,19 @@ import { SelectionBar } from '@ValenceUI/SelectionBar';
 import { Button } from '@ValenceUI/Button';
 import { BarList } from '@ValenceUI/BarList';
 import { DataTable } from '@ValenceUI/DataTable';
+import { DotBar } from '@ValenceUI/DotBar';
 import { ShareChart } from '@ValenceUI/ShareChart';
 import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { SpanPicker } from '@ValenceUI/SpanPicker';
 import { StatStrip } from '@ValenceUI/StatStrip';
 import { StatTile } from '@ValenceUI/StatTile';
+import { TickMeter } from '@ValenceUI/TickMeter';
+import { MeterTile } from '@ValenceUI/MeterTile';
 import { TimeBars } from '@ValenceUI/TimeBars';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { DataTableDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/DataTableDemo';
 import { VirtualGridDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VirtualGridDemo';
+import { VirtualStackDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VirtualStackDemo';
 import { VirtualStripDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VirtualStripDemo';
 import type { UiExample } from './UiExample.types';
 
@@ -61,6 +65,30 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             value="148"
             trend={{ direction: 'up', label: '12% up on last week' }}
           />
+        </div>
+      ),
+    },
+  ],
+  TickMeter: [
+    {
+      title: 'Quiet, busy, nearly full and full',
+      render: () => (
+        <div className="flex max-w-xs flex-col gap-3">
+          <TickMeter fraction={0.08} ticks={20} className="h-5" />
+          <TickMeter fraction={0.45} ticks={20} className="h-5" />
+          <TickMeter fraction={0.8} ticks={20} tone="warning" className="h-5" />
+          <TickMeter fraction={0.96} ticks={20} tone="danger" className="h-5" />
+        </div>
+      ),
+    },
+  ],
+  MeterTile: [
+    {
+      title: 'A figure with how full it is',
+      render: () => (
+        <div className="grid max-w-xl gap-3 sm:grid-cols-2">
+          <MeterTile label="CPU" value="12%" fraction={0.12} />
+          <MeterTile label="Memory" value="38 GB" fraction={0.82} />
         </div>
       ),
     },
@@ -175,6 +203,24 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
       ),
     },
   ],
+  DotBar: [
+    {
+      title: 'How a disk is shared',
+      render: () => (
+        <DotBar
+          label="How the disk is used"
+          className="w-full max-w-md"
+          litId="films"
+          segments={[
+            { id: 'films', share: 0.42, colour: 'var(--color-accent)' },
+            { id: 'shows', share: 0.31, colour: 'var(--color-success)' },
+            { id: 'music', share: 0.02, colour: 'var(--color-highlight)' },
+            { id: 'free', share: 0.25, colour: 'var(--color-border)' },
+          ]}
+        />
+      ),
+    },
+  ],
   ShareChart: [
     {
       title: 'How something splits',
@@ -218,6 +264,12 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
     {
       title: 'A hundred cards, drawn as scrolled',
       render: () => <VirtualGridDemo />,
+    },
+  ],
+  VirtualStack: [
+    {
+      title: 'Sixty blocks of differing heights, drawn as scrolled',
+      render: () => <VirtualStackDemo />,
     },
   ],
   VirtualStrip: [

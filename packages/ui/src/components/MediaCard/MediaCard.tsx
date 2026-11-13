@@ -7,6 +7,7 @@ import { Check as CheckIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { OriginMark } from '@ValenceUI/OriginMark';
+import { CountMark } from '@ValenceUI/CountMark';
 import { CardStatus } from './components/CardStatus/CardStatus';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
@@ -14,6 +15,7 @@ import { WatchedBar } from '@ValenceUI/WatchedBar';
 import { Link } from '@ValenceUI/Link';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const METER_TONES = {
   busy: ['bg-busy/25', 'bg-busy'],
@@ -32,6 +34,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
   square: 'aspect-square',
 };
 
+const MOST_MARKS = 3;
+
 /**
  * One thing in a library, drawn as artwork with its name beneath. Carries how far through it
  * somebody is as a bar across the foot, and takes its shape from what it holds — a poster stands
@@ -46,10 +50,12 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  *   with the card, such as who asked for it.
  * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
  *   icon than said, such as that it is already in the library.
- * @param origin - Where the thing comes from, where that is another server: its initial in its colour,
- *   in the bottom left corner of the artwork, named on hover. Nothing is drawn for this server's own.
+ * @param origin - Where the thing comes from, where that is another server, or this one among others
+ *   that have it too: its initial in its colour, in the bottom left corner of the artwork, named on
+ *   hover. Nothing is drawn for this server's own alone.
  * @param alsoFrom - The other servers that have it too, each drawn as its own mark beside the first,
- *   overlapping, where the thing is one title several servers have.
+ *   overlapping, where the thing is one title several servers have; past three, the first two and
+ *   how many more.
  * @param status - Where the thing stands, such as a request downloading, as a badge in its tone in
  *   the bottom left corner of the artwork, beside where it comes from.
  * @param count - A number to show in the top right corner of the artwork, such as how many episodes
@@ -68,7 +74,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param onSelect - Told when the card was pressed.
  * @param href - Where the card goes, which makes it a link that can be middle-clicked or opened in
  *   a new tab; a plain click still goes through onSelect.
- * @param isStill - Whether to hold the card still rather than letting it lift under a pointer.
+ * @param isStill - Whether to hold the card still rather than letting it lift or its picture zoom
+ *   under a pointer.
  * @param className - Extra classes for the caller's own layout.
  */
 const MediaCard = ({
@@ -97,6 +104,8 @@ const MediaCard = ({
   const marks = [...(origin === undefined ? [] : [origin]), ...alsoFrom].filter(
     (mark, at, every) => every.findIndex((other) => other.label === mark.label) === at,
   );
+  const drawnMarks = marks.length > MOST_MARKS ? marks.slice(0, MOST_MARKS - 1) : marks;
+  const marksLeftOut = marks.length - drawnMarks.length;
   const prefersReducedMotion = useReducedMotionConfig();
   const isLead = emphasis === 'lead';
   const isBook = shape === 'book';
@@ -131,7 +140,9 @@ const MediaCard = ({
               'relative block overflow-hidden bg-card',
               'shadow-[var(--shadow-artwork)] ring-1 ring-line',
               'transition-shadow duration-[var(--duration-base)] ease-[var(--ease-out)]',
-              'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
+              isStill
+                ? ''
+                : 'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
               isBook ? 'valence-book__cover rounded-l-[3px] rounded-r-md' : 'rounded-md',
               SHAPE_CLASSES[shape],
             )}
@@ -148,12 +159,13 @@ const MediaCard = ({
                 src={imageUrl}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 onError={() => {
                   setMissingImageUrl(imageUrl);
                 }}
                 className={cn(
                   'h-full w-full object-cover',
-                  isBook
+                  isBook || isStill
                     ? ''
                     : 'transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.04]',
                 )}
@@ -183,6 +195,7 @@ const MediaCard = ({
                 src={logoUrl}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 draggable={false}
                 className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
                 onError={() => {
@@ -198,12 +211,12 @@ const MediaCard = ({
             )}
 
             {count === undefined || count <= 0 || corner !== undefined ? null : (
-              <span className="absolute right-3 top-3">
+              <span className="absolute right-0 top-0">
                 <Tooltip label={countLabel ?? count.toString()}>
                   <span
                     role="img"
                     aria-label={countLabel ?? count.toString()}
-                    className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-xs font-semibold tabular-nums text-primary-foreground shadow-sm"
+                    className="flex items-center justify-center rounded-bl-lg bg-on-scrim px-3 py-1 text-xs font-bold tabular-nums text-shade"
                   >
                     {count > 99 ? '99+' : count.toString()}
                   </span>
@@ -229,9 +242,16 @@ const MediaCard = ({
               <span className="absolute bottom-3 left-3 flex items-center gap-2">
                 {marks.length === 0 ? null : (
                   <span className="flex -space-x-2">
-                    {marks.map((mark) => (
+                    {drawnMarks.map((mark) => (
                       <OriginMark key={mark.label} {...mark} />
                     ))}
+                    {marksLeftOut === 0 ? null : (
+                      <CountMark
+                        count={marksLeftOut}
+                        label={sayCount('ui.mediaCard.countMoreServersHaveIt', marksLeftOut)}
+                        className="ring-2 ring-shade"
+                      />
+                    )}
                   </span>
                 )}
 

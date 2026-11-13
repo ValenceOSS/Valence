@@ -16,12 +16,12 @@ type CheckRoleChangeOptions = {
  * Decides whether an account may change a role, and says why not when it may not.
  *
  * Two rules, both about not exceeding your own reach: a role at or above your own highest is out of
- * bounds, and you cannot grant a permission you do not hold. An administrator used to be exempt from
- * both, which meant one could rewrite the administrator role itself — and so hand themselves
- * whatever the rank rule was refusing them.
+ * bounds, and you cannot grant a permission you do not hold. Both bind an administrator too, since
+ * one exempt could rewrite the administrator role itself — and so hand themselves whatever the rank
+ * rule refuses them.
  *
- * Rank now applies to everybody but the owner. Holding `administrator` still means holding every
- * permission for the second rule, because that is what the wildcard means; it simply no longer means
+ * Rank applies to everybody but the owner. Holding `administrator` still means holding every
+ * permission for the second rule, because that is what the wildcard means; it does not mean
  * outranking your equals.
  *
  * @param options - Who is acting, how senior they are, what they hold, the role being changed, any

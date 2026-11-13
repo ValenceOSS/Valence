@@ -1,4 +1,8 @@
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
+import { roundOrder } from '@ValenceCore/functions/roundOrder';
+import { shelfTitle } from '@ValenceClient/library/shelfTitle';
+import type { HomeShelf } from '@ValenceContracts/schemas/HomeShelves';
+import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
@@ -15,11 +19,13 @@ type HomeRowsInput = {
   decades: { decade: number; items: MediaSummary[] }[];
   more: { id: string; title: string; items: MediaSummary[] }[];
   fromPlugins?: { id: string; title: string; items: MediaSummary[] }[];
+  again?: number;
+  shelves?: readonly HomeShelf[];
 };
 
-const ROW_LIMIT = 20;
+const ROW_LIMIT: number = HOME_ROW_SIZE.most;
 
-const MIN_ROW = 4;
+const MIN_ROW: number = HOME_ROW_SIZE.fewest;
 
 /**
  * Drops the second and later appearance of anything, keeping the order it was given in.
@@ -80,13 +86,25 @@ const categoryRows = (
 };
 
 /**
- * Names a decade the way somebody says it rather than as the year it happens to start on.
+ * The category rows again, round after round, each round in an order of its own, so the page goes on
+ * for as long as somebody keeps scrolling once every row the library can make has been shown.
  *
- * @param decade - The year the decade begins.
- * @returns What the row calls itself.
+ * @param rows - The category rows as first drawn.
+ * @param count - How many rows to draw again.
+ * @returns The rows drawn again, each known by its round and place.
  */
-const decadeTitle = (decade: number): string =>
-  say('client.library.homeRows.fromTheDecadeS', { decade: decade.toString() });
+const comeRoundAgain = (rows: readonly Rail[], count: number): Rail[] =>
+  rows.length === 0
+    ? []
+    : Array.from({ length: count }, (_, at) => {
+        const round = Math.floor(at / rows.length) + 1;
+        const place = at % rows.length;
+        const drawn = rows[roundOrder(rows.length, round)[place] ?? place];
+
+        return drawn === undefined
+          ? []
+          : [{ ...drawn, id: ['again', round.toString(), place.toString()].join(':') }];
+      }).flat();
 
 /**
  * The rows the front page is browsed by: carrying on, what somebody is likely to want, what is
@@ -103,6 +121,9 @@ const decadeTitle = (decade: number): string =>
  * happened to be read to represent it.
  * Recently added is drawn with even one thing in it, since it is the row every library has — a
  * server holding three films would otherwise open on a hero over nothing.
+ * Once every category row has been shown, they come round again, as many as are asked for. A
+ * server that serves the endless shelves itself sends them ready, already kept from repeating what
+ * is above them, and they follow the rest as they are.
  *
  * @param input - What each row was asked to hold.
  * @returns The rows to draw, in the order they should appear.
@@ -117,29 +138,42 @@ const homeRows = ({
   decades,
   more,
   fromPlugins = [],
-}: HomeRowsInput): Rail[] => [
-  ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
-  ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
-  ...row('recent', say('common.recentlyAdded'), recent, true, 1),
-  ...because.flatMap(({ watched, items }) =>
-    row(
-      `because:${watched.seriesId ?? watched.mediaId}`,
-      say('client.library.homeRows.becauseYouWatchedTitle', { title: watched.title }),
-      items,
-    ),
-  ),
-  ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),
-  ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
-  ...categoryRows([
+  again = 0,
+  shelves = [],
+}: HomeRowsInput): Rail[] => {
+  const categories = categoryRows([
     ...genres.map(({ genre, items }) => ({ id: `genre:${genre}`, title: genre, items })),
     ...decades.map(({ decade, items }) => ({
       id: `decade:${decade.toString()}`,
-      title: decadeTitle(decade),
+      title: shelfTitle({ genre: null, order: null, decade, page: 0 }),
       items,
     })),
     ...more,
-  ]),
-];
+  ]);
+
+  return [
+    ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
+    ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
+    ...row('recent', say('common.recentlyAdded'), recent, true, 1),
+    ...because.flatMap(({ watched, items }) =>
+      row(
+        `because:${watched.seriesId ?? watched.mediaId}`,
+        say('client.library.homeRows.becauseYouWatchedTitle', { title: watched.title }),
+        items,
+      ),
+    ),
+    ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),
+    ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
+    ...categories,
+    ...comeRoundAgain(categories, again),
+    ...shelves.map(({ id, items, ...drawnFrom }) => ({
+      id,
+      title: shelfTitle(drawnFrom),
+      items,
+      standsForShows: true,
+    })),
+  ];
+};
 
 export type { HomeRowsInput };
 

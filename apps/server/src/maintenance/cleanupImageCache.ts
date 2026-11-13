@@ -2,6 +2,9 @@ import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { join } from 'node:path';
+import { PICTURE_FOLDERS } from '@ValenceServer/pictures/PICTURE_FOLDERS';
+import { framedNameOf } from '@ValenceServer/pictures/framedNameOf';
+import { processedNameOf } from '@ValenceServer/pictures/processedNameOf';
 
 type CacheFileSystem = {
   list: (directory: string) => Promise<string[]>;
@@ -44,12 +47,12 @@ const NARROWED_OR_TYPED = /(-w\d+|\.type)$/u;
 const pictureNamed = (name: string): string => name.replace(NARROWED_OR_TYPED, '');
 
 /**
- * Removes every file in a directory that nothing in the database points at any more, which is what
- * makes an artwork cache shrink when a library does. Reads what is referenced first and deletes
- * second, so a fetch happening mid-sweep is never deleted out from under itself.
+ * Removes every file in some directories that nothing in the database points at any more, which is
+ * what makes an artwork cache shrink when a library does. Reads what is referenced first and deletes
+ * second, so a fetch happening mid-sweep is never deleted out from under itself. The directories are
+ * counted through as one, so progress runs once from start to finish.
  *
- * @param directory - The cache directory to sweep.
- * @param isValid - Whether a given filename is still pointed at.
+ * @param folders - Each directory to sweep, with whether a given filename in it is still pointed at.
  * @param files - How to list and remove files.
  * @param phase - Which sweep this is, for reporting progress.
  * @param onProgress - Called as files are worked through.
@@ -57,19 +60,24 @@ const pictureNamed = (name: string): string => name.replace(NARROWED_OR_TYPED, '
  * @returns How many files were removed, and how much disk they held.
  */
 const sweep = async (
-  directory: string,
-  isValid: (fileName: string) => boolean,
+  folders: readonly { directory: string; isValid: (fileName: string) => boolean }[],
   files: CacheFileSystem,
   phase: SweepPhase,
   onProgress?: CleanupImageCacheOptions['onProgress'],
   onProblem?: CleanupImageCacheOptions['onProblem'],
 ): Promise<number> => {
-  const names = await files.list(directory);
+  const listed = (
+    await Promise.all(
+      folders.map(async (folder) =>
+        (await files.list(folder.directory)).map((name) => ({ ...folder, name })),
+      ),
+    )
+  ).flat();
   let removed = 0;
 
-  onProgress?.(phase, 0, names.length);
+  onProgress?.(phase, 0, listed.length);
 
-  for (const [index, name] of names.entries()) {
+  for (const [index, { directory, isValid, name }] of listed.entries()) {
     if (!isValid(name)) {
       await files
         .remove(join(directory, name))
@@ -81,7 +89,7 @@ const sweep = async (
         });
     }
 
-    onProgress?.(phase, index + 1, names.length);
+    onProgress?.(phase, index + 1, listed.length);
   }
 
   return removed;
@@ -95,6 +103,7 @@ const sweep = async (
  *
  * The profile directory is swept by what is still wanted there, not by what is a face: the picture
  * behind the way in lives beside the faces, and anything the sweep is not told to keep it removes.
+ * A face's original upload and the pictures made from it go together, once nothing points at the face.
  * Album covers and artist pictures are swept the same way, by the albums and artists still there.
  *
  * @param options - Where the cache is, and the database saying what is still referenced.
@@ -124,8 +133,7 @@ const cleanupImageCache = async ({
   }
 
   const cacheRemoved = await sweep(
-    imageCacheDir,
-    (name) => validCacheNames.has(pictureNamed(name)),
+    [{ directory: imageCacheDir, isValid: (name) => validCacheNames.has(pictureNamed(name)) }],
     files,
     'cache',
     onProgress,
@@ -137,9 +145,22 @@ const cleanupImageCache = async ({
     photoPaths.filter((path): path is string => path !== null).map(baseName),
   );
 
+  const validProcessedNames = new Set(
+    [...validPhotoNames].flatMap((name) => [processedNameOf(name), framedNameOf(name)]),
+  );
+
   const profilesRemoved = await sweep(
-    profilesDir,
-    (name) => validPhotoNames.has(name),
+    [
+      { directory: profilesDir, isValid: (name) => validPhotoNames.has(name) },
+      {
+        directory: join(profilesDir, PICTURE_FOLDERS.originals),
+        isValid: (name) => validPhotoNames.has(name),
+      },
+      {
+        directory: join(profilesDir, PICTURE_FOLDERS.processed),
+        isValid: (name) => validProcessedNames.has(name),
+      },
+    ],
     files,
     'profiles',
     onProgress,
@@ -155,8 +176,7 @@ const cleanupImageCache = async ({
   );
 
   const musicRemoved = await sweep(
-    musicDir,
-    (name) => artwork.has(name),
+    [{ directory: musicDir, isValid: (name) => artwork.has(name) }],
     files,
     'music',
     onProgress,

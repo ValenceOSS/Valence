@@ -127,4 +127,15 @@ describe('SidebarGroup', () => {
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
+
+  it('shows a spinner beside a destination with work under way, but not while folded', () => {
+    const busy = ITEMS.map((item) => (item.id === 'links' ? { ...item, isBusy: true } : item));
+    const { rerender } = render(group({ items: busy }));
+
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+
+    rerender(group({ items: busy, isCollapsed: true }));
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
 });

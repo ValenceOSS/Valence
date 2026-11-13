@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { readFromServer } from './readFromServer';
 import { RequestFailed } from './RequestFailed';
+import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 
 const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>();
 
@@ -21,6 +22,24 @@ afterEach(() => {
 });
 
 describe('readFromServer', () => {
+  it('notes where the pictures of anything in the answer are served by name', async () => {
+    fetchMock.mockResolvedValue(
+      said({ rows: [{ items: [{ id: 'deep', artwork: { poster: '/api/artwork/p' } }] }] }),
+    );
+
+    await readFromServer('/api/because-you-watched', z.object({ rows: z.array(z.object({})) }));
+
+    expect(artworkAddresses.of('deep', 'poster', 0)).toBe('/api/artwork/p');
+  });
+
+  it('notes nothing from an answer that is not the shape it was promised', async () => {
+    fetchMock.mockResolvedValue(said({ id: 'malformed', artwork: { poster: '/api/artwork/x' } }));
+
+    await expect(readFromServer('/api/profiles', Schema)).rejects.toThrow();
+
+    expect(artworkAddresses.of('malformed', 'poster', 0)).toBeUndefined();
+  });
+
   it('answers with what the server said, parsed', async () => {
     fetchMock.mockResolvedValue(said({ profiles: ['Marques'] }));
 

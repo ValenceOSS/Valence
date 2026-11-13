@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { History, Plus, Server } from '@keyline-icons/react-native';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
 import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
@@ -15,7 +14,7 @@ import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { ServerCard } from '@ValenceTv/screens/ChooseServer/components/ServerCard/ServerCard';
-import mark from '@ValenceTv/assets/valence-mark.png';
+import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { ChooseServerProps } from './ChooseServer.types';
 import { say } from '@ValenceI18n/say';
@@ -129,7 +128,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
 
       <FadeIn isFilling={false}>
         <View style={styles.top}>
-          <Image source={mark} style={MARK} contentFit="contain" />
+          <DeckMark width={MARK.width} height={MARK.height} />
           <Text style={styles.title}>{say('common.whichValenceIsYours')}</Text>
           <Text style={styles.lead}>{whichServerFor(whichTv())}</Text>
         </View>

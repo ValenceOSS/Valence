@@ -110,7 +110,7 @@ const madeFor = async (routes: ReturnType<typeof build>['routes']) => {
 };
 
 describe('createPluginRoutes', () => {
-  it('answers as the person whose app password signed the request in, with their locks on', async () => {
+  it('answers as the person whose app password signed the request in, with their locks on, saying which app password', async () => {
     const { routes, invoke } = build();
     const { credential, secret } = await madeFor(routes);
 
@@ -130,10 +130,11 @@ describe('createPluginRoutes', () => {
       accountId: 'account-1',
       isAdmin: false,
       reads: SAMS_VIEW,
+      app: { id: credential.id, label: credential.label, profileName: 'Sam Smith' },
     });
     expect(invoke.mock.calls[0]?.[1]).toMatchObject({
       id: 'rest',
-      person: { profileId: 'sam', name: 'Sam Smith' },
+      person: { profileId: 'sam', name: 'Sam Smith', login: 'sam-smith' },
     });
   });
 

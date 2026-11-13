@@ -173,6 +173,23 @@ describe('createMusicDevices', () => {
     });
   });
 
+  it('keeps an app outside Valence out of the picker, out of remote control, and out of play tracking', () => {
+    const { presence, change } = presenceWith([entry('laptop', 'me'), entry('app~pw1', 'me')]);
+    const onStarted = vi.fn();
+    const onStopped = vi.fn();
+    const devices = createMusicDevices({ presence, plays: { now: () => 0, onStarted, onStopped } });
+
+    expect(devices.report(ME, 'app~pw1', NOW_PLAYING)).toBe(true);
+    change([entry('laptop', 'me')]);
+
+    expect(devices.list(ME).map((device) => device.clientId)).toEqual(['laptop']);
+    expect(devices.command(ME, 'laptop', 'app~pw1', { kind: 'pause' })).toBe(false);
+    expect(devices.order('app~pw1', { kind: 'pause' })).toBe(false);
+    expect(presence.tell).not.toHaveBeenCalled();
+    expect(onStarted).not.toHaveBeenCalled();
+    expect(onStopped).not.toHaveBeenCalled();
+  });
+
   it('will not command somebody else’s device', () => {
     const { presence } = presenceWith([entry('laptop', 'me'), entry('theirs', 'them')]);
 

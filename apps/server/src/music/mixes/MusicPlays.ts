@@ -5,7 +5,7 @@ type PlayCount = {
 };
 
 type MusicPlays = {
-  record: (profileId: string, trackId: string) => Promise<void>;
+  record: (profileId: string, trackId: string, playedAtMs?: number) => Promise<void>;
   countsSince: (profileId: string, sinceMs: number) => Promise<PlayCount[]>;
 };
 

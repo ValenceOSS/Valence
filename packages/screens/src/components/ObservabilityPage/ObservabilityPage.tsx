@@ -46,9 +46,8 @@ const isView = (value: string): value is ObservabilityView =>
 
 /**
  * Everything the server has to say about itself, on one page: the jobs it has run, the log, how the
- * jobs are doing and how to run and schedule them. It replaces the two pages that used to show the
- * log and the jobs apart — an operator asking "why did the scan fail" no longer has to carry a job's
- * id from one to the other.
+ * jobs are doing and how to run and schedule them. With the log and the jobs together, an operator
+ * asking "why did the scan fail" never has to carry a job's id from one page to another.
  *
  * It is one card, like the other admin pages, and nothing inside it is a card: its sections are laid
  * flat within it, because it is a working surface for reading a great deal at once. The four views are its tabs. Anything that names a job — a line in the log, a row in

@@ -28,7 +28,8 @@ const AHEAD = '150%';
  * @param pageClassName - The colours of the page.
  * @param textStyle - How the text is set: its size, leading and face.
  * @param inset - How far the text stands in from the sides of the page.
- * @param onPlace - Told which part is being read and how far into it, as a fraction.
+ * @param onPlace - Told which part is being read, how far into it the reading line is, and how far
+ *   into it the bottom of the screen is, each as a fraction.
  * @param onFollow - Told when a link within the book is followed.
  * @param onScroller - Given the element that scrolls, for the keys that move down and up a screen.
  */
@@ -175,9 +176,15 @@ const ScrollingText = ({
         sections.find((one) => one.offsetTop + one.offsetHeight > line) ?? sections.at(-1);
 
       if (reading !== undefined) {
-        const within = (line - reading.offsetTop) / Math.max(reading.offsetHeight, 1);
+        const height = Math.max(reading.offsetHeight, 1);
+        const within = (line - reading.offsetTop) / height;
+        const withinEnd = (element.scrollTop + element.clientHeight - reading.offsetTop) / height;
 
-        tell.current(Number(reading.dataset['part']), Math.min(Math.max(within, 0), 1));
+        tell.current(
+          Number(reading.dataset['part']),
+          Math.min(Math.max(within, 0), 1),
+          Math.min(Math.max(withinEnd, 0), 1),
+        );
       }
     });
   };
@@ -195,7 +202,7 @@ const ScrollingText = ({
       )}
     >
       <div
-        className={cn('mx-auto min-h-full shadow-[var(--shadow-lifted)]', pageClassName)}
+        className={cn('mx-auto min-h-full', pageClassName)}
         style={{ maxWidth: MOST_WIDTH, paddingInline: inset, paddingBlock: inset }}
       >
         <div ref={top} aria-hidden className="h-px" />

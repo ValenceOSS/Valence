@@ -1,3 +1,4 @@
+import { showSlug } from '@ValenceCore/functions/showSlug';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { accountsHere } from '@ValenceClient/session/accountsHere';
 import { switchAccount } from '@ValenceClient/session/switchAccount';
@@ -20,7 +21,6 @@ import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
 import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
-import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { useDeviceNotifications } from '@ValenceScreens/notifications/useDeviceNotifications';
@@ -39,7 +39,6 @@ import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
-import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWatching';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { ACCOUNT_OPENS_ON } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
@@ -110,8 +109,6 @@ const ValenceShell = () => {
     progress,
     forgetReported,
     setStartOverride,
-    askingAbout,
-    setAskingAbout,
     watchParty,
     isHoldingTheScreen,
     user,
@@ -189,18 +186,20 @@ const ValenceShell = () => {
 
   const libraryKinds = [...new Set((libraries.data ?? []).map((one) => one.kind))];
   const faces = useQuery(linkingQueries.faces());
+  const here = useQuery(linkingQueries.here());
 
   const libraryChoices = useMemo(
     () =>
       libraryChoicesFor(
         libraries.data ?? [],
         faces.data ?? [],
+        here.data ?? null,
         place.library,
         (library, section) => {
           go({ section, library });
         },
       ),
-    [libraries.data, faces.data, place.library, go],
+    [libraries.data, faces.data, here.data, place.library, go],
   );
 
   const requestableKinds = useRequestableKinds();
@@ -245,7 +244,9 @@ const ValenceShell = () => {
       topDialog,
       place,
       inspecting,
-      openShow?.id === place.show ? openShow.title : null,
+      openShow !== null && (openShow.id === place.show || showSlug(openShow.title) === place.show)
+        ? openShow.title
+        : null,
       openPerson.data?.name ?? null,
     ),
   );
@@ -266,7 +267,10 @@ const ValenceShell = () => {
       return;
     }
 
-    if (openShow?.id === place.show) {
+    if (
+      openShow !== null &&
+      (openShow.id === place.show || showSlug(openShow.title) === place.show)
+    ) {
       return;
     }
 
@@ -275,28 +279,33 @@ const ValenceShell = () => {
     void cache
       .ensureQueryData(libraryQueries.all())
       .then(async (found) => {
-        for (const entry of found) {
-          const shows = await cache.ensureQueryData(libraryQueries.shows(entry.id));
-          const wanted = shows.find((one) => one.id === place.show);
+        const shows = (
+          await Promise.all(
+            found.map((entry) => cache.ensureQueryData(libraryQueries.shows(entry.id))),
+          )
+        ).flat();
+        const byId = shows.find((one) => one.id === place.show);
+        const bySlug = shows.filter((one) => showSlug(one.title) === place.show);
 
-          if (wanted !== undefined) {
-            return wanted;
-          }
-        }
-
-        return null;
+        return byId ?? (bySlug.length === 1 ? (bySlug[0] ?? null) : null);
       })
       .catch(() => null)
       .then((found) => {
-        if (!abandoned) {
-          setOpenShow(found);
+        if (abandoned) {
+          return;
+        }
+
+        setOpenShow(found);
+
+        if (found !== null && found.id !== place.show) {
+          replace({ show: found.id });
         }
       });
 
     return () => {
       abandoned = true;
     };
-  }, [place.show, openShow, cache]);
+  }, [place.show, openShow, cache, replace]);
 
   return (
     <HrefOf.Provider value={hrefOf}>
@@ -701,27 +710,6 @@ const ValenceShell = () => {
           isOpen={sharing !== null}
           onClose={() => {
             setSharing(null);
-          }}
-        />
-
-        <StillWatchingDialog
-          isOpen={askingAbout !== null}
-          title={askingAbout?.title ?? ''}
-          secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
-          onCarryOn={() => {
-            const following = askingAbout;
-
-            setAskingAbout(null);
-
-            if (following !== null) {
-              go({ playing: following.id, inspecting: null });
-            }
-          }}
-          onGiveUp={() => {
-            const wasPlaying = place.playing;
-
-            setAskingAbout(null);
-            go({ playing: null, inspecting: wasPlaying });
           }}
         />
 

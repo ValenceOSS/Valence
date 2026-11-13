@@ -211,8 +211,8 @@ pub struct PreviewRequest {
     pub audio_stream_index: Option<u32>,
     /// The backend the operator chose, where they chose one.
     ///
-    /// Absent means automatic, which is what a caller written before this
-    /// existed asks for and what it used to get regardless.
+    /// Absent means automatic, which is what a caller that names none asks
+    /// for.
     #[serde(default)]
     pub hardware_accel: Option<HardwareAccel>,
     /// Which of the server's jobs asked for this, where one did.
@@ -1329,8 +1329,8 @@ mod tests {
 
     /// `h264_nvenc` takes CUDA frames, so an HDR clip never leaves the card.
     ///
-    /// It used to come down to be tone mapped on the processor and go back up
-    /// inside the encoder: 12.3 seconds for a 24 second clip of a 2160p film,
+    /// Bringing it down to be tone mapped on the processor and back up inside
+    /// the encoder takes 12.3 seconds for a 24 second clip of a 2160p film,
     /// against 1.6 staying up. The chain is the one playback already uses.
     #[test]
     fn keeps_an_hdr_clip_on_the_card_for_nvenc() {

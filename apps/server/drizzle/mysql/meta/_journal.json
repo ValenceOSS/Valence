@@ -456,6 +456,41 @@
       "when": 1794169651213,
       "tag": "0064_an_account_has_one_owner_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "5",
+      "when": 1794423782311,
+      "tag": "0065_bookmarks_are_kept_per_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "5",
+      "when": 1794424762054,
+      "tag": "0066_media_items_are_found_newest_and_best_rated_first",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "5",
+      "when": 1794492893138,
+      "tag": "0067_account_pictures_keep_their_framing",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "5",
+      "when": 1794523129790,
+      "tag": "0068_uploaded_artwork_keeps_its_framing",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "5",
+      "when": 1794543360585,
+      "tag": "0069_household_drawn_faces_keep_their_colour",
+      "breakpoints": true
     }
   ]
 }

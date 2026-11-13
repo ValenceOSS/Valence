@@ -1,9 +1,16 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ShaderMountProps } from '@paper-design/shaders-react';
 import { MoodBackground } from './MoodBackground';
 import type * as MotionReact from 'motion/react';
 
+const graphics = vi.hoisted(() => ({ canDraw: true }));
+
+vi.mock('@ValenceUI/canDrawShaders', () => ({ canDrawShaders: () => graphics.canDraw }));
+
 const motion = vi.hoisted(() => ({ isReduced: false }));
+
+const tints = vi.hoisted(() => new Map<string, number>());
 
 vi.mock('motion/react', async () => ({
   ...(await vi.importActual<typeof MotionReact>('motion/react')),
@@ -11,92 +18,125 @@ vi.mock('motion/react', async () => ({
   useReducedMotionConfig: () => motion.isReduced,
 }));
 
-/**
- * The lights themselves, one for each place a light can sit.
- */
-const blooms = (container: HTMLElement): HTMLElement[] =>
-  Array.from(container.querySelectorAll('.valence-bloom')).filter(
-    (found): found is HTMLElement => found instanceof HTMLElement,
+vi.mock('./tintOf', () => ({
+  tintOf: (colour: string): [number, number, number] => {
+    if (!tints.has(colour)) {
+      tints.set(colour, tints.size + 1);
+    }
+
+    return [(tints.get(colour) ?? 0) / 255, 0, 0];
+  },
+}));
+
+const rowsOf = (value: ShaderMountProps['uniforms'][string]): number[][] =>
+  Array.isArray(value)
+    ? value.map((row) =>
+        Array.isArray(row) ? row.map((each) => (typeof each === 'number' ? each : Number.NaN)) : [],
+      )
+    : [];
+
+vi.mock('@paper-design/shaders-react', () => ({
+  ShaderMount: (props: ShaderMountProps) => {
+    return (
+      <div data-testid="shader-mount" data-speed={String(props.speed)}>
+        {rowsOf(props.uniforms['u_orbs']).map((orb, at) => (
+          <span
+            key={`orb-${at.toString()}`}
+            data-orb=""
+            data-x={String(orb[0])}
+            data-y={String(orb[1])}
+            data-strength={String(orb[2])}
+            data-tint={String(Math.floor((orb[3] ?? 0) / 65536))}
+          />
+        ))}
+      </div>
+    );
+  },
+}));
+
+const orbs = () =>
+  Array.from(screen.getByTestId('shader-mount').querySelectorAll('[data-orb]')).map((orb) => [
+    Number(orb.getAttribute('data-x')),
+    Number(orb.getAttribute('data-y')),
+    Number(orb.getAttribute('data-strength')),
+  ]);
+
+const tintCodes = () =>
+  Array.from(screen.getByTestId('shader-mount').querySelectorAll('[data-orb]')).map((orb) =>
+    Number(orb.getAttribute('data-tint')),
   );
+
+const speed = () => Number(screen.getByTestId('shader-mount').getAttribute('data-speed'));
 
 afterEach(() => {
   motion.isReduced = false;
 });
 
 describe('MoodBackground', () => {
-  it('puts a light where the picture said it came from', () => {
-    const { container } = render(
-      <MoodBackground lights={[{ color: 'rgb(10, 20, 30)', at: '77% 12%' }]} />,
-    );
+  it('lights the page as strongly as the theme says, a glow over black being a wash over white', () => {
+    const { container } = render(<MoodBackground lights={[{ color: '#ff0000' }]} />);
 
-    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-x')).toBe('77%');
-    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-y')).toBe('12%');
+    expect(container.querySelector('[data-slot="mood-orbs"]')).toHaveClass(
+      'opacity-[var(--bloom-strength)]',
+    );
+  });
+
+  it('leaves the plain colour behind where the browser cannot draw shaders', () => {
+    graphics.canDraw = false;
+
+    render(<MoodBackground lights={[{ color: '#ff0000' }]} />);
+
+    expect(screen.queryByTestId('shader-mount')).not.toBeInTheDocument();
+
+    graphics.canDraw = true;
+  });
+
+  it('puts a light where the picture said it came from', () => {
+    render(<MoodBackground lights={[{ color: 'rgb(10, 20, 30)', at: '77% 12%' }]} />);
+
+    expect(orbs()[0]?.[0]).toBeCloseTo(0.77);
+    expect(orbs()[0]?.[1]).toBeCloseTo(0.12);
   });
 
   it('lights the page from each colour it is given', () => {
-    const { container } = render(
+    render(
       <MoodBackground lights={[{ color: 'rgb(120, 40, 200)' }, { color: 'rgb(20, 160, 120)' }]} />,
     );
 
-    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-color')).toBe('rgb(120, 40, 200)');
-    expect(blooms(container)[1]?.style.getPropertyValue('--bloom-color')).toBe('rgb(20, 160, 120)');
+    expect(tintCodes()[0]).toBe(tints.get('rgb(120, 40, 200)'));
+    expect(tintCodes()[1]).toBe(tints.get('rgb(20, 160, 120)'));
   });
 
-  it('falls back to the house colour when nothing on screen has any light to give', () => {
-    const { container } = render(<MoodBackground />);
+  it('falls back to the house colours when nothing on screen has any light to give', () => {
+    render(<MoodBackground />);
 
-    expect(blooms(container).length).toBeGreaterThan(0);
-    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-color')).toBe('rgb(56 68 150)');
+    expect(orbs()).toHaveLength(24);
+    expect(tints.has('rgb(56 68 150)')).toBe(true);
   });
 
   it('ignores a colour that is not one', () => {
-    const { container } = render(
-      <MoodBackground lights={[{ color: '' }, { color: 'rgb(20, 160, 120)' }]} />,
-    );
+    render(<MoodBackground lights={[{ color: '' }, { color: 'rgb(20, 160, 121)' }]} />);
 
-    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-color')).toBe('rgb(20, 160, 120)');
+    expect(tintCodes()[0]).toBe(tints.get('rgb(20, 160, 121)'));
   });
 
-  it('keeps a bloom for every place, dark past the lights it was given', () => {
-    const { container } = render(<MoodBackground lights={[{ color: 'rgb(20, 160, 120)' }]} />);
+  it('repeats a few lights across every place, so the whole page glows', () => {
+    render(<MoodBackground lights={[{ color: 'rgb(20, 160, 120)' }]} />);
 
-    expect(blooms(container)).toHaveLength(12);
-    expect(blooms(container)[5]?.style.getPropertyValue('--bloom-mix')).toBe('0%');
+    expect(orbs()).toHaveLength(24);
+    expect(orbs()[0]?.[2]).toBeGreaterThan(0);
+    expect(orbs()[5]?.[2]).toBeGreaterThan(0);
+    expect(tintCodes()[5]).toBe(tintCodes()[0]);
   });
 
   it('draws no more lights than it has places to put them', () => {
-    const { container } = render(
+    render(
       <MoodBackground
-        lights={[
-          { color: '#111111' },
-          { color: '#222222' },
-          { color: '#333333' },
-          { color: '#444444' },
-          { color: '#555555' },
-          { color: '#666666' },
-          { color: '#777777' },
-          { color: '#888888' },
-          { color: '#999999' },
-          { color: '#aaaaaa' },
-          { color: '#bbbbbb' },
-          { color: '#cccccc' },
-          { color: '#dddddd' },
-          { color: '#eeeeee' },
-        ]}
+        lights={Array.from({ length: 26 }, (_, at) => ({ color: `rgb(${at.toString()} 1 1)` }))}
       />,
     );
 
-    expect(blooms(container)).toHaveLength(12);
-  });
-
-  it('has a place for a light from each cell of the grid a picture is read in', () => {
-    const lights = Array.from({ length: 12 }, (_, at) => ({
-      color: `rgb(${at.toString()} 0 0)`,
-    }));
-
-    const { container } = render(<MoodBackground lights={lights} />);
-
-    expect(blooms(container)).toHaveLength(12);
+    expect(orbs()).toHaveLength(24);
   });
 
   it('keeps the page under the light, so the foot of the screen is the page', () => {
@@ -105,27 +145,32 @@ describe('MoodBackground', () => {
     expect(container.querySelector('.valence-mood-fade')).not.toBeNull();
   });
 
-  it('lets the light wander where a screen is being waited on', () => {
-    const { container } = render(<MoodBackground lights={[{ color: '#112233' }]} isDrifting />);
+  it('lets the light wander where a screen is being waited on, faster when lively', () => {
+    const { unmount } = render(<MoodBackground lights={[{ color: '#112233' }]} isDrifting />);
 
-    expect(blooms(container)[0]?.className).toContain('valence-bloom--drift');
+    expect(speed()).toBe(1);
+
+    unmount();
+    render(<MoodBackground lights={[{ color: '#112233' }]} isDrifting isLively />);
+
+    expect(speed()).toBeGreaterThan(1);
   });
 
   it('holds it still everywhere else', () => {
-    const { container } = render(<MoodBackground lights={[{ color: '#112233' }]} />);
+    render(<MoodBackground lights={[{ color: '#112233' }]} />);
 
-    expect(blooms(container)[0]?.className).not.toContain('valence-bloom--drift');
-  });
-
-  it('sets a display name so devtools can identify it', () => {
-    expect(MoodBackground.displayName).toBe('MoodBackground');
+    expect(speed()).toBe(0);
   });
 
   it('stops the lights drifting for somebody who asked for less motion', () => {
     motion.isReduced = true;
 
-    const { container } = render(<MoodBackground lights={[{ color: '#112233' }]} isDrifting />);
+    render(<MoodBackground lights={[{ color: '#112233' }]} isDrifting />);
 
-    expect(blooms(container)[0]?.className).not.toContain('valence-bloom--drift');
+    expect(speed()).toBe(0);
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(MoodBackground.displayName).toBe('MoodBackground');
   });
 });

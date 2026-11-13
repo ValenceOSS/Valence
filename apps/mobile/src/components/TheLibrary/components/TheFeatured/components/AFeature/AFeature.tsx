@@ -25,6 +25,8 @@ const TELL_FOR = 8000;
 
 const LOGO_HIGH = 76;
 
+const NARROW_LOGO_HIGH = 52;
+
 const LOGO_AT_MOST = 0.7;
 
 const ARRIVES_FROM = 1.06;
@@ -47,11 +49,14 @@ const PARTS = 4;
 
 const ROUNDED = 20;
 
+const WORDS_FIT_FROM = 330;
+
 const OVER_THE_SCRIM = '#000000';
 
 const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, justifyContent: 'space-between', marginTop: 8 },
   half: { flex: 1 },
+  justTheIcon: { flexGrow: 0, paddingHorizontal: 14 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fills: {
     borderRadius: ROUNDED,
@@ -99,16 +104,17 @@ const styles = StyleSheet.create({
  * One title featured at the head of the library, as the web's hero draws it: its backdrop settling
  * into place as it arrives, and a few seconds later a clip of it fading in over that, darkened and
  * blurred towards the foot where its logo, its facts with its age rating and a few lines about it
- * rise into view one after another, with a way to play it and a way to read more. The lines about
+ * rise into view one after another, with a way to play it and a way to read more — the way to read
+ * more down to its icon, its logo shorter and the lines about it left out, on a card too narrow
+ * for them, as a folding phone's outside screen gives it. The lines about
  * it fold away once they have been read, and what is below them slides up into their place.
  *
  * The clip plays only while the title is the one showing, silent unless somebody turned the sound
  * on, which is remembered for the next.
  *
  * The backdrop and its clip are rounded and clipped by themselves as well as by the card around
- * them: as one title gives way to the next, the card's own clipping was dropped for the length of
- * the move and the picture showed square corners, so the picture keeps its corners whatever the
- * card does.
+ * them: as one title gives way to the next, the card's own clipping lapses for the length of the
+ * move, and the picture keeps its corners whatever the card does.
  *
  * @param media - The title.
  * @param width - How wide to draw it.
@@ -134,6 +140,7 @@ const AFeature = ({
   nearness,
 }: AFeatureProps) => {
   const colours = useTheColours();
+  const isNarrow = width < WORDS_FIT_FROM;
   const detail = useQuery(libraryQueries.detail(media.id));
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTelling, setIsTelling] = useState(true);
@@ -289,9 +296,10 @@ const AFeature = ({
               <ATitleLogo
                 mediaId={media.hasLogo ? media.id : null}
                 title={title}
-                high={LOGO_HIGH}
+                high={isNarrow ? NARROW_LOGO_HIGH : LOGO_HIGH}
                 widest={width * LOGO_AT_MOST}
                 isOnArtwork
+                isCentred={false}
               />
             </Animated.View>
 
@@ -327,7 +335,7 @@ const AFeature = ({
               </GROUND.Provider>
             )}
 
-            {overview === null || overview === '' || !isTelling ? null : (
+            {isNarrow || overview === null || overview === '' || !isTelling ? null : (
               <Animated.View style={[styles.folds, folds]}>
                 <View
                   style={styles.unfolded}
@@ -359,11 +367,11 @@ const AFeature = ({
                 </Button>
               </View>
 
-              <View style={styles.half}>
+              <View style={isNarrow ? null : styles.half}>
                 <Button tone="bare" label={say('common.moreInfo')} onPress={onMoreInfo}>
-                  <View style={styles.moreInfo}>
+                  <View style={[styles.moreInfo, isNarrow ? styles.justTheIcon : null]}>
                     <Icon of={Info} size={18} colour="#ffffff" />
-                    <Words tone="onArtwork">{say('common.moreInfo')}</Words>
+                    {isNarrow ? null : <Words tone="onArtwork">{say('common.moreInfo')}</Words>}
                   </View>
                 </Button>
               </View>

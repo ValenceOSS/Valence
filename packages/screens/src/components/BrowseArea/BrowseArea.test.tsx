@@ -70,11 +70,17 @@ const aCollection = (id: string, name: string, holds: Collection['holds']): Coll
   updatedAt: '2026-10-27T00:00:00.000Z',
 });
 
-vi.mock('@ValenceClient/library/fetchLibrary', () => ({
-  fetchLibraries: () => fetchLibraries(),
-  fetchLibraryItems: (libraryId: string, options?: Options) =>
-    fetchLibraryItems(libraryId, options),
-}));
+vi.mock('@ValenceClient/library/fetchLibrary', async () => {
+  const { askedOfEachLibrary } = await import('@ValenceClient/testing/askedOfEachLibrary');
+  const ofOne = async (libraryId: string, options?: Options) =>
+    fetchLibraryItems(libraryId, options);
+
+  return {
+    fetchLibraries: async () => fetchLibraries(),
+    fetchLibraryItems: ofOne,
+    fetchItemsAcross: askedOfEachLibrary(ofOne),
+  };
+});
 
 const item = (id: string, title: string): MediaSummary => ({
   id,
@@ -214,7 +220,7 @@ describe('BrowseArea', () => {
 
     await waitFor(() => {
       expect(readEveryItem).toHaveBeenCalledWith(
-        'library-1',
+        expect.arrayContaining(['library-1']),
         expect.objectContaining({ kind: 'films' }),
       );
     });

@@ -22,6 +22,7 @@ type RailCardProps = {
   look?: 'card' | 'art';
   drawsLarge?: boolean;
   growsOnHover?: boolean;
+  isLazy?: boolean;
   flag?: string;
   badges?: readonly (string | MediaCardBadge)[];
 };

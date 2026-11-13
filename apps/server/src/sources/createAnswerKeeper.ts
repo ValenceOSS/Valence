@@ -5,6 +5,7 @@ import type { TroubleReason } from './SourceTrouble';
 
 type AnswerKeeper<Answer> = {
   keep: (key: string, read: () => Promise<Answer>) => Promise<Answer>;
+  holds: (key: string) => boolean;
   forgetWhere: (isForgotten: (key: string) => boolean) => void;
   clear: () => void;
 };
@@ -81,6 +82,8 @@ const createAnswerKeeper = <Answer>(
 
       return value;
     },
+
+    holds: (key) => kept.get(key) !== undefined || troubled.get(key) !== undefined,
 
     forgetWhere: (isForgotten) => {
       kept.forgetWhere(isForgotten);

@@ -240,6 +240,134 @@ describe('WatchPage', () => {
     expect(drawn.player?.willCarryOn).toBe(false);
   });
 
+  it('has the player ask whether anybody is still watching in place of the next, once enough have followed on', async () => {
+    const episode = (id: string, episodeNumber: number) => ({
+      ...ARRIVAL,
+      id,
+      title: `Episode ${episodeNumber.toString()}`,
+      durationSeconds: 1800,
+      seriesId: 'b7a1c2d3-0000-4000-8000-000000000001',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber,
+    });
+    const first = episode('a1a1a1a1-0000-4000-8000-000000000001', 1);
+    const second = episode('a1a1a1a1-0000-4000-8000-000000000002', 2);
+    const third = episode('a1a1a1a1-0000-4000-8000-000000000003', 3);
+    const watcher: ViewerProfile = {
+      id: '00000000-0000-4000-8000-000000000002',
+      name: 'Viewer',
+      colour: '#3a8ee8',
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+      askStillWatchingAfter: 1,
+      showsWhatIamWatching: false,
+      discordPresence: DEFAULT_DISCORD_PRESENCE,
+      prefersBestCopy: false,
+      isOwner: true,
+      hasPin: false,
+      mayRequest: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    window.history.replaceState(null, '', `/watch/${first.id}`);
+
+    renderInAShell(<WatchPage />, {
+      known: new Map([first, second, third].map((one) => [one.id, one])),
+      watcher,
+    });
+
+    act(() => {
+      drawn.player?.onEnded?.();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.media.id).toBe(second.id);
+    });
+
+    expect(drawn.player?.stillWatching).toBeUndefined();
+
+    act(() => {
+      drawn.player?.onEnded?.();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.stillWatching?.upNext.id).toBe(third.id);
+    });
+    expect(drawn.player?.media.id).toBe(second.id);
+
+    act(() => {
+      drawn.player?.stillWatching?.onCarryOn();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.media.id).toBe(third.id);
+    });
+
+    expect(drawn.player?.stillWatching).toBeUndefined();
+  });
+
+  it('leaves the player for the episode it was on when nobody says they are still watching', async () => {
+    const episode = (id: string, episodeNumber: number) => ({
+      ...ARRIVAL,
+      id,
+      title: `Episode ${episodeNumber.toString()}`,
+      durationSeconds: 1800,
+      seriesId: 'b7a1c2d3-0000-4000-8000-000000000001',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber,
+    });
+    const first = episode('a1a1a1a1-0000-4000-8000-000000000001', 1);
+    const second = episode('a1a1a1a1-0000-4000-8000-000000000002', 2);
+    const third = episode('a1a1a1a1-0000-4000-8000-000000000003', 3);
+    const watcher: ViewerProfile = {
+      id: '00000000-0000-4000-8000-000000000002',
+      name: 'Viewer',
+      colour: '#3a8ee8',
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+      askStillWatchingAfter: 1,
+      showsWhatIamWatching: false,
+      discordPresence: DEFAULT_DISCORD_PRESENCE,
+      prefersBestCopy: false,
+      isOwner: true,
+      hasPin: false,
+      mayRequest: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    window.history.replaceState(null, '', `/watch/${first.id}`);
+
+    renderInAShell(<WatchPage />, {
+      known: new Map([first, second, third].map((one) => [one.id, one])),
+      watcher,
+    });
+
+    act(() => {
+      drawn.player?.onEnded?.();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.media.id).toBe(second.id);
+    });
+
+    act(() => {
+      drawn.player?.onEnded?.();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.stillWatching).toBeDefined();
+    });
+
+    act(() => {
+      drawn.player?.stillWatching?.onStop();
+    });
+
+    await vi.waitFor(() => {
+      expect(window.location.pathname).not.toContain('/watch/');
+    });
+    expect(window.location.search).toContain(second.id);
+  });
+
   it('plays on from the last episode of a season into the first of the next', async () => {
     const episode = (id: string, seasonNumber: number, episodeNumber: number) => ({
       ...ARRIVAL,

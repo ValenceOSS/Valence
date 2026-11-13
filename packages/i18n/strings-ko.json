@@ -965,6 +965,71 @@
     "context": "Shown in the library (from `qualityBadges`)."
   },
   {
+    "handler": "client.library.sayRatingMeans.adultsOnly",
+    "text": "성인 전용이에요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.allAges",
+    "text": "모든 연령에 적합해요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fifteenAndUp",
+    "text": "15세 이상 대상이에요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fourteenAndUp",
+    "text": "14세 미만 어린이에게는 맞지 않을 수 있어요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.parentalGuidance",
+    "text": "보호자의 지도를 권해요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.sevenAndUp",
+    "text": "7세 이상 대상이에요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.seventeenAndUp",
+    "text": "17세 이하는 볼 수 없어요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.thirteenAndUp",
+    "text": "13세 미만 어린이에게는 일부가 맞지 않을 수 있어요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveAndUp",
+    "text": "12세 이상 대상이에요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveWithAnAdult",
+    "text": "12세 이상 대상이며, 더 어린 아이는 어른과 함께 봐야 해요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.underSeventeenWithAnAdult",
+    "text": "17세 미만은 보호자와 함께 봐야 해요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.youngChildren",
+    "text": "어린 아이를 위한 작품이에요.",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.showQualityBadges.standardRange",
+    "text": "SDR",
+    "context": "On a programme's badges, standard dynamic range, said only beside HDR10 or Dolby Vision when some episodes have one and some do not, as in \"HDR10 / SDR\"."
+  },
+  {
     "handler": "client.library.theVersionsOf.anotherVersion",
     "text": "다른 버전",
     "context": "Shown in the library (from `theVersionsOf`)."
@@ -973,6 +1038,11 @@
     "handler": "client.library.useHomeRows.genreFromTheDecadeS",
     "text": "{decade}년대 {genre}",
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app; {decade} is filled in by the app."
+  },
+  {
+    "handler": "client.library.useHomeRows.moreGenre",
+    "text": "{genre} 더 보기",
+    "context": "The heading of a row deep in the home page that carries on past a genre's own row with more of its best-rated titles (from `useHomeRows`). {genre} is the genre's name."
   },
   {
     "handler": "client.library.useHomeRows.newInGenre",
@@ -1102,7 +1172,7 @@
   {
     "handler": "client.playback.describeRungCost.valueMbps",
     "text": "{value} Mbps",
-    "context": "What the original video costs, beside its name in the quality menu. {value} is the bitrate in megabits a second, such as 8.0."
+    "context": "A speed in megabits a second: what the original video costs, beside its name in the quality menu, and the connection's speed and the stream's bitrate in the stream stats charts. {value} is the number, such as 8.0."
   },
   {
     "handler": "client.playback.fetchSegments.skipCredits",
@@ -2745,19 +2815,35 @@
     "context": "Shown, used in the stream stats in the player of the television app and in the stream stats in the video player."
   },
   {
-    "handler": "common.block",
-    "text": "차단",
-    "context": "Button that blocks somebody."
+    "handler": "common.black",
+    "text": "검은색",
+    "context": "The label in the tokens (from `captionColours`)."
   },
+  { "handler": "common.block", "text": "차단", "context": "Button that blocks somebody." },
   {
     "handler": "common.blocked",
     "text": "차단됨",
     "context": "Marks somebody who has been blocked."
   },
   {
+    "handler": "common.blue",
+    "text": "파란색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.book",
     "text": "책",
     "context": "Shown, used in the media kind in the schemas and in the request kind names in the requests."
+  },
+  {
+    "handler": "common.bookmarks",
+    "text": "책갈피",
+    "context": "The heading over the list of bookmarks in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.bookmarkThisPage",
+    "text": "이 페이지에 책갈피 추가",
+    "context": "The button that bookmarks the page being read, in the readers on the web, the desktop and the phone."
   },
   {
     "handler": "common.books",
@@ -2788,6 +2874,11 @@
     "handler": "common.bringTitleBack",
     "text": "{title} 숨김 해제",
     "context": "The label of a button, used in the hidden in the account of the phone app and in the hidden panel in the account area. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.brown",
+    "text": "갈색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.browser",
@@ -2955,6 +3046,11 @@
     "context": "The label, used in several places, among them the media panel in the admin area and the media detail dialog."
   },
   {
+    "handler": "common.chooseWhatShows",
+    "text": "보일 사진 부분을 골라 주세요.",
+    "context": "The line under the title of the window that opens after a picture is chosen for an upload."
+  },
+  {
     "handler": "common.chrome",
     "text": "Chrome",
     "context": "The name of the Google Chrome browser, as a device is labelled with it."
@@ -3047,7 +3143,7 @@
   {
     "handler": "common.connection",
     "text": "연결",
-    "context": "The title of a headed section, used in the download client dialog in the admin area and in the indexer dialog in the admin area."
+    "context": "The title of a headed section, used in the download client and indexer dialogs in the admin area, and in the stream stats in the video player beside the connection's speed."
   },
   {
     "handler": "common.contents",
@@ -3380,6 +3476,16 @@
     "context": "How many permissions a role grants, in the list of roles."
   },
   {
+    "handler": "common.count.removeBookmarks.one",
+    "text": "책갈피 {count}개 삭제",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
+    "handler": "common.count.removeBookmarks.other",
+    "text": "책갈피 {count}개 삭제",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
     "handler": "common.count.removed.one",
     "text": "{count}개 제거됨",
     "context": "How many files a library scan found gone."
@@ -3620,6 +3726,11 @@
     "context": "The label of a toggle, used in the reader sheet in the reader of the phone app and in the page reader."
   },
   {
+    "handler": "common.cream",
+    "text": "크림색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.create",
     "text": "만들기",
     "context": "The confirm label of a name entry dialog, used in several places, among them the files panel in the admin area and the folder browser in the admin area."
@@ -3803,6 +3914,11 @@
     "handler": "common.dragToChangeTheOrder",
     "text": "끌어서 순서 바꾸기",
     "context": "The label of the handle a table row is dragged by to change the order."
+  },
+  {
+    "handler": "common.dragToMovePinchToZoom",
+    "text": "사진을 끌어서 옮기고, 두 손가락으로 벌려 확대해요.",
+    "context": "A hint beside a picture being framed after an upload: it can be dragged into place, or moved with two fingers on a trackpad, and pinched to draw it nearer."
   },
   {
     "handler": "common.duckDuckGo",
@@ -4165,6 +4281,11 @@
     "context": "Text shown, used in the where is your valence of the phone app and in the connect to server."
   },
   {
+    "handler": "common.framePicture",
+    "text": "사진 맞추기",
+    "context": "The title of the window that opens after a picture is chosen for an upload, for placing it in its shape before it is sent."
+  },
+  {
     "handler": "common.fromName",
     "text": "{name}에서 가져옴",
     "context": "Shown in the admin area: a badge on an indexer brought in from a connected Prowlarr. {name} is what the admin called the Prowlarr."
@@ -4240,6 +4361,11 @@
     "context": "The label, used in the bricks in the variants and in the tokens (from `captionColours`)."
   },
   {
+    "handler": "common.grey",
+    "text": "회색",
+    "context": "A colour to put round the page in the phone reader."
+  },
+  {
     "handler": "common.heavy",
     "text": "굵게",
     "context": "The heaviest of a range, used in subtitle settings for both the thickest caption outline and the heaviest caption lettering."
@@ -4249,10 +4375,11 @@
     "text": "도움말",
     "context": "The label of what opens Valence’s help and documentation in the browser: an item in the account menu, and the question mark in the desktop app’s window bar."
   },
+  { "handler": "common.here", "text": "여기", "context": "The detail in the nav bar." },
   {
-    "handler": "common.here",
-    "text": "여기",
-    "context": "The detail in the nav bar."
+    "handler": "common.hexCode",
+    "text": "16진수 코드",
+    "context": "The box a colour is written in as six characters after a #, such as #3a8ee8, for somebody who already knows the colour they want."
   },
   {
     "handler": "common.hidden",
@@ -4325,9 +4452,19 @@
     "context": "Text shown, used in the request in the search of the phone app and in the how to fix."
   },
   {
+    "handler": "common.hue",
+    "text": "색조",
+    "context": "The strip of every colour of the rainbow in a colour picker, which picks which colour; read out by screen readers."
+  },
+  {
     "handler": "common.indexers",
     "text": "인덱서",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the indexers panel in the admin area."
+  },
+  {
+    "handler": "common.indigo",
+    "text": "남색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.inProgress",
@@ -4553,6 +4690,11 @@
     "handler": "common.likeTitle",
     "text": "{title} 좋아요",
     "context": "Shown, used in several places, among them the now playing of the television app and the immersive music. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.lime",
+    "text": "라임색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.linkedServers",
@@ -5100,6 +5242,11 @@
     "context": "Shown, used in the accounts panel in the admin area and in the role members in the roles panel."
   },
   {
+    "handler": "common.noBookmarksYet",
+    "text": "아직 책갈피가 없어요",
+    "context": "The title of the empty list under the Bookmarks heading in a reader, when nothing in the book is bookmarked."
+  },
+  {
     "handler": "common.noCeiling",
     "text": "연령 제한 없음",
     "context": "Shown, used in the library access in the schemas and in the admin area (from `ageChoices`)."
@@ -5295,11 +5442,6 @@
     "context": "Shown on an empty smart collection, on the web and in the phone app."
   },
   {
-    "handler": "common.notMeasured",
-    "text": "측정되지 않음",
-    "context": "Shown, used in the admin area (from `describeCpuShare`) and in the admin area (from `describeValenceMemory`)."
-  },
-  {
     "handler": "common.notNow",
     "text": "나중에",
     "context": "Shown, used in several places, among them the desktop of the desktop app and the ask page of the television app."
@@ -5475,6 +5617,11 @@
     "context": "Shown, used in the quality labels in the profiles in the requests service and in the quality names in the admin area."
   },
   {
+    "handler": "common.orange",
+    "text": "주황색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.order",
     "text": "순서",
     "context": "The name, used in several places, among them the browse area and the job history in the observability page."
@@ -5515,14 +5662,24 @@
     "context": "Text shown, used in several places, among them the text reader in the reader of the phone app and the page reader."
   },
   {
+    "handler": "common.pageAndPercent",
+    "text": "{page}쪽 · {percent}%",
+    "context": "Names a bookmark in a book’s text in the readers’ list of bookmarks: the page the reader showed when it was made, and how far through the book it is. {page} is the page number and {percent} a whole number from 0 to 100."
+  },
+  {
     "handler": "common.pages",
     "text": "페이지",
     "context": "The label of a segmented row, used in the page reader and in the scrolling pages."
   },
   {
+    "handler": "common.pagesYouBookmarkAppearHere",
+    "text": "책갈피를 추가한 페이지가 여기에 나타나요.",
+    "context": "Under “No bookmarks yet” in a reader’s list of bookmarks, saying how to add one."
+  },
+  {
     "handler": "common.pageValue",
     "text": "페이지 {value}",
-    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app."
+    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app, and names a page bookmark in the list of bookmarks."
   },
   {
     "handler": "common.partlyHere",
@@ -5579,11 +5736,7 @@
     "text": "링크를 여는 사람은 비밀번호를 입력해야 해요. 링크가 의도보다 더 많이 공유될 수 있으니 비밀번호를 설정하세요.",
     "context": "Shown in the party panel."
   },
-  {
-    "handler": "common.partyPanel.ask",
-    "text": "초대",
-    "context": "Shown in the party panel."
-  },
+  { "handler": "common.partyPanel.ask", "text": "초대", "context": "Shown in the party panel." },
   {
     "handler": "common.partyPanel.askAlong",
     "text": "사람 초대",
@@ -5654,11 +5807,7 @@
     "text": "게스트",
     "context": "Shown in the party panel."
   },
-  {
-    "handler": "common.partyPanel.host",
-    "text": "호스트",
-    "context": "Shown in the party panel."
-  },
+  { "handler": "common.partyPanel.host", "text": "호스트", "context": "Shown in the party panel." },
   {
     "handler": "common.partyPanel.keepingTime",
     "text": "동기 기준",
@@ -5852,7 +6001,7 @@
   {
     "handler": "common.percent",
     "text": "{value}%",
-    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number."
+    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number. Also names a bookmark in a book’s text by how far through it is."
   },
   {
     "handler": "common.percentDone",
@@ -5864,11 +6013,7 @@
     "text": "{percent}% 읽음",
     "context": "How much of a book or chapter has been read. {percent} is a whole number from 0 to 100."
   },
-  {
-    "handler": "common.person",
-    "text": "사람",
-    "context": "A column heading: who it was."
-  },
+  { "handler": "common.person", "text": "사람", "context": "A column heading: who it was." },
   {
     "handler": "common.pickSomeEpisodes",
     "text": "에피소드 선택",
@@ -5878,6 +6023,11 @@
     "handler": "common.picture",
     "text": "사진",
     "context": "The title of a group, used in several places, among them the profile in the account of the phone app and the account avatar picker in the accounts panel."
+  },
+  {
+    "handler": "common.pink",
+    "text": "분홍색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.pixel",
@@ -6065,6 +6215,11 @@
     "context": "The name of Prowlarr, the indexer manager Valence can bring indexers in from. A product name; usually left as it is."
   },
   {
+    "handler": "common.purple",
+    "text": "보라색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.putTheAlbumsInOrderBy",
     "text": "앨범 정렬 기준",
     "context": "The label of a segmented row, used in the albums of the phone app and in the albums view in the music page."
@@ -6245,6 +6400,16 @@
     "context": "The label of a data table, used in the release pick table in the admin area and in the release search panel in the admin area."
   },
   {
+    "handler": "common.removeBookmark",
+    "text": "책갈피 삭제",
+    "context": "The button that removes the bookmark on the page being read, in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.removeBookmarkAt",
+    "text": "{place} 책갈피 삭제",
+    "context": "The button beside one bookmark in a reader’s list of bookmarks, read out by screen readers. {place} is the bookmark’s name, such as Page 12 or 37%."
+  },
+  {
     "handler": "common.removedName",
     "text": "{name} 삭제됨.",
     "context": "Shown, used in several places, among them the downloads panel in the admin area and the indexers panel in the admin area. {name} is filled in by the app."
@@ -6375,6 +6540,11 @@
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
   },
   {
+    "handler": "common.resetPosition",
+    "text": "위치 초기화",
+    "context": "The label of a button that puts a picture being framed back in the middle, at its smallest, wherever a picture is uploaded."
+  },
+  {
     "handler": "common.resolution",
     "text": "해상도",
     "context": "A video's resolution, such as 1080p: a custom format condition in the quality profile editor, and wherever a resolution is named."
@@ -6408,6 +6578,11 @@
     "handler": "common.roles",
     "text": "역할",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the accounts panel in the admin area."
+  },
+  {
+    "handler": "common.rose",
+    "text": "장미색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.run",
@@ -6550,6 +6725,11 @@
     "context": "The label of a button, used in the shelf of the phone app and in the music home in the music page."
   },
   {
+    "handler": "common.select",
+    "text": "선택",
+    "context": "The button beside the Bookmarks heading in the phone’s reader that starts picking bookmarks to remove several at once."
+  },
+  {
     "handler": "common.selectTitle",
     "text": "{title} 선택",
     "context": "The tick box beside one row of an admin table, read aloud, such as a request or a download. {title} is its name."
@@ -6598,6 +6778,11 @@
     "handler": "common.setUp",
     "text": "설정하기",
     "context": "Shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.shade",
+    "text": "명암",
+    "context": "The square in a colour picker that picks how pale or dark and how strong the chosen hue is; read out by screen readers."
   },
   {
     "handler": "common.shadow",
@@ -6748,6 +6933,16 @@
     "handler": "common.skip",
     "text": "건너뛰기",
     "context": "A button that skips past something optional, such as a step of the get-started checklist or a pre-roll clip played before a title."
+  },
+  {
+    "handler": "common.skyBlue",
+    "text": "하늘색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
+    "handler": "common.slate",
+    "text": "슬레이트색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.sleepTimer",
@@ -6998,6 +7193,11 @@
     "handler": "common.system",
     "text": "시스템",
     "context": "The label, used in several places, among them the theme choice of the phone app and the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.teal",
+    "text": "청록색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.test",
@@ -7435,6 +7635,11 @@
     "context": "The label, used in the download client dialog (from `readDownloadClientForm`) and in the download clients table in the downloads panel."
   },
   {
+    "handler": "common.transparent",
+    "text": "투명",
+    "context": "What a screen reader says of the first swatch in a row of colours, which leaves nothing behind a drawn face, so it shows on whatever it is drawn over."
+  },
+  {
     "handler": "common.tryAgain",
     "text": "다시 시도",
     "context": "The label of a button, used in several places, among them the plugin page of the phone app and the way in of the phone app."
@@ -7585,11 +7790,6 @@
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
   },
   {
-    "handler": "common.useOption",
-    "text": "{option} 사용",
-    "context": "The label of a button, used in the profile in the account of the phone app and in the account avatar picker in the accounts panel. {option} is filled in by the app."
-  },
-  {
     "handler": "common.usePreset",
     "text": "{preset} 사용",
     "context": "The label of a button, used in the colour choice and in the colour picker. {preset} is filled in by the app."
@@ -7643,6 +7843,11 @@
     "handler": "common.view",
     "text": "보기",
     "context": "The label, used in the main of the desktop app (from `theApplicationMenu`) and in the log explorer in the observability page."
+  },
+  {
+    "handler": "common.violet",
+    "text": "바이올렛색",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.vivaldi",
@@ -7783,6 +7988,11 @@
     "handler": "common.where",
     "text": "어디",
     "context": "The label in the webhook fields (from `webhookPanes`)."
+  },
+  {
+    "handler": "common.wherePictureSits",
+    "text": "사진 위치예요. 화살표 키로 옮기고, 플러스나 마이너스 키로 확대해요.",
+    "context": "What a screen reader says of a picture being framed after an upload, which can be dragged into place."
   },
   {
     "handler": "common.whereYouAre",
@@ -10910,14 +11120,9 @@
     "context": "The name of the Android phone in the sheet that picks where music plays, as \"This iPhone\" names an iPhone."
   },
   {
-    "handler": "phone.aFaceEditor.aPhotoOrAGIF",
-    "text": "라이브러리의 사진 또는 GIF예요.",
-    "context": "The line above the photo picker in the phone's profile picture editor."
-  },
-  {
     "handler": "phone.aFaceEditor.chooseAPhotoOrGIF",
     "text": "사진 또는 GIF 선택",
-    "context": "The button in the phone's profile picture editor that opens the photo library."
+    "context": "Read out by screen readers for the button in the picture editor, on the phone and on the web, that opens the photo library or the file picker; the button itself shows a shorter label."
   },
   {
     "handler": "phone.anAlbum.thatAlbumCouldNotBeRead",
@@ -10953,6 +11158,11 @@
     "handler": "phone.anAskable.anythingAlreadyDownloadedForItIs",
     "text": "이 항목에 대해 이미 다운로드된 파일은 모두 삭제돼요.",
     "context": "A message in an alert in the askable of the phone app."
+  },
+  {
+    "handler": "phone.aPerson.theirWorkCouldNotBeRead",
+    "text": "작품을 더 불러오지 못했어요.",
+    "context": "Shown on the phone's page about a person in the cast or crew where their work not on this server and their credits could not be read, above a button to try again."
   },
   {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
@@ -11003,11 +11213,6 @@
     "handler": "phone.aReader.aReaderSheet.autoTakesTheColourOfEach",
     "text": "자동은 각 페이지 가장자리의 색을 따라가요.",
     "context": "Explains the Auto choice for the colour round the page in the phone reader."
-  },
-  {
-    "handler": "phone.aReader.aReaderSheet.grey",
-    "text": "회색",
-    "context": "A colour to put round the page in the phone reader."
   },
   {
     "handler": "phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo",
@@ -11070,11 +11275,6 @@
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
-    "handler": "phone.aReader.aReaderSide.markThesePages",
-    "text": "이 페이지 북마크",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
     "handler": "phone.aReader.aReaderSide.readOn",
     "text": "다음 읽기",
     "context": "Text shown in the reader side in the reader of the phone app."
@@ -11082,11 +11282,6 @@
   {
     "handler": "phone.aReader.aReaderSide.showingWholePagesFillTheWidth",
     "text": "쪽에 맞추기. 너비에 맞추기로 전환",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
-    "handler": "phone.aReader.aReaderSide.unmarkThesePages",
-    "text": "북마크 해제",
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
@@ -11248,6 +11443,11 @@
     "handler": "phone.aShow.playSeasonEpisode",
     "text": "S{season} E{episode} 재생",
     "context": "The button on a programme's page in the phone app that plays the next episode from its start. {season} is the season number and {episode} the episode number."
+  },
+  {
+    "handler": "phone.aShow.statusNextEpisode",
+    "text": "{status} · S{seasonNumber} E{episodeNumber} · {airDate}",
+    "context": "A programme's status chip on its page on the open inside of a folding phone, with the next episode folded into it. {status} is the status, such as Returning; {seasonNumber} and {episodeNumber} are the next episode's; {airDate} says when it airs, such as Airs today."
   },
   {
     "handler": "phone.aShow.thatProgrammeCouldNotBeRead",
@@ -13760,6 +13960,11 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.languageKeptHere",
+    "text": "이 기기에 저장돼요. 저장하면 Valence가 새 언어로 다시 시작해요.",
+    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
     "text": "이 브라우저에서 영화를 더 많이 재생",
     "context": "Title of a setting on this device: decode films the browser can't play by itself in the page, using WebGPU, instead of having the server convert them."
@@ -13768,6 +13973,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "가장 좋은 버전 우선",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
+    "text": "기기와 같음",
+    "context": "The first choice of the Language setting in a profile's settings: speak whichever of the device's own languages Valence has."
   },
   {
     "handler": "screens.accountArea.profileSettings.showsANoticeOnThisComputer",
@@ -16795,6 +17005,11 @@
     "context": "On the admin overview's storage card, the label of the estimated total size of the downloads in the queue that have not finished."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.howItSplits",
+    "text": "Valence가 보관하는 파일을 종류별로 나눈 비율",
+    "context": "Read out in place of the bar on the admin overview's storage card that divides the files Valence keeps (preview clips, thumbnails, transcodes, artwork) by kind."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.keptByValence",
     "text": "Valence가 보관하며, 라이브러리는 제외해요.",
     "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
@@ -17565,26 +17780,6 @@
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The fast cores of a chip that has both fast and efficient ones."
   },
   {
-    "handler": "screens.adminArea.coresValenceNotMeasured.one",
-    "text": "코어 {count}개 · Valence 측정 안 됨",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceNotMeasured.other",
-    "text": "코어 {count}개 · Valence 측정 안 됨",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.one",
-    "text": "코어 {count}개 · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.other",
-    "text": "코어 {count}개 · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
     "handler": "screens.adminArea.correctionPicker.itWillSayWhatItsFiles",
     "text": "다음 스캔 후에 파일의 정보를 사용해요.",
     "context": "A short message shown once something is done in the correction picker in the admin area."
@@ -18065,9 +18260,29 @@
     "context": "Shown in the admin area (from `describeQueueKind`)."
   },
   {
+    "handler": "screens.adminArea.describeQueueKind.encodingVersions",
+    "text": "다른 화질 인코딩 중",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service encodes lower-quality versions of a file ahead of time."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.lookingForTheCredits",
+    "text": "엔딩 크레딧 찾는 중",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service reads a film's frames to find where its credits start."
+  },
+  {
     "handler": "screens.adminArea.describeQueueKind.makingAPreview",
     "text": "미리보기 생성 중",
     "context": "Shown in the admin area (from `describeQueueKind`)."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.preparingADownload",
+    "text": "다운로드 준비 중",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service prepares a copy of a file for somebody to keep on their device."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.readingKeyframes",
+    "text": "탐색용 키프레임 읽는 중",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service reads where a file's keyframes are ahead of time, so seeking and streaming it start faster."
   },
   {
     "handler": "screens.adminArea.describeScanKind.clearingPartsOf",
@@ -22122,7 +22337,7 @@
   {
     "handler": "screens.adminArea.mediaTitlePage.showInTheApp",
     "text": "미리보기",
-    "context": "A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers."
+    "context": "Two places. A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers. And the small heading in the profile picture editor over the face shown at the sizes Valence draws it. A noun or a verb both fit; keep it to one short word."
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.unlockedEveryField",
@@ -22230,44 +22445,24 @@
     "context": "Shown in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.needsYouCard.aNewerDevBuildIsOut",
-    "text": "더 새로운 개발 빌드가 나왔어요",
-    "context": "A count on the overview in the admin area, for a server running a dev build when a newer one is out."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.aNewReleaseIsOut",
-    "text": "새 릴리스가 나왔어요",
-    "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
-  },
-  {
     "handler": "screens.adminArea.needsYouCard.failedRequests",
     "text": "실패한 요청",
-    "context": "A count on the overview in the admin area that opens the catalogue, where the failed requests are listed."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the catalogue where the failed requests are listed."
   },
   {
     "handler": "screens.adminArea.needsYouCard.libraryProblems",
     "text": "라이브러리 문제",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.nothingNeedsYou",
-    "text": "확인할 것이 없어요. Valence는 최신 상태예요.",
-    "context": "Shown when nothing on the server needs the admin."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the titles in the libraries that need fixing."
   },
   {
     "handler": "screens.adminArea.needsYouCard.requestsToApprove",
     "text": "승인할 요청",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.valenceIsUpToDate",
-    "text": "Valence가 최신 버전이에요",
-    "context": "On the admin overview’s Waiting on you card, when the newest release is running."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the requests waiting for approval."
   },
   {
     "handler": "screens.adminArea.needsYouCard.waitingOnYou",
     "text": "확인 필요",
-    "context": "The card at the top of the admin overview that counts what needs an administrator."
+    "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
@@ -22303,36 +22498,6 @@
     "handler": "screens.adminArea.nothingCouldBeReEncoded",
     "text": "아무것도 재인코딩하지 못했어요.",
     "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.notMeasured",
-    "text": "측정되지 않음",
-    "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceNotMeasured",
-    "text": "허용된 {total} 중 · Valence 측정 안 됨",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited and Valence's own use could not be measured. {total} is the memory it is allowed."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceUses",
-    "text": "허용된 {total} 중 · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited. {total} is the memory it is allowed, and {used} how much Valence itself uses, such as 1.2 GB."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalOnMount",
-    "text": "{total} 중 · {mountPoint}",
-    "context": "Under the storage figure at the top of the admin area. {total} is the disk's whole size, such as 8.0 TB, and {mountPoint} is where it is mounted, such as /media."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceNotMeasured",
-    "text": "{total} 중 · Valence 측정 안 됨",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where Valence's own use could not be measured. {total} is all the machine's memory."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceUses",
-    "text": "{total} 중 · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use. {total} is all the machine's memory, and {used} how much Valence itself uses, such as 1.2 GB."
   },
   {
     "handler": "screens.adminArea.onlineServicesCard.everythingValenceConnectsTo",
@@ -22540,6 +22705,71 @@
     "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.driveFull",
+    "text": "{mount} · {share} 사용 중",
+    "context": "One drive in the row of drives on the admin overview's disk usage card. {mount} is where the drive is mounted, such as /mnt/media, {share} how full it is, such as 82%."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.elseIs",
+    "text": "디스크에 있지만 라이브러리나 Valence 파일은 아니에요.",
+    "context": "Said of everything else on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.everythingElse",
+    "text": "기타",
+    "context": "A part of the disk on the admin overview’s disk usage card: what is on the disk that is not a library or Valence’s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.free",
+    "text": "여유 공간",
+    "context": "A part of the disk on the admin overview’s disk usage card: the room left."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.freeOfTheDrive",
+    "text": "{total} 중 여유 공간",
+    "context": "Beside the large figure on the admin overview's disk usage card, which is how much room is left on the drive. {total} is how big the drive is."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed",
+    "text": "{mount} 사용 현황",
+    "context": "Read out in place of the bar on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.notMeasured",
+    "text": "이 디스크는 아직 측정하지 않았어요.",
+    "context": "Shown on the admin overview’s disk usage card before the disk has been measured."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.rescan",
+    "text": "다시 스캔",
+    "context": "Button on the admin overview’s disk usage card that counts what Valence holds on the disk again."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.roomLeft",
+    "text": "{mount} 남은 공간",
+    "context": "Said of the free space on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.shareOfTheDisk",
+    "text": "디스크의 {share}",
+    "context": "Said of a library on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valenceKeeps",
+    "text": "미리보기 {previews}, 스크럽 썸네일 {trickplay}, 트랜스코드 {sessions}, 아트워크 {artwork}",
+    "context": "Said of Valence’s files on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valencesFiles",
+    "text": "Valence 파일",
+    "context": "A part of the disk on the admin overview’s disk usage card: the previews, thumbnails, transcodes, artwork and book pages Valence keeps."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.whichDrive",
+    "text": "표시할 드라이브 선택",
+    "context": "Read out for the row of drives on the admin overview's disk usage card, shown where the libraries are spread over several drives."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.how",
     "text": "방법",
     "context": "A column heading in a table on the admin overview."
@@ -22560,11 +22790,6 @@
     "context": "A column heading in a table on the admin overview."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.loadAgainstCores",
-    "text": "부하(코어 점유율)",
-    "context": "In the key beneath the server load graph: the load average, drawn as a share of how many processor cores the machine has."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.loadFigures.average",
     "text": "평균",
     "context": "Above the average processor share over the range shown, over the server load chart on the admin overview."
@@ -22583,6 +22808,11 @@
     "handler": "screens.adminArea.overviewPanel.loadFigures.now",
     "text": "지금",
     "context": "Above the processor share in use at this moment, over the server load chart on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadOfTheCores",
+    "text": "{load} · 코어 사용률 {share}",
+    "context": "In the tooltip on the admin overview's server load chart, the load average at that moment. {load} is the load average, such as 3.85; {share} is that load against how many processor cores the machine has, such as 48%, which is where the load line is drawn."
   },
   {
     "handler": "screens.adminArea.overviewPanel.memoryUsedOfTotal",
@@ -25715,11 +25945,6 @@
     "context": "Example shown in the empty sign-in message field."
   },
   {
-    "handler": "screens.adminArea.sizeFree",
-    "text": "{size} 남음",
-    "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
-  },
-  {
     "handler": "screens.adminArea.skipMarkers.addAMarker",
     "text": "표시 추가",
     "context": "Button adding a skip marker to a file."
@@ -26838,6 +27063,16 @@
     "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
     "text": "먼저 요청됨",
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.one",
+    "text": "{count}명 더 원해요.",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.other",
+    "text": "{count}명 더 원해요.",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
   },
   {
     "handler": "screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one",
@@ -28335,6 +28570,16 @@
     "context": "Shown on the admin overview’s What’s new card when nothing has."
   },
   {
+    "handler": "screens.adminArea.whatsNewInValence.seeEverythingNew",
+    "text": "새 기능 모두 보기",
+    "context": "On the card that comes up on the admin pages the first time somebody opens them after Valence has updated to a new release. The button that opens the full notes for the release."
+  },
+  {
+    "handler": "screens.adminArea.whatsNewInValence.title",
+    "text": "Valence {version} 새 기능",
+    "context": "On the card that comes up on the admin pages the first time somebody opens them after Valence has updated to a new release. {version} is the release, such as 1.9.0."
+  },
+  {
     "handler": "screens.adminArea.whyThereIsNoFigure",
     "text": "수치가 없는 이유",
     "context": "Text shown in the admin area."
@@ -28413,6 +28658,36 @@
     "handler": "screens.adminArea.wordsManager.wordRenamedToNextOnTitles",
     "text": "{titles}에서 {word}의 이름이 {next}로 바뀜",
     "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waiting.one",
+    "text": "{count}개 대기 중",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waiting.other",
+    "text": "{count}개 대기 중",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waitingItsTurn",
+    "text": "차례를 기다리는 중",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. Said of a job queued behind others."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.whatValenceIsDoing",
+    "text": "Valence 작업 목록",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. Read out for the list of jobs."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.workingOn.one",
+    "text": "Valence가 {count}개 작업 중이에요.",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. {count} is how many jobs are running or waiting."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.workingOn.other",
+    "text": "Valence가 {count}개 작업 중이에요.",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. {count} is how many jobs are running or waiting."
   },
   {
     "handler": "screens.adminPage.adminSearch.findAPage",
@@ -28829,11 +29104,7 @@
     "text": "그 사람에게 보이는 이유",
     "context": "The label of a ban's reason, which the banned person is shown when they next try to sign in."
   },
-  {
-    "handler": "screens.bookDialog.aBook",
-    "text": "책",
-    "context": "Shown in the book dialog."
-  },
+  { "handler": "screens.bookDialog.aBook", "text": "책", "context": "Shown in the book dialog." },
   {
     "handler": "screens.bookDialog.aboutTheAuthor",
     "text": "작가 소개",
@@ -29305,9 +29576,9 @@
     "context": "The placeholder in the description field of a collection."
   },
   {
-    "handler": "screens.colourChoice.anyColourForLabel",
-    "text": "{label}의 아무 색",
-    "context": "Shown in the colour choice. {label} is filled in by the app."
+    "handler": "screens.colourChoice.customColour",
+    "text": "사용자 지정 색",
+    "context": "What the last swatch in a row of colours is called, which opens a picker for a colour that is not among the ready ones. Shown when it is pointed at, and read out by screen readers."
   },
   {
     "handler": "screens.confirmHiding.hideThis",
@@ -30005,11 +30276,6 @@
     "context": "Shown in the drawn studio in the face editor."
   },
   {
-    "handler": "screens.faceEditor.drawnStudio.anotherFace",
-    "text": "다른 아바타",
-    "context": "The label of a button in the drawn studio in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.drawnStudio.bottts",
     "text": "Bottts",
     "context": "Shown in the drawn studio in the face editor."
@@ -30033,6 +30299,11 @@
     "handler": "screens.faceEditor.drawnStudio.notionists",
     "text": "Notionists",
     "context": "Shown in the drawn studio in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.drawnStudio.randomise",
+    "text": "무작위로 바꾸기",
+    "context": "The label of a button in the drawn studio in the face editor, which draws a new face in the same style with every part of it picked afresh at random."
   },
   {
     "handler": "screens.faceEditor.drawnStudio.style",
@@ -30060,39 +30331,39 @@
     "context": "The label in the face editor (from `faceModes`)."
   },
   {
-    "handler": "screens.faceEditor.facePreviews.aroundValence",
-    "text": "Valence 주변",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.inAList",
-    "text": "목록에서",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.theTopBar",
-    "text": "상단 막대",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.whoIsWatching",
-    "text": "누가 보고 있나요?",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.howYouAppearOnEveryScreen",
-    "text": "프로필 사진이 Valence 전체에 어떻게 보이는지예요.",
-    "context": "The detail of a dialog title in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.kindOfFace",
     "text": "사진 종류",
     "context": "The label of a segmented row in the face editor."
   },
   {
-    "handler": "screens.faceEditor.letterStudio.gradient",
-    "text": "그라데이션",
-    "context": "The heading over the gradients a letter face can be painted with."
+    "handler": "screens.faceEditor.letterStudio.blaze",
+    "text": "불꽃",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.candy",
+    "text": "캔디",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.flamingo",
+    "text": "플라밍고",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.lagoon",
+    "text": "라군",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.midnight",
+    "text": "한밤",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.ocean",
+    "text": "바다",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
   },
   {
     "handler": "screens.faceEditor.letterStudio.setItInName",
@@ -30100,9 +30371,14 @@
     "context": "The label of a button in the letter studio in the face editor. {name} is filled in by the app."
   },
   {
-    "handler": "screens.faceEditor.letterStudio.useTheGradientFromTo",
-    "text": "{from}에서 {to}까지의 그라데이션 사용",
-    "context": "The label of a swatch that paints a letter face with a gradient. {from} and {to} are colours as #rrggbb."
+    "handler": "screens.faceEditor.letterStudio.storm",
+    "text": "폭풍",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.twilight",
+    "text": "황혼",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
   },
   {
     "handler": "screens.faceEditor.letterStudio.whereTheGradientEnds",
@@ -30110,44 +30386,69 @@
     "context": "The label of the swatch that picks any colour for a letter face's gradient to end on."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.across",
-    "text": "가로 위치",
-    "context": "The label of a slider in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.blueprint",
+    "text": "청사진",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.aPhotographAGIFOrA",
-    "text": "사진, GIF 또는 짧은 동영상이에요.",
-    "context": "Shown in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.cool",
+    "text": "차갑게",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo",
-    "text": "사진, GIF 또는 동영상 고르기",
-    "context": "The label of a file picker in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.faded",
+    "text": "바랜",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.fitTheWholePicture",
-    "text": "사진 전체 맞추기",
-    "context": "The label of a button in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.greyscale",
+    "text": "회색조",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.framing",
-    "text": "프레이밍",
-    "context": "A heading in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.inverted",
+    "text": "반전",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.upAndDown",
-    "text": "세로 위치",
-    "context": "The label of a slider in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.neon",
+    "text": "네온",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.yourCurrentPicture",
-    "text": "현재 사진",
-    "context": "Shown in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.noir",
+    "text": "느와르",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.psychedelic",
+    "text": "사이키델릭",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.retro",
+    "text": "레트로",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.sunset",
+    "text": "노을",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.vivid",
+    "text": "선명하게",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.warm",
+    "text": "따뜻하게",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
     "handler": "screens.faceEditor.useThisFace",
     "text": "이 사진 사용",
-    "context": "The label in the face editor."
+    "context": "The button that accepts a picture: in the profile picture editor, and in the window that places any uploaded picture in its shape before it is sent, such as a playlist cover, a collection's poster, a title's artwork or this server's picture."
   },
   {
     "handler": "screens.faceEditor.yourFace",
@@ -31725,6 +32026,11 @@
     "context": "The name in the letter font looks in the library."
   },
   {
+    "handler": "screens.library.letterFontLooks.pJakarta",
+    "text": "P. Jakarta",
+    "context": "Plus Jakarta Sans cut short, the font's name beneath a small circle showing a letter set in it, where the whole name does not fit. Screen readers are still told the whole name."
+  },
+  {
     "handler": "screens.library.letterFontLooks.playfair",
     "text": "Playfair",
     "context": "The name in the letter font looks in the library."
@@ -32129,11 +32435,7 @@
     "text": "오류",
     "context": "The level of a log record for something that went wrong, on its badge in a log list."
   },
-  {
-    "handler": "screens.lyricLines.end",
-    "text": "끝",
-    "context": "Shown in the lyric lines."
-  },
+  { "handler": "screens.lyricLines.end", "text": "끝", "context": "Shown in the lyric lines." },
   {
     "handler": "screens.lyricLines.sync",
     "text": "동기화",
@@ -34555,6 +34857,11 @@
     "context": "Shown in the reader chrome."
   },
   {
+    "handler": "screens.readerContents.goToTitle",
+    "text": "이동: {title}",
+    "context": "The label read out for an entry in a book's contents. {title} is the chapter or volume it opens."
+  },
+  {
     "handler": "screens.readerPanel.keepThePanelBesideThePage",
     "text": "패널 고정",
     "context": "Shown in the reader panel."
@@ -34573,6 +34880,11 @@
     "handler": "screens.readingHero.youAreReading",
     "text": "읽고 있어요",
     "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
+  },
+  {
+    "handler": "screens.readingLook.textAndPage",
+    "text": "글자와 페이지",
+    "context": "The button in the book reader that opens the settings for how text and the page look."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",
@@ -36160,11 +36472,6 @@
     "context": "The detail in the sharing (from `describeShareEnding`)."
   },
   {
-    "handler": "screens.showDialog.aboutThisEpisode",
-    "text": "이 에피소드 정보",
-    "context": "The label in the show dialog."
-  },
-  {
     "handler": "screens.showDialog.chooseEpisodes.chooseEpisodesOfTitle",
     "text": "{title}의 에피소드 고르기",
     "context": "The label of a dialog in the choose episodes in the show dialog. {title} is filled in by the app."
@@ -36198,6 +36505,11 @@
     "handler": "screens.showDialog.nothingHereYetEpisodesAppearAs",
     "text": "아직 에피소드가 없어요. 스캔될 때 에피소드가 나타나요.",
     "context": "Text shown in the show dialog."
+  },
+  {
+    "handler": "screens.showDialog.onSomeEpisodes",
+    "text": "일부 에피소드에서 {label}",
+    "context": "A badge on a programme's page for a picture or sound format only some of its episodes have, such as Dolby Atmos. {label} is the format, filled in by the app."
   },
   {
     "handler": "screens.showDialog.playValueEpisodeValue2",
@@ -36485,11 +36797,6 @@
     "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for how many stars this profile gave a film or show."
   },
   {
-    "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",
-    "text": "{title}이(가) 다음에 재생돼요. 확인하기 전까지는 아무것도 재생되거나 시청함으로 표시되지 않아요.",
-    "context": "Text shown in the still watching dialog. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.streamStats.planAxis.burnIn",
     "text": "번인",
     "context": "Shown in the plan axis in the stream stats."
@@ -36720,6 +37027,11 @@
     "context": "Shown in the paused screen in the video player. {title} is filled in by the app; {episodeNumber} is filled in by the app."
   },
   {
+    "handler": "screens.videoPlayer.pausedScreen.upNextEpisode",
+    "text": "다음 편: {episode}",
+    "context": "On the player's paused screen while it asks whether anybody is still watching, naming the episode that plays if they carry on. {episode} is its name and number, such as Chapter 6: Ep. 6."
+  },
+  {
     "handler": "screens.videoPlayer.pausedScreen.youReWatching",
     "text": "시청 중이에요",
     "context": "Text shown in the paused screen in the video player."
@@ -36840,6 +37152,16 @@
     "context": "Shown in the video player."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.buffer",
+    "text": "버퍼",
+    "context": "Stats for nerds: the title of the chart of how many seconds of the stream are ready ahead of the viewer, and its tooltip's label."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.bufferOverTime",
+    "text": "지난 1분 동안 미리 버퍼링된 초",
+    "context": "Stats for nerds: read out to anybody who cannot see the buffer chart."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.byTheBrowser",
     "text": "브라우저에서",
     "context": "Stats for nerds, tone mapping row: the browser tone maps the HDR picture for this SDR screen itself."
@@ -36868,6 +37190,16 @@
     "handler": "screens.videoPlayer.streamStats.mediabunny",
     "text": "Mediabunny",
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.network",
+    "text": "네트워크",
+    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.networkOverTime",
+    "text": "지난 1분 동안의 연결 속도와 스트림 비트레이트",
+    "context": "Stats for nerds: read out to anybody who cannot see the network chart."
   },
   {
     "handler": "screens.videoPlayer.streamStats.noneShownAsHdr",
@@ -36938,6 +37270,11 @@
     "handler": "screens.videoPlayer.streamStats.valencesWebGpuPlayer",
     "text": "Valence WebGPU (Mediabunny + WebCodecs)",
     "context": "Stats for nerds, which player is playing: Valence's own player, reading with Mediabunny, decoding with WebCodecs and drawing with WebGPU. Technical names; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.valueSeconds",
+    "text": "{value}초",
+    "context": "Stats for nerds: a number of seconds, written short. {value} is the number."
   },
   {
     "handler": "screens.videoPlayer.streamStats.widthByHeightAtKbps",
@@ -38155,6 +38492,16 @@
     "context": "Description of the job that reads what linked servers share."
   },
   {
+    "handler": "server.jobs.jobDefinitions.makeArtworkAhead",
+    "text": "카드 아트워크 미리 만들기",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.makesEveryCardPictureAhead",
+    "text": "모든 포스터, 배경, 로고의 작은 사본을 미리 만들어, 카드가 한꺼번에 불러올 수 있게 해요.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator",
     "text": "관리자가 요청한 재인코딩을 실행해요.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -38308,6 +38655,11 @@
     "handler": "server.jobs.phase.arrived.other",
     "text": "{count}개 추가됨",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: how many things arrived in the library since the last digest. {count} is how many."
+  },
+  {
+    "handler": "server.jobs.phase.artwork",
+    "text": "카드 아트워크",
+    "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: making the small copies of every poster, backdrop and logo."
   },
   {
     "handler": "server.jobs.phase.books",
@@ -41105,10 +41457,16 @@
     "context": "Shown after a sentence saying something could not be read from the server, above a button to try again."
   },
   {
-    "handler": "ui.dataTable.filter",
-    "text": "필터",
-    "context": "The name in the data table."
+    "handler": "ui.countMark.plusCount.one",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
   },
+  {
+    "handler": "ui.countMark.plusCount.other",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
+  },
+  { "handler": "ui.dataTable.filter", "text": "필터", "context": "The name in the data table." },
   {
     "handler": "ui.dataTable.filterById",
     "text": "{id}(으)로 필터",
@@ -41148,6 +41506,16 @@
     "handler": "ui.freshnessNote.couldNotCheckForChanges",
     "text": "변경 사항을 확인하지 못했어요",
     "context": "A note in a panel’s heading in the admin area when it is showing what it read last time and the server didn’t answer when asked for anything newer."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.one",
+    "text": "서버 {count}곳 더 보유 중",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.other",
+    "text": "서버 {count}곳 더 보유 중",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
   },
   {
     "handler": "ui.noticeCard.thisWillCloseIn",
@@ -41503,11 +41871,6 @@
     "handler": "ui.timeBars.nothingInThisTime",
     "text": "이 시간 범위에는 아무것도 없어요.",
     "context": "Text shown in the time bars."
-  },
-  {
-    "handler": "ui.tokens.captionColours.black",
-    "text": "검정",
-    "context": "The label in the tokens (from `captionColours`)."
   },
   {
     "handler": "ui.tokens.captionColours.cyan",

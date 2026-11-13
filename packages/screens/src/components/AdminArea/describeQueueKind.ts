@@ -4,6 +4,10 @@ const QUEUE_KIND_LABELS: Record<string, string> = {
   preview: say('screens.adminArea.describeQueueKind.makingAPreview'),
   thumbnails: say('screens.adminArea.describeQueueKind.drawingScrubPreviews'),
   fingerprint: say('screens.adminArea.describeQueueKind.comparingEpisodeAudio'),
+  creditFrames: say('screens.adminArea.describeQueueKind.lookingForTheCredits'),
+  keyframes: say('screens.adminArea.describeQueueKind.readingKeyframes'),
+  renditions: say('screens.adminArea.describeQueueKind.encodingVersions'),
+  downloads: say('screens.adminArea.describeQueueKind.preparingADownload'),
 };
 
 /**

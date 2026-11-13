@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { Star as StarIcon } from '@keyline-icons/react';
+import { Star as StarIcon } from '@keyline-icons/react/fill';
+import { AgeRating } from '@ValenceUI/AgeRating';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { ReactNode } from 'react';
@@ -32,6 +33,7 @@ const TONES = {
  * @param hasSize - Whether to say how much room the file takes, where it is known.
  * @param size - How large the line is set, where it is not the size of the text around it.
  * @param tone - Its colour: that of the text around it, muted, or the pale of text over a picture.
+ * @param ageRating - Its age rating and the country that gave it, drawn last where it is given.
  */
 const MediaFacts = ({
   media,
@@ -40,6 +42,7 @@ const MediaFacts = ({
   hasRuntime = false,
   hasEpisode = true,
   hasSize = false,
+  ageRating = null,
 }: MediaFactsProps) => {
   const rating = media.rating ?? null;
 
@@ -105,6 +108,14 @@ const MediaFacts = ({
           },
         ]
       : []),
+    ...(ageRating === null
+      ? []
+      : [
+          {
+            key: 'age',
+            said: <AgeRating certification={ageRating.certification} region={ageRating.region} />,
+          },
+        ]),
   ];
 
   if (facts.length === 0) {

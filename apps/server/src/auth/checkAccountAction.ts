@@ -12,10 +12,9 @@ type CheckAccountActionOptions = {
  * Decides whether one account may ban or remove another, and says why not when it may not.
  *
  * Rank decides it: nobody may act on somebody at or above their own highest role. That includes
- * another administrator, which is the point — an administrator used to be exempt from this
- * altogether, so anybody given the role could ban the person who gave it to them, reset their
- * password and end their sessions. Handing somebody help with the server meant handing them the
- * ability to take it.
+ * another administrator, which is the point — exempt, anybody given the role could ban the person
+ * who gave it to them, reset their password and end their sessions, and handing somebody help with
+ * the server would mean handing them the ability to take it.
  *
  * The owner sits outside the rule in both directions: nobody may act on them, and they may act on
  * anybody. Somebody has to be able to remove an administrator who has gone wrong, and with equal

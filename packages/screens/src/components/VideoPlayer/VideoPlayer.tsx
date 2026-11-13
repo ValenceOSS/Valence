@@ -101,6 +101,8 @@ import {
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
+import { qualityToAsk } from '@ValenceClient/playback/qualityToAsk';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { TrickplayPreview } from './components/TrickplayPreview/TrickplayPreview';
@@ -116,6 +118,9 @@ import type { DrawnPicture, PoppedOut } from '@ValenceScreens/playback/popOutWit
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
 import { PausedScreen } from './components/PausedScreen/PausedScreen';
+import { StageCue } from './components/StageCue/StageCue';
+import { TrickplayFrame } from './components/TrickplayFrame/TrickplayFrame';
+import type { StageCueProps } from './components/StageCue/StageCue.types';
 import { NextEpisodeCard } from './components/NextEpisodeCard/NextEpisodeCard';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
@@ -130,7 +135,9 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
-import type { PlaybackHealth } from './components/StreamStats/StreamStats.types';
+import type { PlaybackHealth, StatsReading } from './components/StreamStats/StreamStats.types';
+import { keepRecent } from '@ValenceCore/functions/keepRecent';
+import { probeThroughput } from '@ValenceScreens/playback/probeThroughput';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
@@ -214,7 +221,11 @@ const CLEAR_OF_THE_CONTROLS = 12;
 
 const CLEAR_OF_THE_EDGE = 24;
 
+const CONTROLS_TALL_AT_LEAST = 72;
+
 const HEALTH_INTERVAL_MILLISECONDS = 500;
+
+const READINGS_KEPT = 120;
 
 const MOST_FRAME_SKEW_SECONDS = 30;
 
@@ -295,6 +306,9 @@ const EMPTY_HEALTH: PlaybackHealth = {
  *   next one when they take up the offer of it as this one ends.
  * @param willCarryOn - Whether the next episode starts on its own when this one ends, rather than
  *   asking first, so the offer of it counts down only when it will.
+ * @param stillWatching - The episode up next and who to tell the answer, while the paused screen
+ *   asks whether anybody is still watching in place of playing it. Its own shortcuts are off while
+ *   it asks, so a key can only answer the question.
  * @param watchedFractionFor - How to ask how far through a given episode the viewer already is.
  * @param party - The watch party this viewing is part of, where it is part of one.
  * @param partyNotice - Something the party has to say, which may outlive the party itself.
@@ -313,6 +327,7 @@ const VideoPlayer = ({
   following: givenFollowing,
   onSelectEpisode,
   willCarryOn = false,
+  stillWatching,
   watchedFractionFor,
   party,
   partyNotice = null,
@@ -322,6 +337,7 @@ const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const pictureRef = useRef<HTMLCanvasElement>(null);
   const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
+  const [isPlayingTheFile, setIsPlayingTheFile] = useState(false);
   const engineRefusedRef = useRef(false);
   const enginePictureRef = useRef<DrawnPicture | null>(null);
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
@@ -395,6 +411,7 @@ const VideoPlayer = ({
     detail.videoRange !== 'SDR' &&
     !window.matchMedia('(dynamic-range: high)').matches;
   const [isMuted, setIsMuted] = useState(() => readPlaybackPreferences().isMuted);
+  const loudestRef = useRef(volume > 0 ? volume : 1);
   const [isShowingRemaining, setIsShowingRemaining] = useState(
     () => readPlaybackPreferences().showsRemaining,
   );
@@ -406,9 +423,11 @@ const VideoPlayer = ({
   const seekedToTheEndRef = useRef(false);
   const playsOnFromTheEndRef = useRef(false);
   const [health, setHealth] = useState<PlaybackHealth>(EMPTY_HEALTH);
+  const [statsHistory, setStatsHistory] = useState<readonly StatsReading[]>([]);
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
   const [isResting, setIsResting] = useState(false);
+  const [cue, setCue] = useState<StageCueProps['cue']>(null);
   const pointRef = useRef<{ x: number; y: number } | null>(null);
   const hasFinishedRef = useRef(false);
   const [activity, setActivity] = useState(0);
@@ -443,6 +462,11 @@ const VideoPlayer = ({
   });
   const [heldFrame, setHeldFrame] = useState<{ url: string; isItemChange: boolean } | null>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const [controlsElement, setControlsElement] = useState<HTMLDivElement | null>(null);
+  const holdControls = useCallback((element: HTMLDivElement | null) => {
+    controlsRef.current = element;
+    setControlsElement(element);
+  }, []);
   const [controlsTall, setControlsTall] = useState(0);
 
   const isAWindowOfOurOwn = isTheDesktopClient();
@@ -465,12 +489,13 @@ const VideoPlayer = ({
   const frameSkewRef = useRef(0);
 
   const sayWhatTheRoomDid = useCallback((said: string) => {
-    notify.say(said, { where: PLAYER_TOASTS, id: PARTY_NOTICE });
+    notify.say(said, { where: PLAYER_TOASTS, isCompact: true, id: PARTY_NOTICE });
   }, []);
 
   const sayItWillNotStart = useCallback(() => {
     notify.say(say('screens.videoPlayer.yourBrowserWillNotStartThis'), {
       where: PLAYER_TOASTS,
+      isCompact: true,
       id: PARTY_NOTICE,
     });
   }, []);
@@ -550,12 +575,13 @@ const VideoPlayer = ({
 
   useEffect(() => {
     if (partyNotice !== null) {
-      notify.say(partyNotice, { where: PLAYER_TOASTS });
+      notify.say(partyNotice, { where: PLAYER_TOASTS, isCompact: true });
     }
   }, [partyNotice]);
   const releaseRef = useRef<(() => Promise<void>) | null>(null);
   const deliveredRef = useRef<(() => DeliveredFormat | null) | null>(null);
   const estimatedRef = useRef<(() => number | null) | null>(null);
+  const probedRef = useRef<(() => number | null) | null>(null);
   const ladderRef = useRef<(() => { variants: number; activeHeight: number | null }) | null>(null);
   const [ladder, setLadder] = useState<{ variants: number; activeHeight: number | null } | null>(
     null,
@@ -749,6 +775,7 @@ const VideoPlayer = ({
         if (!accepted) {
           notify.failed(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'), {
             where: PLAYER_TOASTS,
+            isCompact: true,
           });
 
           return;
@@ -958,8 +985,10 @@ const VideoPlayer = ({
   useEffect(() => {
     setSession(null);
     setIsDrawnByTheEngine(false);
+    setIsPlayingTheFile(false);
     enginePictureRef.current = null;
     engineStatsRef.current = null;
+    estimatedRef.current = null;
     brightenRef.current = null;
     switchCopyRef.current = null;
     setBrowserRung(null);
@@ -1074,9 +1103,23 @@ const VideoPlayer = ({
         audioStreamIndex === undefined
           ? null
           : (film?.audioStreams.find((stream) => stream.index === audioStreamIndex) ?? null);
-      const isWhole =
-        request.requestedQuality === 'original' ||
-        (request.requestedQuality === 'auto' && request.autoRung === 'original');
+      const pinned =
+        request.requestedQuality === 'auto' || request.requestedQuality === 'original'
+          ? null
+          : request.requestedQuality;
+      const sized =
+        pinned === null
+          ? null
+          : (film ??
+            (await cache
+              .ensureQueryData(libraryQueries.detail(request.mediaId))
+              .catch(() => null)));
+      const quality = qualityToAsk(
+        request.requestedQuality,
+        request.autoRung,
+        sized === null ? null : (sharpestStepOf(sized)?.id ?? null),
+      );
+      const isWhole = quality === 'original';
       const mayPickSound =
         isWhole && engine !== null && (asked === null || engine.audioCodecs.includes(asked.codec));
       const ask = (heardIndex: number | undefined, picksSound: boolean) =>
@@ -1096,7 +1139,7 @@ const VideoPlayer = ({
           clientId,
           request.startSeconds,
           heardIndex,
-          request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
+          quality,
           request.subtitleStreamIndex,
           request.converted,
           request.burnInSubtitleId,
@@ -1115,8 +1158,7 @@ const VideoPlayer = ({
               startSeconds: request.startSeconds,
               audioStreamIndex,
               subtitleStreamIndex: request.subtitleStreamIndex,
-              quality:
-                request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
+              quality: quality,
             })
           : null;
 
@@ -1437,6 +1479,7 @@ const VideoPlayer = ({
             return Promise.resolve();
           };
           element.src = outcome.session.delivery.url;
+          setIsPlayingTheFile(true);
         } else {
           const { plan } = outcome.session;
           const source = await cache
@@ -1627,6 +1670,7 @@ const VideoPlayer = ({
           notify.say(event.reason, {
             id: ADMIN_NOTICE,
             where: PLAYER_TOASTS,
+            isCompact: true,
             staysUntilDismissed: true,
           });
 
@@ -1634,7 +1678,11 @@ const VideoPlayer = ({
         }
 
         if (event.kind === 'message') {
-          notify.say(event.text, { where: PLAYER_TOASTS, staysUntilDismissed: true });
+          notify.say(event.text, {
+            where: PLAYER_TOASTS,
+            isCompact: true,
+            staysUntilDismissed: true,
+          });
 
           return;
         }
@@ -1864,12 +1912,27 @@ const VideoPlayer = ({
       const element = videoRef.current;
 
       if (element !== null) {
-        setHealth(readPlaybackHealth(element, frameSkewRef.current));
-        setDelivered(deliveredRef.current?.() ?? null);
+        const nowHealth = readPlaybackHealth(element, frameSkewRef.current);
+        const nowDelivered = deliveredRef.current?.() ?? null;
+
+        setHealth(nowHealth);
+        setDelivered(nowDelivered);
         setEngineStats(engineStatsRef.current?.() ?? null);
+        setStatsHistory((history) =>
+          keepRecent(
+            history,
+            {
+              connectionKbps: estimatedRef.current?.() ?? probedRef.current?.() ?? null,
+              bitrateKbps: nowDelivered?.bitrateKbps ?? null,
+              bufferedAheadSeconds: nowHealth.bufferedAheadSeconds,
+            },
+            READINGS_KEPT,
+          ),
+        );
       }
     };
 
+    setStatsHistory([]);
     sample();
 
     const timer = setInterval(sample, HEALTH_INTERVAL_MILLISECONDS);
@@ -1878,6 +1941,24 @@ const VideoPlayer = ({
       clearInterval(timer);
     };
   }, [isShowingStats]);
+
+  const directUrl =
+    isPlayingTheFile && session?.delivery.kind === 'direct' ? session.delivery.url : null;
+
+  useEffect(() => {
+    if (!isShowingStats || directUrl === null || !/^(?:https?:)?\//u.test(directUrl)) {
+      return;
+    }
+
+    const probe = probeThroughput(directUrl);
+
+    probedRef.current = probe.readKbps;
+
+    return () => {
+      probe.stop();
+      probedRef.current = null;
+    };
+  }, [isShowingStats, directUrl]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -1953,6 +2034,7 @@ const VideoPlayer = ({
           ? null
           : nextEpisode(episodes, playingEpisode);
   const isHeldAtTheEnd = heldAtTheEndOf === media.id;
+  const isAsking = stillWatching !== undefined;
   const followsGapless =
     session?.playsEpisodesGapless === true &&
     willCarryOn &&
@@ -2405,6 +2487,28 @@ const VideoPlayer = ({
     skipRef.current = skip;
   });
 
+  const toggleMute = () => {
+    isSilencedByPolicyRef.current = false;
+
+    if (isMuted || volume === 0) {
+      if (volume === 0) {
+        setVolume(loudestRef.current);
+      }
+
+      setIsMuted(false);
+
+      return;
+    }
+
+    setIsMuted(true);
+  };
+
+  const toggleMuteRef = useRef(toggleMute);
+
+  useEffect(() => {
+    toggleMuteRef.current = toggleMute;
+  });
+
   const lastTapRef = useRef<{ at: number; zone: TapZone } | null>(null);
   const pendingTapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressClosesAMenuRef = useRef(false);
@@ -2469,6 +2573,7 @@ const VideoPlayer = ({
 
       if (isAgain && zone !== 'middle') {
         skipRef.current(zone === 'back' ? -SKIP_SECONDS : SKIP_SECONDS);
+        setCue({ kind: zone === 'back' ? 'back' : 'forward', at: now });
 
         return;
       }
@@ -2477,6 +2582,7 @@ const VideoPlayer = ({
         pendingTapRef.current = setTimeout(() => {
           pendingTapRef.current = null;
           togglePlayRef.current();
+          setCue({ kind: 'toggle', at: Date.now() });
         }, DOUBLE_TAP_MILLISECONDS);
       }
     },
@@ -2505,6 +2611,7 @@ const VideoPlayer = ({
     pendingTapRef.current = setTimeout(() => {
       pendingTapRef.current = null;
       togglePlayRef.current();
+      setCue({ kind: 'toggle', at: Date.now() });
     }, DOUBLE_TAP_MILLISECONDS);
   };
 
@@ -2568,11 +2675,13 @@ const VideoPlayer = ({
   });
 
   useEffect(() => {
-    const controls = controlsRef.current;
+    const controls = controlsElement;
 
     if (controls === null) {
       return;
     }
+
+    setControlsTall(Math.round(controls.getBoundingClientRect().height));
 
     const watching = new ResizeObserver(([seen]) => {
       const tall = Math.round(seen?.contentRect.height ?? 0);
@@ -2585,7 +2694,7 @@ const VideoPlayer = ({
     return () => {
       watching.disconnect();
     };
-  }, []);
+  }, [controlsElement]);
 
   const isBarUp = (!isIdle && !isResting) || isShowingStats || isMenuOpen || state === 'failed';
   const isBarUpRef = useRef(isBarUp);
@@ -2659,6 +2768,10 @@ const VideoPlayer = ({
       setIsIdle(false);
       setActivity((count) => count + 1);
 
+      if (isAsking) {
+        return;
+      }
+
       const target = event.target;
 
       if (
@@ -2700,8 +2813,7 @@ const VideoPlayer = ({
         },
         f: toggleFullscreen,
         m: () => {
-          isSilencedByPolicyRef.current = false;
-          setIsMuted((muted) => !muted);
+          toggleMuteRef.current();
         },
         c: () => {
           setSelectedSubtitleId((current) =>
@@ -2727,7 +2839,7 @@ const VideoPlayer = ({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [isImmersive, togglePlay, stepFrame, toggleFullscreen, subtitleTracks]);
+  }, [isImmersive, isAsking, togglePlay, stepFrame, toggleFullscreen, subtitleTracks]);
 
   useEffect(() => {
     if (!isImmersive) {
@@ -2804,16 +2916,20 @@ const VideoPlayer = ({
     }
 
     const next = following;
-    const quality =
-      request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality;
+    const { requestedQuality, autoRung } = request;
     const rememberedAudio = readPlaybackPreferences().audioLanguage;
     const clientId = platformInUse().thisClientId();
 
     readied.readyAhead(next.id, async () => {
       const known =
-        rememberedAudio === null
+        rememberedAudio === null && (requestedQuality === 'auto' || requestedQuality === 'original')
           ? null
           : await cache.ensureQueryData(libraryQueries.detail(next.id)).catch(() => null);
+      const quality = qualityToAsk(
+        requestedQuality,
+        autoRung,
+        known === null ? null : (sharpestStepOf(known)?.id ?? null),
+      );
       const audioStreamIndex =
         rememberedAudio === null
           ? undefined
@@ -2886,33 +3002,34 @@ const VideoPlayer = ({
       data-slot="player-header"
       className={
         isImmersive
-          ? `absolute inset-x-0 top-0 z-40 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-text transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-              isBarUp ? 'translate-y-0' : 'pointer-events-none -translate-y-full'
+          ? `valence-on-film absolute inset-x-0 top-0 z-40 flex items-start gap-4 bg-linear-to-b from-shade/70 via-shade/25 to-transparent px-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-16 pl-[calc(1.25rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] text-on-scrim transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
+              isBarUp
+                ? 'translate-y-0 opacity-100 duration-[var(--duration-base)]'
+                : 'pointer-events-none -translate-y-2 opacity-0 duration-[var(--duration-leaving)]'
             }`
           : 'flex items-center gap-4'
       }
     >
-      <div className="w-24 shrink-0" aria-hidden />
-
       <h2
-        className={`flex-1 truncate text-center text-lg font-medium ${
+        data-slot="film-text"
+        className={`min-w-0 flex-1 truncate pt-1.5 text-base font-semibold tracking-tight sm:text-lg ${
           isImmersive ? '' : 'text-text'
         }`}
       >
         {describePlaying(media)}
       </h2>
 
-      <div className="flex w-24 shrink-0 justify-end">
-        <Button
-          isIconOnly
-          variant="overlay"
-          label={say('common.close')}
-          onClick={onClose}
-          size="md"
-        >
-          <Icon of={XIcon} size={20} />
-        </Button>
-      </div>
+      <Button
+        isIconOnly
+        isPill
+        variant={isImmersive ? 'ghost' : 'overlay'}
+        label={say('common.close')}
+        onClick={onClose}
+        size="lg"
+        className={isImmersive ? 'size-10 text-on-scrim' : ''}
+      >
+        <Icon of={XIcon} size={22} />
+      </Button>
     </header>
   );
 
@@ -2986,7 +3103,7 @@ const VideoPlayer = ({
           <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">
             <span
               role="status"
-              className="rounded-full border border-overlay-line bg-overlay px-4 py-2 text-sm font-medium text-on-scrim backdrop-blur-md"
+              className="rounded-full bg-shade/60 px-4 py-2 text-sm font-medium text-on-scrim backdrop-blur-md"
             >
               {say('client.playback.playbackProblems.reconnecting')}
             </span>
@@ -3063,6 +3180,8 @@ const VideoPlayer = ({
           </div>
         )}
 
+        <StageCue cue={cue} isPlaying={isPlaying} />
+
         <Toaster id={PLAYER_TOASTS} position="top-center" />
 
         {castState !== 'connected' ? null : (
@@ -3102,7 +3221,7 @@ const VideoPlayer = ({
               size="lg"
             />
 
-            <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
+            <p className="rounded-full bg-shade/60 px-4 py-1.5 text-sm font-medium text-on-scrim backdrop-blur-md">
               {party?.isHeld === true
                 ? waitingWord(party.waitingFor)
                 : say(WAITING_FOR_MORE[whatIsPlaying(media)])}
@@ -3152,6 +3271,7 @@ const VideoPlayer = ({
               delivered={delivered}
               engine={engineStats}
               sessionStartSeconds={request.startSeconds}
+              history={statsHistory}
               {...(party === undefined
                 ? {}
                 : {
@@ -3172,24 +3292,25 @@ const VideoPlayer = ({
         ) : null}
 
         <div
-          className="absolute right-[calc(0.75rem+env(safe-area-inset-right,0px))] z-10 flex flex-col items-end gap-3 transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
+          className="pointer-events-none absolute left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-[15] flex flex-col items-end gap-3 *:pointer-events-auto transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
           style={{
             bottom: isBarUp
-              ? `calc(${(controlsTall + CLEAR_OF_THE_CONTROLS * 2).toString()}px + env(safe-area-inset-bottom, 0px))`
+              ? `calc(${(Math.max(controlsTall, CONTROLS_TALL_AT_LEAST) + CLEAR_OF_THE_CONTROLS * 2).toString()}px + env(safe-area-inset-bottom, 0px))`
               : CLEAR_OF_THE_EDGE,
           }}
         >
           {skippable === null ? null : (
             <Button
-              size="xl"
-              variant="overlay"
-              className="px-7"
+              size="lg"
+              variant="confirm"
+              isPill
+              className="px-5"
               onClick={() => {
                 seek(skippable.endSeconds);
               }}
             >
               {describeSkip(skippable)}
-              <Icon of={SkipForwardFilledIcon} size={20} />
+              <Icon of={SkipForwardFilledIcon} size={18} />
             </Button>
           )}
 
@@ -3210,9 +3331,20 @@ const VideoPlayer = ({
         </div>
 
         <div
-          ref={controlsRef}
-          className={`absolute z-[15] bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(0.75rem+env(safe-area-inset-left,0px))] right-[calc(0.75rem+env(safe-area-inset-right,0px))] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-            isBarUp ? 'translate-y-0' : 'pointer-events-none translate-y-[calc(100%_+_1.5rem)]'
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[14] h-56 bg-linear-to-t from-shade/80 via-shade/35 to-transparent transition-opacity ease-[var(--ease-out)] motion-reduce:transition-none ${
+            isBarUp
+              ? 'opacity-100 duration-[var(--duration-base)]'
+              : 'opacity-0 duration-[var(--duration-leaving)]'
+          }`}
+        />
+
+        <div
+          ref={holdControls}
+          className={`absolute z-[15] bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
+            isBarUp
+              ? 'translate-y-0 opacity-100 duration-[var(--duration-base)]'
+              : 'pointer-events-none translate-y-2 opacity-0 duration-[var(--duration-leaving)]'
           }`}
         >
           <PlayerControls
@@ -3263,9 +3395,14 @@ const VideoPlayer = ({
             selectedAudioIndex={selectedAudioIndex}
             availableQualitySteps={availableQualitySteps}
             originalLabel={detail === null ? say('common.original') : originalLabel(detail)}
+            originalStep={detail === null ? null : (sharpestStepOf(detail)?.id ?? null)}
             qualityStepsSavingNothing={qualityStepsSavingNothing}
             qualityStepCosts={qualityStepCosts}
-            selectedQuality={request.requestedQuality}
+            selectedQuality={
+              detail !== null && sharpestStepOf(detail)?.id === request.requestedQuality
+                ? 'auto'
+                : request.requestedQuality
+            }
             autoRung={
               isOnALadder && typeof ladder?.activeHeight === 'number'
                 ? rungOfHeight(ladder.activeHeight)
@@ -3294,14 +3431,15 @@ const VideoPlayer = ({
               setCaptionStyle(DEFAULT_CAPTION_STYLE);
             }}
             onVolumeChange={(next) => {
+              if (next > 0) {
+                loudestRef.current = next;
+              }
+
               setVolume(next);
               isSilencedByPolicyRef.current = false;
               setIsMuted(next === 0);
             }}
-            onToggleMute={() => {
-              isSilencedByPolicyRef.current = false;
-              setIsMuted((muted) => !muted);
-            }}
+            onToggleMute={toggleMute}
             onToggleFullscreen={toggleFullscreen}
             {...(hasTelevision
               ? {
@@ -3324,6 +3462,7 @@ const VideoPlayer = ({
               if (!isReachableOrigin(window.location.origin)) {
                 notify.failed(say('screens.videoPlayer.openValenceAtItsAddressOn'), {
                   where: PLAYER_TOASTS,
+                  isCompact: true,
                   id: CAST_NOTICE,
                 });
 
@@ -3349,7 +3488,7 @@ const VideoPlayer = ({
                   window.location.protocol === 'https:'
                     ? say('screens.videoPlayer.thisBrowserOfferedNoDeviceSafari')
                     : say('screens.videoPlayer.thisBrowserOnlyCastsOverA'),
-                  { where: PLAYER_TOASTS, id: CAST_NOTICE },
+                  { where: PLAYER_TOASTS, isCompact: true, id: CAST_NOTICE },
                 );
               });
             }}
@@ -3360,6 +3499,9 @@ const VideoPlayer = ({
             }}
             subtitleOffsetSeconds={subtitleOffset}
             onSubtitleOffsetChange={setSubtitleOffset}
+            renderChapterFrame={(seconds: number) => (
+              <TrickplayFrame trickplay={trickplay} seconds={seconds} isFluid />
+            )}
             renderPreview={(seconds: number) => (
               <TrickplayPreview
                 trickplay={trickplay}
@@ -3370,10 +3512,24 @@ const VideoPlayer = ({
           />
         </div>
 
-        {isImmersive && isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
+        {isImmersive && isFullscreen ? (
+          <PausedScreen
+            media={media}
+            isShown={isResting}
+            secondsLeft={Math.max(duration - position, 0)}
+            {...(stillWatching === undefined ? {} : { asking: stillWatching })}
+          />
+        ) : null}
       </div>
 
-      {isImmersive && !isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
+      {isImmersive && !isFullscreen ? (
+        <PausedScreen
+          media={media}
+          isShown={isResting}
+          secondsLeft={Math.max(duration - position, 0)}
+          {...(stillWatching === undefined ? {} : { asking: stillWatching })}
+        />
+      ) : null}
 
       <PlayOnDialog
         media={sendingAt === null ? null : { id: media.id, title: media.title }}

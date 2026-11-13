@@ -1,3 +1,4 @@
+import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
@@ -56,7 +57,7 @@ type ListItemsOptions = {
   yearTo?: number;
   minRating?: number;
   ids?: string[];
-  order?: 'title' | 'newest' | 'yourRating';
+  order?: 'title' | 'newest' | 'rated' | 'yourRating';
   minYourStars?: number;
   withVersions?: boolean;
   limit?: number;
@@ -155,34 +156,30 @@ const updateLibrary = async (libraryId: string, input: UpdateLibraryInput): Prom
 };
 
 /**
- * Reads one page of a library in one request.
+ * Writes what is asked of a library's items as the query of its address.
  *
- * @param libraryId - The library to read.
  * @param options - What to search for, what to narrow by, and which page to read.
- * @returns The page, and how many items match in total.
+ * @returns The query.
  */
-const fetchOnePage = async (
-  libraryId: string,
-  {
-    search,
-    kind,
-    genre,
-    genres,
-    decades,
-    audioLanguages,
-    audioCodecs,
-    audioChannels,
-    yearFrom,
-    yearTo,
-    minRating,
-    ids,
-    order,
-    minYourStars,
-    withVersions = false,
-    limit = 60,
-    offset = 0,
-  }: ListItemsOptions = {},
-): Promise<MediaPage> => {
+const itemsQueryOf = ({
+  search,
+  kind,
+  genre,
+  genres,
+  decades,
+  audioLanguages,
+  audioCodecs,
+  audioChannels,
+  yearFrom,
+  yearTo,
+  minRating,
+  ids,
+  order,
+  minYourStars,
+  withVersions = false,
+  limit = 60,
+  offset = 0,
+}: ListItemsOptions = {}): URLSearchParams => {
   const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
 
   if (search !== undefined && search.trim() !== '') {
@@ -245,16 +242,16 @@ const fetchOnePage = async (
     query.set('versions', 'all');
   }
 
-  const response = await fetch(
-    say('client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery', {
-      libraryId,
-      query: query.toString(),
-    }),
-    {
-      headers: { accept: 'application/json' },
-    },
-  );
+  return query;
+};
 
+/**
+ * Checks a page of items the server sent, and learns the artwork it names.
+ *
+ * @param response - What the server answered.
+ * @returns The page, and how many items match in total.
+ */
+const pageOf = async (response: Response): Promise<MediaPage> => {
   if (!response.ok) {
     throw new Error(`Items request failed with status ${response.status.toString()}`);
   }
@@ -262,8 +259,60 @@ const fetchOnePage = async (
   const page = MediaPageSchema.parse(await response.json());
 
   artworkRevisions.learn(page.items);
+  artworkAddresses.learn(page.items);
 
   return page;
+};
+
+/**
+ * Reads one page of a library in one request.
+ *
+ * @param libraryId - The library to read.
+ * @param options - What to search for, what to narrow by, and which page to read.
+ * @returns The page, and how many items match in total.
+ */
+const fetchOnePage = async (
+  libraryId: string,
+  options: ListItemsOptions = {},
+): Promise<MediaPage> =>
+  pageOf(
+    await fetch(
+      say('client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery', {
+        libraryId,
+        query: itemsQueryOf(options).toString(),
+      }),
+      { headers: { accept: 'application/json' } },
+    ),
+  );
+
+/**
+ * Reads one page of what several libraries hold together in one request, ordered across them all,
+ * rather than a page from each. Uncounted, the total is only how far this page reaches, which is all
+ * a rail wants and spares the server counting every match.
+ *
+ * @param libraryIds - The libraries to read.
+ * @param options - What to search for, what to narrow by, and which page to read.
+ * @param isCounted - Whether to count every match.
+ * @returns The page, and how many items match in total.
+ */
+const fetchItemsAcross = async (
+  libraryIds: readonly string[],
+  options: ListItemsOptions = {},
+  isCounted = true,
+): Promise<MediaPage> => {
+  const query = itemsQueryOf(options);
+
+  query.set('libraryIds', libraryIds.join(','));
+
+  if (!isCounted) {
+    query.set('counted', 'no');
+  }
+
+  return pageOf(
+    await fetch(['/api/library-items', query.toString()].join('?'), {
+      headers: { accept: 'application/json' },
+    }),
+  );
 };
 
 /**
@@ -666,6 +715,7 @@ export {
   createLibrary,
   updateLibrary,
   fetchLibraryItems,
+  fetchItemsAcross,
   moveMedia,
   fetchMediaDetail,
   scanLibrary,

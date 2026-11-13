@@ -1289,7 +1289,7 @@ describe('telling plugins what happened', () => {
 
     expect(answered).toMatchObject({ kind: 'answered', status: 200 });
     expect(answered.kind === 'answered' ? JSON.parse(answered.body) : null).toEqual({
-      person: { profileId: 'profile-1', name: 'Profile profile-1' },
+      person: { profileId: 'profile-1', name: 'Profile profile-1', login: made.password.login },
       path: 'ping.view',
       query: { u: [made.password.login], f: ['json'] },
       title: A_PLUGIN_MEDIA_FOR_TEST.title,

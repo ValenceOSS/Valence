@@ -9,6 +9,7 @@ import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
+import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
 import { ATitle } from './ATitle';
 import { MediaDetailSchema, MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { useLikeThis } from '@ValenceClient/library/useLikeThis';
@@ -84,6 +85,7 @@ const ALIKE = MediaSummarySchema.parse({
 });
 
 beforeEach(() => {
+  holdAWindowOf(393, 852);
   jest.mocked(useLikeThis).mockReset().mockReturnValue([ALIKE]);
   jest.mocked(fetchMediaDetail).mockReset();
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
@@ -545,5 +547,60 @@ describe('ATitle', () => {
     await pickFromAMenu('Watch together');
 
     expect(onStartParty).toHaveBeenCalledWith('one', 0);
+  });
+
+  it('sets its facts above its badges on a phone', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(
+      detailOf({
+        metadata: { ...detailOf().metadata, certification: '15', certificationRegion: 'GB' },
+      }),
+    );
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('2016 · 1h 56m')).toBeTruthy();
+    expect(drawn.getByText('2016 · 1h 56m').parent).not.toHaveStyle({ flexWrap: 'wrap' });
+    expect(drawn.getByLabelText('Rated 15 by the BBFC')).toBeTruthy();
+    expect(drawn.getByText('4K')).toBeTruthy();
+  });
+
+  it('lays its facts and badges out in one row, opened out', async () => {
+    holdAWindowOf(669, 871);
+    jest.mocked(fetchMediaDetail).mockResolvedValue(
+      detailOf({
+        metadata: { ...detailOf().metadata, certification: '15', certificationRegion: 'GB' },
+      }),
+    );
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('2016 · 1h 56m')).toBeTruthy();
+    expect(drawn.getByText('2016 · 1h 56m').parent).toHaveStyle({ flexWrap: 'wrap' });
+    expect(drawn.getByLabelText('Rated 15 by the BBFC')).toBeTruthy();
+    expect(drawn.getByText('4K')).toBeTruthy();
   });
 });

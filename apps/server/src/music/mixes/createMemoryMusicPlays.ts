@@ -11,8 +11,8 @@ const createMemoryMusicPlays = (now: () => number = Date.now): MusicPlays => {
   const heard: { profileId: string; trackId: string; atMs: number }[] = [];
 
   return {
-    record: (profileId, trackId) => {
-      heard.push({ profileId, trackId, atMs: now() });
+    record: (profileId, trackId, playedAtMs) => {
+      heard.push({ profileId, trackId, atMs: playedAtMs ?? now() });
 
       return Promise.resolve();
     },

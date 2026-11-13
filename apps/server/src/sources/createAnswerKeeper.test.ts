@@ -25,6 +25,17 @@ describe('createAnswerKeeper', () => {
     expect(asked()).toBe(1);
   });
 
+  it('says whether it holds an answer, without asking for one', async () => {
+    const keeper = createAnswerKeeper<string | null>(1000);
+    const { read, asked } = counting(() => Promise.resolve('an answer'));
+
+    expect(keeper.holds('one')).toBe(false);
+    await keeper.keep('one', read);
+    expect(keeper.holds('one')).toBe(true);
+    expect(keeper.holds('two')).toBe(false);
+    expect(asked()).toBe(1);
+  });
+
   it('keeps a site saying it has nothing, since asking again would say the same', async () => {
     const keeper = createAnswerKeeper<string | null>(1000);
     const { read, asked } = counting(() => Promise.resolve(null));

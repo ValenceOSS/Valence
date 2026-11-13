@@ -1,5 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
-import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { streamQueries } from '@ValenceClient/query/streamQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -9,23 +15,28 @@ import { tasteOf } from '@ValenceClient/library/tasteOf';
 import { carryingOn } from '@ValenceClient/library/carryingOn';
 import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { MediaPage, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
+import { shelfTitle } from '@ValenceClient/library/shelfTitle';
 import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 
 const FIRST_GENRES = 6;
 
-const GENRE_BATCH = 4;
+const GENRE_BATCH = 6;
+
+const BATCHES_AHEAD = 2;
 
 const DECADE_BATCH = 4;
 
 const DECADE_SPAN = 9;
 
-const ENCORE_BATCH = 3;
+const ENCORE_BATCH = 12;
+
+const ENCORE_REACH = 20;
 
 const ENCORE_ORDERS = ['newest', 'title'] as const;
 
@@ -37,7 +48,23 @@ const LIKED_READ = 60;
 
 const ACCLAIMED_FROM = 7.5;
 
+const ENCORE_KINDS = 3;
+
+const DRY_ROUNDS = 2;
+
+const SHELVES_A_PAGE = 10;
+
+const TAIL_ROW = /^(?:genre|decade|more|again):/u;
+
 const NOTHING: readonly MediaSummary[] = [];
+
+type Encore = {
+  at: number;
+  genre: string;
+  order: 'newest' | 'title' | null;
+  decade: number | null;
+  page: number;
+};
 
 const NO_TASTE: readonly string[] = [];
 
@@ -59,30 +86,54 @@ const answersOf = (
   results.map(({ data, isLoading, isPlaceholderData }) => ({ data, isLoading, isPlaceholderData }));
 
 /**
- * What to call a shelf in the endless tail, which is a genre seen from a particular angle: the newest
- * of it, the whole of it by name, or the part of it belonging to one decade.
+ * Keeps what the rows read from a set of counted questions: each one's page, how many match in all,
+ * whether it is still being asked, and whether the answer is only the one from before.
  *
- * @param genre - The genre the shelf is drawn from.
- * @param order - The order it is arranged in, where the angle is an arrangement.
- * @param decade - The decade it is narrowed to, where the angle is a decade.
- * @returns What the row says it is.
+ * @param results - The questions, as asked.
+ * @returns Each one's page and total, whether it is still being read, and whether it is the one from
+ *   before.
  */
-const encoreTitle = (
-  genre: string,
-  order: 'newest' | 'title' | null,
-  decade: number | null,
-): string => {
-  if (decade !== null) {
-    return say('client.library.useHomeRows.genreFromTheDecadeS', {
-      genre,
-      decade: decade.toString(),
-    });
-  }
+const pageAnswersOf = (
+  results: readonly {
+    data: MediaPage | undefined;
+    isLoading: boolean;
+    isPlaceholderData: boolean;
+  }[],
+): {
+  data: MediaSummary[] | undefined;
+  total: number | undefined;
+  isLoading: boolean;
+  isPlaceholderData: boolean;
+}[] =>
+  results.map(({ data, isLoading, isPlaceholderData }) => ({
+    data: data?.items,
+    total: data?.total,
+    isLoading,
+    isPlaceholderData,
+  }));
 
-  return order === 'newest'
-    ? say('client.library.useHomeRows.newInGenre', { genre })
-    : `${genre} A–Z`;
-};
+/**
+ * What to ask the server for to fill a shelf in the endless tail.
+ *
+ * @param encore - The genre, and the angle it is seen from.
+ * @param encore.genre - The genre.
+ * @param encore.order - The order it is arranged in, where the angle is an arrangement.
+ * @param encore.decade - The decade it is narrowed to, where the angle is a decade.
+ * @param encore.page - How far past the genre's own row it reaches, where the angle is going deeper.
+ * @returns The question.
+ */
+const encoreAsked = ({
+  genre,
+  order,
+  decade,
+  page,
+}: Pick<Encore, 'genre' | 'order' | 'decade' | 'page'>): ListItemsOptions => ({
+  genre,
+  limit: ROW_LIMIT,
+  ...(order === null ? { order: 'rated' as const } : { order }),
+  ...(decade === null ? {} : { yearFrom: decade, yearTo: decade + DECADE_SPAN }),
+  ...(page === 0 ? {} : { offset: page * ROW_LIMIT }),
+});
 
 /**
  * Orders things newest first, by when they were added.
@@ -131,13 +182,15 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * What somebody is part way through and has liked is read from the hidden library films played
  * from sources are kept in as well, since those are theirs to resume though they are in no library.
  *
- * Each question is put to every library and the answers laid end to end, so each row is sorted
- * again once they are together — otherwise the first library's newest would fill the row before
- * the second's newest were looked at.
+ * Each question is put to every library at once and answered in one order across them all, the
+ * genre and decade rows best-rated first.
  *
  * Past the genres and decades it goes on with the same genres in other orders and eras, each once:
  * a row already shown is not shown again, and once every one has been, there are no more to ask
- * for.
+ * for. Once they all have been, the rows come round again, each round in an order of its own, so the
+ * page goes on for as long as somebody scrolls. Asking for more asks for a number of rows to show rather than of questions to put, so a genre,
+ * decade or angle with too little in it to make a row is passed over and the next asked for in its
+ * place, and the page never stops short because the last few questions came back empty.
  *
  * @param viewerId - Whose front page it is, whose favourites and ratings decide what is offered.
  * @param watchable - The libraries holding something to watch.
@@ -164,15 +217,30 @@ const useHomeRows = (
   const cache = useQueryClient();
   const [readFrom, setReadFrom] = useState(watchable);
 
-  const rowOf = (options: ListItemsOptions) => ({
-    ...libraryQueries.across(watchable, options),
-    enabled: canAsk,
-    placeholderData: (): MediaSummary[] | undefined =>
-      cache.getQueryData(libraryQueries.across(readFrom, options).queryKey),
-  });
+  const rowOf = useCallback(
+    (options: ListItemsOptions) => ({
+      ...libraryQueries.across(watchable, options),
+      enabled: canAsk,
+      placeholderData: (): MediaSummary[] | undefined =>
+        cache.getQueryData(libraryQueries.across(readFrom, options).queryKey),
+    }),
+    [watchable, canAsk, cache, readFrom],
+  );
+
+  const countedRowOf = useCallback(
+    (options: ListItemsOptions) => ({
+      ...libraryQueries.acrossCounted(watchable, options),
+      enabled: canAsk,
+      placeholderData: (): MediaPage | undefined =>
+        cache.getQueryData(libraryQueries.acrossCounted(readFrom, options).queryKey),
+    }),
+    [watchable, canAsk, cache, readFrom],
+  );
   const [genreLimit, setGenreLimit] = useState(FIRST_GENRES);
   const [decadeLimit, setDecadeLimit] = useState(0);
   const [encoreLimit, setEncoreLimit] = useState(0);
+  const [againLimit, setAgainLimit] = useState(0);
+  const [tailWanted, setTailWanted] = useState(FIRST_GENRES);
 
   const favourites = useQuery(viewingQueries.favourites(viewerId));
   const ratings = useQuery({
@@ -182,7 +250,8 @@ const useHomeRows = (
         rating.mediaId !== null && rating.stars >= LIKED_STARS ? [rating.mediaId] : [],
       ),
   });
-  const facets = useQuery({ ...libraryQueries.facets(), enabled: canAsk });
+  const hasShelves = useServerHas('library.homeShelves') === true;
+  const facets = useQuery({ ...libraryQueries.facets(), enabled: canAsk && !hasShelves });
 
   const resumingIds = useMemo(
     () => [...progress.values()].filter(isOnContinueWatching).map((one) => one.mediaId),
@@ -248,6 +317,16 @@ const useHomeRows = (
 
   const taste = keptTaste ?? NO_TASTE;
 
+  const shelvesRead = useInfiniteQuery({
+    ...libraryQueries.homeShelves(watchable, taste, SHELVES_A_PAGE),
+    enabled: canAsk && hasShelves && keptTaste !== null,
+  });
+
+  const shelves = useMemo(
+    () => shelvesRead.data?.pages.flatMap((one) => one.shelves) ?? [],
+    [shelvesRead.data],
+  );
+
   const everyGenre = useMemo(
     () =>
       keptTaste !== null && facets.data !== undefined
@@ -258,9 +337,14 @@ const useHomeRows = (
 
   const genres = useMemo(() => everyGenre.slice(0, genreLimit), [everyGenre, genreLimit]);
 
+  const genreQueries = useMemo(
+    () => genres.map((genre) => countedRowOf({ genre, order: 'rated', limit: ROW_LIMIT })),
+    [genres, countedRowOf],
+  );
+
   const byGenre = useQueries({
-    queries: genres.map((genre) => rowOf({ genre, limit: ROW_LIMIT })),
-    combine: answersOf,
+    queries: genreQueries,
+    combine: pageAnswersOf,
   });
 
   const everyDecade = useMemo(
@@ -271,14 +355,59 @@ const useHomeRows = (
 
   const decades = useMemo(() => everyDecade.slice(0, decadeLimit), [everyDecade, decadeLimit]);
 
+  const decadeQueries = useMemo(
+    () =>
+      decades.map((decade) =>
+        rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, order: 'rated', limit: ROW_LIMIT }),
+      ),
+    [decades, rowOf],
+  );
+
   const byDecade = useQueries({
-    queries: decades.map((decade) =>
-      rowOf({ yearFrom: decade, yearTo: decade + DECADE_SPAN, limit: ROW_LIMIT }),
-    ),
+    queries: decadeQueries,
     combine: answersOf,
   });
 
   const areGenresSettled = byGenre.every((one) => !one.isLoading);
+  const areDecadesSettled = byDecade.every((one) => !one.isLoading);
+
+  const aheadQueries = useMemo(
+    () => [
+      ...everyGenre.slice(genreLimit, genreLimit + GENRE_BATCH * BATCHES_AHEAD).map((genre) => ({
+        ...countedRowOf({ genre, order: 'rated', limit: ROW_LIMIT }),
+        enabled: canAsk && areGenresSettled,
+      })),
+      ...(everyGenre.length > genreLimit
+        ? []
+        : everyDecade
+            .slice(decadeLimit, decadeLimit + DECADE_BATCH * BATCHES_AHEAD)
+            .map((decade) => ({
+              ...rowOf({
+                yearFrom: decade,
+                yearTo: decade + DECADE_SPAN,
+                order: 'rated',
+                limit: ROW_LIMIT,
+              }),
+              enabled: canAsk && areGenresSettled && areDecadesSettled,
+            }))),
+    ],
+    [
+      everyGenre,
+      genreLimit,
+      everyDecade,
+      decadeLimit,
+      rowOf,
+      countedRowOf,
+      canAsk,
+      areGenresSettled,
+      areDecadesSettled,
+    ],
+  );
+
+  useQueries({
+    queries: aheadQueries,
+    combine: () => null,
+  });
 
   const shownGenres = useMemo(
     () =>
@@ -288,61 +417,145 @@ const useHomeRows = (
     [areGenresSettled, genres, byGenre],
   );
 
-  const encores = useMemo(
-    () =>
-      Array.from({ length: encoreLimit }, (_, at) => {
-        const step = Math.floor(at / 2);
+  const pagesKey = genres
+    .map((genre, at) =>
+      [genre, Math.ceil((byGenre[at]?.total ?? 0) / ROW_LIMIT).toString()].join('\t'),
+    )
+    .join('\n');
 
-        if (at % 2 === 0) {
+  const pagesOf = useMemo(
+    () =>
+      new Map(
+        pagesKey.split('\n').map((line) => {
+          const [genre = '', pages = '0'] = line.split('\t');
+
+          return [genre, Number(pages)] as const;
+        }),
+      ),
+    [pagesKey],
+  );
+
+  const encoresUpTo = useCallback(
+    (limit: number) => {
+      const seen = new Set<string>();
+
+      return Array.from({ length: limit }, (_, at): Encore | null => {
+        const step = Math.floor(at / ENCORE_KINDS);
+        const across = Math.max(1, everyGenre.length);
+
+        if (at % ENCORE_KINDS === 0) {
           const wide = Math.max(1, shownGenres.length);
           const genre = shownGenres[step % wide];
           const order = ENCORE_ORDERS[Math.floor(step / wide) % ENCORE_ORDERS.length];
 
           return genre === undefined || order === undefined
             ? null
-            : { at, genre, order, decade: null };
+            : { at, genre, order, decade: null, page: 0 };
         }
 
-        const across = Math.max(1, everyGenre.length);
-        const deep = Math.max(1, everyDecade.length);
-        const genre = everyGenre[step % across];
-        const decade = everyDecade[Math.floor(step / across) % deep];
+        if (at % ENCORE_KINDS === 1) {
+          const deep = Math.max(1, everyDecade.length);
+          const genre = everyGenre[step % across];
+          const decade = everyDecade[Math.floor(step / across) % deep];
 
-        return genre === undefined || decade === undefined
+          return genre === undefined || decade === undefined
+            ? null
+            : { at, genre, order: null, decade, page: 0 };
+        }
+
+        const genre = everyGenre[step % across];
+        const page = 1 + Math.floor(step / across);
+
+        return genre === undefined || page >= (pagesOf.get(genre) ?? 0)
           ? null
-          : { at, genre, order: null, decade };
-      })
-        .filter((one) => one !== null)
-        .filter(
-          (one, index, all) =>
-            all.findIndex(
-              (other) =>
-                other.genre === one.genre &&
-                other.order === one.order &&
-                other.decade === one.decade,
-            ) === index,
-        ),
-    [encoreLimit, shownGenres, everyGenre, everyDecade],
+          : { at, genre, order: null, decade: null, page };
+      }).filter((one): one is Encore => {
+        if (one === null) {
+          return false;
+        }
+
+        const key = [one.genre, one.order, one.decade, one.page].join(' ');
+
+        if (seen.has(key)) {
+          return false;
+        }
+
+        seen.add(key);
+
+        return true;
+      });
+    },
+    [shownGenres, everyGenre, everyDecade, pagesOf],
   );
 
-  const encoreRoom =
-    2 *
+  const encores = useMemo(() => encoresUpTo(encoreLimit), [encoresUpTo, encoreLimit]);
+
+  const encoreQueries = useMemo(
+    () =>
+      encores.map(({ genre, order, decade, page }) =>
+        rowOf(encoreAsked({ genre, order, decade, page })),
+      ),
+    [encores, rowOf],
+  );
+
+  const byEncore = useQueries({
+    queries: encoreQueries,
+    combine: answersOf,
+  });
+
+  const areEncoresSettled = byEncore.every((one) => !one.isLoading);
+
+  const thinAtTheEnd =
+    byEncore.length -
+    1 -
+    byEncore.findLastIndex((one) => one.isLoading || (one.data ?? NOTHING).length >= MIN_ROW);
+  const finiteRoom =
+    ENCORE_KINDS *
     Math.max(
       Math.max(1, shownGenres.length) * ENCORE_ORDERS.length,
       Math.max(1, everyGenre.length) * Math.max(1, everyDecade.length),
     );
-  const hasMoreEncores = shownGenres.length > 0 && encoreLimit < encoreRoom;
+  const deepest = new Map<string, number>();
 
-  const byEncore = useQueries({
-    queries: encores.map(({ genre, order, decade }) =>
-      rowOf({
-        genre,
-        limit: ROW_LIMIT,
-        ...(order === null ? {} : { order }),
-        ...(decade === null ? {} : { yearFrom: decade, yearTo: decade + DECADE_SPAN }),
-      }),
-    ),
-    combine: answersOf,
+  for (const one of encores) {
+    deepest.set(one.genre, Math.max(deepest.get(one.genre) ?? 0, one.page));
+  }
+
+  const canGoDeeper = everyGenre.some(
+    (genre) => (deepest.get(genre) ?? 0) + 1 < (pagesOf.get(genre) ?? 0),
+  );
+  const hasMoreEncores =
+    shownGenres.length > 0 &&
+    (encoreLimit < finiteRoom || canGoDeeper) &&
+    thinAtTheEnd < DRY_ROUNDS * Math.max(1, everyGenre.length);
+
+  const encoresAheadQueries = useMemo(
+    () =>
+      everyGenre.length > genreLimit || everyDecade.length > decadeLimit
+        ? []
+        : encoresUpTo(encoreLimit + ENCORE_BATCH * BATCHES_AHEAD)
+            .slice(encores.length)
+            .map(({ genre, order, decade, page }) => ({
+              ...rowOf(encoreAsked({ genre, order, decade, page })),
+              enabled: canAsk && areEncoresSettled,
+            })),
+    [
+      everyGenre,
+      genreLimit,
+      everyDecade,
+      decadeLimit,
+      encoresUpTo,
+      encoreLimit,
+      encores.length,
+      rowOf,
+      canAsk,
+      areEncoresSettled,
+    ],
+  );
+
+  useQueries({
+    queries: encoresAheadQueries,
+    combine: () => null,
   });
 
   const hasPluginRows = useServerHas('plugins.homeRows');
@@ -353,9 +566,15 @@ const useHomeRows = (
 
   const rails = useMemo(() => {
     const leanings = new Set(taste.slice(0, TASTE_DEPTH));
-    const candidates = genres.flatMap((genre, at) =>
-      leanings.has(genre) ? (byGenre[at]?.data ?? NOTHING) : NOTHING,
-    );
+    const candidates = hasShelves
+      ? shelves.flatMap((one) =>
+          one.kind === 'genre' && one.genre !== null && leanings.has(one.genre)
+            ? one.items
+            : NOTHING,
+        )
+      : genres.flatMap((genre, at) =>
+          leanings.has(genre) ? (byGenre[at]?.data ?? NOTHING) : NOTHING,
+        );
 
     return homeRows({
       resuming: carryingOn(
@@ -378,9 +597,9 @@ const useHomeRows = (
         decade,
         items: [...(byDecade[at]?.data ?? NOTHING)].sort(byRating),
       })),
-      more: encores.map(({ at, genre, order, decade }, index) => ({
+      more: encores.map(({ at, genre, order, decade, page }, index) => ({
         id: `more:${at.toString()}`,
-        title: encoreTitle(genre, order, decade),
+        title: shelfTitle({ genre, order, decade, page }),
         items: [...(byEncore[index]?.data ?? NOTHING)],
       })),
       fromPlugins: (fromPlugins.data?.rows ?? []).map((one) => ({
@@ -391,8 +610,13 @@ const useHomeRows = (
         }),
         items: one.items.filter((media) => watchable.includes(media.libraryId)),
       })),
+      again: againLimit,
+      shelves,
     });
   }, [
+    againLimit,
+    hasShelves,
+    shelves,
     fromPlugins.data,
     taste,
     genres,
@@ -420,7 +644,8 @@ const useHomeRows = (
       acclaimed.isLoading ||
       resuming.isLoading ||
       upNext.isLoading ||
-      byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading));
+      byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading) ||
+      (hasShelves && shelvesRead.isLoading));
 
   if (!hasDrawn && canAsk && !isReadingFirst) {
     setHasDrawn(true);
@@ -438,31 +663,72 @@ const useHomeRows = (
 
   const hasMoreGenres = everyGenre.length > genreLimit;
   const hasMoreDecades = everyDecade.length > decadeLimit;
+  const hasMoreTail = hasMoreGenres || hasMoreDecades || hasMoreEncores;
+  const tailShown = rails.filter((rail) => TAIL_ROW.test(rail.id)).length;
+  const canComeRoundAgain = !hasMoreTail && shownGenres.length > 0;
+  const isTailSettled = areGenresSettled && areDecadesSettled && areEncoresSettled;
 
-  const showMore = useCallback(() => {
+  useEffect(() => {
+    if (!canAsk || !hasDrawn || !isTailSettled || tailShown >= tailWanted) {
+      return;
+    }
+
     if (hasMoreGenres) {
       setGenreLimit((limit) => limit + GENRE_BATCH);
-
-      return;
-    }
-
-    if (hasMoreDecades) {
+    } else if (hasMoreDecades) {
       setDecadeLimit((limit) => limit + DECADE_BATCH);
+    } else if (hasMoreEncores) {
+      const wanted = encores.length + tailWanted - tailShown;
+      const room = encoreLimit + ENCORE_KINDS * Math.max(1, everyGenre.length) * ENCORE_REACH;
+      let limit = encoreLimit + ENCORE_BATCH;
+
+      while (limit < room && encoresUpTo(limit).length < wanted) {
+        limit += ENCORE_BATCH;
+      }
+
+      setEncoreLimit(limit);
+    } else if (canComeRoundAgain && tailWanted > FIRST_GENRES) {
+      setAgainLimit((limit) => limit + tailWanted - tailShown);
+    }
+  }, [
+    canComeRoundAgain,
+    canAsk,
+    hasDrawn,
+    isTailSettled,
+    tailShown,
+    tailWanted,
+    genreLimit,
+    decadeLimit,
+    encoreLimit,
+    encores.length,
+    encoresUpTo,
+    everyGenre.length,
+    hasMoreGenres,
+    hasMoreDecades,
+    hasMoreEncores,
+  ]);
+
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = shelvesRead;
+
+  const showMore = useCallback(() => {
+    if (hasShelves) {
+      if (!isFetchingNextPage) {
+        void fetchNextPage();
+      }
 
       return;
     }
 
-    setEncoreLimit((limit) => limit + ENCORE_BATCH);
-  }, [hasMoreGenres, hasMoreDecades]);
+    setTailWanted((wanted) => Math.max(wanted, tailShown) + ENCORE_BATCH);
+  }, [hasShelves, isFetchingNextPage, fetchNextPage, tailShown]);
 
   return {
     rails,
     isReading: !hasDrawn && isReadingFirst,
-    hasMore: hasMoreGenres || hasMoreDecades || hasMoreEncores,
-    isReadingMore:
-      byGenre.some((one) => one.isLoading) ||
-      byDecade.some((one) => one.isLoading) ||
-      byEncore.some((one) => one.isLoading),
+    hasMore: hasShelves ? hasNextPage : hasMoreTail || canComeRoundAgain,
+    isReadingMore: hasShelves
+      ? isFetchingNextPage
+      : hasMoreTail && (!isTailSettled || tailShown < tailWanted),
     showMore,
   };
 };

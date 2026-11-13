@@ -8,7 +8,7 @@ const aProfile = (overrides: Partial<ViewerProfile> = {}): ViewerProfile => ({
   id: '176acd29-9b53-4193-831d-291bc7a9d4eb',
   name: 'Dan',
   colour: '#e8503a',
-  avatar: { kind: 'photo', isVideo: false, frame: null },
+  avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -38,6 +38,19 @@ describe('thePictureFor', () => {
     installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
 
     expect(thePictureFor(aProfile())?.uri ?? '').toContain('v=2026-09-22T10');
+  });
+
+  it('asks for the square the server framed, where it frames them', () => {
+    installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
+
+    expect(
+      thePictureFor(
+        aProfile({
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true },
+        }),
+      )?.uri ?? '',
+    ).toMatch(/[?&]framed=1$/u);
+    expect(thePictureFor(aProfile())?.uri ?? '').not.toContain('framed');
   });
 
   it('manages on a client that is served by its own valence', () => {

@@ -3,16 +3,29 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { useDiscordSamples } from './useDiscordSamples';
 import type { ReactNode } from 'react';
 
 const fetchLibraries = vi.hoisted(() => vi.fn());
-const fetchLibraryItems = vi.hoisted(() => vi.fn());
+const fetchLibraryItems = vi.hoisted(() =>
+  vi.fn<
+    (libraryId: string, options: object) => Promise<{ items: MediaSummary[]; total: number }>
+  >(),
+);
 const fetchAlbums = vi.hoisted(() => vi.fn());
 const fetchAlbum = vi.hoisted(() => vi.fn());
 
-vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraries, fetchLibraryItems }));
+vi.mock('@ValenceClient/library/fetchLibrary', async () => {
+  const { askedOfEachLibrary } = await import('@ValenceClient/testing/askedOfEachLibrary');
+
+  return {
+    fetchLibraries,
+    fetchLibraryItems,
+    fetchItemsAcross: askedOfEachLibrary(fetchLibraryItems),
+  };
+});
 vi.mock('@ValenceClient/music/fetchMusic', () => ({ fetchAlbums, fetchAlbum }));
 
 const aTitle = (n: number, seriesTitle?: string) =>

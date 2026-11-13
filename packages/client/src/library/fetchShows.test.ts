@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchShows, fetchShow } from './fetchShows';
+import { artworkAddresses } from './artworkAddresses';
+import { fetchComingUp, fetchShows, fetchShow } from './fetchShows';
 
 const fetchMock = vi.fn();
 
@@ -17,6 +18,8 @@ const A_SHOW = {
   coverMediaId: '9c858901-8a57-4791-81fe-4c455b099bc9',
   seriesId: null,
 };
+
+const NEXT_EPISODE = { seasonNumber: 2, episodeNumber: 3, title: 'Soon', airDate: '2026-12-01' };
 
 beforeEach(() => {
   fetchMock.mockReset();
@@ -36,6 +39,18 @@ describe('fetchShows', () => {
     expect(fetchMock).toHaveBeenCalledWith(`/api/libraries/${LIBRARY}/shows`, {
       headers: { accept: 'application/json' },
     });
+  });
+
+  it('notes where each programme’s pictures are served by name, against its cover', async () => {
+    fetchMock.mockResolvedValue(
+      said({ shows: [{ ...A_SHOW, artwork: { poster: '/named', titleBackdrop: '/show' } }] }),
+    );
+
+    await fetchShows(LIBRARY);
+
+    expect(artworkAddresses.of(A_SHOW.coverMediaId, 'poster', 0)).toBe('/named');
+    expect(artworkAddresses.of(A_SHOW.coverMediaId, 'backdrop', 0, true)).toBe('/show');
+    expect(artworkAddresses.of(A_SHOW.coverMediaId, 'backdrop', 0)).toBeUndefined();
   });
 
   it('says so when the server cannot be reached', async () => {
@@ -82,5 +97,20 @@ describe('fetchShow', () => {
     fetchMock.mockRejectedValue(new Error('gone'));
 
     await expect(fetchShow(LIBRARY, 'ted')).rejects.toThrow();
+  });
+});
+
+describe('fetchComingUp', () => {
+  it('reads what is coming up, noting where each programme’s poster is served by name', async () => {
+    const show = { ...A_SHOW, coverMediaId: '1c858901-8a57-4791-81fe-4c455b099bc9' };
+
+    fetchMock.mockResolvedValue(
+      said({
+        shows: [{ show: { ...show, artwork: { poster: '/soon' } }, episode: NEXT_EPISODE }],
+      }),
+    );
+
+    await expect(fetchComingUp()).resolves.toHaveLength(1);
+    expect(artworkAddresses.of(show.coverMediaId, 'poster', 0)).toBe('/soon');
   });
 });

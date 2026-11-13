@@ -24,15 +24,15 @@ import { say } from '@ValenceI18n/say';
 const TOKENS = ['[--rail-gap:1rem] [--rail-peek:0rem]', RAIL.lane].join(' ');
 
 const PER = {
-  wide: '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5]',
+  wide: '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5] min-[1920px]:[--rail-per:6] min-[2560px]:[--rail-per:7] min-[3200px]:[--rail-per:8]',
   portrait:
-    '[--rail-per:3] @md:[--rail-per:4] @2xl:[--rail-per:5] @4xl:[--rail-per:7] @6xl:[--rail-per:9]',
+    '[--rail-per:3] @md:[--rail-per:4] @2xl:[--rail-per:5] @4xl:[--rail-per:7] @6xl:[--rail-per:9] @[120rem]:[--rail-per:11] @[160rem]:[--rail-per:13] @[200rem]:[--rail-per:16]',
   large:
-    '[--rail-per:2] @md:[--rail-per:3] @2xl:[--rail-per:4] @4xl:[--rail-per:5] @6xl:[--rail-per:6]',
+    '[--rail-per:2] @md:[--rail-per:3] @2xl:[--rail-per:4] @4xl:[--rail-per:5] @6xl:[--rail-per:6] @[120rem]:[--rail-per:7] @[160rem]:[--rail-per:9] @[200rem]:[--rail-per:11]',
   poster:
-    '[--rail-per:3] sm:[--rail-per:4] md:[--rail-per:5] lg:[--rail-per:6] xl:[--rail-per:8] 2xl:[--rail-per:9]',
+    '[--rail-per:3] sm:[--rail-per:4] md:[--rail-per:5] lg:[--rail-per:6] xl:[--rail-per:8] 2xl:[--rail-per:9] min-[1920px]:[--rail-per:10] min-[2560px]:[--rail-per:12] min-[3200px]:[--rail-per:14]',
   library:
-    '[--rail-per:2] sm:[--rail-per:3] md:[--rail-per:4] lg:[--rail-per:5] xl:[--rail-per:7] 2xl:[--rail-per:8]',
+    '[--rail-per:2] sm:[--rail-per:3] md:[--rail-per:4] lg:[--rail-per:5] xl:[--rail-per:7] 2xl:[--rail-per:8] min-[1920px]:[--rail-per:9] min-[2560px]:[--rail-per:11] min-[3200px]:[--rail-per:13]',
 } as const;
 
 const FITTED = [
@@ -168,11 +168,12 @@ const Rail = ({
           {action}
 
           {!hasPages ? null : (
-            <>
+            <span className="flex items-center">
               <Button
-                variant="secondary"
-                size="xs"
+                variant="glass"
+                size="lg"
                 isIconOnly
+                joins="next"
                 label={say('ui.rail.backAPageOfTitle', { title })}
                 hasTooltip={false}
                 disabled={isAtStart}
@@ -180,13 +181,14 @@ const Rail = ({
                   scrollTo(pages.at - 1);
                 }}
               >
-                <Icon of={ChevronLeftIcon} size={16} />
+                <Icon of={ChevronLeftIcon} size={18} />
               </Button>
 
               <Button
-                variant="secondary"
-                size="xs"
+                variant="glass"
+                size="lg"
                 isIconOnly
+                joins="previous"
                 label={say('ui.rail.forwardAPageOfTitle', { title })}
                 hasTooltip={false}
                 disabled={isAtEnd}
@@ -194,9 +196,9 @@ const Rail = ({
                   scrollTo(pages.at + 1);
                 }}
               >
-                <Icon of={ChevronRightIcon} size={16} />
+                <Icon of={ChevronRightIcon} size={18} />
               </Button>
-            </>
+            </span>
           )}
         </div>
       </motion.header>

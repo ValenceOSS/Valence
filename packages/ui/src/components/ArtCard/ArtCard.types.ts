@@ -6,6 +6,8 @@ type ArtCardProps = {
   watchedFraction?: number;
   onSelect: () => void;
   href?: string;
+  isStill?: boolean;
+  isLazy?: boolean;
   className?: string;
 };
 

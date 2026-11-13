@@ -5,6 +5,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { RailCard } from './RailCard';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { aLibrary } from '@ValenceClient/testing/aLibrary';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import type * as FetchLibrary from '@ValenceClient/library/fetchLibrary';
+
+const DUMMY = aLinkedServerFace({ name: 'Dummy' });
+
+vi.mock('@ValenceClient/library/fetchLibrary', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchLibrary>()),
+  fetchLibraries: () =>
+    Promise.resolve([
+      aLibrary({ id: '00000000-0000-4000-8000-000000000000' }),
+      aLibrary({ id: 'theirs', linkedServerId: DUMMY.id }),
+      aLibrary({ id: 'stranger', linkedServerId: '00000000-0000-4000-8000-00000000dead' }),
+    ]),
+}));
+
+vi.mock('@ValenceClient/linking/fetchLinkedServerFaces', () => ({
+  fetchLinkedServerFaces: () => Promise.resolve([DUMMY]),
+}));
+
+vi.mock('@ValenceClient/linking/fetchThisServerFace', () => ({
+  fetchThisServerFace: () =>
+    Promise.resolve({ name: 'Valence', colour: '#3a8ee8', pictureAt: null }),
+}));
 
 const MEDIA: MediaSummary = {
   id: '9c858901-8a57-4791-81fe-4c455b099bc9',
@@ -79,6 +103,19 @@ const restOn = async (element: Element, pointerType = 'mouse') => {
 };
 
 /**
+ * Measures the card as a browser would lay it out: the card itself, and its picture within it.
+ */
+const shapedAs = (card: { width: number; height: number }, pictureHeight: number) => {
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function measure(
+    this: Element,
+  ) {
+    return (this.getAttribute('class') ?? '').includes('aspect-')
+      ? new DOMRect(100, 100, card.width, pictureHeight)
+      : new DOMRect(100, 100, card.width, card.height);
+  });
+};
+
+/**
  * Lets whatever the card asked for arrive.
  */
 const flush = async () => {
@@ -101,6 +138,10 @@ const cardHolder = (container: HTMLElement): Element => {
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
+
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(100, 100, 240, 135),
+  );
 
   Object.defineProperty(HTMLMediaElement.prototype, 'play', {
     configurable: true,
@@ -130,6 +171,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('RailCard', () => {
@@ -150,6 +192,50 @@ describe('RailCard', () => {
     renderInAnAddress(<RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     expect(screen.getByText('Parasite')).toBeInTheDocument();
+  });
+
+  it('marks this server beside a linked one where both have the title', async () => {
+    renderInAnAddress(
+      <RailCard
+        media={MEDIA}
+        copies={[{ ...MEDIA, id: 'their-copy', libraryId: 'theirs' }]}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Valence' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+  });
+
+  it('marks nothing on a title only this server has', async () => {
+    renderInAnAddress(<RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />);
+    await flush();
+
+    expect(screen.queryByRole('img', { name: /^From / })).not.toBeInTheDocument();
+  });
+
+  it('never takes a linked library whose server it cannot name for this server’s own', async () => {
+    renderInAnAddress(
+      <RailCard
+        media={{ ...MEDIA, libraryId: 'stranger' }}
+        copies={[{ ...MEDIA, id: 'their-copy', libraryId: 'theirs' }]}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'From Valence' })).not.toBeInTheDocument();
+  });
+
+  it('marks only the linked server on a title only it has', async () => {
+    renderInAnAddress(
+      <RailCard media={{ ...MEDIA, libraryId: 'theirs' }} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'From Dummy' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'From Valence' })).not.toBeInTheDocument();
   });
 
   it('says how many episodes of a programme are left to watch, and nothing for none', () => {
@@ -541,25 +627,25 @@ describe('what the resting card offers, for a keyboard or a finger', () => {
     expect(container.querySelector('.aspect-video')).not.toBeNull();
   });
 
-  it('asks for the whole backdrop where it is drawn larger than a rail draws it', () => {
+  it('asks for the middle-sized backdrop where it is drawn larger than a rail draws it', () => {
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} drawsLarge />,
     );
 
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      `/api/media/${MEDIA.id}/image/backdrop`,
+      `/api/media/${MEDIA.id}/image/backdrop?size=medium`,
     );
   });
 
-  it('asks for the whole poster where it stands upright larger than a rail draws it', () => {
+  it('asks for the middle-sized poster where it stands upright larger than a rail draws it', () => {
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} shape="poster" onPlay={vi.fn()} onInspect={vi.fn()} drawsLarge />,
     );
 
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      `/api/media/${MEDIA.id}/image/poster`,
+      `/api/media/${MEDIA.id}/image/poster?size=medium`,
     );
   });
 
@@ -580,6 +666,8 @@ describe('what the resting card offers, for a keyboard or a finger', () => {
   });
 
   it('opens its preview wide enough to watch, however narrow the poster', async () => {
+    shapedAs({ width: 120, height: 220 }, 180);
+
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} shape="poster" onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
@@ -588,10 +676,12 @@ describe('what the resting card offers, for a keyboard or a finger', () => {
 
     const panel = screen.getByRole('button', { name: 'More about Parasite' }).parentElement;
 
-    expect(panel?.style.width).toBe('352px');
+    expect(panel?.style.width).toBe('246px');
   });
 
   it("opens a flat card's preview at the card's own width, grown a little", async () => {
+    shapedAs({ width: 200, height: 150 }, 112);
+
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
@@ -600,6 +690,6 @@ describe('what the resting card offers, for a keyboard or a finger', () => {
 
     const panel = screen.getByRole('button', { name: 'More about Parasite' }).parentElement;
 
-    expect(panel?.style.width).toBe('0px');
+    expect(panel?.style.width).toBe('272px');
   });
 });

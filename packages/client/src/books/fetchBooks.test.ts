@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   bookCoverUrl,
   bookPageUrl,
+  bookResourceUrl,
   fetchBookContents,
   fetchBookDocument,
   fetchReading,
@@ -36,6 +37,14 @@ describe('bookPageUrl', () => {
 
   it('rounds a width, because a screen measured in a browser is rarely whole', () => {
     expect(bookPageUrl('a-book', 'a-chapter', 4, 1079.6)).toContain('width=1080');
+  });
+});
+
+describe('bookResourceUrl', () => {
+  it('names a picture inside a book by where it is in the book', () => {
+    expect(bookResourceUrl('a-book', 'a-chapter', 'OEBPS/images/p 1.png')).toBe(
+      '/api/books/a-book/chapters/a-chapter/resource?href=OEBPS%2Fimages%2Fp%201.png',
+    );
   });
 });
 

@@ -625,10 +625,9 @@ mod tests {
 
     /// HDR10+ rides on the frames, which is the only place ffprobe reports it.
     ///
-    /// This test used to put the metadata in the stream's side data, where it
-    /// passed and meant nothing: no real file puts it there, so the branch it
-    /// covered could never be reached. Taken from the output of a real HDR10+
-    /// file. See VAL-132.
+    /// No real file puts it in the stream's side data, so a test that did would
+    /// cover a branch that can never be reached. Taken from the output of a real
+    /// HDR10+ file. See VAL-132.
     #[test]
     fn reads_hdr10_plus_from_the_frames_where_ffprobe_reports_it() {
         let json = r#"{"streams": [{"index": 0, "codec_type": "video", "codec_name": "hevc",

@@ -71,4 +71,74 @@ describe('useChromeThatHides', () => {
 
     expect(result.current.isShown).toBe(true);
   });
+
+  it('puts them away at once when hidden, and does not bring them back on the old timer', () => {
+    const { result } = renderHook(() => useChromeThatHides());
+
+    act(() => {
+      result.current.hide();
+    });
+
+    expect(result.current.isShown).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(result.current.isShown).toBe(false);
+  });
+
+  it('puts showing controls away and brings hidden ones back when toggled', () => {
+    const { result } = renderHook(() => useChromeThatHides());
+
+    act(() => {
+      result.current.toggle();
+    });
+
+    expect(result.current.isShown).toBe(false);
+
+    act(() => {
+      result.current.toggle();
+    });
+
+    expect(result.current.isShown).toBe(true);
+  });
+
+  it('brings them back for a pointer near the top or the bottom of the screen', () => {
+    const { result } = renderHook(() => useChromeThatHides());
+
+    act(() => {
+      result.current.hide();
+      result.current.follow({ clientY: 10 });
+    });
+
+    expect(result.current.isShown).toBe(true);
+
+    act(() => {
+      result.current.hide();
+      result.current.follow({ clientY: window.innerHeight - 10 });
+    });
+
+    expect(result.current.isShown).toBe(true);
+  });
+
+  it('only keeps them for a pointer elsewhere, never bringing hidden ones back', () => {
+    const { result } = renderHook(() => useChromeThatHides());
+
+    act(() => {
+      result.current.hide();
+      result.current.follow({ clientY: window.innerHeight / 2 });
+    });
+
+    expect(result.current.isShown).toBe(false);
+
+    act(() => {
+      result.current.wake();
+      vi.advanceTimersByTime(2000);
+      result.current.follow({ clientY: window.innerHeight / 2 });
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(result.current.isShown).toBe(true);
+  });
 });

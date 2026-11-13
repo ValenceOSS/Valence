@@ -3,6 +3,7 @@ import { MediaCard } from '@ValenceUI/MediaCard';
 import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 import { catalogueArtUrl } from '@ValenceClient/requests/catalogueArtUrl';
+import { TITLE_STATUS_TONES } from '@ValenceScreens/requests/TITLE_STATUS_TONES';
 import { meterOf } from './meterOf';
 import type { MediaGridSize } from '@ValenceScreens/components/MediaGrid/MediaGrid.types';
 import type { CatalogueGridProps } from './CatalogueGrid.types';
@@ -27,8 +28,9 @@ const POSTER_TO_WIDTH = 1.5;
 const UNDER_A_CARD = 64;
 
 /**
- * The Catalogue's titles as posters, at the size the library pages use, each with a bar along its
- * foot saying where it stands and how much of it is here. While choosing, a title waiting on
+ * The Catalogue's titles as posters, at the size the library pages use, each wearing a badge that
+ * says where it stands, and how much of it is here where it is on its way, with a bar along its foot
+ * filling as it arrives. A title nobody has followed wears nothing, so the posters stay clean. While choosing, a title waiting on
  * approval wears a box to tick. On a phone the cards are allowed narrower, so two fit across at the
  * middle size rather than one poster the width of the screen.
  *
@@ -66,6 +68,7 @@ const CatalogueGrid = ({
         }
 
         const imageUrl = catalogueArtUrl(entry);
+        const meter = meterOf(entry);
         const isChoosable = isChoosing && entry.status === 'toApprove' && entry.requestId !== null;
 
         return (
@@ -75,7 +78,17 @@ const CatalogueGrid = ({
               subtitle={entry.subtitle ?? entry.year?.toString() ?? ''}
               {...(imageUrl === null ? {} : { imageUrl })}
               shape={isSquare ? 'square' : 'poster'}
-              meter={meterOf(entry)}
+              {...(entry.status === 'notFollowed'
+                ? {}
+                : {
+                    status: {
+                      label: meter.label,
+                      tone: TITLE_STATUS_TONES[entry.status].badge,
+                    },
+                  })}
+              {...(meter.fraction < 1 && (entry.held > 0 || entry.status === 'missing')
+                ? { meter }
+                : {})}
               onSelect={() => {
                 if (isChoosable) {
                   onChoose(entry.key, !chosen.has(entry.key));

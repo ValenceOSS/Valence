@@ -320,3 +320,73 @@ describe('homeRows', () => {
     expect(homeRows(input())).toEqual([]);
   });
 });
+
+describe('the rows that come round again', () => {
+  const categories = input({
+    genres: [
+      { genre: 'Action', items: many('action', 5) },
+      { genre: 'Comedy', items: many('comedy', 5) },
+      { genre: 'Drama', items: many('drama', 5) },
+    ],
+  });
+
+  it('draws the category rows again after them, as many as asked, each round holding every one', () => {
+    const rows = homeRows({ ...categories, again: 7 });
+    const firstTime = rows.slice(0, 3);
+    const again = rows.slice(3);
+
+    expect(again.map((row) => row.id)).toEqual([
+      'again:1:0',
+      'again:1:1',
+      'again:1:2',
+      'again:2:0',
+      'again:2:1',
+      'again:2:2',
+      'again:3:0',
+    ]);
+    expect(new Set(again.slice(0, 3).map((row) => row.title))).toEqual(
+      new Set(firstTime.map((row) => row.title)),
+    );
+    expect(new Set(again.slice(3, 6).map((row) => row.title))).toEqual(
+      new Set(firstTime.map((row) => row.title)),
+    );
+  });
+
+  it('draws them again in the same order each time it is asked', () => {
+    expect(homeRows({ ...categories, again: 6 }).map((row) => row.title)).toEqual(
+      homeRows({ ...categories, again: 6 }).map((row) => row.title),
+    );
+  });
+
+  it('draws nothing again where there is no category row to come back to', () => {
+    expect(homeRows(input({ recent: many('recent', 5), again: 4 })).map((row) => row.id)).toEqual([
+      'recent',
+    ]);
+  });
+
+  it('puts the shelves a server sends after the rest, named and as they are', () => {
+    const rows = homeRows({
+      resuming: [],
+      picked: [],
+      recent: [],
+      because: [],
+      acclaimed: [],
+      genres: [],
+      decades: [],
+      more: [],
+      shelves: [
+        {
+          id: 'again:1:0',
+          kind: 'again',
+          genre: 'Drama',
+          order: null,
+          decade: null,
+          page: 0,
+          items: [],
+        },
+      ],
+    });
+
+    expect(rows).toEqual([{ id: 'again:1:0', title: 'Drama', items: [], standsForShows: true }]);
+  });
+});

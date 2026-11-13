@@ -1,3 +1,0 @@
-const OPENED_EPISODE_REM = 6.875;
-
-export { OPENED_EPISODE_REM };

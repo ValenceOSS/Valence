@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { forgetPicture } from '@ValenceServer/pictures/forgetPicture';
+import { keepPicture } from '@ValenceServer/pictures/keepPicture';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
+import { readPicture } from '@ValenceServer/pictures/readPicture';
 import {
   and,
   asc,
@@ -39,7 +41,6 @@ import { isTheTrackNamed } from '@ValenceServer/music/isTheTrackNamed';
 import { missingCoverUrl } from '@ValenceServer/music/web/missingCoverUrl';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import {
-  contentTypeFor,
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
@@ -837,6 +838,30 @@ const createDatabasePlaylistService = (
       return isDropped;
     },
 
+    dropMany: async (viewer, playlistId, entryIds) => {
+      if (!(await owned(viewer, playlistId)) || (await isSmart(playlistId))) {
+        return null;
+      }
+
+      if (entryIds.length === 0) {
+        return 0;
+      }
+
+      const dropped = countAffected(
+        await db
+          .delete(playlistEntry)
+          .where(
+            and(inArray(playlistEntry.id, [...entryIds]), eq(playlistEntry.playlistId, playlistId)),
+          ),
+      );
+
+      if (dropped > 0) {
+        await touch(playlistId);
+      }
+
+      return dropped;
+    },
+
     readArtwork: async (viewer, playlistId) => {
       const [row] = await db
         .select({ artworkPath: playlist.artworkPath })
@@ -848,15 +873,10 @@ const createDatabasePlaylistService = (
         return null;
       }
 
-      const contentType = contentTypeFor(extname(row.artworkPath));
-      const body = await readFile(join(artworkDirectory, row.artworkPath)).catch(() => null);
-
-      return body === null || contentType === undefined
-        ? null
-        : { body: new Uint8Array(body), contentType };
+      return readPicture(artworkDirectory, row.artworkPath);
     },
 
-    saveArtwork: async (viewer, playlistId, artwork) => {
+    saveArtwork: async (viewer, playlistId, artwork, frame = null) => {
       if (!(await owned(viewer, playlistId))) {
         return 'notYours';
       }
@@ -874,15 +894,22 @@ const createDatabasePlaylistService = (
         .where(eq(playlist.id, playlistId))
         .limit(1);
 
-      await mkdir(artworkDirectory, { recursive: true });
-      await writeFile(join(artworkDirectory, name), artwork.body);
+      const unkept = await keepPicture(artworkDirectory, name, artwork.body, {
+        crop: CROPS.cover,
+        frame,
+      });
+
+      if (unkept !== null) {
+        return unkept;
+      }
+
       await db
         .update(playlist)
-        .set({ artworkPath: name, updatedAt: new Date() })
+        .set({ artworkPath: name, artworkFrame: frame, updatedAt: new Date() })
         .where(eq(playlist.id, playlistId));
 
       if (was?.artworkPath !== null && was?.artworkPath !== undefined) {
-        await unlink(join(artworkDirectory, was.artworkPath)).catch(() => undefined);
+        await forgetPicture(artworkDirectory, was.artworkPath);
       }
 
       return null;
@@ -901,11 +928,11 @@ const createDatabasePlaylistService = (
 
       await db
         .update(playlist)
-        .set({ artworkPath: null, updatedAt: new Date() })
+        .set({ artworkPath: null, artworkFrame: null, updatedAt: new Date() })
         .where(eq(playlist.id, playlistId));
 
       if (was?.artworkPath !== null && was?.artworkPath !== undefined) {
-        await unlink(join(artworkDirectory, was.artworkPath)).catch(() => undefined);
+        await forgetPicture(artworkDirectory, was.artworkPath);
       }
 
       return true;

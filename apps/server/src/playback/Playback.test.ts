@@ -741,6 +741,7 @@ describe('trickplay', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/vtt');
     expect(await response.text()).toContain('WEBVTT');
+    expect(response.headers.get('cache-control')).toBe('private, max-age=86400');
   });
 
   it('answers with a not found rather than an empty body for a missing sheet', async () => {

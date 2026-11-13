@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { library, mediaItem, series, titleEdit } from '#dialect/Schema';
 import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
 import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
+import type { ArtworkAddressOf } from '@ValenceServer/images/ArtworkAddressOf';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { findDuplicates } from '@ValenceServer/health/findDuplicates';
@@ -28,6 +29,7 @@ import type { ListedFile, ListedTitle } from './listedTitlesOf';
 type TitleListDependencies = {
   certificationRegion?: () => Promise<string>;
   now?: () => Date;
+  artworkAddressOf?: ArtworkAddressOf;
 };
 
 const WATCHED_KINDS = ['movies', 'shows', 'anime'];
@@ -80,6 +82,7 @@ const createTitleListService = (
   {
     certificationRegion = () => Promise.resolve('GB'),
     now = () => new Date(),
+    artworkAddressOf,
   }: TitleListDependencies = {},
 ) => {
   /**
@@ -134,7 +137,7 @@ const createTitleListService = (
         episodeTotal,
         ...row
       }) => ({
-        summary: summaryOfRow(row),
+        summary: summaryOfRow(row, artworkAddressOf),
         path,
         sizeBytes: row.sizeBytes,
         parentId: row.parentId,
@@ -370,7 +373,9 @@ const createTitleListService = (
       return null;
     }
 
-    const files: MediaSummary[] = rows.map(({ path: _path, ...row }) => summaryOfRow(row));
+    const files: MediaSummary[] = rows.map(({ path: _path, ...row }) =>
+      summaryOfRow(row, artworkAddressOf),
+    );
 
     return { files, paths: Object.fromEntries(rows.map((row) => [row.id, row.path])) };
   };

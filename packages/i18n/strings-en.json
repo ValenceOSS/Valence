@@ -965,6 +965,71 @@
     "context": "Shown in the library (from `qualityBadges`)."
   },
   {
+    "handler": "client.library.sayRatingMeans.adultsOnly",
+    "text": "For adults only",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.allAges",
+    "text": "Fine for all ages",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fifteenAndUp",
+    "text": "For ages 15 and up",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.fourteenAndUp",
+    "text": "May not suit children under 14",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.parentalGuidance",
+    "text": "Parental guidance suggested",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.sevenAndUp",
+    "text": "For ages 7 and up",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.seventeenAndUp",
+    "text": "Not suitable for anyone 17 or under",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.thirteenAndUp",
+    "text": "Some of it may not suit children under 13",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveAndUp",
+    "text": "For ages 12 and up",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.twelveWithAnAdult",
+    "text": "For ages 12 and up, and younger children with an adult",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.underSeventeenWithAnAdult",
+    "text": "Under 17s should watch with a parent or guardian",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.sayRatingMeans.youngChildren",
+    "text": "Made for young children",
+    "context": "Said beside a title's age rating as it starts playing, where the title lists nothing it contains. Says what the rating means."
+  },
+  {
+    "handler": "client.library.showQualityBadges.standardRange",
+    "text": "SDR",
+    "context": "On a programme's badges, standard dynamic range, said only beside HDR10 or Dolby Vision when some episodes have one and some do not, as in \"HDR10 / SDR\"."
+  },
+  {
     "handler": "client.library.theVersionsOf.anotherVersion",
     "text": "Another version",
     "context": "Shown in the library (from `theVersionsOf`)."
@@ -973,6 +1038,11 @@
     "handler": "client.library.useHomeRows.genreFromTheDecadeS",
     "text": "{genre} from the {decade}s",
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app; {decade} is filled in by the app."
+  },
+  {
+    "handler": "client.library.useHomeRows.moreGenre",
+    "text": "More {genre}",
+    "context": "The heading of a row deep in the home page that carries on past a genre's own row with more of its best-rated titles (from `useHomeRows`). {genre} is the genre's name."
   },
   {
     "handler": "client.library.useHomeRows.newInGenre",
@@ -1102,7 +1172,7 @@
   {
     "handler": "client.playback.describeRungCost.valueMbps",
     "text": "{value} Mbps",
-    "context": "What the original video costs, beside its name in the quality menu. {value} is the bitrate in megabits a second, such as 8.0."
+    "context": "A speed in megabits a second: what the original video costs, beside its name in the quality menu, and the connection's speed and the stream's bitrate in the stream stats charts. {value} is the number, such as 8.0."
   },
   {
     "handler": "client.playback.fetchSegments.skipCredits",
@@ -2744,6 +2814,11 @@
     "text": "Bitrate",
     "context": "Shown, used in the stream stats in the player of the television app and in the stream stats in the video player."
   },
+  {
+    "handler": "common.black",
+    "text": "Black",
+    "context": "The label in the tokens (from `captionColours`)."
+  },
   { "handler": "common.block", "text": "Block", "context": "Button that blocks somebody." },
   {
     "handler": "common.blocked",
@@ -2751,9 +2826,24 @@
     "context": "Marks somebody who has been blocked."
   },
   {
+    "handler": "common.blue",
+    "text": "Blue",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.book",
     "text": "Book",
     "context": "Shown, used in the media kind in the schemas and in the request kind names in the requests."
+  },
+  {
+    "handler": "common.bookmarks",
+    "text": "Bookmarks",
+    "context": "The heading over the list of bookmarks in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.bookmarkThisPage",
+    "text": "Bookmark this page",
+    "context": "The button that bookmarks the page being read, in the readers on the web, the desktop and the phone."
   },
   {
     "handler": "common.books",
@@ -2784,6 +2874,11 @@
     "handler": "common.bringTitleBack",
     "text": "Unhide {title}",
     "context": "The label of a button, used in the hidden in the account of the phone app and in the hidden panel in the account area. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.brown",
+    "text": "Brown",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.browser",
@@ -2951,6 +3046,11 @@
     "context": "The label, used in several places, among them the media panel in the admin area and the media detail dialog."
   },
   {
+    "handler": "common.chooseWhatShows",
+    "text": "Choose the part of the picture that shows.",
+    "context": "The line under the title of the window that opens after a picture is chosen for an upload."
+  },
+  {
     "handler": "common.chrome",
     "text": "Chrome",
     "context": "The name of the Google Chrome browser, as a device is labelled with it."
@@ -3043,7 +3143,7 @@
   {
     "handler": "common.connection",
     "text": "Connection",
-    "context": "The title of a headed section, used in the download client dialog in the admin area and in the indexer dialog in the admin area."
+    "context": "The title of a headed section, used in the download client and indexer dialogs in the admin area, and in the stream stats in the video player beside the connection's speed."
   },
   {
     "handler": "common.contents",
@@ -3376,6 +3476,16 @@
     "context": "How many permissions a role grants, in the list of roles."
   },
   {
+    "handler": "common.count.removeBookmarks.one",
+    "text": "Remove {count} bookmark",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
+    "handler": "common.count.removeBookmarks.other",
+    "text": "Remove {count} bookmarks",
+    "context": "The button under the list of bookmarks in the phone’s reader that removes the bookmarks picked. {count} is how many."
+  },
+  {
     "handler": "common.count.removed.one",
     "text": "{count} removed",
     "context": "How many files a library scan found gone."
@@ -3616,6 +3726,11 @@
     "context": "The label of a toggle, used in the reader sheet in the reader of the phone app and in the page reader."
   },
   {
+    "handler": "common.cream",
+    "text": "Cream",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.create",
     "text": "Create",
     "context": "The confirm label of a name entry dialog, used in several places, among them the files panel in the admin area and the folder browser in the admin area."
@@ -3799,6 +3914,11 @@
     "handler": "common.dragToChangeTheOrder",
     "text": "Drag to change the order",
     "context": "The label of the handle a table row is dragged by to change the order."
+  },
+  {
+    "handler": "common.dragToMovePinchToZoom",
+    "text": "Drag the picture to move it. Pinch to zoom.",
+    "context": "A hint beside a picture being framed after an upload: it can be dragged into place, or moved with two fingers on a trackpad, and pinched to draw it nearer."
   },
   {
     "handler": "common.duckDuckGo",
@@ -4161,6 +4281,11 @@
     "context": "Text shown, used in the where is your valence of the phone app and in the connect to server."
   },
   {
+    "handler": "common.framePicture",
+    "text": "Frame the picture",
+    "context": "The title of the window that opens after a picture is chosen for an upload, for placing it in its shape before it is sent."
+  },
+  {
     "handler": "common.fromName",
     "text": "From {name}",
     "context": "Shown in the admin area: a badge on an indexer brought in from a connected Prowlarr. {name} is what the admin called the Prowlarr."
@@ -4236,6 +4361,11 @@
     "context": "The label, used in the bricks in the variants and in the tokens (from `captionColours`)."
   },
   {
+    "handler": "common.grey",
+    "text": "Grey",
+    "context": "A colour to put round the page in the phone reader."
+  },
+  {
     "handler": "common.heavy",
     "text": "Heavy",
     "context": "The heaviest of a range, used in subtitle settings for both the thickest caption outline and the heaviest caption lettering."
@@ -4246,6 +4376,11 @@
     "context": "The label of what opens Valence’s help and documentation in the browser: an item in the account menu, and the question mark in the desktop app’s window bar."
   },
   { "handler": "common.here", "text": "Here", "context": "The detail in the nav bar." },
+  {
+    "handler": "common.hexCode",
+    "text": "Hex code",
+    "context": "The box a colour is written in as six characters after a #, such as #3a8ee8, for somebody who already knows the colour they want."
+  },
   {
     "handler": "common.hidden",
     "text": "Hidden",
@@ -4317,9 +4452,19 @@
     "context": "Text shown, used in the request in the search of the phone app and in the how to fix."
   },
   {
+    "handler": "common.hue",
+    "text": "Hue",
+    "context": "The strip of every colour of the rainbow in a colour picker, which picks which colour; read out by screen readers."
+  },
+  {
     "handler": "common.indexers",
     "text": "Indexers",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the indexers panel in the admin area."
+  },
+  {
+    "handler": "common.indigo",
+    "text": "Indigo",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.inProgress",
@@ -4545,6 +4690,11 @@
     "handler": "common.likeTitle",
     "text": "Like {title}",
     "context": "Shown, used in several places, among them the now playing of the television app and the immersive music. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.lime",
+    "text": "Lime",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.linkedServers",
@@ -5092,6 +5242,11 @@
     "context": "Shown, used in the accounts panel in the admin area and in the role members in the roles panel."
   },
   {
+    "handler": "common.noBookmarksYet",
+    "text": "No bookmarks yet",
+    "context": "The title of the empty list under the Bookmarks heading in a reader, when nothing in the book is bookmarked."
+  },
+  {
     "handler": "common.noCeiling",
     "text": "No age limit",
     "context": "Shown, used in the library access in the schemas and in the admin area (from `ageChoices`)."
@@ -5287,11 +5442,6 @@
     "context": "Shown on an empty smart collection, on the web and in the phone app."
   },
   {
-    "handler": "common.notMeasured",
-    "text": "not measured",
-    "context": "Shown, used in the admin area (from `describeCpuShare`) and in the admin area (from `describeValenceMemory`)."
-  },
-  {
     "handler": "common.notNow",
     "text": "Not now",
     "context": "Shown, used in several places, among them the desktop of the desktop app and the ask page of the television app."
@@ -5467,6 +5617,11 @@
     "context": "Shown, used in the quality labels in the profiles in the requests service and in the quality names in the admin area."
   },
   {
+    "handler": "common.orange",
+    "text": "Orange",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.order",
     "text": "Order",
     "context": "The name, used in several places, among them the browse area and the job history in the observability page."
@@ -5507,14 +5662,24 @@
     "context": "Text shown, used in several places, among them the text reader in the reader of the phone app and the page reader."
   },
   {
+    "handler": "common.pageAndPercent",
+    "text": "Page {page} · {percent}%",
+    "context": "Names a bookmark in a book’s text in the readers’ list of bookmarks: the page the reader showed when it was made, and how far through the book it is. {page} is the page number and {percent} a whole number from 0 to 100."
+  },
+  {
     "handler": "common.pages",
     "text": "Pages",
     "context": "The label of a segmented row, used in the page reader and in the scrolling pages."
   },
   {
+    "handler": "common.pagesYouBookmarkAppearHere",
+    "text": "Pages you bookmark appear here.",
+    "context": "Under “No bookmarks yet” in a reader’s list of bookmarks, saying how to add one."
+  },
+  {
     "handler": "common.pageValue",
     "text": "Page {value}",
-    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app."
+    "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app, and names a page bookmark in the list of bookmarks."
   },
   {
     "handler": "common.partlyHere",
@@ -5832,7 +5997,7 @@
   {
     "handler": "common.percent",
     "text": "{value}%",
-    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number."
+    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number. Also names a bookmark in a book’s text by how far through it is."
   },
   {
     "handler": "common.percentDone",
@@ -5854,6 +6019,11 @@
     "handler": "common.picture",
     "text": "Picture",
     "context": "The title of a group, used in several places, among them the profile in the account of the phone app and the account avatar picker in the accounts panel."
+  },
+  {
+    "handler": "common.pink",
+    "text": "Pink",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.pixel",
@@ -6041,6 +6211,11 @@
     "context": "The name of Prowlarr, the indexer manager Valence can bring indexers in from. A product name; usually left as it is."
   },
   {
+    "handler": "common.purple",
+    "text": "Purple",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
     "handler": "common.putTheAlbumsInOrderBy",
     "text": "Sort albums by",
     "context": "The label of a segmented row, used in the albums of the phone app and in the albums view in the music page."
@@ -6221,6 +6396,16 @@
     "context": "The label of a data table, used in the release pick table in the admin area and in the release search panel in the admin area."
   },
   {
+    "handler": "common.removeBookmark",
+    "text": "Remove bookmark",
+    "context": "The button that removes the bookmark on the page being read, in the readers on the web, the desktop and the phone."
+  },
+  {
+    "handler": "common.removeBookmarkAt",
+    "text": "Remove bookmark at {place}",
+    "context": "The button beside one bookmark in a reader’s list of bookmarks, read out by screen readers. {place} is the bookmark’s name, such as Page 12 or 37%."
+  },
+  {
     "handler": "common.removedName",
     "text": "Removed {name}.",
     "context": "Shown, used in several places, among them the downloads panel in the admin area and the indexers panel in the admin area. {name} is filled in by the app."
@@ -6351,6 +6536,11 @@
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
   },
   {
+    "handler": "common.resetPosition",
+    "text": "Reset position",
+    "context": "The label of a button that puts a picture being framed back in the middle, at its smallest, wherever a picture is uploaded."
+  },
+  {
     "handler": "common.resolution",
     "text": "Resolution",
     "context": "A video's resolution, such as 1080p: a custom format condition in the quality profile editor, and wherever a resolution is named."
@@ -6384,6 +6574,11 @@
     "handler": "common.roles",
     "text": "Roles",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the accounts panel in the admin area."
+  },
+  {
+    "handler": "common.rose",
+    "text": "Rose",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.run",
@@ -6526,6 +6721,11 @@
     "context": "The label of a button, used in the shelf of the phone app and in the music home in the music page."
   },
   {
+    "handler": "common.select",
+    "text": "Select",
+    "context": "The button beside the Bookmarks heading in the phone’s reader that starts picking bookmarks to remove several at once."
+  },
+  {
     "handler": "common.selectTitle",
     "text": "Select {title}",
     "context": "The tick box beside one row of an admin table, read aloud, such as a request or a download. {title} is its name."
@@ -6574,6 +6774,11 @@
     "handler": "common.setUp",
     "text": "Set up",
     "context": "Shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.shade",
+    "text": "Shade",
+    "context": "The square in a colour picker that picks how pale or dark and how strong the chosen hue is; read out by screen readers."
   },
   {
     "handler": "common.shadow",
@@ -6724,6 +6929,16 @@
     "handler": "common.skip",
     "text": "Skip",
     "context": "A button that skips past something optional, such as a step of the get-started checklist or a pre-roll clip played before a title."
+  },
+  {
+    "handler": "common.skyBlue",
+    "text": "Sky blue",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
+  },
+  {
+    "handler": "common.slate",
+    "text": "Slate",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.sleepTimer",
@@ -6974,6 +7189,11 @@
     "handler": "common.system",
     "text": "System",
     "context": "The label, used in several places, among them the theme choice of the phone app and the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.teal",
+    "text": "Teal",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.test",
@@ -7411,6 +7631,11 @@
     "context": "The label, used in the download client dialog (from `readDownloadClientForm`) and in the download clients table in the downloads panel."
   },
   {
+    "handler": "common.transparent",
+    "text": "Transparent",
+    "context": "What a screen reader says of the first swatch in a row of colours, which leaves nothing behind a drawn face, so it shows on whatever it is drawn over."
+  },
+  {
     "handler": "common.tryAgain",
     "text": "Try again",
     "context": "The label of a button, used in several places, among them the plugin page of the phone app and the way in of the phone app."
@@ -7561,11 +7786,6 @@
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
   },
   {
-    "handler": "common.useOption",
-    "text": "Use {option}",
-    "context": "The label of a button, used in the profile in the account of the phone app and in the account avatar picker in the accounts panel. {option} is filled in by the app."
-  },
-  {
     "handler": "common.usePreset",
     "text": "Use {preset}",
     "context": "The label of a button, used in the colour choice and in the colour picker. {preset} is filled in by the app."
@@ -7619,6 +7839,11 @@
     "handler": "common.view",
     "text": "View",
     "context": "The label, used in the main of the desktop app (from `theApplicationMenu`) and in the log explorer in the observability page."
+  },
+  {
+    "handler": "common.violet",
+    "text": "Violet",
+    "context": "The name of a colour, said for a swatch of it among the colours a face or a setting can be."
   },
   {
     "handler": "common.vivaldi",
@@ -7759,6 +7984,11 @@
     "handler": "common.where",
     "text": "Where",
     "context": "The label in the webhook fields (from `webhookPanes`)."
+  },
+  {
+    "handler": "common.wherePictureSits",
+    "text": "Where the picture sits. Use the arrow keys to move it, and plus or minus to zoom.",
+    "context": "What a screen reader says of a picture being framed after an upload, which can be dragged into place."
   },
   {
     "handler": "common.whereYouAre",
@@ -10886,14 +11116,9 @@
     "context": "The name of the Android phone in the sheet that picks where music plays, as \"This iPhone\" names an iPhone."
   },
   {
-    "handler": "phone.aFaceEditor.aPhotoOrAGIF",
-    "text": "A photo or a GIF from your library.",
-    "context": "The line above the photo picker in the phone's profile picture editor."
-  },
-  {
     "handler": "phone.aFaceEditor.chooseAPhotoOrGIF",
     "text": "Choose a photo or GIF",
-    "context": "The button in the phone's profile picture editor that opens the photo library."
+    "context": "Read out by screen readers for the button in the picture editor, on the phone and on the web, that opens the photo library or the file picker; the button itself shows a shorter label."
   },
   {
     "handler": "phone.anAlbum.thatAlbumCouldNotBeRead",
@@ -10929,6 +11154,11 @@
     "handler": "phone.anAskable.anythingAlreadyDownloadedForItIs",
     "text": "Any files already downloaded for it will be deleted.",
     "context": "A message in an alert in the askable of the phone app."
+  },
+  {
+    "handler": "phone.aPerson.theirWorkCouldNotBeRead",
+    "text": "Couldn’t load the rest of their work.",
+    "context": "Shown on the phone's page about a person in the cast or crew where their work not on this server and their credits could not be read, above a button to try again."
   },
   {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
@@ -10979,11 +11209,6 @@
     "handler": "phone.aReader.aReaderSheet.autoTakesTheColourOfEach",
     "text": "Auto takes the colour of each page's own edge.",
     "context": "Explains the Auto choice for the colour round the page in the phone reader."
-  },
-  {
-    "handler": "phone.aReader.aReaderSheet.grey",
-    "text": "Grey",
-    "context": "A colour to put round the page in the phone reader."
   },
   {
     "handler": "phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo",
@@ -11046,11 +11271,6 @@
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
-    "handler": "phone.aReader.aReaderSide.markThesePages",
-    "text": "Bookmark these pages",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
     "handler": "phone.aReader.aReaderSide.readOn",
     "text": "Read next",
     "context": "Text shown in the reader side in the reader of the phone app."
@@ -11058,11 +11278,6 @@
   {
     "handler": "phone.aReader.aReaderSide.showingWholePagesFillTheWidth",
     "text": "Fit to page. Switch to fit to width",
-    "context": "Shown in the reader side in the reader of the phone app."
-  },
-  {
-    "handler": "phone.aReader.aReaderSide.unmarkThesePages",
-    "text": "Remove bookmark",
     "context": "Shown in the reader side in the reader of the phone app."
   },
   {
@@ -11224,6 +11439,11 @@
     "handler": "phone.aShow.playSeasonEpisode",
     "text": "Play S{season} E{episode}",
     "context": "The button on a programme's page in the phone app that plays the next episode from its start. {season} is the season number and {episode} the episode number."
+  },
+  {
+    "handler": "phone.aShow.statusNextEpisode",
+    "text": "{status} · S{seasonNumber} E{episodeNumber} · {airDate}",
+    "context": "A programme's status chip on its page on the open inside of a folding phone, with the next episode folded into it. {status} is the status, such as Returning; {seasonNumber} and {episodeNumber} are the next episode's; {airDate} says when it airs, such as Airs today."
   },
   {
     "handler": "phone.aShow.thatProgrammeCouldNotBeRead",
@@ -13736,6 +13956,11 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.languageKeptHere",
+    "text": "Kept on this device. Valence starts again in the new language when you save.",
+    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
     "text": "Play more films in this browser",
     "context": "Title of a setting on this device: decode films the browser can't play by itself in the page, using WebGPU, instead of having the server convert them."
@@ -13744,6 +13969,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "Prefer the best version",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
+    "text": "Same as this device",
+    "context": "The first choice of the Language setting in a profile's settings: speak whichever of the device's own languages Valence has."
   },
   {
     "handler": "screens.accountArea.profileSettings.showsANoticeOnThisComputer",
@@ -16771,6 +17001,11 @@
     "context": "On the admin overview's storage card, the label of the estimated total size of the downloads in the queue that have not finished."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.howItSplits",
+    "text": "How the files Valence keeps are split between each kind",
+    "context": "Read out in place of the bar on the admin overview's storage card that divides the files Valence keeps (preview clips, thumbnails, transcodes, artwork) by kind."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.keptByValence",
     "text": "Kept by Valence, not counting the library",
     "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
@@ -17541,26 +17776,6 @@
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The fast cores of a chip that has both fast and efficient ones."
   },
   {
-    "handler": "screens.adminArea.coresValenceNotMeasured.one",
-    "text": "{count} core · Valence not measured",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceNotMeasured.other",
-    "text": "{count} cores · Valence not measured",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.one",
-    "text": "{count} core · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.other",
-    "text": "{count} cores · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
     "handler": "screens.adminArea.correctionPicker.itWillSayWhatItsFiles",
     "text": "It will use the details from its files after the next scan.",
     "context": "A short message shown once something is done in the correction picker in the admin area."
@@ -18041,9 +18256,29 @@
     "context": "Shown in the admin area (from `describeQueueKind`)."
   },
   {
+    "handler": "screens.adminArea.describeQueueKind.encodingVersions",
+    "text": "Encoding other qualities",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service encodes lower-quality versions of a file ahead of time."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.lookingForTheCredits",
+    "text": "Looking for the credits",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service reads a film's frames to find where its credits start."
+  },
+  {
     "handler": "screens.adminArea.describeQueueKind.makingAPreview",
     "text": "Generating a preview",
     "context": "Shown in the admin area (from `describeQueueKind`)."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.preparingADownload",
+    "text": "Preparing a download",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service prepares a copy of a file for somebody to keep on their device."
+  },
+  {
+    "handler": "screens.adminArea.describeQueueKind.readingKeyframes",
+    "text": "Reading keyframes for seeking",
+    "context": "Shown in the admin area (from `describeQueueKind`): the media service reads where a file's keyframes are ahead of time, so seeking and streaming it start faster."
   },
   {
     "handler": "screens.adminArea.describeScanKind.clearingPartsOf",
@@ -22098,7 +22333,7 @@
   {
     "handler": "screens.adminArea.mediaTitlePage.showInTheApp",
     "text": "Preview",
-    "context": "A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers."
+    "context": "Two places. A button on a title's admin page that opens, over the admin page, the same title dialog people see from the home screen, so an administrator can see how the title looks to viewers. And the small heading in the profile picture editor over the face shown at the sizes Valence draws it. A noun or a verb both fit; keep it to one short word."
   },
   {
     "handler": "screens.adminArea.mediaTitlePage.unlockedEveryField",
@@ -22206,44 +22441,24 @@
     "context": "Shown in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.needsYouCard.aNewerDevBuildIsOut",
-    "text": "A newer dev build is out",
-    "context": "A count on the overview in the admin area, for a server running a dev build when a newer one is out."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.aNewReleaseIsOut",
-    "text": "A new release is out",
-    "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
-  },
-  {
     "handler": "screens.adminArea.needsYouCard.failedRequests",
     "text": "Failed requests",
-    "context": "A count on the overview in the admin area that opens the catalogue, where the failed requests are listed."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the catalogue where the failed requests are listed."
   },
   {
     "handler": "screens.adminArea.needsYouCard.libraryProblems",
     "text": "Library problems",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.nothingNeedsYou",
-    "text": "Nothing needs you. Valence is up to date.",
-    "context": "Shown when nothing on the server needs the admin."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the titles in the libraries that need fixing."
   },
   {
     "handler": "screens.adminArea.needsYouCard.requestsToApprove",
     "text": "Requests to approve",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.valenceIsUpToDate",
-    "text": "Valence is up to date",
-    "context": "On the admin overview’s Waiting on you card, when the newest release is running."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the requests waiting for approval."
   },
   {
     "handler": "screens.adminArea.needsYouCard.waitingOnYou",
     "text": "Waiting on you",
-    "context": "The card at the top of the admin overview that counts what needs an administrator."
+    "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
@@ -22279,36 +22494,6 @@
     "handler": "screens.adminArea.nothingCouldBeReEncoded",
     "text": "Couldn’t re-encode anything.",
     "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.notMeasured",
-    "text": "Not measured",
-    "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceNotMeasured",
-    "text": "of {total} allowed · Valence not measured",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited and Valence's own use could not be measured. {total} is the memory it is allowed."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceUses",
-    "text": "of {total} allowed · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited. {total} is the memory it is allowed, and {used} how much Valence itself uses, such as 1.2 GB."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalOnMount",
-    "text": "of {total} · {mountPoint}",
-    "context": "Under the storage figure at the top of the admin area. {total} is the disk's whole size, such as 8.0 TB, and {mountPoint} is where it is mounted, such as /media."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceNotMeasured",
-    "text": "of {total} · Valence not measured",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where Valence's own use could not be measured. {total} is all the machine's memory."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceUses",
-    "text": "of {total} · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use. {total} is all the machine's memory, and {used} how much Valence itself uses, such as 1.2 GB."
   },
   {
     "handler": "screens.adminArea.onlineServicesCard.everythingValenceConnectsTo",
@@ -22516,6 +22701,71 @@
     "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.driveFull",
+    "text": "{mount} · {share} full",
+    "context": "One drive in the row of drives on the admin overview's disk usage card. {mount} is where the drive is mounted, such as /mnt/media, {share} how full it is, such as 82%."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.elseIs",
+    "text": "On the disk, but not in a library or Valence’s.",
+    "context": "Said of everything else on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.everythingElse",
+    "text": "Everything else",
+    "context": "A part of the disk on the admin overview’s disk usage card: what is on the disk that is not a library or Valence’s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.free",
+    "text": "Free",
+    "context": "A part of the disk on the admin overview’s disk usage card: the room left."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.freeOfTheDrive",
+    "text": "free of {total}",
+    "context": "Beside the large figure on the admin overview's disk usage card, which is how much room is left on the drive. {total} is how big the drive is."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed",
+    "text": "How {mount} is used",
+    "context": "Read out in place of the bar on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.notMeasured",
+    "text": "This disk hasn’t been measured yet.",
+    "context": "Shown on the admin overview’s disk usage card before the disk has been measured."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.rescan",
+    "text": "Rescan",
+    "context": "Button on the admin overview’s disk usage card that counts what Valence holds on the disk again."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.roomLeft",
+    "text": "Room left on {mount}.",
+    "context": "Said of the free space on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.shareOfTheDisk",
+    "text": "{share} of the disk.",
+    "context": "Said of a library on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valenceKeeps",
+    "text": "Previews {previews}, scrub thumbnails {trickplay}, transcodes {sessions}, artwork {artwork}.",
+    "context": "Said of Valence’s files on the admin overview’s disk usage card."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valencesFiles",
+    "text": "Valence’s files",
+    "context": "A part of the disk on the admin overview’s disk usage card: the previews, thumbnails, transcodes, artwork and book pages Valence keeps."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.whichDrive",
+    "text": "Which drive to show",
+    "context": "Read out for the row of drives on the admin overview's disk usage card, shown where the libraries are spread over several drives."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.how",
     "text": "How",
     "context": "A column heading in a table on the admin overview."
@@ -22536,11 +22786,6 @@
     "context": "A column heading in a table on the admin overview."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.loadAgainstCores",
-    "text": "Load (share of cores)",
-    "context": "In the key beneath the server load graph: the load average, drawn as a share of how many processor cores the machine has."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.loadFigures.average",
     "text": "Average",
     "context": "Above the average processor share over the range shown, over the server load chart on the admin overview."
@@ -22559,6 +22804,11 @@
     "handler": "screens.adminArea.overviewPanel.loadFigures.now",
     "text": "Now",
     "context": "Above the processor share in use at this moment, over the server load chart on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadOfTheCores",
+    "text": "{load} · {share} of the cores",
+    "context": "In the tooltip on the admin overview's server load chart, the load average at that moment. {load} is the load average, such as 3.85; {share} is that load against how many processor cores the machine has, such as 48%, which is where the load line is drawn."
   },
   {
     "handler": "screens.adminArea.overviewPanel.memoryUsedOfTotal",
@@ -25691,11 +25941,6 @@
     "context": "Example shown in the empty sign-in message field."
   },
   {
-    "handler": "screens.adminArea.sizeFree",
-    "text": "{size} free",
-    "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
-  },
-  {
     "handler": "screens.adminArea.skipMarkers.addAMarker",
     "text": "Add a marker",
     "context": "Button adding a skip marker to a file."
@@ -26814,6 +27059,16 @@
     "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
     "text": "Asked first",
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.one",
+    "text": "{count} more person wants it",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countMorePeopleWantIt.other",
+    "text": "{count} more people want it",
+    "context": "Shown on hover and read aloud for the circle after the faces of the people who also asked for a title, on its admin page, when there are too many to draw them all. {count} is how many are left out."
   },
   {
     "handler": "screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one",
@@ -28311,6 +28566,16 @@
     "context": "Shown on the admin overview’s What’s new card when nothing has."
   },
   {
+    "handler": "screens.adminArea.whatsNewInValence.seeEverythingNew",
+    "text": "See everything new",
+    "context": "On the card that comes up on the admin pages the first time somebody opens them after Valence has updated to a new release. The button that opens the full notes for the release."
+  },
+  {
+    "handler": "screens.adminArea.whatsNewInValence.title",
+    "text": "What’s new in Valence {version}",
+    "context": "On the card that comes up on the admin pages the first time somebody opens them after Valence has updated to a new release. {version} is the release, such as 1.9.0."
+  },
+  {
     "handler": "screens.adminArea.whyThereIsNoFigure",
     "text": "Why there is no figure",
     "context": "Text shown in the admin area."
@@ -28389,6 +28654,36 @@
     "handler": "screens.adminArea.wordsManager.wordRenamedToNextOnTitles",
     "text": "{word} renamed to {next} on {titles}",
     "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waiting.one",
+    "text": "{count} waiting",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waiting.other",
+    "text": "{count} waiting",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.waitingItsTurn",
+    "text": "Waiting its turn",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. Said of a job queued behind others."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.whatValenceIsDoing",
+    "text": "What Valence is doing",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. Read out for the list of jobs."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.workingOn.one",
+    "text": "Valence is working on {count} thing",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. {count} is how many jobs are running or waiting."
+  },
+  {
+    "handler": "screens.adminArea.workUnderWay.workingOn.other",
+    "text": "Valence is working on {count} things",
+    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. {count} is how many jobs are running or waiting."
   },
   {
     "handler": "screens.adminPage.adminSearch.findAPage",
@@ -29281,9 +29576,9 @@
     "context": "The placeholder in the description field of a collection."
   },
   {
-    "handler": "screens.colourChoice.anyColourForLabel",
-    "text": "Any colour for {label}",
-    "context": "Shown in the colour choice. {label} is filled in by the app."
+    "handler": "screens.colourChoice.customColour",
+    "text": "Custom colour",
+    "context": "What the last swatch in a row of colours is called, which opens a picker for a colour that is not among the ready ones. Shown when it is pointed at, and read out by screen readers."
   },
   {
     "handler": "screens.confirmHiding.hideThis",
@@ -29981,11 +30276,6 @@
     "context": "Shown in the drawn studio in the face editor."
   },
   {
-    "handler": "screens.faceEditor.drawnStudio.anotherFace",
-    "text": "Another avatar",
-    "context": "The label of a button in the drawn studio in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.drawnStudio.bottts",
     "text": "Bottts",
     "context": "Shown in the drawn studio in the face editor."
@@ -30009,6 +30299,11 @@
     "handler": "screens.faceEditor.drawnStudio.notionists",
     "text": "Notionists",
     "context": "Shown in the drawn studio in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.drawnStudio.randomise",
+    "text": "Randomise",
+    "context": "The label of a button in the drawn studio in the face editor, which draws a new face in the same style with every part of it picked afresh at random."
   },
   {
     "handler": "screens.faceEditor.drawnStudio.style",
@@ -30036,39 +30331,39 @@
     "context": "The label in the face editor (from `faceModes`)."
   },
   {
-    "handler": "screens.faceEditor.facePreviews.aroundValence",
-    "text": "Around Valence",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.inAList",
-    "text": "In a list",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.theTopBar",
-    "text": "The top bar",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.facePreviews.whoIsWatching",
-    "text": "Who’s watching",
-    "context": "Text shown in the face previews in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.howYouAppearOnEveryScreen",
-    "text": "How your profile picture appears across Valence.",
-    "context": "The detail of a dialog title in the face editor."
-  },
-  {
     "handler": "screens.faceEditor.kindOfFace",
     "text": "Picture type",
     "context": "The label of a segmented row in the face editor."
   },
   {
-    "handler": "screens.faceEditor.letterStudio.gradient",
-    "text": "Gradient",
-    "context": "The heading over the gradients a letter face can be painted with."
+    "handler": "screens.faceEditor.letterStudio.blaze",
+    "text": "Blaze",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.candy",
+    "text": "Candy",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.flamingo",
+    "text": "Flamingo",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.lagoon",
+    "text": "Lagoon",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.midnight",
+    "text": "Midnight",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.ocean",
+    "text": "Ocean",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
   },
   {
     "handler": "screens.faceEditor.letterStudio.setItInName",
@@ -30076,9 +30371,14 @@
     "context": "The label of a button in the letter studio in the face editor. {name} is filled in by the app."
   },
   {
-    "handler": "screens.faceEditor.letterStudio.useTheGradientFromTo",
-    "text": "Use the gradient from {from} to {to}",
-    "context": "The label of a swatch that paints a letter face with a gradient. {from} and {to} are colours as #rrggbb."
+    "handler": "screens.faceEditor.letterStudio.storm",
+    "text": "Storm",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
+  },
+  {
+    "handler": "screens.faceEditor.letterStudio.twilight",
+    "text": "Twilight",
+    "context": "The name of one of the ready gradients a letter face can be painted with, said for its swatch."
   },
   {
     "handler": "screens.faceEditor.letterStudio.whereTheGradientEnds",
@@ -30086,44 +30386,69 @@
     "context": "The label of the swatch that picks any colour for a letter face's gradient to end on."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.across",
-    "text": "Horizontal position",
-    "context": "The label of a slider in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.blueprint",
+    "text": "Blueprint",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.aPhotographAGIFOrA",
-    "text": "A photo, a GIF or a short video.",
-    "context": "Shown in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.cool",
+    "text": "Cool",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo",
-    "text": "Choose a photo, GIF or video",
-    "context": "The label of a file picker in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.faded",
+    "text": "Faded",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.fitTheWholePicture",
-    "text": "Fit the whole picture",
-    "context": "The label of a button in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.greyscale",
+    "text": "Greyscale",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.framing",
-    "text": "Framing",
-    "context": "A heading in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.inverted",
+    "text": "Inverted",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.upAndDown",
-    "text": "Vertical position",
-    "context": "The label of a slider in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.neon",
+    "text": "Neon",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
-    "handler": "screens.faceEditor.photoStudio.yourCurrentPicture",
-    "text": "Your current picture",
-    "context": "Shown in the photo studio in the face editor."
+    "handler": "screens.faceEditor.photoFilters.noir",
+    "text": "Noir",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.psychedelic",
+    "text": "Psychedelic",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.retro",
+    "text": "Retro",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.sunset",
+    "text": "Sunset",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.vivid",
+    "text": "Vivid",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
+  },
+  {
+    "handler": "screens.faceEditor.photoFilters.warm",
+    "text": "Warm",
+    "context": "The name of a filter a profile photo can be drawn in, under a small picture of the photo in that filter, in the face editor."
   },
   {
     "handler": "screens.faceEditor.useThisFace",
     "text": "Use this picture",
-    "context": "The label in the face editor."
+    "context": "The button that accepts a picture: in the profile picture editor, and in the window that places any uploaded picture in its shape before it is sent, such as a playlist cover, a collection's poster, a title's artwork or this server's picture."
   },
   {
     "handler": "screens.faceEditor.yourFace",
@@ -31699,6 +32024,11 @@
     "handler": "screens.library.letterFontLooks.pacifico",
     "text": "Pacifico",
     "context": "The name in the letter font looks in the library."
+  },
+  {
+    "handler": "screens.library.letterFontLooks.pJakarta",
+    "text": "P. Jakarta",
+    "context": "Plus Jakarta Sans cut short, the font's name beneath a small circle showing a letter set in it, where the whole name does not fit. Screen readers are still told the whole name."
   },
   {
     "handler": "screens.library.letterFontLooks.playfair",
@@ -34527,6 +34857,11 @@
     "context": "Shown in the reader chrome."
   },
   {
+    "handler": "screens.readerContents.goToTitle",
+    "text": "Go to {title}",
+    "context": "The label read out for an entry in a book's contents. {title} is the chapter or volume it opens."
+  },
+  {
     "handler": "screens.readerPanel.keepThePanelBesideThePage",
     "text": "Pin panel",
     "context": "Shown in the reader panel."
@@ -34545,6 +34880,11 @@
     "handler": "screens.readingHero.youAreReading",
     "text": "You’re reading",
     "context": "The small line over the book somebody read last, at the top of the Books page (from `ReadingHero`)."
+  },
+  {
+    "handler": "screens.readingLook.textAndPage",
+    "text": "Text and page",
+    "context": "The button in the book reader that opens the settings for how text and the page look."
   },
   {
     "handler": "screens.readPage.nothingInThisBookYet",
@@ -36132,11 +36472,6 @@
     "context": "The detail in the sharing (from `describeShareEnding`)."
   },
   {
-    "handler": "screens.showDialog.aboutThisEpisode",
-    "text": "About this episode",
-    "context": "The label in the show dialog."
-  },
-  {
     "handler": "screens.showDialog.chooseEpisodes.chooseEpisodesOfTitle",
     "text": "Choose episodes of {title}",
     "context": "The label of a dialog in the choose episodes in the show dialog. {title} is filled in by the app."
@@ -36170,6 +36505,11 @@
     "handler": "screens.showDialog.nothingHereYetEpisodesAppearAs",
     "text": "No episodes yet. Episodes appear as they’re scanned.",
     "context": "Text shown in the show dialog."
+  },
+  {
+    "handler": "screens.showDialog.onSomeEpisodes",
+    "text": "{label} on some episodes",
+    "context": "A badge on a programme's page for a picture or sound format only some of its episodes have, such as Dolby Atmos. {label} is the format, filled in by the app."
   },
   {
     "handler": "screens.showDialog.playValueEpisodeValue2",
@@ -36457,11 +36797,6 @@
     "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for how many stars this profile gave a film or show."
   },
   {
-    "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",
-    "text": "{title} is up next. Nothing will play or be marked as watched until you confirm.",
-    "context": "Text shown in the still watching dialog. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.streamStats.planAxis.burnIn",
     "text": "burn in",
     "context": "Shown in the plan axis in the stream stats."
@@ -36692,6 +37027,11 @@
     "context": "Shown in the paused screen in the video player. {title} is filled in by the app; {episodeNumber} is filled in by the app."
   },
   {
+    "handler": "screens.videoPlayer.pausedScreen.upNextEpisode",
+    "text": "Up next: {episode}",
+    "context": "On the player's paused screen while it asks whether anybody is still watching, naming the episode that plays if they carry on. {episode} is its name and number, such as Chapter 6: Ep. 6."
+  },
+  {
     "handler": "screens.videoPlayer.pausedScreen.youReWatching",
     "text": "You’re watching",
     "context": "Text shown in the paused screen in the video player."
@@ -36812,6 +37152,16 @@
     "context": "Shown in the video player."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.buffer",
+    "text": "Buffer",
+    "context": "Stats for nerds: the title of the chart of how many seconds of the stream are ready ahead of the viewer, and its tooltip's label."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.bufferOverTime",
+    "text": "Seconds buffered ahead over the last minute",
+    "context": "Stats for nerds: read out to anybody who cannot see the buffer chart."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.byTheBrowser",
     "text": "By the browser",
     "context": "Stats for nerds, tone mapping row: the browser tone maps the HDR picture for this SDR screen itself."
@@ -36840,6 +37190,16 @@
     "handler": "screens.videoPlayer.streamStats.mediabunny",
     "text": "Mediabunny",
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.network",
+    "text": "Network",
+    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.networkOverTime",
+    "text": "Connection speed and stream bitrate over the last minute",
+    "context": "Stats for nerds: read out to anybody who cannot see the network chart."
   },
   {
     "handler": "screens.videoPlayer.streamStats.noneShownAsHdr",
@@ -36910,6 +37270,11 @@
     "handler": "screens.videoPlayer.streamStats.valencesWebGpuPlayer",
     "text": "Valence WebGPU (Mediabunny + WebCodecs)",
     "context": "Stats for nerds, which player is playing: Valence's own player, reading with Mediabunny, decoding with WebCodecs and drawing with WebGPU. Technical names; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.valueSeconds",
+    "text": "{value}s",
+    "context": "Stats for nerds: a number of seconds, written short. {value} is the number."
   },
   {
     "handler": "screens.videoPlayer.streamStats.widthByHeightAtKbps",
@@ -38127,6 +38492,16 @@
     "context": "Description of the job that reads what linked servers share."
   },
   {
+    "handler": "server.jobs.jobDefinitions.makeArtworkAhead",
+    "text": "Make card artwork ahead",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.makesEveryCardPictureAhead",
+    "text": "Makes the small copy of every poster, backdrop and logo ahead of time, so cards load them at once.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator",
     "text": "Runs the re-encodes an administrator requested.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -38280,6 +38655,11 @@
     "handler": "server.jobs.phase.arrived.other",
     "text": "{count} added",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: how many things arrived in the library since the last digest. {count} is how many."
+  },
+  {
+    "handler": "server.jobs.phase.artwork",
+    "text": "card artwork",
+    "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: making the small copies of every poster, backdrop and logo."
   },
   {
     "handler": "server.jobs.phase.books",
@@ -41076,6 +41456,16 @@
     "text": "The server may be unreachable, or your session may have expired.",
     "context": "Shown after a sentence saying something could not be read from the server, above a button to try again."
   },
+  {
+    "handler": "ui.countMark.plusCount.one",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
+  },
+  {
+    "handler": "ui.countMark.plusCount.other",
+    "text": "+{count}",
+    "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
+  },
   { "handler": "ui.dataTable.filter", "text": "Filter", "context": "The name in the data table." },
   {
     "handler": "ui.dataTable.filterById",
@@ -41116,6 +41506,16 @@
     "handler": "ui.freshnessNote.couldNotCheckForChanges",
     "text": "Couldn’t check for changes",
     "context": "A note in a panel’s heading in the admin area when it is showing what it read last time and the server didn’t answer when asked for anything newer."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.one",
+    "text": "{count} more server has it",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
+  },
+  {
+    "handler": "ui.mediaCard.countMoreServersHaveIt.other",
+    "text": "{count} more servers have it",
+    "context": "Shown on hover and read aloud for the circle after the marks of the servers that have a title, on its card, when there are too many servers to draw them all. {count} is how many are left out."
   },
   {
     "handler": "ui.noticeCard.thisWillCloseIn",
@@ -41471,11 +41871,6 @@
     "handler": "ui.timeBars.nothingInThisTime",
     "text": "Nothing in this time range.",
     "context": "Text shown in the time bars."
-  },
-  {
-    "handler": "ui.tokens.captionColours.black",
-    "text": "Black",
-    "context": "The label in the tokens (from `captionColours`)."
   },
   {
     "handler": "ui.tokens.captionColours.cyan",

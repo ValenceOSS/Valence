@@ -8,6 +8,7 @@ type ABottomSheetProps = {
   onClose: () => void;
   isTall?: boolean;
   tallest?: number;
+  isDraggedAnywhere?: boolean;
   children: ReactNode;
 };
 

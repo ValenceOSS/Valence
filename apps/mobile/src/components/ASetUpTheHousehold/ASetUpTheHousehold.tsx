@@ -129,6 +129,7 @@ const ASetUpTheHousehold = ({ household, onDone }: ASetUpTheHouseholdProps) => {
         key={isEditing ? 'open' : 'shut'}
         isOpen={isEditing}
         profile={face}
+        pickedAlready={picked}
         onClose={() => {
           setIsEditing(false);
         }}

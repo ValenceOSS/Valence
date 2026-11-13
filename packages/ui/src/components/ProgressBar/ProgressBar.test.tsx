@@ -35,10 +35,12 @@ describe('ProgressBar', () => {
     );
   });
 
-  it('paces rather than fills while it does not know', () => {
+  it('slides a short length along the track rather than filling while it does not know', () => {
     const { container } = render(<ProgressBar label="Scanning Films" value={null} />);
+    const track = container.querySelector('[data-slot="progress"]');
 
-    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    expect(track?.firstElementChild).toHaveClass('w-2/5');
+    expect(track?.firstElementChild).not.toHaveStyle({ width: '0%' });
   });
 
   it('shows the stage before the bar', () => {

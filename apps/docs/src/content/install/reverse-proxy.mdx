@@ -184,6 +184,75 @@ proxy_send_timeout 3600s;
 
 Nginx Proxy Manager sets `X-Forwarded-For` itself. Set `PUBLIC_URL` to the same `https://` domain you entered in step 1.
 
+## Serving artwork from the proxy
+
+This is optional. Everything works without it.
+
+Valence names every narrowed poster, backdrop and logo by a key only your server can work out, and serves it at `/api/artwork/<name>-w<width>.webp`. These addresses need no sign-in, never change, and are sent with `Cache-Control: public, max-age=31536000, immutable`, so a browser keeps each picture for good. The library's own image addresses send the browser on to them.
+
+Valence also writes each of those pictures to `IMAGE_CACHE_DIR/public` (`/cache/images/public` in the shipped compose file) under the same file name. A proxy that can read that folder can answer artwork straight from disk, without asking Valence. It hands Valence only the pictures that have not been made yet, and Valence writes those into the folder as it answers them.
+
+Give the proxy the `cache` volume read-only. With Caddy in the same Compose stack:
+
+```yaml
+services:
+  caddy:
+    volumes:
+      - cache:/valence-cache:ro
+```
+
+### Caddy
+
+```text
+valence.example.com {
+    @artwork path_regexp artwork ^/api/artwork/([0-9a-f]{32}-w[0-9]+\.webp)$
+    route @artwork {
+        root * /valence-cache/images/public
+        try_files /{re.artwork.1}
+        header Cache-Control "public, max-age=31536000, immutable" {
+            match status 2xx
+        }
+        file_server {
+            pass_thru
+        }
+        reverse_proxy valence:8420
+    }
+
+    reverse_proxy valence:8420 {
+        flush_interval -1
+    }
+}
+```
+
+`route` keeps the directives in the order written. `try_files` points the request at the file only where it exists, so a picture that has not been made yet keeps its address, and `pass_thru` hands it on to Valence.
+
+### nginx
+
+Mount the volume where nginx can read it, then add this beside the existing `location /`:
+
+```nginx
+location ~ "^/api/artwork/([0-9a-f]{32}-w[0-9]+\.webp)$" {
+    root /valence-cache/images/public;
+    try_files /$1 @valence;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+}
+
+location @valence {
+    proxy_pass http://192.168.1.40:8420;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+### Traefik
+
+Traefik does not serve files from disk. Leave artwork to Valence, or put a CDN in front, as below.
+
+### A CDN
+
+Set `ARTWORK_URL` to the CDN's address, such as `https://cdn.example.com`, and point the CDN's origin at your Valence address. Valence then sends browsers to `https://cdn.example.com/api/artwork/...`. The CDN fetches each picture from Valence once and keeps it, since it never changes. The addresses give nothing away about what is in your library, so they are safe to put on a public CDN.
+
 ## Testing it
 
 1. Check the health endpoint through the proxy: `curl -s https://valence.example.com/api/health`. You should see JSON with `"status":"ok"`.

@@ -4,6 +4,31 @@ import { describe, expect, it, vi } from 'vitest';
 import { ArtCard } from './ArtCard';
 
 describe('ArtCard', () => {
+  it('asks for its pictures at once, unless told they can wait until it comes near', () => {
+    const { container, rerender } = render(
+      <ArtCard
+        title="Arrival"
+        imageUrl="/backdrop.webp"
+        logoUrl="/logo.webp"
+        onSelect={() => undefined}
+      />,
+    );
+
+    expect(container.querySelector('img[loading="lazy"]')).toBeNull();
+
+    rerender(
+      <ArtCard
+        title="Arrival"
+        imageUrl="/backdrop.webp"
+        logoUrl="/logo.webp"
+        onSelect={() => undefined}
+        isLazy
+      />,
+    );
+
+    expect(container.querySelectorAll('img[loading="lazy"]')).toHaveLength(2);
+  });
+
   it('is pressed by its name, and says what is new about it', async () => {
     const onSelect = vi.fn();
 
