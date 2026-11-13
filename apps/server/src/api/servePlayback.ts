@@ -318,7 +318,11 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.playback.thatSessionBelongsToSomebodyElse'), 403);
     }
 
-    const ticket = castTickets.issue({ sessionId });
+    const account = await readAccount(context.req.raw.headers);
+    const ticket = castTickets.issue(
+      { sessionId },
+      account === null ? `session:${sessionId}` : `account:${account.id}`,
+    );
 
     return context.json({ manifestUrl: `/api/playback/cast/${ticket}/index.m3u8` }, 200);
   });

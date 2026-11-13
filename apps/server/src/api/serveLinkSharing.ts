@@ -330,12 +330,15 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
         ? context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403)
         : context.json(
             {
-              ticket: tickets.issue({
-                serverId: who.serverId,
-                route: `/api/playback/session/${encodeURIComponent(sessionId)}`,
-                isWhole: false,
-                subjectId: sessionId,
-              }),
+              ticket: tickets.issue(
+                {
+                  serverId: who.serverId,
+                  route: `/api/playback/session/${encodeURIComponent(sessionId)}`,
+                  isWhole: false,
+                  subjectId: sessionId,
+                },
+                `server:${who.serverId}`,
+              ),
             },
             200,
           );
@@ -349,12 +352,15 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       ? context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403)
       : context.json(
           {
-            ticket: tickets.issue({
-              serverId: who.serverId,
-              route: `/api/playback/${subject.id}/file`,
-              isWhole: true,
-              subjectId: subject.id,
-            }),
+            ticket: tickets.issue(
+              {
+                serverId: who.serverId,
+                route: `/api/playback/${subject.id}/file`,
+                isWhole: true,
+                subjectId: subject.id,
+              },
+              `server:${who.serverId}`,
+            ),
           },
           200,
         );

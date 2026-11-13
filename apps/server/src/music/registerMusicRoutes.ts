@@ -650,11 +650,14 @@ const registerMusicRoutes = (
       return context.json(refuse('error.common.noSuchTrack'), 404);
     }
 
-    const ticket = castTickets.issue({
-      viewer,
-      trackId,
-      quality: context.req.valid('query').quality,
-    });
+    const ticket = castTickets.issue(
+      { viewer, trackId, quality: context.req.valid('query').quality },
+      viewer.kind === 'account'
+        ? `account:${viewer.accountId}`
+        : viewer.kind === 'guest'
+          ? `share:${viewer.shareId}`
+          : 'server',
+    );
 
     return context.json({ address: `/api/music/cast/${ticket}` }, 200);
   });
