@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { app, BrowserWindow, ipcMain, net, powerSaveBlocker } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, net, powerSaveBlocker } from 'electron';
 import type { Tray } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { answerAboutThisLaunch } from '@ValenceDesktop/main/answerAboutThisLaunch';
@@ -10,6 +10,8 @@ import {
   NOW_WATCHING,
 } from '@ValenceDesktop/main/preferenceChannels';
 import { openTheWindow } from '@ValenceDesktop/main/openTheWindow';
+import { showTheAppIcon } from '@ValenceDesktop/main/showTheAppIcon';
+import { APP_ICON_KEY } from '@ValenceClient/shell/APP_ICON_KEY';
 import { openTheUpdateWindow } from '@ValenceDesktop/main/openTheUpdateWindow';
 import { theInstallMark } from '@ValenceDesktop/main/theInstallMark';
 import { wait } from '@ValenceCore/functions/wait';
@@ -276,6 +278,14 @@ const start = async (): Promise<void> => {
     if (key === THE_SERVER_ADDRESS && theServerAddress() !== '') {
       reach.noteReached();
     }
+
+    if (key === APP_ICON_KEY) {
+      showTheAppIcon(theWindow, thePreferenceFile().read(APP_ICON_KEY));
+    }
+  });
+
+  nativeTheme.on('updated', () => {
+    showTheAppIcon(theWindow, thePreferenceFile().read(APP_ICON_KEY));
   });
 
   answerAboutThisLaunch();
@@ -443,6 +453,8 @@ const start = async (): Promise<void> => {
 
   const openAWindow = (showAfter?: Promise<void>): BrowserWindow => {
     const window = openTheWindow(showAfter);
+
+    showTheAppIcon(window, thePreferenceFile().read(APP_ICON_KEY));
 
     takeTheStatusDownWithTheWindow(window, discord);
 

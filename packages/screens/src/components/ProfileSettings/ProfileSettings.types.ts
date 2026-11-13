@@ -1,3 +1,4 @@
+import type { AppIcon } from '@ValenceClient/shell/AppIconSchema';
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import type { Theme } from '@ValenceClient/shell/theme';
@@ -11,6 +12,7 @@ type DeviceChoices = {
   connections: number;
   streamingFormat: 'hls' | 'dash';
   showsDesktopNotices: boolean;
+  appIcon: AppIcon;
 };
 
 type ProfileDraft = DeviceChoices & {

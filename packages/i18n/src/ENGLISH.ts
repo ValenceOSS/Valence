@@ -3442,6 +3442,7 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.appIcon': 'App icon',
   'screens.accountArea.profileSettings.connectionsPerStream': 'Connections per stream',
   'screens.accountArea.profileSettings.dash': 'DASH',
   'screens.accountArea.profileSettings.dashIsReadFromTheSame':
@@ -3466,6 +3467,8 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.streamingFormat': 'Streaming format',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
     'The background behind your initial and the tint on your illustrated avatar.',
+  'screens.accountArea.profileSettings.theIconOnTheTaskbar':
+    "The icon on this computer's taskbar. System follows Windows' light or dark mode.",
   'screens.accountArea.profileSettings.theTitleAndTheSeriesAnd':
     'Shows the title, plus the series and episode or the artist, in your Discord status while something plays. Valence must be open on the same computer as Discord.',
   'screens.accountArea.profileSettings.whatEverybodySharingThisServerSees':

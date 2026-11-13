@@ -18,6 +18,7 @@ type BrandOutput =
   | { kind: 'copy'; from: string; to: string }
   | { kind: 'mark'; from: string; to: string; width: number; height: number }
   | { kind: 'icon'; from: string; to: string; pixels: number; margin: number }
+  | { kind: 'roundIcon'; from: string; to: string; pixels: number; rendition: 'Default' | 'Dark' }
   | {
       kind: 'banner';
       from: string;
@@ -88,6 +89,20 @@ const planBrandOutputs = (): BrandOutput[] => {
     { kind: 'icon', from: ICON, to: 'assets/valence-icon.png', pixels: 256, margin: 0 },
     { kind: 'copy', from: ICON, to: 'apps/desktop/build/icon.icon' },
     { kind: 'icon', from: ICON, to: 'apps/desktop/build/icon.png', pixels: 1024, margin: 0 },
+    {
+      kind: 'roundIcon',
+      from: ICON,
+      to: 'apps/desktop/build/icon-win.png',
+      pixels: 1024,
+      rendition: 'Default',
+    },
+    {
+      kind: 'roundIcon',
+      from: ICON,
+      to: 'apps/desktop/build/icon-win-dark.png',
+      pixels: 1024,
+      rendition: 'Dark',
+    },
     {
       kind: 'icon',
       from: ICON,

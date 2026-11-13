@@ -43,6 +43,7 @@ const DRAFT: ProfileDraft = {
   connections: 3,
   streamingFormat: 'hls',
   showsDesktopNotices: false,
+  appIcon: 'system',
   deviceWas: {
     theme: 'system',
     motion: 'system',
@@ -51,6 +52,7 @@ const DRAFT: ProfileDraft = {
     connections: 3,
     streamingFormat: 'hls',
     showsDesktopNotices: false,
+    appIcon: 'system',
   },
   photo: null,
 };
@@ -122,6 +124,35 @@ describe('ProfileSettings', () => {
 
     expect(onDraft).toHaveBeenCalledWith({ showsDesktopNotices: true });
     expect(areDeviceNoticesOn()).toBe(false);
+  });
+
+  it('puts the taskbar icon into the draft, in the desktop app on Windows', async () => {
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Valence/1.0 Electron',
+    });
+
+    const onDraft = vi.fn();
+
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    const choices = screen.getByRole('group', { name: 'App icon' });
+
+    await userEvent.click(within(choices).getByRole('button', { name: 'Dark' }));
+
+    expect(onDraft).toHaveBeenCalledWith({ appIcon: 'dark' });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('offers no taskbar icon choice outside Windows', () => {
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+
+    expect(screen.queryByRole('group', { name: 'App icon' })).not.toBeInTheDocument();
   });
 
   it('offers no desktop notices in a browser, which has its own way to be told', () => {
