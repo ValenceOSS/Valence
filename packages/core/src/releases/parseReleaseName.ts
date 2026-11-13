@@ -14,6 +14,8 @@ import { readTitle } from '@ValenceCore/releases/readTitle';
 import { spacedName } from '@ValenceCore/releases/spacedName';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 
+const MOST_CHARACTERS = 500;
+
 /**
  * What a name says after its title, where its title can be found in it, and otherwise all of it.
  *
@@ -37,10 +39,13 @@ const afterTheTitle = (spaced: string, title: string): string => {
  * does not give is left empty rather than guessed. Languages are read only after the title, so a
  * title with a word such as Dan, Fin or English in it is not taken for a language.
  *
- * @param name - The release name.
+ * Only the first five hundred characters are read, which is longer than any real release name.
+ *
+ * @param given - The release name.
  * @returns What it is.
  */
-const parseReleaseName = (name: string): ParsedRelease => {
+const parseReleaseName = (given: string): ParsedRelease => {
+  const name = given.slice(0, MOST_CHARACTERS);
   const spaced = spacedName(name);
   const named = readTitle(spaced);
 

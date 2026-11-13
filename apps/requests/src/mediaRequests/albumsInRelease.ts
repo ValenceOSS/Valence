@@ -4,6 +4,8 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 
 type Matchable = Pick<RequestItemRecord, 'id' | 'title'>;
 
+const MOST_CHARACTERS = 500;
+
 const DASHES = /\s*-\s*/g;
 
 const TRAILING_EDITION = /\s*[([][^()[\]]*[)\]]\s*$/;
@@ -55,16 +57,17 @@ const albumsOf = (rest: string): string[] => [
  *
  * @param request - What was asked for.
  * @param items - Its albums.
- * @param title - The title the release's name gives.
+ * @param given - The title the release's name gives, of which five hundred characters are read.
  * @param isArtistChecked - Whether the release must name the artist.
  * @returns The albums it holds.
  */
 const albumsInRelease = <Item extends Matchable>(
   request: Pick<MediaRequestRecord, 'title' | 'artistName' | 'aliases'>,
   items: readonly Item[],
-  title: string,
+  given: string,
   isArtistChecked = true,
 ): Item[] => {
+  const title = given.slice(0, MOST_CHARACTERS);
   const artists = [request.artistName ?? request.title, ...request.aliases];
   const albums = splitsOf(title)
     .filter(

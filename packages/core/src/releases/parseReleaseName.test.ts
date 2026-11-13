@@ -1523,4 +1523,15 @@ describe('parseReleaseName', () => {
     expect(parsed).toMatchObject({ resolution: '1080p', source: 'bluray' });
     expect(parsed.title).toBe('Cleo Suzumiya Haruhi no Yuuutsu The Melancholy of Haruhi Suzumiya');
   });
+
+  it('reads a name hundreds of kilobytes long quickly', () => {
+    const started = Date.now();
+
+    parseReleaseName('flac '.repeat(200_000));
+    parseReleaseName(`Title${'-'.repeat(200_000)}x`);
+    parseReleaseName(`Title${' ('.repeat(200_000)}x`);
+    parseReleaseName(`a${'-x['.repeat(200_000)}`);
+
+    expect(Date.now() - started).toBeLessThan(2_000);
+  });
 });
