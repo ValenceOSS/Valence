@@ -60,6 +60,10 @@ const offerDownloadRoute = createRoute({
       description: 'Nobody is signed in',
       content: { 'application/json': { schema: DownloadError } },
     },
+    403: {
+      description: 'This account’s role does not include saving copies',
+      content: { 'application/json': { schema: DownloadError } },
+    },
     404: {
       description: 'No such media item',
       content: { 'application/json': { schema: DownloadError } },
@@ -94,6 +98,10 @@ const askForDownloadRoute = createRoute({
       description: 'Nobody is signed in',
       content: { 'application/json': { schema: DownloadError } },
     },
+    403: {
+      description: 'This account’s role does not include saving copies',
+      content: { 'application/json': { schema: DownloadError } },
+    },
     404: {
       description: 'No such media item',
       content: { 'application/json': { schema: DownloadError } },
@@ -126,6 +134,10 @@ const offerSeriesRoute = createRoute({
     },
     401: {
       description: 'Nobody is signed in',
+      content: { 'application/json': { schema: DownloadError } },
+    },
+    403: {
+      description: 'This account’s role does not include saving copies',
       content: { 'application/json': { schema: DownloadError } },
     },
     404: {
@@ -163,6 +175,10 @@ const askForSeriesRoute = createRoute({
       description: 'Nobody is signed in',
       content: { 'application/json': { schema: DownloadError } },
     },
+    403: {
+      description: 'This account’s role does not include saving copies',
+      content: { 'application/json': { schema: DownloadError } },
+    },
   },
 });
 
@@ -191,6 +207,10 @@ const resumeDownloadRoute = createRoute({
     204: { description: 'Resumed' },
     401: {
       description: 'Nobody is signed in',
+      content: { 'application/json': { schema: DownloadError } },
+    },
+    403: {
+      description: 'This account’s role does not include saving copies',
       content: { 'application/json': { schema: DownloadError } },
     },
     404: {
@@ -252,6 +272,10 @@ const readDownloadRoute = createRoute({
       description: 'Nobody is signed in',
       content: { 'application/json': { schema: DownloadError } },
     },
+    403: {
+      description: 'This account’s role does not include saving copies',
+      content: { 'application/json': { schema: DownloadError } },
+    },
     404: {
       description: 'Nothing prepared under that name',
       content: { 'application/json': { schema: DownloadError } },
@@ -291,6 +315,10 @@ const holdDownloadRoute = createRoute({
     204: { description: 'Recorded' },
     401: {
       description: 'Nobody is signed in',
+      content: { 'application/json': { schema: DownloadError } },
+    },
+    403: {
+      description: 'This account’s role does not include saving copies',
       content: { 'application/json': { schema: DownloadError } },
     },
   },

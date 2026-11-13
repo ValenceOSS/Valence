@@ -2303,6 +2303,8 @@ const ENGLISH = {
   'error.downloads.thatIsNotAChangeTo': 'That isn’t a valid change to a download client.',
   'error.downloads.thatIsNotADownloadClient': 'That isn’t a valid download client.',
   'error.downloads.thatIsNotAReleaseTo': 'That isn’t a valid release to send.',
+  'error.downloads.thisAccountMayNotSaveCopies':
+    'This account isn’t allowed to save copies to a device.',
   'error.downloads.thoseAreNotRulesForGiving':
     'Those aren’t valid rules for abandoning a download.',
   'error.folder.aFoldersNameIsASingle': 'A folder name can’t contain slashes.',

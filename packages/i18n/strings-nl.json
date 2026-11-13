@@ -9816,6 +9816,11 @@
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
   },
   {
+    "handler": "error.downloads.thisAccountMayNotSaveCopies",
+    "text": "This account isn’t allowed to save copies to a device.",
+    "context": "An error the server answers with (HTTP 403) when an account whose role lacks downloads asks to save a title to a device (from `serveDownloads`)."
+  },
+  {
     "handler": "error.downloads.thoseAreNotRulesForGiving",
     "text": "Those aren’t valid rules for abandoning a download.",
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."

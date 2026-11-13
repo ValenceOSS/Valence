@@ -134,6 +134,11 @@ const watching = async (context: ReturnType<typeof build>) => {
   const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
   const accountId = context.store.user[0]?.id ?? '';
   const profile = await context.profiles.ensureDefault(accountId, 'Dan');
+  const member = (await context.permissions.listRoles()).find((role) => role.name === 'Member');
+
+  if (member !== undefined) {
+    await context.permissions.assignRole(accountId, member.id);
+  }
 
   return {
     cookie,

@@ -28,7 +28,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
-  const { downloads, readProfileId, forwardedFileHeaders, library, viewerOf } = context;
+  const { downloads, readProfileId, forwardedFileHeaders, library, viewerOf, requires } = context;
 
   /**
    * Whether a download is of something its owner is now refused, by a library kept from them or an age
@@ -59,6 +59,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
+    }
+
     const offer = await downloads.offer(
       context.req.valid('param').mediaId,
       context.req.valid('json').deviceProfile,
@@ -74,6 +78,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     if (profileId === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
     }
 
     const { quality, audioLanguages } = context.req.valid('json');
@@ -98,6 +106,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
+    }
+
     const { deviceProfile, mediaIds } = context.req.valid('json');
     const offer = await downloads.offerSeries(
       context.req.valid('param').seriesId,
@@ -115,6 +127,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     if (profileId === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
     }
 
     const { quality, audioLanguages, mediaIds } = context.req.valid('json');
@@ -148,6 +164,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     if (profileId === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
     }
 
     const { id } = context.req.valid('param');
@@ -188,6 +208,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     if (profileId === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
     }
 
     if (await isOutOfReach(context.req.raw.headers, profileId, context.req.valid('param').id)) {
@@ -233,6 +257,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     if (profileId === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    if (!(await requires(context.req.raw.headers, 'download.media'))) {
+      return context.json(refuse('error.downloads.thisAccountMayNotSaveCopies'), 403);
     }
 
     const clientId = context.req.header('x-valence-client') ?? profileId;
