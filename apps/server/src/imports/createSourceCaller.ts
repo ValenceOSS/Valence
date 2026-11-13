@@ -34,6 +34,9 @@ const PICTURE_TYPES = /^image\/(jpeg|png|webp|gif)/;
  * Reads from a Jellyfin, Emby or Plex server, or from plex.tv, over plain HTTP on whatever address
  * it was given, turning every way that can fail into a failure that says so.
  *
+ * Where a path is a whole address on some other host, it is asked for over HTTPS with none of the
+ * headers that carry the source's key.
+ *
  * @param options - How to fetch, where the source answers, what it is called and the headers that
  *   carry its key.
  * @returns How to read json, text and pictures from it, and the one account switch Plex needs.
@@ -63,11 +66,17 @@ const createSourceCaller = ({
     { query = {}, headers: extra = {} }: SourceAsking,
   ): Promise<Response> => {
     let response: Response;
+    const address = addressOf(path, query);
+    const isOurs = new URL(address).origin === new URL(root).origin;
 
     try {
-      response = await fetch(addressOf(path, query), {
+      if (!isOurs && !address.toLowerCase().startsWith('https://')) {
+        throw new TypeError('That is not an address to ask');
+      }
+
+      response = await fetch(address, {
         method,
-        headers: { ...headers, ...extra },
+        headers: isOurs ? { ...headers, ...extra } : {},
         signal: AbortSignal.timeout(waitSeconds * 1000),
       });
     } catch (error) {
