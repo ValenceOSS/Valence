@@ -296,6 +296,10 @@ fn is_forced(stream: &FfprobeStream) -> bool {
         .is_some_and(|forced| *forced == 1)
 }
 
+/// The longest duration a file may declare before it is read as having none, so a header
+/// claiming centuries cannot size a list of segments.
+pub const MOST_DURATION_SECONDS: f64 = 172_800.0;
+
 /// The video stream Valence plays, of however many a file holds.
 ///
 /// The first is the one: a file with two video streams is almost always carrying cover art or a
@@ -404,6 +408,7 @@ fn to_media_probe(output: &FfprobeOutput, path: &Path) -> MediaProbe {
         duration_seconds: format
             .and_then(|f| f.duration.as_ref())
             .and_then(|value| value.parse::<f64>().ok())
+            .filter(|seconds| (0.0..=MOST_DURATION_SECONDS).contains(seconds))
             .unwrap_or_default(),
         bitrate_kbps: parse_kbps(format.and_then(|f| f.bit_rate.as_ref())),
         video,
@@ -589,6 +594,15 @@ mod tests {
         assert_eq!(probe.container, Container::Mkv);
         assert!((probe.duration_seconds - 7200.5).abs() < f64::EPSILON);
         assert_eq!(probe.bitrate_kbps, Some(24000));
+    }
+
+    /// A header that claims a duration no film has is read as having none.
+    #[test]
+    fn reads_an_absurd_declared_duration_as_none() {
+        let json = HDR10_JSON.replace("7200.5", "1000000000000");
+        let probe = parse_ffprobe_output(&json, Path::new("/media/film.mkv")).expect("parses");
+
+        assert!(probe.duration_seconds.abs() < f64::EPSILON);
     }
 
     #[test]
