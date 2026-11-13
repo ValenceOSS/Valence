@@ -216,6 +216,20 @@ describe('createProfileGate', () => {
     }
   });
 
+  it('turns a key away from changing the account’s profiles, while letting it read them', async () => {
+    for (const [method, path] of [
+      ['POST', '/api/profiles'],
+      ['PATCH', '/api/profiles/kid'],
+      ['DELETE', '/api/profiles/kid'],
+      ['PUT', '/api/profiles/kid/pin'],
+      ['POST', '/api/profiles/kid/owner'],
+    ] as const) {
+      expect((await ask(A_KEY, method, path)).status, `${method} ${path}`).toBe(403);
+    }
+
+    expect(await ask(A_KEY, 'GET', '/api/profiles')).toEqual({ status: 200, code: null });
+  });
+
   it('lets a key do what its permissions allow to accounts other than its own', async () => {
     expect(await ask(A_KEY, 'PUT', '/api/admin/accounts/account-2/password')).toEqual({
       status: 200,
