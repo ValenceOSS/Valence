@@ -5,6 +5,7 @@ type DiskUsageCardProps = {
   disks: Monitor['resources']['disks'];
   libraries: readonly Library[];
   cache: Monitor['cache'];
+  artefactRoot: string | null;
   artwork: AdminOverview['artwork'] | null;
   bookPages: AdminOverview['bookPages'] | null;
 };

@@ -18,7 +18,7 @@ import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { Icon } from '@ValenceUI/Icon';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
-import { libraryDisk } from '@ValenceScreens/components/AdminArea/libraryDisk';
+import { driveKeyOf } from '@ValenceScreens/components/AdminArea/driveKeyOf';
 import { libraryDisks } from '@ValenceScreens/components/AdminArea/libraryDisks';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { valenceOwnBytes } from '@ValenceScreens/components/AdminArea/valenceOwnBytes';
@@ -60,22 +60,31 @@ const lookOf = (share: DiskShare): keyof typeof COLOURS =>
 
 /**
  * How a disk is used, drawn as a bar of dots divided between each library on it, the files Valence
- * keeps, everything else and the room left, with a legend beneath it. The figure at the top is what
- * is Valence's on the disk, its libraries and its own files, with how full the disk is beside it.
- * Pointing at a part of the bar or the legend lights it and says more about it above the bar; the
- * largest library is described until anything is pointed at. The disks can be counted again.
+ * keeps, everything else and the room left, with a legend beneath it. The figure at the top is the
+ * room left, beside how big the disk is. Pointing at a part of the bar or the legend lights it and
+ * says more about it above the bar; the largest library is described until anything is pointed at.
+ * The disks can be counted again.
  *
  * Where the libraries are spread over several disks, each can be chosen in turn, starting with the
- * one with the least room left. Valence's own files are counted on that one, as the monitor does
- * not say which disk holds them.
+ * one with the least room left. Valence's own files are counted on the disk holding the folder the
+ * media service keeps its previews in, beside which the artwork is kept, and left out of the others.
+ * Where the media service has not said where that is, they are counted on the first disk.
  *
  * @param disks - The disks the server can see, of which those holding the libraries are drawn.
  * @param libraries - The libraries, of which those on that disk are drawn.
  * @param cache - What the media service holds on disk.
+ * @param artefactRoot - Where the media service keeps its previews, or null where it has not said.
  * @param artwork - How much artwork Valence keeps.
  * @param bookPages - How much the kept pages of books hold.
  */
-const DiskUsageCard = ({ disks, libraries, cache, artwork, bookPages }: DiskUsageCardProps) => {
+const DiskUsageCard = ({
+  disks,
+  libraries,
+  cache,
+  artefactRoot,
+  artwork,
+  bookPages,
+}: DiskUsageCardProps) => {
   const [pointed, setPointed] = useState<string | null>(null);
   const [isCounting, setIsCounting] = useState(false);
   const [chosenMount, setChosenMount] = useState<string | null>(null);
@@ -94,24 +103,30 @@ const DiskUsageCard = ({ disks, libraries, cache, artwork, bookPages }: DiskUsag
     );
   }
 
-  const onDisk = libraries.filter(
-    (library) => libraryDisk([...disks], [library.path])?.mountPoint === disk.mountPoint,
-  );
-  const isValencesDrive = disk.mountPoint === drives[0]?.mountPoint;
+  /**
+   * Whether a path is on the disk being drawn, counting a ZFS pool's datasets as one disk.
+   *
+   * @param path - The path.
+   * @returns Whether it is.
+   */
+  const isOnThisDisk = (path: string): boolean => {
+    const holding = libraryDisks(disks, [path])[0];
+
+    return holding !== undefined && driveKeyOf(holding) === driveKeyOf(disk);
+  };
+  const onDisk = libraries.filter((library) => isOnThisDisk(library.path));
+  const isValencesDrive =
+    artefactRoot === null ? disk.mountPoint === drives[0]?.mountPoint : isOnThisDisk(artefactRoot);
   const shares = diskShares(
     disk,
     onDisk,
-    isValencesDrive ? valenceOwnBytes(cache, artwork, bookPages) : 0,
+    isValencesDrive ? valenceOwnBytes(cache, artwork, bookPages) : null,
     {
       valence: say('screens.adminArea.overviewPanel.diskUsageCard.valencesFiles'),
       else: say('screens.adminArea.overviewPanel.diskUsageCard.everythingElse'),
       free: say('screens.adminArea.overviewPanel.diskUsageCard.free'),
     },
   );
-  const ours = shares
-    .filter((share) => share.is === 'library' || share.is === 'valence')
-    .reduce((sum, share) => sum + share.bytes, 0);
-  const used = Math.max(0, disk.totalBytes - disk.availableBytes);
   const largest = shares.find((share) => share.is === 'library') ?? shares[0];
   const shown = shares.find((share) => share.id === pointed) ?? largest;
   const percent = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 1 });
@@ -173,11 +188,10 @@ const DiskUsageCard = ({ disks, libraries, cache, artwork, bookPages }: DiskUsag
         <div className="flex flex-col gap-2">
           <p className="flex flex-wrap items-baseline gap-x-2">
             <span className="text-4xl font-semibold tracking-tight tabular-nums text-text">
-              {formatBytes(ours)}
+              {formatBytes(disk.availableBytes)}
             </span>
             <span className="text-lg text-text-muted">
-              {say('screens.adminArea.overviewPanel.diskUsageCard.valencesOnTheDrive', {
-                used: formatBytes(used),
+              {say('screens.adminArea.overviewPanel.diskUsageCard.freeOfTheDrive', {
                 total: formatBytes(disk.totalBytes),
               })}
             </span>

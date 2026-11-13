@@ -4,6 +4,7 @@ import type { DiskUse } from './libraryDisks';
 
 const disk = (mountPoint: string, totalBytes: number, availableBytes: number): DiskUse => ({
   mountPoint,
+  device: null,
   totalBytes,
   availableBytes,
 });
@@ -40,5 +41,24 @@ describe('libraryDisks', () => {
 
   it('does not take a sibling mount for one whose name it starts with', () => {
     expect(libraryDisks([media, second], ['/mnt/media2x/films'])).toEqual([]);
+  });
+
+  it('counts the datasets of one ZFS pool as one drive, the pool', () => {
+    const films = {
+      mountPoint: '/media/films',
+      device: 'tank/films',
+      totalBytes: 700,
+      availableBytes: 400,
+    };
+    const shows = {
+      mountPoint: '/media/shows',
+      device: 'tank/shows',
+      totalBytes: 600,
+      availableBytes: 400,
+    };
+
+    expect(libraryDisks([root, films, shows], ['/media/films', '/media/shows/a'])).toEqual([
+      { ...films, totalBytes: 900 },
+    ]);
   });
 });

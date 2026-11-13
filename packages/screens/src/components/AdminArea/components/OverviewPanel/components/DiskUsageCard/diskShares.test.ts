@@ -75,4 +75,15 @@ describe('diskShares', () => {
     expect(shares.find((share) => share.id === 'shows')?.bytes).toBeCloseTo(150);
     expect(shares.reduce((sum, share) => sum + share.bytes, 0)).toBeCloseTo(DISK.totalBytes);
   });
+
+  it('leaves Valence out where its files are on another disk', () => {
+    const shares = diskShares(
+      DISK,
+      [{ id: 'films', name: 'Films', kind: 'movies', sizeBytes: 300 }],
+      null,
+      NAMES,
+    );
+
+    expect(shares.map((share) => share.id)).toEqual(['films', 'else', 'free']);
+  });
 });

@@ -278,6 +278,7 @@ const OverviewPanel = ({
               disks={monitor?.resources.disks ?? []}
               libraries={own}
               cache={monitor?.cache ?? null}
+              artefactRoot={monitor?.resources.artefacts?.root ?? null}
               artwork={overview?.artwork ?? null}
               bookPages={overview?.bookPages ?? null}
             />

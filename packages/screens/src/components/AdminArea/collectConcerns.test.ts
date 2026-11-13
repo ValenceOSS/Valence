@@ -721,7 +721,9 @@ describe('collectConcerns', () => {
   describe('the library disk', () => {
     const onDisk = (totalBytes: number, availableBytes: number): Monitor => {
       const monitor = healthyMonitor();
-      monitor.resources.disks = [{ mountPoint: '/media', totalBytes, availableBytes }];
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: null, totalBytes, availableBytes },
+      ];
 
       return monitor;
     };
@@ -746,7 +748,9 @@ describe('collectConcerns', () => {
 
     it('stays quiet about a full disk no library is on', () => {
       const monitor = healthyMonitor();
-      monitor.resources.disks = [{ mountPoint: '/backup', totalBytes: 1000, availableBytes: 1 }];
+      monitor.resources.disks = [
+        { mountPoint: '/backup', device: null, totalBytes: 1000, availableBytes: 1 },
+      ];
 
       expect(collectConcerns({ ...healthy, monitor })).toEqual([]);
     });

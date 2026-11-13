@@ -22766,6 +22766,11 @@
     "context": "A part of the disk on the admin overview’s disk usage card: the room left."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.diskUsageCard.freeOfTheDrive",
+    "text": "free of {total}",
+    "context": "Beside the large figure on the admin overview's disk usage card, which is how much room is left on the drive. {total} is how big the drive is."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed",
     "text": "How {mount} is used",
     "context": "Read out in place of the bar on the admin overview’s disk usage card."
@@ -22799,11 +22804,6 @@
     "handler": "screens.adminArea.overviewPanel.diskUsageCard.valencesFiles",
     "text": "Valence’s files",
     "context": "A part of the disk on the admin overview’s disk usage card: the previews, thumbnails, transcodes, artwork and book pages Valence keeps."
-  },
-  {
-    "handler": "screens.adminArea.overviewPanel.diskUsageCard.valencesOnTheDrive",
-    "text": "is Valence's, of {used} used on a {total} drive",
-    "context": "Beside the large figure on the admin overview's disk usage card, which is how much of the drive Valence's libraries and its own files take. {used} is how much of the whole drive is used, {total} how big the drive is."
   },
   {
     "handler": "screens.adminArea.overviewPanel.diskUsageCard.whichDrive",
