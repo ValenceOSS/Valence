@@ -253,8 +253,6 @@ const ENGLISH = {
   'client.library.describeTitleDetails.boxOffice': 'Box office',
   'client.library.describeTitleDetails.budget': 'Budget',
   'client.library.describeTitleDetails.rottenTomatoes': 'Rotten Tomatoes',
-  'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
-    '/api/libraries/{libraryId}/items?{query}',
   'client.library.freshFlags.newEpisode': 'New episode',
   'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',

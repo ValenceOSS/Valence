@@ -910,11 +910,6 @@
     "context": "The label in the library (from `describeTitleDetails`)."
   },
   {
-    "handler": "client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery",
-    "text": "/api/libraries/{libraryId}/items?{query}",
-    "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
-  },
-  {
     "handler": "client.library.freshFlags.newEpisode",
     "text": "New episode",
     "context": "Shown in the library (from `freshFlags`)."
