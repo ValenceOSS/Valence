@@ -1,5 +1,4 @@
 import { bodyOf } from '@ValenceI18n/bodyOf';
-import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
@@ -29,21 +28,28 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
-  const { library, folderDisk, requires, settleChange, recordAudit, readOrigins } = context;
+  const { library, folderDisk, requires, settleChange, recordAudit, readOrigins, viewerOf } =
+    context;
 
   /**
-   * Reads the libraries whose files are on this server, which are all the file manager may reach.
+   * Reads the libraries whose files are on this server and which whoever is asking may see, which
+   * are all the file manager may reach for them.
    *
+   * @param headers - The request's headers.
    * @returns Those libraries.
    */
-  const onThisDisk = async () => librariesOnThisDisk(await library.list(asTheServer));
+  const onThisDisk = async (headers: Headers) => {
+    const viewer = await viewerOf(headers);
+
+    return viewer === null ? [] : librariesOnThisDisk(await library.list(viewer));
+  };
 
   app.openapi(listLibraryFilesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const libraries = await onThisDisk();
+    const libraries = await onThisDisk(context.req.raw.headers);
     const listed = await listLibraryFolder(
       libraries,
       context.req.valid('query').path,
@@ -73,7 +79,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const measured = await measureLibraryFolder(
-      await onThisDisk(),
+      await onThisDisk(context.req.raw.headers),
       context.req.valid('query').path,
     );
 
@@ -96,8 +102,15 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
+    const { libraryId } = context.req.valid('query');
+    const reachable = await onThisDisk(context.req.raw.headers);
+
     return context.json(
-      { paths: await library.mediaPathsIn(context.req.valid('query').libraryId) },
+      {
+        paths: reachable.some((one) => one.id === libraryId)
+          ? await library.mediaPathsIn(libraryId)
+          : {},
+      },
       200,
     );
   });
@@ -108,7 +121,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { words, within } = context.req.valid('query');
-    const libraries = await onThisDisk();
+    const libraries = await onThisDisk(context.req.raw.headers);
     const found = await searchLibraryFiles(
       folderDisk,
       libraries,
@@ -139,7 +152,10 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const settled = await settleChange(
-      await deleteLibraryEntry(await onThisDisk(), context.req.valid('query').path),
+      await deleteLibraryEntry(
+        await onThisDisk(context.req.raw.headers),
+        context.req.valid('query').path,
+      ),
     );
 
     if ('path' in settled) {
@@ -160,7 +176,9 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { path, name } = context.req.valid('json');
 
-    const settled = await settleChange(await moveLibraryEntry(await onThisDisk(), path, { name }));
+    const settled = await settleChange(
+      await moveLibraryEntry(await onThisDisk(context.req.raw.headers), path, { name }),
+    );
 
     if ('path' in settled) {
       await recordAudit(context, 'files.renamed', path, { to: settled.path });
@@ -178,7 +196,9 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { path, into } = context.req.valid('json');
 
-    const settled = await settleChange(await moveLibraryEntry(await onThisDisk(), path, { into }));
+    const settled = await settleChange(
+      await moveLibraryEntry(await onThisDisk(context.req.raw.headers), path, { into }),
+    );
 
     if ('path' in settled) {
       await recordAudit(context, 'files.moved', path, { to: settled.path });

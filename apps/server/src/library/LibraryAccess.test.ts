@@ -592,3 +592,27 @@ describe('deciding about one thing from the film itself', () => {
     expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(200);
   });
 });
+
+describe('managing the files of a library taken away', () => {
+  it('leaves the library out of the file manager', async () => {
+    const me = await signedInWith(context, ['account.manage', 'library.edit', 'media.delete']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    const listed = await (await me.ask('/api/admin/files')).text();
+
+    expect(listed).not.toContain('/media/films');
+    expect(listed).toContain('/media/shows');
+  });
+
+  it('treats a path in it as outside every library', async () => {
+    const me = await signedInWith(context, ['account.manage', 'library.edit', 'media.delete']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    expect((await me.ask('/api/admin/files?path=/media/films/Arrival.mkv', 'DELETE')).status).toBe(
+      403,
+    );
+    expect((await me.ask('/api/admin/files/measure?path=/media/films')).status).toBe(403);
+  });
+});
