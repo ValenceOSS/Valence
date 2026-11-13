@@ -746,6 +746,18 @@ describe('collectConcerns', () => {
       );
     });
 
+    it('reports a ZFS dataset a quota holds nearly full, whatever room its pool has', () => {
+      const monitor = healthyMonitor();
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: 'tank/media', totalBytes: 1000, availableBytes: 10 },
+        { mountPoint: '/config', device: 'tank/apps', totalBytes: 5100, availableBytes: 5000 },
+      ];
+
+      expect(collectConcerns({ ...healthy, monitor }).map((concern) => concern.id)).toContain(
+        'disk',
+      );
+    });
+
     it('stays quiet about a full disk no library is on', () => {
       const monitor = healthyMonitor();
       monitor.resources.disks = [

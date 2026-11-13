@@ -29,7 +29,16 @@ describe('wholeDriveOf', () => {
     });
   });
 
-  it('takes the pool’s room left over a dataset held to less by a quota', () => {
+  it('keeps the room left to a dataset a quota holds to less than the pool has', () => {
+    const capped = disk('/media', 'tank/media', 350, 50);
+
+    expect(wholeDriveOf([capped, CACHE], capped)).toMatchObject({
+      totalBytes: 400,
+      availableBytes: 50,
+    });
+  });
+
+  it('is not held to another dataset’s quota', () => {
     const capped = disk('/cache', 'tank/apps', 100, 50);
 
     expect(wholeDriveOf([MEDIA, capped], MEDIA)).toMatchObject({
