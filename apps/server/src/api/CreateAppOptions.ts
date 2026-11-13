@@ -144,6 +144,7 @@ type CreateAppOptions = {
   demoAccounts?: readonly string[];
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<string | null>;
+  setupCode?: { matches: (typed: string) => boolean };
   library: LibraryService;
   playback: PlaybackService;
   permissions?: PermissionService;

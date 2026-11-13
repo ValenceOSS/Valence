@@ -14,6 +14,18 @@ describe('readRefusal', () => {
     expect(await readRefusal(response)).toStrictEqual({ message: 'That name is taken.' });
   });
 
+  it('carries the server’s code for the refusal, so a form can tell one from another', async () => {
+    const response = Response.json(
+      { error: 'That setup code doesn’t match.', code: 'error.setup.thatSetupCodeIsNotRight' },
+      { status: 403 },
+    );
+
+    expect(await readRefusal(response)).toEqual({
+      message: 'That setup code doesn’t match.',
+      code: 'error.setup.thatSetupCodeIsNotRight',
+    });
+  });
+
   it('says something rather than nothing when a refusal explains itself badly', async () => {
     const response = new Response('<html>no</html>', { status: 500 });
 

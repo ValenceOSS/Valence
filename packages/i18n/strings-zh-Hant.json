@@ -10836,6 +10836,11 @@
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveSetup`)."
   },
   {
+    "handler": "error.setup.thatSetupCodeIsNotRight",
+    "text": "That setup code doesn’t match the one in the server’s log.",
+    "context": "An error the server answers with (HTTP 403) when the setup code typed on the first-run setup page is wrong (from `serveSetup`)."
+  },
+  {
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
     "text": "Couldn’t create the administrator account.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveSetup`)."
@@ -36520,6 +36525,16 @@
     "handler": "screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet",
     "text": "No one has an account on this server yet. Create yours, set the addresses Valence is reached on and where your media is, and import from Jellyfin, Emby or Plex if you’re switching. You can change all of it later.",
     "context": "On the first-run setup page: under the heading of the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.printedInTheServerLog",
+    "text": "Valence printed it in its log when it started, so only whoever runs the server can set it up.",
+    "context": "On the first-run setup page: the description under the setup code field on the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.setupCode",
+    "text": "Setup code",
+    "context": "On the first-run setup page: the label of the field for the code the server printed in its log."
   },
   {
     "handler": "screens.shareArea.askWhoeverSentItForA",

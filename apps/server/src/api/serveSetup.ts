@@ -21,7 +21,7 @@ const SignedUpSchema = z.object({ user: z.object({ id: z.string() }) });
  * @param context - What they are answered with.
  */
 const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
-  const { auth, settings, countUsers, promoteToAdmin, requires, telemetry } = context;
+  const { auth, settings, countUsers, promoteToAdmin, requires, telemetry, setupCode } = context;
   const settingUp = createWorkLock();
 
   app.openapi(setupStatusRoute, async (context) => {
@@ -47,8 +47,12 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
         return context.json(refuse('error.setup.setupHasAlreadyBeenCompleted'), 409);
       }
 
-      const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics } =
+      const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics, ...asked } =
         context.req.valid('json');
+
+      if (setupCode !== undefined && !setupCode.matches(asked.setupCode)) {
+        return context.json(refuse('error.setup.thatSetupCodeIsNotRight'), 403);
+      }
       const email = admin.email?.toLowerCase();
 
       const created = await auth.api.signUpEmail({

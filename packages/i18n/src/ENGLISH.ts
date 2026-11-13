@@ -2575,6 +2575,8 @@ const ENGLISH = {
     'Valence doesn’t have permission to delete files there.',
   'error.server.valenceIsNotAllowedToWrite': 'Valence doesn’t have permission to write there.',
   'error.setup.setupHasAlreadyBeenCompleted': 'Setup has already been completed.',
+  'error.setup.thatSetupCodeIsNotRight':
+    'That setup code doesn’t match the one in the server’s log.',
   'error.setup.theAdministratorAccountCouldNotBe': 'Couldn’t create the administrator account.',
   'error.setupLink.chooseAUsernameToSignInWith': 'Choose a username to sign in with.',
   'error.setupLink.thatAccountAlreadyHasAPassword': 'This account already has a password.',
@@ -9234,6 +9236,9 @@ const ENGLISH = {
   'screens.setupWizard.welcomeStep.makeYourAccount': 'Create your account',
   'screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet':
     'No one has an account on this server yet. Create yours, set the addresses Valence is reached on and where your media is, and import from Jellyfin, Emby or Plex if you’re switching. You can change all of it later.',
+  'screens.setupWizard.welcomeStep.printedInTheServerLog':
+    'Valence printed it in its log when it started, so only whoever runs the server can set it up.',
+  'screens.setupWizard.welcomeStep.setupCode': 'Setup code',
   'screens.shareArea.askWhoeverSentItForA': 'Ask the person who sent it for a new one.',
   'screens.shareArea.openingWhatWasSharedWithYou': 'Opening the shared item on {name}',
   'screens.shareArea.sharedWithYouOnName': 'Shared with you on {name}',

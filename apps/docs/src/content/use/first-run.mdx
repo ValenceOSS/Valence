@@ -21,13 +21,13 @@ Open Valence at the address you will normally use to reach it, not at `localhost
 
 ## The setup wizard
 
-Until an account exists, every page of the web app resolves to the wizard, titled **Set up Valence**. Whoever gets there first becomes the administrator, so complete it yourself before sharing the address with anyone.
+Until an account exists, every page of the web app resolves to the wizard, titled **Set up Valence**. Only whoever runs the server can complete it: the first step asks for a setup code, which Valence prints in its log each time it starts with no accounts. Find it with `docker compose logs valence`, on a line that begins `Nobody has an account here yet`. The code is four groups of four letters and digits, and it can be typed in any case. A new one is printed every time the server restarts.
 
 The wizard is a series of short steps, listed down the left (or as a bar of segments on a phone) with the steps already done ticked. **Back** moves to the step before until your account is made; after that the earlier steps are fixed.
 
 | Step                       | What it asks                                                                                                                                | Can be skipped |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| Welcome                    | Nothing. It says what setup will do.                                                                                                        |                |
+| Welcome                    | The setup code from the server's log. It says what setup will do.                                                                           |                |
 | Your account               | Name, username, email (optional) and password.                                                                                              | No             |
 | How Valence is reached     | The trusted addresses, whether Valence is served over HTTPS, and whether it shares anonymous usage statistics. This step makes the account. | No             |
 | Your profile               | How you appear: display name, face, colour, theme, movement, and the still-watching question.                                               | Saved as is    |

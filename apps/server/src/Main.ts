@@ -1,6 +1,7 @@
-import { auditExpiry } from '@ValenceServer/audit/auditExpiry';
 import { z } from '@hono/zod-openapi';
 import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
+import { createSetupCode } from '@ValenceServer/setup/createSetupCode';
+import { auditExpiry } from '@ValenceServer/audit/auditExpiry';
 import { createFanartProvider } from '@ValenceServer/fanart/createFanartProvider';
 import { createNfoWriter } from '@ValenceServer/nfo/createNfoWriter';
 import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
@@ -935,6 +936,8 @@ const auth = createAuth({
     );
   },
 });
+
+const setupCode = createSetupCode();
 
 /**
  * Counts the accounts on this server, which is what first-run setup asks to decide whether the
@@ -5563,6 +5566,7 @@ const app = createApp({
   streamMeter,
   presence,
   countUsers,
+  setupCode,
   promoteToAdmin,
   library: libraryService,
   playback: createLinkedPlayback(
@@ -6918,6 +6922,15 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   if (persisted.setupCompletedAt === null) {
     log.info('server', `First-run setup at ${origin}`);
   }
+
+  void countUsers().then((accounts) => {
+    if (accounts === 0) {
+      log.warn(
+        'server',
+        `Nobody has an account here yet. To set Valence up, open it in a browser and enter this setup code: ${setupCode.code}`,
+      );
+    }
+  });
 
   log.info('server', `API description at ${origin}/api/openapi.json`);
   log.info('server', `Media service dialled at ${env.TRANSCODER_URL}`);

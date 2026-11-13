@@ -1,3 +1,4 @@
+import { createSetupCode } from './createSetupCode';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -28,7 +29,7 @@ const adminPayload = {
   cookieSecure: false,
 };
 
-const buildApp = (initialUserCount = 0) => {
+const buildApp = (initialUserCount = 0, setupCode?: { matches: (typed: string) => boolean }) => {
   const { auth, settings, store } = createMemoryAuth();
   const state: { users: number; countsAccounts: (() => number) | null } = {
     users: initialUserCount,
@@ -52,6 +53,7 @@ const buildApp = (initialUserCount = 0) => {
     ratings: createMemoryRatingService(),
     playback: createMemoryPlaybackService(),
     permissions,
+    ...(setupCode === undefined ? {} : { setupCode }),
   });
 
   return { app, settings, state, store, promoteToAdmin, permissions };
@@ -160,6 +162,30 @@ describe('setup completion', () => {
       trustedOrigins: ['http://192.168.1.40:8420'],
       cookieSecure: false,
     });
+  });
+
+  it('makes nobody the administrator without the code the server printed in its log', async () => {
+    const setup = createSetupCode();
+    const { app, store, promoteToAdmin } = buildApp(0, setup);
+
+    for (const setupCode of [undefined, '', 'AAAA-AAAA-AAAA-AAAA']) {
+      const response = await app.request(
+        postSetup(setupCode === undefined ? adminPayload : { ...adminPayload, setupCode }),
+      );
+
+      expect(response.status).toBe(403);
+      expect(await response.json()).toMatchObject({ code: 'error.setup.thatSetupCodeIsNotRight' });
+    }
+
+    expect(store.user).toHaveLength(0);
+    expect(promoteToAdmin).not.toHaveBeenCalled();
+
+    const made = await app.request(
+      postSetup({ ...adminPayload, setupCode: setup.code.toLowerCase() }),
+    );
+
+    expect(made.status).toBe(200);
+    expect(promoteToAdmin).toHaveBeenCalledWith('admin@valence.test');
   });
 
   it('still makes the administrator after a stranger tried to sign up first', async () => {
