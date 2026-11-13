@@ -116,6 +116,39 @@ describe('ABottomSheet', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('leaves a drag to the sheet on top, where one sheet is opened over another', async () => {
+    const onCloseBeneath = jest.fn();
+    const onCloseAbove = jest.fn();
+    const drawn = await render(
+      <>
+        <ABottomSheet isOpen label="Profile picture" isDraggedAnywhere onClose={onCloseBeneath}>
+          <Text>Avatar</Text>
+        </ABottomSheet>
+        <ABottomSheet isOpen label="Custom colour" isDraggedAnywhere onClose={onCloseAbove}>
+          <Text>Hue</Text>
+        </ABottomSheet>
+      </>,
+    );
+    const at = (pageY: number, timestamp: number) => ({
+      nativeEvent: { pageX: 100, pageY, timestamp },
+    });
+    const dragDown = async (label: string) => {
+      const sheet = drawn.getByLabelText(label);
+
+      await fireEvent(sheet, 'startShouldSetResponderCapture', at(400, 0));
+      await fireEvent(sheet, 'responderMove', at(600, 1000));
+      await fireEvent(sheet, 'responderRelease', at(600, 1000));
+    };
+
+    await dragDown('Profile picture');
+
+    expect(onCloseBeneath).not.toHaveBeenCalled();
+
+    await dragDown('Custom colour');
+
+    expect(onCloseAbove).toHaveBeenCalled();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ABottomSheet.displayName).toBe('ABottomSheet');
   });

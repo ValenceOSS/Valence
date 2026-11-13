@@ -44,15 +44,22 @@ type Mode = (typeof FACE_MODES)[number]['id'];
 /**
  * The profile picture editor, laid out as the web's: which kind of face along the top, the face
  * itself as it changes, and beneath it a band of the chosen kind's choices that is the same height
- * whichever kind is chosen, so the sheet does not jump. A face this editor does not make — an orb or
- * a drawing — opens on the photo studio. Nothing is changed until Use this picture is pressed.
+ * whichever kind is chosen, so the sheet does not jump. It opens on the photo studio, as the web's
+ * does. Nothing is changed until Use this picture is pressed.
  *
  * @param isOpen - Whether the editor is out.
  * @param profile - The profile whose picture is being changed, as it stands in the draft.
+ * @param pickedAlready - A photo chosen here before and not sent yet, which it opens on.
  * @param onClose - Told to put the editor away without changing anything.
  * @param onUse - Told the picture chosen, its colour, and any file to send with it.
  */
-const AFaceEditor = ({ isOpen, profile, onClose, onUse }: AFaceEditorProps) => {
+const AFaceEditor = ({
+  isOpen,
+  profile,
+  pickedAlready = null,
+  onClose,
+  onUse,
+}: AFaceEditorProps) => {
   const start = profile.avatar;
   const [mode, setMode] = useState<Mode>('photo');
   const [colour, setColour] = useState<ProfileColour>(profile.colour);
@@ -68,7 +75,9 @@ const AFaceEditor = ({ isOpen, profile, onClose, onUse }: AFaceEditorProps) => {
   const [colourTo, setColourTo] = useState(
     start.kind === 'initial' ? (start.colourTo ?? null) : null,
   );
-  const [picked, setPicked] = useState<{ uri: string; isVideo: boolean } | null>(null);
+  const [picked, setPicked] = useState<{ uri: string; isVideo: boolean } | null>(
+    pickedAlready === null ? null : { uri: pickedAlready, isVideo: false },
+  );
   const [filter, setFilter] = useState<PhotoFilter>(
     start.kind === 'photo' ? (start.filter ?? 'original') : 'original',
   );

@@ -7,6 +7,7 @@ import { hsvOf } from '@ValenceCore/functions/hsvOf';
 import { SHEET_HOLD } from '@ValenceMobile/components/ASheet/SHEET_HOLD';
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { HUES } from '@ValenceMobile/pictures/HUES';
 import type { AColourPickerProps } from './AColourPicker.types';
 import { say } from '@ValenceI18n/say';
 
@@ -19,8 +20,6 @@ const STRIP = 28;
 const THUMB = 32;
 
 const ROUNDED = 14;
-
-const HUES = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#ff0000'];
 
 const styles = StyleSheet.create({
   field: { height: FIELD },
@@ -36,10 +35,7 @@ const styles = StyleSheet.create({
     marginLeft: -THUMB / 2,
     marginTop: -THUMB / 2,
     position: 'absolute',
-    shadowColor: '#000000',
-    shadowOffset: { height: 1, width: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.5)',
     width: THUMB,
   },
 });

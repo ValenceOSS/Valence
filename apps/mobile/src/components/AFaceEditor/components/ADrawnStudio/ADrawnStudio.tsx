@@ -3,6 +3,7 @@ import { Animated, ScrollView, StyleSheet, View } from 'react-native';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import { Shuffle } from '@keyline-icons/react-native';
 import { drawingToShow } from '@ValenceClient/profiles/drawingToShow';
+import { useSettledValue } from '@ValenceClient/profiles/useSettledValue';
 import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { AVATAR_STYLE_NAMES } from '@ValenceClient/profiles/AVATAR_STYLE_NAMES';
 import { AColourSwatches } from '@ValenceMobile/components/AColourSwatches/AColourSwatches';
@@ -16,6 +17,8 @@ import type { ADrawnStudioProps } from './ADrawnStudio.types';
 import { say } from '@ValenceI18n/say';
 
 const SPIN_MS = 500;
+
+const SETTLES_AFTER = 250;
 
 const styles = StyleSheet.create({
   face: { height: '100%', width: '100%' },
@@ -48,6 +51,7 @@ const ADrawnStudio = ({
 }: ADrawnStudioProps) => {
   const colours = useTheColours();
   const isStill = usePrefersStillness();
+  const settledColour = useSettledValue(colour, SETTLES_AFTER);
   const [turns] = useState(() => new Animated.Value(0));
   const [count, setCount] = useState(0);
 
@@ -75,6 +79,7 @@ const ADrawnStudio = ({
     <View style={styles.section}>
       <ScrollView
         horizontal
+        keyboardShouldPersistTaps="handled"
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
       >
@@ -115,7 +120,7 @@ const ADrawnStudio = ({
             <View style={[styles.face, isOnColour ? { backgroundColor: colour } : null]}>
               <APicture
                 picture={{
-                  uri: onThisServer(drawingToShow(one, seed, isOnColour ? colour : null)),
+                  uri: onThisServer(drawingToShow(one, seed, isOnColour ? settledColour : null)),
                   isDrawn: true,
                 }}
                 onMissing={() => undefined}

@@ -10,12 +10,11 @@ import { ASheet } from '@ValenceMobile/components/ASheet/ASheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { HUES } from '@ValenceMobile/pictures/HUES';
 import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import type { ACustomSwatchProps } from './ACustomSwatch.types';
 
 const WHEEL = 3;
-
-const HUES = ['#ff0000', '#ff00ff', '#0000ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000'];
 
 const styles = StyleSheet.create({
   middle: {

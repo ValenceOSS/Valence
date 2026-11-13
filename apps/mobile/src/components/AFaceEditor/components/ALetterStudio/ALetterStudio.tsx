@@ -1,9 +1,9 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { ViewStyle } from 'react-native';
 import { LETTER_FONTS } from '@ValenceContracts/schemas/LetterFont';
 import { PROFILE_COLOURS, profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
 import { PROFILE_GRADIENTS } from '@ValenceClient/profiles/PROFILE_GRADIENTS';
+import { paintStyleOf } from '@ValenceMobile/pictures/paintStyleOf';
 import { LETTER_FONT_NAMES } from '@ValenceClient/profiles/LETTER_FONT_NAMES';
 import { AColourSwatches } from '@ValenceMobile/components/AColourSwatches/AColourSwatches';
 import { AFaceChoice } from '@ValenceMobile/components/AFaceEditor/components/AFaceChoice/AFaceChoice';
@@ -18,24 +18,6 @@ const styles = StyleSheet.create({
   row: { paddingVertical: 2 },
   section: { gap: 14 },
 });
-
-/**
- * The style a letter face is painted with on a phone: its colour, and its gradient where it has one.
- *
- * @param colour - The colour, or where the gradient starts.
- * @param colourTo - Where the gradient ends, or nothing.
- * @returns The style.
- */
-const paintOf = (colour: string, colourTo: string | null): ViewStyle => {
-  const { style } = facePaint(colour, colourTo);
-
-  return {
-    backgroundColor: style.backgroundColor ?? colour,
-    ...(style.backgroundImage === undefined
-      ? {}
-      : { experimental_backgroundImage: style.backgroundImage }),
-  };
-};
 
 /**
  * The letter studio, as the web's: a row that scrolls sideways of the profile's first letter set in
@@ -62,6 +44,7 @@ const ALetterStudio = ({
   <View style={styles.section}>
     <ScrollView
       horizontal
+      keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
@@ -78,7 +61,7 @@ const ALetterStudio = ({
               onFont(one);
             }}
           >
-            <View style={[styles.fill, paintOf(colour, colourTo)]}>
+            <View style={[styles.fill, paintStyleOf(colour, colourTo)]}>
               <Text
                 style={[
                   styles.letter,

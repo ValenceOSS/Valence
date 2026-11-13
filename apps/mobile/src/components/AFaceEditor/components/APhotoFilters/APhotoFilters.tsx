@@ -42,6 +42,7 @@ const EveryFilter = ({ uri, frame, chosen, onChoose }: APhotoFiltersProps) => {
   return (
     <ScrollView
       horizontal
+      keyboardShouldPersistTaps="handled"
       scrollEnabled={uri !== null}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.filters}

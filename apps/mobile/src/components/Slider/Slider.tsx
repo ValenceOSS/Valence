@@ -90,7 +90,7 @@ const Slider = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderTerminationRequest: () => false,
+        onPanResponderTerminationRequest: () => holdSheet === null,
         onPanResponderGrant: (event) => {
           holdSheet?.(true);
           hold(whereAlongTheLine(event.nativeEvent.locationX, width, furthest));

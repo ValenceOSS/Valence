@@ -154,6 +154,20 @@ const ABottomSheet = ({
   }, [isOpen, isStill, height, lowered, dimmed]);
 
   const grab = useRef({ fromX: 0, fromY: 0, at: 0, when: 0, speed: 0 });
+  const isOpenNow = useRef(isOpen);
+
+  useEffect(() => {
+    isOpenNow.current = isOpen;
+  }, [isOpen]);
+
+  /**
+   * Whether this sheet takes a drag now: only while it is open rather than sinking away, and only
+   * the sheet on top, since a sheet opened from inside another is still inside it as far as touches
+   * go, and the one beneath would otherwise take a drag meant for the one above.
+   *
+   * @returns Whether it does.
+   */
+  const takes = (): boolean => isOpenNow.current && [...SHEETS_UP].at(-1) === sheet;
 
   const settle = () => {
     Animated.spring(lowered, { ...SPRINGS.rise, toValue: 0, useNativeDriver: true }).start();
@@ -171,9 +185,9 @@ const ABottomSheet = ({
 
       return false;
     },
-    onStartShouldSetResponder: () => true,
+    onStartShouldSetResponder: takes,
     onMoveShouldSetResponder: (event?: GestureResponderEvent) => {
-      if (event === undefined) {
+      if (event === undefined || !takes()) {
         return false;
       }
 

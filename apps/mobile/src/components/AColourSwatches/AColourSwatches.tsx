@@ -6,6 +6,7 @@ import { ASwatchRing } from '@ValenceMobile/components/AColourSwatches/component
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
+import { paintStyleOf } from '@ValenceMobile/pictures/paintStyleOf';
 import type { AColourSwatchesProps } from './AColourSwatches.types';
 import { say } from '@ValenceI18n/say';
 
@@ -45,6 +46,7 @@ const AColourSwatches = ({ value, options, onChoose, clear, gradients }: AColour
   return (
     <ScrollView
       horizontal
+      keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
@@ -112,15 +114,7 @@ const AColourSwatches = ({ value, options, onChoose, clear, gradients }: AColour
                 }}
               >
                 <ASwatchRing isChosen={isChosen}>
-                  <View
-                    style={[
-                      styles.swatch,
-                      {
-                        backgroundColor: one.from,
-                        experimental_backgroundImage: `linear-gradient(135deg, ${one.from}, ${one.to})`,
-                      },
-                    ]}
-                  />
+                  <View style={[styles.swatch, paintStyleOf(one.from, one.to)]} />
                 </ASwatchRing>
               </Button>
             );
