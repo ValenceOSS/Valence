@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -28,5 +28,22 @@ describe('unpackZipEntry', () => {
         join(tmpdir(), 'x'),
       ),
     ).toBe(false);
+  });
+
+  it('writes no more than the entry declares, and takes away what it had written', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'zip-'));
+    const zip = join(folder, 'a.zip');
+
+    await writeFile(zip, aStoredZip({ 'book.epub': 'x'.repeat(1000) }));
+
+    const [entry] = (await readZipDirectory(zip)) ?? [];
+    const to = join(folder, 'out', 'book.epub');
+
+    expect(
+      entry === undefined
+        ? true
+        : await unpackZipEntry(zip, { ...entry, uncompressedSize: 10 }, to),
+    ).toBe(false);
+    expect(await stat(to).catch(() => null)).toBeNull();
   });
 });
