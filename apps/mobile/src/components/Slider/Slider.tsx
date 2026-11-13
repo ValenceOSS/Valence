@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
+import { SHEET_HOLD } from '@ValenceMobile/components/ASheet/SHEET_HOLD';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { whereAlongTheLine } from './whereAlongTheLine';
@@ -83,26 +84,31 @@ const Slider = ({
     [onScrubbing],
   );
 
+  const holdSheet = useContext(SHEET_HOLD);
   const responder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
+          holdSheet?.(true);
           hold(whereAlongTheLine(event.nativeEvent.locationX, width, furthest));
         },
         onPanResponderMove: (event) => {
           hold(whereAlongTheLine(event.nativeEvent.locationX, width, furthest));
         },
         onPanResponderRelease: (event) => {
+          holdSheet?.(false);
           setScrubbingTo(null);
           onScrubbed(whereAlongTheLine(event.nativeEvent.locationX, width, furthest));
         },
         onPanResponderTerminate: () => {
+          holdSheet?.(false);
           setScrubbingTo(null);
         },
       }),
-    [width, furthest, hold, onScrubbed],
+    [width, furthest, hold, onScrubbed, holdSheet],
   );
 
   const showing = scrubbingTo ?? value;

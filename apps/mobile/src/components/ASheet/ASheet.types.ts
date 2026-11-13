@@ -8,6 +8,7 @@ type ASheetProps = {
   footer?: ReactNode;
   tallest?: number;
   isTitled?: boolean;
+  isSteady?: boolean;
   children: ReactNode;
 };
 
