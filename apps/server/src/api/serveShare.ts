@@ -16,6 +16,7 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
+import { createShareCreatorCheck } from '@ValenceServer/sharing/createShareCreatorCheck';
 
 /**
  * Registers the share endpoints.
@@ -38,7 +39,14 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     viewerOf,
     readActing,
     recordAudit,
+    permissions,
+    isAccountBanned,
   } = context;
+  const creator = createShareCreatorCheck({
+    isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
+    permissionsOf: (accountId) => permissions.resolve(accountId),
+    isOutOfReach: (viewer, mediaId) => library.isOutOfReach(viewer, mediaId),
+  });
 
   /**
    * The profile making a link, where one is acting.
@@ -225,6 +233,13 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
+    if (!(await creator.stillShares(found.createdBy))) {
+      return context.json(
+        { error: say('common.thisLinkNoLongerWorks'), ended: 'withdrawn' as const },
+        410,
+      );
+    }
+
     await shares.join(found.id, joiner);
 
     const keptFor = rememberGuestFor(found.expiresAt, new Date(), GUEST_REMEMBERED_FOR_SECONDS);
@@ -254,7 +269,17 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       seriesId: found.seriesId,
     });
 
-    return context.json({ kind: found.kind, title: found.title, items, book: null }, 200);
+    const reached = await Promise.all(items.map((one) => creator.reaches(found.createdBy, one.id)));
+
+    return context.json(
+      {
+        kind: found.kind,
+        title: found.title,
+        items: items.filter((_one, at) => reached[at] === true),
+        book: null,
+      },
+      200,
+    );
   });
 };
 
