@@ -117,7 +117,7 @@ jobs:
       - name: Build
         working-directory: apps/mobile
         run: >
-          npx eas-cli@24.10.0 build --local --platform ios --profile "$PROFILE" --non-interactive
+          pnpm exec eas build --local --platform ios --profile "$PROFILE" --non-interactive
           --output "$RUNNER_TEMP/valence.ipa"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

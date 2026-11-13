@@ -120,7 +120,7 @@ jobs:
       - name: Build
         working-directory: apps/${{ matrix.app }}
         run: >
-          npx eas-cli@24.10.0 build --local --platform android --profile production --non-interactive
+          pnpm exec eas build --local --platform android --profile production --non-interactive
           --output "$RUNNER_TEMP/valence.aab"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -137,7 +137,7 @@ jobs:
       - name: Send to Google Play's internal testing
         working-directory: apps/${{ matrix.app }}
         run: >
-          npx eas-cli@24.10.0 submit --platform android --profile production --non-interactive
+          pnpm exec eas submit --platform android --profile production --non-interactive
           --path "$RUNNER_TEMP/valence.aab"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -174,7 +174,7 @@ jobs:
       - name: Build
         working-directory: apps/tv
         run: >
-          npx eas-cli@24.10.0 build --local --platform android --profile firetv --non-interactive
+          pnpm exec eas build --local --platform android --profile firetv --non-interactive
           --output "$RUNNER_TEMP/valence-fire-tv.apk"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

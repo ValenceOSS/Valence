@@ -20,10 +20,12 @@ allowBuilds:
   '@prisma/client': false
   better-sqlite3: false
   core-js: false
+  dtrace-provider: false
   electron: true
   electron-winstaller: true
   esbuild: true
   lfa-ponyfill: false
+  protobufjs: false
   unrs-resolver: false
   vue-demi: false
 
