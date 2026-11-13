@@ -53,7 +53,7 @@ That split is what makes the server testable. Tests call `createApp` with in-mem
 | --------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- |
 | HTTP framework  | Hono                                                                                                      | `apps/server/src/App.ts`     |
 | Route contracts | `@hono/zod-openapi`, schemas from `@valence/contracts`                                                    | `apps/server/src/routes`     |
-| API reference   | Scalar at `/api/reference`, document at `/api/openapi.json`                                               | `App.ts`                     |
+| API reference   | Document at `/api/openapi.json`, drawn by Scalar on the documentation site                                | `App.ts`                     |
 | Authentication  | better-auth with two factor, passkey, device authorisation, JWT, API key, admin and generic OAuth plugins | `apps/server/src/auth`       |
 | Database        | Postgres through Drizzle ORM and the `pg` pool, or MySQL and MariaDB through Drizzle and `mysql2`         | `apps/server/src/db`         |
 | Background work | Valence's own queue, in the `queued_job` and `job_schedule` tables                                        | `apps/server/src/jobs`       |

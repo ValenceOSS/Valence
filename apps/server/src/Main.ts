@@ -6785,7 +6785,7 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     log.info('server', `First-run setup at ${origin}`);
   }
 
-  log.info('server', `API reference at ${origin}/api/reference`);
+  log.info('server', `API description at ${origin}/api/openapi.json`);
   log.info('server', `Media service dialled at ${env.TRANSCODER_URL}`);
 
   if (env.ANNOUNCE_ON_NETWORK) {

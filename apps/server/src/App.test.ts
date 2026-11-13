@@ -124,10 +124,10 @@ describe('createApp', () => {
     expect(body).toHaveProperty(['paths', '/api/playback/{mediaId}/explain', 'post']);
   });
 
-  it('serves the Scalar API reference', async () => {
+  it('serves no reference page of its own, which the documentation site carries instead', async () => {
     const response = await app.request('/api/reference');
 
-    expect(response.status).toBe(200);
+    expect(response.status).not.toBe(200);
   });
 });
 
