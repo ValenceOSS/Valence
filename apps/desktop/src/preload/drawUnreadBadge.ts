@@ -1,6 +1,6 @@
 const SIZE = 32;
 
-const CIRCLE = 'rgb(99, 100, 106)';
+const CIRCLE = 'rgb(242, 63, 67)';
 
 const FONT = `600 19px 'Plus Jakarta Sans', system-ui, sans-serif`;
 
@@ -20,7 +20,9 @@ type UnreadBadgeCanvas = Pick<HTMLCanvasElement, 'width' | 'height' | 'toDataURL
 
 /**
  * Draws the unread count as the small circle Windows lays over the corner of Valence's taskbar
- * button, in Valence's own font and centred by the digits' own height rather than the line's.
+ * button: red, as Discord's and other apps' unread counts are, so it reads as something waiting
+ * rather than as part of the icon, in Valence's own font and centred by the digits' own height
+ * rather than the line's.
  *
  * Windows has no badge of its own to give a count to, so whatever is shown is a picture; Chromium's
  * picture uses a font of its own choosing, sized for one digit and set off-centre. Drawn here, in the
