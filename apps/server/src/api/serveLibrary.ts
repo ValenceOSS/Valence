@@ -64,6 +64,7 @@ import {
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { touchesServerFolder } from '@ValenceServer/library/touchesServerFolder';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
 
@@ -87,6 +88,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     recordAudit,
     titleMetadata,
     readImage,
+    serverFolders,
   } = context;
   const homeShelves = createHomeShelves({
     listItems: (viewer: Viewer, libraryIds, options) =>
@@ -150,6 +152,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { name, kind, path, flavour } = context.req.valid('json');
+
+    if (await touchesServerFolder(path, serverFolders)) {
+      return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
+    }
 
     const created = await library.create({
       name,

@@ -1,3 +1,6 @@
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -25,7 +28,10 @@ type Upload = NonNullable<LibraryService['uploadArtwork']>;
  * @param answer - What the library says to an upload.
  * @returns A way to ask the application, and what the library was asked.
  */
-const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
+const build = async (
+  answer: Awaited<ReturnType<Upload>> = { jobId: null },
+  serverFolders: readonly string[] = [],
+) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const uploadArtwork = vi.fn(
@@ -111,11 +117,13 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
     readImage,
+    serverFolders,
   });
   const cookie = await signUpForTest(app, auth);
 
   permissions.state.overrides[store.user[0]?.id ?? ''] = [
     { permission: 'media.override', effect: 'allow' },
+    { permission: 'library.create', effect: 'allow' },
   ];
   const ask = (path: string, init: RequestInit = {}) =>
     app.request(`${TEST_ORIGIN}${path}`, {
@@ -135,6 +143,26 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
 };
 
 describe('serveLibrary', () => {
+  it('refuses a library on a folder the server keeps its own data in, or one that holds it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'valence-library-'));
+
+    await mkdir(join(root, 'config', 'backups'), { recursive: true });
+    await mkdir(join(root, 'media'));
+
+    const { ask } = await build({ jobId: null }, [join(root, 'config', 'backups')]);
+    const adding = (path: string) =>
+      ask('/api/libraries', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Films', kind: 'movies', path }),
+      });
+
+    expect((await adding(join(root, 'config', 'backups'))).status).toBe(400);
+    expect((await adding(root)).status).toBe(400);
+    expect((await adding(join(root, 'media'))).status).toBe(201);
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('reads every library asked for in one request, counted unless told not to', async () => {
     const { ask, listItemsAcross } = await build();
     const counted = await ask('/api/library-items?libraryIds=films,shows&limit=5&order=rated');

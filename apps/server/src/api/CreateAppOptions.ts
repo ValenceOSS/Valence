@@ -310,6 +310,7 @@ type CreateAppOptions = {
   artworkNames?: ArtworkNames;
   artworkAddress?: string;
   folderDisk?: FolderDisk;
+  serverFolders?: readonly string[];
   uploadDisk?: UploadDisk;
   uploadSessions?: UploadSessions;
   mediaOrigins?: MediaOriginStore;

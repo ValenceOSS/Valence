@@ -5521,6 +5521,13 @@ const titleMetadataService = createTitleMetadataService({
 });
 
 const app = createApp({
+  serverFolders: [
+    env.BACKUP_DIR,
+    env.IMAGE_CACHE_DIR,
+    env.PROFILE_IMAGE_DIR,
+    env.VALENCE_BUCKET_CACHE,
+    ...(env.SUBTITLE_DIR === undefined ? [] : [env.SUBTITLE_DIR]),
+  ],
   callerOf,
   imports: importService,
   plugins: startPlugins,
