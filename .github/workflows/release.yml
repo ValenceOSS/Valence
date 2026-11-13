@@ -162,6 +162,7 @@ jobs:
       title: ${{ matrix.image.title }}
       description: ${{ matrix.image.description }}
       ref: ${{ inputs.tag || github.ref_name }}
+      writes-cache: true
       # The version is handed over rather than read off the ref. release-please calls this workflow
       # rather than pushing a tag that starts it, so the ref here is main and there is no semver in
       # it to find. Left to infer, every type=semver produced nothing and the image went out as

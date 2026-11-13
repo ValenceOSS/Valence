@@ -52,6 +52,11 @@ on:
         required: false
         type: boolean
         default: true
+      writes-cache:
+        description: Keep its layers as the cache later builds read, which only main and a release may
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -156,7 +161,9 @@ jobs:
       # the two share no layers worth reusing. Not in the Actions cache: the repository has 10 GB of
       # that, and two architectures of two images with every stage cached take most of it, so they
       # evicted each other and the pnpm and Rust caches with them. A build that publishes nothing reads
-      # the cache and leaves it as it was, so it leaves nothing in the registry.
+      # the cache and leaves it as it was, so it leaves nothing in the registry. Only main and a release
+      # write it: a build asked for by hand can be of any branch or pull request, and what it wrote
+      # would be read into the next release.
       - name: Build${{ inputs.publish && ' and push' || '' }}
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -170,7 +177,7 @@ jobs:
             VALENCE_VERSION=${{ inputs.version }}${{ inputs.commit-in-version && format('.{0}', needs.meta.outputs.commit) || '' }}
             VALENCE_COMMIT=${{ needs.meta.outputs.commit }}
           cache-from: type=registry,ref=${{ needs.meta.outputs.image }}:buildcache-${{ matrix.arch }}
-          cache-to: ${{ inputs.publish && format('type=registry,ref={0}:buildcache-{1},mode=max,image-manifest=true,oci-mediatypes=true', needs.meta.outputs.image, matrix.arch) || '' }}
+          cache-to: ${{ inputs.publish && inputs.writes-cache && format('type=registry,ref={0}:buildcache-{1},mode=max,image-manifest=true,oci-mediatypes=true', needs.meta.outputs.image, matrix.arch) || '' }}
           provenance: false
 
       - name: Keep the digest
