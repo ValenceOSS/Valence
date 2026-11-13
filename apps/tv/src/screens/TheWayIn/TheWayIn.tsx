@@ -4,7 +4,6 @@ import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
@@ -22,7 +21,7 @@ import { EnterPassword } from '@ValenceTv/screens/EnterPassword/EnterPassword';
 import { WhoIsWatching } from '@ValenceTv/screens/WhoIsWatching/WhoIsWatching';
 import { SignedIn } from '@ValenceTv/screens/SignedIn/SignedIn';
 import { tokens } from '@ValenceTv/theme/tokens';
-import mark from '@ValenceTv/assets/valence-mark.png';
+import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { useThisAppIsTurnedOff } from '@ValenceClient/about/useThisAppIsTurnedOff';
 import { Button } from '@ValenceTv/components/Button/Button';
@@ -277,11 +276,7 @@ const TheWayIn = () => {
           to={flights.mark.to}
           onLanded={markLanded}
         >
-          <Image
-            source={mark}
-            style={{ width: flights.mark.from.width, height: flights.mark.from.height }}
-            contentFit="contain"
-          />
+          <DeckMark width={flights.mark.from.width} height={flights.mark.from.height} />
         </Flight>
       )}
 

@@ -31,20 +31,21 @@ describe('Splash', () => {
     expect(drawn.root).toHaveStyle({ opacity: 1 });
   });
 
-  it('fades away once the app is ready, and says when it has gone', async () => {
+  it('names itself once the app is ready, then fades away and says when it has gone', async () => {
     const onGone = jest.fn();
     const drawn = await render(<Splash isDone={false} onGone={onGone} />);
 
     await drawn.rerender(<Splash isDone onGone={onGone} />);
 
     await act(() => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(1200);
     });
 
     expect(onGone).not.toHaveBeenCalled();
+    expect(drawn.getByText('Valence')).toBeTruthy();
 
     await act(() => {
-      jest.advanceTimersByTime(400);
+      jest.advanceTimersByTime(800);
     });
 
     expect(onGone).toHaveBeenCalledTimes(1);

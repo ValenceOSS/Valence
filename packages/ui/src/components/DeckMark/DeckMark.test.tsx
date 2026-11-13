@@ -16,8 +16,8 @@ describe('DeckMark', () => {
     const cards = [...(container.firstElementChild?.firstElementChild?.children ?? [])];
 
     expect(cards.at(-1)).toHaveStyle({ background: 'var(--color-text)' });
-    expect(cards[0]?.getAttribute('style')).toContain('45%');
-    expect(cards[1]?.getAttribute('style')).toContain('72%');
+    expect(cards[0]?.getAttribute('style')).toContain('14%');
+    expect(cards[1]?.getAttribute('style')).toContain('28%');
   });
 
   it('is a picture with a name where it is given one', () => {

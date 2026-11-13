@@ -1,6 +1,5 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRef } from 'react';
-import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { Face } from '@ValenceTv/components/Face/Face';
@@ -12,7 +11,7 @@ import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
-import mark from '@ValenceTv/assets/valence-mark.png';
+import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
 import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
@@ -59,7 +58,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
       <FadeIn isFilling={false}>
         <View style={styles.top}>
           <View ref={holdMark} collapsable={false}>
-            <Image source={mark} style={MARK} contentFit="contain" />
+            <DeckMark width={MARK.width} height={MARK.height} />
           </View>
           <Text style={styles.title}>
             {isHidden ? say('common.signInWithYourPhone') : say('common.whoIsWatching')}

@@ -16,6 +16,7 @@ import {
 import { DISCORD_URL } from '@ValenceCore/project/DISCORD_URL';
 import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { DeckMark } from '@ValenceUI/DeckMark';
 import { Button } from '@ValenceUI/Button';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -380,7 +381,7 @@ const SiteNav = ({ here, pathname, InSiteLink, starCount, banner, dock }: SiteNa
               onClick={closeAll}
             >
               <motion.span className="flex text-text" {...popArrival(0, isStill)}>
-                <BrandGlyph of="valence" size={30} />
+                <DeckMark size={40} isAnimated={!isStill} />
               </motion.span>
               <span className="sr-only">{say('common.valence')}</span>
               <span

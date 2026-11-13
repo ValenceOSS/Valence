@@ -45,6 +45,7 @@ import { TheMusic } from '@ValenceMobile/components/TheLibrary/components/TheMus
 import { TheClipBehind } from '@ValenceMobile/components/TheLibrary/components/TheClipBehind/TheClipBehind';
 import { useArtworkLights } from '@ValenceMobile/hooks/useArtworkLights';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { useTheBrand } from '@ValenceMobile/hooks/useTheBrand';
 import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
 import { ARRIVING } from '@ValenceMobile/components/AnArrival/ARRIVING';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
@@ -200,6 +201,7 @@ const TheLibrary = ({
   corner,
 }: TheLibraryProps) => {
   const colours = useTheColours();
+  const brand = useTheBrand();
   const told = useRef({ onWatch, onLookAt, onLookAtShow, onCollection });
   const libraries = useQuery(libraryQueries.all());
   const faces = useQuery(linkingQueries.faces());
@@ -462,7 +464,7 @@ const TheLibrary = ({
         <View style={styles.topRow}>
           <View style={styles.brand}>
             <ACarriedMark isHandedOn={false} />
-            <AWrittenName name={say('common.valence')} />
+            <AWrittenName key={brand.name ?? ''} name={brand.name ?? say('common.valence')} />
           </View>
           {corner}
         </View>

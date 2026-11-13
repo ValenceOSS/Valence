@@ -1,44 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { animate, motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
-import { DECK } from './DECK';
-import { faceOf } from './faceOf';
-import { placeCard } from './placeCard';
+import { DECK } from '@ValenceCore/deck/DECK';
+import { faceOf } from '@ValenceCore/deck/faceOf';
+import { placeCard } from '@ValenceCore/deck/placeCard';
+import { DECK_SHARES } from '@ValenceCore/deck/DECK_SHARES';
+import { fitTheDeck } from '@ValenceCore/deck/fitTheDeck';
+import { frownsAt } from '@ValenceCore/deck/frownsAt';
 import { DeckFace } from './components/DeckFace/DeckFace';
 import type { DeckMarkProps } from './DeckMark.types';
 
-const SHARES = [1, 0.5, 0] as const;
-
 const INKS = [
-  'color-mix(in srgb, var(--color-text) 45%, var(--color-surface))',
-  'color-mix(in srgb, var(--color-text) 72%, var(--color-surface))',
+  'color-mix(in srgb, var(--color-text) 14%, var(--color-surface))',
+  'color-mix(in srgb, var(--color-text) 28%, var(--color-surface))',
   'var(--color-text)',
 ] as const;
 
-const CORNERS = SHARES.map((share) => placeCard(share)).flatMap((card) =>
-  [
-    [0, 0],
-    [DECK.width, 0],
-    [0, DECK.height],
-    [DECK.width, DECK.height],
-  ].map(([x = 0, y = 0]) => [
-    card[0] * x + card[2] * y + card[4],
-    card[1] * x + card[3] * y + card[5],
-  ]),
-);
+const HOLDS_FANNED_FOR = 1.6;
 
-const LEFT = Math.min(...CORNERS.map(([x = 0]) => x));
-
-const TOP = Math.min(...CORNERS.map(([, y = 0]) => y));
-
-const SPAN = Math.max(
-  Math.max(...CORNERS.map(([x = 0]) => x)) - LEFT,
-  Math.max(...CORNERS.map(([, y = 0]) => y)) - TOP,
-);
-
-const SPREAD = Math.max(...CORNERS.map(([x = 0]) => x)) - LEFT;
-
-const RISE = Math.max(...CORNERS.map(([, y = 0]) => y)) - TOP;
+const HOLDS_STACKED_FOR = 0.35;
 
 /**
  * The Valence mark as a deck of three cards, drawn in the theme's ink: a smiling card in front and
@@ -48,37 +28,82 @@ const RISE = Math.max(...CORNERS.map(([, y = 0]) => y)) - TOP;
  *
  * @param size - How wide and tall the square it sits in is, in pixels.
  * @param isAnimated - Whether the deck fans out as it arrives.
+ * @param loops - Whether it goes on fanning out, gathering back up and fanning out again, for a
+ *   mark that plays on its own or while something loads. Once it stops looping it fans out from
+ *   wherever it had got to and stays.
  * @param label - What it is, for anybody who cannot see it; omit where a name sits beside it.
  * @param className - Extra classes for the caller's own layout.
  * @returns The mark.
  */
-const DeckMark = ({ size, isAnimated = false, label, className }: DeckMarkProps) => {
+const DeckMark = ({ size, isAnimated = false, loops = false, label, className }: DeckMarkProps) => {
   const reduced = useReducedMotionConfig() ?? false;
-  const isMoving = isAnimated && !reduced;
+  const isMoving = (isAnimated || loops) && !reduced;
   const [progress, setProgress] = useState(isMoving ? 0 : 1);
+  const at = useRef(isMoving ? 0 : 1);
 
   useEffect(() => {
     if (!isMoving) {
+      at.current = 1;
       setProgress(1);
 
       return undefined;
     }
 
-    const controls = animate(0, 1, {
+    const going = { isGone: false };
+    const isStillHere = () => loops && !going.isGone;
+    const follow = (value: number) => {
+      at.current = value;
+      setProgress(value);
+    };
+    let controls = animate(at.current, 1, {
       type: 'spring',
       stiffness: 140,
       damping: 15,
-      delay: 0.25,
-      onUpdate: setProgress,
+      delay: at.current === 0 ? 0.25 : 0,
+      onUpdate: follow,
     });
 
-    return () => controls.stop();
-  }, [isMoving]);
+    /**
+     * Gathers the cards back under the front one and fans them out again, then does it again.
+     */
+    const again = async (): Promise<void> => {
+      await controls;
 
-  const scale = size / SPAN;
-  const shiftX = (size - SPREAD * scale) / 2 - LEFT * scale;
-  const shiftY = (size - RISE * scale) / 2 - TOP * scale;
-  const frowns = Math.min(1, Math.max(0, (progress - 0.5) / 0.4));
+      while (isStillHere()) {
+        controls = animate(1, 0, {
+          type: 'spring',
+          stiffness: 120,
+          damping: 18,
+          delay: HOLDS_FANNED_FOR,
+          onUpdate: follow,
+        });
+        await controls;
+
+        if (!isStillHere()) {
+          return;
+        }
+
+        controls = animate(0, 1, {
+          type: 'spring',
+          stiffness: 140,
+          damping: 15,
+          delay: HOLDS_STACKED_FOR,
+          onUpdate: follow,
+        });
+        await controls;
+      }
+    };
+
+    void again();
+
+    return () => {
+      going.isGone = true;
+      controls.stop();
+    };
+  }, [isMoving, loops]);
+
+  const { scale, shiftX, shiftY } = fitTheDeck(size);
+  const frowns = frownsAt(progress);
 
   return (
     <motion.span
@@ -96,7 +121,7 @@ const DeckMark = ({ size, isAnimated = false, label, className }: DeckMarkProps)
           transform: `translate(${shiftX}px, ${shiftY}px) scale(${scale})`,
         }}
       >
-        {SHARES.map((share, index) => {
+        {DECK_SHARES.map((share, index) => {
           const isSmile = share === 0;
 
           return (
