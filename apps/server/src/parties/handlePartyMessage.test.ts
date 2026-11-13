@@ -441,4 +441,26 @@ describe('what a party is told when a request cannot be granted', () => {
       ]);
     });
   });
+
+  it('lets go of the party a connection had before it opens another', () => {
+    const world = createWorld();
+    const dan = someone('dan', 'Dan');
+
+    for (let at = 0; at < 5; at += 1) {
+      world.say({ kind: 'partyOpen', mediaId: 'a-film' }, dan);
+    }
+
+    expect(world.registry.count()).toBe(1);
+  });
+
+  it('lets go of the party a connection had before it joins another', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('ada', 'Ada'));
+    world.say({ kind: 'partyOpen', mediaId: 'a-song' }, someone('dan', 'Dan'));
+    world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('dan', 'Dan'));
+
+    expect(world.registry.count()).toBe(1);
+    expect(world.registry.partyOf('dan')?.id).toBe('party-1');
+  });
 });

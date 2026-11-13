@@ -94,6 +94,8 @@ const WAIT_MOST_MS = 20_000;
 
 const CHAT_KEPT = 200;
 
+const MOST_PARTIES_HOSTED_PER_ACCOUNT = 10;
+
 const REFUSED_CHAT_OFF = saying('server.parties.partyRegistry.chatIsOffInThisParty');
 
 const REFUSED_UNKNOWN = saying('common.thatPartyIsNotRunning');
@@ -209,6 +211,25 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
         timekeeperId: null,
         chatIsOn: false,
       };
+
+      const hosted = [...parties.values()]
+        .filter((one) =>
+          one.party.members.some(
+            (member) => member.role === 'host' && member.accountId === host.accountId,
+          ),
+        )
+        .sort((one, other) => one.party.createdAtMs - other.party.createdAtMs);
+
+      for (const closing of hosted.slice(
+        0,
+        Math.max(0, hosted.length - (MOST_PARTIES_HOSTED_PER_ACCOUNT - 1)),
+      )) {
+        for (const member of closing.party.members) {
+          whereEveryoneIs.delete(member.connectionId);
+        }
+
+        parties.delete(closing.party.id);
+      }
 
       whereEveryoneIs.set(host.connectionId, party.id);
 

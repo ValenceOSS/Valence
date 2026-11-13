@@ -131,6 +131,7 @@ const handlePartyMessage = (
   const { registry } = binding;
 
   if (message.kind === 'partyOpen') {
+    tellEveryone(binding, registry.leave(who.connectionId));
     tellEveryone(
       binding,
       registry.open({
@@ -144,6 +145,10 @@ const handlePartyMessage = (
   }
 
   if (message.kind === 'partyJoin') {
+    if (registry.partyOf(who.connectionId)?.id !== message.partyId) {
+      tellEveryone(binding, registry.leave(who.connectionId));
+    }
+
     const joined = registry.join({
       partyId: message.partyId,
       ...who,
