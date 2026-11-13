@@ -765,7 +765,9 @@ const createRequestsClient = ({
       }),
 
     liftBlock: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
-      call(`${withRequest(id)}/blocklist/${blockId}`, () => null, { method: 'DELETE' }),
+      call(`${withRequest(id)}/blocklist/${encodeURIComponent(blockId)}`, () => null, {
+        method: 'DELETE',
+      }),
 
     requestReleases: (
       id: string,
