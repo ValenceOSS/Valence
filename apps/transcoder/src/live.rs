@@ -29,7 +29,7 @@ const SCHEMES: [&str; 6] = [
 
 /// The protocols `ffmpeg` may open while reading a stream, which keeps a playlist from sending it
 /// to a local file or any other protocol it knows.
-const PROTOCOLS: &str = "http,https,tls,tcp,crypto,rtsp,rtp,udp,rtmp,rtmps";
+const PROTOCOLS: &str = "http,https,httpproxy,tls,tcp,crypto,rtsp,rtp,udp,rtmp,rtmps";
 
 /// How long a channel nobody is watching keeps running.
 const IDLE_FOR: Duration = Duration::from_secs(60);
@@ -400,6 +400,13 @@ impl LiveRegistry {
 mod tests {
     use super::{ffmpeg_arguments, id_of, is_one_file, Asking, LiveRegistry};
     use std::path::{Path, PathBuf};
+
+    #[test]
+    fn lets_tls_open_the_http_proxy_protocol() {
+        assert!(super::PROTOCOLS
+            .split(',')
+            .any(|protocol| protocol == "httpproxy"));
+    }
 
     #[test]
     fn limits_the_protocols_a_stream_may_open() {
