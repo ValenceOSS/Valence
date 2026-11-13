@@ -5127,6 +5127,11 @@
     "context": "The label, used in the status look in the status and in the concerns banner in the admin area."
   },
   {
+    "handler": "common.network",
+    "text": "Network",
+    "context": "The word for a network connection: the title of the chart of the connection's speed against the stream's bitrate in stats for nerds, and the label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
+  },
+  {
     "handler": "common.never",
     "text": "Never",
     "context": "The label, used in several places, among them the still watching choices in the profiles and the give up rules list (from `metadataWaitChoices`)."
@@ -22451,11 +22456,6 @@
     "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
-    "handler": "screens.adminArea.network",
-    "text": "Network",
-    "context": "The label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
-  },
-  {
     "handler": "screens.adminArea.networkFigure.comingIn",
     "text": "Coming in",
     "context": "A row in the network figure's information on the admin overview: how fast the server is receiving data from its network, such as 12 MB/s."
@@ -37235,11 +37235,6 @@
     "handler": "screens.videoPlayer.streamStats.mediabunny",
     "text": "Mediabunny",
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
-  },
-  {
-    "handler": "screens.videoPlayer.streamStats.network",
-    "text": "Network",
-    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
   },
   {
     "handler": "screens.videoPlayer.streamStats.networkOverTime",

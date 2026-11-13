@@ -38,7 +38,7 @@ const StreamTrends = ({ history, fileBitrateKbps = null }: StreamTrendsProps) =>
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <PanelCard title={say('screens.videoPlayer.streamStats.network')} isCompact isFlush>
+      <PanelCard title={say('common.network')} isCompact isFlush>
         <div className="p-2.5">
           <TrendChart
             values={connection}

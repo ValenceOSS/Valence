@@ -1047,7 +1047,7 @@ const AdminArea = ({
                   }),
             },
             {
-              label: say('screens.adminArea.network'),
+              label: say('common.network'),
               value:
                 resources?.network === null || resources?.network === undefined ? (
                   '—'

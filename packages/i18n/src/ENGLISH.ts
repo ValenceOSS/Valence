@@ -1215,6 +1215,7 @@ const ENGLISH = {
   'common.nameWouldNotTakeTheNZB': '{name} rejected the NZB',
   'common.narrow': 'Narrow',
   'common.needsAttention': 'Needs attention',
+  'common.network': 'Network',
   'common.never': 'Never',
   'common.neverUsed': 'Never used',
   'common.newCollection': 'New collection',
@@ -5670,7 +5671,6 @@ const ENGLISH = {
   'screens.adminArea.needsYouCard.libraryProblems': 'Library problems',
   'screens.adminArea.needsYouCard.requestsToApprove': 'Requests to approve',
   'screens.adminArea.needsYouCard.waitingOnYou': 'Waiting on you',
-  'screens.adminArea.network': 'Network',
   'screens.adminArea.networkFigure.comingIn': 'Coming in',
   'screens.adminArea.networkFigure.countersCouldNotBeRead':
     "This machine's network counters could not be read.",
@@ -9391,7 +9391,6 @@ const ENGLISH = {
     'Decoded here, encoded again as {codec} {channels}ch',
   'screens.videoPlayer.streamStats.filmPeakMappedFrom': '{nits} nits, mapped from 1,000',
   'screens.videoPlayer.streamStats.mediabunny': 'Mediabunny',
-  'screens.videoPlayer.streamStats.network': 'Network',
   'screens.videoPlayer.streamStats.networkOverTime':
     'Connection speed and stream bitrate over the last minute',
   'screens.videoPlayer.streamStats.noneShownAsHdr': 'None, shown as HDR',
