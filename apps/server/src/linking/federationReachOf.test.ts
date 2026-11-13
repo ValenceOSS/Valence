@@ -103,4 +103,20 @@ describe('federationReachOf', () => {
     });
     expect(federationReachOf('GET', '/api/libraries')).toEqual({ kind: 'refused' });
   });
+
+  it('refuses a name that could lead anywhere but the one thing named', () => {
+    for (const name of ['..', '.', '..\\..\\..\\libraries', '%2e%2e', 'a b', 'a:b']) {
+      expect(
+        federationReachOf('GET', `${AT}/api/media/${A_TITLE}/subtitles/${name}`),
+        name,
+      ).toEqual({ kind: 'refused' });
+      expect(
+        federationReachOf('GET', `${AT}/api/playback/session/${name}/index.m3u8`),
+        name,
+      ).toEqual({ kind: 'refused' });
+      expect(federationReachOf('GET', `${AT}/api/playback/trickplay/abc/${name}`), name).toEqual({
+        kind: 'refused',
+      });
+    }
+  });
 });

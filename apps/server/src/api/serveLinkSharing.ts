@@ -22,6 +22,7 @@ import {
 import { createLinkKeeper } from '@ValenceServer/api/createLinkKeeper';
 import { handlePartyMessage } from '@ValenceServer/parties/handlePartyMessage';
 import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
+import { innerAddressOf } from '@ValenceServer/linking/innerAddressOf';
 import { PEER_MEMBER } from '@ValenceServer/linking/parties/PEER_MEMBER';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { AskedAlongSchema } from '@ValenceContracts/schemas/LinkSharing';
@@ -559,7 +560,13 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
             }),
           ).buffer
         : sent;
-    const inner = new Request(new URL(`${who.inner}${asked.search}`, asked.origin), {
+    const address = innerAddressOf(who.inner, asked.search, asked.origin);
+
+    if (address === null) {
+      return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403);
+    }
+
+    const inner = new Request(address, {
       method,
       headers,
       ...(body === null ? {} : { body }),
