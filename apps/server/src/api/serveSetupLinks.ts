@@ -44,8 +44,20 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
   } = context;
 
   /**
-   * Checks that whoever is asking may hand out a link for an account: they hold the right to add
-   * accounts or to look after their security, and they outrank it.
+   * Whether an account was given a link to set itself up and has not used it yet.
+   *
+   * @param userId - The account.
+   * @returns Whether it is still waiting to be set up.
+   */
+  const isWaitingToBeSetUp = async (userId: string) => {
+    const state = await setupLinks?.stateOf(userId);
+
+    return state === 'waiting' || state === 'expired';
+  };
+
+  /**
+   * Checks that whoever is asking may hand out a link for an account: they outrank it, and they
+   * look after accounts' security, or only add accounts and this one has not been set up yet.
    *
    * @param headers - The request's headers.
    * @param userId - The account the link is for.
@@ -75,6 +87,10 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
       if (refusal !== null) {
         return { refusal: describeAccountRefusal(refusal) };
       }
+    }
+
+    if (!actor.permissions.has('account.security') && !(await isWaitingToBeSetUp(userId))) {
+      return { refusal: refuse('common.thatIsForAdministrators') };
     }
 
     return { actorId: actor.id };

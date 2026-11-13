@@ -136,6 +136,27 @@ const asAdministrator = async () => {
   return { ...built, cookie };
 };
 
+/**
+ * The application with somebody signed in whose role may add accounts and nothing else.
+ *
+ * @returns The application, what stands in, and their cookie.
+ */
+const asInviter = async () => {
+  const built = await build();
+  const cookie = await signUpForTest(built.app, built.auth);
+  const signedUp = built.store.user.find((one) => one.id !== built.adaId);
+  const role = await built.permissions.createRole({
+    name: 'Inviter',
+    position: 50,
+    color: null,
+    permissions: ['account.invite'],
+  });
+
+  await built.permissions.assignRole(signedUp?.id ?? '', role.id);
+
+  return { ...built, cookie };
+};
+
 describe('serveSetupLinks', () => {
   describe('the page a link opens', () => {
     it('says what its owner still has to choose, to somebody signed out', async () => {
@@ -330,6 +351,37 @@ describe('serveSetupLinks', () => {
       });
 
       expect(response.status).toBe(401);
+    });
+
+    it('lets somebody who may only add accounts make a link for one still waiting to be set up', async () => {
+      const { app, cookie, setupLinks, adaId } = await asInviter();
+
+      setupLinks.stateOf.mockResolvedValue('expired');
+
+      const response = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+        method: 'POST',
+        body: { lifetimeDays: 1 },
+        cookie,
+      });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('keeps somebody who may only add accounts from making a link for one already set up', async () => {
+      for (const state of ['used', 'none'] as const) {
+        const { app, cookie, setupLinks, adaId } = await asInviter();
+
+        setupLinks.stateOf.mockResolvedValue(state);
+
+        const issued = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+          method: 'POST',
+          body: { lifetimeDays: 1 },
+          cookie,
+        });
+
+        expect(issued.status, state).toBe(403);
+        expect(setupLinks.issue).not.toHaveBeenCalled();
+      }
     });
 
     it('revokes a link', async () => {
