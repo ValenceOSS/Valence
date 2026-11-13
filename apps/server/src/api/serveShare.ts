@@ -41,6 +41,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     recordAudit,
     permissions,
     isAccountBanned,
+    settings,
   } = context;
   const creator = createShareCreatorCheck({
     isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
@@ -247,6 +248,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       path: '/',
       httpOnly: true,
       sameSite: 'Lax',
+      secure: (await settings.read()).cookieSecure,
       maxAge: keptFor,
     } as const;
 

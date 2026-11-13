@@ -157,7 +157,7 @@ const build = () => {
     },
   });
 
-  return { app, auth, shares, permissions, told };
+  return { app, auth, settings, shares, permissions, told };
 };
 
 /**
@@ -302,6 +302,21 @@ describe('opening a link as somebody with no account', () => {
     const { app } = build();
 
     expect((await app.request(`${BASE}/api/share/not-a-token`)).status).toBe(404);
+  });
+
+  it('keeps the link in a cookie sent only over https where the server says it is served so', async () => {
+    const built = build();
+    const cookie = await signedIn(built);
+    const { token } = await shared(built.app, cookie);
+
+    await built.settings.write({ cookieSecure: true });
+
+    const held = (await opened(built.app, token)).response.headers
+      .getSetCookie()
+      .filter((one) => one.startsWith('valence_share'));
+
+    expect(held).toHaveLength(2);
+    expect(held.every((one) => /;\s*Secure/iu.test(one))).toBe(true);
   });
 
   it('stops working the moment it is withdrawn', async () => {
