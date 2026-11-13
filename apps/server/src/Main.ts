@@ -595,6 +595,8 @@ import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecuri
 import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
+import { isANarrowedKey } from '@ValenceServer/realtime/isANarrowedKey';
+import { createBetterAuthApiKeyService } from '@ValenceServer/auth/createBetterAuthApiKeyService';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
 const MEASURES_THIS_PROCESS_EVERY_MS = 5_000;
@@ -6691,6 +6693,8 @@ const rememberWhereTheyAre = async (
   await db.update(session).set({ ipAddress: seen }).where(eq(session.id, sessionId));
 };
 
+const realtimeKeys = createBetterAuthApiKeyService(auth);
+
 app.get(
   '/api/realtime',
   nodeWebSocket.upgradeWebSocket(async (context) => {
@@ -6706,15 +6710,24 @@ app.get(
     }
 
     const accountId = account?.id ?? null;
-    const actingProfileId =
+    const acting =
       account === null
         ? null
-        : ((
-            await readActing(
-              { auth, profiles: profileService, chosen: chosenProfiles },
-              context.req.raw.headers,
-            )
-          )?.profile?.id ?? null);
+        : await readActing(
+            { auth, profiles: profileService, chosen: chosenProfiles },
+            context.req.raw.headers,
+          );
+
+    if (
+      signedIn !== null &&
+      (await isANarrowedKey(acting?.isViaKey === true, () =>
+        realtimeKeys.restrictionFor(context.req.raw.headers, signedIn.session.id),
+      ))
+    ) {
+      return {};
+    }
+
+    const actingProfileId = acting?.profile?.id ?? null;
     const address = callerOf(context);
 
     if (signedIn !== null) {
