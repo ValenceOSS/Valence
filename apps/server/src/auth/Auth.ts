@@ -113,6 +113,7 @@ const createAuth = ({
       enabled: true,
       minPasswordLength: MINIMUM_PASSWORD_LENGTH,
       resetPasswordTokenExpiresIn: PASSWORD_RESET_LIFETIME_SECONDS,
+      revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {
         await onPasswordResetRequested?.(user.email, url, user.name);
       },

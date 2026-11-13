@@ -281,6 +281,33 @@ describe('createAuth', () => {
     expect((resetLinks[0]?.url ?? '').length).toBeGreaterThan(BASE_URL.length + 20);
   });
 
+  it('signs every session out once the password is reset from a recovery link', async () => {
+    const { auth, resetLinks } = createMemoryAuth();
+    const signedUp = await auth.handler(post('/api/auth/sign-up/email', credentials));
+    const cookie = signedUp.headers
+      .getSetCookie()
+      .map((one) => one.split(';')[0] ?? '')
+      .join('; ');
+
+    await auth.handler(
+      post('/api/auth/request-password-reset', {
+        email: credentials.email,
+        redirectTo: `${BASE_URL}/reset`,
+      }),
+    );
+
+    const token = new URL(resetLinks[0]?.url ?? BASE_URL).pathname.split('/').at(-1) ?? '';
+    const reset = await auth.handler(
+      post('/api/auth/reset-password', { newPassword: 'a-new-long-password', token }),
+    );
+    const session = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/get-session`, { headers: { cookie, origin: BASE_URL } }),
+    );
+
+    expect(reset.status).toBe(200);
+    expect(await session.json()).toBeNull();
+  });
+
   it('does not reveal whether an address has an account', async () => {
     const { auth, resetLinks } = createMemoryAuth();
 
