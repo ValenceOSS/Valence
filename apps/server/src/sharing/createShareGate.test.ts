@@ -23,6 +23,8 @@ const gatedApp = (options: {
   hasJoined?: boolean;
   claimedBy?: string[];
   item?: { id: string; seriesId: string | null } | null;
+  creatorShares?: boolean;
+  creatorReaches?: boolean;
 }) => {
   const shares = {
     create: () => Promise.resolve(null),
@@ -50,6 +52,10 @@ const gatedApp = (options: {
         Promise.resolve(
           options.item === undefined ? { id: 'film-1', seriesId: null } : options.item,
         ),
+      creator: {
+        stillShares: () => Promise.resolve(options.creatorShares ?? true),
+        reaches: () => Promise.resolve(options.creatorReaches ?? true),
+      },
     }),
   );
 
@@ -135,6 +141,33 @@ describe('createShareGate', () => {
     );
 
     expect(response.status).toBe(200);
+  });
+
+  it('says a link no longer works once its creator may no longer share', async () => {
+    const response = await gatedApp({ creatorShares: false }).request(
+      '/api/media/3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+      holding('abc'),
+    );
+
+    expect(response.status).toBe(410);
+  });
+
+  it('refuses an item its creator can no longer reach', async () => {
+    expect(
+      (
+        await gatedApp({}).request(
+          '/api/media/3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+          holding('abc'),
+        )
+      ).status,
+    ).toBe(200);
+
+    const response = await gatedApp({ creatorReaches: false }).request(
+      '/api/media/3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+      holding('abc'),
+    );
+
+    expect(response.status).toBe(403);
   });
 
   it('refuses an item the link does not cover', async () => {

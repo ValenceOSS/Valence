@@ -4,6 +4,7 @@ import { createBodyLimit } from '@ValenceServer/api/createBodyLimit';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
+import { createShareCreatorCheck } from '@ValenceServer/sharing/createShareCreatorCheck';
 import { createShareGate } from '@ValenceServer/sharing/createShareGate';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
@@ -32,6 +33,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     library,
     presence,
     shares,
+    permissions,
+    isAccountBanned,
     shareSessions,
     refuseWhatIsOutOfReach,
     peerRequests,
@@ -69,6 +72,11 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
               shares,
               sessions: shareSessions,
               shareHoldingTab: (clientId) => presence.shareOf(clientId),
+              creator: createShareCreatorCheck({
+                isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
+                permissionsOf: (accountId) => permissions.resolve(accountId),
+                isOutOfReach: (viewer, mediaId) => library.isOutOfReach(viewer, mediaId),
+              }),
               itemOf: async (mediaId) => {
                 const item = await library.getMedia(mediaId);
 

@@ -16,6 +16,10 @@ type ShareGateOptions = {
   sessions: ShareSessions;
   itemOf: (mediaId: string) => Promise<{ id: string; seriesId: string | null } | null>;
   shareHoldingTab?: (clientId: string) => string | null;
+  creator?: {
+    stillShares: (accountId: string) => Promise<boolean>;
+    reaches: (accountId: string, mediaId: string) => Promise<boolean>;
+  };
 };
 
 /**
@@ -45,7 +49,13 @@ type ShareGateOptions = {
  * @param itemOf - How to look up the item a request names, to check it against the link's scope.
  * @returns The middleware.
  */
-const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGateOptions) =>
+const createShareGate = ({
+  shares,
+  sessions,
+  itemOf,
+  shareHoldingTab,
+  creator,
+}: ShareGateOptions) =>
   createMiddleware(async (context, next) => {
     const token = getCookie(context, SHARE_COOKIE);
 
@@ -75,6 +85,13 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
           error: whyShareEnded(standing, new Date()) ?? say('common.thisLinkNoLongerWorks'),
           ended: howShareEnded(standing, new Date()) ?? 'withdrawn',
         },
+        410,
+      );
+    }
+
+    if (creator !== undefined && !(await creator.stillShares(found.createdBy))) {
+      return context.json(
+        { error: say('common.thisLinkNoLongerWorks'), ended: 'withdrawn' as const },
         410,
       );
     }
@@ -112,7 +129,11 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
     if (reach.kind === 'needsItem') {
       const item = await itemOf(reach.mediaId);
 
-      if (item === null || !covers(found, item)) {
+      if (
+        item === null ||
+        !covers(found, item) ||
+        (creator !== undefined && !(await creator.reaches(found.createdBy, item.id)))
+      ) {
         return context.json(refuse('error.share.thatIsNotPartOfWhat'), 403);
       }
     }
