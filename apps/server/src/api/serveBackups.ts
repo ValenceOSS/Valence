@@ -13,7 +13,8 @@ import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the backup endpoints: listing the copies of the database, taking one now, downloading
- * one and deleting one, for anybody allowed to change the server's settings.
+ * one and deleting one, for anybody allowed to back the server up, and handing a copy over only to
+ * an administrator, since it holds every account's credentials.
  *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
@@ -22,7 +23,7 @@ const serveBackups = (app: OpenAPIHono, context: AppContext): void => {
   const { requires, backups, recordAudit } = context;
 
   app.openapi(listBackupsRoute, async (asked) => {
-    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.settings'))) {
+    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.backup'))) {
       return asked.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -30,7 +31,7 @@ const serveBackups = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(takeBackupRoute, async (asked) => {
-    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.settings'))) {
+    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.backup'))) {
       return asked.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -48,7 +49,7 @@ const serveBackups = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(downloadBackupRoute, async (asked) => {
-    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.settings'))) {
+    if (backups === undefined || !(await requires(asked.req.raw.headers, 'administrator'))) {
       return asked.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -67,7 +68,7 @@ const serveBackups = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(removeBackupRoute, async (asked) => {
-    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.settings'))) {
+    if (backups === undefined || !(await requires(asked.req.raw.headers, 'server.backup'))) {
       return asked.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
