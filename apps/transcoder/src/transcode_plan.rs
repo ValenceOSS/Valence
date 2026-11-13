@@ -841,7 +841,7 @@ pub fn escape_filter_path_on(platform: Platform, path: &str) -> String {
 
     path.replace('\\', "\\\\")
         .replace(':', "\\:")
-        .replace('\'', "\\'")
+        .replace('\'', "'\\\\\\''")
 }
 
 /// Builds a scale filter that shrinks but never enlarges.
@@ -6539,6 +6539,16 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert_eq!(
             escape_filter_path_on(Platform::Unix, r"/media/a\b.mkv"),
             r"/media/a\\b.mkv"
+        );
+    }
+
+    #[test]
+    fn closes_the_quote_around_an_apostrophe_and_reopens_it() {
+        use super::{escape_filter_path_on, Platform};
+
+        assert_eq!(
+            escape_filter_path_on(Platform::Unix, "/m/it's,a;[b]:c\\d.mkv"),
+            "/m/it'\\\\\\''s,a;[b]\\:c\\\\d.mkv"
         );
     }
 
