@@ -36828,7 +36828,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "无需用遥控器输入密码。在手机上打开此页面，{value}即可登录此电视。",
+    "text": "无需用遥控器输入密码。在手机上打开此页面， {value} 即可登录此电视。",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

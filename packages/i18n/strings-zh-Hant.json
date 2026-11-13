@@ -36824,7 +36824,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "用遙控器即可免於輸入密碼。在手機上開啟此頁面，{value}即會登入此電視。",
+    "text": "用遙控器即可免於輸入密碼。在手機上開啟此頁面， {value} 即會登入此電視。",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

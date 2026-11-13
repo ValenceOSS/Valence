@@ -36856,7 +36856,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Inutile de saisir un mot de passe avec la télécommande. Ouvrez cette page sur votre téléphone et{value}connectera ce téléviseur.",
+    "text": "Inutile de saisir un mot de passe avec la télécommande. Ouvrez cette page sur votre téléphone et {value} connectera ce téléviseur.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

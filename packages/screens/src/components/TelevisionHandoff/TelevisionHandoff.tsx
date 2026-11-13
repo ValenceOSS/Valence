@@ -128,7 +128,7 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
         <h1 className="text-3xl font-medium text-text">{say('common.signInWithYourPhone')}</h1>
 
         <p className="text-base text-text-muted">
-          {say('screens.televisionHandoff.nobodyShouldHaveToSpellA', { value: ` ${name} ` })}
+          {say('screens.televisionHandoff.nobodyShouldHaveToSpellA', { value: name })}
         </p>
       </header>
 

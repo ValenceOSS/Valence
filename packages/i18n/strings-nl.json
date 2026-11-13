@@ -36832,7 +36832,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Hoef geen wachtwoord met de afstandsbediening te typen. Open dit op je telefoon en{value}meldt deze tv aan.",
+    "text": "Hoef geen wachtwoord met de afstandsbediening te typen. Open dit op je telefoon en {value} meldt deze tv aan.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

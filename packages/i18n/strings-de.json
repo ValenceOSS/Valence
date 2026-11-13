@@ -36836,7 +36836,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Kein Passwort mit der Fernbedienung eintippen. Öffne dies auf deinem Handy, dann meldet sich dieser Fernseher an. {value}",
+    "text": "Kein Passwort mit der Fernbedienung eintippen. Öffne dies auf deinem Handy, dann meldet sich dieser Fernseher an. {value} ",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

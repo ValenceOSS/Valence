@@ -36860,7 +36860,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Não é preciso digitar uma senha com o controle remoto. Abra isto no seu celular e{value}entrará nesta TV.",
+    "text": "Não é preciso digitar uma senha com o controle remoto. Abra isto no seu celular e {value} entrará nesta TV.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

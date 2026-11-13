@@ -3099,11 +3099,7 @@
     "text": "أسود",
     "context": "The label in the tokens (from `captionColours`)."
   },
-  {
-    "handler": "common.block",
-    "text": "حظر",
-    "context": "Button that blocks somebody."
-  },
+  { "handler": "common.block", "text": "حظر", "context": "Button that blocks somebody." },
   {
     "handler": "common.blocked",
     "text": "محظور",
@@ -4559,11 +4555,7 @@
     "text": "{count} مسلسلات",
     "context": "A count of TV shows."
   },
-  {
-    "handler": "common.count.shows.two",
-    "text": "مسلسلان",
-    "context": "A count of TV shows."
-  },
+  { "handler": "common.count.shows.two", "text": "مسلسلان", "context": "A count of TV shows." },
   {
     "handler": "common.count.shows.few",
     "text": "{count} مسلسلات",
@@ -5659,11 +5651,7 @@
     "text": "المساعدة",
     "context": "The label of what opens Valence’s help and documentation in the browser: an item in the account menu, and the question mark in the desktop app’s window bar."
   },
-  {
-    "handler": "common.here",
-    "text": "هنا",
-    "context": "The detail in the nav bar."
-  },
+  { "handler": "common.here", "text": "هنا", "context": "The detail in the nav bar." },
   {
     "handler": "common.hexCode",
     "text": "رمز سداسي عشري",
@@ -7089,11 +7077,7 @@
     "text": "يجب على من يفتح الرابط إدخال كلمة المرور. استخدم كلمة مرور في حال تجاوز الرابط ما قصدته من مشاركة.",
     "context": "Shown in the party panel."
   },
-  {
-    "handler": "common.partyPanel.ask",
-    "text": "دعوة",
-    "context": "Shown in the party panel."
-  },
+  { "handler": "common.partyPanel.ask", "text": "دعوة", "context": "Shown in the party panel." },
   {
     "handler": "common.partyPanel.askAlong",
     "text": "دعوة أشخاص",
@@ -7199,16 +7183,8 @@
     "text": "يمكن للجميع التنقل داخل المحتوى",
     "context": "The label of a switch in the party panel."
   },
-  {
-    "handler": "common.partyPanel.guest",
-    "text": "ضيف",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "common.partyPanel.host",
-    "text": "المضيف",
-    "context": "Shown in the party panel."
-  },
+  { "handler": "common.partyPanel.guest", "text": "ضيف", "context": "Shown in the party panel." },
+  { "handler": "common.partyPanel.host", "text": "المضيف", "context": "Shown in the party panel." },
   {
     "handler": "common.partyPanel.keepingTime",
     "text": "قائد المزامنة",
@@ -7434,11 +7410,7 @@
     "text": "قُرئ {percent}%",
     "context": "How much of a book or chapter has been read. {percent} is a whole number from 0 to 100."
   },
-  {
-    "handler": "common.person",
-    "text": "الشخص",
-    "context": "A column heading: who it was."
-  },
+  { "handler": "common.person", "text": "الشخص", "context": "A column heading: who it was." },
   {
     "handler": "common.pickSomeEpisodes",
     "text": "اختر الحلقات",
@@ -32574,11 +32546,7 @@
     "text": "السبب الذي يُعرض عليهم",
     "context": "The label of a ban's reason, which the banned person is shown when they next try to sign in."
   },
-  {
-    "handler": "screens.bookDialog.aBook",
-    "text": "كتاب",
-    "context": "Shown in the book dialog."
-  },
+  { "handler": "screens.bookDialog.aBook", "text": "كتاب", "context": "Shown in the book dialog." },
   {
     "handler": "screens.bookDialog.aboutTheAuthor",
     "text": "عن المؤلف",
@@ -41196,7 +41164,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "لا داعي لكتابة كلمة المرور بجهاز التحكم. افتح هذا على هاتفك و{value} سيسجّل الدخول على هذا التلفاز.",
+    "text": "لا داعي لكتابة كلمة المرور بجهاز التحكم. افتح هذا على هاتفك و {value} سيسجّل الدخول على هذا التلفاز.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {
@@ -46204,11 +46172,7 @@
     "text": "+{count}",
     "context": "A small circle at the end of a row of overlapping faces or server marks, saying how many more there are than are drawn. {count} is the number left out."
   },
-  {
-    "handler": "ui.dataTable.filter",
-    "text": "تصفية",
-    "context": "The name in the data table."
-  },
+  { "handler": "ui.dataTable.filter", "text": "تصفية", "context": "The name in the data table." },
   {
     "handler": "ui.dataTable.filterById",
     "text": "صفِّ حسب {id}",

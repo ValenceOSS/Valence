@@ -36828,7 +36828,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "리모컨으로 비밀번호를 입력하지 마세요. 휴대폰에서 이것을 열고 {value}하면 이 TV에 로그인돼요.",
+    "text": "리모컨으로 비밀번호를 입력하지 마세요. 휴대폰에서 이것을 열고 {value} 하면 이 TV에 로그인돼요.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

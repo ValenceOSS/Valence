@@ -36828,7 +36828,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Skip typing a password with the remote. Open this on your phone and{value}will sign in this TV.",
+    "text": "Skip typing a password with the remote. Open this on your phone and {value} will sign in this TV.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

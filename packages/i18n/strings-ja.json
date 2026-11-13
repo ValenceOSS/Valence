@@ -36828,7 +36828,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "リモコンでパスワードを入力する必要はありません。スマートフォンでこれを開くと、{value} このテレビにサインインします。",
+    "text": "リモコンでパスワードを入力する必要はありません。スマートフォンでこれを開くと、 {value} このテレビにサインインします。",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

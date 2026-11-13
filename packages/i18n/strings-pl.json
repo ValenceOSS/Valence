@@ -39002,7 +39002,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Nie musisz wpisywać hasła pilotem. Otwórz to w telefonie{value}i zaloguj ten telewizor.",
+    "text": "Nie musisz wpisywać hasła pilotem. Otwórz to w telefonie {value} i zaloguj ten telewizor.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

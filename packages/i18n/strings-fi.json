@@ -36832,7 +36832,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Älä kirjoita salasanaa kaukosäätimellä. Avaa tämä puhelimellasi, ja{value}kirjaa tämä TV sisään.",
+    "text": "Älä kirjoita salasanaa kaukosäätimellä. Avaa tämä puhelimellasi, ja {value} kirjaa tämä TV sisään.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

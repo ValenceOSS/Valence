@@ -9302,7 +9302,7 @@ const ENGLISH = {
   'screens.televisionHandoff.askForAnotherCode': 'Get a new code',
   'screens.televisionHandoff.askingForACode': 'Getting a code',
   'screens.televisionHandoff.nobodyShouldHaveToSpellA':
-    'Skip typing a password with the remote. Open this on your phone and{value}will sign in this TV.',
+    'Skip typing a password with the remote. Open this on your phone and {value} will sign in this TV.',
   'screens.televisionHandoff.thatCodeRanOutAskFor': 'That code expired. Get a new one.',
   'screens.televisionHandoff.thatWasTurnedDownOnThe':
     'The request was declined on the other device.',
