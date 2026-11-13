@@ -4,6 +4,7 @@ import { measureLink } from '@ValenceRequests/opds/measureLink';
 import { readOpdsFeed } from '@ValenceRequests/opds/readOpdsFeed';
 import { readOpenSearchTemplate } from '@ValenceRequests/opds/readOpenSearchTemplate';
 import { releasesOfOpds } from '@ValenceRequests/opds/releasesOfOpds';
+import type { GuardFor } from '@ValenceRequests/network/GuardFor';
 import type { LinkFetch } from '@ValenceRequests/opds/measureLink';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
@@ -29,9 +30,18 @@ const FEED = 'application/atom+xml, application/opensearchdescription+xml, appli
  *
  * @param fetch - How to ask.
  * @param wait - Waits for the catalogue's turn, so it is asked no faster than its limit allows.
+ * @param guard - What holds every address but the catalogue's own to the public internet, where
+ *   there is one.
  * @returns The catalogue client.
  */
-const createOpdsCatalogue = (fetch: LinkFetch, wait: (catalogue: Catalogue) => Promise<void>) => {
+const createOpdsCatalogue = (
+  fetch: LinkFetch,
+  wait: (catalogue: Catalogue) => Promise<void>,
+  guard?: GuardFor,
+) => {
+  const reachFor = (catalogue: Catalogue): LinkFetch =>
+    guard === undefined ? fetch : guard([new URL(catalogue.url).host]);
+
   const templates = new Map<string, string>();
 
   const read = async (catalogue: Catalogue, url: string): Promise<Response> => {
@@ -40,7 +50,7 @@ const createOpdsCatalogue = (fetch: LinkFetch, wait: (catalogue: Catalogue) => P
     let response: Response;
 
     try {
-      response = await fetch(url, {
+      response = await reachFor(catalogue)(url, {
         headers: { accept: FEED },
         signal: AbortSignal.timeout(catalogue.timeoutSeconds * 1000),
       });
@@ -124,7 +134,7 @@ const createOpdsCatalogue = (fetch: LinkFetch, wait: (catalogue: Catalogue) => P
     download: async (catalogue: Catalogue, url: string): Promise<ReleaseFile> => {
       await wait(catalogue);
 
-      return measureLink(fetch, url, catalogue.timeoutSeconds);
+      return measureLink(reachFor(catalogue), url, catalogue.timeoutSeconds);
     },
   };
 };

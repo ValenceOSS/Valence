@@ -153,8 +153,40 @@ describe('createIndexerClient', () => {
         bytes: new TextEncoder().encode('d8:announce'),
       });
       expect(
-        (await client.download({ ...JACKETT, kind: 'newznab' }, 'https://nzb/get/1')).kind,
+        (
+          await createIndexerClient({
+            fetch: answering(
+              '<?xml version="1.0"?><nzb xmlns="http://www.newzbin.com/DTD/2003/nzb"/>',
+            ),
+            pacer: createPacer(),
+          }).download({ ...JACKETT, kind: 'newznab' }, 'https://nzb/get/1')
+        ).kind,
       ).toBe('nzb');
+    });
+
+    it('fetches through the guard, trusting only the host of the indexer', async () => {
+      const plain = answering('d8:announce');
+      const guarded = vi.fn(() => Promise.resolve(new Response('d8:announce')));
+      const guard = vi.fn(() => guarded);
+      const client = createIndexerClient({ fetch: plain, pacer: createPacer(), guard });
+
+      await client.download(JACKETT, 'http://169.254.169.254/latest/meta-data/');
+
+      expect(guard).toHaveBeenCalledWith(['jackett:9117']);
+      expect(guarded).toHaveBeenCalledTimes(1);
+      expect(plain).not.toHaveBeenCalled();
+    });
+
+    it('refuses an answer that is not a torrent or an NZB', async () => {
+      const client = createIndexerClient({
+        fetch: answering('{"instance-id":"i-1234"}'),
+        pacer: createPacer(),
+      });
+
+      await expect(client.download(JACKETT, 'http://jackett/dl/1')).rejects.toThrow();
+      await expect(
+        client.download({ ...JACKETT, kind: 'newznab' }, 'https://nzb/get/1'),
+      ).rejects.toThrow();
     });
 
     it('says so when the file is not there, or the indexer cannot be reached', async () => {

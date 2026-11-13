@@ -216,4 +216,20 @@ describe('opening a request pinned to public addresses', () => {
     expect(await text(answer.body)).toBe('stand-in');
     expect(asked).toEqual({ hostname: 'api.example.com', port: 9 });
   });
+
+  it('hands a redirect back unfollowed where following is turned off', async () => {
+    handle = (_asked, answer) => {
+      answer.writeHead(302, { location: 'https://api.example.com/elsewhere' });
+      answer.end();
+    };
+
+    const answer = await openPinnedRequest(
+      'https://api.example.com/',
+      {},
+      optionsFor({ followRedirects: false }),
+    );
+
+    expect(answer.status).toBe(302);
+    expect(answer.headers.location).toBe('https://api.example.com/elsewhere');
+  });
 });

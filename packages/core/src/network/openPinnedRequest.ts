@@ -44,6 +44,7 @@ type OpenPinnedRequestOptions = {
   devTransport?: Transport;
   idleMilliseconds?: number;
   mostRedirects?: number;
+  followRedirects?: boolean;
   signal?: AbortSignal;
 };
 
@@ -75,7 +76,7 @@ const REDIRECTS = new Set([301, 302, 303, 307, 308]);
  * request, and for an address written as a number, before anything is sent to it. Redirects are
  * followed by hand and each hop is held to the same rules. Nothing of the server's own travels
  * with it: no cookies and no forwarding headers. The body is left unread for the caller to
- * stream, and the request gives up when nothing arrives for a while. A developer's stand-in host
+ * stream (a redirect is handed back as it is where following is turned off), and the request gives up when nothing arrives for a while. A developer's stand-in host
  * is reached over plain HTTP at the address it was pointed at.
  *
  * @param address - Where to go.
@@ -99,6 +100,7 @@ const openPinnedRequest = async (
     devTransport = httpRequest,
     idleMilliseconds = 15_000,
     mostRedirects = 3,
+    followRedirects = true,
     signal,
   }: OpenPinnedRequestOptions,
 ): Promise<PinnedAnswer> => {
@@ -222,7 +224,7 @@ const openPinnedRequest = async (
     const status = response.statusCode ?? 0;
     const location = response.headers.location;
 
-    if (!REDIRECTS.has(status) || location === undefined) {
+    if (!followRedirects || !REDIRECTS.has(status) || location === undefined) {
       const headers: Record<string, string> = {};
 
       for (const [name, value] of Object.entries(response.headers)) {
