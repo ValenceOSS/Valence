@@ -61,4 +61,23 @@ describe('libraryDisks', () => {
       { ...films, totalBytes: 900 },
     ]);
   });
+
+  it('measures a pool from the library dataset with the least room left, whichever comes first', () => {
+    const films = {
+      mountPoint: '/media/films',
+      device: 'tank/films',
+      totalBytes: 5700,
+      availableBytes: 5000,
+    };
+    const shows = {
+      mountPoint: '/media/shows',
+      device: 'tank/shows',
+      totalBytes: 610,
+      availableBytes: 10,
+    };
+
+    expect(libraryDisks([root, films, shows], ['/media/films', '/media/shows'])).toEqual([
+      { ...shows, totalBytes: 1310 },
+    ]);
+  });
 });

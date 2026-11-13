@@ -758,6 +758,22 @@ describe('collectConcerns', () => {
       );
     });
 
+    it('reports a quota-held dataset in a pool behind another library dataset with room', () => {
+      const monitor = healthyMonitor();
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: 'tank/media', totalBytes: 5100, availableBytes: 5000 },
+        { mountPoint: '/shows', device: 'tank/shows', totalBytes: 1000, availableBytes: 10 },
+      ];
+
+      expect(
+        collectConcerns({
+          ...healthy,
+          monitor,
+          libraries: [library(), library({ id: 'lib_2', path: '/shows' })],
+        }).map((concern) => concern.id),
+      ).toContain('disk');
+    });
+
     it('stays quiet about a full disk no library is on', () => {
       const monitor = healthyMonitor();
       monitor.resources.disks = [

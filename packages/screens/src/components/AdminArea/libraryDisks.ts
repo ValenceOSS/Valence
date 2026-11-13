@@ -23,7 +23,8 @@ const holds = (mountPoint: string, path: string): boolean => {
 /**
  * Finds every drive a set of libraries lives on, each once, the one with the least room left first.
  * Where a path sits under nested mounts, the deepest is the one it is actually on, and where that is
- * a dataset of a ZFS pool, the drive is the pool, under the mount point of the first library on it.
+ * a dataset of a ZFS pool, the drive is the pool, measured from whichever library's dataset has the
+ * least room left, since a quota can hold one dataset to less than the pool has.
  *
  * @param disks - The filesystems the monitor knows about.
  * @param paths - Where the libraries live.
@@ -41,8 +42,15 @@ const libraryDisks = (disks: readonly DiskUse[], paths: readonly string[]): Disk
         null,
       );
 
-    if (deepest !== null && !holding.has(driveKeyOf(deepest))) {
-      holding.set(driveKeyOf(deepest), wholeDriveOf(disks, deepest));
+    if (deepest === null) {
+      continue;
+    }
+
+    const drive = wholeDriveOf(disks, deepest);
+    const known = holding.get(driveKeyOf(deepest));
+
+    if (known === undefined || drive.availableBytes < known.availableBytes) {
+      holding.set(driveKeyOf(deepest), drive);
     }
   }
 
