@@ -212,6 +212,11 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { userId, roleId } = context.req.valid('param');
+
+    if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
+      return context.json(describeAccountRefusal('outranked'), 403);
+    }
+
     const role = (await permissions.listRoles()).find((candidate) => candidate.id === roleId);
 
     if (role === undefined) {
@@ -248,6 +253,11 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { userId, roleId } = context.req.valid('param');
+
+    if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
+      return context.json(describeAccountRefusal('outranked'), 403);
+    }
+
     const role = (await permissions.listRoles()).find((candidate) => candidate.id === roleId);
 
     if (role !== undefined) {
