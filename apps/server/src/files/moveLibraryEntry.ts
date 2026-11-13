@@ -2,6 +2,7 @@ import { access, rename, stat } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { libraryOf } from '@ValenceServer/files/libraryOf';
+import { staysInsideLibrary } from '@ValenceServer/files/staysInsideLibrary';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntryChange } from '@ValenceServer/files/LibraryEntryChange';
@@ -38,12 +39,12 @@ const moveLibraryEntry = async (
   const from = resolve(path);
   const source = libraryOf(libraries, from);
 
-  if (source === null) {
-    return { kind: 'outside' };
+  if (source !== null && from === resolve(source.path)) {
+    return { kind: 'root' };
   }
 
-  if (from === resolve(source.path)) {
-    return { kind: 'root' };
+  if (source === null || !(await staysInsideLibrary(source, dirname(from)))) {
+    return { kind: 'outside' };
   }
 
   if (
@@ -61,7 +62,7 @@ const moveLibraryEntry = async (
   const target = libraryOf(libraries, into);
   const destination = join(into, 'name' in to ? to.name : basename(from));
 
-  if (target === null) {
+  if (target === null || !(await staysInsideLibrary(target, into))) {
     return { kind: 'outside' };
   }
 

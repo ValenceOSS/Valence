@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { findByName } from '@ValenceServer/folders/findByName';
 import { libraryOf } from '@ValenceServer/files/libraryOf';
+import { staysInsideLibrary } from '@ValenceServer/files/staysInsideLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryFileSearch } from '@ValenceContracts/schemas/LibraryFiles';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
@@ -29,8 +30,12 @@ const searchLibraryFiles = async (
 ): Promise<LibraryFileSearchAnswer> => {
   const isEverywhere = within === undefined || within.trim() === '';
 
-  if (!isEverywhere && libraryOf(libraries, within) === null) {
-    return { kind: 'outside' };
+  if (!isEverywhere) {
+    const library = libraryOf(libraries, within);
+
+    if (library === null || !(await staysInsideLibrary(library, within))) {
+      return { kind: 'outside' };
+    }
   }
 
   const { found, isTruncated } = await findByName(

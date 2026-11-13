@@ -2,6 +2,7 @@ import { readdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { libraryOf } from '@ValenceServer/files/libraryOf';
+import { staysInsideLibrary } from '@ValenceServer/files/staysInsideLibrary';
 import type { DiskRefusal } from '@ValenceServer/files/diskRefusalOf';
 import type { FolderMeasure } from '@ValenceContracts/schemas/LibraryFiles';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -29,7 +30,9 @@ const measureLibraryFolder = async (
 ): Promise<FolderMeasureAnswer> => {
   const at = resolve(path);
 
-  if (libraryOf(libraries, at) === null) {
+  const library = libraryOf(libraries, at);
+
+  if (library === null || !(await staysInsideLibrary(library, at))) {
     return { kind: 'outside' };
   }
 
