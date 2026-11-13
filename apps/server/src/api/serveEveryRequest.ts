@@ -111,8 +111,14 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
   app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
 
-  app.all('/api/auth/is-username-available', (context) =>
-    context.json(refuse('error.common.thisServerDoesNotHaveThatAddress'), 404),
+  app.on(
+    ['GET', 'POST'],
+    [
+      '/api/auth/is-username-available',
+      '/api/auth/request-password-reset',
+      '/api/auth/forget-password',
+    ],
+    (context) => context.json(refuse('error.common.thisServerDoesNotHaveThatAddress'), 404),
   );
 
   app.all('/api/auth/sign-up/*', createSignUpBlock());

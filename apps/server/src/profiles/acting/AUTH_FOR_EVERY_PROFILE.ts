@@ -9,8 +9,6 @@ const AUTH_FOR_EVERY_PROFILE: readonly RegExp[] = [
   /^\/api\/auth\/multi-session\//u,
   /^\/api\/auth\/device(\/.*)?$/u,
   /^\/api\/auth\/reset-password(\/.*)?$/u,
-  /^\/api\/auth\/request-password-reset$/u,
-  /^\/api\/auth\/forget-password$/u,
   /^\/api\/auth\/token$/u,
   /^\/api\/auth\/jwks$/u,
   /^\/api\/auth\/callback\//u,

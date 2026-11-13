@@ -134,6 +134,18 @@ describe('createApp', () => {
     expect(response.status).toBe(404);
   });
 
+  it('sends a recovery link only through its own address, which waits a minute between them', async () => {
+    for (const path of ['/api/auth/request-password-reset', '/api/auth/forget-password']) {
+      const response = await app.request(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'someone@valence.local', redirectTo: '/reset' }),
+      });
+
+      expect(response.status, path).toBe(404);
+    }
+  });
+
   it('serves no reference page of its own, which the documentation site carries instead', async () => {
     const response = await app.request('/api/reference');
 
