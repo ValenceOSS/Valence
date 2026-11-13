@@ -33,6 +33,15 @@ describe('createLinkTokenReader', () => {
     expect(await read(token)).toBeNull();
   });
 
+  it('believes a token once even when it arrives twice at the same moment', async () => {
+    const read = filmsReading();
+    const token = await signLinkToken({ from: 'anime', to: 'films', privateKey: ANIME.privateKey });
+
+    const answers = await Promise.all([read(token), read(token), read(token)]);
+
+    expect(answers.filter((one) => one !== null)).toHaveLength(1);
+  });
+
   it('refuses a token signed by another key, meant for another server, or from nobody it knows', async () => {
     const read = filmsReading();
 

@@ -69,6 +69,10 @@ const createLinkTokenReader = ({ me, keyOf, now = Date.now }: LinkTokenReaderOpt
         currentDate: new Date(atMs),
       });
 
+      if (seen.has(claimed.jti)) {
+        return null;
+      }
+
       seen.set(claimed.jti, atMs + (LINK_TOKEN_SECONDS + CLOCK_SKEW_SECONDS * 2) * 1000);
 
       return {
