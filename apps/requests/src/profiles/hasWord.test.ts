@@ -12,4 +12,15 @@ describe('hasWord', () => {
     expect(hasWord('Movie.2023.1080p.HDR10.x265', '/hdr10\\+?/')).toBe(true);
     expect(hasWord('Movie', '/[/')).toBe(false);
   });
+
+  it('gives up on a pattern that repeats a repeat', () => {
+    const started = Date.now();
+
+    expect(hasWord(`${'a'.repeat(60)}!`, '/^(a+)+$/')).toBe(false);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
+  it('looks only at the start of a very long name', () => {
+    expect(hasWord(`${'x'.repeat(1_000_000)} hdr`, 'hdr')).toBe(false);
+  });
 });
