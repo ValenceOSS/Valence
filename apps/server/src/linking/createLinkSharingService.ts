@@ -1,6 +1,7 @@
 import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { createRateLimiter } from './createRateLimiter';
 import { federationReachOf } from './federationReachOf';
+import { FEDERATION_PATH } from './FEDERATION_PATH';
 import { peerMayReach } from './peerMayReach';
 import { signAsPerson } from './signAsPerson';
 import type {
@@ -121,7 +122,13 @@ const createLinkSharingService = ({
       }
 
       const token = BEARER.exec(authorization ?? '')?.[1];
-      const signer = token === undefined ? null : await linking.readToken(token);
+      const signer =
+        token === undefined
+          ? null
+          : await linking.readToken(token, {
+              method,
+              route: path.startsWith(FEDERATION_PATH) ? path.slice(FEDERATION_PATH.length) : path,
+            });
       const server = signer === null ? null : await links.readServerByFingerprint(signer.from);
 
       if (server?.state !== 'linked' || signer === null) {
@@ -312,7 +319,7 @@ const createLinkSharingService = ({
         return null;
       }
 
-      const signed = await linking.signFor(id);
+      const signed = await linking.signFor(id, undefined, { method: 'GET', route: '/libraries' });
       const answered = signed === null ? null : await peers.libraries(signed.address, signed.token);
 
       if (answered?.kind !== 'answered') {
@@ -345,7 +352,7 @@ const createLinkSharingService = ({
         return null;
       }
 
-      const signed = await linking.signFor(id);
+      const signed = await linking.signFor(id, undefined, { method: 'GET', route: '/activity' });
       const answered = signed === null ? null : await peers.activity(signed.address, signed.token);
 
       if (answered?.kind === 'answered') {

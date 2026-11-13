@@ -6307,7 +6307,10 @@ const askAlongElsewhere = async (
   }
 
   const pseudonym = await linkSharingStore.pseudonymOf(serverId, personId);
-  const signed = pseudonym === null ? null : await linkService.signFor(serverId);
+  const signed =
+    pseudonym === null
+      ? null
+      : await linkService.signFor(serverId, undefined, { method: 'POST', route: '/parties/asked' });
 
   if (signed === null || pseudonym === null) {
     return;

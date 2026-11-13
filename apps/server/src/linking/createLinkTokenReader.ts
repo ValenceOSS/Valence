@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { decodeJwt, importJWK, jwtVerify } from 'jose';
 import { LINK_TOKEN_SECONDS } from './LINK_TOKEN_SECONDS';
+import { boundRouteOf } from './boundRouteOf';
 import type { PublicServerKey } from '@ValenceContracts/schemas/LinkedServer';
 import type { LinkTokenSigner } from './LinkTokenPerson';
 
@@ -9,6 +10,8 @@ const CLOCK_SKEW_SECONDS = 30;
 const PersonClaimsSchema = z.object({
   sub: z.string().min(1).max(64).optional(),
   name: z.string().trim().min(1).max(100).optional(),
+  htm: z.string().min(1).max(16).optional(),
+  htu: z.string().min(1).max(2048).optional(),
 });
 
 type LinkTokenReaderOptions = {
@@ -20,7 +23,9 @@ type LinkTokenReaderOptions = {
 /**
  * Reads what another server says it is, from the token it signed: the token must be signed by the
  * key this server pinned for that server, meant for this server, fresh, and never seen before. A
- * token used twice is refused, so one overheard on the way cannot be replayed. Where the token asks
+ * token used twice is refused, so one overheard on the way cannot be replayed, and one signed for a
+ * request is believed only for that request, so one overheard cannot be spent on another. A token
+ * from a server too old to say which request it was for is believed for any. Where the token asks
  * for one of that server's people, it says who by their pseudonym, and their name where it travels;
  * a token that names a person badly is not believed at all.
  *
@@ -41,7 +46,10 @@ const createLinkTokenReader = ({ me, keyOf, now = Date.now }: LinkTokenReaderOpt
     }
   };
 
-  return async (token: string): Promise<LinkTokenSigner | null> => {
+  return async (
+    token: string,
+    asked?: { method: string; route: string },
+  ): Promise<LinkTokenSigner | null> => {
     const atMs = now();
 
     forget(atMs);
@@ -68,6 +76,17 @@ const createLinkTokenReader = ({ me, keyOf, now = Date.now }: LinkTokenReaderOpt
         maxTokenAge: `${(LINK_TOKEN_SECONDS + CLOCK_SKEW_SECONDS).toString()}s`,
         currentDate: new Date(atMs),
       });
+
+      const { htm, htu } = person.data;
+
+      if (
+        (htm !== undefined || htu !== undefined) &&
+        (asked === undefined ||
+          (htm !== undefined && htm !== asked.method.toUpperCase()) ||
+          (htu !== undefined && htu !== boundRouteOf(asked.route)))
+      ) {
+        return null;
+      }
 
       if (seen.has(claimed.jti)) {
         return null;

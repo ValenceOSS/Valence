@@ -143,12 +143,17 @@ const createLinkService = ({
     now: () => now().getTime(),
   });
 
-  const tokenFor = async (server: StoredLinkedServer, person?: LinkTokenPerson) =>
+  const tokenFor = async (
+    server: StoredLinkedServer,
+    person?: LinkTokenPerson,
+    asking?: { method: string; route: string },
+  ) =>
     signLinkToken({
       from: (await identity()).fingerprint,
       to: server.fingerprint,
       privateKey: (await keys()).privateKey,
       ...(person === undefined ? {} : { person }),
+      ...(asking === undefined ? {} : { asking }),
     });
 
   const knownAs = async (fingerprint: string) => {
@@ -205,11 +210,11 @@ const createLinkService = ({
 
     readToken,
 
-    signFor: async (id, person) => {
+    signFor: async (id, person, asking) => {
       const server = await store.readServer(id);
 
       return server?.state === 'linked'
-        ? { address: server.address, token: await tokenFor(server, person) }
+        ? { address: server.address, token: await tokenFor(server, person, asking) }
         : null;
     },
 
@@ -355,7 +360,10 @@ const createLinkService = ({
       const answered = await peers.pairingState(
         server.address,
         server.theirPairingId,
-        await tokenFor(server),
+        await tokenFor(server, undefined, {
+          method: 'GET',
+          route: `/pair/${server.theirPairingId}`,
+        }),
       );
 
       if (
@@ -384,7 +392,10 @@ const createLinkService = ({
       }
 
       if (server.state === 'linked' || server.state === 'awaitingThem') {
-        await peers.tellUnlinked(server.address, await tokenFor(server));
+        await peers.tellUnlinked(
+          server.address,
+          await tokenFor(server, undefined, { method: 'POST', route: '/unlink' }),
+        );
       }
 
       if (server.state === 'linked') {
@@ -427,7 +438,7 @@ const createLinkService = ({
     },
 
     pairingState: async (pairingId, token) => {
-      const signer = await readToken(token);
+      const signer = await readToken(token, { method: 'GET', route: `/pair/${pairingId}` });
       const server = signer === null ? null : await store.readServer(pairingId);
 
       if (server === null || server.fingerprint !== signer?.from) {
@@ -440,7 +451,7 @@ const createLinkService = ({
     },
 
     hearUnlinked: async (token) => {
-      const signer = await readToken(token);
+      const signer = await readToken(token, { method: 'POST', route: '/unlink' });
       const server = signer === null ? null : await store.readServerByFingerprint(signer.from);
 
       if (server === null) {

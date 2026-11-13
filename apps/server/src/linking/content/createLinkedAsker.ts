@@ -31,7 +31,10 @@ const createLinkedAsker = ({
   people: PersonScope;
 }) => {
   const ask = async (serverId: string, route: string, asking: Asking = {}) => {
-    const signed = await signAsPerson(linking, sharing, serverId, await people.current());
+    const signed = await signAsPerson(linking, sharing, serverId, await people.current(), {
+      method: asking.method ?? 'GET',
+      route,
+    });
 
     return signed === null
       ? null
