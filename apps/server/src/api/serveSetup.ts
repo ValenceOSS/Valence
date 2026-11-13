@@ -10,6 +10,7 @@ import { placeholderEmailOf } from '@ValenceServer/accounts/placeholderEmailOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { createWorkLock } from '@ValenceServer/jobs/createWorkLock';
 
 const SignedUpSchema = z.object({ user: z.object({ id: z.string() }) });
 
@@ -21,6 +22,7 @@ const SignedUpSchema = z.object({ user: z.object({ id: z.string() }) });
  */
 const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
   const { auth, settings, countUsers, promoteToAdmin, requires, telemetry } = context;
+  const settingUp = createWorkLock();
 
   app.openapi(setupStatusRoute, async (context) => {
     const detectedOrigin = new URL(context.req.url).origin;
@@ -39,67 +41,69 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
     );
   });
 
-  app.openapi(setupCompleteRoute, async (context) => {
-    if ((await countUsers()) > 0) {
-      return context.json(refuse('error.setup.setupHasAlreadyBeenCompleted'), 409);
-    }
+  app.openapi(setupCompleteRoute, (context) =>
+    settingUp.run('setup', async () => {
+      if ((await countUsers()) > 0) {
+        return context.json(refuse('error.setup.setupHasAlreadyBeenCompleted'), 409);
+      }
 
-    const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics } =
-      context.req.valid('json');
-    const email = admin.email?.toLowerCase();
+      const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics } =
+        context.req.valid('json');
+      const email = admin.email?.toLowerCase();
 
-    const created = await auth.api.signUpEmail({
-      body: {
-        name: admin.name,
-        email: email ?? placeholderEmailOf(randomUUID()),
-        password: admin.password,
-        username: admin.username,
-        displayUsername: admin.username,
-      },
-      asResponse: true,
-    });
+      const created = await auth.api.signUpEmail({
+        body: {
+          name: admin.name,
+          email: email ?? placeholderEmailOf(randomUUID()),
+          password: admin.password,
+          username: admin.username,
+          displayUsername: admin.username,
+        },
+        asResponse: true,
+      });
 
-    const signedUp = created.ok
-      ? SignedUpSchema.safeParse(await created.json().catch(() => null))
-      : null;
+      const signedUp = created.ok
+        ? SignedUpSchema.safeParse(await created.json().catch(() => null))
+        : null;
 
-    if (signedUp === null || !signedUp.success) {
-      return context.json(refuse('error.setup.theAdministratorAccountCouldNotBe'), 400);
-    }
+      if (signedUp === null || !signedUp.success) {
+        return context.json(refuse('error.setup.theAdministratorAccountCouldNotBe'), 400);
+      }
 
-    const userId = signedUp.data.user.id;
-    const held = email ?? placeholderEmailOf(userId);
+      const userId = signedUp.data.user.id;
+      const held = email ?? placeholderEmailOf(userId);
 
-    if (email === undefined) {
-      await (await auth.$context).internalAdapter.updateUser(userId, { email: held });
-    }
+      if (email === undefined) {
+        await (await auth.$context).internalAdapter.updateUser(userId, { email: held });
+      }
 
-    const ownerAccountId = await promoteToAdmin(held);
+      const ownerAccountId = await promoteToAdmin(held);
 
-    const previous = await settings.read();
+      const previous = await settings.read();
 
-    await settings.write({
-      trustedOrigins,
-      cookieSecure,
-      setupCompletedAt: new Date().toISOString(),
-      setupFlow: 'open',
-      telemetryEnabled: sharesUsageStatistics,
-      ...(ownerAccountId === null ? {} : { ownerAccountId }),
-    });
+      await settings.write({
+        trustedOrigins,
+        cookieSecure,
+        setupCompletedAt: new Date().toISOString(),
+        setupFlow: 'open',
+        telemetryEnabled: sharesUsageStatistics,
+        ...(ownerAccountId === null ? {} : { ownerAccountId }),
+      });
 
-    for (const cookie of created.headers.getSetCookie()) {
-      context.header('set-cookie', cookie, { append: true });
-    }
+      for (const cookie of created.headers.getSetCookie()) {
+        context.header('set-cookie', cookie, { append: true });
+      }
 
-    return context.json(
-      {
-        isComplete: true as const,
-        isSignedIn: created.headers.getSetCookie().length > 0,
-        restartRequired: previous.cookieSecure !== cookieSecure,
-      },
-      200,
-    );
-  });
+      return context.json(
+        {
+          isComplete: true as const,
+          isSignedIn: created.headers.getSetCookie().length > 0,
+          restartRequired: previous.cookieSecure !== cookieSecure,
+        },
+        200,
+      );
+    }),
+  );
 
   app.openapi(setupFlowFinishRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'administrator'))) {

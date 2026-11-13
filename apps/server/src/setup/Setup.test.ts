@@ -30,7 +30,10 @@ const adminPayload = {
 
 const buildApp = (initialUserCount = 0) => {
   const { auth, settings, store } = createMemoryAuth();
-  const state = { users: initialUserCount };
+  const state: { users: number; countsAccounts: (() => number) | null } = {
+    users: initialUserCount,
+    countsAccounts: null,
+  };
   const promoteToAdmin = vi.fn<(email: string) => Promise<string | null>>(() =>
     Promise.resolve(null),
   );
@@ -39,7 +42,7 @@ const buildApp = (initialUserCount = 0) => {
   const app = createApp({
     auth,
     settings,
-    countUsers: () => Promise.resolve(state.users),
+    countUsers: () => Promise.resolve(state.countsAccounts?.() ?? state.users),
     promoteToAdmin,
     library: createMemoryLibraryService(),
     subtitles: createMemorySubtitleService(),
@@ -212,6 +215,25 @@ describe('setup completion', () => {
 
     expect(response.status).toBe(409);
     expect(promoteToAdmin).not.toHaveBeenCalled();
+  });
+
+  it('makes only one administrator when two set the server up at once', async () => {
+    const { app, state, store } = buildApp(0);
+
+    state.countsAccounts = () => store.user.length;
+
+    const answers = await Promise.all([
+      app.request(postSetup(adminPayload)),
+      app.request(
+        postSetup({
+          ...adminPayload,
+          admin: { ...adminPayload.admin, username: 'second', email: 'second@valence.test' },
+        }),
+      ),
+    ]);
+
+    expect(answers.map((answer) => answer.status).toSorted()).toEqual([200, 409]);
+    expect(store.user).toHaveLength(1);
   });
 
   it('cannot be replayed to claim a second administrator', async () => {
