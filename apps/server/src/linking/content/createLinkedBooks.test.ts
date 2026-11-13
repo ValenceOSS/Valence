@@ -140,7 +140,38 @@ describe('createLinkedBooks', () => {
           0,
           (href) => `/api/books/theirs/chapters/their-chapter/resource?href=${href}`,
         ),
-      ).toBe('<img src="/api/books/theirs/chapters/their-chapter/resource?href=a.png">');
+      ).toBe('<img src="/api/books/theirs/chapters/their-chapter/resource?href=a.png" />');
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it(
+    'cleans a linked book’s part as its own, and takes only pictures from it',
+    async () => {
+      const remote = '/api/books/remote-book/chapters/remote-chapter';
+      const asker = aLinkedAskerAnswering((_, route) =>
+        route.includes('/document')
+          ? new Response(
+              `<p onclick="steal()">Hi</p><script>steal()</script><img src="${remote}/resource?href=a.png"><img src="https://tracker.example/pixel.gif">`,
+            )
+          : new Response('<html><script>steal()</script></html>', {
+              headers: { 'content-type': 'text/html' },
+            }),
+      );
+      const books = createLinkedBooks(aLocal(), await holdingBothBooks(), asker);
+      const part = await books.readDocument(
+        'their-chapter',
+        0,
+        (href) => `/api/books/theirs/chapters/their-chapter/resource?href=${href}`,
+      );
+
+      expect(part).toContain(
+        '<img src="/api/books/theirs/chapters/their-chapter/resource?href=a.png" />',
+      );
+      expect(part).not.toContain('tracker.example');
+      expect(part).not.toContain('steal');
+      expect(await books.readResource('their-chapter', 'page.html')).toBeNull();
+      expect(await books.readCover('theirs')).toBeNull();
     },
     STARTING_THE_DATABASE_MS,
   );
