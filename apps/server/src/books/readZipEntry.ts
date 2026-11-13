@@ -3,6 +3,8 @@ import { inflateSync } from 'fflate';
 import { zipEntryDataAt } from '@ValenceCore/zip/zipEntryDataAt';
 import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
 
+const MOST_ENTRY_BYTES = 256 * 1024 * 1024;
+
 /**
  * Reads one file out of a zip, and only that one.
  *
@@ -12,9 +14,14 @@ import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
  *
  * @param path - The archive.
  * @param entry - The entry, as the directory listed it.
- * @returns The file's bytes, or nothing where the archive disagrees with its own directory.
+ * @returns The file's bytes, or nothing where the archive disagrees with its own directory or the
+ *   entry claims to be larger than any book's file is.
  */
 const readZipEntry = async (path: string, entry: ZipEntry): Promise<Uint8Array | null> => {
+  if (entry.compressedSize > MOST_ENTRY_BYTES || entry.uncompressedSize > MOST_ENTRY_BYTES) {
+    return null;
+  }
+
   const file = await open(path, 'r').catch(() => null);
 
   if (file === null) {
