@@ -1,5 +1,7 @@
 const FEATURING = /\s+[([]?(?:feat\.?|ft\.?|featuring|with)\s+/i;
 
+const LONGEST_ARTIST = 300;
+
 const LISTED = /\s*(?:;|\s\/\s)\s*/;
 
 /**
@@ -15,6 +17,7 @@ const LISTED = /\s*(?:;|\s\/\s)\s*/;
  */
 const splitArtists = (tagged: readonly string[]): string[] => {
   const named = tagged
+    .map((value) => value.slice(0, LONGEST_ARTIST).replace(/\s+/g, ' '))
     .flatMap((value) => value.split(LISTED))
     .flatMap((value) => value.split(FEATURING))
     .map((value) => value.replace(/^[([]|[)\]]$/g, '').trim())

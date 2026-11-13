@@ -1,3 +1,5 @@
+const LONGEST_TITLE = 300;
+
 /**
  * An album's title with what rippers and shops add to it taken off, for searching a catalogue that
  * names the record itself: a year on the end, "EP" or "LP", and an edition in brackets.
@@ -7,6 +9,8 @@
  */
 const tidyAlbumTitle = (title: string): string =>
   title
+    .slice(0, LONGEST_TITLE)
+    .replace(/\s+/g, ' ')
     .replace(
       /\s*[([][^)\]]*\b(?:edition|deluxe|remaster(?:ed)?|expanded|anniversary|bonus)\b[^)\]]*[)\]]/gi,
       '',
