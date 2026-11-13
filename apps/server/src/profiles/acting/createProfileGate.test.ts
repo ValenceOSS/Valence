@@ -23,6 +23,8 @@ const KID: Acting = {
 
 const UNCHOSEN: Acting = { ...OWNER, profile: null, mustChoose: true };
 
+const A_KEY: Acting = { ...OWNER, isViaKey: true };
+
 const WITHOUT_PROFILES: Acting = { ...OWNER, profile: null, mustChoose: false };
 
 /**
@@ -190,6 +192,40 @@ describe('createProfileGate', () => {
       status: 200,
       code: null,
     });
+  });
+
+  it('turns a key away from everything that changes its own account', async () => {
+    for (const [method, path] of [
+      ['GET', '/api/account/devices'],
+      ['POST', '/api/account/devices/end-others'],
+      ['PATCH', '/api/account'],
+      ['PUT', '/api/account/photo'],
+      ['POST', '/api/setup-links/password'],
+      ['POST', '/api/phone/hand-back'],
+      ['GET', '/api/calendar/feed'],
+      ['POST', '/api/calendar/feed'],
+      ['POST', '/api/calendar/feed/renew'],
+      ['PUT', '/api/admin/accounts/account-1/password'],
+      ['PATCH', '/api/admin/accounts/account-1'],
+      ['DELETE', '/api/admin/accounts/account-1/sessions'],
+    ] as const) {
+      expect(await ask(A_KEY, method, path), `${method} ${path}`).toEqual({
+        status: 403,
+        code: 'error.apiKey.aKeyCannotChangeHowItsAccount',
+      });
+    }
+  });
+
+  it('lets a key do what its permissions allow to accounts other than its own', async () => {
+    expect(await ask(A_KEY, 'PUT', '/api/admin/accounts/account-2/password')).toEqual({
+      status: 200,
+      code: null,
+    });
+    expect(await ask(A_KEY, 'GET', '/api/admin/accounts/account-1')).toEqual({
+      status: 200,
+      code: null,
+    });
+    expect(await ask(A_KEY, 'GET', '/api/libraries')).toEqual({ status: 200, code: null });
   });
 
   it('turns everybody away from making API keys behind Valence’s back', async () => {

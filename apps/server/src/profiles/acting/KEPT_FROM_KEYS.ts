@@ -1,0 +1,12 @@
+const KEPT_FROM_KEYS: readonly { method: string; path: RegExp }[] = [
+  { method: 'PATCH', path: /^\/api\/account$/u },
+  { method: 'PUT', path: /^\/api\/account\/photo$/u },
+  { method: 'DELETE', path: /^\/api\/account\/photo$/u },
+  { method: 'POST', path: /^\/api\/account\/onboarding$/u },
+  { method: '*', path: /^\/api\/account\/devices(\/.*)?$/u },
+  { method: 'POST', path: /^\/api\/setup-links\/password$/u },
+  { method: 'POST', path: /^\/api\/phone\/hand-back$/u },
+  { method: '*', path: /^\/api\/calendar\/feed(\/renew)?$/u },
+];
+
+export { KEPT_FROM_KEYS };
