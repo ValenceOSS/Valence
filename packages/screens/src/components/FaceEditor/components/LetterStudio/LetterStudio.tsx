@@ -1,17 +1,23 @@
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { ScrollRail } from '@ValenceUI/ScrollRail';
 import { LETTER_FONTS } from '@ValenceContracts/schemas/LetterFont';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
+import { swatchRing } from '@ValenceScreens/components/ColourChoice/swatchRing';
+import { FaceChoice } from '@ValenceScreens/components/FaceEditor/components/FaceChoice/FaceChoice';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
 import { PROFILE_GRADIENTS } from '@ValenceClient/profiles/PROFILE_GRADIENTS';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
+import { FaceLetter } from '@ValenceScreens/components/FaceLetter/FaceLetter';
 import type { LetterStudioProps } from './LetterStudio.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The plainest face: the first letter of the name, the font it is set in, and the colour behind it.
- * Each font is shown setting that very letter, so the choice is made by eye rather than by name.
+ * The plainest face: the first letter of the name, the font it is set in, and what is behind it. A
+ * row that scrolls sideways shows each font setting that very letter, so the choice is made by eye
+ * rather than by name; beneath it, one row holds the colours and then the gradients, each ending in
+ * a swatch that opens a picker for any colour at all.
  *
  * @param name - Whose letter it is.
  * @param colour - The colour now, or where its gradient starts.
@@ -31,102 +37,83 @@ const LetterStudio = ({
   onFont,
 }: LetterStudioProps) => {
   const paint = facePaint(colour, colourTo);
+  const isReadyGradient = PROFILE_GRADIENTS.some(
+    ({ from, to }) => from === colour && to === colourTo,
+  );
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.font')}</h3>
-        <div className="grid grid-cols-4 gap-3">
-          {LETTER_FONTS.map((option) => {
-            const look = LETTER_FONT_LOOKS[option];
+    <div className="flex flex-col gap-4">
+      <ScrollRail className="flex pb-1 pt-1.5">
+        {LETTER_FONTS.map((option) => {
+          const look = LETTER_FONT_LOOKS[option];
 
-            return (
-              <Button
-                key={option}
-                variant="bare"
-                size="none"
-                label={say('screens.faceEditor.letterStudio.setItInName', { name: look.name })}
-                hasTooltip={false}
-                isActive={option === font}
-                onClick={() => {
-                  onFont(option);
-                }}
-                className="group flex flex-col items-center gap-1.5"
+          return (
+            <FaceChoice
+              key={option}
+              label={say('screens.faceEditor.letterStudio.setItInName', { name: look.name })}
+              name={look.shortName ?? look.name}
+              isChosen={option === font}
+              onChoose={() => {
+                onFont(option);
+              }}
+            >
+              <span
+                style={{ ...paint.style, fontFamily: look.family, fontWeight: look.weight }}
+                className={cn(
+                  'flex size-full items-center justify-center text-xl',
+                  paint.ink === 'dark' ? 'text-letter-dark' : 'text-letter-light',
+                )}
               >
-                <span
-                  style={{
-                    ...paint.style,
-                    fontFamily: look.family,
-                    fontWeight: look.weight,
-                  }}
-                  className={cn(
-                    'flex size-16 items-center justify-center rounded-full text-2xl transition-transform group-hover:scale-105',
-                    paint.ink === 'dark' ? 'text-letter-dark' : 'text-letter-light',
-                    option === font &&
-                      'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]',
-                  )}
-                >
-                  {profileInitial(name)}
-                </span>
-                <span
-                  className={cn('text-[0.7rem]', option === font ? 'text-text' : 'text-text-muted')}
-                >
-                  {look.name}
-                </span>
-              </Button>
-            );
-          })}
-        </div>
-      </section>
+                <FaceLetter
+                  letter={profileInitial(name)}
+                  family={look.family}
+                  weight={look.weight}
+                />
+              </span>
+            </FaceChoice>
+          );
+        })}
+      </ScrollRail>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.colour')}</h3>
+      <ScrollRail className="flex items-center gap-2.5 px-1.5 py-1.5">
         <ColourChoice
           label={say('common.colour')}
           value={colourTo === null ? colour : ''}
           onChange={onColour}
+          className="shrink-0 flex-nowrap [&>*]:shrink-0"
         />
-      </section>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] font-medium text-text-muted">
-          {say('screens.faceEditor.letterStudio.gradient')}
-        </h3>
-        <div className="flex flex-wrap items-center gap-2.5">
-          {PROFILE_GRADIENTS.map(([from, to]) => {
-            const isChosen = colourTo !== null && from === colour && to === colourTo;
+        <span aria-hidden className="mx-1.5 h-6 w-0.5 shrink-0 rounded-full bg-text/35" />
 
-            return (
-              <Button
-                key={`${from}${to}`}
-                variant="bare"
-                size="none"
-                label={say('screens.faceEditor.letterStudio.useTheGradientFromTo', { from, to })}
-                isActive={isChosen}
-                style={facePaint(from, to).style}
-                className={cn(
-                  'size-8 rounded-full ring-1 ring-line transition-transform',
-                  isChosen
-                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]'
-                    : 'hover-hover:hover:scale-110',
-                )}
-                onClick={() => {
-                  onGradient(from, to);
-                }}
-              />
-            );
-          })}
+        {PROFILE_GRADIENTS.map(({ from, to, name: gradient }) => {
+          const isChosen = colourTo !== null && from === colour && to === colourTo;
 
-          <ColourChoice
-            label={say('screens.faceEditor.letterStudio.whereTheGradientEnds')}
-            value={colourTo ?? ''}
-            isCompact
-            onChange={(to) => {
-              onGradient(colour, to);
-            }}
-          />
-        </div>
-      </section>
+          return (
+            <Button
+              key={`${from}${to}`}
+              variant="bare"
+              size="none"
+              label={say(gradient)}
+              isActive={isChosen}
+              style={facePaint(from, to).style}
+              className={cn('size-8 shrink-0 rounded-full ring-1 ring-line', swatchRing(isChosen))}
+              onClick={() => {
+                onGradient(from, to);
+              }}
+            />
+          );
+        })}
+
+        <ColourChoice
+          label={say('screens.faceEditor.letterStudio.whereTheGradientEnds')}
+          value={colourTo === null || isReadyGradient ? '' : colourTo}
+          isCompact
+          className="shrink-0"
+          onChange={(to) => {
+            onGradient(colour, to);
+          }}
+        />
+      </ScrollRail>
     </div>
   );
 };

@@ -59,6 +59,19 @@ describe('cropPicture', () => {
     expect([made.width, made.height]).toEqual([667, 1000]);
   });
 
+  it('draws the square in the filter chosen for it', async () => {
+    const made = await cropPicture(new Uint8Array(await halves()), null, CROPS.face, {
+      saturate: 0,
+      hueRotate: 0,
+      contrast: 1,
+      brightness: 1,
+      layer: null,
+    });
+    const [red, blue] = await colourAtMiddle(made);
+
+    expect(Math.abs((red ?? 0) - (blue ?? 0))).toBeLessThan(4);
+  });
+
   it('frames a photograph the right way up, as the camera held it', async () => {
     const sideways = await sharp({
       create: { width: 300, height: 200, channels: 3, background: '#00ff00' },

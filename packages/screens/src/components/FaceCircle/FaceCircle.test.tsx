@@ -73,6 +73,26 @@ describe('FaceCircle', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/api/somewhere/else');
   });
 
+  it('paints the colour behind a drawn avatar drawn on it, and nothing behind one drawn clear', () => {
+    const drawn = (isOnColour: boolean) =>
+      render(
+        <FaceCircle
+          name="Marques"
+          colour="#3a8ee8"
+          avatar={{
+            kind: 'drawn',
+            style: 'thumbs',
+            seed: 'marques',
+            ...(isOnColour ? { isOnColour: true } : {}),
+          }}
+          source="/api/profiles/avatars/thumbs?seed=marques"
+        />,
+      ).container.firstElementChild;
+
+    expect(drawn(true)).toHaveStyle({ backgroundColor: '#3a8ee8' });
+    expect(drawn(false)).not.toHaveStyle({ backgroundColor: '#3a8ee8' });
+  });
+
   it('draws a moving picture as a video rather than an image', () => {
     const { container } = render(
       <FaceCircle

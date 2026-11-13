@@ -1,9 +1,7 @@
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
 import type { PictureLimits } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 
-const HOUSEHOLD_LIMITS: PictureLimits = {
-  mostBytes: 6 * 1024 * 1024,
-  mostPixelsAnEdge: 4096,
-};
+const HOUSEHOLD_LIMITS: PictureLimits = PICTURE_LIMITS.face;
 
 /**
  * The filename a household's picture is kept under.

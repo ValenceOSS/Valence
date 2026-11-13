@@ -2,6 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PictureFramer } from './PictureFramer';
 
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 100 });
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get: () => 100,
+});
+
 const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 
 const aFramer = (onFrame = vi.fn<(frame: typeof UNFRAMED) => void>(), frame = UNFRAMED) => {
@@ -16,17 +22,13 @@ const aFramer = (onFrame = vi.fn<(frame: typeof UNFRAMED) => void>(), frame = UN
       onFrame={onFrame}
     />,
   );
-  const picture = drawn.container.querySelector('img');
   const box = screen.getByRole('group', { name: 'Where the picture sits' });
 
-  if (picture === null) {
-    throw new Error('No picture was drawn.');
+  for (const picture of drawn.container.querySelectorAll('img')) {
+    Object.defineProperty(picture, 'naturalWidth', { configurable: true, value: 2000 });
+    Object.defineProperty(picture, 'naturalHeight', { configurable: true, value: 1000 });
+    fireEvent.load(picture);
   }
-
-  Object.defineProperty(picture, 'naturalWidth', { configurable: true, value: 2000 });
-  Object.defineProperty(picture, 'naturalHeight', { configurable: true, value: 1000 });
-  fireEvent.load(picture);
-  box.getBoundingClientRect = () => DOMRect.fromRect({ x: 0, y: 0, width: 100, height: 100 });
 
   return { box, onFrame };
 };
@@ -36,7 +38,7 @@ describe('PictureFramer', () => {
     const { box, onFrame } = aFramer();
 
     fireEvent.pointerDown(box, { pointerId: 1, clientX: 50, clientY: 50 });
-    fireEvent.pointerMove(box, { pointerId: 1, clientX: 75, clientY: 50 });
+    fireEvent.pointerMove(box, { pointerId: 1, clientX: 70, clientY: 50 });
     fireEvent.pointerUp(box, { pointerId: 1 });
 
     expect(onFrame).toHaveBeenLastCalledWith({ zoom: 1, x: -0.5, y: 0 });
@@ -62,6 +64,23 @@ describe('PictureFramer', () => {
     expect(onFrame.mock.lastCall?.[0].zoom).toBe(4);
   });
 
+  it('draws the picture nearer as two fingers pinch apart on a trackpad', () => {
+    const { box, onFrame } = aFramer();
+
+    fireEvent.wheel(box, { deltaY: -10.5, ctrlKey: true });
+
+    expect(onFrame.mock.lastCall?.[0].zoom).toBeGreaterThan(1.1);
+  });
+
+  it('moves the picture as two fingers move across a trackpad, as a page scrolls', () => {
+    const { box, onFrame } = aFramer();
+
+    fireEvent.wheel(box, { deltaX: 8.5, deltaY: 0 });
+
+    expect(onFrame.mock.lastCall?.[0]).toMatchObject({ zoom: 1 });
+    expect(onFrame.mock.lastCall?.[0].x).toBeGreaterThan(0);
+  });
+
   it('moves with the arrow keys and draws nearer with plus', () => {
     const { box, onFrame } = aFramer();
 
@@ -84,10 +103,18 @@ describe('PictureFramer', () => {
     expect(onFrame.mock.lastCall?.[0].zoom).toBe(2);
   });
 
-  it('is drawn as a circle where asked, and can be reached from the keyboard', () => {
+  it('shows the whole picture faded around the shape it is placed in', () => {
+    const { box } = aFramer();
+    const [faded, placed] = box.querySelectorAll('img');
+
+    expect(faded).toHaveClass('opacity-30');
+    expect(placed?.parentElement).toHaveClass('overflow-hidden', 'rounded-full');
+  });
+
+  it('shows the shape asked for in the middle, and can be reached from the keyboard', () => {
     const { box } = aFramer();
 
-    expect(box).toHaveClass('rounded-full');
+    expect(box.querySelector('.rounded-full')).not.toBeNull();
     expect(box).toHaveAttribute('tabindex', '0');
   });
 

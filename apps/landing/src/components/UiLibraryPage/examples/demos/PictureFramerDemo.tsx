@@ -21,7 +21,7 @@ const PictureFramerDemo = () => {
         label="Where the picture sits"
         shape="circle"
         onFrame={setFrame}
-        className="size-40"
+        className="h-48 w-72"
       />
       <span className="relative block size-16 overflow-hidden rounded-lg">
         <FramedPicture src={ART} frame={frame} aspect={1} />

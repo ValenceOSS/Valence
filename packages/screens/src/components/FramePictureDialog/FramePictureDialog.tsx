@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { RotateCcw as ResetIcon } from '@keyline-icons/react';
+import { useEffect, useRef, useState } from 'react';
+import { Image as ImageIcon, RotateCcw as ResetIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -10,6 +10,9 @@ import { PictureFramer } from '@ValenceUI/PictureFramer';
 import { Slider } from '@ValenceUI/Slider';
 import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
 import { useFileAddress } from '@ValenceScreens/pictures/useFileAddress';
+import { isUnframed } from '@ValenceCore/pictures/isUnframed';
+import { readPickedPicture } from '@ValenceScreens/pictures/readPickedPicture';
+import { notify } from '@ValenceUI/notify';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { FramePictureDialogProps } from './FramePictureDialog.types';
 import { say } from '@ValenceI18n/say';
@@ -22,6 +25,8 @@ const UNFRAMED: PhotoFrame = { zoom: 1, x: 0, y: 0 };
  *
  * @param file - The picture chosen, which opens this, or nothing while none is.
  * @param aspect - How wide the shape is for its height.
+ * @param limits - How large a picture of this kind may be: one larger is turned away before this
+ *   opens, with why.
  * @param shape - Whether it is shown in a circle or a rounded box.
  * @param onClose - Told it was closed without the picture being used.
  * @param onUse - Told to send the picture, with where it sits.
@@ -29,19 +34,57 @@ const UNFRAMED: PhotoFrame = { zoom: 1, x: 0, y: 0 };
 const FramePictureDialog = ({
   file,
   aspect,
+  limits,
   shape = 'rounded',
   onClose,
   onUse,
 }: FramePictureDialogProps) => {
-  const address = useFileAddress(file);
+  const [read, setRead] = useState<{ picture: File; preview: File } | null>(null);
+  const address = useFileAddress(read?.preview ?? null);
   const [frame, setFrame] = useState<PhotoFrame>(UNFRAMED);
+  const latest = useRef({ limits, onClose });
+
+  useEffect(() => {
+    latest.current = { limits, onClose };
+  });
 
   useEffect(() => {
     setFrame(UNFRAMED);
+    setRead(null);
+
+    if (file === null) {
+      return;
+    }
+
+    let isCurrent = true;
+
+    void readPickedPicture(file, latest.current.limits).then((checked) => {
+      if (!isCurrent) {
+        return;
+      }
+
+      if ('refusal' in checked) {
+        notify.failed(checked.refusal);
+        latest.current.onClose();
+
+        return;
+      }
+
+      setRead(checked);
+    });
+
+    return () => {
+      isCurrent = false;
+    };
   }, [file]);
 
   return (
-    <Dialog label={say('common.framePicture')} isOpen={file !== null} onClose={onClose}>
+    <Dialog
+      label={say('common.framePicture')}
+      isOpen={read !== null}
+      onClose={onClose}
+      className="sm:w-[min(26rem,92vw)]"
+    >
       <DialogTitle
         title={say('common.framePicture')}
         detail={say('common.chooseWhatShows')}
@@ -49,7 +92,7 @@ const FramePictureDialog = ({
       />
 
       <DialogContent>
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col gap-3">
           {address === null ? null : (
             <PictureFramer
               src={address}
@@ -59,15 +102,13 @@ const FramePictureDialog = ({
               label={say('common.wherePictureSits')}
               shape={shape}
               onFrame={setFrame}
-              className={aspect >= 1 ? 'w-full max-w-md' : 'h-80 max-h-[50vh]'}
+              className="h-60 w-full"
             />
           )}
 
-          <p className="text-xs text-text-muted">{say('common.dragToMoveScrollToZoom')}</p>
-
-          <div className="flex w-full max-w-md items-end gap-4">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <span className="text-xs text-text">{say('common.zoom')}</span>
+          <div className="flex items-center gap-3">
+            <Icon of={ImageIcon} size={13} tone="muted" />
+            <div className="min-w-0 flex-1">
               <Slider
                 label={say('common.zoom')}
                 value={Math.round((frame.zoom - 1) * 100)}
@@ -78,10 +119,15 @@ const FramePictureDialog = ({
                 }}
               />
             </div>
+            <Icon of={ImageIcon} size={19} tone="muted" />
+          </div>
 
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-text-muted">{say('common.dragToMovePinchToZoom')}</p>
             <Button
               variant="ghost"
               size="sm"
+              disabled={isUnframed(frame)}
               onClick={() => {
                 setFrame(UNFRAMED);
               }}
@@ -97,10 +143,10 @@ const FramePictureDialog = ({
         dismiss={{ onChoose: onClose }}
         confirm={{
           label: say('screens.faceEditor.useThisFace'),
-          isDisabled: file === null,
+          isDisabled: read === null,
           onChoose: () => {
-            if (file !== null) {
-              onUse(file, frame);
+            if (read !== null) {
+              onUse(read.picture, frame);
             }
           },
         }}

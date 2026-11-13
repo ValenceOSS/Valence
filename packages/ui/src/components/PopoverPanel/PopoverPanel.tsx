@@ -22,6 +22,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param isOpen - Whether it is open, for a caller holding that state itself.
  * @param onOpenChange - Told when it opens or closes.
  * @param side - Which side of the trigger to prefer.
+ * @param tooltipSide - Which side its name shows on when pointed at; the side it opens on where not
+ *   given.
  * @param align - Which part of the trigger the panel lines up with, matching `ActionMenu`.
  * @param isDisabled - Whether it can be opened at all.
  * @param isBare - Whether the surrounding chrome already draws the hover, so this must not draw a
@@ -48,6 +50,7 @@ const PopoverPanel = ({
   isOpen,
   onOpenChange,
   side = 'top',
+  tooltipSide = side,
   align = 'end',
   isDisabled = false,
   isBare = false,
@@ -65,7 +68,7 @@ const PopoverPanel = ({
       {...(isOpen === undefined ? {} : { open: isOpen })}
       {...(onOpenChange === undefined ? {} : { onOpenChange })}
     >
-      <Tooltip label={label} side={side === 'top' ? 'top' : 'bottom'}>
+      <Tooltip label={label} side={tooltipSide}>
         <RadixPopover.Trigger
           aria-label={label}
           disabled={isDisabled}
@@ -134,7 +137,15 @@ const PopoverPanel = ({
             <h3 className="shrink-0 px-1 pb-3 text-base font-medium tracking-tight">{heading}</h3>
           )}
 
-          <div className="valence-rail min-h-0 flex-1 overflow-y-auto">{children}</div>
+          <div
+            className={cn(
+              'valence-rail min-h-0 flex-1 overflow-y-auto',
+              hasSurface && '-mx-3 -mb-3 px-3 pb-3',
+              hasSurface && heading === undefined && '-mt-3 pt-3',
+            )}
+          >
+            {children}
+          </div>
         </RadixPopover.Content>
       </RadixPopover.Portal>
     </RadixPopover.Root>

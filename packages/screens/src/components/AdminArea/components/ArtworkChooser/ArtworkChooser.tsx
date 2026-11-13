@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
 import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
 import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
@@ -229,6 +230,7 @@ const ArtworkChooser = ({ subject, onChanged, part }: ArtworkChooserProps) => {
           ) : null}
           <FramePictureDialog
             file={framing}
+            limits={PICTURE_LIMITS.artwork}
             aspect={kind === 'backdrop' ? PICTURE_ASPECTS.backdrop : PICTURE_ASPECTS.poster}
             onClose={() => {
               setFraming(null);

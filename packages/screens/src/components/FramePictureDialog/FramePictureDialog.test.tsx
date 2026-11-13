@@ -1,7 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { FramePictureDialog } from './FramePictureDialog';
+
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 100 });
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get: () => 100,
+});
 
 Object.defineProperty(URL, 'createObjectURL', {
   configurable: true,
@@ -11,18 +17,30 @@ Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () =>
 
 const PICTURE = new File(['x'], 'cover.png', { type: 'image/png' });
 
-const aDialog = (file: File | null = PICTURE) => {
+const aDialog = async (file: File | null = PICTURE) => {
   const onUse = vi.fn<(file: File, frame: { zoom: number; x: number; y: number }) => void>();
   const onClose = vi.fn();
 
-  render(<FramePictureDialog file={file} aspect={1} onClose={onClose} onUse={onUse} />);
+  render(
+    <FramePictureDialog
+      file={file}
+      aspect={1}
+      limits={{ mostBytes: 1000, mostPixelsAnEdge: 4096 }}
+      onClose={onClose}
+      onUse={onUse}
+    />,
+  );
+
+  if (file !== null && file.size <= 1000) {
+    await screen.findByRole('group', { name: /Where the picture sits/u });
+  }
 
   return { onUse, onClose };
 };
 
 describe('FramePictureDialog', () => {
   it('opens on the picture chosen, in the middle of its shape', async () => {
-    const { onUse } = aDialog();
+    const { onUse } = await aDialog();
 
     expect(screen.getByRole('group', { name: /Where the picture sits/u })).toBeInTheDocument();
 
@@ -32,16 +50,12 @@ describe('FramePictureDialog', () => {
   });
 
   it('sends the picture where it was moved to', async () => {
-    const { onUse } = aDialog();
-    const picture = document.querySelector('img');
-
-    if (picture === null) {
-      throw new Error('No picture was drawn.');
+    const { onUse } = await aDialog();
+    for (const picture of document.querySelectorAll('img')) {
+      Object.defineProperty(picture, 'naturalWidth', { configurable: true, value: 2000 });
+      Object.defineProperty(picture, 'naturalHeight', { configurable: true, value: 1000 });
+      fireEvent.load(picture);
     }
-
-    Object.defineProperty(picture, 'naturalWidth', { configurable: true, value: 2000 });
-    Object.defineProperty(picture, 'naturalHeight', { configurable: true, value: 1000 });
-    fireEvent.load(picture);
     fireEvent.keyDown(screen.getByRole('group', { name: /Where the picture sits/u }), {
       key: 'ArrowRight',
     });
@@ -51,7 +65,9 @@ describe('FramePictureDialog', () => {
   });
 
   it('puts the picture back in the middle', async () => {
-    const { onUse } = aDialog();
+    const { onUse } = await aDialog();
+
+    expect(screen.getByRole('button', { name: 'Reset position' })).toBeDisabled();
 
     fireEvent.keyDown(screen.getByRole('slider', { name: 'Zoom' }), { key: 'ArrowRight' });
     await userEvent.click(screen.getByRole('button', { name: 'Reset position' }));
@@ -61,7 +77,7 @@ describe('FramePictureDialog', () => {
   });
 
   it('closes without sending anything', async () => {
-    const { onUse, onClose } = aDialog();
+    const { onUse, onClose } = await aDialog();
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -69,8 +85,21 @@ describe('FramePictureDialog', () => {
     expect(onUse).not.toHaveBeenCalled();
   });
 
-  it('is shut while no picture is chosen', () => {
-    aDialog(null);
+  it('turns away a picture larger than allowed, saying why, without opening', async () => {
+    const { onClose } = await aDialog(
+      new File([new Uint8Array(2000)], 'big.png', { type: 'image/png' }),
+    );
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+    expect(
+      screen.queryByRole('group', { name: /Where the picture sits/u }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('is shut while no picture is chosen', async () => {
+    await aDialog(null);
 
     expect(
       screen.queryByRole('group', { name: /Where the picture sits/u }),

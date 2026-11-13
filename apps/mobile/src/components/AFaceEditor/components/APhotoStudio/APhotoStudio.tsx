@@ -1,30 +1,50 @@
+import { useDeferredValue } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ImagePlus, RotateCcw } from '@keyline-icons/react-native';
+import { Image as ImageIcon, ImagePlus, RotateCcw } from '@keyline-icons/react-native';
 import {
   UIImagePickerPreferredAssetRepresentationMode,
   launchImageLibraryAsync,
 } from 'expo-image-picker';
-import { ASettingSlider } from '@ValenceMobile/components/AFaceEditor/components/ASettingSlider/ASettingSlider';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { Words } from '@ValenceMobile/components/Words/Words';
+import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { Slider } from '@ValenceMobile/components/Slider/Slider';
+import { APhotoFilters } from '@ValenceMobile/components/AFaceEditor/components/APhotoFilters/APhotoFilters';
+import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
+import { isUnframed } from '@ValenceCore/pictures/isUnframed';
 import type { APhotoStudioProps } from './APhotoStudio.types';
 import { say } from '@ValenceI18n/say';
 import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
 
 const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 
+const GREYED = 0.4;
+
 const styles = StyleSheet.create({
-  section: { gap: 12 },
+  buttons: { flexDirection: 'row', gap: 10 },
+  half: { flex: 1 },
+  section: { gap: 14 },
+  slider: { flex: 1 },
+  zoom: { alignItems: 'center', flexDirection: 'row', gap: 12 },
 });
 
 /**
- * The photo studio: a photo or GIF from the phone's library, and how it sits in the circle, zoomed and moved across and up and down as the web frames it.
+ * The photo studio, as the web's: how near the picture is drawn, a way to choose another from the
+ * phone's library and to put it back where it started, and the filters it can be drawn in. Until
+ * there is a picture, what works on one is greyed and still.
  *
  * @param frame - How the picture sits.
+ * @param uri - Where the picture is, once there is one, which the filters are shown on.
+ * @param filter - The filter it is drawn in.
  * @param onPick - Told the picture chosen, and whether it is a video.
  * @param onFrame - Told how the picture now sits.
+ * @param onFilter - Told a filter was chosen.
  */
-const APhotoStudio = ({ frame, onPick, onFrame }: APhotoStudioProps) => {
+const APhotoStudio = ({ frame, uri, filter, onPick, onFrame, onFilter }: APhotoStudioProps) => {
+  const colours = useTheColours();
+  const hasPicture = uri !== null;
+  const settled = useDeferredValue(frame);
+
   const choose = async () => {
     const chosen = await launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -39,47 +59,66 @@ const APhotoStudio = ({ frame, onPick, onFrame }: APhotoStudioProps) => {
 
     onPick({ uri: asset.uri, isVideo: false });
     onFrame(UNFRAMED);
+    onFilter('original');
   };
 
   return (
     <View style={styles.section}>
-      <Words size="small" tone="muted">
-        {say('phone.aFaceEditor.aPhotoOrAGIF')}
-      </Words>
-      <Button
-        tone="quiet"
-        icon={ImagePlus}
-        onPress={() => {
-          void choose();
-        }}
+      <View
+        style={[styles.zoom, { opacity: hasPicture ? 1 : GREYED }]}
+        pointerEvents={hasPicture ? 'auto' : 'none'}
       >
-        {say('phone.aFaceEditor.chooseAPhotoOrGIF')}
-      </Button>
+        <Icon of={ImageIcon} size={14} colour={colours.textMuted} />
+        <View style={styles.slider}>
+          <Slider
+            label={say('common.zoom')}
+            value={frame.zoom - 1}
+            furthest={MOST_FRAME_ZOOM - 1}
+            colour={colours.text}
+            restColour={withAlpha(colours.text, 0.15)}
+            aheadColour={withAlpha(colours.text, 0.15)}
+            onScrubbing={(to) => {
+              onFrame({ ...frame, zoom: 1 + to });
+            }}
+            onScrubbed={(to) => {
+              onFrame({ ...frame, zoom: 1 + to });
+            }}
+          />
+        </View>
+        <Icon of={ImageIcon} size={20} colour={colours.textMuted} />
+      </View>
 
-      <Words size="small" tone="muted">
-        {say('screens.faceEditor.photoStudio.framing')}
-      </Words>
-      <Words size="small" tone="muted">
-        {say('common.dragToMovePinchToZoom')}
-      </Words>
-      <ASettingSlider
-        label={say('common.zoom')}
-        value={frame.zoom}
-        min={1}
-        max={MOST_FRAME_ZOOM}
-        onChange={(zoom) => {
-          onFrame({ ...frame, zoom });
-        }}
-      />
-      <Button
-        tone="ghost"
-        icon={RotateCcw}
-        onPress={() => {
-          onFrame(UNFRAMED);
-        }}
-      >
-        {say('common.resetPosition')}
-      </Button>
+      <View style={styles.buttons}>
+        <View style={styles.half}>
+          <Button
+            tone="ghost"
+            icon={ImagePlus}
+            isWide
+            onPress={() => {
+              void choose();
+            }}
+          >
+            {hasPicture ? say('common.chooseAnother') : say('common.chooseAPicture')}
+          </Button>
+        </View>
+        <View style={styles.half}>
+          <Button
+            tone="ghost"
+            icon={RotateCcw}
+            isWide
+            isDisabled={!hasPicture || isUnframed(frame)}
+            onPress={() => {
+              onFrame(UNFRAMED);
+            }}
+          >
+            {say('common.resetPosition')}
+          </Button>
+        </View>
+      </View>
+
+      <View style={{ opacity: hasPicture ? 1 : GREYED }}>
+        <APhotoFilters uri={uri} frame={settled} chosen={filter} onChoose={onFilter} />
+      </View>
     </View>
   );
 };

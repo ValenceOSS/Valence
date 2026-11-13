@@ -1,3 +1,4 @@
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
 import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
 import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
@@ -270,6 +271,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
 
                 <FramePictureDialog
                   file={framing}
+                  limits={PICTURE_LIMITS.artwork}
                   aspect={PICTURE_ASPECTS.cover}
                   onClose={() => {
                     setFraming(null);

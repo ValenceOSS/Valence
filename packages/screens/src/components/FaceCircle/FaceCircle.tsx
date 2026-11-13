@@ -6,7 +6,10 @@ import { useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
+import { toneOfFilter } from '@ValenceContracts/functions/toneOfFilter';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
+import { FaceLetter } from '@ValenceScreens/components/FaceLetter/FaceLetter';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
 import type { FaceCircleProps } from './FaceCircle.types';
 
@@ -32,7 +35,8 @@ const RETRY_AFTER_MS = 1500;
  * chosen, or one from a server that does not frame them, is framed here.
  *
  * @param name - Whose initial to fall back to.
- * @param colour - The background behind that initial.
+ * @param colour - The background behind that initial, and behind a drawn avatar drawn on it, painted
+ *   here so a colour being chosen shows at once rather than when a drawing made on it arrives.
  * @param avatar - Which of the three kinds of face this is.
  * @param source - Where the picture is served from.
  * @param pending - A picture being uploaded, drawn in place of the stored one.
@@ -84,17 +88,19 @@ const FaceCircle = ({
     (tries === 0 ? asked : `${asked}${asked.includes('?') ? '&' : '?'}try=${tries.toString()}`);
   const showsPicture = chosen !== null || (avatar.kind !== 'initial' && !isMissing);
   const frame = avatar.kind === 'photo' && !isServerFramed ? avatar.frame : null;
+  const tone = avatar.kind === 'photo' && !isServerFramed ? toneOfFilter(avatar.filter) : null;
   const letter = avatar.kind === 'initial' ? LETTER_FONT_LOOKS[avatar.font] : null;
   const paint = facePaint(colour, avatar.kind === 'initial' ? avatar.colourTo : null);
+  const isOnColour = avatar.kind === 'drawn' && avatar.isOnColour === true;
 
   return (
     <span
       style={{
-        ...(showsPicture ? {} : paint.style),
+        ...(showsPicture ? (isOnColour ? { backgroundColor: colour } : {}) : paint.style),
         ...(letter === null ? {} : { fontFamily: letter.family, fontWeight: letter.weight }),
       }}
       className={cn(
-        'relative flex items-center justify-center overflow-hidden bg-subtle font-semibold',
+        'relative isolate flex items-center justify-center overflow-hidden bg-subtle font-semibold',
         !showsPicture && paint.ink === 'dark' ? 'text-letter-dark' : 'text-letter-light',
         shape === 'circle' ? 'rounded-full' : 'rounded-lg',
         isLifted && 'shadow-lg',
@@ -102,7 +108,11 @@ const FaceCircle = ({
       )}
     >
       {!showsPicture ? (
-        <span aria-hidden>{profileInitial(name)}</span>
+        <FaceLetter
+          letter={profileInitial(name)}
+          family={(letter ?? LETTER_FONT_LOOKS[PLUS_JAKARTA_SANS_AS_STORED]).family}
+          weight={(letter ?? LETTER_FONT_LOOKS[PLUS_JAKARTA_SANS_AS_STORED]).weight}
+        />
       ) : isMoving ? (
         <video
           src={isStill ? `${address}#t=0.001` : address}
@@ -116,7 +126,13 @@ const FaceCircle = ({
           onError={failed}
         />
       ) : (
-        <FramedPicture src={address} frame={frame} aspect={PICTURE_ASPECTS.face} onError={failed} />
+        <FramedPicture
+          src={address}
+          frame={frame}
+          aspect={PICTURE_ASPECTS.face}
+          tone={tone}
+          onError={failed}
+        />
       )}
     </span>
   );

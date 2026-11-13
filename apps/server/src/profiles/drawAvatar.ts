@@ -7,15 +7,19 @@ import notionists from '@dicebear/styles/notionists.json' with { type: 'json' };
 import thumbs from '@dicebear/styles/thumbs.json' with { type: 'json' };
 
 /**
- * Draws one avatar in a style, round, from its seed.
+ * Draws one avatar in a style from its seed, on a colour where it is given one. The drawing fills
+ * its square, so each app rounds it into its own shape.
  *
  * @param style - The style to draw in.
- * @returns What draws it from a seed.
+ * @returns What draws it from a seed and a colour.
  */
 const drawnIn =
   <D>(style: Style<D>) =>
-  (seed: string): string =>
-    new Avatar(style, { seed, borderRadius: 50 }).toString();
+  (seed: string, colour: string | null): string =>
+    new Avatar(style, {
+      seed,
+      ...(colour === null ? {} : { backgroundColor: [colour.replace('#', '')] }),
+    }).toString();
 
 const AVATAR_STYLES = {
   adventurer: drawnIn(new Style(adventurer)),
@@ -44,9 +48,11 @@ const isAvatarStyle = (candidate: string): candidate is AvatarStyle =>
  *
  * @param style - The style to draw in.
  * @param seed - What the drawing is derived from, so the same profile is always drawn the same.
+ * @param colour - The profile's colour, drawn behind the face, or nothing to leave it clear.
  * @returns The avatar, as SVG.
  */
-const drawAvatar = (style: AvatarStyle, seed: string): string => AVATAR_STYLES[style](seed);
+const drawAvatar = (style: AvatarStyle, seed: string, colour: string | null = null): string =>
+  AVATAR_STYLES[style](seed, colour);
 
 export type { AvatarStyle };
 

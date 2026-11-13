@@ -1,3 +1,4 @@
+import { drawnAvatarUrl } from '@ValenceContracts/functions/drawnAvatarUrl';
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
@@ -17,7 +18,9 @@ import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.typ
  * @returns The picture, or null where the initial is all there is.
  */
 const thePictureFor = (
-  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar'> & { pictureUrl?: string | undefined },
+  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar' | 'colour'> & {
+    pictureUrl?: string | undefined;
+  },
   picked: string | null = null,
 ): ThePicture | null => {
   if (picked !== null) {
@@ -30,7 +33,11 @@ const thePictureFor = (
     case 'drawn':
       return {
         uri: onThisServer(
-          `/api/profiles/avatars/${profile.avatar.style}?seed=${encodeURIComponent(profile.avatar.seed)}`,
+          drawnAvatarUrl(
+            profile.avatar.style,
+            profile.avatar.seed,
+            profile.avatar.isOnColour === true ? profile.colour : null,
+          ),
         ),
         isDrawn: true,
       };

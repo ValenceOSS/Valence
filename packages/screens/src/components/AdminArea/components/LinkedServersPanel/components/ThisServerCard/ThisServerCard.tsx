@@ -20,6 +20,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { say } from '@ValenceI18n/say';
 import type { LinkIdentityChange } from '@ValenceContracts/schemas/LinkedServer';
 import type { ThisServerCardProps } from './ThisServerCard.types';
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
 import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
 import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
@@ -113,6 +114,7 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
           </FilePicker>
           <FramePictureDialog
             file={framing}
+            limits={PICTURE_LIMITS.face}
             aspect={PICTURE_ASPECTS.face}
             shape="circle"
             onClose={() => {

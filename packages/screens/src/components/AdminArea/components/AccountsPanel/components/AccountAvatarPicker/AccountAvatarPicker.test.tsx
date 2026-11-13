@@ -61,7 +61,7 @@ describe('AccountAvatarPicker', () => {
     const onDraft = vi.fn();
 
     render(<AccountAvatarPicker accountId="usr_1" face={FACE} draft={DRAFT} onDraft={onDraft} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Use #e8503a' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Red' }));
 
     expect(onDraft).toHaveBeenCalledWith({ colour: '#e8503a' });
   });

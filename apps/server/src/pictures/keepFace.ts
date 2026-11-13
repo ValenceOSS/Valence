@@ -7,6 +7,7 @@ import { framedNameOf } from './framedNameOf';
 import { processFace } from './processFace';
 import { processedNameOf } from './processedNameOf';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
+import type { PictureTone } from '@ValenceCore/pictures/PictureTone';
 
 /**
  * Keeps an uploaded face three times: the upload exactly as it came, among the originals, and the
@@ -17,6 +18,7 @@ import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
  * @param name - What the original is called, extension and all.
  * @param body - The upload.
  * @param frame - Where it sits in its circle, or nothing where it fills the circle as it is.
+ * @param tone - The filter the square is drawn in, or nothing to draw it as it is.
  * @returns Nothing, or that the picture could not be read to be processed.
  */
 const keepFace = async (
@@ -24,10 +26,12 @@ const keepFace = async (
   name: string,
   body: Uint8Array,
   frame: PhotoFrame | null,
+  tone: PictureTone | null = null,
 ): Promise<'unreadable' | null> => {
-  const made = await Promise.all([processFace(body), cropPicture(body, frame, CROPS.face)]).catch(
-    () => null,
-  );
+  const made = await Promise.all([
+    processFace(body),
+    cropPicture(body, frame, CROPS.face, tone),
+  ]).catch(() => null);
 
   if (made === null) {
     return 'unreadable';

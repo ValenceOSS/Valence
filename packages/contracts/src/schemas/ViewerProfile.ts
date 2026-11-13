@@ -45,6 +45,24 @@ const AVATAR_STYLES = [
 
 const AvatarStyleSchema = z.enum(AVATAR_STYLES);
 
+const PHOTO_FILTERS = [
+  'original',
+  'greyscale',
+  'noir',
+  'warm',
+  'cool',
+  'vivid',
+  'faded',
+  'retro',
+  'sunset',
+  'neon',
+  'blueprint',
+  'psychedelic',
+  'inverted',
+] as const;
+
+const PhotoFilterSchema = z.enum(PHOTO_FILTERS);
+
 const PhotoFrameSchema = z.object({
   zoom: z.number().min(1).max(MOST_FRAME_ZOOM),
   x: z.number().min(-1).max(1),
@@ -57,12 +75,18 @@ const AvatarSchema = z.discriminatedUnion('kind', [
     font: LetterFontSchema.default(PLUS_JAKARTA_SANS_AS_STORED),
     colourTo: ProfileColourSchema.exactOptional(),
   }),
-  z.object({ kind: z.literal('drawn'), style: AvatarStyleSchema, seed: z.string().min(1).max(64) }),
+  z.object({
+    kind: z.literal('drawn'),
+    style: AvatarStyleSchema,
+    seed: z.string().min(1).max(64),
+    isOnColour: z.boolean().exactOptional(),
+  }),
   z.object({
     kind: z.literal('photo'),
     isVideo: z.boolean().default(false),
     frame: PhotoFrameSchema.nullable().default(null),
     hasFramedPicture: z.boolean().default(false),
+    filter: PhotoFilterSchema.exactOptional(),
   }),
   z.object({
     kind: z.literal('orb'),
@@ -140,10 +164,12 @@ const profileAvatarUrl = (profile: {
 
 type Avatar = z.infer<typeof AvatarSchema>;
 type PhotoFrame = z.infer<typeof PhotoFrameSchema>;
+
+type PhotoFilter = z.infer<typeof PhotoFilterSchema>;
 type ViewerProfile = z.infer<typeof ViewerProfileSchema>;
 type ProfileColour = z.infer<typeof ProfileColourSchema>;
 
-export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile };
+export type { Avatar, PhotoFilter, PhotoFrame, ProfileColour, ViewerProfile };
 
 export {
   ViewerProfileSchema,
@@ -154,6 +180,8 @@ export {
   PROFILE_COLOURS,
   AvatarSchema,
   AvatarStyleSchema,
+  PHOTO_FILTERS,
+  PhotoFilterSchema,
   PhotoFrameSchema,
   AVATAR_STYLES,
   NAME_MAX,

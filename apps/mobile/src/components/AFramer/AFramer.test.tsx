@@ -42,7 +42,12 @@ describe('AFramer', () => {
       nativeEvent: { source: { width: 2000, height: 1000 } },
     });
 
-    expect(thePicture().parent).toHaveStyle({ position: 'absolute', left: -100, width: 200 });
+    expect(thePicture().parent).toHaveStyle({
+      position: 'absolute',
+      left: -50,
+      width: 200,
+      transform: [{ translateX: -50 }, { translateY: 0 }, { scale: 1 }],
+    });
   });
 
   it('draws the picture nearer or further for a screen reader swiping up or down on it', async () => {

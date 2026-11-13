@@ -3,16 +3,19 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { profileAvatarUrl, profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { PICTURES_SEEN } from '@ValenceMobile/components/AFace/PICTURES_SEEN';
 import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
+import { drawingToShow } from '@ValenceClient/profiles/drawingToShow';
 import { APicture } from '@ValenceMobile/components/APicture/APicture';
 import { AMovingFace } from '@ValenceMobile/components/AMovingFace/AMovingFace';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { inkFor } from '@ValenceClient/library/inkFor';
+import { facePaint } from '@ValenceClient/profiles/facePaint';
 import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import { LETTER_FACES } from '@ValenceMobile/theme/LETTER_FACES';
 import type { ViewStyle } from 'react-native';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { placedPicture } from '@ValenceCore/pictures/placedPicture';
+import { toneOfFilter } from '@ValenceContracts/functions/toneOfFilter';
+import { ATonedPicture } from '@ValenceMobile/components/ATonedPicture/ATonedPicture';
 import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import type { AFaceProps } from './AFace.types';
 import { backdropOfAFace } from '@ValenceMobile/components/AFace/backdropOfAFace';
@@ -25,6 +28,8 @@ const SIDE = 96;
 const LARGE_SIDE = 136;
 
 const SMALL_SIDE = 60;
+
+const LETTER_SHARE = 0.4;
 
 const styles = StyleSheet.create({
   face: { alignItems: 'center', gap: 8 },
@@ -74,6 +79,7 @@ const AFace = ({
   picked = null,
   isLarge = false,
   isSmall = false,
+  side: sideAsked,
   tileMotion,
 }: AFaceProps) => {
   const colours = useTheColours();
@@ -82,7 +88,18 @@ const AFace = ({
     uri: string;
     size: { width: number; height: number };
   } | null>(null);
-  const found = thePictureFor(profile, picked);
+  const { avatar } = profile;
+  const isOnColour = avatar.kind === 'drawn' && avatar.isOnColour === true;
+  const paint = facePaint(profile.colour, avatar.kind === 'initial' ? avatar.colourTo : null);
+  const found =
+    picked === null && avatar.kind === 'drawn'
+      ? {
+          uri: onThisServer(
+            drawingToShow(avatar.style, avatar.seed, isOnColour ? profile.colour : null),
+          ),
+          isDrawn: true,
+        }
+      : thePictureFor(profile, picked);
   const seen =
     found === null ? undefined : told?.uri === found.uri ? told.seen : PICTURES_SEEN.get(found.uri);
   const picture = found === null || seen === 'missing' ? null : found;
@@ -99,7 +116,26 @@ const AFace = ({
     PICTURES_SEEN.set(uri, now);
     setTold((was) => (was?.uri === uri && was.seen === now ? was : { uri, seen: now }));
   };
-  const side = isLarge ? LARGE_SIDE : isSmall ? SMALL_SIDE : SIDE;
+
+  /**
+   * Notes that a picture arrived, and how large it is where that is known, so it can be placed in
+   * its frame.
+   *
+   * @param uri - The picture.
+   * @param size - How large it is, where that was told.
+   */
+  const loaded = (uri: string, size: { width: number; height: number } | undefined) => {
+    tell(uri, 'here');
+
+    if (size !== undefined && size.width > 0 && size.height > 0) {
+      setMeasured({ uri, size });
+    }
+  };
+  const side = sideAsked ?? (isLarge ? LARGE_SIDE : isSmall ? SMALL_SIDE : SIDE);
+  const localTone =
+    profile.avatar.kind === 'photo' && (picked !== null || !profile.avatar.hasFramedPicture)
+      ? toneOfFilter(profile.avatar.filter)
+      : null;
 
   return (
     <View style={[styles.face, { width: side }]}>
@@ -107,7 +143,16 @@ const AFace = ({
         style={[
           styles.tile,
           {
-            backgroundColor: backdropOfAFace(profile.colour, isShowing, colours.text),
+            backgroundColor: isOnColour
+              ? profile.colour
+              : backdropOfAFace(
+                  paint.style.backgroundColor ?? profile.colour,
+                  isShowing,
+                  colours.text,
+                ),
+            ...(isShowing || paint.style.backgroundImage === undefined
+              ? {}
+              : { experimental_backgroundImage: paint.style.backgroundImage }),
             borderCurve: 'continuous',
             borderRadius: Math.round(side * FACE_ROUNDNESS),
             height: side,
@@ -128,8 +173,9 @@ const AFace = ({
               styles.initial,
               isLarge && styles.largeInitial,
               isSmall && styles.smallInitial,
+              sideAsked === undefined ? null : { fontSize: Math.round(sideAsked * LETTER_SHARE) },
               {
-                color: LETTER_INKS[inkFor(profile.colour)],
+                color: LETTER_INKS[paint.ink],
                 fontFamily:
                   LETTER_FACES[
                     profile.avatar.kind === 'initial'
@@ -144,36 +190,48 @@ const AFace = ({
         )}
 
         {picture === null ? null : (
-          <View
-            style={[
-              placedIn(
-                profile.avatar.kind !== 'photo' ||
-                  (picked === null && profile.avatar.hasFramedPicture)
-                  ? null
-                  : profile.avatar.frame,
-                measured?.uri === picture.uri ? measured.size : null,
-                side,
-              ),
-            ]}
-          >
-            <APicture
-              picture={picture}
-              onLoad={(size) => {
-                tell(picture.uri, 'here');
-
-                if (size !== undefined && size.width > 0 && size.height > 0) {
-                  setMeasured({ uri: picture.uri, size });
-                }
-              }}
-              onMissing={() => {
-                tell(picture.uri, 'missing');
-              }}
-            />
+          <View style={styles.picture}>
+            <View
+              style={[
+                placedIn(
+                  profile.avatar.kind !== 'photo' ||
+                    (picked === null && profile.avatar.hasFramedPicture)
+                    ? null
+                    : profile.avatar.frame,
+                  measured?.uri === picture.uri ? measured.size : null,
+                  side,
+                ),
+              ]}
+            >
+              {localTone === null ? (
+                <APicture
+                  picture={picture}
+                  onLoad={(size) => {
+                    loaded(picture.uri, size);
+                  }}
+                  onMissing={() => {
+                    tell(picture.uri, 'missing');
+                  }}
+                />
+              ) : (
+                <ATonedPicture
+                  uri={picture.uri}
+                  tone={localTone}
+                  style={styles.picture}
+                  onLoad={(size) => {
+                    loaded(picture.uri, size);
+                  }}
+                  onMissing={() => {
+                    tell(picture.uri, 'missing');
+                  }}
+                />
+              )}
+            </View>
           </View>
         )}
       </Animated.View>
 
-      {isLarge || isSmall ? null : (
+      {isLarge || isSmall || sideAsked !== undefined ? null : (
         <Words tone="muted" lines={1}>
           {profile.name}
         </Words>

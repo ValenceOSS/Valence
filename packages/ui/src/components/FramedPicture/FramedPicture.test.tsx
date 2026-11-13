@@ -48,8 +48,20 @@ describe('FramedPicture', () => {
     expect(picture.style.top).toBe('0%');
   });
 
-  it('shows the middle of a picture left alone, whatever its shape', () => {
-    const { container } = render(<FramedPicture src="/tall.jpg" frame={null} aspect={1} />);
+  it('fills the box from the middle of a picture left alone, as it always has', () => {
+    const { container } = render(<FramedPicture src="/drawn.svg" frame={null} aspect={1} />);
+    const picture = pictureIn(container);
+
+    loaded(picture, 300, 150);
+
+    expect(picture).toHaveClass('object-cover');
+    expect(picture.style.width).toBe('');
+  });
+
+  it('shows the middle of a tall picture placed at the middle', () => {
+    const { container } = render(
+      <FramedPicture src="/tall.jpg" frame={{ zoom: 1, x: 0, y: 0 }} aspect={1} />,
+    );
     const picture = pictureIn(container);
 
     loaded(picture, 1000, 3000);

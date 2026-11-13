@@ -1,3 +1,4 @@
+import { ScrollRail } from '@ValenceUI/ScrollRail';
 import { Bell, Film, Search, Settings } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
@@ -36,6 +37,27 @@ import type { UiExample } from './UiExample.types';
 const nothing = () => undefined;
 
 const LAYOUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
+  ScrollRail: [
+    {
+      title: 'A row with a track that stays in view',
+      render: () => (
+        <div className="max-w-xs">
+          <ScrollRail className="flex gap-2">
+            {['Original', 'Greyscale', 'Warm', 'Cool', 'Vivid', 'Faded', 'Inverted', 'Duotone'].map(
+              (name) => (
+                <span
+                  key={name}
+                  className="shrink-0 rounded-full bg-subtle px-3 py-1.5 text-sm text-text"
+                >
+                  {name}
+                </span>
+              ),
+            )}
+          </ScrollRail>
+        </div>
+      ),
+    },
+  ],
   Card: [
     {
       title: 'Tones',

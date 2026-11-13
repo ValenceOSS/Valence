@@ -1,10 +1,11 @@
 // oxlint-disable react/refs -- everything below runs during a gesture rather than during a render. Where a finger was and how far apart two started are read many times a second, nothing is drawn from them, and they must outlive the renders the gesture causes.
-import { useRef, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
+import { SHEET_HOLD } from '@ValenceMobile/components/ASheet/SHEET_HOLD';
 import { PanResponder, StyleSheet, View } from 'react-native';
-import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
+import { ATonedPicture } from '@ValenceMobile/components/ATonedPicture/ATonedPicture';
 import { howFarApart } from '@ValenceMobile/components/Watching/howFarApart';
 import { movedFrame } from '@ValenceCore/pictures/movedFrame';
-import { placedPicture } from '@ValenceCore/pictures/placedPicture';
+import { framedPlacement } from '@ValenceMobile/pictures/framedPlacement';
 import { zoomedFrame } from '@ValenceCore/pictures/zoomedFrame';
 import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -29,6 +30,7 @@ const styles = StyleSheet.create({
  * @param uri - Where the picture is.
  * @param frame - Where it sits now.
  * @param aspect - How wide its shape is for its height.
+ * @param tone - The filter it is drawn in.
  * @param width - How wide it is drawn.
  * @param roundness - How round its corners are, as a share of its width: a half is a circle.
  * @param onFrame - Told where it sits each time it moves.
@@ -37,12 +39,20 @@ const AFramer = ({
   uri,
   frame,
   aspect,
+  tone = null,
   width,
   roundness = SOFT_CORNERS,
   onFrame,
 }: AFramerProps) => {
   const colours = useTheColours();
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const measure = useCallback((measured: { width: number; height: number }) => {
+    if (measured.width > 0 && measured.height > 0) {
+      setSize((was) =>
+        was?.width === measured.width && was.height === measured.height ? was : measured,
+      );
+    }
+  }, []);
   const latest = useRef(frame);
   const last = useRef<{ x: number; y: number } | null>(null);
   const pinch = useRef<{ apart: number; zoom: number } | null>(null);
@@ -61,12 +71,15 @@ const AFramer = ({
     }
   };
 
+  const holdSheet = useContext(SHEET_HOLD);
   const dragging = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderTerminationRequest: () => false,
     onPanResponderGrant: (event) => {
       const [touch] = event.nativeEvent.touches;
+
+      holdSheet?.(true);
 
       last.current = touch === undefined ? null : { x: touch.pageX, y: touch.pageY };
       pinch.current = null;
@@ -112,14 +125,16 @@ const AFramer = ({
     onPanResponderRelease: () => {
       last.current = null;
       pinch.current = null;
+      holdSheet?.(false);
     },
     onPanResponderTerminate: () => {
       last.current = null;
       pinch.current = null;
+      holdSheet?.(false);
     },
   });
 
-  const at = size === null ? null : placedPicture(size, aspect, frame);
+  const placed = size === null ? null : framedPlacement(size, aspect, frame, { width, height });
 
   return (
     <View
@@ -145,28 +160,8 @@ const AFramer = ({
         },
       ]}
     >
-      <View
-        style={
-          at === null
-            ? styles.whole
-            : {
-                position: 'absolute',
-                left: at.left * width,
-                top: at.top * height,
-                width: at.width * width,
-                height: at.height * height,
-              }
-        }
-      >
-        <ARemotePicture
-          uri={uri}
-          style={styles.whole}
-          onLoad={(measured) => {
-            if (measured.width > 0 && measured.height > 0) {
-              setSize(measured);
-            }
-          }}
-        />
+      <View style={placed ?? styles.whole}>
+        <ATonedPicture uri={uri} tone={tone} style={styles.whole} onLoad={measure} />
       </View>
     </View>
   );

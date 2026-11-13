@@ -45,6 +45,7 @@ import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePar
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
 import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
 import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import { CollectionOrderSchema } from '@ValenceContracts/schemas/Collection';
@@ -212,6 +213,7 @@ const CollectionDialog = ({
 
                     <FramePictureDialog
                       file={framing}
+                      limits={PICTURE_LIMITS.artwork}
                       aspect={PICTURE_ASPECTS.poster}
                       onClose={() => {
                         setFraming(null);

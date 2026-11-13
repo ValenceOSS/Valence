@@ -26,10 +26,14 @@ const PROFILE: ViewerProfile = {
 const START = { avatar: PROFILE.avatar, photo: null, colour: PROFILE.colour };
 
 describe('FaceEditor', () => {
-  it('opens on the kind of face somebody already has', () => {
+  it('opens on a picture of their own, keeping the face they have on its own tab', async () => {
     renderInAnAddress(
       <FaceEditor isOpen onClose={vi.fn()} profile={PROFILE} start={START} onUse={vi.fn()} />,
     );
+
+    expect(screen.getByRole('button', { name: 'Use this picture' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Letter' }));
 
     expect(screen.getByRole('button', { name: 'Set it in Plus Jakarta Sans' })).toHaveAttribute(
       'aria-pressed',
@@ -44,6 +48,7 @@ describe('FaceEditor', () => {
       <FaceEditor isOpen onClose={vi.fn()} profile={PROFILE} start={START} onUse={onUse} />,
     );
 
+    await userEvent.click(screen.getByRole('button', { name: 'Letter' }));
     await userEvent.click(screen.getByRole('button', { name: 'Set it in Manrope' }));
     await userEvent.click(screen.getByRole('button', { name: 'Use this picture' }));
 

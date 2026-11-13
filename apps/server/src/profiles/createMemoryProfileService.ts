@@ -177,7 +177,13 @@ const createMemoryProfileService = (
       }
 
       return Promise.resolve({
-        body: new TextEncoder().encode(drawAvatar(avatar.style, avatar.seed)),
+        body: new TextEncoder().encode(
+          drawAvatar(
+            avatar.style,
+            avatar.seed,
+            avatar.isOnColour === true ? held.profile.colour : null,
+          ),
+        ),
         contentType: 'image/svg+xml',
       });
     },

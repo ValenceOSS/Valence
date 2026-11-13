@@ -4,8 +4,10 @@ type ADrawnStudioProps = {
   style: (typeof AVATAR_STYLES)[number];
   seed: string;
   colour: ProfileColour;
+  isOnColour: boolean;
   onChange: (next: { style: (typeof AVATAR_STYLES)[number]; seed: string }) => void;
   onColour: (colour: ProfileColour) => void;
+  onClear: () => void;
 };
 
 export type { ADrawnStudioProps };

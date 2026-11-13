@@ -1,3 +1,4 @@
+import { toneOfFilter } from '@ValenceContracts/functions/toneOfFilter';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { randomUUID } from 'node:crypto';
@@ -89,11 +90,17 @@ const readAvatarChoice = (row: ProfileRow): ViewerProfile['avatar'] => {
       isVideo: MOVING_FACE_TYPES[extname(row.photoPath)] !== undefined,
       frame: look?.kind === 'photo' ? look.frame : null,
       hasFramedPicture: MOVING_FACE_TYPES[extname(row.photoPath)] === undefined,
+      ...(look?.kind === 'photo' && look.filter !== undefined ? { filter: look.filter } : {}),
     };
   }
 
   if (row.avatarStyle !== null && row.avatarSeed !== null && isAvatarStyle(row.avatarStyle)) {
-    return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
+    return {
+      kind: 'drawn',
+      style: row.avatarStyle,
+      seed: row.avatarSeed,
+      ...(look?.kind === 'drawn' && look.isOnColour === true ? { isOnColour: true } : {}),
+    };
   }
 
   return look?.kind === 'initial'
@@ -157,7 +164,7 @@ const avatarColumns = (
       avatarStyle: avatar.style,
       avatarSeed: avatar.seed,
       photoPath: null,
-      avatarLook: null,
+      avatarLook: avatar.isOnColour === true ? avatar : null,
     };
   }
 
@@ -326,7 +333,12 @@ const createDatabaseProfileService = (
           .limit(1);
 
         if (framed?.photoPath !== null && framed?.photoPath !== undefined) {
-          await reframeFace(photoDirectory, framed.photoPath, request.avatar.frame);
+          await reframeFace(
+            photoDirectory,
+            framed.photoPath,
+            request.avatar.frame,
+            toneOfFilter(request.avatar.filter),
+          );
         }
       }
 
@@ -506,7 +518,13 @@ const createDatabaseProfileService = (
 
       if (choice.kind === 'drawn') {
         return {
-          body: new TextEncoder().encode(drawAvatar(choice.style, choice.seed)),
+          body: new TextEncoder().encode(
+            drawAvatar(
+              choice.style,
+              choice.seed,
+              choice.isOnColour === true ? readColour(face.colour) : null,
+            ),
+          ),
           contentType: 'image/svg+xml',
         };
       }
@@ -539,6 +557,7 @@ const createDatabaseProfileService = (
         name,
         photo.body,
         owned.avatarLook?.kind === 'photo' ? owned.avatarLook.frame : null,
+        toneOfFilter(owned.avatarLook?.kind === 'photo' ? owned.avatarLook.filter : undefined),
       );
 
       if (unkept !== null) {

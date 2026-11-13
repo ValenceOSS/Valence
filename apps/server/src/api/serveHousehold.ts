@@ -5,7 +5,10 @@ import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { HOUSEHOLD_LIMITS } from '@ValenceServer/household/HouseholdPicture';
-import { NAME_MAX as PROFILE_NAME_MAX } from '@ValenceContracts/schemas/ViewerProfile';
+import {
+  NAME_MAX as PROFILE_NAME_MAX,
+  ProfileColourSchema,
+} from '@ValenceContracts/schemas/ViewerProfile';
 import {
   readOnboardingRoute,
   changeHouseholdRoute,
@@ -487,12 +490,13 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.get('/api/profiles/avatars/:style', (context) => {
     const style = context.req.param('style');
     const seed = context.req.query('seed') ?? 'valence';
+    const colour = ProfileColourSchema.safeParse(context.req.query('colour'));
 
     if (!isAvatarStyle(style)) {
       return context.json(refuse('error.household.noSuchStyle'), 404);
     }
 
-    return context.body(drawAvatar(style, seed), 200, {
+    return context.body(drawAvatar(style, seed, colour.success ? colour.data : null), 200, {
       'content-type': 'image/svg+xml',
       'cache-control': 'public, max-age=86400',
     });

@@ -51,6 +51,45 @@ describe('AFace', () => {
     expect(drawn.getByText('Dan')).toBeTruthy();
   });
 
+  it('draws at the size it is given, its letter scaled with it and no name beneath', async () => {
+    const drawn = await render(<AFace profile={aProfile()} side={180} />);
+
+    expect(drawn.getByText('D')).toHaveStyle({ fontSize: 72 });
+    expect(drawn.queryByText('Dan')).toBeNull();
+  });
+
+  it('reads a drawn face clear and paints its colour behind it, so a colour shows at once', async () => {
+    const fetched = jest.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => undefined));
+    const drawn = await render(
+      <AFace
+        profile={aProfile({
+          avatar: { kind: 'drawn', style: 'lorelei', seed: 'dan', isOnColour: true },
+        })}
+      />,
+    );
+
+    expect(fetched).toHaveBeenCalledWith(expect.stringContaining('/avatars/lorelei?seed=dan'));
+    expect(fetched).not.toHaveBeenCalledWith(expect.stringContaining('colour='));
+    expect(drawn.getByText('D').parent).toHaveStyle({ backgroundColor: '#e8503a' });
+
+    fetched.mockRestore();
+  });
+
+  it('paints a letter face’s gradient behind its letter', async () => {
+    const drawn = await render(
+      <AFace
+        profile={aProfile({
+          colour: '#ff7a59',
+          avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED, colourTo: '#e83a90' },
+        })}
+      />,
+    );
+
+    expect(drawn.getByText('D').parent).toHaveStyle({
+      experimental_backgroundImage: 'linear-gradient(135deg, #ff7a59, #e83a90)',
+    });
+  });
+
   it('falls back to the initial where there is no picture', async () => {
     const drawn = await render(<AFace profile={aProfile()} />);
 

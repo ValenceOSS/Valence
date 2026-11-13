@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { FramedPicture } from '@ValenceUI/FramedPicture';
 import { movedFrame } from '@ValenceCore/pictures/movedFrame';
@@ -9,7 +9,17 @@ import type { PictureFramerProps } from './PictureFramer.types';
 
 const WHEEL_ZOOM_PER_PIXEL = 0.002;
 
+const PINCH_ZOOM_PER_PIXEL = 0.01;
+
+const MOUSE_WHEEL_STEP = 50;
+
+const PIXELS_A_LINE = 16;
+
 const KEY_STEP = 0.05;
+
+const WINDOW_TALL = 0.8;
+
+const WINDOW_WIDE = 0.9;
 
 const KEY_ZOOM = 1.1;
 
@@ -28,21 +38,26 @@ const KEY_ZOOMS: Readonly<Partial<Record<string, number>>> = {
 };
 
 /**
- * A picture to be placed in its shape by hand: dragged to choose which part shows, drawn nearer or
- * further with a scroll, a pinch, or the plus and minus keys, and moved with the arrow keys.
+ * A picture to be placed in its shape by hand: the shape sits in the middle of a stage, with the rest
+ * of the picture faded around it so what could be brought in is in view. The picture is dragged, or
+ * moved with two fingers on a trackpad, to choose which part shows; it is drawn nearer or further
+ * with a pinch, a mouse wheel, or the plus and minus keys, and moved with the arrow keys.
  *
  * @param src - Where the picture is.
  * @param frame - Where it sits now.
  * @param aspect - How wide its shape is for its height.
+ * @param tone - The filter it is drawn in.
  * @param mostZoom - The nearest it may be drawn.
  * @param label - What a reader is told it is.
  * @param shape - Whether it is seen through a circle or a rounded box.
+ * @param className - The stage's size and place, which the shape is fitted inside.
  * @param onFrame - Told where it sits each time it moves.
  */
 const PictureFramer = ({
   src,
   frame,
   aspect,
+  tone = null,
   mostZoom,
   label,
   shape = 'rounded',
@@ -55,6 +70,38 @@ const PictureFramer = ({
   const pinch = useRef<{ apart: number; zoom: number } | null>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const [isHeld, setIsHeld] = useState(false);
+  const [stage, setStage] = useState<{ width: number; height: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const element = box.current;
+
+    if (element === null) {
+      return;
+    }
+
+    const measure = () => {
+      setStage({ width: element.clientWidth, height: element.clientHeight });
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const watching = new ResizeObserver(measure);
+
+    watching.observe(element);
+
+    return () => {
+      watching.disconnect();
+    };
+  }, []);
+
+  const across =
+    stage === null || stage.width === 0 || stage.height === 0
+      ? null
+      : Math.min(stage.width * WINDOW_WIDE, stage.height * WINDOW_TALL * aspect);
 
   useEffect(() => {
     latest.current = frame;
@@ -80,15 +127,43 @@ const PictureFramer = ({
 
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
-      place(
-        zoomedFrame(
-          latest.current,
-          latest.current.zoom * Math.exp(-event.deltaY * WHEEL_ZOOM_PER_PIXEL),
-          size,
-          aspect,
-          mostZoom,
-        ),
-      );
+
+      const isPinch = event.ctrlKey || event.metaKey;
+      const isMouseWheel =
+        event.deltaMode !== 0 ||
+        (event.deltaX === 0 &&
+          Math.abs(event.deltaY) >= MOUSE_WHEEL_STEP &&
+          Number.isInteger(event.deltaY));
+
+      if (isPinch || isMouseWheel) {
+        const lines = event.deltaMode === 0 ? 1 : PIXELS_A_LINE;
+
+        place(
+          zoomedFrame(
+            latest.current,
+            latest.current.zoom *
+              Math.exp(
+                -event.deltaY * lines * (isPinch ? PINCH_ZOOM_PER_PIXEL : WHEEL_ZOOM_PER_PIXEL),
+              ),
+            size,
+            aspect,
+            mostZoom,
+          ),
+        );
+
+        return;
+      }
+
+      if (across !== null) {
+        place(
+          movedFrame(
+            latest.current,
+            { x: -event.deltaX / across, y: (-event.deltaY / across) * aspect },
+            size,
+            aspect,
+          ),
+        );
+      }
     };
 
     element.addEventListener('wheel', wheel, { passive: false });
@@ -136,13 +211,14 @@ const PictureFramer = ({
       return;
     }
 
-    const { width, height } = event.currentTarget.getBoundingClientRect();
-
-    if (width > 0 && height > 0) {
+    if (across !== null) {
       place(
         movedFrame(
           latest.current,
-          { x: (event.clientX - was.x) / width, y: (event.clientY - was.y) / height },
+          {
+            x: (event.clientX - was.x) / across,
+            y: ((event.clientY - was.y) / across) * aspect,
+          },
           size,
           aspect,
         ),
@@ -182,12 +258,10 @@ const PictureFramer = ({
       role="group"
       aria-label={label}
       tabIndex={0}
-      style={{ aspectRatio: aspect }}
       className={cn(
-        'relative touch-none select-none overflow-hidden bg-subtle outline-none',
+        'relative touch-none select-none overflow-hidden rounded-lg bg-subtle outline-none',
         'focus-visible:ring-2 focus-visible:ring-primary',
         isHeld ? 'cursor-grabbing' : 'cursor-grab',
-        shape === 'circle' ? 'rounded-full' : 'rounded-lg',
         className,
       )}
       onPointerDown={press}
@@ -196,7 +270,34 @@ const PictureFramer = ({
       onPointerCancel={release}
       onKeyDown={key}
     >
-      <FramedPicture src={src} frame={frame} aspect={aspect} onMeasure={setSize} />
+      {across === null ? null : (
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{ width: across, height: across / aspect }}
+        >
+          <FramedPicture
+            src={src}
+            frame={frame}
+            aspect={aspect}
+            tone={tone === null ? null : { ...tone, layer: null }}
+            className="opacity-30"
+          />
+          <div
+            className={cn(
+              'absolute inset-0 isolate overflow-hidden ring-2 ring-on-scrim/80',
+              shape === 'circle' ? 'rounded-full' : 'rounded-lg',
+            )}
+          >
+            <FramedPicture
+              src={src}
+              frame={frame}
+              aspect={aspect}
+              tone={tone}
+              onMeasure={setSize}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
