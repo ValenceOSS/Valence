@@ -14,6 +14,8 @@ import { SHARED_ELSEWHERE } from './SHARED_ELSEWHERE';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { CataloguePageSchema } from './CataloguePageSchema';
 import type { CataloguePage } from './CataloguePageSchema';
+import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
+import type { LinkSharing } from '@ValenceContracts/schemas/LinkSharing';
 
 const PAGE = 200;
 
@@ -43,8 +45,8 @@ const hidden = (value: string | null): string | null => (value === null ? null :
  * library shows, and nothing it plays. Paged by id, so a page is the same however many times it is
  * read, and the other server knows a title has gone when a whole pass no longer brings it. A title
  * whose file has gone missing still goes, marked so, for the other server to hide rather than
- * forget along with what its viewers had of it. Each
- * page is read through the same schema the other server reads it with, so nothing leaves that it
+ * forget along with what its viewers had of it. A server held to an age is sent only the titles
+ * within it, as it may only play those. Each page is read through the same schema the other server reads it with, so nothing leaves that it
  * would not accept.
  *
  * @param db - The database.
@@ -53,7 +55,11 @@ const hidden = (value: string | null): string | null => (value === null ? null :
  */
 const createCatalogueReader =
   (db: AnyValenceDatabase) =>
-  async (libraryId: string, after: string | null): Promise<CataloguePage | null> => {
+  async (
+    libraryId: string,
+    after: string | null,
+    sharing: LinkSharing | null = null,
+  ): Promise<CataloguePage | null> => {
     const [shelf] = await db
       .select({ kind: library.kind })
       .from(library)
@@ -95,7 +101,7 @@ const createCatalogueReader =
       });
     }
 
-    const items = await db
+    const read = await db
       .select()
       .from(mediaItem)
       .where(
@@ -106,6 +112,21 @@ const createCatalogueReader =
       )
       .orderBy(asc(mediaItem.id))
       .limit(PAGE);
+    const next = read.length === PAGE ? (read.at(-1)?.id ?? null) : null;
+    const items = read.filter(
+      (item) =>
+        sharing === null ||
+        peerMayReach(
+          { ...sharing, libraryIds: [libraryId] },
+          {
+            id: item.id,
+            title: item.title,
+            libraryId,
+            certificationAge: item.certificationAge,
+            isNeverRated: shelf.kind === 'music',
+          },
+        ) === 'allowed',
+    );
     const itemIds = items.map((item) => item.id);
     const seriesIds = [
       ...new Set(items.flatMap((item) => (item.seriesId === null ? [] : [item.seriesId]))),
@@ -155,7 +176,7 @@ const createCatalogueReader =
       albums: albums.map((album) => ({ ...album, artworkPath: hidden(album.artworkPath) })),
       tracks,
       trackArtists,
-      next: items.length === PAGE ? (items.at(-1)?.id ?? null) : null,
+      next,
     });
   };
 

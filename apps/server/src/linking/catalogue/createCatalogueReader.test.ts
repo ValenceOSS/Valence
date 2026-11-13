@@ -4,6 +4,21 @@ import { book, bookChapter, library, mediaItem, series } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createCatalogueReader } from './createCatalogueReader';
 import { SHARED_ELSEWHERE } from './SHARED_ELSEWHERE';
+import type { LinkSharing } from '@ValenceContracts/schemas/LinkSharing';
+
+const UP_TO_TWELVE: LinkSharing = {
+  libraryIds: [],
+  maximumAge: 12,
+  allowsUnrated: false,
+  namesTravel: true,
+  showsActivity: false,
+  mostStreams: null,
+  qualityCeiling: null,
+  takesTheirControls: false,
+  allowsDownloads: false,
+  takesTheirRequests: false,
+  playsDirect: false,
+};
 
 const STARTING_THE_DATABASE_MS = 60_000;
 
@@ -33,6 +48,33 @@ describe('createCatalogueReader', () => {
         backdropUrl: null,
       });
       expect(page?.next).toBeNull();
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it(
+    'sends a server held to an age only the titles within it, and their programmes',
+    async () => {
+      const db = await aMigratedDatabase();
+
+      await db.insert(library).values({ id: 'shows', name: 'Shows', kind: 'shows', path: '/s' });
+      await db.insert(series).values([
+        { id: 'young', libraryId: 'shows', key: 'young', title: 'Young' },
+        { id: 'grown', libraryId: 'shows', key: 'grown', title: 'Grown' },
+      ]);
+      await db.insert(mediaItem).values([
+        { ...aMediaItemRow('a', 'shows'), seriesId: 'young', certificationAge: 12 },
+        { ...aMediaItemRow('b', 'shows'), seriesId: 'grown', certificationAge: 15 },
+        { ...aMediaItemRow('c', 'shows'), seriesId: 'grown', certificationAge: null },
+      ]);
+
+      const page = await createCatalogueReader(db)('shows', null, UP_TO_TWELVE);
+
+      expect(page?.mediaItems.map((one) => one.id)).toEqual(['a']);
+      expect(page?.series.map((one) => one.id)).toEqual(['young']);
+      expect(
+        (await createCatalogueReader(db)('shows', null, null))?.mediaItems.map((one) => one.id),
+      ).toEqual(['a', 'b', 'c']);
     },
     STARTING_THE_DATABASE_MS,
   );

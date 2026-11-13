@@ -507,7 +507,11 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.linking.notSignedByALinkedServer'), 401);
     }
 
-    const page = await linkCatalogue(who.libraryId, context.req.valid('query').after ?? null);
+    const page = await linkCatalogue(
+      who.libraryId,
+      context.req.valid('query').after ?? null,
+      who.sharing ?? null,
+    );
 
     return page === null
       ? context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403)
