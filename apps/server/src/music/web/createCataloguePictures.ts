@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { nameKey } from '@ValenceServer/music/nameKey';
 import { findAppleAlbumCoverUrl } from './findAppleAlbumCoverUrl';
@@ -7,6 +7,8 @@ import { findAppleArtistPictureUrl } from './findAppleArtistPictureUrl';
 import { findDeezerArtistPictureUrl } from './findDeezerArtistPictureUrl';
 import type { MusicWeb } from './createMusicWeb';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+
+const MOST_KEPT = 20_000;
 
 const NOTHING_LASTS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -20,6 +22,7 @@ type CataloguePicturesOptions = {
   web: MusicWeb;
   readImage: (url: string) => Promise<CataloguePicture | null>;
   now?: () => number;
+  mostKept?: number;
 };
 
 type CataloguePictures = {
@@ -46,7 +49,9 @@ type CataloguePictures = {
  * record. Neither needs a key. Where each picture came from is remembered beside it, and so is
  * finding nothing, for a week, so a search that turns up the same records again asks nobody.
  * Nothing found because a site was failing is not remembered, so the next search asks again.
- * Asking twice at once for a picture not yet found finds it once.
+ * Asking twice at once for a picture not yet found finds it once. A cover found only by the name a
+ * caller gave is kept under that name, never under the record's id, so one caller's wording cannot
+ * decide the cover everybody sees; and no more than twenty thousand answers are kept.
  *
  * @param options - Where to remember what was found, the way out to the web, the disk cache the
  *   pictures themselves are kept in, and — for a test — how to tell the time.
@@ -57,8 +62,10 @@ const createCataloguePictures = ({
   web,
   readImage,
   now = () => Date.now(),
+  mostKept = MOST_KEPT,
 }: CataloguePicturesOptions): CataloguePictures => {
   const finding = new Map<string, Promise<string | null>>();
+  let kept: number | null = null;
 
   const fileFor = (key: string): string =>
     join(directory, createHash('sha256').update(key).digest('hex'));
@@ -101,7 +108,12 @@ const createCataloguePictures = ({
       }
 
       await mkdir(directory, { recursive: true });
-      await writeFile(fileFor(key), found ?? '');
+      kept ??= (await readdir(directory).catch(() => [])).length;
+
+      if (kept < mostKept) {
+        kept += 1;
+        await writeFile(fileFor(key), found ?? '');
+      }
 
       return found;
     })().finally(() => {
@@ -116,25 +128,6 @@ const createCataloguePictures = ({
   const readable = async (address: string | null): Promise<string | null> =>
     address !== null && (await readImage(address)) !== null ? address : null;
 
-  const cover: CataloguePictures['cover'] = async (releaseGroupId, hint) => {
-    const address = await whereIs(`cover:${releaseGroupId}`, async () => {
-      const archived = await readable(
-        `https://coverartarchive.org/release-group/${encodeURIComponent(releaseGroupId)}/front-500`,
-      );
-
-      return (
-        archived ??
-        (hint === null
-          ? null
-          : await readable(
-              await findAppleAlbumCoverUrl(web, { title: hint.title, artistName: hint.artist }),
-            ))
-      );
-    });
-
-    return address === null ? null : readImage(address);
-  };
-
   const namedCover: CataloguePictures['namedCover'] = async ({ title, artist }) => {
     const address = await whereIs(
       `named-cover:${artist.toLowerCase()}\n${title.toLowerCase()}`,
@@ -142,6 +135,20 @@ const createCataloguePictures = ({
     );
 
     return address === null ? null : readImage(address);
+  };
+
+  const cover: CataloguePictures['cover'] = async (releaseGroupId, hint) => {
+    const archived = await whereIs(`cover:${releaseGroupId}`, async () =>
+      readable(
+        `https://coverartarchive.org/release-group/${encodeURIComponent(releaseGroupId)}/front-500`,
+      ),
+    );
+
+    if (archived !== null) {
+      return readImage(archived);
+    }
+
+    return hint === null ? null : namedCover(hint);
   };
 
   return {

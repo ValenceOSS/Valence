@@ -162,7 +162,9 @@ describe('createCataloguePictures', () => {
     await found.cover('rg-1', hint);
     await found.cover('rg-1', hint);
 
-    expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(2);
+    expect(
+      readImage.mock.calls.filter(([address]) => address.includes('coverartarchive.org')),
+    ).toHaveLength(2);
   });
 
   it('reads an artist’s face from Deezer first, then Apple Music', async () => {
@@ -203,5 +205,35 @@ describe('createCataloguePictures', () => {
     await found.cover('rg-2', { title: 'A', artist: 'B' });
 
     expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a cover found by a caller’s wording apart from the record’s own id', async () => {
+    const { found } = await pictures(['https://apple/cover.jpg']);
+
+    vi.mocked(findAppleAlbumCoverUrl).mockResolvedValueOnce('https://apple/wrong.jpg');
+    await found.cover('rg-1', { title: 'Wrong', artist: 'Wrong' });
+    await found.cover('rg-1', { title: 'Intimacy', artist: 'Bloc Party' });
+
+    expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(2);
+    expect(findAppleAlbumCoverUrl).toHaveBeenLastCalledWith(expect.anything(), {
+      title: 'Intimacy',
+      artistName: 'Bloc Party',
+    });
+  });
+
+  it('keeps no more answers than it was given room for', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'valence-catalogue-'));
+    const found = createCataloguePictures({
+      directory,
+      web: aWebThatAnswers({}),
+      readImage: () => Promise.resolve(null),
+      mostKept: 2,
+    });
+
+    for (const id of ['a', 'b', 'c', 'd']) {
+      await found.cover(id, null);
+    }
+
+    expect(await readdir(directory)).toHaveLength(2);
   });
 });

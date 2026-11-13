@@ -42,6 +42,9 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
 import { refuse } from '@ValenceI18n/refuse';
+import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
+import { isCatalogueId } from './isCatalogueId';
+import { isShortLookup } from './isShortLookup';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
 import type { AudioQuality } from '@ValenceContracts/schemas/Music';
 
@@ -58,6 +61,10 @@ const NO_PROFILE = refuse('error.music.chooseAProfileFirst');
 const FILLS_ITSELF = refuse('error.music.aSmartPlaylistFillsItself');
 
 const PICKS_LIMIT = 30;
+
+const LOOKUPS_AT_MOST = 240;
+
+const LOOKUPS_WITHIN_MS = 60_000;
 
 /**
  * The profile a viewer is acting as, where they are signed in and acting as one.
@@ -83,6 +90,14 @@ const registerMusicRoutes = (
   app: OpenAPIHono,
   { viewerOf, music, requires }: MusicRouteOptions,
 ): void => {
+  const mayLookUp = createRateLimiter({ most: LOOKUPS_AT_MOST, withinMs: LOOKUPS_WITHIN_MS });
+  const callerOf = (viewer: Viewer): string =>
+    viewer.kind === 'account'
+      ? viewer.accountId
+      : viewer.kind === 'guest'
+        ? viewer.shareId
+        : 'server';
+
   app.openapi(listAlbumsRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
@@ -317,12 +332,23 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/covers/:releaseGroupId', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
+    }
+
+    if (!mayLookUp(callerOf(viewer))) {
+      return context.body(null, 429, { 'retry-after': '60' });
     }
 
     const title = context.req.query('title');
     const artist = context.req.query('artist');
+
+    if (!isCatalogueId(context.req.param('releaseGroupId')) || !isShortLookup(title, artist)) {
+      return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
+    }
+
     const picture = await music.pictures.cover(
       context.req.param('releaseGroupId'),
       title === undefined || artist === undefined ? null : { title, artist },
@@ -337,12 +363,23 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/release-covers/:releaseId', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
+    }
+
+    if (!mayLookUp(callerOf(viewer))) {
+      return context.body(null, 429, { 'retry-after': '60' });
     }
 
     const title = context.req.query('title');
     const artist = context.req.query('artist');
+
+    if (!isCatalogueId(context.req.param('releaseId')) || !isShortLookup(title, artist)) {
+      return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
+    }
+
     const picture = await music.pictures.releaseCover(
       context.req.param('releaseId'),
       title === undefined || artist === undefined ? null : { title, artist },
@@ -357,12 +394,23 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/named-covers', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
+    }
+
+    if (!mayLookUp(callerOf(viewer))) {
+      return context.body(null, 429, { 'retry-after': '60' });
     }
 
     const title = context.req.query('title') ?? '';
     const artist = context.req.query('artist') ?? '';
+
+    if (!isShortLookup(title, artist)) {
+      return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
+    }
+
     const picture =
       title.trim() === '' || artist.trim() === ''
         ? null
@@ -377,11 +425,22 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/artists/picture', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
     }
 
+    if (!mayLookUp(callerOf(viewer))) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
     const name = context.req.query('name') ?? '';
+
+    if (!isShortLookup(name, context.req.query('cover'))) {
+      return context.json(refuse('error.music.noPictureWasFoundForThat'), 404);
+    }
+
     const picture =
       name.trim() === ''
         ? null
