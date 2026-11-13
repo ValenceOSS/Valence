@@ -131,6 +131,34 @@ describe('createSiteClient', () => {
     expect(asked[1]?.init).toMatchObject({ method: 'POST', body: 'q=1' });
   });
 
+  it('sends no cookie, header or body to a host the site redirects to', async () => {
+    const { fetch, asked } = aNetwork({
+      'https://x.example/a': {
+        status: 307,
+        headers: [['location', 'https://other.example/b']],
+      },
+      'https://other.example/b': { body: 'ok' },
+    });
+    const session = aSession({ sid: '9' });
+
+    await createSiteClient({ fetch }).send(
+      {
+        url: 'https://x.example/a',
+        method: 'POST',
+        body: 'password=hunter2',
+        headers: { 'x-api-key': 'secret' },
+      },
+      { ...OPTIONS, session, referer: 'https://x.example/' },
+    );
+
+    expect(asked[0]?.init.headers).toMatchObject({ cookie: 'sid=9', 'x-api-key': 'secret' });
+    expect(asked[1]?.init.headers).not.toHaveProperty('cookie');
+    expect(asked[1]?.init.headers).not.toHaveProperty('x-api-key');
+    expect(asked[1]?.init.headers).not.toHaveProperty('referer');
+    expect(asked[1]?.init.method).toBe('GET');
+    expect(asked[1]?.init.body).toBeUndefined();
+  });
+
   it('says where it would have been sent, where it is not to follow', async () => {
     const { fetch } = aNetwork({
       'https://x.example/s': { status: 302, headers: [['location', '/login.php']] },

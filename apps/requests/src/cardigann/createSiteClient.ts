@@ -139,7 +139,9 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
     try {
       solution = await solver.fetch(
         request,
-        { ...options.session.cookies },
+        new URL(request.url).hostname === new URL(from).hostname
+          ? { ...options.session.cookies }
+          : {},
         browserIdOf(options.session),
       );
     } catch (error) {
@@ -177,7 +179,8 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
         return solve(current, options, request.url);
       }
 
-      const cookie = Object.entries(options.session.cookies)
+      const isOurs = new URL(current.url).hostname === new URL(request.url).hostname;
+      const cookie = Object.entries(isOurs ? options.session.cookies : {})
         .map(([name, value]) => `${name}=${value}`)
         .join('; ');
       let response: Response;
@@ -189,14 +192,14 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
             'user-agent': options.session.userAgent ?? BROWSER_USER_AGENT,
             accept:
               'text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7',
-            ...(options.referer === undefined || options.referer === null
+            ...(options.referer === undefined || options.referer === null || !isOurs
               ? {}
               : { referer: options.referer }),
             ...(cookie === '' ? {} : { cookie }),
             ...(current.body === null
               ? {}
               : { 'content-type': 'application/x-www-form-urlencoded' }),
-            ...current.headers,
+            ...(isOurs ? current.headers : {}),
           },
           ...(current.body === null ? {} : { body: current.body }),
           redirect: 'manual',
@@ -212,7 +215,9 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
         );
       }
 
-      keepCookies(options.session, response);
+      if (isOurs) {
+        keepCookies(options.session, response);
+      }
 
       const location = response.headers.get('location');
 
@@ -230,11 +235,19 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
           };
         }
 
-        const keepsMethod = response.status === 307 || response.status === 308;
+        const keepsMethod =
+          (response.status === 307 || response.status === 308) &&
+          new URL(next).hostname === new URL(current.url).hostname;
 
         current = keepsMethod
           ? { ...current, url: next }
-          : { url: next, method: 'GET', body: null, headers: current.headers };
+          : {
+              url: next,
+              method: 'GET',
+              body: null,
+              headers:
+                new URL(next).hostname === new URL(current.url).hostname ? current.headers : {},
+            };
         continue;
       }
 
