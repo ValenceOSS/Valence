@@ -15,6 +15,17 @@ describe('jobDefinitionsFor', () => {
   });
 });
 
+describe('the backup job', () => {
+  it('is run by hand only by somebody who may run the destructive jobs, since it prunes older backups', () => {
+    const definition = JOB_DEFINITIONS.find((one) => one.kind === 'server.takeBackup');
+
+    expect(definition).toMatchObject({ destructive: true, runsByHand: true, schedulable: true });
+    expect(DEFAULT_JOB_TRIGGERS['server.takeBackup']).toEqual([
+      { kind: 'weekly', dayOfWeek: 0, hour: 4, minute: 30 },
+    ]);
+  });
+});
+
 describe('the pre-transcoding job', () => {
   it('can be scheduled and run by hand, and looks every fifteen minutes unless told otherwise', () => {
     const definition = JOB_DEFINITIONS.find((one) => one.kind === 'library.preTranscode');
