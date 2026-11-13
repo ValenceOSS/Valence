@@ -817,6 +817,38 @@ ${SEARCH}`,
       });
     });
 
+    it('does not read a path the page gave as a template', async () => {
+      let pagesServed = 0;
+      const { engine, asked } = standUp(
+        `download:
+  before:
+    pathselector:
+      selector: a.thanks
+      attribute: href
+    inputs:
+      id: "{{ .DownloadUri.Query.id }}"
+${SEARCH}`,
+        (url) => {
+          if (url.pathname !== '/details.php' || pagesServed > 0) {
+            return { body: TORRENT };
+          }
+
+          pagesServed += 1;
+
+          return {
+            body: '<a class="thanks" href="/thanks.php?x={{ .DownloadUri.Query.id }}">t</a>',
+          };
+        },
+      );
+
+      await engine.download('https://site.example/details.php?id=7');
+
+      const before = asked.find((one) => one.url.includes('/thanks.php'));
+
+      expect(before).toBeDefined();
+      expect(before?.url).not.toContain('x=7');
+    });
+
     it('does a before request by path with a query', async () => {
       const { engine, asked } = standUp(
         `download:\n  before:\n    path: "thanks.php?x=1"\n    inputs:\n      id: "{{ .DownloadUri.Query.id }}"\n${SEARCH}`,

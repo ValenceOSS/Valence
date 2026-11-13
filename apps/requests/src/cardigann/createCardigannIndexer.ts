@@ -602,7 +602,10 @@ const createCardigannIndexer = ({
         '&',
         block.before.queryseparator,
       );
-      const target = at(renderTemplate(path, variables), link);
+      const target = at(
+        block.before.pathselector === undefined ? renderTemplate(path, variables) : path,
+        link,
+      );
 
       before = await send(
         {
