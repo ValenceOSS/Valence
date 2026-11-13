@@ -774,6 +774,23 @@ describe('collectConcerns', () => {
       ).toContain('disk');
     });
 
+    it('reports a library filesystem nearly full though another has fewer bytes left', () => {
+      const monitor = healthyMonitor();
+      monitor.resources.disks = [
+        { mountPoint: '/media', device: null, totalBytes: 100, availableBytes: 20 },
+        { mountPoint: '/shows', device: null, totalBytes: 1000, availableBytes: 30 },
+      ];
+      const concerns = collectConcerns({
+        ...healthy,
+        monitor,
+        libraries: [library(), library({ id: 'lib_2', path: '/shows' })],
+      });
+
+      expect(concerns.find((concern) => concern.id === 'disk')?.detail).toContain(
+        '30 B left on /shows',
+      );
+    });
+
     it('stays quiet about a full disk no library is on', () => {
       const monitor = healthyMonitor();
       monitor.resources.disks = [

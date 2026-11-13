@@ -8,7 +8,7 @@ import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import type { JobRunPage } from '@ValenceContracts/schemas/JobRun';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { valenceCpuShare } from './valenceCpuShare';
-import { libraryDisk } from './libraryDisk';
+import { libraryDisks } from './libraryDisks';
 import { memoryEnvelope } from './memoryEnvelope';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { say } from '@ValenceI18n/say';
@@ -310,16 +310,15 @@ const collectConcerns = ({
     });
   }
 
-  const disk = libraryDisk(
+  const disk = libraryDisks(
     resources?.disks ?? [],
     (libraries ?? []).map((library) => library.path),
+  ).find(
+    (one) =>
+      one.totalBytes > 0 && (one.totalBytes - one.availableBytes) / one.totalBytes > DISK_PRESSURE,
   );
 
-  if (
-    disk !== null &&
-    disk.totalBytes > 0 &&
-    (disk.totalBytes - disk.availableBytes) / disk.totalBytes > DISK_PRESSURE
-  ) {
+  if (disk !== undefined) {
     concerns.push({
       id: 'disk',
       tone: ALERT_TONES['disk'],
