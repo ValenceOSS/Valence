@@ -71,6 +71,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref }}
+          persist-credentials: false
 
       # A release is built from its tag and keeps the number release-please gave it. Anything else,
       # main included however it was named, is named after the release it leads to, by setting that

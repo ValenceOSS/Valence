@@ -29,8 +29,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
   verify:
@@ -39,6 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ inputs.tag || github.ref_name }}
 
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -96,9 +96,9 @@ jobs:
           ref: ${{ inputs.tag || github.ref_name }}
           persist-credentials: false
 
-      # By commit rather than by the branch name, here and below: this workflow holds a token that
-      # can write releases and packages, and a branch can be moved under it. Pinned that way, the
-      # action has to be told which toolchain it was named for.
+      # By commit rather than by the branch name, here and below: jobs in this workflow hold tokens
+      # that can write releases and packages, and a branch can be moved under it. Pinned that way,
+      # the action has to be told which toolchain it was named for.
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           toolchain: stable
@@ -140,6 +140,9 @@ jobs:
   image:
     name: Image (${{ matrix.image.name }})
     needs: [verify, verify-rust, version]
+    permissions:
+      contents: read
+      packages: write
     # Two images from one repository: Valence itself, and the optional requests service beside it.
     # Each is built on runners of its own with caches of its own, since they share nothing but
     # contracts.
@@ -181,6 +184,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ inputs.tag || github.ref_name }}
 
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -348,10 +352,13 @@ jobs:
   publish:
     name: Publish the release
     needs: [image, artefacts, transcoder-mac, transcoder-windows, desktop]
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
 
