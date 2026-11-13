@@ -21,6 +21,20 @@ const HeardSchema = z.object({
   serverAtMs: z.number(),
 });
 
+/**
+ * Whether a message heard from a linked server's party is one a party says: what happens in the
+ * party, a refusal, or a request for its password. Anything else would be the linked server
+ * speaking as this one, to change who the person's tab thinks it is or to show it events from
+ * places it never joined.
+ *
+ * @param message - What was heard.
+ * @returns Whether to hand it on.
+ */
+const isPartyTalk = (message: FromServer): boolean =>
+  (message.kind === 'event' && message.topic === 'party') ||
+  message.kind === 'refused' ||
+  message.kind === 'partyNeedsPassword';
+
 type Relaying = {
   serverId: string;
   person: LinkPerson | null;
@@ -166,7 +180,7 @@ const createPartyRelayClient = ({
           asHeardHere(JsonValueSchema.parse(JSON.parse(JSON.stringify(message))), serverId, offset),
         );
 
-        if (here !== undefined && heard.success) {
+        if (here !== undefined && heard.success && isPartyTalk(heard.data)) {
           here.write(heard.data);
         }
       }

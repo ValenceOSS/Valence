@@ -32,9 +32,21 @@ const bodyOf = (asking: Asking | undefined): JsonValue =>
  * Films names them — and then cannot be heard again.
  *
  * @param says - How Films answers what is said to it.
+ * @param messages - What Films says in the party, where not the usual message.
  * @returns The relay, and what Films was asked.
  */
-const relaying = (says: () => Response | null = () => new Response(null, { status: 204 })) => {
+const relaying = (
+  says: () => Response | null = () => new Response(null, { status: 204 }),
+  messages: readonly JsonValue[] = [
+    {
+      kind: 'event',
+      topic: 'party',
+      atMs: 1000,
+      folded: 0,
+      payload: { party: { id: 'p1' }, mediaId: 'remote', members: ['here~tab-1'] },
+    },
+  ],
+) => {
   let heard = 0;
   const asker = aLinkedAskerAnswering((_, route) => {
     if (!route.startsWith('/parties/hear')) {
@@ -47,18 +59,7 @@ const relaying = (says: () => Response | null = () => new Response(null, { statu
       ? null
       : Response.json({
           serverAtMs: Date.now(),
-          heard: [
-            {
-              connection: 'tab-1',
-              message: {
-                kind: 'event',
-                topic: 'party',
-                atMs: 1000,
-                folded: 0,
-                payload: { party: { id: 'p1' }, mediaId: 'remote', members: ['here~tab-1'] },
-              },
-            },
-          ],
+          heard: messages.map((message) => ({ connection: 'tab-1', message })),
         });
   });
   const relay = createPartyRelayClient({
@@ -108,6 +109,33 @@ describe('createPartyRelayClient', () => {
     expect(write.mock.calls[0]?.[0]).toMatchObject({
       payload: { party: { id: PARTY }, mediaId: localIdOf(FILMS, 'remote'), members: ['tab-1'] },
     });
+    relay.forget('tab-1');
+  });
+
+  it('hands on only what a party says, never anything a linked server dresses up as this one', async () => {
+    const { relay } = relaying(undefined, [
+      { kind: 'welcome', connectionId: 'stolen', topics: ['logs'] },
+      { kind: 'event', topic: 'logs', atMs: 1000, folded: 0, payload: { line: 'forged' } },
+      { kind: 'dropped', topics: ['notifications'] },
+      {
+        kind: 'event',
+        topic: 'party',
+        atMs: 1000,
+        folded: 0,
+        payload: { party: { id: 'p1' }, mediaId: 'remote', members: ['here~tab-1'] },
+      },
+    ]);
+    const write = vi.fn<(message: FromServer) => void>();
+
+    await relay.say('tab-1', SAM, write, JOIN);
+
+    await vi.waitFor(() => {
+      expect(write).toHaveBeenCalled();
+    });
+    await new Promise((settle) => setTimeout(settle, 50));
+
+    expect(write.mock.calls.map(([message]) => message.kind)).toEqual(['event']);
+    expect(write.mock.calls[0]?.[0]).toMatchObject({ topic: 'party' });
     relay.forget('tab-1');
   });
 
