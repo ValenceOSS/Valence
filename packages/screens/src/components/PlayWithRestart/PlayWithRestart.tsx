@@ -21,17 +21,17 @@ import type { PlayWithRestartProps } from './PlayWithRestart.types';
  */
 const PlayWithRestart = ({ children, onStartAgain, more, size = 'lg' }: PlayWithRestartProps) => {
   const square = cn(
-    'flex shrink-0 items-center justify-center rounded-l-[4px]',
+    'flex shrink-0 items-center justify-center rounded-s-[4px]',
     size === 'lg' ? 'h-[3.25rem] w-14' : 'h-10 w-11',
     glassOnArtwork,
   );
-  const end = size === 'lg' ? 'rounded-r-[0.875rem]' : 'rounded-r-[0.75rem]';
+  const end = size === 'lg' ? 'rounded-e-[0.875rem]' : 'rounded-e-[0.75rem]';
   const isJoined = onStartAgain !== undefined || more !== undefined;
 
   return (
     <div className="flex w-full items-stretch gap-[3px]">
       <div
-        className={cn('min-w-0 flex-1 [&>*]:w-full', isJoined ? '[&_button]:rounded-r-[4px]' : '')}
+        className={cn('min-w-0 flex-1 [&>*]:w-full', isJoined ? '[&_button]:rounded-e-[4px]' : '')}
       >
         {children}
       </div>
@@ -41,7 +41,7 @@ const PlayWithRestart = ({ children, onStartAgain, more, size = 'lg' }: PlayWith
           variant="ghost"
           size="none"
           label={say('common.startAgain')}
-          className={cn(square, more === undefined ? end : 'rounded-r-[4px]')}
+          className={cn(square, more === undefined ? end : 'rounded-e-[4px]')}
           onClick={onStartAgain}
         >
           <Icon of={RotateCcwIcon} size={size === 'lg' ? 20 : 17} />

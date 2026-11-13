@@ -183,7 +183,7 @@ const TrackList = ({
               size="none"
               hasTooltip={false}
               className={cn(
-                'truncate text-left text-[0.9375rem]',
+                'truncate text-start text-[0.9375rem]',
                 isCurrent ? 'font-bold text-text' : 'font-medium text-text',
               )}
               onClick={() => {
@@ -194,10 +194,10 @@ const TrackList = ({
             </Button>
 
             <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-[0.8125rem] text-text-muted">
-              {track.isExplicit ? <ExplicitMark className="mr-0.5" /> : null}
+              {track.isExplicit ? <ExplicitMark className="me-0.5" /> : null}
 
               {track.isLossless ? (
-                <span className="mr-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
+                <span className="me-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
                   {say('common.lossless')}
                 </span>
               ) : null}
@@ -261,7 +261,7 @@ const TrackList = ({
           <KeepHeart isKept={isLiked} size={16} />
         </Button>
 
-        <span className="text-right text-sm tabular-nums text-text-muted">
+        <span className="text-end text-sm tabular-nums text-text-muted">
           {formatDuration(track.durationSeconds)}
         </span>
 

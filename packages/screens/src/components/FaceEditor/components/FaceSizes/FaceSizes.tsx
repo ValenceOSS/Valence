@@ -25,7 +25,7 @@ const FaceSizes = ({ name, colour, avatar, source, pending }: FaceSizesProps) =>
       <div className="flex items-center justify-center gap-8">
         <FaceCircle {...face} shape="tile" className="size-12 text-lg" />
 
-        <div className="flex items-center gap-2 rounded-full bg-subtle py-1 pl-1 pr-3">
+        <div className="flex items-center gap-2 rounded-full bg-subtle py-1 ps-1 pe-3">
           <FaceCircle {...face} className="size-7 text-[0.65rem]" />
           <span className="max-w-24 truncate text-xs text-text">{name}</span>
         </div>

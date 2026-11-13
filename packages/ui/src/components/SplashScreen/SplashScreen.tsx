@@ -258,7 +258,7 @@ const SplashScreen = ({
           <motion.span
             aria-hidden
             className={cn(
-              'max-w-[calc(100vw-7.5rem)] overflow-hidden whitespace-nowrap pl-5 font-semibold',
+              'max-w-[calc(100vw-7.5rem)] overflow-hidden whitespace-nowrap ps-5 font-semibold',
               hasNameOpened ? 'text-ellipsis' : '',
               name.length > SHORT_NAME_LENGTH ? 'text-4xl sm:text-6xl' : 'text-6xl',
             )}

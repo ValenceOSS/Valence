@@ -19,7 +19,7 @@ const SidebarCount = ({ count, isUrgent = false, isDot = false }: SidebarCountPr
     <span
       aria-hidden
       className={cn(
-        'absolute top-1.5 right-1.5 z-10 size-2 rounded-full ring-2 ring-[var(--frame-back)]',
+        'absolute top-1.5 end-1.5 z-10 size-2 rounded-full ring-2 ring-[var(--frame-back)]',
         isUrgent ? 'bg-danger' : 'bg-text-muted',
       )}
     />
@@ -27,7 +27,7 @@ const SidebarCount = ({ count, isUrgent = false, isDot = false }: SidebarCountPr
     <span
       aria-hidden
       className={cn(
-        'relative z-10 ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5',
+        'relative z-10 ms-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5',
         'bg-[var(--surface-active)] text-[0.6875rem] font-semibold tabular-nums',
         isUrgent ? 'text-danger' : 'text-text',
       )}

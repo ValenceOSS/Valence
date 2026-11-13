@@ -41,8 +41,8 @@ describe('HistoryArrows', () => {
   it('draws the two as halves of one shape', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: 'Go back' })).toHaveClass('rounded-r-none');
-    expect(screen.getByRole('button', { name: 'Go forward' })).toHaveClass('rounded-l-none');
+    expect(screen.getByRole('button', { name: 'Go back' })).toHaveClass('rounded-e-none');
+    expect(screen.getByRole('button', { name: 'Go forward' })).toHaveClass('rounded-s-none');
   });
 
   it('names the keys that do the same once the pointer rests on one', async () => {

@@ -248,7 +248,7 @@ const MusicLibrary = () => {
                   hasTooltip={false}
                   aria-current={isHere ? 'page' : undefined}
                   className={cn(
-                    'flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-left text-[0.9375rem] font-medium',
+                    'flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-start text-[0.9375rem] font-medium',
                     isHere ? 'bg-hover font-semibold text-text' : 'text-text-muted hover:text-text',
                   )}
                   onClick={() => {
@@ -307,7 +307,7 @@ const MusicLibrary = () => {
                           hasTooltip={false}
                           aria-current={isHere ? 'page' : undefined}
                           className={cn(
-                            'flex w-full items-center gap-3 rounded-md p-1.5 text-left',
+                            'flex w-full items-center gap-3 rounded-md p-1.5 text-start',
                             isHere ? 'bg-hover' : '',
                           )}
                           onClick={() => {
@@ -330,7 +330,7 @@ const MusicLibrary = () => {
                             <Equaliser
                               label={say('common.playing')}
                               isMoving={state.isPlaying}
-                              className="mr-1.5 shrink-0 text-text"
+                              className="me-1.5 shrink-0 text-text"
                             />
                           ) : null}
                         </Button>

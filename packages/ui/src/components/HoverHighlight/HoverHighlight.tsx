@@ -45,7 +45,7 @@ const HoverHighlight = ({ rect, radius = 'md' }: HoverHighlightProps) => {
         <motion.span
           aria-hidden
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-0 bg-[var(--surface-hover)]',
+            'pointer-events-none absolute top-0 start-0 z-0 bg-[var(--surface-hover)]',
             RADIUS_CLASSES[radius],
           )}
           initial={{ opacity: 0, ...placeOf(rect) }}

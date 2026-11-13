@@ -54,7 +54,7 @@ const CatalogueTiles = ({ counts, total, value, onChange }: CatalogueTilesProps)
             onChange(pill.id);
           }}
           className={cn(
-            'flex h-8 shrink-0 items-center gap-2 rounded-full border pl-3 pr-1.5 text-[0.8125rem] font-medium transition-colors',
+            'flex h-8 shrink-0 items-center gap-2 rounded-full border ps-3 pe-1.5 text-[0.8125rem] font-medium transition-colors',
             pill.id === value
               ? 'border-[var(--surface-line)] bg-[var(--surface-active)] text-text'
               : 'border-transparent text-text-muted hover:bg-[var(--surface-hover)] hover:text-text',

@@ -249,7 +249,7 @@ const DiskUsageCard = ({
       />
 
       <ScrollFade
-        className="max-h-44 pr-1"
+        className="max-h-44 pe-1"
         label={say('screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed', {
           mount: disk.mountPoint,
         })}
@@ -272,7 +272,7 @@ const DiskUsageCard = ({
                   size="none"
                   hasTooltip={false}
                   data-highlight={share.id}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left outline-none focus-visible:focus-ring"
+                  className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-start outline-none focus-visible:focus-ring"
                   onPointerEnter={() => {
                     setPointed(share.id);
                   }}

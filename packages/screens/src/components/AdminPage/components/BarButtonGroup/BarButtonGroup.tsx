@@ -21,8 +21,8 @@ const BarButtonGroup = ({ children }: BarButtonGroupProps) => (
       'flex h-8 shrink-0 items-stretch gap-[3px] has-[>*:only-child:empty]:hidden',
       '[&>ul]:flex [&>ul]:items-stretch [&>ul]:gap-[3px]',
       SEGMENT,
-      '[&>ul:first-child>li:first-child]:rounded-l-lg [&>div:first-child]:rounded-l-lg',
-      '[&>div:last-child]:rounded-r-lg [&>ul:has(+div:empty)>li:last-child]:rounded-r-lg [&>ul:last-child>li:last-child]:rounded-r-lg',
+      '[&>ul:first-child>li:first-child]:rounded-s-lg [&>div:first-child]:rounded-s-lg',
+      '[&>div:last-child]:rounded-e-lg [&>ul:has(+div:empty)>li:last-child]:rounded-e-lg [&>ul:last-child>li:last-child]:rounded-e-lg',
     )}
   >
     {children}

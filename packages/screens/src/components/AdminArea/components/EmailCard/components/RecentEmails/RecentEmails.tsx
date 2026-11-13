@@ -34,7 +34,7 @@ const RecentEmails = ({ sends, now }: RecentEmailsProps) => (
             <span className="flex items-baseline gap-2 font-body text-sm">
               <span className="font-medium text-text">{KIND_WORDS[send.kind]}</span>
               <span className="min-w-0 truncate text-text-muted">{send.recipient}</span>
-              <span className="ml-auto shrink-0 text-xs tabular-nums text-text-muted">
+              <span className="ms-auto shrink-0 text-xs tabular-nums text-text-muted">
                 {describeSince(send.createdAt, now)}
               </span>
             </span>

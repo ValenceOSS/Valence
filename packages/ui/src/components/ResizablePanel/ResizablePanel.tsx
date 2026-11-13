@@ -250,7 +250,7 @@ const ResizablePanel = ({
         hidden={isDisabled}
         className={cn(
           'group absolute inset-y-0 z-20 flex w-4 cursor-col-resize touch-none items-center justify-center outline-none select-none',
-          edge === 'start' ? '-left-2' : '-right-2',
+          edge === 'start' ? '-start-2' : '-end-2',
         )}
       >
         <span

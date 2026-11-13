@@ -11,7 +11,7 @@ describe('SessionPill', () => {
 
     expect(pill).toHaveClass('bg-shade/45');
     expect(pill).toHaveClass('backdrop-blur-md');
-    expect(pill).toHaveClass('left-[clamp(8px,3.4cqw,16px)]');
+    expect(pill).toHaveClass('start-[clamp(8px,3.4cqw,16px)]');
     expect(pill.querySelector('svg')).not.toBeNull();
   });
 
@@ -20,7 +20,7 @@ describe('SessionPill', () => {
 
     const pill = screen.getByText('Direct play');
 
-    expect(pill).toHaveClass('right-[clamp(8px,3.4cqw,16px)]');
+    expect(pill).toHaveClass('end-[clamp(8px,3.4cqw,16px)]');
     expect(pill.querySelector('svg')).toBeNull();
   });
 

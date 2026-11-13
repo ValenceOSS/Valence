@@ -39,10 +39,10 @@ const ConcernList = ({ concerns, onOpenPanel, onDismiss }: ConcernListProps) => 
       <ul className="relative flex flex-col divide-y divide-[var(--surface-line)]">
         {concerns.map((concern) => (
           <li key={concern.id} className="flex flex-col">
-            <span data-highlight={concern.id} className="flex items-center gap-1 pr-1.5">
+            <span data-highlight={concern.id} className="flex items-center gap-1 pe-1.5">
               <Button
                 variant="bare"
-                className="flex h-auto min-w-0 flex-1 items-center justify-start gap-3 rounded-md px-3 py-2.5 text-left"
+                className="flex h-auto min-w-0 flex-1 items-center justify-start gap-3 rounded-md px-3 py-2.5 text-start"
                 {...(concern.items === undefined ? {} : { 'aria-expanded': opened === concern.id })}
                 onClick={() => {
                   if (concern.items === undefined) {
@@ -100,7 +100,7 @@ const ConcernList = ({ concerns, onOpenPanel, onDismiss }: ConcernListProps) => 
                   transition={{ duration: isStill ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="flex flex-col gap-3 pb-3 pl-10 pr-3">
+                  <div className="flex flex-col gap-3 pb-3 ps-10 pe-3">
                     <ul className="flex flex-col gap-2">
                       {concern.items.map((item) => (
                         <li key={item.name} className="flex flex-col gap-0.5 text-sm">

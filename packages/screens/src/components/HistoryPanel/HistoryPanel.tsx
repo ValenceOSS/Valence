@@ -175,7 +175,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="ml-auto shrink-0"
+                className="ms-auto shrink-0"
                 aria-label={say('common.forgetName', { name })}
                 onClick={() => {
                   void (entry.kind === 'viewing'
@@ -211,7 +211,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
           variant="ghost"
           size="sm"
           disabled={isClearing}
-          className="ml-auto"
+          className="ms-auto"
           onClick={() => {
             void forgetTheLot();
           }}

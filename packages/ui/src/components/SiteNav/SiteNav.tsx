@@ -643,7 +643,7 @@ const SiteNav = ({ here, pathname, InSiteLink, starCount, banner, dock }: SiteNa
                           key={social.href}
                           variant="bare"
                           size="none"
-                          className="grid grid-cols-[1.5rem_1fr] justify-start gap-3 rounded-xl p-3 text-left"
+                          className="grid grid-cols-[1.5rem_1fr] justify-start gap-3 rounded-xl p-3 text-start"
                           onClick={() => {
                             closeAll();
                             window.open(social.href, '_blank', 'noopener,noreferrer');

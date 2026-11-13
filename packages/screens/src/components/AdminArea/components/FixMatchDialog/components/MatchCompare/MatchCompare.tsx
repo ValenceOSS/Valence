@@ -105,7 +105,7 @@ const MatchCompare = ({ mediaId, preview, taken, onTake }: MatchCompareProps) =>
         <Icon of={ArrowRightIcon} size={16} tone="muted" />
         <MediaPoster className="w-20" src={preview.posterUrl} />
 
-        <span className="ml-auto flex items-center gap-2.5">
+        <span className="ms-auto flex items-center gap-2.5">
           <span aria-hidden className="text-sm text-text-muted">
             {say('screens.adminArea.fixMatchDialog.showUnchanged')}
           </span>

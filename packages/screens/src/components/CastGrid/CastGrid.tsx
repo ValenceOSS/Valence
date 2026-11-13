@@ -76,7 +76,7 @@ const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGri
             <span
               className={cn(
                 'flex w-full min-w-0 flex-col gap-0.5',
-                isOpen ? 'items-start text-left' : 'items-center text-center',
+                isOpen ? 'items-start text-start' : 'items-center text-center',
               )}
             >
               <span className="w-full truncate text-sm font-medium leading-tight text-text">
@@ -99,7 +99,7 @@ const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGri
                 onNavigate={() => {
                   onOpenPerson(member);
                 }}
-                className="group flex flex-col gap-3 rounded-lg text-left"
+                className="group flex flex-col gap-3 rounded-lg text-start"
               >
                 {face}
               </Link>
@@ -111,7 +111,7 @@ const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGri
                 hasTooltip={false}
                 disabled={!canOpenPerson(member.personId) || onOpenPerson === undefined}
                 className={cn(
-                  'group flex flex-col gap-3 rounded-lg text-left',
+                  'group flex flex-col gap-3 rounded-lg text-start',
                   canOpenPerson(member.personId) && onOpenPerson !== undefined
                     ? ''
                     : 'disabled:cursor-default disabled:opacity-100',

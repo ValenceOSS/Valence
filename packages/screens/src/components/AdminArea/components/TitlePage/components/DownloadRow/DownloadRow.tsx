@@ -72,7 +72,7 @@ const DownloadRow = ({ download, onStop }: DownloadRowProps) => {
         </span>
       </span>
 
-      <span className="w-10 shrink-0 text-right text-sm font-medium tabular-nums text-text">
+      <span className="w-10 shrink-0 text-end text-sm font-medium tabular-nums text-text">
         {say('common.percent', { value: percent.toString() })}
       </span>
 

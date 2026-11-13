@@ -47,7 +47,7 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                   size="none"
                   hasTooltip={false}
                   label={say('common.playOnLabel', { label: device.label })}
-                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left"
+                  className="flex w-full items-center gap-3 rounded-lg p-3 text-start"
                   onClick={() => {
                     if (media === null) {
                       return;

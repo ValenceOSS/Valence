@@ -9,8 +9,8 @@ const FLASH: Transition = { duration: 0.6, times: [0, 0.2, 1], ease: [0.23, 1, 0
 
 const PLACES = {
   toggle: 'left-1/2 -translate-x-1/2',
-  back: 'left-[20%] -translate-x-1/2',
-  forward: 'right-[20%] translate-x-1/2',
+  back: 'start-[20%] -translate-x-1/2',
+  forward: 'end-[20%] translate-x-1/2',
 } as const;
 
 /**

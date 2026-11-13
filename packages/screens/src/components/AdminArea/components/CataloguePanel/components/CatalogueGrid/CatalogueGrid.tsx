@@ -99,7 +99,7 @@ const CatalogueGrid = ({
             />
 
             {isChoosable ? (
-              <span className="absolute left-2 top-2 rounded-md bg-[var(--card-face)] p-1 shadow-[var(--shadow-raised)]">
+              <span className="absolute start-2 top-2 rounded-md bg-[var(--card-face)] p-1 shadow-[var(--shadow-raised)]">
                 <Checkbox
                   label={say('common.selectTitle', { title: entry.title })}
                   isLabelHidden

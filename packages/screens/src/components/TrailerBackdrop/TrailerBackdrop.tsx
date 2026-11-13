@@ -116,7 +116,7 @@ const TrailerBackdrop = ({ backdrop, trailerUrl, label, closing }: TrailerBackdr
         }}
       />
 
-      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-6 sm:top-6">
+      <div className="absolute end-4 top-4 z-10 flex items-center gap-2 sm:end-6 sm:top-6">
         {!isPlaying || !hasStarted || hasEnded ? null : (
           <Button
             variant="ghost"

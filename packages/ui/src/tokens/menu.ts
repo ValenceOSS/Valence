@@ -25,8 +25,8 @@ const MENU = {
   marker: 'flex w-3.5 shrink-0 items-center justify-center text-text',
   dot: 'size-1.5 rounded-full bg-current',
   icon: 'flex size-4 shrink-0 items-center justify-center text-text coarse:size-5',
-  itemLabel: 'flex-1 truncate text-left',
-  detail: 'shrink-0 pl-4 text-[0.8125rem] text-text-muted',
+  itemLabel: 'flex-1 truncate text-start',
+  detail: 'shrink-0 ps-4 text-[0.8125rem] text-text-muted',
   hint: 'flex shrink-0 items-center text-text-muted',
 } as const;
 

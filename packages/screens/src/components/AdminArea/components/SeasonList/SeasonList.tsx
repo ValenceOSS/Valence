@@ -127,7 +127,7 @@ const SeasonList = ({
 
           return (
             <li key={season.season} className="flex flex-col">
-              <span className="flex flex-wrap items-center gap-4 py-3 pl-5 pr-3">
+              <span className="flex flex-wrap items-center gap-4 py-3 ps-5 pe-3">
                 <Button
                   variant="bare"
                   size="none"
@@ -142,7 +142,7 @@ const SeasonList = ({
                     setOpen(isOpen ? null : season.season);
                   }}
                   className={cn(
-                    'flex shrink-0 items-center gap-2 text-left',
+                    'flex shrink-0 items-center gap-2 text-start',
                     isCoursed || isNamed ? 'w-56' : 'w-28',
                   )}
                 >
@@ -177,7 +177,7 @@ const SeasonList = ({
                   ))}
                 </span>
 
-                <span className="w-16 shrink-0 text-right text-sm tabular-nums text-text-muted">
+                <span className="w-16 shrink-0 text-end text-sm tabular-nums text-text-muted">
                   {say('screens.adminArea.titlePage.seasonList.heldOfTotal', {
                     held: held.toString(),
                     total: season.episodes.length.toString(),

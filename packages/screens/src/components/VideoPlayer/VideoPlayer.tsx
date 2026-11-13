@@ -3002,7 +3002,7 @@ const VideoPlayer = ({
       data-slot="player-header"
       className={
         isImmersive
-          ? `valence-on-film absolute inset-x-0 top-0 z-40 flex items-start gap-4 bg-linear-to-b from-shade/70 via-shade/25 to-transparent px-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-16 pl-[calc(1.25rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] text-on-scrim transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
+          ? `valence-on-film absolute inset-x-0 top-0 z-40 flex items-start gap-4 bg-linear-to-b from-shade/70 via-shade/25 to-transparent px-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-16 ps-[calc(1.25rem+env(safe-area-inset-left,0px))] pe-[calc(1rem+env(safe-area-inset-right,0px))] text-on-scrim transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
               isBarUp
                 ? 'translate-y-0 opacity-100 duration-[var(--duration-base)]'
                 : 'pointer-events-none -translate-y-2 opacity-0 duration-[var(--duration-leaving)]'
@@ -3234,7 +3234,7 @@ const VideoPlayer = ({
             className={
               heldFrame === null
                 ? 'pointer-events-none absolute inset-0 flex items-center justify-center'
-                : 'pointer-events-none absolute right-3 top-3 rounded-full bg-shade/60 p-2 text-text'
+                : 'pointer-events-none absolute end-3 top-3 rounded-full bg-shade/60 p-2 text-text'
             }
           >
             <Spinner
@@ -3258,7 +3258,7 @@ const VideoPlayer = ({
             dragMomentum={false}
             dragElastic={0}
             dragConstraints={stageRef}
-            className="pointer-events-none absolute left-3 top-16 z-50 w-[min(32rem,calc(100%-1.5rem))]"
+            className="pointer-events-none absolute start-3 top-16 z-50 w-[min(32rem,calc(100%-1.5rem))]"
           >
             <StreamStats
               onGrab={(event) => {
@@ -3292,7 +3292,7 @@ const VideoPlayer = ({
         ) : null}
 
         <div
-          className="pointer-events-none absolute left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-[15] flex flex-col items-end gap-3 *:pointer-events-auto transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
+          className="pointer-events-none absolute start-[calc(1rem+env(safe-area-inset-left,0px))] end-[calc(1rem+env(safe-area-inset-right,0px))] z-[15] flex flex-col items-end gap-3 *:pointer-events-auto transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
           style={{
             bottom: isBarUp
               ? `calc(${(Math.max(controlsTall, CONTROLS_TALL_AT_LEAST) + CLEAR_OF_THE_CONTROLS * 2).toString()}px + env(safe-area-inset-bottom, 0px))`
@@ -3341,7 +3341,7 @@ const VideoPlayer = ({
 
         <div
           ref={holdControls}
-          className={`absolute z-[15] bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
+          className={`absolute z-[15] bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] start-[calc(1rem+env(safe-area-inset-left,0px))] end-[calc(1rem+env(safe-area-inset-right,0px))] transition-[opacity,translate] ease-[var(--ease-out)] motion-reduce:transition-none ${
             isBarUp
               ? 'translate-y-0 opacity-100 duration-[var(--duration-base)]'
               : 'pointer-events-none translate-y-2 opacity-0 duration-[var(--duration-leaving)]'

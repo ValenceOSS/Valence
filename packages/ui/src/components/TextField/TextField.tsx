@@ -154,10 +154,10 @@ const TextField = ({
         isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
         isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
         isBare || isInset || !isPill ? '' : 'rounded-full',
-        joins === 'next' ? 'rounded-r-none border-r-0' : '',
+        joins === 'next' ? 'rounded-e-none border-e-0' : '',
         error === undefined ? '' : 'border-destructive',
-        unit === undefined ? '' : 'pr-12',
-        inside === undefined ? '' : 'pr-9',
+        unit === undefined ? '' : 'pe-12',
+        inside === undefined ? '' : 'pe-9',
       )}
     />
   );
@@ -221,13 +221,13 @@ const TextField = ({
             {unit === undefined ? null : (
               <span
                 id={unitBy}
-                className="pointer-events-none absolute right-3 text-[0.8125rem] tabular-nums text-text-muted"
+                className="pointer-events-none absolute end-3 text-[0.8125rem] tabular-nums text-text-muted"
               >
                 {unit}
               </span>
             )}
             {inside === undefined ? null : (
-              <span className="absolute right-1.5 flex items-center">{inside}</span>
+              <span className="absolute end-1.5 flex items-center">{inside}</span>
             )}
           </span>
         )}

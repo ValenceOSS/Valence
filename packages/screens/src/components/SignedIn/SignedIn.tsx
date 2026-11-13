@@ -440,7 +440,7 @@ const SignedIn = ({ title }: SignedInProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className="absolute top-[calc(var(--valence-window-bar)+1rem)] left-4 z-10"
+            className="absolute top-[calc(var(--valence-window-bar)+1rem)] start-4 z-10"
             onClick={() => {
               setAddingAnotherAccount(false);
             }}

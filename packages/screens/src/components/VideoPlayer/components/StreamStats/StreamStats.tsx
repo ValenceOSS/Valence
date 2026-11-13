@@ -104,7 +104,7 @@ const StreamStats = ({
           }
         }}
         className={cn(
-          'mb-2.5 flex items-center justify-between gap-4 pl-1',
+          'mb-2.5 flex items-center justify-between gap-4 ps-1',
           onGrab === undefined ? '' : 'cursor-grab touch-none select-none active:cursor-grabbing',
         )}
       >

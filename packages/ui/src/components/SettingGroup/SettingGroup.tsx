@@ -18,7 +18,7 @@ const SettingGroup = ({ title, description, children, className }: SettingGroupP
     data-slot="setting-group"
     className={cn('m-0 flex min-w-0 flex-col border-0 p-0 py-6', className)}
   >
-    <legend className="float-left w-full p-0 text-base font-semibold leading-tight text-text">
+    <legend className="float-start w-full p-0 text-base font-semibold leading-tight text-text">
       {title}
     </legend>
 

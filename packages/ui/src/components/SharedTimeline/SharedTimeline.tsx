@@ -113,7 +113,7 @@ const SharedTimeline = ({
       >
         <div ref={bar} className="relative h-1 w-full rounded-full bg-track">
           <motion.span
-            className="absolute inset-y-0 left-0 rounded-full bg-primary"
+            className="absolute inset-y-0 start-0 rounded-full bg-primary"
             initial={false}
             animate={{ width: percentAlong(filledSeconds, durationSeconds) }}
             transition={glide}

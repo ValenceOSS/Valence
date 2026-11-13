@@ -47,7 +47,7 @@ const ChannelLogo = ({ channelId, name, hasLogo, health = null, className }: Cha
         <span
           aria-hidden
           className={cn(
-            'absolute -bottom-0.5 -right-0.5 size-3 rounded-full ring-2 ring-[var(--card-face)]',
+            'absolute -bottom-0.5 -end-0.5 size-3 rounded-full ring-2 ring-[var(--card-face)]',
             health === 'onAir'
               ? 'bg-success'
               : health === 'offAir'

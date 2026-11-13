@@ -41,7 +41,7 @@ const ProblemCard = ({ icon, headline, reason, said, actions }: ProblemCardProps
           </div>
 
           {said === undefined || said === null || said === '' ? null : (
-            <pre className="w-full max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-3 py-2.5 text-left font-mono text-xs leading-relaxed text-text-muted">
+            <pre className="w-full max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-lg border border-[var(--surface-line)] bg-[var(--surface-hover)] px-3 py-2.5 text-start font-mono text-xs leading-relaxed text-text-muted">
               {said}
             </pre>
           )}

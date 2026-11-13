@@ -146,12 +146,12 @@ const Sidebar = ({
         isFloating ? 'self-stretch' : 'h-full',
         isRail
           ? isFloating
-            ? 'my-6 ml-6 w-16 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
+            ? 'my-6 ms-6 w-16 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
             : 'w-16'
           : isCollapsed
             ? 'm-0 w-0'
             : isFloating
-              ? 'my-6 ml-6 w-[var(--panel-width,15rem)] rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
+              ? 'my-6 ms-6 w-[var(--panel-width,15rem)] rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
               : 'w-[var(--panel-width,15rem)]',
         className,
       )}

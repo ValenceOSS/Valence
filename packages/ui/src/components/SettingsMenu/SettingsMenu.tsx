@@ -23,7 +23,7 @@ import type {
 } from './SettingsMenu.types';
 
 const ROW =
-  'relative z-10 flex min-h-9 w-full items-center gap-3 rounded-[0.625rem] px-3 py-2 text-left text-sm';
+  'relative z-10 flex min-h-9 w-full items-center gap-3 rounded-[0.625rem] px-3 py-2 text-start text-sm';
 
 const SLIDE = 28;
 

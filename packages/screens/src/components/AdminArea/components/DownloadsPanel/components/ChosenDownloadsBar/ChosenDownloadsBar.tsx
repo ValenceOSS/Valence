@@ -38,7 +38,7 @@ const ChosenDownloadsBar = ({
   const canResume = chosen.some((download) => download.canPause && download.state === 'paused');
 
   return (
-    <div className="mr-auto flex flex-wrap items-center gap-3">
+    <div className="me-auto flex flex-wrap items-center gap-3">
       <span className="text-sm text-text-muted">
         {chosen.length === 0
           ? sayCount('common.count.downloads', total)

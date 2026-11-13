@@ -36,7 +36,7 @@ const ItemList = ({ title, request, items, isFollowing, onFollow }: ItemListProp
           const problem = item.problem?.message ?? null;
 
           return (
-            <li key={item.id} className="flex flex-wrap items-center gap-4 py-3 pl-5 pr-3">
+            <li key={item.id} className="flex flex-wrap items-center gap-4 py-3 ps-5 pe-3">
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium text-text">{item.title}</span>
                 {item.airDate === null ? null : (

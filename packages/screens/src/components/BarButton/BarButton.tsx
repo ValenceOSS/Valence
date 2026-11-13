@@ -89,7 +89,7 @@ const BarButton = ({
           {badge === undefined ? null : (
             <motion.span
               key="badge"
-              className="absolute -top-1.5 -right-1.5 flex text-current"
+              className="absolute -top-1.5 -end-1.5 flex text-current"
               initial={
                 prefersReducedMotion === true
                   ? { opacity: 0 }

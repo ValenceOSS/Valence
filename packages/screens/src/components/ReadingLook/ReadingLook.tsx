@@ -127,7 +127,7 @@ const ReadingLook = ({
                       </span>
 
                       {isChosen ? (
-                        <span className="absolute top-1.5 right-1.5 grid size-5 place-items-center rounded-full bg-shade/60 text-on-scrim">
+                        <span className="absolute top-1.5 end-1.5 grid size-5 place-items-center rounded-full bg-shade/60 text-on-scrim">
                           <Icon of={CheckIcon} size={12} />
                         </span>
                       ) : null}

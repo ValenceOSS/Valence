@@ -223,7 +223,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
           <div className="flex w-full items-center gap-3">
             <BuildInfoFooter />
 
-            <div className="ml-auto flex gap-3">
+            <div className="ms-auto flex gap-3">
               {tvBrowserOf(window.navigator.userAgent) === null ? null : (
                 <Button
                   variant="secondary"

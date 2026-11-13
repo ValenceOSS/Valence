@@ -32,7 +32,7 @@ const MusicTitleDialog = ({ isOpen, onClose, children }: MusicTitleDialogProps) 
     <Dialog label={say('common.music')} isOpen={isOpen} onClose={onClose} size="stage" edge={tint}>
       <DialogContent className="p-3 [--music-lane:0.25rem] sm:p-4 sm:[--music-lane:0.5rem]">
         <TintedGround tint={tint}>
-          <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+          <div className="absolute end-4 top-4 z-10 sm:end-6 sm:top-6">
             <ArtworkCloseButton onClose={onClose} />
           </div>
 

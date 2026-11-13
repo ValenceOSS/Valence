@@ -64,7 +64,7 @@ const PlanStep = ({ source, choice, onStarted, onBack }: PlanStepProps) => {
   };
 
   const back = (
-    <Button variant="ghost" className="-ml-3" onClick={onBack}>
+    <Button variant="ghost" className="-ms-3" onClick={onBack}>
       {say('common.back')}
     </Button>
   );

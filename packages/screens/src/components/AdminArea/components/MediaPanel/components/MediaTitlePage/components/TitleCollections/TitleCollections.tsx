@@ -82,7 +82,7 @@ const TitleCollections = ({ subject, name }: TitleCollectionsProps) => {
           {collections.map((collection) => (
             <li
               key={collection.id}
-              className="flex h-7 items-center gap-1 rounded-full bg-[var(--surface-hover)] py-0.5 pl-3 pr-1 text-[0.8125rem] text-text"
+              className="flex h-7 items-center gap-1 rounded-full bg-[var(--surface-hover)] py-0.5 ps-3 pe-1 text-[0.8125rem] text-text"
             >
               {collection.name}
               <Button

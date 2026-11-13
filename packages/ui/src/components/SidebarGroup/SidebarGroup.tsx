@@ -13,8 +13,8 @@ import { SidebarCount } from './components/SidebarCount/SidebarCount';
 import type { SidebarGroupProps } from './SidebarGroup.types';
 
 const TRACK = [
-  'relative ml-[1.0625rem] pl-2.5',
-  'before:pointer-events-none before:absolute before:inset-y-1 before:left-0 before:w-px',
+  'relative ms-[1.0625rem] ps-2.5',
+  'before:pointer-events-none before:absolute before:inset-y-1 before:start-0 before:w-px',
   'before:bg-[color-mix(in_oklab,var(--color-text)_18%,transparent)]',
 ].join(' ');
 
@@ -71,7 +71,7 @@ const SidebarGroup = ({
             onOpenChange?.(!isOpen);
           }}
           className={cn(
-            'group/fold flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[0.8125rem]',
+            'group/fold flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-[0.8125rem]',
             'font-medium text-text',
           )}
         >
@@ -156,7 +156,7 @@ const SidebarGroup = ({
                     <span
                       className={cn(
                         'relative z-10 flex shrink-0 scale-75 opacity-50',
-                        item.count === undefined || item.count === 0 ? 'ml-auto' : '',
+                        item.count === undefined || item.count === 0 ? 'ms-auto' : '',
                       )}
                     >
                       <Spinner size="xs" label={say('common.running')} />
@@ -177,7 +177,7 @@ const SidebarGroup = ({
                   {isCurrent && showsFold && !isCollapsed ? (
                     <SlidingMark
                       group={`${markGroup}-track`}
-                      className="inset-auto -left-[0.6875rem] inset-y-1.5 z-10 w-0.5 rounded-full bg-text"
+                      className="inset-auto -start-[0.6875rem] inset-y-1.5 z-10 w-0.5 rounded-full bg-text"
                     />
                   ) : null}
 

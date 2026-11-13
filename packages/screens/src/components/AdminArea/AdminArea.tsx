@@ -926,7 +926,7 @@ const AdminArea = ({
       className="flex w-full flex-col gap-4"
     >
       {isShown ? (
-        <div className="pointer-events-none fixed right-4 bottom-4 z-40 flex flex-col items-end gap-2">
+        <div className="pointer-events-none fixed end-4 bottom-4 z-40 flex flex-col items-end gap-2">
           <WhatsNewInValence
             onOpenUpdates={() => {
               showPanel('updates');

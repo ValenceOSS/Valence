@@ -63,7 +63,7 @@ describe('ScopedField', () => {
   it('stands alone, rounded at both ends, where there is nothing to choose', () => {
     render(<ScopedField label="Search" value="" onValueChange={vi.fn()} choices={[]} />);
 
-    expect(screen.getByRole('searchbox', { name: 'Search' })).not.toHaveClass('rounded-r-none');
+    expect(screen.getByRole('searchbox', { name: 'Search' })).not.toHaveClass('rounded-e-none');
     expect(screen.queryByRole('button')).toBeNull();
   });
 

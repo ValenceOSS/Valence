@@ -107,7 +107,7 @@ const DevicesPanel = () => {
                     label={say('common.playOnLabel', { label: device.label })}
                     disabled={state.current === null && device.nowPlaying === null}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-[0.875rem] p-3 text-left transition-colors duration-[var(--duration-fast)] hover-hover:hover:bg-hover',
+                      'flex w-full items-center gap-3 rounded-[0.875rem] p-3 text-start transition-colors duration-[var(--duration-fast)] hover-hover:hover:bg-hover',
                       isChosen ? 'bg-hover font-semibold text-text' : 'text-text',
                     )}
                     onClick={() => {

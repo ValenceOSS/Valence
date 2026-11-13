@@ -75,7 +75,7 @@ const ChapterMenu = ({
       }
       className="w-[min(20rem,calc(100vw-1.5rem))] p-1.5"
     >
-      <ScrollFade className="max-h-[min(30rem,60vh)] pr-1">
+      <ScrollFade className="max-h-[min(30rem,60vh)] pe-1">
         <div
           ref={containerRef}
           onPointerMove={follow}
@@ -117,7 +117,7 @@ const ChapterMenu = ({
                       onSeek(chapter.startSeconds);
                     }}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-1.5 py-2 text-left outline-none focus-visible:focus-ring',
+                      'flex w-full items-center gap-3 rounded-lg px-1.5 py-2 text-start outline-none focus-visible:focus-ring',
                       'transition-[background-color,scale,opacity] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
                       'active:scale-[0.99] motion-reduce:transition-none',
                       isPlaying
@@ -163,7 +163,7 @@ const ChapterMenu = ({
                       </span>
                     </span>
 
-                    <span className="w-12 shrink-0 pr-1 text-right text-xs tabular-nums text-text-muted">
+                    <span className="w-12 shrink-0 pe-1 text-end text-xs tabular-nums text-text-muted">
                       {describeLength(length)}
                     </span>
                   </Button>

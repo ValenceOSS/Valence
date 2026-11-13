@@ -681,7 +681,7 @@ const TextReader = ({
               className="flex-1"
             />
 
-            <span className="w-12 shrink-0 text-right text-xs tabular-nums text-text-muted">
+            <span className="w-12 shrink-0 text-end text-xs tabular-nums text-text-muted">
               {`${Math.round(((dragged ?? fraction * SLIDER_STEPS) / SLIDER_STEPS) * 100).toString()}%`}
             </span>
           </>
@@ -716,7 +716,7 @@ const TextReader = ({
             <>
               <div
                 aria-hidden
-                className="pointer-events-none invisible absolute top-0 left-0 overflow-hidden"
+                className="pointer-events-none invisible absolute top-0 start-0 overflow-hidden"
                 style={{ width: textWidth, height: textHeight }}
               >
                 <div ref={flow} onLoadCapture={measure} className={FLOW} style={flowStyle}>

@@ -13,7 +13,7 @@ const LIFTS = [
 ].join(' ');
 
 const PLAY = [
-  'pointer-events-auto absolute right-2 bottom-2 flex size-11 items-center justify-center shadow-lg',
+  'pointer-events-auto absolute end-2 bottom-2 flex size-11 items-center justify-center shadow-lg',
   'translate-y-1 opacity-0 transition-[opacity,translate] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
   'hover-hover:group-hover/tile:translate-y-0 hover-hover:group-hover/tile:opacity-100',
   'focus-visible:translate-y-0 focus-visible:opacity-100 motion-reduce:transition-none',
@@ -59,7 +59,7 @@ const MusicTile = ({
         variant="bare"
         size="none"
         hasTooltip={false}
-        className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-md text-left"
+        className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-md text-start"
         onClick={onOpen}
       >
         <span

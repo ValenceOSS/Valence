@@ -66,7 +66,7 @@ const ArtworkTile = ({
       />
     )}
 
-    <span className="absolute bottom-2 left-2">
+    <span className="absolute bottom-2 start-2">
       <Badge tone="solid" size="sm">
         {isChosen ? say('screens.artworkPicker.artworkTile.chosen') : note}
       </Badge>

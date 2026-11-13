@@ -147,7 +147,7 @@ const CustomMessageCard = ({ setup, subscribed, url, onSave }: CustomMessageCard
       }
     >
       <div className="grid xl:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-3 p-4 xl:border-r xl:border-[var(--surface-line)]">
+        <div className="flex min-w-0 flex-col gap-3 p-4 xl:border-e xl:border-[var(--surface-line)]">
           <div className="flex flex-wrap items-center gap-1.5">
             {MESSAGE_VARIABLES.map((one) => (
               <Button

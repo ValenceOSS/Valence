@@ -151,7 +151,7 @@ const Rail = ({
           {onOpenTitle === undefined ? (
             title
           ) : (
-            <Button variant="link" size="none" onClick={onOpenTitle} className="text-left">
+            <Button variant="link" size="none" onClick={onOpenTitle} className="text-start">
               {title}
             </Button>
           )}

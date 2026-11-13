@@ -58,7 +58,7 @@ const ReaderPicker = ({
       className="h-auto min-w-0 flex-1 py-2"
       trigger={
         <>
-          <span className="flex min-w-0 flex-col items-start gap-0.5 text-left">
+          <span className="flex min-w-0 flex-col items-start gap-0.5 text-start">
             <span className="text-xs font-normal text-text-muted">{label}</span>
             <span className="max-w-full truncate text-sm text-text">{value}</span>
           </span>

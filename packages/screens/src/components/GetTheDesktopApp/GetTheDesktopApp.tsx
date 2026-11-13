@@ -83,7 +83,7 @@ const GetTheDesktopApp = ({ waitsMs = WAITS_MS }: GetTheDesktopAppProps) => {
           animate="shown"
           exit="gone"
           transition={revealTransition(prefersReducedMotion, 'heavy')}
-          className="fixed right-4 bottom-4 z-40 w-96 pb-[env(safe-area-inset-bottom,0px)]"
+          className="fixed end-4 bottom-4 z-40 w-96 pb-[env(safe-area-inset-bottom,0px)]"
         >
           <div className="valence-card-shell">
             <div className="valence-card-face valence-card-face--raised flex items-center gap-3 p-3">

@@ -669,7 +669,7 @@ const JobHistoryPanel = ({
         meta: { shrinks: true },
         cell: ({ row }) =>
           row.original.startedAtMs === null || row.original.finishedAtMs === null ? null : (
-            <span className="block whitespace-nowrap text-right tabular-nums text-text-muted">
+            <span className="block whitespace-nowrap text-end tabular-nums text-text-muted">
               {describeTook(row.original.finishedAtMs - row.original.startedAtMs)}
             </span>
           ),

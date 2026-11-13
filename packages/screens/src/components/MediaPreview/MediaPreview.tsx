@@ -443,7 +443,7 @@ const MediaPreview = ({
       {actions === undefined && closing === undefined && !hasStarted && !offersAStart ? null : (
         <div
           className={`absolute z-10 flex items-center gap-2 ${
-            isRoomy ? 'right-4 sm:right-6' : 'right-4'
+            isRoomy ? 'end-4 sm:end-6' : 'end-4'
           } ${
             controlsAtTop
               ? isRoomy

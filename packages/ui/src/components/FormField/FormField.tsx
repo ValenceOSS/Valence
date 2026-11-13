@@ -43,12 +43,12 @@ const FormField = ({
         <div
           className={cn(
             'relative flex min-w-0 flex-col gap-2',
-            aside === undefined ? '' : '[&_input]:pr-24 [&_textarea]:pr-24',
+            aside === undefined ? '' : '[&_input]:pe-24 [&_textarea]:pe-24',
           )}
         >
           {children}
           {aside === undefined ? null : (
-            <div className="absolute top-0 right-1.5 flex h-8 items-center gap-2">{aside}</div>
+            <div className="absolute top-0 end-1.5 flex h-8 items-center gap-2">{aside}</div>
           )}
         </div>
       </>

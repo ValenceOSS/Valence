@@ -93,7 +93,7 @@ const ChoiceList = ({
             </span>
 
             {choice.aside === undefined ? null : (
-              <span className="shrink-0 text-right">{choice.aside}</span>
+              <span className="shrink-0 text-end">{choice.aside}</span>
             )}
           </Button>
         );

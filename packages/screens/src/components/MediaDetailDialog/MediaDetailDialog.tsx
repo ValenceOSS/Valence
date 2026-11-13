@@ -581,7 +581,7 @@ const MediaDetailDialog = ({
                     label={say('screens.mediaDetailDialog.moreToDoWithThis')}
                     actions={actions}
                     isCompact
-                    className="md:ml-auto"
+                    className="md:ms-auto"
                   />
                 </DialogHeadlinePart>
               </DialogHeadline>

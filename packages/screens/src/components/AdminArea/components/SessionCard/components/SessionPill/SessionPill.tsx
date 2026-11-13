@@ -16,7 +16,7 @@ const SessionPill = ({ children, glyph, side = 'left' }: SessionPillProps) => (
       'absolute z-[2] inline-flex items-center whitespace-nowrap rounded-full bg-shade/45 font-semibold text-on-scrim ring-1 ring-on-scrim/15 ring-inset backdrop-blur-md backdrop-saturate-150',
       'top-[clamp(6px,2.8cqw,14px)] h-[clamp(19px,6.8cqw,28px)] gap-[clamp(4px,1.6cqw,7px)]',
       'px-[clamp(6px,2.4cqw,11px)] text-[clamp(10.5px,3.4cqw,13.5px)]',
-      side === 'left' ? 'left-[clamp(8px,3.4cqw,16px)]' : 'right-[clamp(8px,3.4cqw,16px)]',
+      side === 'left' ? 'start-[clamp(8px,3.4cqw,16px)]' : 'end-[clamp(8px,3.4cqw,16px)]',
     )}
   >
     {glyph === undefined ? null : (

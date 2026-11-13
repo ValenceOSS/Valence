@@ -45,7 +45,7 @@ const MeterTile = ({ label, value, detail, fraction, icon, className }: MeterTil
           fraction={fraction}
           ticks={20}
           tone={fraction >= ALARMS_FROM ? 'danger' : fraction >= WARNS_FROM ? 'warning' : 'primary'}
-          className="ml-auto h-5 w-[55%] max-w-48 shrink-0"
+          className="ms-auto h-5 w-[55%] max-w-48 shrink-0"
         />
       )}
     </div>

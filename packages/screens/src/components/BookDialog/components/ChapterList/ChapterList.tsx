@@ -33,7 +33,7 @@ const ChapterList = ({ chapters, read, onOpen }: ChapterListProps) => (
           onClick={() => {
             onOpen(chapter.id);
           }}
-          className="relative flex w-full items-center gap-4 py-3 text-left"
+          className="relative flex w-full items-center gap-4 py-3 text-start"
         >
           <span className="flex min-w-0 flex-1 flex-col gap-1.5">
             <span className="truncate text-sm font-medium text-text">

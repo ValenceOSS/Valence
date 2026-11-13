@@ -62,14 +62,14 @@ const CalendarTimelineBar = ({
       <Button
         variant="bare"
         size="none"
-        className="w-full text-left"
+        className="w-full text-start"
         onClick={() => {
           onOpen(next);
         }}
       >
         <span
           className={cn(
-            'valence-hoverable flex size-full items-center gap-2 rounded-lg bg-subtle py-1 pr-1.5 pl-1',
+            'valence-hoverable flex size-full items-center gap-2 rounded-lg bg-subtle py-1 pe-1.5 ps-1',
             row.last < today ? 'opacity-70' : '',
           )}
         >

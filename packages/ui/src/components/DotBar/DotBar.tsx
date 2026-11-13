@@ -43,7 +43,7 @@ const DotBar = ({ segments, litId = null, label, onPoint, className }: DotBarPro
             <div
               key={segment.id}
               className={cn(
-                'relative h-full min-w-1 border-y border-r first:rounded-l-xl first:border-l last:rounded-r-xl',
+                'relative h-full min-w-1 border-y border-e first:rounded-s-xl first:border-s last:rounded-e-xl',
                 'transition-[opacity,box-shadow,filter] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none',
                 isDim ? 'opacity-40' : 'opacity-100',
               )}

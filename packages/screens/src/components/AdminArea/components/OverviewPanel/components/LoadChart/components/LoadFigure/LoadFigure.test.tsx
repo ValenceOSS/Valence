@@ -24,7 +24,7 @@ describe('LoadFigure', () => {
       </dl>,
     );
 
-    expect(screen.getByText('Memory').parentElement).toHaveClass('lg:items-end', 'lg:text-right');
+    expect(screen.getByText('Memory').parentElement).toHaveClass('lg:items-end', 'lg:text-end');
   });
 
   it('sets a display name so devtools can identify it', () => {

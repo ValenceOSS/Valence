@@ -43,7 +43,7 @@ const PartyChat = ({ lines, meConnectionId, onWrite }: PartyChatProps) => {
               <li key={line.id} className="text-sm leading-snug break-words">
                 <span
                   className={cn(
-                    'mr-1.5 font-semibold',
+                    'me-1.5 font-semibold',
                     line.byConnectionId === meConnectionId ? 'text-text-muted' : 'text-text',
                   )}
                 >

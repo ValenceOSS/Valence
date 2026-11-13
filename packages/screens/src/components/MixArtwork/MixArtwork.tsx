@@ -38,7 +38,10 @@ const MixArtwork = ({ mix, number = 1 }: MixArtworkProps) => {
   const firstAlbum = mix.coverAlbumIds[0];
   const lead = pictures[0]?.src ?? (firstAlbum === undefined ? null : albumArtworkUrl(firstAlbum));
   const mark = (
-    <span className="absolute left-[4.5cqi] top-[4.5cqi] flex h-[6.5cqi]" style={{ color: colour }}>
+    <span
+      className="absolute start-[4.5cqi] top-[4.5cqi] flex h-[6.5cqi]"
+      style={{ color: colour }}
+    >
       <Logo isCurrentColour className="h-full" />
     </span>
   );
@@ -46,8 +49,8 @@ const MixArtwork = ({ mix, number = 1 }: MixArtworkProps) => {
   if (mix.kind === 'station') {
     const [first, second, third] = pictures;
     const circles = [
-      { face: second, place: 'left-[-8%] top-[20%] w-[38%]' },
-      { face: third, place: 'right-[-8%] top-[20%] w-[38%]' },
+      { face: second, place: 'start-[-8%] top-[20%] w-[38%]' },
+      { face: third, place: 'end-[-8%] top-[20%] w-[38%]' },
       { face: first, place: 'left-1/2 top-[12%] w-[52%] -translate-x-1/2' },
     ];
 
@@ -67,7 +70,7 @@ const MixArtwork = ({ mix, number = 1 }: MixArtworkProps) => {
           ),
         )}
 
-        <span className="absolute right-[5cqi] top-[4cqi] text-[4.5cqi] font-bold uppercase tracking-[0.12em] text-shade">
+        <span className="absolute end-[5cqi] top-[4cqi] text-[4.5cqi] font-bold uppercase tracking-[0.12em] text-shade">
           {say('screens.mixArtwork.station')}
         </span>
 

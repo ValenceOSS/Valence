@@ -17,7 +17,7 @@ import type { PluginRowProps } from './PluginRow.types';
  */
 const PluginRow = ({ pluginId, row, onAct, isActing }: PluginRowProps) => {
   const inside = (
-    <span className="flex w-full min-w-0 items-center gap-3 px-3 py-2.5 text-left">
+    <span className="flex w-full min-w-0 items-center gap-3 px-3 py-2.5 text-start">
       {row.image === undefined ? (
         row.icon === undefined ? null : (
           <Icon of={glyphFor(PLUGIN_ICONS, row.icon)} size={18} tone="muted" className="shrink-0" />

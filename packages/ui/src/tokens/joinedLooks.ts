@@ -5,7 +5,7 @@ import { FIELD_SURFACE } from '@ValenceUI/tokens/FIELD_SURFACE';
 const JOINED_SIZE = 'size-9 coarse:size-11';
 
 const DIVIDER =
-  'relative before:pointer-events-none before:absolute before:inset-y-2.5 before:left-0 before:w-px';
+  'relative before:pointer-events-none before:absolute before:inset-y-2.5 before:start-0 before:w-px';
 
 const FLIPS = '[&_svg]:transition-transform [&[data-state=open]_svg]:rotate-180';
 
@@ -22,14 +22,14 @@ const JOINED_LOOKS = {
     JOINED_SIZE,
     DIVIDER,
     FLIPS,
-    'border-l-0 before:bg-[var(--surface-line)] data-[state=open]:bg-[var(--surface-active)]',
+    'border-s-0 before:bg-[var(--surface-line)] data-[state=open]:bg-[var(--surface-active)]',
   ),
   raised: cn(
     buttonStyles({ variant: 'raised', size: 'lg', isIconOnly: true, shape: 'joinsPrevious' }),
     JOINED_SIZE,
     DIVIDER,
     FLIPS,
-    'border-l-0 shadow-none before:bg-[var(--surface-line)] data-[state=open]:brightness-125',
+    'border-s-0 shadow-none before:bg-[var(--surface-line)] data-[state=open]:brightness-125',
   ),
   track: cn(
     'inline-flex min-w-0 divide-x divide-[var(--surface-line)] overflow-hidden rounded-lg',
@@ -43,7 +43,7 @@ const JOINED_LOOKS = {
   field: cn(
     'h-8 gap-1.5 px-3 text-[0.8125rem] font-medium text-text',
     FIELD_SURFACE,
-    'rounded-l-none border-l-0',
+    'rounded-s-none border-s-0',
     'hover:border-[var(--surface-divider)] hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
     DIVIDER,
     'before:inset-y-1.5 before:bg-[var(--surface-line)]',

@@ -193,7 +193,7 @@ const WhoIsWatching = ({
                     />
 
                     {profile.hasPin ? (
-                      <span className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-surface-raised text-text-muted shadow">
+                      <span className="absolute -bottom-1 -end-1 flex size-7 items-center justify-center rounded-full bg-surface-raised text-text-muted shadow">
                         <Icon
                           of={LockIcon}
                           size={14}

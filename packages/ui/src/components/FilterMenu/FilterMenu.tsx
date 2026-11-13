@@ -61,7 +61,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
               />
 
               {selected.size === 0 ? null : (
-                <Badge tone="solid" size="sm" className="absolute -right-2.5 -top-2.5">
+                <Badge tone="solid" size="sm" className="absolute -end-2.5 -top-2.5">
                   <FormattedNumber value={selected.size} />
                 </Badge>
               )}

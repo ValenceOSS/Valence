@@ -183,7 +183,7 @@ const JobRunnerRow = ({
       <li className="flex flex-col gap-2 px-4 py-3">
         {about}
 
-        <span className="-ml-2 flex w-full max-w-[26rem] min-w-0 items-center justify-between gap-2">
+        <span className="-ms-2 flex w-full max-w-[26rem] min-w-0 items-center justify-between gap-2">
           {action}
 
           <span className="flex min-w-0 items-center gap-2">
@@ -201,7 +201,7 @@ const JobRunnerRow = ({
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_11rem_6rem]">
       {about}
 
-      <span className="hidden text-right text-xs tabular-nums text-text-muted sm:block">
+      <span className="hidden text-end text-xs tabular-nums text-text-muted sm:block">
         {countdown}
       </span>
 

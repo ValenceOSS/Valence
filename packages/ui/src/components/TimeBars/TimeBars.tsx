@@ -247,7 +247,7 @@ const TimeBars = ({
                 ))
               : null}
             {isPicking ? (
-              <span className="ml-auto">{say('ui.timeBars.dragAcrossTheBarsToZoom')}</span>
+              <span className="ms-auto">{say('ui.timeBars.dragAcrossTheBarsToZoom')}</span>
             ) : null}
           </figcaption>
         </>

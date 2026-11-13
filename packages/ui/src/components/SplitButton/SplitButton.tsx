@@ -48,7 +48,7 @@ const SplitButton = ({
       joins="next"
       className={cn(
         'min-w-0 flex-1',
-        tone === 'confirm' ? '' : 'border-r-0',
+        tone === 'confirm' ? '' : 'border-e-0',
         tone === 'raised' ? 'shadow-none' : '',
       )}
       onClick={onClick}

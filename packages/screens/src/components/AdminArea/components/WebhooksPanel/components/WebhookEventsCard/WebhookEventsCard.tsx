@@ -149,7 +149,7 @@ const WebhookEventsCard = ({ events, offered, hasRequests, onChange }: WebhookEv
       title={say('screens.adminArea.webhookEventsCard.whatItSends')}
       isFlush
       actions={
-        <span className="pr-3 text-xs text-text-muted">
+        <span className="pe-3 text-xs text-text-muted">
           {say('common.doneOfTotal', { done: totalOn, total: total.length })}
         </span>
       }

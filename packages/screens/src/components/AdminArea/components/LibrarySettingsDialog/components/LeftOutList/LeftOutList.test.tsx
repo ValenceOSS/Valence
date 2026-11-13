@@ -11,7 +11,7 @@ vi.mock('@ValenceClient/library/fetchLeftOut', () => ({ fetchLeftOut: fetchLeftO
 vi.mock('@ValenceClient/library/bringBack', () => ({ bringBack: bringBackMock }));
 
 const LEFT = {
-  id: 'left-1',
+  id: 'start-1',
   libraryId: 'library-1',
   path: '/media/films/Broken (2019)/Broken.mkv',
   isFolder: false,
@@ -35,7 +35,7 @@ describe('LeftOutList', () => {
   it('lists what is left out from inside the library, with why', async () => {
     fetchLeftOutMock.mockResolvedValue([
       LEFT,
-      { ...LEFT, id: 'left-2', path: '/media/films/Extras', isFolder: true, note: null },
+      { ...LEFT, id: 'start-2', path: '/media/films/Extras', isFolder: true, note: null },
     ]);
     draw();
 
@@ -56,7 +56,7 @@ describe('LeftOutList', () => {
       await screen.findByRole('button', { name: 'Include Broken (2019)/Broken.mkv again' }),
     );
 
-    expect(bringBackMock).toHaveBeenCalledWith('library-1', 'left-1');
+    expect(bringBackMock).toHaveBeenCalledWith('library-1', 'start-1');
     await waitFor(() => {
       expect(screen.getByText(/Nothing is excluded/)).toBeInTheDocument();
     });

@@ -1,6 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Home as HomeIcon, Pause as PauseIcon, Play as PlayIcon } from '@keyline-icons/react';
+import {
+  ChevronRight as ChevronRightIcon,
+  Home as HomeIcon,
+  Pause as PauseIcon,
+  Play as PlayIcon,
+} from '@keyline-icons/react';
 import { Home as HomeFilledIcon } from '@keyline-icons/react/fill';
 import { Icon } from './Icon';
 
@@ -149,6 +154,16 @@ describe('Icon', () => {
     const { container } = render(<Icon of={HomeIcon} tone="scrim" />);
 
     expect(container.firstElementChild).toHaveClass('text-on-scrim');
+  });
+
+  it('mirrors an arrow along the line of text where the page runs right to left, and nothing else', () => {
+    const { container, rerender } = render(<Icon of={ChevronRightIcon} />);
+
+    expect(container.firstElementChild).toHaveClass('rtl:-scale-x-100');
+
+    rerender(<Icon of={PlayIcon} />);
+
+    expect(container.firstElementChild).not.toHaveClass('rtl:-scale-x-100');
   });
 
   it('sets a display name so devtools can identify it', () => {

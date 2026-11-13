@@ -56,7 +56,7 @@ const SessionLane = ({ name, face, count, size, children }: SessionLaneProps) =>
         </span>
 
         {!isOpen || pages.count <= 1 ? null : (
-          <span className="ml-auto flex shrink-0 items-center gap-1.5">
+          <span className="ms-auto flex shrink-0 items-center gap-1.5">
             <Button
               variant="secondary"
               size="xs"

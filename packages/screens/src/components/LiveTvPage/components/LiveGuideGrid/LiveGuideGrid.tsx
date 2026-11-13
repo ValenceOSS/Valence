@@ -146,7 +146,7 @@ const LiveGuideGrid = ({
           >
             <div
               className={cn(
-                'sticky left-0 z-20 flex shrink-0 items-center border-r border-[var(--surface-line)] px-3',
+                'sticky start-0 z-20 flex shrink-0 items-center border-e border-[var(--surface-line)] px-3',
                 TABLE_LOOKS.band,
               )}
               style={{ width: `${CHANNELS_REM.toString()}rem` }}
@@ -162,7 +162,7 @@ const LiveGuideGrid = ({
               {slots.map((slot) => (
                 <span
                   key={slot}
-                  className="absolute bottom-0 top-0 flex items-center border-l border-[var(--surface-line)] pl-2 tabular-nums"
+                  className="absolute bottom-0 top-0 flex items-center border-s border-[var(--surface-line)] ps-2 tabular-nums"
                   style={{ left: `${remOf(slot).toString()}rem` }}
                 >
                   {isNowShown && Math.abs(slot - now) < LABEL_CLEARS_MS ? '' : timeOf(slot)}
@@ -195,7 +195,7 @@ const LiveGuideGrid = ({
               >
                 <div
                   className={cn(
-                    'sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-[var(--surface-line)] px-3',
+                    'sticky start-0 z-10 flex shrink-0 items-center gap-2 border-e border-[var(--surface-line)] px-3',
                     TABLE_LOOKS.body,
                   )}
                   style={{ width: `${CHANNELS_REM.toString()}rem` }}
@@ -203,7 +203,7 @@ const LiveGuideGrid = ({
                   {isChosen ? (
                     <span
                       aria-hidden
-                      className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-accent"
+                      className="absolute inset-y-2 start-0 w-1 rounded-e-full bg-accent"
                     />
                   ) : null}
                   <Button
@@ -214,7 +214,7 @@ const LiveGuideGrid = ({
                       onChoose(channel.id);
                     }}
                     className={cn(
-                      'flex min-w-0 flex-1 items-center gap-3 text-left',
+                      'flex min-w-0 flex-1 items-center gap-3 text-start',
                       isUnplayable(channel.health) ? 'opacity-55' : '',
                     )}
                   >
@@ -274,7 +274,7 @@ const LiveGuideGrid = ({
                   onClick={() => {
                     onChoose(channel.id);
                   }}
-                  className="relative block h-full shrink-0 text-left"
+                  className="relative block h-full shrink-0 text-start"
                   style={{ width: `${timelineRem.toString()}rem` }}
                 >
                   {shown.length === 0 ? (
@@ -321,7 +321,7 @@ const LiveGuideGrid = ({
                           {isOn ? (
                             <span
                               aria-hidden
-                              className="absolute bottom-0 left-0 h-0.5 bg-accent"
+                              className="absolute bottom-0 start-0 h-0.5 bg-accent"
                               style={{
                                 width: `${(((now - start) / (end - start)) * 100).toString()}%`,
                               }}
@@ -347,7 +347,7 @@ const LiveGuideGrid = ({
               className="pointer-events-none absolute bottom-0 top-11 z-[5] w-px -translate-x-1/2 bg-accent/80"
               style={{ left: nowLeft }}
             >
-              <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-accent" />
+              <span className="absolute -start-[3px] -top-[3px] size-[7px] rounded-full bg-accent" />
             </span>
           ) : null}
         </div>

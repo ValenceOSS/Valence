@@ -182,7 +182,7 @@ const ShareArea = ({
 
   return (
     <main className="relative min-h-svh">
-      <span className="pointer-events-none absolute left-5 top-6 z-20 text-xs font-medium text-text-muted sm:left-10">
+      <span className="pointer-events-none absolute start-5 top-6 z-20 text-xs font-medium text-text-muted sm:start-10">
         {say('screens.shareArea.sharedWithYouOnName', { name })}
       </span>
 

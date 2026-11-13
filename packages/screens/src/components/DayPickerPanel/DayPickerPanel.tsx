@@ -27,7 +27,7 @@ const DayPickerPanel = ({ picked, today, onPick, footer }: DayPickerPanelProps) 
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2 pl-2">
+      <div className="flex items-center justify-between gap-2 ps-2">
         <span className="text-sm font-semibold text-text">{nameTheMonth(month)}</span>
         <span className="flex items-center">
           <Button

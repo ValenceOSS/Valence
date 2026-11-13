@@ -147,7 +147,7 @@ const PeopleStep = ({ source, onContinue, onBack }: PeopleStepProps) => {
                 </div>
 
                 {person.access === 'needsPin' ? (
-                  <div className="flex flex-wrap items-end gap-2 pl-7">
+                  <div className="flex flex-wrap items-end gap-2 ps-7">
                     <TextField
                       label={say('screens.importWizard.peopleStep.theirPin')}
                       type="password"
@@ -177,7 +177,7 @@ const PeopleStep = ({ source, onContinue, onBack }: PeopleStepProps) => {
                 ) : null}
 
                 {person.access === 'unreadable' ? (
-                  <p className="pl-7 text-sm text-text-muted">
+                  <p className="ps-7 text-sm text-text-muted">
                     {say('screens.importWizard.peopleStep.plexWillNotShareTheirWatching')}
                   </p>
                 ) : null}
@@ -188,7 +188,7 @@ const PeopleStep = ({ source, onContinue, onBack }: PeopleStepProps) => {
       </PanelCard>
 
       <div className="flex items-center justify-between gap-3">
-        <Button variant="ghost" className="-ml-3" onClick={onBack}>
+        <Button variant="ghost" className="-ms-3" onClick={onBack}>
           {say('common.back')}
         </Button>
 

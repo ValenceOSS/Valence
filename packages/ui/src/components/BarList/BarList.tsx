@@ -52,7 +52,7 @@ const BarList = ({
             {items.map((item) => {
               const isChosen = chosen?.has(item.id) === true;
               const row = (
-                <span className="flex w-full flex-col gap-1.5 text-left">
+                <span className="flex w-full flex-col gap-1.5 text-start">
                   <span className="flex items-baseline justify-between gap-3">
                     <span className="flex min-w-0 flex-col">
                       <span className={cn('truncate', isChosen && 'font-semibold')}>

@@ -149,7 +149,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                   align="end"
                   size="sm"
                   look="raised"
-                  className="absolute right-2 top-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                  className="absolute end-2 top-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
                   trigger={<Icon of={EllipsisIcon} size={16} />}
                   groups={[
                     {

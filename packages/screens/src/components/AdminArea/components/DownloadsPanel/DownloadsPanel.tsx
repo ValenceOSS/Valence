@@ -297,7 +297,7 @@ const DownloadsPanel = () => {
         actions={
           <>
             {total === null ? null : (
-              <span className="text-xs tabular-nums text-text-muted last:pr-3">{total}</span>
+              <span className="text-xs tabular-nums text-text-muted last:pe-3">{total}</span>
             )}
 
             {tab !== 'clients' ? null : (

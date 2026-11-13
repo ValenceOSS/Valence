@@ -36,7 +36,7 @@ const SeasonMate = ({ episode, watched, namesItsShow = false, onSelect }: Season
                 title: episode.title,
               })
         }
-        className="group flex w-full flex-col items-stretch gap-2 text-left"
+        className="group flex w-full flex-col items-stretch gap-2 text-start"
         onClick={onSelect}
       >
         <span className="relative block aspect-video w-full overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">

@@ -64,7 +64,7 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
                     <Doodle
                       of="underline"
                       delay={0.5}
-                      className="absolute -bottom-[0.12em] left-[2%] h-[0.22em] w-[96%] text-accent"
+                      className="absolute -bottom-[0.12em] start-[2%] h-[0.22em] w-[96%] text-accent"
                     />
                   </span>
                 </>

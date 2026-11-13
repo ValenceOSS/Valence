@@ -70,7 +70,7 @@ const ReaderContents = ({
     >
       <span className="block px-2 pt-1.5 pb-2 text-xs font-medium text-text-muted">{label}</span>
 
-      <ScrollFade className="max-h-[min(32rem,70vh)] pr-1">
+      <ScrollFade className="max-h-[min(32rem,70vh)] pe-1">
         <div
           ref={containerRef}
           onPointerMove={follow}
@@ -101,7 +101,7 @@ const ReaderContents = ({
                       onSelect(entry.id);
                     }}
                     className={cn(
-                      'flex w-full items-baseline gap-3 rounded-lg px-2 py-2.5 text-left outline-none focus-visible:focus-ring',
+                      'flex w-full items-baseline gap-3 rounded-lg px-2 py-2.5 text-start outline-none focus-visible:focus-ring',
                       'transition-[background-color,scale,opacity] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
                       'active:scale-[0.99] motion-reduce:transition-none',
                       isCurrent

@@ -53,9 +53,7 @@ const AdminStatusFooter = ({
       )}
     >
       {isPillOnly ? null : (
-        <span
-          className={cn('flex min-w-0 flex-col', isInHeader ? 'items-end text-right' : 'flex-1')}
-        >
+        <span className={cn('flex min-w-0 flex-col', isInHeader ? 'items-end text-end' : 'flex-1')}>
           <span className="truncate text-[0.8125rem] font-medium text-text">
             {say('common.valence')}
           </span>
@@ -89,8 +87,8 @@ const AdminStatusFooter = ({
           className={cn(
             'inline-flex shrink-0 items-center rounded-full border font-medium tabular-nums',
             isInHeader
-              ? 'h-8 gap-1.5 pr-2.5 pl-3 text-[0.8125rem]'
-              : 'h-6 gap-1 pr-1.5 pl-2 text-xs',
+              ? 'h-8 gap-1.5 pe-2.5 ps-3 text-[0.8125rem]'
+              : 'h-6 gap-1 pe-1.5 ps-2 text-xs',
             PILL_LOOKS[look],
           )}
         >

@@ -37,7 +37,7 @@ const TrickplayFrame = ({ trickplay, seconds, isFluid = false }: TrickplayFrameP
             aria-label={say('screens.videoPlayer.trickplayFrame.previewAtSeconds', {
               seconds: formatDuration(seconds),
             })}
-            className="absolute top-0 left-0 origin-top-left bg-no-repeat"
+            className="absolute top-0 start-0 origin-top-left bg-no-repeat"
             style={{
               width: `${naturalWidth.toString()}px`,
               height: `${naturalHeight.toString()}px`,

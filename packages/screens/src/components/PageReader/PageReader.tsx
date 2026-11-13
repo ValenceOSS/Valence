@@ -492,7 +492,7 @@ const PageReader = ({
         }
         footer={
           settings.isScrolling ? (
-            <span className="ml-auto text-xs tabular-nums text-text-muted">
+            <span className="ms-auto text-xs tabular-nums text-text-muted">
               {`${(visiblePage + 1).toString()} / ${pageCount.toString()}`}
             </span>
           ) : (
@@ -510,7 +510,7 @@ const PageReader = ({
                 className="flex-1"
               />
 
-              <span className="w-24 shrink-0 text-right text-xs tabular-nums text-text-muted">
+              <span className="w-24 shrink-0 text-end text-xs tabular-nums text-text-muted">
                 {`${describePages(showing)} / ${pageCount.toString()}`}
               </span>
             </>

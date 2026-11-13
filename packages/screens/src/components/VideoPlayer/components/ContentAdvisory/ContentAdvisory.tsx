@@ -28,7 +28,7 @@ const ContentAdvisory = ({ certification, region, advisories, isShown }: Content
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: prefersReducedMotion === true ? 0 : 0.4, ease: 'easeOut' }}
-          className="pointer-events-none absolute top-[calc(4.5rem+env(safe-area-inset-top,0px))] left-[calc(1.5rem+env(safe-area-inset-left,0px))] z-10 flex max-w-md items-center gap-3 rounded-r-md border-l-2 border-on-scrim/80 bg-scrim/60 py-1.5 pr-3 pl-3 text-on-scrim"
+          className="pointer-events-none absolute top-[calc(4.5rem+env(safe-area-inset-top,0px))] start-[calc(1.5rem+env(safe-area-inset-left,0px))] z-10 flex max-w-md items-center gap-3 rounded-e-md border-s-2 border-on-scrim/80 bg-scrim/60 py-1.5 pe-3 ps-3 text-on-scrim"
         >
           {hasRating ? <AgeRating certification={certification} region={region} /> : null}
           {contains === null ? null : <span className="text-sm font-medium">{contains}</span>}

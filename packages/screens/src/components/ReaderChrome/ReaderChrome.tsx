@@ -183,7 +183,7 @@ const ReaderChrome = ({
 
         {isScrolling ? null : (
           <>
-            <div className="absolute top-16 bottom-16 left-0 flex w-1/3">
+            <div className="absolute top-16 bottom-16 start-0 flex w-1/3">
               <Button
                 variant="bare"
                 size="none"
@@ -203,7 +203,7 @@ const ReaderChrome = ({
               </Button>
             </div>
 
-            <div className="absolute top-16 bottom-16 right-0 flex w-1/3">
+            <div className="absolute top-16 bottom-16 end-0 flex w-1/3">
               <Button
                 variant="bare"
                 size="none"

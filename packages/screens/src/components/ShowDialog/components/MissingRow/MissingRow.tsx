@@ -52,7 +52,7 @@ const MissingRow = ({
 
   return (
     <div className="flex flex-wrap items-center gap-3 py-3">
-      <span className="flex min-w-[min(100%,24rem)] flex-1 basis-96 items-center gap-4 text-left">
+      <span className="flex min-w-[min(100%,24rem)] flex-1 basis-96 items-center gap-4 text-start">
         <span className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-lg bg-surface-raised ring-1 ring-dashed ring-line sm:w-36">
           {stillUrl === null || stillUrl === undefined ? null : (
             <img
@@ -71,7 +71,7 @@ const MissingRow = ({
       </span>
 
       {onRequest === undefined && !hasOverview ? null : (
-        <span className="ml-auto flex shrink-0 items-center">
+        <span className="ms-auto flex shrink-0 items-center">
           {onRequest === undefined ? null : (
             <Button
               variant="confirm"
@@ -89,7 +89,7 @@ const MissingRow = ({
               size="md"
               isIconOnly
               {...(onRequest === undefined ? {} : { joins: 'previous' as const })}
-              className={onRequest === undefined ? '' : 'border-l-0'}
+              className={onRequest === undefined ? '' : 'border-s-0'}
               label={say('common.aboutTitle', { title: title ?? named })}
               onClick={() => {
                 setIsReading(true);
