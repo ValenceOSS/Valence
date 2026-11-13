@@ -43,6 +43,7 @@ type CreateAuthOptions = {
   onUserChanged?: (userId: string) => Promise<void>;
   onSignedIn?: (userId: string, at: Date) => Promise<void>;
   onSessionStarted?: (sessionId: string, headers: Headers | null) => Promise<void>;
+  onSessionEnded?: (sessionId: string) => void;
   onDeviceCodeIssued?: (userCode: string, headers: Headers | null) => void;
   onPasswordResetRequested?: (email: string, url: string, name: string) => Promise<void>;
   onSignInSettled?: (attempt: SignInAttempt) => void;
@@ -82,7 +83,8 @@ const SIGN_OUT_PATH = '/sign-out';
  * own. Without either, a television that finished signing in was left on the sign-in screen.
  *
  * @param options - The environment, the database, the settings store, whether cookies are secure,
- * and the hooks fired when an account is made or changed, signs in, or asks for a reset.
+ * and the hooks fired when an account is made or changed, signs in, a session ends, or a reset is
+ * asked for.
  * @returns The authentication layer.
  */
 const createAuth = ({
@@ -97,6 +99,7 @@ const createAuth = ({
   onSignInSettled,
   onSignedOut,
   onSessionStarted,
+  onSessionEnded,
   onDeviceCodeIssued,
 }: CreateAuthOptions) => {
   return betterAuth({
@@ -153,6 +156,8 @@ const createAuth = ({
         },
         delete: {
           after: async (ended, context) => {
+            onSessionEnded?.(ended.id);
+
             if (context?.path === SIGN_OUT_PATH) {
               await onSignedOut?.({
                 userId: ended.userId,

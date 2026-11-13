@@ -264,6 +264,20 @@ describe('createAuth', () => {
     expect(changed).toEqual([store.user[0]?.id]);
   });
 
+  it('says a session has ended however it ended, so nothing it opened outlives it', async () => {
+    const { auth, sessionsEnded } = createMemoryAuth();
+    const signedUp = await auth.handler(post('/api/auth/sign-up/email', credentials));
+    const cookie = signedUp.headers
+      .getSetCookie()
+      .map((one) => one.split(';')[0] ?? '')
+      .join('; ');
+    const signedIn = await auth.api.getSession({ headers: new Headers({ cookie }) });
+
+    await auth.handler(post('/api/auth/revoke-sessions', {}, { cookie, origin: BASE_URL }));
+
+    expect(sessionsEnded).toContain(signedIn?.session.id);
+  });
+
   it('produces a recovery link when someone forgets their password', async () => {
     const { auth, resetLinks } = createMemoryAuth();
     await auth.handler(post('/api/auth/sign-up/email', credentials));

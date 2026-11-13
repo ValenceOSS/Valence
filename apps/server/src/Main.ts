@@ -599,6 +599,7 @@ import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 import { isANarrowedKey } from '@ValenceServer/realtime/isANarrowedKey';
 import { isASocketFromHere } from '@ValenceServer/realtime/isASocketFromHere';
+import { isStillSignedIn } from '@ValenceServer/auth/isStillSignedIn';
 import { createBetterAuthApiKeyService } from '@ValenceServer/auth/createBetterAuthApiKeyService';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
@@ -890,6 +891,9 @@ const auth = createAuth({
       .catch((error: Error) => {
         log.warn('auth', `could not note which device signed in: ${error.message}`);
       });
+  },
+  onSessionEnded: (sessionId) => {
+    signedInSockets.close({ sessionIds: [sessionId] });
   },
   onSignedOut: async ({ userId, address, userAgent }) => {
     const [account] = await db
@@ -6824,6 +6828,16 @@ app.get(
         heartbeat = setInterval(() => {
           if (session?.ping() === false) {
             socket.close();
+
+            return;
+          }
+
+          if (accountId !== null) {
+            void isStillSignedIn(auth, context.req.raw.headers, accountId).then((still) => {
+              if (!still) {
+                socket.close();
+              }
+            });
           }
         }, REALTIME_HEARTBEAT_MS);
 
