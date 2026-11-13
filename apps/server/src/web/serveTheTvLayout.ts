@@ -86,7 +86,7 @@ const serveTheTvLayout = (root: string) => {
 
       without.searchParams.delete('layout');
 
-      return context.redirect(`${without.pathname}${without.search}`, 302);
+      return context.redirect(`/${without.pathname.replace(/^[/\\]+/u, '')}${without.search}`, 302);
     }
 
     const chosen = getCookie(context, LAYOUT_COOKIE);

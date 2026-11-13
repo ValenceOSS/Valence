@@ -136,6 +136,18 @@ describe('serveTheTvLayout', () => {
     expect(toWeb.headers.get('set-cookie')).toContain('valence-layout=web');
   });
 
+  it('never sends the browser to another host named in the path when it takes the layout out of the address', async () => {
+    const app = aServer();
+    const answer = await app.request('//evil.example/path?layout=tv', {
+      headers: { 'user-agent': LG_2025 },
+    });
+    const location = answer.headers.get('location') ?? '';
+
+    expect(answer.status).toBe(302);
+    expect(location.startsWith('/')).toBe(true);
+    expect(location.startsWith('//')).toBe(false);
+  });
+
   it('asks any browser that chose the web app from the TV layout to keep it, TV or not', async () => {
     const app = new Hono();
     const tv = mkdtempSync(join(tmpdir(), 'valence-tv-layout-'));
