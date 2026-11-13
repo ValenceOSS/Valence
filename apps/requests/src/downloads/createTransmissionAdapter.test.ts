@@ -362,4 +362,19 @@ describe('createTransmissionAdapter', () => {
 
     expect(await createTransmissionAdapter(SETTINGS, fetch).files?.(HASH)).toBeNull();
   });
+
+  it('refuses a magnet link that carries a second address', async () => {
+    const { fetch, asked } = aTransmission({
+      'torrent-add': { 'torrent-added': { hashString: HASH.toUpperCase(), id: 1, name: 'Dune' } },
+    });
+
+    await expect(
+      createTransmissionAdapter(SETTINGS, fetch).add(
+        { kind: 'magnet', url: 'magnet:?xt=urn:btih:x\nhttp://10.0.0.5/x' },
+        'Dune',
+        'valence',
+      ),
+    ).rejects.toThrow();
+    expect(asked.some((request) => rpcOf(request).method === 'torrent-add')).toBe(false);
+  });
 });

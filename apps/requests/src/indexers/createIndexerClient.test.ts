@@ -189,6 +189,14 @@ describe('createIndexerClient', () => {
       ).rejects.toThrow();
     });
 
+    it('refuses a magnet link that carries a second address', async () => {
+      const client = createIndexerClient({ fetch: answering(''), pacer: createPacer() });
+
+      await expect(
+        client.download(JACKETT, 'magnet:?xt=urn:btih:A\nhttp://10.0.0.5/x'),
+      ).rejects.toThrow();
+    });
+
     it('says so when the file is not there, or the indexer cannot be reached', async () => {
       await expect(
         createIndexerClient({ fetch: answering('', 404), pacer: createPacer() }).download(

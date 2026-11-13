@@ -1,3 +1,4 @@
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { indexerEndpoint } from '@ValenceRequests/indexers/indexerEndpoint';
 import { readCapabilities } from '@ValenceRequests/indexers/readCapabilities';
@@ -273,6 +274,10 @@ const createIndexerClient = ({
 
     download: async (indexer: IndexerConnection, url: string): Promise<ReleaseFile> => {
       if (url.startsWith('magnet:')) {
+        if (!isSingleMagnetLink(url)) {
+          throw new Error('That is not one magnet link');
+        }
+
         return { kind: 'magnet', url };
       }
 
