@@ -1,4 +1,5 @@
 import { drawingToShow } from '@ValenceClient/profiles/drawingToShow';
+import { useSettledValue } from '@ValenceClient/profiles/useSettledValue';
 import { useEffect, useRef, useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -32,6 +33,8 @@ import { say } from '@ValenceI18n/say';
 type Mode = (typeof FACE_MODES)[number]['id'];
 
 const UNFRAMED: PhotoFrame = { zoom: 1, x: 0, y: 0 };
+
+const SETTLES_AFTER = 250;
 
 /**
  * Making somebody's face, of whichever kind they like — a picture of their own sat where they want
@@ -77,28 +80,38 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
   );
 
   const wasOpen = useRef(isOpen);
+  const picks = useRef(0);
 
   useEffect(() => {
     if (isOpen && !wasOpen.current) {
+      picks.current += 1;
       setMode('photo');
+      setPhoto(start.avatar.kind === 'photo' ? start.photo : null);
+      setPreview(start.avatar.kind === 'photo' ? start.photo : null);
+      setFilter(start.avatar.kind === 'photo' ? (start.avatar.filter ?? 'original') : 'original');
+      setFrame(start.avatar.kind === 'photo' ? (start.avatar.frame ?? UNFRAMED) : UNFRAMED);
+      setDrawn(
+        start.avatar.kind === 'drawn'
+          ? { style: start.avatar.style, seed: start.avatar.seed }
+          : { style: 'adventurer', seed: profile.id },
+      );
+      setFont(start.avatar.kind === 'initial' ? start.avatar.font : PLUS_JAKARTA_SANS_AS_STORED);
       setColour(start.colour);
       setColourTo(start.avatar.kind === 'initial' ? (start.avatar.colourTo ?? null) : null);
       setIsOnColour(start.avatar.kind === 'drawn' && start.avatar.isOnColour === true);
     }
 
     wasOpen.current = isOpen;
-  }, [isOpen, start]);
+  }, [isOpen, start, profile.id]);
 
   const hadPhoto = profile.avatar.kind === 'photo';
+  const settledColour = useSettledValue(colour, SETTLES_AFTER);
   const chosen = useFileAddress(mode === 'photo' ? preview : null);
   const source =
     mode === 'drawn'
-      ? drawingToShow(drawn.style, drawn.seed, isOnColour ? colour : null)
+      ? drawingToShow(drawn.style, drawn.seed, isOnColour ? settledColour : null)
       : profileAvatarUrl(profile);
-  const photoIsVideo =
-    photo === null
-      ? profile.avatar.kind === 'photo' && profile.avatar.isVideo
-      : photo.type.startsWith('video/');
+  const photoIsVideo = photo === null && profile.avatar.kind === 'photo' && profile.avatar.isVideo;
   const placing =
     mode !== 'photo' || photoIsVideo
       ? null
@@ -112,6 +125,8 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
         : { kind: 'initial', font, ...(colourTo === null ? {} : { colourTo }) };
 
   const canUse = mode !== 'photo' || photo !== null || hadPhoto;
+  const isAwaitingAPhoto = mode === 'photo' && !hadPhoto && photo === null;
+  const shown = isAwaitingAPhoto ? profile.avatar : avatar;
 
   const handOver = () => {
     onUse({ avatar, photo: mode === 'photo' ? photo : null, colour });
@@ -147,7 +162,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
           <FaceStage
             name={profile.name}
             colour={colour}
-            avatar={avatar}
+            avatar={shown}
             source={source}
             pending={mode === 'photo' ? preview : null}
             framing={
@@ -170,7 +185,15 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
                 filter={filter}
                 frame={frame}
                 onPick={(file) => {
+                  picks.current += 1;
+
+                  const pick = picks.current;
+
                   void readPickedPicture(file, PICTURE_LIMITS.face).then((read) => {
+                    if (pick !== picks.current) {
+                      return;
+                    }
+
                     if ('refusal' in read) {
                       notify.failed(read.refusal);
 
@@ -227,7 +250,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
           <FaceSizes
             name={profile.name}
             colour={colour}
-            avatar={avatar}
+            avatar={shown}
             source={source}
             pending={mode === 'photo' ? preview : null}
           />

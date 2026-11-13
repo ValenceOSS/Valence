@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { placedPicture } from '@ValenceCore/pictures/placedPicture';
 import { toneFilter } from '@ValenceCore/pictures/toneFilter';
@@ -27,11 +27,10 @@ const FramedPicture = ({
   onError,
   className,
 }: FramedPictureProps) => {
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-
-  useEffect(() => {
-    setSize(null);
-  }, [src]);
+  const [measured, setMeasured] = useState<{ src: string; width: number; height: number } | null>(
+    null,
+  );
+  const size = measured?.src === src ? measured : null;
 
   const at = size === null || frame === null ? null : placedPicture(size, aspect, frame);
   const placed: CSSProperties | undefined =
@@ -63,7 +62,7 @@ const FramedPicture = ({
           };
 
           if (measured.width > 0 && measured.height > 0) {
-            setSize(measured);
+            setMeasured({ src, ...measured });
             onMeasure?.(measured);
           }
         }}

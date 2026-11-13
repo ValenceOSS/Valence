@@ -45,7 +45,7 @@ const FaceStage = ({ name, colour, avatar, source, pending, framing }: FaceStage
         onFrame={framing.onFrame}
         className={STAGE}
       />
-      <p className="pointer-events-none absolute inset-x-0 bottom-1 text-center text-[0.65rem] leading-none text-on-scrim/80">
+      <p className="pointer-events-none absolute inset-x-0 bottom-1 text-center text-[0.65rem] leading-none text-text-muted">
         {say('common.dragToMovePinchToZoom')}
       </p>
     </div>

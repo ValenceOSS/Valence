@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { isMouseWheel } from '@ValenceUI/isMouseWheel';
 import type { PointerEvent } from 'react';
 import type { ScrollRailProps } from './ScrollRail.types';
 
@@ -47,11 +48,24 @@ const ScrollRail = ({ children, className, isDisabled = false }: ScrollRailProps
     }
 
     const watching = new ResizeObserver(measure);
+    const watchEveryone = () => {
+      watching.disconnect();
+      watching.observe(element);
 
-    watching.observe(element);
+      for (const child of element.children) {
+        watching.observe(child);
+      }
+
+      measure();
+    };
+    const changing = new MutationObserver(watchEveryone);
+
+    watchEveryone();
+    changing.observe(element, { childList: true });
 
     return () => {
       watching.disconnect();
+      changing.disconnect();
     };
   }, []);
 
@@ -65,7 +79,7 @@ const ScrollRail = ({ children, className, isDisabled = false }: ScrollRailProps
     const wheel = (event: WheelEvent) => {
       const room = element.scrollWidth - element.clientWidth;
 
-      if (room <= 0 || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+      if (room <= 0 || !isMouseWheel(event)) {
         return;
       }
 

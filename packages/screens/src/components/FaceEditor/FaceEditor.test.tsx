@@ -41,6 +41,30 @@ describe('FaceEditor', () => {
     );
   });
 
+  it('forgets what was done to it when it was put away without using it', async () => {
+    const editor = (isOpen: boolean) => (
+      <FaceEditor
+        isOpen={isOpen}
+        onClose={vi.fn()}
+        profile={PROFILE}
+        start={START}
+        onUse={vi.fn()}
+      />
+    );
+    const drawn = renderInAnAddress(editor(true));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Letter' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Set it in Manrope' }));
+    drawn.rerender(editor(false));
+    drawn.rerender(editor(true));
+    await userEvent.click(screen.getByRole('button', { name: 'Letter' }));
+
+    expect(screen.getByRole('button', { name: 'Set it in Plus Jakarta Sans' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
   it('hands over the letter face it was changed to', async () => {
     const onUse = vi.fn();
 

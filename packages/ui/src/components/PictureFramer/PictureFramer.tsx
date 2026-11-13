@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { isMouseWheel } from '@ValenceUI/isMouseWheel';
 import { FramedPicture } from '@ValenceUI/FramedPicture';
 import { movedFrame } from '@ValenceCore/pictures/movedFrame';
 import { zoomedFrame } from '@ValenceCore/pictures/zoomedFrame';
@@ -10,8 +11,6 @@ import type { PictureFramerProps } from './PictureFramer.types';
 const WHEEL_ZOOM_PER_PIXEL = 0.002;
 
 const PINCH_ZOOM_PER_PIXEL = 0.01;
-
-const MOUSE_WHEEL_STEP = 50;
 
 const PIXELS_A_LINE = 16;
 
@@ -129,13 +128,9 @@ const PictureFramer = ({
       event.preventDefault();
 
       const isPinch = event.ctrlKey || event.metaKey;
-      const isMouseWheel =
-        event.deltaMode !== 0 ||
-        (event.deltaX === 0 &&
-          Math.abs(event.deltaY) >= MOUSE_WHEEL_STEP &&
-          Number.isInteger(event.deltaY));
+      const isWheel = isMouseWheel(event);
 
-      if (isPinch || isMouseWheel) {
+      if (isPinch || isWheel) {
         const lines = event.deltaMode === 0 ? 1 : PIXELS_A_LINE;
 
         place(
@@ -191,7 +186,7 @@ const PictureFramer = ({
 
     const apart = apartOf();
 
-    pinch.current = apart === null ? null : { apart, zoom: latest.current.zoom };
+    pinch.current = apart === null || apart <= 0 ? null : { apart, zoom: latest.current.zoom };
   };
 
   const drag = (event: PointerEvent<HTMLDivElement>) => {

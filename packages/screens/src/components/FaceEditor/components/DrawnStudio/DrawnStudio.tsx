@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { drawingToShow } from '@ValenceClient/profiles/drawingToShow';
+import { useSettledValue } from '@ValenceClient/profiles/useSettledValue';
+
+const SETTLES_AFTER = 250;
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
 import { AVATAR_STYLE_NAMES } from '@ValenceClient/profiles/AVATAR_STYLE_NAMES';
@@ -34,6 +37,7 @@ const DrawnStudio = ({
   onClear,
 }: DrawnStudioProps) => {
   const [turns, setTurns] = useState(0);
+  const settledColour = useSettledValue(colour, SETTLES_AFTER);
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,7 +71,7 @@ const DrawnStudio = ({
             }}
           >
             <img
-              src={drawingToShow(one, seed, isOnColour ? colour : null)}
+              src={drawingToShow(one, seed, isOnColour ? settledColour : null)}
               alt=""
               style={isOnColour ? { backgroundColor: colour } : undefined}
               className="size-full object-cover"
