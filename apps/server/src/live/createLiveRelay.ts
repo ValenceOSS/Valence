@@ -1,3 +1,4 @@
+import { mediaTypeOf } from './mediaTypeOf';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { headersFor } from './headersFor';
 import { FINAL_ADDRESS } from './FINAL_ADDRESS';
@@ -179,7 +180,9 @@ const createLiveRelay = (now: () => number = Date.now) => {
     return new Response(response.body, {
       status: 200,
       headers: {
-        'content-type': type === '' ? 'video/mp2t' : type,
+        'content-type': mediaTypeOf(type, 'video/mp2t'),
+        'content-security-policy': 'sandbox',
+        'content-disposition': 'attachment',
         'cache-control': 'private, max-age=60',
       },
     });
@@ -222,7 +225,9 @@ const createLiveRelay = (now: () => number = Date.now) => {
     return new Response(response.body, {
       status: 200,
       headers: {
-        'content-type': response.headers.get('content-type') ?? 'video/mp4',
+        'content-type': mediaTypeOf(response.headers.get('content-type'), 'video/mp4'),
+        'content-security-policy': 'sandbox',
+        'content-disposition': 'attachment',
         'cache-control': 'private, max-age=60',
       },
     });
