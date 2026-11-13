@@ -764,6 +764,9 @@ const resourceSample = pgTable(
     systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
     cpuCount: integer('cpuCount').notNull(),
     gpuPercent: real('gpuPercent'),
+    networkReceivedBytesPerSecond: real('networkReceivedBytesPerSecond'),
+    networkSentBytesPerSecond: real('networkSentBytesPerSecond'),
+    streamedBytesPerSecond: real('streamedBytesPerSecond'),
   },
   (table) => [index('resource_sample_at_idx').on(table.atMs)],
 );

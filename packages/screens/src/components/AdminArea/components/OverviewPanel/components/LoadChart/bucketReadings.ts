@@ -3,7 +3,8 @@ import type { LoadReading } from './LoadChart.types';
 /**
  * Thins a long run of readings to about as many as a chart can draw, by averaging each stretch of
  * neighbours into one, so a week of readings draws as the shape of the week rather than as every
- * passing spike stacked side by side. Each stretch keeps when it began and the memory it ended on.
+ * passing spike stacked side by side. Each stretch keeps when it began and the memory it ended on,
+ * and a figure no reading in it had stays unknown rather than becoming zero.
  *
  * @param readings - The readings, oldest first.
  * @param most - How many to keep at most.
@@ -26,9 +27,17 @@ const bucketReadings = (readings: readonly LoadReading[], most: number): LoadRea
       continue;
     }
 
-    const graphics = stretch.flatMap((reading) =>
-      reading.gpuPercent === undefined || reading.gpuPercent === null ? [] : [reading.gpuPercent],
-    );
+    const averageOf = (of: (reading: LoadReading) => number | null | undefined) => {
+      const known = stretch.flatMap((reading) => {
+        const value = of(reading);
+
+        return value === undefined || value === null ? [] : [value];
+      });
+
+      return known.length === 0
+        ? null
+        : known.reduce((sum, value) => sum + value, 0) / known.length;
+    };
 
     kept.push({
       atMs: first.atMs,
@@ -38,10 +47,10 @@ const bucketReadings = (readings: readonly LoadReading[], most: number): LoadRea
       systemMemoryUsedBytes: last.systemMemoryUsedBytes,
       systemMemoryTotalBytes: last.systemMemoryTotalBytes,
       cpuCount: last.cpuCount,
-      gpuPercent:
-        graphics.length === 0
-          ? null
-          : graphics.reduce((sum, value) => sum + value, 0) / graphics.length,
+      gpuPercent: averageOf((reading) => reading.gpuPercent),
+      networkReceivedBytesPerSecond: averageOf((reading) => reading.networkReceivedBytesPerSecond),
+      networkSentBytesPerSecond: averageOf((reading) => reading.networkSentBytesPerSecond),
+      streamedBytesPerSecond: averageOf((reading) => reading.streamedBytesPerSecond),
     });
   }
 

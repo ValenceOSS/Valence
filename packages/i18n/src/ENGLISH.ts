@@ -5670,6 +5670,14 @@ const ENGLISH = {
   'screens.adminArea.needsYouCard.libraryProblems': 'Library problems',
   'screens.adminArea.needsYouCard.requestsToApprove': 'Requests to approve',
   'screens.adminArea.needsYouCard.waitingOnYou': 'Waiting on you',
+  'screens.adminArea.network': 'Network',
+  'screens.adminArea.networkFigure.comingIn': 'Coming in',
+  'screens.adminArea.networkFigure.countersCouldNotBeRead':
+    "This machine's network counters could not be read.",
+  'screens.adminArea.networkFigure.everythingElseGoingOut': 'Everything else going out',
+  'screens.adminArea.networkFigure.goingOut': 'Going out',
+  'screens.adminArea.networkFigure.streamingAt': '{speed} streaming to viewers',
+  'screens.adminArea.networkFigure.streamingToViewers': 'Streaming to viewers',
   'screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs':
     'It starts by sending failed jobs. Choose the rest of its events on its page.',
   'screens.adminArea.newWebhookDialog.leftEmptyItsNamedAfterThe':
@@ -5769,10 +5777,15 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
   'screens.adminArea.overviewPanel.loadOfTheCores': '{load} · {share} of the cores',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
+  'screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak':
+    'The network lines are drawn against the busiest moment shown, {peak}.',
+  'screens.adminArea.overviewPanel.networkIn': 'Network in',
+  'screens.adminArea.overviewPanel.networkOut': 'Network out',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',
   'screens.adminArea.overviewPanel.nothingIsRunning': 'Nothing is running.',
   'screens.adminArea.overviewPanel.nothingRunningWaiting': 'Nothing running, {waiting} waiting.',
+  'screens.adminArea.overviewPanel.perSecond': '{size}/s',
   'screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange':
     'CPU usage over the last {loadRange}',
   'screens.adminArea.overviewPanel.processorUseOverTheLastMinute': 'CPU usage over the last minute',

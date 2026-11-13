@@ -20,11 +20,31 @@ describe('bucketReadings', () => {
 
   it('averages each stretch of neighbours into one, keeping when it began', () => {
     const many = [reading(0, 10), reading(1, 30), reading(2, 50), reading(3, 70)];
+    const unknown = {
+      gpuPercent: null,
+      networkReceivedBytesPerSecond: null,
+      networkSentBytesPerSecond: null,
+      streamedBytesPerSecond: null,
+    };
 
     expect(bucketReadings(many, 2)).toEqual([
-      { ...reading(0, 20), loadAverage: 2, gpuPercent: null },
-      { ...reading(2, 60), loadAverage: 6, gpuPercent: null },
+      { ...reading(0, 20), loadAverage: 2, ...unknown },
+      { ...reading(2, 60), loadAverage: 6, ...unknown },
     ]);
+  });
+
+  it('averages the network a stretch moved, leaving out readings that could not say', () => {
+    const many = [
+      { ...reading(0, 10), networkReceivedBytesPerSecond: 100, networkSentBytesPerSecond: 1_000 },
+      { ...reading(1, 10), networkReceivedBytesPerSecond: null, networkSentBytesPerSecond: null },
+      { ...reading(2, 10), networkReceivedBytesPerSecond: 300, networkSentBytesPerSecond: 3_000 },
+      { ...reading(3, 10), networkReceivedBytesPerSecond: 500, networkSentBytesPerSecond: 5_000 },
+    ];
+    const drawn = bucketReadings(many, 2);
+
+    expect(drawn.map((one) => one.networkReceivedBytesPerSecond)).toEqual([100, 400]);
+    expect(drawn.map((one) => one.networkSentBytesPerSecond)).toEqual([1_000, 4_000]);
+    expect(drawn.map((one) => one.streamedBytesPerSecond)).toEqual([null, null]);
   });
 
   it('averages the graphics figures a stretch has, leaving out readings without one', () => {

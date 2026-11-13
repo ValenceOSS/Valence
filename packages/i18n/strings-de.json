@@ -22451,6 +22451,41 @@
     "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
+    "handler": "screens.adminArea.network",
+    "text": "Network",
+    "context": "The label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.comingIn",
+    "text": "Coming in",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is receiving data from its network, such as 12 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.countersCouldNotBeRead",
+    "text": "This machine's network counters could not be read.",
+    "context": "A note in the network figure's information on the admin overview when the operating system does not say how much data its network interfaces have moved."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.everythingElseGoingOut",
+    "text": "Everything else going out",
+    "context": "A row in the network figure's information on the admin overview: what the server is sending that is not Valence streaming to viewers, such as torrent uploads, as a speed such as 1 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.goingOut",
+    "text": "Going out",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is sending data over its network, such as 4 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingAt",
+    "text": "{speed} streaming to viewers",
+    "context": "The line under the network figure on the admin overview. {speed} is how fast Valence is sending viewers what they watch, such as 3 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingToViewers",
+    "text": "Streaming to viewers",
+    "context": "How fast Valence is sending viewers what they watch, listen to or download to their devices, such as 3 MB/s. A row in the network figure's information and in the server load chart's tooltip on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
     "text": "It starts by sending failed jobs. Choose the rest of its events on its page.",
     "context": "In the dialog that creates a webhook: which events a new webhook sends."
@@ -22806,6 +22841,21 @@
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak",
+    "text": "The network lines are drawn against the busiest moment shown, {peak}.",
+    "context": "A note in the tooltip of the admin overview's server load chart. The other lines are percentages; the network has no maximum, so its lines reach the top at the fastest speed in the range shown. {peak} is that speed, such as 40 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkIn",
+    "text": "Network in",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is receiving data."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkOut",
+    "text": "Network out",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is sending data."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "No one is watching, listening or reading.",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
@@ -22819,6 +22869,11 @@
     "handler": "screens.adminArea.overviewPanel.nothingRunningWaiting",
     "text": "Nothing running, {waiting} waiting.",
     "context": "Shown on the admin overview when no background job is running but some are queued. {waiting} is how many are queued."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.perSecond",
+    "text": "{size}/s",
+    "context": "A speed, in the admin overview's server load chart. {size} is a size such as 1.2 MB; the result reads 1.2 MB/s."
   },
   {
     "handler": "screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange",

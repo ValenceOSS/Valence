@@ -264,6 +264,9 @@ pub struct ResourceUse {
     pub disks: Vec<DiskUse>,
     /// How fast each drive is reading and writing, and how full it is.
     pub drives: Vec<crate::drive_activity::DriveActivity>,
+    /// How fast the network is receiving and sending, where its counters can
+    /// be read and have been read twice.
+    pub network: Option<crate::network_activity::NetworkActivity>,
     /// What the graphics hardware is doing, where the machine will say.
     pub graphics: Option<GraphicsUse>,
     /// Why no figure was read, source by source, where none was.
@@ -352,6 +355,7 @@ pub struct Monitor {
     system: Arc<Mutex<System>>,
     disks: Arc<Mutex<DiskReadings>>,
     drives: Arc<Mutex<crate::drive_activity::DriveCounter>>,
+    network: Arc<Mutex<crate::network_activity::NetworkCounter>>,
     graphics: Arc<Mutex<Reading>>,
     artefacts: Arc<Mutex<Option<ArtefactStore>>>,
     cache: Arc<Mutex<Option<CacheUse>>>,
@@ -447,6 +451,7 @@ impl Monitor {
             system: Arc::new(Mutex::new(System::new())),
             disks: Arc::new(Mutex::new(DiskReadings::new())),
             drives: Arc::new(Mutex::new(crate::drive_activity::DriveCounter::new())),
+            network: Arc::new(Mutex::new(crate::network_activity::NetworkCounter::new())),
             graphics: Arc::new(Mutex::new(Reading::default())),
             artefacts: Arc::new(Mutex::new(None)),
             cache: Arc::new(Mutex::new(None)),
@@ -561,6 +566,7 @@ impl Monitor {
             })
             .collect();
         let drives = self.drives.lock().await.read(&filesystems);
+        let network = self.network.lock().await.read();
         let Reading {
             graphics,
             notes: graphics_notes,
@@ -640,6 +646,7 @@ impl Monitor {
             load_average: System::load_average().one,
             disks,
             drives,
+            network,
             graphics,
             graphics_notes,
             artefacts,

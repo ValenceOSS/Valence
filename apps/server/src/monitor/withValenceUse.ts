@@ -4,6 +4,7 @@ import type { RequestsMemory } from '@ValenceContracts/schemas/Requests';
 type ValenceUse = {
   requests: RequestsMemory | null;
   apiCpuPercent: number | null;
+  streamedBytesPerSecond: number | null;
 };
 
 /**
@@ -16,10 +17,15 @@ type ValenceUse = {
  * or is not set up.
  * @param apiCpuPercent - Percent of one core this process has used lately, or nothing before it has
  * been measured twice.
+ * @param streamedBytesPerSecond - How fast this process is sending viewers what they watch, hear or
+ * keep, or nothing before it has been measured twice.
  * @returns The reading with the figures in it, or the reading untouched where it is not shaped like
  * one.
  */
-const withValenceUse = (reading: JsonValue, { requests, apiCpuPercent }: ValenceUse): JsonValue => {
+const withValenceUse = (
+  reading: JsonValue,
+  { requests, apiCpuPercent, streamedBytesPerSecond }: ValenceUse,
+): JsonValue => {
   if (reading === null || typeof reading !== 'object' || Array.isArray(reading)) {
     return reading;
   }
@@ -43,6 +49,7 @@ const withValenceUse = (reading: JsonValue, { requests, apiCpuPercent }: Valence
       apiCpuPercent,
       requestsMemoryBytes: requests?.bytes ?? null,
       requestsCpuPercent: requests?.cpuPercent ?? null,
+      streamedBytesPerSecond,
     },
   };
 };

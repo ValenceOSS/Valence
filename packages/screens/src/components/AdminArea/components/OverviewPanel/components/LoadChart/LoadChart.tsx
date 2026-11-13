@@ -9,6 +9,9 @@ import type { ChosenSpan } from '@ValenceUI/SpanPicker.types';
 import { LoadFigure } from './components/LoadFigure/LoadFigure';
 import { InfoRow } from '@ValenceUI/InfoRow';
 import { InfoHeading } from '@ValenceUI/InfoHeading';
+import { InfoNote } from '@ValenceUI/InfoNote';
+import { shareOfPeak } from './shareOfPeak';
+import { rateOf } from './rateOf';
 import { bucketReadings } from './bucketReadings';
 import type { LoadChartProps } from './LoadChart.types';
 import { say } from '@ValenceI18n/say';
@@ -27,13 +30,18 @@ const MEMORY_COLOUR = 'var(--color-success)';
 
 const GRAPHICS_COLOUR = 'var(--color-busy)';
 
+const INBOUND_COLOUR = 'var(--color-inbound)';
+
+const OUTBOUND_COLOUR = 'var(--color-outbound)';
+
 /**
  * How hard the server has been working over the range chosen: where the processor stands now (or
  * last stood), its average and its peak, the load and the memory beside them, and the processor
  * drawn over time against quarter lines, with every reading under the pointer saying when it was
  * taken and what the machine was doing then. The key to its lines is in that tooltip, each line drawn
  * in its own colour beside its figure, and the load as a share of the cores the line is drawn at; a
- * list of the lines stays for anybody who cannot see the chart.
+ * list of the lines stays for anybody who cannot see the chart. The network has no ceiling to be a
+ * share of, so its two lines are drawn against the busiest moment shown, which the tooltip names.
  *
  * Past the last minute, the whole week kept is drawn small beneath the chart, with a window over
  * the part shown. Choosing a range moves the window to the end of the week and the lines move with
@@ -86,6 +94,18 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
   );
   const values = held.map((reading) => reading.systemCpuPercent);
   const onChart = useMemo(() => bucketReadings(held, MOST_ON_THE_CHART), [held]);
+  const networkPeak = useMemo(
+    () =>
+      Math.max(
+        0,
+        ...onChart.flatMap((reading) =>
+          [reading.networkReceivedBytesPerSecond, reading.networkSentBytesPerSecond].flatMap(
+            (rate) => (rate === undefined || rate === null ? [] : [rate]),
+          ),
+        ),
+      ),
+    [onChart],
+  );
   const chart = useMemo(
     () => ({
       values: onChart.map((reading) => reading.systemCpuPercent),
@@ -110,9 +130,21 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           values: onChart.map((reading) => reading.gpuPercent ?? null),
           colour: GRAPHICS_COLOUR,
         },
+        {
+          values: onChart.map((reading) =>
+            shareOfPeak(reading.networkReceivedBytesPerSecond, networkPeak),
+          ),
+          colour: INBOUND_COLOUR,
+        },
+        {
+          values: onChart.map((reading) =>
+            shareOfPeak(reading.networkSentBytesPerSecond, networkPeak),
+          ),
+          colour: OUTBOUND_COLOUR,
+        },
       ],
     }),
-    [onChart],
+    [onChart, networkPeak],
   );
   const latest = held.at(-1) ?? null;
   const peak = Math.max(0, ...values);
@@ -209,6 +241,28 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
                   {`${Math.round(reading.gpuPercent).toString()}%`}
                 </InfoRow>
               )}
+              <InfoRow
+                label={say('screens.adminArea.overviewPanel.networkIn')}
+                keyClassName="text-inbound"
+              >
+                {rateOf(reading.networkReceivedBytesPerSecond)}
+              </InfoRow>
+              <InfoRow
+                label={say('screens.adminArea.overviewPanel.networkOut')}
+                keyClassName="text-outbound"
+              >
+                {rateOf(reading.networkSentBytesPerSecond)}
+              </InfoRow>
+              <InfoRow label={say('screens.adminArea.networkFigure.streamingToViewers')}>
+                {rateOf(reading.streamedBytesPerSecond)}
+              </InfoRow>
+              {networkPeak === 0 ? null : (
+                <InfoNote>
+                  {say('screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak', {
+                    peak: rateOf(networkPeak),
+                  })}
+                </InfoNote>
+              )}
             </>
           );
         }}
@@ -220,6 +274,8 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           say('screens.adminArea.overviewPanel.loadFigures.loadAverage'),
           say('screens.adminArea.memory'),
           say('screens.adminArea.graphics'),
+          say('screens.adminArea.overviewPanel.networkIn'),
+          say('screens.adminArea.overviewPanel.networkOut'),
         ].map((line) => (
           <li key={line}>{line}</li>
         ))}

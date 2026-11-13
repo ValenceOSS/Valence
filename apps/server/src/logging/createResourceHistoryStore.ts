@@ -20,6 +20,9 @@ type ResourceHistoryStore = {
     systemMemoryTotalBytes: number;
     cpuCount: number;
     gpuPercent?: number | null;
+    networkReceivedBytesPerSecond?: number | null;
+    networkSentBytesPerSecond?: number | null;
+    streamedBytesPerSecond?: number | null;
   }) => Promise<void>;
   read: (range: ResourceSampleRange) => Promise<ResourceSampleRecord[]>;
   forgetExpired: (nowMs: number) => Promise<void>;
@@ -36,6 +39,9 @@ const asRecord = (row: ResourceSampleRow): ResourceSampleRecord => ({
   systemMemoryTotalBytes: row.systemMemoryTotalBytes,
   cpuCount: row.cpuCount,
   gpuPercent: row.gpuPercent,
+  networkReceivedBytesPerSecond: row.networkReceivedBytesPerSecond,
+  networkSentBytesPerSecond: row.networkSentBytesPerSecond,
+  streamedBytesPerSecond: row.streamedBytesPerSecond,
 });
 
 /**

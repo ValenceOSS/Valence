@@ -120,6 +120,8 @@ const MONITOR: Monitor = {
       measured: 'wholeMachine',
       engines: null,
     },
+    network: null,
+    streamedBytesPerSecond: null,
     graphicsNotes: [],
     artefacts: null,
   },
@@ -611,6 +613,8 @@ describe('AdminArea', () => {
           measured: 'wholeMachine',
           engines: null,
         },
+        network: null,
+        streamedBytesPerSecond: null,
         graphicsNotes: [],
       },
     });
