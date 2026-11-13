@@ -40,4 +40,12 @@ describe('readZipEntry', () => {
     ).toBeNull();
     expect(alloc.mock.calls.every(([size]) => size <= 1024 * 1024)).toBe(true);
   });
+
+  it('reads nothing of an entry larger than the cap it was given', async () => {
+    const path = await aZipOnDisk();
+    const [entry] = (await readZipDirectory(path)) ?? [];
+
+    expect(entry === undefined ? 'none' : await readZipEntry(path, entry, 4)).toBeNull();
+    expect(entry === undefined ? 'none' : await readZipEntry(path, entry, 64)).not.toBeNull();
+  });
 });

@@ -52,3 +52,13 @@ describe('readComicInfo', () => {
     expect(readComicInfo('<ComicInfo />')).toBeNull();
   });
 });
+
+describe('readComicInfo on a hostile description', () => {
+  it('reads one made of unclosed openers in moments, not minutes', () => {
+    const began = Date.now();
+
+    readComicInfo(`<ComicInfo>${'<Title '.repeat(60_000)}</ComicInfo>`);
+
+    expect(Date.now() - began).toBeLessThan(5000);
+  });
+});

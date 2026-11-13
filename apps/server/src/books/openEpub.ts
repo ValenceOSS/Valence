@@ -4,6 +4,7 @@ import { imageTypeFor } from './imageTypeFor';
 import { readEpubContents } from './readEpubContents';
 import { insideTheBook, packagePathIn, readEpubPackage } from './readEpubPackage';
 import { readZipDirectory } from '@ValenceCore/zip/readZipDirectory';
+import { MOST_XML_BYTES } from './MOST_XML_BYTES';
 import { readZipEntry } from './readZipEntry';
 import type { ContentsPlace, ReflowBook, SpineEntry } from './BookFile';
 import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
@@ -65,7 +66,7 @@ const openEpub = async (
 
   const containerEntry = held.get(CONTAINER);
   const containerBytes =
-    containerEntry === undefined ? null : await readZipEntry(path, containerEntry);
+    containerEntry === undefined ? null : await readZipEntry(path, containerEntry, MOST_XML_BYTES);
 
   if (containerBytes === null) {
     return null;
@@ -73,7 +74,8 @@ const openEpub = async (
 
   const packageAt = packagePathIn(new TextDecoder().decode(containerBytes));
   const packageEntry = packageAt === null ? undefined : held.get(packageAt);
-  const packageBytes = packageEntry === undefined ? null : await readZipEntry(path, packageEntry);
+  const packageBytes =
+    packageEntry === undefined ? null : await readZipEntry(path, packageEntry, MOST_XML_BYTES);
 
   if (packageAt === null || packageBytes === null) {
     return null;

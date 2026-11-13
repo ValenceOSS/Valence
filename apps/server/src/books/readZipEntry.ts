@@ -14,11 +14,16 @@ const MOST_ENTRY_BYTES = 256 * 1024 * 1024;
  *
  * @param path - The archive.
  * @param entry - The entry, as the directory listed it.
+ * @param mostBytes - The most the entry may inflate to, where it is a document read whole.
  * @returns The file's bytes, or nothing where the archive disagrees with its own directory or the
  *   entry claims to be larger than any book's file is.
  */
-const readZipEntry = async (path: string, entry: ZipEntry): Promise<Uint8Array | null> => {
-  if (entry.compressedSize > MOST_ENTRY_BYTES || entry.uncompressedSize > MOST_ENTRY_BYTES) {
+const readZipEntry = async (
+  path: string,
+  entry: ZipEntry,
+  mostBytes = MOST_ENTRY_BYTES,
+): Promise<Uint8Array | null> => {
+  if (entry.compressedSize > mostBytes || entry.uncompressedSize > mostBytes) {
     return null;
   }
 

@@ -1,5 +1,6 @@
 import { decodeXmlText } from './decodeXmlText';
 import { insideTheBook } from './readEpubPackage';
+import { tagsOf } from './tagsOf';
 
 type ContentsEntry = {
   title: string;
@@ -8,12 +9,13 @@ type ContentsEntry = {
   depth: number;
 };
 
-const TOC_NAV = /<nav\b[^>]*\btype\s*=\s*"[^"]*\btoc\b[^"]*"[^>]*>([\s\S]*?)<\/nav>/i;
+const TOC_TYPE = /\btype\s*=\s*"[^"]*\btoc\b/iu;
 
-const NAV_TOKEN = /<ol\b[^>]*>|<\/ol>|<a\b[^>]*\bhref\s*=\s*"([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+const HREF = /\bhref\s*=\s*"([^"]*)"/iu;
 
-const NCX_TOKEN =
-  /<navPoint\b[^>]*>|<\/navPoint>|<text>([\s\S]*?)<\/text>|<content\b[^>]*\bsrc\s*=\s*"([^"]*)"[^>]*>/gi;
+const SRC = /\bsrc\s*=\s*"([^"]*)"/iu;
+
+const MOST_LABEL_CHARACTERS = 2000;
 
 /**
  * Resolves an address a contents document wrote into a place in the book: the document it points
@@ -55,42 +57,67 @@ const readEpubContents = (
 ): ContentsEntry[] => {
   const base = contentsAt.includes('/') ? contentsAt.slice(0, contentsAt.lastIndexOf('/')) : '';
   const entries: ContentsEntry[] = [];
+  let depth = -1;
+  let labelFrom: number | null = null;
+  let written: string | null = null;
+  let title: string | null = null;
+  let inNav = kind === 'ncx';
 
-  if (kind === 'nav') {
-    const nav = TOC_NAV.exec(xml)?.[1] ?? '';
-    let depth = -1;
-
-    for (const [token, written, label] of nav.matchAll(NAV_TOKEN)) {
-      if (token.startsWith('</')) {
-        depth -= 1;
-      } else if (token.toLowerCase().startsWith('<ol')) {
-        depth += 1;
-      } else if (written !== undefined && label !== undefined) {
-        const place = placeOf(base, written);
-        const title = decodeXmlText(label);
-
-        if (place !== null && title !== '') {
-          entries.push({ title, ...place, depth: Math.max(depth, 0) });
-        }
+  for (const tag of tagsOf(xml)) {
+    if (kind === 'nav' && tag.name === 'nav') {
+      if (inNav && tag.isClosing) {
+        break;
       }
+
+      inNav = inNav || (!tag.isClosing && TOC_TYPE.test(tag.attributes));
+      continue;
     }
 
-    return entries;
-  }
+    if (!inNav) {
+      continue;
+    }
 
-  let depth = -1;
-  let title: string | null = null;
+    const label = (): string | null =>
+      labelFrom === null || tag.starts - labelFrom > MOST_LABEL_CHARACTERS
+        ? null
+        : decodeXmlText(xml.slice(labelFrom, tag.starts));
 
-  for (const [token, label, written] of xml.matchAll(NCX_TOKEN)) {
-    if (token.startsWith('</')) {
-      depth -= 1;
-    } else if (token.toLowerCase().startsWith('<navpoint')) {
-      depth += 1;
-      title = null;
-    } else if (label !== undefined) {
-      title = decodeXmlText(label);
-    } else if (written !== undefined && depth >= 0 && title !== null && title !== '') {
-      const place = placeOf(base, written);
+    if (kind === 'nav') {
+      if (tag.name === 'ol') {
+        depth += tag.isClosing ? -1 : 1;
+      } else if (tag.name === 'a' && !tag.isClosing) {
+        written = HREF.exec(tag.attributes)?.[1] ?? null;
+        labelFrom = written === null ? null : tag.ends;
+      } else if (tag.name === 'a' && written !== null) {
+        const place = placeOf(base, written);
+        const named = label();
+
+        if (place !== null && named !== null && named !== '') {
+          entries.push({ title: named, ...place, depth: Math.max(depth, 0) });
+        }
+
+        written = null;
+        labelFrom = null;
+      }
+    } else if (tag.name === 'navpoint') {
+      depth += tag.isClosing ? -1 : 1;
+      title = tag.isClosing ? title : null;
+    } else if (tag.name === 'text') {
+      if (tag.isClosing) {
+        title = label();
+        labelFrom = null;
+      } else {
+        labelFrom = tag.ends;
+      }
+    } else if (
+      tag.name === 'content' &&
+      !tag.isClosing &&
+      depth >= 0 &&
+      title !== null &&
+      title !== ''
+    ) {
+      const src = SRC.exec(tag.attributes)?.[1];
+      const place = src === undefined ? null : placeOf(base, src);
 
       if (place !== null) {
         entries.push({ title, ...place, depth });
