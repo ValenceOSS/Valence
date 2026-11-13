@@ -29,19 +29,16 @@ describe('wholeDriveOf', () => {
     });
   });
 
-  it('keeps the room left to a dataset a quota holds to less than the pool has', () => {
-    const capped = disk('/media', 'tank/media', 350, 50);
-
-    expect(wholeDriveOf([capped, CACHE], capped)).toMatchObject({
-      totalBytes: 400,
-      availableBytes: 50,
+  it('counts the pool’s top dataset with the datasets below it', () => {
+    expect(wholeDriveOf([MEDIA, disk('/mnt/tank', 'tank', 410, 400)], MEDIA)).toMatchObject({
+      totalBytes: 710,
     });
   });
 
-  it('is not held to another dataset’s quota', () => {
-    const capped = disk('/cache', 'tank/apps', 100, 50);
+  it('gives the pool’s room left, not the less a quota holds one dataset to', () => {
+    const capped = disk('/media', 'tank/media', 350, 50);
 
-    expect(wholeDriveOf([MEDIA, capped], MEDIA)).toMatchObject({
+    expect(wholeDriveOf([capped, CACHE], capped)).toMatchObject({
       totalBytes: 750,
       availableBytes: 400,
     });

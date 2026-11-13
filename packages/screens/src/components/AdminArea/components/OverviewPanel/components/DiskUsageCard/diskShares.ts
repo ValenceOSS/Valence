@@ -10,9 +10,9 @@ type DiskShare = {
 
 /**
  * Divides a disk between what is on it: each library on it, largest first, then the files Valence
- * keeps for itself where they are on it, then whatever else the disk holds, then the room left. What is not a library or
- * Valence's is what remains of the used space once those are taken off, so the shares always add up
- * to the disk. Where the libraries are counted as holding more than the disk has used, as a library
+ * keeps for itself where they are on it, then whatever else the disk holds, then the room left. What
+ * is not a library or Valence's is what remains of the used space once those are taken off, so the
+ * shares always add up to the disk. Where the libraries are counted as holding more than the disk has used, as a library
  * reaching onto another disk would be, they are scaled down together to fit.
  *
  * @param disk - How big the disk is and how much of it is free.

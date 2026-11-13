@@ -209,6 +209,50 @@ describe('DiskUsageCard', () => {
     expect(screen.getByRole('button', { name: /Everything else/ })).toHaveTextContent('48 GB');
   });
 
+  it('gives a ZFS pool’s room left where a quota holds a library dataset to less', () => {
+    render(
+      <DiskUsageCard
+        disks={[
+          {
+            mountPoint: '/media',
+            device: 'tank/media',
+            totalBytes: 310 * GB,
+            availableBytes: 10 * GB,
+          },
+          {
+            mountPoint: '/cache',
+            device: 'tank/apps',
+            totalBytes: 450 * GB,
+            availableBytes: 400 * GB,
+          },
+        ]}
+        libraries={[library({ sizeBytes: 300 * GB })]}
+        cache={null}
+        artefactRoot="/cache/artefacts"
+        artwork={ARTWORK}
+        bookPages={null}
+      />,
+    );
+
+    expect(screen.getByText('400 GB', { selector: '.text-4xl' })).toBeInTheDocument();
+    expect(screen.getByText('free of 750 GB')).toBeInTheDocument();
+  });
+
+  it('counts Valence’s files on the first drive where its previews are on no drive it knows', () => {
+    render(
+      <DiskUsageCard
+        disks={[MEDIA]}
+        libraries={[library({ sizeBytes: 300 * GB })]}
+        cache={null}
+        artefactRoot="/cache/artefacts"
+        artwork={ARTWORK}
+        bookPages={null}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Valence’s files/ })).toHaveTextContent('2.0 GB');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(DiskUsageCard.displayName).toBe('DiskUsageCard');
   });

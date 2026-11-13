@@ -42,42 +42,4 @@ describe('libraryDisks', () => {
   it('does not take a sibling mount for one whose name it starts with', () => {
     expect(libraryDisks([media, second], ['/mnt/media2x/films'])).toEqual([]);
   });
-
-  it('counts the datasets of one ZFS pool as one drive, the pool', () => {
-    const films = {
-      mountPoint: '/media/films',
-      device: 'tank/films',
-      totalBytes: 700,
-      availableBytes: 400,
-    };
-    const shows = {
-      mountPoint: '/media/shows',
-      device: 'tank/shows',
-      totalBytes: 600,
-      availableBytes: 400,
-    };
-
-    expect(libraryDisks([root, films, shows], ['/media/films', '/media/shows/a'])).toEqual([
-      { ...films, totalBytes: 900 },
-    ]);
-  });
-
-  it('measures a pool from the library dataset with the least room left, whichever comes first', () => {
-    const films = {
-      mountPoint: '/media/films',
-      device: 'tank/films',
-      totalBytes: 5700,
-      availableBytes: 5000,
-    };
-    const shows = {
-      mountPoint: '/media/shows',
-      device: 'tank/shows',
-      totalBytes: 610,
-      availableBytes: 10,
-    };
-
-    expect(libraryDisks([root, films, shows], ['/media/films', '/media/shows'])).toEqual([
-      { ...shows, totalBytes: 1310 },
-    ]);
-  });
 });

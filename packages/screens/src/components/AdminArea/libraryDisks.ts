@@ -1,6 +1,4 @@
 import type { Monitor } from '@ValenceClient/admin/fetchAdmin';
-import { driveKeyOf } from './driveKeyOf';
-import { wholeDriveOf } from './wholeDriveOf';
 
 type DiskUse = Monitor['resources']['disks'][number];
 
@@ -21,14 +19,12 @@ const holds = (mountPoint: string, path: string): boolean => {
 };
 
 /**
- * Finds every drive a set of libraries lives on, each once, the one with the least room left first.
- * Where a path sits under nested mounts, the deepest is the one it is actually on, and where that is
- * a dataset of a ZFS pool, the drive is the pool, measured from whichever library's dataset has the
- * least room left, since a quota can hold one dataset to less than the pool has.
+ * Finds every filesystem a set of libraries lives on, each once, the one with the least room left
+ * first. Where a path sits under nested mounts, the deepest is the one it is actually on.
  *
  * @param disks - The filesystems the monitor knows about.
  * @param paths - Where the libraries live.
- * @returns The drives holding any of them, tightest first.
+ * @returns The filesystems holding any of them, tightest first.
  */
 const libraryDisks = (disks: readonly DiskUse[], paths: readonly string[]): DiskUse[] => {
   const holding = new Map<string, DiskUse>();
@@ -42,15 +38,8 @@ const libraryDisks = (disks: readonly DiskUse[], paths: readonly string[]): Disk
         null,
       );
 
-    if (deepest === null) {
-      continue;
-    }
-
-    const drive = wholeDriveOf(disks, deepest);
-    const known = holding.get(driveKeyOf(deepest));
-
-    if (known === undefined || drive.availableBytes < known.availableBytes) {
-      holding.set(driveKeyOf(deepest), drive);
+    if (deepest !== null) {
+      holding.set(deepest.mountPoint, deepest);
     }
   }
 

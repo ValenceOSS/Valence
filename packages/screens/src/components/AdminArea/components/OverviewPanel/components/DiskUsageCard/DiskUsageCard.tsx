@@ -20,6 +20,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
 import { driveKeyOf } from '@ValenceScreens/components/AdminArea/driveKeyOf';
 import { libraryDisks } from '@ValenceScreens/components/AdminArea/libraryDisks';
+import { libraryDrives } from '@ValenceScreens/components/AdminArea/libraryDrives';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { valenceOwnBytes } from '@ValenceScreens/components/AdminArea/valenceOwnBytes';
 import { say } from '@ValenceI18n/say';
@@ -66,9 +67,11 @@ const lookOf = (share: DiskShare): keyof typeof COLOURS =>
  * The disks can be counted again.
  *
  * Where the libraries are spread over several disks, each can be chosen in turn, starting with the
- * one with the least room left. Valence's own files are counted on the disk holding the folder the
- * media service keeps its previews in, beside which the artwork is kept, and left out of the others.
- * Where the media service has not said where that is, they are counted on the first disk.
+ * one with the least room left, the datasets of a ZFS pool counting as the one disk they share.
+ * Valence's own files are counted on the disk holding the folder the media service keeps its
+ * previews in, with the artwork, which is kept in the same volume unless it has been moved, and are
+ * left out of the others. Where the media service has not said where that folder is, or it is on no
+ * disk the monitor reports, they are counted on the first disk.
  *
  * @param disks - The disks the server can see, of which those holding the libraries are drawn.
  * @param libraries - The libraries, of which those on that disk are drawn.
@@ -87,13 +90,14 @@ const DiskUsageCard = ({
 }: DiskUsageCardProps) => {
   const [pointed, setPointed] = useState<string | null>(null);
   const [isCounting, setIsCounting] = useState(false);
-  const [chosenMount, setChosenMount] = useState<string | null>(null);
+  const [chosenDrive, setChosenDrive] = useState<string | null>(null);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
-  const drives = libraryDisks(
+  const drives = libraryDrives(
     disks,
     libraries.map((library) => library.path),
   );
-  const disk = drives.find((drive) => drive.mountPoint === chosenMount) ?? drives[0] ?? null;
+  const disk =
+    drives.find((drive) => driveKeyOf(disks, drive) === chosenDrive) ?? drives[0] ?? null;
 
   if (disk === null) {
     return (
@@ -112,11 +116,13 @@ const DiskUsageCard = ({
   const isOnThisDisk = (path: string): boolean => {
     const holding = libraryDisks(disks, [path])[0];
 
-    return holding !== undefined && driveKeyOf(holding) === driveKeyOf(disk);
+    return holding !== undefined && driveKeyOf(disks, holding) === driveKeyOf(disks, disk);
   };
   const onDisk = libraries.filter((library) => isOnThisDisk(library.path));
   const isValencesDrive =
-    artefactRoot === null ? disk.mountPoint === drives[0]?.mountPoint : isOnThisDisk(artefactRoot);
+    artefactRoot === null || libraryDisks(disks, [artefactRoot]).length === 0
+      ? disk === drives[0]
+      : isOnThisDisk(artefactRoot);
   const shares = diskShares(
     disk,
     onDisk,
@@ -165,7 +171,7 @@ const DiskUsageCard = ({
           label={say('screens.adminArea.overviewPanel.diskUsageCard.whichDrive')}
           size="sm"
           items={drives.map((drive) => ({
-            id: drive.mountPoint,
+            id: driveKeyOf(disks, drive),
             label: say('screens.adminArea.overviewPanel.diskUsageCard.driveFull', {
               mount: drive.mountPoint,
               share: percent.format(
@@ -175,9 +181,9 @@ const DiskUsageCard = ({
               ),
             }),
           }))}
-          value={disk.mountPoint}
-          onSelect={(mount) => {
-            setChosenMount(mount);
+          value={driveKeyOf(disks, disk)}
+          onSelect={(key) => {
+            setChosenDrive(key);
             setPointed(null);
           }}
           className="self-start"
