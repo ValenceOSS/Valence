@@ -16,6 +16,7 @@ type NewWebhookSubscription = {
   events: WebhookEvent[];
   filters?: WebhookFilters;
   custom?: CustomWebhook | null;
+  reachesLocalNetwork?: boolean;
 };
 
 type CreatedWebhookSubscription = {
@@ -31,6 +32,7 @@ type WebhookSubscriptionChange = {
   filters?: WebhookFilters | undefined;
   custom?: CustomWebhook | null | undefined;
   enabled?: boolean | undefined;
+  reachesLocalNetwork?: boolean | undefined;
 };
 
 type WebhookStore = {

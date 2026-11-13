@@ -50,6 +50,7 @@ const aTarget: WebhookDestination = {
   preset: 'generic',
   secret: 'whsec_1',
   custom: null,
+  reachesLocalNetwork: false,
 };
 
 const answering = (status: number): Mock<WebhookFetcher> =>

@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import {
   listWebhooksRoute,
@@ -10,6 +11,7 @@ import {
   DELIVERY_PAGE,
 } from '@ValenceServer/routes/WebhookRoute';
 import { isSafeWebhookUrl } from '@ValenceServer/webhooks/isSafeWebhookUrl';
+import { isWebhookAddressAllowed } from '@ValenceServer/webhooks/isWebhookAddressAllowed';
 import { missingAddressSettings } from '@ValenceContracts/functions/missingAddressSettings';
 import { queueWebhookTest } from '@ValenceServer/webhooks/queueWebhookTest';
 import { queueWebhookRedelivery } from '@ValenceServer/webhooks/queueWebhookRedelivery';
@@ -35,6 +37,26 @@ const templateRefusalOf = (custom: CustomWebhook | null | undefined) => {
       : renderWebhookTemplate(custom.template, custom.format, {}).problem;
 
   return problem === null ? null : refuse(templateProblemKey(problem));
+};
+
+/**
+ * Why a webhook may not be sent to an address written as an IP, judged now because no name lookup
+ * will ever see it.
+ *
+ * @param url - The address asked for.
+ * @param reachesLocalNetwork - Whether the webhook is allowed to reach the local network.
+ * @returns The refusal to give, or nothing where the address is a name or is allowed.
+ */
+const literalAddressRefusalOf = (url: string, reachesLocalNetwork: boolean) => {
+  const host = URL.parse(url)?.hostname.replace(/^\[|\]$/g, '') ?? '';
+
+  if (isIP(host) === 0 || isWebhookAddressAllowed(host, reachesLocalNetwork)) {
+    return null;
+  }
+
+  return isWebhookAddressAllowed(host, true)
+    ? refuse('error.webhook.valenceWillNotSendToTheLocalNetwork')
+    : refuse('error.common.valenceWillNotSendDeliveriesTo');
 };
 
 /**
@@ -72,6 +94,12 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     if (!isSafeWebhookUrl(asked.url)) {
       return context.json(refuse('error.common.valenceWillNotSendDeliveriesTo'), 400);
+    }
+
+    const refusedLiteral = literalAddressRefusalOf(asked.url, asked.reachesLocalNetwork);
+
+    if (refusedLiteral !== null) {
+      return context.json(refusedLiteral, 400);
     }
 
     const missing = missingAddressSettings(asked.preset, asked.url);
@@ -124,13 +152,32 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     const id = context.req.valid('param').id;
     const before =
-      asked.url === undefined && asked.preset === undefined
+      asked.url === undefined &&
+      asked.preset === undefined &&
+      asked.reachesLocalNetwork === undefined
         ? null
         : (await webhooks.list()).find((one) => one.id === id);
+    const refusedLiteral =
+      before === null || before === undefined
+        ? null
+        : literalAddressRefusalOf(
+            asked.url ?? before.url,
+            asked.reachesLocalNetwork ?? before.reachesLocalNetwork,
+          );
+
+    if (
+      refusedLiteral !== null &&
+      (asked.url !== undefined || asked.reachesLocalNetwork !== undefined)
+    ) {
+      return context.json(refusedLiteral, 400);
+    }
+
     const isNewlyCustom =
       asked.preset === 'custom' && asked.custom === undefined && before?.custom === null;
     const missing =
-      before === null || before === undefined
+      before === null ||
+      before === undefined ||
+      (asked.url === undefined && asked.preset === undefined)
         ? []
         : missingAddressSettings(asked.preset ?? before.preset, asked.url ?? before.url);
 

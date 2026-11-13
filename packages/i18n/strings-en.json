@@ -11046,6 +11046,11 @@
     "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
   },
   {
+    "handler": "error.webhook.valenceWillNotSendToTheLocalNetwork",
+    "text": "Valence won’t send to an address on your own network unless Local network is on.",
+    "context": "Refusal, and a delivery's error, when a webhook's address is on the server's own network and the webhook's Local network switch is off."
+  },
+  {
     "handler": "native.captionTextStyle.avenirNextCondensed",
     "text": "Avenir Next Condensed",
     "context": "The name of a font installed on Apple devices, asked for by name to draw the Condensed caption font. Normally left as it is, since it names the font."
@@ -28614,6 +28619,16 @@
     "handler": "screens.adminArea.webhooksPanel.lastDelivery",
     "text": "Last delivery",
     "context": "In the admin list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetwork",
+    "text": "Local network",
+    "context": "Label of the switch on a webhook that lets it send to addresses on the server's own network."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetworkDescription",
+    "text": "Lets this webhook reach addresses on your own network, such as another app on this server.",
+    "context": "Description of the Local network switch on a webhook."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",

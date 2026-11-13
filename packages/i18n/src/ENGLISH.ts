@@ -2634,6 +2634,8 @@ const ENGLISH = {
   'error.webhook.noSuchSubscriptionOrItIs': 'No such subscription, or it’s turned off.',
   'error.webhook.theAddressIsMissingSettings': 'The address is missing {settings}.',
   'error.webhook.theMessageTemplateIsNotValidJson': 'The message template isn’t valid JSON.',
+  'error.webhook.valenceWillNotSendToTheLocalNetwork':
+    'Valence won’t send to an address on your own network unless Local network is on.',
   'native.captionTextStyle.avenirNextCondensed': 'Avenir Next Condensed',
   'native.captionTextStyle.chalkboardSE': 'Chalkboard SE',
   'native.captionTextStyle.courierNew': 'Courier New',
@@ -7278,6 +7280,9 @@ const ENGLISH = {
   'screens.adminArea.webhooksPanel.iHaveCopiedIt': 'I’ve copied it',
   'screens.adminArea.webhooksPanel.keepItTo100CharactersOr': 'Keep it to 100 characters or fewer.',
   'screens.adminArea.webhooksPanel.lastDelivery': 'Last delivery',
+  'screens.adminArea.webhooksPanel.localNetwork': 'Local network',
+  'screens.adminArea.webhooksPanel.localNetworkDescription':
+    'Lets this webhook reach addresses on your own network, such as another app on this server.',
   'screens.adminArea.webhooksPanel.nameIsSetUpCopyIts':
     '{name} is set up. Copy its signing secret now.',
   'screens.adminArea.webhooksPanel.newWebhook': 'New webhook',

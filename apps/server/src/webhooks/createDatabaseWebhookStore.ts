@@ -64,6 +64,7 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
         events: events.data,
         filters: filters.success ? filters.data : DEFAULT_WEBHOOK_FILTERS,
         custom: blankSecretHeaders(customOf(row)),
+        reachesLocalNetwork: row.reachesLocalNetwork,
         enabled: row.enabled,
         createdAt: row.createdAt.toISOString(),
         lastAttemptAt: toIso(row.lastAttemptAt),
@@ -90,6 +91,7 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
       events,
       filters = DEFAULT_WEBHOOK_FILTERS,
       custom = null,
+      reachesLocalNetwork = false,
     }) => {
       const id = randomUUID();
       const secret = `${WEBHOOK_SECRET_PREFIX}${randomBytes(WEBHOOK_SECRET_BYTES).toString('base64url')}`;
@@ -104,6 +106,7 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
         events,
         filters,
         custom,
+        reachesLocalNetwork,
         enabled: true,
         createdAt,
       });
@@ -118,6 +121,7 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
           events,
           filters,
           custom: blankSecretHeaders(custom),
+          reachesLocalNetwork,
           enabled: true,
           createdAt: createdAt.toISOString(),
           lastAttemptAt: null,
@@ -153,6 +157,9 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
                   custom: change.custom === null ? null : keepSecretHeaders(change.custom, stored),
                 }),
             ...(change.enabled === undefined ? {} : { enabled: change.enabled }),
+            ...(change.reachesLocalNetwork === undefined
+              ? {}
+              : { reachesLocalNetwork: change.reachesLocalNetwork }),
           })
           .where(eq(webhookSubscription.id, id));
 
@@ -195,7 +202,13 @@ const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
       const preset = WebhookPresetSchema.safeParse(row.preset);
 
       return preset.success
-        ? { url: row.url, preset: preset.data, secret: row.secret, custom: customOf(row) }
+        ? {
+            url: row.url,
+            preset: preset.data,
+            secret: row.secret,
+            custom: customOf(row),
+            reachesLocalNetwork: row.reachesLocalNetwork,
+          }
         : null;
     },
 

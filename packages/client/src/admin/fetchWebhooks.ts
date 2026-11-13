@@ -28,6 +28,7 @@ type WebhookChange = {
   filters?: WebhookFilters;
   custom?: CustomWebhook | null;
   enabled?: boolean;
+  reachesLocalNetwork?: boolean;
 };
 
 type NewWebhook = {
@@ -36,6 +37,7 @@ type NewWebhook = {
   preset: WebhookPreset;
   events: WebhookSubscribableEvent[];
   filters: WebhookFilters;
+  reachesLocalNetwork?: boolean;
 };
 
 /**
