@@ -6,7 +6,7 @@ type TrendLine = {
 };
 
 type TrendChartProps = {
-  values: number[];
+  values: (number | null)[];
   lines?: readonly TrendLine[];
   ceiling: number;
   label: string;

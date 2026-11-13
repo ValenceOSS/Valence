@@ -23,6 +23,13 @@ describe('naming a piece of work in the queue', () => {
     expect(describeQueueKind('preview')).toBe('Generating a preview');
   });
 
+  it("names the media service's own work in words", () => {
+    expect(describeQueueKind('creditFrames')).toBe('Looking for the credits');
+    expect(describeQueueKind('keyframes')).toBe('Reading keyframes for seeking');
+    expect(describeQueueKind('renditions')).toBe('Encoding other qualities');
+    expect(describeQueueKind('downloads')).toBe('Preparing a download');
+  });
+
   it('shows an unfamiliar kind rather than hiding it', () => {
     expect(describeQueueKind('something-new')).toBe('something-new');
   });

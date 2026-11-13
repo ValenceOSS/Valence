@@ -74,6 +74,28 @@ describe('WorkUnderWay', () => {
     expect(screen.getByText(/Heat \(1995\)\.mkv/)).toBeInTheDocument();
   });
 
+  it("names the media service's work in words, with the file it is on", async () => {
+    render(
+      <WorkUnderWay
+        working={[
+          job({ kind: 'creditFrames', subject: 'Big Buck Bunny.mkv' }),
+          job({ id: 2, kind: 'keyframes', subject: 'Heat (1995).mkv', state: 'queued' }),
+        ]}
+        progress={new Map()}
+        definitions={[SCAN]}
+        libraries={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Valence is working on/ }));
+
+    expect(await screen.findByText('Looking for the credits')).toBeInTheDocument();
+    expect(screen.getByText('Big Buck Bunny.mkv')).toBeInTheDocument();
+    expect(screen.getByText('Reading keyframes for seeking')).toBeInTheDocument();
+    expect(screen.getByText(/Heat \(1995\)\.mkv/)).toBeInTheDocument();
+    expect(screen.queryByText('creditFrames')).not.toBeInTheDocument();
+  });
+
   it('starts tucked away, opens from the pill, and tucks away again at a press beside it', async () => {
     render(
       <WorkUnderWay working={[job()]} progress={PROGRESS} definitions={[SCAN]} libraries={[]} />,

@@ -135,7 +135,9 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
-import type { PlaybackHealth } from './components/StreamStats/StreamStats.types';
+import type { PlaybackHealth, StatsReading } from './components/StreamStats/StreamStats.types';
+import { keepRecent } from '@ValenceCore/functions/keepRecent';
+import { probeThroughput } from '@ValenceScreens/playback/probeThroughput';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
@@ -222,6 +224,8 @@ const CLEAR_OF_THE_EDGE = 24;
 const CONTROLS_TALL_AT_LEAST = 72;
 
 const HEALTH_INTERVAL_MILLISECONDS = 500;
+
+const READINGS_KEPT = 120;
 
 const MOST_FRAME_SKEW_SECONDS = 30;
 
@@ -333,6 +337,7 @@ const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const pictureRef = useRef<HTMLCanvasElement>(null);
   const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
+  const [isPlayingTheFile, setIsPlayingTheFile] = useState(false);
   const engineRefusedRef = useRef(false);
   const enginePictureRef = useRef<DrawnPicture | null>(null);
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
@@ -418,6 +423,7 @@ const VideoPlayer = ({
   const seekedToTheEndRef = useRef(false);
   const playsOnFromTheEndRef = useRef(false);
   const [health, setHealth] = useState<PlaybackHealth>(EMPTY_HEALTH);
+  const [statsHistory, setStatsHistory] = useState<readonly StatsReading[]>([]);
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
   const [isResting, setIsResting] = useState(false);
@@ -575,6 +581,7 @@ const VideoPlayer = ({
   const releaseRef = useRef<(() => Promise<void>) | null>(null);
   const deliveredRef = useRef<(() => DeliveredFormat | null) | null>(null);
   const estimatedRef = useRef<(() => number | null) | null>(null);
+  const probedRef = useRef<(() => number | null) | null>(null);
   const ladderRef = useRef<(() => { variants: number; activeHeight: number | null }) | null>(null);
   const [ladder, setLadder] = useState<{ variants: number; activeHeight: number | null } | null>(
     null,
@@ -978,8 +985,10 @@ const VideoPlayer = ({
   useEffect(() => {
     setSession(null);
     setIsDrawnByTheEngine(false);
+    setIsPlayingTheFile(false);
     enginePictureRef.current = null;
     engineStatsRef.current = null;
+    estimatedRef.current = null;
     brightenRef.current = null;
     switchCopyRef.current = null;
     setBrowserRung(null);
@@ -1470,6 +1479,7 @@ const VideoPlayer = ({
             return Promise.resolve();
           };
           element.src = outcome.session.delivery.url;
+          setIsPlayingTheFile(true);
         } else {
           const { plan } = outcome.session;
           const source = await cache
@@ -1902,12 +1912,27 @@ const VideoPlayer = ({
       const element = videoRef.current;
 
       if (element !== null) {
-        setHealth(readPlaybackHealth(element, frameSkewRef.current));
-        setDelivered(deliveredRef.current?.() ?? null);
+        const nowHealth = readPlaybackHealth(element, frameSkewRef.current);
+        const nowDelivered = deliveredRef.current?.() ?? null;
+
+        setHealth(nowHealth);
+        setDelivered(nowDelivered);
         setEngineStats(engineStatsRef.current?.() ?? null);
+        setStatsHistory((history) =>
+          keepRecent(
+            history,
+            {
+              connectionKbps: estimatedRef.current?.() ?? probedRef.current?.() ?? null,
+              bitrateKbps: nowDelivered?.bitrateKbps ?? null,
+              bufferedAheadSeconds: nowHealth.bufferedAheadSeconds,
+            },
+            READINGS_KEPT,
+          ),
+        );
       }
     };
 
+    setStatsHistory([]);
     sample();
 
     const timer = setInterval(sample, HEALTH_INTERVAL_MILLISECONDS);
@@ -1916,6 +1941,24 @@ const VideoPlayer = ({
       clearInterval(timer);
     };
   }, [isShowingStats]);
+
+  const directUrl =
+    isPlayingTheFile && session?.delivery.kind === 'direct' ? session.delivery.url : null;
+
+  useEffect(() => {
+    if (!isShowingStats || directUrl === null || !/^(?:https?:)?\//u.test(directUrl)) {
+      return;
+    }
+
+    const probe = probeThroughput(directUrl);
+
+    probedRef.current = probe.readKbps;
+
+    return () => {
+      probe.stop();
+      probedRef.current = null;
+    };
+  }, [isShowingStats, directUrl]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -3228,6 +3271,7 @@ const VideoPlayer = ({
               delivered={delivered}
               engine={engineStats}
               sessionStartSeconds={request.startSeconds}
+              history={statsHistory}
               {...(party === undefined
                 ? {}
                 : {
