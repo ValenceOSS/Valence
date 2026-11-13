@@ -29,6 +29,21 @@ describe('blockOnTheDemo', () => {
     }
   });
 
+  it('keeps the shared account’s name, picture, password and address as they are', async () => {
+    const app = anApp(true);
+
+    for (const [method, path] of [
+      ['POST', '/api/auth/update-user'],
+      ['POST', '/api/auth/change-password'],
+      ['POST', '/api/auth/change-email'],
+      ['POST', '/api/auth/delete-user'],
+      ['PUT', '/api/account/photo'],
+      ['DELETE', '/api/account/photo'],
+    ] as const) {
+      expect((await ask(app, method, path)).status, `${method} ${path}`).toBe(403);
+    }
+  });
+
   it('lets every other account through', async () => {
     const app = anApp(false);
 
