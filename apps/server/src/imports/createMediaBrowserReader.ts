@@ -1,4 +1,5 @@
 /* oxlint-disable valence/no-hard-coded-strings -- the source's own item types, fields, modes and element names, sent and matched rather than shown */
+import { MOST_SOURCE_ITEMS } from './MOST_SOURCE_ITEMS';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { SegmentKind } from '@ValenceContracts/schemas/MediaSegment';
 import { saying } from '@ValenceI18n/saying';
@@ -201,7 +202,10 @@ const createMediaBrowserReader = ({
 
       found.push(...page.Items);
 
-      if (page.Items.length < pageSize || found.length >= (page.TotalRecordCount ?? Infinity)) {
+      if (
+        page.Items.length < pageSize ||
+        found.length >= Math.min(page.TotalRecordCount ?? Infinity, MOST_SOURCE_ITEMS)
+      ) {
         return found;
       }
     }
@@ -415,7 +419,10 @@ const createMediaBrowserReader = ({
 
       found.push(...page.Items.map((item) => item.Id));
 
-      if (page.Items.length < pageSize || found.length >= (page.TotalRecordCount ?? Infinity)) {
+      if (
+        page.Items.length < pageSize ||
+        found.length >= Math.min(page.TotalRecordCount ?? Infinity, MOST_SOURCE_ITEMS)
+      ) {
         return found;
       }
     }

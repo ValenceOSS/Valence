@@ -85,6 +85,19 @@ describe('viewingOf', () => {
     expect(made.ratings).toEqual([{ subject: { mediaId: 'valence-heat' }, stars: 4 }]);
   });
 
+  it('keeps a source claiming a billion plays to a thousand', () => {
+    const made = viewing([
+      {
+        ...STATE,
+        isPlayed: true,
+        playCount: 1_000_000_000,
+        lastPlayedAt: new Date('2026-03-10T00:00:00Z'),
+      },
+    ]);
+
+    expect(made.plays).toHaveLength(1000);
+  });
+
   it('keeps real plays and dates only the rest, before the earliest of them', () => {
     const made = viewing(
       [{ ...STATE, isPlayed: true, playCount: 2, lastPlayedAt: new Date('2026-03-10T00:00:00Z') }],

@@ -1,4 +1,5 @@
 /* oxlint-disable valence/no-hard-coded-strings -- the source's own item types, fields, modes and element names, sent and matched rather than shown */
+import { MOST_SOURCE_ITEMS } from './MOST_SOURCE_ITEMS';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import {
   PlexAccountsSchema,
@@ -213,7 +214,7 @@ const createPlexReader = ({
 
       if (
         metadata.length < pageSize ||
-        found.length >= (page.MediaContainer.totalSize ?? Infinity)
+        found.length >= Math.min(page.MediaContainer.totalSize ?? Infinity, MOST_SOURCE_ITEMS)
       ) {
         return found;
       }

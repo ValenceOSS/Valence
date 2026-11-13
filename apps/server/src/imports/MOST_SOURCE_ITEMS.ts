@@ -1,0 +1,3 @@
+const MOST_SOURCE_ITEMS = 500_000;
+
+export { MOST_SOURCE_ITEMS };

@@ -5,6 +5,8 @@ import { starsOf } from './starsOf';
 import type { SourceCatalogue } from './readSourceCatalogue';
 import type { SourcePlay, SourceUserState } from './SourceReader';
 
+const MOST_PLAYS_AN_ITEM = 1000;
+
 type PersonViewing = {
   watched: { mediaItemId: string; durationSeconds: number; at: Date }[];
   resumes: { mediaItemId: string; positionSeconds: number; durationSeconds: number; at: Date }[];
@@ -120,8 +122,10 @@ const viewingOf = ({
     }
 
     const real = realPlays.get(state.itemId) ?? [];
-    const counted =
-      state.playCount > 0 ? state.playCount : state.isPlayed && state.lastPlayedAt !== null ? 1 : 0;
+    const counted = Math.min(
+      state.playCount > 0 ? state.playCount : state.isPlayed && state.lastPlayedAt !== null ? 1 : 0,
+      MOST_PLAYS_AN_ITEM,
+    );
     const missing = Math.max(counted - real.length, 0);
     const earliestReal = real.reduce<number | null>(
       (earliest, play) =>
