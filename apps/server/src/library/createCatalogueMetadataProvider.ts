@@ -994,7 +994,7 @@ const createCatalogueMetadataProvider = ({
        */
       const readOrdered = async (asking: string, groupId: string, episode: number) => {
         const read = EpisodeGroupSchema.safeParse(
-          await request(`/tv/episode_group/${groupId}`, asking, {}),
+          await request(`/tv/episode_group/${encodeURIComponent(groupId)}`, asking, {}),
         );
 
         return read.success
@@ -2004,7 +2004,7 @@ const createCatalogueMetadataProvider = ({
           .slice(0, MOST_EPISODE_GROUPS)
           .map(async (group) => {
             const read = EpisodeGroupSchema.safeParse(
-              await request(`/tv/episode_group/${group.id}`, key, {}),
+              await request(`/tv/episode_group/${encodeURIComponent(group.id)}`, key, {}),
             );
 
             return read.success
@@ -2157,7 +2157,9 @@ const createCatalogueMetadataProvider = ({
       const grouped =
         order === undefined
           ? null
-          : EpisodeGroupSchema.safeParse(await request(`/tv/episode_group/${order}`, key, {}));
+          : EpisodeGroupSchema.safeParse(
+              await request(`/tv/episode_group/${encodeURIComponent(order)}`, key, {}),
+            );
       const ordered =
         grouped === null || !grouped.success || grouped.data.groups.length === 0
           ? null

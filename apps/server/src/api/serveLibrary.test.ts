@@ -254,7 +254,12 @@ describe('serveLibrary', () => {
     const chosen = await ask(`/api/media/${MEDIA_ID}/episode-order`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ order: 'dvd' }),
+      body: JSON.stringify({ order: '5b6f1a2c3d4e5f6a7b8c9d0e' }),
+    });
+    const steered = await ask(`/api/media/${MEDIA_ID}/episode-order`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ order: '../../person/popular' }),
     });
 
     expect(await listed.json()).toEqual({
@@ -262,6 +267,7 @@ describe('serveLibrary', () => {
       chosen: null,
     });
     expect(await chosen.json()).toEqual({ corrected: 4, jobId: 'job' });
+    expect(steered.status).toBe(400);
   });
 
   it('says which show a season is read from, and lists the seasons a show has', async () => {
