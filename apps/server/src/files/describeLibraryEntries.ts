@@ -4,6 +4,7 @@ import { isSidecarName } from '@ValenceServer/library/isSidecarName';
 import { isSidecarOf } from '@ValenceServer/library/isSidecarOf';
 import { isIgnoredPath } from '@ValenceServer/library/naming/isIgnoredPath';
 import type { FileStatus } from '@ValenceContracts/schemas/LibraryFiles';
+import type { MediaOrigin } from '@ValenceContracts/schemas/MediaOrigin';
 import type { Said } from '@ValenceI18n/SaidSchema';
 
 type ListedEntry = { name: string; path: string; isFolder: boolean };
@@ -33,6 +34,7 @@ type EntryDescription = {
   status: FileStatus | null;
   reason: Said | null;
   belongsTo: string | null;
+  origin?: MediaOrigin;
 };
 
 const SHOW = 'series';

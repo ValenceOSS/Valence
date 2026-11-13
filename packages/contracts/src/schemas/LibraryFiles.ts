@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
+import { MediaOriginSchema } from '@ValenceContracts/schemas/MediaOrigin';
 
 const FILE_STATUSES = [
   'inLibrary',
@@ -27,6 +28,7 @@ const LibraryEntrySchema = z.object({
   status: z.enum(FILE_STATUSES).nullish(),
   reason: SaidSchema.nullish(),
   belongsTo: z.string().nullish(),
+  origin: MediaOriginSchema.nullish(),
 });
 
 const LibraryFolderSchema = z.object({

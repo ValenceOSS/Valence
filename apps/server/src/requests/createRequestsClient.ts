@@ -1,4 +1,6 @@
 import { ServiceConsoleSchema } from '@ValenceContracts/schemas/ServiceConsole';
+import { FiledOriginsSchema } from '@ValenceContracts/schemas/MediaOrigin';
+import type { FiledOrigins } from '@ValenceContracts/schemas/MediaOrigin';
 import type { ServiceConsole } from '@ValenceContracts/schemas/ServiceConsole';
 import { queryOfScope } from '@ValenceServer/requests/queryOfScope';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -869,6 +871,12 @@ const createRequestsClient = ({
 
     joinRequest: (id: string, asker: Requester): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/askers`, readRequest, { method: 'POST', body: asker }),
+
+    filedOrigins: (paths: readonly string[]): Promise<RequestsAnswer<FiledOrigins['filed']>> =>
+      call('/api/origins', (body) => FiledOriginsSchema.parse(body).filed, {
+        method: 'POST',
+        body: { paths },
+      }),
 
     renameAskers: (
       askers: AskerNames['askers'],

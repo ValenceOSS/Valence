@@ -10,6 +10,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { InfoRow } from '@ValenceUI/InfoRow';
 import { InfoNote } from '@ValenceUI/InfoNote';
+import { OriginBadge } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/OriginBadge/OriginBadge';
 import { FILE_STATUS_LOOKS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FILE_STATUS_LOOKS';
 import { reasonOfEntry } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/reasonOfEntry';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
@@ -119,6 +120,11 @@ const FileDetails = ({ where, selected, shownPath, onClear, onOpenTitle }: FileD
                 <Badge size="sm" tone={FILE_STATUS_LOOKS[only.status].tone}>
                   {FILE_STATUS_LOOKS[only.status].label}
                 </Badge>
+              </InfoRow>
+            )}
+            {only.origin === null || only.origin === undefined ? null : (
+              <InfoRow label={say('screens.adminArea.folderView.from')}>
+                <OriginBadge origin={only.origin} />
               </InfoRow>
             )}
             {only.title === null || only.title === undefined ? null : (

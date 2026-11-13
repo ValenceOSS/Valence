@@ -925,6 +925,24 @@ const versionChoice = mysqlTable(
   (table) => [uniqueIndex('version_choice_path_idx').on(table.libraryId, table.pathHash)],
 );
 
+const mediaOrigin = mysqlTable(
+  'media_origin',
+  {
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    source: varchar('source', { length: 32 }).notNull(),
+    via: mediumtext('via'),
+    recordedAt: momentNow('recordedAt').notNull(),
+  },
+  (table) => [
+    uniqueIndex('media_origin_path_idx').on(table.libraryId, table.pathHash),
+    check('media_origin_source', sql`${table.source} in ('upload', 'import')`),
+  ],
+);
+
 const titleEdit = mysqlTable(
   'title_edit',
   {
@@ -2434,6 +2452,7 @@ export {
   episodePin,
   seasonSource,
   versionChoice,
+  mediaOrigin,
   titleEdit,
   titleChange,
   mediaItem,
