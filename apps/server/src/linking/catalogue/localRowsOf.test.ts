@@ -51,6 +51,33 @@ describe('localRowsOf', () => {
     });
   });
 
+  it('keeps a cast picture only where the catalogue serves it', () => {
+    const page = CataloguePageSchema.parse({
+      ...NOTHING,
+      mediaItems: [
+        {
+          ...aMediaItemRow('film', 'theirs'),
+          castMembers: [
+            { name: 'Amy Adams', role: 'Louise', imageUrl: 'https://tracker.example/pixel.gif' },
+            {
+              name: 'Jeremy Renner',
+              role: 'Ian',
+              imageUrl: 'https://image.tmdb.org/t/p/w185/j.jpg',
+            },
+          ],
+          guestStars: [{ name: 'Guest', role: 'Them', imageUrl: 'https://tracker.example/g.gif' }],
+        },
+      ],
+    });
+    const [film] = localRowsOf(page, FILMS, HERE).mediaItems;
+
+    expect(film?.castMembers).toEqual([
+      { name: 'Amy Adams', role: 'Louise', imageUrl: null },
+      { name: 'Jeremy Renner', role: 'Ian', imageUrl: 'https://image.tmdb.org/t/p/w185/j.jpg' },
+    ]);
+    expect(film?.guestStars).toEqual([{ name: 'Guest', role: 'Them', imageUrl: null }]);
+  });
+
   it('follows every reference between songs, albums and artists', () => {
     const page = CataloguePageSchema.parse({
       ...NOTHING,
