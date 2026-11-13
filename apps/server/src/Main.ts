@@ -490,6 +490,8 @@ import { createDatabaseNotificationStore } from '@ValenceServer/notifications/cr
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
 import { noticesOfNewMedia } from '@ValenceServer/notifications/noticesOfNewMedia';
 import { splitDigest } from '@ValenceServer/notifications/splitDigest';
+import { holdBackFrom } from '@ValenceServer/notifications/holdBackFrom';
+import { partsForOne } from '@ValenceServer/notifications/partsForOne';
 import { readDigestWindow } from '@ValenceServer/notifications/readDigestWindow';
 import webPush from 'web-push';
 import type { VapidKeys } from '@ValenceServer/notifications/sendWebPush';
@@ -3575,8 +3577,45 @@ const jobs = createJobQueue({
         }
 
         const vapid = await readPushKeys();
+        const limited: string[] = [];
 
-        for (const part of splitDigest(arrived, askedFor)) {
+        for (const { id } of await db.select({ id: user.id }).from(user)) {
+          const isLimited =
+            !(await storedPermissions.resolve(id)).has('administrator') &&
+            ((await libraryService.refusedLibraries(id)).length > 0 ||
+              (await libraryService.ceilingsFor(id)).length > 0);
+
+          if (isLimited) {
+            limited.push(id);
+          }
+        }
+
+        const ownDigests = await Promise.all(
+          limited.map(async (accountId) => {
+            const viewer: Viewer = {
+              kind: 'account',
+              accountId,
+              profileId: null,
+              isAdministrator: false,
+            };
+            const outOfReach = await Promise.all(
+              arrived.map((item) => libraryService.isOutOfReach(viewer, item.id)),
+            );
+
+            return partsForOne(
+              splitDigest(
+                arrived.filter((_item, at) => outOfReach[at] !== true),
+                askedFor,
+              ),
+              accountId,
+            );
+          }),
+        );
+
+        for (const part of [
+          ...holdBackFrom(splitDigest(arrived, askedFor), limited),
+          ...ownDigests.flat(),
+        ]) {
           for (const notice of noticesOfNewMedia(part.items, now)) {
             await notifyHousehold({
               store: notifications,

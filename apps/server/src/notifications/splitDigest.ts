@@ -41,4 +41,6 @@ const splitDigest = (
   ];
 };
 
+export type { DigestPart };
+
 export { splitDigest };
