@@ -90,7 +90,6 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
-import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -121,13 +120,10 @@ import { collectConcerns } from './collectConcerns';
 import { concernKey } from './concernKey';
 import { readDismissedConcerns, saveDismissedConcerns } from './dismissedConcerns';
 import { standingDismissals } from './standingDismissals';
-import { valenceCpuShare } from './valenceCpuShare';
-import { valenceMemoryUse } from './valenceMemoryUse';
 import { memoryEnvelope } from './memoryEnvelope';
 import { libraryDisk } from './libraryDisk';
 import { describeGraphics } from './describeGraphics';
 import { describeFfmpeg } from './describeFfmpeg';
-import { describeCpuShare } from './describeCpuShare';
 import { describeAcceleration } from './describeAcceleration';
 import { describeChains } from './describeChains';
 import { describeToneMapping } from './describeToneMapping';
@@ -800,10 +796,11 @@ const AdminArea = ({
 
   const resources = monitor?.resources ?? null;
   const memory = memoryEnvelope(resources);
-  const memoryFraction = memory === null ? 0 : memory.usedBytes / memory.totalBytes;
-  const valenceMemory = valenceMemoryUse(resources);
+  const graphicsFigure = describeGraphics(
+    resources?.graphics ?? null,
+    resources?.graphicsNotes ?? [],
+  );
 
-  const cpuShare = valenceCpuShare(resources);
   const mediaDisk = libraryDisk(
     resources?.disks ?? [],
     libraries.map((library) => library.path),
@@ -1006,65 +1003,22 @@ const AdminArea = ({
                       />
                     ),
                   }),
-              detail:
-                resources === null ? (
-                  '—'
-                ) : cpuShare === null ? (
-                  <Sentence
-                    counted="screens.adminArea.coresValenceNotMeasured"
-                    count={resources.cpuCount}
-                    fillings={{ count: <FormattedNumber value={resources.cpuCount} /> }}
-                  />
-                ) : (
-                  <Sentence
-                    counted="screens.adminArea.coresValenceShare"
-                    count={resources.cpuCount}
-                    fillings={{
-                      count: <FormattedNumber value={resources.cpuCount} />,
-                      share:
-                        cpuShare >= 1 ? (
-                          <FormattedNumber value={Math.round(cpuShare)} suffix="%" />
-                        ) : (
-                          describeCpuShare(cpuShare)
-                        ),
-                    }}
-                  />
-                ),
             },
             {
               label: say('screens.adminArea.memory'),
               value: memory === null ? '—' : <FormattedBytes bytes={memory.usedBytes} />,
-              fraction: memoryFraction,
+              fraction:
+                memory === null || memory.totalBytes <= 0
+                  ? 0
+                  : memory.usedBytes / memory.totalBytes,
               ...(hardware === null ? {} : { info: <MemoryInfo hardware={hardware} /> }),
-              detail:
-                memory === null ? (
-                  '—'
-                ) : valenceMemory === null ? (
-                  <Sentence
-                    words={
-                      memory.isLimited
-                        ? 'screens.adminArea.ofTotalAllowedValenceNotMeasured'
-                        : 'screens.adminArea.ofTotalValenceNotMeasured'
-                    }
-                    fillings={{ total: <FormattedBytes bytes={memory.totalBytes} /> }}
-                  />
-                ) : (
-                  <Sentence
-                    words={
-                      memory.isLimited
-                        ? 'screens.adminArea.ofTotalAllowedValenceUses'
-                        : 'screens.adminArea.ofTotalValenceUses'
-                    }
-                    fillings={{
-                      total: <FormattedBytes bytes={memory.totalBytes} />,
-                      used: <FormattedBytes bytes={valenceMemory} />,
-                    }}
-                  />
-                ),
             },
             {
               label: say('screens.adminArea.graphics'),
-              ...describeGraphics(resources?.graphics ?? null, resources?.graphicsNotes ?? []),
+              value: graphicsFigure.value,
+              ...(graphicsFigure.fraction === undefined
+                ? {}
+                : { fraction: graphicsFigure.fraction }),
               info: graphicsInfo,
             },
             {
@@ -1076,29 +1030,14 @@ const AdminArea = ({
                 mediaDisk === null ? (
                   '—'
                 ) : (
-                  <Sentence
-                    words="screens.adminArea.sizeFree"
-                    fillings={{ size: <FormattedBytes bytes={mediaDisk.availableBytes} /> }}
-                  />
+                  <FormattedBytes bytes={mediaDisk.totalBytes - mediaDisk.availableBytes} />
                 ),
-              ...(mediaDisk === null
+              ...(mediaDisk === null || mediaDisk.totalBytes <= 0
                 ? {}
                 : {
                     fraction:
                       (mediaDisk.totalBytes - mediaDisk.availableBytes) / mediaDisk.totalBytes,
                   }),
-              detail:
-                mediaDisk === null ? (
-                  say('screens.adminArea.notMeasured')
-                ) : (
-                  <Sentence
-                    words="screens.adminArea.ofTotalOnMount"
-                    fillings={{
-                      total: <FormattedBytes bytes={mediaDisk.totalBytes} />,
-                      mountPoint: mediaDisk.mountPoint,
-                    }}
-                  />
-                ),
             },
           ]}
         />

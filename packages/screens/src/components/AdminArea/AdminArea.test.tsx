@@ -577,17 +577,20 @@ describe('AdminArea', () => {
     expect(await screen.findByText('42%')).toBeInTheDocument();
   });
 
-  it('says how much of the busy processor is Valence itself', async () => {
+  it('says how busy the processor of the whole machine is', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText(/cores · Valence/u)).toHaveTextContent('10 cores · Valence 19%');
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: 'CPU' })).toHaveTextContent('42%');
+    });
   });
 
   it('says the graphics figure is the whole card when the encoder cannot be read', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('41%')).toBeInTheDocument();
-    expect(await screen.findByText('whole GPU, not encoder')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: 'Graphics' })).toHaveTextContent('41%');
+    });
   });
 
   it('says nothing is readable when a card answers with neither figure', async () => {
@@ -612,20 +615,19 @@ describe('AdminArea', () => {
       },
     });
 
-    expect(await screen.findByText('No data')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole('region', { name: 'Graphics' })).getByText('—'),
+      ).toBeInTheDocument();
+    });
   });
 
-  it('reports room left on the disk the library is on, not on the one Valence boots from', async () => {
+  it('reports what is used on the disk the library is on, not on the one Valence boots from', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(
-      (await screen.findAllByText('2.0 TB')).some((size) =>
-        size.parentElement?.textContent?.includes('2.0 TB free'),
-      ),
-    ).toBe(true);
-    expect((await screen.findByText('8.0 TB')).parentElement).toHaveTextContent(
-      'of 8.0 TB · /media',
-    );
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: 'Storage' })).toHaveTextContent('6.0 TB');
+    });
   });
 
   it('watches over the one socket rather than a stream of its own', async () => {

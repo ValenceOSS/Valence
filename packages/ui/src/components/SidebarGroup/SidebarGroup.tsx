@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
@@ -26,7 +27,7 @@ const TRACK = [
  * @param count - How many things in it are waiting on somebody, shown beside its label while it is
  *   folded so they are not hidden by folding it.
  * @param items - The destinations in this group, each with how many things there are waiting on
- *   somebody, if any.
+ *   somebody, if any, and whether work is under way there, shown as a spinner.
  * @param value - Which destination is current.
  * @param onSelect - Told which destination was chosen.
  * @param markGroup - The rail-wide name the travelling highlight answers to, so it slides between
@@ -149,6 +150,17 @@ const SidebarGroup = ({
                       isUrgent={item.isUrgent ?? false}
                       isDot={isCollapsed}
                     />
+                  )}
+
+                  {item.isBusy !== true || isCollapsed ? null : (
+                    <span
+                      className={cn(
+                        'relative z-10 flex shrink-0 scale-75 opacity-50',
+                        item.count === undefined || item.count === 0 ? 'ml-auto' : '',
+                      )}
+                    >
+                      <Spinner size="xs" label={say('common.running')} />
+                    </span>
                   )}
                 </>
               );
