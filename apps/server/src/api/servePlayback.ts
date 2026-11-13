@@ -468,7 +468,9 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
-    if (!mayReport(clientId ?? 'nobody')) {
+    const reporter = (await readAccount(context.req.raw.headers))?.id ?? 'nobody';
+
+    if (!mayReport(reporter)) {
       return context.json(refuse('error.playback.tooManyProblemReports'), 429);
     }
 
