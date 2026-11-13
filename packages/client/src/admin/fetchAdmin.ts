@@ -176,6 +176,7 @@ const DeploymentMemorySchema = z.object({
 
 const DiskUseSchema = z.object({
   mountPoint: z.string(),
+  device: z.string().nullable().default(null),
   totalBytes: z.number(),
   availableBytes: z.number(),
 });

@@ -4,6 +4,7 @@ import type { DiskUse } from './libraryDisks';
 
 const disk = (mountPoint: string, totalBytes: number, availableBytes: number): DiskUse => ({
   mountPoint,
+  device: null,
   totalBytes,
   availableBytes,
 });

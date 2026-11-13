@@ -99,8 +99,18 @@ const MONITOR: Monitor = {
     requestsCpuPercent: null,
     loadAverage: 1.5,
     disks: [
-      { mountPoint: '/', totalBytes: 500 * 1024 ** 3, availableBytes: 100 * 1024 ** 3 },
-      { mountPoint: '/media', totalBytes: 8 * 1024 ** 4, availableBytes: 2 * 1024 ** 4 },
+      {
+        mountPoint: '/',
+        device: null,
+        totalBytes: 500 * 1024 ** 3,
+        availableBytes: 100 * 1024 ** 3,
+      },
+      {
+        mountPoint: '/media',
+        device: null,
+        totalBytes: 8 * 1024 ** 4,
+        availableBytes: 2 * 1024 ** 4,
+      },
     ],
     drives: [],
     graphics: {

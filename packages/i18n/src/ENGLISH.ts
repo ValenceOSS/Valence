@@ -5758,6 +5758,7 @@ const ENGLISH = {
     'On the disk, but not in a library or Valence’s.',
   'screens.adminArea.overviewPanel.diskUsageCard.everythingElse': 'Everything else',
   'screens.adminArea.overviewPanel.diskUsageCard.free': 'Free',
+  'screens.adminArea.overviewPanel.diskUsageCard.freeOfTheDrive': 'free of {total}',
   'screens.adminArea.overviewPanel.diskUsageCard.howTheDiskIsUsed': 'How {mount} is used',
   'screens.adminArea.overviewPanel.diskUsageCard.notMeasured':
     'This disk hasn’t been measured yet.',
@@ -5767,8 +5768,6 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.diskUsageCard.valenceKeeps':
     'Previews {previews}, scrub thumbnails {trickplay}, transcodes {sessions}, artwork {artwork}.',
   'screens.adminArea.overviewPanel.diskUsageCard.valencesFiles': 'Valence’s files',
-  'screens.adminArea.overviewPanel.diskUsageCard.valencesOnTheDrive':
-    "is Valence's, of {used} used on a {total} drive",
   'screens.adminArea.overviewPanel.diskUsageCard.whichDrive': 'Which drive to show',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
