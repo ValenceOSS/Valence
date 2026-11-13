@@ -21,6 +21,8 @@ const MOST_FROM_A_SERVER = 1200;
 
 const MOST_FROM_A_PERSON = 300;
 
+const MOST_PEOPLE_FROM_A_SERVER = 5000;
+
 const MOST_ACTIVITY = 200;
 
 const BEARER = /^Bearer\s+(\S+)$/iu;
@@ -34,7 +36,7 @@ type LinkSharingServiceOptions = {
   claims: PeerClaims;
   peers: PeerClient;
   warn?: (message: string) => void;
-  limits?: { perServer: number; perPerson: number };
+  limits?: { perServer: number; perPerson: number; people?: number };
   now?: () => Date;
 };
 
@@ -47,7 +49,8 @@ type LinkSharingServiceOptions = {
  *
  * 1. it is signed by a server this one is linked with, and meant for this one;
  * 2. it asks for something named as open to a linked server;
- * 3. the server and the person it asks for are within their rate;
+ * 3. the server and the person it asks for are within their rate, and the server brings no more
+ *    people than any household has, so it cannot fill this server's tables one name at a time;
  * 4. the person, where it names one, is not blocked;
  * 5. a catalogue, title, book, album or artist it asks about is in a library shared with that
  *    server and within its age, a session it asks about is one it started, and its record is read
@@ -139,8 +142,17 @@ const createLinkSharingService = ({
         return refused(403, 'error.linking.thatIsNotSharedWithYourServer');
       }
 
+      const isWithinItsRate = serverMayAsk(server.id);
+      const hasRoom =
+        !isWithinItsRate ||
+        signer.person === null ||
+        (await sharing.hasRoomFor(
+          server.id,
+          signer.person.pseudonym,
+          limits.people ?? MOST_PEOPLE_FROM_A_SERVER,
+        ));
       const person =
-        signer.person === null
+        !isWithinItsRate || !hasRoom || signer.person === null
           ? null
           : await sharing.seePerson(server.id, signer.person.pseudonym, signer.person.name, at);
       const subject = reach.kind === 'subject' ? await subjectOf(reach.subject) : null;
@@ -164,7 +176,8 @@ const createLinkSharingService = ({
         );
 
       if (
-        !serverMayAsk(server.id) ||
+        !isWithinItsRate ||
+        !hasRoom ||
         (person !== null && !personMayAsk(`${server.id}:${person.id}`))
       ) {
         await record(reach.action, 'tooMany');

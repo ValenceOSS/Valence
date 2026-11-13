@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, gt, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, lt } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { upsert } from '@ValenceDatabase/upsert';
 import { toIso } from '@ValenceCore/functions/toIso';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
@@ -143,6 +144,30 @@ const createDatabaseLinkSharingStore = (db: AnyValenceDatabase): LinkSharingStor
       return personOf(row);
     },
 
+    hasRoomFor: async (linkedServerId, pseudonym, most) => {
+      const [known] = await db
+        .select({ id: remotePerson.id })
+        .from(remotePerson)
+        .where(
+          and(
+            eq(remotePerson.linkedServerId, linkedServerId),
+            eq(remotePerson.pseudonym, pseudonym),
+          ),
+        )
+        .limit(1);
+
+      if (known !== undefined) {
+        return true;
+      }
+
+      const [counted] = await db
+        .select({ people: count() })
+        .from(remotePerson)
+        .where(eq(remotePerson.linkedServerId, linkedServerId));
+
+      return (counted?.people ?? 0) < most;
+    },
+
     listPeople: async (linkedServerId) =>
       (
         await db
@@ -205,6 +230,9 @@ const createDatabaseLinkSharingStore = (db: AnyValenceDatabase): LinkSharingStor
         at: now,
       });
     },
+
+    forgetActivityBefore: async (before) =>
+      countAffected(await db.delete(federationAudit).where(lt(federationAudit.at, before))),
 
     listActivity: async (linkedServerId, { since, personIds, limit }) => {
       if (personIds?.length === 0) {

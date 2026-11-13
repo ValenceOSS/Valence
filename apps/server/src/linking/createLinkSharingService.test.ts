@@ -32,7 +32,11 @@ const LIBRARIES = [
  * @param limits - How often Anime lets a server and a person ask.
  * @returns Both services, the ids each knows the other by, and what Anime warned about.
  */
-const twoSharingServers = async (limits?: { perServer: number; perPerson: number }) => {
+const twoSharingServers = async (limits?: {
+  perServer: number;
+  perPerson: number;
+  people?: number;
+}) => {
   const { anime, films, animeStore, filmsStore, link } = twoLinkingServers();
   const { filmsAtAnime, animeAtFilms } = await link();
   const warned: string[] = [];
@@ -291,6 +295,33 @@ describe('createLinkSharingService', () => {
     expect(await filmsAsks('/libraries', sam)).toMatchObject({ status: 429 });
     expect((await filmsAsks('/libraries')).kind).toBe('admitted');
     expect(await filmsAsks('/libraries')).toMatchObject({ status: 429 });
+  });
+
+  it('records nobody new once a server is over its rate, or has brought as many people as any house has', async () => {
+    const crowded = await twoSharingServers({ perServer: 100, perPerson: 100, people: 2 });
+
+    await crowded.animeSharing.changeSharing(crowded.filmsAtAnime, { libraryIds: [FILMS] });
+
+    expect((await crowded.filmsAsks('/libraries', { profileId: 'sam', name: 'Sam' })).kind).toBe(
+      'admitted',
+    );
+    expect((await crowded.filmsAsks('/libraries', { profileId: 'kai', name: 'Kai' })).kind).toBe(
+      'admitted',
+    );
+    expect(
+      await crowded.filmsAsks('/libraries', { profileId: 'someone-new', name: 'New' }),
+    ).toMatchObject({ status: 429 });
+    expect((await crowded.filmsAsks('/libraries', { profileId: 'sam', name: 'Sam' })).kind).toBe(
+      'admitted',
+    );
+    expect(await crowded.animeSharing.people(crowded.filmsAtAnime)).toHaveLength(2);
+
+    const busy = await twoSharingServers({ perServer: 1, perPerson: 100 });
+
+    await busy.filmsAsks('/libraries');
+    await busy.filmsAsks('/libraries', { profileId: 'flood', name: 'Flood' });
+
+    expect(await busy.animeSharing.people(busy.filmsAtAnime)).toEqual([]);
   });
 
   it('sends a person’s name only where its admin lets names travel', async () => {

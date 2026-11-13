@@ -1,3 +1,4 @@
+import { auditExpiry } from '@ValenceServer/audit/auditExpiry';
 import { z } from '@hono/zod-openapi';
 import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
 import { createFanartProvider } from '@ValenceServer/fanart/createFanartProvider';
@@ -3669,8 +3670,15 @@ const jobs = createJobQueue({
       },
       [PRUNE_AUDIT_JOB]: async () => {
         const forgotten = await auditService.prune(new Date());
+        const forgottenFromLinks = await linkSharingStore.forgetActivityBefore(
+          auditExpiry(new Date()).signIns,
+        );
 
         log.info('server', `audit log: forgot ${forgotten.toString()} old entries`);
+        log.info(
+          'server',
+          `linked servers: forgot ${forgottenFromLinks.toString()} old record entries`,
+        );
       },
       [PRUNE_RESOURCE_HISTORY_JOB]: async () => {
         await resourceHistory.forgetExpired(Date.now());

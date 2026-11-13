@@ -87,6 +87,16 @@ const createMemoryLinkSharingStore = (
       return Promise.resolve(shownOf(seen));
     },
 
+    hasRoomFor: (linkedServerId, pseudonym, most) => {
+      const theirs = [...people.values()].filter(
+        (person) => person.linkedServerId === linkedServerId,
+      );
+
+      return Promise.resolve(
+        theirs.length < most || theirs.some((person) => person.pseudonym === pseudonym),
+      );
+    },
+
     listPeople: (linkedServerId) =>
       Promise.resolve(
         [...people.values()]
@@ -143,6 +153,15 @@ const createMemoryLinkSharingStore = (
       });
 
       return Promise.resolve();
+    },
+
+    forgetActivityBefore: (before) => {
+      const kept = entries.filter((entry) => new Date(entry.at) >= before);
+      const forgotten = entries.length - kept.length;
+
+      entries.splice(0, entries.length, ...kept);
+
+      return Promise.resolve(forgotten);
     },
 
     listActivity: (linkedServerId, { since, personIds, limit }) =>

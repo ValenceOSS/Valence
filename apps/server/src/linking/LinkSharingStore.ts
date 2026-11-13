@@ -31,6 +31,7 @@ type LinkSharingStore = {
     name: string | null,
     now: Date,
   ) => Promise<RemotePerson>;
+  hasRoomFor: (linkedServerId: string, pseudonym: string, most: number) => Promise<boolean>;
   listPeople: (linkedServerId: string) => Promise<RemotePerson[]>;
   pseudonymOf: (linkedServerId: string, personId: string) => Promise<string | null>;
   blockPerson: (
@@ -39,6 +40,7 @@ type LinkSharingStore = {
     blockedAt: Date | null,
   ) => Promise<RemotePerson | null>;
   record: (entry: AuditEntry, now: Date) => Promise<void>;
+  forgetActivityBefore: (before: Date) => Promise<number>;
   listActivity: (linkedServerId: string, query: ActivityQuery) => Promise<FederationActivity[]>;
 };
 
