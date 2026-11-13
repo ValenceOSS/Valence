@@ -73,6 +73,15 @@ describe('applyFilters', () => {
     expect(filter('-]title]-', 'trim', ']-')).toBe('title');
   });
 
+  it('trims a long run of the characters given without slowing down', () => {
+    const started = Date.now();
+
+    expect(filter(`${'-'.repeat(200_000)}x`, 'trim', '-')).toBe('x');
+    expect(filter(`${'-'.repeat(200_000)}x${'-'.repeat(200_000)}`, 'trim', '-')).toBe('x');
+    expect(filter(`x${'-'.repeat(100_000)}y`, 'trim', '-')).toBe(`x${'-'.repeat(100_000)}y`);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
   it('prepends and appends, filling templates in', () => {
     expect(filter('ABC', 'prepend', 'magnet:?xt=urn:btih:')).toBe('magnet:?xt=urn:btih:ABC');
     expect(filter('2024-03-05', 'append', ' +03:00')).toBe('2024-03-05 +03:00');

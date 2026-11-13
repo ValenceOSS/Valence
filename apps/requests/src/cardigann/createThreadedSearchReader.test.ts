@@ -53,18 +53,56 @@ const BODY = `<table class="results">
   </tr>
 </table>`;
 
+const HANGING = readDefinition(`id: example
+name: Example
+links: [https://example.org/]
+caps:
+  categorymappings:
+    - {id: 1, cat: Movies/HD, desc: "Films"}
+  modes:
+    search: [q]
+type: public
+search:
+  paths:
+    - path: search/{{ .Keywords }}/
+  rows:
+    selector: table.results tr:has(a.title)
+  fields:
+    category:
+      text: 1
+    title:
+      selector: a.title
+      filters:
+        - name: re_replace
+          args: ["(a+)+$", "x"]
+    details:
+      selector: a.title
+      attribute: href
+    download:
+      selector: a.dl
+      attribute: href
+    size:
+      selector: td.size
+    seeders:
+      selector: td.se
+    leechers:
+      selector: td.le
+    date:
+      text: now
+`);
+
 /**
  * The page the test definition asks for, as the site answered it.
  */
-const page = () => {
-  if (DEFINITION === null) {
+const page = (definition = DEFINITION, body = BODY) => {
+  if (definition === null) {
     throw new Error('The test definition does not read.');
   }
 
   const [request] = buildSearchRequests({
-    definition: DEFINITION,
+    definition,
     variables: { ...queryVariables({ query: 'dune' }), '.Config.sitelink': 'https://example.org/' },
-    categories: createCategoryMap(DEFINITION.caps),
+    categories: createCategoryMap(definition.caps),
     asked: [],
     siteLink: 'https://example.org/',
     nowMs: NOW,
@@ -74,7 +112,7 @@ const page = () => {
     throw new Error('The test definition makes no request.');
   }
 
-  return { definition: DEFINITION, request, body: BODY, indexer: INDEXER, nowMs: NOW };
+  return { definition, request, body, indexer: INDEXER, nowMs: NOW };
 };
 
 describe('createThreadedSearchReader', () => {
@@ -98,4 +136,14 @@ describe('createThreadedSearchReader', () => {
       }),
     ).toBeNull();
   });
+
+  it('stops a thread stuck on a page and answers that page with no results', async () => {
+    const asked = page(HANGING, BODY.replace('Dune.2021.1080p', `${'a'.repeat(60)}b`));
+    const read = createThreadedSearchReader(1, 1_000);
+    const started = Date.now();
+
+    expect(await read(asked)).toEqual([]);
+    expect(Date.now() - started).toBeLessThan(10_000);
+    expect(await read(page())).not.toBeNull();
+  }, 30_000);
 });

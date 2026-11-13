@@ -78,16 +78,25 @@ const applyFilter = (
     }
     case 'replace':
       return text.replaceAll(first, renderTemplate(second, context.variables));
-    case 'trim':
-      return first === ''
-        ? text.trim()
-        : text.replace(
-            new RegExp(
-              `^[${first.replace(/[\\\]^-]/g, '\\$&')}]+|[${first.replace(/[\\\]^-]/g, '\\$&')}]+$`,
-              'g',
-            ),
-            '',
-          );
+    case 'trim': {
+      if (first === '') {
+        return text.trim();
+      }
+
+      const characters = new Set(first);
+      let start = 0;
+      let end = text.length;
+
+      while (start < end && characters.has(text[start] ?? '')) {
+        start += 1;
+      }
+
+      while (end > start && characters.has(text[end - 1] ?? '')) {
+        end -= 1;
+      }
+
+      return text.slice(start, end);
+    }
     case 'prepend':
       return renderTemplate(first, context.variables) + text;
     case 'append':

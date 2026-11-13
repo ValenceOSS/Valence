@@ -1,3 +1,4 @@
+import { readBoundedBytes } from '@ValenceRequests/network/readBoundedBytes';
 import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { indexerEndpoint } from '@ValenceRequests/indexers/indexerEndpoint';
@@ -57,6 +58,8 @@ type CreateIndexerClientOptions = {
   annasLibrary?: AnnasLibrary | null;
   guard?: GuardFor;
 };
+
+const MOST_FEED_BYTES = 64 * 1024 * 1024;
 
 /**
  * Asks Torznab and Newznab indexers, OPDS catalogues and Anna's Archive what they can do and what
@@ -194,7 +197,9 @@ const createIndexerClient = ({
       );
     }
 
-    return readIndexerXml(await response.text());
+    return readIndexerXml(
+      new TextDecoder().decode(await readBoundedBytes(response, MOST_FEED_BYTES)),
+    );
   };
 
   return {
@@ -310,7 +315,7 @@ const createIndexerClient = ({
         );
       }
 
-      const bytes = new Uint8Array(await response.arrayBuffer());
+      const bytes = await readBoundedBytes(response, MOST_FEED_BYTES);
 
       if (!response.ok || bytes.length === 0) {
         throw new IndexerFailure(

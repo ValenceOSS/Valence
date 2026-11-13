@@ -12,8 +12,11 @@ const AnsweredSchema = z.union([
 
 const MOST_THREADS = 4;
 
+const PAGE_MILLISECONDS = 20_000;
+
 type Waiting = {
   resolve: (releases: Release[] | null) => void;
+  timer: NodeJS.Timeout;
 };
 
 type Lane = {
@@ -45,12 +48,17 @@ const threadFile = (): { file: URL; execArgv: string[] } => {
  * page. Where a thread cannot read a page, or is not there at all, the page is answered with `null`,
  * and the caller reads it itself, so a failure says exactly what it would have said before.
  *
+ * A page that is not answered within the time given is read as having no results, and its thread is
+ * stopped, so a pattern that never finishes cannot hold a thread, or be run again here.
+ *
  * @param threads - How many threads to keep, one fewer than the machine's cores up to four unless
  *   given.
+ * @param pageMilliseconds - How long a page may take.
  * @returns A reader of result pages.
  */
 const createThreadedSearchReader = (
   threads = Math.max(1, Math.min(MOST_THREADS, availableParallelism() - 1)),
+  pageMilliseconds = PAGE_MILLISECONDS,
 ): SearchResultsReader => {
   const lanes: Lane[] = Array.from({ length: threads }, () => ({
     thread: null,
@@ -60,6 +68,7 @@ const createThreadedSearchReader = (
 
   const settleAll = (lane: Lane) => {
     for (const one of lane.waiting.values()) {
+      clearTimeout(one.timer);
       one.resolve(null);
     }
 
@@ -81,6 +90,11 @@ const createThreadedSearchReader = (
       const one = lane.waiting.get(answered.data.id);
 
       lane.waiting.delete(answered.data.id);
+
+      if (one !== undefined) {
+        clearTimeout(one.timer);
+      }
+
       one?.resolve('failure' in answered.data ? null : answered.data.releases);
     });
     started.on('error', () => {
@@ -110,8 +124,26 @@ const createThreadedSearchReader = (
 
       try {
         lane.thread ??= start(lane);
-        lane.waiting.set(id, { resolve });
-        lane.thread.postMessage({ id, asked: page });
+
+        const { thread } = lane;
+        const timer = setTimeout(() => {
+          for (const one of lane.waiting.values()) {
+            clearTimeout(one.timer);
+            one.resolve([]);
+          }
+
+          lane.waiting.clear();
+
+          if (lane.thread === thread) {
+            lane.thread = null;
+          }
+
+          void thread.terminate();
+        }, pageMilliseconds);
+
+        timer.unref();
+        lane.waiting.set(id, { resolve, timer });
+        thread.postMessage({ id, asked: page });
       } catch {
         lane.waiting.delete(id);
         resolve(null);

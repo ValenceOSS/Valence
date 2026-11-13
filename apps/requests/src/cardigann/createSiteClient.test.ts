@@ -131,6 +131,19 @@ describe('createSiteClient', () => {
     expect(asked[1]?.init).toMatchObject({ method: 'POST', body: 'q=1' });
   });
 
+  it('refuses a page longer than it will read', async () => {
+    const { fetch } = aNetwork({
+      'https://x.example/': { body: new Uint8Array(10 * 1024 * 1024 + 1) },
+    });
+
+    await expect(
+      createSiteClient({ fetch }).send(
+        { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
+        { ...OPTIONS, session: aSession() },
+      ),
+    ).rejects.toBeInstanceOf(IndexerFailure);
+  });
+
   it('sends no cookie, header or body to a host the site redirects to', async () => {
     const { fetch, asked } = aNetwork({
       'https://x.example/a': {
