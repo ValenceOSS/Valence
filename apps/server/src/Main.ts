@@ -107,6 +107,9 @@ import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
+import { titleAnInvitationMayName } from '@ValenceServer/parties/titleAnInvitationMayName';
+import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { createLogger } from '@ValenceServer/logging/createLogger';
 import { createDatabaseLogStore } from '@ValenceServer/logging/createDatabaseLogStore';
 import { createJobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
@@ -2111,8 +2114,12 @@ const partyBinding: PartyBinding = {
       connectionIds: connectionIds.filter((id) => !partyRelay.isPeer(id)),
     });
   },
-  ask: ({ party, byName, profileId }) => {
-    void askSomebodyToTheParty(party, byName, profileId);
+  ask: ({ party, byName, byAccountId, byProfileId, profileId }) => {
+    void askSomebodyToTheParty(
+      party,
+      { name: byName, accountId: byAccountId, profileId: byProfileId },
+      profileId,
+    );
   },
 };
 
@@ -6310,9 +6317,11 @@ const tellOfBeingAskedAlong = async (serverId: string, ask: AskedAlong): Promise
 
 const askSomebodyToTheParty = async (
   party: { id: string; kind: 'watch' | 'listen'; mediaId: string },
-  byName: string,
+  inviter: { name: string; accountId: string; profileId: string | null },
   profileId: string,
 ): Promise<void> => {
+  const byName = inviter.name;
+
   if (profileId.startsWith(PEER_MEMBER)) {
     await askAlongElsewhere(party, byName, profileId);
 
@@ -6325,11 +6334,37 @@ const askSomebodyToTheParty = async (
     return;
   }
 
-  const [found] = await db
-    .select({ title: mediaItem.title })
-    .from(mediaItem)
-    .where(eq(mediaItem.id, party.mediaId))
-    .limit(1);
+  const viewerOfAccount = async (
+    viewingAccountId: string,
+    viewingProfileId: string | null,
+  ): Promise<Viewer> => ({
+    kind: 'account',
+    accountId: viewingAccountId,
+    profileId: viewingProfileId,
+    isAdministrator: (await permissions.resolve(viewingAccountId)).has(ADMINISTRATOR),
+  });
+
+  const naming = await titleAnInvitationMayName({
+    mediaId: party.mediaId,
+    inviter: await viewerOfAccount(inviter.accountId, inviter.profileId),
+    invitee: await viewerOfAccount(accountId, profileId),
+    isOutOfReach: (viewer, mediaId) => libraryService.isOutOfReach(viewer, mediaId),
+    titleOf: async (mediaId) => {
+      const [row] = await db
+        .select({ title: mediaItem.title })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      return row?.title ?? null;
+    },
+  });
+
+  if (naming.kind === 'refused') {
+    return;
+  }
+
+  const found = naming.title === null ? undefined : { title: naming.title };
 
   const isListening = party.kind === 'listen';
 

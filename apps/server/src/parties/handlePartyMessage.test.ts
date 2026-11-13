@@ -24,16 +24,30 @@ const createWorld = () => {
     return `party-${minted.toString()}`;
   });
 
-  const asked: { byName: string; profileId: string; partyId: string }[] = [];
+  const asked: {
+    byName: string;
+    byAccountId: string;
+    byProfileId: string | null;
+    profileId: string;
+    partyId: string;
+  }[] = [];
 
   const binding = {
     registry,
     tell: (connectionIds: readonly string[], payload: JsonValue) => {
       told.push({ to: connectionIds, payload });
     },
-    ask: (asking: { party: { id: string }; byName: string; profileId: string }) => {
+    ask: (asking: {
+      party: { id: string };
+      byName: string;
+      byAccountId: string;
+      byProfileId: string | null;
+      profileId: string;
+    }) => {
       asked.push({
         byName: asking.byName,
+        byAccountId: asking.byAccountId,
+        byProfileId: asking.byProfileId,
         profileId: asking.profileId,
         partyId: asking.party.id,
       });
@@ -310,7 +324,15 @@ describe('handlePartyMessage', () => {
     world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('dan', 'Dan'));
     world.say({ kind: 'partyInvite', profileId: 'profile-sam' }, someone('dan', 'Dan'));
 
-    expect(world.asked).toEqual([{ byName: 'Dan', profileId: 'profile-sam', partyId: 'party-1' }]);
+    expect(world.asked).toEqual([
+      {
+        byName: 'Dan',
+        byAccountId: 'account-dan',
+        byProfileId: null,
+        profileId: 'profile-sam',
+        partyId: 'party-1',
+      },
+    ]);
   });
 
   it('refuses a guest asking somebody along, and tells them why', () => {

@@ -19,7 +19,13 @@ type PartySpeaker = {
 type PartyBinding = {
   registry: PartyRegistry;
   tell: (connectionIds: readonly string[], payload: JsonValue) => void;
-  ask?: (asking: { party: WatchParty; byName: string; profileId: string }) => void;
+  ask?: (asking: {
+    party: WatchParty;
+    byName: string;
+    byAccountId: string;
+    byProfileId: string | null;
+    profileId: string;
+  }) => void;
 };
 
 const asCommandJson = (command: SequencedCommand): JsonValue => ({
@@ -254,6 +260,8 @@ const handlePartyMessage = (
     binding.ask?.({
       party: asking.party,
       byName: asking.byName,
+      byAccountId: who.accountId,
+      byProfileId: who.profileId,
       profileId: message.profileId,
     });
 
