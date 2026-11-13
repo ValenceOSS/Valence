@@ -12,6 +12,8 @@ const SECURITY_CHANGES: Readonly<Record<string, AuditAction>> = {
   '/passkey/delete-passkey': 'auth.passkeyRemoved',
 };
 
+const LONGEST_IDENTIFIER = 254;
+
 /**
  * Says how somebody signed in, from the address they signed in through.
  *
@@ -85,7 +87,7 @@ const auditOfAuthRequest = (attempt: SignInAttempt): AuditToRecord | null => {
       actorId: null,
       actorName: '',
       action: 'auth.signInFailed',
-      target: attempt.identifier,
+      target: attempt.identifier?.slice(0, LONGEST_IDENTIFIER) ?? null,
       detail: { method: methodOf(attempt.path), attempts: '1' },
     };
   }

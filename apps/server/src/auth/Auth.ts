@@ -193,7 +193,7 @@ const createAuth = ({
               ? null
               : { id: context.context.session.user.id, name: context.context.session.user.name },
           identifier: identifier.success
-            ? (identifier.data.email ?? identifier.data.username ?? null)
+            ? ((identifier.data.email ?? identifier.data.username)?.slice(0, 254) ?? null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
           device: deviceOfRequest(context.headers),
