@@ -616,3 +616,32 @@ describe('managing the files of a library taken away', () => {
     expect((await me.ask('/api/admin/files/measure?path=/media/films')).status).toBe(403);
   });
 });
+
+describe('changing a library taken away', () => {
+  it('answers as though it were not there', async () => {
+    const me = await signedInWith(context, ['account.manage', 'library.edit', 'jobs.run']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    expect((await me.ask(`/api/libraries/${FILMS}`, 'PATCH')).status).toBe(404);
+    expect((await me.ask(`/api/libraries/${FILMS}/left-out`)).status).toBe(404);
+    expect((await me.ask(`/api/libraries/${FILMS}/scan`, 'POST')).status).toBe(404);
+    expect((await me.ask(`/api/libraries/${SHOWS}/left-out`)).status).not.toBe(404);
+  });
+
+  it('moves nothing out of it, nor into it', async () => {
+    const me = await signedInWith(context, ['account.manage', 'media.delete']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    const move = (mediaIds: readonly string[], libraryId: string) =>
+      context.app.request(`${BASE}/api/media/move`, {
+        method: 'POST',
+        headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+        body: JSON.stringify({ mediaIds, libraryId }),
+      });
+
+    expect((await move([ARRIVAL], SHOWS)).status).toBe(404);
+    expect((await move([EPISODE], FILMS)).status).toBe(404);
+  });
+});

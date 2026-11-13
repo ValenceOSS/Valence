@@ -963,6 +963,18 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { mediaIds, libraryId } = context.req.valid('json');
+    const viewer = await viewerOf(context.req.raw.headers);
+    const reachable =
+      viewer !== null &&
+      (await library.list(viewer)).some((one) => one.id === libraryId) &&
+      (await Promise.all(mediaIds.map((id) => library.isOutOfReach(viewer, id)))).every(
+        (isOut) => !isOut,
+      );
+
+    if (!reachable) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
     const named = await auditedMedia(mediaIds[0] ?? '');
     const moved = await library.moveMedia(mediaIds, libraryId);
 

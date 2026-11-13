@@ -629,9 +629,14 @@ const createAppContext = (options: CreateAppOptions) => {
       return false;
     }
 
-    return subject.kind === 'item'
-      ? library.isOutOfReach(viewer, subject.mediaId)
-      : library.isSeriesOutOfReach(viewer, subject.seriesId);
+    switch (subject.kind) {
+      case 'item':
+        return library.isOutOfReach(viewer, subject.mediaId);
+      case 'series':
+        return library.isSeriesOutOfReach(viewer, subject.seriesId);
+      case 'library':
+        return !(await library.list(viewer)).some((one) => one.id === subject.libraryId);
+    }
   };
 
   /**

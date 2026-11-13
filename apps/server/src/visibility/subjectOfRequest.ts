@@ -3,6 +3,7 @@ import { canonicalIdOf } from '@ValenceServer/visibility/canonicalIdOf';
 type Subject =
   | { kind: 'item'; mediaId: string }
   | { kind: 'series'; seriesId: string }
+  | { kind: 'library'; libraryId: string }
   | { kind: 'none' };
 
 const ITEM_ROUTES: readonly RegExp[] = [
@@ -13,8 +14,10 @@ const ITEM_ROUTES: readonly RegExp[] = [
 
 const SERIES_ROUTES: readonly RegExp[] = [/^\/api\/series\/([^/]+)(\/.*)?$/];
 
+const LIBRARY_ROUTE = /^\/api\/libraries\/([^/]+)(\/.*)?$/;
+
 /**
- * Which item or programme, if any, a request is about, read from its address alone.
+ * Which item, programme or library, if any, a request is about, read from its address alone.
  *
  * This is matched by prefix rather than against a list of known routes, and the difference matters.
  * The share gate names every route a guest may reach and refuses the rest, so a route it has never
@@ -58,7 +61,10 @@ const subjectOfRequest = (path: string): Subject => {
     }
   }
 
-  return { kind: 'none' };
+  const library = LIBRARY_ROUTE.exec(path)?.[1];
+  const libraryId = library === undefined ? null : canonicalIdOf(library);
+
+  return libraryId === null ? { kind: 'none' } : { kind: 'library', libraryId };
 };
 
 export type { Subject };
