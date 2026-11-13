@@ -40,6 +40,9 @@ pub const FOLDER_NAME: &str = "remote";
 /// The extension every remote input's list ends in.
 pub const EXTENSION: &str = "ffconcat";
 
+/// The containers a library holds, which are all that is read as a file; a playlist is not one.
+pub const CONTAINERS: &str = "matroska,webm,mov,mp4,m4a,3gp,3g2,mj2,mpegts,mpeg,avi,asf,flv,ogg,mp3,flac,wav,aac,ac3,eac3,dts";
+
 /// What ffmpeg and ffprobe are told before the relay's address: that they may open it, and that
 /// a connection to it that drops is to be opened again, and that what it carries must be a
 /// container a library holds, never a playlist that would name further addresses to open.
@@ -47,7 +50,7 @@ pub const RELAY_INPUT: [&str; 10] = [
     "-protocol_whitelist",
     "http,tcp",
     "-format_whitelist",
-    "matroska,webm,mov,mp4,m4a,3gp,3g2,mj2,mpegts,mpeg,avi,asf,flv,ogg,mp3,flac,wav,aac,ac3,eac3,dts",
+    CONTAINERS,
     "-reconnect",
     "1",
     "-reconnect_on_network_error",

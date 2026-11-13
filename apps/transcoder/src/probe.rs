@@ -39,7 +39,21 @@ pub enum ProbeError {
     Failed { status: i32, stderr: String },
     #[error("could not parse ffprobe output: {0}")]
     Parse(#[from] serde_json::Error),
+    #[error("not a media file: it is a {0} playlist")]
+    NotMedia(String),
 }
+
+/// The demuxers that read a list of other things to open rather than a container of media.
+const PLAYLIST_FORMATS: [&str; 8] = [
+    "hls",
+    "applehttp",
+    "sdp",
+    "concat",
+    "dash",
+    "mpd",
+    "rtsp",
+    "rtp",
+];
 
 #[derive(Debug, Deserialize)]
 struct FfprobeOutput {
@@ -449,6 +463,21 @@ fn to_media_probe(output: &FfprobeOutput, path: &Path) -> MediaProbe {
 pub fn parse_ffprobe_output(json: &str, path: &Path) -> Result<MediaProbe, ProbeError> {
     let output: FfprobeOutput = serde_json::from_str(json)?;
 
+    let is_list_of_parts = path.to_str().is_some_and(|path| {
+        crate::joined_input::is_joined(path) || crate::remote_input::is_remote(path)
+    });
+
+    if !is_list_of_parts {
+        if let Some(playlist) = output.format.as_ref().and_then(|format| {
+            format
+                .format_name
+                .split(',')
+                .find(|name| PLAYLIST_FORMATS.contains(name))
+        }) {
+            return Err(ProbeError::NotMedia(playlist.to_owned()));
+        }
+    }
+
     Ok(to_media_probe(&output, path))
 }
 
@@ -603,6 +632,24 @@ mod tests {
         let probe = parse_ffprobe_output(&json, Path::new("/media/film.mkv")).expect("parses");
 
         assert!(probe.duration_seconds.abs() < f64::EPSILON);
+    }
+
+    /// A playlist saved under a video extension names other files to open, so it is not read as
+    /// a film.
+    #[test]
+    fn refuses_a_playlist_saved_as_a_film() {
+        let json =
+            r#"{"streams": [], "format": {"format_name": "hls,applehttp", "duration": "10"}}"#;
+
+        assert!(matches!(
+            parse_ffprobe_output(json, Path::new("/media/film.mkv")),
+            Err(super::ProbeError::NotMedia(_))
+        ));
+        assert!(parse_ffprobe_output(
+            &json.replace("hls,applehttp", "concat"),
+            Path::new("/media/film.mp4")
+        )
+        .is_err());
     }
 
     #[test]

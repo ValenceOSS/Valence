@@ -3452,9 +3452,9 @@ async fn start_fingerprint(
 fn could_not_read(failure: &crate::probe::ProbeError) -> Response {
     let status = match failure {
         crate::probe::ProbeError::Spawn(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        crate::probe::ProbeError::Failed { .. } | crate::probe::ProbeError::Parse(_) => {
-            StatusCode::UNPROCESSABLE_ENTITY
-        }
+        crate::probe::ProbeError::Failed { .. }
+        | crate::probe::ProbeError::Parse(_)
+        | crate::probe::ProbeError::NotMedia(_) => StatusCode::UNPROCESSABLE_ENTITY,
     };
 
     error(status, &failure.to_string())
