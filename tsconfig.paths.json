@@ -200,6 +200,8 @@
       "@ValenceUI/WordReveal.types": [
         "./packages/ui/src/components/WordReveal/WordReveal.types.ts"
       ],
+      "@ValenceUI/MeterTile": ["./packages/ui/src/components/MeterTile/MeterTile.tsx"],
+      "@ValenceUI/MeterTile.types": ["./packages/ui/src/components/MeterTile/MeterTile.types.ts"],
       "@ValenceUI/MorphingRing": ["./packages/ui/src/components/MorphingRing/MorphingRing.tsx"],
       "@ValenceUI/MorphingRing.types": [
         "./packages/ui/src/components/MorphingRing/MorphingRing.types.ts"
@@ -352,6 +354,8 @@
       ],
       "@ValenceUI/PanelCard.types": ["./packages/ui/src/components/PanelCard/PanelCard.types.ts"],
       "@ValenceUI/StatTile": ["./packages/ui/src/components/StatTile/StatTile.tsx"],
+      "@ValenceUI/TickMeter": ["./packages/ui/src/components/TickMeter/TickMeter.tsx"],
+      "@ValenceUI/TickMeter.types": ["./packages/ui/src/components/TickMeter/TickMeter.types.ts"],
       "@ValenceUI/StatTile.types": ["./packages/ui/src/components/StatTile/StatTile.types.ts"],
       "@ValenceUI/Stepper": ["./packages/ui/src/components/Stepper/Stepper.tsx"],
       "@ValenceUI/Stepper.types": ["./packages/ui/src/components/Stepper/Stepper.types.ts"],

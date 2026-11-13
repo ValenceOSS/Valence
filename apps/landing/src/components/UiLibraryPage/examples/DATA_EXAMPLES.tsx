@@ -8,6 +8,8 @@ import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { SpanPicker } from '@ValenceUI/SpanPicker';
 import { StatStrip } from '@ValenceUI/StatStrip';
 import { StatTile } from '@ValenceUI/StatTile';
+import { TickMeter } from '@ValenceUI/TickMeter';
+import { MeterTile } from '@ValenceUI/MeterTile';
 import { TimeBars } from '@ValenceUI/TimeBars';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { DataTableDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/DataTableDemo';
@@ -63,6 +65,30 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             value="148"
             trend={{ direction: 'up', label: '12% up on last week' }}
           />
+        </div>
+      ),
+    },
+  ],
+  TickMeter: [
+    {
+      title: 'Quiet, busy, nearly full and full',
+      render: () => (
+        <div className="flex max-w-xs flex-col gap-3">
+          <TickMeter fraction={0.08} ticks={20} className="h-5" />
+          <TickMeter fraction={0.45} ticks={20} className="h-5" />
+          <TickMeter fraction={0.8} ticks={20} tone="warning" className="h-5" />
+          <TickMeter fraction={0.96} ticks={20} tone="danger" className="h-5" />
+        </div>
+      ),
+    },
+  ],
+  MeterTile: [
+    {
+      title: 'A figure with how full it is',
+      render: () => (
+        <div className="grid max-w-xl gap-3 sm:grid-cols-2">
+          <MeterTile label="CPU" value="12%" fraction={0.12} />
+          <MeterTile label="Memory" value="38 GB" fraction={0.82} />
         </div>
       ),
     },

@@ -1,7 +1,6 @@
 import { namesOfSession } from '@ValenceScreens/devices/namesOfSession';
 import { Spinner } from '@ValenceUI/Spinner';
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
-import { NeedsYouCard } from '@ValenceScreens/components/AdminArea/components/NeedsYouCard/NeedsYouCard';
 import { WhatsNewCard } from '@ValenceScreens/components/AdminArea/components/WhatsNewCard/WhatsNewCard';
 import { MostWatchedList } from '@ValenceScreens/components/AdminArea/components/MostWatchedList/MostWatchedList';
 import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/components/PlaybackModeShare/PlaybackModeShare';
@@ -248,10 +247,6 @@ const OverviewPanel = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="sm:col-span-2 lg:col-span-4">
-          <NeedsYouCard onOpenPanel={onOpenPanel} />
-        </div>
-
         <DashboardRegion
           title={say('screens.adminArea.overviewPanel.serverLoad')}
           className="sm:col-span-2 lg:col-span-2"

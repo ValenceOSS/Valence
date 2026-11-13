@@ -1,4 +1,4 @@
-import { StatTile } from '@ValenceUI/StatTile';
+import { MeterTile } from '@ValenceUI/MeterTile';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import type { StatStripProps } from './StatStrip.types';
 import { say } from '@ValenceI18n/say';
@@ -11,8 +11,8 @@ const COLUMN_CLASSES: Record<number, string> = {
 };
 
 /**
- * The figures that stay on screen whatever else is being read, each with what it measures and, where
- * it is a proportion, a bar of how full it is. A figure that is really a summary of several others
+ * The figures that stay on screen whatever else is being read, each one compact row with what it
+ * measures and, where it is a proportion, a row of ticks for how full it is. A figure that is really a summary of several others
  * carries an information mark, opening onto the detail rather than crowding it onto the tile itself.
  *
  * Fills one row rather than wrapping a lone figure onto a second, so a caller showing fewer figures
@@ -23,9 +23,9 @@ const COLUMN_CLASSES: Record<number, string> = {
  */
 const StatStrip = ({ stats }: StatStripProps) => {
   return (
-    <div className={`grid grid-cols-2 gap-4 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
+    <div className={`grid grid-cols-2 gap-3 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
       {stats.map((stat) => (
-        <StatTile
+        <MeterTile
           key={stat.label}
           label={stat.label}
           value={stat.value}

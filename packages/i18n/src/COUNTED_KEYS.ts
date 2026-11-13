@@ -107,8 +107,6 @@ const COUNTED_KEYS = [
   'screens.adminArea.collectConcerns.playbackStoppedInTheLastDay',
   'screens.adminArea.collectConcerns.streamsRunningOutOfBuffer',
   'screens.adminArea.confirmedCountReEncodes',
-  'screens.adminArea.coresValenceNotMeasured',
-  'screens.adminArea.coresValenceShare',
   'screens.adminArea.customMessageCard.count.placeholdersLeftEmpty',
   'screens.adminArea.describeSince.daysAgo',
   'screens.adminArea.describeSince.hoursAgo',

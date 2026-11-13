@@ -53,6 +53,7 @@ import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 import { setAdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
 import { useAdminAttention } from '@ValenceScreens/admin/useAdminAttention';
 import { countsByPanel } from '@ValenceScreens/admin/countsByPanel';
+import { busyPanels } from '@ValenceScreens/admin/busyPanels';
 import { togglePinned } from '@ValenceScreens/admin/togglePinned';
 import {
   readPinnedPanels,
@@ -61,6 +62,8 @@ import {
 import { AdminStatusFooter } from './components/AdminStatusFooter/AdminStatusFooter';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { AdminSearch } from './components/AdminSearch/AdminSearch';
+import { WaitingOnYou } from './components/WaitingOnYou/WaitingOnYou';
+import { BarButtonGroup } from './components/BarButtonGroup/BarButtonGroup';
 
 const MARKS_PLACE = 'valence-admin-mark';
 
@@ -120,6 +123,8 @@ const AdminPage = () => {
   const [navPlace, setNavPlace] = useState(readAdminNavPlace);
   const attention = useAdminAttention();
   const counts = countsByPanel(attention);
+  const askedMonitor = useQuery(adminQueries.monitor());
+  const busy = busyPanels(askedMonitor.data?.queue.jobs ?? []);
   const hasRoomForTheSidebar = useMatchesMedia(ROOM_FOR_THE_SIDEBAR);
   const isClosed = hasRoomForTheSidebar ? isCollapsed : !isDrawerOpen;
   const isFolded = hasRoomForTheSidebar && isCollapsed;
@@ -149,6 +154,7 @@ const AdminPage = () => {
   const withCount = <Item extends { id: string }>(item: Item) => ({
     ...item,
     href: `/admin/${item.id}`,
+    ...(busy.has(item.id) ? { isBusy: true } : {}),
     ...(counts[item.id] === undefined
       ? {}
       : { count: counts[item.id]?.count ?? 0, isUrgent: counts[item.id]?.isUrgent ?? false }),
@@ -459,7 +465,14 @@ const AdminPage = () => {
                     }}
                   />
                 </span>
-                <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+                <BarButtonGroup>
+                  <WaitingOnYou
+                    onOpenPanel={(next) => {
+                      void go({ to: '/admin/$panel', params: { panel: next } });
+                    }}
+                  />
+                  <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+                </BarButtonGroup>
                 <AdminStatusFooter
                   isPillOnly
                   version={version}
@@ -492,6 +505,7 @@ const AdminPage = () => {
                   (sum, item) => sum + (counts[item.id]?.count ?? 0),
                   0,
                 );
+                const isBusy = section.items.some((item) => busy.has(item.id));
                 const isUrgent = section.items.some(
                   (item) => (counts[item.id]?.count ?? 0) > 0 && counts[item.id]?.isUrgent === true,
                 );
@@ -524,6 +538,11 @@ const AdminPage = () => {
                         {count.toLocaleString()}
                       </Badge>
                     )}
+                    {isBusy ? (
+                      <span className="flex scale-75 opacity-50">
+                        <Spinner size="xs" label={say('common.running')} />
+                      </span>
+                    ) : null}
                   </Button>
                 );
 
@@ -552,16 +571,27 @@ const AdminPage = () => {
                               size={16}
                             />
                           ),
-                          ...((counts[item.id]?.count ?? 0) === 0
+                          ...((counts[item.id]?.count ?? 0) === 0 && !busy.has(item.id)
                             ? {}
                             : {
                                 detail: (
-                                  <Badge
-                                    size="count"
-                                    tone={counts[item.id]?.isUrgent === true ? 'danger' : 'quiet'}
-                                  >
-                                    {(counts[item.id]?.count ?? 0).toLocaleString()}
-                                  </Badge>
+                                  <span className="flex items-center gap-2">
+                                    {(counts[item.id]?.count ?? 0) === 0 ? null : (
+                                      <Badge
+                                        size="count"
+                                        tone={
+                                          counts[item.id]?.isUrgent === true ? 'danger' : 'quiet'
+                                        }
+                                      >
+                                        {(counts[item.id]?.count ?? 0).toLocaleString()}
+                                      </Badge>
+                                    )}
+                                    {busy.has(item.id) ? (
+                                      <span className="flex opacity-60">
+                                        <Spinner size="sm" label={say('common.running')} />
+                                      </span>
+                                    ) : null}
+                                  </span>
                                 ),
                               }),
                         })),
@@ -752,7 +782,14 @@ const AdminPage = () => {
             </h1>
 
             <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
-            <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+            <BarButtonGroup>
+              <WaitingOnYou
+                onOpenPanel={(next) => {
+                  void go({ to: '/admin/$panel', params: { panel: next } });
+                }}
+              />
+              <div id={ADMIN_NOTICES} className="flex shrink-0 items-center empty:hidden" />
+            </BarButtonGroup>
 
             {!isClosed ? null : (
               <span className="hidden sm:flex">

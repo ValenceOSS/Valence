@@ -5442,11 +5442,6 @@
     "context": "Shown on an empty smart collection, on the web and in the phone app."
   },
   {
-    "handler": "common.notMeasured",
-    "text": "not measured",
-    "context": "Shown, used in the admin area (from `describeCpuShare`) and in the admin area (from `describeValenceMemory`)."
-  },
-  {
     "handler": "common.notNow",
     "text": "Not now",
     "context": "Shown, used in several places, among them the desktop of the desktop app and the ask page of the television app."
@@ -17771,26 +17766,6 @@
     "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The fast cores of a chip that has both fast and efficient ones."
   },
   {
-    "handler": "screens.adminArea.coresValenceNotMeasured.one",
-    "text": "{count} core · Valence not measured",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceNotMeasured.other",
-    "text": "{count} cores · Valence not measured",
-    "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.one",
-    "text": "{count} core · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
-    "handler": "screens.adminArea.coresValenceShare.other",
-    "text": "{count} cores · Valence {share}",
-    "context": "Under the processor figure at the top of the admin area. {count} is how many processor cores the machine has, and {share} is how much of the processor Valence itself is using, such as 19%."
-  },
-  {
     "handler": "screens.adminArea.correctionPicker.itWillSayWhatItsFiles",
     "text": "It will use the details from its files after the next scan.",
     "context": "A short message shown once something is done in the correction picker in the admin area."
@@ -22456,44 +22431,24 @@
     "context": "Shown in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.needsYouCard.aNewerDevBuildIsOut",
-    "text": "A newer dev build is out",
-    "context": "A count on the overview in the admin area, for a server running a dev build when a newer one is out."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.aNewReleaseIsOut",
-    "text": "A new release is out",
-    "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
-  },
-  {
     "handler": "screens.adminArea.needsYouCard.failedRequests",
     "text": "Failed requests",
-    "context": "A count on the overview in the admin area that opens the catalogue, where the failed requests are listed."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the catalogue where the failed requests are listed."
   },
   {
     "handler": "screens.adminArea.needsYouCard.libraryProblems",
     "text": "Library problems",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.nothingNeedsYou",
-    "text": "Nothing needs you. Valence is up to date.",
-    "context": "Shown when nothing on the server needs the admin."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the titles in the libraries that need fixing."
   },
   {
     "handler": "screens.adminArea.needsYouCard.requestsToApprove",
     "text": "Requests to approve",
-    "context": "A count on the admin overview’s Waiting on you card."
-  },
-  {
-    "handler": "screens.adminArea.needsYouCard.valenceIsUpToDate",
-    "text": "Valence is up to date",
-    "context": "On the admin overview’s Waiting on you card, when the newest release is running."
+    "context": "The label of a button in the admin top bar, with a count beside it, that opens the requests waiting for approval."
   },
   {
     "handler": "screens.adminArea.needsYouCard.waitingOnYou",
     "text": "Waiting on you",
-    "context": "The card at the top of the admin overview that counts what needs an administrator."
+    "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
@@ -22529,36 +22484,6 @@
     "handler": "screens.adminArea.nothingCouldBeReEncoded",
     "text": "Couldn’t re-encode anything.",
     "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.notMeasured",
-    "text": "Not measured",
-    "context": "Shown in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceNotMeasured",
-    "text": "of {total} allowed · Valence not measured",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited and Valence's own use could not be measured. {total} is the memory it is allowed."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalAllowedValenceUses",
-    "text": "of {total} allowed · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where the container is limited. {total} is the memory it is allowed, and {used} how much Valence itself uses, such as 1.2 GB."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalOnMount",
-    "text": "of {total} · {mountPoint}",
-    "context": "Under the storage figure at the top of the admin area. {total} is the disk's whole size, such as 8.0 TB, and {mountPoint} is where it is mounted, such as /media."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceNotMeasured",
-    "text": "of {total} · Valence not measured",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use, where Valence's own use could not be measured. {total} is all the machine's memory."
-  },
-  {
-    "handler": "screens.adminArea.ofTotalValenceUses",
-    "text": "of {total} · Valence {used}",
-    "context": "Under the memory figure at the top of the admin area, after the memory in use. {total} is all the machine's memory, and {used} how much Valence itself uses, such as 1.2 GB."
   },
   {
     "handler": "screens.adminArea.onlineServicesCard.everythingValenceConnectsTo",
@@ -26004,11 +25929,6 @@
     "handler": "screens.adminArea.signInCard.welcomeHome",
     "text": "Welcome home",
     "context": "Example shown in the empty sign-in message field."
-  },
-  {
-    "handler": "screens.adminArea.sizeFree",
-    "text": "{size} free",
-    "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
   },
   {
     "handler": "screens.adminArea.skipMarkers.addAMarker",
