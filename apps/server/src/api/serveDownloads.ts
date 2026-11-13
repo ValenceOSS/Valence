@@ -28,7 +28,25 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
-  const { downloads, readProfileId, forwardedFileHeaders } = context;
+  const { downloads, readProfileId, forwardedFileHeaders, library, viewerOf } = context;
+
+  /**
+   * Whether a download is of something its owner is now refused, by a library kept from them or an age
+   * limit, which a download asked for earlier does not outlast.
+   *
+   * @param headers - The request's headers.
+   * @param profileId - Whose download it is.
+   * @param id - The download.
+   * @returns Whether it is out of reach.
+   */
+  const isOutOfReach = async (headers: Headers, profileId: string, id: string) => {
+    const viewer = await viewerOf(headers);
+    const held = (await downloads?.list(profileId))?.find((one) => one.id === id);
+
+    return (
+      viewer === null || (held !== undefined && (await library.isOutOfReach(viewer, held.mediaId)))
+    );
+  };
 
   if (downloads === undefined) {
     return;
@@ -132,7 +150,13 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    await downloads.resume(profileId, context.req.valid('param').id);
+    const { id } = context.req.valid('param');
+
+    if (await isOutOfReach(context.req.raw.headers, profileId, id)) {
+      return context.json(refuse('error.downloads.nothingPreparedUnderThatName'), 404);
+    }
+
+    await downloads.resume(profileId, id);
 
     return context.body(null, 204);
   });
@@ -164,6 +188,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     if (profileId === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    if (await isOutOfReach(context.req.raw.headers, profileId, context.req.valid('param').id)) {
+      return context.json(refuse('error.downloads.nothingPreparedUnderThatName'), 404);
     }
 
     const found = await downloads.readFile(

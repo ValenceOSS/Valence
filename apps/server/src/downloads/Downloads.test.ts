@@ -49,34 +49,35 @@ const CREDENTIALS = {
 };
 
 const build = () => {
-  const { auth, settings } = createMemoryAuth();
+  const { auth, settings, store } = createMemoryAuth();
   const downloads = createMemoryDownloadService();
+  const library = createMemoryLibraryService({
+    libraries: [
+      {
+        id: LIBRARY_ID,
+        name: 'Films',
+        kind: 'movies',
+        path: '/media/films',
+        itemCount: 1,
+        lastScannedAt: null,
+        defaultAudioLanguage: null,
+        filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
+        keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
+      },
+    ],
+    media: [FILM],
+  });
 
   const app = createApp({
     auth,
     settings,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
-    library: createMemoryLibraryService({
-      libraries: [
-        {
-          id: LIBRARY_ID,
-          name: 'Films',
-          kind: 'movies',
-          path: '/media/films',
-          itemCount: 1,
-          lastScannedAt: null,
-          defaultAudioLanguage: null,
-          filesAtOnce: null,
-          takesRequests: true,
-          requestProfileId: null,
-          requestPath: null,
-          keepsShowsTogether: true,
-          higherProfileAsks: 'ask',
-        },
-      ],
-      media: [FILM],
-    }),
+    library,
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
@@ -87,7 +88,7 @@ const build = () => {
     downloads,
   });
 
-  return { app, auth, downloads };
+  return { app, auth, downloads, library, store };
 };
 
 /**
@@ -162,6 +163,29 @@ describe('downloads over HTTP', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('video/mp4');
     expect(await response.text()).toBe(`the film ${MEDIA_ID}`);
+  });
+
+  it('hands over no file, and starts none again, once the library is refused the account', async () => {
+    const { app, auth, downloads, library, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const asked = DownloadSchema.parse(await (await ask(app, cookie)).json());
+
+    for (const [profileId, held] of Object.entries(downloads.state.downloads)) {
+      downloads.state.downloads[profileId] = held.map((one) => ({ ...one, state: 'ready' }));
+    }
+
+    await library.refuseLibrary(store.user[0]?.id ?? '', LIBRARY_ID);
+
+    const read = await app.request(`${BASE}/api/downloads/${asked.id}/file`, {
+      headers: { cookie, origin: BASE },
+    });
+    const resumed = await app.request(`${BASE}/api/downloads/${asked.id}/resume`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(read.status).toBe(404);
+    expect(resumed.status).toBe(404);
   });
 
   it('has nothing to say about a viewer who has asked for nothing', async () => {

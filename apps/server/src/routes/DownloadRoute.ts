@@ -193,6 +193,10 @@ const resumeDownloadRoute = createRoute({
       description: 'Nobody is signed in',
       content: { 'application/json': { schema: DownloadError } },
     },
+    404: {
+      description: 'Nothing is kept under that name, or it is of something refused this viewer',
+      content: { 'application/json': { schema: DownloadError } },
+    },
   },
 });
 
