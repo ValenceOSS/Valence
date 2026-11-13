@@ -23,6 +23,7 @@ import { createLinkKeeper } from '@ValenceServer/api/createLinkKeeper';
 import { handlePartyMessage } from '@ValenceServer/parties/handlePartyMessage';
 import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
 import { innerAddressOf } from '@ValenceServer/linking/innerAddressOf';
+import { whatAPeerMayAsk } from '@ValenceServer/linking/whatAPeerMayAsk';
 import { PEER_MEMBER } from '@ValenceServer/linking/parties/PEER_MEMBER';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { AskedAlongSchema } from '@ValenceContracts/schemas/LinkSharing';
@@ -425,7 +426,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
           }),
         holds: () => Promise.resolve(false),
       },
-      asked.data,
+      whatAPeerMayAsk(asked.data),
       undefined,
     );
 
@@ -460,7 +461,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     const answered = await linkedAsk(context.req.param('id'), '/requests', {
       method: 'POST',
       headers: new Headers({ 'content-type': 'application/json' }),
-      body: new TextEncoder().encode(JSON.stringify(asked.data)).buffer,
+      body: new TextEncoder().encode(JSON.stringify(whatAPeerMayAsk(asked.data))).buffer,
     });
 
     if (answered === null) {

@@ -1803,7 +1803,9 @@ const createAppContext = (options: CreateAppOptions) => {
           askingProfile: (await asker.askingProfile?.()) ?? null,
         },
         higherProfileAsks: chosen.higherProfileAsks,
-        isApproved: asked.origin === 'monitored' || (await asker.holds('requests.autoApprove')),
+        isApproved:
+          (asked.origin === 'monitored' && (await asker.holds('requests.manage'))) ||
+          (await asker.holds('requests.autoApprove')),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
         ...(asked.kind === 'book' && (catalogue.narrations ?? []).length > 0
