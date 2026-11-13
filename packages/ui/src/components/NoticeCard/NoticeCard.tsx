@@ -48,6 +48,8 @@ const markOf = (tone: NoticeTone) => {
  * @param tags - Short facts worth reading at a glance.
  * @param countdown - How long until it acts on its own, and what it says beside the count.
  * @param isCompact - Whether it is drawn as one slim line, as it is over a film.
+ * @param children - More beneath the tags, such as a list of what is under way, for a notice that
+ *   says more than a line; left out of the slim line.
  * @param onDismiss - Told to take it away.
  */
 const NoticeCard = ({
@@ -58,6 +60,7 @@ const NoticeCard = ({
   tags,
   countdown,
   isCompact = false,
+  children,
   onDismiss,
 }: NoticeCardProps) => {
   const [left, setLeft] = useState(countdown?.seconds ?? 0);
@@ -172,42 +175,46 @@ const NoticeCard = ({
         isDanger && 'border-danger/30',
       )}
     >
-      <div className="valence-card-face flex items-start gap-3 py-3 pr-2 pl-3.5 text-text">
-        <span className="flex h-5 shrink-0 items-center">{markOf(tone)}</span>
+      <div className="valence-card-face text-text">
+        <div className="flex items-start gap-3 py-3 pr-2 pl-3.5">
+          <span className="flex h-5 shrink-0 items-center">{markOf(tone)}</span>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-px">
-          <p className="text-sm font-medium leading-5 [overflow-wrap:anywhere]">{title}</p>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-px">
+            <p className="text-sm font-medium leading-5 [overflow-wrap:anywhere]">{title}</p>
 
-          {description === undefined ? null : (
-            <p className="text-[0.8125rem] leading-snug text-text-muted [overflow-wrap:anywhere]">
-              {description}
-            </p>
-          )}
+            {description === undefined ? null : (
+              <p className="text-[0.8125rem] leading-snug text-text-muted [overflow-wrap:anywhere]">
+                {description}
+              </p>
+            )}
 
-          {tags === undefined || tags.length === 0 ? null : (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-md bg-[var(--surface-hover)] px-2 py-0.5 text-xs text-text"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+            {tags === undefined || tags.length === 0 ? null : (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md bg-[var(--surface-hover)] px-2 py-0.5 text-xs text-text"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Button
+            variant="subtle"
+            size="xs"
+            isIconOnly
+            label={say('common.dismiss')}
+            onClick={onDismiss}
+            className="-mt-0.5 shrink-0"
+          >
+            <Icon of={XIcon} size={14} />
+          </Button>
         </div>
 
-        <Button
-          variant="subtle"
-          size="xs"
-          isIconOnly
-          label={say('common.dismiss')}
-          onClick={onDismiss}
-          className="-mt-0.5 shrink-0"
-        >
-          <Icon of={XIcon} size={14} />
-        </Button>
+        {children === undefined ? null : <div className="pr-3 pb-3 pl-3.5">{children}</div>}
       </div>
 
       {hasFooter ? (

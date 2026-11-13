@@ -5,6 +5,8 @@ type NoticeCountdown = {
   lead?: string;
 };
 
+import type { ReactNode } from 'react';
+
 type NoticeCardProps = {
   tone: NoticeTone;
   title: string;
@@ -13,6 +15,7 @@ type NoticeCardProps = {
   tags?: readonly string[];
   countdown?: NoticeCountdown;
   isCompact?: boolean;
+  children?: ReactNode;
   onDismiss: () => void;
 };
 
