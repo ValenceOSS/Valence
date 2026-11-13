@@ -81,11 +81,22 @@ const solveRequest = async ({
     }
   };
 
+  const askHere = async (): Promise<Solved | null> => {
+    if (page.origin() !== origin) {
+      throw new IndexerFailure(
+        saying('requests.solver.solveRequest.theSitesBrowserCheckWouldNot'),
+        'CloudflareCheckFailed',
+      );
+    }
+
+    return askThrough(page, request);
+  };
+
   if (page.origin() !== origin) {
     await clearTheWay();
   }
 
-  const asked = await askThrough(page, request);
+  const asked = await askHere();
 
   if (asked !== null) {
     return asked;
@@ -93,7 +104,7 @@ const solveRequest = async ({
 
   await clearTheWay();
 
-  const askedAgain = await askThrough(page, request);
+  const askedAgain = await askHere();
 
   if (askedAgain === null) {
     throw new IndexerFailure(
