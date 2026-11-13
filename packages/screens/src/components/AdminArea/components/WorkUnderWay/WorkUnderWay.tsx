@@ -5,6 +5,7 @@ import { NoticeCard } from '@ValenceUI/NoticeCard';
 import { Spinner } from '@ValenceUI/Spinner';
 import { StepTrail } from '@ValenceUI/StepTrail';
 import { describeScanPhase } from '@ValenceScreens/components/AdminArea/describeScanPhase';
+import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describeQueueKind';
 import { summariseProgress } from '@ValenceScreens/components/AdminArea/components/JobRunner/summariseProgress';
 import type { StepTrailStep } from '@ValenceUI/StepTrail.types';
 import type { WorkUnderWayProps } from './WorkUnderWay.types';
@@ -15,7 +16,8 @@ import { sayCount } from '@ValenceI18n/sayCount';
 /**
  * What Valence is working on, kept in the corner of every admin page so nobody has to go looking: a
  * notice saying how many jobs are running and waiting, and inside it each job as a step, with the
- * stage it has reached, the file it is on, and how far through it is where it counts. It can be
+ * stage it has reached, the file it is on, and how far through it is where it counts. Work the
+ * media service does is named in words, with the file it is working on beneath. It can be
  * tucked away to a round button holding only a spinner, which widens to say what it is while it
  * is pointed at or focused, the card springing down into it and back out again, and starts
  * that way. Open, it blurs the page behind it, and a press anywhere but the card, or Escape, tucks
@@ -44,12 +46,14 @@ const WorkUnderWay = ({ working, progress, definitions, libraries }: WorkUnderWa
         entry.kind === job.kind && (library === undefined || entry.libraryId === library.id),
     );
     const summary = job.state === 'running' ? summariseProgress(theirs) : null;
-    const name = definition === undefined ? job.kind : sayAgain(definition.label);
+    const name =
+      definition === undefined ? describeQueueKind(job.kind) : sayAgain(definition.label);
+    const file = definition === undefined && job.subject !== '' ? job.subject : null;
     const said = [
       summary?.phase === null || summary?.phase === undefined
         ? null
         : describeScanPhase(summary.phase),
-      summary?.item ?? null,
+      summary?.item ?? file,
     ].filter((part) => part !== null);
 
     return {
@@ -57,7 +61,9 @@ const WorkUnderWay = ({ working, progress, definitions, libraries }: WorkUnderWa
       label: library === undefined || job.subject === '' ? name : `${name} · ${library.name}`,
       detail:
         job.state === 'queued'
-          ? say('screens.adminArea.workUnderWay.waitingItsTurn')
+          ? [say('screens.adminArea.workUnderWay.waitingItsTurn'), file]
+              .filter((part) => part !== null)
+              .join(' · ')
           : said.join(' · ') || undefined,
       mark: job.state === 'running' ? 'current' : 'waiting',
       ...(summary === null || summary.processed === null || summary.total === null

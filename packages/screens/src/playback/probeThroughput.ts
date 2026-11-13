@@ -7,7 +7,8 @@ const PROBE_EVERY_MILLISECONDS = 4000;
 /**
  * Measures the connection while a file plays directly, where the browser's own player fetches it
  * and tells the page nothing: every few seconds it reads a slice of the same file, uncached, and
- * times how fast the bytes arrive. It costs a little bandwidth, so it runs only while somebody is
+ * times how fast the bytes arrive. A server that ignores the range and starts sending the whole file
+ * is cut off at once rather than read. It costs a little bandwidth, so it runs only while somebody is
  * looking at the figure.
  *
  * @param url - The file being played.
@@ -35,6 +36,12 @@ const probeThroughput = (
         credentials: 'include',
         signal: state.aborts.signal,
       });
+
+      if (response.status !== 206) {
+        await response.body?.cancel();
+
+        return;
+      }
 
       await response.arrayBuffer();
     } catch {

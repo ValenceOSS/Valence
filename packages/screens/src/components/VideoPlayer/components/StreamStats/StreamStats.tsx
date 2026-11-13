@@ -359,7 +359,10 @@ const StreamStats = ({
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <StatsCard name="Playback">
-            <StatsFact name="Position" value={formatDuration(health.positionSeconds)} />
+            <StatsFact
+              name={say('common.position')}
+              value={formatDuration(health.positionSeconds)}
+            />
             <StatsFact name="Frame on screen" value={formatDuration(health.frameSeconds)} />
             <StatsFact name="Stream starts" value={formatDuration(health.streamFromSeconds)} />
             <StatsFact

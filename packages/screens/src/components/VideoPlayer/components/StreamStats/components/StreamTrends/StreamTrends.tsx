@@ -28,10 +28,12 @@ const describeMbps = (kbps: number | null): string | null =>
  *   is played directly.
  */
 const StreamTrends = ({ history, fileBitrateKbps = null }: StreamTrendsProps) => {
-  const connection = history.map((reading) => reading.connectionKbps ?? 0);
+  const connection = history.map((reading) => reading.connectionKbps);
   const bitrate = history.map((reading) => reading.bitrateKbps ?? fileBitrateKbps);
   const buffered = history.map((reading) => reading.bufferedAheadSeconds);
-  const networkCeiling = roundUpToNice(Math.max(0, ...connection, ...bitrate.map((v) => v ?? 0)));
+  const networkCeiling = roundUpToNice(
+    Math.max(0, ...[...connection, ...bitrate].map((kbps) => kbps ?? 0)),
+  );
   const bufferCeiling = roundUpToNice(Math.max(0, ...buffered));
 
   return (

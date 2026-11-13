@@ -337,6 +337,7 @@ const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const pictureRef = useRef<HTMLCanvasElement>(null);
   const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
+  const [isPlayingTheFile, setIsPlayingTheFile] = useState(false);
   const engineRefusedRef = useRef(false);
   const enginePictureRef = useRef<DrawnPicture | null>(null);
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
@@ -984,8 +985,10 @@ const VideoPlayer = ({
   useEffect(() => {
     setSession(null);
     setIsDrawnByTheEngine(false);
+    setIsPlayingTheFile(false);
     enginePictureRef.current = null;
     engineStatsRef.current = null;
+    estimatedRef.current = null;
     brightenRef.current = null;
     switchCopyRef.current = null;
     setBrowserRung(null);
@@ -1476,6 +1479,7 @@ const VideoPlayer = ({
             return Promise.resolve();
           };
           element.src = outcome.session.delivery.url;
+          setIsPlayingTheFile(true);
         } else {
           const { plan } = outcome.session;
           const source = await cache
@@ -1938,7 +1942,8 @@ const VideoPlayer = ({
     };
   }, [isShowingStats]);
 
-  const directUrl = session?.delivery.kind === 'direct' ? session.delivery.url : null;
+  const directUrl =
+    isPlayingTheFile && session?.delivery.kind === 'direct' ? session.delivery.url : null;
 
   useEffect(() => {
     if (!isShowingStats || directUrl === null || !/^(?:https?:)?\//u.test(directUrl)) {

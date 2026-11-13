@@ -8,7 +8,7 @@ afterEach(() => {
 describe('probeThroughput', () => {
   it('reads a slice of the file, uncached, and estimates the connection from it', async () => {
     const fetcher = vi.fn<typeof fetch>(() =>
-      Promise.resolve(new Response(new Uint8Array(1024 * 1024))),
+      Promise.resolve(new Response(new Uint8Array(1024 * 1024), { status: 206 })),
     );
     const probe = probeThroughput('/api/playback/media-1/file', fetcher);
 
@@ -37,6 +37,24 @@ describe('probeThroughput', () => {
     probe.stop();
     await vi.advanceTimersByTimeAsync(8000);
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('cuts off a server that ignores the range rather than reading the whole file', async () => {
+    const cancel = vi.fn();
+    const whole = new ReadableStream<Uint8Array>({
+      pull: (controller) => {
+        controller.enqueue(new Uint8Array(64 * 1024));
+      },
+      cancel,
+    });
+
+    const probe = probeThroughput('/film', () => Promise.resolve(new Response(whole)));
+
+    await vi.waitFor(() => {
+      expect(cancel).toHaveBeenCalled();
+    });
+    expect(probe.readKbps()).toBeNull();
+    probe.stop();
   });
 
   it('says nothing when the file cannot be reached', async () => {
