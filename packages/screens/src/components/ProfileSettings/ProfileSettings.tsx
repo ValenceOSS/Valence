@@ -22,21 +22,14 @@ import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/component
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 import { say } from '@ValenceI18n/say';
 import { SelectField } from '@ValenceUI/SelectField';
-import { LANGUAGES } from '@ValenceI18n/LANGUAGES';
 import { isLanguage } from '@ValenceI18n/isLanguage';
-import { languageName } from '@ValenceI18n/languageName';
+import { languageChoices } from '@ValenceClient/language/languageChoices';
+import { SAME_AS_THE_DEVICE } from '@ValenceClient/language/SAME_AS_THE_DEVICE';
 
 const FORMAT_CHOICES = [
   { id: 'hls', label: say('screens.accountArea.profileSettings.hls') },
   { id: 'dash', label: say('screens.accountArea.profileSettings.dash') },
 ] as const;
-
-const SAME_AS_THE_DEVICE = 'device';
-
-const LANGUAGE_CHOICES = [
-  { id: SAME_AS_THE_DEVICE, label: say('screens.accountArea.profileSettings.sameAsThisDevice') },
-  ...LANGUAGES.map((language) => ({ id: language, label: languageName(language) })),
-];
 
 const CONNECTION_CHOICES = [
   { id: '1', label: '1' },
@@ -147,7 +140,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           label={say('common.language')}
           isLabelHidden
           size="sm"
-          options={LANGUAGE_CHOICES}
+          options={languageChoices()}
           value={device.language ?? SAME_AS_THE_DEVICE}
           onSelect={(chosen) => {
             onDraft({ language: isLanguage(chosen) ? chosen : null });

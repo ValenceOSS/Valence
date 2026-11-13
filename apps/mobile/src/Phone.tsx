@@ -23,6 +23,7 @@ import { TheHousehold } from '@ValenceMobile/components/TheHousehold/TheHousehol
 import { IfThisAppIsOn } from '@ValenceMobile/components/IfThisAppIsOn/IfThisAppIsOn';
 import { speakTheKeptWords } from '@ValenceClient/language/speakTheKeptWords';
 import { fetchTheWords } from '@ValenceClient/language/fetchTheWords';
+import { useNewWords } from '@ValenceClient/language/useNewWords';
 import { thisDevicesLanguages } from '@ValenceClient/language/thisDevicesLanguages';
 import { layOutFor } from '@ValenceNative/language/layOutFor';
 import type { Language } from '@ValenceI18n/LANGUAGES';
@@ -65,7 +66,7 @@ const Phone = () => {
   const [isSplashDone, setIsSplashDone] = useState(false);
   const [isSplashGone, setIsSplashGone] = useState(false);
   const [spoken, setSpoken] = useState<Language>('en');
-  const [wordsDrawn, setWordsDrawn] = useState(0);
+  const wordsDrawn = useNewWords();
   const scheme = useColorScheme();
 
   const homeIsReady = useCallback(() => {
@@ -107,11 +108,7 @@ const Phone = () => {
       return;
     }
 
-    void fetchTheWords(spoken).then((isChanged) => {
-      if (isChanged) {
-        setWordsDrawn((drawn) => drawn + 1);
-      }
-    });
+    void fetchTheWords(spoken);
   }, [isReady, address, spoken]);
 
   return (

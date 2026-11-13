@@ -4637,6 +4637,11 @@
     "context": "Text shown, used in the share sheet of the phone app and in the share dialog."
   },
   {
+    "handler": "common.layoutTurnsNextTime",
+    "text": "The layout turns to suit this language the next time Valence opens.",
+    "context": "Under the Language setting on the phone and the television, after somebody picks a language written the other way, such as Arabic or Hebrew: the layout mirrors from the next launch."
+  },
+  {
     "handler": "common.leaveOutOfTheLibrary",
     "text": "Excluir de la biblioteca",
     "context": "An action on a file, a folder, a film or a series in the admin area, which makes the library's scans pass over it from then on."
@@ -7992,6 +7997,11 @@
     "handler": "common.whatToShow",
     "text": "Qué mostrar",
     "context": "The label of a segmented row, used in the library of the phone app and in the search of the phone app."
+  },
+  {
+    "handler": "common.whatValenceSpeaksHere",
+    "text": "The language Valence speaks on this device.",
+    "context": "Under the Language setting on the phone and the television, which picks the language Valence shows on that device."
   },
   {
     "handler": "common.where",

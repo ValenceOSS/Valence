@@ -5,6 +5,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { KEPT_WORDS_KEY } from './KEPT_WORDS_KEY';
 import { readKeptWords } from './readKeptWords';
+import { tellOfNewWords } from './tellOfNewWords';
 
 const KEPT_FOR_MILLISECONDS = 24 * 60 * 60 * 1000;
 
@@ -15,7 +16,8 @@ const KEPT_FOR_MILLISECONDS = 24 * 60 * 60 * 1000;
  *
  * @param language - The language to fetch.
  * @param now - The time now, in milliseconds.
- * @returns Whether the words being spoken changed, so the app can draw itself again.
+ * @returns Whether the words being spoken changed; where they did, the app is told to draw itself
+ *   again.
  */
 const fetchTheWords = async (language: Language, now = Date.now()): Promise<boolean> => {
   if (language === 'en') {
@@ -45,6 +47,7 @@ const fetchTheWords = async (language: Language, now = Date.now()): Promise<bool
 
   if (isChanged) {
     speakLanguage(language, words);
+    tellOfNewWords();
   }
 
   return isChanged;

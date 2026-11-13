@@ -1110,6 +1110,8 @@ const ENGLISH = {
   'common.lastActiveWhen': 'Last active {lastActiveAt}',
   'common.lastReadLastReadAt': 'Last synced {lastReadAt}',
   'common.lasts': 'Lasts',
+  'common.layoutTurnsNextTime':
+    'The layout turns to suit this language the next time Valence opens.',
   'common.leaveOutOfTheLibrary': 'Exclude from library',
   'common.leftToRight': 'Left to right',
   'common.letBackIn': 'Unban',
@@ -1820,6 +1822,7 @@ const ENGLISH = {
   'common.whatToLookFor': 'Search in',
   'common.whatToShare': 'What to share',
   'common.whatToShow': 'What to show',
+  'common.whatValenceSpeaksHere': 'The language Valence speaks on this device.',
   'common.where': 'Where',
   'common.wherePictureSits':
     'Where the picture sits. Use the arrow keys to move it, and plus or minus to zoom.',

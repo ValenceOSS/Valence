@@ -22,6 +22,13 @@ import { signOutHere } from '@ValenceTv/session/signOutHere';
 import { forgetWhatWasRead } from '@ValenceClient/session/forgetWhatWasRead';
 import { YourRequests } from '@ValenceTv/screens/Account/components/YourRequests/YourRequests';
 import { ThemeChoice } from '@ValenceTv/screens/Account/components/ThemeChoice/ThemeChoice';
+import { LanguageChoice } from '@ValenceTv/screens/Account/components/LanguageChoice/LanguageChoice';
+import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
+import { changeLanguage } from '@ValenceClient/language/changeLanguage';
+import { chosenLanguageHere } from '@ValenceClient/language/chosenLanguageHere';
+import { languageChoices } from '@ValenceClient/language/languageChoices';
+import { SAME_AS_THE_DEVICE } from '@ValenceClient/language/SAME_AS_THE_DEVICE';
+import { layOutFor } from '@ValenceNative/language/layOutFor';
 import { YourHistory } from '@ValenceTv/screens/Account/components/YourHistory/YourHistory';
 import { EdgeFade } from '@ValenceTv/components/EdgeFade/EdgeFade';
 import { Face } from '@ValenceTv/components/Face/Face';
@@ -42,8 +49,8 @@ import { toTheDesktopLayout } from '@ValenceTv/platform/toTheDesktopLayout';
  * and everything asked for, as wide buttons with an icon to each — and the rarer ways out under
  * those: signing out, moving to another server altogether, and the desktop layout. Down the right,
  * with the width of the screen to itself, is what is going on for them: their own latest requests
- * each saying where it has got to, what they have lately watched, and any themes plugins offer,
- * with this build and the server's named at its foot, as the desktop app's account dialog does. On
+ * each saying where it has got to, what they have lately watched, any themes plugins offer, and
+ * the language Valence speaks here, chosen from a list over the page, with this build and the server's named at its foot, as the desktop app's account dialog does. On
  * a shared demo account it says so beneath the server. Where the account is signed in, like what it
  * has been told, is left to the phone and the web, which manage both properly.
  *
@@ -89,6 +96,9 @@ const AccountPage = ({
     (household.data?.profiles.length ?? 0) > 1;
   const lastWatched = useInfiniteQuery(viewingQueries.history()).data?.pages.flat()[0] ?? null;
   const [restingOn, setRestingOn] = useState<string | null>(null);
+  const [language, setLanguage] = useState(() => chosenLanguageHere() ?? SAME_AS_THE_DEVICE);
+  const [isChoosingLanguage, setIsChoosingLanguage] = useState(false);
+  const [isTurningNextTime, setIsTurningNextTime] = useState(false);
   const mood =
     restingOn ??
     (lastWatched === null
@@ -213,10 +223,36 @@ const AccountPage = ({
 
             <ThemeChoice onFocus={upToBar.leave} />
 
+            <LanguageChoice
+              chosen={language}
+              isTurningNextTime={isTurningNextTime}
+              onFocus={upToBar.leave}
+              onOpen={() => {
+                setIsChoosingLanguage(true);
+              }}
+            />
+
             <Text style={styles.build}>{describeThisBuild(server.data ?? null)}</Text>
           </ScrollView>
         </EdgeFade>
       </EdgeFade>
+
+      {isChoosingLanguage ? (
+        <ChoicePanel
+          title={say('common.language')}
+          choices={languageChoices().map((choice) => ({
+            ...choice,
+            isCurrent: choice.id === language,
+          }))}
+          onChoose={(id) => {
+            setLanguage(id);
+            setIsChoosingLanguage(false);
+            void changeLanguage(id).then((spoken) => {
+              setIsTurningNextTime(layOutFor(spoken));
+            });
+          }}
+        />
+      ) : null}
     </View>
   );
 };

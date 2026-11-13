@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { fetchTheWords } from '@ValenceClient/language/fetchTheWords';
+import { useNewWords } from '@ValenceClient/language/useNewWords';
 import { languageToSpeak } from '@ValenceClient/language/languageToSpeak';
 import { thisDevicesLanguages } from '@ValenceClient/language/thisDevicesLanguages';
 import { TheWayIn } from '@ValenceTv/screens/TheWayIn/TheWayIn';
@@ -21,18 +22,14 @@ import { PromptHost } from '@ValenceTv/components/PromptHost/PromptHost';
  */
 const Television = () => {
   const [answers] = useState(buildQueryClient);
-  const [wordsDrawn, setWordsDrawn] = useState(0);
+  const wordsDrawn = useNewWords();
 
   useEffect(() => {
     if (platformInUse().serverAddress() === null) {
       return;
     }
 
-    void fetchTheWords(languageToSpeak(thisDevicesLanguages())).then((isChanged) => {
-      if (isChanged) {
-        setWordsDrawn((drawn) => drawn + 1);
-      }
-    });
+    void fetchTheWords(languageToSpeak(thisDevicesLanguages()));
   }, []);
 
   return (
