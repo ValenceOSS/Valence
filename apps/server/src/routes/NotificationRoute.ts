@@ -169,6 +169,10 @@ const subscribeToPushRoute = createRoute({
   },
   responses: {
     204: { description: 'This browser will be woken' },
+    400: {
+      description: 'That address is not a public push service',
+      content: { 'application/json': { schema: NotificationError } },
+    },
     401: {
       description: 'Not signed in',
       content: { 'application/json': { schema: NotificationError } },
