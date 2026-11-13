@@ -5,6 +5,7 @@ import {
 } from '@ValenceServer/routes/PlaybackRoute';
 import { LINKED_SESSION } from './LINKED_SESSION';
 import { saidOfRefusal } from './saidOfRefusal';
+import { rehomedAddress } from './rehomedAddress';
 import { PeerAsksSchema } from './PeerAskSchema';
 import type { PeerAsk } from './PeerAskSchema';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
@@ -16,7 +17,7 @@ type LinkedTitle = { serverId: string; remoteId: string };
 
 const JSON_SENT = { 'content-type': 'application/json' };
 
-const TicketSchema = z.object({ ticket: z.string().min(1) });
+const TicketSchema = z.object({ ticket: z.string().regex(/^[A-Za-z0-9_-]{32,64}$/u) });
 
 /**
  * A session or set of thumbnails started on a linked server, under a name of this server's own:
@@ -225,25 +226,24 @@ const createLinkedPlayback = (
                 : { mediaId: linked.remoteId },
             );
 
-      if (direct !== null && ticket !== null) {
-        const directly = `${direct}${FEDERATION_PATH}/direct/${ticket}`;
+      const theirSession = `/api/playback/session/${started.sessionId}/`;
+      const directly =
+        direct !== null && ticket !== null ? `${direct}${FEDERATION_PATH}/direct/${ticket}/` : null;
+      const address =
+        started.delivery.kind === 'hls'
+          ? rehomedAddress(
+              started.delivery.manifestUrl,
+              theirSession,
+              directly ?? `/api/playback/session/${encodeURIComponent(here)}/`,
+            )
+          : rehomedAddress(
+              started.delivery.url,
+              `/api/playback/${linked.remoteId}/`,
+              directly ?? `/api/playback/${mediaId}/`,
+            );
 
-        return {
-          kind: 'started',
-          session: {
-            ...started,
-            plan: { ...started.plan, mediaId },
-            sessionId: here,
-            delivery:
-              started.delivery.kind === 'hls'
-                ? {
-                    kind: 'hls',
-                    manifestUrl: `${directly}/${started.delivery.manifestUrl.split('/').at(-1) ?? ''}`,
-                    dashUrl: null,
-                  }
-                : { kind: 'direct', url: `${directly}/file` },
-          },
-        };
+      if (address === null) {
+        return { kind: 'failed', reason: await saidOfRefusal(null), problem: 'unknown' };
       }
 
       return {
@@ -254,21 +254,8 @@ const createLinkedPlayback = (
           sessionId: here,
           delivery:
             started.delivery.kind === 'hls'
-              ? {
-                  kind: 'hls',
-                  manifestUrl: started.delivery.manifestUrl.replace(
-                    `/api/playback/session/${started.sessionId}/`,
-                    `/api/playback/session/${encodeURIComponent(here)}/`,
-                  ),
-                  dashUrl: null,
-                }
-              : {
-                  kind: 'direct',
-                  url: started.delivery.url.replace(
-                    `/api/playback/${linked.remoteId}/`,
-                    `/api/playback/${mediaId}/`,
-                  ),
-                },
+              ? { kind: 'hls', manifestUrl: address, dashUrl: null }
+              : { kind: 'direct', url: address },
         },
       };
     },
@@ -330,15 +317,13 @@ const createLinkedPlayback = (
       }
 
       const here = linkedNameOf(linked.serverId, read.data.id);
+      const url = rehomedAddress(
+        read.data.url,
+        `/api/playback/trickplay/${read.data.id}/`,
+        `/api/playback/trickplay/${encodeURIComponent(here)}/`,
+      );
 
-      return {
-        ...read.data,
-        id: here,
-        url: read.data.url.replace(
-          `/api/playback/trickplay/${read.data.id}/`,
-          `/api/playback/trickplay/${encodeURIComponent(here)}/`,
-        ),
-      };
+      return url === null ? null : { ...read.data, id: here, url };
     },
 
     readFrame: async (mediaId, seconds, width) => {
