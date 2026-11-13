@@ -146,6 +146,19 @@ describe('the plugin broker', () => {
     );
   });
 
+  it('keeps within the quota when many values are set at once', async () => {
+    const { ask } = build([{ kind: 'storage', quotaBytes: 60 }]);
+    const keys = ['k1', 'k2', 'k3', 'k4', 'k5'];
+
+    const settled = await Promise.allSettled(
+      keys.map((key) => ask('storage.set', [key, 'x'.repeat(20)])),
+    );
+
+    expect(settled.filter((one) => one.status === 'fulfilled')).toHaveLength(2);
+
+    expect(await ask('storage.keys', [])).toHaveLength(2);
+  });
+
   it('fetches only with the network permission', async () => {
     const without = build([]);
 
