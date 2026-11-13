@@ -141,6 +141,25 @@ fn is_font(name: &str) -> bool {
         })
 }
 
+/// The lock that serialises work on one file's fonts, by its address.
+///
+/// Locks nobody else holds are dropped as a new one is asked for, so the table holds only files
+/// being worked on.
+fn lock_for(address: &str) -> std::sync::Arc<tokio::sync::Mutex<()>> {
+    type Locks = std::collections::HashMap<String, std::sync::Arc<tokio::sync::Mutex<()>>>;
+
+    static LOCKS: std::sync::LazyLock<std::sync::Mutex<Locks>> =
+        std::sync::LazyLock::new(|| std::sync::Mutex::new(Locks::new()));
+
+    let mut locks = LOCKS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+    locks.retain(|key, lock| key == address || std::sync::Arc::strong_count(lock) > 1);
+
+    locks.entry(address.to_owned()).or_default().clone()
+}
+
 /// Copies a file's attachments into the directory kept for them, once.
 ///
 /// They are written to a directory of their own first and moved into place
@@ -153,6 +172,9 @@ async fn kept(
     let Some(address) = crate::source_address::of(path).await else {
         return Ok(None);
     };
+
+    let lock = lock_for(&address);
+    let _held = lock.lock().await;
 
     let directory = artefact_root.join(DIRECTORY).join(&address);
 
@@ -250,8 +272,25 @@ pub async fn read(
 
 #[cfg(test)]
 mod tests {
-    use super::{dump_arguments, is_font};
+    use super::{dump_arguments, is_font, lock_for};
     use std::path::Path;
+
+    /// Two requests for one file share a lock, so the second finds the first's fonts finished
+    /// instead of clearing the directory under it; another file has its own.
+    #[tokio::test]
+    async fn gives_one_file_one_lock_at_a_time() {
+        let first = lock_for("fonts-lock-a");
+        let held = first.lock().await;
+        let second = lock_for("fonts-lock-a");
+
+        assert!(std::sync::Arc::ptr_eq(&first, &second));
+        assert!(second.try_lock().is_err());
+        assert!(lock_for("fonts-lock-b").try_lock().is_ok());
+
+        drop(held);
+
+        assert!(second.try_lock().is_ok());
+    }
 
     #[test]
     fn dumps_each_font_under_its_stream_number_and_reads_no_video() {
