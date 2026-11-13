@@ -131,6 +131,23 @@ describe('buckets over HTTP', () => {
     expect(added.status).toBe(400);
   });
 
+  it('refuses a bucket, and a test of one, whose endpoint is a cloud metadata address', async () => {
+    const { ask, test } = await build();
+    const endpoint = 'http://169.254.169.254/latest';
+    const added = await ask('/api/admin/buckets', {
+      method: 'POST',
+      body: JSON.stringify({ ...CHANGE, endpoint }),
+    });
+    const tested = await ask('/api/admin/buckets/test', {
+      method: 'POST',
+      body: JSON.stringify({ ...CHANGE, endpoint }),
+    });
+
+    expect(added.status).toBe(400);
+    expect(tested.status).toBe(400);
+    expect(test).not.toHaveBeenCalled();
+  });
+
   it('will not remove a bucket a library still reads from', async () => {
     const { ask } = await build('/buckets/films/Movies');
 
