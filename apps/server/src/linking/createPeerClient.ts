@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { createPeerFetch } from '@ValenceServer/linking/createPeerFetch';
 import type { Resolve } from '@ValenceServer/buckets/isAcceptableEndpoint';
 import { z } from 'zod';
@@ -18,6 +19,8 @@ import type {
 } from '@ValenceContracts/schemas/LinkedServer';
 
 const WAITS_MS = 8000;
+
+const ANSWERS_WITHIN_MS = 60_000;
 
 const PairRefusalSchema = z.object({ code: z.string() });
 
@@ -67,7 +70,8 @@ type PeerClient = {
  * seconds, since a server that is asleep should not hold an admin's page open, and nothing the
  * other server answers is believed until it has been read through its schema — except what is
  * passed through for somebody watching, reading or listening, which is a picture, a page or a
- * stream handed back as it comes, and runs as long as it is watched.
+ * stream handed back as it comes, and runs as long as it is watched once it has begun to answer
+ * within a minute. Nothing read whole is read past the size any answer should be.
  *
  * @param fetcher - How a request is sent, injectable for tests.
  * @param resolve - What a name resolves to, injectable for tests.
@@ -92,7 +96,7 @@ const createPeerClient = (fetcher: typeof fetch = fetch, resolve?: Resolve): Pee
         },
         signal: AbortSignal.timeout(WAITS_MS),
       });
-      const body = await response.json();
+      const body = await boundedAnswer(response).json();
 
       if (!response.ok) {
         const refusal = PairRefusalSchema.safeParse(body);
@@ -125,7 +129,7 @@ const createPeerClient = (fetcher: typeof fetch = fetch, resolve?: Resolve): Pee
 
         return response.ok
           ? {
-              body: new Uint8Array(await response.arrayBuffer()),
+              body: new Uint8Array(await boundedAnswer(response).arrayBuffer()),
               contentType: response.headers.get('content-type') ?? '',
             }
           : null;
@@ -196,11 +200,21 @@ const createPeerClient = (fetcher: typeof fetch = fetch, resolve?: Resolve): Pee
 
       headers.set('authorization', `Bearer ${token}`);
 
+      const giveUp = new AbortController();
+      const waiting = setTimeout(() => {
+        giveUp.abort();
+      }, ANSWERS_WITHIN_MS);
+
       return peerFetch(`${address}${FEDERATION_PATH}${route}`, {
         method: init.method,
         headers,
+        signal: giveUp.signal,
         ...(init.body === undefined ? {} : { body: init.body }),
-      }).catch(() => null);
+      })
+        .catch(() => null)
+        .finally(() => {
+          clearTimeout(waiting);
+        });
     },
   };
 };

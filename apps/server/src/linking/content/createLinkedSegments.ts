@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { ChapterListSchema, SegmentListSchema } from '@ValenceServer/routes/SegmentRoute';
 import type { SegmentService } from '@ValenceServer/segments/SegmentService';
 import type { LinkedAsker } from './createLinkedAsker';
@@ -26,7 +27,10 @@ const createLinkedSegments = (
     }
 
     const answered = await asker.ask(linked.serverId, `/api/media/${linked.remoteId}/segments`);
-    const read = answered?.ok === true ? SegmentListSchema.safeParse(await answered.json()) : null;
+    const read =
+      answered?.ok === true
+        ? SegmentListSchema.safeParse(await boundedAnswer(answered).json())
+        : null;
 
     return read?.success === true ? read.data.segments : [];
   },
@@ -45,7 +49,10 @@ const createLinkedSegments = (
     }
 
     const answered = await asker.ask(linked.serverId, `/api/media/${linked.remoteId}/chapters`);
-    const read = answered?.ok === true ? ChapterListSchema.safeParse(await answered.json()) : null;
+    const read =
+      answered?.ok === true
+        ? ChapterListSchema.safeParse(await boundedAnswer(answered).json())
+        : null;
 
     return read?.success === true ? read.data.chapters : [];
   },

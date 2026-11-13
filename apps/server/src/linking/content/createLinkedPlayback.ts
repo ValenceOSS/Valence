@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import {
   ExplainResponse,
   StartResponse,
@@ -113,7 +114,8 @@ const createLinkedPlayback = (
     asked: { sessionId: string } | { mediaId: string },
   ) => {
     const answered = await asker.ask(serverId, '/direct', sendingJson(asked));
-    const read = answered?.ok === true ? TicketSchema.safeParse(await answered.json()) : null;
+    const read =
+      answered?.ok === true ? TicketSchema.safeParse(await boundedAnswer(answered).json()) : null;
 
     return read?.success === true ? read.data.ticket : null;
   };
@@ -136,7 +138,10 @@ const createLinkedPlayback = (
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
         }),
       );
-      const read = answered?.ok === true ? ExplainResponse.safeParse(await answered.json()) : null;
+      const read =
+        answered?.ok === true
+          ? ExplainResponse.safeParse(await boundedAnswer(answered).json())
+          : null;
 
       return read?.success === true ? { ...read.data, plan: { ...read.data.plan, mediaId } } : null;
     },
@@ -202,7 +207,7 @@ const createLinkedPlayback = (
           : { kind: 'failed', reason, problem: 'unknown' };
       }
 
-      const read = StartResponse.safeParse(await answered.json());
+      const read = StartResponse.safeParse(await boundedAnswer(answered).json());
 
       if (!read.success) {
         return { kind: 'failed', reason: await saidOfRefusal(null), problem: 'unknown' };
@@ -310,7 +315,9 @@ const createLinkedPlayback = (
         { method: 'POST' },
       );
       const read =
-        answered?.ok === true ? TrickplayResponse.safeParse(await answered.json()) : null;
+        answered?.ok === true
+          ? TrickplayResponse.safeParse(await boundedAnswer(answered).json())
+          : null;
 
       if (read?.success !== true) {
         return null;
@@ -338,7 +345,7 @@ const createLinkedPlayback = (
         `/api/playback/${linked.remoteId}/frame?seconds=${seconds.toString()}&width=${width.toString()}`,
       );
 
-      return answered?.ok === true ? answered.arrayBuffer() : null;
+      return answered?.ok === true ? boundedAnswer(answered).arrayBuffer() : null;
     },
 
     readPreview: async (mediaId, range) => {
@@ -381,7 +388,7 @@ const createLinkedPlayback = (
 
       return answered?.ok === true
         ? {
-            body: await answered.arrayBuffer(),
+            body: await boundedAnswer(answered).arrayBuffer(),
             contentType: answered.headers.get('content-type') ?? 'application/octet-stream',
           }
         : null;
@@ -418,7 +425,9 @@ const createLinkedPlayback = (
         sendingJson({ isPlaying }),
       );
       const asked =
-        answered?.status === 200 ? PeerAsksSchema.safeParse(await answered.json()) : null;
+        answered?.status === 200
+          ? PeerAsksSchema.safeParse(await boundedAnswer(answered).json())
+          : null;
       const deviceId = devices.get(sessionId);
 
       if (asked?.success === true && deviceId !== undefined) {

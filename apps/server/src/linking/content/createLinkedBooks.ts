@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { cleanBookDocument } from '@ValenceServer/books/cleanBookDocument';
 import { eq } from 'drizzle-orm';
 import { book, bookChapter } from '#dialect/Schema';
@@ -33,7 +34,7 @@ const bytesOf = async (answered: Response | null): Promise<BookPageBytes | null>
   const contentType = answered?.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
 
   return answered?.ok === true && contentType !== undefined && PICTURE.test(contentType)
-    ? { bytes: new Uint8Array(await answered.arrayBuffer()), contentType }
+    ? { bytes: new Uint8Array(await boundedAnswer(answered).arrayBuffer()), contentType }
     : null;
 };
 
@@ -86,7 +87,9 @@ const createLinkedBooks = <Books extends ReadsBooks>(
 
       const answered = await asker.askAt(`${linked.path}/contents`);
       const read =
-        answered?.ok === true ? BookContentsSchema.safeParse(await answered.json()) : null;
+        answered?.ok === true
+          ? BookContentsSchema.safeParse(await boundedAnswer(answered).json())
+          : null;
 
       return read?.success === true ? read.data : null;
     },
@@ -106,7 +109,7 @@ const createLinkedBooks = <Books extends ReadsBooks>(
 
       return answered?.ok === true && remote !== undefined
         ? cleanBookDocument(
-            (await answered.text()).replaceAll(remote, here),
+            (await boundedAnswer(answered).text()).replaceAll(remote, here),
             (src) => (src.startsWith(ours) ? src : null),
             (href) => href,
           )

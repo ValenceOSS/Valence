@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { z } from 'zod';
 import { FromServerSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -160,7 +161,11 @@ const createPartyRelayClient = ({
       );
       const read =
         answered?.ok === true
-          ? HeardSchema.safeParse(await answered.json().catch(() => null))
+          ? HeardSchema.safeParse(
+              await boundedAnswer(answered)
+                .json()
+                .catch(() => null),
+            )
           : null;
 
       if (read?.success !== true) {

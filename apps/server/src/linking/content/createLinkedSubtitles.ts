@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { SubtitleCuesSchema, SubtitleListSchema } from '@ValenceServer/routes/SubtitleRoute';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
 import type { LinkedAsker } from './createLinkedAsker';
@@ -26,7 +27,10 @@ const createLinkedSubtitles = (
     }
 
     const answered = await asker.ask(linked.serverId, `/api/media/${linked.remoteId}/subtitles`);
-    const read = answered?.ok === true ? SubtitleListSchema.safeParse(await answered.json()) : null;
+    const read =
+      answered?.ok === true
+        ? SubtitleListSchema.safeParse(await boundedAnswer(answered).json())
+        : null;
 
     return read?.success === true ? read.data.tracks : null;
   },
@@ -43,7 +47,7 @@ const createLinkedSubtitles = (
       `/api/media/${linked.remoteId}/subtitles/${encodeURIComponent(trackId)}`,
     );
 
-    return answered?.ok === true ? answered.text() : null;
+    return answered?.ok === true ? boundedAnswer(answered).text() : null;
   },
 
   readCues: async (mediaId, trackId) => {
@@ -57,7 +61,10 @@ const createLinkedSubtitles = (
       linked.serverId,
       `/api/media/${linked.remoteId}/subtitles/${encodeURIComponent(trackId)}/cues`,
     );
-    const read = answered?.ok === true ? SubtitleCuesSchema.safeParse(await answered.json()) : null;
+    const read =
+      answered?.ok === true
+        ? SubtitleCuesSchema.safeParse(await boundedAnswer(answered).json())
+        : null;
 
     return read?.success === true ? read.data.cues : null;
   },
@@ -73,7 +80,7 @@ const createLinkedSubtitles = (
       `/api/media/${linked.remoteId}/subtitles/${encodeURIComponent(trackId)}/script`,
     );
 
-    return answered?.ok === true ? answered.text() : null;
+    return answered?.ok === true ? boundedAnswer(answered).text() : null;
   },
 });
 
