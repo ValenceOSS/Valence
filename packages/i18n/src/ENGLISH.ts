@@ -9382,6 +9382,8 @@ const ENGLISH = {
   'screens.videoPlayer.playerControls.volumeBoost': 'Volume boost',
   'screens.videoPlayer.playingInAFloatingWindow': 'Playing in a floating window',
   'screens.videoPlayer.preparingPlayback': 'Preparing playback',
+  'screens.videoPlayer.streamStats.buffer': 'Buffer',
+  'screens.videoPlayer.streamStats.bufferOverTime': 'Seconds buffered ahead over the last minute',
   'screens.videoPlayer.streamStats.byTheBrowser': 'By the browser',
   'screens.videoPlayer.streamStats.carriedAsItIs': 'Carried as it is',
   'screens.videoPlayer.streamStats.closeStats': 'Close stats',
@@ -9389,6 +9391,9 @@ const ENGLISH = {
     'Decoded here, encoded again as {codec} {channels}ch',
   'screens.videoPlayer.streamStats.filmPeakMappedFrom': '{nits} nits, mapped from 1,000',
   'screens.videoPlayer.streamStats.mediabunny': 'Mediabunny',
+  'screens.videoPlayer.streamStats.network': 'Network',
+  'screens.videoPlayer.streamStats.networkOverTime':
+    'Connection speed and stream bitrate over the last minute',
   'screens.videoPlayer.streamStats.noneShownAsHdr': 'None, shown as HDR',
   'screens.videoPlayer.streamStats.repackagedInTheBrowser': 'Mediabunny → Media Source → <video>',
   'screens.videoPlayer.streamStats.shakaPlayingDash': 'Shaka Player (DASH)',
@@ -9405,6 +9410,7 @@ const ENGLISH = {
   'screens.videoPlayer.streamStats.toneMappingNoWebGpu': 'Not used: WebGPU isn’t available',
   'screens.videoPlayer.streamStats.toneMappingTrusted': 'Passed its check',
   'screens.videoPlayer.streamStats.valencesWebGpuPlayer': 'Valence WebGPU (Mediabunny + WebCodecs)',
+  'screens.videoPlayer.streamStats.valueSeconds': '{value}s',
   'screens.videoPlayer.streamStats.widthByHeightAtKbps': '{width}×{height} · {kbps} kbps',
   'screens.videoPlayer.thatDeviceWouldNotTakeThis': 'That device couldn’t play this stream.',
   'screens.videoPlayer.theControlsBelowStillWorkStopping':

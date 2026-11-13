@@ -15,6 +15,7 @@ import { PlanAxis } from '@ValenceScreens/components/PlanAxis/PlanAxis';
 import { useToneMappingCheck } from '@ValenceScreens/playback/useToneMappingCheck';
 import { describeSize } from '@ValenceScreens/playback/describeSize';
 import { describeToneMappingCheck } from './describeToneMappingCheck';
+import { StreamTrends } from './components/StreamTrends/StreamTrends';
 import type { StreamStatsProps } from './StreamStats.types';
 import { say } from '@ValenceI18n/say';
 
@@ -38,9 +39,12 @@ import { say } from '@ValenceI18n/say';
  * @param delivered - What the engine is actually being sent, where it has chosen a variant.
  * @param engine - How the browser's own player is keeping up — the GPU drawing, the decoder, how
  *   the sound reaches the element, and the frames decoded, drawn and skipped — where it is the one
- *   playing. It plays the file itself, so the file's own bitrate is what it is being sent.
+ *   playing. It plays the file itself, so the file's own bitrate is what it is being sent, as it is
+ *   wherever the file is played directly.
  * @param sessionStartSeconds - Where the session itself began, which is not always where the viewer
  *   is now.
+ * @param history - The last minute of readings, oldest first, drawn as charts; the newest gives the
+ *   connection's speed.
  * @param party - How the watch party is faring, where this viewing is part of one.
  * @param onClose - Called to close the panel.
  * @param onGrab - Told when somebody takes hold of the panel's head, so whatever holds the panel can
@@ -54,6 +58,7 @@ const StreamStats = ({
   delivered,
   engine = null,
   sessionStartSeconds,
+  history = [],
   party,
   onClose,
   onGrab,
@@ -72,8 +77,10 @@ const StreamStats = ({
   const videoCodec = delivered?.videoCodec ?? detail?.videoCodec ?? null;
   const audioCodec = delivered?.audioCodec ?? audio?.codec ?? null;
   const channels = delivered?.audioChannels ?? audio?.channels ?? null;
-  const bitrateKbps =
-    delivered?.bitrateKbps ?? (engine === null ? null : (detail?.bitrateKbps ?? null));
+  const fileBitrateKbps =
+    engine !== null || session?.delivery.kind === 'direct' ? (detail?.bitrateKbps ?? null) : null;
+  const bitrateKbps = delivered?.bitrateKbps ?? fileBitrateKbps;
+  const connectionKbps = history.at(-1)?.connectionKbps ?? null;
   const isHdrScreen =
     typeof window !== 'undefined' && window.matchMedia('(dynamic-range: high)').matches === true;
   const filmCodec = detail?.videoCodec ?? null;
@@ -144,9 +151,19 @@ const StreamStats = ({
                   <FormattedNumber value={bitrateKbps} suffix=" kbps" />
                 ),
             },
-            { label: say('common.position'), value: formatDuration(health.positionSeconds) },
+            {
+              label: say('common.connection'),
+              value:
+                connectionKbps === null ? null : (
+                  <FormattedNumber value={connectionKbps} suffix=" kbps" />
+                ),
+            },
           ]}
         />
+
+        {history.length === 0 ? null : (
+          <StreamTrends history={history} fileBitrateKbps={fileBitrateKbps} />
+        )}
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <StatsCard name="Source">
@@ -342,6 +359,7 @@ const StreamStats = ({
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <StatsCard name="Playback">
+            <StatsFact name="Position" value={formatDuration(health.positionSeconds)} />
             <StatsFact name="Frame on screen" value={formatDuration(health.frameSeconds)} />
             <StatsFact name="Stream starts" value={formatDuration(health.streamFromSeconds)} />
             <StatsFact
