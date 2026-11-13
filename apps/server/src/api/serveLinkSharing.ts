@@ -30,9 +30,8 @@ import { AskedAlongSchema } from '@ValenceContracts/schemas/LinkSharing';
 import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { StartResponse } from '@ValenceServer/routes/PlaybackRoute';
 import { PeerAskSchema } from '@ValenceServer/linking/content/PeerAskSchema';
-import { ceilingOf } from '@ValenceServer/linking/content/ceilingOf';
+import { startBodyWithin } from '@ValenceServer/linking/content/startBodyWithin';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
-import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { PeerAsk } from '@ValenceServer/linking/content/PeerAskSchema';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -61,10 +60,6 @@ const StartedSchema = z.object({
   sessionId: z.string().min(1),
   delivery: z.object({ kind: z.enum(['hls', 'direct']) }),
 });
-
-const AskedToStartSchema = z
-  .object({ requestedQuality: QualityStepIdSchema.optional() })
-  .catchall(JsonValueSchema);
 
 const BeatSchema = z.object({ isPlaying: z.boolean() });
 
@@ -560,19 +555,13 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.linking.yourServerIsPlayingAsMuchAsItMay'), 429);
     }
 
-    const toStart =
-      isStarting && qualityCeiling !== null && sent !== null
-        ? AskedToStartSchema.safeParse(jsonIn(sent))
-        : null;
     const body =
-      toStart?.success === true && qualityCeiling !== null
-        ? new TextEncoder().encode(
-            JSON.stringify({
-              ...toStart.data,
-              requestedQuality: ceilingOf(toStart.data.requestedQuality, qualityCeiling),
-            }),
-          ).buffer
-        : sent;
+      isStarting && qualityCeiling !== null ? startBodyWithin(sent, qualityCeiling) : sent;
+
+    if (isStarting && qualityCeiling !== null && body === null) {
+      return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 400);
+    }
+
     const address = innerAddressOf(who.inner, asked.search, asked.origin);
 
     if (address === null) {
