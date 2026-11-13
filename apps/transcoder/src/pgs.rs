@@ -30,7 +30,7 @@ const MAX_SIDE: usize = 4096;
 const MAX_OBJECT_DATA: usize = 16 * 1024 * 1024;
 
 /// The most pixels all the captions of one track may hold between them.
-const MAX_TOTAL_PIXELS: usize = 256 * 1024 * 1024;
+const MAX_TOTAL_PIXELS: usize = 1024 * 1024 * 1024;
 
 /// The most display sets read from one track.
 const MAX_DISPLAY_SETS: usize = 20_000;
@@ -221,6 +221,71 @@ fn draw(
     inked.then_some((width, height, pixels))
 }
 
+/// The objects a composition places, and where.
+fn placements_in(body: &[u8]) -> Vec<Placement> {
+    let count = usize::from(*body.get(10).unwrap_or(&0));
+    let mut placements = Vec::new();
+    let mut cursor = 11;
+
+    for _ in 0..count {
+        let (Some(object), Some(cropped), Some(x), Some(y)) = (
+            read_be(body, cursor, 2),
+            body.get(cursor + 3),
+            read_be(body, cursor + 4, 2),
+            read_be(body, cursor + 6, 2),
+        ) else {
+            break;
+        };
+
+        placements.push(Placement {
+            object: u16::try_from(object).unwrap_or(0),
+            x: usize::try_from(x).unwrap_or(0),
+            y: usize::try_from(y).unwrap_or(0),
+        });
+        cursor += if cropped & 0x80 == 0 { 8 } else { 16 };
+    }
+
+    placements
+}
+
+/// Reads an object segment into the objects held, starting one or adding to it, and refusing
+/// one larger than a caption can be; answers whether the segment named an object at all.
+fn read_object(body: &[u8], objects: &mut HashMap<u16, Object>) -> bool {
+    let Some(id) = read_be(body, 0, 2) else {
+        return false;
+    };
+    let id = u16::try_from(id).unwrap_or(0);
+    let flags = *body.get(3).unwrap_or(&0);
+
+    if flags & FIRST_IN_SEQUENCE != 0 {
+        let width = usize::try_from(read_be(body, 7, 2).unwrap_or(0)).unwrap_or(0);
+        let height = usize::try_from(read_be(body, 9, 2).unwrap_or(0)).unwrap_or(0);
+
+        if width > MAX_SIDE || height > MAX_SIDE {
+            objects.remove(&id);
+
+            return true;
+        }
+
+        objects.insert(
+            id,
+            Object {
+                width,
+                height,
+                data: body.get(11..).unwrap_or(&[]).to_vec(),
+            },
+        );
+    } else if let Some(object) = objects.get_mut(&id) {
+        let more = body.get(4..).unwrap_or(&[]);
+
+        if object.data.len() + more.len() <= MAX_OBJECT_DATA {
+            object.data.extend_from_slice(more);
+        }
+    }
+
+    true
+}
+
 /// Every caption in a PGS stream, as pictures with their times.
 ///
 /// A caption runs from the composition that shows it to the next composition,
@@ -266,28 +331,7 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
 
                 composed_at = pts;
                 dirty = true;
-                placements.clear();
-
-                let count = usize::from(*body.get(10).unwrap_or(&0));
-                let mut cursor = 11;
-
-                for _ in 0..count {
-                    let (Some(object), Some(cropped), Some(x), Some(y)) = (
-                        read_be(body, cursor, 2),
-                        body.get(cursor + 3),
-                        read_be(body, cursor + 4, 2),
-                        read_be(body, cursor + 6, 2),
-                    ) else {
-                        break;
-                    };
-
-                    placements.push(Placement {
-                        object: u16::try_from(object).unwrap_or(0),
-                        x: usize::try_from(x).unwrap_or(0),
-                        y: usize::try_from(y).unwrap_or(0),
-                    });
-                    cursor += if cropped & 0x80 == 0 { 8 } else { 16 };
-                }
+                placements = placements_in(body);
             }
             PALETTE => {
                 dirty = true;
@@ -303,37 +347,8 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
                 }
             }
             OBJECT => {
-                let Some(id) = read_be(body, 0, 2) else {
-                    continue;
-                };
-                let id = u16::try_from(id).unwrap_or(0);
-                let flags = *body.get(3).unwrap_or(&0);
-
-                dirty = true;
-
-                if flags & FIRST_IN_SEQUENCE != 0 {
-                    let width = usize::try_from(read_be(body, 7, 2).unwrap_or(0)).unwrap_or(0);
-                    let height = usize::try_from(read_be(body, 9, 2).unwrap_or(0)).unwrap_or(0);
-
-                    if width > MAX_SIDE || height > MAX_SIDE {
-                        objects.remove(&id);
-                        continue;
-                    }
-
-                    objects.insert(
-                        id,
-                        Object {
-                            width,
-                            height,
-                            data: body.get(11..).unwrap_or(&[]).to_vec(),
-                        },
-                    );
-                } else if let Some(object) = objects.get_mut(&id) {
-                    let more = body.get(4..).unwrap_or(&[]);
-
-                    if object.data.len() + more.len() <= MAX_OBJECT_DATA {
-                        object.data.extend_from_slice(more);
-                    }
+                if read_object(body, &mut objects) {
+                    dirty = true;
                 }
             }
             END if !placements.is_empty() && dirty => {
