@@ -1,7 +1,9 @@
 import type { ExternalIds } from './ExternalIds.types';
 
+const LONGEST_NFO = 64 * 1024;
+
 const UNIQUE_ID =
-  /<uniqueid\b[^>]*\btype\s*=\s*["']?(?<type>tmdb|imdb|tvdb)["']?[^>]*>\s*(?<value>[^<\s]+)\s*<\/uniqueid>/giu;
+  /<uniqueid\b[^>]{0,200}\btype\s*=\s*["']?(?<type>tmdb|imdb|tvdb)["']?[^>]{0,200}>\s*(?<value>[^<\s]+)\s*<\/uniqueid>/giu;
 
 const NAMED_TAG = /<(?<tag>tmdbid|imdbid|imdb_id|tvdbid)>\s*(?<value>[^<\s]+)\s*<\/\k<tag>>/giu;
 
@@ -11,17 +13,18 @@ const IMDB_LINK = /imdb\.com\/title\/(?<value>tt\d{7,8})/iu;
 
 const TMDB_LINK = /themoviedb\.org\/(?:movie|tv)\/(?<value>\d+)/iu;
 
-const TVDB_LINK = /thetvdb\.com\/[^\s<]*?(?:id=|series\/)(?<value>\d+)/iu;
+const TVDB_LINK = /thetvdb\.com\/[^\s<]{0,200}?(?:id=|series\/)(?<value>\d+)/iu;
 
 /**
  * Reads the catalogue identifiers an `.nfo` file beside a film or programme holds — written by
  * Jellyfin, Kodi, Sonarr or Radarr as `<uniqueid type="tmdb">`, `<tmdbid>`, `<imdbid>` or a bare
  * link — so a library that was already matched is not matched again from its file names.
  *
- * @param text - The file's contents.
+ * @param contents - The file's contents.
  * @returns The identifiers it holds.
  */
-const readNfoIds = (text: string): ExternalIds => {
+const readNfoIds = (contents: string): ExternalIds => {
+  const text = contents.slice(0, LONGEST_NFO);
   const found: ExternalIds = { tmdb: null, imdb: null, tvdb: null };
 
   for (const match of text.matchAll(UNIQUE_ID)) {
