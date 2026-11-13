@@ -1,21 +1,26 @@
 import { createMiddleware } from 'hono/factory';
-import { getCookie } from 'hono/cookie';
+import { getCookie, setCookie } from 'hono/cookie';
+import { randomUUID } from 'node:crypto';
 import { howShareEnded, isShareLive, whyShareEnded } from '@ValenceContracts/schemas/Share';
 import { covers, reachOf } from './shareReach';
 import type { ShareService } from './ShareService';
 import type { ShareSessions } from './createShareSessions';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
+import { rememberGuestFor } from './rememberGuestFor';
 
 const SHARE_COOKIE = 'valence_share';
 
 const SHARE_JOINER = 'valence_share_joiner';
+
+const DEFAULT_GUEST_KEPT_FOR_SECONDS = 30 * 86_400;
 
 type ShareGateOptions = {
   shares: ShareService;
   sessions: ShareSessions;
   itemOf: (mediaId: string) => Promise<{ id: string; seriesId: string | null } | null>;
   shareHoldingTab?: (clientId: string) => string | null;
+  guestKeptForSeconds?: number;
   creator?: {
     stillShares: (accountId: string) => Promise<boolean>;
     reaches: (accountId: string, mediaId: string) => Promise<boolean>;
@@ -54,6 +59,7 @@ const createShareGate = ({
   sessions,
   itemOf,
   shareHoldingTab,
+  guestKeptForSeconds = DEFAULT_GUEST_KEPT_FOR_SECONDS,
   creator,
 }: ShareGateOptions) =>
   createMiddleware(async (context, next) => {
@@ -94,6 +100,29 @@ const createShareGate = ({
         { error: say('common.thisLinkNoLongerWorks'), ended: 'withdrawn' as const },
         410,
       );
+    }
+
+    if (found.viewCap !== null && !standing.isReturning) {
+      const arriving = joiner ?? randomUUID();
+
+      if (!(await shares.join(found.id, arriving, found.viewCap))) {
+        const spent = { ...standing, views: found.viewCap, isReturning: false };
+
+        return context.json(
+          {
+            error: whyShareEnded(spent, new Date()) ?? say('common.thisLinkNoLongerWorks'),
+            ended: howShareEnded(spent, new Date()) ?? 'withdrawn',
+          },
+          410,
+        );
+      }
+
+      setCookie(context, SHARE_JOINER, arriving, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+        maxAge: rememberGuestFor(found.expiresAt, new Date(), guestKeptForSeconds),
+      });
     }
 
     const reach = reachOf({ method: context.req.method, path: context.req.path });

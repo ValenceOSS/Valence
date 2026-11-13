@@ -241,7 +241,19 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
-    await shares.join(found.id, joiner);
+    if (!(await shares.join(found.id, joiner, found.viewCap))) {
+      return context.json(
+        {
+          error:
+            whyShareEnded(
+              { ...standing, views: found.viewCap ?? found.views, isReturning: false },
+              new Date(),
+            ) ?? say('common.thisLinkNoLongerWorks'),
+          ended: 'spent' as const,
+        },
+        410,
+      );
+    }
 
     const keptFor = rememberGuestFor(found.expiresAt, new Date(), GUEST_REMEMBERED_FOR_SECONDS);
     const kept = {

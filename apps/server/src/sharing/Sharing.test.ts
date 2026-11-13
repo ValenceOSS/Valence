@@ -456,6 +456,20 @@ describe('opening a link as somebody with no account', () => {
 
     expect(response.status).toBe(410);
   });
+
+  it('counts a guest who goes straight to the API with the link, so a cap of one admits one', async () => {
+    const built = build();
+    const { app } = built;
+    const cookie = await signedIn(built);
+    const made = await shared(app, cookie, { kind: 'item', mediaId: FILM, viewCap: 1 });
+    const straightIn = () =>
+      app.request(`${BASE}/api/media/${FILM}`, {
+        headers: { cookie: `valence_share=${made.token}`, origin: BASE },
+      });
+
+    expect((await straightIn()).status).toBe(200);
+    expect((await straightIn()).status).toBe(410);
+  });
 });
 
 /**

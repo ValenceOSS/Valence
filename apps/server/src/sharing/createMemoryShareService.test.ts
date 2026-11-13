@@ -89,6 +89,18 @@ describe('createMemoryShareService', () => {
     expect((await shares.resolve(made?.token ?? ''))?.views).toBe(2);
   });
 
+  it('admits nobody past the cap, but lets back in somebody it already admitted', async () => {
+    const shares = build();
+
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
+    const id = made?.id ?? '';
+
+    await expect(shares.join(id, 'guest-1', 1)).resolves.toBe(true);
+    await expect(shares.join(id, 'guest-2', 1)).resolves.toBe(false);
+    await expect(shares.join(id, 'guest-1', 1)).resolves.toBe(true);
+    expect((await shares.resolve(made?.token ?? ''))?.views).toBe(1);
+  });
+
   it('revokes a link', async () => {
     const shares = build();
 

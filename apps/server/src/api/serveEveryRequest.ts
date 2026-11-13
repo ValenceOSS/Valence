@@ -43,6 +43,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     linkPersonOf,
     callerOf,
     readActing,
+    GUEST_REMEMBERED_FOR_SECONDS,
   } = context;
 
   app.use('*', async (context, next) => {
@@ -73,6 +74,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
               shares,
               sessions: shareSessions,
               shareHoldingTab: (clientId) => presence.shareOf(clientId),
+              guestKeptForSeconds: GUEST_REMEMBERED_FOR_SECONDS,
               creator: createShareCreatorCheck({
                 isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
                 permissionsOf: (accountId) => permissions.resolve(accountId),

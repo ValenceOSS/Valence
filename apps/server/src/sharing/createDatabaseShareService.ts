@@ -90,6 +90,18 @@ type ShareRow = {
 const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
   const COLUMNS = columnsFor(db);
 
+  const admitting = new Map<string, Promise<void>>();
+
+  const hasJoined = async (shareId: string, joiner: string): Promise<boolean> => {
+    const rows = await db
+      .select({ id: shareVisit.id })
+      .from(shareVisit)
+      .where(and(eq(shareVisit.shareId, shareId), eq(shareVisit.joiner, joiner)))
+      .limit(1);
+
+    return rows.length > 0;
+  };
+
   const countViews = async (shareId: string): Promise<number> => {
     const [found] = await db
       .select({ howMany: count() })
@@ -433,30 +445,42 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
       } satisfies ResolvedShare;
     },
 
-    hasJoined: async (shareId, joiner) => {
-      const rows = await db
-        .select({ id: shareVisit.id })
-        .from(shareVisit)
-        .where(and(eq(shareVisit.shareId, shareId), eq(shareVisit.joiner, joiner)))
-        .limit(1);
+    hasJoined,
 
-      return rows.length > 0;
-    },
+    join: (shareId, joiner, viewCap = null) => {
+      const admitted = (admitting.get(shareId) ?? Promise.resolve()).then(async () => {
+        if (viewCap !== null && !(await hasJoined(shareId, joiner))) {
+          if ((await countViews(shareId)) >= viewCap) {
+            return false;
+          }
+        }
 
-    join: async (shareId, joiner) => {
-      await upsert(db, shareVisit, {
-        values: [
-          {
-            id: randomUUID(),
-            shareId,
-            joiner,
-            firstSeenAt: new Date(),
-            lastSeenAt: new Date(),
-          },
-        ],
-        target: [shareVisit.shareId, shareVisit.joiner],
-        set: { lastSeenAt: new Date() },
+        await upsert(db, shareVisit, {
+          values: [
+            {
+              id: randomUUID(),
+              shareId,
+              joiner,
+              firstSeenAt: new Date(),
+              lastSeenAt: new Date(),
+            },
+          ],
+          target: [shareVisit.shareId, shareVisit.joiner],
+          set: { lastSeenAt: new Date() },
+        });
+
+        return true;
       });
+
+      admitting.set(
+        shareId,
+        admitted.then(
+          () => undefined,
+          () => undefined,
+        ),
+      );
+
+      return admitted;
     },
   };
 };

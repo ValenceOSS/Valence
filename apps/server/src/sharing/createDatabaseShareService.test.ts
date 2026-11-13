@@ -171,4 +171,19 @@ describe('joining through a link', () => {
     },
     STARTING_POSTGRES_MS,
   );
+
+  it(
+    'lets in no more people than the cap, however many arrive at once',
+    async () => {
+      const { service, shareId } = await aSharedFilm();
+
+      const answers = await Promise.all(
+        ['a', 'b', 'c', 'd', 'e'].map((joiner) => service.join(shareId, joiner, 1)),
+      );
+
+      expect(answers.filter((admitted) => admitted)).toHaveLength(1);
+      await expect(service.join(shareId, 'a', 1)).resolves.toBe(true);
+    },
+    STARTING_POSTGRES_MS,
+  );
 });

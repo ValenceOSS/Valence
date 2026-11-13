@@ -21,6 +21,7 @@ const A_SHARE: ResolvedShare = {
 const gatedApp = (options: {
   share?: ResolvedShare | null;
   hasJoined?: boolean;
+  admits?: boolean;
   claimedBy?: string[];
   item?: { id: string; seriesId: string | null } | null;
   creatorShares?: boolean;
@@ -33,7 +34,7 @@ const gatedApp = (options: {
     revoke: () => Promise.resolve(false),
     revokeAnybody: () => Promise.resolve(null),
     resolve: () => Promise.resolve(options.share === undefined ? A_SHARE : options.share),
-    join: () => Promise.resolve(),
+    join: () => Promise.resolve(options.admits ?? true),
     hasJoined: () => Promise.resolve(options.hasJoined ?? false),
   } satisfies ShareService;
 
@@ -108,6 +109,32 @@ describe('createShareGate', () => {
     const response = await gatedApp({}).request('/api/health', holding('abc'));
 
     expect(response.status).toBe(200);
+  });
+
+  it('lets in a guest of a capped link, and gives them the cookie that counts them once', async () => {
+    const response = await gatedApp({ share: { ...A_SHARE, viewCap: 1 } }).request(
+      '/api/health',
+      holding('abc'),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toContain('valence_share_joiner=');
+  });
+
+  it('refuses a guest of a capped link that has no room left, whichever route they call', async () => {
+    const response = await gatedApp({
+      share: { ...A_SHARE, viewCap: 1, views: 1 },
+      admits: false,
+    }).request('/api/health', holding('abc'));
+
+    expect(response.status).toBe(410);
+    expect(await response.json()).toMatchObject({ ended: 'spent' });
+  });
+
+  it('does not count a guest of an uncapped link', async () => {
+    const response = await gatedApp({}).request('/api/health', holding('abc'));
+
+    expect(response.headers.get('set-cookie')).toBeNull();
   });
 
   it('refuses a route nobody opened to a share', async () => {
