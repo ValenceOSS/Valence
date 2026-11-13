@@ -109,7 +109,36 @@ updates, is drawn with `Sentence`:
 
 The phone and TV clients map `sayParts` or `sayCountParts` into keyed fragments the same way.
 
-## Enforcement
+## Speaking a language
+
+`say` and its helpers speak whatever language the process was told to speak with
+`speakLanguage(language, words)`. A server never calls it, so servers, logs and webhooks speak
+English. A client calls it once, before it draws anything:
+
+- **Which language:** `chooseLanguage(wanted)` takes the device's languages, most wanted first, and
+  returns the first Valence has. It matches the base language when the region differs, reads
+  Chinese by script (Taiwan and Hong Kong read Traditional) and Portuguese by country (anywhere
+  outside Brazil reads European). Somebody can also pick a language on the device under
+  Account › Profile › Language. That choice is kept on the device under `valence.language`.
+- **Its words:** on the web, the `wordsByLanguage` build plugin serves `virtual:valence-words`.
+  `loadWords(language)` fetches that language's words, by handler, as a chunk of its own, without
+  the translators' notes. English is built in and costs nothing to load. A string a language file
+  doesn't translate yet is said in English.
+- **Counted words:** `sayCount` and `sayCountParts` pick the form with `Intl.PluralRules` for the
+  language being spoken (`zero`, `one`, `two`, `few`, `many` or `other`). Where a file has no form
+  of that kind, they fall back to `.one` or `.other`. The number is written the language's way.
+
+### Right to left
+
+Arabic and Hebrew are written right to left (`RIGHT_TO_LEFT`). The web client sets
+`<html lang dir>` from `directionOf(language)`, and the layout mirrors itself because:
+
+- spacing, positions, alignment, corners and borders use start and end classes (`ms-`, `pe-`,
+  `start-`, `text-start`, `rounded-s`, `border-e`…), never left and right. The oxlint rule
+  `valence/logical-sides` enforces this in `packages/ui`, `packages/screens`, `apps/web` and
+  `apps/desktop`. A centring pair such as `left-1/2 -translate-x-1/2` is fine as it is.
+- `Icon` mirrors arrows and chevrons that point along the line of text (`SIDEWAYS_GLYPHS`), so back
+  still points back. Play, skip and other media controls stay as they are, as they do everywhere.
 
 The oxlint rule `valence/no-hard-coded-strings` covers every package and app except the docs,
 landing and plugin SDK. It reports:

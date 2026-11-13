@@ -21,11 +21,22 @@ import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoi
 import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/components/PluginThemeRow/PluginThemeRow';
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 import { say } from '@ValenceI18n/say';
+import { SelectField } from '@ValenceUI/SelectField';
+import { LANGUAGES } from '@ValenceI18n/LANGUAGES';
+import { isLanguage } from '@ValenceI18n/isLanguage';
+import { languageName } from '@ValenceI18n/languageName';
 
 const FORMAT_CHOICES = [
   { id: 'hls', label: say('screens.accountArea.profileSettings.hls') },
   { id: 'dash', label: say('screens.accountArea.profileSettings.dash') },
 ] as const;
+
+const SAME_AS_THE_DEVICE = 'device';
+
+const LANGUAGE_CHOICES = [
+  { id: SAME_AS_THE_DEVICE, label: say('screens.accountArea.profileSettings.sameAsThisDevice') },
+  ...LANGUAGES.map((language) => ({ id: language, label: languageName(language) })),
+];
 
 const CONNECTION_CHOICES = [
   { id: '1', label: '1' },
@@ -37,7 +48,7 @@ const CONNECTION_CHOICES = [
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
  * patient Valence is about asking whether they are still there. Beside them, what this device
- * chooses for itself: its theme, movement and colours, whether a browser with WebGPU plays files it
+ * chooses for itself: the language it speaks, each named in itself, its theme, movement and colours, whether a browser with WebGPU plays files it
  * cannot play by itself through its own player, how many pieces of a film it fetches at once and in
  * which format, and in the desktop app whether this computer puts a notice up when something new
  * reaches the inbox. Those are kept on the device rather than the account, but wait for the same
@@ -126,6 +137,23 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
             }}
           />
         )}
+      </SettingRow>
+
+      <SettingRow
+        title={say('common.language')}
+        description={say('screens.accountArea.profileSettings.languageKeptHere')}
+      >
+        <SelectField
+          label={say('common.language')}
+          isLabelHidden
+          size="sm"
+          options={LANGUAGE_CHOICES}
+          value={device.language ?? SAME_AS_THE_DEVICE}
+          onSelect={(chosen) => {
+            onDraft({ language: isLanguage(chosen) ? chosen : null });
+          }}
+          className="w-56"
+        />
       </SettingRow>
 
       <SettingRow

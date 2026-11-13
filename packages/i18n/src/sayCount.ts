@@ -1,4 +1,6 @@
-import { say } from './say';
+import { countedHandler } from './countedHandler';
+import { fillGaps } from './fillGaps';
+import { SPOKEN } from './SPOKEN';
 import type { CountedKey } from './CountedKey';
 
 /**
@@ -15,9 +17,9 @@ const sayCount = (
   count: number,
   values: Readonly<Record<string, string | number>> = {},
 ): string =>
-  say(count === 1 ? `${key}.one` : `${key}.other`, {
+  fillGaps(SPOKEN.words[countedHandler(key, count)] ?? key, {
     ...values,
-    count: count.toLocaleString('en'),
+    count: count.toLocaleString(SPOKEN.language),
   });
 
 export { sayCount };

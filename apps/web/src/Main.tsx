@@ -10,10 +10,18 @@ import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { installBrowserPlatform } from '@ValenceWeb/platform/installBrowserPlatform';
 import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { KeepTheLayout } from '@ValenceScreens/components/KeepTheLayout/KeepTheLayout';
+import { startSpeaking } from '@ValenceClient/language/startSpeaking';
+import { directionOf } from '@ValenceI18n/directionOf';
+import { loadWords } from 'virtual:valence-words';
 import './styles/main.css';
 
 installBrowserPlatform();
 reloadWhenCodeIsGone(window);
+
+const spoken = await startSpeaking(navigator.languages, loadWords);
+
+document.documentElement.lang = spoken;
+document.documentElement.dir = directionOf(spoken);
 
 const container = document.querySelector('#root');
 

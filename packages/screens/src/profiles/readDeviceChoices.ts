@@ -2,6 +2,7 @@ import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
 import { chosenPluginTheme } from '@ValenceClient/plugins/pluginThemeChoice';
 import { chosenMotion } from '@ValenceClient/shell/motion';
 import { chosenTheme } from '@ValenceClient/shell/theme';
+import { chosenLanguageHere } from '@ValenceClient/language/chosenLanguageHere';
 import { readPlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import type { DeviceChoices } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
@@ -15,6 +16,7 @@ const readDeviceChoices = (): DeviceChoices => {
   const playback = readPlaybackPreferences();
 
   return {
+    language: chosenLanguageHere(),
     theme: chosenTheme(),
     motion: chosenMotion(),
     pluginTheme: chosenPluginTheme(),

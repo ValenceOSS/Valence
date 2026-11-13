@@ -11,6 +11,7 @@ describe('keepDeviceChoices', () => {
   it('keeps every choice the editor changed, to be read back as made', () => {
     const was = readDeviceChoices();
     const chosen = {
+      language: null,
       theme: 'light',
       motion: 'full',
       pluginTheme: 'midnight/deep-sea',

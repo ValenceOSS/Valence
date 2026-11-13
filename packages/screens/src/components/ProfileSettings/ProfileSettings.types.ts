@@ -1,9 +1,11 @@
+import type { Language } from '@ValenceI18n/LANGUAGES';
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import type { Theme } from '@ValenceClient/shell/theme';
 import type { Motion } from '@ValenceClient/shell/motion';
 
 type DeviceChoices = {
+  language: Language | null;
   theme: Theme;
   motion: Motion;
   pluginTheme: string | null;

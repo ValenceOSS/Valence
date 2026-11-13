@@ -39,6 +39,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: true,
+  language: null,
   theme: 'system',
   motion: 'system',
   pluginTheme: null,
@@ -47,6 +48,7 @@ const DRAFT: ProfileDraft = {
   streamingFormat: 'hls',
   showsDesktopNotices: false,
   deviceWas: {
+    language: null,
     theme: 'system',
     motion: 'system',
     pluginTheme: null,

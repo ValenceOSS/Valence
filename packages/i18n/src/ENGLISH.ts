@@ -3457,9 +3457,12 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.hls': 'HLS',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Saved on this device, not your account, and applied immediately.',
+  'screens.accountArea.profileSettings.languageKeptHere':
+    'Kept on this device. Valence starts again in the new language when you save.',
   'screens.accountArea.profileSettings.playMoreFilmsInThisBrowser':
     'Play more films in this browser',
   'screens.accountArea.profileSettings.preferTheBestCopy': 'Prefer the best version',
+  'screens.accountArea.profileSettings.sameAsThisDevice': 'Same as this device',
   'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
     'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I’m playing on Discord',
