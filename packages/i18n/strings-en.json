@@ -28601,21 +28601,6 @@
     "context": "Notice after a genre or tag was renamed. {titles} is how many titles, as in 12 titles."
   },
   {
-    "handler": "screens.adminArea.workUnderWay.processedOfTotal",
-    "text": "{processed} of {total}",
-    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. How far through a job is, such as 412 of 1,020."
-  },
-  {
-    "handler": "screens.adminArea.workUnderWay.running.one",
-    "text": "{count} running",
-    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs running now."
-  },
-  {
-    "handler": "screens.adminArea.workUnderWay.running.other",
-    "text": "{count} running",
-    "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs running now."
-  },
-  {
     "handler": "screens.adminArea.workUnderWay.waiting.one",
     "text": "{count} waiting",
     "context": "On the panel at the foot of the admin pages that shows what Valence is working on. A tag counting the jobs waiting their turn."

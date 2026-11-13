@@ -66,7 +66,7 @@ const WorkUnderWay = ({ working, progress, definitions, libraries }: WorkUnderWa
             aside: {
               kind: 'badge' as const,
               tone: 'quiet' as const,
-              text: say('screens.adminArea.workUnderWay.processedOfTotal', {
+              text: say('screens.importWizard.runProgress.processedOfTotal', {
                 processed: summary.processed.toLocaleString(),
                 total: summary.total.toLocaleString(),
               }),
@@ -202,7 +202,7 @@ const WorkUnderWay = ({ working, progress, definitions, libraries }: WorkUnderWa
                     tags={[
                       ...(running === 0
                         ? []
-                        : [sayCount('screens.adminArea.workUnderWay.running', running)]),
+                        : [sayCount('screens.cacheBreakdown.cacheRows.running', running)]),
                       ...(waiting === 0
                         ? []
                         : [sayCount('screens.adminArea.workUnderWay.waiting', waiting)]),

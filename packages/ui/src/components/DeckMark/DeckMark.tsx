@@ -21,6 +21,18 @@ const HOLDS_FANNED_FOR = 1.6;
 const HOLDS_STACKED_FOR = 0.35;
 
 /**
+ * Waits a while in real time, so a loop always pauses between turns however quickly an animation
+ * finishes.
+ *
+ * @param seconds - How long to wait.
+ * @returns When the wait is over.
+ */
+const holdFor = (seconds: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, seconds * 1000);
+  });
+
+/**
  * The Valence mark as a deck of three cards, drawn in the theme's ink: a smiling card in front and
  * two frowning ones behind. Animated, the deck arrives stacked and fans out from under the front
  * card, the frowns coming in as the cards behind it land; for anybody who has asked for less motion
@@ -70,14 +82,21 @@ const DeckMark = ({ size, isAnimated = false, loops = false, label, className }:
       await controls;
 
       while (isStillHere()) {
+        await holdFor(HOLDS_FANNED_FOR);
+
+        if (!isStillHere()) {
+          return;
+        }
+
         controls = animate(1, 0, {
           type: 'spring',
           stiffness: 120,
           damping: 18,
-          delay: HOLDS_FANNED_FOR,
           onUpdate: follow,
         });
         await controls;
+
+        await holdFor(HOLDS_STACKED_FOR);
 
         if (!isStillHere()) {
           return;
@@ -87,7 +106,6 @@ const DeckMark = ({ size, isAnimated = false, loops = false, label, className }:
           type: 'spring',
           stiffness: 140,
           damping: 15,
-          delay: HOLDS_STACKED_FOR,
           onUpdate: follow,
         });
         await controls;

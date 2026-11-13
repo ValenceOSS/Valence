@@ -100,7 +100,7 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
         <DeckMark
           width={MARK.width}
           height={MARK.height}
-          loops={!isDone}
+          loops={!isDone && !isStill}
           label={say('common.valence')}
         />
 

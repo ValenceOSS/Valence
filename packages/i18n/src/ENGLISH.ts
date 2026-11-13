@@ -7279,9 +7279,6 @@ const ENGLISH = {
   'screens.adminArea.wordsManager.wordRemovedFromTitles': '{word} removed from {titles}',
   'screens.adminArea.wordsManager.wordRenamedToNextOnTitles':
     '{word} renamed to {next} on {titles}',
-  'screens.adminArea.workUnderWay.processedOfTotal': '{processed} of {total}',
-  'screens.adminArea.workUnderWay.running.one': '{count} running',
-  'screens.adminArea.workUnderWay.running.other': '{count} running',
   'screens.adminArea.workUnderWay.waiting.one': '{count} waiting',
   'screens.adminArea.workUnderWay.waiting.other': '{count} waiting',
   'screens.adminArea.workUnderWay.waitingItsTurn': 'Waiting its turn',

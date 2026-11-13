@@ -171,7 +171,6 @@ const COUNTED_KEYS = [
   'screens.adminArea.uploadMediaDialog.filesLeftOut',
   'screens.adminArea.uploadMediaDialog.uploadedCountFilesToName',
   'screens.adminArea.uploadMediaDialog.uploadsLeftUnfinished',
-  'screens.adminArea.workUnderWay.running',
   'screens.adminArea.workUnderWay.waiting',
   'screens.adminArea.workUnderWay.workingOn',
   'screens.bookDialog.count.haveRead',

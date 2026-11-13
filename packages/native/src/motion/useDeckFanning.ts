@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { usePrefersStillness } from './usePrefersStillness';
 
@@ -36,6 +36,7 @@ const useDeckFanning = ({
   const [grown] = useState(() => new Animated.Value(isArriving ? STARTS_AT : 1));
   const [progress, setProgress] = useState(isArriving ? 0 : 1);
   const [grows, setGrows] = useState(isArriving ? STARTS_AT : 1);
+  const hasMoved = useRef(false);
 
   useEffect(() => {
     const fanning = fanned.addListener(({ value }) => {
@@ -73,11 +74,13 @@ const useDeckFanning = ({
   }, [isArriving, grown]);
 
   useEffect(() => {
-    if (isStill) {
+    if (isStill || (!isLooping && !isArriving && !hasMoved.current)) {
       fanned.setValue(1);
 
       return undefined;
     }
+
+    hasMoved.current = true;
 
     const fanOut = (after: number) =>
       Animated.sequence([
