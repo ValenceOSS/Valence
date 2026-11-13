@@ -167,4 +167,19 @@ describe('tellDiscord', () => {
 
     expect(statusesSent(readyToTalk())).toBe(1);
   });
+
+  it('drops a connection whose peer sends a length no message has', () => {
+    const discord = tellDiscord('/tmp', 1_755_000_000_000);
+
+    discord.about({ kind: 'browsing', look: LOOK });
+
+    const socket = readyToTalk();
+    const nonsense = Buffer.alloc(16);
+
+    nonsense.writeInt32LE(FRAME, 0);
+    nonsense.writeInt32LE(-8, 4);
+    socket.emit('data', nonsense);
+
+    expect(socket.isDestroyed).toBe(true);
+  });
 });
