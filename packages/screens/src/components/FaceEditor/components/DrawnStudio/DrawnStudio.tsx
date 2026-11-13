@@ -1,74 +1,97 @@
+import { useState } from 'react';
+import { drawingToShow } from '@ValenceClient/profiles/drawingToShow';
+import { useSettledValue } from '@ValenceClient/profiles/useSettledValue';
+
+const SETTLES_AFTER = 250;
+import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
 import { AVATAR_STYLE_NAMES } from '@ValenceClient/profiles/AVATAR_STYLE_NAMES';
-import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
-import { cn } from '@ValenceUI/cn';
+import { ScrollRail } from '@ValenceUI/ScrollRail';
 import { AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
+import { FaceChoice } from '@ValenceScreens/components/FaceEditor/components/FaceChoice/FaceChoice';
 import type { DrawnStudioProps } from './DrawnStudio.types';
 import { say } from '@ValenceI18n/say';
 import { randomId } from '@ValenceClient/platform/randomId';
 
 /**
- * A drawn face: which style it is drawn in, and a shuffle that draws a different face in that
- * style each time it is pressed.
+ * A drawn face of one’s own: a row that scrolls sideways of a way to draw it afresh at random, then
+ * the styles to draw it in, each shown as the face itself, and beneath it what is behind it: nothing,
+ * or a colour. The shuffle spins round once each time it is pressed, so a new face is seen to have been drawn.
  *
- * @param style - The style chosen now.
- * @param seed - What the face in that style is drawn from.
+ * @param style - The style it is drawn in.
+ * @param seed - What picks this face among all of that style's.
+ * @param colour - The profile's colour, behind the face where it is drawn on it.
+ * @param isOnColour - Whether the face is drawn on that colour, rather than clear.
  * @param onChange - Told the style or the face changed.
+ * @param onColour - Told a colour was chosen to draw the face on.
+ * @param onClear - Told the face is to be drawn clear.
  */
-const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
-  <div className="flex flex-col gap-8">
-    <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] font-medium text-text-muted">
-        {say('screens.faceEditor.drawnStudio.style')}
-      </h3>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+const DrawnStudio = ({
+  style,
+  seed,
+  colour,
+  isOnColour,
+  onChange,
+  onColour,
+  onClear,
+}: DrawnStudioProps) => {
+  const [turns, setTurns] = useState(0);
+  const settledColour = useSettledValue(colour, SETTLES_AFTER);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <ScrollRail className="flex pb-1 pt-1.5">
+        <FaceChoice
+          label={say('screens.faceEditor.drawnStudio.randomise')}
+          name={say('screens.faceEditor.drawnStudio.randomise')}
+          isChosen={false}
+          onChoose={() => {
+            setTurns((was) => was + 1);
+            onChange({ style, seed: randomId().slice(0, 12) });
+          }}
+        >
+          <span
+            style={{ transform: `rotate(${(turns * 360).toString()}deg)` }}
+            className="flex size-full items-center justify-center text-text transition-transform duration-500 ease-out still:transition-none"
+          >
+            <Icon of={ShuffleIcon} size={18} />
+          </span>
+        </FaceChoice>
         {AVATAR_STYLES.map((one) => (
-          <Button
+          <FaceChoice
             key={one}
-            variant="bare"
-            size="none"
             label={say('screens.faceEditor.drawnStudio.drawItInTheSTYLENAMES', {
               STYLE_NAMES: AVATAR_STYLE_NAMES[one],
             })}
-            hasTooltip={false}
-            isActive={one === style}
-            onClick={() => {
+            name={AVATAR_STYLE_NAMES[one]}
+            isChosen={one === style}
+            onChoose={() => {
               onChange({ style: one, seed });
             }}
-            className="group flex flex-col items-center gap-1.5"
           >
             <img
-              src={`/api/profiles/avatars/${one}?seed=${encodeURIComponent(seed)}`}
+              src={drawingToShow(one, seed, isOnColour ? settledColour : null)}
               alt=""
-              className={cn(
-                'size-16 rounded-xl bg-subtle transition-transform group-hover:scale-105',
-                one === style &&
-                  'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]',
-              )}
+              style={isOnColour ? { backgroundColor: colour } : undefined}
+              className="size-full object-cover"
             />
-            <span className={cn('text-[0.7rem]', one === style ? 'text-text' : 'text-text-muted')}>
-              {AVATAR_STYLE_NAMES[one]}
-            </span>
-          </Button>
+          </FaceChoice>
         ))}
-      </div>
-    </section>
+      </ScrollRail>
 
-    <div>
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => {
-          onChange({ style, seed: randomId().slice(0, 12) });
-        }}
-      >
-        <Icon of={ShuffleIcon} size={15} />
-        {say('screens.faceEditor.drawnStudio.anotherFace')}
-      </Button>
+      <ScrollRail className="flex">
+        <ColourChoice
+          label={say('common.colour')}
+          value={isOnColour ? colour : ''}
+          onChange={onColour}
+          clear={{ isChosen: !isOnColour, onChoose: onClear }}
+          className="flex-nowrap px-1.5 py-1.5 [&>*]:shrink-0"
+        />
+      </ScrollRail>
     </div>
-  </div>
-);
+  );
+};
 
 DrawnStudio.displayName = 'DrawnStudio';
 

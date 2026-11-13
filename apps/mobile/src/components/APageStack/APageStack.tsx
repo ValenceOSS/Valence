@@ -6,6 +6,7 @@ import { CARD_GOES_BACK } from '@ValenceMobile/components/APageStack/CARD_GOES_B
 import { CARD_SCROLL } from '@ValenceMobile/components/APageStack/CARD_SCROLL';
 import { IS_A_CARD } from '@ValenceMobile/components/APageStack/IS_A_CARD';
 import { IS_ON_TOP } from '@ValenceMobile/components/APageStack/IS_ON_TOP';
+import { SHEETS_UP } from '@ValenceMobile/components/ABottomSheet/SHEETS_UP';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import type { APageStackProps, AStackedPage } from './APageStack.types';
@@ -535,6 +536,7 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
         const now = latest.get('now') ?? NOTHING_YET;
 
         return (
+          SHEETS_UP.size === 0 &&
           now.canDrop &&
           (now.top === null || scrolls.get(now.top.key) !== false) &&
           gesture.vy >= 0 &&
@@ -568,6 +570,7 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
   const [swiping] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponderCapture: (_, gesture) =>
+        SHEETS_UP.size === 0 &&
         latest.get('now')?.canSwipe === true &&
         gesture.x0 < EDGE &&
         gesture.dx > 8 &&

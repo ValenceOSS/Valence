@@ -1,3 +1,4 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { refuse } from '@ValenceI18n/refuse';
@@ -337,10 +338,14 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
           : context.json(NOT_ALLOWED, 403);
       }
 
-      const wrong = await collections.saveArtwork(context.req.param('collectionId'), {
-        body: new Uint8Array(await context.req.arrayBuffer()),
-        contentType: context.req.header('content-type') ?? '',
-      });
+      const wrong = await collections.saveArtwork(
+        context.req.param('collectionId'),
+        {
+          body: new Uint8Array(await context.req.arrayBuffer()),
+          contentType: context.req.header('content-type') ?? '',
+        },
+        frameFromQuery(context.req.query()),
+      );
 
       if (wrong === 'missing' || wrong === 'notYours') {
         return context.json(NO_SUCH_COLLECTION, 404);

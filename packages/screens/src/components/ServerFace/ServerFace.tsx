@@ -4,7 +4,7 @@ import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFon
 
 const AN_INITIAL = { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED } as const;
 
-const A_PHOTO = { kind: 'photo', isVideo: false, frame: null } as const;
+const A_PHOTO = { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false } as const;
 
 /**
  * What a server is shown by: the picture its admin gave it, or else its initial in its colour.

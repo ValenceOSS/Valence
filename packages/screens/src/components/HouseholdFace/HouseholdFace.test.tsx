@@ -7,7 +7,7 @@ import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFon
 const HOUSEHOLD: Household = {
   name: 'The Morgans',
   colour: '#3ac47d',
-  avatar: { kind: 'photo', isVideo: false, frame: null },
+  avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 

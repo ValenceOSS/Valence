@@ -3,8 +3,8 @@ import type { KeyboardEvent, PointerEvent } from 'react';
 import { SwatchRow } from '@ValenceUI/SwatchRow';
 import { TextField } from '@ValenceUI/TextField';
 import { cn } from '@ValenceUI/cn';
-import { hexOfHsv } from '@ValenceUI/hexOfHsv';
-import { hsvOf } from '@ValenceUI/hsvOf';
+import { hexOfHsv } from '@ValenceCore/functions/hexOfHsv';
+import { hsvOf } from '@ValenceCore/functions/hsvOf';
 import type { ColourPickerProps } from './ColourPicker.types';
 import { say } from '@ValenceI18n/say';
 
@@ -35,14 +35,16 @@ const placeOf = (event: PointerEvent<HTMLDivElement>): { across: number; down: n
  * keys as well, so nothing here needs a mouse.
  *
  * @param label - What the colour is for, read out on each control.
- * @param value - The colour now, as `#rrggbb`.
+ * @param value - The colour now, as `#rrggbb`, or empty where there is none yet, while the colour
+ *   the field and strip start on is shown instead.
  * @param onChange - Told the new colour as it moves.
  * @param presets - Ready colours to offer first.
  * @param className - Extra classes for the caller's own layout.
  */
 const ColourPicker = ({ label, value, onChange, presets = [], className }: ColourPickerProps) => {
   const [hsv, setHsv] = useState(() => hsvOf(value));
-  const [typed, setTyped] = useState(value);
+  const shown = HEX.test(value) ? value : hexOfHsv(hsv.hue, hsv.saturation, hsv.brightness);
+  const [typed, setTyped] = useState(shown);
   const sent = useRef(value);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
       setHsv(hsvOf(value));
     }
 
-    setTyped(value);
+    setTyped(HEX.test(value) ? value : (current) => current);
   }, [value]);
 
   const move = (next: { hue: number; saturation: number; brightness: number }) => {
@@ -145,7 +147,7 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
           style={{
             left: `${(hsv.saturation * 100).toString()}%`,
             top: `${((1 - hsv.brightness) * 100).toString()}%`,
-            backgroundColor: value,
+            backgroundColor: shown,
           }}
           className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-picker-thumb"
         />
@@ -182,7 +184,7 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
       <div className="flex items-center gap-2">
         <span
           aria-hidden
-          style={{ backgroundColor: value }}
+          style={{ backgroundColor: shown }}
           className="size-8 shrink-0 rounded-md ring-1 ring-line"
         />
         <TextField

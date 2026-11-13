@@ -5,9 +5,7 @@
       "@ValenceUI/ColourPicker.types": [
         "./packages/ui/src/components/ColourPicker/ColourPicker.types.ts"
       ],
-      "@ValenceUI/hsvOf": ["./packages/ui/src/functions/hsvOf.ts"],
       "@ValenceUI/filterMenuGroupOf": ["./packages/ui/src/functions/filterMenuGroupOf.ts"],
-      "@ValenceUI/hexOfHsv": ["./packages/ui/src/functions/hexOfHsv.ts"],
       "@ValenceUI/PageCurl": ["./packages/ui/src/components/PageCurl/PageCurl.tsx"],
       "@ValenceUI/LiquidFill": ["./packages/ui/src/components/LiquidFill/LiquidFill.tsx"],
       "@ValenceUI/LiquidFill.types": [
@@ -142,6 +140,9 @@
         "./packages/ui/src/components/EmbeddedVideo/EmbeddedVideo.types.ts"
       ],
       "@ValenceUI/FilePicker": ["./packages/ui/src/components/FilePicker/FilePicker.tsx"],
+      "@ValenceUI/FramedPicture": ["./packages/ui/src/components/FramedPicture/FramedPicture.tsx"],
+      "@ValenceUI/PictureFramer": ["./packages/ui/src/components/PictureFramer/PictureFramer.tsx"],
+      "@ValenceUI/ScrollRail": ["./packages/ui/src/components/ScrollRail/ScrollRail.tsx"],
       "@ValenceUI/GlassPanel": ["./packages/ui/src/components/GlassPanel/GlassPanel.tsx"],
       "@ValenceUI/HistoryArrows": ["./packages/ui/src/components/HistoryArrows/HistoryArrows.tsx"],
       "@ValenceUI/HistoryArrows.types": [
@@ -457,6 +458,7 @@
       "@ValenceUI/VirtualStrip": ["./packages/ui/src/components/VirtualStrip/VirtualStrip.tsx"],
       "@ValenceUI/DrawnWhenNear": ["./packages/ui/src/components/DrawnWhenNear/DrawnWhenNear.tsx"],
       "@ValenceUI/columnsIn": ["./packages/ui/src/components/VirtualGrid/columnsIn.ts"],
+      "@ValenceUI/isMouseWheel": ["./packages/ui/src/functions/isMouseWheel.ts"],
       "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"],
       "@ValenceUI/useHasScrolledPast": ["./packages/ui/src/functions/useHasScrolledPast.ts"],
       "@ValenceUI/useMatchesMedia": ["./packages/ui/src/functions/useMatchesMedia.ts"],

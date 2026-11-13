@@ -6,6 +6,12 @@ import { AccountPictureDialog } from './AccountPictureDialog';
 import type * as Notify from '@ValenceUI/notify';
 import type { Household, HouseholdRequest } from '@ValenceContracts/schemas/Household';
 
+Object.defineProperty(URL, 'createObjectURL', {
+  configurable: true,
+  value: () => 'blob:chosen',
+});
+Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
+
 const saveHousehold = vi.hoisted(() =>
   vi.fn<(request: HouseholdRequest) => Promise<Household | null>>(),
 );
@@ -89,6 +95,7 @@ describe('AccountPictureDialog', () => {
       screen.getByLabelText(/Upload a picture/),
       new File(['x'], 'face.png', { type: 'image/png' }),
     );
+    await actor.click(await screen.findByRole('button', { name: 'Use this picture' }));
     await actor.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {

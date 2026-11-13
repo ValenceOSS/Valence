@@ -7,6 +7,7 @@ type AFaceProps = {
   picked?: string | null;
   isLarge?: boolean;
   isSmall?: boolean;
+  side?: number;
   tileMotion?: ComponentProps<typeof Animated.View>['style'];
 };
 

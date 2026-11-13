@@ -132,6 +132,23 @@ describe('createMemoryProfileService', () => {
     expect(picture?.contentType).toBe('image/svg+xml');
   });
 
+  it('draws a face clear unless it was chosen on the profile colour', async () => {
+    const profiles = createMemoryProfileService();
+    const clear = await profiles.create('marques', {
+      ...REQUEST,
+      avatar: { kind: 'drawn', style: 'bottts', seed: 'abc' },
+    });
+    const onColour = await profiles.create('marques', {
+      ...REQUEST,
+      avatar: { kind: 'drawn', style: 'bottts', seed: 'abc', isOnColour: true },
+    });
+    const drawn = async (profileId: string) =>
+      new TextDecoder().decode((await profiles.readAvatar(profileId))?.body);
+
+    expect(await drawn(clear.id)).not.toBe(await drawn(onColour.id));
+    expect(await drawn(onColour.id)).toContain(onColour.colour.slice(1));
+  });
+
   it('has no picture for somebody wearing a letter', async () => {
     const profiles = createMemoryProfileService();
     const made = await profiles.create('marques', REQUEST);
@@ -150,7 +167,12 @@ describe('createMemoryProfileService', () => {
 
     const [changed] = await profiles.list('marques');
 
-    expect(changed?.avatar).toEqual({ kind: 'photo', isVideo: false, frame: null });
+    expect(changed?.avatar).toEqual({
+      kind: 'photo',
+      isVideo: false,
+      frame: null,
+      hasFramedPicture: true,
+    });
   });
 
   it('turns away a clip, since a face is a still picture', async () => {

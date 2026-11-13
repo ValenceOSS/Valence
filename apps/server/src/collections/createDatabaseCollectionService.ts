@@ -2,8 +2,10 @@ import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { forgetPicture } from '@ValenceServer/pictures/forgetPicture';
+import { keepPicture } from '@ValenceServer/pictures/keepPicture';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
+import { readPicture } from '@ValenceServer/pictures/readPicture';
 import {
   and,
   asc,
@@ -40,7 +42,6 @@ import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { STEP, positionBetween } from '@ValenceServer/playlists/positionBetween';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import {
-  contentTypeFor,
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
@@ -524,7 +525,7 @@ const createDatabaseCollectionService = ({
 
   const forgetArtwork = async (path: string | null | undefined): Promise<void> => {
     if (path !== null && path !== undefined) {
-      await unlink(join(artworkDirectory, path)).catch(() => undefined);
+      await forgetPicture(artworkDirectory, path);
     }
   };
 
@@ -882,15 +883,10 @@ const createDatabaseCollectionService = ({
         return null;
       }
 
-      const contentType = contentTypeFor(extname(artworkPath));
-      const body = await readFile(join(artworkDirectory, artworkPath)).catch(() => null);
-
-      return body === null || contentType === undefined
-        ? null
-        : { body: new Uint8Array(body), contentType };
+      return readPicture(artworkDirectory, artworkPath);
     },
 
-    saveArtwork: async (collectionId, artwork) => {
+    saveArtwork: async (collectionId, artwork, frame = null) => {
       const was = await artworkPathOf(collectionId);
 
       if (was === undefined) {
@@ -905,11 +901,18 @@ const createDatabaseCollectionService = ({
 
       const name = `${collectionId}-${Date.now().toString()}${extensionFor(artwork.contentType) ?? '.png'}`;
 
-      await mkdir(artworkDirectory, { recursive: true });
-      await writeFile(join(artworkDirectory, name), artwork.body);
+      const unkept = await keepPicture(artworkDirectory, name, artwork.body, {
+        crop: CROPS.poster,
+        frame,
+      });
+
+      if (unkept !== null) {
+        return unkept;
+      }
+
       await db
         .update(collection)
-        .set({ artworkPath: name, updatedAt: new Date() })
+        .set({ artworkPath: name, artworkFrame: frame, updatedAt: new Date() })
         .where(eq(collection.id, collectionId));
       await forgetArtwork(was);
       onChanged();
@@ -926,7 +929,7 @@ const createDatabaseCollectionService = ({
 
       await db
         .update(collection)
-        .set({ artworkPath: null, updatedAt: new Date() })
+        .set({ artworkPath: null, artworkFrame: null, updatedAt: new Date() })
         .where(eq(collection.id, collectionId));
       await forgetArtwork(was);
       onChanged();

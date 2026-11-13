@@ -43,4 +43,30 @@ describe('LetterStudio', () => {
 
     expect(onFont).toHaveBeenCalledWith('manrope');
   });
+
+  it('offers the colours and the gradients in one row, marking a gradient in use', async () => {
+    const onGradient = vi.fn();
+
+    render(
+      <LetterStudio
+        name="Marques"
+        colour="#ff7a59"
+        font={PLUS_JAKARTA_SANS_AS_STORED}
+        colourTo="#e83a90"
+        onGradient={onGradient}
+        onColour={vi.fn()}
+        onFont={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Flamingo' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Red' })).not.toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Blaze' }));
+
+    expect(onGradient).toHaveBeenCalledWith('#f2c94c', '#e8503a');
+  });
 });

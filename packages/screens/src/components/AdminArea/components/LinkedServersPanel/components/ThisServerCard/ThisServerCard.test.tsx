@@ -1,9 +1,16 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ThisServerCard } from './ThisServerCard';
 import type { LinkIdentity, LinkIdentityChange } from '@ValenceContracts/schemas/LinkedServer';
+
+Object.defineProperty(URL, 'createObjectURL', {
+  configurable: true,
+  value: () => 'blob:chosen',
+});
+Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
 
 const changeLinkIdentity =
   vi.fn<
@@ -16,10 +23,12 @@ vi.mock('@ValenceClient/admin/changeLinkIdentity', () => ({
   changeLinkIdentity: (change: LinkIdentityChange) => changeLinkIdentity(change),
 }));
 
-const changeServerPicture = vi.fn<(file: File | null) => Promise<{ refusal: string | null }>>();
+const changeServerPicture =
+  vi.fn<(file: File | null, frame?: PhotoFrame | null) => Promise<{ refusal: string | null }>>();
 
 vi.mock('@ValenceClient/admin/changeServerPicture', () => ({
-  changeServerPicture: (file: File | null) => changeServerPicture(file),
+  changeServerPicture: (file: File | null, frame?: PhotoFrame | null) =>
+    changeServerPicture(file, frame),
 }));
 
 const PICTURE = new File(['bytes'], 'server.png', { type: 'image/png' });
@@ -75,13 +84,17 @@ describe('ThisServerCard', () => {
     });
   });
 
-  it('sends a new picture as soon as it is chosen', async () => {
+  it('sends a new picture once it is placed in its circle', async () => {
     renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
 
     await userEvent.upload(screen.getByLabelText(/Choose a picture/u), PICTURE);
 
+    expect(changeServerPicture).not.toHaveBeenCalled();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Use this picture' }));
+
     await waitFor(() => {
-      expect(changeServerPicture).toHaveBeenCalledWith(PICTURE);
+      expect(changeServerPicture).toHaveBeenCalledWith(PICTURE, { zoom: 1, x: 0, y: 0 });
     });
     expect(changeLinkIdentity).not.toHaveBeenCalled();
   });
@@ -99,7 +112,7 @@ describe('ThisServerCard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove picture' }));
 
     await waitFor(() => {
-      expect(changeServerPicture).toHaveBeenCalledWith(null);
+      expect(changeServerPicture).toHaveBeenCalledWith(null, null);
     });
   });
 

@@ -7,10 +7,16 @@ import { AccountFaceCard } from './AccountFaceCard';
 import type * as Notify from '@ValenceUI/notify';
 import type { Household, HouseholdRequest, Onboarding } from '@ValenceContracts/schemas/Household';
 
+Object.defineProperty(URL, 'createObjectURL', {
+  configurable: true,
+  value: () => 'blob:chosen',
+});
+Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
+
 const FOLLOWING: Household = {
   name: 'Dan',
   colour: '#3a8ee8',
-  avatar: { kind: 'photo', isVideo: false, frame: null },
+  avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
   updatedAt: '2026-10-20T00:00:00.000Z',
   hasOwnName: false,
   hasOwnPicture: false,
@@ -145,13 +151,14 @@ describe('AccountFaceCard', () => {
 
     await actor.click(await screen.findByRole('button', { name: 'Choose a picture' }));
     await actor.upload(await screen.findByLabelText(/Upload a picture/), picture);
+    await actor.click(await screen.findByRole('button', { name: 'Use this picture' }));
 
     expect(uploadHouseholdPhoto).not.toHaveBeenCalled();
 
     await actor.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(uploadHouseholdPhoto).toHaveBeenCalledWith(picture);
+      expect(uploadHouseholdPhoto).toHaveBeenCalledWith(picture, { zoom: 1, x: 0, y: 0 });
     });
     expect(saveHousehold).toHaveBeenCalledWith({ colour: '#3a8ee8' });
   });

@@ -72,10 +72,16 @@ describe('AvatarSchema', () => {
     ).toBe(false);
   });
 
-  it('reads a photograph, and assumes it does not move unless told', () => {
+  it('reads a photograph, and assumes it neither moves nor is framed by the server unless told', () => {
     const parsed = AvatarSchema.parse({ kind: 'photo' });
 
-    expect(parsed).toEqual({ kind: 'photo', isVideo: false, frame: null });
+    expect(parsed).toEqual({ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false });
+  });
+
+  it('reads that the server serves a photograph framed, as an older server never says', () => {
+    expect(AvatarSchema.parse({ kind: 'photo', hasFramedPicture: true })).toMatchObject({
+      hasFramedPicture: true,
+    });
   });
 
   it('reads a picture that moves, which needs a video element rather than an image', () => {
@@ -83,6 +89,7 @@ describe('AvatarSchema', () => {
       kind: 'photo',
       isVideo: true,
       frame: null,
+      hasFramedPicture: false,
     });
   });
 });

@@ -1,9 +1,10 @@
+import { withFrameQuery } from '@ValenceContracts/functions/withFrameQuery';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
 import { AccountListSchema, AccountSchema } from '@ValenceContracts/schemas/Account';
 import type { Account } from '@ValenceContracts/schemas/Account';
-import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import { IssuedSetupLinkSchema } from '@ValenceContracts/schemas/SetupLink';
 import type { SetupLinkLifetime } from '@ValenceContracts/schemas/SetupLink';
 import { z } from 'zod';
@@ -168,10 +169,15 @@ const resetAccountPassword = async (userId: string, password: string): Promise<R
  *
  * @param userId - The account to change.
  * @param photo - The picture to save.
+ * @param frame - Where it sits in its circle, or nothing for its middle.
  * @returns Any refusal from the server.
  */
-const setAccountPhoto = async (userId: string, photo: File): Promise<Refusal> => {
-  const response = await fetch(`/api/admin/accounts/${userId}/photo`, {
+const setAccountPhoto = async (
+  userId: string,
+  photo: File,
+  frame: PhotoFrame | null = null,
+): Promise<Refusal> => {
+  const response = await fetch(withFrameQuery(`/api/admin/accounts/${userId}/photo`, frame), {
     method: 'PUT',
     credentials: 'same-origin',
     headers: { 'content-type': photo.type },

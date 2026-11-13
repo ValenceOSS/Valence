@@ -54,17 +54,7 @@ import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleM
 import { seasonSourcesOfFile } from '@ValenceServer/library/seasonSourcesOfFile';
 import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
-import {
-  copyFile,
-  mkdir,
-  readdir,
-  readFile,
-  rename,
-  rm,
-  stat,
-  unlink,
-  utimes,
-} from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, unlink, utimes, writeFile } from 'node:fs/promises';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -185,6 +175,8 @@ import {
   library,
   mediaItem,
   mediaArtworkChoice,
+  collection,
+  playlist,
   mediaPart,
   mediaRendition,
   mediaItemJob,
@@ -216,6 +208,12 @@ import { createLiveRelay } from '@ValenceServer/live/createLiveRelay';
 import { createLiveRoutes } from '@ValenceServer/live/createLiveRoutes';
 import { createIptvOrgCatalogue } from '@ValenceServer/live/createIptvOrgCatalogue';
 import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
+import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
+import { upgradePictures } from '@ValenceServer/pictures/upgradePictures';
+import { CROPS } from '@ValenceServer/pictures/CROPS';
+import { forgetRawLocalCopies } from '@ValenceServer/images/forgetRawLocalCopies';
+import { isThere } from '@ValenceServer/pictures/isThere';
+import { moveFile } from '@ValenceServer/pictures/moveFile';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
@@ -1391,21 +1389,8 @@ await movePhotographsOnce({
     ensure: async (directory) => {
       await mkdir(directory, { recursive: true });
     },
-    has: (path) =>
-      stat(path).then(
-        () => true,
-        () => false,
-      ),
-    move: async (fromPath, toPath) => {
-      await rename(fromPath, toPath).catch(async (error: NodeJS.ErrnoException) => {
-        if (error.code !== 'EXDEV') {
-          throw error;
-        }
-
-        await copyFile(fromPath, toPath);
-        await unlink(fromPath);
-      });
-    },
+    has: isThere,
+    move: moveFile,
   },
   onProblem: (name, reason) => {
     log.error('server', `profiles: ${name} could not be moved — ${reason.message}`);
@@ -1415,6 +1400,84 @@ await movePhotographsOnce({
 const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 
 const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
+
+const upgradedFaces = await upgradeFaces(
+  env.PROFILE_IMAGE_DIR,
+  [
+    ...(
+      await db
+        .select({ photoPath: viewerProfile.photoPath, look: viewerProfile.avatarLook })
+        .from(viewerProfile)
+    ).map((row) => ({
+      photoPath: row.photoPath,
+      frame: row.look?.kind === 'photo' ? row.look.frame : null,
+    })),
+    ...(
+      await db
+        .select({ photoPath: userProfile.photoPath, frame: userProfile.photoFrame })
+        .from(userProfile)
+    ).map((row) => ({ photoPath: row.photoPath, frame: row.frame })),
+  ].flatMap((row) => (row.photoPath === null ? [] : [{ name: row.photoPath, frame: row.frame }])),
+  (name, reason) => {
+    log.error(
+      'server',
+      `profiles: ${name} could not be read, so it will not be shown until a new picture is uploaded — ${reason.message}`,
+    );
+  },
+);
+
+if (upgradedFaces.moved + upgradedFaces.processed > 0) {
+  log.info(
+    'server',
+    `profiles: ${upgradedFaces.moved.toString()} picture(s) kept as originals, ${upgradedFaces.processed.toString()} processed`,
+  );
+}
+
+const collectionArtworkDir = join(env.PROFILE_IMAGE_DIR, '..', 'collections');
+
+const playlistArtworkDir = join(env.PROFILE_IMAGE_DIR, '..', 'playlists');
+
+const keptSettings = await settings.read();
+
+const keptUploads = [
+  {
+    directory: env.PROFILE_IMAGE_DIR,
+    pictures: [keptSettings.splashscreenFile, keptSettings.brandLogoFile].flatMap((name) =>
+      name === null ? [] : [{ name, cropping: null }],
+    ),
+  },
+  {
+    directory: collectionArtworkDir,
+    pictures: (
+      await db
+        .select({ name: collection.artworkPath, frame: collection.artworkFrame })
+        .from(collection)
+    ).flatMap(({ name, frame }) =>
+      name === null ? [] : [{ name, cropping: { crop: CROPS.poster, frame } }],
+    ),
+  },
+  {
+    directory: playlistArtworkDir,
+    pictures: (
+      await db.select({ name: playlist.artworkPath, frame: playlist.artworkFrame }).from(playlist)
+    ).flatMap(({ name, frame }) =>
+      name === null ? [] : [{ name, cropping: { crop: CROPS.cover, frame } }],
+    ),
+  },
+];
+
+for (const { directory, pictures } of keptUploads) {
+  const upgraded = await upgradePictures(directory, pictures, (name, reason) => {
+    log.error('server', `pictures: ${name} could not be cleaned — ${reason.message}`);
+  });
+
+  if (upgraded.moved + upgraded.processed > 0) {
+    log.info(
+      'server',
+      `pictures: ${upgraded.moved.toString()} upload(s) in ${directory} kept as originals, ${upgraded.processed.toString()} cleaned`,
+    );
+  }
+}
 
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 const brandLogo = createFilePictureStore({
@@ -1751,11 +1814,7 @@ const musicServices: MusicServices = {
     web: musicWeb,
     readImage: (url) => cataloguePictureCache.read(url),
   }),
-  playlists: createDatabasePlaylistService(
-    db,
-    musicLibrary,
-    join(env.PROFILE_IMAGE_DIR, '..', 'playlists'),
-  ),
+  playlists: createDatabasePlaylistService(db, musicLibrary, playlistArtworkDir),
   devices: createMusicDevices({
     presence,
     onChanged: (accountId) => {
@@ -1967,6 +2026,17 @@ const linkedTitleOf = createLinkedTitleReader(db);
 
 const serverPictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'servers'));
 
+const livePictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live'), false);
+
+for (const pictures of [serverPictures, livePictures]) {
+  await pictures.upgrade((name, reason) => {
+    log.error(
+      'server',
+      `pictures: ${name} could not be read, so it will not be shown until a new picture is uploaded — ${reason.message}`,
+    );
+  });
+}
+
 const tellLinkedOfChange = createChangeTeller({
   links: linkStore,
   sharing: linkSharingStore,
@@ -2004,7 +2074,7 @@ const liveTv: LiveTvOptions = {
   relay: createLiveRelay(),
   iptvOrg: createIptvOrgCatalogue(),
   routes: liveRoutes,
-  pictures: createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live')),
+  pictures: livePictures,
   startTranscoded: async (channel, proxy) => {
     const liveId =
       (await transcoder.startLive?.(channel.streamUrl, {
@@ -3834,7 +3904,7 @@ const libraryService = createDatabaseLibraryService({
 const collectionService = createDatabaseCollectionService({
   db,
   library: libraryService,
-  artworkDirectory: join(env.PROFILE_IMAGE_DIR, '..', 'collections'),
+  artworkDirectory: collectionArtworkDir,
   onChanged: () => {
     realtime.publish('media', { event: 'collections' }, { kind: 'everyone' });
   },
@@ -4667,6 +4737,32 @@ const images = createImageCache({
     }
   },
 });
+
+const RAW_COPIES_LET_GO = join(env.IMAGE_CACHE_DIR, '.raw-local-copies-let-go');
+
+if (!(await isThere(RAW_COPIES_LET_GO))) {
+  void (async () => {
+    const forgottenRawCopies = await forgetRawLocalCopies(await listArtworkUrls(), {
+      directory: env.IMAGE_CACHE_DIR,
+      nameFor: images.nameFor,
+      forget: images.forget,
+    });
+
+    await writeFile(RAW_COPIES_LET_GO, '');
+
+    if (forgottenRawCopies > 0) {
+      log.info(
+        'server',
+        `image cache: ${forgottenRawCopies.toString()} copied picture(s) from this server let go, to be cleaned`,
+      );
+    }
+  })().catch((error: Error) => {
+    log.warn(
+      'server',
+      `image cache: copied pictures from this server could not be checked: ${error.message}`,
+    );
+  });
+}
 
 const bookPagesDir = join(env.IMAGE_CACHE_DIR, 'books');
 

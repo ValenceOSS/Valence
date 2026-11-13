@@ -19,7 +19,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
@@ -1587,6 +1587,7 @@ const playlist = pgTable(
     isShared: boolean('isShared').notNull().default(false),
     isOrdered: boolean('isOrdered').notNull().default(false),
     artworkPath: text('artworkPath'),
+    artworkFrame: jsonb('artworkFrame').$type<PhotoFrame>(),
     rules: jsonb('rules').$type<SongRules>(),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
@@ -2005,6 +2006,8 @@ const userProfile = pgTable('user_profile', {
   avatarStyle: text('avatarStyle'),
   avatarSeed: text('avatarSeed'),
   photoPath: text('photoPath'),
+  photoFrame: jsonb('photoFrame').$type<PhotoFrame>(),
+  avatarOnColour: boolean('avatarOnColour'),
   wayInId: text('wayInId').unique(),
   onboardedAt: timestamp('onboardedAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
@@ -2175,6 +2178,7 @@ const collection = pgTable(
     name: text('name').notNull(),
     description: text('description'),
     artworkPath: text('artworkPath'),
+    artworkFrame: jsonb('artworkFrame').$type<PhotoFrame>(),
     isOrdered: boolean('isOrdered').notNull().default(false),
     createdBy: text('createdBy').references(() => user.id, { onDelete: 'set null' }),
     profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),

@@ -1,15 +1,21 @@
+import { drawnAvatarUrl } from '@ValenceContracts/functions/drawnAvatarUrl';
+import { colourName } from '@ValenceClient/profiles/colourName';
+import { useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { FormField } from '@ValenceUI/FormField';
 import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
+import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { AccountAvatarPickerProps } from './AccountAvatarPicker.types';
 import { say } from '@ValenceI18n/say';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
-const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
+const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 
 /**
  * An account's picture, drawn face and colour, changed on its behalf. Held as a draft like the rest
@@ -30,6 +36,7 @@ const AccountAvatarPicker = ({
   isOwnAccount = false,
 }: AccountAvatarPickerProps) => {
   const seed = accountId;
+  const [framing, setFraming] = useState<File | null>(null);
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,16 +70,28 @@ const AccountAvatarPicker = ({
             label={say('screens.accountsPanel.accountAvatarPicker.uploadAPicture')}
             accept={PHOTO_TYPES}
             size="sm"
-            onPick={(file) => {
-              onDraft({
-                photo: file,
-                avatar: { kind: 'photo', isVideo: file.type.startsWith('video/'), frame: null },
-              });
-            }}
+            onPick={setFraming}
           >
             <Icon of={ImageIcon} size={15} />
             {say('common.upload')}
           </FilePicker>
+
+          <FramePictureDialog
+            file={framing}
+            limits={PICTURE_LIMITS.face}
+            aspect={PICTURE_ASPECTS.face}
+            shape="circle"
+            onClose={() => {
+              setFraming(null);
+            }}
+            onUse={(file, frame) => {
+              setFraming(null);
+              onDraft({
+                photo: file,
+                avatar: { kind: 'photo', isVideo: false, frame, hasFramedPicture: false },
+              });
+            }}
+          />
         </div>
       </FormField>
 
@@ -98,7 +117,7 @@ const AccountAvatarPicker = ({
               }}
             >
               <img
-                src={`/api/profiles/avatars/${style}?seed=${encodeURIComponent(seed)}`}
+                src={drawnAvatarUrl(style, seed)}
                 alt=""
                 loading="lazy"
                 className="h-full w-full object-cover"
@@ -139,7 +158,7 @@ const AccountAvatarPicker = ({
               key={option}
               variant="bare"
               size="none"
-              label={say('common.useOption', { option })}
+              label={colourName(option)}
               isActive={option === draft.colour}
               style={{ backgroundColor: option }}
               className={`size-6 rounded-full transition-transform ${

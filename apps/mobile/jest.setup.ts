@@ -111,6 +111,40 @@ jest.mock('react-native-gesture-handler', () => ({
     mockCreateElement(mockView, { style }, children),
 }));
 
+jest.mock('@shopify/react-native-skia', () => ({
+  Canvas: ({ children, style }: ViewProps & { children?: ReactNode }) =>
+    mockCreateElement(mockView, { style, testID: 'skia-canvas' }, children),
+  ColorMatrix: ({ matrix }: { matrix: number[] }) =>
+    mockCreateElement(mockView, {
+      testID: 'skia-colour-matrix',
+      accessibilityHint: matrix.join(','),
+    }),
+  Image: ({ children }: { children?: ReactNode }) =>
+    mockCreateElement(mockView, { testID: 'skia-image' }, children),
+  LinearGradient: () => null,
+  RoundedRect: ({ children }: { children?: ReactNode }) =>
+    mockCreateElement(mockView, { testID: 'skia-rounded-rect' }, children),
+  Circle: ({ children }: { children?: ReactNode }) =>
+    mockCreateElement(mockView, { testID: 'skia-circle' }, children),
+  SweepGradient: () => null,
+  vec: (x = 0, y = 0) => ({ x, y }),
+  Rect: ({ color, opacity, blendMode }: { color: string; opacity: number; blendMode: string }) =>
+    mockCreateElement(mockView, {
+      testID: 'skia-layer',
+      style: { backgroundColor: color, opacity },
+      accessibilityHint: blendMode,
+    }),
+  Skia: {
+    Data: {
+      fromBytes: () => ({}),
+      fromURI: () => Promise.resolve({}),
+    },
+    Image: {
+      MakeImageFromEncoded: () => ({ width: () => 1200, height: () => 800 }),
+    },
+  },
+}));
+
 jest.mock('expo-blur', () => ({
   BlurView: (props: ViewProps) => mockCreateElement(mockView, props),
 }));

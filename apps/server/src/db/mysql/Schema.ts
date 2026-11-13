@@ -19,7 +19,7 @@ import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
-import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DeviceIdentity } from '@ValenceContracts/schemas/DeviceIdentity';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
@@ -1575,6 +1575,7 @@ const playlist = mysqlTable(
     isShared: boolean('isShared').notNull().default(false),
     isOrdered: boolean('isOrdered').notNull().default(false),
     artworkPath: mediumtext('artworkPath'),
+    artworkFrame: jsonColumn('artworkFrame').$type<PhotoFrame>(),
     rules: jsonColumn('rules').$type<SongRules>(),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
@@ -2001,6 +2002,8 @@ const userProfile = mysqlTable('user_profile', {
   avatarStyle: mediumtext('avatarStyle'),
   avatarSeed: mediumtext('avatarSeed'),
   photoPath: mediumtext('photoPath'),
+  photoFrame: jsonColumn('photoFrame').$type<PhotoFrame>(),
+  avatarOnColour: boolean('avatarOnColour'),
   wayInId: varchar('wayInId', { length: 36 }).unique(),
   onboardedAt: moment('onboardedAt'),
   createdAt: momentNow('createdAt').notNull(),
@@ -2173,6 +2176,7 @@ const collection = mysqlTable(
     name: mediumtext('name').notNull(),
     description: mediumtext('description'),
     artworkPath: mediumtext('artworkPath'),
+    artworkFrame: jsonColumn('artworkFrame').$type<PhotoFrame>(),
     isOrdered: boolean('isOrdered').notNull().default(false),
     createdBy: identifier('createdBy').references(() => user.id, { onDelete: 'set null' }),
     profileId: identifier('profileId').references(() => viewerProfile.id, {

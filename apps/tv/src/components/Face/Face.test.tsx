@@ -64,7 +64,10 @@ describe('Face', () => {
   it('draws their photograph, asked for as whoever is signed in', async () => {
     const drawn = await render(
       <Face
-        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+        }}
         size={100}
       />,
     );
@@ -75,6 +78,27 @@ describe('Face', () => {
       expect.objectContaining({
         source: {
           uri: `https://valence.test/api/profiles/${PROFILE.id}/avatar?v=2026-09-02T00%3A00%3A00.000Z`,
+          headers: { authorization: 'Bearer a-session' },
+        },
+      }),
+    );
+  });
+
+  it('asks for the square the server framed, where it frames them', async () => {
+    await render(
+      <Face
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true },
+        }}
+        size={100}
+      />,
+    );
+
+    expect(mockDrawnImage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        source: {
+          uri: `https://valence.test/api/profiles/${PROFILE.id}/avatar?v=2026-09-02T00%3A00%3A00.000Z&framed=1`,
           headers: { authorization: 'Bearer a-session' },
         },
       }),

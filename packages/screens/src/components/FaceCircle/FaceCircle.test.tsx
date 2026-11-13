@@ -10,6 +10,20 @@ const revokeObjectURL = vi.fn();
 Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
 Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
 
+const loaded = (container: HTMLElement, width: number, height: number): HTMLImageElement => {
+  const picture = container.querySelector('img');
+
+  if (picture === null) {
+    throw new Error('Nothing is drawing a picture.');
+  }
+
+  Object.defineProperty(picture, 'naturalWidth', { configurable: true, value: width });
+  Object.defineProperty(picture, 'naturalHeight', { configurable: true, value: height });
+  fireEvent.load(picture);
+
+  return picture;
+};
+
 beforeEach(() => {
   createObjectURL.mockClear().mockReturnValue('blob:chosen');
   revokeObjectURL.mockClear();
@@ -51,7 +65,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/somewhere/else"
       />,
     );
@@ -59,12 +73,32 @@ describe('FaceCircle', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/api/somewhere/else');
   });
 
+  it('paints the colour behind a drawn avatar drawn on it, and nothing behind one drawn clear', () => {
+    const drawn = (isOnColour: boolean) =>
+      render(
+        <FaceCircle
+          name="Marques"
+          colour="#3a8ee8"
+          avatar={{
+            kind: 'drawn',
+            style: 'thumbs',
+            seed: 'marques',
+            ...(isOnColour ? { isOnColour: true } : {}),
+          }}
+          source="/api/profiles/avatars/thumbs?seed=marques"
+        />,
+      ).container.firstElementChild;
+
+    expect(drawn(true)).toHaveStyle({ backgroundColor: '#3a8ee8' });
+    expect(drawn(false)).not.toHaveStyle({ backgroundColor: '#3a8ee8' });
+  });
+
   it('draws a moving picture as a video rather than an image', () => {
     const { container } = render(
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: true, frame: null }}
+        avatar={{ kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false }}
         source="/api/somewhere/else"
       />,
     );
@@ -77,7 +111,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: true, frame: null }}
+        avatar={{ kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false }}
         source="/api/somewhere/else"
       />,
     );
@@ -92,7 +126,7 @@ describe('FaceCircle', () => {
         <FaceCircle
           name="Marques"
           colour="#3a8ee8"
-          avatar={{ kind: 'photo', isVideo: true, frame: null }}
+          avatar={{ kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false }}
           source="/api/somewhere/else"
         />
       </MotionConfig>,
@@ -122,7 +156,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/gone"
       />,
     );
@@ -155,7 +189,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/gone?v=1"
       />,
     );
@@ -172,7 +206,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false, frame: null }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false }}
         source="/api/gone?v=2"
       />,
     );
@@ -192,5 +226,67 @@ describe('FaceCircle', () => {
     );
 
     expect(container.querySelector('img')?.getAttribute('src')).toBe('blob:chosen');
+  });
+
+  it('asks the server for the square it framed, and draws it as it comes', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 2, x: 1, y: 0 },
+          hasFramedPicture: true,
+        }}
+        source="/api/profiles/p1/avatar?v=1"
+      />,
+    );
+    const picture = container.querySelector('img');
+
+    expect(picture?.getAttribute('src')).toBe('/api/profiles/p1/avatar?v=1&framed=1');
+    expect(picture?.style.transform).toBe('');
+  });
+
+  it('frames a picture itself where the server does not', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 1, x: 1, y: 0 },
+          hasFramedPicture: false,
+        }}
+        source="/api/profiles/p1/avatar?v=1"
+      />,
+    );
+    const picture = loaded(container, 2000, 1000);
+
+    expect(picture.getAttribute('src')).toBe('/api/profiles/p1/avatar?v=1');
+    expect(picture.style.left).toBe('-100%');
+    expect(picture.style.width).toBe('200%');
+  });
+
+  it('moves a picture being chosen as its frame is moved, before it is uploaded', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{
+          kind: 'photo',
+          isVideo: false,
+          frame: { zoom: 1, x: -1, y: 0 },
+          hasFramedPicture: true,
+        }}
+        source="/api/profiles/p1/avatar?v=1"
+        pending={new File(['bytes'], 'face.png', { type: 'image/png' })}
+      />,
+    );
+    const picture = loaded(container, 2000, 1000);
+
+    expect(picture.getAttribute('src')).toBe('blob:chosen');
+    expect(picture.style.left).toBe('0%');
   });
 });

@@ -92,6 +92,57 @@ describe('cleanupImageCache', () => {
     expect(removed).toEqual(['/cache/profiles/orphan.jpg']);
   });
 
+  it('keeps the original and processed picture of a face still pointed at, and removes both of one that is not', async () => {
+    const { fs, removed } = harness({
+      '/cache': [],
+      '/cache/profiles': [],
+      '/cache/profiles/originals': ['abc.jpg', 'gone.png'],
+      '/cache/profiles/processed': ['abc.webp', 'abc.framed.webp', 'gone.webp', 'gone.framed.webp'],
+    });
+
+    await cleanupImageCache({
+      imageCacheDir: '/cache',
+      profilesDir: '/cache/profiles',
+      files: fs,
+      nameFor,
+      listArtworkUrls: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve(['abc.jpg']),
+    });
+
+    expect(removed).toEqual([
+      '/cache/profiles/originals/gone.png',
+      '/cache/profiles/processed/gone.webp',
+      '/cache/profiles/processed/gone.framed.webp',
+    ]);
+  });
+
+  it('counts the faces’ folders through as one, so progress runs once', async () => {
+    const { fs } = harness({
+      '/cache': [],
+      '/cache/profiles': ['splash.png'],
+      '/cache/profiles/originals': ['abc.jpg'],
+      '/cache/profiles/processed': ['abc.webp'],
+    });
+    const progress: [string, number, number][] = [];
+
+    await cleanupImageCache({
+      imageCacheDir: '/cache',
+      profilesDir: '/cache/profiles',
+      files: fs,
+      nameFor,
+      listArtworkUrls: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve(['abc.jpg', 'splash.png']),
+      onProgress: (phase, processed, total) => progress.push([phase, processed, total]),
+    });
+
+    expect(progress.filter(([phase]) => phase === 'profiles')).toEqual([
+      ['profiles', 0, 3],
+      ['profiles', 1, 3],
+      ['profiles', 2, 3],
+      ['profiles', 3, 3],
+    ]);
+  });
+
   it('reports how many files it removed in total', async () => {
     const { fs } = harness({
       '/cache': ['hash-orphan'],

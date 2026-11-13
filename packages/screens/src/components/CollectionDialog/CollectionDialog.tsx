@@ -45,6 +45,9 @@ import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePar
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
+import { PICTURE_LIMITS } from '@ValenceContracts/constants/PICTURE_LIMITS';
+import { FramePictureDialog } from '@ValenceScreens/components/FramePictureDialog/FramePictureDialog';
+import { PICTURE_ASPECTS } from '@ValenceContracts/constants/PICTURE_ASPECTS';
 import { CollectionOrderSchema } from '@ValenceContracts/schemas/Collection';
 import type { CollectionOrder } from '@ValenceContracts/schemas/Collection';
 import type { CollectionDialogProps } from './CollectionDialog.types';
@@ -90,6 +93,7 @@ const CollectionDialog = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isSendingArtwork, setIsSendingArtwork] = useState(false);
+  const [framing, setFraming] = useState<File | null>(null);
 
   const shown = collectionId ?? lastOpened;
   const asked = useQuery({ ...collectionQueries.one(shown ?? ''), enabled: shown !== null });
@@ -201,9 +205,23 @@ const CollectionDialog = ({
                       variant="secondary"
                       size="sm"
                       isLoading={isSendingArtwork}
-                      onPick={(file) => {
+                      onPick={setFraming}
+                    >
+                      <Icon of={ImagePlusIcon} size={16} />
+                      {say('screens.collectionDialog.chooseArtwork')}
+                    </FilePicker>
+
+                    <FramePictureDialog
+                      file={framing}
+                      limits={PICTURE_LIMITS.artwork}
+                      aspect={PICTURE_ASPECTS.poster}
+                      onClose={() => {
+                        setFraming(null);
+                      }}
+                      onUse={(file, frame) => {
+                        setFraming(null);
                         setIsSendingArtwork(true);
-                        void saveCollectionArtwork(collection.id, file).then((wrong) => {
+                        void saveCollectionArtwork(collection.id, file, frame).then((wrong) => {
                           setIsSendingArtwork(false);
                           refresh();
 
@@ -218,10 +236,7 @@ const CollectionDialog = ({
                           }
                         });
                       }}
-                    >
-                      <Icon of={ImagePlusIcon} size={16} />
-                      {say('screens.collectionDialog.chooseArtwork')}
-                    </FilePicker>
+                    />
 
                     <ActionMenu
                       label={say('common.moreForName', { name: collection.name })}

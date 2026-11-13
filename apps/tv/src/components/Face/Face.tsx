@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
 import { profileAvatarUrl, profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
@@ -12,7 +13,8 @@ import type { FaceProps } from './Face.types';
  * What a profile looks like — their photograph, their drawn face, or their initial on their colour.
  *
  * A picture the server cannot produce falls back to the initial, as it does on the web, rather than
- * leaving an empty circle where a face should be.
+ * leaving an empty circle where a face should be. A photograph the server framed is shown as the
+ * square its frame chose.
  *
  * @param profile - Whose face to draw.
  * @param size - How wide it is.
@@ -33,7 +35,14 @@ const Face = ({ profile, size, isFocused = false, isRound = false }: FaceProps) 
         </Text>
       ) : (
         <Image
-          source={pictureSource(onTheServer(profileAvatarUrl(profile)), signedHeaders())}
+          source={pictureSource(
+            onTheServer(
+              profile.avatar.kind === 'photo' && profile.avatar.hasFramedPicture
+                ? framedPictureUrl(profileAvatarUrl(profile))
+                : profileAvatarUrl(profile),
+            ),
+            signedHeaders(),
+          )}
           style={[StyleSheet.absoluteFill, { borderRadius: ring.borderRadius }]}
           contentFit="cover"
           onError={() => {

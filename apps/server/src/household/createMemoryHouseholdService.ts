@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { processFace } from '@ValenceServer/pictures/processFace';
 import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { HOUSEHOLD_LIMITS } from './HouseholdPicture';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
@@ -111,20 +112,28 @@ const createMemoryHouseholdService = (
     readAvatar: (userId) => {
       const picture = held(userId).picture;
 
-      return Promise.resolve(picture === null ? null : { body: picture, contentType: 'image/png' });
+      return Promise.resolve(
+        picture === null ? null : { body: picture, contentType: 'image/webp' },
+      );
     },
 
-    savePhoto: async (userId, photo) => {
+    savePhoto: async (userId, photo, frame) => {
       const wrong = await whatIsWrongWithThePicture(photo, HOUSEHOLD_LIMITS);
 
       if (wrong !== null) {
         return wrong;
       }
 
+      const processed = await processFace(photo.body).catch(() => null);
+
+      if (processed === null) {
+        return 'unreadable';
+      }
+
       const one = held(userId);
 
-      one.picture = photo.body;
-      one.avatar = { kind: 'photo', isVideo: false, frame: null };
+      one.picture = processed;
+      one.avatar = { kind: 'photo', isVideo: false, frame: frame ?? null, hasFramedPicture: true };
       one.updatedAt = new Date().toISOString();
 
       return null;

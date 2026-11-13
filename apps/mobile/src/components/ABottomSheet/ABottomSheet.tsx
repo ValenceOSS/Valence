@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { SHEETS_UP } from '@ValenceMobile/components/ABottomSheet/SHEETS_UP';
 import { X } from '@keyline-icons/react-native';
 import {
   Animated,
   KeyboardAvoidingView,
   Modal,
-  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
   View,
   useWindowDimensions,
 } from 'react-native';
+import type { GestureResponderEvent, ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
@@ -63,7 +64,9 @@ const styles = StyleSheet.create({
  * either system.
  *
  * A press on the dimmed page puts it away, and so does dragging it down by its top past a little
- * way or flicking it; let go short of that and it springs back.
+ * way or flicking it; let go short of that and it springs back. While it is up the page beneath is
+ * told so, since the sheet is drawn in a window of its own but its touches still pass through the
+ * page, which would otherwise take a swipe on the sheet for one on itself and slide away under it.
  *
  * @param isOpen - Whether it is out.
  * @param label - What it is for, for anybody who cannot see it.
@@ -73,6 +76,9 @@ const styles = StyleSheet.create({
  * @param isTall - Whether it rises as far as it may whatever it holds, for something that scrolls.
  * @param tallest - How much of the screen it may rise to, as a share, where it should stop short of
  *   the usual.
+ * @param isDraggedAnywhere - Whether a drag down anywhere on it puts it away, rather than only one by
+ *   its top, for a sheet whose contents do not scroll: a touch nothing in it takes is the sheet's
+ *   from the start, and one a button took is handed over once it turns into a drag down.
  * @param children - What it holds.
  */
 const ABottomSheet = ({
@@ -84,6 +90,7 @@ const ABottomSheet = ({
   isTall = false,
   children,
   tallest = TALLEST,
+  isDraggedAnywhere = false,
 }: ABottomSheetProps) => {
   const colours = useTheColours();
   const isDark = colours.surface === theColours.dark.surface;
@@ -91,6 +98,19 @@ const ABottomSheet = ({
   const isStill = usePrefersStillness();
   const { height } = useWindowDimensions();
   const [isShowing, setIsShowing] = useState(isOpen);
+  const sheet = useId();
+
+  useEffect(() => {
+    if (!isShowing) {
+      return;
+    }
+
+    SHEETS_UP.add(sheet);
+
+    return () => {
+      SHEETS_UP.delete(sheet);
+    };
+  }, [isShowing, sheet]);
   const [lowered] = useState(() => new Animated.Value(height));
   const [dimmed] = useState(() => new Animated.Value(0));
   const [latest] = useState(() => new Map([['onClose', onClose]]));
@@ -133,24 +153,73 @@ const ABottomSheet = ({
     });
   }, [isOpen, isStill, height, lowered, dimmed]);
 
-  const [drag] = useState(() =>
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) =>
-        gesture.dy > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
-      onPanResponderMove: (_, gesture) => {
-        lowered.setValue(Math.max(0, gesture.dy));
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy > LETS_GO_PAST || gesture.vy > LETS_GO_FASTER_THAN) {
-          latest.get('onClose')?.();
+  const grab = useRef({ fromX: 0, fromY: 0, at: 0, when: 0, speed: 0 });
+  const isOpenNow = useRef(isOpen);
 
-          return;
-        }
+  useEffect(() => {
+    isOpenNow.current = isOpen;
+  }, [isOpen]);
 
-        Animated.spring(lowered, { ...SPRINGS.rise, toValue: 0, useNativeDriver: true }).start();
-      },
-    }),
-  );
+  /**
+   * Whether this sheet takes a drag now: only while it is open rather than sinking away, and only
+   * the sheet on top, since a sheet opened from inside another is still inside it as far as touches
+   * go, and the one beneath would otherwise take a drag meant for the one above.
+   *
+   * @returns Whether it does.
+   */
+  const takes = (): boolean => isOpenNow.current && [...SHEETS_UP].at(-1) === sheet;
+
+  const settle = () => {
+    Animated.spring(lowered, { ...SPRINGS.rise, toValue: 0, useNativeDriver: true }).start();
+  };
+
+  const drag: ViewProps = {
+    onStartShouldSetResponderCapture: ({ nativeEvent }: GestureResponderEvent) => {
+      grab.current = {
+        fromX: nativeEvent.pageX,
+        fromY: nativeEvent.pageY,
+        at: nativeEvent.pageY,
+        when: nativeEvent.timestamp,
+        speed: 0,
+      };
+
+      return false;
+    },
+    onStartShouldSetResponder: takes,
+    onMoveShouldSetResponder: (event?: GestureResponderEvent) => {
+      if (event === undefined || !takes()) {
+        return false;
+      }
+
+      const down = event.nativeEvent.pageY - grab.current.fromY;
+
+      return down > 6 && down > Math.abs(event.nativeEvent.pageX - grab.current.fromX);
+    },
+    onResponderMove: ({ nativeEvent }: GestureResponderEvent) => {
+      const was = grab.current;
+      const elapsed = nativeEvent.timestamp - was.when;
+
+      grab.current = {
+        ...was,
+        at: nativeEvent.pageY,
+        when: nativeEvent.timestamp,
+        speed: elapsed > 0 ? (nativeEvent.pageY - was.at) / elapsed : was.speed,
+      };
+      lowered.setValue(Math.max(0, nativeEvent.pageY - was.fromY));
+    },
+    onResponderRelease: () => {
+      const { at, fromY, speed } = grab.current;
+
+      if (at - fromY > LETS_GO_PAST || speed > LETS_GO_FASTER_THAN) {
+        latest.get('onClose')?.();
+
+        return;
+      }
+
+      settle();
+    },
+    onResponderTerminate: settle,
+  };
 
   return (
     <Modal
@@ -176,6 +245,7 @@ const ABottomSheet = ({
         <Animated.View
           accessibilityViewIsModal
           accessibilityLabel={label}
+          {...(isDraggedAnywhere ? drag : {})}
           style={[
             styles.sheet,
             {
@@ -196,7 +266,7 @@ const ABottomSheet = ({
             ]}
             pointerEvents="none"
           />
-          <View {...drag.panHandlers}>
+          <View {...(isDraggedAnywhere ? {} : drag)}>
             <View style={styles.grip}>
               <View style={[styles.handle, { backgroundColor: withAlpha(colours.text, 0.28) }]} />
             </View>

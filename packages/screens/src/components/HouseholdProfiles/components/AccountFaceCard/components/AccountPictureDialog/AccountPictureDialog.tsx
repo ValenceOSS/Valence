@@ -43,7 +43,13 @@ const AccountPictureDialog = ({
   const save = async (): Promise<void> => {
     setIsSaving(true);
 
-    const refused = draft.photo === null ? null : await uploadHouseholdPhoto(draft.photo);
+    const refused =
+      draft.photo === null
+        ? null
+        : await uploadHouseholdPhoto(
+            draft.photo,
+            draft.avatar.kind === 'photo' ? draft.avatar.frame : null,
+          );
     const saved =
       refused === null
         ? await saveHousehold({

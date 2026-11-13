@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type {
   Collection,
   CollectionDetail,
@@ -60,6 +61,7 @@ type CollectionService = {
   saveArtwork: (
     collectionId: string,
     artwork: CollectionArtwork,
+    frame?: PhotoFrame | null,
   ) => Promise<PictureFault | 'missing' | null>;
   dropArtwork: (collectionId: string) => Promise<boolean>;
 };

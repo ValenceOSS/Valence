@@ -1,3 +1,4 @@
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type {
   CreatePlaylist,
   PlaylistDetail,
@@ -46,6 +47,7 @@ type PlaylistService = {
     viewer: Viewer,
     playlistId: string,
     artwork: PlaylistArtwork,
+    frame?: PhotoFrame | null,
   ) => Promise<PictureFault | null>;
   dropArtwork: (viewer: Viewer, playlistId: string) => Promise<boolean>;
 };

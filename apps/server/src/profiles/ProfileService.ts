@@ -35,7 +35,10 @@ type ProfileService = {
   remove: (userId: string, profileId: string) => Promise<boolean>;
   belongsTo: (userId: string, profileId: string) => Promise<boolean>;
   moveTo: (profileId: string, newOwnerId: string) => Promise<boolean>;
-  readAvatar: (profileId: string) => Promise<{ body: Uint8Array; contentType: string } | null>;
+  readAvatar: (
+    profileId: string,
+    isFramed?: boolean,
+  ) => Promise<{ body: Uint8Array; contentType: string } | null>;
   listEveryone: () => Promise<ViewerProfile[]>;
   findSignIn: (profileId: string) => Promise<{ email: string; username: string | null } | null>;
   accountOf: (profileId: string) => Promise<string | null>;

@@ -14,6 +14,8 @@ import { MediaCard } from '@ValenceUI/MediaCard';
 import { NavBar } from '@ValenceUI/NavBar';
 import { QrCode } from '@ValenceUI/QrCode';
 import { Rail } from '@ValenceUI/Rail';
+import { FramedPicture } from '@ValenceUI/FramedPicture';
+import { PictureFramerDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/PictureFramerDemo';
 import { VideoSurfaceDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VideoSurfaceDemo';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { ReaderVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette';
@@ -27,6 +29,33 @@ const WIDE_ART = '/downloads-header.jpg';
 const nothing = () => undefined;
 
 const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
+  PictureFramer: [
+    {
+      title: 'Dragged into a circle',
+      render: () => <PictureFramerDemo />,
+    },
+  ],
+  FramedPicture: [
+    {
+      title: 'One picture, three frames',
+      render: () => (
+        <div className="flex gap-4">
+          {[
+            { zoom: 1, x: -1, y: 0 },
+            { zoom: 1, x: 0, y: 0 },
+            { zoom: 2, x: 1, y: 1 },
+          ].map((frame) => (
+            <span
+              key={`${frame.zoom.toString()}${frame.x.toString()}`}
+              className="relative block size-24 overflow-hidden rounded-full"
+            >
+              <FramedPicture src={WIDE_ART} frame={frame} aspect={1} />
+            </span>
+          ))}
+        </div>
+      ),
+    },
+  ],
   MediaCard: [
     {
       title: 'Shapes',

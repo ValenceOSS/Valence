@@ -94,8 +94,8 @@ const APageSettings = ({
         modifiers={[pickerStyle('segmented')]}
       >
         <Text modifiers={[tag('edge')]}>{say('common.auto')}</Text>
-        <Text modifiers={[tag('black')]}>{say('ui.tokens.captionColours.black')}</Text>
-        <Text modifiers={[tag('grey')]}>{say('phone.aReader.aReaderSheet.grey')}</Text>
+        <Text modifiers={[tag('black')]}>{say('common.black')}</Text>
+        <Text modifiers={[tag('grey')]}>{say('common.grey')}</Text>
         <Text modifiers={[tag('white')]}>{say('common.white')}</Text>
       </Picker>
     </Section>

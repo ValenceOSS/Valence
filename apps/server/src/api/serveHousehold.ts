@@ -1,10 +1,14 @@
+import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { HOUSEHOLD_LIMITS } from '@ValenceServer/household/HouseholdPicture';
-import { NAME_MAX as PROFILE_NAME_MAX } from '@ValenceContracts/schemas/ViewerProfile';
+import {
+  NAME_MAX as PROFILE_NAME_MAX,
+  ProfileColourSchema,
+} from '@ValenceContracts/schemas/ViewerProfile';
 import {
   readOnboardingRoute,
   changeHouseholdRoute,
@@ -122,7 +126,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const picture = await faces.readPicture(account.id);
+    const picture = await faces.readPicture(account.id, context.req.query('framed') === '1');
 
     if (picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -142,7 +146,10 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const picture = await faces?.readPicture(context.req.param('userId'));
+    const picture = await faces?.readPicture(
+      context.req.param('userId'),
+      context.req.query('framed') === '1',
+    );
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -164,10 +171,14 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const wrong = await faces.savePhoto(account.id, {
-      body: new Uint8Array(await context.req.arrayBuffer()),
-      contentType: context.req.header('content-type') ?? '',
-    });
+    const wrong = await faces.savePhoto(
+      account.id,
+      {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      },
+      frameFromQuery(context.req.query()),
+    );
 
     if (wrong !== null) {
       const said = describePictureFault(wrong, HOUSEHOLD_LIMITS);
@@ -188,7 +199,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
     }
 
-    const picture = await profiles?.readAvatar(profileId);
+    const picture = await profiles?.readAvatar(profileId, context.req.query('framed') === '1');
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
@@ -212,7 +223,9 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
           ? await profiles?.accountOf(profileId)
           : null;
     const picture =
-      accountId === null || accountId === undefined ? null : await faces?.readPicture(accountId);
+      accountId === null || accountId === undefined
+        ? null
+        : await faces?.readPicture(accountId, context.req.query('framed') === '1');
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -474,12 +487,13 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.get('/api/profiles/avatars/:style', (context) => {
     const style = context.req.param('style');
     const seed = context.req.query('seed') ?? 'valence';
+    const colour = ProfileColourSchema.safeParse(context.req.query('colour'));
 
     if (!isAvatarStyle(style)) {
       return context.json(refuse('error.household.noSuchStyle'), 404);
     }
 
-    return context.body(drawAvatar(style, seed), 200, {
+    return context.body(drawAvatar(style, seed, colour.success ? colour.data : null), 200, {
       'content-type': 'image/svg+xml',
       'cache-control': 'public, max-age=86400',
     });

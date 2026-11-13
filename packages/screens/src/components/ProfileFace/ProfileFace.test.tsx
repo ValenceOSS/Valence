@@ -90,7 +90,10 @@ describe('ProfileFace', () => {
   it('draws a still photograph as a picture', () => {
     const { container } = render(
       <ProfileFace
-        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+        }}
       />,
     );
 
@@ -100,7 +103,10 @@ describe('ProfileFace', () => {
   it('plays a moving picture, which an image tag would draw as nothing', () => {
     const { container } = render(
       <ProfileFace
-        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true, frame: null } }}
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false },
+        }}
       />,
     );
 
@@ -110,7 +116,10 @@ describe('ProfileFace', () => {
   it('falls back to the letter when the picture is not there to be drawn', () => {
     const { container } = render(
       <ProfileFace
-        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+        }}
       />,
     );
 
@@ -123,7 +132,10 @@ describe('ProfileFace', () => {
   it('falls back to the letter when a moving picture is not there either', () => {
     const { container } = render(
       <ProfileFace
-        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true, frame: null } }}
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: true, frame: null, hasFramedPicture: false },
+        }}
       />,
     );
 
@@ -133,7 +145,10 @@ describe('ProfileFace', () => {
   });
 
   it('tries again once the picture has been changed', () => {
-    const photo = { ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } as const };
+    const photo = {
+      ...PROFILE,
+      avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false } as const,
+    };
     const { container, rerender } = render(<ProfileFace profile={photo} />);
 
     failEveryTry(container);
@@ -174,7 +189,10 @@ describe('ProfileFace', () => {
   it('draws a decorative face, since the name beside it already says who it is', () => {
     const { container } = render(
       <ProfileFace
-        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+        }}
       />,
     );
 

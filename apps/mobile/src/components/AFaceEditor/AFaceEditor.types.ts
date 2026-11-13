@@ -9,6 +9,7 @@ type AFaceChoice = {
 type AFaceEditorProps = {
   isOpen: boolean;
   profile: Pick<ViewerProfile, 'id' | 'name' | 'colour' | 'avatar' | 'updatedAt'>;
+  pickedAlready?: string | null;
   onClose: () => void;
   onUse: (choice: AFaceChoice) => void;
 };

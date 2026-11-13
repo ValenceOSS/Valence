@@ -1,4 +1,8 @@
+import { mkdtemp, readFile, readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { favourite, mediaItem } from '#dialect/Schema';
 import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
@@ -17,7 +21,7 @@ const EVERY_SONG = { rules: [], order: 'title' as const, limit: null };
  *
  * @returns The playlist service, the database, Pat watching, the playlist and the covered album.
  */
-const aPlaylist = async () => {
+const aPlaylist = async (artworkDirectory = '/artwork') => {
   const { db, viewer } = await aHousehold();
   const store = createDatabaseMusicStore(db);
   const artist = await store.keepArtist('music', 'Low', null);
@@ -49,7 +53,7 @@ const aPlaylist = async () => {
   const playlists = createDatabasePlaylistService(
     db,
     createDatabaseMusicService(db),
-    '/artwork',
+    artworkDirectory,
     () => clock.now,
   );
   const made = await playlists.create(viewer, {
@@ -61,6 +65,32 @@ const aPlaylist = async () => {
 };
 
 describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('keeps a cover as it came, and hands out a cleaned copy carrying nothing about the camera', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'valence-playlist-covers-'));
+    const { playlists, viewer, id } = await aPlaylist(folder);
+    const cover = new Uint8Array(
+      await sharp({ create: { width: 8, height: 8, channels: 3, background: '#3a8ee8' } })
+        .withExif({ IFD0: { Make: 'A camera' } })
+        .jpeg()
+        .toBuffer(),
+    );
+
+    await expect(
+      playlists.saveArtwork(viewer, id, { body: cover, contentType: 'image/jpeg' }),
+    ).resolves.toBeNull();
+
+    const [kept] = await readdir(join(folder, 'originals'));
+    const read = await playlists.readArtwork(viewer, id);
+
+    expect(await readFile(join(folder, 'originals', kept ?? ''))).toEqual(Buffer.from(cover));
+    expect(read?.contentType).toBe('image/webp');
+    expect((await sharp(read?.body).metadata()).exif).toBeUndefined();
+
+    await expect(playlists.dropArtwork(viewer, id)).resolves.toBe(true);
+    expect(await readdir(join(folder, 'originals'))).toEqual([]);
+    expect(await readdir(join(folder, 'processed'))).toEqual([]);
+  });
+
   it('tallies its entries and their length as numbers, tiled with only the covered albums', async () => {
     const { viewer, playlists, id, covered } = await aPlaylist();
 

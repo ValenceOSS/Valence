@@ -1,3 +1,5 @@
+import { withFrameQuery } from '@ValenceContracts/functions/withFrameQuery';
+import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
   PlaylistDetailReadSchema,
@@ -140,10 +142,15 @@ const playlistArtworkUrl = (playlist: PlaylistSummary): string | null =>
  *
  * @param playlistId - The playlist.
  * @param picture - The picture, and what kind it is.
+ * @param frame - Where it sits in its shape, or nothing for its middle.
  * @returns What was wrong with it, or nothing where it was kept.
  */
-const savePlaylistArtwork = async (playlistId: string, picture: Blob): Promise<string | null> => {
-  const response = await fetch(`/api/playlists/${playlistId}/artwork`, {
+const savePlaylistArtwork = async (
+  playlistId: string,
+  picture: Blob,
+  frame: PhotoFrame | null = null,
+): Promise<string | null> => {
+  const response = await fetch(withFrameQuery(`/api/playlists/${playlistId}/artwork`, frame), {
     method: 'PUT',
     credentials: 'same-origin',
     headers: { 'content-type': picture.type },
