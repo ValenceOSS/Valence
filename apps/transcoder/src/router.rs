@@ -38,7 +38,7 @@ use crate::split_session::{self, Half};
 use crate::subtitle::{SubtitleError, SubtitleRegistry, SubtitleRequest, SubtitleTrack, Tools};
 use crate::transcode_plan::HardwareAccel;
 use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
-use crate::transcode_plan::{SessionSpec, INIT_SEGMENT_NAME, MANIFEST_NAME};
+use crate::transcode_plan::{SessionSpec, SubtitleAction, INIT_SEGMENT_NAME, MANIFEST_NAME};
 use crate::trickplay::{
     directory_for, is_complete, pending_index, tile_height_for, SheetSource, TrickplayJob,
     TrickplayRegistry, TrickplayRequest,
@@ -797,6 +797,10 @@ async fn test_hardware(
 async fn probe(State(state): State<AppState>, Json(request): Json<ProbeRequest>) -> Response {
     let path = Path::new(&request.path);
 
+    if !state.is_readable(path) {
+        return outside_the_roots(path);
+    }
+
     let Ok(result) = probe_media(&state.ffprobe, path).await else {
         return error(StatusCode::BAD_REQUEST, "That file could not be probed.");
     };
@@ -921,6 +925,10 @@ async fn start_session(
     Json(mut request): Json<StartSessionRequest>,
 ) -> Response {
     let began = std::time::Instant::now();
+
+    if let Err(refused) = check_session_inputs(&state, &request) {
+        return *refused;
+    }
 
     read_picture_format(&state, &mut request.spec).await;
 
@@ -1205,6 +1213,51 @@ async fn read_picture_format(state: &AppState, spec: &mut SessionSpec) {
     spec.source_video_codec.get_or_insert(codec);
 }
 
+/// The first file a request to start a session names that may not be read.
+///
+/// A subtitle file is opened by ffmpeg itself, so one that is an address rather than a path is
+/// refused whatever the roots say.
+fn unreadable_input(state: &AppState, request: &StartSessionRequest) -> Option<String> {
+    let StartSessionRequest {
+        spec,
+        variants,
+        deferred_variants,
+        ..
+    } = request;
+
+    for spec in std::iter::once(spec)
+        .chain(variants)
+        .chain(deferred_variants)
+    {
+        if !state.is_readable(Path::new(&spec.input_path)) {
+            return Some(spec.input_path.clone());
+        }
+
+        if let SubtitleAction::BurnIn {
+            subtitle_file: Some(file),
+            ..
+        } = &spec.subtitles
+        {
+            if file.contains("://") || !state.is_readable(Path::new(file)) {
+                return Some(file.clone());
+            }
+        }
+    }
+
+    None
+}
+
+/// Refuses a request to start a session that names a file outside the media roots.
+fn check_session_inputs(
+    state: &AppState,
+    request: &StartSessionRequest,
+) -> Result<(), Box<Response>> {
+    match unreadable_input(state, request) {
+        Some(path) => Err(Box::new(outside_the_roots(Path::new(&path)))),
+        None => Ok(()),
+    }
+}
+
 /// Starts whatever a request to start a session asks for: one session, or a picture, its sound and
 /// the other qualities of it, sent apart.
 async fn start_from(
@@ -1218,6 +1271,8 @@ async fn start_from(
         deferred_variants,
         placement,
     } = request;
+
+    check_session_inputs(state, request)?;
 
     state.registry.set_placement(placement.clone());
 
@@ -3792,7 +3847,8 @@ pub fn create_router(state: AppState) -> Router {
 mod tests {
     use super::{
         claim_for_a_live_job, content_type_for, is_safe_segment_name, locate, parse_range,
-        reach_of, sheet_accel, AppState, Claimed, FolderReach, SessionFileQuery, SweepRequest,
+        reach_of, sheet_accel, unreadable_input, AppState, Claimed, FolderReach, SessionFileQuery,
+        StartSessionRequest, SweepRequest,
     };
     use crate::render_registry::RenderRegistry;
     use std::path::{Path, PathBuf};
@@ -3858,6 +3914,66 @@ mod tests {
 
         assert!(reading.is_readable(Path::new(&within)));
         assert!(!reading.is_readable(Path::new(&reaching)));
+    }
+
+    fn starting(input: &str, subtitle_file: Option<&str>) -> StartSessionRequest {
+        let subtitles = subtitle_file.map_or_else(
+            || serde_json::json!({ "kind": "none" }),
+            |file| {
+                serde_json::json!({
+                    "kind": "burnIn",
+                    "subtitleIndex": 0,
+                    "isImageBased": false,
+                    "subtitleFile": file,
+                })
+            },
+        );
+
+        serde_json::from_value(serde_json::json!({
+            "inputPath": input,
+            "startSeconds": 0,
+            "segmentSeconds": 4,
+            "hardwareAccel": "none",
+            "video": { "kind": "copy" },
+            "audio": { "kind": "copy" },
+            "subtitles": subtitles,
+        }))
+        .expect("reads the request")
+    }
+
+    /// A session may start only from files inside the roots, and a subtitle file that is an
+    /// address is never opened, whether roots are set or not.
+    #[test]
+    fn starts_a_session_only_from_files_inside_the_roots() {
+        let limited = AppState {
+            media_roots: vec![PathBuf::from("/media")],
+            ..writing_to(&[])
+        };
+        let open = writing_to(&[]);
+
+        assert_eq!(
+            unreadable_input(&limited, &starting("/etc/passwd", None)),
+            Some("/etc/passwd".to_owned())
+        );
+        assert_eq!(
+            unreadable_input(&limited, &starting("/media/a.mkv", None)),
+            None
+        );
+        assert_eq!(
+            unreadable_input(&limited, &starting("/media/a.mkv", Some("/etc/hosts"))),
+            Some("/etc/hosts".to_owned())
+        );
+        assert_eq!(
+            unreadable_input(
+                &open,
+                &starting("/media/a.mkv", Some("http://host.test/a.srt"))
+            ),
+            Some("http://host.test/a.srt".to_owned())
+        );
+        assert_eq!(
+            unreadable_input(&open, &starting("/media/a.mkv", Some("/media/a.en.srt"))),
+            None
+        );
     }
 
     /// A library folder inside the roots may be read, one outside may not, and with no roots set

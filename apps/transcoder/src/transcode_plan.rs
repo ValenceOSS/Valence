@@ -328,7 +328,11 @@ pub enum SubtitleAction {
         is_image_based: bool,
         /// A text subtitle file kept beside the film, drawn instead of one of
         /// the film's own streams; `subtitle_index` then counts the file's.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "crate::path_map::deserialize_optional"
+        )]
         subtitle_file: Option<String>,
     },
 }
