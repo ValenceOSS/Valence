@@ -37,6 +37,7 @@ import type { SetupStanding } from '@ValenceServer/accounts/setupLinks/SetupLink
  */
 const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   const {
+    auth,
     profiles,
     faces,
     listUsers,
@@ -626,6 +627,10 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
     const actor = await readActor(context.req.raw.headers);
     const userId = context.req.param('userId');
+
+    if ((await (await auth.$context).internalAdapter.findUserById(userId)) === null) {
+      return context.json(refuse('error.account.noSuchAccount'), 404);
+    }
 
     if (actor !== null && actor.id !== userId) {
       const target = await permissions.rolesFor(userId);
