@@ -6,6 +6,7 @@ import {
   PageAddressSchema,
 } from '@ValenceContracts/schemas/LiveTv';
 import { checkChannel } from './checkChannel';
+import { isPublicWebAddress } from './isPublicWebAddress';
 import { checkEmbed } from './checkEmbed';
 import { saying } from '@ValenceI18n/saying';
 import { isHlsPlaylist } from './isHlsPlaylist';
@@ -273,6 +274,16 @@ const createLiveTvService = ({
     },
 
     isEmbedded: async (channel) => (await store.readSource(channel.sourceId))?.kind === 'embed',
+
+    isFromThePublicInternet: async (channel) => {
+      const source = await store.readSource(channel.sourceId);
+
+      return (
+        source?.kind === 'playlistUrl' &&
+        source.address !== null &&
+        (await isPublicWebAddress(source.address))
+      );
+    },
 
     changeGuide: async (id, guideUrl) => {
       const source = await store.readSource(id);

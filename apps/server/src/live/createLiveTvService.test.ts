@@ -7,6 +7,47 @@ const AT = new Date('2026-11-04T12:00:00.000Z');
 
 const STREAM = aStoredLiveSource();
 
+describe('createLiveTvService isFromThePublicInternet', () => {
+  const aChannelOf = (sourceId: string) => ({
+    number: null,
+    name: 'News',
+    group: null,
+    logoUrl: null,
+    guideId: null,
+    streamUrl: 'http://192.168.1.20/news.ts',
+    userAgent: null,
+    referrer: null,
+    id: 'news',
+    sourceId,
+    position: 0,
+    health: null,
+    route: null,
+    checkedAt: null,
+  });
+
+  it('says a channel from a playlist on the public internet is', async () => {
+    const playlist = aStoredLiveSource({ kind: 'playlistUrl', address: 'https://8.8.8.8/tv.m3u' });
+    const { store } = aLiveTvStore(playlist);
+    const service = createLiveTvService({ store, now: () => AT, fetcher: vi.fn() });
+
+    expect(await service.isFromThePublicInternet(aChannelOf(playlist.id))).toBe(true);
+  });
+
+  it('says a channel from this network, or one the administrator gave, is not', async () => {
+    for (const source of [
+      aStoredLiveSource({ kind: 'playlistUrl', address: 'http://192.168.1.20/tv.m3u' }),
+      aStoredLiveSource({ kind: 'tuner', address: 'http://192.168.1.30' }),
+      aStoredLiveSource({ kind: 'playlistFile', address: null, playlist: '#EXTM3U' }),
+      aStoredLiveSource({ kind: 'stream', address: 'https://8.8.8.8/one.m3u8' }),
+    ]) {
+      const { store } = aLiveTvStore(source);
+      const service = createLiveTvService({ store, now: () => AT, fetcher: vi.fn() });
+
+      expect(await service.isFromThePublicInternet(aChannelOf(source.id)), source.kind).toBe(false);
+    }
+  });
+});
+
 describe('createLiveTvService change', () => {
   it('renames a playlist without reading it again', async () => {
     const playlist = aStoredLiveSource({

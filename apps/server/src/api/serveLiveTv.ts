@@ -18,6 +18,7 @@ import { UPLOADED_LOGO } from '@ValenceServer/live/UPLOADED_LOGO';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
+import type { StoredLiveChannel } from '@ValenceServer/live/LiveTvStore';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -48,6 +49,19 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     neverKeep,
     tooBigToRead,
   } = context;
+
+  /**
+   * How to fetch for a channel: held to the public internet where its playlist came from there,
+   * so a playlist cannot point this server at its own network, and as given otherwise.
+   *
+   * @param channel - The channel being fetched for.
+   * @param inner - How the channel's addresses are reached.
+   * @returns The fetch to use.
+   */
+  const fetcherFor = async (channel: StoredLiveChannel, inner: typeof fetch) =>
+    (await liveTv?.service.isFromThePublicInternet(channel)) === true
+      ? createPublicOnlyFetch(inner)
+      : inner;
 
   const isAdmin = (headers: Headers) => requires(headers, 'server.settings');
 
@@ -248,7 +262,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             channel.id,
             { u: context.req.query('u'), e: context.req.query('e'), s: context.req.query('s') },
             channel,
-            createPublicOnlyFetch(liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
+            await fetcherFor(channel, liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
           );
 
     return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
@@ -282,7 +296,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             context.req.param('token'),
             `${url.pathname.slice(prefix.length)}${url.search}`,
             channel,
-            createPublicOnlyFetch(liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
+            await fetcherFor(channel, liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
           );
 
     return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
@@ -308,7 +322,9 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     const logo =
       channel?.logoUrl === null || channel === null || channel.logoUrl.startsWith(UPLOADED_LOGO)
         ? null
-        : await createPublicOnlyFetch(liveTv?.routes.logos ?? fetch)(channel.logoUrl, {
+        : await (
+            await fetcherFor(channel, liveTv?.routes.logos ?? fetch)
+          )(channel.logoUrl, {
             signal: AbortSignal.timeout(10_000),
           }).catch(() => null);
 
