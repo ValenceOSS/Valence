@@ -11,6 +11,7 @@ type UploadDisk = {
   writeAt: (
     staging: string,
     offset: number,
+    most: number,
     body: ReadableStream<Uint8Array>,
   ) => Promise<{ kind: 'written'; bytes: number } | UploadRefusal>;
   finish: (staging: string, destination: string, bytes: number) => Promise<UploadResult>;
