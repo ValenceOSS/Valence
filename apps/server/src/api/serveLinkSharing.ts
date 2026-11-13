@@ -334,6 +334,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
                 serverId: who.serverId,
                 route: `/api/playback/session/${encodeURIComponent(sessionId)}`,
                 isWhole: false,
+                subjectId: sessionId,
               }),
             },
             200,
@@ -352,6 +353,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
               serverId: who.serverId,
               route: `/api/playback/${subject.id}/file`,
               isWhole: true,
+              subjectId: subject.id,
             }),
           },
           200,
@@ -361,7 +363,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
   app.get(`${FEDERATION_PATH}/direct/:ticket/:name`, async (context) => {
     const ticketed = tickets.read(context.req.param('ticket'));
 
-    if (ticketed === null) {
+    if (ticketed === null || !(await linkSharing.stillReaches(ticketed))) {
       return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403);
     }
 

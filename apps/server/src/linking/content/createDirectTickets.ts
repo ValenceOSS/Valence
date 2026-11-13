@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-type Ticketed = { serverId: string; route: string; isWhole: boolean };
+type Ticketed = { serverId: string; route: string; isWhole: boolean; subjectId: string };
 
 const TICKET_LASTS_MS = 6 * 60 * 60 * 1000;
 

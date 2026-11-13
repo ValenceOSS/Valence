@@ -231,6 +231,23 @@ const createLinkSharingService = ({
 
     subjectOfTitle: (mediaId) => subjectOf({ kind: 'item', id: mediaId }),
 
+    stillReaches: async ({ serverId, isWhole, subjectId }) => {
+      if ((await links.readServer(serverId))?.state !== 'linked') {
+        return false;
+      }
+
+      if (!isWhole) {
+        return claims.claimedBy('session', subjectId, serverId) !== null;
+      }
+
+      const [shared, subject] = await Promise.all([
+        sharing.readSharing(serverId),
+        subjectOf({ kind: 'item', id: subjectId }),
+      ]);
+
+      return shared !== null && subject !== null && peerMayReach(shared, subject) === 'allowed';
+    },
+
     sharedWith: async (serverId) => {
       const shared = await sharing.readSharing(serverId);
 

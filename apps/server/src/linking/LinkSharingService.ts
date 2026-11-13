@@ -50,6 +50,11 @@ type LinkSharingService = {
   admit: (request: FederationRequest) => Promise<Admission>;
   sharedWith: (serverId: string) => Promise<SharedLibrary[]>;
   subjectOfTitle: (mediaId: string) => Promise<PeerItem | null>;
+  stillReaches: (ticketed: {
+    serverId: string;
+    isWhole: boolean;
+    subjectId: string;
+  }) => Promise<boolean>;
   activityFor: (serverId: string, since?: Date) => Promise<FederationActivity[] | null>;
   sharingOf: (id: string) => Promise<LinkSharing | null>;
   changeSharing: (id: string, change: LinkSharingChange) => Promise<SharingChange>;

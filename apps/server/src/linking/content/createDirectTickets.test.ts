@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createDirectTickets } from './createDirectTickets';
 
-const A_SESSION = { serverId: 'films', route: '/api/playback/session/one', isWhole: false };
+const A_SESSION = {
+  serverId: 'films',
+  route: '/api/playback/session/one',
+  isWhole: false,
+  subjectId: 'one',
+};
 
 const HOUR_MS = 60 * 60 * 1000;
 
