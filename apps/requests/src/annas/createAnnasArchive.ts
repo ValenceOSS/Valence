@@ -11,6 +11,7 @@ import type { Solution, Solver } from '@ValenceRequests/solver/createSolver';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { AnnasBookStore } from '@ValenceRequests/annas/createDatabaseAnnasBookStore';
 import type { AnnasTorrents } from '@ValenceRequests/annas/createAnnasTorrents';
+import type { GuardFor } from '@ValenceRequests/network/GuardFor';
 import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
 import { saying } from '@ValenceI18n/saying';
@@ -97,6 +98,7 @@ const createAnnasArchive = (
   wait: (archive: Archive) => Promise<void>,
   solver: Pick<Solver, 'fetch'> | null = null,
   library: AnnasLibrary | null = null,
+  guard?: GuardFor,
 ) => {
   const sessions = new Map<string, Session>();
 
@@ -252,6 +254,12 @@ const createAnnasArchive = (
         await response.body?.cancel().catch(() => undefined);
         current = new URL(location, current);
 
+        if (current.origin !== originOf(archive)) {
+          throw new IndexerFailure(
+            saying('requests.indexers.indexerService.theIndexerCouldNotBeAsked'),
+          );
+        }
+
         continue;
       }
 
@@ -376,6 +384,12 @@ const createAnnasArchive = (
           );
         }
 
+        if (new URL(torrent.url).origin !== originOf(archive)) {
+          throw new IndexerFailure(
+            saying('requests.annas.annasArchive.itsTorrentIsNoLongerOffered'),
+          );
+        }
+
         const answer = await ask(archive, torrent.url, { headers: {} });
 
         if (!answer.ok) {
@@ -433,7 +447,11 @@ const createAnnasArchive = (
 
       await wait(archive);
 
-      return measureLink(fetch, link, archive.timeoutSeconds);
+      return measureLink(
+        guard === undefined ? fetch : guard([new URL(archive.url).host]),
+        link,
+        archive.timeoutSeconds,
+      );
     },
   };
 };

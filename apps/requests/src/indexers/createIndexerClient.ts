@@ -102,6 +102,7 @@ const createIndexerClient = ({
     (indexer) => pacer.turn(indexer.id, indexer.requestsPerMinute),
     solver,
     annasLibrary,
+    guard,
   );
 
   const engineFor = async (indexer: IndexerConnection, isUrgent = false) => {

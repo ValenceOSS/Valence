@@ -206,6 +206,7 @@ const indexers = createIndexerService({
     site: createSiteClient({
       fetch,
       solver,
+      guard,
     }),
     solver,
     annasLibrary: { books: annasBooks, torrents: annasTorrents },

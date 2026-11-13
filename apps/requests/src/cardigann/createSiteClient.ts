@@ -5,6 +5,7 @@ import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareChallenge';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
+import type { GuardFor } from '@ValenceRequests/network/GuardFor';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import { saying } from '@ValenceI18n/saying';
 
@@ -34,11 +35,13 @@ type SendOptions = {
   timeoutSeconds: number;
   followRedirects: boolean;
   referer?: string | null;
+  trustedHosts?: readonly string[];
 };
 
 type CreateSiteClientOptions = {
   fetch: SiteFetch;
   solver?: Pick<Solver, 'fetch'> | null;
+  guard?: GuardFor;
 };
 
 const MOST_REDIRECTS = 10;
@@ -106,9 +109,10 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  *
  * @param fetch - How to ask.
  * @param solver - The browser that gets past the check, or nothing where there is none.
+ * @param guard - What holds every host but the site's own to the public internet, where there is one.
  * @returns The client.
  */
-const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => {
+const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptions) => {
   const throughTheBrowser = new Set<string>();
 
   const browserIdOf = (session: SiteSession): string => {
@@ -166,6 +170,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
 
   const send = async (request: SiteRequest, options: SendOptions): Promise<SiteResponse> => {
     let current = request;
+    const reach = guard === undefined ? fetch : guard(options.trustedHosts ?? []);
 
     for (let hops = 0; hops <= MOST_REDIRECTS; hops += 1) {
       if (options.followRedirects && throughTheBrowser.has(new URL(current.url).host)) {
@@ -178,7 +183,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
       let response: Response;
 
       try {
-        response = await fetch(current.url, {
+        response = await reach(current.url, {
           method: current.method,
           headers: {
             'user-agent': options.session.userAgent ?? BROWSER_USER_AGENT,

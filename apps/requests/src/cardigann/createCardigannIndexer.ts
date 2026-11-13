@@ -144,6 +144,7 @@ const createCardigannIndexer = ({
       timeoutSeconds,
       followRedirects,
       referer,
+      trustedHosts: [new URL(siteLink).host],
     });
   };
 

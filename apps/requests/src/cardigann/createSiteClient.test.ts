@@ -5,6 +5,7 @@ import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import { createSiteClient } from './createSiteClient';
 import type { SiteFetch } from './createSiteClient';
+import type { GuardedFetch } from '@ValenceRequests/network/GuardedFetch';
 import type { SiteSession } from './SiteSession';
 
 type Reply = { status?: number; body?: string | Uint8Array; headers?: [string, string][] };
@@ -380,5 +381,35 @@ describe('createSiteClient', () => {
         client.send(aGet('https://x.example/u'), { ...OPTIONS, session: aSession() }),
       ).rejects.toThrow('Couldn’t start the browser used to pass Cloudflare’s check');
     });
+  });
+
+  it('holds a redirect to a host that is not the site to the guard, which refuses a private one', async () => {
+    const { fetch } = aNetwork({
+      'https://x.example/login': {
+        status: 302,
+        headers: [['location', 'http://10.0.0.5:8080/internal']],
+      },
+    });
+    const guarded = vi.fn<GuardedFetch>((url, init) =>
+      url.startsWith('http://10.0.0.5')
+        ? Promise.reject(new TypeError('refused'))
+        : fetch(url, {
+            method: init.method ?? 'GET',
+            headers: init.headers ?? {},
+            redirect: 'manual',
+            signal: init.signal ?? AbortSignal.timeout(1000),
+          }),
+    );
+    const guard = vi.fn(() => guarded);
+
+    await expect(
+      createSiteClient({ fetch, guard }).send(
+        { url: 'https://x.example/login', method: 'GET', body: null, headers: {} },
+        { ...OPTIONS, session: aSession(), trustedHosts: ['x.example'] },
+      ),
+    ).rejects.toBeInstanceOf(IndexerFailure);
+    expect(guard).toHaveBeenCalledWith(['x.example']);
+    expect(guarded).toHaveBeenCalledTimes(2);
+    expect(guarded.mock.calls[1]?.[0]).toBe('http://10.0.0.5:8080/internal');
   });
 });
