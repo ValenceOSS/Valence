@@ -952,9 +952,15 @@ const Watching = ({
       return;
     }
 
+    if (source === null) {
+      setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn }));
+
+      return;
+    }
+
     staysPaused.current = !player.playing;
     setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, from: player.currentTime }));
-  }, [toBurnIn, asking.burnInSubtitleId, player]);
+  }, [toBurnIn, asking.burnInSubtitleId, player, source]);
 
   useEventListener(player, 'playToEnd', () => {
     if (source === null || !(player.duration > 0)) {

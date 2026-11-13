@@ -687,6 +687,8 @@ describe('Watching', () => {
 
     theFakePlayer.currentTime = 900;
 
+    const play = jest.spyOn(theFakePlayer, 'play');
+
     await act(() => {
       theFakePlayer.popOut();
     });
@@ -696,8 +698,64 @@ describe('Watching', () => {
     });
     expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[3]).toBe(900);
     await waitFor(() => {
-      expect(theFakePlayer.playing).toBe(true);
+      expect(play).toHaveBeenCalled();
     });
+
+    play.mockRestore();
+  });
+
+  it('keeps its place and plays on when it comes back before the burnt-in picture arrives', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([
+      {
+        id: 'english',
+        language: 'en',
+        label: 'English',
+        format: 'subrip',
+        isForced: false,
+        isHearingImpaired: false,
+        delivery: 'text',
+        streamIndex: null,
+      },
+    ]);
+    saveSubtitleLanguage('en');
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    jest.mocked(startPlaybackSession).mockReturnValueOnce(new Promise(() => undefined));
+    theFakePlayer.currentTime = 900;
+
+    await act(() => {
+      theFakePlayer.popOut();
+    });
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
+    });
+
+    theFakePlayer.pause();
+    theFakePlayer.currentTime = 0;
+
+    const play = jest.spyOn(theFakePlayer, 'play');
+
+    await act(() => {
+      theFakePlayer.popBackIn();
+    });
+
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBeUndefined();
+    });
+    expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[3]).toBe(900);
+    await waitFor(() => {
+      expect(play).toHaveBeenCalled();
+    });
+
+    play.mockRestore();
   });
 
   it('leaves a film paused in picture-in-picture paused when its subtitles go back to the phone', async () => {
