@@ -4,6 +4,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { createAppContext } from '@ValenceServer/api/createAppContext';
 import { serveEveryRequest } from '@ValenceServer/api/serveEveryRequest';
 import { serveAbout } from '@ValenceServer/api/serveAbout';
+import { serveStrings } from '@ValenceServer/api/serveStrings';
 import { serveSetup } from '@ValenceServer/api/serveSetup';
 import { serveLibrary } from '@ValenceServer/api/serveLibrary';
 import { serveCalendar } from '@ValenceServer/api/serveCalendar';
@@ -80,6 +81,7 @@ const createApp = (options: CreateAppOptions) => {
 
   serveEveryRequest(app, context);
   serveAbout(app, context);
+  serveStrings(app, context);
   serveSetup(app, context);
   serveLibrary(app, context);
   serveCalendar(app, context);

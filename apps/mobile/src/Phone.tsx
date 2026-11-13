@@ -21,6 +21,11 @@ import { TheFlyingMark } from '@ValenceMobile/components/TheFlyingMark/TheFlying
 import { TheChosenAppearance } from '@ValenceMobile/components/TheChosenAppearance/TheChosenAppearance';
 import { TheHousehold } from '@ValenceMobile/components/TheHousehold/TheHousehold';
 import { IfThisAppIsOn } from '@ValenceMobile/components/IfThisAppIsOn/IfThisAppIsOn';
+import { speakTheKeptWords } from '@ValenceClient/language/speakTheKeptWords';
+import { fetchTheWords } from '@ValenceClient/language/fetchTheWords';
+import { thisDevicesLanguages } from '@ValenceClient/language/thisDevicesLanguages';
+import { layOutFor } from '@ValenceNative/language/layOutFor';
+import type { Language } from '@ValenceI18n/LANGUAGES';
 
 const styles = StyleSheet.create({ whole: { flex: 1 } });
 import { WhereIsYourValence } from '@ValenceMobile/components/WhereIsYourValence/WhereIsYourValence';
@@ -44,6 +49,11 @@ const answers = buildQueryClient();
  * read, and the theme chosen in it from then on. The mark flying between screens is drawn above
  * it, so the splash's mark is never covered by the card it leaves.
  *
+ * It speaks the phone's language from the first frame, in the words it kept from its server last
+ * time, and asks the server for them again once it knows where the server is; where they changed,
+ * everything is drawn again in them. Arabic and Hebrew lay it out right to left from the next
+ * launch, which is when React Native settles which way an app runs.
+ *
  * The phone is held upright from here on. Only a film is worth turning it for, and the screen
  * showing one asks for that itself.
  */
@@ -54,6 +64,8 @@ const Phone = () => {
   const [isHomeReady, setIsHomeReady] = useState(false);
   const [isSplashDone, setIsSplashDone] = useState(false);
   const [isSplashGone, setIsSplashGone] = useState(false);
+  const [spoken, setSpoken] = useState<Language>('en');
+  const [wordsDrawn, setWordsDrawn] = useState(0);
   const scheme = useColorScheme();
 
   const homeIsReady = useCallback(() => {
@@ -74,6 +86,11 @@ const Phone = () => {
     void whatThePhoneRemembers().then((held) => {
       installPhonePlatform(held);
 
+      const language = speakTheKeptWords(thisDevicesLanguages());
+
+      layOutFor(language);
+      setSpoken(language);
+
       const known = platformInUse().serverAddress();
 
       if (known !== null) {
@@ -85,11 +102,23 @@ const Phone = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (!isReady || address === null) {
+      return;
+    }
+
+    void fetchTheWords(spoken).then((isChanged) => {
+      if (isChanged) {
+        setWordsDrawn((drawn) => drawn + 1);
+      }
+    });
+  }, [isReady, address, spoken]);
+
   return (
     <GestureHandlerRootView style={styles.whole}>
       <SafeAreaProvider>
         {isReady ? (
-          <QueryClientProvider client={answers}>
+          <QueryClientProvider key={wordsDrawn} client={answers}>
             <THE_FIRST_SCREEN_IS_READY.Provider value={homeIsReady}>
               {address === null || isAsking ? (
                 <WhereIsYourValence

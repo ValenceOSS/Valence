@@ -5453,6 +5453,7 @@ const titleMetadataService = createTitleMetadataService({
 });
 
 const app = createApp({
+  stringsFolder: fileURLToPath(new URL('../../../packages/i18n', import.meta.url)),
   callerOf,
   imports: importService,
   plugins: startPlugins,

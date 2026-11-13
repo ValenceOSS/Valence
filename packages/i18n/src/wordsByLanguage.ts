@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { LANGUAGES } from './LANGUAGES';
 import { StringsFileSchema } from './StringsFileSchema';
+import { wordsInFile } from './wordsInFile';
 
 const LOADERS_ID = 'virtual:valence-words';
 
@@ -44,9 +45,7 @@ const wordsModule = (folder: string, language: string): string => {
     JSON.parse(readFileSync(join(folder, `strings-${language}.json`), 'utf8')),
   );
 
-  return `export default JSON.parse(${JSON.stringify(
-    JSON.stringify(Object.fromEntries(entries.map((entry) => [entry.handler, entry.text]))),
-  )});\n`;
+  return `export default JSON.parse(${JSON.stringify(JSON.stringify(wordsInFile(entries)))});\n`;
 };
 
 /**
