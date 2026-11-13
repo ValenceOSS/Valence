@@ -13,9 +13,16 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
+import { aLibraryAt } from '@ValenceServer/files/aLibraryAt';
 import { jobDefinitionsFor } from '@ValenceServer/jobs/jobDefinitions';
+import { z } from 'zod';
+import { LibrarySchema } from '@ValenceContracts/schemas/Library';
+import type { Library } from '@ValenceContracts/schemas/Library';
+import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { LibraryService } from '@ValenceServer/library/LibraryService';
+
+const LibraryListSchema = z.array(LibrarySchema);
 
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 const ON_DISK = 'valence-disk:L2ZpbG1zL3Bvc3Rlci5qcGc';
@@ -31,6 +38,8 @@ type Upload = NonNullable<LibraryService['uploadArtwork']>;
 const build = async (
   answer: Awaited<ReturnType<Upload>> = { jobId: null },
   serverFolders: readonly string[] = [],
+  libraries: Library[] = [],
+  grants: readonly Permission[] = ['library.create'],
 ) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -75,7 +84,7 @@ const build = async (
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: {
-      ...createMemoryLibraryService({ libraries: [], media: [] }),
+      ...createMemoryLibraryService({ libraries, media: [] }),
       uploadArtwork,
       listItemsAcross,
       isOwnArtwork: (_mediaId, url) => Promise.resolve(url === ON_DISK),
@@ -123,7 +132,7 @@ const build = async (
 
   permissions.state.overrides[store.user[0]?.id ?? ''] = [
     { permission: 'media.override', effect: 'allow' },
-    { permission: 'library.create', effect: 'allow' },
+    ...grants.map((permission) => ({ permission, effect: 'allow' as const })),
   ];
   const ask = (path: string, init: RequestInit = {}) =>
     app.request(`${TEST_ORIGIN}${path}`, {
@@ -143,6 +152,21 @@ const build = async (
 };
 
 describe('serveLibrary', () => {
+  it('shows where each library is on the machine only to somebody who may change libraries', async () => {
+    const films = { ...aLibraryAt('/mnt/nas/films'), requestPath: '/mnt/nas/requested' };
+    const plain = await build({ jobId: null }, [], [films], []);
+    const shown = LibraryListSchema.parse(await (await plain.ask('/api/libraries')).json());
+
+    expect(shown.map((one) => [one.path, one.requestPath])).toEqual([['/', null]]);
+
+    const editor = await build({ jobId: null }, [], [films], ['library.edit']);
+    const full = LibraryListSchema.parse(await (await editor.ask('/api/libraries')).json());
+
+    expect(full.map((one) => [one.path, one.requestPath])).toEqual([
+      ['/mnt/nas/films', '/mnt/nas/requested'],
+    ]);
+  });
+
   it('refuses a library on a folder the server keeps its own data in, or one that holds it', async () => {
     const root = await mkdtemp(join(tmpdir(), 'valence-library-'));
 

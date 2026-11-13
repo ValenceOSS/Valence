@@ -64,6 +64,7 @@ import {
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { withoutHostFolders } from '@ValenceServer/library/withoutHostFolders';
 import { touchesServerFolder } from '@ValenceServer/library/touchesServerFolder';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
@@ -135,12 +136,15 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
     const locks = await readLibraryLocks(settings);
     const locked = new Set(viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : []);
+    const mayChange =
+      (await requires(context.req.raw.headers, 'library.edit')) ||
+      (await requires(context.req.raw.headers, 'library.create'));
 
     return context.json(
-      (await library.list(viewer)).map((each) => ({
-        ...each,
-        hasLock: locks[each.id] !== undefined,
-        isLocked: locked.has(each.id),
+      (await library.list(viewer)).map((listed) => ({
+        ...(mayChange ? listed : withoutHostFolders(listed)),
+        hasLock: locks[listed.id] !== undefined,
+        isLocked: locked.has(listed.id),
       })),
       200,
     );
