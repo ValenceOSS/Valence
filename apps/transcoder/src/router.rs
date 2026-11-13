@@ -1013,6 +1013,16 @@ fn is_session_address(id: &str) -> bool {
     id.len() == 32 && id.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
+/// Whether an id is one this service names a cached artefact by, a hash written out
+/// in hex, which is what makes it safe to join onto a cache directory.
+fn is_cache_address(id: &str) -> bool {
+    matches!(id.len(), 32 | 64) && id.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn no_such_artefact() -> Response {
+    error(StatusCode::NOT_FOUND, "No such artefact.")
+}
+
 /// Picks a session up again after a restart, from the request kept beside its
 /// segments, when nothing holds it.
 ///
@@ -2459,6 +2469,10 @@ async fn download_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if !is_cache_address(&id) {
+        return no_such_artefact();
+    }
+
     serve_file(
         &download::directory_for(&state.registry.config().cache_root, &id),
         &name,
@@ -2492,6 +2506,10 @@ async fn forget_download(
     State(state): State<AppState>,
     Json(request): Json<ForgetDownload>,
 ) -> Response {
+    if !is_cache_address(&request.id) {
+        return (StatusCode::OK, Json(ForgetReport { forgotten: false })).into_response();
+    }
+
     let root = state.registry.config().cache_root.join("downloads");
 
     if state.downloads.stop(&request.id).await {
@@ -2541,6 +2559,10 @@ async fn preview_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if !is_cache_address(&id) {
+        return no_such_artefact();
+    }
+
     let directory = preview_directory(&state.registry.config().artefact_root, &id);
 
     serve_file(&directory, &name, requested_range(&headers)).await
@@ -3323,6 +3345,10 @@ async fn trickplay_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if !is_cache_address(&id) {
+        return no_such_artefact();
+    }
+
     serve_file(
         &directory_for(&state.registry.config().artefact_root, &id),
         &name,

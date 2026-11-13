@@ -321,3 +321,68 @@ async fn keeps_nothing_alive_when_a_library_is_empty() {
         Some(0)
     );
 }
+
+async fn status_of(app: &axum::Router, request: Request<Body>) -> StatusCode {
+    app.clone()
+        .oneshot(request)
+        .await
+        .expect("handles the request")
+        .status()
+}
+
+#[tokio::test]
+async fn serves_nothing_outside_the_cache_for_an_id_that_climbs_out_of_it() {
+    let root = cache_root("climbing-out");
+    let outside = common::scratch("valence-test-sweep-outside-the-cache");
+
+    std::fs::create_dir_all(&outside).expect("makes a folder beside the cache");
+    std::fs::write(outside.join("secret.txt"), b"not an artefact").expect("writes a file there");
+
+    for kind in ["trickplay", "previews", "downloads"] {
+        std::fs::create_dir_all(root.join(kind)).expect("makes the cache folder");
+    }
+
+    let app = app(root);
+    let climbing = "..%2F..%2Fvalence-test-sweep-outside-the-cache";
+
+    for kind in ["trickplay", "previews", "downloads"] {
+        let status = status_of(
+            &app,
+            Request::builder()
+                .uri(format!("/{kind}/{climbing}/secret.txt"))
+                .body(Body::empty())
+                .expect("builds the request"),
+        )
+        .await;
+
+        assert_eq!(
+            status,
+            StatusCode::NOT_FOUND,
+            "/{kind} served a file from outside its cache"
+        );
+    }
+}
+
+#[tokio::test]
+async fn forgets_no_download_whose_id_is_not_one_this_service_made() {
+    let root = cache_root("forget-climbing");
+    let downloads = root.join("downloads");
+    let kept = downloads.join("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+
+    std::fs::create_dir_all(&kept).expect("makes a prepared download");
+
+    let app = app(root.clone());
+
+    for id in ["", "..", "../downloads", "/"] {
+        let report = post(&app, "/downloads/forget", serde_json::json!({ "id": id })).await;
+
+        assert_eq!(
+            report.get("forgotten").and_then(serde_json::Value::as_bool),
+            Some(false),
+            "forgetting {id:?} removed something"
+        );
+    }
+
+    assert!(kept.is_dir(), "a prepared download was removed");
+    assert!(root.is_dir(), "the cache itself was removed");
+}
