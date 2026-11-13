@@ -1248,19 +1248,24 @@ const createAppContext = (options: CreateAppOptions) => {
   /**
    * Whether this actor may decide what another account sees.
    *
-   * The same two questions the rest of the accounts panel asks: holding the permission, and not
-   * acting on somebody at or above your own rank. Without the second, a manager could quietly take
-   * the library away from an administrator.
+   * The same questions the rest of the accounts panel asks: holding the permission, not acting on
+   * somebody at or above your own rank, and not changing your own access unless you own the server.
+   * Without the second, a manager could quietly take the library away from an administrator; without
+   * the third, somebody limited could lift their own limits.
    *
-   * @param headers - The request's headers.
-   * @param userId - Whose access is being changed.
+   * @param request - The request, for its headers and whether it reads or changes.
+   * @param userId - Whose access is being read or changed.
    * @returns Why they may not, or nothing where they may.
    */
-  const mayDecideAccess = async (headers: Headers, userId: string): Promise<RefusalBody | null> => {
-    const actor = await readActor(headers);
+  const mayDecideAccess = async (request: Request, userId: string): Promise<RefusalBody | null> => {
+    const actor = await readActor(request.headers);
 
     if (actor === null || !actor.permissions.has('account.manage')) {
       return refuse('common.thatIsForAdministrators');
+    }
+
+    if (request.method !== 'GET' && actor.id === userId && actor.id !== (await theOwner())) {
+      return describeAccountRefusal('self');
     }
 
     if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
