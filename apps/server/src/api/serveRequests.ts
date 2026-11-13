@@ -1,6 +1,7 @@
 import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
+import { filedInto } from '@ValenceServer/requests/filedInto';
 import { withAskerProfiles } from '@ValenceServer/requests/withAskerProfiles';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saidFrom } from '@ValenceI18n/saidFrom';
@@ -1039,7 +1040,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           change.courOrder !== undefined;
 
         if (!asksTheCatalogue && change.libraryId === undefined) {
-          return client.changeRequest(id, { change });
+          return client.changeRequest(id, { change: filedInto(change, undefined) });
         }
 
         const found = await client.findRequest(id);
@@ -1068,10 +1069,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           : null;
 
         return client.changeRequest(id, {
-          change:
-            change.libraryId === undefined || into === undefined
-              ? change
-              : { ...change, libraryPath: into.requestPath ?? into.path },
+          change: filedInto(change, change.libraryId === undefined ? undefined : into),
           ...(catalogue === null ? {} : { catalogue }),
           held:
             found.value.kind === 'series' && found.value.tmdbId !== null && into !== undefined
