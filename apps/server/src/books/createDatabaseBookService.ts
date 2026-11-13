@@ -1245,8 +1245,10 @@ const createDatabaseBookService = (
           COVER_WIDTH,
         );
 
-        await mkdir(chosenCovers, { recursive: true });
-        await writeFile(chosenCoverOf(bookId), drawn.bytes);
+        if (drawn !== null) {
+          await mkdir(chosenCovers, { recursive: true });
+          await writeFile(chosenCoverOf(bookId), drawn.bytes);
+        }
       }
 
       const changed = await db
@@ -1330,7 +1332,10 @@ const createDatabaseBookService = (
               COVER_WIDTH,
             );
 
-            await writeFile(foundCoverOf(row.id), drawn.bytes);
+            if (drawn !== null) {
+              await writeFile(foundCoverOf(row.id), drawn.bytes);
+            }
+
             await db
               .update(book)
               .set({

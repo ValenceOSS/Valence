@@ -19,8 +19,8 @@ describe('drawBookCover', () => {
       640,
     );
 
-    expect(drawn.contentType).toBe('image/webp');
-    expect((await sharp(drawn.bytes).metadata()).width).toBe(640);
+    expect(drawn?.contentType).toBe('image/webp');
+    expect((await sharp(drawn?.bytes).metadata()).width).toBe(640);
   });
 
   it('never draws a small cover larger than it is', async () => {
@@ -29,12 +29,15 @@ describe('drawBookCover', () => {
       640,
     );
 
-    expect((await sharp(drawn.bytes).metadata()).width).toBe(300);
+    expect((await sharp(drawn?.bytes).metadata()).width).toBe(300);
   });
 
-  it('hands back a picture it cannot draw as it was', async () => {
-    const broken = { bytes: new Uint8Array([1, 2, 3]), contentType: 'image/jpeg' };
+  it('hands back nothing for bytes that are not a picture', async () => {
+    const broken = {
+      bytes: new TextEncoder().encode('DB_PASSWORD=hunter2'),
+      contentType: 'image/jpeg',
+    };
 
-    expect(await drawBookCover(broken, 640)).toBe(broken);
+    expect(await drawBookCover(broken, 640)).toBeNull();
   });
 });

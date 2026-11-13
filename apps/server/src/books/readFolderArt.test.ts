@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -37,5 +37,13 @@ describe('readFolderArt', () => {
   it('finds nothing where the folder keeps no cover, or is not there', async () => {
     expect(await readFolderArt(root, true)).toBeNull();
     expect(await readFolderArt(join(root, 'Gone'), true)).toBeNull();
+  });
+
+  it('does not follow a link named like a cover to a file elsewhere', async () => {
+    await mkdir(join(root, 'Dune'));
+    await writeFile(join(root, 'secret.env'), 'DB_PASSWORD=hunter2');
+    await symlink(join(root, 'secret.env'), join(root, 'Dune', 'cover.jpg'));
+
+    expect(await readFolderArt(join(root, 'Dune'), true)).toBeNull();
   });
 });
