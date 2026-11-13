@@ -376,6 +376,8 @@ const Watching = ({
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const knownLength = useRef(0);
   const picture = useRef<VideoViewRef | null>(null);
+  const [isPoppedOut, setIsPoppedOut] = useState(false);
+  const staysPaused = useRef(false);
   const [areControlsUp, setAreControlsUp] = useState(true);
   const [areControlsDrawn, setAreControlsDrawn] = useState(true);
   const [fade] = useState(() => new Animated.Value(1));
@@ -801,9 +803,11 @@ const Watching = ({
       player.seekBy(seekTo - player.currentTime);
     }
 
-    if (party === undefined) {
+    if (party === undefined && !staysPaused.current) {
       player.play();
     }
+
+    staysPaused.current = false;
   });
 
   useEffect(() => {
@@ -937,7 +941,9 @@ const Watching = ({
     isExternalPlaybackActive: player.isExternalPlaybackActive,
   });
   const toBurnIn =
-    casting.isExternalPlaybackActive === true && !isKept && beingRead?.delivery === 'text'
+    (casting.isExternalPlaybackActive === true || isPoppedOut) &&
+    !isKept &&
+    beingRead?.delivery === 'text'
       ? beingRead.id
       : undefined;
 
@@ -946,8 +952,15 @@ const Watching = ({
       return;
     }
 
+    if (source === null) {
+      setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn }));
+
+      return;
+    }
+
+    staysPaused.current = !player.playing;
     setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, from: player.currentTime }));
-  }, [toBurnIn, asking.burnInSubtitleId, player]);
+  }, [toBurnIn, asking.burnInSubtitleId, player, source]);
 
   useEventListener(player, 'playToEnd', () => {
     if (source === null || !(player.duration > 0)) {
@@ -1432,6 +1445,12 @@ const Watching = ({
             player={player}
             allowsPictureInPicture
             startsPictureInPictureAutomatically
+            onPictureInPictureStart={() => {
+              setIsPoppedOut(true);
+            }}
+            onPictureInPictureStop={() => {
+              setIsPoppedOut(false);
+            }}
             nativeControls={false}
             contentFit={fitted === null ? 'contain' : 'cover'}
           />
