@@ -54,17 +54,7 @@ import { createTitleMetadataService } from '@ValenceServer/metadata/createTitleM
 import { seasonSourcesOfFile } from '@ValenceServer/library/seasonSourcesOfFile';
 import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
-import {
-  copyFile,
-  mkdir,
-  readdir,
-  readFile,
-  rename,
-  rm,
-  stat,
-  unlink,
-  utimes,
-} from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, unlink, utimes, writeFile } from 'node:fs/promises';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -222,6 +212,8 @@ import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
 import { upgradePictures } from '@ValenceServer/pictures/upgradePictures';
 import { CROPS } from '@ValenceServer/pictures/CROPS';
 import { forgetRawLocalCopies } from '@ValenceServer/images/forgetRawLocalCopies';
+import { isThere } from '@ValenceServer/pictures/isThere';
+import { moveFile } from '@ValenceServer/pictures/moveFile';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
@@ -1397,21 +1389,8 @@ await movePhotographsOnce({
     ensure: async (directory) => {
       await mkdir(directory, { recursive: true });
     },
-    has: (path) =>
-      stat(path).then(
-        () => true,
-        () => false,
-      ),
-    move: async (fromPath, toPath) => {
-      await rename(fromPath, toPath).catch(async (error: NodeJS.ErrnoException) => {
-        if (error.code !== 'EXDEV') {
-          throw error;
-        }
-
-        await copyFile(fromPath, toPath);
-        await unlink(fromPath);
-      });
-    },
+    has: isThere,
+    move: moveFile,
   },
   onProblem: (name, reason) => {
     log.error('server', `profiles: ${name} could not be moved — ${reason.message}`);
@@ -1440,7 +1419,10 @@ const upgradedFaces = await upgradeFaces(
     ).map((row) => ({ photoPath: row.photoPath, frame: row.frame })),
   ].flatMap((row) => (row.photoPath === null ? [] : [{ name: row.photoPath, frame: row.frame }])),
   (name, reason) => {
-    log.error('server', `profiles: ${name} could not be processed — ${reason.message}`);
+    log.error(
+      'server',
+      `profiles: ${name} could not be read, so it will not be shown until a new picture is uploaded — ${reason.message}`,
+    );
   },
 );
 
@@ -2048,7 +2030,10 @@ const livePictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live'), f
 
 for (const pictures of [serverPictures, livePictures]) {
   await pictures.upgrade((name, reason) => {
-    log.error('server', `pictures: ${name} could not be processed — ${reason.message}`);
+    log.error(
+      'server',
+      `pictures: ${name} could not be read, so it will not be shown until a new picture is uploaded — ${reason.message}`,
+    );
   });
 }
 
@@ -4753,17 +4738,30 @@ const images = createImageCache({
   },
 });
 
-const forgottenRawCopies = await forgetRawLocalCopies(await listArtworkUrls(), {
-  directory: env.IMAGE_CACHE_DIR,
-  nameFor: images.nameFor,
-  forget: images.forget,
-});
+const RAW_COPIES_LET_GO = join(env.IMAGE_CACHE_DIR, '.raw-local-copies-let-go');
 
-if (forgottenRawCopies > 0) {
-  log.info(
-    'server',
-    `image cache: ${forgottenRawCopies.toString()} copied picture(s) from this server let go, to be cleaned`,
-  );
+if (!(await isThere(RAW_COPIES_LET_GO))) {
+  void (async () => {
+    const forgottenRawCopies = await forgetRawLocalCopies(await listArtworkUrls(), {
+      directory: env.IMAGE_CACHE_DIR,
+      nameFor: images.nameFor,
+      forget: images.forget,
+    });
+
+    await writeFile(RAW_COPIES_LET_GO, '');
+
+    if (forgottenRawCopies > 0) {
+      log.info(
+        'server',
+        `image cache: ${forgottenRawCopies.toString()} copied picture(s) from this server let go, to be cleaned`,
+      );
+    }
+  })().catch((error: Error) => {
+    log.warn(
+      'server',
+      `image cache: copied pictures from this server could not be checked: ${error.message}`,
+    );
+  });
 }
 
 const bookPagesDir = join(env.IMAGE_CACHE_DIR, 'books');

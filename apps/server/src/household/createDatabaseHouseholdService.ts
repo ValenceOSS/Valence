@@ -25,6 +25,7 @@ type HouseholdRow = {
   avatarSeed: string | null;
   photoPath: string | null;
   photoFrame: PhotoFrame | null;
+  avatarOnColour: boolean | null;
   onboardedAt: Date | null;
   updatedAt: Date;
 };
@@ -36,6 +37,7 @@ const COLUMNS = {
   avatarSeed: userProfile.avatarSeed,
   photoPath: userProfile.photoPath,
   photoFrame: userProfile.photoFrame,
+  avatarOnColour: userProfile.avatarOnColour,
   onboardedAt: userProfile.onboardedAt,
   updatedAt: userProfile.updatedAt,
 };
@@ -60,7 +62,12 @@ const readAvatarChoice = (row: HouseholdRow): Avatar | null => {
   }
 
   if (row.avatarStyle !== null && row.avatarSeed !== null && isAvatarStyle(row.avatarStyle)) {
-    return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
+    return {
+      kind: 'drawn',
+      style: row.avatarStyle,
+      seed: row.avatarSeed,
+      ...(row.avatarOnColour === true ? { isOnColour: true } : {}),
+    };
   }
 
   return null;
@@ -81,6 +88,7 @@ const avatarColumns = (
   avatarSeed?: string | null;
   photoPath?: string | null;
   photoFrame?: PhotoFrame | null;
+  avatarOnColour?: boolean | null;
 } | null => {
   if (avatar === undefined) {
     return null;
@@ -91,8 +99,20 @@ const avatarColumns = (
   }
 
   return avatar?.kind === 'drawn'
-    ? { avatarStyle: avatar.style, avatarSeed: avatar.seed, photoPath: null, photoFrame: null }
-    : { avatarStyle: null, avatarSeed: null, photoPath: null, photoFrame: null };
+    ? {
+        avatarStyle: avatar.style,
+        avatarSeed: avatar.seed,
+        avatarOnColour: avatar.isOnColour === true,
+        photoPath: null,
+        photoFrame: null,
+      }
+    : {
+        avatarStyle: null,
+        avatarSeed: null,
+        avatarOnColour: null,
+        photoPath: null,
+        photoFrame: null,
+      };
 };
 
 /**
@@ -212,7 +232,15 @@ const createDatabaseHouseholdService = (
 
       if (choice?.kind === 'drawn') {
         return {
-          body: new TextEncoder().encode(drawAvatar(choice.style, choice.seed)),
+          body: new TextEncoder().encode(
+            drawAvatar(
+              choice.style,
+              choice.seed,
+              choice.isOnColour === true
+                ? (ProfileColourSchema.nullable().catch(null).parse(row.colour) ?? null)
+                : null,
+            ),
+          ),
           contentType: 'image/svg+xml',
         };
       }
@@ -245,6 +273,7 @@ const createDatabaseHouseholdService = (
             photoFrame: framed,
             avatarStyle: null,
             avatarSeed: null,
+            avatarOnColour: null,
             updatedAt: new Date(),
           })
           .where(eq(userProfile.userId, userId)),

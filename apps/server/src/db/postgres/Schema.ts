@@ -2007,6 +2007,7 @@ const userProfile = pgTable('user_profile', {
   avatarSeed: text('avatarSeed'),
   photoPath: text('photoPath'),
   photoFrame: jsonb('photoFrame').$type<PhotoFrame>(),
+  avatarOnColour: boolean('avatarOnColour'),
   wayInId: text('wayInId').unique(),
   onboardedAt: timestamp('onboardedAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),

@@ -2003,6 +2003,7 @@ const userProfile = mysqlTable('user_profile', {
   avatarSeed: mediumtext('avatarSeed'),
   photoPath: mediumtext('photoPath'),
   photoFrame: jsonColumn('photoFrame').$type<PhotoFrame>(),
+  avatarOnColour: boolean('avatarOnColour'),
   wayInId: varchar('wayInId', { length: 36 }).unique(),
   onboardedAt: moment('onboardedAt'),
   createdAt: momentNow('createdAt').notNull(),

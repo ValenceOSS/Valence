@@ -13,6 +13,7 @@ import { framedNameOf } from '@ValenceServer/pictures/framedNameOf';
 import { processedNameOf } from '@ValenceServer/pictures/processedNameOf';
 import { readPicture } from '@ValenceServer/pictures/readPicture';
 import { upgradeFaces } from '@ValenceServer/pictures/upgradeFaces';
+import { upgradePictures } from '@ValenceServer/pictures/upgradePictures';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 
@@ -80,21 +81,28 @@ const createServerPictures = (directory: string, isRound = true): ServerPictures
         return wrong;
       }
 
-      await remove(key);
+      const extension = extensionFor(picture.contentType) ?? '.png';
+      const name = `${key}${extension}`;
+      const unkept = isRound
+        ? await keepFace(directory, name, picture.body, frame)
+        : await keepPicture(directory, name, picture.body);
 
-      const name = `${key}${extensionFor(picture.contentType) ?? '.png'}`;
-
-      if (!isRound) {
-        return keepPicture(directory, name, picture.body);
+      if (unkept !== null) {
+        return unkept;
       }
 
-      const unkept = await keepFace(directory, name, picture.body, frame);
+      await Promise.all([
+        ...KEPT_AS.filter((other) => other !== extension).flatMap((other) => [
+          rm(join(directory, `${key}${other}`), { force: true }),
+          rm(join(directory, PICTURE_FOLDERS.originals, `${key}${other}`), { force: true }),
+        ]),
+        rm(join(directory, `${key}${extension}`), { force: true }),
+        isRound && frame !== null
+          ? writeFile(frameFileOf(key), JSON.stringify(frame))
+          : rm(frameFileOf(key), { force: true }),
+      ]);
 
-      if (unkept === null && frame !== null) {
-        await writeFile(frameFileOf(key), JSON.stringify(frame));
-      }
-
-      return unkept;
+      return null;
     },
 
     read: async (key) => {
@@ -121,6 +129,16 @@ const createServerPictures = (directory: string, isRound = true): ServerPictures
         ...(await picturesIn(directory)),
         ...(await picturesIn(join(directory, PICTURE_FOLDERS.originals))),
       ];
+
+      if (!isRound) {
+        await upgradePictures(
+          directory,
+          names.map((name) => ({ name, cropping: null })),
+          onProblem,
+        );
+
+        return;
+      }
 
       await upgradeFaces(
         directory,

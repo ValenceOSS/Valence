@@ -28,16 +28,13 @@ const keepFace = async (
   frame: PhotoFrame | null,
   tone: PictureTone | null = null,
 ): Promise<'unreadable' | null> => {
-  const made = await Promise.all([
-    processFace(body),
-    cropPicture(body, frame, CROPS.face, tone),
-  ]).catch(() => null);
+  const whole = await processFace(body).catch(() => null);
+  const framed =
+    whole === null ? null : await cropPicture(body, frame, CROPS.face, tone).catch(() => null);
 
-  if (made === null) {
+  if (whole === null || framed === null) {
     return 'unreadable';
   }
-
-  const [whole, framed] = made;
 
   await mkdir(join(directory, PICTURE_FOLDERS.originals), { recursive: true });
   await mkdir(join(directory, PICTURE_FOLDERS.processed), { recursive: true });

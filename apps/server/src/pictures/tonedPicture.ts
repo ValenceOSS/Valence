@@ -1,11 +1,32 @@
 import sharp from 'sharp';
-import { colourMatrix } from './colourMatrix';
+import { toneMatrix } from '@ValenceCore/pictures/toneMatrix';
 import type { PictureTone } from '@ValenceCore/pictures/PictureTone';
+
+/**
+ * How colourful a tone makes a picture and how far round the colour wheel it swings it, as the three
+ * rows sharp recombines red, green and blue by, read from the matrix every client draws the tone with.
+ *
+ * @param tone - The tone.
+ * @returns The rows for red, green and blue.
+ */
+const colouring = (
+  tone: PictureTone,
+): [[number, number, number], [number, number, number], [number, number, number]] => {
+  const matrix = toneMatrix({ ...tone, contrast: 1, brightness: 1, layer: null });
+  const row = (at: number): [number, number, number] => [
+    matrix[at] ?? 0,
+    matrix[at + 1] ?? 0,
+    matrix[at + 2] ?? 0,
+  ];
+
+  return [row(0), row(5), row(10)];
+};
 
 /**
  * Draws a picture in a tone as a browser previews it: made more or less colourful and swung round
  * the colour wheel, then more or less contrasting, then brighter or darker, each as CSS draws it, and
- * then a colour laid over it and blended — softly, as an overlay, as a screen, or by difference. An animated picture is toned on every frame.
+ * then a colour laid over it and blended — softly, as an overlay, as a screen, or by difference. An
+ * animated picture is toned on every frame.
  *
  * @param body - The picture, saved without loss.
  * @param tone - The tone.
@@ -22,10 +43,7 @@ const tonedPicture = async (
   const coloured =
     tone.saturate === 1 && tone.hueRotate === 0
       ? body
-      : await sharp(body, read)
-          .recomb(colourMatrix(tone.saturate, tone.hueRotate))
-          .webp({ lossless: true })
-          .toBuffer();
+      : await sharp(body, read).recomb(colouring(tone)).webp({ lossless: true }).toBuffer();
   const lit =
     tone.contrast === 1 && tone.brightness === 1
       ? coloured

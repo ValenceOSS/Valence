@@ -96,6 +96,23 @@ describe('createServerPictures', () => {
     await expect(pictures.read('own')).resolves.toBeNull();
   });
 
+  it('keeps the picture it had where a new one turns out unreadable', async () => {
+    const directory = await aFolder();
+    const pictures = createServerPictures(directory);
+    const whole = await aPhoto('jpeg');
+
+    await pictures.save('own', { body: await aPhoto(), contentType: 'image/png' });
+    await expect(
+      pictures.save('own', {
+        body: whole.slice(0, Math.floor(whole.length / 2)),
+        contentType: 'image/jpeg',
+      }),
+    ).resolves.toBe('unreadable');
+
+    expect((await pictures.read('own'))?.contentType).toBe('image/webp');
+    expect(await readdir(join(directory, 'originals'))).toContain('own.png');
+  });
+
   it('brings pictures kept loose before up to date', async () => {
     const directory = await aFolder();
     const pictures = createServerPictures(directory);

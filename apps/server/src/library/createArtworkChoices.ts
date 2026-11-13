@@ -8,7 +8,7 @@ import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { diskPictureAddress } from './diskPictureAddress';
 import { uploadPictureAddress } from './uploadPictureAddress';
-import { UPLOAD_ADDRESS } from './UPLOAD_ADDRESS';
+import { uploadAddressOf } from './uploadAddressOf';
 import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm';
 import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -329,7 +329,7 @@ const createArtworkChoices = ({
     }
 
     const isKeptHere =
-      UPLOAD_ADDRESS.test(url) || (await picturesOnDisk(title)).some((one) => one.url === url);
+      uploadAddressOf(url) !== null || (await picturesOnDisk(title)).some((one) => one.url === url);
 
     if (!isKeptHere) {
       const options = await readOptions?.({
@@ -547,7 +547,8 @@ const createArtworkChoices = ({
 
     return (
       typeof title !== 'string' &&
-      (UPLOAD_ADDRESS.test(url) || (await picturesOnDisk(title)).some((one) => one.url === url))
+      (uploadAddressOf(url) !== null ||
+        (await picturesOnDisk(title)).some((one) => one.url === url))
     );
   };
 

@@ -1,13 +1,5 @@
-type PictureTone = {
-  saturate: number;
-  hueRotate: number;
-  contrast: number;
-  brightness: number;
-  layer: {
-    colour: string;
-    blend: 'soft-light' | 'overlay' | 'screen' | 'difference';
-    opacity: number;
-  } | null;
-};
+import type { PhotoFilterLook } from '@ValenceContracts/constants/PHOTO_FILTER_LOOKS';
+
+type PictureTone = PhotoFilterLook;
 
 export type { PictureTone };

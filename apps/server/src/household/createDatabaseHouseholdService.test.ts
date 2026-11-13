@@ -92,6 +92,33 @@ describe('createDatabaseHouseholdService', () => {
   );
 
   it(
+    'keeps a drawn face on its colour, and draws it there',
+    async () => {
+      const service = await aService();
+
+      await service.change('ada', {
+        colour: '#3ac47d',
+        avatar: { kind: 'drawn', style: 'bottts', seed: 'ada', isOnColour: true },
+      });
+
+      await expect(service.read('ada')).resolves.toMatchObject({
+        avatar: { kind: 'drawn', seed: 'ada', isOnColour: true },
+      });
+
+      const drawn = await service.readAvatar('ada');
+
+      expect(new TextDecoder().decode(drawn?.body)).toContain('3ac47d');
+
+      await service.change('ada', { avatar: { kind: 'drawn', style: 'bottts', seed: 'ada' } });
+
+      await expect(service.read('ada')).resolves.not.toMatchObject({
+        avatar: { isOnColour: true },
+      });
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'says nothing changed for a household that is not there',
     async () => {
       const service = await aService();

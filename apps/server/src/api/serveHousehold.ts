@@ -126,7 +126,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const picture = await faces.readPicture(account.id, context.req.query('framed') !== undefined);
+    const picture = await faces.readPicture(account.id, context.req.query('framed') === '1');
 
     if (picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -148,7 +148,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
     const picture = await faces?.readPicture(
       context.req.param('userId'),
-      context.req.query('framed') !== undefined,
+      context.req.query('framed') === '1',
     );
 
     if (picture === undefined || picture === null) {
@@ -199,10 +199,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
     }
 
-    const picture = await profiles?.readAvatar(
-      profileId,
-      context.req.query('framed') !== undefined,
-    );
+    const picture = await profiles?.readAvatar(profileId, context.req.query('framed') === '1');
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
@@ -228,7 +225,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const picture =
       accountId === null || accountId === undefined
         ? null
-        : await faces?.readPicture(accountId, context.req.query('framed') !== undefined);
+        : await faces?.readPicture(accountId, context.req.query('framed') === '1');
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
