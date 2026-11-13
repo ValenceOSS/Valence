@@ -894,7 +894,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaId, watchedAt] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope, true);
+        await seenBy(mediaId, await viewingAs(profileId, scope));
         await host.viewing.markWatched(profileId, mediaId, watchedAt ?? null);
 
         return null;
@@ -904,7 +904,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaId] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope, true);
+        await seenBy(mediaId, await viewingAs(profileId, scope));
         await host.viewing.markUnwatched(profileId, mediaId);
 
         return null;

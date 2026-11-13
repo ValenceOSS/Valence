@@ -860,6 +860,24 @@ describe('the plugin broker', () => {
     );
   });
 
+  it('marks nothing watched or unwatched for something the person cannot see', async () => {
+    const { ask, host } = build([{ kind: 'viewing', access: 'write' }]);
+
+    vi.mocked(host.library.get).mockResolvedValueOnce(null);
+
+    await expect(ask('viewing.markWatched', ['p1', 'hidden'])).rejects.toThrow(
+      'no such thing in their library',
+    );
+
+    vi.mocked(host.library.get).mockResolvedValueOnce(null);
+
+    await expect(ask('viewing.markUnwatched', ['p1', 'hidden'])).rejects.toThrow(
+      'no such thing in their library',
+    );
+    expect(host.viewing.markWatched).not.toHaveBeenCalled();
+    expect(host.viewing.markUnwatched).not.toHaveBeenCalled();
+  });
+
   it('renames, empties and removes playlists only with playlists write', async () => {
     const reader = build([{ kind: 'playlists', access: 'read' }]);
 
