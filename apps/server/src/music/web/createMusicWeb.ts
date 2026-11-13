@@ -1,7 +1,9 @@
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
+import { isPublicWebAddress } from '@ValenceServer/live/isPublicWebAddress';
 import { reportStatus } from '@ValenceServer/sources/reportStatus';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 import type { TroubleReason } from '@ValenceServer/sources/SourceTrouble';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -12,6 +14,7 @@ type WebFetch = (
     signal: AbortSignal;
     method?: 'POST';
     body?: string;
+    redirect?: 'manual';
   },
 ) => Promise<Response>;
 
@@ -34,9 +37,14 @@ type MusicWebOptions = {
   wait?: (ms: number) => Promise<void>;
   now?: () => number;
   timeoutMs?: number;
+  resolve?: Resolve;
 };
 
 const DEFAULT_SPACING_MS = 250;
+
+const MOST_REDIRECTS = 3;
+
+const MOST_BODY_BYTES = 32 * 1024 * 1024;
 
 const RETRIES = 2;
 
@@ -45,6 +53,47 @@ const GIVES_UP_AFTER_MS = 20_000;
 const BACKOFF_MS = 2000;
 
 const LIMITS_WITH_503 = new Set(['musicbrainz.org']);
+
+/**
+ * Reads an answer's body, giving up on one that runs past what any picture or page is.
+ *
+ * @param answer - The answer.
+ * @returns Its bytes, or nothing where there was no answer, it could not be read or it was too big.
+ */
+const readCapped = async (answer: Response | null): Promise<Uint8Array | null> => {
+  const reader = answer?.body?.getReader();
+
+  if (reader === undefined) {
+    return null;
+  }
+
+  const chunks: Uint8Array[] = [];
+  let held = 0;
+
+  try {
+    for (;;) {
+      const read = await reader.read();
+
+      if (read.done || !(read.value instanceof Uint8Array)) {
+        break;
+      }
+
+      held += read.value.length;
+
+      if (held > MOST_BODY_BYTES) {
+        await reader.cancel();
+
+        return null;
+      }
+
+      chunks.push(read.value);
+    }
+  } catch {
+    return null;
+  }
+
+  return new Uint8Array(Buffer.concat(chunks));
+};
 
 /**
  * The server's way out to the services music is described by, made to be a good guest on each.
@@ -63,6 +112,9 @@ const LIMITS_WITH_503 = new Set(['musicbrainz.org']);
  * answer at all — is reported to the trouble watch as well, so a cache does not keep it and a
  * search can say why it found nothing.
  *
+ * Pictures and pages are fetched only from public addresses, checked again at every redirect, and
+ * only up to thirty-two mebibytes of them are read.
+ *
  * @param options - Who to say is asking, how far apart to space each site's requests, how long to
  *   wait for an answer, and — for a test — how to fetch, wait and tell the time.
  * @returns A way to ask for JSON, and one that answers nothing at all where the site couldn't be
@@ -76,6 +128,7 @@ const createMusicWeb = ({
   wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
   timeoutMs = GIVES_UP_AFTER_MS,
+  resolve,
 }: MusicWebOptions): MusicWeb & QueryWeb => {
   const nextAllowed = new Map<string, number>();
   const queues = new Map<string, Promise<void>>();
@@ -110,13 +163,43 @@ const createMusicWeb = ({
     }
   };
 
+  const sentChecked = async (
+    url: string,
+    init: Parameters<WebFetch>[1],
+  ): Promise<Response | null> => {
+    let at = url;
+
+    for (let hop = 0; hop <= MOST_REDIRECTS; hop += 1) {
+      if (!(await isPublicWebAddress(at, resolve))) {
+        return null;
+      }
+
+      const answer = await fetchImpl(at, { ...init, redirect: 'manual' });
+      const location = answer.headers.get('location');
+
+      if (answer.status < 300 || answer.status >= 400 || location === null) {
+        return answer;
+      }
+
+      void answer.body?.cancel();
+      at = new URL(location, at).toString();
+    }
+
+    return null;
+  };
+
   const reach = async (
     url: string,
     accept: string,
     body: JsonValue | null = null,
+    isChecked = false,
   ): Promise<Response | null | undefined> => {
     const host = new URL(url).host;
     let status = 0;
+
+    if (isChecked && !(await isPublicWebAddress(url, resolve))) {
+      return null;
+    }
 
     const failing = (reason: TroubleReason) => {
       failed += 1;
@@ -126,16 +209,17 @@ const createMusicWeb = ({
     };
 
     for (let attempt = 0; attempt <= RETRIES; attempt += 1) {
+      const init = {
+        headers: {
+          'user-agent': userAgent,
+          accept,
+          ...(body === null ? {} : { 'content-type': 'application/json' }),
+        },
+        signal: AbortSignal.timeout(timeoutMs),
+        ...(body === null ? {} : { method: 'POST' as const, body: JSON.stringify(body) }),
+      };
       const answer = await inTurn(host, async () =>
-        fetchImpl(url, {
-          headers: {
-            'user-agent': userAgent,
-            accept,
-            ...(body === null ? {} : { 'content-type': 'application/json' }),
-          },
-          signal: AbortSignal.timeout(timeoutMs),
-          ...(body === null ? {} : { method: 'POST' as const, body: JSON.stringify(body) }),
-        }).catch(() => null),
+        (isChecked ? sentChecked(url, init) : fetchImpl(url, init)).catch(() => null),
       );
 
       if (answer === null) {
@@ -166,8 +250,9 @@ const createMusicWeb = ({
     url: string,
     accept: string,
     body: JsonValue | null = null,
+    isChecked = false,
   ): Promise<Response | null> => {
-    const answer = await reach(url, accept, body);
+    const answer = await reach(url, accept, body, isChecked);
 
     return answer ?? null;
   };
@@ -193,21 +278,15 @@ const createMusicWeb = ({
     post: async (url, body) => readJson(await ask(url, 'application/json', body)),
 
     bytes: async (url) => {
-      const answer = await ask(url, 'image/*');
+      const read = await readCapped(await ask(url, 'image/*', null, true));
 
-      if (answer === null) {
-        return null;
-      }
-
-      const read = await answer.arrayBuffer().catch(() => null);
-
-      return read === null || read.byteLength === 0 ? null : new Uint8Array(read);
+      return read === null || read.byteLength === 0 ? null : read;
     },
 
     text: async (url) => {
-      const answer = await ask(url, 'text/html');
+      const read = await readCapped(await ask(url, 'text/html', null, true));
 
-      return answer === null ? null : answer.text().catch(() => null);
+      return read === null ? null : new TextDecoder().decode(read);
     },
   };
 };

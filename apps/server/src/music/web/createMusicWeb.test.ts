@@ -3,6 +3,8 @@ import { createMusicWeb } from './createMusicWeb';
 import type { WebFetch } from './createMusicWeb';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 
+const PUBLIC = () => Promise.resolve(['93.184.216.34']);
+
 const answering =
   (...answers: Response[]): WebFetch =>
   () =>
@@ -28,6 +30,7 @@ describe('createMusicWeb', () => {
       userAgent: 'x',
       spacingMs: {},
       fetchImpl: answering(Response.json({ a: 1 }), new Response(new Uint8Array([1, 2, 3]))),
+      resolve: PUBLIC,
     });
 
     expect(await web.json('https://a.test/')).toEqual({ a: 1 });
@@ -207,5 +210,50 @@ describe('createMusicWeb', () => {
     const { trouble } = await troubleWatch.during(() => web.json('https://musicbrainz.org/ws/2/x'));
 
     expect(trouble).toBeNull();
+  });
+
+  it('fetches no picture from an address that leads inside', async () => {
+    const fetchImpl = vi.fn<WebFetch>(() => Promise.resolve(new Response(new Uint8Array([1]))));
+    const web = createMusicWeb({ userAgent: 'x', spacingMs: {}, fetchImpl, resolve: PUBLIC });
+
+    expect(await web.bytes('http://127.0.0.1:8420/api/x')).toBeNull();
+    expect(await web.bytes('https://internal.test/x')).not.toBeNull();
+    expect(
+      await createMusicWeb({
+        userAgent: 'x',
+        spacingMs: {},
+        fetchImpl,
+        resolve: () => Promise.resolve(['10.0.0.5']),
+      }).bytes('https://rebinding.test/x'),
+    ).toBeNull();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('checks every address a picture redirects to', async () => {
+    const fetchImpl = vi.fn<WebFetch>(() =>
+      Promise.resolve(
+        new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/x' } }),
+      ),
+    );
+    const web = createMusicWeb({ userAgent: 'x', spacingMs: {}, fetchImpl, resolve: PUBLIC });
+
+    expect(await web.bytes('https://cdn.test/x')).toBeNull();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives up on a picture larger than any picture is', async () => {
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(8 * 1024 * 1024));
+      },
+    });
+    const web = createMusicWeb({
+      userAgent: 'x',
+      spacingMs: {},
+      fetchImpl: answering(new Response(endless)),
+      resolve: PUBLIC,
+    });
+
+    expect(await web.bytes('https://cdn.test/huge')).toBeNull();
   });
 });
