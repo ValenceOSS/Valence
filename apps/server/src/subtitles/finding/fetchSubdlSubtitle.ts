@@ -63,14 +63,17 @@ const fetchSubdlSubtitle = async (
     let inflated = 0;
     const files = unzipSync(zipped, {
       filter: (file) => {
+        if (
+          subtitleKindOf(file.name) === null ||
+          file.originalSize > MOST_SUBTITLE_BYTES ||
+          file.size > MOST_SUBTITLE_BYTES
+        ) {
+          return false;
+        }
+
         inflated += file.originalSize;
 
-        return (
-          subtitleKindOf(file.name) !== null &&
-          file.originalSize <= MOST_SUBTITLE_BYTES &&
-          file.size <= MOST_SUBTITLE_BYTES &&
-          inflated <= MOST_INFLATED_BYTES
-        );
+        return inflated <= MOST_INFLATED_BYTES;
       },
     });
     const subtitles = Object.keys(files)

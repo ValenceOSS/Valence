@@ -18,6 +18,20 @@ describe('fetchSubdlSubtitle', () => {
     });
   });
 
+  it('counts only subtitles against what it will inflate, so a large file beside them takes nothing from them', async () => {
+    const zip = zipSync({
+      'poster.jpg': new Uint8Array(40 * 1024 * 1024),
+      'Film.srt': new TextEncoder().encode('1\n00:00:01,000 --> 00:00:02,000\nHi\n'),
+    });
+
+    expect(zip.length).toBeLessThan(1024 * 1024);
+    expect(await fetchSubdlSubtitle('/subtitle/1.zip', null, answeringWith(zip))).toEqual({
+      kind: 'downloaded',
+      bytes: new TextEncoder().encode('1\n00:00:01,000 --> 00:00:02,000\nHi\n'),
+      extension: 'srt',
+    });
+  });
+
   it('inflates no subtitle that declares more than a subtitle could be', async () => {
     const zip = zipSync({ 'Film.srt': new Uint8Array(6 * 1024 * 1024) });
 
