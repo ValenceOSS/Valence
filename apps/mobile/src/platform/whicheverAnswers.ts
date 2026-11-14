@@ -1,9 +1,12 @@
+import { recogniseJellyfinAt } from '@ValenceClient/jellyfin/recogniseJellyfinAt';
+
 const HEALTH = '/api/health';
 
 const LONG_ENOUGH = 6000;
 
 /**
- * The first of these addresses with a Valence behind it.
+ * The first of these addresses with a Valence behind it, or a Jellyfin server, which is remembered
+ * as one so the phone talks to it as Jellyfin from then on.
  *
  * Asked of each in turn rather than all at once, so the order they were offered in is the order
  * they are tried and the answer is the best guess that worked rather than the quickest to reply.
@@ -27,10 +30,16 @@ const whicheverAnswers = async (addresses: readonly string[]): Promise<string | 
     const answered = await fetch(`${address}${HEALTH}`, { signal: giveUp.signal }).catch(
       () => null,
     );
+    const isJellyfin =
+      (answered === null || !answered.ok) && !giveUp.signal.aborted
+        ? await recogniseJellyfinAt(address, (url) => fetch(url, { signal: giveUp.signal })).catch(
+            () => false,
+          )
+        : false;
 
     clearTimeout(waiting);
 
-    if (answered !== null && answered.ok) {
+    if (isJellyfin || (answered !== null && answered.ok)) {
       return address;
     }
   }

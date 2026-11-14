@@ -1,0 +1,3 @@
+const JELLYFIN_VERSION = '10.10.7';
+
+export { JELLYFIN_VERSION };

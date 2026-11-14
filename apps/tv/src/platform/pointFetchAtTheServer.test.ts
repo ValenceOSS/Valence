@@ -1,6 +1,6 @@
 import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
 import { readDeviceHints } from '@ValenceContracts/functions/readDeviceHints';
-import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { installPlatform, platformInUse } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { PLACEHOLDER } from '@ValenceClient/session/askTheServer';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
@@ -10,6 +10,7 @@ import {
   withTheSession,
 } from '@ValenceTv/platform/pointFetchAtTheServer';
 import { keepTheSessionToken } from '@ValenceTv/platform/theSessionToken';
+import { jellyfinLinks } from '@ValenceClient/jellyfin/jellyfinLinks';
 
 const realFetch = globalThis.fetch;
 
@@ -96,6 +97,32 @@ describe('withTheSession', () => {
 });
 
 describe('pointFetchAtTheServer', () => {
+  it('answers Valence’s endpoints itself for a Jellyfin server, asking Jellyfin rather than Valence', async () => {
+    const sent = jest.fn<Promise<Response>, [string | URL | Request, RequestInit | undefined]>(() =>
+      Promise.resolve(new Response('{}')),
+    );
+
+    globalThis.fetch = sent;
+    installPlatform(aFakePlatform());
+    rememberServerAddress('http://jellyfin.local:8096');
+    jellyfinLinks(platformInUse().store).keep({
+      address: 'http://jellyfin.local:8096',
+      serverId: 'jf',
+      serverName: 'Den',
+      token: null,
+      userId: null,
+      userName: null,
+      isAdministrator: false,
+    });
+    pointFetchAtTheServer();
+
+    const about = await fetch('/api/about');
+
+    expect(about.status).toBe(200);
+    expect(await about.text()).toContain('"features"');
+    expect(sent).not.toHaveBeenCalled();
+  });
+
   it('sends a path to the server, signed', async () => {
     const sent = jest.fn<Promise<Response>, [string | URL | Request, RequestInit | undefined]>(() =>
       Promise.resolve(new Response('{}')),

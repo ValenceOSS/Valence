@@ -6,6 +6,7 @@ import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { isAValence } from '@ValenceTv/native/isAValence';
+import { recogniseJellyfinAt } from '@ValenceClient/jellyfin/recogniseJellyfinAt';
 import { whichTv } from '@ValenceTv/native/whichTv';
 import type { TvKind } from '@ValenceTv/platform/TvKind';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
@@ -91,7 +92,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
     setProblem(null);
 
     for (const address of addresses) {
-      if (await isAValence(address)) {
+      if ((await recogniseJellyfinAt(address).catch(() => false)) || (await isAValence(address))) {
         setIsAsking(false);
         onChosen(address);
 

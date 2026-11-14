@@ -1,0 +1,71 @@
+---
+title: Using Jellyfin apps with Valence
+description: Add your Valence to Findroid, Swiftfin, Jellyfin Media Player, Infuse or Streamyfin as a Jellyfin server, and watch from it with the app you already use.
+order: 22
+---
+
+Valence also answers as a Jellyfin server. Any app made for Jellyfin, such as Findroid on Android, Swiftfin on an iPhone or Apple TV, Jellyfin Media Player on a computer, Infuse or Streamyfin, can add your Valence, sign in, browse your films and programmes, play them, and keep your place. What you watch there shows up in Valence's own apps, and the other way round.
+
+There is nothing to turn on. Every Valence server answers at its own address with `/jellyfin` on the end.
+
+## Add the server
+
+In the Jellyfin app, add a server and give it your Valence's address followed by `/jellyfin`:
+
+```text
+https://valence.example.com/jellyfin
+```
+
+Use the same address you open Valence at in a browser, with `/jellyfin` added. The app checks it and shows your server's name.
+
+If Valence sits behind a reverse proxy, the proxy must pass `/jellyfin` through to Valence the same way it passes everything else. A proxy that only forwards `/` and `/api` will need `/jellyfin` added. See [Reverse proxy](/install/reverse-proxy).
+
+## Sign in
+
+Sign in with your Valence account's email address or username and its password. You watch as your account's own profile.
+
+To watch as another profile on the account, add `#` and the profile's name to what you type:
+
+```text
+you@example.com#Kids
+```
+
+Each profile is its own user in the Jellyfin app, with its own place in everything, its own favourites and only the libraries and titles that profile may see.
+
+- **A profile locked with a PIN can't be used from a Jellyfin app.** Jellyfin apps have nowhere to ask for a PIN, so Valence turns the sign-in away rather than letting anybody past it. Sign in as another profile, or take the PIN off in Valence.
+- **An account with two-step sign-in** signs in with an API key in place of its password, because Jellyfin apps can't ask for a code. Make one under **Account → API keys** in Valence and paste it as the password. Holding API keys is a permission of its own, so ask an administrator if the card isn't there. The key watches as the profile it was made for, so leave the `#` off or name that profile.
+
+Signing out in the app signs that device out of Valence. It shows in your devices list in Valence while it is signed in.
+
+## What works
+
+| In the Jellyfin app                   | From Valence                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Libraries                             | Your film and programme libraries, as far as your profile may see them                          |
+| Browsing, sorting, filters and search | Films, programmes, seasons and episodes, with their pictures, story and cast                    |
+| Continue watching, Next up, Latest    | Where you got to, the next episode of what you're watching, and what arrived most recently      |
+| Playing                               | The file as it is where the app can play it, or a stream Valence converts for it where it can't |
+| Watched, unwatched and favourites     | Written to your progress and favourites in Valence                                              |
+
+How a title plays is decided as it is for Valence's own apps: the app says what it can play, and Valence sends the file untouched or converts what it must. Stream limits, age limits and library access all hold.
+
+## What doesn't
+
+- Jellyfin's dashboard and anything an administrator does there. Manage Valence in Valence.
+- Live TV, music and audiobooks. They stay in Valence's own apps for now.
+- SyncPlay and Jellyfin plugins.
+- Trailers, extras and "more like this", which come back empty.
+
+## Valence's apps on a Jellyfin server
+
+It works the other way round too. Valence's phone app and TV app can be pointed at a Jellyfin server, so somebody whose household still runs Jellyfin can watch from it with Valence's apps.
+
+Type the Jellyfin server's address where the app asks for your server, such as `http://192.168.1.10:8096`. The app recognises it as Jellyfin and asks you to sign in with your Jellyfin username and password. From then on you see your Jellyfin user's film and programme libraries, the title pages, continue watching and the next episode, and you play from Jellyfin: the file as it is where the device can play it, or Jellyfin's own converted stream where it can't. Where you got to, what you finished and your favourites are written back to Jellyfin, so the Jellyfin apps see them too.
+
+Only what Jellyfin has a counterpart for is offered. Profiles, requests, music, audiobooks, live TV, downloads, watch parties and everything an administrator does are Valence's and aren't shown. To use them, point the app at a Valence server instead, from the account page.
+
+## If an app won't connect
+
+- **Check the address ends in `/jellyfin`.** Without it the app reaches Valence's own web app, which isn't a Jellyfin server.
+- **Check the app reaches Valence at all.** Open `https://valence.example.com/jellyfin/System/Info/Public` in a browser on the same device. It should show your server's name and a Jellyfin version.
+- **"Wrong username or password"** with the right password usually means the account has two-step sign-in, or the profile after the `#` is locked with a PIN or is spelt differently. Use an API key, or another profile.
