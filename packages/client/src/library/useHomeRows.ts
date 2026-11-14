@@ -586,7 +586,9 @@ const useHomeRows = (
         upNext.data ?? [],
       ).slice(0, ROW_LIMIT),
       picked: hasPicking
-        ? (picking.data ?? NOTHING).filter((media) => watchable.includes(media.libraryId))
+        ? (picking.data ?? NOTHING).filter(
+            (media) => watchable.includes(media.libraryId) && !likedIds.includes(media.id),
+          )
         : pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
       recent: [...(recent.data ?? NOTHING)].sort(byNewest),
       because: (because.data ?? []).map((one) => ({

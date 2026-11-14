@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { favourite, mediaItem, rating, watchHistory } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -145,7 +145,17 @@ const readPickedForYou = async ({
     .from(watchHistory)
     .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
     .where(and(eq(watchHistory.profileId, profileId), isNull(mediaItem.extraKind)))
+    .orderBy(desc(watchHistory.lastWatchedAt))
     .limit(VIEWINGS_READ);
+  const started = await db
+    .selectDistinct({
+      id: mediaItem.id,
+      parentId: mediaItem.parentId,
+      seriesId: mediaItem.seriesId,
+    })
+    .from(watchHistory)
+    .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
+    .where(eq(watchHistory.profileId, profileId));
   const stars = await db
     .select({ mediaId: rating.mediaItemId, seriesId: rating.seriesId, stars: rating.stars })
     .from(rating)
@@ -248,7 +258,7 @@ const readPickedForYou = async ({
     profileId,
     recommended,
     ratings,
-    leaveOut: new Set([...histories.keys(), ...keptIds]),
+    leaveOut: new Set([...started.map(titleOf), ...keptIds]),
     limit,
   });
   const cards = await readSummaries(db, viewer, ranked, artworkAddressOf);

@@ -699,20 +699,26 @@ describe('useHomeRows', () => {
     expect(picked?.items.map((media) => media.id)).not.toContain('drama-0');
   });
 
-  it('takes what is picked for the profile from the server where it can pick', async () => {
+  it('takes what is picked for the profile from the server where it can pick, leaving out what was started since', async () => {
     serverHasMock.mockImplementation((feature) => feature !== 'library.homeShelves');
     facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
     aLibrary({ byGenre: { Drama: films('drama', 8, 'Drama') } });
     pickedMock.mockResolvedValue(films('picked', 6, 'Western'));
 
-    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inACache,
-    });
+    const { result } = renderHook(
+      () =>
+        useHomeRows(VIEWER, [LIBRARY], new Map([['picked-0', halfWay('picked-0')]]), true, true),
+      { wrapper: inACache },
+    );
 
     await waitFor(() => {
       expect(
         result.current.rails.find((rail) => rail.id === 'picked')?.items.map((media) => media.id),
-      ).toEqual(films('picked', 6, 'Western').map((media) => media.id));
+      ).toEqual(
+        films('picked', 6, 'Western')
+          .slice(1)
+          .map((media) => media.id),
+      );
     });
     expect(pickedMock).toHaveBeenCalled();
   });
