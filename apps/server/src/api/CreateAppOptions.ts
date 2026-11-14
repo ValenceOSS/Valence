@@ -118,6 +118,7 @@ import type { EmailService } from '@ValenceServer/email/EmailService';
 import type { TelemetryService } from '@ValenceServer/telemetry/TelemetryService';
 import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 import type { TrailerAddresses } from '@ValenceServer/requests/trailers/TrailerAddresses';
+import type { StreamMeter } from '@ValenceServer/monitor/createStreamMeter';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -347,6 +348,7 @@ type CreateAppOptions = {
   log?: Logger;
   jobHistory?: JobHistoryStore;
   resourceHistory?: ResourceHistoryStore;
+  streamMeter?: StreamMeter;
   events?: EventBus;
   plugins?: (requests: PluginHost['requests']) => PluginService;
   imports?: ImportService;

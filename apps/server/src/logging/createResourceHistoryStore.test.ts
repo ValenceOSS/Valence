@@ -42,7 +42,7 @@ describe('reading a range of resource history', () => {
 });
 
 describe('asRecord', () => {
-  it('carries a stored sample over as it was recorded', () => {
+  it('carries a stored sample over as it was recorded, network and all', () => {
     const record = asRecord({
       id: 'sample-1',
       atMs: 1000,
@@ -52,6 +52,9 @@ describe('asRecord', () => {
       systemMemoryTotalBytes: 4096,
       cpuCount: 4,
       gpuPercent: null,
+      networkReceivedBytesPerSecond: 125_000,
+      networkSentBytesPerSecond: 2_500_000,
+      streamedBytesPerSecond: null,
     });
 
     expect(record).toStrictEqual({
@@ -63,6 +66,9 @@ describe('asRecord', () => {
       systemMemoryTotalBytes: 4096,
       cpuCount: 4,
       gpuPercent: null,
+      networkReceivedBytesPerSecond: 125_000,
+      networkSentBytesPerSecond: 2_500_000,
+      streamedBytesPerSecond: null,
     });
   });
 });

@@ -11,14 +11,14 @@ const ReadingSchema = z.object({
   }),
 });
 
-const NOTHING = { requests: null, apiCpuPercent: null };
+const NOTHING = { requests: null, apiCpuPercent: null, streamedBytesPerSecond: null };
 
 describe('withValenceUse', () => {
   it('says what this process is holding and using, which the media service cannot see', () => {
     const reading = ReadingSchema.parse(
       withValenceUse(
         { resources: { serviceMemoryBytes: 16 } },
-        { requests: null, apiCpuPercent: 12 },
+        { requests: null, apiCpuPercent: 12, streamedBytesPerSecond: null },
       ),
     );
 
@@ -32,12 +32,35 @@ describe('withValenceUse', () => {
     const reading = ReadingSchema.parse(
       withValenceUse(
         { resources: { serviceMemoryBytes: 16 } },
-        { requests: { bytes: 3_200_000_000, cpuPercent: 80 }, apiCpuPercent: null },
+        {
+          requests: { bytes: 3_200_000_000, cpuPercent: 80 },
+          apiCpuPercent: null,
+          streamedBytesPerSecond: null,
+        },
       ),
     );
 
     expect(reading.resources.requestsMemoryBytes).toBe(3_200_000_000);
     expect(reading.resources.requestsCpuPercent).toBe(80);
+  });
+
+  it('says how fast viewers are being sent what they watch, and nothing before it is known', () => {
+    const StreamedSchema = z.object({
+      resources: z.object({ streamedBytesPerSecond: z.number().nullable() }),
+    });
+
+    expect(
+      StreamedSchema.parse(
+        withValenceUse(
+          { resources: {} },
+          { requests: null, apiCpuPercent: null, streamedBytesPerSecond: 2_500_000 },
+        ),
+      ).resources.streamedBytesPerSecond,
+    ).toBe(2_500_000);
+    expect(
+      StreamedSchema.parse(withValenceUse({ resources: {} }, NOTHING)).resources
+        .streamedBytesPerSecond,
+    ).toBeNull();
   });
 
   it('leaves everything else in the reading alone', () => {

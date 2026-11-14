@@ -99,6 +99,9 @@ import { useLookAgainWhenShown } from '@ValenceClient/query/useLookAgainWhenShow
 import { freshnessOf } from '@ValenceClient/query/freshnessOf';
 import { StatStrip } from './components/StatStrip/StatStrip';
 import { ProcessorInfo } from './components/ProcessorInfo/ProcessorInfo';
+import { NetworkInfo } from './components/NetworkInfo/NetworkInfo';
+import { speedsOf } from './components/DownloadsPanel/speedsOf';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { MemoryInfo } from './components/MemoryInfo/MemoryInfo';
 import { EngineGraphs } from '@ValenceScreens/components/AdminArea/components/EngineGraphs/EngineGraphs';
 import type { EngineReading } from '@ValenceScreens/components/AdminArea/components/EngineGraphs/EngineGraphs.types';
@@ -776,6 +779,10 @@ const AdminArea = ({
               reading.resources.graphics?.devicePercent ??
               reading.resources.graphics?.encoderPercent ??
               null,
+            networkReceivedBytesPerSecond:
+              reading.resources.network?.receivedBytesPerSecond ?? null,
+            networkSentBytesPerSecond: reading.resources.network?.sentBytesPerSecond ?? null,
+            streamedBytesPerSecond: reading.resources.streamedBytesPerSecond,
           },
         ].slice(-historyLength),
       );
@@ -1038,6 +1045,41 @@ const AdminArea = ({
                     fraction:
                       (mediaDisk.totalBytes - mediaDisk.availableBytes) / mediaDisk.totalBytes,
                   }),
+            },
+            {
+              label: say('common.network'),
+              value:
+                resources?.network === null || resources?.network === undefined ? (
+                  '—'
+                ) : (
+                  <span className="inline-flex gap-3">
+                    {speedsOf(
+                      resources.network.receivedBytesPerSecond,
+                      resources.network.sentBytesPerSecond,
+                    )}
+                  </span>
+                ),
+              ...(resources?.streamedBytesPerSecond === null ||
+              resources?.streamedBytesPerSecond === undefined
+                ? {}
+                : {
+                    detail: (
+                      <Sentence
+                        words="screens.adminArea.networkFigure.streamingAt"
+                        fillings={{
+                          speed: (
+                            <FormattedBytes bytes={resources.streamedBytesPerSecond} suffix="/s" />
+                          ),
+                        }}
+                      />
+                    ),
+                  }),
+              info: (
+                <NetworkInfo
+                  network={resources?.network ?? null}
+                  streamedBytesPerSecond={resources?.streamedBytesPerSecond ?? null}
+                />
+              ),
             },
           ]}
         />

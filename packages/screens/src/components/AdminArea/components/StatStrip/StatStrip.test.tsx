@@ -107,4 +107,20 @@ describe('StatStrip', () => {
 
     expect(screen.queryAllByRole('heading')).toHaveLength(0);
   });
+
+  it('stretches a figure left over on a row of its own across the row', () => {
+    const { container } = render(
+      <StatStrip
+        stats={['Processor', 'Memory', 'Graphics', 'Storage', 'Network'].map((label) => ({
+          label,
+          value: '1',
+        }))}
+      />,
+    );
+    const tiles = container.querySelectorAll('section.valence-card-shell');
+
+    expect(container.firstElementChild).toHaveClass('lg:grid-cols-4', '2xl:grid-cols-5');
+    expect(tiles[4]).toHaveClass('col-span-2', 'lg:col-span-4', '2xl:col-span-1');
+    expect(tiles[3]).not.toHaveClass('col-span-2');
+  });
 });

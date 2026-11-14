@@ -139,6 +139,8 @@ const MONITOR: Monitor = {
     disks: [],
     drives: [],
     graphics: null,
+    network: null,
+    streamedBytesPerSecond: null,
     graphicsNotes: [],
     artefacts: null,
   },

@@ -118,6 +118,8 @@ import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
 import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
 import { withValenceUse } from '@ValenceServer/monitor/withValenceUse';
+import { createStreamMeter } from '@ValenceServer/monitor/createStreamMeter';
+import { createRateAverage } from '@ValenceServer/monitor/createRateAverage';
 import { createRequestsUseWatch } from '@ValenceServer/monitor/createRequestsUseWatch';
 import { createCpuMeter } from '@ValenceCore/functions/createCpuMeter';
 import { watchForStalls } from '@ValenceServer/monitor/watchForStalls';
@@ -594,6 +596,8 @@ const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
 const MEASURES_THIS_PROCESS_EVERY_MS = 5_000;
 
+const MEASURES_STREAMING_EVERY_MS = 1_000;
+
 const BOOK_COVERS_AFTER_MS = 60_000;
 
 const MonitorResourceSampleSchema = z.object({
@@ -608,6 +612,11 @@ const MonitorResourceSampleSchema = z.object({
       .object({ devicePercent: z.number().nullable(), encoderPercent: z.number().nullable() })
       .nullable()
       .default(null),
+    network: z
+      .object({ receivedBytesPerSecond: z.number(), sentBytesPerSecond: z.number() })
+      .nullable()
+      .default(null),
+    streamedBytesPerSecond: z.number().nullable().default(null),
   }),
 });
 const env = readEnv(process.env);
@@ -2284,6 +2293,12 @@ const tellRequestsWhoIsWhoLater = () => {
   });
 };
 
+const streamMeter = createStreamMeter();
+
+setInterval(() => {
+  streamMeter.sample(Date.now());
+}, MEASURES_STREAMING_EVERY_MS).unref();
+
 const requestsUse =
   requestsSetup.kind === 'on' && requestsClient !== null
     ? createRequestsUseWatch({ read: () => requestsClient.readUse() })
@@ -2309,7 +2324,11 @@ setInterval(() => {
  *
  * @returns This process's figures and the requests service's.
  */
-const valenceUseNow = () => ({ requests: requestsUse?.current() ?? null, apiCpuPercent });
+const valenceUseNow = () => ({
+  requests: requestsUse?.current() ?? null,
+  apiCpuPercent,
+  streamedBytesPerSecond: streamMeter.bytesPerSecond(),
+});
 
 const requests =
   requestsSetup.kind === 'on' && requestsClient !== null
@@ -5473,6 +5492,7 @@ const app = createApp({
   log,
   jobHistory,
   resourceHistory,
+  streamMeter,
   presence,
   countUsers,
   promoteToAdmin,
@@ -6353,6 +6373,12 @@ const RESOURCE_SAMPLE_INTERVAL_MS = 60_000;
 
 let lastSampledAtMs = 0;
 
+const receivedOverTheMinute = createRateAverage();
+
+const sentOverTheMinute = createRateAverage();
+
+const streamedOverTheMinute = createRateAverage();
+
 /**
  * Records one resource sample for the load history, no more often than once a minute — the monitor
  * relay reads roughly once a second, and keeping every reading for a week would be tens of millions
@@ -6368,6 +6394,10 @@ const sampleResourcesThrottled = (reading: JsonValue): void => {
   }
 
   const { resources } = parsed.data;
+
+  receivedOverTheMinute.add(resources.network?.receivedBytesPerSecond ?? null);
+  sentOverTheMinute.add(resources.network?.sentBytesPerSecond ?? null);
+  streamedOverTheMinute.add(resources.streamedBytesPerSecond);
 
   if (resources.atMs - lastSampledAtMs < RESOURCE_SAMPLE_INTERVAL_MS) {
     return;
@@ -6385,6 +6415,9 @@ const sampleResourcesThrottled = (reading: JsonValue): void => {
       systemMemoryTotalBytes: resources.systemMemoryTotalBytes,
       cpuCount: resources.cpuCount,
       gpuPercent: resources.graphics?.devicePercent ?? resources.graphics?.encoderPercent ?? null,
+      networkReceivedBytesPerSecond: receivedOverTheMinute.take(),
+      networkSentBytesPerSecond: sentOverTheMinute.take(),
+      streamedBytesPerSecond: streamedOverTheMinute.take(),
     })
     .catch(() => {});
 };

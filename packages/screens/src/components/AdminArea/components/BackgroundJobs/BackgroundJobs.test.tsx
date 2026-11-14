@@ -39,6 +39,8 @@ const monitor = (jobs: Job[]): Monitor => ({
     disks: [],
     drives: [],
     graphics: null,
+    network: null,
+    streamedBytesPerSecond: null,
     graphicsNotes: [],
     artefacts: null,
   },

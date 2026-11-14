@@ -433,6 +433,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let state = app_state(registry.clone(), ffprobe, journal);
 
     state.monitor.watch_graphics();
+    state.monitor.watch_network();
     state
         .monitor
         .watch_cache(state.registry.config().artefact_root.clone());

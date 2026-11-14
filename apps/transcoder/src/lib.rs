@@ -42,6 +42,7 @@ pub mod loudness;
 pub mod media;
 pub mod mkv_cues;
 pub mod monitor;
+pub mod network_activity;
 pub mod path_map;
 pub mod pci_names;
 pub mod pgs;
