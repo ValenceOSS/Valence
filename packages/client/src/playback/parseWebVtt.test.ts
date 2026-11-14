@@ -74,6 +74,31 @@ describe('parseWebVtt', () => {
   it('reads nothing out of nothing, rather than failing', () => {
     expect(parseWebVtt('')).toEqual([]);
   });
+
+  it('keeps the words after a blank line inside a line, which a converted script writes', () => {
+    expect(
+      parseWebVtt('WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nRomaji line\n\nEnglish line\n'),
+    ).toEqual([{ from: 1, to: 2, text: 'Romaji line\nEnglish line' }]);
+  });
+
+  it('keeps a line that begins with a blank one', () => {
+    expect(
+      parseWebVtt(
+        'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n\nRaised by one row\n\n00:00:03.000 --> 00:00:04.000\nNext',
+      ),
+    ).toEqual([
+      { from: 1, to: 2, text: 'Raised by one row' },
+      { from: 3, to: 4, text: 'Next' },
+    ]);
+  });
+
+  it('does not take a cue’s number, or a note, for more of the line before it', () => {
+    expect(
+      parseWebVtt(
+        'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nSaid\n\n2\n\nNOTE an aside\n\n00:00:03.000 --> 00:00:04.000\nNext',
+      ).map((cue) => cue.text),
+    ).toEqual(['Said', 'Next']);
+  });
 });
 
 describe('cueAt', () => {
