@@ -29,6 +29,8 @@ const SHARING_VERDICT_LASTS_MS = 5000;
 
 const MOST_ACTIVITY = 200;
 
+const MOST_SERVERS_WITH_KNOWN_PEOPLE = 500;
+
 const BEARER = /^Bearer\s+(\S+)$/iu;
 
 type LinkSharingServiceOptions = {
@@ -99,6 +101,7 @@ const createLinkSharingService = ({
     withinMs: MINUTE_MS,
     now: clock,
   });
+  const knownPeople = new Map<string, Set<string>>();
   const personMayAsk = createRateLimiter({
     most: limits.perPerson,
     withinMs: MINUTE_MS,
@@ -155,18 +158,31 @@ const createLinkSharingService = ({
       }
 
       const isWithinItsRate = serverMayAsk(server.id);
+      const mostPeople = limits.people ?? MOST_PEOPLE_FROM_A_SERVER;
       const hasRoom =
         !isWithinItsRate ||
         signer.person === null ||
-        (await sharing.hasRoomFor(
-          server.id,
-          signer.person.pseudonym,
-          limits.people ?? MOST_PEOPLE_FROM_A_SERVER,
-        ));
+        knownPeople.get(server.id)?.has(signer.person.pseudonym) === true ||
+        (await sharing.hasRoomFor(server.id, signer.person.pseudonym, mostPeople));
       const person =
         !isWithinItsRate || !hasRoom || signer.person === null
           ? null
           : await sharing.seePerson(server.id, signer.person.pseudonym, signer.person.name, at);
+
+      if (person !== null && signer.person !== null) {
+        const known = knownPeople.get(server.id) ?? new Set<string>();
+
+        if (known.size < mostPeople) {
+          known.add(signer.person.pseudonym);
+        }
+
+        if (knownPeople.size >= MOST_SERVERS_WITH_KNOWN_PEOPLE && !knownPeople.has(server.id)) {
+          knownPeople.clear();
+        }
+
+        knownPeople.set(server.id, known);
+      }
+
       const subject = reach.kind === 'subject' ? await subjectOf(reach.subject) : null;
       const claimed =
         reach.kind === 'claimed' ? claims.claimedBy(reach.claim, reach.id, server.id) : null;

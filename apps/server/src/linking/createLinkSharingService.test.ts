@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { twoLinkingServers } from '@ValenceServer/testing/twoLinkingServers';
 import { createLinkSharingService } from './createLinkSharingService';
 import { createMemoryLinkSharingStore } from './createMemoryLinkSharingStore';
@@ -88,10 +88,14 @@ const twoSharingServers = async (limits?: {
     passThrough: () => Promise.resolve(null),
   };
 
+  const animePeople = createMemoryLinkSharingStore(
+    async (id) => (await animeStore.readServer(id)) !== null,
+  );
+  const hasRoomFor = vi.fn(animePeople.hasRoomFor);
   const animeSharing = createLinkSharingService({
     linking: anime,
     links: animeStore,
-    sharing: createMemoryLinkSharingStore(async (id) => (await animeStore.readServer(id)) !== null),
+    sharing: { ...animePeople, hasRoomFor },
     libraries: () => Promise.resolve([...LIBRARIES]),
     subjectOf: ({ kind, id }) =>
       Promise.resolve(kind === 'item' ? (ITEMS.find((item) => item.id === id) ?? null) : null),
@@ -137,7 +141,16 @@ const twoSharingServers = async (limits?: {
     });
   };
 
-  return { animeSharing, filmsSharing, filmsAtAnime, animeAtFilms, filmsAsks, warned, claims };
+  return {
+    animeSharing,
+    filmsSharing,
+    filmsAtAnime,
+    animeAtFilms,
+    filmsAsks,
+    warned,
+    claims,
+    hasRoomFor,
+  };
 };
 
 describe('createLinkSharingService', () => {
@@ -336,6 +349,21 @@ describe('createLinkSharingService', () => {
     await busy.filmsAsks('/libraries', { profileId: 'flood', name: 'Flood' });
 
     expect(await busy.animeSharing.people(busy.filmsAtAnime)).toEqual([]);
+  });
+
+  it('asks whether there is room only for a person it has not seen before', async () => {
+    const { filmsAsks, hasRoomFor } = await twoSharingServers();
+    const sam = { profileId: 'sam', name: 'Sam' };
+
+    await filmsAsks('/libraries', sam);
+    await filmsAsks('/libraries', sam);
+    await filmsAsks('/libraries', sam);
+
+    expect(hasRoomFor).toHaveBeenCalledTimes(1);
+
+    await filmsAsks('/libraries', { profileId: 'kai', name: 'Kai' });
+
+    expect(hasRoomFor).toHaveBeenCalledTimes(2);
   });
 
   it('sends a person’s name only where its admin lets names travel', async () => {
