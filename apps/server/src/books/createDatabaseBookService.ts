@@ -1250,16 +1250,16 @@ const createDatabaseBookService = (
           ? null
           : await matching.picture(found.posterUrl.replace(/-M\.jpg$/, '-L.jpg'));
 
-      if (picture !== null) {
-        const drawn = await drawBookCover(
-          { bytes: picture, contentType: 'image/jpeg' },
-          COVER_WIDTH,
-        );
+      const drawn =
+        picture === null
+          ? null
+          : await drawBookCover({ bytes: picture, contentType: 'image/jpeg' }, COVER_WIDTH);
 
-        if (drawn !== null) {
-          await mkdir(chosenCovers, { recursive: true });
-          await writeFile(chosenCoverOf(bookId), drawn.bytes);
-        }
+      if (drawn === null) {
+        await rm(chosenCoverOf(bookId), { force: true });
+      } else {
+        await mkdir(chosenCovers, { recursive: true });
+        await writeFile(chosenCoverOf(bookId), drawn.bytes);
       }
 
       const changed = await db

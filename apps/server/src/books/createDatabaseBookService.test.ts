@@ -149,6 +149,35 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(await service.readCover(id ?? '')).toMatchObject({ contentType: 'image/webp' });
   });
 
+  it('drops the cover of an earlier correction when the new one will not draw', async () => {
+    const db = await aMigratedDatabase();
+    const cacheDir = await mkdtemp(join(tmpdir(), 'valence-books-'));
+    const service = createDatabaseBookService(db, cacheDir, {
+      ...MATCHING,
+      describe: () =>
+        Promise.resolve({
+          title: 'Dune (corrected)',
+          year: 1966,
+          overview: 'Corrected.',
+          posterUrl: 'https://covers.example/dune-M.jpg',
+          authors: ['F. Herbert'],
+          subjects: [],
+        }),
+      picture: () => Promise.resolve(Uint8Array.from([1, 2, 3])),
+    });
+
+    await db.insert(library).values({ id: 'books', name: 'Books', kind: 'books', path: '/books' });
+
+    const id = await service.upsertBook(DUNE);
+    const chosen = join(cacheDir, 'book-covers', `${id ?? ''}.webp`);
+
+    await mkdir(join(cacheDir, 'book-covers'), { recursive: true });
+    await writeFile(chosen, 'the earlier correction');
+
+    await expect(service.correct(id ?? '', 1)).resolves.toBe(true);
+    await expect(access(chosen)).rejects.toThrow();
+  });
+
   it('says a correction or its forgetting changed nothing for a book that is not there', async () => {
     const { service } = await aShelf();
 
