@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { nameKey } from '@ValenceServer/music/nameKey';
 import { findAppleAlbumCoverUrl } from './findAppleAlbumCoverUrl';
@@ -51,7 +51,8 @@ type CataloguePictures = {
  * Nothing found because a site was failing is not remembered, so the next search asks again.
  * Asking twice at once for a picture not yet found finds it once. A cover found only by the name a
  * caller gave is kept under that name, never under the record's id, so one caller's wording cannot
- * decide the cover everybody sees; and no more than twenty thousand answers are kept.
+ * decide the cover everybody sees; and no more than twenty thousand answers are kept, the oldest
+ * making room for the newest.
  *
  * @param options - Where to remember what was found, the way out to the web, the disk cache the
  *   pictures themselves are kept in, and — for a test — how to tell the time.
@@ -69,6 +70,28 @@ const createCataloguePictures = ({
 
   const fileFor = (key: string): string =>
     join(directory, createHash('sha256').update(key).digest('hex'));
+
+  /**
+   * Removes the oldest answers, by the files' own times, so the newest have room.
+   *
+   * @returns How many answers are kept after it.
+   */
+  const makeRoom = async (): Promise<number> => {
+    const names = await readdir(directory).catch(() => []);
+    const aged = await Promise.all(
+      names.map(async (name) => ({
+        name,
+        at: (await stat(join(directory, name)).catch(() => null))?.mtimeMs ?? 0,
+      })),
+    );
+    const oldest = aged
+      .toSorted((one, other) => one.at - other.at)
+      .slice(0, Math.max(1, Math.ceil(mostKept / 10)));
+
+    await Promise.all(oldest.map(({ name }) => rm(join(directory, name), { force: true })));
+
+    return names.length - oldest.length;
+  };
 
   const remembered = async (key: string): Promise<string | null | undefined> => {
     const file = fileFor(key);
@@ -110,10 +133,14 @@ const createCataloguePictures = ({
       await mkdir(directory, { recursive: true });
       kept ??= (await readdir(directory).catch(() => [])).length;
 
-      if (kept < mostKept) {
-        kept += 1;
-        await writeFile(fileFor(key), found ?? '');
+      const file = fileFor(key);
+      const isNew = (await stat(file).catch(() => null)) === null;
+
+      if (isNew) {
+        kept = (kept >= mostKept ? await makeRoom() : kept) + 1;
       }
+
+      await writeFile(file, found ?? '');
 
       return found;
     })().finally(() => {

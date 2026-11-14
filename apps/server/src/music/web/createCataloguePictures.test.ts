@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, utimes } from 'node:fs/promises';
+import { mkdtemp, readdir, stat, utimes } from 'node:fs/promises';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -235,5 +235,65 @@ describe('createCataloguePictures', () => {
     }
 
     expect(await readdir(directory)).toHaveLength(2);
+  });
+
+  it('makes room for a new answer by removing the oldest ones', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'valence-catalogue-'));
+    const found = createCataloguePictures({
+      directory,
+      web: aWebThatAnswers({}),
+      readImage: () => Promise.resolve(null),
+      mostKept: 10,
+    });
+
+    for (const id of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']) {
+      await found.cover(id, null);
+    }
+
+    const before = await readdir(directory);
+
+    for (const [index, name] of before.entries()) {
+      const at = new Date(Date.now() - (100 - index) * 1000);
+
+      await utimes(join(directory, name), at, at);
+    }
+
+    await found.cover('k', null);
+
+    const after = await readdir(directory);
+
+    expect(after).toHaveLength(10);
+    expect(after).not.toContain(before[0]);
+    expect(after).toContain(before[1]);
+  });
+
+  it('does not count an expired answer written again as a new one', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'valence-catalogue-'));
+    const found = createCataloguePictures({
+      directory,
+      web: aWebThatAnswers({}),
+      readImage: () => Promise.resolve(null),
+      now: () => Date.now(),
+      mostKept: 2,
+    });
+
+    await found.cover('a', null);
+    await found.cover('b', null);
+
+    const names = await readdir(directory);
+    const longAgo = new Date(Date.now() - 2 * WEEK_MS);
+
+    for (const name of names) {
+      await utimes(join(directory, name), longAgo, longAgo);
+    }
+
+    await found.cover('a', null);
+
+    const mtimes = await Promise.all(
+      names.map(async (name) => (await stat(join(directory, name))).mtimeMs),
+    );
+
+    expect(await readdir(directory)).toHaveLength(2);
+    expect(mtimes.filter((at) => at > longAgo.getTime() + WEEK_MS)).toHaveLength(1);
   });
 });
