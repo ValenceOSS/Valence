@@ -755,7 +755,7 @@ const build = (
   previewQuality: PreviewQuality | undefined = undefined,
   options: Pick<
     CreatePlaybackServiceOptions,
-    'readSessionFromDisk' | 'usesKeyframeThumbnails'
+    'readSessionFromDisk' | 'usesKeyframeThumbnails' | 'subtitles'
   > = {},
 ) => {
   const transcoder: Transcoder = {
@@ -1510,6 +1510,70 @@ describe('playing a copy kept alongside', () => {
         },
       },
     });
+  });
+
+  it('draws a subtitle the film carries from the film itself, since a kept copy carries none', async () => {
+    const withASubtitle = {
+      ...withACopy,
+      item: {
+        ...withACopy.item,
+        subtitleStreams: [{ index: 2, format: 'ass' as const, language: 'en', isForced: false }],
+      },
+    };
+    const started: SessionSpec[] = [];
+    const { service } = build(
+      {
+        startSession: (spec) => {
+          started.push(spec);
+
+          return Promise.resolve({
+            id: 'session-1',
+            manifest: 'index.m3u8',
+            encodesVideo: true,
+            encodedForKeyframes: false,
+            reuse: 'none' as const,
+          });
+        },
+      },
+      withASubtitle,
+      undefined,
+      {
+        subtitles: {
+          list: () =>
+            Promise.resolve([
+              {
+                id: 'own',
+                language: 'en',
+                label: 'English',
+                format: 'ass',
+                isForced: false,
+                isHearingImpaired: false,
+                delivery: 'text' as const,
+                streamIndex: 2,
+              },
+            ]),
+        },
+      },
+    );
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      profile(),
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true,
+      undefined,
+      'own',
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { plan: { subtitles: { kind: 'burnIn', streamIndex: 2 } } },
+    });
+    expect(started[0]?.inputPath).toBe('/media/arrival.mkv');
   });
 
   it('reads the copy at the path the library holds for it', async () => {
