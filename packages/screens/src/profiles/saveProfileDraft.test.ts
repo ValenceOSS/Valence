@@ -46,6 +46,7 @@ const DRAFT: ProfileDraft = {
   connections: 3,
   streamingFormat: 'hls',
   showsDesktopNotices: false,
+  appIcon: 'system',
   deviceWas: {
     theme: 'system',
     motion: 'system',
@@ -54,6 +55,7 @@ const DRAFT: ProfileDraft = {
     connections: 3,
     streamingFormat: 'hls',
     showsDesktopNotices: false,
+    appIcon: 'system',
   },
   photo: null,
 };

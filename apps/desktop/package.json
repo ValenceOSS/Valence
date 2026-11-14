@@ -72,6 +72,8 @@
       "dist-preload/**",
       "dist-native/**",
       "build/icon.png",
+      "build/icon-win.png",
+      "build/icon-win-dark.png",
       "package.json"
     ],
     "asarUnpack": [
@@ -107,7 +109,7 @@
       ]
     },
     "win": {
-      "icon": "build/icon.png",
+      "icon": "build/icon-win.png",
       "target": [
         {
           "target": "nsis",

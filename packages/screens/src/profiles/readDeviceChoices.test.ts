@@ -1,3 +1,4 @@
+import { chooseAppIcon } from '@ValenceClient/shell/chooseAppIcon';
 import { afterEach, describe, expect, it } from 'vitest';
 import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { choosePluginTheme } from '@ValenceClient/plugins/pluginThemeChoice';
@@ -20,6 +21,7 @@ describe('readDeviceChoices', () => {
       connections: 3,
       streamingFormat: 'hls',
       showsDesktopNotices: false,
+      appIcon: 'system',
     });
   });
 
@@ -29,6 +31,7 @@ describe('readDeviceChoices', () => {
     choosePluginTheme('midnight/deep-sea');
     writePlaybackPreferences({ playsInTheBrowser: true, connections: 1, streamingFormat: 'dash' });
     chooseDeviceNotices(true);
+    chooseAppIcon('dark');
 
     expect(readDeviceChoices()).toEqual({
       theme: 'dark',
@@ -38,6 +41,7 @@ describe('readDeviceChoices', () => {
       connections: 1,
       streamingFormat: 'dash',
       showsDesktopNotices: true,
+      appIcon: 'dark',
     });
   });
 });
