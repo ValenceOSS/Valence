@@ -12,8 +12,9 @@ const POPUP_MOTION = [
 
 const PRESS_MOTION = [
   'transition-[translate,scale,background-color,border-color,color,box-shadow,filter]',
-  'duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+  'duration-[var(--duration-fast)] ease-[var(--ease-out)]',
   'hover-hover:hover:scale-[1.02] active:translate-y-px active:scale-[0.98]',
+  'active:duration-[var(--duration-instant)]',
   'still:transition-none still:hover:scale-100 still:active:translate-y-0 still:active:scale-100',
 ].join(' ');
 

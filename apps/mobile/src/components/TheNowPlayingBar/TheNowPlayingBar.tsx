@@ -7,6 +7,8 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, StyleSheet, View } from 'react-native';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
+import * as Haptics from 'expo-haptics';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
@@ -247,6 +249,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           if (toward === 0 || now.width === 0 || !isPossible) {
             Animated.spring(shift, {
               ...SPRINGS.liquid,
+              velocity: gesture.vx * 1000,
               toValue: 0,
               useNativeDriver: true,
             }).start();
@@ -255,6 +258,8 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           }
 
           const moveOn = toward < 0 ? now.next : now.previous;
+
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
           if (now.isStill) {
             shift.setValue(0);
@@ -266,6 +271,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           Animated.timing(shift, {
             toValue: toward * now.width,
             duration: GOES_OFF_MS,
+            easing: EASINGS.out,
             useNativeDriver: true,
           }).start(() => {
             swiped.add('now');
@@ -288,14 +294,16 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
         const isGoing = gesture.dy > GOES_PAST || gesture.vy > GOES_FASTER_THAN;
 
         if (!isGoing) {
-          Animated.spring(slid, BACK).start();
+          Animated.spring(slid, { ...BACK, velocity: gesture.vy * 1000 }).start();
 
           return;
         }
 
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Animated.timing(slid, {
           toValue: GOES_OFF_BY,
           duration: GOES_OFF_MS,
+          easing: EASINGS.out,
           useNativeDriver: true,
         }).start(() => {
           now.letGo();

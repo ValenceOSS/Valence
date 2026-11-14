@@ -94,7 +94,7 @@ const TheLeap = ({ leap }: TheLeapProps) => {
       Animated.timing(showing, {
         toValue: 0,
         duration: GOING,
-        easing: EASINGS.inQuad,
+        easing: EASINGS.out,
         useNativeDriver: true,
       }),
     ]);

@@ -27,7 +27,7 @@ const SECTION_VARIANTS: Variants = {
   gone: (direction: number) => ({
     opacity: 0,
     x: direction * -SHIFT_PX,
-    transition: { duration: 0.16, ease: 'easeIn' },
+    transition: { duration: 0.16, ease: ENTER_EASE },
   }),
 };
 

@@ -2,6 +2,7 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import { SHEET_HOLD } from '@ValenceMobile/components/ASheet/SHEET_HOLD';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { whereAlongTheLine } from './whereAlongTheLine';
 import type { SliderProps } from './Slider.types';
 
@@ -75,14 +76,28 @@ const Slider = ({
 }: SliderProps) => {
   const [width, setWidth] = useState(0);
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
+  const [notchesPassed] = useState(() => new Map<'now', number>());
 
   const hold = useCallback(
     (at: number) => {
+      const passed = notches.filter((notch) => notch <= at).length;
+
+      const was = notchesPassed.get('now');
+
+      if (was !== undefined && passed !== was) {
+        void Haptics.selectionAsync();
+      }
+
+      notchesPassed.set('now', passed);
       setScrubbingTo(at);
       onScrubbing?.(at);
     },
-    [onScrubbing],
+    [onScrubbing, notches, notchesPassed],
   );
+
+  const letGo = useCallback(() => {
+    notchesPassed.delete('now');
+  }, [notchesPassed]);
 
   const holdSheet = useContext(SHEET_HOLD);
   const responder = useMemo(
@@ -99,16 +114,18 @@ const Slider = ({
           hold(whereAlongTheLine(event.nativeEvent.locationX, width, furthest));
         },
         onPanResponderRelease: (event) => {
+          letGo();
           holdSheet?.(false);
           setScrubbingTo(null);
           onScrubbed(whereAlongTheLine(event.nativeEvent.locationX, width, furthest));
         },
         onPanResponderTerminate: () => {
+          letGo();
           holdSheet?.(false);
           setScrubbingTo(null);
         },
       }),
-    [width, furthest, hold, onScrubbed, holdSheet],
+    [width, furthest, hold, letGo, onScrubbed, holdSheet],
   );
 
   const showing = scrubbingTo ?? value;

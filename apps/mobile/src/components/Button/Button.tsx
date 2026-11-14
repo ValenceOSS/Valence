@@ -5,14 +5,17 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ButtonProps } from './Button.types';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const PRESSED_SCALE = 0.96;
+const PRESSED_SCALE = 0.97;
 
-const PRESS = { damping: 22, mass: 0.6, stiffness: 420, useNativeDriver: true } as const;
+const PRESSES_IN = 100;
+
+const LETS_GO_OVER = 150;
 
 const styles = StyleSheet.create({
   bare: {},
@@ -149,7 +152,12 @@ const Button = ({
     setIsPressed(to !== 1);
 
     if (!fills && !holdsStill) {
-      Animated.spring(scale, { ...PRESS, toValue: to }).start();
+      Animated.timing(scale, {
+        toValue: to,
+        duration: to === 1 ? LETS_GO_OVER : PRESSES_IN,
+        easing: EASINGS.out,
+        useNativeDriver: true,
+      }).start();
     }
   };
 

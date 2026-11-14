@@ -329,10 +329,10 @@ const useHomeRows = (
 
   const everyGenre = useMemo(
     () =>
-      keptTaste !== null && facets.data !== undefined
+      keptTaste !== null && !hasShelves && facets.data !== undefined
         ? [...new Set([...keptTaste, ...facets.data.genres])]
         : [],
-    [keptTaste, facets.data],
+    [keptTaste, hasShelves, facets.data],
   );
 
   const genres = useMemo(() => everyGenre.slice(0, genreLimit), [everyGenre, genreLimit]);
