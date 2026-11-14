@@ -37,6 +37,7 @@ type SendOptions = {
   followRedirects: boolean;
   referer?: string | null;
   trustedHosts?: readonly string[];
+  isTheSite?: (hostname: string) => boolean;
 };
 
 type CreateSiteClientOptions = {
@@ -104,6 +105,9 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  * following redirects itself so that no cookie set along the way is lost, and reading pages in the
  * site's own character set.
  *
+ * Cookies and headers go to the site's own hosts, as the caller says which they are, and to no
+ * other host a redirect leads to. Where the caller does not say, the site is the host first asked.
+ *
  * A site behind Cloudflare's browser check is asked again through the service's own browser, and
  * the cookies and browser it got past the check with are kept for the requests after. From then on
  * that site's requests go straight to the browser, which the site now trusts, where a request from
@@ -137,14 +141,14 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
     }
 
     const { host } = new URL(request.url);
+    const isTheSite =
+      options.isTheSite ?? ((hostname: string) => hostname === new URL(from).hostname);
     let solution: Awaited<ReturnType<Solver['fetch']>>;
 
     try {
       solution = await solver.fetch(
         request,
-        new URL(request.url).hostname === new URL(from).hostname
-          ? { ...options.session.cookies }
-          : {},
+        isTheSite(new URL(request.url).hostname) ? { ...options.session.cookies } : {},
         browserIdOf(options.session),
       );
     } catch (error) {
@@ -176,13 +180,15 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
   const send = async (request: SiteRequest, options: SendOptions): Promise<SiteResponse> => {
     let current = request;
     const reach = guard === undefined ? fetch : guard(options.trustedHosts ?? []);
+    const isTheSite =
+      options.isTheSite ?? ((hostname: string) => hostname === new URL(request.url).hostname);
 
     for (let hops = 0; hops <= MOST_REDIRECTS; hops += 1) {
       if (options.followRedirects && throughTheBrowser.has(new URL(current.url).host)) {
         return solve(current, options, request.url);
       }
 
-      const isOurs = new URL(current.url).hostname === new URL(request.url).hostname;
+      const isOurs = isTheSite(new URL(current.url).hostname);
       const cookie = Object.entries(isOurs ? options.session.cookies : {})
         .map(([name, value]) => `${name}=${value}`)
         .join('; ');
@@ -240,7 +246,8 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
 
         const keepsMethod =
           (response.status === 307 || response.status === 308) &&
-          new URL(next).hostname === new URL(current.url).hostname;
+          isOurs &&
+          isTheSite(new URL(next).hostname);
 
         current = keepsMethod
           ? { ...current, url: next }
@@ -248,8 +255,7 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
               url: next,
               method: 'GET',
               body: null,
-              headers:
-                new URL(next).hostname === new URL(current.url).hostname ? current.headers : {},
+              headers: isOurs && isTheSite(new URL(next).hostname) ? current.headers : {},
             };
         continue;
       }

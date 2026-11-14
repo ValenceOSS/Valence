@@ -6,6 +6,7 @@ import { buildSearchRequests } from '@ValenceRequests/cardigann/buildSearchReque
 import { configVariables } from '@ValenceRequests/cardigann/configVariables';
 import { isNextPage } from '@ValenceRequests/cardigann/isNextPage';
 import { createCategoryMap } from '@ValenceRequests/cardigann/createCategoryMap';
+import { createSiteHostCheck } from '@ValenceRequests/cardigann/createSiteHostCheck';
 import { encodeForm } from '@ValenceRequests/cardigann/encodeForm';
 import { findInHtml } from '@ValenceRequests/cardigann/findInHtml';
 import { queryVariables } from '@ValenceRequests/cardigann/queryVariables';
@@ -107,6 +108,7 @@ const createCardigannIndexer = ({
   let lastAskedAt = 0;
   const config = (): Record<string, TemplateValue> =>
     configVariables(definition, settings, siteLink, now());
+  const isTheSite = createSiteHostCheck(siteLink, definition.links);
   const at = (path: string, base = siteLink) => new URL(path, base).toString();
 
   /**
@@ -145,6 +147,7 @@ const createCardigannIndexer = ({
       followRedirects,
       referer,
       trustedHosts: [new URL(siteLink).host],
+      isTheSite,
     });
   };
 
