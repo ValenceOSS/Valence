@@ -75,9 +75,14 @@ type PeerClient = {
  *
  * @param fetcher - How a request is sent, injectable for tests.
  * @param resolve - What a name resolves to, injectable for tests.
+ * @param mostBytes - The most of an answer read whole, injectable for tests.
  * @returns The client.
  */
-const createPeerClient = (fetcher?: typeof fetch, resolve?: Resolve): PeerClient => {
+const createPeerClient = (
+  fetcher?: typeof fetch,
+  resolve?: Resolve,
+  mostBytes?: number,
+): PeerClient => {
   const peerFetch = createPeerFetch(fetcher, resolve);
 
   const send = async <Answer>(
@@ -96,7 +101,7 @@ const createPeerClient = (fetcher?: typeof fetch, resolve?: Resolve): PeerClient
         },
         signal: AbortSignal.timeout(WAITS_MS),
       });
-      const body = await boundedAnswer(response).json();
+      const body = await boundedAnswer(response, mostBytes).json();
 
       if (!response.ok) {
         const refusal = PairRefusalSchema.safeParse(body);
@@ -129,7 +134,7 @@ const createPeerClient = (fetcher?: typeof fetch, resolve?: Resolve): PeerClient
 
         return response.ok
           ? {
-              body: new Uint8Array(await boundedAnswer(response).arrayBuffer()),
+              body: new Uint8Array(await boundedAnswer(response, mostBytes).arrayBuffer()),
               contentType: response.headers.get('content-type') ?? '',
             }
           : null;
