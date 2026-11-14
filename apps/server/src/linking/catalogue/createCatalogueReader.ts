@@ -31,8 +31,8 @@ const NOTHING = {
 };
 
 /**
- * Where this server keeps something, said only as whether it has it — a linked server is told that a
- * title has a poster or a book has a cover, never where on this server's disks either is.
+ * Where this server keeps something, said only as whether it has it — a linked server is told that
+ * a title has a poster or a book has a cover, never where on this server's disks either is.
  *
  * @param value - The path or address.
  * @returns A mark that there is one, or nothing where there is not.
@@ -46,8 +46,8 @@ const hidden = (value: string | null): string | null => (value === null ? null :
  * read, and the other server knows a title has gone when a whole pass no longer brings it. A title
  * whose file has gone missing still goes, marked so, for the other server to hide rather than
  * forget along with what its viewers had of it. A server held to an age is sent only the titles
- * within it, as it may only play those. Each page is read through the same schema the other server reads it with, so nothing leaves that it
- * would not accept.
+ * within it, as it may only play those. Each page is read through the same schema the other server
+ * reads it with, so nothing leaves that it would not accept.
  *
  * @param db - The database.
  * @returns A reader of a page, after the id the last one ended on, or nothing where there is no
