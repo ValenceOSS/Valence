@@ -293,6 +293,11 @@ fn read_object(body: &[u8], objects: &mut HashMap<u16, Object>) -> bool {
 /// seconds.
 #[must_use]
 pub fn captions(stream: &[u8]) -> Vec<Caption> {
+    captions_within(stream, MAX_TOTAL_PIXELS)
+}
+
+/// Every caption in a PGS stream until they hold more than `limit` pixels between them.
+fn captions_within(stream: &[u8], limit: usize) -> Vec<Caption> {
     let mut captions = Vec::new();
     let mut palette: HashMap<u8, Colour> = HashMap::new();
     let mut objects: HashMap<u16, Object> = HashMap::new();
@@ -362,7 +367,7 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
                 if let Some((width, height, pixels)) = draw(&placements, &objects, &palette) {
                     held_pixels += width * height;
 
-                    if held_pixels > MAX_TOTAL_PIXELS {
+                    if held_pixels > limit {
                         break;
                     }
 
@@ -388,7 +393,7 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
 
 #[cfg(test)]
 mod tests {
-    use super::{captions, decode_runs};
+    use super::{captions, captions_within, decode_runs};
 
     /// One segment of a PGS stream.
     fn segment(pts_ms: u32, kind: u8, body: &[u8]) -> Vec<u8> {
@@ -534,13 +539,13 @@ mod tests {
 
         stream.extend(segment(0, 0x14, &palette()));
 
-        for at in 0..2_000_u32 {
+        for at in 0..20_u32 {
             stream.extend(segment(at, 0x16, &composition(true)));
-            stream.extend(segment(at, 0x15, &sized_object(4_096, 2_160)));
+            stream.extend(segment(at, 0x15, &sized_object(100, 100)));
             stream.extend(segment(at, 0x80, &[]));
         }
 
-        assert!(captions(&stream).len() < 2_000);
+        assert!(captions_within(&stream, 100 * 100 * 5).len() < 20);
     }
 
     #[test]
