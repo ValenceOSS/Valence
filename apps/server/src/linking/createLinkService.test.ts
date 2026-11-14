@@ -146,16 +146,19 @@ describe('createLinkService', () => {
     const { anime, films, link } = twoLinkingServers();
     const { filmsAtAnime, animeAtFilms } = await link();
     const pseudonym = await films.pseudonymFor(animeAtFilms, 'sam');
-    const signed = await films.signFor(animeAtFilms, { pseudonym, name: 'Sam' });
+    const asking = { method: 'GET', route: '/libraries' };
+    const signed = await films.signFor(animeAtFilms, { pseudonym, name: 'Sam' }, asking);
 
     expect(signed?.address).toBe('https://anime.example');
-    expect(await anime.readToken(signed?.token ?? '')).toEqual({
+    expect(await anime.readToken(signed?.token ?? '', asking)).toEqual({
       from: (await films.identity()).fingerprint,
       person: { pseudonym, name: 'Sam' },
     });
     expect(await films.pseudonymFor(animeAtFilms, 'sam')).toBe(pseudonym);
     expect(await films.pseudonymFor(animeAtFilms, 'kai')).not.toBe(pseudonym);
-    expect(await anime.signFor('00000000-0000-4000-8000-000000000000')).toBeNull();
+    expect(
+      await anime.signFor('00000000-0000-4000-8000-000000000000', undefined, asking),
+    ).toBeNull();
     expect(filmsAtAnime).not.toBe('');
   });
 

@@ -19,7 +19,7 @@ const signAsPerson = async (
   sharing: LinkSharingStore,
   serverId: string,
   person: LinkPerson | null,
-  asking?: { method: string; route: string },
+  asking: { method: string; route: string },
 ): Promise<{ address: string; token: string } | null> => {
   if (person === null) {
     return linking.signFor(serverId, undefined, asking);

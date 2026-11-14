@@ -395,8 +395,8 @@ const createLinkSharingService = ({
       return { standing: answered?.kind === 'refused' ? 'notShown' : 'unreachable', entries: [] };
     },
 
-    askAs: async (id, person) =>
-      (await linkedServer(id)) === null ? null : signAsPerson(linking, sharing, id, person),
+    askAs: async (id, person, asking) =>
+      (await linkedServer(id)) === null ? null : signAsPerson(linking, sharing, id, person, asking),
   };
 };
 

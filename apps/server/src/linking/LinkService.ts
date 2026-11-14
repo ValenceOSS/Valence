@@ -28,8 +28,8 @@ type LinkService = {
   ) => Promise<LinkTokenSigner | null>;
   signFor: (
     id: string,
-    person?: LinkTokenPerson,
-    asking?: { method: string; route: string },
+    person: LinkTokenPerson | undefined,
+    asking: { method: string; route: string },
   ) => Promise<{ address: string; token: string } | null>;
   pseudonymFor: (id: string, profileId: string) => Promise<string>;
   publicIdentity: () => Promise<ServerIdentity>;

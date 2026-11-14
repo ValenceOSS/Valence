@@ -93,7 +93,10 @@ const aNetwork = () => {
         defaultName: new URL(address).hostname,
         peers,
         ask: async (serverId, route, asking) => {
-          const signed = await service.signFor(serverId);
+          const signed = await service.signFor(serverId, undefined, {
+            method: asking.method ?? 'GET',
+            route,
+          });
 
           return signed === null
             ? null
@@ -162,7 +165,10 @@ const aNetwork = () => {
       body?: object,
       person: { profileId: string; name: string } | null = null,
     ) => {
-      const signed = await signAsPerson(service, sharing, serverId, person);
+      const signed = await signAsPerson(service, sharing, serverId, person, {
+        method,
+        route,
+      });
 
       return fetcher(`${signed?.address ?? ''}/api/federation/v1${route}`, {
         method,

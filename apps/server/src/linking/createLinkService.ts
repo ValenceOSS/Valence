@@ -145,15 +145,15 @@ const createLinkService = ({
 
   const tokenFor = async (
     server: StoredLinkedServer,
-    person?: LinkTokenPerson,
-    asking?: { method: string; route: string },
+    person: LinkTokenPerson | undefined,
+    asking: { method: string; route: string },
   ) =>
     signLinkToken({
       from: (await identity()).fingerprint,
       to: server.fingerprint,
       privateKey: (await keys()).privateKey,
       ...(person === undefined ? {} : { person }),
-      ...(asking === undefined ? {} : { asking }),
+      asking,
     });
 
   const knownAs = async (fingerprint: string) => {

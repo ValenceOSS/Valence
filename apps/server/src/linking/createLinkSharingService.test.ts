@@ -129,10 +129,11 @@ const twoSharingServers = async (limits?: {
     person?: { profileId: string; name: string },
     method = 'GET',
   ) => {
+    const asking = { method, route: path };
     const signed =
       person === undefined
-        ? await films.signFor(animeAtFilms)
-        : await filmsSharing.askAs(animeAtFilms, person);
+        ? await films.signFor(animeAtFilms, undefined, asking)
+        : await filmsSharing.askAs(animeAtFilms, person, asking);
 
     return animeSharing.admit({
       method,
@@ -413,10 +414,11 @@ describe('createLinkSharingService', () => {
     expect(await animeSharing.theirActivity('00000000-0000-4000-8000-000000000000')).toBeNull();
     expect(await animeSharing.activity('00000000-0000-4000-8000-000000000000')).toBeNull();
     expect(
-      await animeSharing.askAs('00000000-0000-4000-8000-000000000000', {
-        profileId: 'sam',
-        name: 'Sam',
-      }),
+      await animeSharing.askAs(
+        '00000000-0000-4000-8000-000000000000',
+        { profileId: 'sam', name: 'Sam' },
+        { method: 'GET', route: '/libraries' },
+      ),
     ).toBeNull();
   });
 });

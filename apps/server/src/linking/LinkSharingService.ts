@@ -64,7 +64,11 @@ type LinkSharingService = {
   theirLibraries: (id: string) => Promise<TheirLibraries | null>;
   chooseTheirLibrary: (id: string, libraryId: string, isTaken: boolean) => Promise<boolean>;
   theirActivity: (id: string) => Promise<TheirActivity | null>;
-  askAs: (id: string, person: LinkPerson) => Promise<{ address: string; token: string } | null>;
+  askAs: (
+    id: string,
+    person: LinkPerson,
+    asking: { method: string; route: string },
+  ) => Promise<{ address: string; token: string } | null>;
 };
 
 export type {
