@@ -110,7 +110,7 @@ const APlayerPanel = ({
     Animated.timing(shown, {
       toValue: 1,
       duration: 320,
-      easing: EASINGS.outCubic,
+      easing: EASINGS.drawer,
       useNativeDriver: true,
     }).start();
   }, [shown, across, isACard, isSettled]);
@@ -124,8 +124,8 @@ const APlayerPanel = ({
 
     Animated.timing(shown, {
       toValue: 0,
-      duration: 260,
-      easing: EASINGS.inCubic,
+      duration: 200,
+      easing: EASINGS.drawer,
       useNativeDriver: true,
     }).start(() => {
       onClose();

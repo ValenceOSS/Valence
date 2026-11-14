@@ -32,7 +32,7 @@ const pageVariants = (isStill: boolean): Variants =>
           y: -14,
           scale: 0.99,
           filter: 'blur(10px)',
-          transition: { duration: 0.24, ease: 'easeIn' },
+          transition: { duration: 0.24, ease: SETTLE },
         },
       };
 

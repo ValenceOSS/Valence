@@ -11,6 +11,8 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { GestureResponderEvent, ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
@@ -143,9 +145,15 @@ const ABottomSheet = ({
       Animated.timing(lowered, {
         toValue: height,
         duration: isStill ? 0 : 220,
+        easing: EASINGS.drawer,
         useNativeDriver: true,
       }),
-      Animated.timing(dimmed, { toValue: 0, duration: isStill ? 0 : 200, useNativeDriver: true }),
+      Animated.timing(dimmed, {
+        toValue: 0,
+        duration: isStill ? 0 : 200,
+        easing: EASINGS.out,
+        useNativeDriver: true,
+      }),
     ]).start(({ finished }) => {
       if (finished) {
         setIsShowing(false);
@@ -169,8 +177,13 @@ const ABottomSheet = ({
    */
   const takes = (): boolean => isOpenNow.current && [...SHEETS_UP].at(-1) === sheet;
 
-  const settle = () => {
-    Animated.spring(lowered, { ...SPRINGS.rise, toValue: 0, useNativeDriver: true }).start();
+  const settle = (velocity = 0) => {
+    Animated.spring(lowered, {
+      ...SPRINGS.rise,
+      velocity,
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
   };
 
   const drag: ViewProps = {
@@ -211,14 +224,17 @@ const ABottomSheet = ({
       const { at, fromY, speed } = grab.current;
 
       if (at - fromY > LETS_GO_PAST || speed > LETS_GO_FASTER_THAN) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         latest.get('onClose')?.();
 
         return;
       }
 
+      settle(speed * 1000);
+    },
+    onResponderTerminate: () => {
       settle();
     },
-    onResponderTerminate: settle,
   };
 
   return (

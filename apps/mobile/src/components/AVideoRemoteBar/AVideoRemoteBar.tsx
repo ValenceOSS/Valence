@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, LayoutAnimation, PanResponder, Platform, StyleSheet, View } from 'react-native';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
+import * as Haptics from 'expo-haptics';
 import { Tv } from '@keyline-icons/react-native';
 import { Pause as PauseFilled, Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
@@ -142,10 +144,17 @@ const AVideoRemoteBar = ({ onOpen }: AVideoRemoteBarProps) => {
           clientId === null ||
           (gesture.dy < PUT_AWAY_PAST && gesture.vy < PUT_AWAY_FASTER_THAN)
         ) {
-          Animated.spring(slid, { ...SPRINGS.liquid, toValue: 0, useNativeDriver: true }).start();
+          Animated.spring(slid, {
+            ...SPRINGS.liquid,
+            velocity: gesture.vy * 1000,
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
 
           return;
         }
+
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         if (now?.isStill === true) {
           dismissDevice(clientId);
@@ -156,6 +165,7 @@ const AVideoRemoteBar = ({ onOpen }: AVideoRemoteBarProps) => {
         Animated.timing(slid, {
           toValue: SLIDES_OFF_BY,
           duration: 160,
+          easing: EASINGS.out,
           useNativeDriver: true,
         }).start(() => {
           dismissDevice(clientId);

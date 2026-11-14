@@ -18,6 +18,7 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Animated, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { howTheFileSounds } from '@ValenceClient/music/howTheFileSounds';
@@ -294,6 +295,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
         if (!isTurning) {
           Animated.spring(position, {
             ...SPRINGS.liquid,
+            velocity: now === undefined ? 0 : (-gesture.vx * 1000) / now.page,
             toValue: now?.at ?? 0,
             useNativeDriver: true,
           }).start();
@@ -301,6 +303,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
           return;
         }
 
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Animated.timing(position, {
           toValue: now.at + towards,
           duration: TURNS_IN_MS,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, LayoutAnimation, StyleSheet, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -151,6 +152,10 @@ const ACapsuleRow = ({
               isChosen={isChosen}
               label={item.label}
               onPress={() => {
+                if (!isChosen) {
+                  void Haptics.selectionAsync();
+                }
+
                 if (!isStill && !isChosen) {
                   LayoutAnimation.configureNext(SLIDES);
                 }

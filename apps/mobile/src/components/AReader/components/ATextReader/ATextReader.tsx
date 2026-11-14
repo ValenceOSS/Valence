@@ -237,6 +237,7 @@ const ATextReader = ({
   const lastTouched = useRef(0);
   const long = useRef<ComponentRef<typeof ScrollView>>(null);
   const [longY, setLongY] = useState(0);
+  const longYNow = useRef(0);
   const [longLaid, setLongLaid] = useState<ReadonlyMap<number, { top: number; height: number }>>(
     new Map(),
   );
@@ -457,6 +458,7 @@ const ATextReader = ({
           (anchored ?? ('within' in aim.at && at === aim.part ? aim.at.within * box.height : 0));
 
     long.current?.scrollTo({ y, animated: false });
+    longYNow.current = y;
     setLongY(y);
     setAim(null);
   }, [isLong, aim, isLongLaid, shownParts, longLaid]);
@@ -905,7 +907,19 @@ const ATextReader = ({
             setLongTall(tallness);
           }}
           onScroll={({ nativeEvent }) => {
-            setLongY(nativeEvent.contentOffset.y);
+            const y = nativeEvent.contentOffset.y;
+
+            longYNow.current = y;
+
+            if (Math.abs(y - longY) > longShown / 2) {
+              setLongY(y);
+            }
+          }}
+          onScrollEndDrag={() => {
+            setLongY(longYNow.current);
+          }}
+          onMomentumScrollEnd={() => {
+            setLongY(longYNow.current);
           }}
         >
           {!isWholeRead ? (

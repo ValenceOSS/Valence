@@ -23,8 +23,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Slider } from '@ValenceUI/Slider';
 import {
+  easeOut,
   fadeVariants,
-  revealItemVariants,
   revealTransition,
   spring,
   stillTransition,
@@ -56,6 +56,20 @@ import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { say } from '@ValenceI18n/say';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+
+const TRACK_SHIFT = 6;
+
+const TRACK_CHANGES: Variants = {
+  hidden: { opacity: 0, y: TRACK_SHIFT },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.2, ease: easeOut } },
+  gone: { opacity: 0, y: -TRACK_SHIFT, transition: { duration: 0.12, ease: easeOut } },
+};
+
+const TRACK_FADES: Variants = {
+  hidden: { opacity: 0 },
+  shown: { opacity: 1, transition: stillTransition },
+  gone: { opacity: 0, transition: stillTransition },
+};
 
 const ARRIVING: Variants = {
   hidden: { opacity: 0, y: '120%' },
@@ -176,12 +190,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
         <section aria-label={say('common.nowPlaying')} className="relative text-text">
           <div className="flex flex-col">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 sm:px-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1.6fr)_minmax(0,1fr)]">
-              <div className="flex min-w-0 items-center gap-3">
-                <AnimatePresence mode="wait" initial={false}>
+              <div className="relative flex min-w-0 items-center gap-3">
+                <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
                     key={shown.trackId}
-                    variants={revealItemVariants(prefersReducedMotion)}
-                    custom={0}
+                    variants={prefersReducedMotion === true ? TRACK_FADES : TRACK_CHANGES}
                     initial="hidden"
                     animate="shown"
                     exit="gone"

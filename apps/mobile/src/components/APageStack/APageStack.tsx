@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Animated, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CARD_GOES_BACK } from '@ValenceMobile/components/APageStack/CARD_GOES_BACK';
 import { CARD_SCROLL } from '@ValenceMobile/components/APageStack/CARD_SCROLL';
@@ -48,6 +49,8 @@ const GRABBER_WIDE = 56;
 const GRABBER_HIGH = 5;
 
 const KEPT_BENEATH = 2;
+
+const MILLISECONDS_A_SECOND = 1000;
 
 const MOVE = { ...SPRINGS.liquid, overshootClamping: true, useNativeDriver: true } as const;
 
@@ -512,16 +515,23 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
     }
 
     const isGoing = dy / height > GOES_DOWN_PAST || vy > GOES_DOWN_FASTER_THAN;
+    const velocity = (vy * MILLISECONDS_A_SECOND) / height;
+
+    if (isGoing) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
 
     if (top.isCard === true && beneath !== null) {
       Animated.spring(placeIn(places, beneath.key), {
         ...MOVE,
+        velocity,
         toValue: isGoing ? IN_PLACE : PUSHED_UNDER,
       }).start();
     }
 
     Animated.spring(placeIn(places, top.key), {
       ...MOVE,
+      velocity,
       toValue: isGoing ? PUSHED_OFF : IN_PLACE,
     }).start(({ finished }) => {
       if (isGoing && finished) {
@@ -609,31 +619,40 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
         }
 
         const isGoing = gesture.dx / width > GOES_BACK_PAST || gesture.vx > GOES_BACK_FASTER_THAN;
+        const velocity = (gesture.vx * MILLISECONDS_A_SECOND) / width;
+
+        if (isGoing) {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
 
         if (top.isCard === true) {
-          Animated.spring(peeling, { ...MOVE, toValue: isGoing ? 1 : 0 }).start(({ finished }) => {
-            if (!finished) {
-              return;
-            }
+          Animated.spring(peeling, { ...MOVE, velocity, toValue: isGoing ? 1 : 0 }).start(
+            ({ finished }) => {
+              if (!finished) {
+                return;
+              }
 
-            if (isGoing) {
-              onStepBack?.();
+              if (isGoing) {
+                onStepBack?.();
 
-              return;
-            }
+                return;
+              }
 
-            setPeeled(null);
-          });
+              setPeeled(null);
+            },
+          );
 
           return;
         }
 
         Animated.spring(placeIn(places, beneath.key), {
           ...MOVE,
+          velocity,
           toValue: isGoing ? IN_PLACE : PUSHED_UNDER,
         }).start();
         Animated.spring(placeIn(places, top.key), {
           ...MOVE,
+          velocity,
           toValue: isGoing ? PUSHED_OFF : IN_PLACE,
         }).start(({ finished }) => {
           if (isGoing && finished) {
