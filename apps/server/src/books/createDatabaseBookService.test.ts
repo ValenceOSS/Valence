@@ -1,13 +1,17 @@
-import { access, mkdtemp, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import sharp from 'sharp';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { book, library, user, viewerProfile } from '#dialect/Schema';
 import { createDatabaseBookService } from './createDatabaseBookService';
+import { openBookFile } from './openBookFile';
 import type { BookMatching } from './BookMatching';
 import type { BookRow } from './scanBookLibrary';
+
+vi.mock('./openBookFile', () => ({ openBookFile: vi.fn() }));
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -81,6 +85,10 @@ const aShelf = async () => {
 };
 
 describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
+  beforeEach(() => {
+    vi.mocked(openBookFile).mockReset().mockResolvedValue(null);
+  });
+
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -108,6 +116,37 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
       title: 'dune',
       authors: ['Herbert'],
     });
+  });
+
+  it('falls back to the folder art when the cover inside an audiobook will not draw', async () => {
+    const { db, service, cacheDir } = await aShelf();
+    const folder = join(cacheDir, 'Dune');
+
+    await mkdir(folder);
+    await db.update(library).set({ path: cacheDir }).where(eq(library.id, 'books'));
+    await writeFile(
+      join(folder, 'cover.png'),
+      await sharp({ create: { width: 8, height: 8, channels: 3, background: '#fff' } })
+        .png()
+        .toBuffer(),
+    );
+
+    const id = await service.upsertBook({ ...DUNE, path: folder });
+
+    await service.upsertChapter('books', {
+      ...chapterOf(join(folder, '1.mp3'), 1, 'mp3'),
+      bookPath: folder,
+    });
+    vi.mocked(openBookFile).mockResolvedValueOnce({
+      layout: 'audio',
+      durationSeconds: 600,
+      marks: [],
+      track: null,
+      readCover: () =>
+        Promise.resolve({ bytes: Uint8Array.from([1, 2, 3]), contentType: 'image/jpeg' }),
+    });
+
+    expect(await service.readCover(id ?? '')).toMatchObject({ contentType: 'image/webp' });
   });
 
   it('says a correction or its forgetting changed nothing for a book that is not there', async () => {

@@ -837,11 +837,19 @@ const createDatabaseBookService = (
       if (isAudiobookFormat(BookFormatSchema.catch('cbz').parse(first.format))) {
         const opened = await openBookFile(first.path).catch(() => null);
         const carried = opened?.layout === 'audio' ? await opened.readCover() : null;
-        const cover =
-          carried ??
-          (await readFolderArt(first.bookPath, first.bookPath !== first.path, first.libraryPath));
+        const drawn = carried === null ? null : await drawBookCover(carried, COVER_WIDTH);
 
-        return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
+        if (drawn !== null) {
+          return drawn;
+        }
+
+        const art = await readFolderArt(
+          first.bookPath,
+          first.bookPath !== first.path,
+          first.libraryPath,
+        );
+
+        return art === null ? null : drawBookCover(art, COVER_WIDTH);
       }
 
       if (first.format !== 'epub' && first.format !== 'pdf') {
