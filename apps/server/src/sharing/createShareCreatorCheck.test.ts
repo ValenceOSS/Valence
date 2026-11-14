@@ -10,7 +10,12 @@ const BOOK = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
  * The checks, over an account with the standing given.
  */
 const checks = (
-  standing: { banned?: boolean; held?: GrantedPermission[]; refusedItems?: string[]; refusedBooks?: string[] } = {},
+  standing: {
+    banned?: boolean;
+    held?: GrantedPermission[];
+    refusedItems?: string[];
+    refusedBooks?: string[];
+  } = {},
 ) =>
   createShareCreatorCheck({
     isBanned: () => Promise.resolve(standing.banned ?? false),
@@ -28,6 +33,34 @@ const checks = (
   });
 
 describe('createShareCreatorCheck', () => {
+  it('looks a creator up once for the requests inside a few seconds, and again after', async () => {
+    let looked = 0;
+    let clock = 0;
+    const check = createShareCreatorCheck({
+      isBanned: () => {
+        looked += 1;
+
+        return Promise.resolve(false);
+      },
+      permissionsOf: () => Promise.resolve(new Set<GrantedPermission>(['sharing.link'])),
+      isOutOfReach: () => Promise.resolve(false),
+      canReachBook: () => Promise.resolve(true),
+      now: () => clock,
+    });
+
+    await check.stillShares('account-1');
+    await check.reaches('account-1', ITEM);
+    clock = 9_000;
+    await check.stillShares('account-1');
+
+    expect(looked).toBe(1);
+
+    clock = 11_000;
+    await check.stillShares('account-1');
+
+    expect(looked).toBe(2);
+  });
+
   it('keeps a link working for somebody still allowed to share', async () => {
     expect(await checks().stillShares('account-1')).toBe(true);
     expect(await checks().reaches('account-1', ITEM)).toBe(true);
