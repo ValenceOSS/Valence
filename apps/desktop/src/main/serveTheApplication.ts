@@ -27,8 +27,8 @@ const CARRIED = ['accept', 'content-type', 'range', 'authorization', DEVICE_HEAD
 /**
  * Writes the policy a page of this client is held to, allowing these sources of script beyond its own.
  * The one thing a page may frame is the video host's player, which is how a catalogue trailer plays.
- * WebAssembly may be compiled, since the browser's own player decodes sound and draws styled
- * subtitles with it.
+ * WebAssembly may be compiled, since the browser's own player decodes sound and MPEG-2 pictures
+ * with it.
  *
  * @param scripts - Where else script may come from.
  * @returns The policy, as the header carries it.
