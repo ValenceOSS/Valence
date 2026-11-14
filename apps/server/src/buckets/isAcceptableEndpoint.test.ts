@@ -24,6 +24,10 @@ describe('isAcceptableEndpoint', () => {
   it('refuses a cloud’s metadata address, written as a number or reached by a name', async () => {
     await expect(isAcceptableEndpoint('http://169.254.169.254/latest')).resolves.toBe(false);
     await expect(isAcceptableEndpoint('http://[fe80::1]/')).resolves.toBe(false);
+    await expect(isAcceptableEndpoint('http://[fd00:ec2::254]/')).resolves.toBe(false);
+    await expect(
+      isAcceptableEndpoint('http://metadata.example', resolvesTo('fd00:ec2::254')),
+    ).resolves.toBe(false);
     await expect(isAcceptableEndpoint('http://[::ffff:169.254.169.254]/')).resolves.toBe(false);
     await expect(
       isAcceptableEndpoint('http://metadata.example', resolvesTo('169.254.169.254')),

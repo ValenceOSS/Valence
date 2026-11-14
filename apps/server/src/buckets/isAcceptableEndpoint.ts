@@ -7,6 +7,7 @@ const NEVER_REACHED = new BlockList();
 
 NEVER_REACHED.addSubnet('169.254.0.0', 16, 'ipv4');
 NEVER_REACHED.addSubnet('fe80::', 10, 'ipv6');
+NEVER_REACHED.addSubnet('fd00:ec2::', 64, 'ipv6');
 
 const MAPPED_IPV4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i;
 
