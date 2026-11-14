@@ -31,6 +31,7 @@ import {
 import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress';
 import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
 import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
+import { useSubtitleCues } from '@ValenceClient/playback/useSubtitleCues';
 import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
 import {
   QualityPreferenceSchema,
@@ -689,10 +690,12 @@ const Player = ({
         : (trackForLanguage(textTracks, subtitleLanguage)?.id ?? null);
   const subtitles =
     chosenSubtitles ?? sentSubtitles ?? defaultTrackId(textTracks, chosenAudio?.language ?? null);
-  const cues = useQuery({
-    ...playbackQueries.cues(mediaId, subtitles),
-    enabled: subtitles !== SUBTITLES_OFF,
-  });
+  const cues = useSubtitleCues(
+    mediaId,
+    subtitles === SUBTITLES_OFF
+      ? null
+      : (textTracks.find((track) => track.id === subtitles) ?? null),
+  );
 
   const touch = useCallback(() => {
     setIsShowing(true);
@@ -1269,7 +1272,7 @@ const Player = ({
 
       {subtitles === SUBTITLES_OFF ? null : (
         <SubtitleLine
-          cues={cues.data ?? []}
+          cues={cues}
           position={position - subtitleOffset}
           isPlaying={isPlaying}
           isLifted={isShowing}

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 
 const SubtitleSpanSchema = z.object({
   text: z.string(),
@@ -11,6 +12,8 @@ const SubtitleSpanSchema = z.object({
   isUnderlined: z.boolean(),
   isStruckThrough: z.boolean(),
 });
+
+const NOT_FOUND = 404;
 
 const SubtitleCueSchema = z.object({
   from: z.number(),
@@ -42,27 +45,33 @@ const subtitleCuesUrl = (mediaId: string, trackId: string, fromSeconds = 0): str
 /**
  * Reads a track as lines that kept where they go and what they were dressed in.
  *
- * Only a script carries any of that. Every other kind of subtitle answers with nothing here and is
- * read as WebVTT instead, which is also what happens to a script on a server too old to have been
- * asked this — so a client never has to know which it is talking to.
+ * Only a script carries any of that. A track with none answers that it has none, and so does a
+ * script with no line in it, or an answer that is not the shape asked for; each is read as WebVTT
+ * instead, which is also what happens on a server too old to have been asked this. Anything else —
+ * a server out of reach, or one that could not read the track just now — is thrown, so whoever
+ * asked can ask again rather than settle for nothing.
  *
  * @param url - The address the lines are served from.
+ * @param signal - Told when the lines are no longer wanted.
  * @returns The lines, or null where this track has no styled form.
  */
-const fetchSubtitleCues = async (url: string): Promise<SubtitleCue[] | null> => {
-  try {
-    const answer = await fetch(url);
+const fetchSubtitleCues = async (
+  url: string,
+  signal?: AbortSignal,
+): Promise<SubtitleCue[] | null> => {
+  const answer = await fetch(url, signal === undefined ? {} : { signal });
 
-    if (!answer.ok) {
-      return null;
-    }
-
-    const read = SubtitleCuesSchema.safeParse(await answer.json());
-
-    return read.success ? read.data.cues : null;
-  } catch {
+  if (answer.status === NOT_FOUND) {
     return null;
   }
+
+  if (!answer.ok) {
+    throw new RequestFailed(url, answer.status);
+  }
+
+  const read = SubtitleCuesSchema.safeParse(await answer.json().catch(() => null));
+
+  return read.success && read.data.cues.length > 0 ? read.data.cues : null;
 };
 
 export type { SubtitleCue, SubtitleSpan };

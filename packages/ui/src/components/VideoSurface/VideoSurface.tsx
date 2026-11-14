@@ -18,7 +18,9 @@ const HAS_FUTURE_DATA = 3;
  * @param textTrack - The subtitle track to attach, where one is selected.
  * @param isDrawnElsewhere - Whether somebody above is drawing the subtitles. The track is still
  *   attached and still loaded, because a picture-in-picture window has no text tracks of its own and
- *   reads its lines from these — it is only the drawing that is somebody else's.
+ *   reads its lines from these — it is only the drawing that is somebody else's. An iPhone's browser
+ *   cannot take the page full screen, only hand the film to the system's own player, which draws
+ *   nothing of the page's; so while that player has it, the track is shown by the element after all.
  * @param onTimeUpdate - Told the position as it moves.
  * @param onDurationChange - Told the length once the file says what it is.
  * @param onPlayingChange - Told when playback starts or stops.
@@ -47,6 +49,8 @@ const VideoSurface = ({
   const trackId = textTrack?.id ?? null;
   const trackRef = useRef<HTMLTrackElement>(null);
   const lastTimeRef = useRef<number | null>(null);
+  const isWithTheSystemRef = useRef(false);
+
   useEffect(() => {
     const element = videoRef.current;
 
@@ -62,16 +66,30 @@ const VideoSurface = ({
       const own = trackRef.current?.track;
 
       if (own !== undefined && trackId !== null) {
-        own.mode = isDrawnElsewhere ? 'hidden' : 'showing';
+        own.mode = isDrawnElsewhere && !isWithTheSystemRef.current ? 'hidden' : 'showing';
       }
+    };
+
+    const handOver = () => {
+      isWithTheSystemRef.current = true;
+      show();
+    };
+
+    const takeBack = () => {
+      isWithTheSystemRef.current = false;
+      show();
     };
 
     show();
 
     element.textTracks.addEventListener('addtrack', show);
+    element.addEventListener('webkitbeginfullscreen', handOver);
+    element.addEventListener('webkitendfullscreen', takeBack);
 
     return () => {
       element.textTracks.removeEventListener('addtrack', show);
+      element.removeEventListener('webkitbeginfullscreen', handOver);
+      element.removeEventListener('webkitendfullscreen', takeBack);
     };
   }, [videoRef, trackId, isDrawnElsewhere]);
 

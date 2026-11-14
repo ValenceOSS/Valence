@@ -1914,6 +1914,38 @@ describe('VideoPlayer', () => {
     );
   });
 
+  it('draws the lines of the track a viewer chooses over the picture', async () => {
+    const actor = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          url.includes('/api/media/media-1/subtitles/en')
+            ? new Response('WEBVTT\n\n00:00:00.000 --> 02:00:00.000\nWelcome aboard\n')
+            : new Response('', { status: 404 }),
+        ),
+      ),
+    );
+    subtitlesMock.mockResolvedValue([
+      {
+        id: 'en',
+        language: 'en',
+        label: 'English',
+        format: 'srt',
+        isForced: false,
+        isHearingImpaired: false,
+      },
+    ]);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await settled();
+    await actor.click(await screen.findByRole('button', { name: 'Settings' }));
+    await actor.click(await screen.findByRole('button', { name: /Subtitles\/CC/ }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /English/ }));
+
+    expect(await screen.findByText('Welcome aboard')).toBeInTheDocument();
+  });
+
   it('marks the track the server actually chose, not the first in the file', async () => {
     const actor = userEvent.setup();
     detailMock.mockResolvedValue(detailWithTwoAudioTracks);

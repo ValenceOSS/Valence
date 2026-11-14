@@ -132,7 +132,6 @@ import type { StartedSession } from '@ValenceClient/playback/startPlaybackSessio
 import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
-import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { PlaybackHealth, StatsReading } from './components/StreamStats/StreamStats.types';
@@ -3156,10 +3155,11 @@ const VideoPlayer = ({
 
         {fetchableTrack === null ? null : (
           <SubtitleCues
-            src={subtitleTrackUrl(media.id, fetchableTrack.id)}
-            cuesSrc={subtitleCuesUrl(media.id, fetchableTrack.id)}
+            mediaId={media.id}
+            track={fetchableTrack}
             atSeconds={position - subtitleOffset}
             video={videoRef}
+            picture={enginePictureRef}
             offsetSeconds={subtitleOffset}
             style={captionStyle}
             isLifted={isBarUp}

@@ -1,17 +1,33 @@
 import { useEffect, useState } from 'react';
-import { fetchSubtitleCues } from '@ValenceClient/playback/fetchSubtitleCues';
-import { asSubtitleLines } from '@ValenceClient/playback/asSubtitleLines';
+import { useSubtitleCues } from '@ValenceClient/playback/useSubtitleCues';
+import { arrangeSubtitleLines } from '@ValenceClient/playback/arrangeSubtitleLines';
 import { linesAt } from '@ValenceScreens/playback/linesAt';
 import { toCuePlacement } from '@ValenceScreens/playback/toCuePlacement';
-import { toSpanStyle } from '@ValenceScreens/playback/toSpanStyle';
-import { toCueDeclarations } from '@ValenceScreens/playback/captionStyle';
-import { dialogueFontSize } from '@ValenceScreens/playback/dialogueFontSize';
+import { SubtitleLine } from './components/SubtitleLine/SubtitleLine';
+import { pictureBox } from './pictureBox';
+import { usePictureRatio } from './usePictureRatio';
+import type { CSSProperties } from 'react';
+import type { SubtitleRow } from '@ValenceClient/playback/arrangeSubtitleLines';
 import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleCuesProps } from './SubtitleCues.types';
 
 const CLEAR_OF_THE_CONTROLS = '18%';
 
-const NEAR_THE_BOTTOM = '8%';
+const NEAR_THE_EDGE = '8%';
+
+const ROWS = ['top', 'middle', 'bottom'] as const satisfies readonly SubtitleRow[];
+
+const STACKED: Record<SubtitleRow, string> = {
+  top: 'flex-col',
+  middle: 'flex-col',
+  bottom: 'flex-col-reverse',
+};
+
+type LiveMoment = {
+  seconds: number;
+  cues: readonly SubtitleCue[];
+  offsetSeconds: number;
+};
 
 /**
  * Subtitles drawn by the application rather than by the thing playing the film.
@@ -19,76 +35,52 @@ const NEAR_THE_BOTTOM = '8%';
  * A browser draws these itself, given a `track` element on the video it is playing. There is no
  * video element when the operating system is doing the playing — the picture is behind the window,
  * and nothing behind the window knows what this application's subtitles are or where its controls
- * sit. So the file is read here and the lines are drawn as part of the page, over the picture, with
- * the same preferences a browser would have been handed.
+ * sit. So the lines are read here and drawn as part of the page, over the picture, with the same
+ * preferences a browser would have been handed.
  *
- * It moves out of the way of the controls when they are up, which a browser only manages through a
- * positioning hint that has to be rewritten into the file. Here it is where the line is put.
+ * The lines come from the reader every client shares, which draws a script's plain text until its
+ * own lines arrive and keeps asking while the server cannot answer, so a track is late rather than
+ * blank.
  *
- * A track that is a script is asked for as lines that kept where they go and what they were dressed
- * in, and anything else — or any track on a server that cannot answer that — is read as WebVTT and
- * dressed in nothing, which is the same thing this drew before scripts were understood.
+ * No two lines are drawn on the same spot. A line the script put at a point of its own goes there;
+ * every other line joins the row its alignment names — along the top, across the middle or along the
+ * foot — and stacks there with the rest. The foot stacks upwards, the first line said lowest and each
+ * later one above it, as a renderer of the script stacks them, so a line being read stays where it is
+ * when another starts. The rows move out of the way of the controls when they are up, which a browser
+ * only manages through a positioning hint that has to be rewritten into the file.
  *
- * Whose styling wins depends on what a line is. A sign is the author's: a shop front, a caption, a
- * note in the corner of the frame, drawn where and how the script asked so that it reads as part of
- * the picture. Dialogue is the viewer's, and takes the caption preferences they set — those exist so
- * that somebody who needs large lettering on a solid ground can read at all, and a file is not
- * entitled to overrule that. Dialogue is sized by the picture's height, so it grows with the player
- * on a large or dense screen rather than staying the size of the page's text.
+ * The rows are laid along the player, which is where the controls are. A line placed at a point is
+ * placed on the picture instead, in a box of the picture's own shape centred in the player, so that
+ * a sign lands on the shop front it names and is sized against the picture rather than in the bars
+ * beside or above it when the player is not the film's shape.
  *
- * @param src - The subtitle file to read as WebVTT.
- * @param cuesSrc - Where to ask for the same track as styled lines, for a track that has them.
+ * @param mediaId - What is playing.
+ * @param track - The track being read.
  * @param atSeconds - Where playback is up to, offset included.
  * @param video - The video it is drawn over, whose clock it reads every frame where given, so a
  *   line comes and goes on the frame it should rather than on the browser's next quarter-second
- *   report of the time.
+ *   report of the time. A moment read against other lines or another offset is never used, so a
+ *   line does not outstay a new track or a nudge to the timing.
+ * @param picture - The picture the page's own engine draws on a canvas, where it draws one, whose
+ *   size gives the picture's shape when the video carries only the sound.
  * @param offsetSeconds - How far the viewer has moved the subtitles against the picture, read
  *   against that clock.
  * @param style - How this viewer likes captions drawn.
- * @param isLifted - Whether the controls are up and dialogue should sit above them.
+ * @param isLifted - Whether the controls are up and the rows should keep clear of them.
  */
 const SubtitleCues = ({
-  src,
-  cuesSrc,
+  mediaId,
+  track,
   atSeconds,
   video,
+  picture,
   offsetSeconds = 0,
   style,
   isLifted = false,
 }: SubtitleCuesProps) => {
-  const [cues, setCues] = useState<readonly SubtitleCue[]>([]);
-
-  useEffect(() => {
-    let dropped = false;
-
-    setCues([]);
-
-    const read = async (): Promise<SubtitleCue[]> => {
-      const styled = cuesSrc === undefined ? null : await fetchSubtitleCues(cuesSrc);
-
-      if (styled !== null) {
-        return styled;
-      }
-
-      const text = await fetch(src)
-        .then((answer) => (answer.ok ? answer.text() : ''))
-        .catch(() => '');
-
-      return asSubtitleLines(text);
-    };
-
-    void read().then((found) => {
-      if (!dropped) {
-        setCues(found);
-      }
-    });
-
-    return () => {
-      dropped = true;
-    };
-  }, [src, cuesSrc]);
-
-  const [liveSeconds, setLiveSeconds] = useState<number | null>(null);
+  const cues = useSubtitleCues(mediaId, track);
+  const [live, setLive] = useState<LiveMoment | null>(null);
+  const ratio = usePictureRatio(video, picture);
 
   useEffect(() => {
     if (video === undefined) {
@@ -96,7 +88,7 @@ const SubtitleCues = ({
     }
 
     let frame = 0;
-    let shown = '';
+    let shown: string | null = null;
 
     const follow = () => {
       const element = video.current;
@@ -109,7 +101,7 @@ const SubtitleCues = ({
 
         if (showing !== shown) {
           shown = showing;
-          setLiveSeconds(seconds);
+          setLive({ seconds, cues, offsetSeconds });
         }
       }
 
@@ -123,47 +115,62 @@ const SubtitleCues = ({
     };
   }, [video, offsetSeconds, cues]);
 
-  const said = linesAt(cues, video === undefined ? atSeconds : (liveSeconds ?? atSeconds));
+  const isLive =
+    video !== undefined &&
+    live !== null &&
+    live.cues === cues &&
+    live.offsetSeconds === offsetSeconds;
+  const arranged = arrangeSubtitleLines(linesAt(cues, isLive ? live.seconds : atSeconds));
 
-  if (said.length === 0) {
+  if (ROWS.every((row) => arranged.rows[row].length === 0) && arranged.placed.length === 0) {
     return null;
   }
 
-  const viewer = toCueDeclarations(style);
+  const edge = isLifted ? CLEAR_OF_THE_CONTROLS : NEAR_THE_EDGE;
+  const rowAt: Record<SubtitleRow, CSSProperties> = {
+    top: { top: edge },
+    middle: { top: '50%', transform: 'translateY(-50%)' },
+    bottom: { bottom: edge },
+  };
 
   return (
     <div
       className="pointer-events-none absolute inset-0 z-10 [container-type:size]"
       aria-live="polite"
     >
-      {said.map((cue, index) => {
-        const placement = toCuePlacement(cue, isLifted ? CLEAR_OF_THE_CONTROLS : NEAR_THE_BOTTOM);
-
-        return (
+      {ROWS.map((row) =>
+        arranged.rows[row].length === 0 ? null : (
           <div
-            key={`${cue.from.toString()}-${index.toString()}`}
-            className="absolute flex px-[8%]"
-            style={{ ...placement.box, justifyContent: placement.justify }}
+            key={row}
+            className={`absolute inset-x-0 flex ${STACKED[row]} items-center gap-1 px-[8%]`}
+            style={rowAt[row]}
           >
-            <p
-              className="max-w-full rounded px-2 py-0.5 leading-snug whitespace-pre-line"
-              style={
-                cue.isSign
-                  ? { textAlign: 'center', textShadow: viewer.textShadow }
-                  : { ...viewer, textAlign: 'center', fontSize: dialogueFontSize(style.fontScale) }
-              }
-            >
-              {cue.isSign
-                ? cue.spans.map((span, at) => (
-                    <span key={`${at.toString()}-${span.text}`} style={toSpanStyle(span)}>
-                      {span.text}
-                    </span>
-                  ))
-                : cue.spans.map((span) => span.text).join('')}
-            </p>
+            {arranged.rows[row].map((cue, index) => (
+              <SubtitleLine
+                key={`${cue.from.toString()}-${index.toString()}`}
+                cue={cue}
+                style={style}
+              />
+            ))}
           </div>
-        );
-      })}
+        ),
+      )}
+
+      {arranged.placed.length === 0 ? null : (
+        <div className="absolute [container-type:size]" style={pictureBox(ratio)}>
+          {arranged.placed.map((cue, index) =>
+            cue.position === null ? null : (
+              <div
+                key={`${cue.from.toString()}-${index.toString()}`}
+                className="absolute flex flex-col"
+                style={toCuePlacement(cue.position, cue.alignment)}
+              >
+                <SubtitleLine cue={cue} style={style} />
+              </div>
+            ),
+          )}
+        </div>
+      )}
     </div>
   );
 };

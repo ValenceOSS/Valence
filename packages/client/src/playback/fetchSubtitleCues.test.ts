@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchSubtitleCues, subtitleCuesUrl } from './fetchSubtitleCues';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 
 const A_CUE = {
   from: 1,
@@ -27,8 +28,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const answers = <T>(answer: { ok: boolean; json: () => Promise<T> }) => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(answer));
+const answers = (body: string | object, status = 200) => {
+  const fetchMock = vi.fn(() =>
+    Promise.resolve(
+      typeof body === 'string' ? new Response(body, { status }) : Response.json(body, { status }),
+    ),
+  );
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  return fetchMock;
 };
 
 describe('the address a track’s styled lines are asked for', () => {
@@ -47,7 +56,7 @@ describe('the address a track’s styled lines are asked for', () => {
 
 describe('reading a track as styled lines', () => {
   it('reads the lines where the track has them', async () => {
-    answers({ ok: true, json: () => Promise.resolve({ cues: [A_CUE] }) });
+    answers({ cues: [A_CUE] });
 
     const cues = await fetchSubtitleCues('/cues');
 
@@ -56,26 +65,47 @@ describe('reading a track as styled lines', () => {
   });
 
   it('answers with nothing where the track carries no styling', async () => {
-    answers({ ok: false, json: () => Promise.resolve({ error: 'no' }) });
+    answers({ error: 'no' }, 404);
 
     await expect(fetchSubtitleCues('/cues')).resolves.toBeNull();
   });
 
-  it('answers with nothing rather than throwing where the server cannot be reached', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+  it('answers with nothing where the script has no line in it, so the plain track is read', async () => {
+    answers({ cues: [] });
 
     await expect(fetchSubtitleCues('/cues')).resolves.toBeNull();
+  });
+
+  it('throws where the server could not read the track just now, so it is asked again', async () => {
+    answers({ error: 'later' }, 503);
+
+    await expect(fetchSubtitleCues('/cues')).rejects.toThrow(RequestFailed);
+  });
+
+  it('throws where the server cannot be reached, rather than taking that for no styling', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+
+    await expect(fetchSubtitleCues('/cues')).rejects.toThrow('offline');
   });
 
   it('refuses an answer that is not the shape it asked for', async () => {
-    answers({ ok: true, json: () => Promise.resolve({ cues: [{ from: 'soon' }] }) });
+    answers({ cues: [{ from: 'soon' }] });
 
     await expect(fetchSubtitleCues('/cues')).resolves.toBeNull();
   });
 
   it('refuses an answer that is not JSON at all', async () => {
-    answers({ ok: true, json: () => Promise.reject(new Error('not json')) });
+    answers('<html>a proxy’s page</html>');
 
     await expect(fetchSubtitleCues('/cues')).resolves.toBeNull();
+  });
+
+  it('hands the request what tells it the lines are no longer wanted', async () => {
+    const fetchMock = answers({ cues: [A_CUE] });
+    const stop = new AbortController();
+
+    await fetchSubtitleCues('/cues', stop.signal);
+
+    expect(fetchMock).toHaveBeenCalledWith('/cues', { signal: stop.signal });
   });
 });
