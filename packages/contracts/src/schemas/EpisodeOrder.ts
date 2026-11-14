@@ -1,11 +1,12 @@
 import { z } from 'zod';
+import { EpisodeGroupIdSchema } from './Anime';
 
 const EpisodeOrdersSchema = z.object({
   orders: z.array(z.object({ id: z.string(), name: z.string(), type: z.number().int() })),
   chosen: z.string().nullable(),
 });
 
-const ChooseEpisodeOrderSchema = z.object({ order: z.string().min(1).max(64).nullable() });
+const ChooseEpisodeOrderSchema = z.object({ order: EpisodeGroupIdSchema.nullable() });
 
 const EpisodePinRequestSchema = z.object({
   pin: z

@@ -4,6 +4,7 @@ import {
   setAccountStreamLimitRoute,
   setRoleStreamLimitRoute,
 } from '@ValenceServer/routes/StreamLimitRoute';
+import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
 import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
 import { streamsOf } from '@ValenceServer/streams/streamsOf';
 import { NO_STREAM_LIMIT, StreamLimitsSchema } from '@ValenceContracts/schemas/StreamLimit';
@@ -31,7 +32,16 @@ const holdsAnything = (limit: StreamLimit): boolean =>
  * @param context - What they are answered with.
  */
 const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
-  const { requires, settings, permissions, presence, readActor, refusalOver } = context;
+  const {
+    requires,
+    settings,
+    permissions,
+    presence,
+    readActor,
+    refusalOver,
+    theOwner,
+    describeRefusal,
+  } = context;
 
   const limitsNow = async (): Promise<StreamLimits> =>
     StreamLimitsSchema.catch(NOBODY_LIMITED).parse((await settings.read()).streamLimits);
@@ -92,17 +102,43 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
+    const { roleId } = context.req.valid('param');
+
+    if (!(await permissions.listRoles()).some((role) => role.id === roleId)) {
+      return context.json(refuse('error.role.noSuchRole'), 404);
+    }
+
     const limits = await limitsNow();
 
-    return context.json(limits.roles[context.req.valid('param').roleId] ?? NO_STREAM_LIMIT, 200);
+    return context.json(limits.roles[roleId] ?? NO_STREAM_LIMIT, 200);
   });
 
   app.openapi(setRoleStreamLimitRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { roleId } = context.req.valid('param');
+    const role = (await permissions.listRoles()).find((one) => one.id === roleId);
+
+    if (role === undefined) {
+      return context.json(refuse('error.role.noSuchRole'), 404);
+    }
+
+    const refusal = checkRoleChange({
+      actorId: actor.id,
+      ownerId: await theOwner(),
+      actorHighestPosition: actor.highestPosition,
+      actorPermissions: actor.permissions,
+      targetPosition: role.position,
+    });
+
+    if (refusal !== null) {
+      return context.json(describeRefusal(refusal), 403);
+    }
+
     const limit = context.req.valid('json');
     const limits = await limitsNow();
     const { [roleId]: _was, ...others } = limits.roles;

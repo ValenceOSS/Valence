@@ -113,6 +113,21 @@ describe('a download client a plugin provides', () => {
     });
   });
 
+  it('refuses a magnet that is more than one link, sending nothing to the plugin', async () => {
+    const { adapter, call } = build(() => ({ id: '7' }));
+
+    expect(
+      await problemOf(
+        adapter.add(
+          { kind: 'magnet', url: 'magnet:?xt=urn:btih:a http://10.0.0.5/' },
+          'Film',
+          'films',
+        ),
+      ),
+    ).toBe('requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent');
+    expect(call).not.toHaveBeenCalled();
+  });
+
   it('sends nothing and tries nothing while it has no folder to copy into', async () => {
     const { adapter, call } = build(() => ({ id: '7' }), [SENT], '');
 

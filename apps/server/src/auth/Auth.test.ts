@@ -264,6 +264,20 @@ describe('createAuth', () => {
     expect(changed).toEqual([store.user[0]?.id]);
   });
 
+  it('says a session has ended however it ended, so nothing it opened outlives it', async () => {
+    const { auth, sessionsEnded } = createMemoryAuth();
+    const signedUp = await auth.handler(post('/api/auth/sign-up/email', credentials));
+    const cookie = signedUp.headers
+      .getSetCookie()
+      .map((one) => one.split(';')[0] ?? '')
+      .join('; ');
+    const signedIn = await auth.api.getSession({ headers: new Headers({ cookie }) });
+
+    await auth.handler(post('/api/auth/revoke-sessions', {}, { cookie, origin: BASE_URL }));
+
+    expect(sessionsEnded).toContain(signedIn?.session.id);
+  });
+
   it('produces a recovery link when someone forgets their password', async () => {
     const { auth, resetLinks } = createMemoryAuth();
     await auth.handler(post('/api/auth/sign-up/email', credentials));
@@ -279,6 +293,33 @@ describe('createAuth', () => {
     expect(resetLinks[0]?.email).toBe(credentials.email);
     expect(resetLinks[0]?.url).toContain('reset-password');
     expect((resetLinks[0]?.url ?? '').length).toBeGreaterThan(BASE_URL.length + 20);
+  });
+
+  it('signs every session out once the password is reset from a recovery link', async () => {
+    const { auth, resetLinks } = createMemoryAuth();
+    const signedUp = await auth.handler(post('/api/auth/sign-up/email', credentials));
+    const cookie = signedUp.headers
+      .getSetCookie()
+      .map((one) => one.split(';')[0] ?? '')
+      .join('; ');
+
+    await auth.handler(
+      post('/api/auth/request-password-reset', {
+        email: credentials.email,
+        redirectTo: `${BASE_URL}/reset`,
+      }),
+    );
+
+    const token = new URL(resetLinks[0]?.url ?? BASE_URL).pathname.split('/').at(-1) ?? '';
+    const reset = await auth.handler(
+      post('/api/auth/reset-password', { newPassword: 'a-new-long-password', token }),
+    );
+    const session = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/get-session`, { headers: { cookie, origin: BASE_URL } }),
+    );
+
+    expect(reset.status).toBe(200);
+    expect(await session.json()).toBeNull();
   });
 
   it('does not reveal whether an address has an account', async () => {

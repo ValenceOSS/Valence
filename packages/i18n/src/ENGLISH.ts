@@ -253,8 +253,6 @@ const ENGLISH = {
   'client.library.describeTitleDetails.boxOffice': 'Box office',
   'client.library.describeTitleDetails.budget': 'Budget',
   'client.library.describeTitleDetails.rottenTomatoes': 'Rotten Tomatoes',
-  'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
-    '/api/libraries/{libraryId}/items?{query}',
   'client.library.freshFlags.newEpisode': 'New episode',
   'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',
@@ -2305,6 +2303,8 @@ const ENGLISH = {
   'error.downloads.thatIsNotAChangeTo': 'That isn’t a valid change to a download client.',
   'error.downloads.thatIsNotADownloadClient': 'That isn’t a valid download client.',
   'error.downloads.thatIsNotAReleaseTo': 'That isn’t a valid release to send.',
+  'error.downloads.thisAccountMayNotSaveCopies':
+    'This account isn’t allowed to save copies to a device.',
   'error.downloads.thoseAreNotRulesForGiving':
     'Those aren’t valid rules for abandoning a download.',
   'error.folder.aFoldersNameIsASingle': 'A folder name can’t contain slashes.',
@@ -2404,6 +2404,7 @@ const ENGLISH = {
   'error.linking.thatServerHasNoPicture': 'That server has no picture.',
   'error.linking.thatServerTakesNoRequestsFromYours':
     'That server doesn’t accept requests from yours.',
+  'error.linking.thatStartCouldNotBeRead': 'That request to start playing couldn’t be read.',
   'error.linking.thisAccountMayNotLinkServers':
     'This account isn’t allowed to link this server with others.',
   'error.linking.thisPersonMayNotWatchFromHere':
@@ -2575,6 +2576,8 @@ const ENGLISH = {
     'Valence doesn’t have permission to delete files there.',
   'error.server.valenceIsNotAllowedToWrite': 'Valence doesn’t have permission to write there.',
   'error.setup.setupHasAlreadyBeenCompleted': 'Setup has already been completed.',
+  'error.setup.thatSetupCodeIsNotRight':
+    'That setup code doesn’t match the one in the server’s log.',
   'error.setup.theAdministratorAccountCouldNotBe': 'Couldn’t create the administrator account.',
   'error.setupLink.chooseAUsernameToSignInWith': 'Choose a username to sign in with.',
   'error.setupLink.thatAccountAlreadyHasAPassword': 'This account already has a password.',
@@ -2632,6 +2635,8 @@ const ENGLISH = {
   'error.webhook.noSuchSubscriptionOrItIs': 'No such subscription, or it’s turned off.',
   'error.webhook.theAddressIsMissingSettings': 'The address is missing {settings}.',
   'error.webhook.theMessageTemplateIsNotValidJson': 'The message template isn’t valid JSON.',
+  'error.webhook.valenceWillNotSendToTheLocalNetwork':
+    'Valence won’t send to an address on your own network unless Local network is on.',
   'native.captionTextStyle.avenirNextCondensed': 'Avenir Next Condensed',
   'native.captionTextStyle.chalkboardSE': 'Chalkboard SE',
   'native.captionTextStyle.courierNew': 'Courier New',
@@ -7276,6 +7281,9 @@ const ENGLISH = {
   'screens.adminArea.webhooksPanel.iHaveCopiedIt': 'I’ve copied it',
   'screens.adminArea.webhooksPanel.keepItTo100CharactersOr': 'Keep it to 100 characters or fewer.',
   'screens.adminArea.webhooksPanel.lastDelivery': 'Last delivery',
+  'screens.adminArea.webhooksPanel.localNetwork': 'Local network',
+  'screens.adminArea.webhooksPanel.localNetworkDescription':
+    'Lets this webhook reach addresses on your own network, such as another app on this server.',
   'screens.adminArea.webhooksPanel.nameIsSetUpCopyIts':
     '{name} is set up. Copy its signing secret now.',
   'screens.adminArea.webhooksPanel.newWebhook': 'New webhook',
@@ -9234,6 +9242,9 @@ const ENGLISH = {
   'screens.setupWizard.welcomeStep.makeYourAccount': 'Create your account',
   'screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet':
     'No one has an account on this server yet. Create yours, set the addresses Valence is reached on and where your media is, and import from Jellyfin, Emby or Plex if you’re switching. You can change all of it later.',
+  'screens.setupWizard.welcomeStep.printedInTheServerLog':
+    'Valence printed it in its log when it started, so only whoever runs the server can set it up.',
+  'screens.setupWizard.welcomeStep.setupCode': 'Setup code',
   'screens.shareArea.askWhoeverSentItForA': 'Ask the person who sent it for a new one.',
   'screens.shareArea.openingWhatWasSharedWithYou': 'Opening the shared item on {name}',
   'screens.shareArea.sharedWithYouOnName': 'Shared with you on {name}',
@@ -9551,6 +9562,8 @@ const ENGLISH = {
     'those details weren’t accepted.',
   'server.book.privateMaxAge604800Immutable': 'private, max-age=604800, immutable',
   'server.books.chapterNumbered': 'Chapter {number}',
+  'server.books.openComicRar.thatComicIsLargerThanA':
+    'That comic is larger than a gibibyte, the most Valence will read.',
   'server.books.pagesFromTo': 'Pages {from}–{to}',
   'server.books.partNumbered': 'Part {number}',
   'server.books.scanBookLibrary.thatBookAlreadyReadsAnotherWay':

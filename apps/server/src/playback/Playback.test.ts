@@ -361,6 +361,26 @@ describe('reporting what stopped playing', () => {
     expect(warnings).toHaveLength(20);
   });
 
+  it('counts reports by who sends them, not by the device they name', async () => {
+    const { log, warnings } = aRecordingLog();
+    const { app } = build({ log });
+
+    const answers = [];
+
+    for (let report = 0; report < 21; report += 1) {
+      answers.push(
+        (
+          await app.request(
+            post(`/api/playback/problems?clientId=tab-${report.toString()}`, aReport),
+          )
+        ).status,
+      );
+    }
+
+    expect(answers.at(-1)).toBe(429);
+    expect(warnings).toHaveLength(20);
+  });
+
   it('refuses a report sent for somebody else’s device', async () => {
     const presence = createPresenceService();
     const { auth, settings, store } = createMemoryAuth();

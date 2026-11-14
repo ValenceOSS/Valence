@@ -11,6 +11,7 @@ import type { LinkSharingStore } from './LinkSharingStore';
  * @param sharing - What this server shares with the other, where the names setting is kept.
  * @param serverId - The linked server.
  * @param person - Who on this server is asking, if anybody.
+ * @param asking - The request the token is for, which it is then good for alone.
  * @returns Where to send it and the token, or nothing where that server is not linked.
  */
 const signAsPerson = async (
@@ -18,19 +19,24 @@ const signAsPerson = async (
   sharing: LinkSharingStore,
   serverId: string,
   person: LinkPerson | null,
+  asking: { method: string; route: string },
 ): Promise<{ address: string; token: string } | null> => {
   if (person === null) {
-    return linking.signFor(serverId);
+    return linking.signFor(serverId, undefined, asking);
   }
 
   const shared = await sharing.readSharing(serverId);
 
   return shared === null
     ? null
-    : linking.signFor(serverId, {
-        pseudonym: await linking.pseudonymFor(serverId, person.profileId),
-        name: shared.namesTravel ? person.name : null,
-      });
+    : linking.signFor(
+        serverId,
+        {
+          pseudonym: await linking.pseudonymFor(serverId, person.profileId),
+          name: shared.namesTravel ? person.name : null,
+        },
+        asking,
+      );
 };
 
 export { signAsPerson };

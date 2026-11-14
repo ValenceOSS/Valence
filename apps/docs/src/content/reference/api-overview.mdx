@@ -10,13 +10,12 @@ Everything the Valence web and desktop clients do goes through one HTTP API, and
 
 The API lives under `/api` on the same address as the web client. If you reach Valence at `https://valence.example.com`, the base URL is `https://valence.example.com/api`. There is no separate API host and no version prefix.
 
-| What                                     | Where               |
-| :--------------------------------------- | :------------------ |
-| Interactive reference on this site       | [/api](/api)        |
-| Interactive reference on your own server | `/api/reference`    |
-| OpenAPI 3.1 document                     | `/api/openapi.json` |
-| Health check                             | `/api/health`       |
-| WebSocket                                | `/api/realtime`     |
+| What                               | Where               |
+| :--------------------------------- | :------------------ |
+| Interactive reference on this site | [/api](/api)        |
+| OpenAPI 3.1 document               | `/api/openapi.json` |
+| Health check                       | `/api/health`       |
+| WebSocket                          | `/api/realtime`     |
 
 The OpenAPI document and the server's own reference page are public, so a client generator can read them without signing in. The document your server serves reports the version of the release it is running, which makes it the right one to generate a client against. The copy behind this site's reference is written from the same routes at documentation build time.
 
@@ -47,7 +46,7 @@ Valence uses [better-auth](https://www.better-auth.com), and a request is answer
 | `POST /api/password-reset`, and `GET` and `POST /api/setup-links/{token}`                                                                                          | Resetting a forgotten password, and setting one from a link an administrator made                                                          |
 | `/api/federation/v1/*`                                                                                                                                             | Linked servers, which prove who they are with their own keys                                                                               |
 | `GET /api/plugins/{id}/accounts/{provider}/connect`, `GET /api/plugins/oauth/callback` and `POST /api/plugins/{id}/hooks/{hook}/{secret}`                          | Connecting an outside account to a plugin, which checks its own ticket or session, and webhooks to plugins, by the secret in their address |
-| `GET /api/openapi.json` and `GET /api/reference`                                                                                                                   | The documentation of the API itself                                                                                                        |
+| `GET /api/openapi.json`                                                                                                                                            | The documentation of the API itself                                                                                                        |
 | `GET /api/profiles/everyone`, `GET /api/profiles/{profileId}/avatar`, `GET /api/profiles/{profileId}/household`, `GET /api/splashscreen` and `GET /api/brand/logo` | Only while the server is set to show who lives here before sign-in (an admin setting, on by default)                                       |
 
 Anything else without credentials answers `401` with `{"error": "You’re not signed in.", "code": "error.common.nobodyIsSignedIn", "values": {}}`, unless the request carries a live share link, in which case it is handled as a share guest and confined to what the link covers.

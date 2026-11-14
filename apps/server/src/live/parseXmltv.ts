@@ -1,11 +1,8 @@
+import { elementsOf } from './elementsOf';
 import { xmlTextOf } from './xmlTextOf';
 import { xmltvTimeOf } from './xmltvTimeOf';
 import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import type { ParsedProgramme } from './ParsedProgramme';
-
-const PROGRAMME = /<programme\b([^>]*)>([\s\S]*?)<\/programme>/giu;
-
-const CHANNEL = /<channel\b[^>]*\bid="([^"]*)"[^>]*>([\s\S]*?)<\/channel>/giu;
 
 /**
  * The value of one attribute in an element's opening tag.
@@ -49,10 +46,12 @@ const parseXmltv = async (
   const names = new Map<string, string[]>();
   const turn = takeTurns();
 
-  for (const [, id, body] of text.matchAll(CHANNEL)) {
+  for (const { attributes, body } of elementsOf(text, 'channel')) {
     await turn();
 
-    if (id !== undefined && body !== undefined) {
+    const id = attributeOf(attributes, 'id');
+
+    if (id !== null) {
       names.set(
         xmlTextOf(id),
         [...body.matchAll(/<display-name\b[^>]*>([\s\S]*?)<\/display-name>/giu)].flatMap((found) =>
@@ -64,13 +63,13 @@ const parseXmltv = async (
 
   const programmes: ParsedProgramme[] = [];
 
-  for (const [, attributes, body] of text.matchAll(PROGRAMME)) {
+  for (const { attributes, body } of elementsOf(text, 'programme')) {
     await turn();
 
-    const channel = attributes === undefined ? null : attributeOf(attributes, 'channel');
-    const startsAt = xmltvTimeOf(attributeOf(attributes ?? '', 'start') ?? '');
-    const endsAt = xmltvTimeOf(attributeOf(attributes ?? '', 'stop') ?? '');
-    const title = childOf(body ?? '', 'title');
+    const channel = attributeOf(attributes, 'channel');
+    const startsAt = xmltvTimeOf(attributeOf(attributes, 'start') ?? '');
+    const endsAt = xmltvTimeOf(attributeOf(attributes, 'stop') ?? '');
+    const title = childOf(body, 'title');
 
     if (
       channel !== null &&
@@ -85,9 +84,9 @@ const parseXmltv = async (
         startsAt,
         endsAt,
         title,
-        subtitle: childOf(body ?? '', 'sub-title'),
-        description: childOf(body ?? '', 'desc'),
-        category: childOf(body ?? '', 'category'),
+        subtitle: childOf(body, 'sub-title'),
+        description: childOf(body, 'desc'),
+        category: childOf(body, 'category'),
       });
     }
   }

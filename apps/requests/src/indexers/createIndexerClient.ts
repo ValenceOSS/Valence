@@ -1,3 +1,5 @@
+import { readBodyOrFail } from '@ValenceRequests/network/readBodyOrFail';
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { indexerEndpoint } from '@ValenceRequests/indexers/indexerEndpoint';
 import { readCapabilities } from '@ValenceRequests/indexers/readCapabilities';
@@ -13,6 +15,7 @@ import { createOpdsCatalogue } from '@ValenceRequests/opds/createOpdsCatalogue';
 import { createAnnasArchive } from '@ValenceRequests/annas/createAnnasArchive';
 import { asksForBooks } from '@ValenceRequests/indexers/asksForBooks';
 import type { AnnasLibrary, ArchiveFetch } from '@ValenceRequests/annas/createAnnasArchive';
+import type { GuardFor } from '@ValenceRequests/network/GuardFor';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import type { Pacer } from '@ValenceRequests/indexers/createPacer';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
@@ -53,7 +56,10 @@ type CreateIndexerClientOptions = {
   readResults?: SearchResultsReader;
   solver?: Pick<Solver, 'fetch'> | null;
   annasLibrary?: AnnasLibrary | null;
+  guard?: GuardFor;
 };
+
+const MOST_FEED_BYTES = 64 * 1024 * 1024;
 
 /**
  * Asks Torznab and Newznab indexers, OPDS catalogues and Anna's Archive what they can do and what
@@ -73,6 +79,7 @@ type CreateIndexerClientOptions = {
  *   releases it found there, so the log shows what each indexer was really asked.
  * @param readResults - What reads a page of results off the main thread, where there is one.
  * @param solver - The browser that gets past a site's bot check, for Anna's Archive.
+ * @param guard - What holds every address that is not an indexer's own to the public internet.
  * @param annasLibrary - Anna's Archive's books as this service keeps them, searched instead of its
  *   site where any are kept.
  * @returns The client.
@@ -86,9 +93,12 @@ const createIndexerClient = ({
   readResults,
   solver = null,
   annasLibrary = null,
+  guard,
 }: CreateIndexerClientOptions) => {
-  const catalogues = createOpdsCatalogue(fetch, (catalogue) =>
-    pacer.turn(catalogue.id, catalogue.requestsPerMinute),
+  const catalogues = createOpdsCatalogue(
+    fetch,
+    (catalogue) => pacer.turn(catalogue.id, catalogue.requestsPerMinute),
+    guard,
   );
 
   const archive = createAnnasArchive(
@@ -96,6 +106,7 @@ const createIndexerClient = ({
     (indexer) => pacer.turn(indexer.id, indexer.requestsPerMinute),
     solver,
     annasLibrary,
+    guard,
   );
 
   const engineFor = async (indexer: IndexerConnection, isUrgent = false) => {
@@ -186,7 +197,9 @@ const createIndexerClient = ({
       );
     }
 
-    return readIndexerXml(await response.text());
+    return readIndexerXml(
+      new TextDecoder().decode(await readBodyOrFail(response, MOST_FEED_BYTES)),
+    );
   };
 
   return {
@@ -266,6 +279,10 @@ const createIndexerClient = ({
 
     download: async (indexer: IndexerConnection, url: string): Promise<ReleaseFile> => {
       if (url.startsWith('magnet:')) {
+        if (!isSingleMagnetLink(url)) {
+          throw new Error('That is not one magnet link');
+        }
+
         return { kind: 'magnet', url };
       }
 
@@ -288,7 +305,7 @@ const createIndexerClient = ({
       let response: Response;
 
       try {
-        response = await fetch(url, {
+        response = await (guard === undefined ? fetch : guard([new URL(indexer.url).host]))(url, {
           headers: {},
           signal: AbortSignal.timeout(indexer.timeoutSeconds * 1000),
         });
@@ -298,7 +315,7 @@ const createIndexerClient = ({
         );
       }
 
-      const bytes = new Uint8Array(await response.arrayBuffer());
+      const bytes = await readBodyOrFail(response, MOST_FEED_BYTES);
 
       if (!response.ok || bytes.length === 0) {
         throw new IndexerFailure(
@@ -308,7 +325,16 @@ const createIndexerClient = ({
         );
       }
 
-      return { kind: indexer.kind === 'newznab' ? 'nzb' : 'torrent', bytes };
+      const isNzb = indexer.kind === 'newznab';
+      const looksRight = isNzb
+        ? new TextDecoder().decode(bytes.subarray(0, 2048)).includes('<nzb')
+        : bytes[0] === 0x64;
+
+      if (!looksRight) {
+        throw new Error('That is not a release file');
+      }
+
+      return { kind: isNzb ? 'nzb' : 'torrent', bytes };
     },
   };
 };

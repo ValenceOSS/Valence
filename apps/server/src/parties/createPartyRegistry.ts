@@ -22,7 +22,7 @@ type Joining = {
 };
 
 type Joined =
-  | { kind: 'joined'; party: WatchParty }
+  | { kind: 'joined'; party: WatchParty; left?: WatchParty }
   | { kind: 'needsPassword'; wasWrong: boolean }
   | { kind: 'notWelcome' }
   | { kind: 'unknown' };
@@ -36,6 +36,7 @@ type PartyRegistry = {
     mediaId: string;
     host: Omit<Joining, 'partyId'>;
     kind?: PartyKind;
+    onClosed?: (party: WatchParty) => void;
   }) => WatchParty;
   join: (joining: Joining) => Joined;
   leave: (connectionId: string) => WatchParty | null;
@@ -93,6 +94,8 @@ type Held = {
 const WAIT_MOST_MS = 20_000;
 
 const CHAT_KEPT = 200;
+
+const MOST_PARTIES_HOSTED_PER_ACCOUNT = 10;
 
 const REFUSED_CHAT_OFF = saying('server.parties.partyRegistry.chatIsOffInThisParty');
 
@@ -190,8 +193,39 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
     return held;
   };
 
+  const departFrom = (partyId: string, connectionId: string): WatchParty | null => {
+    const holding = held(partyId);
+
+    whereEveryoneIs.delete(connectionId);
+
+    if (holding === undefined) {
+      return null;
+    }
+
+    const left = holding.party.members.filter((one) => one.connectionId !== connectionId);
+
+    if (left.length === 0) {
+      parties.delete(partyId);
+
+      return null;
+    }
+
+    const stillHosted = left.some((one) => one.role === 'host');
+
+    return save(
+      {
+        ...holding.party,
+        members: stillHosted
+          ? left
+          : left.map((one, index) => (index === 0 ? { ...one, role: 'host' } : one)),
+      },
+      holding.sequence,
+      holding,
+    );
+  };
+
   return {
-    open: ({ mediaId, host, kind = 'watch' }) => {
+    open: ({ mediaId, host, kind = 'watch', onClosed }) => {
       const atMs = Date.now();
       const isShared = kind === 'watch';
 
@@ -209,6 +243,26 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
         timekeeperId: null,
         chatIsOn: false,
       };
+
+      const hosted = [...parties.values()]
+        .filter((one) =>
+          one.party.members.some(
+            (member) => member.role === 'host' && member.accountId === host.accountId,
+          ),
+        )
+        .sort((one, other) => one.party.createdAtMs - other.party.createdAtMs);
+
+      for (const closing of hosted.slice(
+        0,
+        Math.max(0, hosted.length - (MOST_PARTIES_HOSTED_PER_ACCOUNT - 1)),
+      )) {
+        for (const member of closing.party.members) {
+          whereEveryoneIs.delete(member.connectionId);
+        }
+
+        parties.delete(closing.party.id);
+        onClosed?.(closing.party);
+      }
 
       whereEveryoneIs.set(host.connectionId, party.id);
 
@@ -236,6 +290,9 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
         return { kind: 'needsPassword', wasWrong: joining.password !== undefined };
       }
 
+      const previousId = whereEveryoneIs.get(joining.connectionId);
+      const left = previousId === undefined ? null : departFrom(previousId, joining.connectionId);
+
       whereEveryoneIs.set(joining.connectionId, joining.partyId);
 
       return {
@@ -248,39 +305,14 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
           holding.sequence,
           holding,
         ),
+        ...(left === null ? {} : { left }),
       };
     },
 
     leave: (connectionId) => {
       const partyId = whereEveryoneIs.get(connectionId);
-      const holding = partyId === undefined ? undefined : held(partyId);
 
-      whereEveryoneIs.delete(connectionId);
-
-      if (holding === undefined || partyId === undefined) {
-        return null;
-      }
-
-      const left = holding.party.members.filter((one) => one.connectionId !== connectionId);
-
-      if (left.length === 0) {
-        parties.delete(partyId);
-
-        return null;
-      }
-
-      const stillHosted = left.some((one) => one.role === 'host');
-
-      return save(
-        {
-          ...holding.party,
-          members: stillHosted
-            ? left
-            : left.map((one, index) => (index === 0 ? { ...one, role: 'host' } : one)),
-        },
-        holding.sequence,
-        holding,
-      );
+      return partyId === undefined ? null : departFrom(partyId, connectionId);
     },
 
     issue: (partyId, connectionId, command, atMs) => {

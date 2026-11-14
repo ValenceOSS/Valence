@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -48,5 +48,23 @@ describe('deleteLibraryEntry', () => {
     await expect(deleteLibraryEntry([aLibraryAt(root)], join(root, 'Gone.mkv'))).resolves.toEqual({
       kind: 'missing',
     });
+  });
+
+  it('refuses a path that goes through a link leading out of the library, but deletes the link itself', async () => {
+    const elsewhere = await mkdtemp(join(tmpdir(), 'valence-elsewhere-'));
+
+    await writeFile(join(elsewhere, 'Precious.mkv'), 'x');
+    await symlink(elsewhere, join(root, 'Show', 'link'));
+
+    await expect(
+      deleteLibraryEntry([aLibraryAt(root)], join(root, 'Show', 'link', 'Precious.mkv')),
+    ).resolves.toEqual({ kind: 'outside' });
+    expect(await readdir(elsewhere)).toEqual(['Precious.mkv']);
+
+    await expect(
+      deleteLibraryEntry([aLibraryAt(root)], join(root, 'Show', 'link')),
+    ).resolves.toMatchObject({ kind: 'changed' });
+    expect(await readdir(elsewhere)).toEqual(['Precious.mkv']);
+    await rm(elsewhere, { recursive: true, force: true });
   });
 });

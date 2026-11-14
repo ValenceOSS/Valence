@@ -102,6 +102,22 @@ describe('createDatabaseWebhookStore', () => {
     STARTING_POSTGRES_MS,
   );
   it(
+    'keeps a subscription off the local network until it is allowed',
+    async () => {
+      const store = createDatabaseWebhookStore(await aMigratedDatabase());
+      const { subscription } = await store.create({ ...A_SUBSCRIPTION, events: ['job.failed'] });
+
+      expect(subscription.reachesLocalNetwork).toBe(false);
+      expect((await store.readTarget(subscription.id))?.reachesLocalNetwork).toBe(false);
+
+      const changed = await store.update(subscription.id, { reachesLocalNetwork: true });
+
+      expect(changed?.reachesLocalNetwork).toBe(true);
+      expect((await store.readTarget(subscription.id))?.reachesLocalNetwork).toBe(true);
+    },
+    STARTING_POSTGRES_MS,
+  );
+  it(
     'stores a Custom setup, shows it with its secrets hidden and keeps a secret saved back empty',
     async () => {
       const store = createDatabaseWebhookStore(await aMigratedDatabase());

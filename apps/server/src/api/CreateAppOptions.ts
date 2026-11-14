@@ -28,7 +28,7 @@ import type { LinkStore } from '@ValenceServer/linking/LinkStore';
 import type { LinkService } from '@ValenceServer/linking/LinkService';
 import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { PartyRelayHub } from '@ValenceServer/linking/parties/createPartyRelayHub';
-import type { AskedAlong } from '@ValenceContracts/schemas/LinkSharing';
+import type { AskedAlong, LinkSharing } from '@ValenceContracts/schemas/LinkSharing';
 import type { PersonScope } from '@ValenceServer/linking/content/createPersonScope';
 import type { ServerPictures } from '@ValenceServer/linking/createServerPictures';
 import type { LinkedChange } from '@ValenceServer/linking/createChangeTeller';
@@ -144,6 +144,7 @@ type CreateAppOptions = {
   demoAccounts?: readonly string[];
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<string | null>;
+  setupCode?: { matches: (typed: string) => boolean };
   library: LibraryService;
   playback: PlaybackService;
   permissions?: PermissionService;
@@ -194,7 +195,11 @@ type CreateAppOptions = {
     defaultName?: string;
     peers: PeerClient;
     subjectOf?: (subject: PeerSubject) => Promise<PeerItem | null>;
-    catalogue?: (libraryId: string, after: string | null) => Promise<CataloguePage | null>;
+    catalogue?: (
+      libraryId: string,
+      after: string | null,
+      sharing: LinkSharing | null,
+    ) => Promise<CataloguePage | null>;
     warn?: (message: string) => void;
   };
   createAccountWithoutPassword?: (
@@ -306,6 +311,7 @@ type CreateAppOptions = {
   artworkNames?: ArtworkNames;
   artworkAddress?: string;
   folderDisk?: FolderDisk;
+  serverFolders?: readonly string[];
   uploadDisk?: UploadDisk;
   uploadSessions?: UploadSessions;
   mediaOrigins?: MediaOriginStore;

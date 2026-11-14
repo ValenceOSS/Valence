@@ -80,7 +80,20 @@ describe('createMemoryWebhookStore', () => {
       preset: 'discord',
       secret: created.secret,
       custom: null,
+      reachesLocalNetwork: false,
     });
+  });
+
+  it('keeps a subscription off the local network until it is allowed, and says so to the delivery job', async () => {
+    const { subscription } = await store.create({ ...aSubscription, events: ['job.failed'] });
+
+    expect(subscription.reachesLocalNetwork).toBe(false);
+    expect((await store.readTarget(subscription.id))?.reachesLocalNetwork).toBe(false);
+
+    const changed = await store.update(subscription.id, { reachesLocalNetwork: true });
+
+    expect(changed?.reachesLocalNetwork).toBe(true);
+    expect((await store.readTarget(subscription.id))?.reachesLocalNetwork).toBe(true);
   });
 
   it('has nothing to deliver to once a subscription is deleted', async () => {

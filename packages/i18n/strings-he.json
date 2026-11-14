@@ -910,11 +910,6 @@
     "context": "The label in the library (from `describeTitleDetails`)."
   },
   {
-    "handler": "client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery",
-    "text": "/api/libraries/{libraryId}/items?{query}",
-    "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
-  },
-  {
     "handler": "client.library.freshFlags.newEpisode",
     "text": "New episode",
     "context": "Shown in the library (from `freshFlags`)."
@@ -9821,6 +9816,11 @@
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
   },
   {
+    "handler": "error.downloads.thisAccountMayNotSaveCopies",
+    "text": "This account isn’t allowed to save copies to a device.",
+    "context": "An error the server answers with (HTTP 403) when an account whose role lacks downloads asks to save a title to a device (from `serveDownloads`)."
+  },
+  {
     "handler": "error.downloads.thoseAreNotRulesForGiving",
     "text": "Those aren’t valid rules for abandoning a download.",
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
@@ -10174,6 +10174,11 @@
     "handler": "error.linking.thatServerTakesNoRequestsFromYours",
     "text": "That server doesn’t accept requests from yours.",
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
+  },
+  {
+    "handler": "error.linking.thatStartCouldNotBeRead",
+    "text": "That request to start playing couldn’t be read.",
+    "context": "Refusal sent to a linked Valence server whose request to start playing is not a body this server can read."
   },
   {
     "handler": "error.linking.thisAccountMayNotLinkServers",
@@ -10836,6 +10841,11 @@
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveSetup`)."
   },
   {
+    "handler": "error.setup.thatSetupCodeIsNotRight",
+    "text": "That setup code doesn’t match the one in the server’s log.",
+    "context": "An error the server answers with (HTTP 403) when the setup code typed on the first-run setup page is wrong (from `serveSetup`)."
+  },
+  {
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
     "text": "Couldn’t create the administrator account.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveSetup`)."
@@ -11039,6 +11049,11 @@
     "handler": "error.webhook.theMessageTemplateIsNotValidJson",
     "text": "The message template isn’t valid JSON.",
     "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
+  },
+  {
+    "handler": "error.webhook.valenceWillNotSendToTheLocalNetwork",
+    "text": "Valence won’t send to an address on your own network unless Local network is on.",
+    "context": "Refusal, and a delivery's error, when a webhook's address is on the server's own network and the webhook's Local network switch is off."
   },
   {
     "handler": "native.captionTextStyle.avenirNextCondensed",
@@ -28611,6 +28626,16 @@
     "context": "In the admin list of webhooks."
   },
   {
+    "handler": "screens.adminArea.webhooksPanel.localNetwork",
+    "text": "Local network",
+    "context": "Label of the switch on a webhook that lets it send to addresses on the server's own network."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetworkDescription",
+    "text": "Lets this webhook reach addresses on your own network, such as another app on this server.",
+    "context": "Description of the Local network switch on a webhook."
+  },
+  {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",
     "text": "{name} is set up. Copy its signing secret now.",
     "context": "Text shown in the webhooks panel in the admin area. {name} is filled in by the app."
@@ -36522,6 +36547,16 @@
     "context": "On the first-run setup page: under the heading of the first step."
   },
   {
+    "handler": "screens.setupWizard.welcomeStep.printedInTheServerLog",
+    "text": "Valence printed it in its log when it started, so only whoever runs the server can set it up.",
+    "context": "On the first-run setup page: the description under the setup code field on the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.setupCode",
+    "text": "Setup code",
+    "context": "On the first-run setup page: the label of the field for the code the server printed in its log."
+  },
+  {
     "handler": "screens.shareArea.askWhoeverSentItForA",
     "text": "Ask the person who sent it for a new one.",
     "context": "Shown in the share area."
@@ -37860,6 +37895,11 @@
     "handler": "server.books.chapterNumbered",
     "text": "Chapter {number}",
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
+  },
+  {
+    "handler": "server.books.openComicRar.thatComicIsLargerThanA",
+    "text": "That comic is larger than a gibibyte, the most Valence will read.",
+    "context": "Shown in the books on the server (from `openComicRar`)."
   },
   {
     "handler": "server.books.pagesFromTo",

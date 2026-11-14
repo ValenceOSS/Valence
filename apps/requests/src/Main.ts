@@ -1,3 +1,4 @@
+import { createGuardedFetch } from '@ValenceRequests/network/createGuardedFetch';
 import { createDatabaseAnnasBookStore } from '@ValenceRequests/annas/createDatabaseAnnasBookStore';
 import { createAnnasTorrents } from '@ValenceRequests/annas/createAnnasTorrents';
 import { createAnnasRoutes } from '@ValenceRequests/annas/createAnnasRoutes';
@@ -191,17 +192,21 @@ const annasBooks = createDatabaseAnnasBookStore(db);
 
 const annasTorrents = createAnnasTorrents(fetch);
 
+const guard = createGuardedFetch();
+
 const indexers = createIndexerService({
   store: indexerStore,
   definitions: definitions.definition,
   client: createIndexerClient({
     fetch,
+    guard,
     pacer: createPacer(),
     definitions: definitions.definition,
     readResults: createThreadedSearchReader(),
     site: createSiteClient({
       fetch,
       solver,
+      guard,
     }),
     solver,
     annasLibrary: { books: annasBooks, torrents: annasTorrents },

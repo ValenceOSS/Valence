@@ -32,6 +32,10 @@ pub const FOLDER_NAME: &str = "joined";
 /// parts' absolute paths are allowed.
 pub const CONCAT_INPUT: [&str; 4] = ["-f", "concat", "-safe", "0"];
 
+/// What ffmpeg and ffprobe are told before a file of a library: that it is a file, and that
+/// nothing it holds may be a reason to open an address.
+pub const LOCAL_INPUT: [&str; 2] = ["-protocol_whitelist", "file,pipe"];
+
 static FOLDER: OnceLock<PathBuf> = OnceLock::new();
 
 /// Numbers each list written, so two requests writing the same list at once
@@ -71,6 +75,20 @@ pub fn is_joined(path: &str) -> bool {
 /// the demuxer calls unsafe, hence `-safe 0`.
 #[must_use]
 pub fn opened(arguments: Vec<String>) -> Vec<String> {
+    opened_with(arguments, &[])
+}
+
+/// As [`opened`], and a file of a library must also be one of the containers a library holds,
+/// which a playlist saved under a video extension is not.
+#[must_use]
+pub fn opened_as_media(arguments: Vec<String>) -> Vec<String> {
+    opened_with(
+        arguments,
+        &["-format_whitelist", crate::remote_input::CONTAINERS],
+    )
+}
+
+fn opened_with(arguments: Vec<String>, also: &[&str]) -> Vec<String> {
     let mut read = Vec::with_capacity(arguments.len() + 4);
     let mut arguments = arguments.into_iter().peekable();
 
@@ -89,6 +107,9 @@ pub fn opened(arguments: Vec<String>) -> Vec<String> {
 
                 continue;
             }
+
+            read.extend(LOCAL_INPUT.map(str::to_owned));
+            read.extend(also.iter().map(|argument| (*argument).to_owned()));
         }
 
         read.push(argument);
@@ -117,7 +138,11 @@ pub fn probed(path: &Path) -> Vec<std::ffi::OsString> {
             .chain([path.as_os_str().to_owned()])
             .collect()
     } else {
-        vec![path.as_os_str().to_owned()]
+        LOCAL_INPUT
+            .into_iter()
+            .map(std::ffi::OsString::from)
+            .chain([path.as_os_str().to_owned()])
+            .collect()
     }
 }
 
@@ -284,7 +309,7 @@ pub fn test_folder() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_joined, join, opened, probed, quoted, Part};
+    use super::{is_joined, join, opened, opened_as_media, probed, quoted, Part};
 
     fn part(path: &str, duration_seconds: f64) -> Part {
         Part {
@@ -318,11 +343,31 @@ mod tests {
         assert_eq!(join(&[part(&only, 20.0)]), Ok(only.clone()));
         assert_eq!(
             probed(std::path::Path::new(&only)),
-            vec![std::ffi::OsString::from(&only)]
+            vec![
+                std::ffi::OsString::from("-protocol_whitelist"),
+                std::ffi::OsString::from("file,pipe"),
+                std::ffi::OsString::from(&only)
+            ]
         );
         assert_eq!(
             opened(vec!["-i".to_owned(), only.clone()]),
-            vec!["-i".to_owned(), only]
+            vec![
+                "-protocol_whitelist".to_owned(),
+                "file,pipe".to_owned(),
+                "-i".to_owned(),
+                only.clone()
+            ]
+        );
+        assert_eq!(
+            opened_as_media(vec!["-i".to_owned(), only.clone()]),
+            vec![
+                "-protocol_whitelist".to_owned(),
+                "file,pipe".to_owned(),
+                "-format_whitelist".to_owned(),
+                crate::remote_input::CONTAINERS.to_owned(),
+                "-i".to_owned(),
+                only
+            ]
         );
     }
 

@@ -309,7 +309,7 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     group: 'housekeeping',
     description: saying('server.jobs.jobDefinitions.copiesTheWholeDatabaseIntoTheBackupFolder'),
     needsLibrary: false,
-    destructive: false,
+    destructive: true,
     takesParts: false,
     announcesFinish: true,
     runsByHand: true,

@@ -157,6 +157,15 @@ describe('solveRequest', () => {
     ).rejects.toThrow('browser check blocked the request');
   });
 
+  it('does not send the request from a page the site redirected to another origin', async () => {
+    const page = { ...aSitePage(), origin: () => 'https://elsewhere.example' };
+
+    await expect(
+      solveRequest({ page, request: A_POST, deadline: Date.now() + 60_000, wait }),
+    ).rejects.toMatchObject({ problemCode: 'CloudflareCheckFailed' });
+    expect(page.fetch).not.toHaveBeenCalled();
+  });
+
   it('names the kind of each failure, so the admin area can link to what explains it', async () => {
     let clock = 0;
 

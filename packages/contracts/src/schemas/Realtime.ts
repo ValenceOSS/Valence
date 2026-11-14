@@ -81,13 +81,13 @@ const ClockAskSchema = z.object({ kind: z.literal('clockAsk'), sentAtMs: z.numbe
 
 const PartyOpenSchema = z.object({
   kind: z.literal('partyOpen'),
-  mediaId: z.string().min(1),
+  mediaId: z.string().min(1).max(128),
   partyKind: PartyKindSchema.optional(),
 });
 
 const PartyJoinSchema = z.object({
   kind: z.literal('partyJoin'),
-  partyId: z.string().min(1),
+  partyId: z.string().min(1).max(128),
   password: z.string().min(1).max(200).optional(),
 });
 
@@ -108,18 +108,18 @@ const PartyReportSchema = z.object({
 
 const PartySetRoleSchema = z.object({
   kind: z.literal('partySetRole'),
-  connectionId: z.string().min(1),
+  connectionId: z.string().min(1).max(128),
   role: PartyRoleSchema,
 });
 
 const PartyInviteSchema = z.object({
   kind: z.literal('partyInvite'),
-  profileId: z.string().min(1),
+  profileId: z.string().min(1).max(128),
 });
 
 const PartyRemoveSchema = z.object({
   kind: z.literal('partyRemove'),
-  connectionId: z.string().min(1),
+  connectionId: z.string().min(1).max(128),
 });
 
 const PartySetPasswordSchema = z.object({

@@ -1,7 +1,12 @@
+import { isPublicAddress } from '@ValenceCore/network/isPublicAddress';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
+import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
+import { isPublicWebAddress } from '@ValenceServer/live/isPublicWebAddress';
 import { reportStatus } from '@ValenceServer/sources/reportStatus';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 import type { TroubleReason } from '@ValenceServer/sources/SourceTrouble';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -12,6 +17,7 @@ type WebFetch = (
     signal: AbortSignal;
     method?: 'POST';
     body?: string;
+    redirect?: 'manual';
   },
 ) => Promise<Response>;
 
@@ -34,9 +40,14 @@ type MusicWebOptions = {
   wait?: (ms: number) => Promise<void>;
   now?: () => number;
   timeoutMs?: number;
+  resolve?: Resolve;
 };
 
 const DEFAULT_SPACING_MS = 250;
+
+const MOST_REDIRECTS = 3;
+
+const MOST_BODY_BYTES = 32 * 1024 * 1024;
 
 const RETRIES = 2;
 
@@ -63,6 +74,9 @@ const LIMITS_WITH_503 = new Set(['musicbrainz.org']);
  * answer at all — is reported to the trouble watch as well, so a cache does not keep it and a
  * search can say why it found nothing.
  *
+ * Pictures and pages are fetched only from public addresses, checked again at every redirect, and
+ * only up to thirty-two mebibytes of them are read.
+ *
  * @param options - Who to say is asking, how far apart to space each site's requests, how long to
  *   wait for an answer, and — for a test — how to fetch, wait and tell the time.
  * @returns A way to ask for JSON, and one that answers nothing at all where the site couldn't be
@@ -72,11 +86,19 @@ const LIMITS_WITH_503 = new Set(['musicbrainz.org']);
 const createMusicWeb = ({
   userAgent,
   spacingMs,
-  fetchImpl = (url, init) => fetch(url, init),
+  fetchImpl,
   wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
   timeoutMs = GIVES_UP_AFTER_MS,
+  resolve,
 }: MusicWebOptions): MusicWeb & QueryWeb => {
+  const plain: WebFetch = fetchImpl ?? ((url, init) => fetch(url, init));
+  const pinned: WebFetch =
+    fetchImpl ??
+    createPinnedFetch(
+      isPublicAddress,
+      () => new TypeError('that address is not on the public internet'),
+    );
   const nextAllowed = new Map<string, number>();
   const queues = new Map<string, Promise<void>>();
   let failed = 0;
@@ -110,10 +132,36 @@ const createMusicWeb = ({
     }
   };
 
+  const sentChecked = async (
+    url: string,
+    init: Parameters<WebFetch>[1],
+  ): Promise<Response | null> => {
+    let at = url;
+
+    for (let hop = 0; hop <= MOST_REDIRECTS; hop += 1) {
+      if (!(await isPublicWebAddress(at, resolve))) {
+        return null;
+      }
+
+      const answer = await pinned(at, { ...init, redirect: 'manual' });
+      const location = answer.headers.get('location');
+
+      if (answer.status < 300 || answer.status >= 400 || location === null) {
+        return answer;
+      }
+
+      void answer.body?.cancel();
+      at = new URL(location, at).toString();
+    }
+
+    return null;
+  };
+
   const reach = async (
     url: string,
     accept: string,
     body: JsonValue | null = null,
+    isChecked = false,
   ): Promise<Response | null | undefined> => {
     const host = new URL(url).host;
     let status = 0;
@@ -126,16 +174,17 @@ const createMusicWeb = ({
     };
 
     for (let attempt = 0; attempt <= RETRIES; attempt += 1) {
+      const init = {
+        headers: {
+          'user-agent': userAgent,
+          accept,
+          ...(body === null ? {} : { 'content-type': 'application/json' }),
+        },
+        signal: AbortSignal.timeout(timeoutMs),
+        ...(body === null ? {} : { method: 'POST' as const, body: JSON.stringify(body) }),
+      };
       const answer = await inTurn(host, async () =>
-        fetchImpl(url, {
-          headers: {
-            'user-agent': userAgent,
-            accept,
-            ...(body === null ? {} : { 'content-type': 'application/json' }),
-          },
-          signal: AbortSignal.timeout(timeoutMs),
-          ...(body === null ? {} : { method: 'POST' as const, body: JSON.stringify(body) }),
-        }).catch(() => null),
+        (isChecked ? sentChecked(url, init) : plain(url, init)).catch(() => null),
       );
 
       if (answer === null) {
@@ -166,8 +215,9 @@ const createMusicWeb = ({
     url: string,
     accept: string,
     body: JsonValue | null = null,
+    isChecked = false,
   ): Promise<Response | null> => {
-    const answer = await reach(url, accept, body);
+    const answer = await reach(url, accept, body, isChecked);
 
     return answer ?? null;
   };
@@ -193,21 +243,17 @@ const createMusicWeb = ({
     post: async (url, body) => readJson(await ask(url, 'application/json', body)),
 
     bytes: async (url) => {
-      const answer = await ask(url, 'image/*');
+      const answer = await ask(url, 'image/*', null, true);
+      const read = answer === null ? null : await readBodyUpTo(answer, MOST_BODY_BYTES);
 
-      if (answer === null) {
-        return null;
-      }
-
-      const read = await answer.arrayBuffer().catch(() => null);
-
-      return read === null || read.byteLength === 0 ? null : new Uint8Array(read);
+      return read === null || read.byteLength === 0 ? null : read;
     },
 
     text: async (url) => {
-      const answer = await ask(url, 'text/html');
+      const answer = await ask(url, 'text/html', null, true);
+      const read = answer === null ? null : await readBodyUpTo(answer, MOST_BODY_BYTES);
 
-      return answer === null ? null : answer.text().catch(() => null);
+      return read === null ? null : new TextDecoder().decode(read);
     },
   };
 };

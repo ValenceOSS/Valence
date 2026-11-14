@@ -32,6 +32,7 @@ type SetupLinkService = {
   issue: (userId: string, options: IssueOptions) => Promise<IssuedLink>;
   linkFor: (token: string, origin?: string) => string;
   stateOf: (userId: string) => Promise<SetupState>;
+  isAwaitingFirstUse: (userId: string) => Promise<boolean>;
   statesOf: (userIds: readonly string[]) => Promise<Map<string, SetupStanding>>;
   revoke: (userId: string) => Promise<void>;
   inspect: (token: string) => Promise<LinkedAccount | null>;

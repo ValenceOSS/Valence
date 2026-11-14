@@ -30,6 +30,34 @@ describe('createPasswordResetRequests', () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it('answers before the link is sent, so a real account takes no longer than a made-up one', async () => {
+    const ask = createPasswordResetRequests({
+      findAccount: () => Promise.resolve(ADA),
+      request: () => new Promise<void>(() => undefined),
+    });
+    const answered = await Promise.race([
+      ask({ identifier: 'ada' }, 'https://valence.example/reset-password').then(() => true),
+      new Promise<boolean>((resolve) => {
+        setTimeout(() => {
+          resolve(false);
+        }, 200);
+      }),
+    ]);
+
+    expect(answered).toBe(true);
+  });
+
+  it('keeps a link that cannot be sent from failing the answer', async () => {
+    const ask = createPasswordResetRequests({
+      findAccount: () => Promise.resolve(ADA),
+      request: () => Promise.reject(new Error('the mail server is down')),
+    });
+
+    await expect(
+      ask({ identifier: 'ada' }, 'https://valence.example/reset-password'),
+    ).resolves.toBeUndefined();
+  });
+
   it('asks at most once a minute for one account', async () => {
     let at = 0;
     const request = vi.fn(() => Promise.resolve());

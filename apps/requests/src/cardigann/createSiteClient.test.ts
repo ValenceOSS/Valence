@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import { createSiteClient } from './createSiteClient';
+import { createSiteHostCheck } from './createSiteHostCheck';
 import type { SiteFetch } from './createSiteClient';
+import type { GuardedFetch } from '@ValenceRequests/network/GuardedFetch';
 import type { SiteSession } from './SiteSession';
 
 type Reply = { status?: number; body?: string | Uint8Array; headers?: [string, string][] };
@@ -128,6 +130,106 @@ describe('createSiteClient', () => {
     );
 
     expect(asked[1]?.init).toMatchObject({ method: 'POST', body: 'q=1' });
+  });
+
+  it('refuses a page longer than it will read', async () => {
+    const { fetch } = aNetwork({
+      'https://x.example/': { body: new Uint8Array(10 * 1024 * 1024 + 1) },
+    });
+
+    await expect(
+      createSiteClient({ fetch }).send(
+        { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
+        { ...OPTIONS, session: aSession() },
+      ),
+    ).rejects.toBeInstanceOf(IndexerFailure);
+  });
+
+  it('sends no cookie, header or body to a host the site redirects to', async () => {
+    const { fetch, asked } = aNetwork({
+      'https://x.example/a': {
+        status: 307,
+        headers: [['location', 'https://other.example/b']],
+      },
+      'https://other.example/b': { body: 'ok' },
+    });
+    const session = aSession({ sid: '9' });
+
+    await createSiteClient({ fetch }).send(
+      {
+        url: 'https://x.example/a',
+        method: 'POST',
+        body: 'password=hunter2',
+        headers: { 'x-api-key': 'secret' },
+      },
+      { ...OPTIONS, session, referer: 'https://x.example/' },
+    );
+
+    expect(asked[0]?.init.headers).toMatchObject({ cookie: 'sid=9', 'x-api-key': 'secret' });
+    expect(asked[1]?.init.headers).not.toHaveProperty('cookie');
+    expect(asked[1]?.init.headers).not.toHaveProperty('x-api-key');
+    expect(asked[1]?.init.headers).not.toHaveProperty('referer');
+    expect(asked[1]?.init.method).toBe('GET');
+    expect(asked[1]?.init.body).toBeUndefined();
+  });
+
+  it('keeps its cookies and headers across a redirect to another host of the same site', async () => {
+    const { fetch, asked } = aNetwork({
+      'https://site.org/a': {
+        status: 302,
+        headers: [
+          ['location', 'https://www.site.org/b'],
+          ['set-cookie', 'first=1'],
+        ],
+      },
+      'https://www.site.org/b': {
+        status: 302,
+        headers: [
+          ['location', 'https://dl.site.org/c.torrent'],
+          ['set-cookie', 'second=2'],
+        ],
+      },
+      'https://dl.site.org/c.torrent': { body: 'file' },
+    });
+    const session = aSession({ sid: '9' });
+
+    await createSiteClient({ fetch }).send(
+      { url: 'https://site.org/a', method: 'GET', body: null, headers: { 'x-api-key': 'secret' } },
+      {
+        ...OPTIONS,
+        session,
+        isTheSite: createSiteHostCheck('https://site.org/', ['https://site.org/']),
+      },
+    );
+
+    expect(asked[1]?.init.headers).toMatchObject({
+      cookie: 'sid=9; first=1',
+      'x-api-key': 'secret',
+    });
+    expect(asked[2]?.init.headers).toMatchObject({
+      cookie: 'sid=9; first=1; second=2',
+      'x-api-key': 'secret',
+    });
+    expect(session.cookies).toEqual({ sid: '9', first: '1', second: '2' });
+  });
+
+  it('still sends nothing to a host outside the site when it is told which hosts are the site’s', async () => {
+    const { fetch, asked } = aNetwork({
+      'https://site.org/a': { status: 302, headers: [['location', 'https://evilsite.org/b']] },
+      'https://evilsite.org/b': { body: 'ok' },
+    });
+
+    await createSiteClient({ fetch }).send(
+      { url: 'https://site.org/a', method: 'GET', body: null, headers: { 'x-api-key': 'secret' } },
+      {
+        ...OPTIONS,
+        session: aSession({ sid: '9' }),
+        isTheSite: createSiteHostCheck('https://site.org/', ['https://site.org/']),
+      },
+    );
+
+    expect(asked[1]?.init.headers).not.toHaveProperty('cookie');
+    expect(asked[1]?.init.headers).not.toHaveProperty('x-api-key');
   });
 
   it('says where it would have been sent, where it is not to follow', async () => {
@@ -380,5 +482,35 @@ describe('createSiteClient', () => {
         client.send(aGet('https://x.example/u'), { ...OPTIONS, session: aSession() }),
       ).rejects.toThrow('Couldn’t start the browser used to pass Cloudflare’s check');
     });
+  });
+
+  it('holds a redirect to a host that is not the site to the guard, which refuses a private one', async () => {
+    const { fetch } = aNetwork({
+      'https://x.example/login': {
+        status: 302,
+        headers: [['location', 'http://10.0.0.5:8080/internal']],
+      },
+    });
+    const guarded = vi.fn<GuardedFetch>((url, init) =>
+      url.startsWith('http://10.0.0.5')
+        ? Promise.reject(new TypeError('refused'))
+        : fetch(url, {
+            method: init.method ?? 'GET',
+            headers: init.headers ?? {},
+            redirect: 'manual',
+            signal: init.signal ?? AbortSignal.timeout(1000),
+          }),
+    );
+    const guard = vi.fn(() => guarded);
+
+    await expect(
+      createSiteClient({ fetch, guard }).send(
+        { url: 'https://x.example/login', method: 'GET', body: null, headers: {} },
+        { ...OPTIONS, session: aSession(), trustedHosts: ['x.example'] },
+      ),
+    ).rejects.toBeInstanceOf(IndexerFailure);
+    expect(guard).toHaveBeenCalledWith(['x.example']);
+    expect(guarded).toHaveBeenCalledTimes(2);
+    expect(guarded.mock.calls[1]?.[0]).toBe('http://10.0.0.5:8080/internal');
   });
 });

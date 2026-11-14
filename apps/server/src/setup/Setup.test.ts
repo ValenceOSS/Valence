@@ -1,3 +1,4 @@
+import { createSetupCode } from './createSetupCode';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -28,9 +29,12 @@ const adminPayload = {
   cookieSecure: false,
 };
 
-const buildApp = (initialUserCount = 0) => {
+const buildApp = (initialUserCount = 0, setupCode?: { matches: (typed: string) => boolean }) => {
   const { auth, settings, store } = createMemoryAuth();
-  const state = { users: initialUserCount };
+  const state: { users: number; countsAccounts: (() => number) | null } = {
+    users: initialUserCount,
+    countsAccounts: null,
+  };
   const promoteToAdmin = vi.fn<(email: string) => Promise<string | null>>(() =>
     Promise.resolve(null),
   );
@@ -39,7 +43,7 @@ const buildApp = (initialUserCount = 0) => {
   const app = createApp({
     auth,
     settings,
-    countUsers: () => Promise.resolve(state.users),
+    countUsers: () => Promise.resolve(state.countsAccounts?.() ?? state.users),
     promoteToAdmin,
     library: createMemoryLibraryService(),
     subtitles: createMemorySubtitleService(),
@@ -49,6 +53,7 @@ const buildApp = (initialUserCount = 0) => {
     ratings: createMemoryRatingService(),
     playback: createMemoryPlaybackService(),
     permissions,
+    ...(setupCode === undefined ? {} : { setupCode }),
   });
 
   return { app, settings, state, store, promoteToAdmin, permissions };
@@ -159,6 +164,30 @@ describe('setup completion', () => {
     });
   });
 
+  it('makes nobody the administrator without the code the server printed in its log', async () => {
+    const setup = createSetupCode();
+    const { app, store, promoteToAdmin } = buildApp(0, setup);
+
+    for (const setupCode of [undefined, '', 'AAAA-AAAA-AAAA-AAAA']) {
+      const response = await app.request(
+        postSetup(setupCode === undefined ? adminPayload : { ...adminPayload, setupCode }),
+      );
+
+      expect(response.status).toBe(403);
+      expect(await response.json()).toMatchObject({ code: 'error.setup.thatSetupCodeIsNotRight' });
+    }
+
+    expect(store.user).toHaveLength(0);
+    expect(promoteToAdmin).not.toHaveBeenCalled();
+
+    const made = await app.request(
+      postSetup({ ...adminPayload, setupCode: setup.code.toLowerCase() }),
+    );
+
+    expect(made.status).toBe(200);
+    expect(promoteToAdmin).toHaveBeenCalledWith('admin@valence.test');
+  });
+
   it('still makes the administrator after a stranger tried to sign up first', async () => {
     const { app, store, promoteToAdmin } = buildApp(0);
 
@@ -212,6 +241,25 @@ describe('setup completion', () => {
 
     expect(response.status).toBe(409);
     expect(promoteToAdmin).not.toHaveBeenCalled();
+  });
+
+  it('makes only one administrator when two set the server up at once', async () => {
+    const { app, state, store } = buildApp(0);
+
+    state.countsAccounts = () => store.user.length;
+
+    const answers = await Promise.all([
+      app.request(postSetup(adminPayload)),
+      app.request(
+        postSetup({
+          ...adminPayload,
+          admin: { ...adminPayload.admin, username: 'second', email: 'second@valence.test' },
+        }),
+      ),
+    ]);
+
+    expect(answers.map((answer) => answer.status).toSorted()).toEqual([200, 409]);
+    expect(store.user).toHaveLength(1);
   });
 
   it('cannot be replayed to claim a second administrator', async () => {

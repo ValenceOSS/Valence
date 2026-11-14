@@ -236,6 +236,7 @@ const createAppContext = (options: CreateAppOptions) => {
     demoAccounts = [],
     countUsers,
     promoteToAdmin,
+    setupCode,
     library,
     playback,
     maintenance = createMemoryMaintenanceService(),
@@ -301,6 +302,7 @@ const createAppContext = (options: CreateAppOptions) => {
     artworkAddress = '',
     isTranscoderReachable = () => Promise.resolve(false),
     folderDisk = createFolderDisk(),
+    serverFolders = [],
     uploadDisk = createUploadDisk(),
     uploadSessions = createUploadSessions(),
     mediaOrigins = createMemoryMediaOriginStore(),
@@ -370,7 +372,7 @@ const createAppContext = (options: CreateAppOptions) => {
 
   const linkStore = linkingOptions?.store ?? createMemoryLinkStore();
   const peerClaims = createPeerClaims();
-  const peerRequests = new WeakSet<Headers>();
+  const peerRequests = new WeakMap<Headers, string>();
   const linkPeople = linkingOptions?.people ?? createPersonScope();
   const linkSharingStore =
     linkingOptions?.sharing ??
@@ -616,12 +618,13 @@ const createAppContext = (options: CreateAppOptions) => {
    * Whether an account was refused the library something sits in.
    *
    * The cheap question is asked first and is usually the only one. Every poster and backdrop on a
-   * page arrives as a request of its own, so the common answer — nothing is refused — costs a single
-   * indexed lookup. Who is an administrator is worked out only once something has actually been
-   * refused, which is rare, rather than on each of the fifty images a library page draws.
+   * page arrives as a request of its own, so the common answer — nothing is refused — costs a
+   * lookup of that one item, programme or library, each a single query. Who is an administrator is
+   * worked out only once something has actually been refused, which is rare, rather than on each of
+   * the fifty images a library page draws.
    *
    * @param viewer - Who is asking, as their account and the profile acting for it.
-   * @param subject - The item or programme in question.
+   * @param subject - The item, programme or library in question.
    * @returns Whether to refuse it.
    */
   const isOutOfReach = async (viewer: Viewer | null, subject: Subject): Promise<boolean> => {
@@ -629,9 +632,14 @@ const createAppContext = (options: CreateAppOptions) => {
       return false;
     }
 
-    return subject.kind === 'item'
-      ? library.isOutOfReach(viewer, subject.mediaId)
-      : library.isSeriesOutOfReach(viewer, subject.seriesId);
+    switch (subject.kind) {
+      case 'item':
+        return library.isOutOfReach(viewer, subject.mediaId);
+      case 'series':
+        return library.isSeriesOutOfReach(viewer, subject.seriesId);
+      case 'library':
+        return library.isLibraryOutOfView(viewer, subject.libraryId);
+    }
   };
 
   /**
@@ -1243,19 +1251,24 @@ const createAppContext = (options: CreateAppOptions) => {
   /**
    * Whether this actor may decide what another account sees.
    *
-   * The same two questions the rest of the accounts panel asks: holding the permission, and not
-   * acting on somebody at or above your own rank. Without the second, a manager could quietly take
-   * the library away from an administrator.
+   * The same questions the rest of the accounts panel asks: holding the permission, not acting on
+   * somebody at or above your own rank, and not changing your own access unless you own the server.
+   * Without the second, a manager could quietly take the library away from an administrator; without
+   * the third, somebody limited could lift their own limits.
    *
-   * @param headers - The request's headers.
-   * @param userId - Whose access is being changed.
+   * @param request - The request, for its headers and whether it reads or changes.
+   * @param userId - Whose access is being read or changed.
    * @returns Why they may not, or nothing where they may.
    */
-  const mayDecideAccess = async (headers: Headers, userId: string): Promise<RefusalBody | null> => {
-    const actor = await readActor(headers);
+  const mayDecideAccess = async (request: Request, userId: string): Promise<RefusalBody | null> => {
+    const actor = await readActor(request.headers);
 
     if (actor === null || !actor.permissions.has('account.manage')) {
       return refuse('common.thatIsForAdministrators');
+    }
+
+    if (request.method !== 'GET' && actor.id === userId && actor.id !== (await theOwner())) {
+      return describeAccountRefusal('self');
     }
 
     if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
@@ -1803,7 +1816,9 @@ const createAppContext = (options: CreateAppOptions) => {
           askingProfile: (await asker.askingProfile?.()) ?? null,
         },
         higherProfileAsks: chosen.higherProfileAsks,
-        isApproved: asked.origin === 'monitored' || (await asker.holds('requests.autoApprove')),
+        isApproved:
+          (asked.origin === 'monitored' && (await asker.holds('requests.manage'))) ||
+          (await asker.holds('requests.autoApprove')),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
         ...(asked.kind === 'book' && (catalogue.narrations ?? []).length > 0
@@ -2053,6 +2068,7 @@ const createAppContext = (options: CreateAppOptions) => {
     callerOf,
     countUsers,
     promoteToAdmin,
+    setupCode,
     library,
     playback,
     maintenance,
@@ -2112,6 +2128,7 @@ const createAppContext = (options: CreateAppOptions) => {
     artworkAddress,
     isTranscoderReachable,
     folderDisk,
+    serverFolders,
     uploadDisk,
     uploadSessions,
     mediaOrigins,

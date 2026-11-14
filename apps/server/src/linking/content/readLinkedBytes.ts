@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import type { LinkedAsker } from './createLinkedAsker';
 
 /**
@@ -10,7 +11,7 @@ import type { LinkedAsker } from './createLinkedAsker';
 const readLinkedBytes = async (asker: LinkedAsker, address: string): Promise<Uint8Array | null> => {
   const answered = await asker.askAt(address);
 
-  return answered?.ok === true ? new Uint8Array(await answered.arrayBuffer()) : null;
+  return answered?.ok === true ? new Uint8Array(await boundedAnswer(answered).arrayBuffer()) : null;
 };
 
 export { readLinkedBytes };

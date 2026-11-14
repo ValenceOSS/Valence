@@ -1,3 +1,4 @@
+import { castFromTheCatalogue } from './castFromTheCatalogue';
 import { localIdOf } from './localIdOf';
 import { linkedAddressOf } from './linkedAddressOf';
 import type { CataloguePage } from './CataloguePageSchema';
@@ -31,6 +32,8 @@ const localRowsOf = (page: CataloguePage, serverId: string, libraryId: string) =
       posterUrl: from(`/api/media/${row.id}/image/poster`, row.posterUrl),
       backdropUrl: from(`/api/media/${row.id}/image/backdrop`, row.backdropUrl),
       logoUrl: from(`/api/media/${row.id}/image/logo`, row.logoUrl),
+      castMembers: castFromTheCatalogue(row.castMembers),
+      guestStars: castFromTheCatalogue(row.guestStars),
     })),
     artists: page.artists.map((row) => ({
       ...row,

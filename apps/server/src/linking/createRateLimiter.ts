@@ -2,7 +2,10 @@ type RateLimiterOptions = {
   most: number;
   withinMs: number;
   now?: () => number;
+  mostCallers?: number;
 };
+
+const MOST_CALLERS = 10_000;
 
 /**
  * Counts what each caller asks for in a window of time, and says once one has asked for more than
@@ -12,9 +15,16 @@ type RateLimiterOptions = {
  * @param most - How many requests a caller may make in a window.
  * @param withinMs - How long a window is.
  * @param now - The clock, in milliseconds.
+ * @param mostCallers - How many callers are counted at once; a new one past that is refused until a
+ * window ends.
  * @returns A function that counts a request by its caller, and answers whether it is allowed.
  */
-const createRateLimiter = ({ most, withinMs, now = Date.now }: RateLimiterOptions) => {
+const createRateLimiter = ({
+  most,
+  withinMs,
+  now = Date.now,
+  mostCallers = MOST_CALLERS,
+}: RateLimiterOptions) => {
   const windows = new Map<string, { from: number; count: number }>();
 
   return (caller: string): boolean => {
@@ -26,7 +36,13 @@ const createRateLimiter = ({ most, withinMs, now = Date.now }: RateLimiterOption
       }
     }
 
-    const window = windows.get(caller) ?? { from: at, count: 0 };
+    const known = windows.get(caller);
+
+    if (known === undefined && windows.size >= mostCallers) {
+      return false;
+    }
+
+    const window = known ?? { from: at, count: 0 };
 
     window.count += 1;
     windows.set(caller, window);

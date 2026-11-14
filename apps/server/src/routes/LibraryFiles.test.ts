@@ -130,7 +130,7 @@ describe('the file manager over HTTP', () => {
   });
 
   it('says where each item in a library is, only to somebody who may change libraries', async () => {
-    const libraryId = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    const libraryId = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
     const { send, library } = await build();
     const told = vi
       .spyOn(library, 'mediaPathsIn')

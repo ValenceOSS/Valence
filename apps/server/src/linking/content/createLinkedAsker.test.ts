@@ -50,7 +50,10 @@ describe('createLinkedAsker', () => {
     expect(address).toBe('https://anime.example');
     expect(route).toBe('/api/books/one/cover');
     expect(init?.method).toBe('GET');
-    expect((await anime.readToken(token ?? ''))?.person?.name).toBe('Sam');
+    expect(
+      (await anime.readToken(token ?? '', { method: 'GET', route: '/api/books/one/cover' }))?.person
+        ?.name,
+    ).toBe('Sam');
   });
 
   it('asks by a linked address, and for nothing at an address of this server’s own', async () => {

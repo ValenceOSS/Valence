@@ -80,4 +80,12 @@ describe('auditOfAuthRequest', () => {
     expect(auditOfAuthRequest(attempted({ path: '/get-session', signedInAs: ADA }))).toBeNull();
     expect(auditOfAuthRequest(attempted({}))).toBeNull();
   });
+
+  it('keeps no more than an address-length of what was typed in a refused sign-in', () => {
+    const entry = auditOfAuthRequest(
+      attempted({ statusCode: 401, identifier: 'x'.repeat(100_000) }),
+    );
+
+    expect(entry?.target).toBe('x'.repeat(254));
+  });
 });

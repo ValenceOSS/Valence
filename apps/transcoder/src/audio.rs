@@ -195,6 +195,8 @@ pub fn rendition_arguments(input: &Path, bitrate: AudioBitrate, output: &Path) -
         "-loglevel".to_owned(),
         "error".to_owned(),
         "-y".to_owned(),
+        "-protocol_whitelist".to_owned(),
+        "file,pipe".to_owned(),
         "-i".to_owned(),
         input.to_string_lossy().into_owned(),
         "-map".to_owned(),
@@ -557,6 +559,19 @@ mod tests {
             arguments.last().map(String::as_str),
             Some("/cache/audio/abc.part")
         );
+    }
+
+    #[test]
+    fn opens_the_source_with_only_the_local_protocols() {
+        let arguments = rendition_arguments(
+            Path::new("/music/track.flac"),
+            AudioBitrate::Medium,
+            Path::new("/cache/audio/abc.part"),
+        );
+
+        assert!(arguments
+            .windows(3)
+            .any(|found| found == ["-protocol_whitelist", "file,pipe", "-i"]));
     }
 
     #[test]

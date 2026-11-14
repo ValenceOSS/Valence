@@ -64,6 +64,17 @@ describe('createUploadDisk', () => {
     expect(await readdir(root)).toEqual([]);
   });
 
+  it('stops writing and leaves nothing behind once more arrives than the disk has free', async () => {
+    const at = join(root, 'Arrival.mkv');
+
+    await expect(
+      createUploadDisk(() => Promise.resolve(4)).write(at, bodyOf('a film')),
+    ).resolves.toEqual({
+      kind: 'failed',
+    });
+    expect(await readdir(root)).toEqual([]);
+  });
+
   it('never shows a file to a scan before all of it has arrived', async () => {
     const at = join(root, 'Arrival.mkv');
     let seen: string[] = [];
@@ -104,12 +115,12 @@ describe('createUploadDisk, in pieces', () => {
     const disk = createUploadDisk();
 
     await expect(disk.begin(at, staging)).resolves.toEqual({ kind: 'begun' });
-    await expect(disk.writeAt(staging, 4, bodyOf('film'))).resolves.toEqual({
+    await expect(disk.writeAt(staging, 4, 4, bodyOf('film'))).resolves.toEqual({
       kind: 'written',
       bytes: 4,
     });
-    await disk.writeAt(staging, 0, bodyOf('a ; '));
-    await disk.writeAt(staging, 0, bodyOf('a : '));
+    await disk.writeAt(staging, 0, 4, bodyOf('a ; '));
+    await disk.writeAt(staging, 0, 4, bodyOf('a : '));
 
     await expect(disk.finish(staging, at, 8)).resolves.toEqual({ kind: 'written', bytes: 8 });
     expect(await readFile(at, 'utf8')).toBe('a : film');
@@ -122,10 +133,22 @@ describe('createUploadDisk, in pieces', () => {
     const disk = createUploadDisk();
 
     await disk.begin(at, staging);
-    await disk.writeAt(staging, 0, bodyOf('a film and more'));
+    await disk.writeAt(staging, 0, 15, bodyOf('a film and more'));
 
     await expect(disk.finish(staging, at, 6)).resolves.toEqual({ kind: 'written', bytes: 6 });
     expect(await readFile(at, 'utf8')).toBe('a film');
+  });
+
+  it('stops a piece that is longer than it was said to be, and says how far it got', async () => {
+    const staging = join(root, '.Arrival.mkv.one.part');
+    const disk = createUploadDisk();
+
+    await disk.begin(join(root, 'Arrival.mkv'), staging);
+
+    const written = await disk.writeAt(staging, 0, 4, bodyOf('far more than four'));
+
+    expect(written.kind === 'written' ? written.bytes : 0).toBeGreaterThan(4);
+    expect((await readFile(staging)).length).toBeLessThanOrEqual(4);
   });
 
   it('begins nothing where a file is already there, and finishes onto nothing there either', async () => {
@@ -154,7 +177,7 @@ describe('createUploadDisk, in pieces', () => {
 
   it('says a piece failed where there is no staging file to write it into', async () => {
     await expect(
-      createUploadDisk().writeAt(join(root, '.missing.part'), 0, bodyOf('x')),
+      createUploadDisk().writeAt(join(root, '.missing.part'), 0, 1, bodyOf('x')),
     ).resolves.toEqual({ kind: 'failed' });
   });
 });

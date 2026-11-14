@@ -2,6 +2,7 @@ import { readdir, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { libraryOf } from '@ValenceServer/files/libraryOf';
+import { staysInsideLibrary } from '@ValenceServer/files/staysInsideLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryEntry, LibraryFolder } from '@ValenceContracts/schemas/LibraryFiles';
 import type { DiskRefusal } from '@ValenceServer/files/diskRefusalOf';
@@ -58,7 +59,7 @@ const listLibraryFolder = async (
   const at = resolve(path);
   const library = libraryOf(libraries, at);
 
-  if (library === null) {
+  if (library === null || !(await staysInsideLibrary(library, at))) {
     return { kind: 'outside' };
   }
 

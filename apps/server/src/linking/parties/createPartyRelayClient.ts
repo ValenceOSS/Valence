@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { z } from 'zod';
 import { FromServerSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -20,6 +21,20 @@ const HeardSchema = z.object({
   heard: z.array(z.object({ connection: z.string(), message: FromServerSchema })),
   serverAtMs: z.number(),
 });
+
+/**
+ * Whether a message heard from a linked server's party is one a party says: what happens in the
+ * party, a refusal, or a request for its password. Anything else would be the linked server
+ * speaking as this one, to change who the person's tab thinks it is or to show it events from
+ * places it never joined.
+ *
+ * @param message - What was heard.
+ * @returns Whether to hand it on.
+ */
+const isPartyTalk = (message: FromServer): boolean =>
+  (message.kind === 'event' && message.topic === 'party') ||
+  message.kind === 'refused' ||
+  message.kind === 'partyNeedsPassword';
 
 type Relaying = {
   serverId: string;
@@ -146,7 +161,11 @@ const createPartyRelayClient = ({
       );
       const read =
         answered?.ok === true
-          ? HeardSchema.safeParse(await answered.json().catch(() => null))
+          ? HeardSchema.safeParse(
+              await boundedAnswer(answered)
+                .json()
+                .catch(() => null),
+            )
           : null;
 
       if (read?.success !== true) {
@@ -166,7 +185,7 @@ const createPartyRelayClient = ({
           asHeardHere(JsonValueSchema.parse(JSON.parse(JSON.stringify(message))), serverId, offset),
         );
 
-        if (here !== undefined && heard.success) {
+        if (here?.serverId === serverId && heard.success && isPartyTalk(heard.data)) {
           here.write(heard.data);
         }
       }

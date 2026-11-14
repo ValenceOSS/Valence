@@ -181,6 +181,15 @@ const createDatabaseSetupLinkService = ({
 
     stateOf: async (userId) => (await statesOf([userId])).get(userId)?.state ?? 'none',
 
+    isAwaitingFirstUse: async (userId) => {
+      const rows = await db
+        .select({ usedAt: accountSetupLink.usedAt })
+        .from(accountSetupLink)
+        .where(eq(accountSetupLink.userId, userId));
+
+      return rows.length > 0 && rows.every((row) => row.usedAt === null);
+    },
+
     statesOf,
 
     revoke,

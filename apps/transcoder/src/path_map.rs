@@ -188,6 +188,21 @@ where
     translate(String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
 }
 
+/// Reads an optional path field from a request and translates it.
+///
+/// # Errors
+///
+/// Where the field is neither absent nor a string, or [`translate`] refuses it.
+pub fn deserialize_optional<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Option::<String>::deserialize(deserializer)?
+        .map(translate)
+        .transpose()
+        .map_err(serde::de::Error::custom)
+}
+
 /// A request field naming the file to read: one path, every part of a film
 /// kept as several files, in order, or a remote input the server registered.
 #[derive(Deserialize)]

@@ -1,3 +1,6 @@
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -10,9 +13,16 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
+import { aLibraryAt } from '@ValenceServer/files/aLibraryAt';
 import { jobDefinitionsFor } from '@ValenceServer/jobs/jobDefinitions';
+import { z } from 'zod';
+import { LibrarySchema } from '@ValenceContracts/schemas/Library';
+import type { Library } from '@ValenceContracts/schemas/Library';
+import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { LibraryService } from '@ValenceServer/library/LibraryService';
+
+const LibraryListSchema = z.array(LibrarySchema);
 
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 const ON_DISK = 'valence-disk:L2ZpbG1zL3Bvc3Rlci5qcGc';
@@ -25,7 +35,12 @@ type Upload = NonNullable<LibraryService['uploadArtwork']>;
  * @param answer - What the library says to an upload.
  * @returns A way to ask the application, and what the library was asked.
  */
-const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
+const build = async (
+  answer: Awaited<ReturnType<Upload>> = { jobId: null },
+  serverFolders: readonly string[] = [],
+  libraries: Library[] = [],
+  grants: readonly Permission[] = ['library.create'],
+) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const uploadArtwork = vi.fn(
@@ -69,7 +84,7 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: {
-      ...createMemoryLibraryService({ libraries: [], media: [] }),
+      ...createMemoryLibraryService({ libraries, media: [] }),
       uploadArtwork,
       listItemsAcross,
       isOwnArtwork: (_mediaId, url) => Promise.resolve(url === ON_DISK),
@@ -111,11 +126,13 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
     readImage,
+    serverFolders,
   });
   const cookie = await signUpForTest(app, auth);
 
   permissions.state.overrides[store.user[0]?.id ?? ''] = [
     { permission: 'media.override', effect: 'allow' },
+    ...grants.map((permission) => ({ permission, effect: 'allow' as const })),
   ];
   const ask = (path: string, init: RequestInit = {}) =>
     app.request(`${TEST_ORIGIN}${path}`, {
@@ -135,6 +152,79 @@ const build = async (answer: Awaited<ReturnType<Upload>> = { jobId: null }) => {
 };
 
 describe('serveLibrary', () => {
+  it('shows where each library is on the machine only to somebody who may change libraries', async () => {
+    const films = { ...aLibraryAt('/mnt/nas/films'), requestPath: '/mnt/nas/requested' };
+    const plain = await build({ jobId: null }, [], [films], []);
+    const shown = LibraryListSchema.parse(await (await plain.ask('/api/libraries')).json());
+
+    expect(shown.map((one) => [one.path, one.requestPath])).toEqual([['/', null]]);
+
+    const editor = await build({ jobId: null }, [], [films], ['library.edit']);
+    const full = LibraryListSchema.parse(await (await editor.ask('/api/libraries')).json());
+
+    expect(full.map((one) => [one.path, one.requestPath])).toEqual([
+      ['/mnt/nas/films', '/mnt/nas/requested'],
+    ]);
+  });
+
+  it('shows where each library is, and nothing else of the machine, to somebody who monitors the server', async () => {
+    const films = { ...aLibraryAt('/mnt/nas/films'), requestPath: '/mnt/nas/requested' };
+    const monitor = await build({ jobId: null }, [], [films], ['server.monitor']);
+    const shown = LibraryListSchema.parse(await (await monitor.ask('/api/libraries')).json());
+
+    expect(shown.map((one) => [one.path, one.requestPath])).toEqual([['/mnt/nas/films', null]]);
+  });
+
+  it('refuses a library on a folder the server keeps its own data in, or one that holds it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'valence-library-'));
+
+    await mkdir(join(root, 'config', 'backups'), { recursive: true });
+    await mkdir(join(root, 'media'));
+
+    const { ask } = await build({ jobId: null }, [join(root, 'config', 'backups')]);
+    const adding = (path: string) =>
+      ask('/api/libraries', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Films', kind: 'movies', path }),
+      });
+
+    expect((await adding(join(root, 'config', 'backups'))).status).toBe(400);
+    expect((await adding(root)).status).toBe(400);
+    expect((await adding(join(root, 'media'))).status).toBe(201);
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('refuses a request folder on a folder the server keeps its own data in, or one that holds it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'valence-library-'));
+
+    await mkdir(join(root, 'config', 'backups'), { recursive: true });
+    await mkdir(join(root, 'media'));
+
+    const films = aLibraryAt(join(root, 'media'));
+    const { ask } = await build(
+      { jobId: null },
+      [join(root, 'config', 'backups')],
+      [films],
+      ['library.edit'],
+    );
+    const choosing = (requestPath: string) =>
+      ask(`/api/libraries/${films.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ defaultAudioLanguage: null, requestPath }),
+      });
+    const refusedFor = async (requestPath: string) =>
+      z.object({ code: z.string() }).parse(await (await choosing(requestPath)).json()).code;
+
+    expect(await refusedFor(join(root, 'config', 'backups'))).toBe(
+      'error.library.thatPathIsNotAReadable',
+    );
+    expect(await refusedFor(root)).toBe('error.library.thatPathIsNotAReadable');
+    expect((await choosing(join(root, 'media'))).status).toBe(200);
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('reads every library asked for in one request, counted unless told not to', async () => {
     const { ask, listItemsAcross } = await build();
     const counted = await ask('/api/library-items?libraryIds=films,shows&limit=5&order=rated');
@@ -254,7 +344,12 @@ describe('serveLibrary', () => {
     const chosen = await ask(`/api/media/${MEDIA_ID}/episode-order`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ order: 'dvd' }),
+      body: JSON.stringify({ order: '5b6f1a2c3d4e5f6a7b8c9d0e' }),
+    });
+    const steered = await ask(`/api/media/${MEDIA_ID}/episode-order`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ order: '../../person/popular' }),
     });
 
     expect(await listed.json()).toEqual({
@@ -262,6 +357,7 @@ describe('serveLibrary', () => {
       chosen: null,
     });
     expect(await chosen.json()).toEqual({ corrected: 4, jobId: 'job' });
+    expect(steered.status).toBe(400);
   });
 
   it('says which show a season is read from, and lists the seasons a show has', async () => {

@@ -2314,12 +2314,15 @@ const createDatabaseLibraryService = ({
     },
 
     isSeriesOutOfReach: async (asThem, seriesId) => {
-      const rows = await db
-        .select({ reachable: truth(sql`coalesce(${reachableByViewer(db, asThem)}, true)`) })
+      const reachable = sql`coalesce(${reachableByViewer(db, asThem)}, true)`;
+      const first = await db
+        .select({ reachable: truth(reachable) })
         .from(mediaItem)
-        .where(eq(mediaItem.seriesId, seriesId));
+        .where(eq(mediaItem.seriesId, seriesId))
+        .orderBy(desc(reachable))
+        .limit(1);
 
-      return rows.length > 0 && rows.every((row) => row.reachable === false);
+      return first[0]?.reachable === false;
     },
 
     refusedLibraries: async (accountId) => {
@@ -2500,6 +2503,16 @@ const createDatabaseLibraryService = ({
         .limit(1);
 
       return refused.length > 0;
+    },
+
+    isLibraryOutOfView: async (viewer, libraryId) => {
+      const offered = await db
+        .select({ id: library.id })
+        .from(library)
+        .where(and(eq(library.id, libraryId), librariesVisibleToViewer(db, viewer)))
+        .limit(1);
+
+      return offered.length === 0;
     },
 
     getMedia: async (id) => {

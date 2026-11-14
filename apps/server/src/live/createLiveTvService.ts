@@ -6,6 +6,8 @@ import {
   PageAddressSchema,
 } from '@ValenceContracts/schemas/LiveTv';
 import { checkChannel } from './checkChannel';
+import { isLocalWebAddress } from './isLocalWebAddress';
+import type { Resolve } from './isPublicWebAddress';
 import { checkEmbed } from './checkEmbed';
 import { saying } from '@ValenceI18n/saying';
 import { isHlsPlaylist } from './isHlsPlaylist';
@@ -39,6 +41,7 @@ type LiveTvServiceOptions = {
   routes?: LiveRoutes;
   now?: () => Date;
   fetcher?: typeof fetch;
+  resolve?: Resolve;
   warn?: (message: string) => void;
 };
 
@@ -80,8 +83,11 @@ const createLiveTvService = ({
   routes,
   now = () => new Date(),
   fetcher = fetch,
+  resolve,
   warn = () => undefined,
 }: LiveTvServiceOptions): LiveTvService => {
+  const heldToThePublic = new Map<string, boolean>();
+
   const oneChannel = (source: StoredLiveSource, streamUrl: string): ParsedChannel[] => [
     {
       number: null,
@@ -142,6 +148,8 @@ const createLiveTvService = ({
   };
 
   const refreshed = async (source: StoredLiveSource): Promise<LiveSource> => {
+    heldToThePublic.delete(source.id);
+
     try {
       return await readAgain(source);
     } catch (error) {
@@ -252,7 +260,11 @@ const createLiveTvService = ({
       return refreshed(source);
     },
 
-    remove: (id) => store.removeSource(id),
+    remove: (id) => {
+      heldToThePublic.delete(id);
+
+      return store.removeSource(id);
+    },
 
     refresh: async (id) => {
       const source = await store.readSource(id);
@@ -273,6 +285,25 @@ const createLiveTvService = ({
     },
 
     isEmbedded: async (channel) => (await store.readSource(channel.sourceId))?.kind === 'embed',
+
+    isFromThePublicInternet: async (channel) => {
+      const remembered = heldToThePublic.get(channel.sourceId);
+
+      if (remembered !== undefined) {
+        return remembered;
+      }
+
+      const source = await store.readSource(channel.sourceId);
+
+      const held =
+        source?.kind === 'playlistUrl' &&
+        source.address !== null &&
+        !(await isLocalWebAddress(source.address, resolve));
+
+      heldToThePublic.set(channel.sourceId, held);
+
+      return held;
+    },
 
     changeGuide: async (id, guideUrl) => {
       const source = await store.readSource(id);
@@ -317,6 +348,7 @@ const createLiveTvService = ({
       };
 
       await store.changeSource(id, next);
+      heldToThePublic.delete(id);
 
       const changed = { ...source, ...next };
 

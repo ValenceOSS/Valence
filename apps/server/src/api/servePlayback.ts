@@ -318,7 +318,11 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.playback.thatSessionBelongsToSomebodyElse'), 403);
     }
 
-    const ticket = castTickets.issue({ sessionId });
+    const account = await readAccount(context.req.raw.headers);
+    const ticket = castTickets.issue(
+      { sessionId },
+      account === null ? `session:${sessionId}` : `account:${account.id}`,
+    );
 
     return context.json({ manifestUrl: `/api/playback/cast/${ticket}/index.m3u8` }, 200);
   });
@@ -468,7 +472,9 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
-    if (!mayReport(clientId ?? 'nobody')) {
+    const reporter = (await readAccount(context.req.raw.headers))?.id ?? 'nobody';
+
+    if (!mayReport(reporter)) {
       return context.json(refuse('error.playback.tooManyProblemReports'), 429);
     }
 

@@ -35,6 +35,8 @@ import type {
   SetupWizardProps,
 } from './SetupWizard.types';
 
+const WRONG_SETUP_CODE = 'error.setup.thatSetupCodeIsNotRight';
+
 const ORDER: readonly SetupStepId[] = [
   'welcome',
   'account',
@@ -147,6 +149,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
     password: '',
     again: '',
   });
+  const [setupCode, setSetupCode] = useState('');
   const [origins, setOrigins] = useState<string[]>([...status.suggestedTrustedOrigins]);
   const [cookieSecure, setCookieSecure] = useState(status.isSecureContext);
   const [sharesUsageStatistics, setSharesUsageStatistics] = useState(false);
@@ -171,6 +174,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
 
     const email = draft.email.trim();
     const made = await completeSetup({
+      setupCode,
       admin: {
         name: draft.name.trim(),
         username: draft.username.trim(),
@@ -184,6 +188,11 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
 
     if (made.kind === 'refused') {
       setIsCreating(false);
+
+      if (made.refusal?.code === WRONG_SETUP_CODE) {
+        go('welcome');
+      }
+
       setProblem(made.refusal?.message ?? say('screens.setupWizard.setupCouldNotBeCompletedCheck'));
 
       return;
@@ -215,6 +224,12 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
       case 'welcome':
         return (
           <WelcomeStep
+            setupCode={setupCode}
+            onSetupCodeChange={(typed) => {
+              setSetupCode(typed);
+              setProblem(null);
+            }}
+            problem={problem}
             onBegin={() => {
               go('account');
             }}

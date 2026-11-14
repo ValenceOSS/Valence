@@ -157,7 +157,7 @@ const build = () => {
     },
   });
 
-  return { app, auth, shares, permissions, told };
+  return { app, auth, settings, shares, permissions, told };
 };
 
 /**
@@ -304,6 +304,21 @@ describe('opening a link as somebody with no account', () => {
     expect((await app.request(`${BASE}/api/share/not-a-token`)).status).toBe(404);
   });
 
+  it('keeps the link in a cookie sent only over https where the server says it is served so', async () => {
+    const built = build();
+    const cookie = await signedIn(built);
+    const { token } = await shared(built.app, cookie);
+
+    await built.settings.write({ cookieSecure: true });
+
+    const held = (await opened(built.app, token)).response.headers
+      .getSetCookie()
+      .filter((one) => one.startsWith('valence_share'));
+
+    expect(held).toHaveLength(2);
+    expect(held.every((one) => /;\s*Secure/iu.test(one))).toBe(true);
+  });
+
   it('stops working the moment it is withdrawn', async () => {
     const built = build();
     const { app } = built;
@@ -318,6 +333,29 @@ describe('opening a link as somebody with no account', () => {
     const { response } = await opened(app, made.token);
 
     expect(response.status).toBe(410);
+  });
+
+  it('stops working once whoever made it may no longer share', async () => {
+    const built = build();
+    const cookie = await signedIn(built);
+    const { token } = await shared(built.app, cookie);
+    const session = SessionAccountSchema.parse(
+      await (
+        await built.app.request(`${BASE}/api/auth/get-session`, {
+          headers: { cookie, origin: BASE },
+        })
+      ).json(),
+    );
+    const without = await built.permissions.createRole({
+      name: 'Watches only',
+      position: 10,
+      color: null,
+      permissions: ['streaming.view'],
+    });
+
+    built.permissions.state.assignments[session.user.id] = [without.id];
+
+    expect((await opened(built.app, token)).response.status).toBe(410);
   });
 
   it('stops working once it has expired', async () => {
@@ -417,6 +455,20 @@ describe('opening a link as somebody with no account', () => {
     const { response } = await opened(app, made.token);
 
     expect(response.status).toBe(410);
+  });
+
+  it('counts a guest who goes straight to the API with the link, so a cap of one admits one', async () => {
+    const built = build();
+    const { app } = built;
+    const cookie = await signedIn(built);
+    const made = await shared(app, cookie, { kind: 'item', mediaId: FILM, viewCap: 1 });
+    const straightIn = () =>
+      app.request(`${BASE}/api/media/${FILM}`, {
+        headers: { cookie: `valence_share=${made.token}`, origin: BASE },
+      });
+
+    expect((await straightIn()).status).toBe(200);
+    expect((await straightIn()).status).toBe(410);
   });
 });
 

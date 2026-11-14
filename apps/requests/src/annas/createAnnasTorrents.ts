@@ -44,7 +44,7 @@ const createAnnasTorrents = (fetch: TorrentListFetch, now: () => number = Date.n
     const read = TorrentListSchema.safeParse(await answer.json().catch(() => null));
     const torrents = new Map(
       (read.success ? read.data : [])
-        .filter((one) => !one.obsolete)
+        .filter((one) => !one.obsolete && URL.parse(one.url, origin)?.origin === origin)
         .map((one) => [
           torrentKeyOf(one.group_name, one.display_name),
           {

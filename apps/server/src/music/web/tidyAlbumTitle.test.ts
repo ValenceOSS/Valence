@@ -20,4 +20,21 @@ describe('tidyAlbumTitle', () => {
     expect(tidyAlbumTitle('Even In Arcadia')).toBe('Even In Arcadia');
     expect(tidyAlbumTitle('1989')).toBe('1989');
   });
+
+  it('finishes at once on a title padded with thousands of spaces', () => {
+    const started = performance.now();
+
+    tidyAlbumTitle(`a${' '.repeat(20_000)}b`);
+    tidyAlbumTitle(`a${' '.repeat(20_000)}2005`);
+
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+
+  it('finishes at once on a title of endless open brackets', () => {
+    const started = performance.now();
+
+    tidyAlbumTitle(`${'('.repeat(20_000)}edition`);
+
+    expect(performance.now() - started).toBeLessThan(500);
+  });
 });

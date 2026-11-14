@@ -45,6 +45,7 @@ const build = () => {
 
   return {
     permissions,
+    store,
     administrator: signedInApp(app, { auth, store, permissions, isAdministrator: true }),
     viewer: signedInApp(app, { auth, store, permissions }),
   };
@@ -121,6 +122,46 @@ describe('stream limits', () => {
     );
 
     expect(refused.status).toBe(400);
+  });
+
+  it('will not set a limit on a role at or above the role of whoever asks, nor on one that is not there', async () => {
+    const { viewer, permissions, store } = build();
+    const moderator = await permissions.createRole({
+      name: 'Moderator',
+      position: 60,
+      color: null,
+      permissions: ['account.manage'],
+    });
+    const administratorRole = (await permissions.listRoles()).find(
+      (role) => role.name === 'Administrator',
+    );
+    const kids = await permissions.createRole({
+      name: 'Kids',
+      position: 50,
+      color: null,
+      permissions: [],
+    });
+
+    await viewer.request(`${TEST_ORIGIN}/api/admin/roles/${kids.id}/stream-limit`);
+    permissions.state.assignments[store.user[0]?.id ?? ''] = [moderator.id];
+
+    const limit = put({ maxBitrateKbps: 250, maxStreams: 1 });
+
+    expect(
+      (
+        await viewer.request(
+          `${TEST_ORIGIN}/api/admin/roles/${administratorRole?.id ?? ''}/stream-limit`,
+          limit,
+        )
+      ).status,
+    ).toBe(403);
+    expect(
+      (await viewer.request(`${TEST_ORIGIN}/api/admin/roles/made-up/stream-limit`, limit)).status,
+    ).toBe(404);
+    expect(
+      (await viewer.request(`${TEST_ORIGIN}/api/admin/roles/${kids.id}/stream-limit`, limit))
+        .status,
+    ).toBe(200);
   });
 
   it('is for whoever manages accounts', async () => {

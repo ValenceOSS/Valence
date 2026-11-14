@@ -82,7 +82,7 @@ pub enum SubtitleError {
 /// converts in about a second rather than in the minutes a re-encode takes.
 #[must_use]
 pub fn extract_arguments(path: &Path, stream_index: u32) -> Vec<String> {
-    crate::joined_input::opened(vec![
+    crate::joined_input::opened_as_media(vec![
         "-nostdin".to_owned(),
         "-loglevel".to_owned(),
         "error".to_owned(),
@@ -125,14 +125,14 @@ pub fn extract_all_arguments(path: &Path, stream_indices: &[u32], directory: &Pa
         ]);
     }
 
-    crate::joined_input::opened(arguments)
+    crate::joined_input::opened_as_media(arguments)
 }
 
 /// The arguments that copy one embedded ASS or SSA track out as Advanced
 /// `SubStation`, keeping its styles, positions and override tags.
 #[must_use]
 pub fn extract_ass_arguments(path: &Path, stream_index: u32) -> Vec<String> {
-    crate::joined_input::opened(vec![
+    crate::joined_input::opened_as_media(vec![
         "-nostdin".to_owned(),
         "-loglevel".to_owned(),
         "error".to_owned(),

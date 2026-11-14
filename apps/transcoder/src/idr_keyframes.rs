@@ -380,6 +380,8 @@ mod tests {
                 "-nostdin",
                 "-ss",
                 "37.788",
+                "-protocol_whitelist",
+                "file,pipe",
                 "-i",
                 "/media/film.mkv",
                 "-map",

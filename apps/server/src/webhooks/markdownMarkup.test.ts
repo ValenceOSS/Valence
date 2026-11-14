@@ -20,6 +20,15 @@ describe('markdownMarkup', () => {
     );
   });
 
+  it('keeps a web address from carrying a link or an image of its own wording', () => {
+    expect(markdownMarkup.escape('https://a[Sign-in](https://evil.example/login)')).toBe(
+      'https://a%5BSign-in%5D%28https://evil.example/login%29',
+    );
+    expect(markdownMarkup.escape('https://a![](https://evil.example/pixel.png)')).not.toMatch(
+      /[[\]()]/,
+    );
+  });
+
   it('marks text bold', () => {
     expect(markdownMarkup.bold('Status:')).toBe('**Status:**');
   });

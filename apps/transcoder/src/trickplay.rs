@@ -234,6 +234,9 @@ pub fn tile_height_for(tile_width: u32, source_width: u32, source_height: u32) -
     even.max(2)
 }
 
+/// The most thumbnails one piece of media is given; a length needing more is refused.
+const MOST_THUMBNAILS: f64 = 100_000.0;
+
 /// How many thumbnails a piece of media of this length needs.
 #[must_use]
 pub fn thumbnail_count(duration_seconds: f64, interval_seconds: u32) -> u32 {
@@ -247,8 +250,8 @@ pub fn thumbnail_count(duration_seconds: f64, interval_seconds: u32) -> u32 {
         return 0;
     }
 
-    if count >= f64::from(u32::MAX) {
-        return u32::MAX;
+    if count > MOST_THUMBNAILS {
+        return 0;
     }
 
     #[allow(
@@ -781,8 +784,8 @@ pub fn build_index(request: &TrickplayRequest, tile_height: u32, count: u32) -> 
     }
 
     for index in 0..count {
-        let start = index * request.interval_seconds;
-        let end = start + request.interval_seconds;
+        let start = index.saturating_mul(request.interval_seconds);
+        let end = start.saturating_add(request.interval_seconds);
         let sheet = index / per_sheet;
         let within = index % per_sheet;
         let x = (within % request.columns) * request.tile_width;
@@ -1395,6 +1398,13 @@ otherwise start a second one"
     #[test]
     fn nothing_is_generated_for_media_of_no_length() {
         assert_eq!(thumbnail_count(0.0, 10), 0);
+    }
+
+    #[test]
+    fn media_needing_an_absurd_number_of_thumbnails_gets_none() {
+        assert_eq!(thumbnail_count(1e12, 10), 0);
+        assert_eq!(thumbnail_count(1_000_000.0, 10), 100_000);
+        assert_eq!(thumbnail_count(1_000_010.0, 10), 0);
     }
 
     #[test]

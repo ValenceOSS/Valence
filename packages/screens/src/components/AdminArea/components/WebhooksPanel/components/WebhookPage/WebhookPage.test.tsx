@@ -91,6 +91,15 @@ describe('WebhookPage', () => {
     });
   });
 
+  it('turns the local network on and off for the webhook', async () => {
+    const user = userEvent.setup();
+    const { onEdit } = drawn(aWebhook());
+
+    await user.click(screen.getByRole('switch', { name: 'Local network' }));
+
+    expect(onEdit).toHaveBeenCalledWith(aWebhook().id, { reachesLocalNetwork: true });
+  });
+
   it('keeps a Custom setup already saved when turned back to Custom', async () => {
     const user = userEvent.setup();
     const { onEdit } = drawn(aWebhook({ custom: DEFAULT_CUSTOM_WEBHOOK }));

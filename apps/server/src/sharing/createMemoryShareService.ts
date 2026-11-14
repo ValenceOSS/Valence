@@ -192,10 +192,20 @@ const createMemoryShareService = (
     hasJoined: (shareId, joiner) =>
       Promise.resolve(state.shares.find((one) => one.id === shareId)?.joiners.has(joiner) === true),
 
-    join: (shareId, joiner) => {
-      state.shares.find((one) => one.id === shareId)?.joiners.add(joiner);
+    join: (shareId, joiner, viewCap = null) => {
+      const joiners = state.shares.find((one) => one.id === shareId)?.joiners;
 
-      return Promise.resolve();
+      if (joiners === undefined) {
+        return Promise.resolve(false);
+      }
+
+      if (viewCap !== null && !joiners.has(joiner) && joiners.size >= viewCap) {
+        return Promise.resolve(false);
+      }
+
+      joiners.add(joiner);
+
+      return Promise.resolve(true);
     },
   };
 };

@@ -270,6 +270,9 @@ pub fn is_cut_as_asked(cached: &Boundaries, spec: &SessionSpec) -> bool {
         .is_none_or(|encoded| encoded == spec.starts_where_sought())
 }
 
+/// The most segments one session is laid out in; a duration needing more is read as unusable.
+const MOST_SEGMENTS: f64 = 100_000.0;
+
 /// The segments an encode produces, which are the length that was asked for.
 ///
 /// `-force_key_frames` puts a keyframe on every boundary, so unlike a copied
@@ -284,15 +287,20 @@ pub fn equal_lengths(duration_seconds: f64, segment_seconds: u32) -> Vec<f64> {
         return Vec::new();
     }
 
-    let mut lengths = Vec::new();
-    let mut covered = 0.0;
+    let whole = (duration_seconds / wanted).ceil() - 1.0;
 
-    while duration_seconds - covered > wanted {
-        lengths.push(wanted);
-        covered += wanted;
+    if whole >= MOST_SEGMENTS {
+        return Vec::new();
     }
 
-    lengths.push(duration_seconds - covered);
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "the count is positive and under MOST_SEGMENTS"
+    )]
+    let mut lengths = vec![wanted; whole as usize];
+
+    lengths.push(duration_seconds - wanted * whole);
 
     lengths
 }
@@ -346,15 +354,18 @@ pub fn encoded_lengths(
         return lengths;
     };
 
-    while lengths.len() > 1 {
-        let boundary: f64 = lengths[..lengths.len() - 1].iter().sum();
+    let mut boundary: f64 = lengths
+        .split_last()
+        .map_or(0.0, |(_, before)| before.iter().sum());
 
+    while lengths.len() > 1 {
         if picture + CUT_TOLERANCE_SECONDS >= boundary {
             break;
         }
 
         if let Some(tail) = lengths.pop() {
             if let Some(open) = lengths.last_mut() {
+                boundary -= *open;
                 *open += tail;
             }
         }
@@ -1309,6 +1320,15 @@ mod tests {
     #[test]
     fn cuts_an_encode_where_it_was_asked_to() {
         assert_eq!(equal_lengths(12.0, 4), vec![4.0, 4.0, 4.0]);
+    }
+
+    /// A duration that would need more segments than any film has is refused rather than listed.
+    #[test]
+    fn refuses_a_duration_that_would_need_an_absurd_number_of_segments() {
+        assert_eq!(equal_lengths(1e12, 4), Vec::<f64>::new());
+        assert_eq!(equal_lengths(1e300, 4), Vec::<f64>::new());
+        assert_eq!(equal_lengths(399_996.0, 4).len(), 99_999);
+        assert_eq!(encoded_lengths(1e12, 4, Some(10.0)), Vec::<f64>::new());
     }
 
     /// The tail is a segment even though it is shorter than the rest.

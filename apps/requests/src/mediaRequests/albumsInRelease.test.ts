@@ -65,4 +65,17 @@ describe('albumsInRelease', () => {
   it('checks only the album of a release picked by hand', () => {
     expect(heldBy('Various - The Wall (1979) [FLAC]', PINK_FLOYD, false)).toEqual(['wall']);
   });
+
+  it('reads a title of hundreds of kilobytes quickly', () => {
+    const started = Date.now();
+
+    albumsInRelease(
+      PINK_FLOYD,
+      ALBUMS,
+      `Artist - Album${' ('.repeat(200_000)}x${' '.repeat(200_000)}`,
+    );
+    albumsInRelease(PINK_FLOYD, ALBUMS, `Artist${' - a'.repeat(100_000)}`);
+
+    expect(Date.now() - started).toBeLessThan(2_000);
+  });
 });

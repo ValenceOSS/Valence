@@ -87,7 +87,7 @@ describe('push subscriptions', () => {
     const { app, auth, request, notifications, accountId } = await signedIn();
 
     await request('/api/notifications/push', 'POST', {
-      endpoint: 'https://push/mine',
+      endpoint: 'https://93.184.216.34/mine',
       p256dh: 'k',
       auth: 'a',
     });
@@ -101,7 +101,7 @@ describe('push subscriptions', () => {
     const response = await app.request(`${TEST_ORIGIN}/api/notifications/push`, {
       method: 'DELETE',
       headers: { cookie: theirs, origin: TEST_ORIGIN, 'content-type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'https://push/mine' }),
+      body: JSON.stringify({ endpoint: 'https://93.184.216.34/mine' }),
     });
 
     expect(theirs).not.toBe('');
@@ -113,15 +113,30 @@ describe('push subscriptions', () => {
     const { request, notifications, accountId } = await signedIn();
 
     await request('/api/notifications/push', 'POST', {
-      endpoint: 'https://push/mine',
+      endpoint: 'https://93.184.216.34/mine',
       p256dh: 'k',
       auth: 'a',
     });
 
-    await request('/api/notifications/push', 'DELETE', { endpoint: 'https://push/mine' });
+    await request('/api/notifications/push', 'DELETE', { endpoint: 'https://93.184.216.34/mine' });
 
     expect(await notifications.listPushEndpoints(accountId)).toStrictEqual([]);
   });
+});
+
+describe('registering a browser', () => {
+  it.each(['https://10.0.0.5/push', 'https://169.254.169.254/', 'http://93.184.216.34/push'])(
+    'will not register %s, which is not a public push service',
+    async (endpoint) => {
+      const { request, notifications, accountId } = await signedIn();
+
+      expect(
+        (await request('/api/notifications/push', 'POST', { endpoint, p256dh: 'k', auth: 'a' }))
+          .status,
+      ).toBe(400);
+      expect(await notifications.listPushEndpoints(accountId)).toStrictEqual([]);
+    },
+  );
 });
 
 describe('the notification routes', () => {
@@ -226,7 +241,7 @@ describe('the notification routes', () => {
 
   it('registers a browser and forgets it again', async () => {
     const { request, notifications, accountId } = await signedIn();
-    const endpoint = 'https://push.example.com/abc';
+    const endpoint = 'https://93.184.216.34/abc';
 
     expect(
       (await request('/api/notifications/push', 'POST', { endpoint, p256dh: 'k', auth: 'a' }))

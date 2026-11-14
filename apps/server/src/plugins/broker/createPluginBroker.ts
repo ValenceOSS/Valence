@@ -365,6 +365,7 @@ const createPluginBroker = ({
   const name = installation.manifest.name;
   let secretWrites: Promise<void> = Promise.resolve();
   let jobWrites: Promise<void> = Promise.resolve();
+  let storageWrites: Promise<void> = Promise.resolve();
 
   const find = <K extends Permission['kind']>(kind: K): Extract<Permission, { kind: K }> | null =>
     granted.find(
@@ -690,15 +691,20 @@ const createPluginBroker = ({
 
         const [key, value] = ARGS[method].parse(args);
         const bytes = Buffer.byteLength(JSON.stringify(value)) + Buffer.byteLength(key);
-        const already = await store.bytesKept(installation.id, key);
+        const written = storageWrites.then(async () => {
+          const already = await store.bytesKept(installation.id, key);
 
-        if (already + bytes > quota.quotaBytes) {
-          throw new PluginRefusalError(
-            `${name} has used all of the ${quota.quotaBytes.toString()} bytes it may keep.`,
-          );
-        }
+          if (already + bytes > quota.quotaBytes) {
+            throw new PluginRefusalError(
+              `${name} has used all of the ${quota.quotaBytes.toString()} bytes it may keep.`,
+            );
+          }
 
-        await store.writeValue(installation.id, key, value, bytes);
+          await store.writeValue(installation.id, key, value, bytes);
+        });
+
+        storageWrites = written.catch(() => undefined);
+        await written;
 
         return null;
       }
@@ -894,7 +900,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaId, watchedAt] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope, true);
+        await seenBy(mediaId, await viewingAs(profileId, scope));
         await host.viewing.markWatched(profileId, mediaId, watchedAt ?? null);
 
         return null;
@@ -904,7 +910,7 @@ const createPluginBroker = ({
 
         const [profileId, mediaId] = ARGS[method].parse(args);
 
-        await actsFor(profileId, scope, true);
+        await seenBy(mediaId, await viewingAs(profileId, scope));
         await host.viewing.markUnwatched(profileId, mediaId);
 
         return null;

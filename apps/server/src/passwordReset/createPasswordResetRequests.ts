@@ -14,7 +14,7 @@ type CreatePasswordResetRequestsOptions = {
  * Takes somebody's word for which account they forgot the password to, by its username, its
  * address or the face they picked, and asks for a reset link for it — at most once a minute per
  * account, so the form cannot be used to fill somebody's inbox. Nothing about whether the account
- * exists is answered.
+ * exists is answered, not even by how long the answer takes: the link is sent after it.
  *
  * @param options - How an account is found, how a reset is asked for, and the clock.
  * @returns A function that asks for a reset, given who they say they are and where the link
@@ -45,7 +45,7 @@ const createPasswordResetRequests = ({
     }
 
     lastAsked.set(account.userId, at);
-    await request(account.email, redirectTo);
+    void request(account.email, redirectTo).catch(() => undefined);
   };
 };
 

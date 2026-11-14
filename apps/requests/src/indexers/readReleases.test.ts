@@ -165,4 +165,15 @@ describe('readReleases', () => {
       'The indexer’s response to a search wasn’t a list of results',
     );
   });
+
+  it('takes no magnet link that carries a second line', () => {
+    const xml = `<rss xmlns:torznab="http://torznab.com/schemas/2015/feed"><channel><item>
+      <title>Dune</title>
+      <link>http://jackett:9117/dl/1</link>
+      <torznab:attr name="magneturl" value="magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567\nhttp://10.0.0.5/x" />
+    </item></channel></rss>`;
+    const [release] = readReleases(readIndexerXml(xml), JACKETT);
+
+    expect(release?.magnetUrl).toBeNull();
+  });
 });

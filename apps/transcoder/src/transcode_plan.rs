@@ -328,7 +328,11 @@ pub enum SubtitleAction {
         is_image_based: bool,
         /// A text subtitle file kept beside the film, drawn instead of one of
         /// the film's own streams; `subtitle_index` then counts the file's.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "crate::path_map::deserialize_optional"
+        )]
         subtitle_file: Option<String>,
     },
 }
@@ -841,7 +845,7 @@ pub fn escape_filter_path_on(platform: Platform, path: &str) -> String {
 
     path.replace('\\', "\\\\")
         .replace(':', "\\:")
-        .replace('\'', "\\'")
+        .replace('\'', "'\\\\\\''")
 }
 
 /// Builds a scale filter that shrinks but never enlarges.
@@ -2965,7 +2969,8 @@ impl TranscodePlan {
     }
 
     /// Names the input, read through the concat demuxer where it is the list
-    /// joining a film's parts, and through the relay where it is a remote file.
+    /// joining a film's parts, through the relay where it is a remote file, and
+    /// as a plain file, allowed no protocol but `file` and `pipe`, otherwise.
     fn push_input(&self, args: &mut Vec<String>) {
         if let Some(relayed) = crate::remote_input::relay_address_of(&self.spec.input_path) {
             args.extend(crate::remote_input::RELAY_INPUT.map(str::to_owned));
@@ -2977,6 +2982,8 @@ impl TranscodePlan {
 
         if crate::joined_input::is_joined(&self.spec.input_path) {
             args.extend(crate::joined_input::CONCAT_INPUT.map(str::to_owned));
+        } else {
+            args.extend(crate::joined_input::LOCAL_INPUT.map(str::to_owned));
         }
 
         args.push("-i".into());
@@ -5877,6 +5884,27 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert!(pairs(&args, "-map").contains(&"0:v:0".to_owned()));
     }
 
+    /// A plain library file is opened with only the file and pipe protocols, so nothing inside it
+    /// can make ffmpeg reach an address.
+    #[test]
+    fn opens_a_library_file_with_only_the_local_protocols() {
+        for args in [
+            plan(spec()).to_ffmpeg_args(),
+            plan(encoding("libx265")).to_download_args(),
+        ] {
+            let input = args
+                .iter()
+                .position(|argument| argument == "-i")
+                .expect("names the input");
+
+            assert_eq!(
+                &args[input - 2..input],
+                ["-protocol_whitelist", "file,pipe"],
+                "{args:?}"
+            );
+        }
+    }
+
     /// A download is the same transcode and must stay the same transcode.
     #[test]
     fn leaves_a_download_reading_exactly_as_it_did() {
@@ -6539,6 +6567,16 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert_eq!(
             escape_filter_path_on(Platform::Unix, r"/media/a\b.mkv"),
             r"/media/a\\b.mkv"
+        );
+    }
+
+    #[test]
+    fn closes_the_quote_around_an_apostrophe_and_reopens_it() {
+        use super::{escape_filter_path_on, Platform};
+
+        assert_eq!(
+            escape_filter_path_on(Platform::Unix, "/m/it's,a;[b]:c\\d.mkv"),
+            "/m/it'\\\\\\''s,a;[b]\\:c\\\\d.mkv"
         );
     }
 

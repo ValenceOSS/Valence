@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
@@ -92,7 +93,10 @@ const aNetwork = () => {
         defaultName: new URL(address).hostname,
         peers,
         ask: async (serverId, route, asking) => {
-          const signed = await service.signFor(serverId);
+          const signed = await service.signFor(serverId, undefined, {
+            method: asking.method ?? 'GET',
+            route,
+          });
 
           return signed === null
             ? null
@@ -161,7 +165,10 @@ const aNetwork = () => {
       body?: object,
       person: { profileId: string; name: string } | null = null,
     ) => {
-      const signed = await signAsPerson(service, sharing, serverId, person);
+      const signed = await signAsPerson(service, sharing, serverId, person, {
+        method,
+        route,
+      });
 
       return fetcher(`${signed?.address ?? ''}/api/federation/v1${route}`, {
         method,
@@ -532,6 +539,56 @@ describe('the linked server routes', () => {
       'Arrival',
       'allowed',
     ]);
+  });
+
+  it('stops honouring a ticket once the title is no longer shared, or the server is unlinked', async () => {
+    const network = aNetwork();
+    const title = '00000000-0000-4000-8000-0000000000c1';
+    const anime = await network.serverAt('https://anime.example', ['administrator'], [FILMS], {
+      subjectOf: ({ id }) =>
+        Promise.resolve(
+          id === title
+            ? {
+                id,
+                title: 'Arrival',
+                libraryId: FILMS.id,
+                certificationAge: 12,
+                isNeverRated: false,
+              }
+            : null,
+        ),
+    });
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const ticketFor = async () =>
+      z
+        .object({ ticket: z.string() })
+        .parse(await (await films.askAt(hostAtGuest, '/direct', 'POST', { mediaId: title })).json())
+        .ticket;
+    const fetched = async (ticket: string) =>
+      (await anime.app.request(`/api/federation/v1/direct/${ticket}/film.mkv`)).status;
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    const shared = await ticketFor();
+
+    expect(await fetched(shared)).not.toBe(403);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', { libraryIds: [] });
+
+    expect(await fetched(shared)).toBe(403);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    const again = await ticketFor();
+
+    expect(await fetched(again)).not.toBe(403);
+    expect((await anime.request(`/api/linked-servers/${guestAtHost}`, 'DELETE')).status).toBe(204);
+    expect(await fetched(again)).toBe(403);
   });
 
   it('keeps every new limit it is given for a linked server', async () => {

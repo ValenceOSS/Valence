@@ -40,7 +40,15 @@ const createMemoryWebhookStore = (): WebhookStore => {
   return {
     list: () => Promise.resolve([...subscriptions.values()].map((held) => held.subscription)),
 
-    create: ({ name, url, preset, events, filters = DEFAULT_WEBHOOK_FILTERS, custom = null }) => {
+    create: ({
+      name,
+      url,
+      preset,
+      events,
+      filters = DEFAULT_WEBHOOK_FILTERS,
+      custom = null,
+      reachesLocalNetwork = false,
+    }) => {
       const id = randomUUID();
       const held = {
         secret: `whsec_memory_${id}`,
@@ -53,6 +61,7 @@ const createMemoryWebhookStore = (): WebhookStore => {
           events,
           filters,
           custom: blankSecretHeaders(custom),
+          reachesLocalNetwork,
           enabled: true,
           createdAt: new Date().toISOString(),
           lastAttemptAt: null,
@@ -88,6 +97,9 @@ const createMemoryWebhookStore = (): WebhookStore => {
         ...(change.events === undefined ? {} : { events: change.events }),
         ...(change.filters === undefined ? {} : { filters: change.filters }),
         ...(change.enabled === undefined ? {} : { enabled: change.enabled }),
+        ...(change.reachesLocalNetwork === undefined
+          ? {}
+          : { reachesLocalNetwork: change.reachesLocalNetwork }),
       };
 
       subscriptions.set(id, { ...held, custom, subscription: changed });
@@ -118,6 +130,7 @@ const createMemoryWebhookStore = (): WebhookStore => {
         preset: held.subscription.preset,
         secret: held.secret,
         custom: held.custom,
+        reachesLocalNetwork: held.subscription.reachesLocalNetwork,
       });
     },
 

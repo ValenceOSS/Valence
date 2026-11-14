@@ -33,4 +33,12 @@ describe('splitArtists', () => {
   it('credits nobody where nothing was tagged', () => {
     expect(splitArtists(['', '  '])).toEqual([]);
   });
+
+  it('finishes at once on an artist padded with thousands of spaces', () => {
+    const started = performance.now();
+
+    splitArtists([`a${' '.repeat(50_000)}b`]);
+
+    expect(performance.now() - started).toBeLessThan(500);
+  });
 });

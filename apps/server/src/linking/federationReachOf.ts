@@ -3,7 +3,7 @@ import type { FederationReach, PeerClaimKind, PeerSubject } from './FederationRe
 
 const ID = '[0-9a-fA-F-]{36}';
 
-const NAME = '[^/]+';
+const NAME = '(?!\\.\\.?(?:/|$))[A-Za-z0-9._~-]+';
 
 const PASSTHROUGH = '/api';
 

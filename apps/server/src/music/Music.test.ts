@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { createApp } from '@ValenceServer/App';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { registerMusicRoutes } from './registerMusicRoutes';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -161,6 +164,10 @@ const fakeMusic = () => {
       artistPicture: vi.fn(() => Promise.resolve(null)),
       namedCover: vi.fn(() => Promise.resolve(null)),
       releaseCover: vi.fn(() => Promise.resolve(null)),
+      knowsCover: vi.fn(() => Promise.resolve(false)),
+      knowsArtistPicture: vi.fn(() => Promise.resolve(false)),
+      knowsNamedCover: vi.fn(() => Promise.resolve(false)),
+      knowsReleaseCover: vi.fn(() => Promise.resolve(false)),
     },
     corrections: {
       search: vi.fn(() => Promise.resolve([])),
@@ -560,5 +567,47 @@ describe('the music routes', () => {
     });
 
     expect((await bare.request(`${BASE}/api/music/albums`)).status).not.toBe(200);
+  });
+
+  it('counts each linked server’s picture lookups apart from the others’', async () => {
+    const app = new OpenAPIHono();
+
+    registerMusicRoutes(app, {
+      viewerOf: () => Promise.resolve(asTheServer),
+      music: fakeMusic(),
+      requires: () => Promise.resolve(true),
+      peerOf: (headers) => headers.get('x-peer') ?? undefined,
+    });
+
+    const asking = (peer: string) =>
+      app.request(`${BASE}/api/music/catalogue/named-covers?title=A&artist=B`, {
+        headers: { 'x-peer': peer },
+      });
+
+    for (let count = 0; count < 240; count += 1) {
+      await asking('den');
+    }
+
+    expect((await asking('den')).status).toBe(429);
+    expect((await asking('attic')).status).not.toBe(429);
+  });
+
+  it('does not count a picture lookup the cache answers', async () => {
+    const app = new OpenAPIHono();
+    const music = fakeMusic();
+
+    music.pictures.knowsNamedCover.mockResolvedValue(true);
+    registerMusicRoutes(app, {
+      viewerOf: () => Promise.resolve(asTheServer),
+      music,
+      requires: () => Promise.resolve(true),
+      peerOf: () => 'den',
+    });
+
+    for (let count = 0; count < 300; count += 1) {
+      const answer = await app.request(`${BASE}/api/music/catalogue/named-covers?title=A&artist=B`);
+
+      expect(answer.status).not.toBe(429);
+    }
   });
 });

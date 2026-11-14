@@ -1,6 +1,6 @@
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
 import { createServerPictures } from './createServerPictures';
@@ -15,6 +15,25 @@ const aPhoto = async (format: 'png' | 'jpeg' = 'png') =>
 const aFolder = () => mkdtemp(join(tmpdir(), 'valence-servers-'));
 
 describe('createServerPictures', () => {
+  it('refuses a key that climbs out of the folder, so a picture kept elsewhere is not handed out', async () => {
+    const outside = await aFolder();
+    const directory = join(await aFolder(), 'servers');
+    const pictures = createServerPictures(directory);
+
+    await mkdir(join(outside, 'processed'), { recursive: true });
+    await mkdir(join(directory, 'processed'), { recursive: true });
+    await writeFile(join(outside, 'processed', 'face.framed.webp'), 'kept');
+
+    const climbing = `linked-/../../../../${basename(outside)}/processed/face`;
+
+    await expect(pictures.read(climbing)).resolves.toBeNull();
+    await expect(
+      pictures.save(climbing, { body: await aPhoto(), contentType: 'image/png' }),
+    ).resolves.toBe('unreadable');
+    await expect(pictures.remove(climbing)).resolves.toBeUndefined();
+    expect(await readdir(join(outside, 'processed'))).toEqual(['face.framed.webp']);
+  });
+
   it('keeps the upload and shows only the square made from it', async () => {
     const directory = await aFolder();
     const pictures = createServerPictures(directory);

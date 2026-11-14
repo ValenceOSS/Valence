@@ -17,6 +17,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { backupAddress, removeBackup, takeBackup } from '@ValenceClient/admin/fetchBackups';
 import type { Backup, BackupKind } from '@ValenceContracts/schemas/Backup';
@@ -49,6 +50,7 @@ const KIND_NAMES: Readonly<Record<BackupKind, string>> = {
  */
 const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
   const cache = useQueryClient();
+  const { mayAdminister } = useWhatIMayDo();
   const asked = useQuery(adminQueries.backups());
   const now = useTicking(A_CAPTION_AGES_EVERY);
   const [isTaking, setIsTaking] = useState(false);
@@ -129,14 +131,18 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
         (backup) => [
           {
             items: [
-              {
-                id: 'download',
-                label: say('common.download'),
-                icon: <Icon of={DownloadFilledIcon} size={15} />,
-                onChoose: () => {
-                  window.location.assign(backupAddress(backup.name));
-                },
-              },
+              ...(mayAdminister
+                ? [
+                    {
+                      id: 'download',
+                      label: say('common.download'),
+                      icon: <Icon of={DownloadFilledIcon} size={15} />,
+                      onChoose: () => {
+                        window.location.assign(backupAddress(backup.name));
+                      },
+                    },
+                  ]
+                : []),
               {
                 id: 'restore',
                 label: say('common.bringBack'),
@@ -163,7 +169,7 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
         ],
       ),
     ],
-    [now],
+    [now, mayAdminister],
   );
 
   return (

@@ -1,5 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
+import { createSetupCode } from '@ValenceServer/setup/createSetupCode';
+import { auditExpiry } from '@ValenceServer/audit/auditExpiry';
 import { createFanartProvider } from '@ValenceServer/fanart/createFanartProvider';
 import { createNfoWriter } from '@ValenceServer/nfo/createNfoWriter';
 import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
@@ -107,6 +109,10 @@ import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
+import { mayInviteTo } from '@ValenceServer/parties/mayInviteTo';
+import { titleAnInvitationMayName } from '@ValenceServer/parties/titleAnInvitationMayName';
+import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { createLogger } from '@ValenceServer/logging/createLogger';
 import { createDatabaseLogStore } from '@ValenceServer/logging/createDatabaseLogStore';
 import { createJobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
@@ -487,6 +493,8 @@ import { createDatabaseNotificationStore } from '@ValenceServer/notifications/cr
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
 import { noticesOfNewMedia } from '@ValenceServer/notifications/noticesOfNewMedia';
 import { splitDigest } from '@ValenceServer/notifications/splitDigest';
+import { holdBackFrom } from '@ValenceServer/notifications/holdBackFrom';
+import { partsForOne } from '@ValenceServer/notifications/partsForOne';
 import { readDigestWindow } from '@ValenceServer/notifications/readDigestWindow';
 import webPush from 'web-push';
 import type { VapidKeys } from '@ValenceServer/notifications/sendWebPush';
@@ -592,6 +600,10 @@ import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecuri
 import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
+import { isANarrowedKey } from '@ValenceServer/realtime/isANarrowedKey';
+import { isASocketFromHere } from '@ValenceServer/realtime/isASocketFromHere';
+import { isStillSignedIn } from '@ValenceServer/auth/isStillSignedIn';
+import { createBetterAuthApiKeyService } from '@ValenceServer/auth/createBetterAuthApiKeyService';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
 const MEASURES_THIS_PROCESS_EVERY_MS = 5_000;
@@ -883,6 +895,9 @@ const auth = createAuth({
         log.warn('auth', `could not note which device signed in: ${error.message}`);
       });
   },
+  onSessionEnded: (sessionId) => {
+    signedInSockets.close({ sessionIds: [sessionId] });
+  },
   onSignedOut: async ({ userId, address, userAgent }) => {
     const [account] = await db
       .select({ name: user.name })
@@ -922,6 +937,8 @@ const auth = createAuth({
     );
   },
 });
+
+const setupCode = createSetupCode();
 
 /**
  * Counts the accounts on this server, which is what first-run setup asks to decide whether the
@@ -2111,8 +2128,12 @@ const partyBinding: PartyBinding = {
       connectionIds: connectionIds.filter((id) => !partyRelay.isPeer(id)),
     });
   },
-  ask: ({ party, byName, profileId }) => {
-    void askSomebodyToTheParty(party, byName, profileId);
+  ask: ({ party, byName, byAccountId, byProfileId, profileId }) => {
+    void askSomebodyToTheParty(
+      party,
+      { name: byName, accountId: byAccountId, profileId: byProfileId },
+      profileId,
+    );
   },
 };
 
@@ -3566,8 +3587,45 @@ const jobs = createJobQueue({
         }
 
         const vapid = await readPushKeys();
+        const limited: string[] = [];
 
-        for (const part of splitDigest(arrived, askedFor)) {
+        for (const { id } of await db.select({ id: user.id }).from(user)) {
+          const isLimited =
+            !(await storedPermissions.resolve(id)).has('administrator') &&
+            ((await libraryService.refusedLibraries(id)).length > 0 ||
+              (await libraryService.ceilingsFor(id)).length > 0);
+
+          if (isLimited) {
+            limited.push(id);
+          }
+        }
+
+        const ownDigests = await Promise.all(
+          limited.map(async (accountId) => {
+            const viewer: Viewer = {
+              kind: 'account',
+              accountId,
+              profileId: null,
+              isAdministrator: false,
+            };
+            const outOfReach = await Promise.all(
+              arrived.map((item) => libraryService.isOutOfReach(viewer, item.id)),
+            );
+
+            return partsForOne(
+              splitDigest(
+                arrived.filter((_item, at) => outOfReach[at] !== true),
+                askedFor,
+              ),
+              accountId,
+            );
+          }),
+        );
+
+        for (const part of [
+          ...holdBackFrom(splitDigest(arrived, askedFor), limited),
+          ...ownDigests.flat(),
+        ]) {
           for (const notice of noticesOfNewMedia(part.items, now)) {
             await notifyHousehold({
               store: notifications,
@@ -3616,8 +3674,15 @@ const jobs = createJobQueue({
       },
       [PRUNE_AUDIT_JOB]: async () => {
         const forgotten = await auditService.prune(new Date());
+        const forgottenFromLinks = await linkSharingStore.forgetActivityBefore(
+          auditExpiry(new Date()).signIns,
+        );
 
         log.info('server', `audit log: forgot ${forgotten.toString()} old entries`);
+        log.info(
+          'server',
+          `linked servers: forgot ${forgottenFromLinks.toString()} old record entries`,
+        );
       },
       [PRUNE_RESOURCE_HISTORY_JOB]: async () => {
         await resourceHistory.forgetExpired(Date.now());
@@ -5302,8 +5367,17 @@ const addAccountWithoutPassword = (request: AccountWithoutPasswordRequest) =>
     request,
   );
 
+const serverFolders = [
+  env.BACKUP_DIR,
+  env.IMAGE_CACHE_DIR,
+  env.PROFILE_IMAGE_DIR,
+  env.VALENCE_BUCKET_CACHE,
+  ...(env.SUBTITLE_DIR === undefined ? [] : [env.SUBTITLE_DIR]),
+];
+
 const importService = createImportService({
   db,
+  serverFolders,
   store: createDatabaseImportStore(db),
   library: libraryService,
   profiles: profileService,
@@ -5473,6 +5547,7 @@ const titleMetadataService = createTitleMetadataService({
 });
 
 const app = createApp({
+  serverFolders,
   callerOf,
   imports: importService,
   plugins: startPlugins,
@@ -5495,6 +5570,7 @@ const app = createApp({
   streamMeter,
   presence,
   countUsers,
+  setupCode,
   promoteToAdmin,
   library: libraryService,
   playback: createLinkedPlayback(
@@ -6235,7 +6311,10 @@ const askAlongElsewhere = async (
   }
 
   const pseudonym = await linkSharingStore.pseudonymOf(serverId, personId);
-  const signed = pseudonym === null ? null : await linkService.signFor(serverId);
+  const signed =
+    pseudonym === null
+      ? null
+      : await linkService.signFor(serverId, undefined, { method: 'POST', route: '/parties/asked' });
 
   if (signed === null || pseudonym === null) {
     return;
@@ -6310,9 +6389,34 @@ const tellOfBeingAskedAlong = async (serverId: string, ask: AskedAlong): Promise
 
 const askSomebodyToTheParty = async (
   party: { id: string; kind: 'watch' | 'listen'; mediaId: string },
-  byName: string,
+  inviter: { name: string; accountId: string; profileId: string | null },
   profileId: string,
 ): Promise<void> => {
+  const byName = inviter.name;
+
+  const viewerOfAccount = async (
+    viewingAccountId: string,
+    viewingProfileId: string | null,
+  ): Promise<Viewer> => ({
+    kind: 'account',
+    accountId: viewingAccountId,
+    profileId: viewingProfileId,
+    isAdministrator: (await permissions.resolve(viewingAccountId)).has(ADMINISTRATOR),
+  });
+
+  const isOutOfReach = (viewer: Viewer, mediaId: string) =>
+    libraryService.isOutOfReach(viewer, mediaId);
+
+  if (
+    !(await mayInviteTo(
+      await viewerOfAccount(inviter.accountId, inviter.profileId),
+      party.mediaId,
+      isOutOfReach,
+    ))
+  ) {
+    return;
+  }
+
   if (profileId.startsWith(PEER_MEMBER)) {
     await askAlongElsewhere(party, byName, profileId);
 
@@ -6325,11 +6429,27 @@ const askSomebodyToTheParty = async (
     return;
   }
 
-  const [found] = await db
-    .select({ title: mediaItem.title })
-    .from(mediaItem)
-    .where(eq(mediaItem.id, party.mediaId))
-    .limit(1);
+  const naming = await titleAnInvitationMayName({
+    mediaId: party.mediaId,
+    inviter: await viewerOfAccount(inviter.accountId, inviter.profileId),
+    invitee: await viewerOfAccount(accountId, profileId),
+    isOutOfReach,
+    titleOf: async (mediaId) => {
+      const [row] = await db
+        .select({ title: mediaItem.title })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      return row?.title ?? null;
+    },
+  });
+
+  if (naming.kind === 'refused') {
+    return;
+  }
+
+  const found = naming.title === null ? undefined : { title: naming.title };
 
   const isListening = party.kind === 'listen';
 
@@ -6656,9 +6776,28 @@ const rememberWhereTheyAre = async (
   await db.update(session).set({ ipAddress: seen }).where(eq(session.id, sessionId));
 };
 
+const realtimeKeys = createBetterAuthApiKeyService(auth);
+
+const realtimeOrigins = trustedOriginsFor({
+  configured: env.TRUSTED_ORIGINS,
+  port: env.PORT,
+  settings,
+});
+
 app.get(
   '/api/realtime',
   nodeWebSocket.upgradeWebSocket(async (context) => {
+    if (
+      !isASocketFromHere({
+        origin: context.req.header('origin'),
+        host: context.req.header('host'),
+        forwardedHost: context.req.header('x-forwarded-host'),
+        trusted: await realtimeOrigins(),
+      })
+    ) {
+      return {};
+    }
+
     const signedIn = await readSessionOnce(auth, context.req.raw.headers);
     const account = signedIn?.user ?? null;
     const who =
@@ -6671,15 +6810,24 @@ app.get(
     }
 
     const accountId = account?.id ?? null;
-    const actingProfileId =
+    const acting =
       account === null
         ? null
-        : ((
-            await readActing(
-              { auth, profiles: profileService, chosen: chosenProfiles },
-              context.req.raw.headers,
-            )
-          )?.profile?.id ?? null);
+        : await readActing(
+            { auth, profiles: profileService, chosen: chosenProfiles },
+            context.req.raw.headers,
+          );
+
+    if (
+      signedIn !== null &&
+      (await isANarrowedKey(acting?.isViaKey === true, () =>
+        realtimeKeys.restrictionFor(context.req.raw.headers, signedIn.session.id),
+      ))
+    ) {
+      return {};
+    }
+
+    const actingProfileId = acting?.profile?.id ?? null;
     const address = callerOf(context);
 
     if (signedIn !== null) {
@@ -6709,9 +6857,23 @@ app.get(
           },
         );
 
+        let beats = 0;
+
         heartbeat = setInterval(() => {
           if (session?.ping() === false) {
             socket.close();
+
+            return;
+          }
+
+          beats += 1;
+
+          if (accountId !== null && beats % 3 === 0) {
+            void isStillSignedIn(auth, context.req.raw.headers, accountId).then((still) => {
+              if (!still) {
+                socket.close();
+              }
+            });
           }
         }, REALTIME_HEARTBEAT_MS);
 
@@ -6785,7 +6947,16 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     log.info('server', `First-run setup at ${origin}`);
   }
 
-  log.info('server', `API reference at ${origin}/api/reference`);
+  void countUsers().then((accounts) => {
+    if (accounts === 0) {
+      log.warn(
+        'server',
+        `Nobody has an account here yet. To set Valence up, open it in a browser and enter this setup code: ${setupCode.code}`,
+      );
+    }
+  });
+
+  log.info('server', `API description at ${origin}/api/openapi.json`);
   log.info('server', `Media service dialled at ${env.TRANSCODER_URL}`);
 
   if (env.ANNOUNCE_ON_NETWORK) {

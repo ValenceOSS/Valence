@@ -406,6 +406,23 @@ const itemsIn = (
 };
 
 /**
+ * Whether a library is offered to a viewer at all: not refused to their account and not hidden by
+ * the profile acting for it.
+ *
+ * @param state - What the service is holding.
+ * @param viewer - Who is asking.
+ * @param libraryId - The library.
+ * @returns Whether they are offered it.
+ */
+const isOffered = (state: MemoryState, viewer: Viewer, libraryId: string): boolean =>
+  reaches(state, viewer, libraryId) &&
+  (viewer.kind !== 'account' ||
+    viewer.profileId === null ||
+    !(state.hidden ?? []).some(
+      (row) => row.profileId === viewer.profileId && row.libraryId === libraryId,
+    ));
+
+/**
  * A library held in memory, so the HTTP surface can be exercised without Postgres. Models the
  * behaviour the routes depend on — searching, filtering, paging, missing identifiers — in step with
  * the database version, since a test passing against different behaviour describes a server that
@@ -422,15 +439,7 @@ const createMemoryLibraryService = (
   list: (viewer) =>
     Promise.resolve(
       state.libraries
-        .filter((entry) => reaches(state, viewer, entry.id))
-        .filter(
-          (entry) =>
-            viewer.kind !== 'account' ||
-            viewer.profileId === null ||
-            !(state.hidden ?? []).some(
-              (row) => row.profileId === viewer.profileId && row.libraryId === entry.id,
-            ),
-        )
+        .filter((entry) => isOffered(state, viewer, entry.id))
         .map((entry) => ({
           ...entry,
           itemCount: state.media.filter((item) => item.libraryId === entry.id).length,
@@ -685,6 +694,13 @@ const createMemoryLibraryService = (
 
   isLibraryOutOfReach: (accountId, libraryId) =>
     Promise.resolve(blocks(state, accountId, libraryId)),
+
+  isLibraryOutOfView: (viewer, libraryId) =>
+    Promise.resolve(
+      !state.libraries.some(
+        (entry) => entry.id === libraryId && isOffered(state, viewer, entry.id),
+      ),
+    ),
 
   isOutOfReach: (viewer, mediaId) => {
     if (viewer.kind !== 'account' || viewer.isAdministrator) {

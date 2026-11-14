@@ -783,10 +783,10 @@ describe('createRealtimeHandler, what a device says it is', () => {
 });
 
 describe('a connection that is part of a watch party', () => {
-  const withAParty = () => {
+  const withAParty = (held: ReadonlySet<Permission> = new Set<Permission>(['sharing.party'])) => {
     const registry = createRealtimeRegistry({
       entitlements: createEntitlements({
-        resolve: () => Promise.resolve(new Set<Permission>()),
+        resolve: () => Promise.resolve(held),
         now: () => 0,
         ttlMs: 0,
       }),
@@ -857,6 +857,15 @@ describe('a connection that is part of a watch party', () => {
     expect(world.parties.count()).toBe(1);
   });
 
+  it('opens nothing for an account whose role lacks watch parties', async () => {
+    const world = withAParty(new Set<Permission>());
+
+    await world.session.receive(JSON.stringify({ kind: 'partyOpen', mediaId: 'a-film' }));
+    await world.session.receive(JSON.stringify({ kind: 'partyJoin', partyId: 'party-1' }));
+
+    expect(world.parties.count()).toBe(0);
+  });
+
   it('takes somebody out of their party when the connection closes', async () => {
     const world = withAParty();
 
@@ -883,7 +892,7 @@ describe('naming somebody in a party', () => {
     const asked: string[] = [];
     const registry = createRealtimeRegistry({
       entitlements: createEntitlements({
-        resolve: () => Promise.resolve(new Set<Permission>()),
+        resolve: () => Promise.resolve(new Set<Permission>(['sharing.party'])),
         now: () => 0,
         ttlMs: 0,
       }),

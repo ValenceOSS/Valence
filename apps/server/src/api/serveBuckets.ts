@@ -7,6 +7,7 @@ import type { StoredBucket } from '@ValenceContracts/schemas/Bucket';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { isAcceptableEndpoint } from '@ValenceServer/buckets/isAcceptableEndpoint';
 
 /**
  * Registers the S3-compatible buckets an administrator adds, each mounted as a folder a library can
@@ -42,7 +43,11 @@ const serveBuckets = (app: OpenAPIHono, context: AppContext): void => {
   const readChange = async (request: Request) => {
     const body = JsonValueSchema.safeParse(await request.json().catch(() => null));
 
-    return BucketChangeSchema.safeParse(body.success ? body.data : null);
+    const parsed = BucketChangeSchema.safeParse(body.success ? body.data : null);
+
+    return parsed.success && !(await isAcceptableEndpoint(parsed.data.endpoint))
+      ? ({ success: false } as const)
+      : parsed;
   };
 
   app.get('/api/admin/buckets', async (context) => {

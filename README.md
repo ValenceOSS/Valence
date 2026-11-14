@@ -160,7 +160,6 @@ pnpm dev
 | ---------------- | -------------------------------------- |
 | Web client       | http://localhost:5173                  |
 | API              | http://localhost:8420/api              |
-| API reference    | http://localhost:8420/api/reference    |
 | OpenAPI document | http://localhost:8420/api/openapi.json |
 | Requests service | http://localhost:8421                  |
 

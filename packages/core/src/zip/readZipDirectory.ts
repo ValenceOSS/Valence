@@ -16,6 +16,8 @@ const DEFLATED = 8;
 
 const NEEDS_ZIP64 = 0xff_ff_ff_ff;
 
+const MOST_DIRECTORY_BYTES = 16 * 1024 * 1024;
+
 type ZipEntry = {
   name: string;
   isCompressed: boolean;
@@ -63,7 +65,8 @@ const findTheDirectory = (tail: DataView): { at: number; count: number; size: nu
  * caller, which knows what the names mean.
  *
  * @param path - The archive.
- * @returns What is inside it, or nothing where the file is not a zip or is one this cannot read.
+ * @returns What is inside it, or nothing where the file is not a zip, is one this cannot read, or
+ *   claims a directory or an entry that does not fit inside the file.
  */
 const readZipDirectory = async (path: string): Promise<ZipEntry[] | null> => {
   const file = await open(path, 'r').catch(() => null);
@@ -81,7 +84,13 @@ const readZipDirectory = async (path: string): Promise<ZipEntry[] | null> => {
 
     const found = findTheDirectory(new DataView(tail.buffer, tail.byteOffset, tail.byteLength));
 
-    if (found === null || found.at === NEEDS_ZIP64 || found.count === 0xff_ff) {
+    if (
+      found === null ||
+      found.at === NEEDS_ZIP64 ||
+      found.count === 0xff_ff ||
+      found.size > MOST_DIRECTORY_BYTES ||
+      found.at + found.size > size
+    ) {
       return null;
     }
 
@@ -110,7 +119,11 @@ const readZipDirectory = async (path: string): Promise<ZipEntry[] | null> => {
       const commentLength = reading.getUint16(at + 32, true);
       const headerOffset = reading.getUint32(at + 42, true);
 
-      if (compressedSize === NEEDS_ZIP64 || headerOffset === NEEDS_ZIP64) {
+      if (
+        compressedSize === NEEDS_ZIP64 ||
+        headerOffset === NEEDS_ZIP64 ||
+        headerOffset + compressedSize > size
+      ) {
         return null;
       }
 

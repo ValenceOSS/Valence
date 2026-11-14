@@ -146,6 +146,19 @@ describe('the plugin broker', () => {
     );
   });
 
+  it('keeps within the quota when many values are set at once', async () => {
+    const { ask } = build([{ kind: 'storage', quotaBytes: 60 }]);
+    const keys = ['k1', 'k2', 'k3', 'k4', 'k5'];
+
+    const settled = await Promise.allSettled(
+      keys.map((key) => ask('storage.set', [key, 'x'.repeat(20)])),
+    );
+
+    expect(settled.filter((one) => one.status === 'fulfilled')).toHaveLength(2);
+
+    expect(await ask('storage.keys', [])).toHaveLength(2);
+  });
+
   it('fetches only with the network permission', async () => {
     const without = build([]);
 
@@ -858,6 +871,24 @@ describe('the plugin broker', () => {
     await expect(ask('viewing.favourite', ['p1', 'hidden', true])).rejects.toThrow(
       'no such thing in their library',
     );
+  });
+
+  it('marks nothing watched or unwatched for something the person cannot see', async () => {
+    const { ask, host } = build([{ kind: 'viewing', access: 'write' }]);
+
+    vi.mocked(host.library.get).mockResolvedValueOnce(null);
+
+    await expect(ask('viewing.markWatched', ['p1', 'hidden'])).rejects.toThrow(
+      'no such thing in their library',
+    );
+
+    vi.mocked(host.library.get).mockResolvedValueOnce(null);
+
+    await expect(ask('viewing.markUnwatched', ['p1', 'hidden'])).rejects.toThrow(
+      'no such thing in their library',
+    );
+    expect(host.viewing.markWatched).not.toHaveBeenCalled();
+    expect(host.viewing.markUnwatched).not.toHaveBeenCalled();
   });
 
   it('renames, empties and removes playlists only with playlists write', async () => {

@@ -135,7 +135,6 @@ Once the server is up, these addresses work:
 | ---------------------------------------- | --------------------------------------------------- |
 | `http://localhost:5173`                  | The web client, with hot reload                     |
 | `http://localhost:8420/api`              | The API                                             |
-| `http://localhost:8420/api/reference`    | The Scalar API reference                            |
 | `http://localhost:8420/api/openapi.json` | The OpenAPI document                                |
 | `http://localhost:8420/api/health`       | Health, including whether the media service answers |
 
@@ -166,7 +165,7 @@ pnpm --filter @valence/requests browser
 
 ## First administrator
 
-A fresh database has no accounts. Open `http://localhost:5173` and the web client shows first-run setup, which calls `GET /api/setup/status` and then `POST /api/setup`. Setup creates the administrator, records your trusted origins and marks setup complete. A second attempt answers `409`, so it cannot be used to add accounts later. Afterwards, add libraries from the admin area. See [First run](/use/first-run) and [Libraries](/use/libraries) for the viewer's side.
+A fresh database has no accounts. Open `http://localhost:5173` and the web client shows first-run setup, which calls `GET /api/setup/status` and then `POST /api/setup`. Its first step asks for the setup code the server printed in your terminal when it started. Setup creates the administrator, records your trusted origins and marks setup complete. A second attempt answers `409`, so it cannot be used to add accounts later. Afterwards, add libraries from the admin area. See [First run](/use/first-run) and [Libraries](/use/libraries) for the viewer's side.
 
 ## Media for development
 

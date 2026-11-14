@@ -60,4 +60,13 @@ describe('cleanString', () => {
   it.each(LEFT_ALONE)('leaves %j alone', (input) => {
     expect(cleanString(input)).toBeNull();
   });
+
+  it('finishes at once on a name made of many bracket groups that no pattern ends', () => {
+    const name = `Movie ${'[a] '.repeat(60)}x`;
+    const started = performance.now();
+
+    cleanString(name);
+
+    expect(performance.now() - started).toBeLessThan(500);
+  });
 });

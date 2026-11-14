@@ -1,9 +1,16 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { createExtractorFromData } from 'node-unrar-js';
+import { saying } from '@ValenceI18n/saying';
 import { imageTypeFor } from './imageTypeFor';
 import { inPageOrder } from './inPageOrder';
 import { COMIC_INFO, readComicInfo } from './readComicInfo';
+import { MOST_XML_BYTES } from './MOST_XML_BYTES';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { BookAbout, FixedBook } from './BookFile';
+
+const MOST_ARCHIVE_BYTES = 1024 * 1024 * 1024;
+
+const MOST_PICTURE_BYTES = 64 * 1024 * 1024;
 
 /**
  * Opens a comic archive that is a RAR rather than a zip.
@@ -16,10 +23,31 @@ import type { BookAbout, FixedBook } from './BookFile';
  * CBR is the older way of shipping a comic and the rarer one — almost everything is a zip — so this
  * is correctness first and speed a distant second.
  *
+ * An archive over a gibibyte is refused and said to be, and so is a picture or description whose
+ * header declares more than a page or a description could be, before anything is inflated.
+ *
  * @param path - The archive.
+ * @param onProblem - Told why an archive was refused, where it is a file the reader could see.
  * @returns The pages and how to read one, or nothing where this is not a RAR of pictures.
  */
-const openComicRar = async (path: string): Promise<FixedBook | null> => {
+const openComicRar = async (
+  path: string,
+  onProblem?: (reason: Said) => void,
+): Promise<FixedBook | null> => {
+  const size = await stat(path)
+    .then((found) => found.size)
+    .catch(() => null);
+
+  if (size === null) {
+    return null;
+  }
+
+  if (size > MOST_ARCHIVE_BYTES) {
+    onProblem?.(saying('server.books.openComicRar.thatComicIsLargerThanA'));
+
+    return null;
+  }
+
   const data = await readFile(path).catch(() => null);
 
   if (data === null) {
@@ -42,11 +70,11 @@ const openComicRar = async (path: string): Promise<FixedBook | null> => {
         continue;
       }
 
-      if (imageTypeFor(header.name) !== null) {
+      if (imageTypeFor(header.name) !== null && header.unpSize <= MOST_PICTURE_BYTES) {
         names.push(header.name);
       }
 
-      if (header.name.toLowerCase().endsWith(COMIC_INFO)) {
+      if (header.name.toLowerCase().endsWith(COMIC_INFO) && header.unpSize <= MOST_XML_BYTES) {
         describedName = header.name;
       }
     }

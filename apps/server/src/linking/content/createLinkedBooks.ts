@@ -1,3 +1,5 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
+import { cleanBookDocument } from '@ValenceServer/books/cleanBookDocument';
 import { eq } from 'drizzle-orm';
 import { book, bookChapter } from '#dialect/Schema';
 import { BookContentsSchema } from '@ValenceContracts/schemas/Book';
@@ -19,19 +21,22 @@ type ReadsBooks = {
   readCover: (bookId: string) => Promise<BookPageBytes | null>;
 };
 
+const PICTURE = /^image\/(jpeg|png|gif|webp|avif|bmp)$/u;
+
 /**
- * What came back, as the bytes of a page, a picture or a resource.
+ * What came back, as the bytes of a page, a picture or a resource, where it is a picture: nothing
+ * else a linked server sends is served here as if this server had made it.
  *
  * @param answered - The answer.
  * @returns The bytes and their type, or nothing where there were none.
  */
-const bytesOf = async (answered: Response | null): Promise<BookPageBytes | null> =>
-  answered?.ok === true
-    ? {
-        bytes: new Uint8Array(await answered.arrayBuffer()),
-        contentType: answered.headers.get('content-type') ?? 'application/octet-stream',
-      }
+const bytesOf = async (answered: Response | null): Promise<BookPageBytes | null> => {
+  const contentType = answered?.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
+
+  return answered?.ok === true && contentType !== undefined && PICTURE.test(contentType)
+    ? { bytes: new Uint8Array(await boundedAnswer(answered).arrayBuffer()), contentType }
     : null;
+};
 
 /**
  * Books that read this server's own as they always have, and a book a linked server shares by
@@ -82,7 +87,9 @@ const createLinkedBooks = <Books extends ReadsBooks>(
 
       const answered = await asker.askAt(`${linked.path}/contents`);
       const read =
-        answered?.ok === true ? BookContentsSchema.safeParse(await answered.json()) : null;
+        answered?.ok === true
+          ? BookContentsSchema.safeParse(await boundedAnswer(answered).json())
+          : null;
 
       return read?.success === true ? read.data : null;
     },
@@ -98,8 +105,14 @@ const createLinkedBooks = <Books extends ReadsBooks>(
       const remote = readLinkedAddress(linked.path)?.route;
       const here = addressFor('').replace(/\/resource\?href=$/u, '');
 
+      const ours = addressFor('');
+
       return answered?.ok === true && remote !== undefined
-        ? (await answered.text()).replaceAll(remote, here)
+        ? cleanBookDocument(
+            (await boundedAnswer(answered).text()).replaceAll(remote, here),
+            (src) => (src.startsWith(ours) ? src : null),
+            (href) => href,
+          )
         : null;
     },
 

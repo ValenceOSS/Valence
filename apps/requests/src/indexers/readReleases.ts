@@ -1,3 +1,4 @@
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
@@ -107,8 +108,9 @@ const readReleases = (document: object, indexer: ReleaseSource): Release[] => {
     const leechers =
       whole(attribute('leechers')) ?? (peers === null ? null : Math.max(peers - (seeders ?? 0), 0));
     const link = item.link ?? item.enclosure?.['@url'] ?? null;
-    const magnet =
+    const named =
       attribute('magneturl') ?? (link?.startsWith('magnet:') === true ? link : undefined) ?? null;
+    const magnet = named !== null && isSingleMagnetLink(named) ? named : null;
     const published = item.pubDate === undefined ? Number.NaN : Date.parse(item.pubDate);
     const identity = item.guid ?? link ?? item.title;
 

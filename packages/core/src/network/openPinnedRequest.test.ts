@@ -216,4 +216,119 @@ describe('opening a request pinned to public addresses', () => {
     expect(await text(answer.body)).toBe('stand-in');
     expect(asked).toEqual({ hostname: 'api.example.com', port: 9 });
   });
+
+  it('hands a redirect back unfollowed where following is turned off', async () => {
+    handle = (_asked, answer) => {
+      answer.writeHead(302, { location: 'https://api.example.com/elsewhere' });
+      answer.end();
+    };
+
+    const answer = await openPinnedRequest(
+      'https://api.example.com/',
+      {},
+      optionsFor({ followRedirects: false }),
+    );
+
+    expect(answer.status).toBe(302);
+    expect(answer.headers.location).toBe('https://api.example.com/elsewhere');
+  });
+
+  it('refuses plain http and another port unless it is told they are allowed', async () => {
+    expect(await reasonOf(openPinnedRequest('http://api.example.com/', {}, optionsFor()))).toBe(
+      'notHttps',
+    );
+    expect(
+      await reasonOf(openPinnedRequest('https://api.example.com:8443/', {}, optionsFor())),
+    ).toBe('port');
+    expect(
+      await reasonOf(
+        openPinnedRequest('http://api.example.com/', {}, optionsFor({ allowsAnyPort: true })),
+      ),
+    ).toBe('notHttps');
+  });
+
+  it('reaches plain http on any port where both are allowed, as long as the address is public', async () => {
+    let asked: { port: string | number | null | undefined; servername: string | undefined } = {
+      port: null,
+      servername: undefined,
+    };
+
+    handle = (_asked, answer) => {
+      answer.end('plain');
+    };
+
+    const answer = await openPinnedRequest(
+      'http://api.example.com:8080/feed',
+      {},
+      optionsFor({
+        allowsHttp: true,
+        allowsAnyPort: true,
+        transport: () => {
+          throw new Error('Plain http is not reached over https');
+        },
+        httpTransport: (options, onResponse) => {
+          asked = { port: options.port, servername: options.servername };
+
+          return request({ ...options, port }, onResponse);
+        },
+      }),
+    );
+
+    expect(await text(answer.body)).toBe('plain');
+    expect(asked).toEqual({ port: 8080, servername: undefined });
+    expect(
+      await reasonOf(
+        openPinnedRequest(
+          'http://127.0.0.1:8080/',
+          {},
+          optionsFor({
+            hosts: 'any',
+            allowsHttp: true,
+            allowsAnyPort: true,
+            isAllowedAddress: () => false,
+          }),
+        ),
+      ),
+    ).toBe('resolvesPrivately');
+  });
+
+  it('reaches a home network address only where the private network is allowed', async () => {
+    const onHomeNetwork: OpenPinnedRequestOptions = {
+      hosts: 'any',
+      userAgent: 'Valence-Test',
+      transport: (options, onResponse) =>
+        request(
+          {
+            ...options,
+            port,
+            lookup: (hostname, lookupOptions, answer) => {
+              options.lookup?.(hostname, lookupOptions, (error) => {
+                if (error !== null) {
+                  answer(error, '', 4);
+                } else if (lookupOptions.all === true) {
+                  answer(null, [{ address: '127.0.0.1', family: 4 }]);
+                } else {
+                  answer(null, '127.0.0.1', 4);
+                }
+              });
+            },
+          },
+          onResponse,
+        ),
+      resolver: (_hostname, answer) => {
+        answer(null, [{ address: '192.168.1.20', family: 4 }]);
+      },
+    };
+    const withPrivateNetwork = { ...onHomeNetwork, allowsPrivateNetwork: true };
+
+    expect(await reasonOf(openPinnedRequest('https://api.example.com/', {}, onHomeNetwork))).toBe(
+      'resolvesPrivately',
+    );
+    expect(
+      await reasonOf(openPinnedRequest('https://api.example.com/', {}, withPrivateNetwork)),
+    ).toBe('opened');
+    expect(await reasonOf(openPinnedRequest('https://127.0.0.1/', {}, withPrivateNetwork))).toBe(
+      'resolvesPrivately',
+    );
+  });
 });

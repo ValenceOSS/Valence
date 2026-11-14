@@ -1,3 +1,4 @@
+import { MOST_RELEASE_NAME_CHARACTERS } from '@ValenceCore/releases/MOST_RELEASE_NAME_CHARACTERS';
 import { isSameTitle } from '@ValenceRequests/mediaRequests/isSameTitle';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -55,16 +56,17 @@ const albumsOf = (rest: string): string[] => [
  *
  * @param request - What was asked for.
  * @param items - Its albums.
- * @param title - The title the release's name gives.
+ * @param given - The title the release's name gives, of which five hundred characters are read.
  * @param isArtistChecked - Whether the release must name the artist.
  * @returns The albums it holds.
  */
 const albumsInRelease = <Item extends Matchable>(
   request: Pick<MediaRequestRecord, 'title' | 'artistName' | 'aliases'>,
   items: readonly Item[],
-  title: string,
+  given: string,
   isArtistChecked = true,
 ): Item[] => {
+  const title = given.slice(0, MOST_RELEASE_NAME_CHARACTERS);
   const artists = [request.artistName ?? request.title, ...request.aliases];
   const albums = splitsOf(title)
     .filter(

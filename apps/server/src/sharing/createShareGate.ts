@@ -1,21 +1,32 @@
 import { createMiddleware } from 'hono/factory';
-import { getCookie } from 'hono/cookie';
+import { getCookie, setCookie } from 'hono/cookie';
+import { randomUUID } from 'node:crypto';
 import { howShareEnded, isShareLive, whyShareEnded } from '@ValenceContracts/schemas/Share';
 import { covers, reachOf } from './shareReach';
 import type { ShareService } from './ShareService';
 import type { ShareSessions } from './createShareSessions';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
+import { rememberGuestFor } from './rememberGuestFor';
 
 const SHARE_COOKIE = 'valence_share';
 
 const SHARE_JOINER = 'valence_share_joiner';
+
+const DEFAULT_GUEST_KEPT_FOR_SECONDS = 30 * 86_400;
 
 type ShareGateOptions = {
   shares: ShareService;
   sessions: ShareSessions;
   itemOf: (mediaId: string) => Promise<{ id: string; seriesId: string | null } | null>;
   shareHoldingTab?: (clientId: string) => string | null;
+  guestKeptForSeconds?: number;
+  isCookieSecure?: () => Promise<boolean>;
+  creator?: {
+    stillShares: (accountId: string) => Promise<boolean>;
+    reaches: (accountId: string, mediaId: string) => Promise<boolean>;
+    reachesBook: (accountId: string, bookId: string) => Promise<boolean>;
+  };
 };
 
 /**
@@ -43,9 +54,18 @@ type ShareGateOptions = {
  * @param shares - Where links are resolved.
  * @param sessions - Which share started which playback session.
  * @param itemOf - How to look up the item a request names, to check it against the link's scope.
+ * @param isCookieSecure - Whether the server's cookies are sent only over https, as its settings say.
  * @returns The middleware.
  */
-const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGateOptions) =>
+const createShareGate = ({
+  shares,
+  sessions,
+  itemOf,
+  shareHoldingTab,
+  guestKeptForSeconds = DEFAULT_GUEST_KEPT_FOR_SECONDS,
+  isCookieSecure,
+  creator,
+}: ShareGateOptions) =>
   createMiddleware(async (context, next) => {
     const token = getCookie(context, SHARE_COOKIE);
 
@@ -79,6 +99,37 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
       );
     }
 
+    if (creator !== undefined && !(await creator.stillShares(found.createdBy))) {
+      return context.json(
+        { error: say('common.thisLinkNoLongerWorks'), ended: 'withdrawn' as const },
+        410,
+      );
+    }
+
+    if (found.viewCap !== null && !standing.isReturning) {
+      const arriving = joiner ?? randomUUID();
+
+      if (!(await shares.join(found.id, arriving, found.viewCap))) {
+        const spent = { ...standing, views: found.viewCap, isReturning: false };
+
+        return context.json(
+          {
+            error: whyShareEnded(spent, new Date()) ?? say('common.thisLinkNoLongerWorks'),
+            ended: howShareEnded(spent, new Date()) ?? 'withdrawn',
+          },
+          410,
+        );
+      }
+
+      setCookie(context, SHARE_JOINER, arriving, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+        secure: (await isCookieSecure?.()) ?? false,
+        maxAge: rememberGuestFor(found.expiresAt, new Date(), guestKeptForSeconds),
+      });
+    }
+
     const reach = reachOf({ method: context.req.method, path: context.req.path });
 
     if (reach.kind === 'refused') {
@@ -105,14 +156,23 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
       return;
     }
 
-    if (reach.kind === 'needsBook' && (found.kind !== 'book' || found.bookId !== reach.bookId)) {
+    if (
+      reach.kind === 'needsBook' &&
+      (found.kind !== 'book' ||
+        found.bookId !== reach.bookId ||
+        (creator !== undefined && !(await creator.reachesBook(found.createdBy, reach.bookId))))
+    ) {
       return context.json(refuse('error.share.thatIsNotPartOfWhat'), 403);
     }
 
     if (reach.kind === 'needsItem') {
       const item = await itemOf(reach.mediaId);
 
-      if (item === null || !covers(found, item)) {
+      if (
+        item === null ||
+        !covers(found, item) ||
+        (creator !== undefined && !(await creator.reaches(found.createdBy, item.id)))
+      ) {
         return context.json(refuse('error.share.thatIsNotPartOfWhat'), 403);
       }
     }

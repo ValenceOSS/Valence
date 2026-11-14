@@ -75,6 +75,7 @@ const SessionAccountSchema = z.object({ user: z.object({ id: z.string() }) });
 const build = (options: { refusesEveryAccount?: boolean } = {}) => {
   const { auth, settings } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
+  const refusal = { on: options.refusesEveryAccount === true };
   const app = createApp({
     auth,
     settings,
@@ -117,9 +118,7 @@ const build = (options: { refusesEveryAccount?: boolean } = {}) => {
         { ...A_CHAPTER, id: MANGA_CHAPTER, bookId: MANGA_ID, format: 'cbz', pageCount: 20 },
       ],
       contents: { [NOVEL_CHAPTER]: CONTENTS },
-      ...(options.refusesEveryAccount === true
-        ? { refuses: (viewer) => viewer.kind === 'account' }
-        : {}),
+      refuses: (viewer) => refusal.on && viewer.kind === 'account',
       documents: {
         [`${NOVEL_CHAPTER}:0`]: '<p>It is a truth universally acknowledged.</p>',
         [`${NOVEL_CHAPTER}:1`]: '<p id="c2">Mr. Bennet.</p><img src="{picture}"/>',
@@ -133,7 +132,7 @@ const build = (options: { refusesEveryAccount?: boolean } = {}) => {
     permissions,
   });
 
-  return { app, auth, permissions };
+  return { app, auth, permissions, refusal };
 };
 
 /**
@@ -600,6 +599,37 @@ describe('sharing a book over HTTP', () => {
     expect(reading.status).toBe(200);
     expect(elsewhere.status).toBe(403);
     expect(keeping.status).toBe(403);
+  });
+
+  it('stops a link to a book once its creator can no longer see the book', async () => {
+    const built = build();
+    const cookie = await signedIn(built);
+    const made = CreatedShareSchema.parse(
+      await (
+        await built.app.request(`${BASE}/api/shares`, {
+          method: 'POST',
+          headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+          body: JSON.stringify({ kind: 'book', bookId: NOVEL_ID }),
+        })
+      ).json(),
+    );
+    const opened = await built.app.request(`${BASE}/api/share/${made.token}`);
+    const guest = opened.headers
+      .getSetCookie()
+      .map((one) => one.split(';')[0] ?? '')
+      .join('; ');
+    const path = `${BASE}/api/books/${NOVEL_ID}/chapters/${NOVEL_CHAPTER}/document?part=0`;
+
+    expect((await built.app.request(path, { headers: { cookie: guest } })).status).toBe(200);
+
+    built.refusal.on = true;
+
+    const reading = await built.app.request(path, { headers: { cookie: guest } });
+    const reopened = await built.app.request(`${BASE}/api/share/${made.token}`);
+    const body = z.object({ book: BookSchema.nullable() }).parse(await reopened.json());
+
+    expect(reading.status).toBe(403);
+    expect(body.book).toBeNull();
   });
 
   it('will not share a book the sharer cannot see', async () => {

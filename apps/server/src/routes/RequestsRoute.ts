@@ -1499,7 +1499,7 @@ const liftMediaBlockRoute = createRoute({
     params: RecordIdParameter.extend({
       blockId: z
         .string()
-        .min(1)
+        .regex(/^[A-Za-z0-9_-]{1,64}$/)
         .openapi({ param: { name: 'blockId', in: 'path' } }),
     }),
   },

@@ -28,7 +28,6 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'POST', path: /^\/api\/federation\/v1\// },
   { method: 'DELETE', path: /^\/api\/federation\/v1\// },
   { method: 'GET', path: /^\/api\/openapi\.json$/ },
-  { method: 'GET', path: /^\/api\/reference$/ },
   {
     method: 'GET',
     path: /^\/api\/plugins\/[a-z][a-z0-9-]{2,63}\/accounts\/[a-z][a-z0-9-]{0,39}\/connect$/,

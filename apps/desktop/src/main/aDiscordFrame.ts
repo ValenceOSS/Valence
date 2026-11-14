@@ -4,6 +4,8 @@ const HANDSHAKE = 0;
 
 const FRAME = 1;
 
+const MOST_PAYLOAD_BYTES = 64 * 1024;
+
 type DiscordFrame = { opcode: number; payload: string };
 
 /**
@@ -34,15 +36,24 @@ const aDiscordFrame = (opcode: number, payload: string): Buffer => {
  * A socket hands over bytes rather than messages, so a read can carry half of one, or three and a
  * bit. Anything short of a whole message is handed back to be read again once more arrives.
  *
+ * A message that says it is shorter than nothing or longer than Discord ever sends is not one: the
+ * reading stops there and the result says the peer is not speaking the protocol.
+ *
  * @param arrived - Everything received and not yet read.
- * @returns The whole messages, and the remainder to keep.
+ * @returns The whole messages, the remainder to keep, and whether the bytes are no protocol at all.
  */
-const readDiscordFrames = (arrived: Buffer): { frames: DiscordFrame[]; rest: Buffer } => {
+const readDiscordFrames = (
+  arrived: Buffer,
+): { frames: DiscordFrame[]; rest: Buffer; isBroken: boolean } => {
   const frames: DiscordFrame[] = [];
   let at = 0;
 
   while (arrived.length - at >= HEADER) {
     const length = arrived.readInt32LE(at + 4);
+
+    if (length < 0 || length > MOST_PAYLOAD_BYTES) {
+      return { frames, rest: Buffer.alloc(0), isBroken: true };
+    }
 
     if (arrived.length - at - HEADER < length) {
       break;
@@ -56,7 +67,7 @@ const readDiscordFrames = (arrived: Buffer): { frames: DiscordFrame[]; rest: Buf
     at += HEADER + length;
   }
 
-  return { frames, rest: arrived.subarray(at) };
+  return { frames, rest: arrived.subarray(at), isBroken: false };
 };
 
 export type { DiscordFrame };

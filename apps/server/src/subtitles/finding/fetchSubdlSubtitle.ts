@@ -3,6 +3,13 @@ import { extname } from 'node:path';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { parseEpisodePath } from '@ValenceServer/library/naming/parseEpisodePath';
 import type { DownloadedSubtitle } from './DownloadedSubtitle';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
+
+const MOST_ZIP_BYTES = 5 * 1024 * 1024;
+
+const MOST_SUBTITLE_BYTES = 5 * 1024 * 1024;
+
+const MOST_INFLATED_BYTES = 32 * 1024 * 1024;
 
 /**
  * The kind of subtitle a file in a zip is, by its extension, where it is one Valence reads.
@@ -47,7 +54,28 @@ const fetchSubdlSubtitle = async (
   }
 
   try {
-    const files = unzipSync(new Uint8Array(await answer.arrayBuffer()));
+    const zipped = await readBodyUpTo(answer, MOST_ZIP_BYTES);
+
+    if (zipped === null) {
+      return null;
+    }
+
+    let inflated = 0;
+    const files = unzipSync(zipped, {
+      filter: (file) => {
+        if (
+          subtitleKindOf(file.name) === null ||
+          file.originalSize > MOST_SUBTITLE_BYTES ||
+          file.size > MOST_SUBTITLE_BYTES
+        ) {
+          return false;
+        }
+
+        inflated += file.originalSize;
+
+        return inflated <= MOST_INFLATED_BYTES;
+      },
+    });
     const subtitles = Object.keys(files)
       .toSorted()
       .filter((one) => subtitleKindOf(one) !== null);

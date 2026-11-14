@@ -625,4 +625,21 @@ describe('createQbittorrentAdapter', () => {
     );
     expect(asked.filter((request) => request.url.pathname.endsWith('/filePrio'))).toHaveLength(1);
   });
+
+  it('refuses a magnet link that carries a second address', async () => {
+    const { fetch, asked } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'POST /api/v2/torrents/createCategory': () => new Response('', { status: 409 }),
+      'POST /api/v2/torrents/add': () => new Response('Ok.'),
+    });
+
+    await expect(
+      createQbittorrentAdapter(SETTINGS, fetch).add(
+        { kind: 'magnet', url: `${MAGNET}\nhttp://10.0.0.5/x` },
+        'Dune',
+        'valence',
+      ),
+    ).rejects.toThrow();
+    expect(asked.some((request) => request.url.pathname.endsWith('/add'))).toBe(false);
+  });
 });

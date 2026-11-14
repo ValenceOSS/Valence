@@ -61,4 +61,23 @@ describe('readDiscordFrames', () => {
   it('reads nothing out of nothing', () => {
     expect(readDiscordFrames(Buffer.alloc(0)).frames).toEqual([]);
   });
+
+  it('stops at a length that is negative, which would otherwise never move past it', () => {
+    const header = Buffer.alloc(16);
+
+    header.writeInt32LE(FRAME, 0);
+    header.writeInt32LE(-8, 4);
+
+    expect(readDiscordFrames(header)).toMatchObject({ frames: [], isBroken: true });
+  });
+
+  it('stops at a length no message of Discord’s is as long as', () => {
+    const header = Buffer.alloc(8);
+
+    header.writeInt32LE(FRAME, 0);
+    header.writeInt32LE(0x7fffffff, 4);
+
+    expect(readDiscordFrames(header)).toMatchObject({ frames: [], isBroken: true });
+    expect(readDiscordFrames(aDiscordFrame(FRAME, '{}')).isBroken).toBe(false);
+  });
 });

@@ -80,4 +80,34 @@ describe('createMemoryLinkSharingStore', () => {
     expect(await store.listActivity('films', { limit: 10, since: later(100_000) })).toHaveLength(1);
     expect(await store.listActivity('films', { limit: 10, personIds: [] })).toEqual([]);
   });
+
+  it('makes room for no new person past the most a server may bring, but always for one it knows', async () => {
+    const store = aStore();
+
+    await store.seePerson('films', 'p1', 'Sam', AT);
+
+    expect(await store.hasRoomFor('films', 'p2', 1)).toBe(false);
+    expect(await store.hasRoomFor('films', 'p1', 1)).toBe(true);
+    expect(await store.hasRoomFor('other', 'p2', 1)).toBe(true);
+  });
+
+  it('forgets the record from before a moment', async () => {
+    const store = aStore();
+    const entry = {
+      linkedServerId: 'films',
+      remotePersonId: null,
+      action: 'media',
+      mediaId: null,
+      mediaTitle: 'Arrival',
+      outcome: 'allowed',
+    } as const;
+
+    await store.record(entry, AT);
+    await store.record({ ...entry, mediaTitle: 'Dune' }, later(86_400_000));
+
+    expect(await store.forgetActivityBefore(later(1000))).toBe(1);
+    expect((await store.listActivity('films', { limit: 10 })).map((one) => one.mediaTitle)).toEqual(
+      ['Dune'],
+    );
+  });
 });

@@ -159,7 +159,7 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
 
     const offset = index * session.pieceBytes;
     const expected = Math.min(session.pieceBytes, session.bytes - offset);
-    const written = await uploadDisk.writeAt(session.staging, offset, body);
+    const written = await uploadDisk.writeAt(session.staging, offset, expected, body);
 
     if (written.kind !== 'written') {
       const said = sayRefused(written);

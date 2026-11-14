@@ -174,6 +174,23 @@ describe('what a book says about itself', () => {
     ]);
   });
 
+  it('does not read a table of contents bigger than any real one', async () => {
+    const swollen = await aBook('swollen.epub', {
+      'META-INF/container.xml': CONTAINER,
+      'OEBPS/content.opf': NAV_PACKAGE,
+      'OEBPS/nav.xhtml': say(
+        `<nav epub:type="toc"><ol><li><a href="text/one.xhtml">Loomings</a></li></ol></nav>${' '.repeat(3 * 1024 * 1024)}`,
+      ),
+      'OEBPS/text/one.xhtml': say('<p>One.</p>'),
+      'OEBPS/text/two.xhtml': say('<p>Two.</p>'),
+    });
+
+    expect(await (await openEpub(swollen, address))?.readContents()).toEqual([
+      { title: 'Part 1', part: 0, anchor: null, depth: 0 },
+      { title: 'Part 2', part: 1, anchor: null, depth: 0 },
+    ]);
+  });
+
   it('lists the parts themselves where the book has no table of contents', async () => {
     const contents = await (await openEpub(path, address))?.readContents();
 

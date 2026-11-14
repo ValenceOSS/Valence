@@ -77,3 +77,14 @@ describe('readEpubContents', () => {
     ).toEqual([]);
   });
 });
+
+describe('readEpubContents on a hostile contents document', () => {
+  it('reads one made of unclosed links in moments, not minutes', () => {
+    const hostile = `<nav epub:type="toc"><ol>${'<a href="x" '.repeat(40_000)}</ol></nav>`;
+    const began = Date.now();
+
+    readEpubContents('nav.xhtml', hostile, 'nav');
+
+    expect(Date.now() - began).toBeLessThan(5000);
+  });
+});

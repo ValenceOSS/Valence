@@ -4,6 +4,7 @@ import { say } from '@ValenceI18n/say';
 import { pdfPartsOf } from './pdfPartsOf';
 import { readPdfPageText } from './readPdfPageText';
 import { reflowPdfText } from './reflowPdfText';
+import { renderScaleFor } from './renderScaleFor';
 import type { FixedBook, ReflowBook } from './BookFile';
 
 type OutlineItem = NonNullable<ReturnType<Document['loadOutline']>>[number];
@@ -80,11 +81,13 @@ const openPortableDocument = async (path: string): Promise<FixedBook | ReflowBoo
   const drawn = (at: number) => {
     try {
       const page = opened.loadPage(at);
-      const picture = page.toPixmap(
-        Matrix.scale(RENDER_AT, RENDER_AT),
-        ColorSpace.DeviceRGB,
-        false,
-      );
+      const scale = renderScaleFor(page.getBounds(), RENDER_AT);
+
+      if (scale === null) {
+        return Promise.resolve(null);
+      }
+
+      const picture = page.toPixmap(Matrix.scale(scale, scale), ColorSpace.DeviceRGB, false);
 
       return Promise.resolve({ bytes: picture.asPNG(), contentType: 'image/png' });
     } catch {

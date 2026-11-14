@@ -1,6 +1,7 @@
 import type { AuditAction } from '@ValenceContracts/schemas/Audit';
 import type { AuditToRecord } from '@ValenceServer/audit/AuditService';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
+import { LONGEST_IDENTIFIER } from '@ValenceServer/auth/LONGEST_IDENTIFIER';
 
 const SESSION_RENEWAL_PATH = '/get-session';
 
@@ -85,7 +86,7 @@ const auditOfAuthRequest = (attempt: SignInAttempt): AuditToRecord | null => {
       actorId: null,
       actorName: '',
       action: 'auth.signInFailed',
-      target: attempt.identifier,
+      target: attempt.identifier?.slice(0, LONGEST_IDENTIFIER) ?? null,
       detail: { method: methodOf(attempt.path), attempts: '1' },
     };
   }

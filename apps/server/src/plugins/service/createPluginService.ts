@@ -1911,7 +1911,10 @@ const createPluginService = ({
       const ticket =
         asked.ticket === null ? null : tickets.redeem(asked.ticket, pluginId, providerId);
 
-      if (asked.ticket !== null && ticket === null) {
+      if (
+        (asked.ticket !== null && ticket === null) ||
+        (ticket !== null && asked.viewer !== null && asked.viewer.accountId !== ticket.accountId)
+      ) {
         return { problem: saying('server.service.pluginService.thatLinkHasExpiredGoBack') };
       }
 

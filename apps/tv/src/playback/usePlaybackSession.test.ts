@@ -144,6 +144,30 @@ describe('usePlaybackSession', () => {
     });
   });
 
+  it('opens a stream on another server without the session this one signed it in with', async () => {
+    const elsewhere = aSession({
+      kind: 'hls',
+      manifestUrl: 'https://films.example/api/federation/v1/direct/ticket/index.m3u8',
+      dashUrl: null,
+    });
+
+    starting({ kind: 'started', session: elsewhere });
+
+    const { result } = await renderHook(() => usePlaybackSession(MEDIA, 0, () => true));
+
+    await settle();
+
+    expect(result.current).toEqual({
+      kind: 'ready',
+      source: {
+        uri: 'https://films.example/api/federation/v1/direct/ticket/index.m3u8',
+        headers: {},
+        contentType: 'hls',
+      },
+      started: elsewhere,
+    });
+  });
+
   it('opens a file sent as it is without saying it is HLS', async () => {
     starting({ kind: 'started', session: DIRECT });
 

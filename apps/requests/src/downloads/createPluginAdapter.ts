@@ -26,6 +26,7 @@ import type {
 import type { DownloadClientRecord } from '@ValenceRequests/downloads/DownloadClientRecord';
 import type { LinkFetcher, LinkedFiles } from '@ValenceRequests/downloads/createLinkFetcher';
 import { readTorrentHash } from '@ValenceRequests/downloads/readTorrentHash';
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { PluginCallChannel } from '@ValenceRequests/pluginCalls/createPluginCallChannel';
@@ -313,6 +314,12 @@ const createPluginAdapter = ({
 
     add: async (file, title) => {
       needsAFolder();
+
+      if (file.kind === 'magnet' && !isSingleMagnetLink(file.url)) {
+        throw new DownloadClientFailure(
+          saying('requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent'),
+        );
+      }
 
       const release = releaseInOf(file, title);
 

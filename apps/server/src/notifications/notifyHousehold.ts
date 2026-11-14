@@ -7,6 +7,8 @@ import type { VapidKeys, WebPushSender } from './sendWebPush';
 import type { PushDeliveries } from './createPushDeliveries';
 import type { PushRelay } from './createPushRelay';
 import { say } from '@ValenceI18n/say';
+import { isPublicWebAddress } from '@ValenceServer/live/isPublicWebAddress';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 
 type NotifyHouseholdOptions = {
   store: NotificationStore;
@@ -17,6 +19,7 @@ type NotifyHouseholdOptions = {
   vapid: VapidKeys | null;
   phones?: { relay: PushRelay; deliveries: PushDeliveries };
   send?: WebPushSender;
+  resolve?: Resolve;
   onProblem?: (reason: string) => void;
   announce?: (userIds: readonly string[]) => void;
   only?: readonly string[];
@@ -41,6 +44,7 @@ type NotifyHouseholdOptions = {
  * @param vapid The push identity, or null where the server has none.
  * @param phones How to wake phones through the push relay, and where what each push says is kept for the phone to read; without it, phones are not woken.
  * @param send How to reach a push service, so a test need not.
+ * @param resolve How a push service's name is resolved when its address is checked again before a push is sent.
  * @param onProblem Told when something could not be delivered.
  * @param announce Told who now has something waiting, so open tabs can hear about it at once.
  * @param only The people to tell, where this concerns some of the household rather than all of it. Preferences still decide how each of them hears it.
@@ -56,6 +60,7 @@ const notifyHousehold = async ({
   vapid,
   phones,
   send,
+  resolve,
   onProblem,
   announce,
   only,
@@ -117,6 +122,12 @@ const notifyHousehold = async ({
 
       if (vapid !== null) {
         for (const endpoint of await store.listPushEndpoints(userId)) {
+          if (!(await isPublicWebAddress(endpoint.endpoint, resolve))) {
+            await store.removePushEndpoint(userId, endpoint.endpoint);
+
+            continue;
+          }
+
           const outcome = await sendWebPush(
             endpoint,
             { title: title.message, body: body.message, link, said: { title, body } },

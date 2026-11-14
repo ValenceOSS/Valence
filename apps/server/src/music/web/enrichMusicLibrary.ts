@@ -34,7 +34,13 @@ type Enriched = {
  * @param title - The title.
  * @returns What it is matched on.
  */
-const matchable = (title: string): string => nameKey(title.replace(/\s*[([].*?[)\]]\s*/g, ' '));
+const matchable = (title: string): string =>
+  nameKey(
+    title
+      .slice(0, 300)
+      .replace(/\s+/g, ' ')
+      .replace(/ ?[([].*?[)\]] ?/g, ' '),
+  );
 
 /**
  * Fills in what a music library's own files did not say, from the services music is described by:

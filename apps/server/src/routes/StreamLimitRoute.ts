@@ -53,6 +53,11 @@ const setAccountStreamLimitRoute = createRoute({
   },
 });
 
+const noSuchRole = {
+  description: 'There is no such role',
+  content: { 'application/json': { schema: StreamLimitError } },
+};
+
 const readRoleStreamLimitRoute = createRoute({
   method: 'get',
   path: '/api/admin/roles/{roleId}/stream-limit',
@@ -65,6 +70,7 @@ const readRoleStreamLimitRoute = createRoute({
       content: { 'application/json': { schema: StreamLimit } },
     },
     403: forbidden,
+    404: noSuchRole,
   },
 });
 
@@ -83,6 +89,7 @@ const setRoleStreamLimitRoute = createRoute({
       content: { 'application/json': { schema: StreamLimit } },
     },
     403: forbidden,
+    404: noSuchRole,
   },
 });
 

@@ -784,3 +784,20 @@ describe('finding a party', () => {
     });
   });
 });
+
+describe('how many parties one account holds open', () => {
+  it('closes the oldest party an account hosts once it hosts ten', () => {
+    const registry = createWorld();
+
+    for (let at = 0; at < 50; at += 1) {
+      registry.open({
+        mediaId: 'a-film',
+        host: { ...someone(`connection-${at.toString()}`, 'Dan'), accountId: 'account-dan' },
+      });
+    }
+
+    expect(registry.count()).toBe(10);
+    expect(registry.partyOf('connection-0')).toBeNull();
+    expect(registry.partyOf('connection-49')).not.toBeNull();
+  });
+});

@@ -42,6 +42,7 @@ type ImportServices = {
   banAccount: (userId: string, reason: string) => Promise<boolean>;
   tmdbOfTvdb: (tvdbId: number) => Promise<number | null>;
   regions: () => Promise<readonly string[]>;
+  serverFolders: readonly string[];
   fetch: SourceFetch;
   readerFor?:
     | ((source: StoredImportSource, regions: readonly string[]) => SourceReader)
