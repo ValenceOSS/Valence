@@ -33,6 +33,56 @@ describe('createLiveTvService isFromThePublicInternet', () => {
     expect(await service.isFromThePublicInternet(aChannelOf(playlist.id))).toBe(true);
   });
 
+  it('keeps the guard on when the name does not resolve, or answers both ways', async () => {
+    const playlist = aStoredLiveSource({
+      kind: 'playlistUrl',
+      address: 'http://nowhere.example/tv.m3u',
+    });
+    const { store } = aLiveTvStore(playlist);
+    const failing = createLiveTvService({
+      store,
+      now: () => AT,
+      fetcher: vi.fn(),
+      resolve: () => Promise.reject(new Error('ENOTFOUND')),
+    });
+    const mixed = createLiveTvService({
+      store,
+      now: () => AT,
+      fetcher: vi.fn(),
+      resolve: () => Promise.resolve(['8.8.8.8', '192.168.1.5']),
+    });
+    const local = createLiveTvService({
+      store,
+      now: () => AT,
+      fetcher: vi.fn(),
+      resolve: () => Promise.resolve(['192.168.1.5']),
+    });
+
+    expect(await failing.isFromThePublicInternet(aChannelOf(playlist.id))).toBe(true);
+    expect(await mixed.isFromThePublicInternet(aChannelOf(playlist.id))).toBe(true);
+    expect(await local.isFromThePublicInternet(aChannelOf(playlist.id))).toBe(false);
+  });
+
+  it('remembers the verdict until the source is refreshed', async () => {
+    const playlist = aStoredLiveSource({
+      kind: 'playlistUrl',
+      address: 'http://tv.example/tv.m3u',
+    });
+    const { store } = aLiveTvStore(playlist);
+    const resolve = vi.fn(() => Promise.resolve(['8.8.8.8']));
+    const service = createLiveTvService({ store, now: () => AT, fetcher: vi.fn(), resolve });
+
+    await service.isFromThePublicInternet(aChannelOf(playlist.id));
+    await service.isFromThePublicInternet(aChannelOf(playlist.id));
+
+    expect(resolve).toHaveBeenCalledTimes(1);
+
+    await service.refresh(playlist.id);
+    await service.isFromThePublicInternet(aChannelOf(playlist.id));
+
+    expect(resolve).toHaveBeenCalledTimes(2);
+  });
+
   it('says a channel from this network, or one the administrator gave, is not', async () => {
     for (const source of [
       aStoredLiveSource({ kind: 'playlistUrl', address: 'http://192.168.1.20/tv.m3u' }),
