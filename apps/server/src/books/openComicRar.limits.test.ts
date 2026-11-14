@@ -51,6 +51,11 @@ describe('openComicRar limits', () => {
 
     const { openComicRar } = await import('./openComicRar');
 
-    expect(await openComicRar('/books/huge.cbr')).toBeNull();
+    const problems: (string | null)[] = [];
+
+    const book = await openComicRar('/books/huge.cbr', (reason) => problems.push(reason.code));
+
+    expect(book).toBeNull();
+    expect(problems).toEqual(['server.books.openComicRar.thatComicIsLargerThanA']);
   });
 });

@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, truncate, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { zipSync } from 'fflate';
@@ -325,6 +325,24 @@ describe('scanBookLibrary', () => {
         code: 'server.library.scanLibrary.nothingWasFoundWhereThisLibrary',
       }),
     );
+  });
+
+  it('says why a comic over a gibibyte was left out, and only that', async () => {
+    const huge = join(where, 'Huge Volume.cbr');
+    const problems: string[] = [];
+
+    await writeFile(huge, 'Rar!');
+    await truncate(huge, 1024 ** 3 + 1);
+
+    await scanBookLibrary({
+      libraryId: 'a-library',
+      root: where,
+      files: { listFiles: () => Promise.resolve({ files: listing([huge]), unreadable: [] }) },
+      store: store(),
+      onProblem: (path, reason) => problems.push(`${path} ${reason.code}`),
+    });
+
+    expect(problems).toEqual([`${huge} server.books.openComicRar.thatComicIsLargerThanA`]);
   });
 
   it('keeps a book under a folder the walk could not read', async () => {

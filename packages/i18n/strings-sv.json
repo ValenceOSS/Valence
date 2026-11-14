@@ -37892,6 +37892,11 @@
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
   },
   {
+    "handler": "server.books.openComicRar.thatComicIsLargerThanA",
+    "text": "That comic is larger than a gibibyte, the most Valence will read.",
+    "context": "Shown in the books on the server (from `openComicRar`)."
+  },
+  {
     "handler": "server.books.pagesFromTo",
     "text": "Pages {from}–{to}",
     "context": "The name of a part of a PDF book that has no chapter names of its own, in the reader's contents. {from} and {to} are page numbers."

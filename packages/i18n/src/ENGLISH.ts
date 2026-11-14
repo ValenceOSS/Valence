@@ -9561,6 +9561,8 @@ const ENGLISH = {
     'those details weren’t accepted.',
   'server.book.privateMaxAge604800Immutable': 'private, max-age=604800, immutable',
   'server.books.chapterNumbered': 'Chapter {number}',
+  'server.books.openComicRar.thatComicIsLargerThanA':
+    'That comic is larger than a gibibyte, the most Valence will read.',
   'server.books.pagesFromTo': 'Pages {from}–{to}',
   'server.books.partNumbered': 'Part {number}',
   'server.books.scanBookLibrary.thatBookAlreadyReadsAnotherWay':
