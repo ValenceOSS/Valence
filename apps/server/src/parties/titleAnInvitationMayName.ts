@@ -1,3 +1,4 @@
+import { mayInviteTo } from './mayInviteTo';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type Invitation = {
@@ -23,7 +24,7 @@ type Naming = { kind: 'refused' } | { kind: 'named'; title: string | null };
 const titleAnInvitationMayName = async (invitation: Invitation): Promise<Naming> => {
   const { mediaId, inviter, invitee, isOutOfReach, titleOf } = invitation;
 
-  if (await isOutOfReach(inviter, mediaId)) {
+  if (!(await mayInviteTo(inviter, mediaId, isOutOfReach))) {
     return { kind: 'refused' };
   }
 

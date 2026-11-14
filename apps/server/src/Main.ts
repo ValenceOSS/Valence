@@ -109,6 +109,7 @@ import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
+import { mayInviteTo } from '@ValenceServer/parties/mayInviteTo';
 import { titleAnInvitationMayName } from '@ValenceServer/parties/titleAnInvitationMayName';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -6390,6 +6391,29 @@ const askSomebodyToTheParty = async (
 ): Promise<void> => {
   const byName = inviter.name;
 
+  const viewerOfAccount = async (
+    viewingAccountId: string,
+    viewingProfileId: string | null,
+  ): Promise<Viewer> => ({
+    kind: 'account',
+    accountId: viewingAccountId,
+    profileId: viewingProfileId,
+    isAdministrator: (await permissions.resolve(viewingAccountId)).has(ADMINISTRATOR),
+  });
+
+  const isOutOfReach = (viewer: Viewer, mediaId: string) =>
+    libraryService.isOutOfReach(viewer, mediaId);
+
+  if (
+    !(await mayInviteTo(
+      await viewerOfAccount(inviter.accountId, inviter.profileId),
+      party.mediaId,
+      isOutOfReach,
+    ))
+  ) {
+    return;
+  }
+
   if (profileId.startsWith(PEER_MEMBER)) {
     await askAlongElsewhere(party, byName, profileId);
 
@@ -6402,21 +6426,11 @@ const askSomebodyToTheParty = async (
     return;
   }
 
-  const viewerOfAccount = async (
-    viewingAccountId: string,
-    viewingProfileId: string | null,
-  ): Promise<Viewer> => ({
-    kind: 'account',
-    accountId: viewingAccountId,
-    profileId: viewingProfileId,
-    isAdministrator: (await permissions.resolve(viewingAccountId)).has(ADMINISTRATOR),
-  });
-
   const naming = await titleAnInvitationMayName({
     mediaId: party.mediaId,
     inviter: await viewerOfAccount(inviter.accountId, inviter.profileId),
     invitee: await viewerOfAccount(accountId, profileId),
-    isOutOfReach: (viewer, mediaId) => libraryService.isOutOfReach(viewer, mediaId),
+    isOutOfReach,
     titleOf: async (mediaId) => {
       const [row] = await db
         .select({ title: mediaItem.title })
