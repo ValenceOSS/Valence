@@ -1,11 +1,8 @@
-import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { isPublicAddress } from '@ValenceCore/network/isPublicAddress';
+import { resolveAll } from '@ValenceServer/web/resolveAll';
 
 type Resolve = (host: string) => Promise<readonly string[]>;
-
-const resolveAll: Resolve = async (host) =>
-  (await lookup(host, { all: true, verbatim: true })).map((found) => found.address);
 
 /**
  * Whether a web address leads only to the public internet: an http or https address whose host is

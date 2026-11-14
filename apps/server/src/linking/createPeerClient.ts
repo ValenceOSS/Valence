@@ -1,6 +1,6 @@
 import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { createPeerFetch } from '@ValenceServer/linking/createPeerFetch';
-import type { Resolve } from '@ValenceServer/buckets/isAcceptableEndpoint';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 import { z } from 'zod';
 import { PairAnswerSchema, ServerIdentitySchema } from '@ValenceContracts/schemas/LinkedServer';
 import {

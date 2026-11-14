@@ -1,5 +1,5 @@
 import { isAcceptableEndpoint } from '@ValenceServer/buckets/isAcceptableEndpoint';
-import type { Resolve } from '@ValenceServer/buckets/isAcceptableEndpoint';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 
 const REMEMBERED_MS = 60_000;
 

@@ -1,7 +1,6 @@
-import { lookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
-
-type Resolve = (host: string) => Promise<readonly string[]>;
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
+import { resolveAll } from '@ValenceServer/web/resolveAll';
 
 const NEVER_REACHED = new BlockList();
 
@@ -10,9 +9,6 @@ NEVER_REACHED.addSubnet('fe80::', 10, 'ipv6');
 NEVER_REACHED.addSubnet('fd00:ec2::', 64, 'ipv6');
 
 const MAPPED_IPV4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i;
-
-const resolveAll: Resolve = async (host) =>
-  (await lookup(host, { all: true, verbatim: true })).map((found) => found.address);
 
 /**
  * Whether an address is one a cloud keeps its metadata service on, or another link-local one, which
@@ -62,7 +58,5 @@ const isAcceptableEndpoint = async (
 
   return !found.some(isLinkLocal);
 };
-
-export type { Resolve };
 
 export { isAcceptableEndpoint };
