@@ -187,6 +187,36 @@ describe('serveLibrary', () => {
     await rm(root, { recursive: true, force: true });
   });
 
+  it('refuses a request folder on a folder the server keeps its own data in, or one that holds it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'valence-library-'));
+
+    await mkdir(join(root, 'config', 'backups'), { recursive: true });
+    await mkdir(join(root, 'media'));
+
+    const films = aLibraryAt(join(root, 'media'));
+    const { ask } = await build(
+      { jobId: null },
+      [join(root, 'config', 'backups')],
+      [films],
+      ['library.edit'],
+    );
+    const choosing = (requestPath: string) =>
+      ask(`/api/libraries/${films.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ defaultAudioLanguage: null, requestPath }),
+      });
+    const refusedFor = async (requestPath: string) =>
+      z.object({ code: z.string() }).parse(await (await choosing(requestPath)).json()).code;
+
+    expect(await refusedFor(join(root, 'config', 'backups'))).toBe(
+      'error.library.thatPathIsNotAReadable',
+    );
+    expect(await refusedFor(root)).toBe('error.library.thatPathIsNotAReadable');
+    expect((await choosing(join(root, 'media'))).status).toBe(200);
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('reads every library asked for in one request, counted unless told not to', async () => {
     const { ask, listItemsAcross } = await build();
     const counted = await ask('/api/library-items?libraryIds=films,shows&limit=5&order=rated');

@@ -30,6 +30,7 @@ import { readerOfSource } from './readerOfSource';
 import { resolvePlexHomeToken } from './resolvePlexHomeToken';
 import { runImport } from './runImport';
 import { tidyPath } from './tidyPath';
+import { touchesServerFolder } from '@ValenceServer/library/touchesServerFolder';
 import type { ImportServices } from './ImportServices';
 import type { StoredImportRun, StoredImportSource } from './ImportRecords';
 
@@ -357,7 +358,9 @@ const createImportService = (services: ImportServices) => {
         );
         const library =
           existing ??
-          (await services.library.create({ name: wanted.name, kind: wanted.kind, path }));
+          ((await touchesServerFolder(path, services.serverFolders))
+            ? null
+            : await services.library.create({ name: wanted.name, kind: wanted.kind, path }));
 
         if (library === null) {
           made.push({

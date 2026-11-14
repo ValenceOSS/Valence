@@ -297,6 +297,32 @@ describe('createImportService', { timeout: 60_000 }, () => {
     expect(await imports.saveMappings('missing', [])).toBeNull();
   });
 
+  it('does not make a library on a folder the server keeps its own data in', async () => {
+    const { imports, services } = await anImportService({
+      serverFolders: ['/media/config'],
+    });
+    const source = await services.store.addSource({
+      kind: 'jellyfin',
+      name: 'Den',
+      url: 'http://den',
+      token: 'k',
+      details: { ...DETAILS, pathMappings: [{ from: '/data', to: '/media' }] },
+    });
+    const made = await imports.createLibraries(source.id, {
+      libraries: [
+        { sourceLibraryId: 'lib-films', sourcePath: '/data', name: 'Films', kind: 'movies' },
+        { sourceLibraryId: 'lib-cfg', sourcePath: '/data/config', name: 'Config', kind: 'movies' },
+        { sourceLibraryId: 'lib-tv', sourcePath: '/data/tv', name: 'Shows', kind: 'shows' },
+      ],
+    });
+
+    expect(made?.map((one) => [one.libraryId === null, one.problem?.code ?? null])).toEqual([
+      [true, 'server.imports.importService.valenceCannotSeeAFolderAtPath'],
+      [true, 'server.imports.importService.valenceCannotSeeAFolderAtPath'],
+      [false, null],
+    ]);
+  });
+
   it('plans as a job, follows it, starts the import once planned, and can stop it', async () => {
     const { imports, services, asked } = await anImportService();
     const source = await services.store.addSource({

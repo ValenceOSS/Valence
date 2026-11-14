@@ -200,6 +200,15 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     } = context.req.valid('json');
     const libraryId = context.req.valid('param').id;
 
+    if (
+      requestPath !== undefined &&
+      requestPath !== null &&
+      requestPath !== '' &&
+      (await touchesServerFolder(requestPath, serverFolders))
+    ) {
+      return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
+    }
+
     if (fulfilment !== undefined && fulfilment !== null) {
       const kind = (await library.list(asTheServer)).find((entry) => entry.id === libraryId)?.kind;
       const apps = await requestsClient?.listArrApps();

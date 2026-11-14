@@ -5367,8 +5367,17 @@ const addAccountWithoutPassword = (request: AccountWithoutPasswordRequest) =>
     request,
   );
 
+const serverFolders = [
+  env.BACKUP_DIR,
+  env.IMAGE_CACHE_DIR,
+  env.PROFILE_IMAGE_DIR,
+  env.VALENCE_BUCKET_CACHE,
+  ...(env.SUBTITLE_DIR === undefined ? [] : [env.SUBTITLE_DIR]),
+];
+
 const importService = createImportService({
   db,
+  serverFolders,
   store: createDatabaseImportStore(db),
   library: libraryService,
   profiles: profileService,
@@ -5538,13 +5547,7 @@ const titleMetadataService = createTitleMetadataService({
 });
 
 const app = createApp({
-  serverFolders: [
-    env.BACKUP_DIR,
-    env.IMAGE_CACHE_DIR,
-    env.PROFILE_IMAGE_DIR,
-    env.VALENCE_BUCKET_CACHE,
-    ...(env.SUBTITLE_DIR === undefined ? [] : [env.SUBTITLE_DIR]),
-  ],
+  serverFolders,
   callerOf,
   imports: importService,
   plugins: startPlugins,
