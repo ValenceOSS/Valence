@@ -2,6 +2,7 @@ import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import { isWebhookAddressAllowed } from './isWebhookAddressAllowed';
 import { refusalOfWebhookAddress } from './refusalOfWebhookAddress';
 import type { WebhookFetcher } from './deliverWebhook';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -10,9 +11,13 @@ import { say } from '@ValenceI18n/say';
  * gains nothing.
  *
  * @param reachesLocalNetwork - Whether the webhook is allowed to reach the local network.
+ * @param resolve - What a name resolves to, in place of the system's lookup, injectable for tests.
  * @returns A fetcher that follows no redirect.
  */
-const createPinnedWebhookFetcher = (reachesLocalNetwork: boolean): WebhookFetcher => {
+const createPinnedWebhookFetcher = (
+  reachesLocalNetwork: boolean,
+  resolve?: Resolve,
+): WebhookFetcher => {
   const pinned = createPinnedFetch(
     (address) => isWebhookAddressAllowed(address, reachesLocalNetwork),
     (addresses) =>
@@ -22,6 +27,7 @@ const createPinnedWebhookFetcher = (reachesLocalNetwork: boolean): WebhookFetche
             'error.common.valenceWillNotSendDeliveriesTo',
         ),
       ),
+    resolve,
   );
 
   return async (url, init) => {

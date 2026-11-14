@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { VALENCE_BRAND } from './VALENCE_BRAND';
 import { WEBHOOK_PAYLOAD_VERSION } from '@ValenceContracts/schemas/Webhook';
 import { deliverWebhook } from './deliverWebhook';
+import { createPinnedWebhookFetcher } from './createPinnedWebhookFetcher';
+import { say } from '@ValenceI18n/say';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookDestination, WebhookFetcher } from './deliverWebhook';
@@ -67,6 +69,22 @@ const requestMadeBy = (fetchImpl: Mock<WebhookFetcher>) => {
 };
 
 describe('deliverWebhook', () => {
+  it('records the Local network refusal, not a bare fetch failure, for a name that resolves to a private address', async () => {
+    const fetcher = createPinnedWebhookFetcher(false, () => Promise.resolve(['192.168.1.20']));
+
+    const attempt = await deliverWebhook(
+      { ...aTarget, url: 'https://nas.example.test/hook', reachesLocalNetwork: false },
+      aPayload,
+      fetcher,
+    );
+
+    expect(attempt).toStrictEqual({
+      ok: false,
+      status: null,
+      error: say('error.webhook.valenceWillNotSendToTheLocalNetwork'),
+    });
+  });
+
   it('posts the event and reports that it landed', async () => {
     const fetchImpl = answering(204);
 
