@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import {
   changeLiveSourceRoute,
   addLiveSourceRoute,
@@ -19,6 +20,7 @@ import { describePictureFault } from '@ValenceServer/profiles/describePictureFau
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { StoredLiveChannel } from '@ValenceServer/live/LiveTvStore';
+import { sniffLogoType } from '@ValenceServer/live/sniffLogoType';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -28,6 +30,8 @@ const GUIDE_SHOWS_BEHIND_MS = 60 * 60 * 1000;
 const GUIDE_SHOWS_AHEAD_MS = 12 * 60 * 60 * 1000;
 
 const MOST_GUIDE_MS = 8 * 24 * 60 * 60 * 1000;
+
+const MOST_LOGO_BYTES = 4 * 1024 * 1024;
 
 /**
  * Registers the live TV endpoints: the sources, which only an admin who may change the server's
@@ -328,24 +332,41 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             signal: AbortSignal.timeout(10_000),
           }).catch(() => null);
 
-    const logoType = logo?.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+    const declared = logo?.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+    const isPicture =
+      /^image\/(png|jpe?g|webp|gif|avif|bmp|x-ms-bmp|x-icon|vnd\.microsoft\.icon|svg\+xml)$/u.test(
+        declared,
+      );
 
     if (
       logo === null ||
       !logo.ok ||
       logo.body === null ||
-      !/^image\/(png|jpeg|webp|gif|avif)$/u.test(logoType)
+      (!isPicture && declared !== 'application/octet-stream')
     ) {
       void logo?.body?.cancel();
 
       return context.json(refuse('error.live.thatChannelHasNoLogo'), 404);
     }
 
-    return new Response(logo.body, {
+    const bytes = await boundedAnswer(logo, MOST_LOGO_BYTES)
+      .arrayBuffer()
+      .then((read) => new Uint8Array(read))
+      .catch(() => null);
+    const sniffed = bytes === null ? null : sniffLogoType(bytes);
+    const declaredType = declared === 'image/jpg' ? 'image/jpeg' : declared;
+    const logoType = bytes === null ? null : isPicture ? declaredType : sniffed;
+
+    if (logoType === null || bytes === null) {
+      return context.json(refuse('error.live.thatChannelHasNoLogo'), 404);
+    }
+
+    return new Response(bytes, {
       status: 200,
       headers: {
         'content-type': logoType,
         'content-security-policy': "default-src 'none'; sandbox",
+        'x-content-type-options': 'nosniff',
         'cache-control': 'private, max-age=86400',
       },
     });
