@@ -1,7 +1,6 @@
 import { shieldTheAnswer } from '@ValenceServer/api/shieldTheAnswer';
 import { PLUGIN_ROUTE_PATH } from '@ValenceServer/plugins/routes/PLUGIN_ROUTE_PATH';
 import { createBodyLimit } from '@ValenceServer/api/createBodyLimit';
-import { withCaller } from '@ValenceServer/web/withCaller';
 import { settleTheCaller } from '@ValenceServer/web/settleTheCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
@@ -139,9 +138,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
   app.use('/api/auth/*', createNoEmailBlock());
 
-  app.on(['GET', 'POST'], '/api/auth/*', async (context) =>
-    auth.handler(await withCaller(context.req.raw, callerOf?.(context) ?? null)),
-  );
+  app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
 };
 
 export { serveEveryRequest };
