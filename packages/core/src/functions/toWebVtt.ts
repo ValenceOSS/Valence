@@ -1,8 +1,8 @@
+import { parseAdvancedSubStation } from './parseAdvancedSubStation';
+
 const WEBVTT_HEADER = 'WEBVTT';
 
 const SUBRIP_TIMESTAMP = /(\d{1,2}):(\d{2}):(\d{2})[,.](\d{1,3})/g;
-
-const ASS_TIMESTAMP = /^(\d{1,2}):(\d{2}):(\d{2})[.:](\d{1,2})$/;
 
 /**
  * Formats a position as the `hh:mm:ss.mmm` timestamp WebVTT insists on, every field padded to the
@@ -44,92 +44,39 @@ const fromSubRip = (source: string): string => {
 };
 
 /**
- * Reads an Advanced SubStation timestamp as a number of seconds. That format counts hundredths
- * rather than thousandths and pads nothing, so `0:00:01.5` means a second and a half.
+ * Puts a script's line into the shape a WebVTT cue holds: its words, with no line left blank, since a
+ * blank line ends a cue and would cut off everything after it.
  *
- * @param value - The timestamp as the script wrote it.
- * @returns The position in seconds, or null where the line was not a timestamp at all.
+ * @param said - The line's words, its breaks already turned into real ones.
+ * @returns The words as a cue's text, or nothing where there are none.
  */
-const readAssTimestamp = (value: string): number | null => {
-  const match = ASS_TIMESTAMP.exec(value.trim());
-
-  if (match === null) {
-    return null;
-  }
-
-  const [, hours = '0', minutes = '0', seconds = '0', centiseconds = '0'] = match;
-
-  return (
-    Number(hours) * 3600 +
-    Number(minutes) * 60 +
-    Number(seconds) +
-    Number(centiseconds.padEnd(2, '0')) / 100
-  );
-};
+const asCueText = (said: string): string =>
+  said
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .join('\n');
 
 /**
- * Strips the styling an Advanced SubStation line carries — override blocks in braces, drawing
- * commands, and its own escapes for line breaks and hard spaces — leaving the words a viewer is
- * meant to read. WebVTT has no way to express most of it, and a browser shown the codes displays
- * them.
- *
- * @param text - The line as the script wrote it, styling and all.
- * @returns The words alone, with its line breaks turned into real ones.
- */
-const stripAssMarkup = (text: string): string =>
-  text
-    .replace(/\{[^}]*\}/g, '')
-    .replace(/\\N|\\n/g, '\n')
-    .replace(/\\h/g, ' ')
-    .trim();
-
-/**
- * Converts an Advanced SubStation script to WebVTT. The format declares its own column order in a
- * `Format:` line, so that is read first and the start, end and text columns are taken from wherever
- * this particular script put them rather than from where they usually are.
+ * Converts an Advanced SubStation script to WebVTT, reading it the way the styled lines are read so
+ * the two forms of a track agree on what is said. Only the words survive: WebVTT has no way to say
+ * where a sign goes or what it is dressed in, and a drawing or a run the script made invisible is not
+ * words at all.
  *
  * @param source - The subtitle file as Advanced SubStation or SubStation Alpha.
- * @returns The same subtitles as WebVTT, with the styling stripped.
+ * @returns The same subtitles as WebVTT, in the order they start, with the styling stripped.
  */
 const fromAdvancedSubStation = (source: string): string => {
-  const lines = source.replace(/\r\n/g, '\n').split('\n');
-  const cues: string[] = [];
+  const cues = parseAdvancedSubStation(source)
+    .cues.slice()
+    .sort((one, other) => one.from - other.from)
+    .flatMap((cue) => {
+      const said = asCueText(cue.spans.map((span) => span.text).join(''));
 
-  let startColumn = 1;
-  let endColumn = 2;
-  let textColumn = 9;
-
-  for (const line of lines) {
-    if (line.startsWith('Format:') && cues.length === 0) {
-      const columns = line
-        .slice('Format:'.length)
-        .split(',')
-        .map((column) => column.trim().toLowerCase());
-
-      const start = columns.indexOf('start');
-      const end = columns.indexOf('end');
-      const text = columns.indexOf('text');
-
-      startColumn = start === -1 ? startColumn : start;
-      endColumn = end === -1 ? endColumn : end;
-      textColumn = text === -1 ? textColumn : text;
-    }
-
-    if (!line.startsWith('Dialogue:')) {
-      continue;
-    }
-
-    const fields = line.slice('Dialogue:'.length).split(',');
-    const start = readAssTimestamp(fields[startColumn] ?? '');
-    const end = readAssTimestamp(fields[endColumn] ?? '');
-    const text = stripAssMarkup(fields.slice(textColumn).join(','));
-
-    if (start === null || end === null || text === '') {
-      continue;
-    }
-
-    cues.push(`${formatTimestamp(start)} --> ${formatTimestamp(end)}\n${text}`);
-  }
+      return said === ''
+        ? []
+        : [`${formatTimestamp(cue.from)} --> ${formatTimestamp(cue.to)}\n${said}`];
+    });
 
   return `${WEBVTT_HEADER}\n\n${cues.join('\n\n')}${cues.length === 0 ? '' : '\n'}`;
 };
@@ -159,4 +106,4 @@ const toWebVtt = (source: string, format: string): string => {
   return fromSubRip(source);
 };
 
-export { toWebVtt, fromSubRip, fromAdvancedSubStation, formatTimestamp, readAssTimestamp };
+export { toWebVtt, fromSubRip, fromAdvancedSubStation, formatTimestamp };

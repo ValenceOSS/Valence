@@ -142,7 +142,72 @@ describe('the lettering changing partway through a line', () => {
   });
 
   it('leaves the words when it cannot draw what was asked for', () => {
-    expect(spansOf('{\\t(0,500,\\frz360)\\p1}spinning')[0]?.text).toBe('spinning');
+    expect(spansOf('{\\t(0,500,\\frz360)\\blur2}spinning')[0]?.text).toBe('spinning');
+  });
+
+  it('leaves out a vector drawing, which is a shape written as coordinates', () => {
+    const spans = spansOf('{\\p1}m 0 0 l 100 0 100 100 0 100{\\p0}A sign beside it');
+
+    expect(spans.map((span) => span.text)).toEqual(['A sign beside it']);
+  });
+
+  it('leaves out a run the script made invisible', () => {
+    const spans = spansOf('{\\alpha&HFF&}ghost {\\alpha&H00&}visible');
+
+    expect(spans.map((span) => span.text)).toEqual(['visible']);
+  });
+
+  it('shows a line that fades out, rather than taking where it ends for where it starts', () => {
+    expect(spansOf('{\\t(0,500,\\alpha&HFF&)}going')[0]?.text).toBe('going');
+  });
+});
+
+describe('lines with nothing to read in them', () => {
+  const cuesOf = (...events: string[]) =>
+    parseAdvancedSubStation(
+      ['[Events]', 'Format: Layer, Start, End, Style, Name, Text', ...events].join('\n'),
+    ).cues;
+
+  it('drops a line that is only a drawing', () => {
+    expect(
+      cuesOf('Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\p1}m 0 0 l 1920 0 1920 1080{\\p0}'),
+    ).toEqual([]);
+  });
+
+  it('drops a line that is only invisible', () => {
+    expect(cuesOf('Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\alpha&HFF&}hidden')).toEqual([]);
+  });
+});
+
+describe('styles a line asks for by name', () => {
+  const script = (...events: string[]) =>
+    parseAdvancedSubStation(
+      [
+        '[V4+ Styles]',
+        'Format: Name, Fontname, Italic, Alignment',
+        'Style: Default,Arial,0,2',
+        'Style: Thoughts,Georgia,1,2',
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        ...events,
+      ].join('\n'),
+    ).cues;
+
+  it('starts over from the style a reset names', () => {
+    const spans =
+      script('Dialogue: 0,0:00:01.00,0:00:02.00,Default,,said {\\rThoughts}thought')[0]?.spans ??
+      [];
+
+    expect(spans.map((span) => [span.text, span.fontFamily, span.isItalic])).toEqual([
+      ['said ', 'Arial', false],
+      ['thought', 'Georgia', true],
+    ]);
+  });
+
+  it('dresses a line naming a style the script never defined in its Default style', () => {
+    const spans = script('Dialogue: 0,0:00:01.00,0:00:02.00,Nowhere,,Still said')[0]?.spans ?? [];
+
+    expect(spans[0]?.fontFamily).toBe('Arial');
   });
 });
 
@@ -222,6 +287,69 @@ describe('scripts that are not the tidy case', () => {
 
     expect(cues[0]?.spans[0]?.text).toBe('Still said');
     expect(cues[0]?.isSign).toBe(false);
+  });
+
+  it('reads the usual columns where the events section names none', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,No format line above me',
+      ].join('\n'),
+    );
+
+    expect(cues[0]?.spans[0]?.text).toBe('No format line above me');
+  });
+
+  it('reads the usual columns where the Format line leaves out the text', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Format: Layer, Start, End, Style',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Line one',
+      ].join('\n'),
+    );
+
+    expect(cues[0]?.spans[0]?.text).toBe('Line one');
+  });
+
+  it('reads lines written with a space before them or before a colon', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Format : Layer, Start, End, Style, Name, Text',
+        '  Dialogue: 0,0:00:01.00,0:00:02.00,Default,,Indented',
+      ].join('\n'),
+    );
+
+    expect(cues[0]?.spans[0]?.text).toBe('Indented');
+  });
+
+  it('reads the older alignment tag the older way, whichever kind of script carries it', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[V4+ Styles]',
+        'Format: Name, Alignment',
+        'Style: Default,2',
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\a6}Up top',
+      ].join('\n'),
+    );
+
+    expect(cues[0]?.alignment).toBe(8);
+  });
+
+  it('puts a moving line where its move starts, as a sign', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\move(96,72,288,216)}Moving',
+      ].join('\n'),
+    );
+
+    expect(cues[0]?.position).toEqual({ x: 0.25, y: 0.25 });
+    expect(cues[0]?.isSign).toBe(true);
   });
 
   it('finds nothing in a file that is not a script, without failing', () => {

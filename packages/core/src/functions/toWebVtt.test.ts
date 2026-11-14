@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  toWebVtt,
-  fromSubRip,
-  fromAdvancedSubStation,
-  formatTimestamp,
-  readAssTimestamp,
-} from './toWebVtt';
+import { toWebVtt, fromSubRip, fromAdvancedSubStation, formatTimestamp } from './toWebVtt';
 
 const subRip = ['1', '00:00:01,000 --> 00:00:03,500', 'Line one', '', '2'].join('\n');
 
@@ -22,16 +16,6 @@ describe('formatTimestamp', () => {
 
   it('never writes a negative time', () => {
     expect(formatTimestamp(-4)).toBe('00:00:00.000');
-  });
-});
-
-describe('readAssTimestamp', () => {
-  it('reads centiseconds, which is all the format carries', () => {
-    expect(readAssTimestamp('0:00:03.50')).toBe(3.5);
-  });
-
-  it('reports nothing for a field that is not a time', () => {
-    expect(readAssTimestamp('Default')).toBeNull();
   });
 });
 
@@ -118,6 +102,32 @@ describe('fromAdvancedSubStation', () => {
     const wordless = advancedSubStation.replace(',Line one', ',');
 
     expect(fromAdvancedSubStation(wordless)).toBe('WEBVTT\n\n');
+  });
+
+  it('leaves out a vector drawing rather than writing its coordinates as words', () => {
+    const drawn = advancedSubStation.replace(
+      'Line one',
+      '{\\p1}m 0 0 l 100 0 100 100 0 100{\\p0}Line one',
+    );
+
+    expect(fromAdvancedSubStation(drawn)).not.toContain('m 0 0');
+    expect(fromAdvancedSubStation(drawn)).toContain('Line one');
+  });
+
+  it('keeps a line after a blank one inside the same cue, since a blank line ends a cue', () => {
+    const spaced = advancedSubStation.replace('Line one', 'First paragraph\\N\\NSecond paragraph');
+
+    expect(fromAdvancedSubStation(spaced)).toContain('First paragraph\nSecond paragraph');
+  });
+
+  it('writes the cues in the order they start, as WebVTT asks', () => {
+    const shuffled = [
+      advancedSubStation,
+      'Dialogue: 0,0:00:00.50,0:00:00.90,Default,,Earlier line',
+    ].join('\n');
+    const converted = fromAdvancedSubStation(shuffled);
+
+    expect(converted.indexOf('Earlier line')).toBeLessThan(converted.indexOf('Line one'));
   });
 
   it('keeps its own idea of a column the Format line does not name', () => {

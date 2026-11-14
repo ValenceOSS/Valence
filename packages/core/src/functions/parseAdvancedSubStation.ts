@@ -1,7 +1,7 @@
 import { parseAssColour } from './parseAssColour';
 import { parseAssOverrides } from './parseAssOverrides';
 import { BOTTOM_CENTRE, readAssAlignment } from './readAssAlignment';
-import { readAssTimestamp } from './toWebVtt';
+import { readAssTimestamp } from './readAssTimestamp';
 import type { AssTextStyle } from './parseAssOverrides';
 
 type AssSpan = Omit<AssTextStyle, 'fontSize'> & {
@@ -55,6 +55,23 @@ const PLAIN_STYLE: AssTextStyle = {
 };
 
 const PLAIN_MARGINS: AssMargins = { left: 0, right: 0, vertical: 0 };
+
+const STANDARD_EVENT_COLUMNS = [
+  'layer',
+  'start',
+  'end',
+  'style',
+  'name',
+  'marginl',
+  'marginr',
+  'marginv',
+  'effect',
+  'text',
+];
+
+const COLUMNS_A_LINE_NEEDS = ['start', 'end', 'text'];
+
+const A_FORMAT_LINE = /^Format\s*:/;
 
 /**
  * Reads the columns a `Format:` line names, which is how these sections say what order they put
@@ -145,17 +162,23 @@ const readEscapes = (text: string): string =>
  *
  * A block describes the lettering from where it sits to the end of the line or to the next block, so
  * a line reading `{\i1}sign{\i0} here` is three runs of which one is italic. `\r` starts over from
- * the line's own style, which is how a script ends an override without spelling out its opposite.
+ * the line's own style, or from the style it names, which is how a script ends an override without
+ * spelling out its opposite.
+ *
+ * Two kinds of run are left out because there are no words in them to read. A run drawn in vector
+ * mode, between `\p1` and `\p0`, is the outline of a shape written as coordinates. A run the script
+ * made fully transparent is there to hold space or to be faded in by an effect this does not play.
  *
  * @param text - The line's text column, escapes and braces and all.
  * @param base - The lettering the line's named style starts it with.
- * @param isLegacy - Whether this script numbers its alignments the older way.
+ * @param styleNamed - The lettering of another style in the script, by name, for `\r` to start over
+ *   from.
  * @returns The runs, and anything the blocks said about where the whole line sits.
  */
 const readSpans = (
   text: string,
   base: AssTextStyle,
-  isLegacy: boolean,
+  styleNamed: (name: string) => AssTextStyle | undefined,
 ): {
   spans: (AssTextStyle & { text: string })[];
   alignment: number | null;
@@ -166,12 +189,13 @@ const readSpans = (
   let current: AssTextStyle = { ...base };
   let alignment: number | null = null;
   let position: { x: number; y: number } | null = null;
+  let isDrawing = false;
   let at = 0;
 
   const take = (raw: string): void => {
     const said = readEscapes(raw);
 
-    if (said !== '') {
+    if (said !== '' && !isDrawing && current.opacity !== 0) {
       spans.push({ ...current, text: said });
     }
   };
@@ -179,14 +203,18 @@ const readSpans = (
   for (const match of text.matchAll(AN_OVERRIDE)) {
     take(text.slice(at, match.index));
 
-    const overrides = parseAssOverrides(match.groups?.['block'] ?? '', isLegacy);
+    const overrides = parseAssOverrides(match.groups?.['block'] ?? '');
+    const startsFrom =
+      overrides.reset === null
+        ? current
+        : overrides.reset === ''
+          ? base
+          : (styleNamed(overrides.reset) ?? base);
 
-    current = overrides.isReset
-      ? { ...base, ...overrides.style }
-      : { ...current, ...overrides.style };
-
+    current = { ...startsFrom, ...overrides.style };
     alignment = overrides.alignment ?? alignment;
     position = overrides.position ?? position;
+    isDrawing = overrides.drawing === null ? isDrawing : overrides.drawing > 0;
     at = match.index + match[0].length;
   }
 
@@ -216,6 +244,9 @@ const readSpans = (
  *
  * The text is the last column a script declares, and is put there so that a line containing commas
  * needs no escaping — so everything from that column on is the line, rather than that column alone.
+ * Where the events section names no columns, or names them without the start, end and text, the
+ * order every tool writes is assumed, as libass assumes it. A line naming a style the script never
+ * defined is dressed in its Default style, as libass dresses it.
  *
  * @param source - The script.
  * @returns Its lines.
@@ -227,11 +258,12 @@ const parseAdvancedSubStation = (source: string): AssScript => {
   let section = '';
   let isLegacy = false;
   let styleColumns: string[] = [];
-  let eventColumns: string[] = [];
+  let eventColumns = STANDARD_EVENT_COLUMNS;
   let width = DEFAULT_WIDTH;
   let height = DEFAULT_HEIGHT;
 
-  for (const line of source.replaceAll('\r\n', '\n').split('\n')) {
+  for (const written of source.replaceAll('\r\n', '\n').split('\n')) {
+    const line = written.trimStart();
     const heading = A_SECTION.exec(line.trim());
 
     if (heading !== null) {
@@ -259,13 +291,17 @@ const parseAdvancedSubStation = (source: string): AssScript => {
       continue;
     }
 
-    if (line.startsWith('Format:')) {
+    if (A_FORMAT_LINE.test(line)) {
+      const columns = readFormat(line);
+
       if (section.endsWith('styles')) {
-        styleColumns = readFormat(line);
+        styleColumns = columns;
       }
 
       if (section === 'events') {
-        eventColumns = readFormat(line);
+        eventColumns = COLUMNS_A_LINE_NEEDS.every((name) => columns.includes(name))
+          ? columns
+          : STANDARD_EVENT_COLUMNS;
       }
 
       continue;
@@ -282,7 +318,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
       continue;
     }
 
-    if (!line.startsWith('Dialogue:') || eventColumns.length === 0) {
+    if (!line.startsWith('Dialogue:')) {
       continue;
     }
 
@@ -295,7 +331,8 @@ const parseAdvancedSubStation = (source: string): AssScript => {
       continue;
     }
 
-    const named = styles.get(fieldOf(fields, eventColumns, 'style').toLowerCase());
+    const named =
+      styles.get(fieldOf(fields, eventColumns, 'style').toLowerCase()) ?? styles.get('default');
     const base = named?.text ?? PLAIN_STYLE;
 
     const said =
@@ -303,7 +340,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
         ? fields.slice(textColumn).join(',')
         : (fields[textColumn] ?? '');
 
-    const read = readSpans(said, base, isLegacy);
+    const read = readSpans(said, base, (name) => styles.get(name.toLowerCase())?.text);
 
     if (read.spans.length === 0) {
       continue;
