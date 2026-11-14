@@ -1225,22 +1225,25 @@ fn unreadable_input(state: &AppState, request: &StartSessionRequest) -> Option<S
         ..
     } = request;
 
-    for spec in std::iter::once(spec)
+    std::iter::once(spec)
         .chain(variants)
         .chain(deferred_variants)
-    {
-        if !state.is_readable(Path::new(&spec.input_path)) {
-            return Some(spec.input_path.clone());
-        }
+        .find_map(|spec| unreadable_spec(state, spec))
+}
 
-        if let SubtitleAction::BurnIn {
-            subtitle_file: Some(file),
-            ..
-        } = &spec.subtitles
-        {
-            if file.contains("://") || !state.is_readable(Path::new(file)) {
-                return Some(file.clone());
-            }
+/// The first file a spec names, its picture or its burn-in subtitle file, that may not be read.
+fn unreadable_spec(state: &AppState, spec: &SessionSpec) -> Option<String> {
+    if !state.is_readable(Path::new(&spec.input_path)) {
+        return Some(spec.input_path.clone());
+    }
+
+    if let SubtitleAction::BurnIn {
+        subtitle_file: Some(file),
+        ..
+    } = &spec.subtitles
+    {
+        if file.contains("://") || !state.is_readable(Path::new(file)) {
+            return Some(file.clone());
         }
     }
 
@@ -2463,8 +2466,8 @@ async fn start_download(
 ) -> Response {
     let path = PathBuf::from(&request.spec.input_path);
 
-    if !state.is_readable(&path) {
-        return outside_the_roots(&path);
+    if let Some(refused) = unreadable_spec(&state, &request.spec) {
+        return outside_the_roots(Path::new(&refused));
     }
 
     let config = state.registry.config();
@@ -2828,8 +2831,8 @@ async fn start_rendition(
     let source = PathBuf::from(&request.spec.input_path);
     let output = PathBuf::from(&request.output_path);
 
-    if !state.is_readable(&source) {
-        return outside_the_roots(&source);
+    if let Some(refused) = unreadable_spec(&state, &request.spec) {
+        return outside_the_roots(Path::new(&refused));
     }
 
     if !state.is_writable(&output) {
@@ -3851,6 +3854,7 @@ mod tests {
         StartSessionRequest, SweepRequest,
     };
     use crate::render_registry::RenderRegistry;
+    use axum::http::StatusCode;
     use std::path::{Path, PathBuf};
 
     fn writing_to(roots: &[&str]) -> AppState {
@@ -3916,7 +3920,7 @@ mod tests {
         assert!(!reading.is_readable(Path::new(&reaching)));
     }
 
-    fn starting(input: &str, subtitle_file: Option<&str>) -> StartSessionRequest {
+    fn spec_json(input: &str, subtitle_file: Option<&str>) -> serde_json::Value {
         let subtitles = subtitle_file.map_or_else(
             || serde_json::json!({ "kind": "none" }),
             |file| {
@@ -3929,7 +3933,7 @@ mod tests {
             },
         );
 
-        serde_json::from_value(serde_json::json!({
+        serde_json::json!({
             "inputPath": input,
             "startSeconds": 0,
             "segmentSeconds": 4,
@@ -3937,8 +3941,11 @@ mod tests {
             "video": { "kind": "copy" },
             "audio": { "kind": "copy" },
             "subtitles": subtitles,
-        }))
-        .expect("reads the request")
+        })
+    }
+
+    fn starting(input: &str, subtitle_file: Option<&str>) -> StartSessionRequest {
+        serde_json::from_value(spec_json(input, subtitle_file)).expect("reads the request")
     }
 
     /// A session may start only from files inside the roots, and a subtitle file that is an
@@ -3974,6 +3981,42 @@ mod tests {
             unreadable_input(&open, &starting("/media/a.mkv", Some("/media/a.en.srt"))),
             None
         );
+    }
+
+    /// A download and a kept rendition refuse a burn-in subtitle file that is an address or lies
+    /// outside the roots, as a session does.
+    #[tokio::test]
+    async fn refuses_a_download_or_rendition_naming_a_subtitle_it_may_not_open() {
+        let limited = AppState {
+            media_roots: vec![PathBuf::from("/media")],
+            ..writing_to(&["/media/out"])
+        };
+
+        for file in ["http://host.test/a.srt", "/etc/hosts"] {
+            let download = serde_json::from_value(serde_json::json!({
+                "spec": spec_json("/media/a.mkv", Some(file)),
+                "durationSeconds": 60.0,
+            }))
+            .expect("reads the request");
+            let rendition = serde_json::from_value(serde_json::json!({
+                "spec": spec_json("/media/a.mkv", Some(file)),
+                "durationSeconds": 60.0,
+                "outputPath": "/media/out/a.mkv",
+            }))
+            .expect("reads the request");
+
+            let refused =
+                super::start_download(axum::extract::State(limited.clone()), axum::Json(download))
+                    .await;
+            assert_eq!(refused.status(), StatusCode::FORBIDDEN, "{file}");
+
+            let refused = super::start_rendition(
+                axum::extract::State(limited.clone()),
+                axum::Json(rendition),
+            )
+            .await;
+            assert_eq!(refused.status(), StatusCode::FORBIDDEN, "{file}");
+        }
     }
 
     /// A library folder inside the roots may be read, one outside may not, and with no roots set
