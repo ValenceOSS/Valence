@@ -9,6 +9,7 @@ const DEMO_BLOCKS = [
   { method: 'PUT', path: '/api/account/devices/:id/name' },
   { method: 'POST', path: '/api/profiles' },
   { method: 'DELETE', path: '/api/profiles/:profileId' },
+  { method: 'PUT', path: '/api/profiles/:profileId/photo' },
   { method: 'PUT', path: '/api/profiles/:profileId/pin' },
   { method: 'PUT', path: '/api/profiles/:profileId/may-request' },
   { method: 'POST', path: '/api/profiles/:profileId/owner' },

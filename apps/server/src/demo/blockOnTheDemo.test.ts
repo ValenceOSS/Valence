@@ -39,6 +39,7 @@ describe('blockOnTheDemo', () => {
       ['POST', '/api/auth/delete-user'],
       ['PUT', '/api/account/photo'],
       ['DELETE', '/api/account/photo'],
+      ['PUT', '/api/profiles/:profileId/photo'],
     ] as const) {
       expect((await ask(app, method, path)).status, `${method} ${path}`).toBe(403);
     }
@@ -52,10 +53,40 @@ describe('blockOnTheDemo', () => {
     }
   });
 
-  it('still lets the demo account change its own profile and read the household', async () => {
+  it('lets the demo account change how its profile behaves, but not what it is called or looks like', async () => {
+    const app = anApp(true);
+    const changing = (body: object) =>
+      app.request('/api/profiles/p1', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    expect((await changing({ showsWhatIamWatching: false })).status).toBe(200);
+
+    for (const fixed of [{ name: 'Mine now' }, { colour: '#ff0000' }, { avatar: 'cat' }]) {
+      const answer = await changing({ showsWhatIamWatching: true, ...fixed });
+
+      expect(answer.status, JSON.stringify(fixed)).toBe(403);
+      expect(await answer.json()).toMatchObject({
+        code: 'error.account.theDemoAccountCannotDoThat',
+      });
+    }
+
+    expect(
+      (
+        await anApp(false).request('/api/profiles/p1', {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: 'Mine' }),
+        })
+      ).status,
+    ).toBe(200);
+  });
+
+  it('still lets the demo account read the household', async () => {
     const app = anApp(true);
 
-    expect((await ask(app, 'PATCH', '/api/profiles/p1')).status).toBe(200);
     expect((await ask(app, 'GET', '/api/account')).status).toBe(200);
   });
 });
