@@ -6,6 +6,7 @@ import {
   marksHearingImpaired,
 } from './createEmbeddedSubtitleService';
 import type { EmbeddedStream } from './createEmbeddedSubtitleService';
+import { TranscoderError } from '@ValenceServer/transcoder/TranscoderClient';
 
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 const PATH = '/media/Parasite (2019).mkv';
@@ -13,6 +14,14 @@ const PATH = '/media/Parasite (2019).mkv';
 type ReadsPictures = NonNullable<
   Parameters<typeof createEmbeddedSubtitleService>[0]['transcoder']['readPictureSubtitle']
 >;
+
+const SCRIPT = [
+  '[Events]',
+  'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
+  'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(10,10)}From the script',
+].join('\n');
+
+const refused = () => new TranscoderError('The media service rejected /subtitles.', 400);
 
 const streamOf = (changes: Partial<EmbeddedStream> = {}): EmbeddedStream => ({
   index: 2,
@@ -213,23 +222,92 @@ describe('createEmbeddedSubtitleService', () => {
     await expect(service.read(MEDIA_ID, 'made-up')).resolves.toBeNull();
   });
 
-  it('answers with nothing rather than failing when extraction goes wrong', async () => {
-    const { service } = build([streamOf()], vi.fn().mockRejectedValue(new Error('no such stream')));
+  it('answers with nothing rather than failing when the media service refuses the track', async () => {
+    const { service } = build([streamOf()], vi.fn().mockRejectedValue(refused()));
     const tracks = await service.list(MEDIA_ID);
 
     await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBeNull();
   });
 
   it('says why it could not read a track, rather than failing quietly', async () => {
-    const { service, onProblem } = build(
-      [streamOf()],
-      vi.fn().mockRejectedValue(new Error('no such stream')),
-    );
+    const { service, onProblem } = build([streamOf()], vi.fn().mockRejectedValue(refused()));
     const tracks = await service.list(MEDIA_ID);
 
     await service.read(MEDIA_ID, tracks?.[0]?.id ?? '');
 
-    expect(onProblem).toHaveBeenCalledWith(PATH, 'no such stream');
+    expect(onProblem).toHaveBeenCalledWith(PATH, 'The media service rejected /subtitles.');
+  });
+
+  it('fails a read the media service could not be asked about, so the player asks again', async () => {
+    const { service, onProblem } = build(
+      [streamOf()],
+      vi.fn().mockRejectedValue(new TypeError('fetch failed')),
+    );
+    const tracks = await service.list(MEDIA_ID);
+
+    await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).rejects.toThrow('fetch failed');
+    expect(onProblem).not.toHaveBeenCalled();
+  });
+
+  describe('scripts', () => {
+    const scriptReader = (script: Promise<string>) =>
+      vi.fn(({ format }: { format?: 'webvtt' | 'ass' }) =>
+        format === 'ass'
+          ? script
+          : Promise.resolve('WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nconverted'),
+      );
+
+    it('reads a script out of the container for its styled lines', async () => {
+      const readSubtitle = scriptReader(Promise.resolve(SCRIPT));
+      const { service } = build([streamOf({ format: 'ass' })], readSubtitle);
+      const tracks = await service.list(MEDIA_ID);
+      const cues = await service.readCues(MEDIA_ID, tracks?.[0]?.id ?? '');
+
+      expect(cues?.map((cue) => cue.isSign)).toEqual([true]);
+      expect(readSubtitle).toHaveBeenCalledWith({ inputPath: PATH, streamIndex: 2, format: 'ass' });
+    });
+
+    it('answers no styled lines where the media service refuses the script', async () => {
+      const { service } = build(
+        [streamOf({ format: 'ass' })],
+        scriptReader(Promise.reject(refused())),
+      );
+      const tracks = await service.list(MEDIA_ID);
+
+      await expect(service.readCues(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBeNull();
+    });
+
+    it('fails the styled read where the media service cannot be reached', async () => {
+      const { service } = build(
+        [streamOf({ format: 'ass' })],
+        scriptReader(Promise.reject(new TypeError('fetch failed'))),
+      );
+      const tracks = await service.list(MEDIA_ID);
+
+      await expect(service.readCues(MEDIA_ID, tracks?.[0]?.id ?? '')).rejects.toThrow();
+    });
+
+    it('writes a script’s WebVTT from the script, so both forms of the track agree', async () => {
+      const { service } = build(
+        [streamOf({ format: 'ass' })],
+        scriptReader(Promise.resolve(SCRIPT)),
+      );
+      const tracks = await service.list(MEDIA_ID);
+      const read = await service.read(MEDIA_ID, tracks?.[0]?.id ?? '');
+
+      expect(read).toContain('From the script');
+      expect(read).not.toContain('converted');
+    });
+
+    it('falls back to the media service’s WebVTT where the script has no line in it', async () => {
+      const { service } = build(
+        [streamOf({ format: 'ass' })],
+        scriptReader(Promise.resolve('[Script Info]\nTitle: Nothing')),
+      );
+      const tracks = await service.list(MEDIA_ID);
+
+      await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toContain('converted');
+    });
   });
 
   describe('pictures read into words', () => {

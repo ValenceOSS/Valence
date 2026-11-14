@@ -1,7 +1,8 @@
 import { cuesOfScript } from './cuesOfScript';
-import { STYLED_FORMATS } from './STYLED_FORMATS';
+import { isStyledSubtitle } from '@ValenceContracts/functions/isStyledSubtitle';
+import { fromAdvancedSubStation } from '@ValenceCore/functions/toWebVtt';
+import { TranscoderError } from '@ValenceServer/transcoder/TranscoderClient';
 import { say } from '@ValenceI18n/say';
-import { saying } from '@ValenceI18n/saying';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
@@ -14,6 +15,8 @@ import { describeFailure } from '@ValenceServer/logging/describeFailure';
 const HEARING_IMPAIRED_MARKERS = ['sdh', 'cc', 'hearing', 'hard of hearing'];
 
 const UNREADABLE = new Set(['unknown']);
+
+const OUT_OF_REACH_FROM = 500;
 
 type EmbeddedStream = {
   index: number;
@@ -182,6 +185,33 @@ const createEmbeddedSubtitleService = ({
   /**
    * A styled track's script, copied out of the container as the file carries it.
    *
+   * A media service that refuses the track has said it cannot be read, and is answered as a track
+   * with no script. One that cannot be reached, or fails in itself, has said nothing about the
+   * track, and the failure is passed on so the player can ask again.
+   *
+   * @param path - The file the track is in.
+   * @param stream - The track.
+   * @returns The script, or nothing for a track with no styling or one that cannot be read.
+   */
+  const scriptOf = async (path: string, stream: EmbeddedStream): Promise<string | null> => {
+    if (!isStyledSubtitle(stream.format)) {
+      return null;
+    }
+
+    return transcoder
+      .readSubtitle({ inputPath: path, streamIndex: stream.index, format: 'ass' })
+      .catch((error) => {
+        if (error instanceof TranscoderError && error.status < OUT_OF_REACH_FROM) {
+          return null;
+        }
+
+        throw error;
+      });
+  };
+
+  /**
+   * A styled track's script, by the identifier a player was given for it.
+   *
    * @param mediaId - The title.
    * @param id - The track.
    * @returns The script, or nothing for a track with no styling or one that cannot be read.
@@ -190,17 +220,39 @@ const createEmbeddedSubtitleService = ({
     const found = await discover(mediaId);
     const stream = found?.streams.find((candidate) => idFor(found.path, candidate.index) === id);
 
-    if (
-      found === null ||
-      stream === undefined ||
-      !STYLED_FORMATS.has(stream.format.toLowerCase())
-    ) {
-      return null;
+    return found === null || stream === undefined ? null : scriptOf(found.path, stream);
+  };
+
+  /**
+   * A text track as WebVTT, read out of the container.
+   *
+   * A script is read from the script itself, the way its styled lines are, so the two forms of the
+   * track say the same thing; the media service's own conversion keeps drawings as words and cuts a
+   * line short at a blank one. It is only used where the script has nothing to give.
+   *
+   * @param path - The file the track is in.
+   * @param stream - The track.
+   * @returns The track as WebVTT, or nothing where it cannot be read.
+   */
+  const readText = async (path: string, stream: EmbeddedStream): Promise<string | null> => {
+    const script = await scriptOf(path, stream);
+    const fromScript = script === null ? null : fromAdvancedSubStation(script);
+
+    if (fromScript?.includes('-->') === true) {
+      return fromScript;
     }
 
-    return transcoder
-      .readSubtitle({ inputPath: found.path, streamIndex: stream.index, format: 'ass' })
-      .catch(() => null);
+    try {
+      return await transcoder.readSubtitle({ inputPath: path, streamIndex: stream.index });
+    } catch (error) {
+      if (!(error instanceof TranscoderError) || error.status >= OUT_OF_REACH_FROM) {
+        throw error;
+      }
+
+      onProblem?.(path, sayVerbatim(describeFailure(error)));
+
+      return null;
+    }
   };
 
   return {
@@ -295,21 +347,7 @@ const createEmbeddedSubtitleService = ({
         return null;
       }
 
-      try {
-        return await transcoder.readSubtitle({
-          inputPath: found.path,
-          streamIndex: stream.index,
-        });
-      } catch (error) {
-        onProblem?.(
-          found.path,
-          error instanceof Error
-            ? sayVerbatim(describeFailure(error))
-            : saying('server.subtitles.sidecarSubtitleService.unreadable'),
-        );
-
-        return null;
-      }
+      return readText(found.path, stream);
     },
 
     readScript,

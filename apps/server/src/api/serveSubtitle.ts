@@ -22,6 +22,21 @@ import { refuse } from '@ValenceI18n/refuse';
 const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
   const { subtitles, subtitleFonts } = context;
 
+  /**
+   * Reads a track, telling a read that failed for a reason that is no answer about the track, such
+   * as the media service being out of reach, apart from a track that has nothing to give.
+   *
+   * @param read - The read.
+   * @returns What it read, or that it failed.
+   */
+  const attempt = async <T>(read: () => Promise<T>): Promise<{ read: T } | { failure: true }> => {
+    try {
+      return { read: await read() };
+    } catch {
+      return { failure: true };
+    }
+  };
+
   app.openapi(listSubtitlesRoute, async (context) => {
     const tracks = await subtitles.list(context.req.valid('param').mediaId);
 
@@ -36,7 +51,13 @@ const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
     const { mediaId, trackId } = context.req.valid('param');
     const { from } = context.req.valid('query');
 
-    const track = await subtitles.read(mediaId, trackId);
+    const attempted = await attempt(() => subtitles.read(mediaId, trackId));
+
+    if ('failure' in attempted) {
+      return context.json(refuse('error.subtitle.couldNotBeReadJustNow'), 503);
+    }
+
+    const track = attempted.read;
 
     if (track === null) {
       return context.json(refuse('error.common.noSuchTrack'), 404);
@@ -51,7 +72,13 @@ const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
     const { mediaId, trackId } = context.req.valid('param');
     const { from } = context.req.valid('query');
 
-    const cues = await subtitles.readCues(mediaId, trackId);
+    const attempted = await attempt(() => subtitles.readCues(mediaId, trackId));
+
+    if ('failure' in attempted) {
+      return context.json(refuse('error.subtitle.couldNotBeReadJustNow'), 503);
+    }
+
+    const cues = attempted.read;
 
     if (cues === null) {
       return context.json(refuse('error.subtitle.thatTrackCarriesNoStylingOf'), 404);
@@ -63,7 +90,13 @@ const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(readSubtitleScriptRoute, async (context) => {
     const { mediaId, trackId } = context.req.valid('param');
 
-    const script = await subtitles.readScript(mediaId, trackId);
+    const attempted = await attempt(() => subtitles.readScript(mediaId, trackId));
+
+    if ('failure' in attempted) {
+      return context.json(refuse('error.subtitle.couldNotBeReadJustNow'), 503);
+    }
+
+    const script = attempted.read;
 
     if (script === null) {
       return context.json(refuse('error.subtitle.thatTrackCarriesNoStylingOf'), 404);

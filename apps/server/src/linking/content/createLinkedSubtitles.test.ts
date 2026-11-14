@@ -58,7 +58,7 @@ describe('createLinkedSubtitles', () => {
     ]);
   });
 
-  it('reads nothing where the linked server cannot be reached', async () => {
+  it('lists nothing where the linked server cannot be reached', async () => {
     const subtitles = createLinkedSubtitles(
       aLocal(),
       linkedTitleOf,
@@ -66,7 +66,39 @@ describe('createLinkedSubtitles', () => {
     );
 
     expect(await subtitles.list('theirs')).toBeNull();
+  });
+
+  it('fails a read where the linked server cannot be reached, so the player asks again', async () => {
+    const subtitles = createLinkedSubtitles(
+      aLocal(),
+      linkedTitleOf,
+      aLinkedAskerAnswering(() => null),
+    );
+
+    await expect(subtitles.read('theirs', 'en')).rejects.toThrow();
+    await expect(subtitles.readCues('theirs', 'en')).rejects.toThrow();
+    await expect(subtitles.readScript('theirs', 'en')).rejects.toThrow();
+  });
+
+  it('fails a read the linked server could not answer just now', async () => {
+    const subtitles = createLinkedSubtitles(
+      aLocal(),
+      linkedTitleOf,
+      aLinkedAskerAnswering(() => new Response('', { status: 503 })),
+    );
+
+    await expect(subtitles.readCues('theirs', 'en')).rejects.toThrow();
+  });
+
+  it('reads nothing where the linked server says the track has nothing to give', async () => {
+    const subtitles = createLinkedSubtitles(
+      aLocal(),
+      linkedTitleOf,
+      aLinkedAskerAnswering(() => new Response('', { status: 404 })),
+    );
+
     expect(await subtitles.read('theirs', 'en')).toBeNull();
     expect(await subtitles.readCues('theirs', 'en')).toBeNull();
+    expect(await subtitles.readScript('theirs', 'en')).toBeNull();
   });
 });
