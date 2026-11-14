@@ -7,6 +7,8 @@ import type { SourcePlay, SourceUserState } from './SourceReader';
 
 const MOST_PLAYS_AN_ITEM = 1000;
 
+const MOST_PLAYS_A_PERSON = 1_000_000;
+
 type PersonViewing = {
   watched: { mediaItemId: string; durationSeconds: number; at: Date }[];
   resumes: { mediaItemId: string; positionSeconds: number; durationSeconds: number; at: Date }[];
@@ -70,6 +72,10 @@ const viewingOf = ({
     }
 
     for (const play of itemPlays) {
+      if (viewing.plays.length >= MOST_PLAYS_A_PERSON) {
+        break;
+      }
+
       viewing.plays.push({
         mediaItemId: match.mediaItemId,
         at: play.at,
@@ -126,7 +132,10 @@ const viewingOf = ({
       state.playCount > 0 ? state.playCount : state.isPlayed && state.lastPlayedAt !== null ? 1 : 0,
       MOST_PLAYS_AN_ITEM,
     );
-    const missing = Math.max(counted - real.length, 0);
+    const missing = Math.min(
+      Math.max(counted - real.length, 0),
+      Math.max(MOST_PLAYS_A_PERSON - viewing.plays.length, 0),
+    );
     const earliestReal = real.reduce<number | null>(
       (earliest, play) =>
         earliest === null ? play.at.getTime() : Math.min(earliest, play.at.getTime()),

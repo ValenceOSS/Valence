@@ -117,6 +117,33 @@ describe('viewingOf', () => {
     expect(viewing([{ ...STATE, isPlayed: true }]).plays).toHaveLength(0);
   });
 
+  it('stops adding viewings for a person once they come to a million', () => {
+    const ids = Array.from({ length: 1100 }, (_, index) => `item-${index.toString()}`);
+    const catalogue = {
+      byId: new Map(ids.map((id) => [id, aSourceItem({ id, kind: 'movie', title: id })])),
+      matches: new Map<string, ItemMatch>(
+        ids.map((id) => [id, { kind: 'item', mediaItemId: `valence-${id}`, by: 'id' }]),
+      ),
+    };
+    const made = viewingOf({
+      sourceId: 'src',
+      userId: 'u',
+      states: ids.map((id) => ({
+        ...STATE,
+        itemId: id,
+        isPlayed: true,
+        playCount: 1000,
+        lastPlayedAt: new Date('2026-03-10T00:00:00Z'),
+      })),
+      plays: [],
+      catalogue,
+      durations: new Map(),
+      now: NOW,
+    });
+
+    expect(made.plays).toHaveLength(1_000_000);
+  });
+
   it('dates plays with no date of their own when the item arrived', () => {
     expect(viewing([{ ...STATE, playCount: 1 }]).plays[0]?.at).toEqual(
       new Date('2026-03-01T00:00:00Z'),
