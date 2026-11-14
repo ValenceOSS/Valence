@@ -37,6 +37,7 @@ const plan: PlaybackPlan = {
 const build = () => {
   const { auth, settings, store } = createMemoryAuth();
   const presence = createPresenceService();
+  const playback = createMemoryPlaybackService();
 
   const app = createApp({
     auth,
@@ -44,7 +45,7 @@ const build = () => {
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService(),
-    playback: createMemoryPlaybackService(),
+    playback,
     presence,
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
@@ -53,7 +54,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, auth, presence, store };
+  return { app, auth, presence, store, playback };
 };
 
 describe('presence over HTTP', () => {
@@ -153,8 +154,9 @@ describe('presence over HTTP', () => {
     ]);
   });
 
-  it('records a heartbeat from a tab that is signed in', async () => {
-    const { app, auth, presence, store } = build();
+  it('records a heartbeat from a tab that is signed in, and passes it on to playback', async () => {
+    const { app, auth, presence, store, playback } = build();
+    const relay = vi.spyOn(playback, 'relayPresence');
     const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     presence.connect({
@@ -200,6 +202,12 @@ describe('presence over HTTP', () => {
       isPlaying: false,
       health: { positionSeconds: 42 },
     });
+    expect(relay).toHaveBeenCalledWith(
+      'tab-1',
+      'media-1',
+      false,
+      expect.objectContaining({ positionSeconds: 42 }),
+    );
   });
 
   it('refuses a heartbeat for a tab belonging to another account', async () => {

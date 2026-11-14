@@ -86,11 +86,13 @@ type PlaybackService = {
   readPreview: (mediaId: string, range: string | null) => Promise<PreviewRead>;
   readTrickplayFile: (trickplayId: string, name: string) => Promise<StoredFile | null>;
   stop: (sessionId: string, deviceId?: string) => Promise<boolean>;
-  heartbeat: (
-    sessionId: string,
+  heartbeat: (sessionId: string, isPlaying: boolean) => Promise<boolean>;
+  relayPresence: (
+    deviceId: string,
+    mediaId: string,
     isPlaying: boolean,
     health?: PresencePlaybackHealth,
-  ) => Promise<boolean>;
+  ) => void;
 };
 
 type Trickplay = {

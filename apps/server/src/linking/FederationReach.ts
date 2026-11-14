@@ -10,7 +10,14 @@ type FederationReach =
   | { kind: 'server'; action: FederationAction }
   | { kind: 'catalogue'; action: FederationAction; libraryId: string }
   | { kind: 'subject'; action: FederationAction; subject: PeerSubject; inner: string }
-  | { kind: 'claimed'; action: FederationAction; claim: PeerClaimKind; id: string; inner: string }
+  | {
+      kind: 'claimed';
+      action: FederationAction;
+      claim: PeerClaimKind;
+      id: string;
+      inner: string;
+      isAHeartbeat: boolean;
+    }
   | { kind: 'refused' };
 
 export type { FederationReach, PeerClaimKind, PeerSubject };

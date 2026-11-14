@@ -67,12 +67,18 @@ const SUBJECT_ROUTES: readonly { method: string; path: RegExp; kind: PeerSubject
   { method: 'GET', path: new RegExp(`^/api/music/artists/(${ID})/image$`), kind: 'artist' },
 ];
 
-const CLAIMED_ROUTES: readonly { method: string; path: RegExp; claim: PeerClaimKind }[] = [
+const CLAIMED_ROUTES: readonly {
+  method: string;
+  path: RegExp;
+  claim: PeerClaimKind;
+  isAHeartbeat?: true;
+}[] = [
   { method: 'DELETE', path: new RegExp(`^/api/playback/session/(${NAME})$`), claim: 'session' },
   {
     method: 'POST',
     path: new RegExp(`^/api/playback/session/(${NAME})/heartbeat$`),
     claim: 'session',
+    isAHeartbeat: true,
   },
   {
     method: 'GET',
@@ -113,7 +119,14 @@ const passedThroughTo = (method: string, inner: string): FederationReach => {
     const found = route.method === method ? route.path.exec(inner) : null;
 
     if (found?.[1] !== undefined) {
-      return { kind: 'claimed', action: 'media', claim: route.claim, id: found[1], inner };
+      return {
+        kind: 'claimed',
+        action: 'media',
+        claim: route.claim,
+        id: found[1],
+        inner,
+        isAHeartbeat: route.isAHeartbeat === true,
+      };
     }
   }
 

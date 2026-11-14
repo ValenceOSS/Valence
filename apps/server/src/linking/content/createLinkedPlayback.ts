@@ -12,6 +12,7 @@ import type { PeerAsk } from './PeerAskSchema';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
 import { z } from 'zod';
 import type { PlaybackService } from '@ValenceServer/playback/PlaybackService';
+import type { PresencePlaybackHealth } from '@ValenceServer/presence/PresenceService';
 import type { LinkedAsker } from './createLinkedAsker';
 
 type LinkedTitle = { serverId: string; remoteId: string };
@@ -90,7 +91,8 @@ const hasBody = (
  * the manifest, segments, file, thumbnails and frames, which this server passes on as they come. A
  * session started there is known here by a name of this server's own, and every address it hands
  * back is made this server's, so a player only ever talks to the server it is signed in to, and
- * never learns another is there.
+ * never learns another is there. What the player says of it here, whether it is playing and where it
+ * has got, is passed on to that server each time it says so, one at a time.
  *
  * @param local - This server's own playback.
  * @param linkedTitleOf - Which linked server a title is from and what it calls it, or nothing
@@ -120,7 +122,45 @@ const createLinkedPlayback = (
     return read?.success === true ? read.data.ticket : null;
   };
 
-  const devices = new Map<string, string>();
+  const devices = new Map<string, { deviceId: string; mediaId: string }>();
+  const sending = new Set<string>();
+
+  /**
+   * Tells a linked server a session it started for somebody here is still wanted, whether it is
+   * playing and, where the player said, where it has got, and passes on whatever its admin asked of
+   * them.
+   *
+   * @param sessionId - The session, by this server's name for it.
+   * @param linked - The server it is on and what that server calls it.
+   * @param isPlaying - Whether the picture is moving.
+   * @param health - Where the player has got and how the stream is going, where it said.
+   * @returns Whether the linked server took it.
+   */
+  const beat = async (
+    sessionId: string,
+    linked: LinkedTitle,
+    isPlaying: boolean,
+    health?: PresencePlaybackHealth,
+  ) => {
+    const answered = await asker.ask(
+      linked.serverId,
+      `/api/playback/session/${encodeURIComponent(linked.remoteId)}/heartbeat`,
+      sendingJson({ isPlaying, ...(health === undefined ? {} : { health }) }),
+    );
+    const asked =
+      answered?.status === 200
+        ? PeerAsksSchema.safeParse(await boundedAnswer(answered).json())
+        : null;
+    const device = devices.get(sessionId);
+
+    if (asked?.success === true && device !== undefined) {
+      onAsked(device.deviceId, linked.serverId, asked.data.asks);
+
+      return true;
+    }
+
+    return answered?.ok === true;
+  };
 
   return {
     explain: async (mediaId, profile, requestedQuality) => {
@@ -217,7 +257,7 @@ const createLinkedPlayback = (
       const here = linkedNameOf(linked.serverId, started.sessionId);
 
       if (deviceId !== undefined) {
-        devices.set(here, deviceId);
+        devices.set(here, { deviceId, mediaId });
       }
 
       const direct = await directFrom(linked.serverId);
@@ -412,31 +452,32 @@ const createLinkedPlayback = (
       return answered?.ok === true;
     },
 
-    heartbeat: async (sessionId, isPlaying, health) => {
+    heartbeat: async (sessionId, isPlaying) => {
       const linked = readLinkedName(sessionId);
 
       if (linked === null) {
         return local.heartbeat(sessionId, isPlaying);
       }
 
-      const answered = await asker.ask(
-        linked.serverId,
-        `/api/playback/session/${encodeURIComponent(linked.remoteId)}/heartbeat`,
-        sendingJson({ isPlaying, ...(health === undefined ? {} : { health }) }),
-      );
-      const asked =
-        answered?.status === 200
-          ? PeerAsksSchema.safeParse(await boundedAnswer(answered).json())
-          : null;
-      const deviceId = devices.get(sessionId);
+      return beat(sessionId, linked, isPlaying);
+    },
 
-      if (asked?.success === true && deviceId !== undefined) {
-        onAsked(deviceId, linked.serverId, asked.data.asks);
+    relayPresence: (deviceId, mediaId, isPlaying, health) => {
+      const sessionId = [...devices]
+        .filter(([, device]) => device.deviceId === deviceId && device.mediaId === mediaId)
+        .at(-1)?.[0];
+      const linked = sessionId === undefined ? null : readLinkedName(sessionId);
 
-        return true;
+      if (sessionId === undefined || linked === null || sending.has(sessionId)) {
+        return;
       }
 
-      return answered?.ok === true;
+      sending.add(sessionId);
+      void beat(sessionId, linked, isPlaying, health)
+        .catch(() => false)
+        .finally(() => {
+          sending.delete(sessionId);
+        });
     },
   };
 };

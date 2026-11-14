@@ -176,6 +176,8 @@ const createMemoryPlaybackService = (
   },
 
   heartbeat: (sessionId) => Promise.resolve(state.sessions[sessionId] !== undefined),
+
+  relayPresence: () => undefined,
 });
 
 export { createMemoryPlaybackService };

@@ -1,5 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, signedInApp } from '@ValenceServer/auth/signUpForTest';
@@ -640,90 +640,6 @@ describe('playback sessions', () => {
     );
 
     expect(response.status).toBe(204);
-  });
-
-  it('passes on where the device’s player has got with a heartbeat', async () => {
-    const presence = createPresenceService();
-    const { auth, settings, store } = createMemoryAuth();
-    const permissions = createMemoryPermissionService();
-    const playback = createMemoryPlaybackService({
-      media: { [MEDIA_ID]: hdrMedia },
-      sessions: {},
-    });
-    const heartbeat = vi.spyOn(playback, 'heartbeat');
-    const health = {
-      positionSeconds: 1200,
-      durationSeconds: 8500,
-      bufferedAheadSeconds: 60,
-      presentedWidth: 1920,
-      presentedHeight: 800,
-    };
-    const app = signedInApp(
-      createApp({
-        auth,
-        settings,
-        permissions,
-        countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(null),
-        library: createMemoryLibraryService(),
-        subtitles: createMemorySubtitleService(),
-        segments: createMemorySegmentService(),
-        progress: createMemoryWatchProgressService(),
-        favourites: createMemoryFavouriteService(),
-        ratings: createMemoryRatingService(),
-        playback,
-        presence,
-      }),
-      { auth, store, permissions, isAdministrator: true },
-    );
-    const started = StartSchema.parse(
-      await (
-        await app.request(
-          post(`/api/playback/${MEDIA_ID}/session?clientId=tab-1`, {
-            deviceProfile: modestProfile,
-          }),
-        )
-      ).json(),
-    );
-
-    presence.connect({
-      clientId: 'tab-1',
-      socketId: 'socket-1',
-      accountId: null,
-      profileId: null,
-      profileName: null,
-      deviceLabel: 'Chrome on Windows',
-      send: () => {},
-    });
-    await app.request(
-      post(`/api/playback/session/${started.sessionId}/heartbeat?clientId=tab-1`, {
-        isPlaying: true,
-      }),
-    );
-    presence.startPlayback('tab-1', {
-      mediaId: MEDIA_ID,
-      mediaTitle: 'Arrival',
-      seriesTitle: null,
-      seasonNumber: null,
-      episodeNumber: null,
-      hasPoster: false,
-      hasBackdrop: false,
-      mode: 'transcode',
-      reuse: null,
-      transcoderSessionId: started.sessionId,
-      plan: started.plan,
-    });
-    presence.heartbeatPlayback('tab-1', true, health);
-    await app.request(
-      post(`/api/playback/session/${started.sessionId}/heartbeat?clientId=tab-1`, {
-        isPlaying: true,
-      }),
-    );
-
-    expect(heartbeat.mock.calls).toEqual([
-      [started.sessionId, true, undefined],
-      [started.sessionId, true, health],
-    ]);
   });
 
   it('reports a heartbeat for an unknown session', async () => {
