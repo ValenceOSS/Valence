@@ -98,12 +98,29 @@ pub fn extract_arguments(path: &Path, stream_index: u32) -> Vec<String> {
     ])
 }
 
-/// The arguments that convert every listed track to `WebVTT` in one read.
+/// A text track the file's one pass reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TextTrack {
+    /// The stream, as ffprobe numbered it.
+    pub stream_index: u32,
+    /// Whether it is an ASS or SSA script, kept as one beside its `WebVTT`.
+    pub is_styled: bool,
+}
+
+/// The subtitle formats the one pass can turn into `WebVTT`.
+const CONVERTIBLE: [&str; 4] = ["srt", "webvtt", "ass", "ssa"];
+
+/// The subtitle formats that are scripts, kept as written as well as in `WebVTT`.
+const STYLED: [&str; 2] = ["ass", "ssa"];
+
+/// The arguments that read every listed track in one pass of the file.
 ///
-/// One output per track, each written beside the others under a name ending
-/// `.partial` so nothing reads a track still being written.
+/// One `WebVTT` output per track, and for a script a second output copying
+/// it as written, each under a name ending `.partial` so nothing reads a
+/// track still being written. The script is copied rather than re-encoded,
+/// so a line ffmpeg could not decode as UTF-8 is kept rather than dropped.
 #[must_use]
-pub fn extract_all_arguments(path: &Path, stream_indices: &[u32], directory: &Path) -> Vec<String> {
+pub fn extract_all_arguments(path: &Path, tracks: &[TextTrack], directory: &Path) -> Vec<String> {
     let mut arguments = vec![
         "-nostdin".to_owned(),
         "-y".to_owned(),
@@ -113,16 +130,32 @@ pub fn extract_all_arguments(path: &Path, stream_indices: &[u32], directory: &Pa
         path.to_string_lossy().into_owned(),
     ];
 
-    for index in stream_indices {
+    for track in tracks {
         arguments.extend([
             "-map".to_owned(),
-            format!("0:{index}"),
+            format!("0:{}", track.stream_index),
             "-c:s".to_owned(),
             "webvtt".to_owned(),
             "-f".to_owned(),
             "webvtt".to_owned(),
-            partial_at(directory, *index).to_string_lossy().into_owned(),
+            partial_at(directory, track.stream_index)
+                .to_string_lossy()
+                .into_owned(),
         ]);
+
+        if track.is_styled {
+            arguments.extend([
+                "-map".to_owned(),
+                format!("0:{}", track.stream_index),
+                "-c:s".to_owned(),
+                "copy".to_owned(),
+                "-f".to_owned(),
+                "ass".to_owned(),
+                partial_ass_at(directory, track.stream_index)
+                    .to_string_lossy()
+                    .into_owned(),
+            ]);
+        }
     }
 
     crate::joined_input::opened_as_media(arguments)
@@ -153,6 +186,11 @@ fn kept_ass_at(directory: &Path, stream_index: u32) -> PathBuf {
     directory.join(format!("{stream_index}.ass"))
 }
 
+/// Where an Advanced `SubStation` copy is written before it is finished.
+fn partial_ass_at(directory: &Path, stream_index: u32) -> PathBuf {
+    directory.join(format!("{stream_index}.ass.partial"))
+}
+
 /// Refuses an Advanced `SubStation` copy holding no lines.
 fn as_ass_track(content: String) -> Result<SubtitleTrack, SubtitleError> {
     if !content.contains("Dialogue:") {
@@ -162,17 +200,18 @@ fn as_ass_track(content: String) -> Result<SubtitleTrack, SubtitleError> {
     Ok(SubtitleTrack { content })
 }
 
-/// Copies one track out as Advanced `SubStation`.
+/// Copies one track out as Advanced `SubStation`, as ffmpeg wrote it, lines
+/// or none.
 ///
 /// # Errors
 ///
-/// Returns [`SubtitleError`] when ffmpeg cannot be started, it refuses the
-/// stream, or the stream turns out to hold nothing.
+/// Returns [`SubtitleError`] when ffmpeg cannot be started or it refuses the
+/// stream.
 pub async fn extract_ass(
     ffmpeg: &str,
     path: &Path,
     stream_index: u32,
-) -> Result<SubtitleTrack, SubtitleError> {
+) -> Result<String, SubtitleError> {
     let output = Command::new(ffmpeg)
         .args(extract_ass_arguments(path, stream_index))
         .kill_on_drop(true)
@@ -186,7 +225,7 @@ pub async fn extract_ass(
         ));
     }
 
-    as_ass_track(String::from_utf8_lossy(&output.stdout).into_owned())
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
 /// Where a finished track is kept.
@@ -367,9 +406,12 @@ impl SubtitleRegistry {
 
 impl SubtitleRegistry {
     /// One ASS or SSA track as Advanced `SubStation`, kept beside the file's
-    /// `WebVTT` copies once read. Read on its own rather than in the file's
-    /// one pass, since only a player drawing signs where they belong asks for
-    /// it, and only of tracks that have any.
+    /// `WebVTT` copies once read.
+    ///
+    /// The file's one pass writes it with the rest, so a player that has
+    /// listed the tracks finds it waiting, and one that has not waits for a
+    /// single read of the file rather than two. A copy with no lines is kept
+    /// too, so asking again answers from disk rather than reading again.
     async fn read_ass(
         &self,
         tools: Tools,
@@ -383,22 +425,21 @@ impl SubtitleRegistry {
             return finish(async move {
                 let _slot = slot;
 
-                extract_ass(&tools.ffmpeg, &path, stream_index).await
+                as_ass_track(extract_ass(&tools.ffmpeg, &path, stream_index).await?)
             })
             .await;
         };
 
         let directory = artefact_root.join(DIRECTORY).join(&address);
-        let kept = kept_ass_at(&directory, stream_index);
 
-        if let Ok(content) = tokio::fs::read_to_string(&kept).await {
-            return as_ass_track(content);
+        if let Some(found) = kept_ass(&directory, stream_index).await {
+            return found;
         }
 
         let claim = self.claim(&address).await;
 
-        if let Ok(content) = tokio::fs::read_to_string(&kept).await {
-            return as_ass_track(content);
+        if let Some(found) = kept_ass(&directory, stream_index).await {
+            return found;
         }
 
         let slot = self.slot().await?;
@@ -407,20 +448,65 @@ impl SubtitleRegistry {
             let _claim = claim;
             let _slot = slot;
 
-            let track = extract_ass(&tools.ffmpeg, &path, stream_index).await?;
-
-            if tokio::fs::create_dir_all(&directory).await.is_ok() {
-                let partial = directory.join(format!("{stream_index}.ass.partial"));
-
-                if tokio::fs::write(&partial, &track.content).await.is_ok() {
-                    let _ = tokio::fs::rename(&partial, &kept).await;
-                }
-            }
-
-            Ok(track)
+            read_ass_into(&tools, &directory, &path, stream_index).await
         })
         .await
     }
+}
+
+/// Answers from the Advanced `SubStation` copy an earlier read kept, where
+/// there is one.
+async fn kept_ass(
+    directory: &Path,
+    stream_index: u32,
+) -> Option<Result<SubtitleTrack, SubtitleError>> {
+    let content = tokio::fs::read_to_string(kept_ass_at(directory, stream_index))
+        .await
+        .ok()?;
+
+    Some(as_ass_track(content))
+}
+
+/// Reads a file's text tracks into the directory kept for it, scripts
+/// included, and answers with one script.
+///
+/// Where the pass fails, or the file's header does not list the track as a
+/// script, the track is copied out on its own.
+async fn read_ass_into(
+    tools: &Tools,
+    directory: &Path,
+    path: &Path,
+    stream_index: u32,
+) -> Result<SubtitleTrack, SubtitleError> {
+    tokio::fs::create_dir_all(directory)
+        .await
+        .map_err(SubtitleError::Spawn)?;
+
+    let tracks = text_tracks(&tools.ffprobe, path).await;
+    let is_listed = tracks
+        .iter()
+        .any(|track| track.stream_index == stream_index && track.is_styled);
+
+    if is_listed
+        && extract_all(&tools.ffmpeg, path, &tracks, directory)
+            .await
+            .is_ok()
+    {
+        if let Some(found) = kept_ass(directory, stream_index).await {
+            return found;
+        }
+    }
+
+    let content = extract_ass(&tools.ffmpeg, path, stream_index).await?;
+
+    keep_as(
+        &partial_ass_at(directory, stream_index),
+        &kept_ass_at(directory, stream_index),
+        &content,
+    )
+    .await;
+
+    as_ass_track(content)
 }
 
 /// Runs a read as a task of its own, so dropping the caller does not stop it.
@@ -443,10 +529,12 @@ async fn read_into(
         .await
         .map_err(SubtitleError::Spawn)?;
 
-    let indices = text_tracks(&tools.ffprobe, path).await;
+    let tracks = text_tracks(&tools.ffprobe, path).await;
 
-    if !indices.contains(&stream_index)
-        || extract_all(&tools.ffmpeg, path, &indices, directory)
+    if !tracks
+        .iter()
+        .any(|track| track.stream_index == stream_index)
+        || extract_all(&tools.ffmpeg, path, &tracks, directory)
             .await
             .is_err()
     {
@@ -475,19 +563,24 @@ pub struct Tools {
     pub ffprobe: String,
 }
 
-/// Every text track a file carries, by stream index.
+/// Every text track a file carries that the one pass can read.
 ///
 /// Read from the header, which is quick. A file that cannot be probed gives
-/// none, and the caller reads only the track it was asked for.
-async fn text_tracks(ffprobe: &str, path: &Path) -> Vec<u32> {
+/// none, and the caller reads only the track it was asked for. A stream in a
+/// format ffmpeg cannot turn into text is left out, since one such stream
+/// would fail the pass for every other track.
+async fn text_tracks(ffprobe: &str, path: &Path) -> Vec<TextTrack> {
     crate::probe::probe_media(ffprobe, path)
         .await
         .map(|probe| {
             probe
                 .subtitle_streams
                 .iter()
-                .filter(|stream| !stream.is_image_based)
-                .map(|stream| stream.index)
+                .filter(|stream| CONVERTIBLE.contains(&stream.format.as_str()))
+                .map(|stream| TextTrack {
+                    stream_index: stream.index,
+                    is_styled: STYLED.contains(&stream.format.as_str()),
+                })
                 .collect()
         })
         .unwrap_or_default()
@@ -498,19 +591,20 @@ async fn text_tracks(ffprobe: &str, path: &Path) -> Vec<u32> {
 async fn extract_all(
     ffmpeg: &str,
     path: &Path,
-    stream_indices: &[u32],
+    tracks: &[TextTrack],
     directory: &Path,
 ) -> Result<(), SubtitleError> {
     let output = Command::new(ffmpeg)
-        .args(extract_all_arguments(path, stream_indices, directory))
+        .args(extract_all_arguments(path, tracks, directory))
         .kill_on_drop(true)
         .output()
         .await
         .map_err(SubtitleError::Spawn)?;
 
     if !output.status.success() {
-        for index in stream_indices {
-            let _ = tokio::fs::remove_file(partial_at(directory, *index)).await;
+        for track in tracks {
+            let _ = tokio::fs::remove_file(partial_at(directory, track.stream_index)).await;
+            let _ = tokio::fs::remove_file(partial_ass_at(directory, track.stream_index)).await;
         }
 
         return Err(SubtitleError::Failed(
@@ -518,8 +612,20 @@ async fn extract_all(
         ));
     }
 
-    for index in stream_indices {
-        let _ = tokio::fs::rename(partial_at(directory, *index), kept_at(directory, *index)).await;
+    for track in tracks {
+        let _ = tokio::fs::rename(
+            partial_at(directory, track.stream_index),
+            kept_at(directory, track.stream_index),
+        )
+        .await;
+
+        if track.is_styled {
+            let _ = tokio::fs::rename(
+                partial_ass_at(directory, track.stream_index),
+                kept_ass_at(directory, track.stream_index),
+            )
+            .await;
+        }
     }
 
     Ok(())
@@ -527,10 +633,18 @@ async fn extract_all(
 
 /// Keeps one track read on its own.
 async fn keep(directory: &Path, stream_index: u32, content: &str) {
-    let partial = partial_at(directory, stream_index);
+    keep_as(
+        &partial_at(directory, stream_index),
+        &kept_at(directory, stream_index),
+        content,
+    )
+    .await;
+}
 
-    if tokio::fs::write(&partial, content).await.is_ok() {
-        let _ = tokio::fs::rename(&partial, kept_at(directory, stream_index)).await;
+/// Writes a copy under its unfinished name, then moves it into place.
+async fn keep_as(partial: &Path, kept: &Path, content: &str) {
+    if tokio::fs::write(partial, content).await.is_ok() {
+        let _ = tokio::fs::rename(partial, kept).await;
     }
 }
 
@@ -567,9 +681,26 @@ pub async fn extract_subtitle(
 
 #[cfg(test)]
 mod tests {
-    use super::{extract_all_arguments, extract_arguments, SubtitleRegistry, READS_AT_ONCE};
+    use super::{
+        extract_all_arguments, extract_arguments, extract_ass_arguments, SubtitleRegistry,
+        TextTrack, READS_AT_ONCE,
+    };
     use std::path::Path;
     use std::time::Duration;
+
+    fn plain(stream_index: u32) -> TextTrack {
+        TextTrack {
+            stream_index,
+            is_styled: false,
+        }
+    }
+
+    fn styled(stream_index: u32) -> TextTrack {
+        TextTrack {
+            stream_index,
+            is_styled: true,
+        }
+    }
 
     #[tokio::test]
     async fn reads_only_a_few_files_at_once() {
@@ -616,8 +747,11 @@ mod tests {
 
     #[test]
     fn reads_every_track_in_one_pass() {
-        let arguments =
-            extract_all_arguments(Path::new("/media/film.mkv"), &[2, 3, 7], Path::new("/kept"));
+        let arguments = extract_all_arguments(
+            Path::new("/media/film.mkv"),
+            &[plain(2), plain(3), plain(7)],
+            Path::new("/kept"),
+        );
 
         assert_eq!(
             arguments
@@ -638,8 +772,11 @@ mod tests {
 
     #[test]
     fn writes_each_track_beside_the_others_until_it_is_finished() {
-        let arguments =
-            extract_all_arguments(Path::new("/media/film.mkv"), &[2, 3], Path::new("/kept"));
+        let arguments = extract_all_arguments(
+            Path::new("/media/film.mkv"),
+            &[plain(2), plain(3)],
+            Path::new("/kept"),
+        );
 
         assert!(arguments.iter().any(|argument| *argument
             == Path::new("/kept")
@@ -655,10 +792,71 @@ mod tests {
 
     #[test]
     fn writes_over_a_partial_track_a_crashed_read_left_behind() {
-        let arguments =
-            extract_all_arguments(Path::new("/media/film.mkv"), &[2], Path::new("/kept"));
+        let arguments = extract_all_arguments(
+            Path::new("/media/film.mkv"),
+            &[plain(2)],
+            Path::new("/kept"),
+        );
 
         assert!(arguments.iter().any(|argument| argument == "-y"));
+    }
+
+    #[test]
+    fn copies_a_script_out_as_written_in_the_same_pass() {
+        let arguments = extract_all_arguments(
+            Path::new("/media/film.mkv"),
+            &[styled(2), plain(3)],
+            Path::new("/kept"),
+        );
+        let script = Path::new("/kept")
+            .join("2.ass.partial")
+            .display()
+            .to_string();
+        let at = arguments
+            .iter()
+            .position(|argument| *argument == script)
+            .expect("writes the script");
+
+        assert_eq!(
+            arguments
+                .iter()
+                .filter(|argument| *argument == "-i")
+                .count(),
+            1
+        );
+        assert_eq!(arguments[at - 5..at], ["0:2", "-c:s", "copy", "-f", "ass"]);
+        assert!(arguments.iter().any(|argument| *argument
+            == Path::new("/kept")
+                .join("2.vtt.partial")
+                .display()
+                .to_string()));
+    }
+
+    #[test]
+    fn copies_no_script_for_a_track_that_is_not_one() {
+        let arguments = extract_all_arguments(
+            Path::new("/media/film.mkv"),
+            &[plain(3)],
+            Path::new("/kept"),
+        );
+
+        assert!(!arguments.iter().any(|argument| argument == "ass"));
+        assert!(!arguments
+            .iter()
+            .any(|argument| argument.ends_with(".ass.partial")));
+    }
+
+    #[test]
+    fn copies_one_script_out_as_advanced_substation() {
+        let arguments = extract_ass_arguments(Path::new("/media/film.mkv"), 4);
+        let map = arguments
+            .iter()
+            .position(|argument| argument == "-map")
+            .expect("maps");
+
+        assert_eq!(arguments[map + 1], "0:4");
+        assert_eq!(arguments.last().map(String::as_str), Some("-"));
+        assert!(arguments.windows(2).any(|pair| pair == ["-f", "ass"]));
     }
 
     #[test]
