@@ -1,5 +1,6 @@
 /* oxlint-disable valence/no-hard-coded-strings -- Jellyfin's own field values and kinds, which its apps match on and no person reads */
-import { say } from '@ValenceI18n/say';
+import { nameOfSeason } from '@ValenceServer/jellyfin/nameOfSeason';
+import { JELLYFIN_ITEM_DEFAULTS } from '@ValenceServer/jellyfin/JELLYFIN_ITEM_DEFAULTS';
 import { artworkNameIn } from '@ValenceServer/jellyfin/artworkNameIn';
 import { seasonJellyfinId } from '@ValenceServer/jellyfin/seasonJellyfinId';
 import { showJellyfinId } from '@ValenceServer/jellyfin/showJellyfinId';
@@ -9,22 +10,6 @@ import type { JellyfinItem } from '@ValenceServer/jellyfin/JellyfinDtos';
 import type { JellyfinViewing } from '@ValenceServer/jellyfin/JellyfinViewing';
 
 const POSTER_SHAPE = 2 / 3;
-
-/**
- * What a season is called where the catalogue gives it no name of its own.
- *
- * @param seasonNumber - The season, or nothing for episodes given no season.
- * @returns Its name.
- */
-const nameOfSeason = (seasonNumber: number | null): string => {
-  if (seasonNumber === null) {
-    return say('common.episodes');
-  }
-
-  return seasonNumber === 0
-    ? say('common.specials')
-    : say('common.seasonSeasonNumber', { seasonNumber });
-};
 
 /**
  * One season of a programme as Jellyfin describes it. Valence holds no season of its own, so it is
@@ -50,6 +35,7 @@ const jellyfinItemOfSeason = (
   ).length;
 
   return {
+    ...JELLYFIN_ITEM_DEFAULTS,
     Name: named ?? nameOfSeason(season.seasonNumber),
     ServerId: viewing.serverId,
     Id: id,

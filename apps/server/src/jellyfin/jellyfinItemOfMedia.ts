@@ -1,5 +1,7 @@
 /* oxlint-disable valence/no-hard-coded-strings -- Jellyfin's own field values and kinds, which its apps match on and no person reads */
 import { artworkNameIn } from '@ValenceServer/jellyfin/artworkNameIn';
+import { JELLYFIN_ITEM_DEFAULTS } from '@ValenceServer/jellyfin/JELLYFIN_ITEM_DEFAULTS';
+import { nameOfSeason } from '@ValenceServer/jellyfin/nameOfSeason';
 import { jellyfinIdOf } from '@ValenceServer/jellyfin/jellyfinIdOf';
 import { jellyfinMediaSourceOf } from '@ValenceServer/jellyfin/jellyfinMediaSourceOf';
 import { jellyfinUserDataOf } from '@ValenceServer/jellyfin/jellyfinUserDataOf';
@@ -65,8 +67,13 @@ const jellyfinItemOfMedia = (
   const logo = artworkNameIn(media.artwork?.logo);
   const primary = isEpisode ? (backdrop ?? poster) : poster;
   const metadata = detail?.metadata;
+  const seasonName =
+    isEpisode && media.seasonNumber !== null && media.seasonNumber !== undefined
+      ? nameOfSeason(media.seasonNumber)
+      : undefined;
 
   return {
+    ...JELLYFIN_ITEM_DEFAULTS,
     Name: media.title,
     ServerId: viewing.serverId,
     Id: jellyfinIdOf(media.id),
@@ -78,14 +85,14 @@ const jellyfinItemOfMedia = (
     ...field('PremiereDate', media.releaseDate),
     ...field('ProductionYear', media.year),
     ...field('CommunityRating', media.rating),
-    ...field('Genres', media.genres),
+    Genres: media.genres ?? [],
     ...field('Overview', metadata?.overview),
     ...field('OfficialRating', metadata?.certification),
     ...(metadata?.tagline === null || metadata?.tagline === undefined
       ? {}
       : { Taglines: [metadata.tagline] }),
     ...(metadata?.cast === null || metadata?.cast === undefined
-      ? {}
+      ? { People: [] }
       : {
           People: metadata.cast.map((member) => ({
             Name: member.name,
@@ -110,6 +117,7 @@ const jellyfinItemOfMedia = (
           SeriesName: media.seriesTitle ?? media.title,
           SeriesId: showJellyfinId(media.libraryId, showId),
           SeasonId: seasonJellyfinId(showKey, media.seasonNumber ?? null),
+          ...field('SeasonName', seasonName),
           ...field('IndexNumber', media.episodeNumber),
           ...field('IndexNumberEnd', media.episodeNumberEnd),
           ...field('ParentIndexNumber', media.seasonNumber),

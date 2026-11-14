@@ -1,4 +1,5 @@
 /* oxlint-disable valence/no-hard-coded-strings -- Jellyfin's own field values and kinds, which its apps match on and no person reads */
+import { JELLYFIN_ITEM_DEFAULTS } from '@ValenceServer/jellyfin/JELLYFIN_ITEM_DEFAULTS';
 import { jellyfinIdOf } from '@ValenceServer/jellyfin/jellyfinIdOf';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { JellyfinItem } from '@ValenceServer/jellyfin/JellyfinDtos';
@@ -14,6 +15,7 @@ const jellyfinViewOf = (library: Library, serverId: string): JellyfinItem => {
   const id = jellyfinIdOf(library.id);
 
   return {
+    ...JELLYFIN_ITEM_DEFAULTS,
     Name: library.name,
     ServerId: serverId,
     Id: id,

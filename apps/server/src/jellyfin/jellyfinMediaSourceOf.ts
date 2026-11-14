@@ -43,6 +43,10 @@ const jellyfinMediaSourceOf = (item: MediaDetail): JellyfinMediaSource => {
     MediaAttachments: [],
     Formats: [],
     Bitrate: item.bitrateKbps * 1000,
+    RequiredHttpHeaders: {},
+    VideoType: 'VideoFile',
+    UseMostCompatibleTranscodingProfile: false,
+    HasSegments: false,
     ...(audio === undefined ? {} : { DefaultAudioStreamIndex: jellyfinStreamIndexOf(audio.index) }),
   };
 };

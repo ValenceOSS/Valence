@@ -1,5 +1,6 @@
 /* oxlint-disable valence/no-hard-coded-strings -- Jellyfin's own field values and kinds, which its apps match on and no person reads */
 import { artworkNameIn } from '@ValenceServer/jellyfin/artworkNameIn';
+import { JELLYFIN_ITEM_DEFAULTS } from '@ValenceServer/jellyfin/JELLYFIN_ITEM_DEFAULTS';
 import { jellyfinIdOf } from '@ValenceServer/jellyfin/jellyfinIdOf';
 import { showJellyfinId } from '@ValenceServer/jellyfin/showJellyfinId';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
@@ -29,6 +30,7 @@ const jellyfinItemOfShow = (
   const unwatched = show.unwatchedCount ?? null;
 
   return {
+    ...JELLYFIN_ITEM_DEFAULTS,
     Name: show.title,
     ServerId: viewing.serverId,
     Id: id,

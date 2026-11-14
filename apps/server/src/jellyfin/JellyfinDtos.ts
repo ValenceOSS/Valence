@@ -80,6 +80,9 @@ type JellyfinMediaSource = {
   TranscodingContainer?: string;
   DirectStreamUrl?: string;
   HasSegments?: boolean;
+  RequiredHttpHeaders: Record<string, string>;
+  VideoType: 'VideoFile';
+  UseMostCompatibleTranscodingProfile: boolean;
 };
 
 type JellyfinItem = {
@@ -94,7 +97,6 @@ type JellyfinItem = {
   PremiereDate?: string;
   OfficialRating?: string;
   Overview?: string;
-  Taglines?: string[];
   Genres?: string[];
   CommunityRating?: number;
   RunTimeTicks?: number;
@@ -118,7 +120,7 @@ type JellyfinItem = {
   ChildCount?: number;
   RecursiveItemCount?: number;
   People?: JellyfinPerson[];
-  Studios?: [];
+  Studios: [];
   GenreItems?: { Name: string; Id: string }[];
   ProviderIds?: Record<string, string>;
   LocationType: 'FileSystem' | 'Virtual';
@@ -138,6 +140,15 @@ type JellyfinItem = {
   LocalTrailerCount?: number;
   SpecialFeatureCount?: number;
   Status?: string;
+  PlayAccess: 'Full';
+  EnableMediaSourceDisplay: boolean;
+  ImageBlurHashes: Record<string, Record<string, string>>;
+  Tags: string[];
+  Taglines?: string[];
+  RemoteTrailers: [];
+  ExternalUrls: [];
+  LockedFields: [];
+  LockData: boolean;
 };
 
 type JellyfinQueryResult = {
