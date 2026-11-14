@@ -6,6 +6,7 @@ import { isIP } from 'node:net';
 import type { ClientRequest, IncomingMessage } from 'node:http';
 import type { RequestOptions } from 'node:https';
 import { isHostAllowed } from './isHostAllowed';
+import { isPrivateNetworkAddress } from './isPrivateNetworkAddress';
 import { isPublicAddress } from './isPublicAddress';
 import { PinnedRequestRefusal } from './PinnedRequestRefusal';
 import type { DevHost } from './readDevHosts';
@@ -42,6 +43,10 @@ type OpenPinnedRequestOptions = {
   port?: number;
   devHosts?: ReadonlyMap<string, DevHost>;
   devTransport?: Transport;
+  httpTransport?: Transport;
+  allowsHttp?: boolean;
+  allowsAnyPort?: boolean;
+  allowsPrivateNetwork?: boolean;
   idleMilliseconds?: number;
   mostRedirects?: number;
   followRedirects?: boolean;
@@ -76,8 +81,15 @@ const REDIRECTS = new Set([301, 302, 303, 307, 308]);
  * request, and for an address written as a number, before anything is sent to it. Redirects are
  * followed by hand and each hop is held to the same rules. Nothing of the server's own travels
  * with it: no cookies and no forwarding headers. The body is left unread for the caller to
- * stream (a redirect is handed back as it is where following is turned off), and the request gives up when nothing arrives for a while. A developer's stand-in host
- * is reached over plain HTTP at the address it was pointed at.
+ * stream (a redirect is handed back as it is where following is turned off), and the request
+ * gives up when nothing arrives for a while. A developer's stand-in host is reached over plain
+ * HTTP at the address it was pointed at.
+ *
+ * A caller reaching hosts that are never given credentials may turn on `allowsHttp` and
+ * `allowsAnyPort`, which also let it reach a plain HTTP address, or one on another port. They are
+ * off unless asked for, so a plugin is held exactly as before. `allowsPrivateNetwork` further
+ * accepts the addresses of a home or office network, and still refuses this machine and
+ * link-local and metadata addresses.
  *
  * @param address - Where to go.
  * @param init - The method, headers and body.
@@ -94,10 +106,16 @@ const openPinnedRequest = async (
     resolver = (hostname, answer) => {
       resolve(hostname, { all: true, verbatim: true }, answer);
     },
-    isAllowedAddress = isPublicAddress,
+    allowsPrivateNetwork = false,
+    isAllowedAddress = allowsPrivateNetwork
+      ? (candidate) => isPublicAddress(candidate) || isPrivateNetworkAddress(candidate)
+      : isPublicAddress,
     port = 443,
     devHosts = new Map(),
     devTransport = httpRequest,
+    httpTransport = httpRequest,
+    allowsHttp = false,
+    allowsAnyPort = false,
     idleMilliseconds = 15_000,
     mostRedirects = 3,
     followRedirects = true,
@@ -107,7 +125,9 @@ const openPinnedRequest = async (
   const check = (candidate: string): URL => {
     const url = URL.parse(candidate);
 
-    if (url === null || url.protocol !== 'https:') {
+    const isAllowedScheme = url?.protocol === 'https:' || (allowsHttp && url?.protocol === 'http:');
+
+    if (url === null || !isAllowedScheme) {
       throw new PinnedRequestRefusal('notHttps', url?.hostname ?? '');
     }
 
@@ -115,7 +135,9 @@ const openPinnedRequest = async (
       throw new PinnedRequestRefusal('credentials', url.hostname);
     }
 
-    if (url.port !== '' && url.port !== '443') {
+    const standardPort = url.protocol === 'http:' ? '80' : '443';
+
+    if (!allowsAnyPort && url.port !== '' && url.port !== standardPort) {
       throw new PinnedRequestRefusal('port', url.hostname);
     }
 
@@ -151,14 +173,17 @@ const openPinnedRequest = async (
 
       let answered: IncomingMessage | null = null;
 
-      const outgoing = (dev === undefined ? transport : devTransport)(
+      const isPlain = url.protocol === 'http:';
+      const outgoing = (dev !== undefined ? devTransport : isPlain ? httpTransport : transport)(
         {
           hostname: url.hostname,
-          port: dev?.port ?? port,
+          port:
+            dev?.port ??
+            (allowsAnyPort && url.port !== '' ? Number(url.port) : isPlain ? 80 : port),
           path: `${url.pathname}${url.search}`,
           method: asked.method ?? 'GET',
           headers,
-          ...(dev === undefined ? { servername: url.hostname } : {}),
+          ...(dev === undefined && !isPlain ? { servername: url.hostname } : {}),
           ...(signal === undefined ? {} : { signal }),
           lookup: (hostname, lookupOptions, answer) => {
             if (dev !== undefined) {

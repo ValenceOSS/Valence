@@ -13,6 +13,7 @@ import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { AnnasBookStore } from '@ValenceRequests/annas/createDatabaseAnnasBookStore';
 import type { AnnasTorrents } from '@ValenceRequests/annas/createAnnasTorrents';
 import type { GuardFor } from '@ValenceRequests/network/GuardFor';
+import { isSameOriginOrUpgrade } from '@ValenceRequests/network/isSameOriginOrUpgrade';
 import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
 import { saying } from '@ValenceI18n/saying';
@@ -259,7 +260,7 @@ const createAnnasArchive = (
         await response.body?.cancel().catch(() => undefined);
         current = new URL(location, current);
 
-        if (current.origin !== originOf(archive)) {
+        if (!isSameOriginOrUpgrade(originOf(archive), current.toString())) {
           throw new IndexerFailure(
             saying('requests.indexers.indexerService.theIndexerCouldNotBeAsked'),
           );
