@@ -113,7 +113,7 @@ const AdminSearch = ({ sections, isCompact, onGo }: AdminSearchProps) => {
           onClick={() => {
             setIsOpen(true);
           }}
-          className="w-full justify-between pr-1.5 font-normal text-text-muted"
+          className="w-full justify-between pe-1.5 font-normal text-text-muted"
         >
           <span className="truncate">
             {say('screens.adminPage.adminSearch.searchTheAdminArea')}

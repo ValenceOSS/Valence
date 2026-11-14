@@ -237,7 +237,7 @@ const MusicTransport = ({
       </div>
 
       <div className="flex w-full items-center gap-2">
-        <span className="w-10 text-right text-xs tabular-nums text-text-muted">
+        <span className="w-10 text-end text-xs tabular-nums text-text-muted">
           {formatDuration(position)}
         </span>
         {scrubber}

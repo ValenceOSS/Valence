@@ -82,7 +82,7 @@ const WelcomeToValence = ({ name, onFinished, children }: WelcomeToValenceProps)
       </motion.div>
 
       {children === undefined ? null : (
-        <motion.div {...rises(0.5)} className="w-full max-w-md text-left">
+        <motion.div {...rises(0.5)} className="w-full max-w-md text-start">
           {children}
         </motion.div>
       )}

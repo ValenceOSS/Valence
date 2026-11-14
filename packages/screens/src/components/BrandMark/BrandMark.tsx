@@ -10,8 +10,8 @@ import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { say } from '@ValenceI18n/say';
 
 const LOOKS = {
-  md: { mark: 28, word: 'pl-2.5 text-xl font-semibold' },
-  sm: { mark: 24, word: 'pl-2 text-base font-semibold' },
+  md: { mark: 28, word: 'ps-2.5 text-xl font-semibold' },
+  sm: { mark: 24, word: 'ps-2 text-base font-semibold' },
 } as const;
 
 /**

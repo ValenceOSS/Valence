@@ -60,7 +60,7 @@ const RemovePluginDialog = ({
         ) : lines.length === 0 ? (
           <p>{say('screens.pluginsPanel.removePluginDialog.itKeptNothingAndNobodyConnected')}</p>
         ) : (
-          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-text">
+          <ul className="flex list-disc flex-col gap-1.5 ps-5 text-text">
             {lines.map((line) => (
               <li key={line}>{line}</li>
             ))}

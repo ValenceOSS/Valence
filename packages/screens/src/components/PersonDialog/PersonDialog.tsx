@@ -144,11 +144,11 @@ const PersonDialog = ({
       <DialogContent className="p-3 sm:p-4">
         <TintedGround tint={tint}>
           {onBack === undefined ? (
-            <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+            <div className="absolute end-4 top-4 z-10 sm:end-6 sm:top-6">
               <ArtworkCloseButton onClose={onClose} />
             </div>
           ) : (
-            <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+            <div className="absolute end-4 top-4 z-10 sm:end-6 sm:top-6">
               <ArtworkBackButton
                 label={
                   backLabel === undefined
@@ -184,7 +184,7 @@ const PersonDialog = ({
                 )}
               </DialogHeadlinePart>
 
-              <span className="flex min-w-0 flex-col gap-2 text-center md:text-left">
+              <span className="flex min-w-0 flex-col gap-2 text-center md:text-start">
                 <DialogHeadlinePart
                   as="h2"
                   isTitle
@@ -238,7 +238,7 @@ const PersonDialog = ({
               ) : null}
 
               {isLoading || couldNotRead ? null : (
-                <div className="md:pr-14">
+                <div className="md:pe-14">
                   <DialogSection heading={say('screens.personDialog.biography')}>
                     {person?.biography === null || person?.biography === undefined ? (
                       <p className="text-sm text-text-muted">

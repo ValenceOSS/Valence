@@ -52,7 +52,7 @@ const EpisodeRow = ({
       onClick={() => {
         onPlay(episode, resumeSeconds ?? 0);
       }}
-      className="flex min-w-[min(100%,24rem)] flex-1 basis-96 items-center gap-4 text-left"
+      className="flex min-w-[min(100%,24rem)] flex-1 basis-96 items-center gap-4 text-start"
     >
       <span className="flex w-28 shrink-0 flex-col gap-1.5 sm:w-36">
         <span className="relative aspect-video w-full overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">
@@ -73,7 +73,7 @@ const EpisodeRow = ({
             <span
               role="img"
               aria-label={say('common.watched')}
-              className="absolute bottom-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-success text-surface"
+              className="absolute bottom-1.5 end-1.5 flex size-5 items-center justify-center rounded-full bg-success text-surface"
             >
               <Icon of={CheckIcon} size={12} />
             </span>
@@ -100,7 +100,7 @@ const EpisodeRow = ({
     </Button>
 
     {onMarkWatched === undefined && onInspect === undefined ? null : (
-      <span className="ml-auto flex shrink-0 items-center">
+      <span className="ms-auto flex shrink-0 items-center">
         {onMarkWatched === undefined ? null : (
           <Button
             variant={(watchedFraction ?? 0) >= 1 ? 'secondary' : 'confirm'}
@@ -130,7 +130,7 @@ const EpisodeRow = ({
             size="md"
             isIconOnly
             {...(onMarkWatched === undefined ? {} : { joins: 'previous' as const })}
-            className={onMarkWatched === undefined ? '' : 'border-l-0'}
+            className={onMarkWatched === undefined ? '' : 'border-s-0'}
             label={say('common.aboutTitle', { title: episode.title })}
             onClick={() => {
               onInspect(episode);

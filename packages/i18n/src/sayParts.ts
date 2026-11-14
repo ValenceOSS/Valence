@@ -1,4 +1,4 @@
-import { GAP } from './GAP';
+import { partsOf } from './partsOf';
 import { say } from './say';
 import type { StringKey } from './StringKey';
 
@@ -13,10 +13,6 @@ import type { StringKey } from './StringKey';
 const sayParts = <Filling>(
   key: StringKey,
   fillings: Readonly<Record<string, Filling>>,
-): (string | Filling)[] =>
-  say(key)
-    .split(GAP)
-    .map((part, at) => (at % 2 === 1 ? (fillings[part] ?? `{${part}}`) : part))
-    .filter((part) => part !== '');
+): (string | Filling)[] => partsOf(say(key), fillings);
 
 export { sayParts };

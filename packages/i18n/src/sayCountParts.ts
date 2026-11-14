@@ -1,4 +1,6 @@
-import { sayParts } from './sayParts';
+import { countedHandler } from './countedHandler';
+import { partsOf } from './partsOf';
+import { SPOKEN } from './SPOKEN';
 import type { CountedKey } from './CountedKey';
 
 /**
@@ -14,6 +16,6 @@ const sayCountParts = <Filling>(
   key: CountedKey,
   count: number,
   fillings: Readonly<Record<string, Filling>>,
-): (string | Filling)[] => sayParts(count === 1 ? `${key}.one` : `${key}.other`, fillings);
+): (string | Filling)[] => partsOf(SPOKEN.words[countedHandler(key, count)] ?? key, fillings);
 
 export { sayCountParts };

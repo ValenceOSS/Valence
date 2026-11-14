@@ -13,9 +13,12 @@ import { WelcomeStep } from './WelcomeStep';
 const welcome = (setupCode = '', problem: string | null = null) => {
   const onBegin = vi.fn();
   const onSetupCodeChange = vi.fn();
+  const onLanguageChange = vi.fn();
 
   render(
     <WelcomeStep
+      language="device"
+      onLanguageChange={onLanguageChange}
       setupCode={setupCode}
       onSetupCodeChange={onSetupCodeChange}
       problem={problem}
@@ -23,10 +26,21 @@ const welcome = (setupCode = '', problem: string | null = null) => {
     />,
   );
 
-  return { onBegin, onSetupCodeChange };
+  return { onBegin, onSetupCodeChange, onLanguageChange };
 };
 
 describe('WelcomeStep', () => {
+  it('asks which language the server speaks, following each device until one is chosen', async () => {
+    const { onLanguageChange } = welcome();
+
+    expect(screen.getByRole('button', { name: 'Language' })).toHaveTextContent('Each device’s own');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Language' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
+
+    expect(onLanguageChange).toHaveBeenCalledWith('de');
+  });
+
   it('says what setting up is about to ask', () => {
     welcome();
 

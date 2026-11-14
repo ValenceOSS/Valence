@@ -966,7 +966,7 @@ const RailCardFace = ({
                       <img
                         src={artworkUrl(media.id, 'logo', { size: 'medium' })}
                         alt=""
-                        className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+                        className="absolute bottom-[14%] start-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
                       />
                     </span>
                   ) : null}
@@ -981,7 +981,7 @@ const RailCardFace = ({
                   }
                   animate={{ opacity: 1, transform: 'translateY(0px)' }}
                   transition={prefersReducedMotion === true ? { duration: 0.12 } : DETAILS_RISE}
-                  className="relative flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-4 pb-4 pt-4 text-left"
+                  className="relative flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-4 pb-4 pt-4 text-start"
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="min-w-0 truncate text-xs font-medium text-text-muted">
@@ -1025,13 +1025,13 @@ const RailCardFace = ({
                         event.stopPropagation();
                         onOpenShow(media);
                       }}
-                      className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-[-0.02em] text-text underline-offset-4 hover:underline"
+                      className="relative z-10 self-start text-start text-xl font-semibold leading-tight tracking-[-0.02em] text-text underline-offset-4 hover:underline"
                     >
                       {media.seriesTitle}
                     </Button>
                   )}
 
-                  <span className="pointer-events-none flex min-h-0 shrink flex-col gap-3 text-left">
+                  <span className="pointer-events-none flex min-h-0 shrink flex-col gap-3 text-start">
                     <MediaFacts
                       media={
                         isSeries && show !== null

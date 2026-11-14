@@ -67,12 +67,12 @@ const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: Dia
       )}
     >
       {note === undefined || note === null || note === '' ? null : (
-        <span role="alert" className="text-sm text-danger sm:mr-auto">
+        <span role="alert" className="text-sm text-danger sm:me-auto">
           {note}
         </span>
       )}
 
-      {lead === undefined ? null : <span className="sm:mr-auto">{lead}</span>}
+      {lead === undefined ? null : <span className="sm:me-auto">{lead}</span>}
 
       {dismiss === undefined ? null : (
         <Button

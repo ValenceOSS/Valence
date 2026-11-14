@@ -4,6 +4,8 @@ import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/Pr
 import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
 import { chosenTheme } from '@ValenceClient/shell/theme';
 import { readPlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
+import { chooseLanguageHere } from '@ValenceClient/language/chooseLanguageHere';
+import { chosenLanguageHere } from '@ValenceClient/language/chosenLanguageHere';
 import { saveProfileDraft } from './saveProfileDraft';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
@@ -24,6 +26,7 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: true,
   hasPin: false,
   mayRequest: true,
@@ -39,6 +42,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: true,
+  language: null,
   theme: 'system',
   motion: 'system',
   pluginTheme: null,
@@ -81,6 +85,7 @@ describe('saveProfileDraft', () => {
       true,
       true,
       DRAFT.discordPresence,
+      null,
     );
   });
 
@@ -96,6 +101,7 @@ describe('saveProfileDraft', () => {
       true,
       true,
       DRAFT.discordPresence,
+      null,
     );
   });
 
@@ -148,5 +154,31 @@ describe('saveProfileDraft', () => {
   it('turns this computer’s notices on once the rest is saved', async () => {
     expect(await saveProfileDraft(PROFILE, { ...DRAFT, showsDesktopNotices: true })).toBeNull();
     expect(areDeviceNoticesOn()).toBe(true);
+  });
+
+  it('saves a new language on the profile, and forgets one chosen on this device before', async () => {
+    chooseLanguageHere('ko');
+
+    expect(await saveProfileDraft(PROFILE, { ...DRAFT, language: 'de' })).toBeNull();
+    expect(saveProfile).toHaveBeenCalledWith(
+      PROFILE.id,
+      'Dan',
+      '#3ac47d',
+      { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+      2,
+      true,
+      true,
+      DRAFT.discordPresence,
+      'de',
+    );
+    expect(chosenLanguageHere()).toBeNull();
+  });
+
+  it('leaves a language chosen on this device alone where the profile’s did not change', async () => {
+    chooseLanguageHere('ko');
+    await saveProfileDraft(PROFILE, DRAFT);
+
+    expect(chosenLanguageHere()).toBe('ko');
+    chooseLanguageHere(null);
   });
 });

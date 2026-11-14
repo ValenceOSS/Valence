@@ -418,7 +418,7 @@ const WallField = ({ onClose, onOpenFilm, onOpenShow }: WallFieldProps) => {
                   tiles.current.delete(key);
                 };
               }}
-              className="absolute top-0 left-0 will-change-transform"
+              className="absolute top-0 start-0 will-change-transform"
               style={{ width: grid.tileWidth, height: grid.tileHeight }}
             >
               <Button

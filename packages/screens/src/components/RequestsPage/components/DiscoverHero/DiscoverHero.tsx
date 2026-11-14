@@ -141,7 +141,7 @@ const DiscoverHero = ({
             </span>
           ))}
           {status === 'askable' ? null : (
-            <span className="ml-2 flex items-center gap-1.5 rounded-full bg-overlay px-2.5 py-0.5 text-sm backdrop-blur">
+            <span className="ms-2 flex items-center gap-1.5 rounded-full bg-overlay px-2.5 py-0.5 text-sm backdrop-blur">
               <Icon of={status === 'library' ? CircleCheckIcon : ClockIcon} size={14} />
               {status === 'library' ? say('common.inTheLibrary') : say('common.requested')}
             </span>
@@ -196,7 +196,7 @@ const DiscoverHero = ({
           label={say('screens.requestsPage.discoverHero.trendingTitles')}
           tone="overlay"
           onSelect={setAt}
-          className="mb-8 mr-6 self-end sm:absolute sm:bottom-14 sm:right-12 sm:mb-0 sm:mr-0"
+          className="mb-8 me-6 self-end sm:absolute sm:bottom-14 sm:end-12 sm:mb-0 sm:me-0"
         />
       )}
     </section>

@@ -177,7 +177,7 @@ const BulkField = ({
       }
       {...(className === undefined ? {} : { className })}
       aside={
-        <span className="ml-auto flex items-center gap-1.5">
+        <span className="ms-auto flex items-center gap-1.5">
           {isMixed && touch === undefined ? <Badge size="sm">{mixedWord}</Badge> : null}
           {touch === undefined ? null : (
             <Button

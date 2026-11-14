@@ -1,0 +1,35 @@
+import type { Language } from './LANGUAGES';
+
+const LANGUAGE_NAMES: Readonly<Record<Language, string>> = {
+  en: 'English',
+  ar: 'العربية',
+  be: 'Беларуская',
+  cs: 'Čeština',
+  da: 'Dansk',
+  de: 'Deutsch',
+  el: 'Ελληνικά',
+  es: 'Español',
+  eu: 'Euskara',
+  fi: 'Suomi',
+  fr: 'Français',
+  he: 'עברית',
+  it: 'Italiano',
+  ja: '日本語',
+  ko: '한국어',
+  nb: 'Norsk bokmål',
+  nl: 'Nederlands',
+  pl: 'Polski',
+  'pt-BR': 'Português (Brasil)',
+  'pt-PT': 'Português (Portugal)',
+  ro: 'Română',
+  ru: 'Русский',
+  sk: 'Slovenčina',
+  sv: 'Svenska',
+  tr: 'Türkçe',
+  uk: 'Українська',
+  vi: 'Tiếng Việt',
+  'zh-Hans': '简体中文',
+  'zh-Hant': '繁體中文',
+};
+
+export { LANGUAGE_NAMES };

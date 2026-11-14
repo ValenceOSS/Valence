@@ -81,7 +81,7 @@ const MissingSongRow = ({
               size="none"
               hasTooltip={false}
               label={say('common.requestTheAlbumTitleIsOn', { title })}
-              className="truncate text-left text-[0.9375rem] font-medium text-text-muted"
+              className="truncate text-start text-[0.9375rem] font-medium text-text-muted"
               onClick={onChoose}
             >
               {title}

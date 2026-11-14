@@ -29,7 +29,7 @@ const AlbumTracks = ({ tracks, label }: AlbumTracksProps) => {
             keyOf={(track) => `${track.disc.toString()}:${track.number.toString()}:${track.title}`}
             renderItem={(track) => (
               <span className="flex items-center gap-4 py-2.5 text-sm">
-                <span className="w-6 shrink-0 text-right tabular-nums text-text-muted">
+                <span className="w-6 shrink-0 text-end tabular-nums text-text-muted">
                   {track.number}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-text">{track.title}</span>

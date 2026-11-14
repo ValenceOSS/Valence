@@ -12,7 +12,7 @@ const SQUARES_ON_ARTWORK = [
   '[&_button:not([data-music-play])]:bg-[color-mix(in_oklab,var(--title-tint,var(--color-glass))_40%,var(--color-glass))]',
   '[&_button:not([data-music-play])]:hover-hover:hover:bg-[var(--color-glass-hover)]',
   '[&_button:not([data-music-play])]:active:scale-[0.96]',
-  'md:[&_[data-music-play]]:mr-auto md:[&_[data-music-play]]:w-[21rem]',
+  'md:[&_[data-music-play]]:me-auto md:[&_[data-music-play]]:w-[21rem]',
 ].join(' ');
 
 /**

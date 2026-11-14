@@ -27,7 +27,7 @@ const CalendarEntryRow = ({ entry, onOpen, isCompact = false }: CalendarEntryRow
     <Button
       variant="bare"
       size="none"
-      className="w-full text-left"
+      className="w-full text-start"
       onClick={() => {
         onOpen(entry);
       }}

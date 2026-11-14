@@ -82,7 +82,7 @@ const MusicArtwork = ({
       )}
 
       {origin === undefined ? null : (
-        <OriginMark {...origin} className="absolute bottom-1.5 left-1.5 size-5" />
+        <OriginMark {...origin} className="absolute bottom-1.5 start-1.5 size-5" />
       )}
     </motion.span>
   );

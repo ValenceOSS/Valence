@@ -30,7 +30,7 @@ const SeriesBookList = ({
     const isFollowed = (request.companionsWanted ?? []).includes(book.asin);
 
     return (
-      <li key={book.asin} className="flex flex-col gap-2 py-3 pl-5 pr-3">
+      <li key={book.asin} className="flex flex-col gap-2 py-3 ps-5 pe-3">
         <span className="flex flex-wrap items-center gap-3">
           <span className="w-10 shrink-0 text-sm tabular-nums text-text-muted">
             {book.position ?? ''}
@@ -56,7 +56,7 @@ const SeriesBookList = ({
           ) : null}
         </span>
         {asked.length === 0 ? null : (
-          <span className="pl-13">
+          <span className="ps-13">
             <BookFormats items={asked} approval={request.approval} narrations={book.narrations} />
           </span>
         )}

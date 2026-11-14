@@ -16,7 +16,7 @@ const StatsFact = ({ name, value, isCode = false }: StatsFactProps) => (
     <dd
       {...(isCode && typeof value === 'string' ? { title: value } : {})}
       className={cn(
-        'min-w-0 text-right text-[0.75rem] leading-5 tabular-nums',
+        'min-w-0 text-end text-[0.75rem] leading-5 tabular-nums',
         value === null ? 'text-text-muted' : 'font-medium text-text',
         isCode ? 'truncate font-mono text-[0.6875rem] font-normal text-text-muted' : 'break-words',
       )}

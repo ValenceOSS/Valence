@@ -121,7 +121,7 @@ const Stepper = ({ label, steps, current, shape = 'fits', className }: StepperPr
               {at === steps.length - 1 ? null : (
                 <span
                   aria-hidden="true"
-                  className="absolute left-[1.5rem] top-[2.375rem] h-[calc(100%-1.75rem)] w-px overflow-hidden bg-[var(--surface-line)]"
+                  className="absolute start-[1.5rem] top-[2.375rem] h-[calc(100%-1.75rem)] w-px overflow-hidden bg-[var(--surface-line)]"
                 >
                   <motion.span
                     className="absolute inset-0 origin-top bg-text/50"

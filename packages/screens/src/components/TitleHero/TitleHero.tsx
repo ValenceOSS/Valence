@@ -26,11 +26,11 @@ const TitleHero = ({ preview, children, lead, corner, ref }: TitleHeroProps) => 
     </div>
 
     {lead === undefined ? null : (
-      <div className="absolute left-4 top-4 sm:left-6 sm:top-6">{lead}</div>
+      <div className="absolute start-4 top-4 sm:start-6 sm:top-6">{lead}</div>
     )}
 
     {corner === undefined ? null : (
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">{corner}</div>
+      <div className="absolute end-4 top-4 sm:end-6 sm:top-6">{corner}</div>
     )}
 
     <div className="absolute inset-x-0 bottom-0 px-4 pb-10 sm:px-6 sm:pb-14">{children}</div>

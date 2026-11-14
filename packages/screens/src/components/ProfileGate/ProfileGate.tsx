@@ -425,7 +425,7 @@ const ProfileGate = ({
         animate={{ opacity: isTitleOver ? 1 : 0 }}
         transition={{ duration: 0.4 }}
         className={cn(
-          'absolute right-6 top-[calc(1.5rem+var(--valence-window-bar))] in-data-[valence-desktop=true]:top-[calc(1rem+var(--valence-window-bar-height))]',
+          'absolute end-6 top-[calc(1.5rem+var(--valence-window-bar))] in-data-[valence-desktop=true]:top-[calc(1rem+var(--valence-window-bar-height))]',
           isTitleOver ? '' : 'pointer-events-none',
         )}
       >

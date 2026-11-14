@@ -58,7 +58,7 @@ const GetStarted = ({
   return (
     <aside
       aria-label={title}
-      className="fixed right-4 bottom-4 z-30 flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[1.25rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] text-text shadow-[var(--shadow-overlay)] [--card-shell:var(--frame-card)]"
+      className="fixed end-4 bottom-4 z-30 flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[1.25rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] text-text shadow-[var(--shadow-overlay)] [--card-shell:var(--frame-card)]"
     >
       <Button
         variant="bare"
@@ -68,7 +68,7 @@ const GetStarted = ({
         onClick={() => {
           onCollapsedChange(!isCollapsed);
         }}
-        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-start"
       >
         <span className="font-sans text-base font-semibold">{title}</span>
         <span className="flex items-center gap-2 text-sm text-text-muted">
@@ -111,7 +111,7 @@ const GetStarted = ({
                         setOpenSection(isOpen ? '' : section.id);
                         setOpenStep(null);
                       }}
-                      className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left text-[0.9375rem] text-text-muted"
+                      className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-start text-[0.9375rem] text-text-muted"
                     >
                       {section.title}
                       <Icon of={isOpen ? ChevronDownIcon : ChevronRightIcon} size={15} />
@@ -146,7 +146,7 @@ const GetStarted = ({
                                   onClick={() => {
                                     setOpenStep(isStepOpen ? '' : step.id);
                                   }}
-                                  className="flex w-full items-center gap-3 px-3 py-3 text-left"
+                                  className="flex w-full items-center gap-3 px-3 py-3 text-start"
                                 >
                                   <span
                                     className={cn(
@@ -199,7 +199,7 @@ const GetStarted = ({
                                       transition={transition}
                                       className="overflow-hidden"
                                     >
-                                      <div className="flex flex-col gap-3 pr-3 pb-3.5 pl-11">
+                                      <div className="flex flex-col gap-3 pe-3 pb-3.5 ps-11">
                                         <p className="font-body text-sm leading-snug text-text-muted">
                                           {step.description}
                                         </p>

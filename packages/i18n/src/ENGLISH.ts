@@ -1113,6 +1113,8 @@ const ENGLISH = {
   'common.lastActiveWhen': 'Last active {lastActiveAt}',
   'common.lastReadLastReadAt': 'Last synced {lastReadAt}',
   'common.lasts': 'Lasts',
+  'common.layoutTurnsNextTime':
+    'The layout turns to suit this language the next time Valence opens.',
   'common.leaveOutOfTheLibrary': 'Exclude from library',
   'common.leftToRight': 'Left to right',
   'common.letBackIn': 'Unban',
@@ -1824,6 +1826,7 @@ const ENGLISH = {
   'common.whatToLookFor': 'Search in',
   'common.whatToShare': 'What to share',
   'common.whatToShow': 'What to show',
+  'common.whatValenceSpeaksHere': 'The language Valence speaks on this device.',
   'common.where': 'Where',
   'common.wherePictureSits':
     'Where the picture sits. Use the arrow keys to move it, and plus or minus to zoom.',
@@ -3470,9 +3473,13 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.hls': 'HLS',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Saved on this device, not your account, and applied immediately.',
+  'screens.accountArea.profileSettings.languageFollowsThisProfile':
+    'Used on every device this profile watches on. Valence starts again in the new language when you save.',
   'screens.accountArea.profileSettings.playMoreFilmsInThisBrowser':
     'Play more films in this browser',
   'screens.accountArea.profileSettings.preferTheBestCopy': 'Prefer the best version',
+  'screens.accountArea.profileSettings.sameAsTheServer': 'Same as the server ({language})',
+  'screens.accountArea.profileSettings.sameAsThisDevice': 'Same as this device',
   'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
     'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I’m playing on Discord',
@@ -6419,6 +6426,11 @@ const ENGLISH = {
   'screens.adminArea.serverCard.corners': 'Corners',
   'screens.adminArea.serverCard.cornersDetail': 'How rounded cards, buttons and posters are.',
   'screens.adminArea.serverCard.descriptionDetail': 'Shown by search engines and in link previews.',
+  'screens.adminArea.serverCard.eachDevicesOwn': 'Each device’s own',
+  'screens.adminArea.serverCard.languageCouldNotBeSaved': 'The language could not be saved',
+  'screens.adminArea.serverCard.languageDetail':
+    'What everybody sees unless they choose a language for their own profile.',
+  'screens.adminArea.serverCard.languageSaved': 'Language saved',
   'screens.adminArea.serverCard.logoDetail': 'Square PNG, JPEG, WebP or AVIF, up to 2 MB.',
   'screens.adminArea.serverCard.logoRemoved': 'Logo removed.',
   'screens.adminArea.serverCard.nameDetail': 'Shown in the apps, the browser tab and emails.',
@@ -6539,6 +6551,7 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.saveTheTheAudioDBKey': 'Save TheAudioDB key',
   'screens.adminArea.settingsPanel.secure': 'Secure',
   'screens.adminArea.settingsPanel.segmentLengthSaved': 'Segment length saved.',
+  'screens.adminArea.settingsPanel.serverLanguage': 'Server language',
   'screens.adminArea.settingsPanel.shortSegments': 'Short segments',
   'screens.adminArea.settingsPanel.shortSegmentsStartAndSeekSooner':
     'Sends video in pieces of about two seconds instead of four. Playback starts and seeks sooner over a slow connection or tunnel, at the cost of more requests.',
@@ -9242,6 +9255,8 @@ const ENGLISH = {
   'screens.setupWizard.validateSetupForm.enterAValidEmailAddress': 'Enter a valid email address.',
   'screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH':
     'Use at least {MINIMUM_PASSWORD_LENGTH} characters.',
+  'screens.setupWizard.welcomeStep.languageDetail':
+    'The language Valence speaks to everybody here. Each person can choose their own later.',
   'screens.setupWizard.welcomeStep.makeYourAccount': 'Create your account',
   'screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet':
     'No one has an account on this server yet. Create yours, set the addresses Valence is reached on and where your media is, and import from Jellyfin, Emby or Plex if you’re switching. You can change all of it later.',
@@ -9340,7 +9355,7 @@ const ENGLISH = {
   'screens.televisionHandoff.askForAnotherCode': 'Get a new code',
   'screens.televisionHandoff.askingForACode': 'Getting a code',
   'screens.televisionHandoff.nobodyShouldHaveToSpellA':
-    'Skip typing a password with the remote. Open this on your phone and{value}will sign in this TV.',
+    'Skip typing a password with the remote. Open this on your phone and {value} will sign in this TV.',
   'screens.televisionHandoff.thatCodeRanOutAskFor': 'That code expired. Get a new one.',
   'screens.televisionHandoff.thatWasTurnedDownOnThe':
     'The request was declined on the other device.',

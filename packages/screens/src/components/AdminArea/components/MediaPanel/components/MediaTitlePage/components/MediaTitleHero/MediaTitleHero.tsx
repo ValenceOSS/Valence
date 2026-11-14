@@ -111,7 +111,7 @@ const MediaTitleHero = ({
               {facts.map((fact) => (
                 <div
                   key={fact.label}
-                  className="flex min-w-0 flex-col gap-0.5 border-[var(--surface-line)] px-5 py-3 @xl:px-7 @4xl:border-l @4xl:first:border-l-0"
+                  className="flex min-w-0 flex-col gap-0.5 border-[var(--surface-line)] px-5 py-3 @xl:px-7 @4xl:border-s @4xl:first:border-s-0"
                 >
                   <dt className="text-xs text-text-muted">{fact.label}</dt>
                   <dd className="truncate text-sm font-medium text-text tabular-nums">

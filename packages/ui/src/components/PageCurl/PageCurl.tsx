@@ -204,7 +204,7 @@ const PageCurl = ({
       <div ref={shadowRef} className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           ref={shadowStripRef}
-          className="absolute left-0 top-0 origin-top-left bg-linear-to-b from-shade/45 via-shade/10 to-transparent"
+          className="absolute start-0 top-0 origin-top-left bg-linear-to-b from-shade/45 via-shade/10 to-transparent"
           style={strip}
         />
       </div>
@@ -224,7 +224,7 @@ const PageCurl = ({
             {isBackFacing ? null : <div className="absolute inset-0 bg-plate/80" />}
             <div
               ref={backStripRef}
-              className="absolute left-0 top-0 origin-top-left bg-linear-to-b from-shade/30 via-shade/5 to-transparent"
+              className="absolute start-0 top-0 origin-top-left bg-linear-to-b from-shade/30 via-shade/5 to-transparent"
               style={strip}
             />
           </div>

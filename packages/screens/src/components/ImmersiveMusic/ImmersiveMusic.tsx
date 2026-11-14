@@ -118,7 +118,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
             <span className="h-1 w-10 rounded-full bg-on-scrim/40" />
           </div>
 
-          <div className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-10 flex items-center gap-2">
+          <div className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] end-4 z-10 flex items-center gap-2">
             <Button
               variant="overlay"
               isIconOnly

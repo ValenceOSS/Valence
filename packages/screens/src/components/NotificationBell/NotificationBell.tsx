@@ -66,8 +66,8 @@ const NotificationBell = ({
             size={isInTheWindowBar ? 'sm' : 'count'}
             className={
               isInTheWindowBar
-                ? 'absolute -top-1 -right-1.5 h-3.5 min-w-3.5 justify-center rounded-full px-1 text-[0.5625rem] leading-none ring-2 ring-[var(--frame-back)]'
-                : 'absolute top-0 right-0 ring-2 ring-[var(--frame-back)]'
+                ? 'absolute -top-1 -end-1.5 h-3.5 min-w-3.5 justify-center rounded-full px-1 text-[0.5625rem] leading-none ring-2 ring-[var(--frame-back)]'
+                : 'absolute top-0 end-0 ring-2 ring-[var(--frame-back)]'
             }
           >
             <FormattedNumber

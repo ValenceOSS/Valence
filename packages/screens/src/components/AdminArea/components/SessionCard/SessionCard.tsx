@@ -169,7 +169,7 @@ const SessionCard = ({
             <Icon of={InfoIcon} size={16} />
           </Button>
 
-          <span className="ml-auto flex items-center gap-0.5">
+          <span className="ms-auto flex items-center gap-0.5">
             <Button
               isIconOnly
               variant="ghost"

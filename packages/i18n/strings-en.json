@@ -4647,6 +4647,11 @@
     "context": "Text shown, used in the share sheet of the phone app and in the share dialog."
   },
   {
+    "handler": "common.layoutTurnsNextTime",
+    "text": "The layout turns to suit this language the next time Valence opens.",
+    "context": "Under the Language setting on the phone and the television, after somebody picks a language written the other way, such as Arabic or Hebrew: the layout mirrors from the next launch."
+  },
+  {
     "handler": "common.leaveOutOfTheLibrary",
     "text": "Exclude from library",
     "context": "An action on a file, a folder, a film or a series in the admin area, which makes the library's scans pass over it from then on."
@@ -7999,6 +8004,11 @@
     "handler": "common.whatToShow",
     "text": "What to show",
     "context": "The label of a segmented row, used in the library of the phone app and in the search of the phone app."
+  },
+  {
+    "handler": "common.whatValenceSpeaksHere",
+    "text": "The language Valence speaks on this device.",
+    "context": "Under the Language setting on the phone and the television, which picks the language Valence shows on that device."
   },
   {
     "handler": "common.where",
@@ -14006,6 +14016,11 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.languageFollowsThisProfile",
+    "text": "Used on every device this profile watches on. Valence starts again in the new language when you save.",
+    "context": "Under the Language setting in a profile's settings, which picks the language the profile sees Valence in on every device."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
     "text": "Play more films in this browser",
     "context": "Title of a setting on this device: decode films the browser can't play by itself in the page, using WebGPU, instead of having the server convert them."
@@ -14014,6 +14029,16 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "Prefer the best version",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsTheServer",
+    "text": "Same as the server ({language})",
+    "context": "The first choice of the Language setting in a profile's settings: speak the language the server's administrator chose. {language} is that language's name, written in itself, such as Deutsch."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
+    "text": "Same as this device",
+    "context": "The first choice of the Language setting in a profile's settings: speak whichever of the device's own languages Valence has."
   },
   {
     "handler": "screens.accountArea.profileSettings.showsANoticeOnThisComputer",
@@ -25241,6 +25266,26 @@
     "context": "Under the server description setting."
   },
   {
+    "handler": "screens.adminArea.serverCard.eachDevicesOwn",
+    "text": "Each device’s own",
+    "context": "The first choice of the server's Language setting, in the admin area and in setup: no language for the whole server, so each device speaks whichever of its own languages Valence has."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageCouldNotBeSaved",
+    "text": "The language could not be saved",
+    "context": "A notice when the server's language could not be saved, in the admin area's settings."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageDetail",
+    "text": "What everybody sees unless they choose a language for their own profile.",
+    "context": "Under the Language setting on the server card in the admin area's settings, which picks the language the whole server speaks."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageSaved",
+    "text": "Language saved",
+    "context": "A notice once the server's language has been saved, in the admin area's settings."
+  },
+  {
     "handler": "screens.adminArea.serverCard.logoDetail",
     "text": "Square PNG, JPEG, WebP or AVIF, up to 2 MB.",
     "context": "Under the server logo setting: which pictures it takes."
@@ -25714,6 +25759,11 @@
     "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
     "text": "Segment length saved.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.serverLanguage",
+    "text": "Server language",
+    "context": "Names the server's language setting in the admin area's activity log, where somebody changed it."
   },
   {
     "handler": "screens.adminArea.settingsPanel.shortSegments",
@@ -36552,6 +36602,11 @@
     "context": "Shown in the setup wizard (from `validateSetupForm`). {MINIMUM_PASSWORD_LENGTH} is filled in by the app."
   },
   {
+    "handler": "screens.setupWizard.welcomeStep.languageDetail",
+    "text": "The language Valence speaks to everybody here. Each person can choose their own later.",
+    "context": "Under the Language choice on the first step of setting up a new server. Choosing one starts the page again in that language."
+  },
+  {
     "handler": "screens.setupWizard.welcomeStep.makeYourAccount",
     "text": "Create your account",
     "context": "On the first-run setup page: the button on the first step that goes on to making the administrator account."
@@ -36988,7 +37043,7 @@
   },
   {
     "handler": "screens.televisionHandoff.nobodyShouldHaveToSpellA",
-    "text": "Skip typing a password with the remote. Open this on your phone and{value}will sign in this TV.",
+    "text": "Skip typing a password with the remote. Open this on your phone and {value} will sign in this TV.",
     "context": "Text shown in the television handoff. {value} is filled in by the app."
   },
   {

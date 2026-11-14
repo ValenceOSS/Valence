@@ -119,7 +119,7 @@ const AccessStep = ({
                 transition={revealTransition(prefersReducedMotion)}
                 className="border-b border-[var(--surface-line)] last:border-b-0"
               >
-                <div className="flex items-center gap-3 py-1.5 pl-4 pr-1.5">
+                <div className="flex items-center gap-3 py-1.5 ps-4 pe-1.5">
                   <span className="min-w-0 flex-1 truncate text-sm tabular-nums text-text">
                     {origin}
                   </span>

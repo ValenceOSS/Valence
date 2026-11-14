@@ -25,6 +25,7 @@ describe('buildValencePlugin', () => {
       expect(bundle.default.meta.name).toBe('valence');
       expect(Object.keys(bundle.default.rules).toSorted()).toEqual([
         'banned-syntax',
+        'logical-sides',
         'neutral-queries',
         'no-comments',
         'no-hard-coded-strings',

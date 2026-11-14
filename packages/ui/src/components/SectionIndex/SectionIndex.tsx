@@ -60,9 +60,9 @@ const SectionIndex = ({ label, sections, className }: SectionIndexProps) => {
                 ?.scrollIntoView({ behavior: isStill ? 'auto' : 'smooth', block: 'start' });
             }}
             className={cn(
-              'relative flex w-full items-center justify-between gap-2 rounded-md py-1.5 pr-2 pl-3 text-left text-[0.8125rem]',
+              'relative flex w-full items-center justify-between gap-2 rounded-md py-1.5 pe-2 ps-3 text-start text-[0.8125rem]',
               'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none',
-              'before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:transition-colors',
+              'before:absolute before:inset-y-1.5 before:start-0 before:w-0.5 before:rounded-full before:transition-colors',
               isReading
                 ? 'font-medium text-text before:bg-text'
                 : 'text-text-muted before:bg-transparent hover:text-text',

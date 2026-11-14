@@ -144,6 +144,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
       showsWhatIamWatching,
       discordPresence,
       prefersBestCopy,
+      language,
     } = context.req.valid('json');
 
     const answer = await asked.management.update(
@@ -157,6 +158,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
         ...(showsWhatIamWatching === undefined ? {} : { showsWhatIamWatching }),
         ...(discordPresence === undefined ? {} : { discordPresence }),
         ...(prefersBestCopy === undefined ? {} : { prefersBestCopy }),
+        ...(language === undefined ? {} : { language }),
       },
     );
 

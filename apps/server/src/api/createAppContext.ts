@@ -231,6 +231,7 @@ const createAppContext = (options: CreateAppOptions) => {
     settings,
     version: SERVER_VERSION = '0.0.0',
     commit: givenCommit,
+    stringsFolder = null,
     trustedOrigins,
     callerOf,
     demoAccounts = [],
@@ -2055,6 +2056,7 @@ const createAppContext = (options: CreateAppOptions) => {
 
   return {
     auth,
+    stringsFolder,
     plugins,
     findInCatalogue,
     sayOfAsk,

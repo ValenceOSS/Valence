@@ -141,7 +141,7 @@ const CollectionDialog = ({
   return (
     <Dialog label={label} isOpen={collectionId !== null} onClose={onClose} size="stage">
       <DialogContent className="p-0">
-        <div className="absolute right-4 top-4 z-10">
+        <div className="absolute end-4 top-4 z-10">
           <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
             <Icon of={XIcon} size={18} />
           </Button>
@@ -169,7 +169,7 @@ const CollectionDialog = ({
               </div>
             )
           ) : (
-            <DialogHeadline className="flex flex-wrap items-end gap-5 pr-12">
+            <DialogHeadline className="flex flex-wrap items-end gap-5 pe-12">
               <DialogHeadlinePart as="span" className="block w-28 shrink-0 sm:w-36">
                 <CollectionCover collection={collection} className="w-full" />
               </DialogHeadlinePart>

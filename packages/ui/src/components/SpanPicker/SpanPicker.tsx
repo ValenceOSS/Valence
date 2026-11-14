@@ -147,7 +147,7 @@ const SpanPicker = ({
         >
           <span
             aria-hidden
-            className={cn(HANDLE, '-left-1')}
+            className={cn(HANDLE, '-start-1')}
             onPointerDown={begin('start')}
             onPointerMove={follow}
             onPointerUp={letGo}
@@ -155,7 +155,7 @@ const SpanPicker = ({
           />
           <span
             aria-hidden
-            className={cn(HANDLE, '-right-1')}
+            className={cn(HANDLE, '-end-1')}
             onPointerDown={begin('end')}
             onPointerMove={follow}
             onPointerUp={letGo}

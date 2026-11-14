@@ -317,7 +317,7 @@ const BrowseArea = ({
         className="flex flex-col gap-4"
       >
         <div className="flex min-h-10 flex-wrap items-center justify-end gap-3">
-          <PageTitle className="mr-auto">{page.title}</PageTitle>
+          <PageTitle className="me-auto">{page.title}</PageTitle>
 
           {kind === 'films' || kind === 'shows' ? (
             <NewCollectionButton

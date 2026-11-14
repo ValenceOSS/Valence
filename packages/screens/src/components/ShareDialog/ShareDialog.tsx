@@ -121,7 +121,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
 
           <BackdropScrim />
 
-          <div className="absolute right-3 top-3">
+          <div className="absolute end-3 top-3">
             <Button
               isIconOnly
               variant="overlay"

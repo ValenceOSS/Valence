@@ -44,7 +44,7 @@ const QueuedSong = ({
       label={track.album.title}
       className="size-11"
     />
-    <span className="flex min-w-0 flex-col text-left">
+    <span className="flex min-w-0 flex-col text-start">
       <span
         className={`truncate text-sm ${isCurrent ? 'font-semibold text-text' : 'font-medium text-text'}`}
       >

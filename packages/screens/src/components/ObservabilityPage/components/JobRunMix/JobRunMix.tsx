@@ -111,7 +111,7 @@ const JobRunMix = ({ running, completed, failed, stopped, extra }: JobRunMixProp
         )}
 
         {succeeded === null ? null : (
-          <p className="ml-auto flex items-center gap-2">
+          <p className="ms-auto flex items-center gap-2">
             {besideTheNumber(
               sayParts('screens.observabilityPage.jobRunMix.succeededPercent', {
                 percent: (

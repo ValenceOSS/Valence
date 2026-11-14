@@ -19,7 +19,7 @@ describe('StageCue', () => {
     const back = render(<StageCue cue={{ kind: 'back', at: 1 }} isPlaying />);
     const forward = render(<StageCue cue={{ kind: 'forward', at: 2 }} isPlaying />);
 
-    expect(back.container.firstElementChild).toHaveClass('left-[20%]');
-    expect(forward.container.firstElementChild).toHaveClass('right-[20%]');
+    expect(back.container.firstElementChild).toHaveClass('start-[20%]');
+    expect(forward.container.firstElementChild).toHaveClass('end-[20%]');
   });
 });

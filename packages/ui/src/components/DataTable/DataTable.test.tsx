@@ -412,7 +412,7 @@ describe('DataTable', () => {
 
     const [first, second] = screen.getAllByRole('columnheader');
 
-    expect(first?.className).toMatch(/border-l/);
+    expect(first?.className).toMatch(/border-s/);
     expect(second?.className).toMatch(/max-xl:hidden/);
     expect(screen.getByText('About items')).toBeInTheDocument();
   });

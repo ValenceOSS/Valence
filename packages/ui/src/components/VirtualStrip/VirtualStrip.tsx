@@ -87,7 +87,7 @@ const VirtualStrip = ({
             key={item.key}
             data-index={item.index}
             ref={virtualiser.measureElement}
-            className="absolute left-0 top-0 w-full"
+            className="absolute start-0 top-0 w-full"
             style={{ transform: `translateY(${item.start.toString()}px)` }}
           >
             {children(item.index)}

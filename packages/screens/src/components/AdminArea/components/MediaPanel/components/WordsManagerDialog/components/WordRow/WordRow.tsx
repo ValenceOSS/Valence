@@ -41,7 +41,7 @@ const WordRow = ({ word, count, isBusy, onRename, onRemove }: WordRowProps) => {
         }}
         className="min-w-0 flex-1"
       />
-      <span className="w-20 shrink-0 text-right font-body text-xs tabular-nums text-text-muted">
+      <span className="w-20 shrink-0 text-end font-body text-xs tabular-nums text-text-muted">
         {sayCount('common.count.titles', count)}
       </span>
       <Button

@@ -132,7 +132,7 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
           const standing = lyricStanding(index, at, lyrics.isSynced, look === 'immersive');
           const words = line.text === '' ? '♪' : line.text;
           const drawn = cn(
-            'origin-left text-left',
+            'origin-left text-start',
             look === 'panel'
               ? 'text-[1.0625rem] font-semibold leading-snug tracking-[-0.01em]'
               : 'font-bold leading-[1.12] tracking-[-0.025em]',

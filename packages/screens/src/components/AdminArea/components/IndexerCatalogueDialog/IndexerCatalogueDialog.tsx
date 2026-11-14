@@ -190,7 +190,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
               key={generic.id}
               variant="secondary"
               size="none"
-              className="flex flex-col items-start gap-0.5 px-3 py-2 text-left"
+              className="flex flex-col items-start gap-0.5 px-3 py-2 text-start"
               onClick={() => {
                 onChoose({ kind: generic.id });
               }}

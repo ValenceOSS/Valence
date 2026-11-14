@@ -82,7 +82,7 @@ const LogLine = ({
           aria-expanded={isExpanded}
           label={`${look.label} from ${record.source}: ${record.message}`}
           hasTooltip={false}
-          className="flex min-w-0 flex-1 items-start gap-4 px-3 py-2 text-left font-mono text-[0.8125rem]"
+          className="flex min-w-0 flex-1 items-start gap-4 px-3 py-2 text-start font-mono text-[0.8125rem]"
           onClick={onToggle}
         >
           {hasTime ? (
@@ -182,7 +182,7 @@ const LogLine = ({
       </div>
 
       {isExpanded ? (
-        <div className="flex flex-col gap-2 pb-2 pl-9 pr-3">
+        <div className="flex flex-col gap-2 pb-2 ps-9 pe-3">
           {record.detail === null ? null : (
             <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-[var(--surface-hover)] px-3 py-2 font-mono text-xs leading-relaxed text-text-muted">
               {record.detail}

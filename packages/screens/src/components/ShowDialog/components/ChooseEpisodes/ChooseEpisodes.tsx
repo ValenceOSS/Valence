@@ -81,7 +81,7 @@ const ChooseEpisodes = ({
                 className="font-medium"
               />
 
-              <ul className="flex flex-col gap-1 pl-6">
+              <ul className="flex flex-col gap-1 ps-6">
                 {season.episodes.map((episode) => (
                   <li key={episode.id}>
                     <Checkbox

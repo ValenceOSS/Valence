@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chooseTheme, chosenTheme } from '@ValenceClient/shell/theme';
 import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
+import { LANGUAGES_IN_USE_KEY } from '@ValenceClient/language/LANGUAGES_IN_USE_KEY';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ProfileSettings } from './ProfileSettings';
@@ -21,6 +23,7 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: true,
   hasPin: false,
   mayRequest: true,
@@ -36,6 +39,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: PROFILE.showsWhatIamWatching,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   theme: 'system',
   motion: 'system',
   pluginTheme: null,
@@ -59,6 +63,7 @@ const DRAFT: ProfileDraft = {
 
 beforeEach(() => {
   chooseTheme('system');
+  platformInUse().store.forget(LANGUAGES_IN_USE_KEY);
 });
 
 describe('ProfileSettings', () => {
@@ -84,6 +89,32 @@ describe('ProfileSettings', () => {
 
     expect(onDraft).toHaveBeenCalledWith({ theme: 'dark' });
     expect(chosenTheme()).toBe('system');
+  });
+
+  it('puts a language for the profile into the draft', async () => {
+    const actor = userEvent.setup();
+    const onDraft = vi.fn();
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    expect(screen.getByRole('button', { name: 'Language' })).toHaveTextContent(
+      'Same as this device',
+    );
+
+    await actor.click(screen.getByRole('button', { name: 'Language' }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
+
+    expect(onDraft).toHaveBeenCalledWith({ language: 'de' });
+  });
+
+  it('names the server’s language as the one followed, where the server chose one', () => {
+    platformInUse().store.write(LANGUAGES_IN_USE_KEY, '{"server":"fr","profile":null}');
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Language' })).toHaveTextContent(
+      'Same as the server (Français)',
+    );
   });
 
   it('writes a new name into the draft rather than saving it', async () => {

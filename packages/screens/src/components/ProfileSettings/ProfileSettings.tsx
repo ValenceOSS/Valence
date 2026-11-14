@@ -23,6 +23,12 @@ import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoi
 import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/components/PluginThemeRow/PluginThemeRow';
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 import { say } from '@ValenceI18n/say';
+import { SelectField } from '@ValenceUI/SelectField';
+import { isLanguage } from '@ValenceI18n/isLanguage';
+import { languageChoices } from '@ValenceClient/language/languageChoices';
+import { readLanguagesInUse } from '@ValenceClient/language/readLanguagesInUse';
+import { languageName } from '@ValenceI18n/languageName';
+import { SAME_AS_THE_DEVICE } from '@ValenceClient/language/SAME_AS_THE_DEVICE';
 
 const FORMAT_CHOICES = [
   { id: 'hls', label: say('screens.accountArea.profileSettings.hls') },
@@ -38,8 +44,8 @@ const CONNECTION_CHOICES = [
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
- * patient Valence is about asking whether they are still there. Beside them, what this device
- * chooses for itself: its theme, movement and colours, whether a browser with WebGPU plays files it
+ * patient Valence is about asking whether they are still there, and the language they speak wherever
+ * they watch, each named in itself. Beside them, what this device chooses for itself: its theme, movement and colours, whether a browser with WebGPU plays files it
  * cannot play by itself through its own player, on Windows which icon the taskbar shows it with, how many pieces of a film it fetches at once and in
  * which format, and in the desktop app whether this computer puts a notice up when something new
  * reaches the inbox. Those are kept on the device rather than the account, but wait for the same
@@ -65,6 +71,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
     desktopSystemOf(navigator.userAgent) === 'windows';
   const hasAGpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
   const device = draft ?? readDeviceChoices();
+  const serverLanguage = readLanguagesInUse().server;
 
   const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
@@ -132,6 +139,30 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
             }}
           />
         )}
+      </SettingRow>
+
+      <SettingRow
+        title={say('common.language')}
+        description={say('screens.accountArea.profileSettings.languageFollowsThisProfile')}
+      >
+        <SelectField
+          label={say('common.language')}
+          isLabelHidden
+          size="sm"
+          options={languageChoices(
+            serverLanguage === null
+              ? undefined
+              : say('screens.accountArea.profileSettings.sameAsTheServer', {
+                  language: languageName(serverLanguage),
+                }),
+          )}
+          value={draft?.language ?? SAME_AS_THE_DEVICE}
+          isDisabled={!isReady}
+          onSelect={(chosen) => {
+            onDraft({ language: isLanguage(chosen) ? chosen : null });
+          }}
+          className="w-56"
+        />
       </SettingRow>
 
       <SettingRow

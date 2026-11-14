@@ -171,7 +171,7 @@ const InstalledPluginCard = ({
         <Callout
           title={say('screens.pluginsPanel.installedPluginCard.itStoppedWorking')}
           tone="danger"
-          className="ml-14"
+          className="ms-14"
         >
           {sayAgain(plugin.problem)}
         </Callout>

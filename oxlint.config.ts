@@ -282,6 +282,15 @@ export default defineConfig({
     },
     {
       files: [
+        'packages/ui/src/**/*.{ts,tsx}',
+        'packages/screens/src/**/*.{ts,tsx}',
+        'apps/web/src/**/*.{ts,tsx}',
+        'apps/desktop/src/**/*.{ts,tsx}',
+      ],
+      rules: { 'valence/logical-sides': 'error' },
+    },
+    {
+      files: [
         'packages/core/src/**/*.{ts,tsx}',
         'packages/contracts/src/**/*.{ts,tsx}',
         'apps/server/src/**/*.{ts,tsx}',

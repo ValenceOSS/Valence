@@ -94,7 +94,7 @@ const SetupStepFrame = ({
             back === undefined ? 'justify-start' : 'justify-between',
           )}
         >
-          {back === undefined ? null : <span className="-ml-3 flex">{back}</span>}
+          {back === undefined ? null : <span className="-ms-3 flex">{back}</span>}
           <span className="flex flex-wrap items-center justify-end gap-2">{actions}</span>
         </motion.footer>
       )}

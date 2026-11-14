@@ -85,6 +85,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
       draft.showsWhatIamWatching !== profile.showsWhatIamWatching ||
       draft.prefersBestCopy !== profile.prefersBestCopy ||
+      draft.language !== profile.language ||
       areDeviceChoicesChanged(draft) ||
       JSON.stringify(draft.discordPresence) !== JSON.stringify(profile.discordPresence) ||
       JSON.stringify(draft.avatar) !== JSON.stringify(profile.avatar));
@@ -223,7 +224,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
           <div className="flex w-full items-center gap-3">
             <BuildInfoFooter />
 
-            <div className="ml-auto flex gap-3">
+            <div className="ms-auto flex gap-3">
               {tvBrowserOf(window.navigator.userAgent) === null ? null : (
                 <Button
                   variant="secondary"

@@ -30,11 +30,11 @@ const StepTrailLines = ({ lines, hasNext, isSettled }: StepTrailLinesProps) => {
     <div className="relative pt-3 pb-3">
       <span
         aria-hidden
-        className={cn(BEND, '-top-2 left-[11.5px] h-[17px] rounded-bl-[7px] border-b border-l')}
+        className={cn(BEND, '-top-2 start-[11.5px] h-[17px] rounded-es-[7px] border-b border-s')}
       />
       <span
         aria-hidden
-        className={cn(BEND, 'top-2 left-[18px] h-[18px] rounded-tr-[7px] border-t border-r')}
+        className={cn(BEND, 'top-2 start-[18px] h-[18px] rounded-se-[7px] border-t border-e')}
       />
       {hasNext ? (
         <>
@@ -42,14 +42,14 @@ const StepTrailLines = ({ lines, hasNext, isSettled }: StepTrailLinesProps) => {
             aria-hidden
             className={cn(
               BEND,
-              'bottom-[9px] left-[18px] h-[18px] rounded-br-[7px] border-b border-r',
+              'bottom-[9px] start-[18px] h-[18px] rounded-ee-[7px] border-b border-e',
             )}
           />
           <span
             aria-hidden
             className={cn(
               BEND,
-              '-bottom-2 left-[11.5px] h-[18px] rounded-tl-[7px] border-t border-l',
+              '-bottom-2 start-[11.5px] h-[18px] rounded-ss-[7px] border-t border-s',
             )}
           />
         </>
@@ -72,7 +72,7 @@ const StepTrailLines = ({ lines, hasNext, isSettled }: StepTrailLinesProps) => {
                   animate={{ scaleY: 1 }}
                   transition={flow}
                   className={cn(
-                    'absolute left-[24px] top-[14px] w-px origin-top bg-[var(--surface-line)]',
+                    'absolute start-[24px] top-[14px] w-px origin-top bg-[var(--surface-line)]',
                     at < lines.length - 1 ? 'h-full' : 'bottom-[15px]',
                   )}
                 />
@@ -83,7 +83,7 @@ const StepTrailLines = ({ lines, hasNext, isSettled }: StepTrailLinesProps) => {
                 animate={{ scale: 1 }}
                 transition={isStill ? { duration: 0 } : { ...settleTween, delay: 0.15 }}
                 className={cn(
-                  'absolute left-[21.5px] top-[11px] size-1.5 rounded-full transition-colors duration-300',
+                  'absolute start-[21.5px] top-[11px] size-1.5 rounded-full transition-colors duration-300',
                   DOTS[line.mark],
                 )}
               />
@@ -91,7 +91,7 @@ const StepTrailLines = ({ lines, hasNext, isSettled }: StepTrailLinesProps) => {
                 initial={isMoving ? { y: 8 } : false}
                 animate={{ y: 0 }}
                 transition={flow}
-                className="flex min-h-7 py-1 pl-10 text-sm leading-5 text-text-muted"
+                className="flex min-h-7 py-1 ps-10 text-sm leading-5 text-text-muted"
               >
                 <span className="min-w-0 flex-1">{line.content}</span>
               </motion.span>

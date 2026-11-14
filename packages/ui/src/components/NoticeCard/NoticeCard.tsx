@@ -122,7 +122,7 @@ const NoticeCard = ({
       <div
         ref={shell}
         className={cn(
-          'mx-auto flex w-fit max-w-[min(30rem,calc(100vw-2rem))] items-center gap-2.5 rounded-full border py-1.5 pr-1.5 pl-3.5 text-text',
+          'mx-auto flex w-fit max-w-[min(30rem,calc(100vw-2rem))] items-center gap-2.5 rounded-full border py-1.5 pe-1.5 ps-3.5 text-text',
           'border-[var(--menu-line)] bg-surface-raised shadow-[var(--shadow-overlay)]',
           isDanger && 'border-danger/30',
         )}
@@ -176,7 +176,7 @@ const NoticeCard = ({
       )}
     >
       <div className="valence-card-face text-text">
-        <div className="flex items-start gap-3 py-3 pr-2 pl-3.5">
+        <div className="flex items-start gap-3 py-3 pe-2 ps-3.5">
           <span className="flex h-5 shrink-0 items-center">{markOf(tone)}</span>
 
           <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-px">
@@ -214,11 +214,11 @@ const NoticeCard = ({
           </Button>
         </div>
 
-        {children === undefined ? null : <div className="pr-3 pb-3 pl-3.5">{children}</div>}
+        {children === undefined ? null : <div className="pe-3 pb-3 ps-3.5">{children}</div>}
       </div>
 
       {hasFooter ? (
-        <div className="flex min-h-10 items-center justify-between gap-3 pr-1 pl-3 text-[0.8125rem]">
+        <div className="flex min-h-10 items-center justify-between gap-3 pe-1 ps-3 text-[0.8125rem]">
           {countdown === undefined ? (
             <span />
           ) : (

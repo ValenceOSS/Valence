@@ -225,7 +225,7 @@ const LibrariesStep = ({ source, onContinue, onBack }: LibrariesStepProps) => {
                   const key = keyOf(library.sourceLibraryId, location.sourcePath);
 
                   return (
-                    <div key={key} className="flex flex-col gap-1 pl-2">
+                    <div key={key} className="flex flex-col gap-1 ps-2">
                       <span className="font-mono text-xs text-text-muted">
                         {say('screens.importWizard.librariesStep.sourcePathBecomesValencePath', {
                           sourcePath: location.sourcePath,
@@ -339,7 +339,7 @@ const LibrariesStep = ({ source, onContinue, onBack }: LibrariesStepProps) => {
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <Button variant="ghost" className="-ml-3" onClick={onBack}>
+        <Button variant="ghost" className="-ms-3" onClick={onBack}>
           {say('common.back')}
         </Button>
 

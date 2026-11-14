@@ -69,7 +69,7 @@ const Switch = ({
       className={cn(
         isLabelHidden
           ? 'flex items-center outline-none'
-          : 'flex w-full items-center gap-3 text-left outline-none',
+          : 'flex w-full items-center gap-3 text-start outline-none',
         'focus-visible:focus-ring rounded-md',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,

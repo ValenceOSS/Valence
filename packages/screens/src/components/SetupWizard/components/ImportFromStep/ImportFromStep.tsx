@@ -32,7 +32,7 @@ const ImportFromStep = ({ onBack, onDone }: ImportFromStepProps) => {
         lead={
           <span className="flex flex-col items-start gap-3">
             {say('screens.setupWizard.importStep.nothingOnTheOldServerChanges')}
-            <span className="-ml-2.5 flex flex-wrap gap-1">
+            <span className="-ms-2.5 flex flex-wrap gap-1">
               <Button
                 variant="subtle"
                 size="sm"

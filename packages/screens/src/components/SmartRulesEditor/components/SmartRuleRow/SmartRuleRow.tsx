@@ -232,7 +232,7 @@ const SmartRuleRow = ({
           size="xs"
           label={say('screens.smartRules.removeThisRule')}
           onClick={onRemove}
-          className="ml-auto"
+          className="ms-auto"
         >
           <Icon of={XIcon} size={14} />
         </Button>

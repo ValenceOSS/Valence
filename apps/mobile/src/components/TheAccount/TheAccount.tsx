@@ -34,6 +34,7 @@ import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { AnAccountRow } from '@ValenceMobile/components/AnAccountRow/AnAccountRow';
 import { AThemeChoice } from '@ValenceMobile/components/AThemeChoice/AThemeChoice';
+import { ALanguageChoice } from '@ValenceMobile/components/ALanguageChoice/ALanguageChoice';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -258,6 +259,7 @@ const TheAccount = ({
 
       <ARising turn={5}>
         <AThemeChoice />
+        <ALanguageChoice />
       </ARising>
 
       <ARising turn={6}>

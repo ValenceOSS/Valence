@@ -51,7 +51,7 @@ const PersonPortraits = ({ portraits, className }: PersonPortraitsProps) => {
             variant="overlay"
             size="sm"
             label={say('common.previous')}
-            className="absolute inset-y-0 left-2 my-auto hover-hover:hover:scale-100 active:translate-y-0 active:scale-100"
+            className="absolute inset-y-0 start-2 my-auto hover-hover:hover:scale-100 active:translate-y-0 active:scale-100"
             onClick={() => {
               setAt((shownAt - 1 + count) % count);
             }}
@@ -64,7 +64,7 @@ const PersonPortraits = ({ portraits, className }: PersonPortraitsProps) => {
             variant="overlay"
             size="sm"
             label={say('common.next')}
-            className="absolute inset-y-0 right-2 my-auto hover-hover:hover:scale-100 active:translate-y-0 active:scale-100"
+            className="absolute inset-y-0 end-2 my-auto hover-hover:hover:scale-100 active:translate-y-0 active:scale-100"
             onClick={() => {
               setAt((shownAt + 1) % count);
             }}

@@ -95,7 +95,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
             <span>· {sayCount('common.count.songs', album.trackCount)}</span>
             <span>· {formatDuration(album.durationSeconds)}</span>
             {album.sizeBytes <= 0 ? null : <span>· {formatBytes(album.sizeBytes)}</span>}
-            {album.isExplicit ? <ExplicitMark className="ml-1" /> : null}
+            {album.isExplicit ? <ExplicitMark className="ms-1" /> : null}
           </>
         }
         actions={

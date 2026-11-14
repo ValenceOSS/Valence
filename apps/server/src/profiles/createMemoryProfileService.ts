@@ -67,6 +67,7 @@ const createMemoryProfileService = (
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      language: null,
       isOwner: listFor(userId).length === 0,
       hasPin: false,
       mayRequest: true,
@@ -119,6 +120,7 @@ const createMemoryProfileService = (
         showsWhatIamWatching: request.showsWhatIamWatching ?? held.profile.showsWhatIamWatching,
         discordPresence: request.discordPresence ?? held.profile.discordPresence,
         prefersBestCopy: request.prefersBestCopy ?? held.profile.prefersBestCopy,
+        language: request.language === undefined ? held.profile.language : request.language,
         updatedAt: stamp(),
       };
 

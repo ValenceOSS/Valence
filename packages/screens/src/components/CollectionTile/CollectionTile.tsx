@@ -22,7 +22,7 @@ const CollectionTile = ({ collection, onOpen }: CollectionTileProps) => (
       variant="bare"
       size="none"
       hasTooltip={false}
-      className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-lg text-left"
+      className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-lg text-start"
       onClick={onOpen}
     >
       <span className={`block rounded-lg shadow-[var(--shadow-artwork)] ${LIFTS}`}>

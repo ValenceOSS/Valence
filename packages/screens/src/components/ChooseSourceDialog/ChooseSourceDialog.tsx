@@ -115,7 +115,7 @@ const ChooseSourceDialog = ({
                         <li key={offer.id}>
                           <Button
                             variant="secondary"
-                            className="h-auto w-full flex-col items-start gap-1 py-2 text-left"
+                            className="h-auto w-full flex-col items-start gap-1 py-2 text-start"
                             disabled={isPlaying}
                             aria-label={
                               offer.id === bestId

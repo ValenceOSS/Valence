@@ -79,7 +79,7 @@ const ScopedField = ({
         }
         className={cn(
           size === 'lg' ? 'h-9 text-sm' : '',
-          index === choices.length - 1 && submit === undefined ? '' : 'rounded-r-none border-r-0',
+          index === choices.length - 1 && submit === undefined ? '' : 'rounded-e-none border-e-0',
         )}
       />
     ))}

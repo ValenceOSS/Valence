@@ -67,6 +67,7 @@ const aProfile = (id: string, name: string, hasPin = false): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: name === 'Operator',
   hasPin,
   mayRequest: true,

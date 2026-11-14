@@ -11,6 +11,8 @@ import {
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import type { Roundness } from '@ValenceContracts/schemas/Roundness';
+import { SpokenLanguageSchema } from '@ValenceContracts/schemas/SpokenLanguage';
+import type { Language } from '@ValenceI18n/LANGUAGES';
 import { DEFAULT_RELEASE_TYPES, ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
@@ -82,6 +84,7 @@ const AdminOverviewSchema = z.object({
     requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
     controlsConnectedApps: z.boolean().default(false),
     roundness: RoundnessSchema.optional(),
+    language: SpokenLanguageSchema.nullable().optional(),
     hiddenAlerts: z.array(z.string()).default([]),
     certificationRegion: z.string().default('GB'),
     keepsDownloadsForDays: z.number().int().nonnegative().default(14),
@@ -1161,6 +1164,24 @@ const saveRoundness = async (roundness: Roundness): Promise<boolean> => {
 };
 
 /**
+ * Sets the language this server speaks to everybody who has not chosen one of their own, or lets
+ * each device speak its own again.
+ *
+ * @param language - The language, or nothing to follow each device.
+ * @returns Whether the setting was written.
+ */
+const saveServerLanguage = async (language: Language | null): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ language }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets the message the sign in and profile pages show under their heading, or takes it away.
  *
  * @param wayInMessage - What it says and in which colour, or null for no message.
@@ -1418,6 +1439,7 @@ export {
   saveHardwareAccel,
   savePreviewQuality,
   saveRoundness,
+  saveServerLanguage,
   saveWayInMessage,
   saveCertificationRegion,
   saveKeepsDownloadsForDays,

@@ -4,7 +4,7 @@ import type { LoadFigureProps } from './LoadFigure.types';
 const ALIGNMENTS = {
   start: '',
   center: 'lg:items-center lg:text-center',
-  end: 'lg:items-end lg:text-right',
+  end: 'lg:items-end lg:text-end',
 } as const;
 
 /**

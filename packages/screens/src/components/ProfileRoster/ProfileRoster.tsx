@@ -48,8 +48,8 @@ const ProfileRoster = ({ profiles, menuFor, onAdd }: ProfileRosterProps) => {
           <li
             key={profile.id}
             className={cn(
-              'flex items-center gap-3 border-b border-[var(--surface-line)] py-2 pl-3 last:border-b-0 in-[.valence-card-face]:border-[var(--surface-card-line)] in-[.valence-card-face]:pl-4 in-[.valence-card-face]:last:border-b',
-              menuFor === undefined ? 'pr-3' : 'pr-1.5',
+              'flex items-center gap-3 border-b border-[var(--surface-line)] py-2 ps-3 last:border-b-0 in-[.valence-card-face]:border-[var(--surface-card-line)] in-[.valence-card-face]:ps-4 in-[.valence-card-face]:last:border-b',
+              menuFor === undefined ? 'pe-3' : 'pe-1.5',
             )}
           >
             <ProfileFace profile={profile} className="size-8 shrink-0 text-xs" />

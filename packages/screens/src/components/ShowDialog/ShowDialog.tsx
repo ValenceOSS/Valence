@@ -521,7 +521,7 @@ const ShowDialog = ({
                   label={say('screens.bookDialog.moreToDoWithThisBook')}
                   actions={actions}
                   isCompact
-                  className="md:ml-auto"
+                  className="md:ms-auto"
                 />
               </DialogHeadlinePart>
             </DialogHeadline>

@@ -511,7 +511,7 @@ const AskableDialog = ({
           <div aria-busy className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl">
               <Skeleton shape="soft" className="h-[34vh] min-h-[14rem] w-full sm:h-[22rem]" />
-              <div className="absolute right-4 top-4">
+              <div className="absolute end-4 top-4">
                 <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
                   <Icon of={XIcon} size={20} />
                 </Button>
@@ -701,7 +701,7 @@ const AskableDialog = ({
                           label={say('screens.askableDialog.moreToDoWithThis')}
                           actions={actions}
                           isCompact
-                          className="md:ml-auto"
+                          className="md:ms-auto"
                         />
                       )}
                     </DialogHeadlinePart>

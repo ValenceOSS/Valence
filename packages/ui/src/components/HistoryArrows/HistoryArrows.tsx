@@ -40,7 +40,7 @@ const HistoryArrows = ({
       {...(backKeys === undefined ? {} : { shortcut: backKeys })}
       disabled={!canGoBack}
       onClick={onBack}
-      className="h-6 w-7 rounded-l-md rounded-r-none"
+      className="h-6 w-7 rounded-s-md rounded-e-none"
     >
       <Icon of={MoveLeftIcon} size={14} />
     </Button>
@@ -53,7 +53,7 @@ const HistoryArrows = ({
       {...(forwardKeys === undefined ? {} : { shortcut: forwardKeys })}
       disabled={!canGoForward}
       onClick={onForward}
-      className="h-6 w-7 rounded-l-none rounded-r-md"
+      className="h-6 w-7 rounded-s-none rounded-e-md"
     >
       <Icon of={MoveRightIcon} size={14} />
     </Button>

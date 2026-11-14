@@ -21,7 +21,7 @@ const InfoRow = ({ label, keyClassName, children }: InfoRowProps) => (
       )}
       {label}
     </span>
-    <span className="min-w-0 text-right tabular-nums text-text">{children}</span>
+    <span className="min-w-0 text-end tabular-nums text-text">{children}</span>
   </span>
 );
 

@@ -71,14 +71,14 @@ const ROW_GUESS = 56;
 
 const DRAWN_BEYOND = 10;
 
-const SHRINKS = 'w-px whitespace-nowrap [&:not(:last-child)]:pr-0 sm:[&:not(:last-child)]:pr-0';
+const SHRINKS = 'w-px whitespace-nowrap [&:not(:last-child)]:pe-0 sm:[&:not(:last-child)]:pe-0';
 
 const FILLS = 'w-full min-w-64 max-w-0';
 
 const BAND = TABLE_LOOKS.band;
 
 const LINE_BEFORE =
-  'border-l border-[var(--surface-line)] in-[.valence-card-face]:border-[var(--card-face-line)]';
+  'border-s border-[var(--surface-line)] in-[.valence-card-face]:border-[var(--card-face-line)]';
 
 const STRIPES =
   '[&>tr:not(:last-child)>td]:border-b [&>tr>td]:border-[color-mix(in_oklab,var(--color-text)_6%,transparent)]';
@@ -447,7 +447,7 @@ const DataTable = <Row extends RowData>({
                       key={header.id}
                       scope="col"
                       className={cn(
-                        'group/th sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2 text-left text-xs font-medium text-text-muted in-[.valence-card-face]:border-[var(--card-face-line)] sm:px-5',
+                        'group/th sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2 text-start text-xs font-medium text-text-muted in-[.valence-card-face]:border-[var(--card-face-line)] sm:px-5',
                         TABLE_LOOKS.body,
                         'in-[.valence-card-face]:bg-[var(--card-face)] in-[.valence-card-face]:bg-none',
                         header.column.columnDef.meta?.shrinks === true ? SHRINKS : '',
@@ -718,7 +718,7 @@ const DataTable = <Row extends RowData>({
       ) : pageCount <= 1 ? null : (
         <div
           className={cn(
-            'flex items-center justify-between gap-4 border-t border-[var(--surface-line)] py-1.5 pr-1.5 pl-5',
+            'flex items-center justify-between gap-4 border-t border-[var(--surface-line)] py-1.5 pe-1.5 ps-5',
             BAND,
           )}
         >

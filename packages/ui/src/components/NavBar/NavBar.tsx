@@ -243,7 +243,7 @@ const NavBar = ({
                           OPENS,
                           isCurrent
                             ? 'md:-mx-0.5 md:w-[1.375rem] md:px-0.5 md:opacity-100'
-                            : 'md:-ml-2 md:w-0 md:opacity-0',
+                            : 'md:-ms-2 md:w-0 md:opacity-0',
                         )}
                       >
                         <AnimatedIcon
@@ -413,7 +413,7 @@ const NavBar = ({
                 </motion.span>
 
                 {action.badge === undefined ? null : (
-                  <span className="absolute -right-0.5 -top-0.5 z-10">{action.badge}</span>
+                  <span className="absolute -end-0.5 -top-0.5 z-10">{action.badge}</span>
                 )}
               </Button>
             ) : (
@@ -451,7 +451,7 @@ const NavBar = ({
           )}
 
           {trailing === undefined ? null : (
-            <div className="ml-2 flex shrink-0 items-center gap-3">{trailing}</div>
+            <div className="ms-2 flex shrink-0 items-center gap-3">{trailing}</div>
           )}
         </div>
       </nav>

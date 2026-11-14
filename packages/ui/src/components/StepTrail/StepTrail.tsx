@@ -191,7 +191,7 @@ const StepTrail = ({ label, steps, isNewestFirst = false, className }: StepTrail
                       exit={{ opacity: 0, transition: { duration: 0.1 } }}
                       transition={motionOf}
                       className={cn(
-                        'absolute left-[11.5px] h-[calc(100%-1.5rem)] w-px overflow-hidden bg-[var(--surface-line)]',
+                        'absolute start-[11.5px] h-[calc(100%-1.5rem)] w-px overflow-hidden bg-[var(--surface-line)]',
                         step.detail === undefined ? 'top-8' : 'top-10',
                       )}
                     >
@@ -222,7 +222,7 @@ const StepTrail = ({ label, steps, isNewestFirst = false, className }: StepTrail
                       toggle(step.id);
                     }}
                     className={cn(
-                      'flex w-full items-center gap-4 text-left',
+                      'flex w-full items-center gap-4 text-start',
                       step.detail === undefined ? 'min-h-10' : 'min-h-14',
                     )}
                   >

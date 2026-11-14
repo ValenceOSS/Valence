@@ -1,8 +1,6 @@
-import { ENGLISH } from './ENGLISH';
-import { GAP } from './GAP';
+import { fillGaps } from './fillGaps';
+import { SPOKEN } from './SPOKEN';
 import type { StringKey } from './StringKey';
-
-const WORDS: Readonly<Record<StringKey, string>> = ENGLISH;
 
 /**
  * Says something in words from the strings file, with any `{name}` in it filled from what is given.
@@ -15,10 +13,6 @@ const WORDS: Readonly<Record<StringKey, string>> = ENGLISH;
  * @returns The words, filled in.
  */
 const say = (key: StringKey, values: Readonly<Record<string, string | number>> = {}): string =>
-  WORDS[key].replace(GAP, (whole, name: string) => {
-    const value = values[name];
-
-    return value === undefined ? whole : value.toString();
-  });
+  fillGaps(SPOKEN.words[key] ?? key, values);
 
 export { say };

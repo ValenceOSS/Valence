@@ -422,6 +422,6 @@ describe('a control after the field', () => {
     const field = screen.getByLabelText('Rating');
 
     expect(field).toHaveAccessibleDescription('/ 10');
-    expect(field).toHaveClass('pr-12');
+    expect(field).toHaveClass('pe-12');
   });
 });

@@ -32,7 +32,7 @@ const AskerStrip = ({ request }: AskerStripProps) => {
   const [one, ...rest] = named.map((asker) => nameOfAskerFor(asker, null));
 
   return (
-    <span className="flex w-fit max-w-full items-center gap-3 rounded-full border border-[var(--surface-line)] bg-[var(--surface-hover)] py-1.5 pl-1.5 pr-4 backdrop-blur-xl">
+    <span className="flex w-fit max-w-full items-center gap-3 rounded-full border border-[var(--surface-line)] bg-[var(--surface-hover)] py-1.5 ps-1.5 pe-4 backdrop-blur-xl">
       <AskerFace asker={first} accounts={accounts} size="md" />
 
       <span className="min-w-0 truncate text-sm text-text-muted">
@@ -56,7 +56,7 @@ const AskerStrip = ({ request }: AskerStripProps) => {
             align="start"
             className="w-72"
             trigger={
-              <span className="flex min-w-0 items-center gap-2 py-0.5 pr-1 hover:text-text">
+              <span className="flex min-w-0 items-center gap-2 py-0.5 pe-1 hover:text-text">
                 <span className="flex shrink-0 -space-x-1.5">
                   {drawn.map((asker) => (
                     <AskerFace

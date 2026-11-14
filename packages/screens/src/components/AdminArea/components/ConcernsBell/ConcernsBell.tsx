@@ -48,7 +48,7 @@ const ConcernsBell = ({ concerns, onOpenPanel, onDismiss }: ConcernsBellProps) =
             <Badge
               tone="bright"
               size="count"
-              className="absolute -top-0.5 -right-0.5 ring-2 ring-[var(--frame-panel)]"
+              className="absolute -top-0.5 -end-0.5 ring-2 ring-[var(--frame-panel)]"
             >
               <FormattedNumber
                 value={Math.min(concerns.length, COUNTED_UP_TO)}

@@ -65,7 +65,7 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
                 onChange(next);
               }}
               className={cn(
-                'flex items-center gap-3 rounded-xl p-3 text-left ring-1 ring-inset',
+                'flex items-center gap-3 rounded-xl p-3 text-start ring-1 ring-inset',
                 prefersReducedMotion === true ? '' : 'transition-colors duration-150',
                 isChosen
                   ? 'bg-[var(--surface-hover)] ring-primary/60'

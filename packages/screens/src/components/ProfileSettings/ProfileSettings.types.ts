@@ -1,3 +1,4 @@
+import type { Language } from '@ValenceI18n/LANGUAGES';
 import type { AppIcon } from '@ValenceClient/shell/AppIconSchema';
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
@@ -23,6 +24,7 @@ type ProfileDraft = DeviceChoices & {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence;
   prefersBestCopy: boolean;
+  language: Language | null;
   deviceWas: DeviceChoices;
   photo: File | null;
 };

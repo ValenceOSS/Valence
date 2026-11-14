@@ -386,7 +386,7 @@ const Hero = ({
           </motion.div>
         </motion.div>
 
-        <div className="mb-8 mr-6 flex items-center gap-3 self-end sm:absolute sm:bottom-14 sm:right-12 sm:mb-0 sm:mr-0">
+        <div className="mb-8 me-6 flex items-center gap-3 self-end sm:absolute sm:bottom-14 sm:end-12 sm:mb-0 sm:me-0">
           <PageDots
             count={items.length}
             selectedIndex={index}

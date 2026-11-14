@@ -143,7 +143,7 @@ describe('Button', () => {
 
     expect(screen.getByRole('button', { name: 'Open the album' })).toHaveClass(
       'w-full',
-      'text-left',
+      'text-start',
       'bg-transparent',
       'hover:bg-[var(--surface-hover)]',
     );
@@ -385,7 +385,7 @@ describe('Button', () => {
   describe('painted by its caller', () => {
     it('imposes no layout on an episode row, a card or a menu row that draws its own', () => {
       render(
-        <Button variant="bare" size="none" className="flex flex-col text-left">
+        <Button variant="bare" size="none" className="flex flex-col text-start">
           Season 2
         </Button>,
       );
@@ -424,7 +424,7 @@ describe('Button', () => {
 
     it('brings no skin of its own when bare', () => {
       render(
-        <Button variant="bare" size="none" className="text-left">
+        <Button variant="bare" size="none" className="text-start">
           Season 2
         </Button>,
       );
@@ -433,7 +433,7 @@ describe('Button', () => {
 
       expect(button).not.toHaveClass('bg-accent');
       expect(button).not.toHaveClass('h-10');
-      expect(button).toHaveClass('text-left');
+      expect(button).toHaveClass('text-start');
     });
 
     it('keeps the behaviour of a button while wearing none of its look', async () => {

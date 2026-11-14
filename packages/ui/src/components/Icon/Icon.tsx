@@ -1,5 +1,6 @@
 import { cn } from '@ValenceUI/cn';
 import type { IconProps, IconTone } from './Icon.types';
+import { SIDEWAYS_GLYPHS } from './SIDEWAYS_GLYPHS';
 
 const TONES: Readonly<Record<IconTone, string>> = {
   inherit: '',
@@ -25,6 +26,9 @@ const GRID = 24;
  * Whether a thing is on is said with a filled drawing, not a heavier line: `whenActive` names the
  * filled twin, or the other idea where the pair is two ideas rather than one switched on — play and
  * pause — and it is swapped in place rather than drawn beside.
+ *
+ * An arrow or chevron that points along the line of text is mirrored where the page runs right to
+ * left, so back still points to where somebody came from.
  *
  * @param of - The icon.
  * @param whenActive - The drawing to show instead while in force.
@@ -55,7 +59,12 @@ const Icon = ({
     <Glyph
       size={`${(size / BASE_TEXT_PX).toString()}rem`}
       {...(weight === undefined ? {} : { strokeWidth: (weight * GRID) / size })}
-      className={cn('valence-icon', TONES[tone], className)}
+      className={cn(
+        'valence-icon',
+        TONES[tone],
+        SIDEWAYS_GLYPHS.has(Glyph) && 'rtl:-scale-x-100',
+        className,
+      )}
       {...(label === undefined
         ? { 'aria-hidden': true }
         : { 'aria-hidden': false, role: 'img', 'aria-label': label })}

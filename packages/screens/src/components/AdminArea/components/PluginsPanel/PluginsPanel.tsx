@@ -158,7 +158,7 @@ const PluginsPanel = () => {
             }}
           />
           {tab === 'available' && catalogue.data?.signedBy === 'trusted' ? (
-            <span className="ml-3 text-xs text-text-muted">
+            <span className="ms-3 text-xs text-text-muted">
               {say('screens.adminArea.pluginsPanel.pluginsFromAKeyYouTrust')}
             </span>
           ) : null}

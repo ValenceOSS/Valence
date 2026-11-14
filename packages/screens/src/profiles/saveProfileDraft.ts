@@ -1,13 +1,15 @@
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { chooseLanguageHere } from '@ValenceClient/language/chooseLanguageHere';
 import { keepDeviceChoices } from './keepDeviceChoices';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
 /**
  * Writes a profile editor's draft: any new photograph first, then the name, colour, face and the
  * rest, keeping the old name where the new one was left empty, and then what this device chose for
- * itself.
+ * itself. A new language for the profile wins over one chosen on this device before, so the profile
+ * speaks it here too.
  *
  * @param profile - The profile as the server holds it.
  * @param draft - What it should become.
@@ -32,10 +34,15 @@ const saveProfileDraft = async (
     draft.showsWhatIamWatching,
     draft.prefersBestCopy,
     draft.discordPresence,
+    draft.language,
   );
 
   if (!saved) {
     return say('common.thoseChangesWereNotSaved');
+  }
+
+  if (draft.language !== profile.language) {
+    chooseLanguageHere(null);
   }
 
   keepDeviceChoices(draft, draft.deviceWas);

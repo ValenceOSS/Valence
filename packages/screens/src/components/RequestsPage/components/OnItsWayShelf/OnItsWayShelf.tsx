@@ -51,7 +51,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
     const [first, ...rest] = names;
 
     return askers.length === 0 ? null : (
-      <span className="flex min-w-0 items-center gap-1.5 rounded-full bg-overlay py-0.5 pl-0.5 pr-2.5 text-xs font-medium text-on-scrim backdrop-blur-md">
+      <span className="flex min-w-0 items-center gap-1.5 rounded-full bg-overlay py-0.5 ps-0.5 pe-2.5 text-xs font-medium text-on-scrim backdrop-blur-md">
         <span className="flex shrink-0 -space-x-1.5">
           {askers.slice(0, FACES).map((asker) => {
             const face = faces.data?.find((profile) => profile.id === asker.faceProfileId);

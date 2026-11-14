@@ -49,7 +49,7 @@ const DiscordStatusCard = ({
           <img
             src={DISCORD_PICTURES[smallImage] ?? smallImage}
             alt={smallImageLabel ?? ''}
-            className="absolute -bottom-1 -right-1 size-7 rounded-full border-2 border-surface-raised bg-surface-raised object-cover"
+            className="absolute -bottom-1 -end-1 size-7 rounded-full border-2 border-surface-raised bg-surface-raised object-cover"
           />
         )}
       </div>

@@ -50,11 +50,11 @@ describe('StepTrailLines', () => {
       <StepTrailLines lines={LINES} hasNext isSettled={false} />,
     );
 
-    expect(container.querySelectorAll('.rounded-br-\\[7px\\]')).toHaveLength(1);
+    expect(container.querySelectorAll('.rounded-ee-\\[7px\\]')).toHaveLength(1);
 
     rerender(<StepTrailLines lines={LINES} hasNext={false} isSettled={false} />);
 
-    expect(container.querySelectorAll('.rounded-br-\\[7px\\]')).toHaveLength(0);
+    expect(container.querySelectorAll('.rounded-ee-\\[7px\\]')).toHaveLength(0);
   });
 
   it('draws the same lines with motion reduced', () => {

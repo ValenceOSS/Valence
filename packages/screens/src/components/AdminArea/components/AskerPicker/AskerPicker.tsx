@@ -38,7 +38,7 @@ const AskerPicker = ({
       }}
     />
 
-    <div className="flex flex-col gap-3 border-l border-line pl-4">
+    <div className="flex flex-col gap-3 border-s border-line ps-4">
       {askers.map((asker) => (
         <Checkbox
           key={asker.id}

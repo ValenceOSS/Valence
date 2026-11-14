@@ -44,9 +44,9 @@ const RankedChoices = <Choice extends string>({
       {chosen.map((id, place) => (
         <li
           key={id}
-          className="flex h-10 items-center gap-2.5 pl-3 pr-1.5 transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
+          className="flex h-10 items-center gap-2.5 ps-3 pe-1.5 transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
         >
-          <span className="w-4 text-right text-xs tabular-nums text-text-muted">
+          <span className="w-4 text-end text-xs tabular-nums text-text-muted">
             {(place + 1).toString()}
           </span>
 
@@ -90,7 +90,7 @@ const RankedChoices = <Choice extends string>({
       {unchosen.map((option) => (
         <li
           key={option.id}
-          className="flex h-10 items-center gap-2.5 pl-[2.125rem] pr-1.5 text-text-muted transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
+          className="flex h-10 items-center gap-2.5 ps-[2.125rem] pe-1.5 text-text-muted transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
         >
           <Checkbox
             label={option.label}

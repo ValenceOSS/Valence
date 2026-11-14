@@ -116,10 +116,10 @@ const CacheBreakdown = ({
               {nameOf(row)}
               <dd className="text-xs text-text-muted">{row.detail}</dd>
             </div>
-            <dd className="w-14 shrink-0 text-right text-xs tabular-nums text-text-muted">
+            <dd className="w-14 shrink-0 text-end text-xs tabular-nums text-text-muted">
               {row.bytes === null || keptBytes === 0 ? '—' : percent.format(row.bytes / keptBytes)}
             </dd>
-            <dd className="w-20 shrink-0 text-right text-sm font-medium tabular-nums text-text">
+            <dd className="w-20 shrink-0 text-end text-sm font-medium tabular-nums text-text">
               {row.value}
             </dd>
           </div>

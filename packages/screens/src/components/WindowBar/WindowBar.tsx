@@ -62,8 +62,8 @@ const WindowBar = ({
     data-slot="window-bar"
     data-over-dialogs
     className={cn(
-      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pl-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag] has-[[data-state=open]]:[-webkit-app-region:no-drag]',
-      frame === undefined ? 'pr-[var(--valence-window-bar-clearance)]' : null,
+      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] ps-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag] has-[[data-state=open]]:[-webkit-app-region:no-drag]',
+      frame === undefined ? 'pe-[var(--valence-window-bar-clearance)]' : null,
     )}
   >
     <div className="flex items-center gap-1 [-webkit-app-region:no-drag]">

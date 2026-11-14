@@ -152,7 +152,7 @@ const FileGroup = ({ group, chosen, refusalFor, onToggle }: FileGroupProps) => {
             initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            className="overflow-hidden pl-8"
+            className="overflow-hidden ps-8"
           >
             {group.items.map((item) => (
               <li key={item.id} className="rounded-md px-2 py-1.5 hover:bg-shade/20">

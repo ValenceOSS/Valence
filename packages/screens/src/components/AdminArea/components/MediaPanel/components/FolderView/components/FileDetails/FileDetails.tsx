@@ -236,7 +236,7 @@ const FileDetails = ({ where, selected, shownPath, onClear, onOpenTitle }: FileD
       minWidth={fileDetailsWidth.narrowest}
       maxWidth={fileDetailsWidth.widest}
       onWidthChange={fileDetailsWidth.save}
-      className="border-l border-[var(--surface-line)]"
+      className="border-s border-[var(--surface-line)]"
     >
       {details}
     </ResizablePanel>

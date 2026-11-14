@@ -61,7 +61,7 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
           animate="shown"
           exit="gone"
           transition={arriving}
-          className="pointer-events-none fixed right-4 bottom-[calc(var(--music-bar-room,0px)+1rem)] z-40 max-w-[calc(100vw-2rem)] pb-[env(safe-area-inset-bottom,0px)]"
+          className="pointer-events-none fixed end-4 bottom-[calc(var(--music-bar-room,0px)+1rem)] z-40 max-w-[calc(100vw-2rem)] pb-[env(safe-area-inset-bottom,0px)]"
         >
           <section
             aria-label={say('screens.audiobookBar.listeningTo')}

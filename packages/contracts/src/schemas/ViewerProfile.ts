@@ -5,6 +5,7 @@ import { SketchSceneSchema } from './SketchScene';
 import { HowOftenToAskSchema, StillWatchingSchema } from './StillWatching';
 import { DEFAULT_DISCORD_PRESENCE, DiscordPresenceSchema } from './DiscordPresence';
 import { MOST_FRAME_ZOOM } from '@ValenceContracts/constants/MOST_FRAME_ZOOM';
+import { SpokenLanguageSchema } from './SpokenLanguage';
 
 const PROFILE_COLOURS = [
   '#e8503a',
@@ -106,6 +107,7 @@ const ViewerProfileSchema = z.object({
   showsWhatIamWatching: z.boolean().default(false),
   discordPresence: DiscordPresenceSchema.default(DEFAULT_DISCORD_PRESENCE),
   prefersBestCopy: z.boolean().default(false),
+  language: SpokenLanguageSchema.nullable().default(null),
   isOwner: z.boolean().default(false),
   hasPin: z.boolean().default(false),
   mayRequest: z.boolean().default(true),
@@ -121,6 +123,7 @@ const ViewerProfileRequestSchema = z.object({
   showsWhatIamWatching: z.boolean().optional(),
   discordPresence: DiscordPresenceSchema.optional(),
   prefersBestCopy: z.boolean().optional(),
+  language: SpokenLanguageSchema.nullable().optional(),
 });
 
 const ViewerProfileListSchema = z.object({

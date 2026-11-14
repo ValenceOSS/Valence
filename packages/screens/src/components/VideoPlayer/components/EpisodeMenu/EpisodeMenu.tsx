@@ -147,7 +147,7 @@ const EpisodeMenu = ({
         </div>
       )}
 
-      <ScrollFade className="max-h-[min(30rem,60vh)] pr-1">
+      <ScrollFade className="max-h-[min(30rem,60vh)] pe-1">
         <div
           ref={containerRef}
           onPointerMove={follow}
@@ -194,7 +194,7 @@ const EpisodeMenu = ({
                       onSelect(episode);
                     }}
                     className={cn(
-                      'flex w-full items-start gap-3 rounded-lg px-1.5 py-2 text-left outline-none focus-visible:focus-ring',
+                      'flex w-full items-start gap-3 rounded-lg px-1.5 py-2 text-start outline-none focus-visible:focus-ring',
                       'transition-[background-color,scale,opacity] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
                       'active:scale-[0.99] motion-reduce:transition-none',
                       isOn
@@ -259,7 +259,7 @@ const EpisodeMenu = ({
                       </span>
                     </span>
 
-                    <span className="flex w-12 shrink-0 justify-end pt-0.5 pr-1 text-xs tabular-nums text-text-muted">
+                    <span className="flex w-12 shrink-0 justify-end pt-0.5 pe-1 text-xs tabular-nums text-text-muted">
                       {isWatched ? (
                         <Icon
                           of={CircleCheckFilledIcon}

@@ -70,19 +70,19 @@ const ArtCard = ({
           {...(isLazy ? { loading: 'lazy' } : {})}
           decoding="async"
           draggable={false}
-          className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+          className="absolute bottom-[14%] start-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
           onError={() => {
             setIsLogoMissing(true);
           }}
         />
       ) : (
-        <span className="absolute inset-x-[6%] bottom-[14%] line-clamp-2 text-left text-lg font-bold leading-tight tracking-tight text-on-scrim drop-shadow-lg">
+        <span className="absolute inset-x-[6%] bottom-[14%] line-clamp-2 text-start text-lg font-bold leading-tight tracking-tight text-on-scrim drop-shadow-lg">
           {title}
         </span>
       )}
 
       {flag === undefined ? null : (
-        <span className="absolute top-0 left-0 bg-on-scrim text-shade whitespace-nowrap rounded-br-lg px-3 py-1 text-xs font-bold">
+        <span className="absolute top-0 start-0 bg-on-scrim text-shade whitespace-nowrap rounded-ee-lg px-3 py-1 text-xs font-bold">
           {flag}
         </span>
       )}

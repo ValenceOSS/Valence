@@ -218,7 +218,7 @@ const PROBLEM_NAMES: Readonly<Record<TitleProblem, string>> = {
   unreadable: say('screens.adminArea.mediaPanel.couldNotBeRead'),
 };
 
-const INDENTS: readonly string[] = ['', 'pl-9', 'pl-[4.5rem]'];
+const INDENTS: readonly string[] = ['', 'ps-9', 'ps-[4.5rem]'];
 
 /**
  * Everything the libraries hold, one library at a time, each title with its poster: every film on

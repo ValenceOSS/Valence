@@ -23,6 +23,7 @@ const A_FACE: WayIn['profiles'][number] = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: true,
   hasPin: false,
   mayRequest: true,

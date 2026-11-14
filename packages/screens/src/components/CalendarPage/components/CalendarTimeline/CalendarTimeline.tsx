@@ -68,7 +68,7 @@ const CalendarTimeline = ({ day, today, entries, onOpen }: CalendarTimelineProps
                 />
                 <span
                   aria-hidden
-                  className="w-0 justify-self-center border-l border-dashed border-text/30"
+                  className="w-0 justify-self-center border-s border-dashed border-text/30"
                   style={{
                     gridColumn: todayAt + 1,
                     gridRow: `${(HEADER_ROWS + 1).toString()} / -1`,
@@ -81,7 +81,7 @@ const CalendarTimeline = ({ day, today, entries, onOpen }: CalendarTimelineProps
               at === 0 || date.endsWith('-01') ? (
                 <span
                   key={`month:${date}`}
-                  className="whitespace-nowrap pt-3 pb-1 pl-1.5 text-[0.625rem] font-medium uppercase tracking-[0.08em] text-text/50"
+                  className="whitespace-nowrap pt-3 pb-1 ps-1.5 text-[0.625rem] font-medium uppercase tracking-[0.08em] text-text/50"
                   style={{ gridColumn: at + 1, gridRow: 1 }}
                 >
                   {nameTheShortMonth(date)}

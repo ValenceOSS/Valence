@@ -46,7 +46,7 @@ const AccountFace = ({ avatar, name }: AccountFaceProps) => {
           <span
             ref={nameRef}
             aria-hidden
-            className="flex whitespace-pre pl-2 pr-2.5 text-sm font-medium text-text"
+            className="flex whitespace-pre ps-2 pe-2.5 text-sm font-medium text-text"
           >
             {[...name].map((letter, at) => (
               <motion.span

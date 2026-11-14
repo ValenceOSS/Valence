@@ -42,7 +42,7 @@ const BARS = 40;
 const LIVE_EVERY_MS = 2000;
 
 const FACT =
-  'flex flex-col gap-1.5 border-[var(--surface-line)] px-4 py-3 max-sm:odd:border-r sm:not-first:border-l max-sm:nth-[n+3]:border-t';
+  'flex flex-col gap-1.5 border-[var(--surface-line)] px-4 py-3 max-sm:odd:border-e sm:not-first:border-s max-sm:nth-[n+3]:border-t';
 
 const FACT_NAME = 'text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text/50';
 
@@ -347,10 +347,10 @@ const JobTraceDialog = ({
                     return (
                       <li
                         key={line.id}
-                        className="flex items-start gap-2.5 border-l-2 px-3 py-1.5"
+                        className="flex items-start gap-2.5 border-s-2 px-3 py-1.5"
                         style={{ borderLeftColor: look.colour }}
                       >
-                        <span className="w-24 shrink-0 whitespace-nowrap text-right tabular-nums text-text-muted">
+                        <span className="w-24 shrink-0 whitespace-nowrap text-end tabular-nums text-text-muted">
                           {`+${describeElapsed(Math.max(0, line.atMs - startedAt))}`}
                         </span>
 

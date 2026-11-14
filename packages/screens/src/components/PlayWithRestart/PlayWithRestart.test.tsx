@@ -48,9 +48,9 @@ describe('PlayWithRestart', () => {
     );
 
     expect(screen.getByRole('button', { name: 'More' })).toHaveClass(
-      'rounded-l-[4px]',
-      'rounded-r-[0.75rem]',
+      'rounded-s-[4px]',
+      'rounded-e-[0.75rem]',
     );
-    expect(screen.getByRole('button', { name: 'Start again' })).toHaveClass('rounded-r-[4px]');
+    expect(screen.getByRole('button', { name: 'Start again' })).toHaveClass('rounded-e-[4px]');
   });
 });

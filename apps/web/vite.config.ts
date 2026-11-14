@@ -4,6 +4,8 @@ import { build, defineConfig } from 'vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
+import { tsImport } from 'tsx/esm/api';
+import { z } from 'zod';
 import type { Plugin, ProxyOptions } from 'vite';
 
 /**
@@ -139,9 +141,18 @@ const memoised = {
   },
 };
 
+const WordsByLanguageToolSchema = z.object({
+  wordsByLanguage: z.custom<() => Plugin>((value) => typeof value === 'function'),
+});
+
+const { wordsByLanguage } = WordsByLanguageToolSchema.parse(
+  await tsImport('@ValenceI18n/wordsByLanguage', import.meta.url),
+);
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
+    wordsByLanguage(),
     react(),
     babel({ presets: [memoised] }),
     tailwindcss(),

@@ -47,7 +47,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
         return context.json(refuse('error.setup.setupHasAlreadyBeenCompleted'), 409);
       }
 
-      const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics, ...asked } =
+      const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics, language, ...asked } =
         context.req.valid('json');
 
       if (setupCode !== undefined && !setupCode.matches(asked.setupCode)) {
@@ -91,6 +91,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
         setupCompletedAt: new Date().toISOString(),
         setupFlow: 'open',
         telemetryEnabled: sharesUsageStatistics,
+        language,
         ...(ownerAccountId === null ? {} : { ownerAccountId }),
       });
 

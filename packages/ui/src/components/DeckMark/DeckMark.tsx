@@ -133,7 +133,7 @@ const DeckMark = ({ size, isAnimated = false, loops = false, label, className }:
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
     >
       <span
-        className="absolute left-0 top-0 block"
+        className="absolute start-0 top-0 block"
         style={{
           transformOrigin: '0 0',
           transform: `translate(${shiftX}px, ${shiftY}px) scale(${scale})`,
@@ -145,7 +145,7 @@ const DeckMark = ({ size, isAnimated = false, loops = false, label, className }:
           return (
             <span
               key={share}
-              className="absolute left-0 top-0 block"
+              className="absolute start-0 top-0 block"
               style={{
                 width: DECK.width,
                 height: DECK.height,

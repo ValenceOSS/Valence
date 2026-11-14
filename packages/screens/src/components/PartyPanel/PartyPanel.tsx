@@ -320,7 +320,7 @@ const PartyPanel = ({
                 {drift !== null && <span className="text-xs text-text-muted">{drift}</span>}
 
                 {me?.role === 'host' && member.connectionId !== meConnectionId && (
-                  <span className="ml-auto flex gap-1">
+                  <span className="ms-auto flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"

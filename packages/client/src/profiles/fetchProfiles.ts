@@ -1,4 +1,5 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
+import type { Language } from '@ValenceI18n/LANGUAGES';
 import { readRefusal } from '@ValenceClient/admin/readRefusal';
 import { say } from '@ValenceI18n/say';
 import { ViewerProfileListSchema } from '@ValenceContracts/schemas/ViewerProfile';
@@ -46,6 +47,7 @@ const createProfile = async (
  * @param showsWhatIamWatching - Whether others are shown what they are watching.
  * @param prefersBestCopy - Whether they would rather be played the best copy of a title, wherever it is.
  * @param discordPresence - How their status looks on Discord, from the desktop app.
+ * @param language - The language they speak wherever they watch, or nothing to follow the server.
  * @returns Whether the change was written.
  */
 const saveProfile = async (
@@ -57,6 +59,7 @@ const saveProfile = async (
   showsWhatIamWatching?: boolean,
   prefersBestCopy?: boolean,
   discordPresence?: DiscordPresence,
+  language?: Language | null,
 ): Promise<boolean> => {
   const response = await fetch(`/api/profiles/${profileId}`, {
     method: 'PATCH',
@@ -69,6 +72,7 @@ const saveProfile = async (
       ...(showsWhatIamWatching === undefined ? {} : { showsWhatIamWatching }),
       ...(prefersBestCopy === undefined ? {} : { prefersBestCopy }),
       ...(discordPresence === undefined ? {} : { discordPresence }),
+      ...(language === undefined ? {} : { language }),
     }),
   }).catch(() => null);
 

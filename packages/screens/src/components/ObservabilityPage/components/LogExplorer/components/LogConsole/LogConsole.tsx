@@ -31,7 +31,7 @@ const LogConsole = ({ records, isWrapped }: LogConsoleProps) => (
                 : '',
           )}
         >
-          <span className="w-8 shrink-0 text-right tabular-nums text-text-muted select-none">
+          <span className="w-8 shrink-0 text-end tabular-nums text-text-muted select-none">
             {at + 1}
           </span>
           <span

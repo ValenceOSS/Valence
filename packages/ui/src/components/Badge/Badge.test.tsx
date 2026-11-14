@@ -67,9 +67,9 @@ describe('Badge', () => {
       </>,
     );
 
-    expect(badgeOf('76')).toHaveClass('gap-1', 'pr-0.5');
+    expect(badgeOf('76')).toHaveClass('gap-1', 'pe-0.5');
     expect(badgeOf('20')).toHaveClass('px-1.5');
-    expect(badgeOf('20')).not.toHaveClass('pr-0.5');
+    expect(badgeOf('20')).not.toHaveClass('pe-0.5');
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -124,7 +124,7 @@ const MediaCard = ({
     transition: revealTransition(prefersReducedMotion),
   };
   const face = cn(
-    'group flex w-full flex-col gap-3 rounded-md text-left outline-none',
+    'group flex w-full flex-col gap-3 rounded-md text-start outline-none',
     isBook ? 'valence-book-card' : '',
     'focus-visible:focus-ring',
     className,
@@ -143,14 +143,14 @@ const MediaCard = ({
               isStill
                 ? ''
                 : 'motion-reduce:transition-none hover-hover:group-hover:shadow-[var(--shadow-artwork-raised)]',
-              isBook ? 'valence-book__cover rounded-l-[3px] rounded-r-md' : 'rounded-md',
+              isBook ? 'valence-book__cover rounded-s-[3px] rounded-e-md' : 'rounded-md',
               SHAPE_CLASSES[shape],
             )}
           >
             {!showsImage ? (
               <span
                 aria-hidden
-                className="absolute bottom-[-0.15em] left-[-0.06em] text-[9rem] font-semibold leading-none tracking-tighter text-on-scrim/[0.07]"
+                className="absolute bottom-[-0.15em] start-[-0.06em] text-[9rem] font-semibold leading-none tracking-tighter text-on-scrim/[0.07]"
               >
                 {title.slice(0, 1).toUpperCase()}
               </span>
@@ -177,7 +177,7 @@ const MediaCard = ({
             <span className="absolute inset-0 bg-linear-to-t from-shade/80 via-shade/10 to-transparent opacity-70 transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:opacity-90" />
 
             {badges.length === 0 ? null : (
-              <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+              <span className="absolute start-3 top-3 flex flex-wrap gap-1.5">
                 {badges.map((badge) =>
                   typeof badge === 'string' ? (
                     <Badge key={badge} tone="solid">
@@ -197,7 +197,7 @@ const MediaCard = ({
                 loading="lazy"
                 decoding="async"
                 draggable={false}
-                className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+                className="absolute bottom-[14%] start-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
                 onError={() => {
                   setIsLogoMissing(true);
                 }}
@@ -205,18 +205,18 @@ const MediaCard = ({
             )}
 
             {overlay === undefined ? null : (
-              <span className="pointer-events-none absolute left-2.5 top-2.5 flex max-w-[calc(100%-1.25rem)]">
+              <span className="pointer-events-none absolute start-2.5 top-2.5 flex max-w-[calc(100%-1.25rem)]">
                 {overlay}
               </span>
             )}
 
             {count === undefined || count <= 0 || corner !== undefined ? null : (
-              <span className="absolute right-0 top-0">
+              <span className="absolute end-0 top-0">
                 <Tooltip label={countLabel ?? count.toString()}>
                   <span
                     role="img"
                     aria-label={countLabel ?? count.toString()}
-                    className="flex items-center justify-center rounded-bl-lg bg-on-scrim px-3 py-1 text-xs font-bold tabular-nums text-shade"
+                    className="flex items-center justify-center rounded-es-lg bg-on-scrim px-3 py-1 text-xs font-bold tabular-nums text-shade"
                   >
                     {count > 99 ? '99+' : count.toString()}
                   </span>
@@ -225,7 +225,7 @@ const MediaCard = ({
             )}
 
             {corner === undefined ? null : (
-              <span className="absolute right-3 top-3">
+              <span className="absolute end-3 top-3">
                 <Tooltip label={corner.label}>
                   <span
                     role="img"
@@ -239,7 +239,7 @@ const MediaCard = ({
             )}
 
             {marks.length === 0 && status === undefined ? null : (
-              <span className="absolute bottom-3 left-3 flex items-center gap-2">
+              <span className="absolute bottom-3 start-3 flex items-center gap-2">
                 {marks.length === 0 ? null : (
                   <span className="flex -space-x-2">
                     {drawnMarks.map((mark) => (
@@ -260,7 +260,7 @@ const MediaCard = ({
             )}
 
             {watchedFraction === undefined || watchedFraction < 1 ? null : (
-              <span className="absolute bottom-3 right-3">
+              <span className="absolute bottom-3 end-3">
                 <Tooltip label={say('common.watched')}>
                   <span
                     role="img"

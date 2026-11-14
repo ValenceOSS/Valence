@@ -120,7 +120,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
         ) : null}
 
         {release.publishedAt === null ? null : (
-          <span className="ml-auto shrink-0 text-xs tabular-nums text-text-muted">
+          <span className="ms-auto shrink-0 text-xs tabular-nums text-text-muted">
             {describeSince(release.publishedAt, now)}
           </span>
         )}
@@ -135,7 +135,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
             transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             className="overflow-hidden"
           >
-            <div className="flex flex-col gap-4 pt-1 pr-2 pb-4 pl-[2.125rem] max-sm:pl-0">
+            <div className="flex flex-col gap-4 pt-1 pe-2 pb-4 ps-[2.125rem] max-sm:ps-0">
               {notes.length === 0 ? (
                 <p className="text-sm text-text-muted">
                   {say('screens.adminArea.updatesPanel.releaseEntry.noNotesForThisRelease')}
@@ -152,7 +152,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                       </h3>
                     )}
 
-                    <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-text-muted marker:text-text-muted/60">
+                    <ul className="flex list-disc flex-col gap-2 ps-5 text-sm text-text-muted marker:text-text-muted/60">
                       {(openSections.has(
                         section.kind === 'written' ? section.heading : section.kind,
                       )
@@ -168,7 +168,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                               size="sm"
                               tone="quiet"
                               icon={iconOfScope(point.scope)}
-                              className="mr-1.5 align-[0.0625rem]"
+                              className="me-1.5 align-[0.0625rem]"
                             >
                               {point.scope}
                             </Badge>
@@ -179,7 +179,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                           {point.pull === null ? null : (
                             <Link
                               href={point.pull.url}
-                              className="ml-1.5 text-xs tabular-nums text-text-muted"
+                              className="ms-1.5 text-xs tabular-nums text-text-muted"
                             >
                               {say('screens.adminArea.updatesPanel.releaseEntry.pullNumber', {
                                 number: point.pull.number,
@@ -188,7 +188,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                           )}
 
                           {point.author === null ? null : (
-                            <span className="ml-1.5 text-xs text-text-muted">
+                            <span className="ms-1.5 text-xs text-text-muted">
                               {say('screens.adminArea.updatesPanel.releaseEntry.byAuthor', {
                                 name: point.author,
                               })}

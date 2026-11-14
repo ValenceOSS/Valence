@@ -135,7 +135,7 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
             aria-hidden
             className="absolute inset-0 -z-10 bg-linear-to-b from-transparent from-45% to-shade/80"
           />
-          <span className="absolute bottom-[6cqw] left-[4.5cqw] flex max-w-[60%] flex-col items-start text-on-scrim">
+          <span className="absolute bottom-[6cqw] start-[4.5cqw] flex max-w-[60%] flex-col items-start text-on-scrim">
             {logoMissingFor === playback.mediaId || !hasPicture ? (
               <span className="text-[clamp(14px,5.6cqw,26px)] font-semibold leading-tight drop-shadow-[0_2px_10px_var(--color-scrim)]">
                 {shown}
@@ -242,12 +242,15 @@ const SessionArtwork = ({ session }: SessionArtworkProps) => {
         >
           {buffered === null ? null : (
             <span
-              className={cn('absolute inset-y-0 left-0', isOnArt ? 'bg-on-scrim/35' : 'bg-text/25')}
+              className={cn(
+                'absolute inset-y-0 start-0',
+                isOnArt ? 'bg-on-scrim/35' : 'bg-text/25',
+              )}
               style={{ width: `${(buffered * 100).toString()}%` }}
             />
           )}
           <span
-            className={cn('absolute inset-y-0 left-0', isOnArt ? 'bg-on-scrim' : 'bg-text')}
+            className={cn('absolute inset-y-0 start-0', isOnArt ? 'bg-on-scrim' : 'bg-text')}
             style={{ width: `${(through * 100).toString()}%` }}
           />
         </span>

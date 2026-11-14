@@ -173,7 +173,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
               size="sm"
               isActive={at === playing}
               aria-current={at === playing ? 'true' : undefined}
-              className="w-full justify-between gap-3 text-left"
+              className="w-full justify-between gap-3 text-start"
               onClick={() => {
                 player.goToChapter(at);
               }}

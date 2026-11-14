@@ -86,7 +86,7 @@ const OpenInTheApp = () => {
   return (
     <aside
       aria-label={say('screens.openInTheApp.openInTheValenceApp')}
-      className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 flex items-center gap-3 rounded-xl bg-surface-raised p-3 pl-4 shadow-lg ring-1 ring-line"
+      className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 flex items-center gap-3 rounded-xl bg-surface-raised p-3 ps-4 shadow-lg ring-1 ring-line"
     >
       <p className="min-w-0 flex-1 text-sm text-text">
         {say('screens.openInTheApp.haveTheValenceApp')}

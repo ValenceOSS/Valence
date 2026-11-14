@@ -64,7 +64,7 @@ const SourcedField = ({
         </Badge>
       )}
 
-      <span className="ml-auto opacity-0 transition-opacity duration-[var(--duration-fast)] group-focus-within/field:opacity-100 group-hover/field:opacity-100 has-[[data-state=open]]:opacity-100 coarse:opacity-100 motion-reduce:transition-none">
+      <span className="ms-auto opacity-0 transition-opacity duration-[var(--duration-fast)] group-focus-within/field:opacity-100 group-hover/field:opacity-100 has-[[data-state=open]]:opacity-100 coarse:opacity-100 motion-reduce:transition-none">
         <ActionMenu
           label={say('common.moreForName', { name: label })}
           size="sm"

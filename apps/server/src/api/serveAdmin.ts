@@ -305,6 +305,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           requestReleaseTypes: current.requestReleaseTypes,
           controlsConnectedApps: current.controlsConnectedApps,
           roundness: current.roundness,
+          language: current.language,
           hiddenAlerts: current.hiddenAlerts,
           keepsDownloadsForDays: current.keepsDownloadsForDays,
           splashscreen: await splashscreen.address(),
@@ -394,6 +395,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { controlsConnectedApps: patch.controlsConnectedApps }),
       ...(patch.roundness === undefined ? {} : { roundness: patch.roundness }),
+      ...(patch.language === undefined ? {} : { language: patch.language }),
       ...(patch.hiddenAlerts === undefined
         ? {}
         : { hiddenAlerts: [...new Set(patch.hiddenAlerts)] }),
@@ -460,6 +462,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         requestReleaseTypes: updated.requestReleaseTypes,
         controlsConnectedApps: updated.controlsConnectedApps,
         roundness: updated.roundness,
+        language: updated.language,
         hiddenAlerts: updated.hiddenAlerts,
         keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),

@@ -49,10 +49,10 @@ const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay, onClose }: MusicMiniPlay
         animate="shown"
         exit="gone"
         transition={arriving}
-        className="pointer-events-none fixed bottom-4 left-4 z-40 pb-[env(safe-area-inset-bottom,0px)]"
+        className="pointer-events-none fixed bottom-4 start-4 z-40 pb-[env(safe-area-inset-bottom,0px)]"
       >
         <div className="valence-card-shell pointer-events-auto">
-          <div className="valence-card-face valence-card-face--raised flex items-center gap-2 p-2 pr-3">
+          <div className="valence-card-face valence-card-face--raised flex items-center gap-2 p-2 pe-3">
             <Button
               variant="bare"
               size="none"

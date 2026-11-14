@@ -659,7 +659,7 @@ const AdminPage = () => {
             hasRoomForTheSidebar
               ? 'sticky top-[var(--valence-window-bar)] z-30 h-[calc(100dvh-var(--valence-window-bar))] shrink-0 self-start'
               : cn(
-                  'fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40',
+                  'fixed bottom-0 start-0 top-[var(--valence-window-bar)] z-40',
                   'transition-[translate,box-shadow] duration-[var(--duration-slow)] ease-[var(--ease-out)] motion-reduce:transition-none',
                   isDrawerOpen
                     ? 'translate-x-0 shadow-[var(--shadow-lifted)]'
@@ -759,8 +759,8 @@ const AdminPage = () => {
           inert={!hasRoomForTheSidebar && isDrawerOpen}
           className={cn(
             'flex min-w-0 flex-1 flex-col overflow-clip border-[var(--surface-line)] bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]',
-            'md:my-2 md:mr-2 md:rounded-2xl md:border md:shadow-[var(--shadow-raised)]',
-            isCollapsed ? 'md:ml-2' : '',
+            'md:my-2 md:me-2 md:rounded-2xl md:border md:shadow-[var(--shadow-raised)]',
+            isCollapsed ? 'md:ms-2' : '',
           )}
         >
           <div className="sticky top-[var(--valence-window-bar)] z-40 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5">

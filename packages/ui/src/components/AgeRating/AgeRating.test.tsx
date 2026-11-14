@@ -28,8 +28,8 @@ describe('AgeRating', () => {
   });
 
   it('takes the caller’s own classes', () => {
-    render(<AgeRating certification="16" region="IE" className="ml-2" />);
+    render(<AgeRating certification="16" region="IE" className="ms-2" />);
 
-    expect(screen.getByRole('img')).toHaveClass('ml-2');
+    expect(screen.getByRole('img')).toHaveClass('ms-2');
   });
 });

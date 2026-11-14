@@ -89,7 +89,7 @@ const Badge = ({
         'leading-none whitespace-nowrap',
         colour === null ? TONE_CLASSES[tone] : '',
         SIZE_CLASSES[size],
-        size === 'count' && (mark !== undefined || tone === 'busy') && 'pr-0.5',
+        size === 'count' && (mark !== undefined || tone === 'busy') && 'pe-0.5',
         className,
       )}
     >

@@ -138,6 +138,7 @@ type CreateAppOptions = {
   auth: ValenceAuth;
   settings: SettingsStore;
   version?: string;
+  stringsFolder?: string | null;
   commit?: string | undefined;
   trustedOrigins?: () => Promise<readonly string[]>;
   callerOf?: (context: Context) => string | null;

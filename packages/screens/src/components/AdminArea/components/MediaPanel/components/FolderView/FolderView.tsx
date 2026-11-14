@@ -314,7 +314,7 @@ const FolderView = ({
                 <Button
                   variant="subtle"
                   size="none"
-                  className="block max-w-full self-start truncate text-left font-medium text-text hover:underline"
+                  className="block max-w-full self-start truncate text-start font-medium text-text hover:underline"
                   onClick={(event) => {
                     event.stopPropagation();
                     open(row.original.path);

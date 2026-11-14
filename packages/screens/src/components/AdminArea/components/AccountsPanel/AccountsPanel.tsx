@@ -672,7 +672,7 @@ const AccountsPanel = () => {
             size="none"
             label={say('common.editName', { name: row.original.name })}
             hasTooltip={false}
-            className="flex min-w-0 items-center gap-3 text-left"
+            className="flex min-w-0 items-center gap-3 text-start"
             onClick={() => {
               openEditor(row.original.id);
             }}
@@ -1063,7 +1063,7 @@ const AccountsPanel = () => {
               <div key={at} className="flex items-center gap-3">
                 <Skeleton shape="round" className="size-8" />
                 <Skeleton className="h-4 w-40" />
-                <Skeleton className="ml-auto h-4 w-20" />
+                <Skeleton className="ms-auto h-4 w-20" />
               </div>
             ))}
           </div>

@@ -187,7 +187,7 @@ describe('WindowBar', () => {
       '[-webkit-app-region:no-drag]',
     );
     expect(container.querySelector('[data-slot="window-bar"]')).not.toHaveClass(
-      'pr-[var(--valence-window-bar-clearance)]',
+      'pe-[var(--valence-window-bar-clearance)]',
     );
   });
 
@@ -196,7 +196,7 @@ describe('WindowBar', () => {
 
     expect(container.querySelector('[data-slot="window-controls"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-slot="window-bar"]')).toHaveClass(
-      'pr-[var(--valence-window-bar-clearance)]',
+      'pe-[var(--valence-window-bar-clearance)]',
     );
   });
 });
