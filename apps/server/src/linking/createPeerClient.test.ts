@@ -62,6 +62,31 @@ describe('createPeerClient', () => {
     expect(await createPeerClient(fetcher).tellUnlinked('https://anime.example', 't')).toBe(false);
   });
 
+  it('gives up on a server that answers without end, rather than holding all of it', async () => {
+    let pulled = 0;
+    const endless = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            pull: (controller) => {
+              pulled += 1;
+              controller.enqueue(new Uint8Array(1024 * 1024).fill(32));
+            },
+          }),
+        ),
+      ),
+    );
+
+    expect(
+      await createPeerClient(
+        endless,
+        () => Promise.resolve(['192.168.1.20']),
+        1024 * 1024,
+      ).identityAt('http://anime.lan'),
+    ).toBeNull();
+    expect(pulled).toBeLessThan(10);
+  });
+
   it('signs the questions that need it', async () => {
     const fetcher = answering(200, {
       pairingId: '00000000-0000-4000-8000-000000000001',

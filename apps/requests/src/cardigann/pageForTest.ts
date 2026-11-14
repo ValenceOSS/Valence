@@ -1,0 +1,121 @@
+/* oxlint-disable valence/no-hard-coded-strings -- stands in for a site's definition and page in tests */
+import { buildSearchRequests } from './buildSearchRequests';
+import { createCategoryMap } from './createCategoryMap';
+import { queryVariables } from './queryVariables';
+import { readDefinition } from './readDefinition';
+
+const NOW = Date.parse('2026-09-19T12:00:00.000Z');
+
+const INDEXER = { id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Example' };
+
+const DEFINITION = readDefinition(`id: example
+name: Example
+links: [https://example.org/]
+caps:
+  categorymappings:
+    - {id: 1, cat: Movies/HD, desc: "Films"}
+  modes:
+    search: [q]
+type: public
+search:
+  paths:
+    - path: search/{{ .Keywords }}/
+  rows:
+    selector: table.results tr:has(a.title)
+  fields:
+    category:
+      text: 1
+    title:
+      selector: a.title
+    details:
+      selector: a.title
+      attribute: href
+    download:
+      selector: a.dl
+      attribute: href
+    size:
+      selector: td.size
+    seeders:
+      selector: td.se
+    leechers:
+      selector: td.le
+    date:
+      text: now
+`);
+
+const BODY = `<table class="results">
+  <tr>
+    <td><a class="title" href="/torrent/7/">Dune.2021.1080p</a></td>
+    <td><a class="dl" href="/dl/7.torrent">get</a></td>
+    <td class="size">8.5 GB</td><td class="se">12</td><td class="le">3</td>
+  </tr>
+</table>`;
+
+const HANGING = readDefinition(`id: example
+name: Example
+links: [https://example.org/]
+caps:
+  categorymappings:
+    - {id: 1, cat: Movies/HD, desc: "Films"}
+  modes:
+    search: [q]
+type: public
+search:
+  paths:
+    - path: search/{{ .Keywords }}/
+  rows:
+    selector: table.results tr:has(a.title)
+  fields:
+    category:
+      text: 1
+    title:
+      selector: a.title
+      filters:
+        - name: re_replace
+          args: ["(a+)+$", "x"]
+    details:
+      selector: a.title
+      attribute: href
+    download:
+      selector: a.dl
+      attribute: href
+    size:
+      selector: td.size
+    seeders:
+      selector: td.se
+    leechers:
+      selector: td.le
+    date:
+      text: now
+`);
+
+/**
+ * The page the test definition asks for, as the site answered it, or one whose title takes a
+ * pattern forever to read where it is `stuck`.
+ */
+const pageForTest = (options: { stuck?: boolean } = {}) => {
+  const definition = options.stuck === true ? HANGING : DEFINITION;
+  const body =
+    options.stuck === true ? BODY.replace('Dune.2021.1080p', `${'a'.repeat(60)}b`) : BODY;
+
+  if (definition === null) {
+    throw new Error('The test definition does not read.');
+  }
+
+  const [request] = buildSearchRequests({
+    definition,
+    variables: { ...queryVariables({ query: 'dune' }), '.Config.sitelink': 'https://example.org/' },
+    categories: createCategoryMap(definition.caps),
+    asked: [],
+    siteLink: 'https://example.org/',
+    nowMs: NOW,
+  });
+
+  if (request === undefined) {
+    throw new Error('The test definition makes no request.');
+  }
+
+  return { definition, request, body, indexer: INDEXER, nowMs: NOW };
+};
+
+export { pageForTest };

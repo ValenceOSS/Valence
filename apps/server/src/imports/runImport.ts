@@ -1,3 +1,5 @@
+import { rememberImportedFiles } from '@ValenceServer/imports/rememberImportedFiles';
+import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
 import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { eq } from 'drizzle-orm';
 import { MOST_COLLECTION_ENTRIES } from '@ValenceContracts/schemas/Collection';
@@ -199,32 +201,37 @@ const setAccess = async (
     }
 
     const access = person.user.libraryAccess;
+    const isAllowed = (sourceLibraryId: string) =>
+      access.kind === 'all' || access.libraryIds.includes(sourceLibraryId);
+    const reachedFrom = (allowed: boolean) =>
+      new Set(
+        located
+          .filter((library) => isAllowed(library.sourceLibraryId) === allowed)
+          .flatMap((library) => library.locations.map((location) => location.libraryId))
+          .filter((libraryId) => libraryId !== null),
+      );
+    const refused = reachedFrom(false);
+    const allowed = [...reachedFrom(true)].filter((libraryId) => !refused.has(libraryId));
+    const refusing =
+      access.kind === 'all'
+        ? [...refused]
+        : libraries.map((library) => library.id).filter((id) => !allowed.includes(id));
 
-    for (const library of located) {
-      const allowed = access.kind === 'all' || access.libraryIds.includes(library.sourceLibraryId);
+    for (const libraryId of refusing) {
+      await services.library.refuseLibrary(person.userId, libraryId);
+    }
 
-      for (const location of library.locations) {
-        if (location.libraryId === null) {
-          continue;
-        }
+    for (const libraryId of allowed) {
+      await services.library.allowLibrary(person.userId, libraryId);
 
-        if (!allowed) {
-          await services.library.refuseLibrary(person.userId, location.libraryId);
+      const kind = kinds.get(libraryId);
 
-          continue;
-        }
-
-        await services.library.allowLibrary(person.userId, location.libraryId);
-
-        const kind = kinds.get(location.libraryId);
-
-        if (person.user.ceiling !== null && kind !== undefined && isVideoKind(kind)) {
-          await services.library.setCeiling(person.userId, {
-            libraryId: location.libraryId,
-            maximumAge: person.user.ceiling.maximumAge,
-            allowsUnrated: person.user.ceiling.allowsUnrated,
-          });
-        }
+      if (person.user.ceiling !== null && kind !== undefined && isVideoKind(kind)) {
+        await services.library.setCeiling(person.userId, {
+          libraryId,
+          maximumAge: person.user.ceiling.maximumAge,
+          allowsUnrated: person.user.ceiling.allowsUnrated,
+        });
       }
     }
   }
@@ -651,6 +658,13 @@ const runImport = async (
       );
     },
   });
+  await rememberImportedFiles(
+    services.db,
+    createDatabaseMediaOriginStore(services.db),
+    catalogue.matches,
+    state.report.source.name,
+  );
+
   const people = await peopleOf(state, users);
 
   if (!isBehind('access', run.cursor)) {

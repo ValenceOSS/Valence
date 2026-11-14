@@ -90,6 +90,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { Spinner } from '@ValenceUI/Spinner';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { OriginBadge } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/OriginBadge/OriginBadge';
 import { MediaPoster } from './components/MediaPoster/MediaPoster';
 import { MediaTitlePage } from './components/MediaTitlePage/MediaTitlePage';
 import { describeAudio } from './describeAudio';
@@ -169,7 +170,15 @@ const sortOfColumn = (id: string): TitleSort =>
 
 const NO_ROWS: readonly MediaTitle[] = [];
 
-const HIDEABLE: readonly string[] = ['quality', 'codec', 'audio', 'length', 'size', 'added'];
+const HIDEABLE: readonly string[] = [
+  'quality',
+  'codec',
+  'audio',
+  'length',
+  'size',
+  'origin',
+  'added',
+];
 
 const SEARCH_SETTLES_MS = 250;
 
@@ -484,6 +493,14 @@ const MediaPanel = ({
     () => pages.data?.pages.flatMap((page) => page.titles) ?? [],
     [pages.data],
   );
+  const leadPaths = useMemo(
+    () =>
+      listedRows.flatMap((row) =>
+        row.leadPath === null || row.episodes > 0 ? [] : [row.leadPath],
+      ),
+    [listedRows],
+  );
+  const origins = useQuery(adminQueries.mediaOrigins(leadPaths)).data;
   const [opening, setOpening] = useState<ReadonlySet<string>>(NO_IDS);
   const openingIds = [...opening];
   const fullOf = useQueries({
@@ -565,6 +582,7 @@ const MediaPanel = ({
     audio: say('common.audio'),
     length: say('screens.adminArea.titlePage.trackTable.length'),
     size: say('common.size'),
+    origin: say('screens.adminArea.folderView.from'),
     added: say('common.added'),
   };
   const toFix = new Map(
@@ -1369,6 +1387,18 @@ const MediaPanel = ({
             {row.original.sizeBytes === null ? '—' : formatBytes(row.original.sizeBytes)}
           </span>
         ),
+      },
+      {
+        id: 'origin',
+        meta: { showsOnlyWhenWide: true },
+        header: say('screens.adminArea.folderView.from'),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const path = row.original.row?.leadPath;
+          const origin = path === null || path === undefined ? undefined : origins?.[path];
+
+          return origin === undefined ? null : <OriginBadge origin={origin} />;
+        },
       },
       {
         id: 'added',

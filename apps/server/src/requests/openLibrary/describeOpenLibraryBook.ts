@@ -16,7 +16,14 @@ const WorkSchema = z.object({
   covers: z.array(z.number().int()).nullish().catch(null),
   first_publish_date: z.string().nullish().catch(null),
   authors: z
-    .array(z.object({ author: z.object({ key: z.string() }).nullish().catch(null) }))
+    .array(
+      z.object({
+        author: z
+          .object({ key: z.string().regex(/^\/authors\/OL\d{1,12}A$/) })
+          .nullish()
+          .catch(null),
+      }),
+    )
     .nullish()
     .catch(null),
 });

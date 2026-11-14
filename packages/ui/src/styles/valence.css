@@ -75,6 +75,18 @@
   initial-value: oklch(0.6 0.16 50);
 }
 
+@property --color-inbound {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.58 0.11 195);
+}
+
+@property --color-outbound {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.56 0.2 330);
+}
+
 @property --color-danger {
   syntax: '<color>';
   inherits: true;
@@ -246,6 +258,8 @@
   --color-highlight: oklch(0.54 0.115 85);
   --color-highlight-contrast: oklch(0.99 0 0);
   --color-busy: oklch(0.6 0.16 50);
+  --color-inbound: oklch(0.58 0.11 195);
+  --color-outbound: oklch(0.56 0.2 330);
   --color-danger: oklch(0.55 0.17 25);
   --color-success: oklch(0.55 0.15 145);
   --color-warning: oklch(0.7 0.15 80);
@@ -378,6 +392,8 @@
       --color-highlight: oklch(0.8834 0.1013 87);
       --color-highlight-contrast: oklch(0.14 0.012 265);
       --color-busy: oklch(0.76 0.15 55);
+      --color-inbound: oklch(0.8 0.12 195);
+      --color-outbound: oklch(0.74 0.18 330);
       --color-danger: oklch(0.68 0.16 25);
       --color-success: oklch(0.72 0.17 145);
       --color-warning: oklch(0.85 0.16 90);
@@ -428,6 +444,8 @@
     --color-highlight: oklch(0.8834 0.1013 87);
     --color-highlight-contrast: oklch(0.14 0.012 265);
     --color-busy: oklch(0.76 0.15 55);
+    --color-inbound: oklch(0.8 0.12 195);
+    --color-outbound: oklch(0.74 0.18 330);
     --color-danger: oklch(0.68 0.16 25);
     --color-success: oklch(0.72 0.17 145);
     --color-warning: oklch(0.85 0.16 90);
@@ -642,6 +660,8 @@ body :is(input, textarea, [contenteditable]) {
     --color-highlight var(--duration-theme) var(--ease-out),
     --color-highlight-contrast var(--duration-theme) var(--ease-out),
     --color-busy var(--duration-theme) var(--ease-out),
+    --color-inbound var(--duration-theme) var(--ease-out),
+    --color-outbound var(--duration-theme) var(--ease-out),
     --color-danger var(--duration-theme) var(--ease-out),
     --color-success var(--duration-theme) var(--ease-out),
     --color-warning var(--duration-theme) var(--ease-out);

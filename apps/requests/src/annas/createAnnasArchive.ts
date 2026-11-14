@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
+import { readBodyOrFail } from '@ValenceRequests/network/readBodyOrFail';
 import { readAnnasResults } from '@ValenceRequests/annas/readAnnasResults';
 import { BROWSER_USER_AGENT } from '@ValenceRequests/cardigann/BROWSER_USER_AGENT';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
@@ -11,6 +12,8 @@ import type { Solution, Solver } from '@ValenceRequests/solver/createSolver';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { AnnasBookStore } from '@ValenceRequests/annas/createDatabaseAnnasBookStore';
 import type { AnnasTorrents } from '@ValenceRequests/annas/createAnnasTorrents';
+import type { GuardFor } from '@ValenceRequests/network/GuardFor';
+import { isSameOriginOrUpgrade } from '@ValenceRequests/network/isSameOriginOrUpgrade';
 import { safeFileName } from '@ValenceCore/functions/safeFileName';
 import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
 import { saying } from '@ValenceI18n/saying';
@@ -47,6 +50,10 @@ const SESSION_MILLISECONDS = 6 * 60 * 60 * 1000;
 const MOST_REDIRECTS = 5;
 
 const MOST_RESULTS = 50;
+
+const MOST_PAGE_BYTES = 10 * 1024 * 1024;
+
+const MOST_TORRENT_BYTES = 64 * 1024 * 1024;
 
 const BOOK_TYPES = new Map(Object.values(BOOK_FILE_TYPES).map((type) => [type.extension, type]));
 
@@ -97,6 +104,7 @@ const createAnnasArchive = (
   wait: (archive: Archive) => Promise<void>,
   solver: Pick<Solver, 'fetch'> | null = null,
   library: AnnasLibrary | null = null,
+  guard?: GuardFor,
 ) => {
   const sessions = new Map<string, Session>();
 
@@ -252,6 +260,12 @@ const createAnnasArchive = (
         await response.body?.cancel().catch(() => undefined);
         current = new URL(location, current);
 
+        if (!isSameOriginOrUpgrade(originOf(archive), current.toString())) {
+          throw new IndexerFailure(
+            saying('requests.indexers.indexerService.theIndexerCouldNotBeAsked'),
+          );
+        }
+
         continue;
       }
 
@@ -265,7 +279,7 @@ const createAnnasArchive = (
         );
       }
 
-      return response.text();
+      return new TextDecoder().decode(await readBodyOrFail(response, MOST_PAGE_BYTES));
     }
 
     throw new IndexerFailure(saying('requests.annas.annasArchive.tooManyRedirects'));
@@ -376,6 +390,12 @@ const createAnnasArchive = (
           );
         }
 
+        if (new URL(torrent.url).origin !== originOf(archive)) {
+          throw new IndexerFailure(
+            saying('requests.annas.annasArchive.itsTorrentIsNoLongerOffered'),
+          );
+        }
+
         const answer = await ask(archive, torrent.url, { headers: {} });
 
         if (!answer.ok) {
@@ -394,7 +414,7 @@ const createAnnasArchive = (
 
         return {
           kind: 'torrent',
-          bytes: new Uint8Array(await answer.arrayBuffer()),
+          bytes: await readBodyOrFail(answer, MOST_TORRENT_BYTES),
           onlyFile: {
             path: kept.fileInTorrent,
             name: `${named === '' ? kept.md5 : named}.${kept.extension}`,
@@ -433,7 +453,11 @@ const createAnnasArchive = (
 
       await wait(archive);
 
-      return measureLink(fetch, link, archive.timeoutSeconds);
+      return measureLink(
+        guard === undefined ? fetch : guard([new URL(archive.url).host]),
+        link,
+        archive.timeoutSeconds,
+      );
     },
   };
 };

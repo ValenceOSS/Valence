@@ -764,6 +764,9 @@ const resourceSample = pgTable(
     systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
     cpuCount: integer('cpuCount').notNull(),
     gpuPercent: real('gpuPercent'),
+    networkReceivedBytesPerSecond: real('networkReceivedBytesPerSecond'),
+    networkSentBytesPerSecond: real('networkSentBytesPerSecond'),
+    streamedBytesPerSecond: real('streamedBytesPerSecond'),
   },
   (table) => [index('resource_sample_at_idx').on(table.atMs)],
 );
@@ -941,6 +944,23 @@ const versionChoice = pgTable(
     setAt: timestamp('setAt').notNull().defaultNow(),
   },
   (table) => [uniqueIndex('version_choice_path_idx').on(table.libraryId, table.path)],
+);
+
+const mediaOrigin = pgTable(
+  'media_origin',
+  {
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    source: text('source').notNull(),
+    via: text('via'),
+    recordedAt: timestamp('recordedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('media_origin_path_idx').on(table.libraryId, table.path),
+    check('media_origin_source', sql`${table.source} in ('upload', 'import')`),
+  ],
 );
 
 const titleEdit = pgTable(
@@ -1684,6 +1704,7 @@ const webhookSubscription = pgTable(
     events: jsonb('events').notNull(),
     filters: jsonb('filters').notNull().default({}),
     custom: jsonb('custom'),
+    reachesLocalNetwork: boolean('reachesLocalNetwork').notNull().default(false),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     lastAttemptAt: timestamp('lastAttemptAt'),
@@ -2437,6 +2458,7 @@ export {
   episodePin,
   seasonSource,
   versionChoice,
+  mediaOrigin,
   titleEdit,
   titleChange,
   mediaItem,

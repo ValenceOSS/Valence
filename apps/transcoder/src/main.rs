@@ -432,7 +432,15 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
 
     let state = app_state(registry.clone(), ffprobe, journal);
 
+    if state.media_roots.is_empty() {
+        tracing::warn!(
+            target: "paths",
+            "VALENCE_MEDIA_ROOTS is not set, so this service will read any file it can reach; set it to the media folders"
+        );
+    }
+
     state.monitor.watch_graphics();
+    state.monitor.watch_network();
     state
         .monitor
         .watch_cache(state.registry.config().artefact_root.clone());

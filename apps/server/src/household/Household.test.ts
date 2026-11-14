@@ -204,6 +204,21 @@ describe('setting a household up over HTTP', () => {
     await expect(households.read(userId)).resolves.toMatchObject({ avatar: { kind: 'photo' } });
   });
 
+  it('writes no picture for an account that is not there', async () => {
+    const { app, auth, makeAdministrator } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    makeAdministrator(await whoTheyAre(app, cookie));
+
+    const kept = await app.request(`${BASE}/api/admin/accounts/..%2F..%2Fsomewhere/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(),
+    });
+
+    expect(kept.status).toBe(404);
+  });
+
   it('serves another account’s picture to an administrator, and to nobody else', async () => {
     const { app, auth, makeAdministrator } = build();
     const cookie = await signUpForTest(app, auth, CREDENTIALS);

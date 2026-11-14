@@ -1,3 +1,4 @@
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { FilesJudged } from '@ValenceRequests/downloads/FilesJudged';
 import { NOTHING_JUDGED } from '@ValenceRequests/downloads/NOTHING_JUDGED';
@@ -605,6 +606,13 @@ const createDownloadQueue = ({
       }
 
       let file: ReleaseFile | null;
+
+      if (read.url.startsWith('magnet:') && !isSingleMagnetLink(read.url)) {
+        return {
+          refused: saying('requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent'),
+          problemCode: null,
+        };
+      }
 
       try {
         file = read.url.startsWith('magnet:')

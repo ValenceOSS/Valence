@@ -28,6 +28,7 @@ import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PAS
 import { PASSWORD_RESET_LIFETIME_SECONDS } from '@ValenceServer/auth/PASSWORD_RESET_LIFETIME_SECONDS';
 import { MINIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MINIMUM_USERNAME_LENGTH';
 import { MAXIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MAXIMUM_USERNAME_LENGTH';
+import { LONGEST_IDENTIFIER } from '@ValenceServer/auth/LONGEST_IDENTIFIER';
 import { signInTheDemo } from '@ValenceServer/auth/signInTheDemo';
 import { checkThePassword } from '@ValenceServer/auth/checkThePassword';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
@@ -43,6 +44,7 @@ type CreateAuthOptions = {
   onUserChanged?: (userId: string) => Promise<void>;
   onSignedIn?: (userId: string, at: Date) => Promise<void>;
   onSessionStarted?: (sessionId: string, headers: Headers | null) => Promise<void>;
+  onSessionEnded?: (sessionId: string) => void;
   onDeviceCodeIssued?: (userCode: string, headers: Headers | null) => void;
   onPasswordResetRequested?: (email: string, url: string, name: string) => Promise<void>;
   onSignInSettled?: (attempt: SignInAttempt) => void;
@@ -82,7 +84,8 @@ const SIGN_OUT_PATH = '/sign-out';
  * own. Without either, a television that finished signing in was left on the sign-in screen.
  *
  * @param options - The environment, the database, the settings store, whether cookies are secure,
- * and the hooks fired when an account is made or changed, signs in, or asks for a reset.
+ * and the hooks fired when an account is made or changed, signs in, a session ends, or a reset is
+ * asked for.
  * @returns The authentication layer.
  */
 const createAuth = ({
@@ -97,6 +100,7 @@ const createAuth = ({
   onSignInSettled,
   onSignedOut,
   onSessionStarted,
+  onSessionEnded,
   onDeviceCodeIssued,
 }: CreateAuthOptions) => {
   return betterAuth({
@@ -113,6 +117,7 @@ const createAuth = ({
       enabled: true,
       minPasswordLength: MINIMUM_PASSWORD_LENGTH,
       resetPasswordTokenExpiresIn: PASSWORD_RESET_LIFETIME_SECONDS,
+      revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {
         await onPasswordResetRequested?.(user.email, url, user.name);
       },
@@ -152,6 +157,8 @@ const createAuth = ({
         },
         delete: {
           after: async (ended, context) => {
+            onSessionEnded?.(ended.id);
+
             if (context?.path === SIGN_OUT_PATH) {
               await onSignedOut?.({
                 userId: ended.userId,
@@ -193,7 +200,8 @@ const createAuth = ({
               ? null
               : { id: context.context.session.user.id, name: context.context.session.user.name },
           identifier: identifier.success
-            ? (identifier.data.email ?? identifier.data.username ?? null)
+            ? ((identifier.data.email ?? identifier.data.username)?.slice(0, LONGEST_IDENTIFIER) ??
+              null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
           device: deviceOfRequest(context.headers),

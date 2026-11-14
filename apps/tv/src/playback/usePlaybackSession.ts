@@ -10,7 +10,7 @@ import {
   stopPlaybackSession,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
-import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
+import { signedHeadersFor } from '@ValenceTv/platform/theSessionToken';
 import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
@@ -152,13 +152,13 @@ const usePlaybackSession = (
         }, PRESENCE_HEARTBEAT_MS),
       );
 
-      const uri = onTheServer(delivery.kind === 'hls' ? delivery.manifestUrl : delivery.url);
+      const sent = delivery.kind === 'hls' ? delivery.manifestUrl : delivery.url;
 
       setSession({
         kind: 'ready',
         source: {
-          uri,
-          headers: signedHeaders(),
+          uri: onTheServer(sent),
+          headers: signedHeadersFor(sent),
           contentType: delivery.kind === 'hls' ? 'hls' : 'auto',
         },
         started: outcome.session,

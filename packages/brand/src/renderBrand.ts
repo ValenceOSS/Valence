@@ -11,6 +11,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
+import { circleMask } from './circleMask';
 import { matteOf } from './matteOf';
 import { opaqueBounds } from './opaqueBounds';
 import { planBanner } from './planBanner';
@@ -27,6 +28,8 @@ const LOGO_WIDTH = 485;
 const RENDER_PIXELS = 2048;
 
 const SOLID = 128;
+
+const ROUND_ICON_OVERSCAN = 1.08;
 
 type Lifted = { background: Buffer; artwork: Buffer; logo: Bounds };
 
@@ -71,10 +74,16 @@ const findIctool = (): string => {
  * @param ictool - The renderer.
  * @param bundle - The `.icon` bundle.
  * @param pixels - How wide and tall the picture is.
+ * @param rendition - Which look of the icon: its default, or its dark one.
  * @returns The picture.
  * @throws If the renderer fails.
  */
-const renderIcon = (ictool: string, bundle: string, pixels: number): Buffer => {
+const renderIcon = (
+  ictool: string,
+  bundle: string,
+  pixels: number,
+  rendition: 'Default' | 'Dark' = 'Default',
+): Buffer => {
   const out = mkdtempSync(join(tmpdir(), 'valence-icon-'));
   const file = join(out, 'icon.png');
   const size = pixels.toString();
@@ -88,7 +97,7 @@ const renderIcon = (ictool: string, bundle: string, pixels: number): Buffer => {
       '--platform',
       'macOS',
       '--rendition',
-      'Default',
+      rendition,
       '--width',
       size,
       '--height',
@@ -237,6 +246,27 @@ const make = async (
         .toFile(to);
 
       return;
+    case 'roundIcon': {
+      const drawn = Math.round(output.pixels * ROUND_ICON_OVERSCAN);
+      const inset = Math.floor((drawn - output.pixels) / 2);
+      const square = await sharp(renderIcon(ictool, from, drawn, output.rendition))
+        .extract({ left: inset, top: inset, width: output.pixels, height: output.pixels })
+        .png()
+        .toBuffer();
+
+      await sharp(square)
+        .composite([
+          {
+            input: circleMask(output.pixels),
+            raw: { width: output.pixels, height: output.pixels, channels: 4 },
+            blend: 'dest-in',
+          },
+        ])
+        .png()
+        .toFile(to);
+
+      return;
+    }
     case 'banner': {
       const icon = await lifted();
       const plan = planBanner(

@@ -17,6 +17,7 @@ type LiveTvService = {
   change: (id: string, change: LiveSourceChange) => Promise<LiveSource | Said | null>;
   changeLogo: (id: string, logoUrl: string | null) => Promise<LiveSource | null>;
   isEmbedded: (channel: StoredLiveChannel) => Promise<boolean>;
+  isFromThePublicInternet: (channel: StoredLiveChannel) => Promise<boolean>;
   refreshAll: () => Promise<number>;
   checkAll: () => Promise<Record<LiveHealth, number>>;
   guide: (profileId: string | null, from: Date, until: Date) => Promise<LiveGuide>;

@@ -256,7 +256,10 @@ const createCatalogueSync = ({
       return null;
     }
 
-    const asked = await linking.signFor(serverId);
+    const asked = await linking.signFor(serverId, undefined, {
+      method: 'GET',
+      route: '/libraries',
+    });
     const listed = asked === null ? null : await peers.libraries(asked.address, asked.token);
 
     reachable.set(serverId, listed?.kind === 'answered');
@@ -310,7 +313,10 @@ const createCatalogueSync = ({
       keptLibraries.add(libraryId);
 
       for (let page = 0; page < MOST_PAGES; page += 1) {
-        const signed = await linking.signFor(serverId);
+        const signed = await linking.signFor(serverId, undefined, {
+          method: 'GET',
+          route: `/catalogue/${shared.id}`,
+        });
         const read: PeerAnswer<CataloguePage> | null =
           signed === null
             ? null

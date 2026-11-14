@@ -1,3 +1,4 @@
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -253,6 +254,12 @@ const createTransmissionAdapter = (
       if (file.kind === 'nzb') {
         throw new DownloadClientFailure(
           saying('common.nameTakesTorrentsNotNZBs', { name: settings.name }),
+        );
+      }
+
+      if (file.kind === 'magnet' && !isSingleMagnetLink(file.url)) {
+        throw new DownloadClientFailure(
+          saying('requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent'),
         );
       }
 

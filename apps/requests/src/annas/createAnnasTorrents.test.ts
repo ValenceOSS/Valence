@@ -48,4 +48,18 @@ describe('createAnnasTorrents', () => {
 
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+
+  it('drops a torrent whose file is named on any other host than the mirror', async () => {
+    const fetch = vi.fn(() =>
+      Promise.resolve(
+        Response.json([
+          { ...LIST[0], url: 'http://10.0.0.5:8080/steal.torrent' },
+          { ...LIST[0], display_name: 'g.torrent', url: '//other.example/x.torrent' },
+        ]),
+      ),
+    );
+    const torrents = createAnnasTorrents(fetch);
+
+    expect((await torrents.all('https://example.org')).size).toBe(0);
+  });
 });

@@ -1,6 +1,7 @@
 import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
+import { filedInto } from '@ValenceServer/requests/filedInto';
 import { withAskerProfiles } from '@ValenceServer/requests/withAskerProfiles';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saidFrom } from '@ValenceI18n/saidFrom';
@@ -109,6 +110,7 @@ import { courSeasonsOf } from '@ValenceContracts/functions/courSeasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { bookAsTitle, discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { withinReachOf } from '@ValenceServer/requests/catalogue/withinReachOf';
 import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
@@ -186,6 +188,26 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     householdNameFor,
     recordAudit,
   } = context;
+
+  /**
+   * The library as somebody may see it when told what stands in it: without what they are refused.
+   *
+   * @param headers - The request's headers.
+   * @returns The lookup to stand titles by.
+   */
+  const lookupFor = async (headers: Headers) => {
+    const viewer = await viewerOf(headers);
+
+    return viewer === null
+      ? withinReachOf(discovery.lookup, {
+          isItemOutOfReach: () => Promise.resolve(true),
+          isSeriesOutOfReach: () => Promise.resolve(true),
+        })
+      : withinReachOf(discovery.lookup, {
+          isItemOutOfReach: (mediaId) => library.isOutOfReach(viewer, mediaId),
+          isSeriesOutOfReach: (seriesId) => library.isSeriesOutOfReach(viewer, seriesId),
+        });
+  };
 
   const offeredClients = async () =>
     (await plugins?.contributions({ isAdmin: true, grants: new Set() }))?.downloadClients ?? [];
@@ -515,12 +537,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
+    const lookup = await lookupFor(context.req.raw.headers);
+
     return context.json(
       {
         shelves: await Promise.all(
           shelves.map(async (shelf) => ({
             ...shelf,
-            titles: await standTitles(shelf.titles, discovery.lookup, requested),
+            titles: await standTitles(shelf.titles, lookup, requested),
           })),
         ),
         studios: kinds.has('film') ? discovered.studios : [],
@@ -572,7 +596,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       {
-        titles: await standTitles(titles, discovery.lookup, await everyRequest()),
+        titles: await standTitles(
+          titles,
+          await lookupFor(context.req.raw.headers),
+          await everyRequest(),
+        ),
         page,
         hasMore: browsed.hasMore,
       },
@@ -615,9 +643,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           : [];
       });
     const requests = await everyRequest();
+    const lookup = await lookupFor(context.req.raw.headers);
     const [titles, stoodCredits] = await Promise.all([
-      standTitles(asTitles(work.titles), discovery.lookup, requests),
-      standTitles(asTitles(work.timeline), discovery.lookup, requests),
+      standTitles(asTitles(work.titles), lookup, requests),
+      standTitles(asTitles(work.timeline), lookup, requests),
     ]);
     const creditOf = new Map(work.timeline.map((credit) => [credit.externalId, credit]));
 
@@ -665,7 +694,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
             overview: match.overview,
             posterUrl: match.posterUrl,
           })),
-          discovery.lookup,
+          await lookupFor(context.req.raw.headers),
           await everyRequest(),
         ),
       },
@@ -710,9 +739,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const requests = await everyRequest();
+    const lookup = await lookupFor(context.req.raw.headers);
     const [byAuthor, alike] = await Promise.all([
-      standTitles(about.byAuthor.map(bookAsTitle), discovery.lookup, requests),
-      standTitles(about.alike.map(bookAsTitle), discovery.lookup, requests),
+      standTitles(about.byAuthor.map(bookAsTitle), lookup, requests),
+      standTitles(about.alike.map(bookAsTitle), lookup, requests),
     ]);
 
     return context.json({ ...about, byAuthor, alike }, 200);
@@ -738,7 +768,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { found, refusal } = await findSayingWhy(() => findInCatalogue(query, kind));
 
     return refusal === null
-      ? context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200)
+      ? context.json(
+          await standTitles(found, await lookupFor(context.req.raw.headers), await everyRequest()),
+          200,
+        )
       : context.json(refusal, 503);
   });
 
@@ -777,7 +810,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       {
-        titles: await standTitles(titles, discovery.lookup, await everyRequest()),
+        titles: await standTitles(
+          titles,
+          await lookupFor(context.req.raw.headers),
+          await everyRequest(),
+        ),
         page,
         hasMore: searched.hasMore,
       },
@@ -819,7 +856,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       (
         await standTitles(
           [...hits.values()].map(titleOfMusicHit),
-          discovery.lookup,
+          await lookupFor(context.req.raw.headers),
           hits.size === 0 ? [] : await everyRequest(),
         )
       ).map((title) => [title.id, title] as const),
@@ -977,7 +1014,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.theCatalogueDoesNotKnowThat'), 404);
     }
 
-    const [stood] = await standTitles([described], discovery.lookup, await everyRequest());
+    const [stood] = await standTitles(
+      [described],
+      await lookupFor(context.req.raw.headers),
+      await everyRequest(),
+    );
 
     return context.json({ ...described, standing: stood?.standing ?? NOT_STOOD }, 200);
   });
@@ -1039,7 +1080,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           change.courOrder !== undefined;
 
         if (!asksTheCatalogue && change.libraryId === undefined) {
-          return client.changeRequest(id, { change });
+          return client.changeRequest(id, { change: filedInto(change, undefined) });
         }
 
         const found = await client.findRequest(id);
@@ -1068,10 +1109,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           : null;
 
         return client.changeRequest(id, {
-          change:
-            change.libraryId === undefined || into === undefined
-              ? change
-              : { ...change, libraryPath: into.requestPath ?? into.path },
+          change: filedInto(change, change.libraryId === undefined ? undefined : into),
           ...(catalogue === null ? {} : { catalogue }),
           held:
             found.value.kind === 'series' && found.value.tmdbId !== null && into !== undefined

@@ -34,7 +34,9 @@ const createChangeTeller =
         server.state === 'linked' &&
         (serverId === undefined || serverId === server.id) &&
         (libraryId === undefined || shared?.libraryIds.includes(libraryId) === true);
-      const signed = isTold ? await linking.signFor(server.id) : null;
+      const signed = isTold
+        ? await linking.signFor(server.id, undefined, { method: 'POST', route: '/changed' })
+        : null;
 
       if (signed !== null) {
         await peers.tellChanged(signed.address, signed.token);

@@ -25,7 +25,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readLibraryAccessRoute, async (context) => {
     const { userId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -57,7 +57,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(allowLibraryRoute, async (context) => {
     const { userId, libraryId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -74,7 +74,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(refuseLibraryRoute, async (context) => {
     const { userId, libraryId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -91,7 +91,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(setCeilingRoute, async (context) => {
     const { userId, libraryId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -110,7 +110,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(clearCeilingRoute, async (context) => {
     const { userId, libraryId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -123,7 +123,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readExceptionsRoute, async (context) => {
     const { userId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -144,7 +144,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(setExceptionRoute, async (context) => {
     const { userId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);
@@ -162,7 +162,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(clearExceptionRoute, async (context) => {
     const { userId, kind, subjectId } = context.req.valid('param');
-    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+    const refusal = await mayDecideAccess(context.req.raw, userId);
 
     if (refusal !== null) {
       return context.json(refusal, 403);

@@ -74,6 +74,7 @@ const drawOn = (
           connections: 3,
           streamingFormat: 'hls',
           showsDesktopNotices: false,
+          appIcon: 'system',
           deviceWas: {
             language: null,
             theme: 'system',
@@ -83,6 +84,7 @@ const drawOn = (
             connections: 3,
             streamingFormat: 'hls',
             showsDesktopNotices: false,
+            appIcon: 'system',
           },
           photo: null,
         }}

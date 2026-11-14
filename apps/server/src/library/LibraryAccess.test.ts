@@ -118,17 +118,18 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, auth, library, permissions, store };
+  return { app, auth, library, permissions, settings, store };
 };
 
 /**
- * Signs somebody up, gives them exactly the permissions named at the rank asked for, and hands back
- * a way to ask as them.
+ * Signs somebody up, gives them exactly the permissions named at the rank asked for, makes them the
+ * server's owner unless told not to, and hands back a way to ask as them.
  */
 const signedInWith = async (
   context: ReturnType<typeof build>,
   held: readonly Permission[],
   position = 50,
+  ownsTheServer = true,
 ) => {
   const cookie = await signUpForTest(context.app, context.auth, {
     name: 'Dan',
@@ -145,6 +146,10 @@ const signedInWith = async (
   });
 
   await context.permissions.assignRole(accountId, role.id);
+
+  if (ownsTheServer) {
+    await context.settings.write({ ownerAccountId: accountId });
+  }
 
   return {
     accountId,
@@ -270,7 +275,7 @@ describe('giving one back', () => {
 
 describe('who may decide', () => {
   it('will not let somebody act on an account that outranks them', async () => {
-    const me = await signedInWith(context, ['account.manage'], 10);
+    const me = await signedInWith(context, ['account.manage'], 10, false);
 
     const senior = await context.permissions.createRole({
       name: 'Senior',
@@ -290,7 +295,7 @@ describe('who may decide', () => {
   });
 
   it('lets them act on an account below their own rank', async () => {
-    const me = await signedInWith(context, ['account.manage'], 90);
+    const me = await signedInWith(context, ['account.manage'], 90, false);
 
     const junior = await context.permissions.createRole({
       name: 'Junior',
@@ -304,6 +309,32 @@ describe('who may decide', () => {
     await context.permissions.assignRole(theirs, junior.id);
 
     expect((await me.ask(`/api/admin/accounts/${theirs}/libraries`)).status).toBe(200);
+  });
+
+  it('will not let somebody who does not own the server change their own access', async () => {
+    const me = await signedInWith(context, ['account.manage'], 50, false);
+    const mine = `/api/admin/accounts/${me.accountId}`;
+
+    context.library.state.blocked = [{ accountId: me.accountId, libraryId: FILMS }];
+    context.library.state.ceilings = [
+      { accountId: me.accountId, libraryId: SHOWS, maximumAge: 12, allowsUnrated: false },
+    ];
+    context.library.state.exceptions = [
+      { accountId: me.accountId, mediaItemId: ARRIVAL, effect: 'deny' },
+    ];
+
+    expect((await me.ask(`${mine}/libraries/${FILMS}`, 'PUT')).status).toBe(403);
+    expect((await me.ask(`${mine}/libraries/${SHOWS}/ceiling`, 'DELETE')).status).toBe(403);
+    expect((await me.ask(`${mine}/exceptions/item/${ARRIVAL}`, 'DELETE')).status).toBe(403);
+    expect(context.library.state.blocked).toHaveLength(1);
+    expect(context.library.state.ceilings).toHaveLength(1);
+    expect(context.library.state.exceptions).toHaveLength(1);
+  });
+
+  it('still lets them read their own access', async () => {
+    const me = await signedInWith(context, ['account.manage'], 50, false);
+
+    expect((await me.ask(`/api/admin/accounts/${me.accountId}/libraries`)).status).toBe(200);
   });
 });
 
@@ -590,5 +621,58 @@ describe('deciding about one thing from the film itself', () => {
 
     expect(forgotten.status).toBe(204);
     expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(200);
+  });
+});
+
+describe('managing the files of a library taken away', () => {
+  it('leaves the library out of the file manager', async () => {
+    const me = await signedInWith(context, ['account.manage', 'library.edit', 'media.delete']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    const listed = await (await me.ask('/api/admin/files')).text();
+
+    expect(listed).not.toContain('/media/films');
+    expect(listed).toContain('/media/shows');
+  });
+
+  it('treats a path in it as outside every library', async () => {
+    const me = await signedInWith(context, ['account.manage', 'library.edit', 'media.delete']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    expect((await me.ask('/api/admin/files?path=/media/films/Arrival.mkv', 'DELETE')).status).toBe(
+      403,
+    );
+    expect((await me.ask('/api/admin/files/measure?path=/media/films')).status).toBe(403);
+  });
+});
+
+describe('changing a library taken away', () => {
+  it('answers as though it were not there', async () => {
+    const me = await signedInWith(context, ['account.manage', 'library.edit', 'jobs.run']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    expect((await me.ask(`/api/libraries/${FILMS}`, 'PATCH')).status).toBe(404);
+    expect((await me.ask(`/api/libraries/${FILMS}/left-out`)).status).toBe(404);
+    expect((await me.ask(`/api/libraries/${FILMS}/scan`, 'POST')).status).toBe(404);
+    expect((await me.ask(`/api/libraries/${SHOWS}/left-out`)).status).not.toBe(404);
+  });
+
+  it('moves nothing out of it, nor into it', async () => {
+    const me = await signedInWith(context, ['account.manage', 'media.delete']);
+
+    await me.ask(`/api/admin/accounts/${me.accountId}/libraries/${FILMS}`, 'DELETE');
+
+    const move = (mediaIds: readonly string[], libraryId: string) =>
+      context.app.request(`${BASE}/api/media/move`, {
+        method: 'POST',
+        headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+        body: JSON.stringify({ mediaIds, libraryId }),
+      });
+
+    expect((await move([ARRIVAL], SHOWS)).status).toBe(404);
+    expect((await move([EPISODE], FILMS)).status).toBe(404);
   });
 });

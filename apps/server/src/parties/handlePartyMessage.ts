@@ -19,7 +19,13 @@ type PartySpeaker = {
 type PartyBinding = {
   registry: PartyRegistry;
   tell: (connectionIds: readonly string[], payload: JsonValue) => void;
-  ask?: (asking: { party: WatchParty; byName: string; profileId: string }) => void;
+  ask?: (asking: {
+    party: WatchParty;
+    byName: string;
+    byAccountId: string;
+    byProfileId: string | null;
+    profileId: string;
+  }) => void;
 };
 
 const asCommandJson = (command: SequencedCommand): JsonValue => ({
@@ -131,12 +137,19 @@ const handlePartyMessage = (
   const { registry } = binding;
 
   if (message.kind === 'partyOpen') {
+    tellEveryone(binding, registry.leave(who.connectionId));
     tellEveryone(
       binding,
       registry.open({
         mediaId: message.mediaId,
         host: who,
         ...(message.partyKind === undefined ? {} : { kind: message.partyKind }),
+        onClosed: (closed) => {
+          binding.tell(
+            closed.members.map((member) => member.connectionId),
+            asPartyJson({ ...closed, members: [] }),
+          );
+        },
       }),
     );
 
@@ -175,6 +188,7 @@ const handlePartyMessage = (
       return;
     }
 
+    tellEveryone(binding, joined.left ?? null);
     tellEveryone(binding, joined.party);
 
     const heard = registry.chatOf(joined.party.id);
@@ -249,6 +263,8 @@ const handlePartyMessage = (
     binding.ask?.({
       party: asking.party,
       byName: asking.byName,
+      byAccountId: who.accountId,
+      byProfileId: who.profileId,
       profileId: message.profileId,
     });
 

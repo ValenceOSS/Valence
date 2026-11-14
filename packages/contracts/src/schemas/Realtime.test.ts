@@ -176,4 +176,14 @@ describe('FromClientSchema', () => {
       mediaId: 'm1',
     });
   });
+
+  it('refuses a party message carrying an id too long to be one', () => {
+    const long = 'x'.repeat(129);
+
+    expect(FromClientSchema.safeParse({ kind: 'partyOpen', mediaId: long }).success).toBe(false);
+    expect(FromClientSchema.safeParse({ kind: 'partyJoin', partyId: long }).success).toBe(false);
+    expect(FromClientSchema.safeParse({ kind: 'partyInvite', profileId: long }).success).toBe(
+      false,
+    );
+  });
 });

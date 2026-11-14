@@ -78,12 +78,22 @@ describe('what a request is about', () => {
     ['a session file, which names an artefact', '/api/playback/session/direct-abc/index.m3u8'],
     ['a sheet of thumbnails by its own id', '/api/playback/trickplay/abc/sheet-0.jpg'],
     ['the library listing', '/api/libraries'],
-    ['a library’s items', '/api/libraries/3f2504e0-4f89-41d3-9a0c-0305e82c3301/items'],
     ['somebody’s favourites', '/api/favourites'],
     ['a person', '/api/people/500'],
     ['health', '/api/health'],
   ])('says nothing about %s', (_what, path) => {
     expect(subjectOfRequest(path)).toEqual({ kind: 'none' });
+  });
+
+  it.each([
+    ['its items', '/api/libraries/3f2504e0-4f89-41d3-9a0c-0305e82c3301/items'],
+    ['itself', '/api/libraries/3f2504e0-4f89-41d3-9a0c-0305e82c3301'],
+    ['what it leaves out', '/api/libraries/3f2504e0-4f89-41d3-9a0c-0305e82c3301/left-out'],
+  ])('names the library behind %s', (_what, path) => {
+    expect(subjectOfRequest(path)).toEqual({
+      kind: 'library',
+      libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+    });
   });
 
   it('is not fooled by something that merely starts like an identifier', () => {

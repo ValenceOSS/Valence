@@ -132,6 +132,42 @@ describe('the webhook routes', () => {
     expect(response.status).toBe(400);
   });
 
+  it('refuses a private address written out unless the local network is allowed', async () => {
+    const { request } = await asKeeper();
+
+    const refused = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      url: 'http://192.168.1.20/hook',
+    });
+    const allowed = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      url: 'http://192.168.1.20/hook',
+      reachesLocalNetwork: true,
+    });
+
+    expect(refused.status).toBe(400);
+    expect(allowed.status).toBe(201);
+    expect(CreatedWebhookSchema.parse(await allowed.json()).reachesLocalNetwork).toBe(true);
+  });
+
+  it('refuses a link-local address even with the local network allowed', async () => {
+    const { request } = await asKeeper();
+
+    const response = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      url: 'http://169.254.169.254/latest/meta-data/',
+      reachesLocalNetwork: true,
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('keeps a new webhook off the local network by default', async () => {
+    const { create } = await asKeeper();
+
+    expect((await create()).reachesLocalNetwork).toBe(false);
+  });
+
   it('refuses a Telegram address that names no chat, saying what it is missing', async () => {
     const { request } = await asKeeper();
 
@@ -207,6 +243,48 @@ describe('the webhook routes', () => {
 
     const response = await request(`/api/webhooks/${made.id}`, 'PATCH', {
       url: 'http://169.254.169.254/latest/meta-data',
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('turns the local network on and off for a subscription', async () => {
+    const { request, create } = await asKeeper();
+    const made = await create();
+
+    const on = await request(`/api/webhooks/${made.id}`, 'PATCH', { reachesLocalNetwork: true });
+    const off = await request(`/api/webhooks/${made.id}`, 'PATCH', { reachesLocalNetwork: false });
+
+    expect(WebhookSubscriptionSchema.parse(await on.json()).reachesLocalNetwork).toBe(true);
+    expect(WebhookSubscriptionSchema.parse(await off.json()).reachesLocalNetwork).toBe(false);
+  });
+
+  it('refuses to repoint a subscription at a private address without the local network', async () => {
+    const { request, create } = await asKeeper();
+    const made = await create();
+
+    const refused = await request(`/api/webhooks/${made.id}`, 'PATCH', {
+      url: 'http://10.0.0.5/hook',
+    });
+    const allowed = await request(`/api/webhooks/${made.id}`, 'PATCH', {
+      url: 'http://10.0.0.5/hook',
+      reachesLocalNetwork: true,
+    });
+
+    expect(refused.status).toBe(400);
+    expect(allowed.status).toBe(200);
+  });
+
+  it('refuses to turn the local network off under a subscription already at a private address', async () => {
+    const { request, create } = await asKeeper();
+    const made = await create({
+      ...aSubscription,
+      url: 'http://10.0.0.5/hook',
+      reachesLocalNetwork: true,
+    });
+
+    const response = await request(`/api/webhooks/${made.id}`, 'PATCH', {
+      reachesLocalNetwork: false,
     });
 
     expect(response.status).toBe(400);

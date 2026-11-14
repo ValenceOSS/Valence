@@ -8,6 +8,13 @@ const COLUMN_CLASSES: Record<number, string> = {
   2: 'lg:grid-cols-2',
   3: 'lg:grid-cols-3',
   4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-4 2xl:grid-cols-5',
+};
+
+const LAST_SPAN_CLASSES: Record<number, string> = {
+  1: 'col-span-2 lg:col-span-1',
+  3: 'col-span-2 lg:col-span-1',
+  5: 'col-span-2 lg:col-span-4 2xl:col-span-1',
 };
 
 /**
@@ -17,19 +24,23 @@ const COLUMN_CLASSES: Record<number, string> = {
  *
  * Fills one row rather than wrapping a lone figure onto a second, so a caller showing fewer figures
  * — a page that is not the overview, say — reads as a row meant to be that width rather than a grid
- * with a gap in it.
+ * with a gap in it; where a figure is left over on a row of its own, it stretches across the row.
  *
  * @param stats - The figures to show, in the order they should read.
  */
 const StatStrip = ({ stats }: StatStripProps) => {
   return (
     <div className={`grid grid-cols-2 gap-3 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
-      {stats.map((stat) => (
+      {stats.map((stat, index) => (
         <MeterTile
           key={stat.label}
           label={stat.label}
           value={stat.value}
-          className="min-w-0"
+          className={
+            index === stats.length - 1
+              ? `min-w-0 ${LAST_SPAN_CLASSES[stats.length] ?? ''}`
+              : 'min-w-0'
+          }
           {...(stat.detail === undefined ? {} : { detail: stat.detail })}
           {...(stat.fraction === undefined ? {} : { fraction: stat.fraction })}
           {...(stat.info === undefined

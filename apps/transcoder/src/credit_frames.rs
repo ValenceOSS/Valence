@@ -311,7 +311,7 @@ lavfi.signalstats.YMIN=20
         });
         let joined = arguments.join(" ");
 
-        assert!(joined.contains("-skip_frame nokey -ss 1200.000 -copyts -i /media/film.mkv"));
+        assert!(joined.contains("-skip_frame nokey -ss 1200.000 -copyts -protocol_whitelist file,pipe -i /media/film.mkv"));
         assert!(
             joined.contains("select='eq(key\\,1)',format=yuv420p,blackframe=amount=0:threshold=28")
         );
@@ -350,6 +350,8 @@ lavfi.signalstats.YMIN=20
 
         assert!(!joined.contains("skip_frame"));
         assert!(!joined.contains("select="));
-        assert!(joined.contains("-ss 2106.250 -copyts -t 10.500 -i /media/film.mkv"));
+        assert!(joined.contains(
+            "-ss 2106.250 -copyts -t 10.500 -protocol_whitelist file,pipe -i /media/film.mkv"
+        ));
     }
 }

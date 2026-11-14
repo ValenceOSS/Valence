@@ -19,6 +19,7 @@ const SetupAdminSchema = z.object({
 });
 
 const SetupRequestSchema = z.object({
+  setupCode: z.string().max(64).default(''),
   admin: SetupAdminSchema,
   trustedOrigins: z.array(z.string().url()).min(1),
   cookieSecure: z.boolean(),

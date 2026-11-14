@@ -22,6 +22,19 @@ const FIRST_IN_SEQUENCE: u8 = 0x80;
 /// misses letters that touch the edge of the page.
 const MARGIN: usize = 12;
 
+/// The longest side, in pixels, an object or a drawn caption may have; PGS itself stops at 1920
+/// by 1080.
+const MAX_SIDE: usize = 4096;
+
+/// The most coded bytes one object may hold.
+const MAX_OBJECT_DATA: usize = 16 * 1024 * 1024;
+
+/// The most pixels all the captions of one track may hold between them.
+const MAX_TOTAL_PIXELS: usize = 1024 * 1024 * 1024;
+
+/// The most display sets read from one track.
+const MAX_DISPLAY_SETS: usize = 20_000;
+
 /// How bright and how opaque a pixel must be to count as lettering.
 const INK_LUMA: u8 = 150;
 const INK_ALPHA: u8 = 128;
@@ -172,7 +185,7 @@ fn draw(
         bottom = bottom.max(placement.y + object.height);
     }
 
-    if right <= left || bottom <= top {
+    if right <= left || bottom <= top || right - left > MAX_SIDE || bottom - top > MAX_SIDE {
         return None;
     }
 
@@ -208,6 +221,71 @@ fn draw(
     inked.then_some((width, height, pixels))
 }
 
+/// The objects a composition places, and where.
+fn placements_in(body: &[u8]) -> Vec<Placement> {
+    let count = usize::from(*body.get(10).unwrap_or(&0));
+    let mut placements = Vec::new();
+    let mut cursor = 11;
+
+    for _ in 0..count {
+        let (Some(object), Some(cropped), Some(x), Some(y)) = (
+            read_be(body, cursor, 2),
+            body.get(cursor + 3),
+            read_be(body, cursor + 4, 2),
+            read_be(body, cursor + 6, 2),
+        ) else {
+            break;
+        };
+
+        placements.push(Placement {
+            object: u16::try_from(object).unwrap_or(0),
+            x: usize::try_from(x).unwrap_or(0),
+            y: usize::try_from(y).unwrap_or(0),
+        });
+        cursor += if cropped & 0x80 == 0 { 8 } else { 16 };
+    }
+
+    placements
+}
+
+/// Reads an object segment into the objects held, starting one or adding to it, and refusing
+/// one larger than a caption can be; answers whether the segment named an object at all.
+fn read_object(body: &[u8], objects: &mut HashMap<u16, Object>) -> bool {
+    let Some(id) = read_be(body, 0, 2) else {
+        return false;
+    };
+    let id = u16::try_from(id).unwrap_or(0);
+    let flags = *body.get(3).unwrap_or(&0);
+
+    if flags & FIRST_IN_SEQUENCE != 0 {
+        let width = usize::try_from(read_be(body, 7, 2).unwrap_or(0)).unwrap_or(0);
+        let height = usize::try_from(read_be(body, 9, 2).unwrap_or(0)).unwrap_or(0);
+
+        if width > MAX_SIDE || height > MAX_SIDE {
+            objects.remove(&id);
+
+            return true;
+        }
+
+        objects.insert(
+            id,
+            Object {
+                width,
+                height,
+                data: body.get(11..).unwrap_or(&[]).to_vec(),
+            },
+        );
+    } else if let Some(object) = objects.get_mut(&id) {
+        let more = body.get(4..).unwrap_or(&[]);
+
+        if object.data.len() + more.len() <= MAX_OBJECT_DATA {
+            object.data.extend_from_slice(more);
+        }
+    }
+
+    true
+}
+
 /// Every caption in a PGS stream, as pictures with their times.
 ///
 /// A caption runs from the composition that shows it to the next composition,
@@ -215,11 +293,19 @@ fn draw(
 /// seconds.
 #[must_use]
 pub fn captions(stream: &[u8]) -> Vec<Caption> {
+    captions_within(stream, MAX_TOTAL_PIXELS)
+}
+
+/// Every caption in a PGS stream until they hold more than `limit` pixels between them.
+fn captions_within(stream: &[u8], limit: usize) -> Vec<Caption> {
     let mut captions = Vec::new();
     let mut palette: HashMap<u8, Colour> = HashMap::new();
     let mut objects: HashMap<u16, Object> = HashMap::new();
     let mut placements: Vec<Placement> = Vec::new();
     let mut shown: Option<(u64, usize, usize, Vec<u8>)> = None;
+    let mut dirty = false;
+    let mut display_sets = 0_usize;
+    let mut held_pixels = 0_usize;
     let mut composed_at = 0_u64;
     let mut at = 0;
 
@@ -249,30 +335,12 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
                 }
 
                 composed_at = pts;
-                placements.clear();
-
-                let count = usize::from(*body.get(10).unwrap_or(&0));
-                let mut cursor = 11;
-
-                for _ in 0..count {
-                    let (Some(object), Some(cropped), Some(x), Some(y)) = (
-                        read_be(body, cursor, 2),
-                        body.get(cursor + 3),
-                        read_be(body, cursor + 4, 2),
-                        read_be(body, cursor + 6, 2),
-                    ) else {
-                        break;
-                    };
-
-                    placements.push(Placement {
-                        object: u16::try_from(object).unwrap_or(0),
-                        x: usize::try_from(x).unwrap_or(0),
-                        y: usize::try_from(y).unwrap_or(0),
-                    });
-                    cursor += if cropped & 0x80 == 0 { 8 } else { 16 };
-                }
+                dirty = true;
+                placements = placements_in(body);
             }
             PALETTE => {
+                dirty = true;
+
                 for entry in body.get(2..).unwrap_or(&[]).chunks_exact(5) {
                     palette.insert(
                         entry[0],
@@ -284,30 +352,25 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
                 }
             }
             OBJECT => {
-                let Some(id) = read_be(body, 0, 2) else {
-                    continue;
-                };
-                let id = u16::try_from(id).unwrap_or(0);
-                let flags = *body.get(3).unwrap_or(&0);
-
-                if flags & FIRST_IN_SEQUENCE != 0 {
-                    let width = usize::try_from(read_be(body, 7, 2).unwrap_or(0)).unwrap_or(0);
-                    let height = usize::try_from(read_be(body, 9, 2).unwrap_or(0)).unwrap_or(0);
-
-                    objects.insert(
-                        id,
-                        Object {
-                            width,
-                            height,
-                            data: body.get(11..).unwrap_or(&[]).to_vec(),
-                        },
-                    );
-                } else if let Some(object) = objects.get_mut(&id) {
-                    object.data.extend_from_slice(body.get(4..).unwrap_or(&[]));
+                if read_object(body, &mut objects) {
+                    dirty = true;
                 }
             }
-            END if !placements.is_empty() => {
+            END if !placements.is_empty() && dirty => {
+                dirty = false;
+                display_sets += 1;
+
+                if display_sets > MAX_DISPLAY_SETS {
+                    break;
+                }
+
                 if let Some((width, height, pixels)) = draw(&placements, &objects, &palette) {
+                    held_pixels += width * height;
+
+                    if held_pixels > limit {
+                        break;
+                    }
+
                     shown = Some((composed_at, width, height, pixels));
                 }
             }
@@ -330,7 +393,7 @@ pub fn captions(stream: &[u8]) -> Vec<Caption> {
 
 #[cfg(test)]
 mod tests {
-    use super::{captions, decode_runs};
+    use super::{captions, captions_within, decode_runs};
 
     /// One segment of a PGS stream.
     fn segment(pts_ms: u32, kind: u8, body: &[u8]) -> Vec<u8> {
@@ -430,6 +493,59 @@ mod tests {
         assert_eq!(caption.pixels[12 * caption.width + 12], 0);
         assert_eq!(caption.pixels[13 * caption.width + 12], 255);
         assert!(caption.as_pgm().starts_with(b"P5\n28 26\n255\n"));
+    }
+
+    /// An object segment declaring a size, with one run of one pixel.
+    fn sized_object(width: u16, height: u16) -> Vec<u8> {
+        let mut body = vec![0x00, 0x01, 0x00, 0xC0, 0x00, 0x00, 0x0D];
+
+        body.extend_from_slice(&width.to_be_bytes());
+        body.extend_from_slice(&height.to_be_bytes());
+        body.extend_from_slice(&[0x01, 0x00, 0x00]);
+
+        body
+    }
+
+    #[test]
+    fn refuses_an_object_declaring_a_huge_picture() {
+        let mut stream = Vec::new();
+
+        stream.extend(segment(0, 0x16, &composition(true)));
+        stream.extend(segment(0, 0x14, &palette()));
+        stream.extend(segment(0, 0x15, &sized_object(65_535, 65_535)));
+        stream.extend(segment(0, 0x80, &[]));
+
+        assert_eq!(captions(&stream), Vec::new());
+    }
+
+    #[test]
+    fn draws_a_set_once_however_many_end_markers_follow() {
+        let mut stream = Vec::new();
+
+        stream.extend(segment(0, 0x16, &composition(true)));
+        stream.extend(segment(0, 0x14, &palette()));
+        stream.extend(segment(0, 0x15, &object()));
+
+        for _ in 0..50_000 {
+            stream.extend(segment(0, 0x80, &[]));
+        }
+
+        assert_eq!(captions(&stream).len(), 1);
+    }
+
+    #[test]
+    fn stops_holding_captions_past_the_total_pixel_limit() {
+        let mut stream = Vec::new();
+
+        stream.extend(segment(0, 0x14, &palette()));
+
+        for at in 0..20_u32 {
+            stream.extend(segment(at, 0x16, &composition(true)));
+            stream.extend(segment(at, 0x15, &sized_object(100, 100)));
+            stream.extend(segment(at, 0x80, &[]));
+        }
+
+        assert!(captions_within(&stream, 100 * 100 * 5).len() < 20);
     }
 
     #[test]

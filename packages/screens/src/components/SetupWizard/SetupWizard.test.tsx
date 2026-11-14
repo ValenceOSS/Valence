@@ -178,8 +178,15 @@ const renderWizard = (props: Partial<SetupWizardProps> = {}) =>
     wrapper: CacheScope,
   });
 
-const reachAccess = async (email = '') => {
+const SETUP_CODE = 'K7QD-3MXP-9RTA-WZ4H';
+
+const begin = async () => {
+  await userEvent.type(screen.getByLabelText('Setup code'), SETUP_CODE);
   await userEvent.click(screen.getByRole('button', { name: 'Create your account' }));
+};
+
+const reachAccess = async (email = '') => {
+  await begin();
   await userEvent.type(await screen.findByLabelText('Name'), '  Operator  ');
   await userEvent.type(screen.getByLabelText('Username'), 'operator');
 
@@ -225,7 +232,7 @@ describe('SetupWizard', () => {
   it('walks from the welcome to the account and back again', async () => {
     renderWizard();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Create your account' }));
+    await begin();
 
     expect(await screen.findByRole('heading', { name: 'Your account' })).toBeInTheDocument();
     expect(currentStep()).toHaveTextContent('Your account');
@@ -277,6 +284,7 @@ describe('SetupWizard', () => {
       expect(completeSetup).toHaveBeenCalledOnce();
     });
     expect(completeSetup).toHaveBeenCalledWith({
+      setupCode: SETUP_CODE,
       admin: { name: 'Operator', username: 'operator', password: 'a-long-enough-password' },
       trustedOrigins: ['http://192.168.1.40:8420', 'http://192.168.1.40:5173'],
       cookieSecure: false,
@@ -294,6 +302,7 @@ describe('SetupWizard', () => {
 
     await waitFor(() => {
       expect(completeSetup).toHaveBeenCalledWith({
+        setupCode: SETUP_CODE,
         admin: {
           name: 'Operator',
           username: 'operator',
@@ -344,6 +353,46 @@ describe('SetupWizard', () => {
     await screen.findByRole('region', { name: 'Profile step' });
 
     expect(signInWithUsernameOrEmail).toHaveBeenCalledWith('operator', 'a-long-enough-password');
+  });
+
+  it('goes back to the welcome and says so where the setup code was wrong', async () => {
+    completeSetup.mockResolvedValue({
+      kind: 'refused',
+      refusal: {
+        message: 'That setup code doesn’t match the one in the server’s log.',
+        code: 'error.setup.thatSetupCodeIsNotRight',
+      },
+    });
+
+    renderWizard();
+
+    await createAccount();
+
+    expect(
+      await screen.findByText('That setup code doesn’t match the one in the server’s log.'),
+    ).toBeInTheDocument();
+    expect(currentStep()).toHaveTextContent('Welcome');
+    expect(screen.getByLabelText('Setup code')).toHaveValue(SETUP_CODE);
+  });
+
+  it('clears the wrong-code message as soon as the code is retyped', async () => {
+    completeSetup.mockResolvedValue({
+      kind: 'refused',
+      refusal: {
+        message: 'That setup code doesn’t match the one in the server’s log.',
+        code: 'error.setup.thatSetupCodeIsNotRight',
+      },
+    });
+
+    renderWizard();
+
+    await createAccount();
+    await screen.findByText('That setup code doesn’t match the one in the server’s log.');
+    await userEvent.type(screen.getByLabelText('Setup code'), 'X');
+
+    expect(
+      screen.queryByText('That setup code doesn’t match the one in the server’s log.'),
+    ).not.toBeInTheDocument();
   });
 
   it('stays on the access step and says why the server refused', async () => {

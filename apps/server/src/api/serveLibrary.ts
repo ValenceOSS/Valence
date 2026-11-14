@@ -64,6 +64,8 @@ import {
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { withoutHostFolders } from '@ValenceServer/library/withoutHostFolders';
+import { touchesServerFolder } from '@ValenceServer/library/touchesServerFolder';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
 
@@ -87,6 +89,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     recordAudit,
     titleMetadata,
     readImage,
+    serverFolders,
   } = context;
   const homeShelves = createHomeShelves({
     listItems: (viewer: Viewer, libraryIds, options) =>
@@ -133,12 +136,19 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
     const locks = await readLibraryLocks(settings);
     const locked = new Set(viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : []);
+    const mayChange =
+      (await requires(context.req.raw.headers, 'library.edit')) ||
+      (await requires(context.req.raw.headers, 'library.create'));
+
+    const mayMonitor = mayChange || (await requires(context.req.raw.headers, 'server.monitor'));
 
     return context.json(
-      (await library.list(viewer)).map((each) => ({
-        ...each,
-        hasLock: locks[each.id] !== undefined,
-        isLocked: locked.has(each.id),
+      (await library.list(viewer)).map((listed) => ({
+        ...(mayChange
+          ? listed
+          : { ...withoutHostFolders(listed), ...(mayMonitor ? { path: listed.path } : {}) }),
+        hasLock: locks[listed.id] !== undefined,
+        isLocked: locked.has(listed.id),
       })),
       200,
     );
@@ -150,6 +160,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { name, kind, path, flavour } = context.req.valid('json');
+
+    if (await touchesServerFolder(path, serverFolders)) {
+      return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
+    }
 
     const created = await library.create({
       name,
@@ -189,6 +203,15 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       fulfilment,
     } = context.req.valid('json');
     const libraryId = context.req.valid('param').id;
+
+    if (
+      requestPath !== undefined &&
+      requestPath !== null &&
+      requestPath !== '' &&
+      (await touchesServerFolder(requestPath, serverFolders))
+    ) {
+      return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
+    }
 
     if (fulfilment !== undefined && fulfilment !== null) {
       const kind = (await library.list(asTheServer)).find((entry) => entry.id === libraryId)?.kind;
@@ -963,6 +986,18 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { mediaIds, libraryId } = context.req.valid('json');
+    const viewer = await viewerOf(context.req.raw.headers);
+    const reachable =
+      viewer !== null &&
+      (await library.list(viewer)).some((one) => one.id === libraryId) &&
+      (await Promise.all(mediaIds.map((id) => library.isOutOfReach(viewer, id)))).every(
+        (isOut) => !isOut,
+      );
+
+    if (!reachable) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
     const named = await auditedMedia(mediaIds[0] ?? '');
     const moved = await library.moveMedia(mediaIds, libraryId);
 

@@ -1,3 +1,4 @@
+import { chooseAppIcon } from '@ValenceClient/shell/chooseAppIcon';
 import { chooseLanguageHere } from '@ValenceClient/language/chooseLanguageHere';
 import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { choosePluginTheme } from '@ValenceClient/plugins/pluginThemeChoice';
@@ -39,6 +40,10 @@ const keepDeviceChoices = (choices: DeviceChoices, was: DeviceChoices): void => 
 
   if (choices.showsDesktopNotices !== was.showsDesktopNotices) {
     chooseDeviceNotices(choices.showsDesktopNotices);
+  }
+
+  if (choices.appIcon !== was.appIcon) {
+    chooseAppIcon(choices.appIcon);
   }
 
   if (choices.language !== was.language) {

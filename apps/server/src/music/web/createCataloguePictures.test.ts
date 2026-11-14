@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, utimes } from 'node:fs/promises';
+import { mkdtemp, readdir, stat, utimes } from 'node:fs/promises';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -162,7 +162,9 @@ describe('createCataloguePictures', () => {
     await found.cover('rg-1', hint);
     await found.cover('rg-1', hint);
 
-    expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(2);
+    expect(
+      readImage.mock.calls.filter(([address]) => address.includes('coverartarchive.org')),
+    ).toHaveLength(2);
   });
 
   it('reads an artist’s face from Deezer first, then Apple Music', async () => {
@@ -203,5 +205,114 @@ describe('createCataloguePictures', () => {
     await found.cover('rg-2', { title: 'A', artist: 'B' });
 
     expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a cover found by a caller’s wording apart from the record’s own id', async () => {
+    const { found } = await pictures(['https://apple/cover.jpg']);
+
+    vi.mocked(findAppleAlbumCoverUrl).mockResolvedValueOnce('https://apple/wrong.jpg');
+    await found.cover('rg-1', { title: 'Wrong', artist: 'Wrong' });
+    await found.cover('rg-1', { title: 'Intimacy', artist: 'Bloc Party' });
+
+    expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(2);
+    expect(findAppleAlbumCoverUrl).toHaveBeenLastCalledWith(expect.anything(), {
+      title: 'Intimacy',
+      artistName: 'Bloc Party',
+    });
+  });
+
+  it('keeps no more answers than it was given room for', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'valence-catalogue-'));
+    const found = createCataloguePictures({
+      directory,
+      web: aWebThatAnswers({}),
+      readImage: () => Promise.resolve(null),
+      mostKept: 2,
+    });
+
+    for (const id of ['a', 'b', 'c', 'd']) {
+      await found.cover(id, null);
+    }
+
+    expect(await readdir(directory)).toHaveLength(2);
+  });
+
+  it('makes room for a new answer by removing the oldest ones', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'valence-catalogue-'));
+    const found = createCataloguePictures({
+      directory,
+      web: aWebThatAnswers({}),
+      readImage: () => Promise.resolve(null),
+      mostKept: 10,
+    });
+
+    for (const id of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']) {
+      await found.cover(id, null);
+    }
+
+    const before = await readdir(directory);
+
+    for (const [index, name] of before.entries()) {
+      const at = new Date(Date.now() - (100 - index) * 1000);
+
+      await utimes(join(directory, name), at, at);
+    }
+
+    await found.cover('k', null);
+
+    const after = await readdir(directory);
+
+    expect(after).toHaveLength(10);
+    expect(after).not.toContain(before[0]);
+    expect(after).toContain(before[1]);
+  });
+
+  it('does not count an expired answer written again as a new one', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'valence-catalogue-'));
+    const found = createCataloguePictures({
+      directory,
+      web: aWebThatAnswers({}),
+      readImage: () => Promise.resolve(null),
+      now: () => Date.now(),
+      mostKept: 2,
+    });
+
+    await found.cover('a', null);
+    await found.cover('b', null);
+
+    const names = await readdir(directory);
+    const longAgo = new Date(Date.now() - 2 * WEEK_MS);
+
+    for (const name of names) {
+      await utimes(join(directory, name), longAgo, longAgo);
+    }
+
+    await found.cover('a', null);
+
+    const mtimes = await Promise.all(
+      names.map(async (name) => (await stat(join(directory, name))).mtimeMs),
+    );
+
+    expect(await readdir(directory)).toHaveLength(2);
+    expect(mtimes.filter((at) => at > longAgo.getTime() + WEEK_MS)).toHaveLength(1);
+  });
+
+  it('knows whether it already holds an answer, so a caller can tell a cached lookup from a new one', async () => {
+    const { found } = await pictures([ARCHIVED]);
+
+    expect(await found.knowsCover('rg-1', null)).toBe(false);
+
+    await found.cover('rg-1', null);
+
+    expect(await found.knowsCover('rg-1', null)).toBe(true);
+    expect(await found.knowsCover('rg-9', null)).toBe(false);
+
+    await found.cover('rg-2', null);
+
+    expect(await found.knowsCover('rg-2', { title: 'A', artist: 'B' })).toBe(false);
+
+    await found.cover('rg-2', { title: 'A', artist: 'B' });
+
+    expect(await found.knowsCover('rg-2', { title: 'A', artist: 'B' })).toBe(true);
   });
 });

@@ -595,6 +595,11 @@
     "context": "Shown in the admin (from `fetchCorrections`)."
   },
   {
+    "handler": "client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot",
+    "text": "これらのファイルの入手元を読み取れませんでした。",
+    "context": "Shown in the admin when the server would not say where library files came from (downloaded, uploaded, imported or found on disk)."
+  },
+  {
     "handler": "client.admin.groupPermissions.sharing",
     "text": "共有",
     "context": "Shown in the admin (from `groupPermissions`)."
@@ -903,11 +908,6 @@
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
     "text": "Rotten Tomatoes",
     "context": "The label in the library (from `describeTitleDetails`)."
-  },
-  {
-    "handler": "client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery",
-    "text": "/api/libraries/{libraryId}/items?{query}",
-    "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
   },
   {
     "handler": "client.library.freshFlags.newEpisode",
@@ -4633,7 +4633,7 @@
   },
   {
     "handler": "common.layoutTurnsNextTime",
-    "text": "The layout turns to suit this language the next time Valence opens.",
+    "text": "次回 Valence を開いたときに、この言語に合わせてレイアウトが切り替わります。",
     "context": "Under the Language setting on the phone and the television, after somebody picks a language written the other way, such as Arabic or Hebrew: the layout mirrors from the next launch."
   },
   {
@@ -5130,6 +5130,11 @@
     "handler": "common.needsAttention",
     "text": "要確認",
     "context": "The label, used in the status look in the status and in the concerns banner in the admin area."
+  },
+  {
+    "handler": "common.network",
+    "text": "ネットワーク",
+    "context": "The word for a network connection: the title of the chart of the connection's speed against the stream's bitrate in stats for nerds, and the label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
   },
   {
     "handler": "common.never",
@@ -7991,7 +7996,7 @@
   },
   {
     "handler": "common.whatValenceSpeaksHere",
-    "text": "The language Valence speaks on this device.",
+    "text": "このデバイスで Valence が使用する言語です。",
     "context": "Under the Language setting on the phone and the television, which picks the language Valence shows on that device."
   },
   {
@@ -9825,6 +9830,11 @@
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
   },
   {
+    "handler": "error.downloads.thisAccountMayNotSaveCopies",
+    "text": "このアカウントは、デバイスへのコピーの保存が許可されていません。",
+    "context": "An error the server answers with (HTTP 403) when an account whose role lacks downloads asks to save a title to a device (from `serveDownloads`)."
+  },
+  {
     "handler": "error.downloads.thoseAreNotRulesForGiving",
     "text": "ダウンロードを中止するルールとして無効です。",
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
@@ -10178,6 +10188,11 @@
     "handler": "error.linking.thatServerTakesNoRequestsFromYours",
     "text": "そのサーバーは、あなたのサーバーからのリクエストを受け付けていません。",
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
+  },
+  {
+    "handler": "error.linking.thatStartCouldNotBeRead",
+    "text": "再生開始のリクエストを読み取れませんでした。",
+    "context": "Refusal sent to a linked Valence server whose request to start playing is not a body this server can read."
   },
   {
     "handler": "error.linking.thisAccountMayNotLinkServers",
@@ -10655,6 +10670,11 @@
     "context": "Error when a later, higher-quality ask is settled without saying which way."
   },
   {
+    "handler": "error.requests.sayWhichFilesToAskAbout",
+    "text": "確認するファイルを指定してください。",
+    "context": "An error the requests service answers with (HTTP 400) when the server asks which library files it filed but names no files, or too many (from `createOriginRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "どのライブラリのアイテムになったかを指定してください。",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10833,6 +10853,11 @@
     "handler": "error.setup.setupHasAlreadyBeenCompleted",
     "text": "セットアップはすでに完了しています。",
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveSetup`)."
+  },
+  {
+    "handler": "error.setup.thatSetupCodeIsNotRight",
+    "text": "セットアップコードが、サーバーのログに表示されたコードと一致しません。",
+    "context": "An error the server answers with (HTTP 403) when the setup code typed on the first-run setup page is wrong (from `serveSetup`)."
   },
   {
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
@@ -11038,6 +11063,11 @@
     "handler": "error.webhook.theMessageTemplateIsNotValidJson",
     "text": "メッセージのテンプレートが有効な JSON ではありません。",
     "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
+  },
+  {
+    "handler": "error.webhook.valenceWillNotSendToTheLocalNetwork",
+    "text": "「ローカルネットワーク」がオンになっていない限り、Valence はお使いのネットワーク内のアドレスには送信しません。",
+    "context": "Refusal, and a delivery's error, when a webhook's address is on the server's own network and the webhook's Local network switch is off."
   },
   {
     "handler": "native.captionTextStyle.avenirNextCondensed",
@@ -13920,6 +13950,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.appIcon",
+    "text": "アプリのアイコン",
+    "context": "A setting in the desktop app on Windows: whether Valence's round taskbar icon is light, dark, or follows Windows' light or dark mode."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.connectionsPerStream",
     "text": "ストリームごとの接続数",
     "context": "The title of the setting for how many pieces of a film this device fetches at once."
@@ -13971,7 +14006,7 @@
   },
   {
     "handler": "screens.accountArea.profileSettings.languageKeptHere",
-    "text": "このデバイスに保存されます。保存すると、Valence が新しい言語で再起動します。",
+    "text": "このデバイスに保存されます。保存すると、新しい言語で Valence が再起動します。",
     "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
   },
   {
@@ -14008,6 +14043,11 @@
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
     "text": "頭文字の背景と、イラストアバターの色合いです。",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.theIconOnTheTaskbar",
+    "text": "このコンピューターのタスクバーのアイコンです。「システム」は Windows のライト/ダークモードに従います。",
+    "context": "Under the App icon setting in the desktop app on Windows."
   },
   {
     "handler": "screens.accountArea.profileSettings.theTitleAndTheSeriesAnd",
@@ -14938,6 +14978,56 @@
     "handler": "screens.admin.reasonNames.videoRotationNotSupported",
     "text": "デバイスは映像を回転できません",
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.downloadedVia",
+    "text": "ダウンロード済み · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. {client} is the download client, such as SABnzbd."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByAConnectedApp",
+    "text": "接続済みのアプリが取得",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app such as Sonarr or Radarr, which fetched it. Which app is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByApp",
+    "text": "{app} が取得",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app, which fetched it. {app} is the app's name, such as Sonarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDisk",
+    "text": "ディスク上で検出",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it; somebody put it in the folder by hand, not through Valence."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDiskLinked",
+    "text": "ディスク上で検出 · 別のコピーとリンク済み",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it, and it shares its data with another file on the same disk through a hard link."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.imported",
+    "text": "インポート済み",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.importedFrom",
+    "text": "{source} からインポート",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server. {source} is that server's name, such as Plex."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownload",
+    "text": "ダウンロードとリンク済み",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download that is still on the disk, so both share the same data and the torrent can keep seeding. The download client is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownloadVia",
+    "text": "ダウンロードとリンク済み · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download still on the disk, so both share the same data. {client} is the download client or app that fetched it, such as qBittorrent or Radarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.uploaded",
+    "text": "Valence にアップロード済み",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: somebody uploaded it through Valence."
   },
   {
     "handler": "screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver",
@@ -19675,6 +19765,11 @@
     "context": "The reason in the folder view's details pane for a file that was excluded."
   },
   {
+    "handler": "screens.adminArea.folderView.from",
+    "text": "取得元",
+    "context": "Column heading and detail label in the admin's Media and Files: where each library file came from, such as downloaded, uploaded, imported or found on disk."
+  },
+  {
     "handler": "screens.adminArea.folderView.inAFolderScansSkip",
     "text": "スキャンが対象外にするフォルダー（特典やメタデータなど）にあります。",
     "context": "The reason in the folder view's details pane for a video in a folder that scans skip."
@@ -22475,6 +22570,36 @@
     "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
+    "handler": "screens.adminArea.networkFigure.comingIn",
+    "text": "受信",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is receiving data from its network, such as 12 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.countersCouldNotBeRead",
+    "text": "このマシンのネットワークカウンターを読み取れませんでした。",
+    "context": "A note in the network figure's information on the admin overview when the operating system does not say how much data its network interfaces have moved."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.everythingElseGoingOut",
+    "text": "その他の送信",
+    "context": "A row in the network figure's information on the admin overview: what the server is sending that is not Valence streaming to viewers, such as torrent uploads, as a speed such as 1 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.goingOut",
+    "text": "送信",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is sending data over its network, such as 4 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingAt",
+    "text": "視聴者へ {speed} でストリーミング中",
+    "context": "The line under the network figure on the admin overview. {speed} is how fast Valence is sending viewers what they watch, such as 3 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingToViewers",
+    "text": "視聴者へのストリーミング",
+    "context": "How fast Valence is sending viewers what they watch, listen to or download to their devices, such as 3 MB/s. A row in the network figure's information and in the server load chart's tooltip on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
     "text": "最初は失敗したジョブを送信します。ほかのイベントはそのページで選択してください。",
     "context": "In the dialog that creates a webhook: which events a new webhook sends."
@@ -22830,6 +22955,21 @@
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak",
+    "text": "ネットワークの線は、表示範囲内の最大値 {peak} を基準に描かれています。",
+    "context": "A note in the tooltip of the admin overview's server load chart. The other lines are percentages; the network has no maximum, so its lines reach the top at the fastest speed in the range shown. {peak} is that speed, such as 40 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkIn",
+    "text": "ネットワーク受信",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is receiving data."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkOut",
+    "text": "ネットワーク送信",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is sending data."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "誰も視聴、再生、閲覧していません。",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
@@ -22843,6 +22983,11 @@
     "handler": "screens.adminArea.overviewPanel.nothingRunningWaiting",
     "text": "実行中のものはなく、{waiting} 件が待機中です。",
     "context": "Shown on the admin overview when no background job is running but some are queued. {waiting} is how many are queued."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.perSecond",
+    "text": "{size}/s",
+    "context": "A speed, in the admin overview's server load chart. {size} is a size such as 1.2 MB; the result reads 1.2 MB/s."
   },
   {
     "handler": "screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange",
@@ -28503,6 +28648,16 @@
     "handler": "screens.adminArea.webhooksPanel.lastDelivery",
     "text": "最終送信",
     "context": "In the admin list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetwork",
+    "text": "ローカルネットワーク",
+    "context": "Label of the switch on a webhook that lets it send to addresses on the server's own network."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetworkDescription",
+    "text": "このウェブフックが、このサーバー上の別のアプリなど、お使いのネットワーク内のアドレスに届くようにします。",
+    "context": "Description of the Local network switch on a webhook."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",
@@ -36412,6 +36567,16 @@
     "context": "On the first-run setup page: under the heading of the first step."
   },
   {
+    "handler": "screens.setupWizard.welcomeStep.printedInTheServerLog",
+    "text": "Valence は起動時にログへ表示するため、サーバーを管理している人だけが設定できます。",
+    "context": "On the first-run setup page: the description under the setup code field on the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.setupCode",
+    "text": "セットアップコード",
+    "context": "On the first-run setup page: the label of the field for the code the server printed in its log."
+  },
+  {
     "handler": "screens.shareArea.askWhoeverSentItForA",
     "text": "送ってくれた人に新しいリンクを依頼してください。",
     "context": "Shown in the share area."
@@ -37202,11 +37367,6 @@
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
   },
   {
-    "handler": "screens.videoPlayer.streamStats.network",
-    "text": "ネットワーク",
-    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
-  },
-  {
     "handler": "screens.videoPlayer.streamStats.networkOverTime",
     "text": "直近1分間の接続速度とストリームのビットレート",
     "context": "Stats for nerds: read out to anybody who cannot see the network chart."
@@ -37755,6 +37915,11 @@
     "handler": "server.books.chapterNumbered",
     "text": "チャプター {number}",
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
+  },
+  {
+    "handler": "server.books.openComicRar.thatComicIsLargerThanA",
+    "text": "このコミックは 1 ギビバイトより大きく、Valence が読める上限を超えています。",
+    "context": "Shown in the books on the server (from `openComicRar`)."
   },
   {
     "handler": "server.books.pagesFromTo",

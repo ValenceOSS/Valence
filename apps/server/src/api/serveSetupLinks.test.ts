@@ -26,13 +26,14 @@ const EXPIRES = new Date(Date.UTC(2026, 9, 9));
  *
  * @returns The application and what stands in.
  */
-const build = async () => {
+const build = async (callerOf?: () => string | null) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const setupLinks = {
     issue: vi.fn<SetupLinkService['issue']>(),
     linkFor: vi.fn<SetupLinkService['linkFor']>(),
     stateOf: vi.fn<SetupLinkService['stateOf']>(),
+    isAwaitingFirstUse: vi.fn<SetupLinkService['isAwaitingFirstUse']>(),
     statesOf: vi.fn<SetupLinkService['statesOf']>(),
     revoke: vi.fn<SetupLinkService['revoke']>(),
     inspect: vi.fn<SetupLinkService['inspect']>(),
@@ -93,6 +94,7 @@ const build = async () => {
     progress: createMemoryWatchProgressService(),
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
+    ...(callerOf === undefined ? {} : { callerOf }),
   });
 
   return { app, auth, store, permissions, setupLinks, email, adaId: made.id };
@@ -132,6 +134,27 @@ const asAdministrator = async () => {
   const signedUp = built.store.user.find((one) => one.id !== built.adaId);
 
   await makeAdministrator(built.permissions, signedUp?.id ?? '');
+
+  return { ...built, cookie };
+};
+
+/**
+ * The application with somebody signed in whose role may add accounts and nothing else.
+ *
+ * @returns The application, what stands in, and their cookie.
+ */
+const asInviter = async () => {
+  const built = await build();
+  const cookie = await signUpForTest(built.app, built.auth);
+  const signedUp = built.store.user.find((one) => one.id !== built.adaId);
+  const role = await built.permissions.createRole({
+    name: 'Inviter',
+    position: 50,
+    color: null,
+    permissions: ['account.invite'],
+  });
+
+  await built.permissions.assignRole(signedUp?.id ?? '', role.id);
 
   return { ...built, cookie };
 };
@@ -200,6 +223,23 @@ describe('serveSetupLinks', () => {
       await expect(
         auth.api.signInUsername({ body: { username: 'ada', password: PASSWORD } }),
       ).resolves.toMatchObject({ user: { name: 'Ada' } });
+    });
+
+    it('records the address this server worked out for the session, not one the caller wrote', async () => {
+      const { app, store } = await build(() => '203.0.113.7');
+
+      const response = await app.request(`${TEST_ORIGIN}/api/setup-links/${TOKEN}`, {
+        method: 'POST',
+        headers: {
+          origin: TEST_ORIGIN,
+          'content-type': 'application/json',
+          'x-valence-caller': '198.51.100.1',
+        },
+        body: JSON.stringify({ username: 'Ada', email: 'ada@example.com', password: PASSWORD }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(store.session.map((one) => one.ipAddress)).toEqual(['203.0.113.7']);
     });
 
     it('signs its owner in without a password, to make a passkey', async () => {
@@ -330,6 +370,57 @@ describe('serveSetupLinks', () => {
       });
 
       expect(response.status).toBe(401);
+    });
+
+    it('lets somebody who may only add accounts make a link for one still waiting to be set up', async () => {
+      const { app, cookie, setupLinks, adaId } = await asInviter();
+
+      setupLinks.isAwaitingFirstUse.mockResolvedValue(true);
+
+      const response = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+        method: 'POST',
+        body: { lifetimeDays: 1 },
+        cookie,
+      });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('keeps somebody who may only add accounts from making a link for one already set up', async () => {
+      for (const state of ['used', 'none'] as const) {
+        const { app, cookie, setupLinks, adaId } = await asInviter();
+
+        setupLinks.isAwaitingFirstUse.mockResolvedValue(false);
+
+        const issued = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+          method: 'POST',
+          body: { lifetimeDays: 1 },
+          cookie,
+        });
+
+        expect(issued.status, state).toBe(403);
+        expect(setupLinks.issue).not.toHaveBeenCalled();
+      }
+    });
+
+    it('lets somebody who may only add accounts make a link again after revoking a waiting one', async () => {
+      const { app, cookie, setupLinks, adaId } = await asInviter();
+
+      setupLinks.stateOf.mockResolvedValue('none');
+      setupLinks.isAwaitingFirstUse.mockResolvedValue(true);
+
+      const revoked = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+        method: 'DELETE',
+        cookie,
+      });
+      const issued = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+        method: 'POST',
+        body: { lifetimeDays: 1 },
+        cookie,
+      });
+
+      expect(revoked.status).toBe(204);
+      expect(issued.status).toBe(201);
     });
 
     it('revokes a link', async () => {

@@ -2,13 +2,13 @@ import type { BookAbout } from './BookFile';
 
 const COMIC_INFO = 'comicinfo.xml';
 
-const TITLE = /<Title\b[^>]*>([^<]*)<\/Title>/i;
+const TITLE = /<Title\b[^>]{0,2000}>([^<]*)<\/Title>/i;
 
-const SERIES = /<Series\b[^>]*>([^<]*)<\/Series>/i;
+const SERIES = /<Series\b[^>]{0,2000}>([^<]*)<\/Series>/i;
 
-const SUMMARY = /<Summary\b[^>]*>([^<]*)<\/Summary>/i;
+const SUMMARY = /<Summary\b[^>]{0,2000}>([^<]*)<\/Summary>/i;
 
-const WRITER = /<Writer\b[^>]*>([^<]*)<\/Writer>/i;
+const WRITER = /<Writer\b[^>]{0,2000}>([^<]*)<\/Writer>/i;
 
 /**
  * Reads one tag's text out of a comic's own description of itself, treating an empty tag as an

@@ -1284,4 +1284,38 @@ describe('createRequestsClient with requests for films and series', () => {
       'silent',
     );
   });
+
+  it('asks which library files the service filed, and by what', async () => {
+    const { client, fetch } = aClient(200, {
+      filed: { '/films/Heat.mkv': { source: 'download', via: 'qBittorrent' } },
+    });
+
+    expect(await client.filedOrigins(['/films/Heat.mkv'])).toEqual({
+      kind: 'answered',
+      value: { '/films/Heat.mkv': { source: 'download', via: 'qBittorrent' } },
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://requests:8421/api/origins',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ paths: ['/films/Heat.mkv'] }),
+      }),
+    );
+  });
+
+  it('keeps a block id inside its own path segment when lifting a block', async () => {
+    const fetch = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })));
+    const client = createRequestsClient({
+      address: 'http://requests:8421',
+      secret: A_SECRET,
+      fetch,
+    });
+
+    await client.liftBlock('abc', '../../indexers/1?x=%2F');
+
+    expect(fetch).toHaveBeenCalledWith(
+      'http://requests:8421/api/requests/abc/blocklist/..%2F..%2Findexers%2F1%3Fx%3D%252F',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
 });

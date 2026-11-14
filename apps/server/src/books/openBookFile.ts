@@ -6,6 +6,7 @@ import { openAudiobook } from './openAudiobook';
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
 import type { BookFormat } from '@ValenceContracts/schemas/Book';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { OpenedBook } from './BookFile';
 
 /**
@@ -34,11 +35,13 @@ const bookFormatOf = (path: string): BookFormat | null => {
  * @param path - The file.
  * @param addressFor - Turns a path inside a book into one this server serves, which only a book that
  *   reflows has any use for: its pictures live inside it, where no browser can reach them.
+ * @param onProblem - Told why a file was refused where it could be opened but is not allowed to be.
  * @returns The book, or nothing where it cannot be opened as one.
  */
 const openBookFile = async (
   path: string,
   addressFor: (href: string) => string | null = () => null,
+  onProblem?: (reason: Said) => void,
 ): Promise<OpenedBook | null> => {
   const format = bookFormatOf(path);
 
@@ -47,7 +50,7 @@ const openBookFile = async (
   }
 
   if (format === 'cbr') {
-    return openComicRar(path);
+    return openComicRar(path, onProblem);
   }
 
   if (format === 'pdf') {

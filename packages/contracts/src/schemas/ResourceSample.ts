@@ -15,6 +15,9 @@ const ResourceSampleRecordSchema = z.object({
   systemMemoryTotalBytes: z.number(),
   cpuCount: z.number().int().nonnegative(),
   gpuPercent: z.number().nullish(),
+  networkReceivedBytesPerSecond: z.number().nullish(),
+  networkSentBytesPerSecond: z.number().nullish(),
+  streamedBytesPerSecond: z.number().nullish(),
 });
 
 const ResourceSampleHistorySchema = z.object({

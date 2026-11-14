@@ -338,6 +338,7 @@ const someImportServices = (
     },
     tmdbOfTvdb: (tvdbId) => Promise.resolve(tvdbId === 79126 ? 1438 : null),
     regions: () => Promise.resolve(['US']),
+    serverFolders: [],
     fetch: () => Promise.reject(new Error('the network is not used')),
     readerFor: () => reader,
     jobs: {

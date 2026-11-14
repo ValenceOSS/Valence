@@ -31,7 +31,7 @@ use common::{ffmpeg, ffprobe};
 /// What the fixture clip contains, so a slice of it is recognisable.
 const CONTENT: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
-const PREVIEW_ID: &str = "ranged";
+const PREVIEW_ID: &str = "0123456789abcdef0123456789abcdef";
 
 fn cache_root(name: &str) -> std::path::PathBuf {
     common::scratch(format!("valence-test-ranged-{name}"))
@@ -191,7 +191,7 @@ async fn refuses_a_name_that_climbs_out_of_the_directory() {
     let response = app("escape")
         .oneshot(
             Request::builder()
-                .uri("/previews/ranged/..%2F..%2Fsecret")
+                .uri("/previews/0123456789abcdef0123456789abcdef/..%2F..%2Fsecret")
                 .body(Body::empty())
                 .expect("builds the request"),
         )

@@ -35,6 +35,8 @@ type FakePlayer = {
   sentWith: Record<string, string> | null;
   describedAs: { title?: string; artwork?: string } | null;
   floatsOnLeaving: boolean;
+  popOut: () => void;
+  popBackIn: () => void;
   addListener: (of: string, told: (said: WhatAPlayerSays) => void) => { remove: () => void };
   say: (of: string, said: WhatAPlayerSays) => void;
 };
@@ -62,6 +64,8 @@ const theFakePlayer: FakePlayer = {
   sentWith: null,
   describedAs: null,
   floatsOnLeaving: false,
+  popOut: () => undefined,
+  popBackIn: () => undefined,
   addListener: (of, told) => {
     listening.set(of, [...(listening.get(of) ?? []), told]);
 
@@ -97,6 +101,8 @@ const forgetTheFakePlayer = (): void => {
   theFakePlayer.sentWith = null;
   theFakePlayer.describedAs = null;
   theFakePlayer.floatsOnLeaving = false;
+  theFakePlayer.popOut = () => undefined;
+  theFakePlayer.popBackIn = () => undefined;
 };
 
 export type { FakePlayer, PlayingChange, TimeUpdate, WhatAPlayerSays };

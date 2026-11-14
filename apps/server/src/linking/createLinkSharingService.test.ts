@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { twoLinkingServers } from '@ValenceServer/testing/twoLinkingServers';
 import { createLinkSharingService } from './createLinkSharingService';
 import { createMemoryLinkSharingStore } from './createMemoryLinkSharingStore';
@@ -32,7 +32,11 @@ const LIBRARIES = [
  * @param limits - How often Anime lets a server and a person ask.
  * @returns Both services, the ids each knows the other by, and what Anime warned about.
  */
-const twoSharingServers = async (limits?: { perServer: number; perPerson: number }) => {
+const twoSharingServers = async (limits?: {
+  perServer: number;
+  perPerson: number;
+  people?: number;
+}) => {
   const { anime, films, animeStore, filmsStore, link } = twoLinkingServers();
   const { filmsAtAnime, animeAtFilms } = await link();
   const warned: string[] = [];
@@ -84,10 +88,14 @@ const twoSharingServers = async (limits?: { perServer: number; perPerson: number
     passThrough: () => Promise.resolve(null),
   };
 
+  const animePeople = createMemoryLinkSharingStore(
+    async (id) => (await animeStore.readServer(id)) !== null,
+  );
+  const hasRoomFor = vi.fn(animePeople.hasRoomFor);
   const animeSharing = createLinkSharingService({
     linking: anime,
     links: animeStore,
-    sharing: createMemoryLinkSharingStore(async (id) => (await animeStore.readServer(id)) !== null),
+    sharing: { ...animePeople, hasRoomFor },
     libraries: () => Promise.resolve([...LIBRARIES]),
     subjectOf: ({ kind, id }) =>
       Promise.resolve(kind === 'item' ? (ITEMS.find((item) => item.id === id) ?? null) : null),
@@ -121,10 +129,11 @@ const twoSharingServers = async (limits?: { perServer: number; perPerson: number
     person?: { profileId: string; name: string },
     method = 'GET',
   ) => {
+    const asking = { method, route: path };
     const signed =
       person === undefined
-        ? await films.signFor(animeAtFilms)
-        : await filmsSharing.askAs(animeAtFilms, person);
+        ? await films.signFor(animeAtFilms, undefined, asking)
+        : await filmsSharing.askAs(animeAtFilms, person, asking);
 
     return animeSharing.admit({
       method,
@@ -133,7 +142,16 @@ const twoSharingServers = async (limits?: { perServer: number; perPerson: number
     });
   };
 
-  return { animeSharing, filmsSharing, filmsAtAnime, animeAtFilms, filmsAsks, warned, claims };
+  return {
+    animeSharing,
+    filmsSharing,
+    filmsAtAnime,
+    animeAtFilms,
+    filmsAsks,
+    warned,
+    claims,
+    hasRoomFor,
+  };
 };
 
 describe('createLinkSharingService', () => {
@@ -202,6 +220,20 @@ describe('createLinkSharingService', () => {
       inner: '/api/playback/session/one/index.m3u8',
       title: { mediaId: ARRIVAL, title: 'Arrival' },
     });
+  });
+
+  it('stops a session’s direct ticket once the title it plays is no longer shared', async () => {
+    const { animeSharing, filmsAtAnime, claims } = await twoSharingServers();
+    const ticketed = { serverId: filmsAtAnime, isWhole: false, subjectId: 'one' };
+
+    await animeSharing.changeSharing(filmsAtAnime, { libraryIds: [FILMS] });
+    claims.claim('session', 'one', filmsAtAnime, { mediaId: ARRIVAL, title: 'Arrival' });
+
+    expect(await animeSharing.stillReaches(ticketed)).toBe(true);
+
+    await animeSharing.changeSharing(filmsAtAnime, { libraryIds: [] });
+
+    expect(await animeSharing.stillReaches(ticketed)).toBe(false);
   });
 
   it('refuses the other server its record where its admin does not show it', async () => {
@@ -293,6 +325,48 @@ describe('createLinkSharingService', () => {
     expect(await filmsAsks('/libraries')).toMatchObject({ status: 429 });
   });
 
+  it('records nobody new once a server is over its rate, or has brought as many people as any house has', async () => {
+    const crowded = await twoSharingServers({ perServer: 100, perPerson: 100, people: 2 });
+
+    await crowded.animeSharing.changeSharing(crowded.filmsAtAnime, { libraryIds: [FILMS] });
+
+    expect((await crowded.filmsAsks('/libraries', { profileId: 'sam', name: 'Sam' })).kind).toBe(
+      'admitted',
+    );
+    expect((await crowded.filmsAsks('/libraries', { profileId: 'kai', name: 'Kai' })).kind).toBe(
+      'admitted',
+    );
+    expect(
+      await crowded.filmsAsks('/libraries', { profileId: 'someone-new', name: 'New' }),
+    ).toMatchObject({ status: 429 });
+    expect((await crowded.filmsAsks('/libraries', { profileId: 'sam', name: 'Sam' })).kind).toBe(
+      'admitted',
+    );
+    expect(await crowded.animeSharing.people(crowded.filmsAtAnime)).toHaveLength(2);
+
+    const busy = await twoSharingServers({ perServer: 1, perPerson: 100 });
+
+    await busy.filmsAsks('/libraries');
+    await busy.filmsAsks('/libraries', { profileId: 'flood', name: 'Flood' });
+
+    expect(await busy.animeSharing.people(busy.filmsAtAnime)).toEqual([]);
+  });
+
+  it('asks whether there is room only for a person it has not seen before', async () => {
+    const { filmsAsks, hasRoomFor } = await twoSharingServers();
+    const sam = { profileId: 'sam', name: 'Sam' };
+
+    await filmsAsks('/libraries', sam);
+    await filmsAsks('/libraries', sam);
+    await filmsAsks('/libraries', sam);
+
+    expect(hasRoomFor).toHaveBeenCalledTimes(1);
+
+    await filmsAsks('/libraries', { profileId: 'kai', name: 'Kai' });
+
+    expect(hasRoomFor).toHaveBeenCalledTimes(2);
+  });
+
   it('sends a person’s name only where its admin lets names travel', async () => {
     const { animeSharing, filmsSharing, filmsAtAnime, animeAtFilms, filmsAsks } =
       await twoSharingServers();
@@ -340,10 +414,11 @@ describe('createLinkSharingService', () => {
     expect(await animeSharing.theirActivity('00000000-0000-4000-8000-000000000000')).toBeNull();
     expect(await animeSharing.activity('00000000-0000-4000-8000-000000000000')).toBeNull();
     expect(
-      await animeSharing.askAs('00000000-0000-4000-8000-000000000000', {
-        profileId: 'sam',
-        name: 'Sam',
-      }),
+      await animeSharing.askAs(
+        '00000000-0000-4000-8000-000000000000',
+        { profileId: 'sam', name: 'Sam' },
+        { method: 'GET', route: '/libraries' },
+      ),
     ).toBeNull();
   });
 });

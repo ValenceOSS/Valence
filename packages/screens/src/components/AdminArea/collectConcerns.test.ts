@@ -84,6 +84,8 @@ const healthyMonitor = (
     disks: [],
     drives: [],
     graphics: null,
+    network: null,
+    streamedBytesPerSecond: null,
     graphicsNotes: [],
     artefacts: null,
   },

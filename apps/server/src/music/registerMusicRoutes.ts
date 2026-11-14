@@ -42,6 +42,9 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
 import { refuse } from '@ValenceI18n/refuse';
+import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
+import { isCatalogueId } from './isCatalogueId';
+import { isShortLookup } from './isShortLookup';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
 import type { AudioQuality } from '@ValenceContracts/schemas/Music';
 
@@ -49,6 +52,7 @@ type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
   music: MusicServices;
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
+  peerOf?: (headers: Headers) => string | undefined;
 };
 
 const NOBODY = refuse('error.common.nobodyIsSignedIn');
@@ -58,6 +62,10 @@ const NO_PROFILE = refuse('error.music.chooseAProfileFirst');
 const FILLS_ITSELF = refuse('error.music.aSmartPlaylistFillsItself');
 
 const PICKS_LIMIT = 30;
+
+const LOOKUPS_AT_MOST = 240;
+
+const LOOKUPS_WITHIN_MS = 60_000;
 
 /**
  * The profile a viewer is acting as, where they are signed in and acting as one.
@@ -77,12 +85,21 @@ const profileOf = (viewer: Viewer | null): string | null =>
  * from somebody is left out here the same as everywhere else.
  *
  * @param app - The application to add the routes to.
- * @param options - How to tell who is asking, and the services music is read through.
+ * @param options - How to tell who is asking, the services music is read through, and which linked
+ *   server a request came in from, where it did.
  */
 const registerMusicRoutes = (
   app: OpenAPIHono,
-  { viewerOf, music, requires }: MusicRouteOptions,
+  { viewerOf, music, requires, peerOf }: MusicRouteOptions,
 ): void => {
+  const mayLookUp = createRateLimiter({ most: LOOKUPS_AT_MOST, withinMs: LOOKUPS_WITHIN_MS });
+  const callerOf = (viewer: Viewer, headers: Headers): string =>
+    viewer.kind === 'account'
+      ? viewer.accountId
+      : viewer.kind === 'guest'
+        ? viewer.shareId
+        : `server:${peerOf?.(headers) ?? ''}`;
+
   app.openapi(listAlbumsRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
@@ -317,16 +334,29 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/covers/:releaseGroupId', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
     }
 
     const title = context.req.query('title');
     const artist = context.req.query('artist');
-    const picture = await music.pictures.cover(
-      context.req.param('releaseGroupId'),
-      title === undefined || artist === undefined ? null : { title, artist },
-    );
+
+    if (!isCatalogueId(context.req.param('releaseGroupId')) || !isShortLookup(title, artist)) {
+      return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
+    }
+
+    const hint = title === undefined || artist === undefined ? null : { title, artist };
+
+    if (
+      !(await music.pictures.knowsCover(context.req.param('releaseGroupId'), hint)) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = await music.pictures.cover(context.req.param('releaseGroupId'), hint);
 
     return picture === null
       ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
@@ -337,16 +367,29 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/release-covers/:releaseId', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
     }
 
     const title = context.req.query('title');
     const artist = context.req.query('artist');
-    const picture = await music.pictures.releaseCover(
-      context.req.param('releaseId'),
-      title === undefined || artist === undefined ? null : { title, artist },
-    );
+
+    if (!isCatalogueId(context.req.param('releaseId')) || !isShortLookup(title, artist)) {
+      return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
+    }
+
+    const hint = title === undefined || artist === undefined ? null : { title, artist };
+
+    if (
+      !(await music.pictures.knowsReleaseCover(context.req.param('releaseId'), hint)) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = await music.pictures.releaseCover(context.req.param('releaseId'), hint);
 
     return picture === null
       ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
@@ -357,16 +400,30 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/named-covers', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
     }
 
     const title = context.req.query('title') ?? '';
     const artist = context.req.query('artist') ?? '';
-    const picture =
-      title.trim() === '' || artist.trim() === ''
-        ? null
-        : await music.pictures.namedCover({ title, artist });
+
+    if (!isShortLookup(title, artist)) {
+      return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
+    }
+
+    const isNamed = title.trim() !== '' && artist.trim() !== '';
+
+    if (
+      isNamed &&
+      !(await music.pictures.knowsNamedCover({ title, artist })) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = isNamed ? await music.pictures.namedCover({ title, artist }) : null;
 
     return picture === null
       ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
@@ -377,15 +434,30 @@ const registerMusicRoutes = (
   });
 
   app.get('/api/music/catalogue/artists/picture', async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
     }
 
     const name = context.req.query('name') ?? '';
-    const picture =
-      name.trim() === ''
-        ? null
-        : await music.pictures.artistPicture(name, context.req.query('cover') ?? null);
+
+    if (!isShortLookup(name, context.req.query('cover'))) {
+      return context.json(refuse('error.music.noPictureWasFoundForThat'), 404);
+    }
+
+    const coverOf = context.req.query('cover') ?? null;
+    const isNamed = name.trim() !== '';
+
+    if (
+      isNamed &&
+      !(await music.pictures.knowsArtistPicture(name, coverOf)) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = isNamed ? await music.pictures.artistPicture(name, coverOf) : null;
 
     return picture === null
       ? context.json(refuse('error.music.noPictureWasFoundForThat'), 404)
@@ -591,11 +663,14 @@ const registerMusicRoutes = (
       return context.json(refuse('error.common.noSuchTrack'), 404);
     }
 
-    const ticket = castTickets.issue({
-      viewer,
-      trackId,
-      quality: context.req.valid('query').quality,
-    });
+    const ticket = castTickets.issue(
+      { viewer, trackId, quality: context.req.valid('query').quality },
+      viewer.kind === 'account'
+        ? `account:${viewer.accountId}`
+        : viewer.kind === 'guest'
+          ? `share:${viewer.shareId}`
+          : 'server',
+    );
 
     return context.json({ address: `/api/music/cast/${ticket}` }, 200);
   });

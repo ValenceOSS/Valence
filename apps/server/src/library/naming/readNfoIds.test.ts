@@ -38,4 +38,13 @@ describe('readNfoIds', () => {
       tvdb: null,
     });
   });
+
+  it('finishes at once on a megabyte of unclosed tags and links', () => {
+    const started = performance.now();
+
+    readNfoIds('<uniqueid '.repeat(100_000));
+    readNfoIds('thetvdb.com/'.repeat(80_000));
+
+    expect(performance.now() - started).toBeLessThan(500);
+  });
 });

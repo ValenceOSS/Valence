@@ -2,6 +2,7 @@ import { imageTypeFor } from './imageTypeFor';
 import { COMIC_INFO, readComicInfo } from './readComicInfo';
 import { inPageOrder } from './inPageOrder';
 import { readZipDirectory } from '@ValenceCore/zip/readZipDirectory';
+import { MOST_XML_BYTES } from './MOST_XML_BYTES';
 import { readZipEntry } from './readZipEntry';
 import type { ZipEntry } from '@ValenceCore/zip/readZipDirectory';
 import type { FixedBook } from './BookFile';
@@ -46,7 +47,8 @@ const openComicZip = async (path: string): Promise<FixedBook | null> => {
     return null;
   }
 
-  const describedBytes = described === null ? null : await readZipEntry(path, described);
+  const describedBytes =
+    described === null ? null : await readZipEntry(path, described, MOST_XML_BYTES);
   const about =
     describedBytes === null ? null : readComicInfo(new TextDecoder().decode(describedBytes));
 

@@ -41,6 +41,8 @@ describe('LoadChart', () => {
 
     expect(screen.getByRole('list')).toHaveClass('sr-only');
     expect(screen.getByText('Graphics')).toBeInTheDocument();
+    expect(screen.getByText('Network in')).toBeInTheDocument();
+    expect(screen.getByText('Network out')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

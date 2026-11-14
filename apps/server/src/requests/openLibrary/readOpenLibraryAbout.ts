@@ -273,7 +273,7 @@ const readOpenLibraryAbout = async (
     return null;
   }
 
-  const authorKey = book.author_key?.[0] ?? null;
+  const authorKey = book.author_key?.find((key) => /^OL\d{1,12}A$/.test(key)) ?? null;
   const subjects = (book.subject ?? [])
     .filter(
       (subject) =>

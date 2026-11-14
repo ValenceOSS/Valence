@@ -293,6 +293,16 @@ describe('fetchLibraryItems', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toContain('offset=48');
   });
 
+  it('builds the address in code, with the library id escaped into one path segment', async () => {
+    fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
+
+    await fetchLibraryItems('a/../b?c', { limit: 24 });
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toMatch(
+      /^\/api\/libraries\/a%2F\.\.%2Fb%3Fc\/items\?limit=24(&|$)/u,
+    );
+  });
+
   it('sends a search term when given one', async () => {
     fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
 

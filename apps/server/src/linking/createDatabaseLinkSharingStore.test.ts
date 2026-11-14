@@ -91,4 +91,44 @@ describe('createDatabaseLinkSharingStore', () => {
     },
     STARTING_THE_DATABASE_MS,
   );
+
+  it(
+    'makes room for no new person past the most a server may bring, but always for one it knows',
+    async () => {
+      const { store, serverId } = await aLinkedDatabase();
+
+      expect(await store.hasRoomFor(serverId, 'p1', 2)).toBe(true);
+
+      await store.seePerson(serverId, 'p1', 'Sam', AT);
+      await store.seePerson(serverId, 'p2', 'Kai', AT);
+
+      expect(await store.hasRoomFor(serverId, 'p3', 2)).toBe(false);
+      expect(await store.hasRoomFor(serverId, 'p1', 2)).toBe(true);
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it(
+    'forgets the record from before a moment, and says how much it forgot',
+    async () => {
+      const { store, serverId } = await aLinkedDatabase();
+      const entry = {
+        linkedServerId: serverId,
+        remotePersonId: null,
+        action: 'media',
+        mediaId: FILMS,
+        mediaTitle: 'Arrival',
+        outcome: 'allowed',
+      } as const;
+
+      await store.record(entry, AT);
+      await store.record({ ...entry, mediaTitle: 'Dune' }, new Date(AT.getTime() + 86_400_000));
+
+      expect(await store.forgetActivityBefore(new Date(AT.getTime() + 1000))).toBe(1);
+      expect(
+        (await store.listActivity(serverId, { limit: 10 })).map((one) => one.mediaTitle),
+      ).toEqual(['Dune']);
+    },
+    STARTING_THE_DATABASE_MS,
+  );
 });

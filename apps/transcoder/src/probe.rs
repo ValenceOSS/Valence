@@ -39,7 +39,22 @@ pub enum ProbeError {
     Failed { status: i32, stderr: String },
     #[error("could not parse ffprobe output: {0}")]
     Parse(#[from] serde_json::Error),
+    #[error("not a media file: it is a {0} playlist")]
+    NotMedia(String),
 }
+
+/// The demuxers that read a list of other things to open rather than a container of media.
+const PLAYLIST_FORMATS: [&str; 9] = [
+    "hls",
+    "applehttp",
+    "sdp",
+    "concat",
+    "dash",
+    "mpd",
+    "rtsp",
+    "rtp",
+    "imf",
+];
 
 #[derive(Debug, Deserialize)]
 struct FfprobeOutput {
@@ -296,6 +311,10 @@ fn is_forced(stream: &FfprobeStream) -> bool {
         .is_some_and(|forced| *forced == 1)
 }
 
+/// The longest duration a file may declare before it is read as having none, so a header
+/// claiming centuries cannot size a list of segments.
+pub const MOST_DURATION_SECONDS: f64 = 172_800.0;
+
 /// The video stream Valence plays, of however many a file holds.
 ///
 /// The first is the one: a file with two video streams is almost always carrying cover art or a
@@ -404,6 +423,7 @@ fn to_media_probe(output: &FfprobeOutput, path: &Path) -> MediaProbe {
         duration_seconds: format
             .and_then(|f| f.duration.as_ref())
             .and_then(|value| value.parse::<f64>().ok())
+            .filter(|seconds| (0.0..=MOST_DURATION_SECONDS).contains(seconds))
             .unwrap_or_default(),
         bitrate_kbps: parse_kbps(format.and_then(|f| f.bit_rate.as_ref())),
         video,
@@ -443,6 +463,21 @@ fn to_media_probe(output: &FfprobeOutput, path: &Path) -> MediaProbe {
 /// documented output.
 pub fn parse_ffprobe_output(json: &str, path: &Path) -> Result<MediaProbe, ProbeError> {
     let output: FfprobeOutput = serde_json::from_str(json)?;
+
+    let is_list_of_parts = path.to_str().is_some_and(|path| {
+        crate::joined_input::is_joined(path) || crate::remote_input::is_remote(path)
+    });
+
+    if !is_list_of_parts {
+        if let Some(playlist) = output.format.as_ref().and_then(|format| {
+            format
+                .format_name
+                .split(',')
+                .find(|name| PLAYLIST_FORMATS.contains(name))
+        }) {
+            return Err(ProbeError::NotMedia(playlist.to_owned()));
+        }
+    }
 
     Ok(to_media_probe(&output, path))
 }
@@ -589,6 +624,38 @@ mod tests {
         assert_eq!(probe.container, Container::Mkv);
         assert!((probe.duration_seconds - 7200.5).abs() < f64::EPSILON);
         assert_eq!(probe.bitrate_kbps, Some(24000));
+    }
+
+    /// A header that claims a duration no film has is read as having none.
+    #[test]
+    fn reads_an_absurd_declared_duration_as_none() {
+        let json = HDR10_JSON.replace("7200.5", "1000000000000");
+        let probe = parse_ffprobe_output(&json, Path::new("/media/film.mkv")).expect("parses");
+
+        assert!(probe.duration_seconds.abs() < f64::EPSILON);
+    }
+
+    /// A playlist saved under a video extension names other files to open, so it is not read as
+    /// a film.
+    #[test]
+    fn refuses_a_playlist_saved_as_a_film() {
+        let json =
+            r#"{"streams": [], "format": {"format_name": "hls,applehttp", "duration": "10"}}"#;
+
+        assert!(matches!(
+            parse_ffprobe_output(json, Path::new("/media/film.mkv")),
+            Err(super::ProbeError::NotMedia(_))
+        ));
+        assert!(parse_ffprobe_output(
+            &json.replace("hls,applehttp", "concat"),
+            Path::new("/media/film.mp4")
+        )
+        .is_err());
+        assert!(parse_ffprobe_output(
+            &json.replace("hls,applehttp", "imf"),
+            Path::new("/media/film.mxf")
+        )
+        .is_err());
     }
 
     #[test]

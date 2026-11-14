@@ -57,6 +57,19 @@ describe('drawUnreadBadge', () => {
     expect(pen.fillText).toHaveBeenCalledWith('4', 16, 23);
   });
 
+  it('draws the circle in red, as the unread counts of other apps are', async () => {
+    const pen = aPen();
+    const filled: string[] = [];
+
+    pen.fill.mockImplementation(() => {
+      filled.push(String(pen.fillStyle));
+    });
+
+    await drawUnreadBadge(2, aCanvas(pen));
+
+    expect(filled).toEqual(['rgb(218, 48, 54)']);
+  });
+
   it('writes counts past nine as 9+', async () => {
     const pen = aPen();
 

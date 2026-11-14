@@ -67,6 +67,7 @@ import { serveInsights } from '@ValenceServer/api/serveInsights';
 import { serveAudit } from '@ValenceServer/api/serveAudit';
 import { serveBackups } from '@ValenceServer/api/serveBackups';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
+import { countWhatIsStreamed } from '@ValenceServer/monitor/countWhatIsStreamed';
 
 /**
  * Builds the server's API: every endpoint, registered area by area in the order they are matched,
@@ -80,6 +81,7 @@ const createApp = (options: CreateAppOptions) => {
   const context = createAppContext(options);
 
   serveEveryRequest(app, context);
+  countWhatIsStreamed(app, options.streamMeter);
   serveAbout(app, context);
   serveStrings(app, context);
   serveSetup(app, context);

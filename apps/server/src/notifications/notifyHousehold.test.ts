@@ -14,6 +14,7 @@ const news = {
   title: sayVerbatim('Something new to watch'),
   body: sayVerbatim('12 episodes — The Office'),
   link: '/?show=s1',
+  resolve: () => Promise.resolve(['93.184.216.34']),
 };
 
 let store: NotificationStore;
@@ -54,6 +55,24 @@ describe('notifyHousehold', () => {
     await notifyHousehold({ store, ...news, vapid: keys, send });
 
     expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops a browser whose address no longer leads to the public internet, without pushing at it', async () => {
+    const send = landing();
+
+    await store.writePreference('alice', { event: 'media.added', inApp: true, push: true });
+    await store.addPushEndpoint('alice', { endpoint: 'https://push/1', p256dh: 'k', auth: 'a' });
+
+    await notifyHousehold({
+      store,
+      ...news,
+      resolve: () => Promise.resolve(['10.0.0.5']),
+      vapid: keys,
+      send,
+    });
+
+    expect(send).not.toHaveBeenCalled();
+    expect(await store.listPushEndpoints('alice')).toStrictEqual([]);
   });
 
   it('reaches every browser one person uses', async () => {

@@ -24,12 +24,18 @@ const MOST_UNWRAPPINGS = 4;
  */
 const spellOut = (text: string): string =>
   text.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (whole, name: string) => {
-    if (name.startsWith('#x') || name.startsWith('#X')) {
-      return String.fromCodePoint(Number.parseInt(name.slice(2), 16));
-    }
+    const isHex = name.startsWith('#x') || name.startsWith('#X');
 
-    if (name.startsWith('#')) {
-      return String.fromCodePoint(Number.parseInt(name.slice(1), 10));
+    if (isHex || name.startsWith('#')) {
+      const code = Number.parseInt(name.slice(isHex ? 2 : 1), isHex ? 16 : 10);
+
+      if (code === 0) {
+        return '\uFFFD';
+      }
+
+      return code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)
+        ? whole
+        : String.fromCodePoint(code);
     }
 
     return NAMED[name.toLowerCase()] ?? whole;

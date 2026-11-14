@@ -26,6 +26,8 @@ const fn default_width() -> u32 {
 pub enum FrameError {
     #[error("could not start ffmpeg: {0}")]
     Spawn(std::io::Error),
+    #[error("taking the frame ran out of time")]
+    TimedOut,
     #[error("ffmpeg could not decode a frame there: {0}")]
     Failed(String),
     #[error("ffmpeg produced no picture")]
@@ -59,6 +61,29 @@ pub fn frame_arguments(path: &Path, at_seconds: u32, width: u32) -> Vec<String> 
     ])
 }
 
+/// How many frames are taken at once; the rest wait their turn.
+const AT_ONCE: usize = 4;
+
+/// How long a frame may take, waiting included, before it is given up on.
+const MOST_SECONDS: std::time::Duration = std::time::Duration::from_secs(20);
+
+static TURNS: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(AT_ONCE);
+
+/// Runs work in one of `turns` and gives up on it after `limit`, waiting for a turn included.
+async fn within<T>(
+    turns: &tokio::sync::Semaphore,
+    limit: std::time::Duration,
+    work: impl std::future::Future<Output = Result<T, FrameError>>,
+) -> Result<T, FrameError> {
+    tokio::time::timeout(limit, async {
+        let _turn = turns.acquire().await.map_err(|_| FrameError::TimedOut)?;
+
+        work.await
+    })
+    .await
+    .unwrap_or(Err(FrameError::TimedOut))
+}
+
 /// Takes a single frame out of a file as a JPEG.
 ///
 /// What a preview is going to start from, drawn before the preview can play.
@@ -70,6 +95,21 @@ pub fn frame_arguments(path: &Path, at_seconds: u32, width: u32) -> Vec<String> 
 /// Returns [`FrameError`] when ffmpeg cannot be started, refuses the file, or
 /// decodes nothing at that position.
 pub async fn take_frame(
+    ffmpeg: &str,
+    path: &Path,
+    at_seconds: u32,
+    width: u32,
+) -> Result<Vec<u8>, FrameError> {
+    within(
+        &TURNS,
+        MOST_SECONDS,
+        run_ffmpeg(ffmpeg, path, at_seconds, width),
+    )
+    .await
+}
+
+/// Runs ffmpeg for one frame and reads what it wrote.
+async fn run_ffmpeg(
     ffmpeg: &str,
     path: &Path,
     at_seconds: u32,
@@ -97,8 +137,36 @@ pub async fn take_frame(
 
 #[cfg(test)]
 mod tests {
-    use super::frame_arguments;
+    use super::{frame_arguments, within, FrameError};
     use std::path::Path;
+    use std::time::Duration;
+
+    /// A frame that never finishes is given up on, and so is one that never gets a turn.
+    #[tokio::test]
+    async fn gives_up_on_a_frame_that_takes_too_long() {
+        let turns = tokio::sync::Semaphore::new(1);
+        let held = turns.acquire().await.expect("takes the only turn");
+
+        let waiting = within(&turns, Duration::from_millis(50), async {
+            Ok::<_, FrameError>(Vec::<u8>::new())
+        })
+        .await;
+        drop(held);
+        let stuck = within(
+            &turns,
+            Duration::from_millis(50),
+            std::future::pending::<Result<Vec<u8>, FrameError>>(),
+        )
+        .await;
+        let quick = within(&turns, Duration::from_millis(500), async {
+            Ok::<_, FrameError>(vec![1_u8])
+        })
+        .await;
+
+        assert!(matches!(waiting, Err(FrameError::TimedOut)));
+        assert!(matches!(stuck, Err(FrameError::TimedOut)));
+        assert_eq!(quick.expect("finishes"), vec![1_u8]);
+    }
 
     #[test]
     fn seeks_before_opening_the_file() {

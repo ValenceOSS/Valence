@@ -87,4 +87,20 @@ describe('describeOpenLibraryBook', () => {
       await expect(describeOpenLibraryBook(web, 9)).resolves.toMatchObject({ year });
     }
   });
+
+  it('asks for no author whose key is not a plain author path', async () => {
+    const web = aWebThatAnswers({
+      '/works/OL9W.json': {
+        title: 'Odd',
+        authors: [{ author: { key: '@10.0.0.5:8080/x' } }, { author: { key: '/authors/OL7A' } }],
+      },
+      '/authors/OL7A.json': { name: 'Andy Weir' },
+      '10.0.0.5': { name: 'Internal' },
+    });
+
+    await expect(describeOpenLibraryBook(web, 9)).resolves.toMatchObject({
+      authors: ['Andy Weir'],
+    });
+    expect(web.json).not.toHaveBeenCalledWith(expect.stringContaining('10.0.0.5'));
+  });
 });

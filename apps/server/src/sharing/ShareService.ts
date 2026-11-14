@@ -38,7 +38,7 @@ type ShareService = {
   revoke: (createdBy: string, shareId: string, onlyProfileId: string | null) => Promise<boolean>;
   revokeAnybody: (shareId: string) => Promise<WithdrawnShare | null>;
   resolve: (token: string) => Promise<ResolvedShare | null>;
-  join: (shareId: string, joiner: string) => Promise<void>;
+  join: (shareId: string, joiner: string, viewCap?: number | null) => Promise<boolean>;
   hasJoined: (shareId: string, joiner: string) => Promise<boolean>;
 };
 

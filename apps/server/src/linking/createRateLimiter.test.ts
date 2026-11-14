@@ -9,6 +9,17 @@ describe('createRateLimiter', () => {
     expect(allows('b')).toBe(true);
   });
 
+  it('refuses a new caller once as many are being counted as it will hold, until a window ends', () => {
+    let at = 0;
+    const allows = createRateLimiter({ most: 5, withinMs: 1000, now: () => at, mostCallers: 2 });
+
+    expect([allows('a'), allows('b'), allows('c'), allows('a')]).toEqual([true, true, false, true]);
+
+    at = 1000;
+
+    expect(allows('c')).toBe(true);
+  });
+
   it('starts again once the window has passed', () => {
     let at = 0;
     const allows = createRateLimiter({ most: 1, withinMs: 1000, now: () => at });

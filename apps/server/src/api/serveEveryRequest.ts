@@ -1,9 +1,10 @@
 import { shieldTheAnswer } from '@ValenceServer/api/shieldTheAnswer';
 import { PLUGIN_ROUTE_PATH } from '@ValenceServer/plugins/routes/PLUGIN_ROUTE_PATH';
 import { createBodyLimit } from '@ValenceServer/api/createBodyLimit';
-import { withCaller } from '@ValenceServer/web/withCaller';
+import { settleTheCaller } from '@ValenceServer/web/settleTheCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
+import { createShareCreatorCheck } from '@ValenceServer/sharing/createShareCreatorCheck';
 import { createShareGate } from '@ValenceServer/sharing/createShareGate';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
@@ -17,6 +18,7 @@ import { createAppGate } from '@ValenceServer/access/createAppGate';
 import { createProfileGate } from '@ValenceServer/profiles/acting/createProfileGate';
 import { closedAppsIn } from '@ValenceServer/access/closedAppsIn';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers what every request passes through before any endpoint answers it — the headers, the checks on who may reach what, and the sign-in service's own paths.
@@ -30,8 +32,11 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     settings,
     trustedOrigins,
     library,
+    books,
     presence,
     shares,
+    permissions,
+    isAccountBanned,
     shareSessions,
     refuseWhatIsOutOfReach,
     peerRequests,
@@ -39,6 +44,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     linkPersonOf,
     callerOf,
     readActing,
+    GUEST_REMEMBERED_FOR_SECONDS,
   } = context;
 
   app.use('*', async (context, next) => {
@@ -46,6 +52,11 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
     shieldTheAnswer(context.res.headers);
   });
+
+  app.use(
+    '*',
+    settleTheCaller((context) => callerOf?.(context) ?? null),
+  );
 
   app.use(
     '/api/*',
@@ -69,6 +80,15 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
               shares,
               sessions: shareSessions,
               shareHoldingTab: (clientId) => presence.shareOf(clientId),
+              guestKeptForSeconds: GUEST_REMEMBERED_FOR_SECONDS,
+              isCookieSecure: async () => (await settings.read()).cookieSecure,
+              creator: createShareCreatorCheck({
+                isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
+                permissionsOf: (accountId) => permissions.resolve(accountId),
+                isOutOfReach: (viewer, mediaId) => library.isOutOfReach(viewer, mediaId),
+                canReachBook: async (viewer, bookId) =>
+                  books !== undefined && (await books.canReach(viewer, bookId)),
+              }),
               itemOf: async (mediaId) => {
                 const item = await library.getMedia(mediaId);
 
@@ -102,15 +122,23 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
   app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
 
+  app.on(
+    ['GET', 'POST'],
+    [
+      '/api/auth/is-username-available',
+      '/api/auth/request-password-reset',
+      '/api/auth/forget-password',
+    ],
+    (context) => context.json(refuse('error.common.thisServerDoesNotHaveThatAddress'), 404),
+  );
+
   app.all('/api/auth/sign-up/*', createSignUpBlock());
 
   app.use('/api/auth/*', createApiKeyAuthBlock());
 
   app.use('/api/auth/*', createNoEmailBlock());
 
-  app.on(['GET', 'POST'], '/api/auth/*', async (context) =>
-    auth.handler(await withCaller(context.req.raw, callerOf?.(context) ?? null)),
-  );
+  app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
 };
 
 export { serveEveryRequest };

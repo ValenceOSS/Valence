@@ -277,10 +277,10 @@ const fetchOnePage = async (
 ): Promise<MediaPage> =>
   pageOf(
     await fetch(
-      say('client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery', {
-        libraryId,
-        query: itemsQueryOf(options).toString(),
-      }),
+      [
+        `/api/libraries/${encodeURIComponent(libraryId)}/items`,
+        itemsQueryOf(options).toString(),
+      ].join('?'),
       { headers: { accept: 'application/json' } },
     ),
   );

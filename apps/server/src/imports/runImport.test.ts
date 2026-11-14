@@ -130,7 +130,7 @@ describe('runImport', { timeout: 60_000 }, () => {
     expect(finished).toMatchObject({ state: 'completed', cursor: { phase: 'done' }, jobId: 'job' });
   });
 
-  it('sets what each person may see, with their age ceiling, as the old server had it', async () => {
+  it('sets what each person may see, with their age ceiling, as the old server had it, refusing every library it did not allow', async () => {
     const { db } = await aLibraryToImportInto(await aHousehold());
     const { services, asked } = someImportServices(db);
     const run = await aPlannedRun(services);
@@ -139,7 +139,10 @@ describe('runImport', { timeout: 60_000 }, () => {
 
     const sam = await accountNamed(db, 'Sam');
 
-    expect(asked.refused).toEqual([[sam.id, 'shows']]);
+    expect(asked.refused.toSorted()).toEqual([
+      [sam.id, 'music'],
+      [sam.id, 'shows'],
+    ]);
     expect(asked.allowed.filter(([who]) => who === sam.id)).toEqual([[sam.id, 'films']]);
     expect(asked.ceilings).toEqual([[sam.id, 'films', 13, false]]);
   });

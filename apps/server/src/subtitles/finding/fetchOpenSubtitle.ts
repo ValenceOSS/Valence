@@ -2,6 +2,9 @@ import { z } from 'zod';
 import type { DownloadedSubtitle } from './DownloadedSubtitle';
 import { OPEN_SUBTITLES_AGENT } from './OPEN_SUBTITLES_AGENT';
 import { OPEN_SUBTITLES_API } from './OPEN_SUBTITLES_API';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
+
+const MOST_SUBTITLE_BYTES = 5 * 1024 * 1024;
 
 const LoginSchema = z.object({ token: z.string().min(1) });
 
@@ -63,9 +66,9 @@ const fetchOpenSubtitle = async (
     () => null,
   );
 
-  return file?.ok === true
-    ? { kind: 'downloaded', bytes: new Uint8Array(await file.arrayBuffer()), extension: 'srt' }
-    : null;
+  const bytes = file?.ok === true ? await readBodyUpTo(file, MOST_SUBTITLE_BYTES) : null;
+
+  return bytes === null ? null : { kind: 'downloaded', bytes, extension: 'srt' };
 };
 
 export type { OpenSubtitlesAccount };

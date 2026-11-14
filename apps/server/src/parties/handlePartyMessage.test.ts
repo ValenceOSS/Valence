@@ -24,16 +24,30 @@ const createWorld = () => {
     return `party-${minted.toString()}`;
   });
 
-  const asked: { byName: string; profileId: string; partyId: string }[] = [];
+  const asked: {
+    byName: string;
+    byAccountId: string;
+    byProfileId: string | null;
+    profileId: string;
+    partyId: string;
+  }[] = [];
 
   const binding = {
     registry,
     tell: (connectionIds: readonly string[], payload: JsonValue) => {
       told.push({ to: connectionIds, payload });
     },
-    ask: (asking: { party: { id: string }; byName: string; profileId: string }) => {
+    ask: (asking: {
+      party: { id: string };
+      byName: string;
+      byAccountId: string;
+      byProfileId: string | null;
+      profileId: string;
+    }) => {
       asked.push({
         byName: asking.byName,
+        byAccountId: asking.byAccountId,
+        byProfileId: asking.byProfileId,
         profileId: asking.profileId,
         partyId: asking.party.id,
       });
@@ -310,7 +324,15 @@ describe('handlePartyMessage', () => {
     world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('dan', 'Dan'));
     world.say({ kind: 'partyInvite', profileId: 'profile-sam' }, someone('dan', 'Dan'));
 
-    expect(world.asked).toEqual([{ byName: 'Dan', profileId: 'profile-sam', partyId: 'party-1' }]);
+    expect(world.asked).toEqual([
+      {
+        byName: 'Dan',
+        byAccountId: 'account-dan',
+        byProfileId: null,
+        profileId: 'profile-sam',
+        partyId: 'party-1',
+      },
+    ]);
   });
 
   it('refuses a guest asking somebody along, and tells them why', () => {
@@ -440,5 +462,78 @@ describe('what a party is told when a request cannot be granted', () => {
         { kind: 'refused', why: 'The host hasn’t turned chat on for this party.' },
       ]);
     });
+  });
+
+  it('lets go of the party a connection had before it opens another', () => {
+    const world = createWorld();
+    const dan = someone('dan', 'Dan');
+
+    for (let at = 0; at < 5; at += 1) {
+      world.say({ kind: 'partyOpen', mediaId: 'a-film' }, dan);
+    }
+
+    expect(world.registry.count()).toBe(1);
+  });
+
+  it('lets go of the party a connection had before it joins another', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('ada', 'Ada'));
+    world.say({ kind: 'partyOpen', mediaId: 'a-song' }, someone('dan', 'Dan'));
+    world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('dan', 'Dan'));
+
+    expect(world.registry.count()).toBe(1);
+    expect(world.registry.partyOf('dan')?.id).toBe('party-1');
+  });
+
+  it('keeps somebody in their party when the one they ask to join wants a password', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('dan', 'Dan'));
+    world.say({ kind: 'partySetPassword', password: 'letmein' }, someone('dan', 'Dan'));
+    world.say({ kind: 'partyOpen', mediaId: 'a-song' }, someone('sam', 'Sam'));
+    world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('sam', 'Sam'));
+
+    expect(world.answers).toEqual([
+      { kind: 'partyNeedsPassword', partyId: 'party-1', wasWrong: false },
+    ]);
+    expect(world.registry.partyOf('sam')?.id).toBe('party-2');
+  });
+
+  it('keeps somebody in their party when the one they ask to join is not running', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-song' }, someone('sam', 'Sam'));
+    world.say({ kind: 'partyJoin', partyId: 'nothing' }, someone('sam', 'Sam'));
+
+    expect(world.registry.partyOf('sam')?.id).toBe('party-1');
+  });
+
+  it('moves somebody out of their party once they have joined another', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('dan', 'Dan'));
+    world.say({ kind: 'partyOpen', mediaId: 'a-song' }, someone('sam', 'Sam'));
+    world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('sam', 'Sam'));
+
+    expect(world.registry.partyOf('sam')?.id).toBe('party-1');
+    expect(world.registry.find('party-2')).toBeNull();
+  });
+
+  it('tells the members of the oldest party when opening another closes it', () => {
+    const world = createWorld();
+    const dan = (at: number) => ({ ...someone(`dan-${at.toString()}`, 'Dan'), accountId: 'dan' });
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-film' }, dan(0));
+    world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('sam', 'Sam'));
+
+    for (let at = 1; at <= 10; at += 1) {
+      world.say({ kind: 'partyOpen', mediaId: 'a-film' }, dan(at));
+    }
+
+    const last = world.told.filter((one) => one.to.includes('sam')).at(-1);
+
+    expect(partyIn(last?.payload)).toMatchObject({ id: 'party-1', members: [] });
+    expect(world.registry.find('party-1')).toBeNull();
   });
 });

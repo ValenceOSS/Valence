@@ -43,6 +43,10 @@ const setupCompleteRoute = createRoute({
       description: 'Setup has already been completed',
       content: { 'application/json': { schema: SetupError } },
     },
+    403: {
+      description: 'The setup code is not the one in the server log',
+      content: { 'application/json': { schema: SetupError } },
+    },
     400: {
       description: 'The administrator could not be created',
       content: { 'application/json': { schema: SetupError } },

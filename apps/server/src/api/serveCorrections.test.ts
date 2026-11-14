@@ -102,6 +102,10 @@ const aMusic = () =>
       artistPicture: vi.fn(nothing),
       namedCover: vi.fn(nothing),
       releaseCover: vi.fn(nothing),
+      knowsCover: vi.fn(() => Promise.resolve(false)),
+      knowsArtistPicture: vi.fn(() => Promise.resolve(false)),
+      knowsNamedCover: vi.fn(() => Promise.resolve(false)),
+      knowsReleaseCover: vi.fn(() => Promise.resolve(false)),
     },
     corrections: {
       search: vi.fn(() =>

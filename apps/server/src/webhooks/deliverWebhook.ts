@@ -3,7 +3,7 @@ import type { WebhookBrand } from './WebhookBrand';
 import { fetchPosterAttachment } from './fetchPosterAttachment';
 import { formatWebhookBody } from './formatWebhookBody';
 import { isSafeWebhookUrl } from './isSafeWebhookUrl';
-import { resolvesSafely } from './resolvesSafely';
+import { createPinnedWebhookFetcher } from './createPinnedWebhookFetcher';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
 import { webhookNoticeFor } from './webhookNoticeFor';
 import type { PosterAttachment } from './fetchPosterAttachment';
@@ -31,6 +31,7 @@ type WebhookTarget = {
   preset: WebhookPreset;
   secret: string;
   custom: CustomWebhook | null;
+  reachesLocalNetwork: boolean;
 };
 
 type WebhookDestination = WebhookTarget & { brand: WebhookBrand };
@@ -67,17 +68,7 @@ const deliverWebhook = async (
     return { ok: false, status: null, error: say('error.common.valenceWillNotSendDeliveriesTo') };
   }
 
-  const call: WebhookFetcher =
-    fetchImpl ??
-    (async (url, init) => {
-      if (!(await resolvesSafely(url))) {
-        throw new Error(say('error.common.valenceWillNotSendDeliveriesTo'));
-      }
-
-      const response = await fetch(url, { ...init, redirect: 'manual' });
-
-      return { ok: response.ok, status: response.status };
-    });
+  const call: WebhookFetcher = fetchImpl ?? createPinnedWebhookFetcher(target.reachesLocalNetwork);
 
   const poster =
     target.preset === 'pushover'

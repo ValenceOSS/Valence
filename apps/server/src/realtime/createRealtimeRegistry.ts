@@ -39,6 +39,7 @@ type RealtimeRegistry = {
   recheck: (accountId: string) => Promise<void>;
   recheckAll: () => Promise<void>;
   topicsOf: (connectionId: string) => RealtimeTopic[];
+  holds: (connectionId: string, permission: GrantedPermission) => Promise<boolean>;
   onHeard: (topic: RealtimeTopic, listen: (isHeard: boolean) => void) => () => void;
   count: () => number;
   drain: () => Promise<void>;
@@ -356,6 +357,12 @@ const createRealtimeRegistry = ({
     },
 
     topicsOf: (connectionId) => [...(subscriptions.get(connectionId) ?? [])],
+
+    holds: async (connectionId, permission) => {
+      const connection = connections.get(connectionId);
+
+      return connection !== undefined && (await heldBy(connection)).has(permission);
+    },
 
     onHeard: (topic, listen) => {
       const watched = hearing.get(topic) ?? {

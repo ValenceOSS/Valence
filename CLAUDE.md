@@ -80,7 +80,7 @@ standalone functions. snake_case for Rust modules.
 | Layer         | Choice                                              |
 | ------------- | --------------------------------------------------- |
 | API contract  | Hono + `@hono/zod-openapi`                          |
-| API reference | Scalar, served at `/api/reference`                  |
+| API reference | Scalar, on the documentation site (`apps/docs`)     |
 | Auth          | better-auth                                         |
 | Data          | Postgres, MySQL or MariaDB + Drizzle; jobs in-house |
 | Plugins       | Process-per-plugin, brokered                        |

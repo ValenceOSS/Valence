@@ -23,6 +23,8 @@ const resources = (overrides: Partial<Monitor['resources']> = {}): Monitor['reso
   disks: [],
   drives: [],
   graphics: null,
+  network: null,
+  streamedBytesPerSecond: null,
   graphicsNotes: [],
   artefacts: null,
   ...overrides,

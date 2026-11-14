@@ -1,3 +1,4 @@
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { createClientCaller } from '@ValenceRequests/downloads/createClientCaller';
@@ -388,7 +389,7 @@ const createQbittorrentAdapter = (
 
       const hash = file.kind === 'magnet' ? readMagnetHash(file.url) : readTorrentHash(file.bytes);
 
-      if (hash === null) {
+      if (hash === null || (file.kind === 'magnet' && !isSingleMagnetLink(file.url))) {
         throw new DownloadClientFailure(
           saying('requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent'),
         );

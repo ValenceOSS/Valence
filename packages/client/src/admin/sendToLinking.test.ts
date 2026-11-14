@@ -32,7 +32,7 @@ describe('sendToLinking', () => {
 
     expect(await sendToLinking('', 'POST', z.null(), { invite: 'x' })).toEqual({
       value: null,
-      refusal: { message: 'That invite has been used.' },
+      refusal: { message: 'That invite has been used.', code: 'error.linking.x' },
     });
   });
 

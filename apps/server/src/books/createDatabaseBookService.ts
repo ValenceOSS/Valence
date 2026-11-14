@@ -818,9 +818,11 @@ const createDatabaseBookService = (
           path: bookChapter.path,
           format: bookChapter.format,
           bookPath: book.path,
+          libraryPath: library.path,
         })
         .from(bookChapter)
         .innerJoin(book, eq(book.id, bookChapter.bookId))
+        .innerJoin(library, eq(library.id, book.libraryId))
         .where(and(eq(bookChapter.bookId, bookId), isNull(bookChapter.missingSince)))
         .orderBy(asc(bookChapter.number));
       const first =
@@ -835,10 +837,19 @@ const createDatabaseBookService = (
       if (isAudiobookFormat(BookFormatSchema.catch('cbz').parse(first.format))) {
         const opened = await openBookFile(first.path).catch(() => null);
         const carried = opened?.layout === 'audio' ? await opened.readCover() : null;
-        const cover =
-          carried ?? (await readFolderArt(first.bookPath, first.bookPath !== first.path));
+        const drawn = carried === null ? null : await drawBookCover(carried, COVER_WIDTH);
 
-        return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
+        if (drawn !== null) {
+          return drawn;
+        }
+
+        const art = await readFolderArt(
+          first.bookPath,
+          first.bookPath !== first.path,
+          first.libraryPath,
+        );
+
+        return art === null ? null : drawBookCover(art, COVER_WIDTH);
       }
 
       if (first.format !== 'epub' && first.format !== 'pdf') {
@@ -1239,12 +1250,14 @@ const createDatabaseBookService = (
           ? null
           : await matching.picture(found.posterUrl.replace(/-M\.jpg$/, '-L.jpg'));
 
-      if (picture !== null) {
-        const drawn = await drawBookCover(
-          { bytes: picture, contentType: 'image/jpeg' },
-          COVER_WIDTH,
-        );
+      const drawn =
+        picture === null
+          ? null
+          : await drawBookCover({ bytes: picture, contentType: 'image/jpeg' }, COVER_WIDTH);
 
+      if (drawn === null) {
+        await rm(chosenCoverOf(bookId), { force: true });
+      } else {
         await mkdir(chosenCovers, { recursive: true });
         await writeFile(chosenCoverOf(bookId), drawn.bytes);
       }
@@ -1330,7 +1343,10 @@ const createDatabaseBookService = (
               COVER_WIDTH,
             );
 
-            await writeFile(foundCoverOf(row.id), drawn.bytes);
+            if (drawn !== null) {
+              await writeFile(foundCoverOf(row.id), drawn.bytes);
+            }
+
             await db
               .update(book)
               .set({

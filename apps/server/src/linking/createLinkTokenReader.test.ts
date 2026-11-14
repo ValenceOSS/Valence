@@ -33,6 +33,54 @@ describe('createLinkTokenReader', () => {
     expect(await read(token)).toBeNull();
   });
 
+  it('believes a token once even when it arrives twice at the same moment', async () => {
+    const read = filmsReading();
+    const token = await signLinkToken({ from: 'anime', to: 'films', privateKey: ANIME.privateKey });
+
+    const answers = await Promise.all([read(token), read(token), read(token)]);
+
+    expect(answers.filter((one) => one !== null)).toHaveLength(1);
+  });
+
+  it('believes a token signed for one request only for that request', async () => {
+    const asking = { method: 'GET', route: '/catalogue/films?after=abc' };
+    const sign = () =>
+      signLinkToken({ from: 'anime', to: 'films', privateKey: ANIME.privateKey, asking });
+
+    expect(
+      await filmsReading()(await sign(), { method: 'GET', route: '/catalogue/films' }),
+    ).toEqual({ from: 'anime', person: null });
+    expect(
+      await filmsReading()(await sign(), { method: 'GET', route: '/api/playback/x/file' }),
+    ).toBeNull();
+    expect(
+      await filmsReading()(await sign(), { method: 'POST', route: '/catalogue/films' }),
+    ).toBeNull();
+    expect(await filmsReading()(await sign())).toBeNull();
+  });
+
+  it('believes a token from a server too old to bind it, for any request', async () => {
+    const token = await signLinkToken({ from: 'anime', to: 'films', privateKey: ANIME.privateKey });
+
+    expect(await filmsReading()(token, { method: 'POST', route: '/unlink' })).toEqual({
+      from: 'anime',
+      person: null,
+    });
+  });
+
+  it('does not spend a token on a request it was not signed for', async () => {
+    const read = filmsReading();
+    const token = await signLinkToken({
+      from: 'anime',
+      to: 'films',
+      privateKey: ANIME.privateKey,
+      asking: { method: 'GET', route: '/libraries' },
+    });
+
+    expect(await read(token, { method: 'POST', route: '/unlink' })).toBeNull();
+    expect(await read(token, { method: 'GET', route: '/libraries' })).not.toBeNull();
+  });
+
   it('refuses a token signed by another key, meant for another server, or from nobody it knows', async () => {
     const read = filmsReading();
 

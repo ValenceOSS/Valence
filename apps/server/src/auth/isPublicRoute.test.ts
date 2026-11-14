@@ -115,9 +115,9 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('POST', '/api/music/tracks/abc/cast')).toBe(false);
   });
 
-  it('publishes the specification and the reference', () => {
+  it('publishes the specification, and no reference page of its own', () => {
     expect(isPublicRoute('GET', '/api/openapi.json')).toBe(true);
-    expect(isPublicRoute('GET', '/api/reference')).toBe(true);
+    expect(isPublicRoute('GET', '/api/reference')).toBe(false);
   });
 
   describe('everything else', () => {

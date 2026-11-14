@@ -38,7 +38,7 @@ use crate::split_session::{self, Half};
 use crate::subtitle::{SubtitleError, SubtitleRegistry, SubtitleRequest, SubtitleTrack, Tools};
 use crate::transcode_plan::HardwareAccel;
 use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
-use crate::transcode_plan::{SessionSpec, INIT_SEGMENT_NAME, MANIFEST_NAME};
+use crate::transcode_plan::{SessionSpec, SubtitleAction, INIT_SEGMENT_NAME, MANIFEST_NAME};
 use crate::trickplay::{
     directory_for, is_complete, pending_index, tile_height_for, SheetSource, TrickplayJob,
     TrickplayRegistry, TrickplayRequest,
@@ -797,6 +797,10 @@ async fn test_hardware(
 async fn probe(State(state): State<AppState>, Json(request): Json<ProbeRequest>) -> Response {
     let path = Path::new(&request.path);
 
+    if !state.is_readable(path) {
+        return outside_the_roots(path);
+    }
+
     let Ok(result) = probe_media(&state.ffprobe, path).await else {
         return error(StatusCode::BAD_REQUEST, "That file could not be probed.");
     };
@@ -922,6 +926,10 @@ async fn start_session(
 ) -> Response {
     let began = std::time::Instant::now();
 
+    if let Err(refused) = check_session_inputs(&state, &request) {
+        return *refused;
+    }
+
     read_picture_format(&state, &mut request.spec).await;
 
     match start_from(&state, &request).await {
@@ -1011,6 +1019,16 @@ async fn keep_the_start(state: &AppState, root: &str, request: &StartSessionRequ
 /// safe to look for a directory by.
 fn is_session_address(id: &str) -> bool {
     id.len() == 32 && id.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+/// Whether an id is one this service names a cached artefact by, a hash written out
+/// in hex, which is what makes it safe to join onto a cache directory.
+fn is_cache_address(id: &str) -> bool {
+    matches!(id.len(), 32 | 64) && id.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn no_such_artefact() -> Response {
+    error(StatusCode::NOT_FOUND, "No such artefact.")
 }
 
 /// Picks a session up again after a restart, from the request kept beside its
@@ -1195,6 +1213,54 @@ async fn read_picture_format(state: &AppState, spec: &mut SessionSpec) {
     spec.source_video_codec.get_or_insert(codec);
 }
 
+/// The first file a request to start a session names that may not be read.
+///
+/// A subtitle file is opened by ffmpeg itself, so one that is an address rather than a path is
+/// refused whatever the roots say.
+fn unreadable_input(state: &AppState, request: &StartSessionRequest) -> Option<String> {
+    let StartSessionRequest {
+        spec,
+        variants,
+        deferred_variants,
+        ..
+    } = request;
+
+    std::iter::once(spec)
+        .chain(variants)
+        .chain(deferred_variants)
+        .find_map(|spec| unreadable_spec(state, spec))
+}
+
+/// The first file a spec names, its picture or its burn-in subtitle file, that may not be read.
+fn unreadable_spec(state: &AppState, spec: &SessionSpec) -> Option<String> {
+    if !state.is_readable(Path::new(&spec.input_path)) {
+        return Some(spec.input_path.clone());
+    }
+
+    if let SubtitleAction::BurnIn {
+        subtitle_file: Some(file),
+        ..
+    } = &spec.subtitles
+    {
+        if file.contains("://") || !state.is_readable(Path::new(file)) {
+            return Some(file.clone());
+        }
+    }
+
+    None
+}
+
+/// Refuses a request to start a session that names a file outside the media roots.
+fn check_session_inputs(
+    state: &AppState,
+    request: &StartSessionRequest,
+) -> Result<(), Box<Response>> {
+    match unreadable_input(state, request) {
+        Some(path) => Err(Box::new(outside_the_roots(Path::new(&path)))),
+        None => Ok(()),
+    }
+}
+
 /// Starts whatever a request to start a session asks for: one session, or a picture, its sound and
 /// the other qualities of it, sent apart.
 async fn start_from(
@@ -1208,6 +1274,8 @@ async fn start_from(
         deferred_variants,
         placement,
     } = request;
+
+    check_session_inputs(state, request)?;
 
     state.registry.set_placement(placement.clone());
 
@@ -2398,8 +2466,8 @@ async fn start_download(
 ) -> Response {
     let path = PathBuf::from(&request.spec.input_path);
 
-    if !state.is_readable(&path) {
-        return outside_the_roots(&path);
+    if let Some(refused) = unreadable_spec(&state, &request.spec) {
+        return outside_the_roots(Path::new(&refused));
     }
 
     let config = state.registry.config();
@@ -2459,6 +2527,10 @@ async fn download_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if !is_cache_address(&id) {
+        return no_such_artefact();
+    }
+
     serve_file(
         &download::directory_for(&state.registry.config().cache_root, &id),
         &name,
@@ -2492,6 +2564,10 @@ async fn forget_download(
     State(state): State<AppState>,
     Json(request): Json<ForgetDownload>,
 ) -> Response {
+    if !is_cache_address(&request.id) {
+        return (StatusCode::OK, Json(ForgetReport { forgotten: false })).into_response();
+    }
+
     let root = state.registry.config().cache_root.join("downloads");
 
     if state.downloads.stop(&request.id).await {
@@ -2541,6 +2617,10 @@ async fn preview_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if !is_cache_address(&id) {
+        return no_such_artefact();
+    }
+
     let directory = preview_directory(&state.registry.config().artefact_root, &id);
 
     serve_file(&directory, &name, requested_range(&headers)).await
@@ -2751,8 +2831,8 @@ async fn start_rendition(
     let source = PathBuf::from(&request.spec.input_path);
     let output = PathBuf::from(&request.output_path);
 
-    if !state.is_readable(&source) {
-        return outside_the_roots(&source);
+    if let Some(refused) = unreadable_spec(&state, &request.spec) {
+        return outside_the_roots(Path::new(&refused));
     }
 
     if !state.is_writable(&output) {
@@ -3323,6 +3403,10 @@ async fn trickplay_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if !is_cache_address(&id) {
+        return no_such_artefact();
+    }
+
     serve_file(
         &directory_for(&state.registry.config().artefact_root, &id),
         &name,
@@ -3371,9 +3455,9 @@ async fn start_fingerprint(
 fn could_not_read(failure: &crate::probe::ProbeError) -> Response {
     let status = match failure {
         crate::probe::ProbeError::Spawn(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        crate::probe::ProbeError::Failed { .. } | crate::probe::ProbeError::Parse(_) => {
-            StatusCode::UNPROCESSABLE_ENTITY
-        }
+        crate::probe::ProbeError::Failed { .. }
+        | crate::probe::ProbeError::Parse(_)
+        | crate::probe::ProbeError::NotMedia(_) => StatusCode::UNPROCESSABLE_ENTITY,
     };
 
     error(status, &failure.to_string())
@@ -3766,9 +3850,11 @@ pub fn create_router(state: AppState) -> Router {
 mod tests {
     use super::{
         claim_for_a_live_job, content_type_for, is_safe_segment_name, locate, parse_range,
-        reach_of, sheet_accel, AppState, Claimed, FolderReach, SessionFileQuery, SweepRequest,
+        reach_of, sheet_accel, unreadable_input, AppState, Claimed, FolderReach, SessionFileQuery,
+        StartSessionRequest, SweepRequest,
     };
     use crate::render_registry::RenderRegistry;
+    use axum::http::StatusCode;
     use std::path::{Path, PathBuf};
 
     fn writing_to(roots: &[&str]) -> AppState {
@@ -3832,6 +3918,105 @@ mod tests {
 
         assert!(reading.is_readable(Path::new(&within)));
         assert!(!reading.is_readable(Path::new(&reaching)));
+    }
+
+    fn spec_json(input: &str, subtitle_file: Option<&str>) -> serde_json::Value {
+        let subtitles = subtitle_file.map_or_else(
+            || serde_json::json!({ "kind": "none" }),
+            |file| {
+                serde_json::json!({
+                    "kind": "burnIn",
+                    "subtitleIndex": 0,
+                    "isImageBased": false,
+                    "subtitleFile": file,
+                })
+            },
+        );
+
+        serde_json::json!({
+            "inputPath": input,
+            "startSeconds": 0,
+            "segmentSeconds": 4,
+            "hardwareAccel": "none",
+            "video": { "kind": "copy" },
+            "audio": { "kind": "copy" },
+            "subtitles": subtitles,
+        })
+    }
+
+    fn starting(input: &str, subtitle_file: Option<&str>) -> StartSessionRequest {
+        serde_json::from_value(spec_json(input, subtitle_file)).expect("reads the request")
+    }
+
+    /// A session may start only from files inside the roots, and a subtitle file that is an
+    /// address is never opened, whether roots are set or not.
+    #[test]
+    fn starts_a_session_only_from_files_inside_the_roots() {
+        let limited = AppState {
+            media_roots: vec![PathBuf::from("/media")],
+            ..writing_to(&[])
+        };
+        let open = writing_to(&[]);
+
+        assert_eq!(
+            unreadable_input(&limited, &starting("/etc/passwd", None)),
+            Some("/etc/passwd".to_owned())
+        );
+        assert_eq!(
+            unreadable_input(&limited, &starting("/media/a.mkv", None)),
+            None
+        );
+        assert_eq!(
+            unreadable_input(&limited, &starting("/media/a.mkv", Some("/etc/hosts"))),
+            Some("/etc/hosts".to_owned())
+        );
+        assert_eq!(
+            unreadable_input(
+                &open,
+                &starting("/media/a.mkv", Some("http://host.test/a.srt"))
+            ),
+            Some("http://host.test/a.srt".to_owned())
+        );
+        assert_eq!(
+            unreadable_input(&open, &starting("/media/a.mkv", Some("/media/a.en.srt"))),
+            None
+        );
+    }
+
+    /// A download and a kept rendition refuse a burn-in subtitle file that is an address or lies
+    /// outside the roots, as a session does.
+    #[tokio::test]
+    async fn refuses_a_download_or_rendition_naming_a_subtitle_it_may_not_open() {
+        let limited = AppState {
+            media_roots: vec![PathBuf::from("/media")],
+            ..writing_to(&["/media/out"])
+        };
+
+        for file in ["http://host.test/a.srt", "/etc/hosts"] {
+            let download = serde_json::from_value(serde_json::json!({
+                "spec": spec_json("/media/a.mkv", Some(file)),
+                "durationSeconds": 60.0,
+            }))
+            .expect("reads the request");
+            let rendition = serde_json::from_value(serde_json::json!({
+                "spec": spec_json("/media/a.mkv", Some(file)),
+                "durationSeconds": 60.0,
+                "outputPath": "/media/out/a.mkv",
+            }))
+            .expect("reads the request");
+
+            let refused =
+                super::start_download(axum::extract::State(limited.clone()), axum::Json(download))
+                    .await;
+            assert_eq!(refused.status(), StatusCode::FORBIDDEN, "{file}");
+
+            let refused = super::start_rendition(
+                axum::extract::State(limited.clone()),
+                axum::Json(rendition),
+            )
+            .await;
+            assert_eq!(refused.status(), StatusCode::FORBIDDEN, "{file}");
+        }
     }
 
     /// A library folder inside the roots may be read, one outside may not, and with no roots set

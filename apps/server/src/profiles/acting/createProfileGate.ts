@@ -3,6 +3,7 @@ import { refuse } from '@ValenceI18n/refuse';
 import { isPublicRoute } from '@ValenceServer/auth/isPublicRoute';
 import { AUTH_FOR_EVERY_PROFILE } from './AUTH_FOR_EVERY_PROFILE';
 import { FOR_THE_OWNER } from './FOR_THE_OWNER';
+import { KEPT_FROM_KEYS } from './KEPT_FROM_KEYS';
 import { WITHOUT_A_PROFILE } from './WITHOUT_A_PROFILE';
 import type { Acting } from './Acting';
 
@@ -24,9 +25,25 @@ const matchesAny = (
   );
 
 /**
+ * Whether a request changes, or reads the sessions of, the account it is made for, through the
+ * routes an administrator uses on any account.
+ *
+ * @param method - The request's method.
+ * @param path - The request's path.
+ * @param accountId - The account the request is made for.
+ * @returns Whether it acts on that account itself.
+ */
+const actsOnItsOwnAccount = (method: string, path: string, accountId: string): boolean => {
+  const found = /^\/api\/admin\/accounts\/([^/]+)(\/.*)?$/u.exec(path);
+
+  return found?.[1] === accountId && (method !== 'GET' || (found[2] ?? '').startsWith('/sessions'));
+};
+
+/**
  * Holds every signed-in request to the profile acting for it: a session that has not chosen a
  * profile reaches only the picker, a profile other than the account's owner is turned away from
- * everything that changes the account itself, and nobody makes API keys behind Valence's back.
+ * everything that changes the account itself, an API key is turned away from changing its own
+ * account, and nobody makes API keys behind Valence's back.
  *
  * @param readActing - Who is acting for a request.
  * @returns The middleware.
@@ -51,6 +68,14 @@ const createProfileGate = (readActing: (headers: Headers) => Promise<Acting | nu
       await next();
 
       return undefined;
+    }
+
+    if (
+      acting.isViaKey &&
+      (matchesAny(KEPT_FROM_KEYS, method, path) ||
+        actsOnItsOwnAccount(method, path, acting.account.id))
+    ) {
+      return context.json(refuse('error.apiKey.aKeyCannotChangeHowItsAccount'), 403);
     }
 
     if (acting.mustChoose && !matchesAny(WITHOUT_A_PROFILE, method, path)) {

@@ -3,7 +3,7 @@ import { say } from '@ValenceI18n/say';
 import { isUnknownToServer } from '@ValenceClient/query/isUnknownToServer';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 
-type Refusal = { message: string } | null;
+type Refusal = { message: string; code?: string } | null;
 
 /**
  * Reads why the server refused, where it did, so a form can say what was wrong rather than that
@@ -27,13 +27,17 @@ const readRefusal = async (response: Response): Promise<Refusal> => {
     return { message: say('client.query.thisAppIsNewerThanTheServer') };
   }
 
-  const refused = z.object({ error: z.string() }).safeParse(body);
+  const refused = z
+    .object({ error: z.string(), code: z.string().nullable().optional() })
+    .safeParse(body);
 
-  return {
-    message: refused.success
-      ? refused.data.error
-      : say('client.admin.readRefusal.thatCouldNotBeDoneTry'),
-  };
+  if (!refused.success) {
+    return { message: say('client.admin.readRefusal.thatCouldNotBeDoneTry') };
+  }
+
+  const { error, code } = refused.data;
+
+  return code === null || code === undefined ? { message: error } : { message: error, code };
 };
 
 export type { Refusal };

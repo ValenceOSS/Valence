@@ -19,6 +19,23 @@ import { aStoredLiveSource } from '@ValenceServer/testing/aStoredLiveSource';
 
 const SOURCE = aStoredLiveSource();
 
+const CHANNEL = {
+  number: null,
+  name: 'News',
+  group: null,
+  logoUrl: 'https://logos.example/news',
+  guideId: null,
+  streamUrl: 'https://streams.example/news.m3u8',
+  userAgent: null,
+  referrer: null,
+  id: 'news',
+  sourceId: SOURCE.id,
+  position: 0,
+  health: null,
+  route: null,
+  checkedAt: null,
+};
+
 const build = () => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -46,6 +63,8 @@ const build = () => {
       routes,
     },
   });
+
+  held.store.readChannel = () => Promise.resolve(CHANNEL);
 
   return {
     held,
@@ -103,5 +122,51 @@ describe('changing a live TV source', () => {
 
     expect(answer.status).toBe(403);
     expect(held.changes).toEqual([]);
+  });
+});
+
+describe('a channel’s logo', () => {
+  const logoSentAs = async (contentType: string | null, body: Uint8Array | string) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            body,
+            contentType === null ? {} : { headers: { 'content-type': contentType } },
+          ),
+        ),
+      ),
+    );
+
+    try {
+      const { viewer } = build();
+
+      return await viewer.request(`${TEST_ORIGIN}/api/live/channels/news/logo`);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  };
+
+  it('serves a logo sent as an SVG, an icon or a bitmap, inside a sandbox', async () => {
+    for (const type of ['image/svg+xml', 'image/jpg', 'image/x-icon', 'image/bmp']) {
+      const answer = await logoSentAs(type, '<svg xmlns="http://www.w3.org/2000/svg"/>');
+
+      expect(answer.status, type).toBe(200);
+      expect(answer.headers.get('content-security-policy')).toContain('sandbox');
+    }
+  });
+
+  it('serves a logo sent as a plain download by what its bytes are', async () => {
+    const answer = await logoSentAs('application/octet-stream', '<svg xmlns="x"/>');
+
+    expect(answer.status).toBe(200);
+    expect(answer.headers.get('content-type')).toBe('image/svg+xml');
+    expect(await answer.text()).toBe('<svg xmlns="x"/>');
+  });
+
+  it('refuses a plain download that is no picture, and a page', async () => {
+    expect((await logoSentAs('application/octet-stream', '<html></html>')).status).toBe(404);
+    expect((await logoSentAs('text/html', '<svg/>')).status).toBe(404);
   });
 });

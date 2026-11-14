@@ -19,6 +19,8 @@ import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePic
 
 const KEPT_AS = ['.jpg', '.png', '.webp', '.avif', '.gif'] as const;
 
+const PLAIN_KEY = /^[A-Za-z0-9_-]+$/;
+
 type ServerPicture = { body: Uint8Array; contentType: string };
 
 type ServerPictures = {
@@ -62,6 +64,10 @@ const createServerPictures = (directory: string, isRound = true): ServerPictures
   };
 
   const remove = async (key: string) => {
+    if (!PLAIN_KEY.test(key)) {
+      return;
+    }
+
     await Promise.all([
       ...KEPT_AS.flatMap((extension) => [
         rm(join(directory, `${key}${extension}`), { force: true }),
@@ -75,6 +81,10 @@ const createServerPictures = (directory: string, isRound = true): ServerPictures
 
   return {
     save: async (key, picture, frame = null) => {
+      if (!PLAIN_KEY.test(key)) {
+        return 'unreadable';
+      }
+
       const wrong = await whatIsWrongWithThePicture(picture, FACE_LIMITS);
 
       if (wrong !== null) {
@@ -106,6 +116,10 @@ const createServerPictures = (directory: string, isRound = true): ServerPictures
     },
 
     read: async (key) => {
+      if (!PLAIN_KEY.test(key)) {
+        return null;
+      }
+
       if (!isRound) {
         return readPicture(directory, key);
       }

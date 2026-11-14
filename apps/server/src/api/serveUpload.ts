@@ -19,8 +19,14 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
-  const { uploadDisk, uploadSessions, libraryToUploadInto, sayRefused, sweepAbandonedUploads } =
-    context;
+  const {
+    uploadDisk,
+    uploadSessions,
+    libraryToUploadInto,
+    sayRefused,
+    sweepAbandonedUploads,
+    mediaOrigins,
+  } = context;
 
   app.openapi(uploadMediaRoute, async (context) => {
     const found = await libraryToUploadInto(context.req.raw.headers, context.req.valid('param').id);
@@ -57,6 +63,10 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const written = await uploadDisk.write(plan.destination, body);
 
     if (written.kind === 'written') {
+      await mediaOrigins.record([
+        { libraryId: found.target.id, path: plan.destination, source: 'upload', via: null },
+      ]);
+
       return context.json({ path: relativePath, bytes: written.bytes }, 201);
     }
 
@@ -149,7 +159,7 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
 
     const offset = index * session.pieceBytes;
     const expected = Math.min(session.pieceBytes, session.bytes - offset);
-    const written = await uploadDisk.writeAt(session.staging, offset, body);
+    const written = await uploadDisk.writeAt(session.staging, offset, expected, body);
 
     if (written.kind !== 'written') {
       const said = sayRefused(written);
@@ -227,6 +237,10 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     await uploadSessions.close(uploadId);
 
     if (finished.kind === 'written') {
+      await mediaOrigins.record([
+        { libraryId: session.libraryId, path: session.destination, source: 'upload', via: null },
+      ]);
+
       return context.json({ path: session.path, bytes: finished.bytes }, 201);
     }
 

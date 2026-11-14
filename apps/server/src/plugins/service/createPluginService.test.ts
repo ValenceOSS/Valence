@@ -344,6 +344,38 @@ describe('a plugin from upload to use, through its own process', () => {
     service.stop();
   }, 30_000);
 
+  it('does not start a connection from a ticket when another account is signed in', async () => {
+    const service = await installed();
+
+    await service.change('counter', { settings: { clientId: 'client-1' } });
+
+    const made = await service.act('counter', HOME, VIEWER, {
+      action: { id: 'valence.accounts.connect', payload: { provider: 'anilist' } },
+      fields: {},
+    });
+    const ticket = new URL(made?.navigate ?? '', 'https://valence.home').searchParams.get('ticket');
+
+    expect(
+      await service.connect('counter', 'anilist', {
+        ticket,
+        viewer: { ...VIEWER, accountId: 'account-2' },
+        returnTo: '/',
+      }),
+    ).toHaveProperty('problem');
+
+    const again = await service.act('counter', HOME, VIEWER, {
+      action: { id: 'valence.accounts.connect', payload: { provider: 'anilist' } },
+      fields: {},
+    });
+    const next = new URL(again?.navigate ?? '', 'https://valence.home').searchParams.get('ticket');
+
+    expect(
+      await service.connect('counter', 'anilist', { ticket: next, viewer: VIEWER, returnTo: '/' }),
+    ).toHaveProperty('location');
+
+    service.stop();
+  }, 30_000);
+
   it('never sends the reserved actions to the plugin', async () => {
     const service = await installed();
     const answer = await service.act('counter', HOME, VIEWER, {

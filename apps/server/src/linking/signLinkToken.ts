@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { importJWK, SignJWT } from 'jose';
 import { LINK_TOKEN_SECONDS } from './LINK_TOKEN_SECONDS';
+import { boundRouteOf } from './boundRouteOf';
 import type { LinkTokenPerson } from './LinkTokenPerson';
 
 type LinkTokenClaims = {
@@ -8,6 +9,7 @@ type LinkTokenClaims = {
   to: string;
   privateKey: string;
   person?: LinkTokenPerson;
+  asking?: { method: string; route: string };
 };
 
 /**
@@ -24,10 +26,14 @@ const signLinkToken = async ({
   to,
   privateKey,
   person,
+  asking,
 }: LinkTokenClaims): Promise<string> => {
-  const signing = new SignJWT(
-    person === undefined || person.name === null ? {} : { name: person.name },
-  )
+  const signing = new SignJWT({
+    ...(person === undefined || person.name === null ? {} : { name: person.name }),
+    ...(asking === undefined
+      ? {}
+      : { htm: asking.method.toUpperCase(), htu: boundRouteOf(asking.route) }),
+  })
     .setProtectedHeader({ alg: 'EdDSA' })
     .setIssuer(from)
     .setAudience(to)

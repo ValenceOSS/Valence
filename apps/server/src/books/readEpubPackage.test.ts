@@ -187,3 +187,14 @@ describe('a package that describes the book', () => {
     expect(read.ncxHref).toBe('toc.ncx');
   });
 });
+
+describe('readEpubPackage on a hostile package', () => {
+  it('reads a package made of unclosed openers in moments, not minutes', () => {
+    const hostile = `<package><manifest>${'<item '.repeat(60_000)}</manifest></package>`;
+    const began = Date.now();
+
+    readEpubPackage('content.opf', hostile);
+
+    expect(Date.now() - began).toBeLessThan(5000);
+  });
+});

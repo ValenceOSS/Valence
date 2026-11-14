@@ -18,6 +18,7 @@ import {
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { isPublicWebAddress } from '@ValenceServer/live/isPublicWebAddress';
 
 /**
  * Registers the notification endpoints.
@@ -137,7 +138,16 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    await notifications.addPushEndpoint(account.id, context.req.valid('json'));
+    const subscription = context.req.valid('json');
+
+    if (
+      !subscription.endpoint.startsWith('https://') ||
+      !(await isPublicWebAddress(subscription.endpoint))
+    ) {
+      return context.json(refuse('error.common.thisLinkDoesNotWork'), 400);
+    }
+
+    await notifications.addPushEndpoint(account.id, subscription);
 
     return context.body(null, 204);
   });

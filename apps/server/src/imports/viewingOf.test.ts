@@ -85,6 +85,19 @@ describe('viewingOf', () => {
     expect(made.ratings).toEqual([{ subject: { mediaId: 'valence-heat' }, stars: 4 }]);
   });
 
+  it('keeps a source claiming a billion plays to a thousand', () => {
+    const made = viewing([
+      {
+        ...STATE,
+        isPlayed: true,
+        playCount: 1_000_000_000,
+        lastPlayedAt: new Date('2026-03-10T00:00:00Z'),
+      },
+    ]);
+
+    expect(made.plays).toHaveLength(1000);
+  });
+
   it('keeps real plays and dates only the rest, before the earliest of them', () => {
     const made = viewing(
       [{ ...STATE, isPlayed: true, playCount: 2, lastPlayedAt: new Date('2026-03-10T00:00:00Z') }],
@@ -102,6 +115,33 @@ describe('viewingOf', () => {
       viewing([{ ...STATE, isPlayed: true, lastPlayedAt: new Date('2026-01-01T00:00:00Z') }]).plays,
     ).toHaveLength(1);
     expect(viewing([{ ...STATE, isPlayed: true }]).plays).toHaveLength(0);
+  });
+
+  it('stops adding viewings for a person once they come to a million', () => {
+    const ids = Array.from({ length: 1100 }, (_, index) => `item-${index.toString()}`);
+    const catalogue = {
+      byId: new Map(ids.map((id) => [id, aSourceItem({ id, kind: 'movie', title: id })])),
+      matches: new Map<string, ItemMatch>(
+        ids.map((id) => [id, { kind: 'item', mediaItemId: `valence-${id}`, by: 'id' }]),
+      ),
+    };
+    const made = viewingOf({
+      sourceId: 'src',
+      userId: 'u',
+      states: ids.map((id) => ({
+        ...STATE,
+        itemId: id,
+        isPlayed: true,
+        playCount: 1000,
+        lastPlayedAt: new Date('2026-03-10T00:00:00Z'),
+      })),
+      plays: [],
+      catalogue,
+      durations: new Map(),
+      now: NOW,
+    });
+
+    expect(made.plays).toHaveLength(1_000_000);
   });
 
   it('dates plays with no date of their own when the item arrived', () => {

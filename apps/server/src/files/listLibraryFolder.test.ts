@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -91,5 +91,16 @@ describe('listLibraryFolder', () => {
     await expect(
       listLibraryFolder([aLibraryAt(root)], join(root, 'nowhere'), nothingKnown),
     ).resolves.toEqual({ kind: 'missing' });
+  });
+
+  it('refuses a folder reached through a link that leads out of the library', async () => {
+    const elsewhere = await mkdtemp(join(tmpdir(), 'valence-elsewhere-'));
+
+    await symlink(elsewhere, join(root, 'link'));
+
+    await expect(
+      listLibraryFolder([aLibraryAt(root)], join(root, 'link'), nothingKnown),
+    ).resolves.toEqual({ kind: 'outside' });
+    await rm(elsewhere, { recursive: true, force: true });
   });
 });

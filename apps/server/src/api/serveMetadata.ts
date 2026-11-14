@@ -24,6 +24,7 @@ import {
   undoTitleChangeRoute,
 } from '@ValenceServer/routes/MetadataRoute';
 import { refuse } from '@ValenceI18n/refuse';
+import { createEveryTitleGate } from '@ValenceServer/metadata/createEveryTitleGate';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
@@ -52,7 +53,9 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
     requires,
     readAccount,
     recordAudit,
+    viewerOf,
   } = context;
+  const mayManageEveryTitle = createEveryTitleGate({ requires, viewerOf, library });
 
   /**
    * Reads who is changing a title, for the history.
@@ -118,10 +121,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listOrphanedEditsRoute, async (context) => {
-    if (
-      orphanedEdits === undefined ||
-      !(await requires(context.req.raw.headers, 'media.override'))
-    ) {
+    if (orphanedEdits === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -129,10 +129,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(attachOrphanedEditsRoute, async (context) => {
-    if (
-      orphanedEdits === undefined ||
-      !(await requires(context.req.raw.headers, 'media.override'))
-    ) {
+    if (orphanedEdits === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -149,10 +146,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(forgetOrphanedEditsRoute, async (context) => {
-    if (
-      orphanedEdits === undefined ||
-      !(await requires(context.req.raw.headers, 'media.override'))
-    ) {
+    if (orphanedEdits === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -165,7 +159,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(readTitlesTogetherRoute, async (context) => {
-    if (bulkTitles === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (bulkTitles === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -173,7 +167,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(editTitlesTogetherRoute, async (context) => {
-    if (bulkTitles === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (bulkTitles === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -193,7 +187,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(undoTitlesTogetherRoute, async (context) => {
-    if (bulkTitles === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (bulkTitles === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -215,7 +209,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listTitlesRoute, async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -225,7 +219,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listTitleKeysRoute, async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -233,7 +227,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listTitleChoicesRoute, async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -241,7 +235,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(countLibraryProblemsRoute, async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -249,7 +243,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listTitleValuesRoute, async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -259,10 +253,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(findTitleCandidatesRoute, async (context) => {
-    if (
-      findCandidates === undefined ||
-      !(await requires(context.req.raw.headers, 'media.override'))
-    ) {
+    if (findCandidates === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -272,7 +263,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(findCataloguePeopleRoute, async (context) => {
     if (
       findCataloguePeople === undefined ||
-      !(await requires(context.req.raw.headers, 'media.override'))
+      !(await mayManageEveryTitle(context.req.raw.headers))
     ) {
       return context.json(NOT_FOR_YOU, 404);
     }
@@ -284,7 +275,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/admin/titles/export', async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 
@@ -307,7 +298,7 @@ const serveMetadata = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(readTitleFilesRoute, async (context) => {
-    if (titleList === undefined || !(await requires(context.req.raw.headers, 'media.override'))) {
+    if (titleList === undefined || !(await mayManageEveryTitle(context.req.raw.headers))) {
       return context.json(NOT_FOR_YOU, 404);
     }
 

@@ -8,6 +8,9 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Form } from '@ValenceUI/Form';
 import { Icon } from '@ValenceUI/Icon';
 import { SelectField } from '@ValenceUI/SelectField';
+import { SettingList } from '@ValenceUI/SettingList';
+import { SettingRow } from '@ValenceUI/SettingRow';
+import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { DEFAULT_WEBHOOK_FILTERS, WEBHOOK_PRESETS } from '@ValenceContracts/schemas/Webhook';
 import { WEBHOOK_SERVICE_NAMES } from '@ValenceScreens/components/AdminArea/components/WebhooksPanel/WEBHOOK_SERVICE_NAMES';
@@ -29,6 +32,7 @@ const NewWebhookDialog = ({ isOpen, onClose, onCreate }: NewWebhookDialogProps) 
   const [preset, setPreset] = useState<WebhookPreset>('discord');
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
+  const [reachesLocalNetwork, setReachesLocalNetwork] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const addressProblem = isChecked ? webhookAddressProblem(url) : null;
@@ -38,6 +42,7 @@ const NewWebhookDialog = ({ isOpen, onClose, onCreate }: NewWebhookDialogProps) 
   const close = () => {
     setUrl('');
     setName('');
+    setReachesLocalNetwork(false);
     setProblem(null);
     setIsChecked(false);
     onClose();
@@ -70,6 +75,7 @@ const NewWebhookDialog = ({ isOpen, onClose, onCreate }: NewWebhookDialogProps) 
             preset,
             events: ['job.failed'],
             filters: DEFAULT_WEBHOOK_FILTERS,
+            reachesLocalNetwork,
           })
             .then((refusal) => {
               if (refusal === null) {
@@ -114,6 +120,21 @@ const NewWebhookDialog = ({ isOpen, onClose, onCreate }: NewWebhookDialogProps) 
               description={say('screens.adminArea.newWebhookDialog.leftEmptyItsNamedAfterThe')}
               {...(nameProblem === null ? {} : { error: nameProblem })}
             />
+            <SettingList>
+              <SettingRow
+                title={say('screens.adminArea.webhooksPanel.localNetwork')}
+                description={say('screens.adminArea.webhooksPanel.localNetworkDescription')}
+              >
+                <Switch
+                  label={say('screens.adminArea.webhooksPanel.localNetwork')}
+                  isLabelHidden
+                  isOn={reachesLocalNetwork}
+                  onToggle={() => {
+                    setReachesLocalNetwork(!reachesLocalNetwork);
+                  }}
+                />
+              </SettingRow>
+            </SettingList>
             <p className="text-xs text-text-muted">
               {say('screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs')}
             </p>

@@ -646,7 +646,7 @@ const createDownloadService = ({
         .where(eq(preparedDownload.renditionId, row.renditionId))
         .limit(1);
 
-      if (others.length === 0) {
+      if (others.length === 0 && row.renditionId !== '') {
         await transcoder.forgetDownload(row.renditionId).catch(() => false);
       }
     },
@@ -676,7 +676,11 @@ const createDownloadService = ({
         return found;
       });
 
-      const renditions = [...new Set(cleared.map((row) => row.renditionId))];
+      const renditions = [
+        ...new Set(
+          cleared.map((row) => row.renditionId).filter((renditionId) => renditionId !== ''),
+        ),
+      ];
       const stillWanted =
         renditions.length === 0
           ? []

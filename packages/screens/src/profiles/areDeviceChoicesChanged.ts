@@ -9,6 +9,7 @@ const CHOICES: readonly (keyof DeviceChoices)[] = [
   'connections',
   'streamingFormat',
   'showsDesktopNotices',
+  'appIcon',
 ];
 
 /**

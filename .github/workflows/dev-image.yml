@@ -77,6 +77,7 @@ jobs:
       title: ${{ matrix.image.title }} (dev)
       description: An unreleased build of main, for testing
       ref: ${{ github.sha }}
+      writes-cache: true
       tags: |
         type=raw,value=${{ needs.version.outputs.next }}-dev
         type=raw,value=dev

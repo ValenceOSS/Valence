@@ -395,3 +395,46 @@ describe('a key against the routes that read an account', () => {
     expect((await asKey('valence_not_a_real_key_at_all', '/api/profiles')).status).toBe(401);
   });
 });
+
+describe('a key narrowed to a few permissions, against its own account', () => {
+  it('cannot see or end the account’s other sessions', async () => {
+    const { asKey, mint } = await signedInWith(['administrator']);
+    const narrow = await mint({ name: 'Now playing', permissions: ['streaming.view'] });
+
+    expect((await asKey(narrow.key, '/api/account/devices')).status).toBe(403);
+    expect((await asKey(narrow.key, '/api/account/devices/end-others', 'POST')).status).toBe(403);
+  });
+
+  it('cannot set its own account’s password, whatever it may do to others', async () => {
+    const { asKey, mint, request } = await signedInWith(['administrator']);
+    const session = z
+      .object({ user: z.object({ id: z.string() }) })
+      .parse(await (await request('/api/auth/get-session')).json());
+    const security = await mint({ name: 'Security', permissions: ['account.security'] });
+
+    expect(
+      (
+        await asKey(security.key, `/api/admin/accounts/${session.user.id}/password`, 'PUT', {
+          password: 'a-password-the-key-chose',
+        })
+      ).status,
+    ).toBe(403);
+  });
+
+  it('cannot rename the account or make a calendar link for it', async () => {
+    const { asKey, mint } = await signedInWith(['administrator']);
+    const narrow = await mint({ name: 'Now playing', permissions: ['streaming.view'] });
+
+    expect((await asKey(narrow.key, '/api/account', 'PATCH', { name: 'Renamed' })).status).toBe(
+      403,
+    );
+    expect((await asKey(narrow.key, '/api/calendar/feed', 'POST', {})).status).toBe(403);
+  });
+
+  it('still reads what its permissions allow', async () => {
+    const { asKey, mint } = await signedInWith(['administrator']);
+    const narrow = await mint({ name: 'Now playing', permissions: ['streaming.view'] });
+
+    expect((await asKey(narrow.key, '/api/libraries')).status).toBe(200);
+  });
+});

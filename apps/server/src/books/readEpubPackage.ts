@@ -1,20 +1,20 @@
-const ROOT_FILE = /<rootfile\b[^>]*\bfull-path\s*=\s*"([^"]+)"/i;
+const ROOT_FILE = /<rootfile\b[^>]{0,2000}\bfull-path\s*=\s*"([^"]+)"/i;
 
-const MANIFEST_ITEM = /<item\b[^>]*>/gi;
+const MANIFEST_ITEM = /<item\b[^>]{0,2000}>/gi;
 
-const SPINE_ITEM = /<itemref\b[^>]*>/gi;
+const SPINE_ITEM = /<itemref\b[^>]{0,2000}>/gi;
 
-const TITLE = /<dc:title\b[^>]*>([^<]*)<\/dc:title>/i;
+const TITLE = /<dc:title\b[^>]{0,2000}>([^<]*)<\/dc:title>/i;
 
-const CREATOR = /<dc:creator\b[^>]*>([^<]*)<\/dc:creator>/gi;
+const CREATOR = /<dc:creator\b[^>]{0,2000}>([^<]*)<\/dc:creator>/gi;
 
-const DESCRIPTION = /<dc:description\b[^>]*>([^<]*)<\/dc:description>/i;
+const DESCRIPTION = /<dc:description\b[^>]{0,2000}>([^<]*)<\/dc:description>/i;
 
-const META = /<meta\b[^>]*>/gi;
+const META = /<meta\b[^>]{0,2000}>/gi;
 
-const SPINE = /<spine\b[^>]*>/i;
+const SPINE = /<spine\b[^>]{0,2000}>/i;
 
-const REFINING_META = /<meta\b([^>]*)>([^<]*)<\/meta>/gi;
+const REFINING_META = /<meta\b([^>]{0,2000})>([^<]*)<\/meta>/gi;
 
 const NCX_TYPE = 'application/x-dtbncx+xml';
 

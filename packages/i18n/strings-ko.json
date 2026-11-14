@@ -595,6 +595,11 @@
     "context": "Shown in the admin (from `fetchCorrections`)."
   },
   {
+    "handler": "client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot",
+    "text": "이 파일들이 어디에서 왔는지 읽을 수 없었어요.",
+    "context": "Shown in the admin when the server would not say where library files came from (downloaded, uploaded, imported or found on disk)."
+  },
+  {
     "handler": "client.admin.groupPermissions.sharing",
     "text": "공유",
     "context": "Shown in the admin (from `groupPermissions`)."
@@ -903,11 +908,6 @@
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
     "text": "Rotten Tomatoes",
     "context": "The label in the library (from `describeTitleDetails`)."
-  },
-  {
-    "handler": "client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery",
-    "text": "/api/libraries/{libraryId}/items?{query}",
-    "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
   },
   {
     "handler": "client.library.freshFlags.newEpisode",
@@ -4633,7 +4633,7 @@
   },
   {
     "handler": "common.layoutTurnsNextTime",
-    "text": "The layout turns to suit this language the next time Valence opens.",
+    "text": "다음에 Valence를 열 때 이 언어에 맞게 레이아웃이 바뀌어요.",
     "context": "Under the Language setting on the phone and the television, after somebody picks a language written the other way, such as Arabic or Hebrew: the layout mirrors from the next launch."
   },
   {
@@ -5130,6 +5130,11 @@
     "handler": "common.needsAttention",
     "text": "확인 필요",
     "context": "The label, used in the status look in the status and in the concerns banner in the admin area."
+  },
+  {
+    "handler": "common.network",
+    "text": "네트워크",
+    "context": "The word for a network connection: the title of the chart of the connection's speed against the stream's bitrate in stats for nerds, and the label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
   },
   {
     "handler": "common.never",
@@ -7991,7 +7996,7 @@
   },
   {
     "handler": "common.whatValenceSpeaksHere",
-    "text": "The language Valence speaks on this device.",
+    "text": "이 기기에서 Valence가 사용하는 언어예요.",
     "context": "Under the Language setting on the phone and the television, which picks the language Valence shows on that device."
   },
   {
@@ -9825,6 +9830,11 @@
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
   },
   {
+    "handler": "error.downloads.thisAccountMayNotSaveCopies",
+    "text": "이 계정은 기기에 사본을 저장할 수 없어요.",
+    "context": "An error the server answers with (HTTP 403) when an account whose role lacks downloads asks to save a title to a device (from `serveDownloads`)."
+  },
+  {
     "handler": "error.downloads.thoseAreNotRulesForGiving",
     "text": "다운로드를 포기하는 규칙으로 올바르지 않아요.",
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
@@ -10178,6 +10188,11 @@
     "handler": "error.linking.thatServerTakesNoRequestsFromYours",
     "text": "그 서버는 이 서버의 요청을 받지 않아요.",
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
+  },
+  {
+    "handler": "error.linking.thatStartCouldNotBeRead",
+    "text": "재생 시작 요청을 읽을 수 없었어요.",
+    "context": "Refusal sent to a linked Valence server whose request to start playing is not a body this server can read."
   },
   {
     "handler": "error.linking.thisAccountMayNotLinkServers",
@@ -10655,6 +10670,11 @@
     "context": "Error when a later, higher-quality ask is settled without saying which way."
   },
   {
+    "handler": "error.requests.sayWhichFilesToAskAbout",
+    "text": "어떤 파일을 확인할지 알려 주세요.",
+    "context": "An error the requests service answers with (HTTP 400) when the server asks which library files it filed but names no files, or too many (from `createOriginRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "요청이 어떤 라이브러리 항목이 되었는지 알려 주세요.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10833,6 +10853,11 @@
     "handler": "error.setup.setupHasAlreadyBeenCompleted",
     "text": "설정이 이미 완료됐어요.",
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveSetup`)."
+  },
+  {
+    "handler": "error.setup.thatSetupCodeIsNotRight",
+    "text": "설정 코드가 서버 로그에 있는 코드와 일치하지 않아요.",
+    "context": "An error the server answers with (HTTP 403) when the setup code typed on the first-run setup page is wrong (from `serveSetup`)."
   },
   {
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
@@ -11038,6 +11063,11 @@
     "handler": "error.webhook.theMessageTemplateIsNotValidJson",
     "text": "메시지 템플릿이 올바른 JSON이 아니에요.",
     "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
+  },
+  {
+    "handler": "error.webhook.valenceWillNotSendToTheLocalNetwork",
+    "text": "로컬 네트워크가 켜져 있지 않으면 Valence는 내 네트워크 안의 주소로 보내지 않아요.",
+    "context": "Refusal, and a delivery's error, when a webhook's address is on the server's own network and the webhook's Local network switch is off."
   },
   {
     "handler": "native.captionTextStyle.avenirNextCondensed",
@@ -13920,6 +13950,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.appIcon",
+    "text": "앱 아이콘",
+    "context": "A setting in the desktop app on Windows: whether Valence's round taskbar icon is light, dark, or follows Windows' light or dark mode."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.connectionsPerStream",
     "text": "스트림당 연결 수",
     "context": "The title of the setting for how many pieces of a film this device fetches at once."
@@ -14008,6 +14043,11 @@
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
     "text": "이니셜 뒤의 배경과 일러스트 아바타의 색조예요.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.theIconOnTheTaskbar",
+    "text": "이 컴퓨터 작업 표시줄의 아이콘이에요. 시스템은 Windows의 밝게/어둡게 모드를 따라요.",
+    "context": "Under the App icon setting in the desktop app on Windows."
   },
   {
     "handler": "screens.accountArea.profileSettings.theTitleAndTheSeriesAnd",
@@ -14938,6 +14978,56 @@
     "handler": "screens.admin.reasonNames.videoRotationNotSupported",
     "text": "이 기기는 영상을 회전할 수 없어요",
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.downloadedVia",
+    "text": "다운로드됨 · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. {client} is the download client, such as SABnzbd."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByAConnectedApp",
+    "text": "연결된 앱이 가져옴",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app such as Sonarr or Radarr, which fetched it. Which app is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByApp",
+    "text": "{app}이(가) 가져옴",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app, which fetched it. {app} is the app's name, such as Sonarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDisk",
+    "text": "디스크에서 찾음",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it; somebody put it in the folder by hand, not through Valence."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDiskLinked",
+    "text": "디스크에서 찾음 · 다른 사본과 연결됨",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it, and it shares its data with another file on the same disk through a hard link."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.imported",
+    "text": "가져옴",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.importedFrom",
+    "text": "{source}에서 가져옴",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server. {source} is that server's name, such as Plex."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownload",
+    "text": "다운로드와 연결됨",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download that is still on the disk, so both share the same data and the torrent can keep seeding. The download client is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownloadVia",
+    "text": "다운로드와 연결됨 · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download still on the disk, so both share the same data. {client} is the download client or app that fetched it, such as qBittorrent or Radarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.uploaded",
+    "text": "Valence에 업로드됨",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: somebody uploaded it through Valence."
   },
   {
     "handler": "screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver",
@@ -19675,6 +19765,11 @@
     "context": "The reason in the folder view's details pane for a file that was excluded."
   },
   {
+    "handler": "screens.adminArea.folderView.from",
+    "text": "출처",
+    "context": "Column heading and detail label in the admin's Media and Files: where each library file came from, such as downloaded, uploaded, imported or found on disk."
+  },
+  {
     "handler": "screens.adminArea.folderView.inAFolderScansSkip",
     "text": "스캔이 건너뛰는 폴더에 있어요. 예를 들어 부가 영상이나 메타데이터 폴더예요.",
     "context": "The reason in the folder view's details pane for a video in a folder that scans skip."
@@ -22475,6 +22570,36 @@
     "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
+    "handler": "screens.adminArea.networkFigure.comingIn",
+    "text": "들어옴",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is receiving data from its network, such as 12 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.countersCouldNotBeRead",
+    "text": "이 기기의 네트워크 카운터를 읽을 수 없었어요.",
+    "context": "A note in the network figure's information on the admin overview when the operating system does not say how much data its network interfaces have moved."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.everythingElseGoingOut",
+    "text": "그 밖에 나가는 모든 것",
+    "context": "A row in the network figure's information on the admin overview: what the server is sending that is not Valence streaming to viewers, such as torrent uploads, as a speed such as 1 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.goingOut",
+    "text": "나감",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is sending data over its network, such as 4 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingAt",
+    "text": "시청자에게 {speed}로 스트리밍 중",
+    "context": "The line under the network figure on the admin overview. {speed} is how fast Valence is sending viewers what they watch, such as 3 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingToViewers",
+    "text": "시청자에게 스트리밍",
+    "context": "How fast Valence is sending viewers what they watch, listen to or download to their devices, such as 3 MB/s. A row in the network figure's information and in the server load chart's tooltip on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
     "text": "실패한 작업을 보내는 것부터 시작해요. 나머지 이벤트는 페이지에서 고르세요.",
     "context": "In the dialog that creates a webhook: which events a new webhook sends."
@@ -22830,6 +22955,21 @@
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak",
+    "text": "네트워크 선은 표시된 구간에서 가장 바빴던 순간인 {peak}을 기준으로 그려져요.",
+    "context": "A note in the tooltip of the admin overview's server load chart. The other lines are percentages; the network has no maximum, so its lines reach the top at the fastest speed in the range shown. {peak} is that speed, such as 40 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkIn",
+    "text": "네트워크 수신",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is receiving data."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkOut",
+    "text": "네트워크 송신",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is sending data."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "아무도 시청, 청취, 읽기를 하지 않아요.",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
@@ -22843,6 +22983,11 @@
     "handler": "screens.adminArea.overviewPanel.nothingRunningWaiting",
     "text": "실행 중인 것이 없고, {waiting}개가 대기 중이에요.",
     "context": "Shown on the admin overview when no background job is running but some are queued. {waiting} is how many are queued."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.perSecond",
+    "text": "{size}/s",
+    "context": "A speed, in the admin overview's server load chart. {size} is a size such as 1.2 MB; the result reads 1.2 MB/s."
   },
   {
     "handler": "screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange",
@@ -28503,6 +28648,16 @@
     "handler": "screens.adminArea.webhooksPanel.lastDelivery",
     "text": "마지막 전송",
     "context": "In the admin list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetwork",
+    "text": "로컬 네트워크",
+    "context": "Label of the switch on a webhook that lets it send to addresses on the server's own network."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetworkDescription",
+    "text": "이 웹훅이 이 서버의 다른 앱처럼 내 네트워크의 주소에 닿을 수 있게 해요.",
+    "context": "Description of the Local network switch on a webhook."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",
@@ -36412,6 +36567,16 @@
     "context": "On the first-run setup page: under the heading of the first step."
   },
   {
+    "handler": "screens.setupWizard.welcomeStep.printedInTheServerLog",
+    "text": "Valence가 시작할 때 로그에 출력하므로, 서버를 운영하는 사람만 설정할 수 있어요.",
+    "context": "On the first-run setup page: the description under the setup code field on the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.setupCode",
+    "text": "설정 코드",
+    "context": "On the first-run setup page: the label of the field for the code the server printed in its log."
+  },
+  {
     "handler": "screens.shareArea.askWhoeverSentItForA",
     "text": "보낸 사람에게 새 것을 요청하세요.",
     "context": "Shown in the share area."
@@ -37202,11 +37367,6 @@
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
   },
   {
-    "handler": "screens.videoPlayer.streamStats.network",
-    "text": "네트워크",
-    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
-  },
-  {
     "handler": "screens.videoPlayer.streamStats.networkOverTime",
     "text": "지난 1분 동안의 연결 속도와 스트림 비트레이트",
     "context": "Stats for nerds: read out to anybody who cannot see the network chart."
@@ -37755,6 +37915,11 @@
     "handler": "server.books.chapterNumbered",
     "text": "{number}장",
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
+  },
+  {
+    "handler": "server.books.openComicRar.thatComicIsLargerThanA",
+    "text": "이 만화는 Valence가 읽을 수 있는 최대 크기인 1기비바이트보다 커요.",
+    "context": "Shown in the books on the server (from `openComicRar`)."
   },
   {
     "handler": "server.books.pagesFromTo",

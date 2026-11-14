@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { access, mkdir, rename, rm, stat, truncate, writeFile } from 'node:fs/promises';
+import { access, mkdir, rename, rm, stat, statfs, truncate, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
-import { Readable } from 'node:stream';
+import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { UploadDisk, UploadRefusal, UploadResult } from '@ValenceServer/uploads/UploadDisk';
 
@@ -45,6 +45,47 @@ const refusalOf = (error: Error | null): UploadRefusal => {
 };
 
 /**
+ * A stream that passes bytes along until more than a limit has come through, and then fails.
+ *
+ * @param most - The most bytes it passes.
+ * @returns The stream, and how many bytes had come when it failed, or nothing while it has not.
+ */
+const limitedTo = (most: number) => {
+  let seen = 0;
+  let passed: number | null = null;
+
+  return {
+    stream: new Transform({
+      transform: (chunk: Buffer, _encoding, callback) => {
+        seen += chunk.length;
+
+        if (seen > most) {
+          passed = seen;
+          callback(new Error('more bytes arrived than were allowed'));
+
+          return;
+        }
+
+        callback(null, chunk);
+      },
+    }),
+    passedAt: () => passed,
+  };
+};
+
+/**
+ * How many bytes are free for Valence to write to on the disk a folder is on.
+ *
+ * @param folder - A folder on that disk.
+ * @returns The bytes free.
+ */
+const spaceLeftAt = async (folder: string): Promise<number> => {
+  const disk = await statfs(folder);
+
+  return disk.bavail * disk.bsize;
+};
+
+/**
  * The machine's own disk, as an upload is written to it.
  *
  * The body is streamed to a hidden file beside where it is going and moved into place only once all
@@ -58,9 +99,15 @@ const refusalOf = (error: Error | null): UploadRefusal => {
  * at its own place in it — so a piece sent twice lands in the same place — and it is cut to the size
  * it was said to be and moved into place once whole, as a single upload is.
  *
+ * What arrives is never allowed to pass what the disk has free, nor a piece to pass its own size,
+ * so a body that never ends fills nothing.
+ *
+ * @param spaceLeft - How many bytes are free on the disk a folder is on.
  * @returns The disk.
  */
-const createUploadDisk = (): UploadDisk => ({
+const createUploadDisk = (
+  spaceLeft: (folder: string) => Promise<number> = spaceLeftAt,
+): UploadDisk => ({
   write: async (destination, body): Promise<UploadResult> => {
     const partial = join(dirname(destination), `.${basename(destination)}.${randomUUID()}.part`);
 
@@ -70,7 +117,14 @@ const createUploadDisk = (): UploadDisk => ({
       }
 
       await mkdir(dirname(destination), { recursive: true });
-      await pipeline(Readable.fromWeb(body), createWriteStream(partial, { flags: 'wx' }));
+
+      const limit = limitedTo(await spaceLeft(dirname(destination)));
+
+      await pipeline(
+        Readable.fromWeb(body),
+        limit.stream,
+        createWriteStream(partial, { flags: 'wx' }),
+      );
 
       if (await isThere(destination)) {
         await rm(partial, { force: true });
@@ -103,14 +157,22 @@ const createUploadDisk = (): UploadDisk => ({
     }
   },
 
-  writeAt: async (staging, offset, body) => {
+  writeAt: async (staging, offset, most, body) => {
+    const limit = limitedTo(most);
+
     try {
       const into = createWriteStream(staging, { flags: 'r+', start: offset });
 
-      await pipeline(Readable.fromWeb(body), into);
+      await pipeline(Readable.fromWeb(body), limit.stream, into);
 
       return { kind: 'written', bytes: into.bytesWritten };
     } catch (error) {
+      const passedAt = limit.passedAt();
+
+      if (passedAt !== null) {
+        return { kind: 'written', bytes: passedAt };
+      }
+
       return refusalOf(error instanceof Error ? error : null);
     }
   },

@@ -27,6 +27,7 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     preTranscoding,
     requires,
     viewerOf,
+    peerRequests,
     readAccount,
     recordAudit,
   } = context;
@@ -73,7 +74,12 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   if (music !== undefined) {
-    registerMusicRoutes(app, { viewerOf, music, requires });
+    registerMusicRoutes(app, {
+      viewerOf,
+      music,
+      requires,
+      peerOf: (headers) => peerRequests.get(headers),
+    });
   }
 
   if (videoDevices !== undefined) {

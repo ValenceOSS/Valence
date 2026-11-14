@@ -595,6 +595,11 @@
     "context": "Shown in the admin (from `fetchCorrections`)."
   },
   {
+    "handler": "client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot",
+    "text": "Bu dosyaların nereden geldiği okunamadı.",
+    "context": "Shown in the admin when the server would not say where library files came from (downloaded, uploaded, imported or found on disk)."
+  },
+  {
     "handler": "client.admin.groupPermissions.sharing",
     "text": "Paylaşım",
     "context": "Shown in the admin (from `groupPermissions`)."
@@ -903,11 +908,6 @@
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
     "text": "Rotten Tomatoes",
     "context": "The label in the library (from `describeTitleDetails`)."
-  },
-  {
-    "handler": "client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery",
-    "text": "/api/libraries/{libraryId}/items?{query}",
-    "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
   },
   {
     "handler": "client.library.freshFlags.newEpisode",
@@ -4633,7 +4633,7 @@
   },
   {
     "handler": "common.layoutTurnsNextTime",
-    "text": "The layout turns to suit this language the next time Valence opens.",
+    "text": "Düzen, Valence bir sonraki açılışta bu dile uyacak şekilde değişir.",
     "context": "Under the Language setting on the phone and the television, after somebody picks a language written the other way, such as Arabic or Hebrew: the layout mirrors from the next launch."
   },
   {
@@ -5130,6 +5130,11 @@
     "handler": "common.needsAttention",
     "text": "Dikkat gerekiyor",
     "context": "The label, used in the status look in the status and in the concerns banner in the admin area."
+  },
+  {
+    "handler": "common.network",
+    "text": "Ağ",
+    "context": "The word for a network connection: the title of the chart of the connection's speed against the stream's bitrate in stats for nerds, and the label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
   },
   {
     "handler": "common.never",
@@ -7995,7 +8000,7 @@
   },
   {
     "handler": "common.whatValenceSpeaksHere",
-    "text": "The language Valence speaks on this device.",
+    "text": "Valence’ın bu cihazda kullandığı dil.",
     "context": "Under the Language setting on the phone and the television, which picks the language Valence shows on that device."
   },
   {
@@ -9829,6 +9834,11 @@
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
   },
   {
+    "handler": "error.downloads.thisAccountMayNotSaveCopies",
+    "text": "Bu hesabın bir cihaza kopya kaydetmesine izin verilmiyor.",
+    "context": "An error the server answers with (HTTP 403) when an account whose role lacks downloads asks to save a title to a device (from `serveDownloads`)."
+  },
+  {
     "handler": "error.downloads.thoseAreNotRulesForGiving",
     "text": "Bunlar bir indirmeyi bırakmak için geçerli kurallar değil.",
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
@@ -10182,6 +10192,11 @@
     "handler": "error.linking.thatServerTakesNoRequestsFromYours",
     "text": "Bu sunucu, senin sunucundan istek kabul etmiyor.",
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
+  },
+  {
+    "handler": "error.linking.thatStartCouldNotBeRead",
+    "text": "Oynatmayı başlatma isteği okunamadı.",
+    "context": "Refusal sent to a linked Valence server whose request to start playing is not a body this server can read."
   },
   {
     "handler": "error.linking.thisAccountMayNotLinkServers",
@@ -10659,6 +10674,11 @@
     "context": "Error when a later, higher-quality ask is settled without saying which way."
   },
   {
+    "handler": "error.requests.sayWhichFilesToAskAbout",
+    "text": "Hangi dosyaların sorulacağını belirtin.",
+    "context": "An error the requests service answers with (HTTP 400) when the server asks which library files it filed but names no files, or too many (from `createOriginRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "Bunun hangi kitaplık öğesine dönüştüğünü belirt.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10837,6 +10857,11 @@
     "handler": "error.setup.setupHasAlreadyBeenCompleted",
     "text": "Kurulum zaten tamamlandı.",
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveSetup`)."
+  },
+  {
+    "handler": "error.setup.thatSetupCodeIsNotRight",
+    "text": "Bu kurulum kodu, sunucunun günlüğündeki kodla eşleşmiyor.",
+    "context": "An error the server answers with (HTTP 403) when the setup code typed on the first-run setup page is wrong (from `serveSetup`)."
   },
   {
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
@@ -11042,6 +11067,11 @@
     "handler": "error.webhook.theMessageTemplateIsNotValidJson",
     "text": "İleti şablonu geçerli bir JSON değil.",
     "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
+  },
+  {
+    "handler": "error.webhook.valenceWillNotSendToTheLocalNetwork",
+    "text": "Yerel ağ açık değilse Valence, kendi ağınızdaki bir adrese gönderim yapmaz.",
+    "context": "Refusal, and a delivery's error, when a webhook's address is on the server's own network and the webhook's Local network switch is off."
   },
   {
     "handler": "native.captionTextStyle.avenirNextCondensed",
@@ -13924,6 +13954,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.appIcon",
+    "text": "Uygulama simgesi",
+    "context": "A setting in the desktop app on Windows: whether Valence's round taskbar icon is light, dark, or follows Windows' light or dark mode."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.connectionsPerStream",
     "text": "Akış başına bağlantı",
     "context": "The title of the setting for how many pieces of a film this device fetches at once."
@@ -14012,6 +14047,11 @@
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
     "text": "Adının ilk harfinin arkasındaki arka plan ve çizim avatarındaki ton.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.theIconOnTheTaskbar",
+    "text": "Bu bilgisayarın görev çubuğundaki simge. Sistem, Windows’un açık ya da koyu moduna uyar.",
+    "context": "Under the App icon setting in the desktop app on Windows."
   },
   {
     "handler": "screens.accountArea.profileSettings.theTitleAndTheSeriesAnd",
@@ -14942,6 +14982,56 @@
     "handler": "screens.admin.reasonNames.videoRotationNotSupported",
     "text": "Cihaz videoyu döndüremiyor",
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.downloadedVia",
+    "text": "İndirildi · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. {client} is the download client, such as SABnzbd."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByAConnectedApp",
+    "text": "Bağlı bir uygulama tarafından getirildi",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app such as Sonarr or Radarr, which fetched it. Which app is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByApp",
+    "text": "{app} tarafından getirildi",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app, which fetched it. {app} is the app's name, such as Sonarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDisk",
+    "text": "Diskte bulundu",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it; somebody put it in the folder by hand, not through Valence."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDiskLinked",
+    "text": "Diskte bulundu · Başka bir kopyayla bağlı",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it, and it shares its data with another file on the same disk through a hard link."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.imported",
+    "text": "İçe aktarıldı",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.importedFrom",
+    "text": "{source} kaynağından içe aktarıldı",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server. {source} is that server's name, such as Plex."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownload",
+    "text": "İndirmeyle bağlandı",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download that is still on the disk, so both share the same data and the torrent can keep seeding. The download client is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownloadVia",
+    "text": "İndirmeyle bağlandı · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download still on the disk, so both share the same data. {client} is the download client or app that fetched it, such as qBittorrent or Radarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.uploaded",
+    "text": "Valence’a yüklendi",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: somebody uploaded it through Valence."
   },
   {
     "handler": "screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver",
@@ -19679,6 +19769,11 @@
     "context": "The reason in the folder view's details pane for a file that was excluded."
   },
   {
+    "handler": "screens.adminArea.folderView.from",
+    "text": "Kaynak",
+    "context": "Column heading and detail label in the admin's Media and Files: where each library file came from, such as downloaded, uploaded, imported or found on disk."
+  },
+  {
     "handler": "screens.adminArea.folderView.inAFolderScansSkip",
     "text": "Taramaların atladığı bir klasörde, örneğin ekstralar veya üst veri klasöründe.",
     "context": "The reason in the folder view's details pane for a video in a folder that scans skip."
@@ -22479,6 +22574,36 @@
     "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
+    "handler": "screens.adminArea.networkFigure.comingIn",
+    "text": "Gelen",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is receiving data from its network, such as 12 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.countersCouldNotBeRead",
+    "text": "Bu makinenin ağ sayaçları okunamadı.",
+    "context": "A note in the network figure's information on the admin overview when the operating system does not say how much data its network interfaces have moved."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.everythingElseGoingOut",
+    "text": "Giden diğer her şey",
+    "context": "A row in the network figure's information on the admin overview: what the server is sending that is not Valence streaming to viewers, such as torrent uploads, as a speed such as 1 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.goingOut",
+    "text": "Giden",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is sending data over its network, such as 4 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingAt",
+    "text": "İzleyicilere {speed} aktarılıyor",
+    "context": "The line under the network figure on the admin overview. {speed} is how fast Valence is sending viewers what they watch, such as 3 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingToViewers",
+    "text": "İzleyicilere aktarım",
+    "context": "How fast Valence is sending viewers what they watch, listen to or download to their devices, such as 3 MB/s. A row in the network figure's information and in the server load chart's tooltip on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
     "text": "Başarısız işleri göndererek başlar. Diğer olaylarını sayfasından seç.",
     "context": "In the dialog that creates a webhook: which events a new webhook sends."
@@ -22834,6 +22959,21 @@
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak",
+    "text": "Ağ çizgileri, gösterilen en yoğun an olan {peak} değerine göre çizilir.",
+    "context": "A note in the tooltip of the admin overview's server load chart. The other lines are percentages; the network has no maximum, so its lines reach the top at the fastest speed in the range shown. {peak} is that speed, such as 40 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkIn",
+    "text": "Gelen ağ",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is receiving data."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkOut",
+    "text": "Giden ağ",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is sending data."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "Kimse izlemiyor, dinlemiyor veya okumuyor.",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
@@ -22847,6 +22987,11 @@
     "handler": "screens.adminArea.overviewPanel.nothingRunningWaiting",
     "text": "Çalışan bir şey yok, {waiting} bekliyor.",
     "context": "Shown on the admin overview when no background job is running but some are queued. {waiting} is how many are queued."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.perSecond",
+    "text": "{size}/sn",
+    "context": "A speed, in the admin overview's server load chart. {size} is a size such as 1.2 MB; the result reads 1.2 MB/s."
   },
   {
     "handler": "screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange",
@@ -28507,6 +28652,16 @@
     "handler": "screens.adminArea.webhooksPanel.lastDelivery",
     "text": "Son gönderim",
     "context": "In the admin list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetwork",
+    "text": "Yerel ağ",
+    "context": "Label of the switch on a webhook that lets it send to addresses on the server's own network."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetworkDescription",
+    "text": "Bu webhook’un sunucunuzun kendi ağındaki adreslere, örneğin bu sunucudaki başka bir uygulamaya ulaşmasını sağlar.",
+    "context": "Description of the Local network switch on a webhook."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",
@@ -36420,6 +36575,16 @@
     "context": "On the first-run setup page: under the heading of the first step."
   },
   {
+    "handler": "screens.setupWizard.welcomeStep.printedInTheServerLog",
+    "text": "Valence bunu başladığında günlüğüne yazdı; kurulumu yalnızca sunucuyu çalıştıran kişi yapabilir.",
+    "context": "On the first-run setup page: the description under the setup code field on the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.setupCode",
+    "text": "Kurulum kodu",
+    "context": "On the first-run setup page: the label of the field for the code the server printed in its log."
+  },
+  {
     "handler": "screens.shareArea.askWhoeverSentItForA",
     "text": "Gönderen kişiden yeni bir tane iste.",
     "context": "Shown in the share area."
@@ -37210,11 +37375,6 @@
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
   },
   {
-    "handler": "screens.videoPlayer.streamStats.network",
-    "text": "Ağ",
-    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
-  },
-  {
     "handler": "screens.videoPlayer.streamStats.networkOverTime",
     "text": "Son bir dakikada bağlantı hızı ve yayın bit hızı",
     "context": "Stats for nerds: read out to anybody who cannot see the network chart."
@@ -37763,6 +37923,11 @@
     "handler": "server.books.chapterNumbered",
     "text": "Bölüm {number}",
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
+  },
+  {
+    "handler": "server.books.openComicRar.thatComicIsLargerThanA",
+    "text": "Bu çizgi roman, Valence’ın okuyabileceği en büyük boyut olan bir gibibayttan büyük.",
+    "context": "Shown in the books on the server (from `openComicRar`)."
   },
   {
     "handler": "server.books.pagesFromTo",

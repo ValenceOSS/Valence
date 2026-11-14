@@ -706,6 +706,7 @@ const WebhookSubscriptionSchema = z
     events: z.array(WebhookEventSchema).min(1),
     filters: WebhookFiltersSchema.prefault({}),
     custom: CustomWebhookSchema.nullable().default(null),
+    reachesLocalNetwork: z.boolean().default(false),
     enabled: z.boolean(),
     createdAt: z.string().datetime(),
   })

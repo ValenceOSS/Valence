@@ -17,6 +17,7 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Breadcrumbs } from '@ValenceUI/Breadcrumbs';
 import { Button } from '@ValenceUI/Button';
+import { OriginBadge } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/OriginBadge/OriginBadge';
 import { FILE_STATUS_LOOKS } from '@ValenceScreens/components/AdminArea/components/MediaPanel/components/FolderView/FILE_STATUS_LOOKS';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -380,6 +381,17 @@ const FolderView = ({
           );
         },
       },
+      {
+        id: 'origin',
+        header: say('screens.adminArea.folderView.from'),
+        meta: { showsOnlyWhenWide: true },
+        enableSorting: false,
+        cell: ({ row }) => {
+          const { origin } = row.original;
+
+          return origin === null || origin === undefined ? null : <OriginBadge origin={origin} />;
+        },
+      },
       ...moreColumns,
       {
         id: 'size',
@@ -658,7 +670,7 @@ const FolderView = ({
                 at === null
                   ? columns.filter(
                       (column) =>
-                        !['choose', 'size', 'modified', 'title', 'status'].includes(
+                        !['choose', 'size', 'modified', 'title', 'status', 'origin'].includes(
                           column.id ?? '',
                         ),
                     )

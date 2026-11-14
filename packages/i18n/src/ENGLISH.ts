@@ -172,6 +172,8 @@ const ENGLISH = {
   'client.admin.describeTriggerInZone.clockYourTime': '{clock} your time',
   'client.admin.describeTriggerInZone.dayAtClockYourTime': '{day} at {clock} your time',
   'client.admin.fetchCorrections.thatCouldNotBeChanged': 'Couldn’t save the change. Try again.',
+  'client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot':
+    'Where these files came from could not be read.',
   'client.admin.groupPermissions.sharing': 'Sharing',
   'client.admin.groupPermissions.streaming': 'Streaming',
   'client.admin.logRanges.last15Minutes': 'Last 15 minutes',
@@ -251,8 +253,6 @@ const ENGLISH = {
   'client.library.describeTitleDetails.boxOffice': 'Box office',
   'client.library.describeTitleDetails.budget': 'Budget',
   'client.library.describeTitleDetails.rottenTomatoes': 'Rotten Tomatoes',
-  'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
-    '/api/libraries/{libraryId}/items?{query}',
   'client.library.freshFlags.newEpisode': 'New episode',
   'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',
@@ -1217,6 +1217,7 @@ const ENGLISH = {
   'common.nameWouldNotTakeTheNZB': '{name} rejected the NZB',
   'common.narrow': 'Narrow',
   'common.needsAttention': 'Needs attention',
+  'common.network': 'Network',
   'common.never': 'Never',
   'common.neverUsed': 'Never used',
   'common.newCollection': 'New collection',
@@ -2305,6 +2306,8 @@ const ENGLISH = {
   'error.downloads.thatIsNotAChangeTo': 'That isn’t a valid change to a download client.',
   'error.downloads.thatIsNotADownloadClient': 'That isn’t a valid download client.',
   'error.downloads.thatIsNotAReleaseTo': 'That isn’t a valid release to send.',
+  'error.downloads.thisAccountMayNotSaveCopies':
+    'This account isn’t allowed to save copies to a device.',
   'error.downloads.thoseAreNotRulesForGiving':
     'Those aren’t valid rules for abandoning a download.',
   'error.folder.aFoldersNameIsASingle': 'A folder name can’t contain slashes.',
@@ -2404,6 +2407,7 @@ const ENGLISH = {
   'error.linking.thatServerHasNoPicture': 'That server has no picture.',
   'error.linking.thatServerTakesNoRequestsFromYours':
     'That server doesn’t accept requests from yours.',
+  'error.linking.thatStartCouldNotBeRead': 'That request to start playing couldn’t be read.',
   'error.linking.thisAccountMayNotLinkServers':
     'This account isn’t allowed to link this server with others.',
   'error.linking.thisPersonMayNotWatchFromHere':
@@ -2523,6 +2527,7 @@ const ENGLISH = {
   'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
   'error.requests.sayWhetherToSwitchOrKeep':
     'Say whether to switch the request to the higher profile or keep the one it has.',
+  'error.requests.sayWhichFilesToAskAbout': 'Say which files to ask about.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhichNarrationToFetch': 'Say which narration of the audiobook to fetch.',
   'error.requests.sayWhoIsAsking': 'Say who is asking.',
@@ -2574,6 +2579,8 @@ const ENGLISH = {
     'Valence doesn’t have permission to delete files there.',
   'error.server.valenceIsNotAllowedToWrite': 'Valence doesn’t have permission to write there.',
   'error.setup.setupHasAlreadyBeenCompleted': 'Setup has already been completed.',
+  'error.setup.thatSetupCodeIsNotRight':
+    'That setup code doesn’t match the one in the server’s log.',
   'error.setup.theAdministratorAccountCouldNotBe': 'Couldn’t create the administrator account.',
   'error.setupLink.chooseAUsernameToSignInWith': 'Choose a username to sign in with.',
   'error.setupLink.thatAccountAlreadyHasAPassword': 'This account already has a password.',
@@ -2631,6 +2638,8 @@ const ENGLISH = {
   'error.webhook.noSuchSubscriptionOrItIs': 'No such subscription, or it’s turned off.',
   'error.webhook.theAddressIsMissingSettings': 'The address is missing {settings}.',
   'error.webhook.theMessageTemplateIsNotValidJson': 'The message template isn’t valid JSON.',
+  'error.webhook.valenceWillNotSendToTheLocalNetwork':
+    'Valence won’t send to an address on your own network unless Local network is on.',
   'native.captionTextStyle.avenirNextCondensed': 'Avenir Next Condensed',
   'native.captionTextStyle.chalkboardSE': 'Chalkboard SE',
   'native.captionTextStyle.courierNew': 'Courier New',
@@ -3445,6 +3454,7 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.appIcon': 'App icon',
   'screens.accountArea.profileSettings.connectionsPerStream': 'Connections per stream',
   'screens.accountArea.profileSettings.dash': 'DASH',
   'screens.accountArea.profileSettings.dashIsReadFromTheSame':
@@ -3472,6 +3482,8 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.streamingFormat': 'Streaming format',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
     'The background behind your initial and the tint on your illustrated avatar.',
+  'screens.accountArea.profileSettings.theIconOnTheTaskbar':
+    "The icon on this computer's taskbar. System follows Windows' light or dark mode.",
   'screens.accountArea.profileSettings.theTitleAndTheSeriesAnd':
     'Shows the title, plus the series and episode or the artist, in your Discord status while something plays. Valence must be open on the same computer as Discord.',
   'screens.accountArea.profileSettings.whatEverybodySharingThisServerSees':
@@ -3696,6 +3708,16 @@ const ENGLISH = {
   'screens.admin.reasonNames.videoResolutionAboveLimit':
     'The picture is larger than the device allows',
   'screens.admin.reasonNames.videoRotationNotSupported': 'The device can’t turn the video',
+  'screens.admin.wordsOfOrigin.downloadedVia': 'Downloaded · {client}',
+  'screens.admin.wordsOfOrigin.fetchedByAConnectedApp': 'Fetched by a connected app',
+  'screens.admin.wordsOfOrigin.fetchedByApp': 'Fetched by {app}',
+  'screens.admin.wordsOfOrigin.foundOnDisk': 'Found on disk',
+  'screens.admin.wordsOfOrigin.foundOnDiskLinked': 'Found on disk · Linked to another copy',
+  'screens.admin.wordsOfOrigin.imported': 'Imported',
+  'screens.admin.wordsOfOrigin.importedFrom': 'Imported from {source}',
+  'screens.admin.wordsOfOrigin.linkedToADownload': 'Linked to a download',
+  'screens.admin.wordsOfOrigin.linkedToADownloadVia': 'Linked to a download · {client}',
+  'screens.admin.wordsOfOrigin.uploaded': 'Uploaded to Valence',
   'screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver':
     'AMD, requires the proprietary driver',
   'screens.adminArea.accelerationOptions.aMF': 'AMF',
@@ -4943,6 +4965,7 @@ const ENGLISH = {
   'screens.adminArea.folderView.belongsWith': 'Belongs with',
   'screens.adminArea.folderView.excluded': 'Excluded',
   'screens.adminArea.folderView.excludedFromTheLibrary': 'Somebody excluded it from the library.',
+  'screens.adminArea.folderView.from': 'Came from',
   'screens.adminArea.folderView.inAFolderScansSkip':
     'It’s in a folder scans skip, such as one of extras or metadata.',
   'screens.adminArea.folderView.itsVideoIsGone': 'Its video is gone',
@@ -5676,6 +5699,13 @@ const ENGLISH = {
   'screens.adminArea.needsYouCard.libraryProblems': 'Library problems',
   'screens.adminArea.needsYouCard.requestsToApprove': 'Requests to approve',
   'screens.adminArea.needsYouCard.waitingOnYou': 'Waiting on you',
+  'screens.adminArea.networkFigure.comingIn': 'Coming in',
+  'screens.adminArea.networkFigure.countersCouldNotBeRead':
+    "This machine's network counters could not be read.",
+  'screens.adminArea.networkFigure.everythingElseGoingOut': 'Everything else going out',
+  'screens.adminArea.networkFigure.goingOut': 'Going out',
+  'screens.adminArea.networkFigure.streamingAt': '{speed} streaming to viewers',
+  'screens.adminArea.networkFigure.streamingToViewers': 'Streaming to viewers',
   'screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs':
     'It starts by sending failed jobs. Choose the rest of its events on its page.',
   'screens.adminArea.newWebhookDialog.leftEmptyItsNamedAfterThe':
@@ -5775,10 +5805,15 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
   'screens.adminArea.overviewPanel.loadOfTheCores': '{load} · {share} of the cores',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
+  'screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak':
+    'The network lines are drawn against the busiest moment shown, {peak}.',
+  'screens.adminArea.overviewPanel.networkIn': 'Network in',
+  'screens.adminArea.overviewPanel.networkOut': 'Network out',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',
   'screens.adminArea.overviewPanel.nothingIsRunning': 'Nothing is running.',
   'screens.adminArea.overviewPanel.nothingRunningWaiting': 'Nothing running, {waiting} waiting.',
+  'screens.adminArea.overviewPanel.perSecond': '{size}/s',
   'screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange':
     'CPU usage over the last {loadRange}',
   'screens.adminArea.overviewPanel.processorUseOverTheLastMinute': 'CPU usage over the last minute',
@@ -7252,6 +7287,9 @@ const ENGLISH = {
   'screens.adminArea.webhooksPanel.iHaveCopiedIt': 'I’ve copied it',
   'screens.adminArea.webhooksPanel.keepItTo100CharactersOr': 'Keep it to 100 characters or fewer.',
   'screens.adminArea.webhooksPanel.lastDelivery': 'Last delivery',
+  'screens.adminArea.webhooksPanel.localNetwork': 'Local network',
+  'screens.adminArea.webhooksPanel.localNetworkDescription':
+    'Lets this webhook reach addresses on your own network, such as another app on this server.',
   'screens.adminArea.webhooksPanel.nameIsSetUpCopyIts':
     '{name} is set up. Copy its signing secret now.',
   'screens.adminArea.webhooksPanel.newWebhook': 'New webhook',
@@ -9210,6 +9248,9 @@ const ENGLISH = {
   'screens.setupWizard.welcomeStep.makeYourAccount': 'Create your account',
   'screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet':
     'No one has an account on this server yet. Create yours, set the addresses Valence is reached on and where your media is, and import from Jellyfin, Emby or Plex if you’re switching. You can change all of it later.',
+  'screens.setupWizard.welcomeStep.printedInTheServerLog':
+    'Valence printed it in its log when it started, so only whoever runs the server can set it up.',
+  'screens.setupWizard.welcomeStep.setupCode': 'Setup code',
   'screens.shareArea.askWhoeverSentItForA': 'Ask the person who sent it for a new one.',
   'screens.shareArea.openingWhatWasSharedWithYou': 'Opening the shared item on {name}',
   'screens.shareArea.sharedWithYouOnName': 'Shared with you on {name}',
@@ -9384,7 +9425,6 @@ const ENGLISH = {
     'Decoded here, encoded again as {codec} {channels}ch',
   'screens.videoPlayer.streamStats.filmPeakMappedFrom': '{nits} nits, mapped from 1,000',
   'screens.videoPlayer.streamStats.mediabunny': 'Mediabunny',
-  'screens.videoPlayer.streamStats.network': 'Network',
   'screens.videoPlayer.streamStats.networkOverTime':
     'Connection speed and stream bitrate over the last minute',
   'screens.videoPlayer.streamStats.noneShownAsHdr': 'None, shown as HDR',
@@ -9528,6 +9568,8 @@ const ENGLISH = {
     'those details weren’t accepted.',
   'server.book.privateMaxAge604800Immutable': 'private, max-age=604800, immutable',
   'server.books.chapterNumbered': 'Chapter {number}',
+  'server.books.openComicRar.thatComicIsLargerThanA':
+    'That comic is larger than a gibibyte, the most Valence will read.',
   'server.books.pagesFromTo': 'Pages {from}–{to}',
   'server.books.partNumbered': 'Part {number}',
   'server.books.scanBookLibrary.thatBookAlreadyReadsAnotherWay':

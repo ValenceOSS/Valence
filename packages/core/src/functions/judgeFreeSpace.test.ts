@@ -14,6 +14,10 @@ describe('judgeFreeSpace', () => {
     expect(judgeFreeSpace({ bytes: 58_000_000_000, freeBytes: 41_000_000_000 })).toBe('willNotFit');
   });
 
+  it('says nothing will fit on a device that reports no room left', () => {
+    expect(judgeFreeSpace({ bytes: 4_000_000_000, freeBytes: 0 })).toBe('willNotFit');
+  });
+
   it('claims nothing where the device would not say how much room it has', () => {
     expect(judgeFreeSpace({ bytes: 4_000_000_000, freeBytes: null })).toBe('unknown');
   });

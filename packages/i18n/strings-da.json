@@ -595,6 +595,11 @@
     "context": "Shown in the admin (from `fetchCorrections`)."
   },
   {
+    "handler": "client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot",
+    "text": "Det kunne ikke læses, hvor disse filer kom fra.",
+    "context": "Shown in the admin when the server would not say where library files came from (downloaded, uploaded, imported or found on disk)."
+  },
+  {
     "handler": "client.admin.groupPermissions.sharing",
     "text": "Deling",
     "context": "Shown in the admin (from `groupPermissions`)."
@@ -903,11 +908,6 @@
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
     "text": "Rotten Tomatoes",
     "context": "The label in the library (from `describeTitleDetails`)."
-  },
-  {
-    "handler": "client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery",
-    "text": "/api/libraries/{libraryId}/items?{query}",
-    "context": "Shown in the library (from `fetchLibrary`). {libraryId} is filled in by the app; {query} is filled in by the app."
   },
   {
     "handler": "client.library.freshFlags.newEpisode",
@@ -4633,7 +4633,7 @@
   },
   {
     "handler": "common.layoutTurnsNextTime",
-    "text": "The layout turns to suit this language the next time Valence opens.",
+    "text": "Layoutet vender, så det passer til dette sprog, næste gang Valence åbnes.",
     "context": "Under the Language setting on the phone and the television, after somebody picks a language written the other way, such as Arabic or Hebrew: the layout mirrors from the next launch."
   },
   {
@@ -5130,6 +5130,11 @@
     "handler": "common.needsAttention",
     "text": "Kræver opmærksomhed",
     "context": "The label, used in the status look in the status and in the concerns banner in the admin area."
+  },
+  {
+    "handler": "common.network",
+    "text": "Netværk",
+    "context": "The word for a network connection: the title of the chart of the connection's speed against the stream's bitrate in stats for nerds, and the label of the network figure at the top of the admin overview, beside Processor, Memory, Graphics and Storage."
   },
   {
     "handler": "common.never",
@@ -7987,7 +7992,7 @@
   },
   {
     "handler": "common.whatValenceSpeaksHere",
-    "text": "The language Valence speaks on this device.",
+    "text": "Det sprog, Valence taler på denne enhed.",
     "context": "Under the Language setting on the phone and the television, which picks the language Valence shows on that device."
   },
   {
@@ -9821,6 +9826,11 @@
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
   },
   {
+    "handler": "error.downloads.thisAccountMayNotSaveCopies",
+    "text": "Denne konto må ikke gemme kopier på en enhed.",
+    "context": "An error the server answers with (HTTP 403) when an account whose role lacks downloads asks to save a title to a device (from `serveDownloads`)."
+  },
+  {
     "handler": "error.downloads.thoseAreNotRulesForGiving",
     "text": "Det er ikke gyldige regler for at opgive en download.",
     "context": "An error the server answers with (HTTP 400) in the downloads in the requests service (from `createDownloadRoutes`)."
@@ -10174,6 +10184,11 @@
     "handler": "error.linking.thatServerTakesNoRequestsFromYours",
     "text": "Den server accepterer ikke anmodninger fra din.",
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
+  },
+  {
+    "handler": "error.linking.thatStartCouldNotBeRead",
+    "text": "Anmodningen om at starte afspilning kunne ikke læses.",
+    "context": "Refusal sent to a linked Valence server whose request to start playing is not a body this server can read."
   },
   {
     "handler": "error.linking.thisAccountMayNotLinkServers",
@@ -10651,6 +10666,11 @@
     "context": "Error when a later, higher-quality ask is settled without saying which way."
   },
   {
+    "handler": "error.requests.sayWhichFilesToAskAbout",
+    "text": "Angiv, hvilke filer der skal spørges om.",
+    "context": "An error the requests service answers with (HTTP 400) when the server asks which library files it filed but names no files, or too many (from `createOriginRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "Angiv, hvilket bibliotekselement det blev til.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10829,6 +10849,11 @@
     "handler": "error.setup.setupHasAlreadyBeenCompleted",
     "text": "Opsætningen er allerede gennemført.",
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveSetup`)."
+  },
+  {
+    "handler": "error.setup.thatSetupCodeIsNotRight",
+    "text": "Opsætningskoden stemmer ikke med den i serverens log.",
+    "context": "An error the server answers with (HTTP 403) when the setup code typed on the first-run setup page is wrong (from `serveSetup`)."
   },
   {
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
@@ -11034,6 +11059,11 @@
     "handler": "error.webhook.theMessageTemplateIsNotValidJson",
     "text": "Beskedskabelonen er ikke gyldig JSON.",
     "context": "Refusal, and a delivery's error, when a Custom webhook's message template can't be read as JSON."
+  },
+  {
+    "handler": "error.webhook.valenceWillNotSendToTheLocalNetwork",
+    "text": "Valence sender ikke til en adresse på dit eget netværk, medmindre Lokalt netværk er slået til.",
+    "context": "Refusal, and a delivery's error, when a webhook's address is on the server's own network and the webhook's Local network switch is off."
   },
   {
     "handler": "native.captionTextStyle.avenirNextCondensed",
@@ -13916,6 +13946,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.appIcon",
+    "text": "App-ikon",
+    "context": "A setting in the desktop app on Windows: whether Valence's round taskbar icon is light, dark, or follows Windows' light or dark mode."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.connectionsPerStream",
     "text": "Forbindelser pr. stream",
     "context": "The title of the setting for how many pieces of a film this device fetches at once."
@@ -13982,7 +14017,7 @@
   },
   {
     "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
-    "text": "Som denne enhed",
+    "text": "Samme som denne enhed",
     "context": "The first choice of the Language setting in a profile's settings: speak whichever of the device's own languages Valence has."
   },
   {
@@ -14004,6 +14039,11 @@
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
     "text": "Baggrunden bag dit forbogstav og farven på din illustrerede avatar.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.theIconOnTheTaskbar",
+    "text": "Ikonet på denne computers proceslinje. System følger Windows' lyse eller mørke tilstand.",
+    "context": "Under the App icon setting in the desktop app on Windows."
   },
   {
     "handler": "screens.accountArea.profileSettings.theTitleAndTheSeriesAnd",
@@ -14934,6 +14974,56 @@
     "handler": "screens.admin.reasonNames.videoRotationNotSupported",
     "text": "Enheden kan ikke dreje videoen",
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.downloadedVia",
+    "text": "Hentet · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. {client} is the download client, such as SABnzbd."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByAConnectedApp",
+    "text": "Hentet af en forbundet app",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app such as Sonarr or Radarr, which fetched it. Which app is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByApp",
+    "text": "Hentet af {app}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app, which fetched it. {app} is the app's name, such as Sonarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDisk",
+    "text": "Fundet på disken",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it; somebody put it in the folder by hand, not through Valence."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDiskLinked",
+    "text": "Fundet på disken · Linket til en anden kopi",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it, and it shares its data with another file on the same disk through a hard link."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.imported",
+    "text": "Importeret",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.importedFrom",
+    "text": "Importeret fra {source}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server. {source} is that server's name, such as Plex."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownload",
+    "text": "Linket til en download",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download that is still on the disk, so both share the same data and the torrent can keep seeding. The download client is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownloadVia",
+    "text": "Linket til en download · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download still on the disk, so both share the same data. {client} is the download client or app that fetched it, such as qBittorrent or Radarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.uploaded",
+    "text": "Uploadet til Valence",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: somebody uploaded it through Valence."
   },
   {
     "handler": "screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver",
@@ -19671,6 +19761,11 @@
     "context": "The reason in the folder view's details pane for a file that was excluded."
   },
   {
+    "handler": "screens.adminArea.folderView.from",
+    "text": "Kom fra",
+    "context": "Column heading and detail label in the admin's Media and Files: where each library file came from, such as downloaded, uploaded, imported or found on disk."
+  },
+  {
     "handler": "screens.adminArea.folderView.inAFolderScansSkip",
     "text": "Den ligger i en mappe, scanninger springer over, f.eks. en med ekstramateriale eller metadata.",
     "context": "The reason in the folder view's details pane for a video in a folder that scans skip."
@@ -22471,6 +22566,36 @@
     "context": "Read out for the group of buttons in the admin top bar that count what needs an administrator."
   },
   {
+    "handler": "screens.adminArea.networkFigure.comingIn",
+    "text": "Indgående",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is receiving data from its network, such as 12 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.countersCouldNotBeRead",
+    "text": "Netværkstællerne på denne maskine kunne ikke læses.",
+    "context": "A note in the network figure's information on the admin overview when the operating system does not say how much data its network interfaces have moved."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.everythingElseGoingOut",
+    "text": "Alt andet udgående",
+    "context": "A row in the network figure's information on the admin overview: what the server is sending that is not Valence streaming to viewers, such as torrent uploads, as a speed such as 1 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.goingOut",
+    "text": "Udgående",
+    "context": "A row in the network figure's information on the admin overview: how fast the server is sending data over its network, such as 4 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingAt",
+    "text": "{speed} streamet til seere",
+    "context": "The line under the network figure on the admin overview. {speed} is how fast Valence is sending viewers what they watch, such as 3 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.networkFigure.streamingToViewers",
+    "text": "Streamet til seere",
+    "context": "How fast Valence is sending viewers what they watch, listen to or download to their devices, such as 3 MB/s. A row in the network figure's information and in the server load chart's tooltip on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.newWebhookDialog.itStartsBySendingFailedJobs",
     "text": "Den starter med at sende mislykkede job. Vælg resten af dens hændelser på dens side.",
     "context": "In the dialog that creates a webhook: which events a new webhook sends."
@@ -22826,6 +22951,21 @@
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.networkDrawnAgainstItsPeak",
+    "text": "Netværkslinjerne er tegnet i forhold til det travleste øjeblik, der vises, {peak}.",
+    "context": "A note in the tooltip of the admin overview's server load chart. The other lines are percentages; the network has no maximum, so its lines reach the top at the fastest speed in the range shown. {peak} is that speed, such as 40 MB/s."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkIn",
+    "text": "Netværk ind",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is receiving data."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.networkOut",
+    "text": "Netværk ud",
+    "context": "The name of the line in the admin overview's server load chart, and its row in the chart's tooltip, for how fast the server is sending data."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "Ingen ser, lytter eller læser.",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
@@ -22839,6 +22979,11 @@
     "handler": "screens.adminArea.overviewPanel.nothingRunningWaiting",
     "text": "Intet kører, {waiting} venter.",
     "context": "Shown on the admin overview when no background job is running but some are queued. {waiting} is how many are queued."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.perSecond",
+    "text": "{size}/s",
+    "context": "A speed, in the admin overview's server load chart. {size} is a size such as 1.2 MB; the result reads 1.2 MB/s."
   },
   {
     "handler": "screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange",
@@ -28499,6 +28644,16 @@
     "handler": "screens.adminArea.webhooksPanel.lastDelivery",
     "text": "Seneste levering",
     "context": "In the admin list of webhooks."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetwork",
+    "text": "Lokalt netværk",
+    "context": "Label of the switch on a webhook that lets it send to addresses on the server's own network."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.localNetworkDescription",
+    "text": "Lader denne webhook nå adresser på dit eget netværk, f.eks. en anden app på denne server.",
+    "context": "Description of the Local network switch on a webhook."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.nameIsSetUpCopyIts",
@@ -36412,6 +36567,16 @@
     "context": "On the first-run setup page: under the heading of the first step."
   },
   {
+    "handler": "screens.setupWizard.welcomeStep.printedInTheServerLog",
+    "text": "Valence skrev den i sin log, da den startede, så kun den, der kører serveren, kan opsætte den.",
+    "context": "On the first-run setup page: the description under the setup code field on the first step."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.setupCode",
+    "text": "Opsætningskode",
+    "context": "On the first-run setup page: the label of the field for the code the server printed in its log."
+  },
+  {
     "handler": "screens.shareArea.askWhoeverSentItForA",
     "text": "Bed personen, der sendte det, om et nyt.",
     "context": "Shown in the share area."
@@ -37202,11 +37367,6 @@
     "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
   },
   {
-    "handler": "screens.videoPlayer.streamStats.network",
-    "text": "Netværk",
-    "context": "Stats for nerds: the title of the chart of the connection's speed set against the stream's bitrate."
-  },
-  {
     "handler": "screens.videoPlayer.streamStats.networkOverTime",
     "text": "Forbindelseshastighed og streamens bitrate i det sidste minut",
     "context": "Stats for nerds: read out to anybody who cannot see the network chart."
@@ -37755,6 +37915,11 @@
     "handler": "server.books.chapterNumbered",
     "text": "Kapitel {number}",
     "context": "Shown in the books on the server (from `chapterTitleOf`). {number} is filled in by the app."
+  },
+  {
+    "handler": "server.books.openComicRar.thatComicIsLargerThanA",
+    "text": "Tegneserien er større end et gibibyte, den største Valence læser.",
+    "context": "Shown in the books on the server (from `openComicRar`)."
   },
   {
     "handler": "server.books.pagesFromTo",

@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import {
   ExplainResponse,
   StartResponse,
@@ -5,6 +6,7 @@ import {
 } from '@ValenceServer/routes/PlaybackRoute';
 import { LINKED_SESSION } from './LINKED_SESSION';
 import { saidOfRefusal } from './saidOfRefusal';
+import { rehomedAddress } from './rehomedAddress';
 import { PeerAsksSchema } from './PeerAskSchema';
 import type { PeerAsk } from './PeerAskSchema';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
@@ -16,7 +18,7 @@ type LinkedTitle = { serverId: string; remoteId: string };
 
 const JSON_SENT = { 'content-type': 'application/json' };
 
-const TicketSchema = z.object({ ticket: z.string().min(1) });
+const TicketSchema = z.object({ ticket: z.string().regex(/^[A-Za-z0-9_-]{32,64}$/u) });
 
 /**
  * A session or set of thumbnails started on a linked server, under a name of this server's own:
@@ -112,7 +114,8 @@ const createLinkedPlayback = (
     asked: { sessionId: string } | { mediaId: string },
   ) => {
     const answered = await asker.ask(serverId, '/direct', sendingJson(asked));
-    const read = answered?.ok === true ? TicketSchema.safeParse(await answered.json()) : null;
+    const read =
+      answered?.ok === true ? TicketSchema.safeParse(await boundedAnswer(answered).json()) : null;
 
     return read?.success === true ? read.data.ticket : null;
   };
@@ -135,7 +138,10 @@ const createLinkedPlayback = (
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
         }),
       );
-      const read = answered?.ok === true ? ExplainResponse.safeParse(await answered.json()) : null;
+      const read =
+        answered?.ok === true
+          ? ExplainResponse.safeParse(await boundedAnswer(answered).json())
+          : null;
 
       return read?.success === true ? { ...read.data, plan: { ...read.data.plan, mediaId } } : null;
     },
@@ -201,7 +207,7 @@ const createLinkedPlayback = (
           : { kind: 'failed', reason, problem: 'unknown' };
       }
 
-      const read = StartResponse.safeParse(await answered.json());
+      const read = StartResponse.safeParse(await boundedAnswer(answered).json());
 
       if (!read.success) {
         return { kind: 'failed', reason: await saidOfRefusal(null), problem: 'unknown' };
@@ -225,25 +231,24 @@ const createLinkedPlayback = (
                 : { mediaId: linked.remoteId },
             );
 
-      if (direct !== null && ticket !== null) {
-        const directly = `${direct}${FEDERATION_PATH}/direct/${ticket}`;
+      const theirSession = `/api/playback/session/${started.sessionId}/`;
+      const directly =
+        direct !== null && ticket !== null ? `${direct}${FEDERATION_PATH}/direct/${ticket}/` : null;
+      const address =
+        started.delivery.kind === 'hls'
+          ? rehomedAddress(
+              started.delivery.manifestUrl,
+              theirSession,
+              directly ?? `/api/playback/session/${encodeURIComponent(here)}/`,
+            )
+          : rehomedAddress(
+              started.delivery.url,
+              `/api/playback/${linked.remoteId}/`,
+              directly ?? `/api/playback/${mediaId}/`,
+            );
 
-        return {
-          kind: 'started',
-          session: {
-            ...started,
-            plan: { ...started.plan, mediaId },
-            sessionId: here,
-            delivery:
-              started.delivery.kind === 'hls'
-                ? {
-                    kind: 'hls',
-                    manifestUrl: `${directly}/${started.delivery.manifestUrl.split('/').at(-1) ?? ''}`,
-                    dashUrl: null,
-                  }
-                : { kind: 'direct', url: `${directly}/file` },
-          },
-        };
+      if (address === null) {
+        return { kind: 'failed', reason: await saidOfRefusal(null), problem: 'unknown' };
       }
 
       return {
@@ -254,21 +259,8 @@ const createLinkedPlayback = (
           sessionId: here,
           delivery:
             started.delivery.kind === 'hls'
-              ? {
-                  kind: 'hls',
-                  manifestUrl: started.delivery.manifestUrl.replace(
-                    `/api/playback/session/${started.sessionId}/`,
-                    `/api/playback/session/${encodeURIComponent(here)}/`,
-                  ),
-                  dashUrl: null,
-                }
-              : {
-                  kind: 'direct',
-                  url: started.delivery.url.replace(
-                    `/api/playback/${linked.remoteId}/`,
-                    `/api/playback/${mediaId}/`,
-                  ),
-                },
+              ? { kind: 'hls', manifestUrl: address, dashUrl: null }
+              : { kind: 'direct', url: address },
         },
       };
     },
@@ -323,22 +315,22 @@ const createLinkedPlayback = (
         { method: 'POST' },
       );
       const read =
-        answered?.ok === true ? TrickplayResponse.safeParse(await answered.json()) : null;
+        answered?.ok === true
+          ? TrickplayResponse.safeParse(await boundedAnswer(answered).json())
+          : null;
 
       if (read?.success !== true) {
         return null;
       }
 
       const here = linkedNameOf(linked.serverId, read.data.id);
+      const url = rehomedAddress(
+        read.data.url,
+        `/api/playback/trickplay/${read.data.id}/`,
+        `/api/playback/trickplay/${encodeURIComponent(here)}/`,
+      );
 
-      return {
-        ...read.data,
-        id: here,
-        url: read.data.url.replace(
-          `/api/playback/trickplay/${read.data.id}/`,
-          `/api/playback/trickplay/${encodeURIComponent(here)}/`,
-        ),
-      };
+      return url === null ? null : { ...read.data, id: here, url };
     },
 
     readFrame: async (mediaId, seconds, width) => {
@@ -353,7 +345,7 @@ const createLinkedPlayback = (
         `/api/playback/${linked.remoteId}/frame?seconds=${seconds.toString()}&width=${width.toString()}`,
       );
 
-      return answered?.ok === true ? answered.arrayBuffer() : null;
+      return answered?.ok === true ? boundedAnswer(answered).arrayBuffer() : null;
     },
 
     readPreview: async (mediaId, range) => {
@@ -396,7 +388,7 @@ const createLinkedPlayback = (
 
       return answered?.ok === true
         ? {
-            body: await answered.arrayBuffer(),
+            body: await boundedAnswer(answered).arrayBuffer(),
             contentType: answered.headers.get('content-type') ?? 'application/octet-stream',
           }
         : null;
@@ -433,7 +425,9 @@ const createLinkedPlayback = (
         sendingJson({ isPlaying }),
       );
       const asked =
-        answered?.status === 200 ? PeerAsksSchema.safeParse(await answered.json()) : null;
+        answered?.status === 200
+          ? PeerAsksSchema.safeParse(await boundedAnswer(answered).json())
+          : null;
       const deviceId = devices.get(sessionId);
 
       if (asked?.success === true && deviceId !== undefined) {

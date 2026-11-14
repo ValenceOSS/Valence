@@ -19,6 +19,7 @@ describe('keepDeviceChoices', () => {
       connections: 4,
       streamingFormat: 'dash',
       showsDesktopNotices: true,
+      appIcon: 'system',
     } as const;
 
     keepDeviceChoices(chosen, was);

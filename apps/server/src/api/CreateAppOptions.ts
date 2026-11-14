@@ -28,7 +28,7 @@ import type { LinkStore } from '@ValenceServer/linking/LinkStore';
 import type { LinkService } from '@ValenceServer/linking/LinkService';
 import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { PartyRelayHub } from '@ValenceServer/linking/parties/createPartyRelayHub';
-import type { AskedAlong } from '@ValenceContracts/schemas/LinkSharing';
+import type { AskedAlong, LinkSharing } from '@ValenceContracts/schemas/LinkSharing';
 import type { PersonScope } from '@ValenceServer/linking/content/createPersonScope';
 import type { ServerPictures } from '@ValenceServer/linking/createServerPictures';
 import type { LinkedChange } from '@ValenceServer/linking/createChangeTeller';
@@ -72,6 +72,7 @@ import type { HouseholdService } from '@ValenceServer/household/HouseholdService
 import type { SplashscreenStore } from '@ValenceServer/splashscreen/SplashscreenStore';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import type { MediaOriginStore } from '@ValenceServer/origins/MediaOriginStore';
 import type { RequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import type { MaintenanceService } from '@ValenceServer/maintenance/MaintenanceService';
 import type { JobScheduleService } from '@ValenceServer/jobs/JobScheduleService';
@@ -117,6 +118,7 @@ import type { EmailService } from '@ValenceServer/email/EmailService';
 import type { TelemetryService } from '@ValenceServer/telemetry/TelemetryService';
 import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 import type { TrailerAddresses } from '@ValenceServer/requests/trailers/TrailerAddresses';
+import type { StreamMeter } from '@ValenceServer/monitor/createStreamMeter';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -143,6 +145,7 @@ type CreateAppOptions = {
   demoAccounts?: readonly string[];
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<string | null>;
+  setupCode?: { matches: (typed: string) => boolean };
   library: LibraryService;
   playback: PlaybackService;
   permissions?: PermissionService;
@@ -193,7 +196,11 @@ type CreateAppOptions = {
     defaultName?: string;
     peers: PeerClient;
     subjectOf?: (subject: PeerSubject) => Promise<PeerItem | null>;
-    catalogue?: (libraryId: string, after: string | null) => Promise<CataloguePage | null>;
+    catalogue?: (
+      libraryId: string,
+      after: string | null,
+      sharing: LinkSharing | null,
+    ) => Promise<CataloguePage | null>;
     warn?: (message: string) => void;
   };
   createAccountWithoutPassword?: (
@@ -305,8 +312,10 @@ type CreateAppOptions = {
   artworkNames?: ArtworkNames;
   artworkAddress?: string;
   folderDisk?: FolderDisk;
+  serverFolders?: readonly string[];
   uploadDisk?: UploadDisk;
   uploadSessions?: UploadSessions;
+  mediaOrigins?: MediaOriginStore;
   isTranscoderReachable?: () => Promise<boolean>;
   transcoderAddress?: string;
   listRunningJobs?: () => RunningJob[];
@@ -346,6 +355,7 @@ type CreateAppOptions = {
   log?: Logger;
   jobHistory?: JobHistoryStore;
   resourceHistory?: ResourceHistoryStore;
+  streamMeter?: StreamMeter;
   events?: EventBus;
   plugins?: (requests: PluginHost['requests']) => PluginService;
   imports?: ImportService;

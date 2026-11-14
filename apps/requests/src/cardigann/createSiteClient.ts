@@ -2,9 +2,11 @@ import { BROWSER_USER_AGENT } from '@ValenceRequests/cardigann/BROWSER_USER_AGEN
 import { randomUUID } from 'node:crypto';
 import iconv from 'iconv-lite';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { readBodyOrFail } from '@ValenceRequests/network/readBodyOrFail';
 import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareChallenge';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
+import type { GuardFor } from '@ValenceRequests/network/GuardFor';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 import { saying } from '@ValenceI18n/saying';
 
@@ -34,14 +36,19 @@ type SendOptions = {
   timeoutSeconds: number;
   followRedirects: boolean;
   referer?: string | null;
+  trustedHosts?: readonly string[];
+  isTheSite?: (hostname: string) => boolean;
 };
 
 type CreateSiteClientOptions = {
   fetch: SiteFetch;
   solver?: Pick<Solver, 'fetch'> | null;
+  guard?: GuardFor;
 };
 
 const MOST_REDIRECTS = 10;
+
+const MOST_BYTES = 10 * 1024 * 1024;
 
 /**
  * Reads a page's bytes in the character set it declares, or else the one its definition names, or
@@ -98,6 +105,9 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  * following redirects itself so that no cookie set along the way is lost, and reading pages in the
  * site's own character set.
  *
+ * Cookies and headers go to the site's own hosts, as the caller says which they are, and to no
+ * other host a redirect leads to. Where the caller does not say, the site is the host first asked.
+ *
  * A site behind Cloudflare's browser check is asked again through the service's own browser, and
  * the cookies and browser it got past the check with are kept for the requests after. From then on
  * that site's requests go straight to the browser, which the site now trusts, where a request from
@@ -106,9 +116,10 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  *
  * @param fetch - How to ask.
  * @param solver - The browser that gets past the check, or nothing where there is none.
+ * @param guard - What holds every host but the site's own to the public internet, where there is one.
  * @returns The client.
  */
-const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => {
+const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptions) => {
   const throughTheBrowser = new Set<string>();
 
   const browserIdOf = (session: SiteSession): string => {
@@ -130,12 +141,14 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
     }
 
     const { host } = new URL(request.url);
+    const isTheSite =
+      options.isTheSite ?? ((hostname: string) => hostname === new URL(from).hostname);
     let solution: Awaited<ReturnType<Solver['fetch']>>;
 
     try {
       solution = await solver.fetch(
         request,
-        { ...options.session.cookies },
+        isTheSite(new URL(request.url).hostname) ? { ...options.session.cookies } : {},
         browserIdOf(options.session),
       );
     } catch (error) {
@@ -166,32 +179,36 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
 
   const send = async (request: SiteRequest, options: SendOptions): Promise<SiteResponse> => {
     let current = request;
+    const reach = guard === undefined ? fetch : guard(options.trustedHosts ?? []);
+    const isTheSite =
+      options.isTheSite ?? ((hostname: string) => hostname === new URL(request.url).hostname);
 
     for (let hops = 0; hops <= MOST_REDIRECTS; hops += 1) {
       if (options.followRedirects && throughTheBrowser.has(new URL(current.url).host)) {
         return solve(current, options, request.url);
       }
 
-      const cookie = Object.entries(options.session.cookies)
+      const isOurs = isTheSite(new URL(current.url).hostname);
+      const cookie = Object.entries(isOurs ? options.session.cookies : {})
         .map(([name, value]) => `${name}=${value}`)
         .join('; ');
       let response: Response;
 
       try {
-        response = await fetch(current.url, {
+        response = await reach(current.url, {
           method: current.method,
           headers: {
             'user-agent': options.session.userAgent ?? BROWSER_USER_AGENT,
             accept:
               'text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7',
-            ...(options.referer === undefined || options.referer === null
+            ...(options.referer === undefined || options.referer === null || !isOurs
               ? {}
               : { referer: options.referer }),
             ...(cookie === '' ? {} : { cookie }),
             ...(current.body === null
               ? {}
               : { 'content-type': 'application/x-www-form-urlencoded' }),
-            ...current.headers,
+            ...(isOurs ? current.headers : {}),
           },
           ...(current.body === null ? {} : { body: current.body }),
           redirect: 'manual',
@@ -207,7 +224,9 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
         );
       }
 
-      keepCookies(options.session, response);
+      if (isOurs) {
+        keepCookies(options.session, response);
+      }
 
       const location = response.headers.get('location');
 
@@ -225,15 +244,23 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
           };
         }
 
-        const keepsMethod = response.status === 307 || response.status === 308;
+        const keepsMethod =
+          (response.status === 307 || response.status === 308) &&
+          isOurs &&
+          isTheSite(new URL(next).hostname);
 
         current = keepsMethod
           ? { ...current, url: next }
-          : { url: next, method: 'GET', body: null, headers: current.headers };
+          : {
+              url: next,
+              method: 'GET',
+              body: null,
+              headers: isOurs && isTheSite(new URL(next).hostname) ? current.headers : {},
+            };
         continue;
       }
 
-      const bytes = new Uint8Array(await response.arrayBuffer());
+      const bytes = await readBodyOrFail(response, MOST_BYTES);
       const body = readText(bytes, response.headers.get('content-type'), options.encoding);
 
       if (isCloudflareChallenge(response.status, response.headers.get('server'), body)) {

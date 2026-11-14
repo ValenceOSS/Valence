@@ -313,6 +313,19 @@ const WebhookPage = ({
               onSave={(url) => save({ url })}
             />
           </SettingRow>
+          <SettingRow
+            title={say('screens.adminArea.webhooksPanel.localNetwork')}
+            description={say('screens.adminArea.webhooksPanel.localNetworkDescription')}
+          >
+            <Switch
+              label={say('screens.adminArea.webhooksPanel.localNetwork')}
+              isLabelHidden
+              isOn={webhook.reachesLocalNetwork}
+              onToggle={() => {
+                void save({ reachesLocalNetwork: !webhook.reachesLocalNetwork });
+              }}
+            />
+          </SettingRow>
           {isCustom ? (
             <CustomRequestRows
               setup={setup}

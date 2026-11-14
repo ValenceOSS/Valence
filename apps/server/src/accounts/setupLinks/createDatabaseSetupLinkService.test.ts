@@ -75,6 +75,30 @@ describe('createDatabaseSetupLinkService', () => {
   );
 
   it(
+    'still counts an account as awaiting its first use after its link is revoked, until one is used',
+    async () => {
+      const { links } = await aService();
+
+      await expect(links.isAwaitingFirstUse('ada')).resolves.toBe(false);
+
+      const issued = await links.issue('ada', { lifetimeDays: 1, by: null });
+
+      await links.revoke('ada');
+
+      await expect(links.stateOf('ada')).resolves.toBe('none');
+      await expect(links.isAwaitingFirstUse('ada')).resolves.toBe(true);
+
+      const again = await links.issue('ada', { lifetimeDays: 1, by: null });
+
+      await links.redeem(again.token, {});
+
+      expect(issued.token).not.toBe(again.token);
+      await expect(links.isAwaitingFirstUse('ada')).resolves.toBe(false);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'says an account is waiting, then expired once its link runs out',
     async () => {
       const { links, clock } = await aService();

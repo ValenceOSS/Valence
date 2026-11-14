@@ -34,6 +34,7 @@ import type {
 } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
 import { problemOfStartFailure } from '@ValenceServer/playback/problemOfStartFailure';
+import { isTrickplayAddress } from '@ValenceServer/playback/isTrickplayAddress';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
 
@@ -570,7 +571,10 @@ const createPlaybackService = ({
       return file === null ? { kind: 'pending' } : { kind: 'ready', file };
     },
 
-    readTrickplayFile: (trickplayId, name) => transcoder.readTrickplayFile(trickplayId, name),
+    readTrickplayFile: (trickplayId, name) =>
+      isTrickplayAddress(trickplayId)
+        ? transcoder.readTrickplayFile(trickplayId, name)
+        : Promise.resolve(null),
 
     stop: (sessionId, deviceId) => transcoder.stopSession(sessionId, deviceId),
 

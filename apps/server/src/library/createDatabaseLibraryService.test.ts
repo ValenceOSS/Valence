@@ -575,6 +575,38 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     expect(await service.isSeriesOutOfReach(ADA, 'a-show')).toBe(true);
   });
 
+  it('keeps a series within reach while any one of its episodes is, and out of it only when none is', async () => {
+    const { db, service } = await aLibrary();
+
+    await db
+      .insert(series)
+      .values({ id: 'mixed', libraryId: SHOWS_ID, key: 'mixed', title: 'Mixed' });
+    await db.insert(mediaItem).values([
+      aFilm('one', 'One', {
+        libraryId: SHOWS_ID,
+        path: '/shows/one.mkv',
+        seriesId: 'mixed',
+        seasonNumber: 1,
+        episodeNumber: 1,
+      }),
+      aFilm('two', 'Two', {
+        libraryId: FILMS_ID,
+        path: '/films/two.mkv',
+        seriesId: 'mixed',
+        seasonNumber: 1,
+        episodeNumber: 2,
+      }),
+    ]);
+    await db.insert(libraryBlock).values({ userId: 'ada', libraryId: SHOWS_ID });
+
+    expect(await service.isSeriesOutOfReach(ADA, 'mixed')).toBe(false);
+    expect(await service.isSeriesOutOfReach(ADA, 'nothing-here')).toBe(false);
+
+    await db.insert(libraryBlock).values({ userId: 'ada', libraryId: FILMS_ID });
+
+    expect(await service.isSeriesOutOfReach(ADA, 'mixed')).toBe(true);
+  });
+
   it('makes a library of series an anime one and back, and never a library of films', async () => {
     const { service } = await aLibrary();
 
@@ -859,6 +891,22 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     await service.refuseLibrary('ada', FILMS_ID);
 
     await expect(service.refusedLibraries('ada')).resolves.toEqual([FILMS_ID]);
+  });
+
+  it('says in one lookup whether a library is kept from a viewer, or is not there', async () => {
+    const { service } = await aLibrary();
+    await expect(service.isLibraryOutOfView(ADA, FILMS_ID)).resolves.toBe(false);
+
+    await service.refuseLibrary('ada', FILMS_ID);
+
+    await expect(service.isLibraryOutOfView(ADA, FILMS_ID)).resolves.toBe(true);
+    await expect(
+      service.isLibraryOutOfView({ ...ADA, isAdministrator: true }, FILMS_ID),
+    ).resolves.toBe(false);
+    await expect(service.isLibraryOutOfView(SERVER, FILMS_ID)).resolves.toBe(false);
+    await expect(
+      service.isLibraryOutOfView(SERVER, '00000000-0000-4000-8000-000000000000'),
+    ).resolves.toBe(true);
   });
 
   it('keeps one ceiling per library, the one set last', async () => {

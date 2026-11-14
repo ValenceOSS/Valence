@@ -15,6 +15,8 @@ const THERE = '00000000-0000-4000-8000-0000000000b1';
 
 const SESSION = `linked~${FILMS}~s1`;
 
+const A_TICKET = 'aTicketOfFortyThreeCharactersInBase64url_-0';
+
 const reason: Reason = { code: 'ClientSupportsSource', detail: sayVerbatim('It plays') };
 
 const plan: PlaybackPlan = {
@@ -66,7 +68,7 @@ const films = (route: string, asking: Asking): Response | null => {
   }
 
   if (route === '/direct') {
-    return Response.json({ ticket: 'a-ticket' });
+    return Response.json({ ticket: A_TICKET });
   }
 
   if (route.endsWith('/heartbeat')) {
@@ -253,7 +255,59 @@ describe('createLinkedPlayback', () => {
         sessionId: SESSION,
         delivery: {
           kind: 'hls',
-          manifestUrl: 'https://films.example/api/federation/v1/direct/a-ticket/index.m3u8',
+          manifestUrl: `https://films.example/api/federation/v1/direct/${A_TICKET}/index.m3u8`,
+        },
+      },
+    });
+  });
+
+  it('hands players no address a linked server chose outside its own routes', async () => {
+    for (const delivery of [
+      { kind: 'hls', manifestUrl: 'https://elsewhere.example/index.m3u8' },
+      { kind: 'hls', manifestUrl: '//elsewhere.example/api/playback/session/s1/index.m3u8' },
+      { kind: 'hls', manifestUrl: '/api/playback/session/s1/../../../libraries' },
+      { kind: 'direct', url: 'https://elsewhere.example/file' },
+    ]) {
+      const { linked } = playback((route, asking) =>
+        route === `/api/playback/${THERE}/session`
+          ? Response.json({ ...STARTED, delivery })
+          : films(route, asking),
+      );
+
+      expect(await linked.start(HERE, aDeviceProfile(), 0), JSON.stringify(delivery)).toMatchObject(
+        { kind: 'failed' },
+      );
+    }
+  });
+
+  it('hands players no thumbnails a linked server addressed somewhere else', async () => {
+    const { linked } = playback((route, asking) =>
+      route === `/api/playback/${THERE}/trickplay`
+        ? Response.json({
+            id: 't1',
+            url: 'https://elsewhere.example/sheet.jpg',
+            intervalSeconds: 10,
+            tileWidth: 320,
+            tileHeight: 180,
+          })
+        : films(route, asking),
+    );
+
+    expect(await linked.trickplay(HERE)).toBeNull();
+  });
+
+  it('plays straight from a linked server only with a ticket shaped like one', async () => {
+    const { linked } = playback(
+      (route, asking) =>
+        route === '/direct' ? Response.json({ ticket: '../../somewhere?' }) : films(route, asking),
+      'https://films.example',
+    );
+
+    expect(await linked.start(HERE, aDeviceProfile(), 0)).toMatchObject({
+      session: {
+        delivery: {
+          kind: 'hls',
+          manifestUrl: `/api/playback/session/${encodeURIComponent(SESSION)}/index.m3u8`,
         },
       },
     });

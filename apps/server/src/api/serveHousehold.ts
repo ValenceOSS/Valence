@@ -1,6 +1,5 @@
 import { frameFromQuery } from '@ValenceServer/pictures/frameFromQuery';
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
-import { withCaller } from '@ValenceServer/web/withCaller';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
@@ -47,7 +46,6 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     announceProfiles,
     readAccount,
     readActing,
-    callerOf,
     listUsers,
     recordAudit,
   } = context;
@@ -463,23 +461,20 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     forwarded.delete('content-length');
 
     return auth.handler(
-      await withCaller(
-        new Request(
-          new URL(
-            byUsername ? '/api/auth/sign-in/username' : '/api/auth/sign-in/email',
-            context.req.url,
-          ),
-          {
-            method: 'POST',
-            headers: forwarded,
-            body: JSON.stringify(
-              byUsername
-                ? { username: account.username, password: parsed.data.password }
-                : { email: account.email, password: parsed.data.password },
-            ),
-          },
+      new Request(
+        new URL(
+          byUsername ? '/api/auth/sign-in/username' : '/api/auth/sign-in/email',
+          context.req.url,
         ),
-        callerOf?.(context) ?? null,
+        {
+          method: 'POST',
+          headers: forwarded,
+          body: JSON.stringify(
+            byUsername
+              ? { username: account.username, password: parsed.data.password }
+              : { email: account.email, password: parsed.data.password },
+          ),
+        },
       ),
     );
   });

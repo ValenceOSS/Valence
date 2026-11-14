@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { say } from '@ValenceI18n/say';
@@ -10,7 +11,12 @@ import { say } from '@ValenceI18n/say';
  * @returns Why.
  */
 const saidOfRefusal = async (answered: Response | null): Promise<Said> => {
-  const body = answered === null ? null : await answered.json().catch(() => null);
+  const body =
+    answered === null
+      ? null
+      : await boundedAnswer(answered)
+          .json()
+          .catch(() => null);
   const refusal = RefusalSchema.safeParse(body);
 
   return refusal.success

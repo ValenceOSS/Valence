@@ -63,7 +63,7 @@ const PartyCommandSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('play'), atSeconds: z.number().nonnegative() }),
   z.object({ kind: z.literal('pause'), atSeconds: z.number().nonnegative() }),
   z.object({ kind: z.literal('seek'), atSeconds: z.number().nonnegative() }),
-  z.object({ kind: z.literal('changeWhatIsPlaying'), mediaId: z.string().min(1) }),
+  z.object({ kind: z.literal('changeWhatIsPlaying'), mediaId: z.string().min(1).max(128) }),
 ]);
 
 const PartyNoticeSchema = z.object({

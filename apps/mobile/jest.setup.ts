@@ -238,10 +238,16 @@ jest.mock('expo-video', () => ({
   },
   VideoView: ({
     startsPictureInPictureAutomatically,
+    onPictureInPictureStart,
+    onPictureInPictureStop,
   }: {
     startsPictureInPictureAutomatically?: boolean;
+    onPictureInPictureStart?: () => void;
+    onPictureInPictureStop?: () => void;
   }) => {
     mockPlayer.floatsOnLeaving = startsPictureInPictureAutomatically === true;
+    mockPlayer.popOut = onPictureInPictureStart ?? (() => undefined);
+    mockPlayer.popBackIn = onPictureInPictureStop ?? (() => undefined);
 
     return null;
   },

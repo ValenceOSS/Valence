@@ -15,6 +15,7 @@ const aWebhook = (overrides: Partial<WebhookSubscription> = {}): WebhookSubscrip
   events: ['job.failed'],
   filters: { mediaAdded: 'perScan', accounts: [], profiles: [], itemTypes: [] },
   custom: null,
+  reachesLocalNetwork: false,
   enabled: true,
   createdAt: '2026-08-14T20:00:00.000Z',
   lastAttemptAt: null,

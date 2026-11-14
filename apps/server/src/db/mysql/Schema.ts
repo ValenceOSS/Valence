@@ -740,6 +740,9 @@ const resourceSample = mysqlTable(
     systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
     cpuCount: int('cpuCount').notNull(),
     gpuPercent: float('gpuPercent'),
+    networkReceivedBytesPerSecond: float('networkReceivedBytesPerSecond'),
+    networkSentBytesPerSecond: float('networkSentBytesPerSecond'),
+    streamedBytesPerSecond: float('streamedBytesPerSecond'),
   },
   (table) => [index('resource_sample_at_idx').on(table.atMs)],
 );
@@ -923,6 +926,24 @@ const versionChoice = mysqlTable(
     setAt: momentNow('setAt').notNull(),
   },
   (table) => [uniqueIndex('version_choice_path_idx').on(table.libraryId, table.pathHash)],
+);
+
+const mediaOrigin = mysqlTable(
+  'media_origin',
+  {
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    source: varchar('source', { length: 32 }).notNull(),
+    via: mediumtext('via'),
+    recordedAt: momentNow('recordedAt').notNull(),
+  },
+  (table) => [
+    uniqueIndex('media_origin_path_idx').on(table.libraryId, table.pathHash),
+    check('media_origin_source', sql`${table.source} in ('upload', 'import')`),
+  ],
 );
 
 const titleEdit = mysqlTable(
@@ -1674,6 +1695,7 @@ const webhookSubscription = mysqlTable(
       .notNull()
       .$defaultFn(() => ({})),
     custom: jsonColumn('custom'),
+    reachesLocalNetwork: boolean('reachesLocalNetwork').notNull().default(false),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: momentNow('createdAt').notNull(),
     lastAttemptAt: moment('lastAttemptAt'),
@@ -2434,6 +2456,7 @@ export {
   episodePin,
   seasonSource,
   versionChoice,
+  mediaOrigin,
   titleEdit,
   titleChange,
   mediaItem,

@@ -21,8 +21,13 @@ const A_SHARE: ResolvedShare = {
 const gatedApp = (options: {
   share?: ResolvedShare | null;
   hasJoined?: boolean;
+  admits?: boolean;
   claimedBy?: string[];
   item?: { id: string; seriesId: string | null } | null;
+  creatorShares?: boolean;
+  creatorReaches?: boolean;
+  creatorReachesBook?: boolean;
+  secure?: boolean;
 }) => {
   const shares = {
     create: () => Promise.resolve(null),
@@ -31,7 +36,7 @@ const gatedApp = (options: {
     revoke: () => Promise.resolve(false),
     revokeAnybody: () => Promise.resolve(null),
     resolve: () => Promise.resolve(options.share === undefined ? A_SHARE : options.share),
-    join: () => Promise.resolve(),
+    join: () => Promise.resolve(options.admits ?? true),
     hasJoined: () => Promise.resolve(options.hasJoined ?? false),
   } satisfies ShareService;
 
@@ -46,10 +51,16 @@ const gatedApp = (options: {
         isClaimedBy: (_sessionId, shareId) => (options.claimedBy ?? []).includes(shareId),
         release: () => {},
       },
+      isCookieSecure: () => Promise.resolve(options.secure ?? false),
       itemOf: () =>
         Promise.resolve(
           options.item === undefined ? { id: 'film-1', seriesId: null } : options.item,
         ),
+      creator: {
+        stillShares: () => Promise.resolve(options.creatorShares ?? true),
+        reaches: () => Promise.resolve(options.creatorReaches ?? true),
+        reachesBook: () => Promise.resolve(options.creatorReachesBook ?? true),
+      },
     }),
   );
 
@@ -63,6 +74,15 @@ const holding = (token: string | null) => ({
 });
 
 describe('createShareGate', () => {
+  it('marks the cookie that admits a guest secure where the server’s cookies are', async () => {
+    const share = { ...A_SHARE, viewCap: 3 };
+    const secure = await gatedApp({ share, secure: true }).request('/api/health', holding('abc'));
+    const plain = await gatedApp({ share, secure: false }).request('/api/health', holding('abc'));
+
+    expect(secure.headers.get('set-cookie')).toContain('Secure');
+    expect(plain.headers.get('set-cookie')).not.toContain('Secure');
+  });
+
   it('refuses somebody holding no link at all', async () => {
     const response = await gatedApp({}).request('/api/health', holding(null));
 
@@ -104,6 +124,32 @@ describe('createShareGate', () => {
     expect(response.status).toBe(200);
   });
 
+  it('lets in a guest of a capped link, and gives them the cookie that counts them once', async () => {
+    const response = await gatedApp({ share: { ...A_SHARE, viewCap: 1 } }).request(
+      '/api/health',
+      holding('abc'),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toContain('valence_share_joiner=');
+  });
+
+  it('refuses a guest of a capped link that has no room left, whichever route they call', async () => {
+    const response = await gatedApp({
+      share: { ...A_SHARE, viewCap: 1, views: 1 },
+      admits: false,
+    }).request('/api/health', holding('abc'));
+
+    expect(response.status).toBe(410);
+    expect(await response.json()).toMatchObject({ ended: 'spent' });
+  });
+
+  it('does not count a guest of an uncapped link', async () => {
+    const response = await gatedApp({}).request('/api/health', holding('abc'));
+
+    expect(response.headers.get('set-cookie')).toBeNull();
+  });
+
   it('refuses a route nobody opened to a share', async () => {
     const response = await gatedApp({}).request('/api/admin/shares', holding('abc'));
 
@@ -137,6 +183,33 @@ describe('createShareGate', () => {
     expect(response.status).toBe(200);
   });
 
+  it('says a link no longer works once its creator may no longer share', async () => {
+    const response = await gatedApp({ creatorShares: false }).request(
+      '/api/media/3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+      holding('abc'),
+    );
+
+    expect(response.status).toBe(410);
+  });
+
+  it('refuses an item its creator can no longer reach', async () => {
+    expect(
+      (
+        await gatedApp({}).request(
+          '/api/media/3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+          holding('abc'),
+        )
+      ).status,
+    ).toBe(200);
+
+    const response = await gatedApp({ creatorReaches: false }).request(
+      '/api/media/3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+      holding('abc'),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
   it('refuses an item the link does not cover', async () => {
     const response = await gatedApp({ item: { id: 'other', seriesId: null } }).request(
       '/api/media/other',
@@ -159,6 +232,16 @@ describe('createShareGate', () => {
     }).request(`/api/books/${book}/cover`, holding('token'));
 
     expect(response.status).toBe(200);
+  });
+
+  it('refuses the book that was shared once its creator can no longer reach it', async () => {
+    const book = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
+    const response = await gatedApp({
+      share: { ...A_SHARE, kind: 'book', mediaId: null, bookId: book },
+      creatorReachesBook: false,
+    }).request(`/api/books/${book}/cover`, holding('token'));
+
+    expect(response.status).toBe(403);
   });
 
   it('refuses a guest a book other than the one shared', async () => {

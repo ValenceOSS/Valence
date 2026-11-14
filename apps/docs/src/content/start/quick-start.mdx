@@ -58,7 +58,7 @@ A healthy server answers with JSON containing `"status":"ok"` and `"transcoderRe
 
 ## 4. Create the administrator
 
-Open your `PUBLIC_URL` in a browser. The first visit shows the setup wizard, which asks for a name, an email address and a password of at least 10 characters for the administrator account, plus the addresses you use to reach the server and whether it is reached over HTTPS.
+Open your `PUBLIC_URL` in a browser. The first visit shows the setup wizard, which first asks for the setup code Valence printed in its log (run `docker compose logs valence` to see it), then for a name, an email address and a password of at least 10 characters for the administrator account, plus the addresses you use to reach the server and whether it is reached over HTTPS.
 
 The first account is the administrator, so make it before you tell anybody else the address. Confirm that the trusted origins box lists the address you are actually using. A missing origin is the most common cause of a sign-in that does nothing. Leave the HTTPS box unticked for this plain HTTP test. See [First run](/use/first-run) for the rest of the wizard.
 

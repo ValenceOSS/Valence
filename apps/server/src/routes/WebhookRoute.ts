@@ -29,6 +29,7 @@ const Webhook = z
     events: z.array(WebhookEvent),
     filters: WebhookFilters,
     custom: CustomWebhook.nullable(),
+    reachesLocalNetwork: z.boolean(),
     enabled: z.boolean(),
     createdAt: z.string().datetime(),
     lastAttemptAt: z.string().datetime().nullable(),
@@ -47,6 +48,7 @@ const CreateWebhookRequest = z
     events: z.array(SubscribableEvent).min(1),
     filters: WebhookFiltersSchema.prefault({}),
     custom: CustomWebhook.nullable().optional(),
+    reachesLocalNetwork: z.boolean().default(false),
   })
   .openapi('CreateWebhookRequest');
 
@@ -59,6 +61,7 @@ const UpdateWebhookRequest = z
     filters: WebhookFiltersSchema.optional(),
     custom: CustomWebhook.nullable().optional(),
     enabled: z.boolean().optional(),
+    reachesLocalNetwork: z.boolean().optional(),
   })
   .openapi('UpdateWebhookRequest');
 

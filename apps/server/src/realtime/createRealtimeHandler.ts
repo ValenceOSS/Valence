@@ -224,6 +224,10 @@ const createRealtimeHandler = ({
         }
 
         if (read.data.kind.startsWith('party')) {
+          if (read.data.kind !== 'partyLeave' && !(await registry.holds(id, 'sharing.party'))) {
+            return;
+          }
+
           if (relay !== undefined && who.accountId !== null && relay.takes(id, read.data)) {
             await relay.say(
               id,

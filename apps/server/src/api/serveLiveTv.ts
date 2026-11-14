@@ -1,3 +1,4 @@
+import { boundedAnswer } from '@ValenceServer/linking/boundedAnswer';
 import {
   changeLiveSourceRoute,
   addLiveSourceRoute,
@@ -12,11 +13,14 @@ import {
   watchLiveChannelRoute,
 } from '@ValenceServer/routes/LiveTvRoute';
 import { checkEmbed } from '@ValenceServer/live/checkEmbed';
+import { createPublicOnlyFetch } from '@ValenceServer/live/createPublicOnlyFetch';
 import { probeStream } from '@ValenceServer/live/probeStream';
 import { UPLOADED_LOGO } from '@ValenceServer/live/UPLOADED_LOGO';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
+import type { StoredLiveChannel } from '@ValenceServer/live/LiveTvStore';
+import { sniffLogoType } from '@ValenceServer/live/sniffLogoType';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -26,6 +30,8 @@ const GUIDE_SHOWS_BEHIND_MS = 60 * 60 * 1000;
 const GUIDE_SHOWS_AHEAD_MS = 12 * 60 * 60 * 1000;
 
 const MOST_GUIDE_MS = 8 * 24 * 60 * 60 * 1000;
+
+const MOST_LOGO_BYTES = 4 * 1024 * 1024;
 
 /**
  * Registers the live TV endpoints: the sources, which only an admin who may change the server's
@@ -47,6 +53,19 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     neverKeep,
     tooBigToRead,
   } = context;
+
+  /**
+   * How to fetch for a channel: held to the public internet where its playlist came from there,
+   * so a playlist cannot point this server at its own network, and as given otherwise.
+   *
+   * @param channel - The channel being fetched for.
+   * @param inner - How the channel's addresses are reached.
+   * @returns The fetch to use.
+   */
+  const fetcherFor = async (channel: StoredLiveChannel, inner: typeof fetch) =>
+    (await liveTv?.service.isFromThePublicInternet(channel)) === true
+      ? createPublicOnlyFetch(inner)
+      : inner;
 
   const isAdmin = (headers: Headers) => requires(headers, 'server.settings');
 
@@ -247,7 +266,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             channel.id,
             { u: context.req.query('u'), e: context.req.query('e'), s: context.req.query('s') },
             channel,
-            liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id)),
+            await fetcherFor(channel, liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
           );
 
     return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
@@ -281,7 +300,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
             context.req.param('token'),
             `${url.pathname.slice(prefix.length)}${url.search}`,
             channel,
-            liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id)),
+            await fetcherFor(channel, liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id))),
           );
 
     return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
@@ -307,18 +326,47 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     const logo =
       channel?.logoUrl === null || channel === null || channel.logoUrl.startsWith(UPLOADED_LOGO)
         ? null
-        : await (liveTv?.routes.logos ?? fetch)(channel.logoUrl, {
+        : await (
+            await fetcherFor(channel, liveTv?.routes.logos ?? fetch)
+          )(channel.logoUrl, {
             signal: AbortSignal.timeout(10_000),
           }).catch(() => null);
 
-    if (logo === null || !logo.ok || logo.body === null) {
+    const declared = logo?.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+    const isPicture =
+      /^image\/(png|jpe?g|webp|gif|avif|bmp|x-ms-bmp|x-icon|vnd\.microsoft\.icon|svg\+xml)$/u.test(
+        declared,
+      );
+
+    if (
+      logo === null ||
+      !logo.ok ||
+      logo.body === null ||
+      (!isPicture && declared !== 'application/octet-stream')
+    ) {
+      void logo?.body?.cancel();
+
       return context.json(refuse('error.live.thatChannelHasNoLogo'), 404);
     }
 
-    return new Response(logo.body, {
+    const bytes = await boundedAnswer(logo, MOST_LOGO_BYTES)
+      .arrayBuffer()
+      .then((read) => new Uint8Array(read))
+      .catch(() => null);
+    const sniffed = bytes === null ? null : sniffLogoType(bytes);
+    const declaredType = declared === 'image/jpg' ? 'image/jpeg' : declared;
+    const logoType = bytes === null ? null : isPicture ? declaredType : sniffed;
+
+    if (logoType === null || bytes === null) {
+      return context.json(refuse('error.live.thatChannelHasNoLogo'), 404);
+    }
+
+    return new Response(bytes, {
       status: 200,
       headers: {
-        'content-type': logo.headers.get('content-type') ?? 'image/png',
+        'content-type': logoType,
+        'content-security-policy': "default-src 'none'; sandbox",
+        'x-content-type-options': 'nosniff',
         'cache-control': 'private, max-age=86400',
       },
     });

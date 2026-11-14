@@ -22,15 +22,17 @@ import {
 import { createLinkKeeper } from '@ValenceServer/api/createLinkKeeper';
 import { handlePartyMessage } from '@ValenceServer/parties/handlePartyMessage';
 import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
+import { innerAddressOf } from '@ValenceServer/linking/innerAddressOf';
+import { whatAPeerMayAsk } from '@ValenceServer/linking/whatAPeerMayAsk';
 import { PEER_MEMBER } from '@ValenceServer/linking/parties/PEER_MEMBER';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { AskedAlongSchema } from '@ValenceContracts/schemas/LinkSharing';
 import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { StartResponse } from '@ValenceServer/routes/PlaybackRoute';
 import { PeerAskSchema } from '@ValenceServer/linking/content/PeerAskSchema';
-import { ceilingOf } from '@ValenceServer/linking/content/ceilingOf';
+import { startBodyWithin } from '@ValenceServer/linking/content/startBodyWithin';
+import { createStreamSlots } from '@ValenceServer/linking/content/createStreamSlots';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
-import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { PeerAsk } from '@ValenceServer/linking/content/PeerAskSchema';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -59,10 +61,6 @@ const StartedSchema = z.object({
   sessionId: z.string().min(1),
   delivery: z.object({ kind: z.enum(['hls', 'direct']) }),
 });
-
-const AskedToStartSchema = z
-  .object({ requestedQuality: QualityStepIdSchema.optional() })
-  .catchall(JsonValueSchema);
 
 const BeatSchema = z.object({ isPlaying: z.boolean() });
 
@@ -143,6 +141,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
   } = context;
   const asking = new Map<string, PeerAsk[]>();
   const tickets = createDirectTickets();
+  const streamSlots = createStreamSlots();
   const viewerOf = (serverId: string, sessionId: string) => `peer~${serverId}~${sessionId}`;
   const keeper = createLinkKeeper(context);
   const syncSoon = createSoonSync(syncLinkedServer, SYNCS_AFTER_MS);
@@ -328,11 +327,15 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
         ? context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403)
         : context.json(
             {
-              ticket: tickets.issue({
-                serverId: who.serverId,
-                route: `/api/playback/session/${encodeURIComponent(sessionId)}`,
-                isWhole: false,
-              }),
+              ticket: tickets.issue(
+                {
+                  serverId: who.serverId,
+                  route: `/api/playback/session/${encodeURIComponent(sessionId)}`,
+                  isWhole: false,
+                  subjectId: sessionId,
+                },
+                `server:${who.serverId}`,
+              ),
             },
             200,
           );
@@ -346,11 +349,15 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       ? context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403)
       : context.json(
           {
-            ticket: tickets.issue({
-              serverId: who.serverId,
-              route: `/api/playback/${subject.id}/file`,
-              isWhole: true,
-            }),
+            ticket: tickets.issue(
+              {
+                serverId: who.serverId,
+                route: `/api/playback/${subject.id}/file`,
+                isWhole: true,
+                subjectId: subject.id,
+              },
+              `server:${who.serverId}`,
+            ),
           },
           200,
         );
@@ -359,7 +366,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
   app.get(`${FEDERATION_PATH}/direct/:ticket/:name`, async (context) => {
     const ticketed = tickets.read(context.req.param('ticket'));
 
-    if (ticketed === null) {
+    if (ticketed === null || !(await linkSharing.stillReaches(ticketed))) {
       return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403);
     }
 
@@ -381,7 +388,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       { method: 'GET', headers },
     );
 
-    peerRequests.add(inner.headers);
+    peerRequests.set(inner.headers, ticketed.serverId);
 
     const answered = await app.fetch(inner);
     const passedBack = new Headers(answered.headers);
@@ -424,7 +431,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
           }),
         holds: () => Promise.resolve(false),
       },
-      asked.data,
+      whatAPeerMayAsk(asked.data),
       undefined,
     );
 
@@ -459,7 +466,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     const answered = await linkedAsk(context.req.param('id'), '/requests', {
       method: 'POST',
       headers: new Headers({ 'content-type': 'application/json' }),
-      body: new TextEncoder().encode(JSON.stringify(asked.data)).buffer,
+      body: new TextEncoder().encode(JSON.stringify(whatAPeerMayAsk(asked.data))).buffer,
     });
 
     if (answered === null) {
@@ -505,7 +512,11 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.linking.notSignedByALinkedServer'), 401);
     }
 
-    const page = await linkCatalogue(who.libraryId, context.req.valid('query').after ?? null);
+    const page = await linkCatalogue(
+      who.libraryId,
+      context.req.valid('query').after ?? null,
+      who.sharing ?? null,
+    );
 
     return page === null
       ? context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403)
@@ -538,81 +549,98 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       qualityCeiling: null,
     };
 
-    if (
-      isStarting &&
-      mostStreams !== null &&
-      peerClaims.countOf('session', who.serverId) >= mostStreams
-    ) {
+    const giveBack = isStarting
+      ? streamSlots.take(who.serverId, mostStreams, peerClaims.countOf('session', who.serverId))
+      : () => undefined;
+
+    if (giveBack === null) {
       return context.json(refuse('error.linking.yourServerIsPlayingAsMuchAsItMay'), 429);
     }
 
-    const toStart =
-      isStarting && qualityCeiling !== null && sent !== null
-        ? AskedToStartSchema.safeParse(jsonIn(sent))
-        : null;
     const body =
-      toStart?.success === true && qualityCeiling !== null
-        ? new TextEncoder().encode(
-            JSON.stringify({
-              ...toStart.data,
-              requestedQuality: ceilingOf(toStart.data.requestedQuality, qualityCeiling),
-            }),
-          ).buffer
-        : sent;
-    const inner = new Request(new URL(`${who.inner}${asked.search}`, asked.origin), {
+      isStarting && qualityCeiling !== null ? startBodyWithin(sent, qualityCeiling) : sent;
+
+    if (isStarting && qualityCeiling !== null && body === null) {
+      giveBack();
+
+      return context.json(refuse('error.linking.thatStartCouldNotBeRead'), 400);
+    }
+
+    const address = innerAddressOf(who.inner, asked.search, asked.origin);
+
+    if (address === null) {
+      giveBack();
+
+      return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403);
+    }
+
+    const inner = new Request(address, {
       method,
       headers,
       ...(body === null ? {} : { body }),
     });
 
-    peerRequests.add(inner.headers);
+    peerRequests.set(inner.headers, who.serverId);
 
-    const answered = await app.fetch(inner);
+    const answered = await (async () => {
+      try {
+        return await app.fetch(inner);
+      } catch (error) {
+        giveBack();
+
+        throw error;
+      }
+    })();
     const stopped = method === 'DELETE' ? STOPPED_SESSION.exec(who.inner)?.[1] : undefined;
     const beating = method === 'POST' ? HEARTBEAT.exec(who.inner)?.[1] : undefined;
 
-    if (answered.ok && isStarting) {
-      const started = StartedSchema.safeParse(await answered.clone().json());
-      const plan = StartResponse.safeParse(await answered.clone().json());
+    try {
+      if (answered.ok && isStarting) {
+        const started = StartedSchema.safeParse(await answered.clone().json());
+        const plan = StartResponse.safeParse(await answered.clone().json());
 
-      if (started.success) {
-        const { sessionId } = started.data;
-        const watcher = viewerOf(who.serverId, sessionId);
-        const item = who.title.mediaId === null ? null : await library.getMedia(who.title.mediaId);
+        if (started.success) {
+          const { sessionId } = started.data;
+          const watcher = viewerOf(who.serverId, sessionId);
+          const item =
+            who.title.mediaId === null ? null : await library.getMedia(who.title.mediaId);
 
-        peerClaims.claim('session', sessionId, who.serverId, who.title);
-        presence.connect({
-          clientId: watcher,
-          socketId: watcher,
-          profileId: null,
-          profileName: who.personName,
-          fromServer: who.serverName,
-          deviceLabel: who.serverName,
-          send: (event) => {
-            const ask = PeerAskSchema.safeParse(event);
+          peerClaims.claim('session', sessionId, who.serverId, who.title);
+          presence.connect({
+            clientId: watcher,
+            socketId: watcher,
+            profileId: null,
+            profileName: who.personName,
+            fromServer: who.serverName,
+            deviceLabel: who.serverName,
+            send: (event) => {
+              const ask = PeerAskSchema.safeParse(event);
 
-            if (ask.success) {
-              asking.set(sessionId, [...(asking.get(sessionId) ?? []), ask.data]);
-            }
-          },
-        });
-
-        if (item !== null && plan.success) {
-          presence.startPlayback(watcher, {
-            mediaId: item.id,
-            mediaTitle: item.title,
-            seriesTitle: item.metadata.seriesTitle ?? null,
-            seasonNumber: item.metadata.seasonNumber ?? null,
-            episodeNumber: item.metadata.episodeNumber ?? null,
-            hasPoster: item.metadata.hasPoster,
-            hasBackdrop: item.metadata.hasBackdrop,
-            mode: started.data.delivery.kind === 'hls' ? 'transcode' : 'direct',
-            reuse: plan.data.reuse,
-            transcoderSessionId: started.data.delivery.kind === 'hls' ? sessionId : null,
-            plan: plan.data.plan,
+              if (ask.success) {
+                asking.set(sessionId, [...(asking.get(sessionId) ?? []), ask.data]);
+              }
+            },
           });
+
+          if (item !== null && plan.success) {
+            presence.startPlayback(watcher, {
+              mediaId: item.id,
+              mediaTitle: item.title,
+              seriesTitle: item.metadata.seriesTitle ?? null,
+              seasonNumber: item.metadata.seasonNumber ?? null,
+              episodeNumber: item.metadata.episodeNumber ?? null,
+              hasPoster: item.metadata.hasPoster,
+              hasBackdrop: item.metadata.hasBackdrop,
+              mode: started.data.delivery.kind === 'hls' ? 'transcode' : 'direct',
+              reuse: plan.data.reuse,
+              transcoderSessionId: started.data.delivery.kind === 'hls' ? sessionId : null,
+              plan: plan.data.plan,
+            });
+          }
         }
       }
+    } finally {
+      giveBack();
     }
 
     if (beating !== undefined && sent !== null) {

@@ -57,6 +57,27 @@ describe('NewWebhookDialog', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('starts a webhook on the local network where the switch is turned on', async () => {
+    const user = userEvent.setup();
+    const { onCreate } = drawn();
+
+    await user.type(screen.getByRole('textbox', { name: 'Address' }), 'http://192.168.1.5/hook');
+    await user.click(screen.getByRole('switch', { name: 'Local network' }));
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ reachesLocalNetwork: true }));
+  });
+
+  it('keeps a new webhook off the local network by default', async () => {
+    const user = userEvent.setup();
+    const { onCreate } = drawn();
+
+    await user.type(screen.getByRole('textbox', { name: 'Address' }), 'https://hooks.example/a');
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ reachesLocalNetwork: false }));
+  });
+
   it('stays open and says why where the server refuses', async () => {
     const user = userEvent.setup();
     const { onClose } = drawn({ message: 'That address points inside this network.' });

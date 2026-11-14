@@ -1079,6 +1079,14 @@ describe('starting playback', () => {
 });
 
 describe('the files a player asks for while it is watching', () => {
+  it('asks the transcoder for nothing outside its thumbnails', async () => {
+    const readTrickplayFile = vi.fn(() => Promise.resolve(null));
+    const { service } = build({ readTrickplayFile });
+
+    await expect(service.readTrickplayFile('../../../../proc/1', 'environ')).resolves.toBeNull();
+    expect(readTrickplayFile).not.toHaveBeenCalled();
+  });
+
   it('reads a file belonging to a session', async () => {
     const readSessionFile = vi.fn(() => Promise.resolve(null));
     const { service } = build({ readSessionFile });
@@ -1344,9 +1352,12 @@ describe('the files a player asks for while it is watching', () => {
     const readTrickplayFile = vi.fn(() => Promise.resolve(null));
     const { service } = build({ readTrickplayFile });
 
-    await service.readTrickplayFile('sheet-1', 'sheet-000.jpg');
+    await service.readTrickplayFile('0123456789abcdef0123456789abcdef', 'sheet-000.jpg');
 
-    expect(readTrickplayFile).toHaveBeenCalledWith('sheet-1', 'sheet-000.jpg');
+    expect(readTrickplayFile).toHaveBeenCalledWith(
+      '0123456789abcdef0123456789abcdef',
+      'sheet-000.jpg',
+    );
   });
 });
 

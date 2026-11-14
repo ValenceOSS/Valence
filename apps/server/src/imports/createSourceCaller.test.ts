@@ -56,6 +56,22 @@ describe('createSourceCaller', () => {
     expect(calls[0]?.url.toString()).toBe('https://plex.tv/api/users/');
   });
 
+  it('sends none of its key to a whole address on another host, and only over https', async () => {
+    const { fetch, calls } = aFakeSourceFetch(() => ({ body: 'text' }));
+    const caller = aCaller(fetch);
+
+    await caller.text('https://avatars.example/a.png', { headers: { token: 't' } });
+    await caller.text('http://source:8096/base/Items', { headers: { token: 't' } });
+
+    expect(calls[0]?.headers).toEqual({});
+    expect(calls[1]?.headers).toEqual({ key: 'k', token: 't' });
+    expect(await failureOf(caller.text('http://avatars.example/a.png'))).toEqual([
+      'server.imports.sourceCaller.nameCouldNotBeReached',
+      null,
+    ]);
+    expect(calls).toHaveLength(2);
+  });
+
   it('says when the source cannot be reached, or does not answer in time', async () => {
     const unreachable: SourceFetch = () => Promise.reject(new Error('refused'));
     const slow: SourceFetch = () => {
@@ -72,6 +88,21 @@ describe('createSourceCaller', () => {
     ]);
     expect(await failureOf(aCaller(slow).json('/x', Shape))).toEqual([
       'server.imports.sourceCaller.nameDidNotAnswerInTime',
+      null,
+    ]);
+  });
+
+  it('says a source whose address is not one could not be reached, rather than throwing', async () => {
+    const { fetch } = aFakeSourceFetch(() => ({ body: '{"a":1}' }));
+    const caller = createSourceCaller({
+      fetch,
+      base: 'not an address',
+      name: 'Jellyfin',
+      headers: {},
+    });
+
+    expect(await failureOf(caller.json('/x', Shape))).toEqual([
+      'server.imports.sourceCaller.nameCouldNotBeReached',
       null,
     ]);
   });

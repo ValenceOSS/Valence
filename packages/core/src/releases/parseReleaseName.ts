@@ -1,3 +1,4 @@
+import { MOST_RELEASE_NAME_CHARACTERS } from '@ValenceCore/releases/MOST_RELEASE_NAME_CHARACTERS';
 import { readAudio } from '@ValenceCore/releases/readAudio';
 import { readCodec } from '@ValenceCore/releases/readCodec';
 import { readEdition } from '@ValenceCore/releases/readEdition';
@@ -37,10 +38,13 @@ const afterTheTitle = (spaced: string, title: string): string => {
  * does not give is left empty rather than guessed. Languages are read only after the title, so a
  * title with a word such as Dan, Fin or English in it is not taken for a language.
  *
- * @param name - The release name.
+ * Only the first five hundred characters are read, which is longer than any real release name.
+ *
+ * @param given - The release name.
  * @returns What it is.
  */
-const parseReleaseName = (name: string): ParsedRelease => {
+const parseReleaseName = (given: string): ParsedRelease => {
+  const name = given.slice(0, MOST_RELEASE_NAME_CHARACTERS);
   const spaced = spacedName(name);
   const named = readTitle(spaced);
 

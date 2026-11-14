@@ -263,6 +263,63 @@ describe('managing roles over HTTP', () => {
       expect(response.status).toBe(403);
     });
 
+    it('refuses to give or take a role from somebody who outranks the actor', async () => {
+      const context = await signedInWith(['account.roles'], 100);
+      const senior = await context.permissions.createRole({
+        name: 'Senior',
+        position: 500,
+        color: null,
+        permissions: [],
+      });
+      const junior = await context.permissions.createRole({
+        name: 'Junior',
+        position: 10,
+        color: null,
+        permissions: [],
+      });
+
+      await context.permissions.assignRole('usr_other', senior.id);
+      await context.permissions.assignRole('usr_other', junior.id);
+
+      const given = await context.request(
+        `/api/admin/accounts/usr_other/roles/${junior.id}`,
+        'PUT',
+      );
+      const taken = await context.request(
+        `/api/admin/accounts/usr_other/roles/${junior.id}`,
+        'DELETE',
+      );
+
+      expect(given.status).toBe(403);
+      expect(taken.status).toBe(403);
+      expect(await taken.text()).toContain('equal to or higher than yours');
+      expect((await context.permissions.rolesFor('usr_other')).map((role) => role.name)).toEqual(
+        expect.arrayContaining(['Senior', 'Junior']),
+      );
+    });
+
+    it('still gives and takes a role from somebody junior to the actor', async () => {
+      const context = await signedInWith(['account.roles'], 100);
+      const junior = await context.permissions.createRole({
+        name: 'Junior',
+        position: 10,
+        color: null,
+        permissions: [],
+      });
+
+      const given = await context.request(
+        `/api/admin/accounts/usr_other/roles/${junior.id}`,
+        'PUT',
+      );
+      const taken = await context.request(
+        `/api/admin/accounts/usr_other/roles/${junior.id}`,
+        'DELETE',
+      );
+
+      expect(given.status).toBe(204);
+      expect(taken.status).toBe(204);
+    });
+
     it('records an override', async () => {
       const context = await signedInWith(['administrator']);
       const response = await context.request(`/api/admin/accounts/usr_other/overrides`, 'PUT', {

@@ -115,6 +115,13 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
     arrived = Buffer.concat([arrived, chunk]);
 
     const read = readDiscordFrames(arrived);
+
+    if (read.isBroken) {
+      forget();
+
+      return;
+    }
+
     arrived = read.rest;
 
     for (const frame of read.frames) {

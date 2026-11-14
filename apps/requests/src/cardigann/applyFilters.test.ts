@@ -73,6 +73,15 @@ describe('applyFilters', () => {
     expect(filter('-]title]-', 'trim', ']-')).toBe('title');
   });
 
+  it('trims a long run of the characters given without slowing down', () => {
+    const started = Date.now();
+
+    expect(filter(`${'-'.repeat(200_000)}x`, 'trim', '-')).toBe('x');
+    expect(filter(`${'-'.repeat(200_000)}x${'-'.repeat(200_000)}`, 'trim', '-')).toBe('x');
+    expect(filter(`x${'-'.repeat(100_000)}y`, 'trim', '-')).toBe(`x${'-'.repeat(100_000)}y`);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
   it('prepends and appends, filling templates in', () => {
     expect(filter('ABC', 'prepend', 'magnet:?xt=urn:btih:')).toBe('magnet:?xt=urn:btih:ABC');
     expect(filter('2024-03-05', 'append', ' +03:00')).toBe('2024-03-05 +03:00');
@@ -136,5 +145,13 @@ describe('applyFilters', () => {
         CONTEXT,
       ),
     ).toBe('s12e45');
+  });
+
+  it('runs a pattern over no more than the first 64 KiB of a value', () => {
+    const long = `${'a'.repeat(65_536)}b`;
+
+    expect(filter(long, 're_replace', ['b', 'X'])).toBe('a'.repeat(65_536));
+    expect(filter(long, 'regexp', '(b)')).toBe('');
+    expect(filter(`b${'a'.repeat(70_000)}`, 'regexp', '(b)')).toBe('b');
   });
 });

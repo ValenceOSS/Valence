@@ -72,7 +72,8 @@ The **Webhooks** page lists every webhook with its **Service**, how many events 
 2. Choose the **Service**: what Valence sends, so the other end understands it.
 3. Paste the **Address** the deliveries are posted to.
 4. Optionally give it a **Name**. Left empty, it's named after the service.
-5. Press **Create**.
+5. Turn on **Local network** if the address is on your own network, such as another app on this server.
+6. Press **Create**.
 
 A new webhook starts by sending failed jobs, and opens on its own page to choose the rest. Its signing secret is shown there once, in a highlighted card. Copy it, give it to the receiver and press **I’ve copied it**. If you lose it, delete the webhook and create another.
 
@@ -81,7 +82,7 @@ An address that isn't a web address, or a name longer than 100 characters, is po
 ### A webhook's page
 
 - **The top card** shows the service, how the last delivery went and when, the address, and the last error if it is failing. Beside them are the **Enabled** switch, **Send a test**, and a menu holding **Delete**.
-- **Where it goes** holds the **Name**, the **Service** and the **Address**. A changed name or address saves with its own **Save** button; a new service saves as soon as it is chosen.
+- **Where it goes** holds the **Name**, the **Service**, the **Address** and the **Local network** switch. A changed name or address saves with its own **Save** button; a new service saves as soon as it is chosen.
 - **What it sends** chooses the events, described below.
 - **Only for** narrows who and what it reports, described under Filters.
 - **Deliveries** lists what it has sent lately.
@@ -89,9 +90,13 @@ An address that isn't a web address, or a name longer than 100 characters, is po
 Every change saves as it is made and confirms with "Webhook saved."
 
 <Callout title="Where deliveries may go" tone="quiet">
-  Valence refuses to send to anything that is not HTTP or HTTPS, and to link local addresses such as
-  `169.254.x.x` and the cloud metadata hostnames, so a webhook cannot be used to read a cloud host's
-  credentials.
+  Valence refuses to send to anything that is not HTTP or HTTPS. Addresses on the server's own
+  network, such as another app on this server, a device on your home network or a Docker container,
+  are refused unless **Local network** is turned on for that webhook, under **Where it goes** or
+  when you create it. Tailscale addresses count as the local network. Link local addresses such as
+  `169.254.x.x` and the cloud metadata addresses are always refused, so a webhook cannot be used to
+  read a cloud host's credentials. A name is checked as it is looked up, and Valence connects to the
+  address it checked.
 </Callout>
 
 ### Services

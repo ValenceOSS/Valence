@@ -198,7 +198,11 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     onProgress?.(processed, changed.length);
 
     const format = bookFormatOf(file.path);
-    const read = await openBookFile(file.path).catch(() => null);
+    const explained: Said[] = [];
+    const read = await openBookFile(file.path, undefined, (reason) => {
+      explained.push(reason);
+      onProblem?.(file.path, reason);
+    }).catch(() => null);
     const opened =
       read?.layout === 'audio' && read.marks.length <= 1 && readMarks !== undefined
         ? await readMarks(file.path, read.durationSeconds)
@@ -208,7 +212,10 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
 
     if (format === null || opened === null) {
       failed += 1;
-      onProblem?.(file.path, saying('server.books.scanBookLibrary.thatFileCouldNotBeOpened'));
+
+      if (explained.length === 0) {
+        onProblem?.(file.path, saying('server.books.scanBookLibrary.thatFileCouldNotBeOpened'));
+      }
 
       continue;
     }

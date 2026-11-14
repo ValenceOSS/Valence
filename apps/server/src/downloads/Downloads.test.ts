@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
+import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
@@ -49,34 +50,37 @@ const CREDENTIALS = {
 };
 
 const build = () => {
-  const { auth, settings } = createMemoryAuth();
+  const { auth, settings, store } = createMemoryAuth();
+  const permissions = createMemoryPermissionService();
   const downloads = createMemoryDownloadService();
+  const library = createMemoryLibraryService({
+    libraries: [
+      {
+        id: LIBRARY_ID,
+        name: 'Films',
+        kind: 'movies',
+        path: '/media/films',
+        itemCount: 1,
+        lastScannedAt: null,
+        defaultAudioLanguage: null,
+        filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
+        keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
+      },
+    ],
+    media: [FILM],
+  });
 
   const app = createApp({
     auth,
     settings,
+    permissions,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
-    library: createMemoryLibraryService({
-      libraries: [
-        {
-          id: LIBRARY_ID,
-          name: 'Films',
-          kind: 'movies',
-          path: '/media/films',
-          itemCount: 1,
-          lastScannedAt: null,
-          defaultAudioLanguage: null,
-          filesAtOnce: null,
-          takesRequests: true,
-          requestProfileId: null,
-          requestPath: null,
-          keepsShowsTogether: true,
-          higherProfileAsks: 'ask',
-        },
-      ],
-      media: [FILM],
-    }),
+    library,
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
@@ -87,7 +91,25 @@ const build = () => {
     downloads,
   });
 
-  return { app, auth, downloads };
+  /**
+   * Signs somebody up holding the role a new account is given, as the server gives it.
+   *
+   * @param credentials - Who to sign up.
+   * @returns Their session cookie.
+   */
+  const signUp = async (credentials: typeof CREDENTIALS = CREDENTIALS) => {
+    const cookie = await signUpForTest(app, auth, credentials);
+    const member = (await permissions.listRoles()).find((role) => role.name === 'Member');
+    const made = store.user.at(-1);
+
+    if (member !== undefined && made !== undefined) {
+      await permissions.assignRole(made.id, member.id);
+    }
+
+    return cookie;
+  };
+
+  return { app, auth, downloads, library, permissions, store, signUp };
 };
 
 /**
@@ -135,8 +157,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('says there is nothing to fetch where nothing is ready under that name', async () => {
-    const { app, auth } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp } = build();
+    const cookie = await signUp();
 
     const response = await app.request(
       `${BASE}/api/downloads/3fa85f64-5717-4562-b3fc-2c963f66afa6/file`,
@@ -147,8 +169,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('hands over a file that is ready to its owner', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
     const asked = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
     for (const [profileId, held] of Object.entries(downloads.state.downloads)) {
@@ -164,9 +186,32 @@ describe('downloads over HTTP', () => {
     expect(await response.text()).toBe(`the film ${MEDIA_ID}`);
   });
 
+  it('hands over no file, and starts none again, once the library is refused the account', async () => {
+    const { app, signUp, downloads, library, store } = build();
+    const cookie = await signUp();
+    const asked = DownloadSchema.parse(await (await ask(app, cookie)).json());
+
+    for (const [profileId, held] of Object.entries(downloads.state.downloads)) {
+      downloads.state.downloads[profileId] = held.map((one) => ({ ...one, state: 'ready' }));
+    }
+
+    await library.refuseLibrary(store.user[0]?.id ?? '', LIBRARY_ID);
+
+    const read = await app.request(`${BASE}/api/downloads/${asked.id}/file`, {
+      headers: { cookie, origin: BASE },
+    });
+    const resumed = await app.request(`${BASE}/api/downloads/${asked.id}/resume`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(read.status).toBe(404);
+    expect(resumed.status).toBe(404);
+  });
+
   it('has nothing to say about a viewer who has asked for nothing', async () => {
-    const { app, auth } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp } = build();
+    const cookie = await signUp();
 
     const listed = DownloadListSchema.parse(
       await (
@@ -178,8 +223,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('starts one on request and says it is being prepared', async () => {
-    const { app, auth } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp } = build();
+    const cookie = await signUp();
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -188,8 +233,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('does not start a second one for the same thing, since one is already under way', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     await ask(app, cookie);
     await ask(app, cookie);
@@ -198,8 +243,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('treats a different rung as a different thing to prepare', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     await ask(app, cookie, '1080p');
     await ask(app, cookie, '720p');
@@ -208,8 +253,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('lists what has been asked for', async () => {
-    const { app, auth } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp } = build();
+    const cookie = await signUp();
 
     await ask(app, cookie);
 
@@ -223,8 +268,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('stops keeping one on the server when told to', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -238,8 +283,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('queues every episode of a programme on one ask', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
 
@@ -257,8 +302,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('queues only the episodes chosen, where some were', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
 
@@ -276,8 +321,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('pauses one on request, so it stops without losing what it has done', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -291,8 +336,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('carries on from where it stopped when resumed', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -321,8 +366,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('records what a device says it is holding, and what it has let go', async () => {
-    const { app, auth, downloads } = build();
-    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const { app, signUp, downloads } = build();
+    const cookie = await signUp();
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/holdings`, {
       method: 'PUT',
@@ -340,10 +385,70 @@ describe('downloads over HTTP', () => {
     expect(Object.values(downloads.state.holdings).flat()).toEqual([]);
   });
 
+  it('saves no copy for an account whose role does not include downloads, but lets it tidy up', async () => {
+    const { app, downloads, permissions, store, signUp } = build();
+    const cookie = await signUp();
+    const asked = DownloadSchema.parse(await (await ask(app, cookie)).json());
+
+    for (const [profileId, held] of Object.entries(downloads.state.downloads)) {
+      downloads.state.downloads[profileId] = held.map((one) => ({ ...one, state: 'ready' }));
+    }
+
+    await permissions.setOverride(store.user[0]?.id ?? '', {
+      permission: 'download.media',
+      effect: 'deny',
+    });
+
+    const sent = (path: string, method = 'GET', body?: object) =>
+      app.request(`${BASE}${path}`, {
+        method,
+        headers: {
+          cookie,
+          origin: BASE,
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+    const PROFILE = {
+      deviceProfile: {
+        schemaVersion: 1,
+        name: 'Browser',
+        maxWidth: 1920,
+        maxHeight: 1080,
+        maxBitrateKbps: 8000,
+        maxAudioChannels: 2,
+        supportedVideoRanges: ['SDR'],
+        tenBitVideoCodecs: [],
+        maxVideoLevels: {},
+        canPlayInterlaced: true,
+        canPlayAnamorphic: true,
+        canRotate: true,
+        unsupportedAudioProfiles: [],
+        supportedSubtitleFormats: ['webvtt'],
+        directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac'] }],
+        transcodingProfiles: [
+          { container: 'ts', videoCodec: 'h264', audioCodec: 'aac', protocol: 'hls' },
+        ],
+      },
+    };
+
+    expect((await ask(app, cookie)).status).toBe(403);
+    expect((await sent(`/api/media/${MEDIA_ID}/downloads/offer`, 'POST', PROFILE)).status).toBe(
+      403,
+    );
+    expect((await sent(`/api/downloads/${asked.id}/file`)).status).toBe(403);
+    expect((await sent(`/api/downloads/${asked.id}/resume`, 'POST')).status).toBe(403);
+    expect(
+      (await sent(`/api/media/${MEDIA_ID}/holdings`, 'PUT', { quality: '1080p' })).status,
+    ).toBe(403);
+    expect((await sent('/api/downloads')).status).toBe(200);
+    expect((await sent(`/api/downloads/${asked.id}`, 'DELETE')).status).toBe(204);
+  });
+
   it('lets go of a holding only for whoever is asking, whatever device they name', async () => {
-    const { app, auth, downloads } = build();
-    const mine = await signUpForTest(app, auth, CREDENTIALS);
-    const theirs = await signUpForTest(app, auth, {
+    const { app, signUp, downloads } = build();
+    const mine = await signUp();
+    const theirs = await signUp({
       name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',

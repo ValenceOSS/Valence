@@ -1,3 +1,4 @@
+import { chosenAppIcon } from '@ValenceClient/shell/chosenAppIcon';
 import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
 import { chosenPluginTheme } from '@ValenceClient/plugins/pluginThemeChoice';
 import { chosenMotion } from '@ValenceClient/shell/motion';
@@ -24,6 +25,7 @@ const readDeviceChoices = (): DeviceChoices => {
     connections: playback.connections,
     streamingFormat: playback.streamingFormat,
     showsDesktopNotices: areDeviceNoticesOn(),
+    appIcon: chosenAppIcon(),
   };
 };
 

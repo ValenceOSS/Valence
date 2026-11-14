@@ -4,6 +4,7 @@ import { completeSetup } from './completeSetup';
 const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>();
 
 const REQUEST = {
+  setupCode: 'K7QD-3MXP-9RTA-WZ4H',
   admin: { name: 'Ada', username: 'ada', password: 'a-long-password' },
   trustedOrigins: ['http://localhost:8420'],
   cookieSecure: false,

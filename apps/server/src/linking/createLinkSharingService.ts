@@ -1,6 +1,8 @@
+import { createBriefVerdicts } from '@ValenceServer/linking/content/createBriefVerdicts';
 import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { createRateLimiter } from './createRateLimiter';
 import { federationReachOf } from './federationReachOf';
+import { FEDERATION_PATH } from './FEDERATION_PATH';
 import { peerMayReach } from './peerMayReach';
 import { signAsPerson } from './signAsPerson';
 import type {
@@ -21,7 +23,13 @@ const MOST_FROM_A_SERVER = 1200;
 
 const MOST_FROM_A_PERSON = 300;
 
+const MOST_PEOPLE_FROM_A_SERVER = 5000;
+
+const SHARING_VERDICT_LASTS_MS = 5000;
+
 const MOST_ACTIVITY = 200;
+
+const MOST_SERVERS_WITH_KNOWN_PEOPLE = 500;
 
 const BEARER = /^Bearer\s+(\S+)$/iu;
 
@@ -34,7 +42,7 @@ type LinkSharingServiceOptions = {
   claims: PeerClaims;
   peers: PeerClient;
   warn?: (message: string) => void;
-  limits?: { perServer: number; perPerson: number };
+  limits?: { perServer: number; perPerson: number; people?: number };
   now?: () => Date;
 };
 
@@ -47,7 +55,8 @@ type LinkSharingServiceOptions = {
  *
  * 1. it is signed by a server this one is linked with, and meant for this one;
  * 2. it asks for something named as open to a linked server;
- * 3. the server and the person it asks for are within their rate;
+ * 3. the server and the person it asks for are within their rate, and the server brings no more
+ *    people than any household has, so it cannot fill this server's tables one name at a time;
  * 4. the person, where it names one, is not blocked;
  * 5. a catalogue, title, book, album or artist it asks about is in a library shared with that
  *    server and within its age, a session it asks about is one it started, and its record is read
@@ -92,6 +101,7 @@ const createLinkSharingService = ({
     withinMs: MINUTE_MS,
     now: clock,
   });
+  const knownPeople = new Map<string, Set<string>>();
   const personMayAsk = createRateLimiter({
     most: limits.perPerson,
     withinMs: MINUTE_MS,
@@ -102,6 +112,8 @@ const createLinkSharingService = ({
     status: 401 | 403 | 429,
     code: Extract<Admission, { kind: 'refused' }>['code'],
   ): Admission => ({ kind: 'refused', status, code });
+
+  const sharingVerdicts = createBriefVerdicts(SHARING_VERDICT_LASTS_MS);
 
   const linkedServer = async (id: string) => {
     const server = await links.readServer(id);
@@ -118,7 +130,13 @@ const createLinkSharingService = ({
       }
 
       const token = BEARER.exec(authorization ?? '')?.[1];
-      const signer = token === undefined ? null : await linking.readToken(token);
+      const signer =
+        token === undefined
+          ? null
+          : await linking.readToken(token, {
+              method,
+              route: path.startsWith(FEDERATION_PATH) ? path.slice(FEDERATION_PATH.length) : path,
+            });
       const server = signer === null ? null : await links.readServerByFingerprint(signer.from);
 
       if (server?.state !== 'linked' || signer === null) {
@@ -139,10 +157,32 @@ const createLinkSharingService = ({
         return refused(403, 'error.linking.thatIsNotSharedWithYourServer');
       }
 
+      const isWithinItsRate = serverMayAsk(server.id);
+      const mostPeople = limits.people ?? MOST_PEOPLE_FROM_A_SERVER;
+      const hasRoom =
+        !isWithinItsRate ||
+        signer.person === null ||
+        knownPeople.get(server.id)?.has(signer.person.pseudonym) === true ||
+        (await sharing.hasRoomFor(server.id, signer.person.pseudonym, mostPeople));
       const person =
-        signer.person === null
+        !isWithinItsRate || !hasRoom || signer.person === null
           ? null
           : await sharing.seePerson(server.id, signer.person.pseudonym, signer.person.name, at);
+
+      if (person !== null && signer.person !== null) {
+        const known = knownPeople.get(server.id) ?? new Set<string>();
+
+        if (known.size < mostPeople) {
+          known.add(signer.person.pseudonym);
+        }
+
+        if (knownPeople.size >= MOST_SERVERS_WITH_KNOWN_PEOPLE && !knownPeople.has(server.id)) {
+          knownPeople.clear();
+        }
+
+        knownPeople.set(server.id, known);
+      }
+
       const subject = reach.kind === 'subject' ? await subjectOf(reach.subject) : null;
       const claimed =
         reach.kind === 'claimed' ? claims.claimedBy(reach.claim, reach.id, server.id) : null;
@@ -164,7 +204,8 @@ const createLinkSharingService = ({
         );
 
       if (
-        !serverMayAsk(server.id) ||
+        !isWithinItsRate ||
+        !hasRoom ||
         (person !== null && !personMayAsk(`${server.id}:${person.id}`))
       ) {
         await record(reach.action, 'tooMany');
@@ -231,6 +272,33 @@ const createLinkSharingService = ({
 
     subjectOfTitle: (mediaId) => subjectOf({ kind: 'item', id: mediaId }),
 
+    stillReaches: async ({ serverId, isWhole, subjectId }) => {
+      if ((await links.readServer(serverId))?.state !== 'linked') {
+        return false;
+      }
+
+      const claimed = isWhole ? null : claims.claimedBy('session', subjectId, serverId);
+
+      if (!isWhole && claimed === null) {
+        return false;
+      }
+
+      if (claimed !== null && claimed.mediaId === null) {
+        return true;
+      }
+
+      const mediaId = claimed?.mediaId ?? subjectId;
+
+      return sharingVerdicts.judge(`${serverId}:${mediaId}`, async () => {
+        const [shared, subject] = await Promise.all([
+          sharing.readSharing(serverId),
+          subjectOf({ kind: 'item', id: mediaId }),
+        ]);
+
+        return shared !== null && subject !== null && peerMayReach(shared, subject) === 'allowed';
+      });
+    },
+
     sharedWith: async (serverId) => {
       const shared = await sharing.readSharing(serverId);
 
@@ -265,6 +333,8 @@ const createLinkSharingService = ({
 
       const changed = await sharing.changeSharing(id, change);
 
+      sharingVerdicts.forget();
+
       return changed === null ? { kind: 'noSuchServer' } : { kind: 'changed', sharing: changed };
     },
 
@@ -282,7 +352,7 @@ const createLinkSharingService = ({
         return null;
       }
 
-      const signed = await linking.signFor(id);
+      const signed = await linking.signFor(id, undefined, { method: 'GET', route: '/libraries' });
       const answered = signed === null ? null : await peers.libraries(signed.address, signed.token);
 
       if (answered?.kind !== 'answered') {
@@ -315,7 +385,7 @@ const createLinkSharingService = ({
         return null;
       }
 
-      const signed = await linking.signFor(id);
+      const signed = await linking.signFor(id, undefined, { method: 'GET', route: '/activity' });
       const answered = signed === null ? null : await peers.activity(signed.address, signed.token);
 
       if (answered?.kind === 'answered') {
@@ -325,8 +395,8 @@ const createLinkSharingService = ({
       return { standing: answered?.kind === 'refused' ? 'notShown' : 'unreachable', entries: [] };
     },
 
-    askAs: async (id, person) =>
-      (await linkedServer(id)) === null ? null : signAsPerson(linking, sharing, id, person),
+    askAs: async (id, person, asking) =>
+      (await linkedServer(id)) === null ? null : signAsPerson(linking, sharing, id, person, asking),
   };
 };
 

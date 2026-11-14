@@ -1,3 +1,4 @@
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { createHash } from 'node:crypto';
 import { load } from 'cheerio';
 import { applyFilters } from '@ValenceRequests/cardigann/applyFilters';
@@ -150,10 +151,10 @@ const readRow = (options: ReadSearchResultsOptions, read: FieldReader): ReleaseD
  */
 const finish = (draft: ReleaseDraft, options: ReadSearchResultsOptions): Release | null => {
   const title = draft.title.replace(/\s+/g, ' ').trim();
-  const hashFromMagnet = /xt=urn:btih:([^&]+)/i.exec(draft.magnetUrl ?? '')?.[1] ?? null;
+  const hashFromMagnet = /xt=urn:btih:([^&\s]+)/i.exec(draft.magnetUrl ?? '')?.[1] ?? null;
   const infoHash = draft.infoHash ?? hashFromMagnet;
   const magnetUrl =
-    draft.magnetUrl ??
+    (draft.magnetUrl !== null && isSingleMagnetLink(draft.magnetUrl) ? draft.magnetUrl : null) ??
     (infoHash !== null && options.definition.type !== 'private'
       ? buildMagnet(infoHash, title)
       : null);

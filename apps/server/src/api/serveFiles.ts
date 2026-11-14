@@ -1,16 +1,17 @@
 import { bodyOf } from '@ValenceI18n/bodyOf';
-import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
   listMediaPathsRoute,
   measureLibraryFolderRoute,
   moveLibraryFileRoute,
+  readMediaOriginsRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,
 } from '@ValenceServer/routes/FilesRoute';
 import { listLibraryFolder } from '@ValenceServer/files/listLibraryFolder';
 import { describeEntriesIn } from '@ValenceServer/files/describeEntriesIn';
+import { withOrigins } from '@ValenceServer/origins/withOrigins';
 import { measureLibraryFolder } from '@ValenceServer/files/measureLibraryFolder';
 import { searchLibraryFiles } from '@ValenceServer/files/searchLibraryFiles';
 import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
@@ -27,23 +28,35 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
-  const { library, folderDisk, requires, settleChange, recordAudit } = context;
+  const { library, folderDisk, requires, settleChange, recordAudit, readOrigins, viewerOf } =
+    context;
 
   /**
-   * Reads the libraries whose files are on this server, which are all the file manager may reach.
+   * Reads the libraries whose files are on this server and which whoever is asking may see, which
+   * are all the file manager may reach for them.
    *
+   * @param headers - The request's headers.
    * @returns Those libraries.
    */
-  const onThisDisk = async () => librariesOnThisDisk(await library.list(asTheServer));
+  const onThisDisk = async (headers: Headers) => {
+    const viewer = await viewerOf(headers);
+
+    return viewer === null ? [] : librariesOnThisDisk(await library.list(viewer));
+  };
 
   app.openapi(listLibraryFilesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const libraries = await onThisDisk();
-    const listed = await listLibraryFolder(libraries, context.req.valid('query').path, (entries) =>
-      describeEntriesIn(libraries, entries, library.readEntryFacts),
+    const libraries = await onThisDisk(context.req.raw.headers);
+    const listed = await listLibraryFolder(
+      libraries,
+      context.req.valid('query').path,
+      withOrigins(
+        (entries) => describeEntriesIn(libraries, entries, library.readEntryFacts),
+        readOrigins,
+      ),
     );
 
     switch (listed.kind) {
@@ -66,7 +79,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const measured = await measureLibraryFolder(
-      await onThisDisk(),
+      await onThisDisk(context.req.raw.headers),
       context.req.valid('query').path,
     );
 
@@ -89,8 +102,15 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
+    const { libraryId } = context.req.valid('query');
+    const reachable = await onThisDisk(context.req.raw.headers);
+
     return context.json(
-      { paths: await library.mediaPathsIn(context.req.valid('query').libraryId) },
+      {
+        paths: reachable.some((one) => one.id === libraryId)
+          ? await library.mediaPathsIn(libraryId)
+          : {},
+      },
       200,
     );
   });
@@ -101,14 +121,29 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { words, within } = context.req.valid('query');
-    const libraries = await onThisDisk();
-    const found = await searchLibraryFiles(folderDisk, libraries, words, within, (entries) =>
-      describeEntriesIn(libraries, entries, library.readEntryFacts),
+    const libraries = await onThisDisk(context.req.raw.headers);
+    const found = await searchLibraryFiles(
+      folderDisk,
+      libraries,
+      words,
+      within,
+      withOrigins(
+        (entries) => describeEntriesIn(libraries, entries, library.readEntryFacts),
+        readOrigins,
+      ),
     );
 
     return found.kind === 'found'
       ? context.json(found.search, 200)
       : context.json(refuse('error.common.thatIsNotInsideALibrary'), 403);
+  });
+
+  app.openapi(readMediaOriginsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    return context.json({ origins: await readOrigins(context.req.valid('json').paths) }, 200);
   });
 
   app.openapi(deleteLibraryFileRoute, async (context) => {
@@ -117,7 +152,10 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const settled = await settleChange(
-      await deleteLibraryEntry(await onThisDisk(), context.req.valid('query').path),
+      await deleteLibraryEntry(
+        await onThisDisk(context.req.raw.headers),
+        context.req.valid('query').path,
+      ),
     );
 
     if ('path' in settled) {
@@ -138,7 +176,9 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { path, name } = context.req.valid('json');
 
-    const settled = await settleChange(await moveLibraryEntry(await onThisDisk(), path, { name }));
+    const settled = await settleChange(
+      await moveLibraryEntry(await onThisDisk(context.req.raw.headers), path, { name }),
+    );
 
     if ('path' in settled) {
       await recordAudit(context, 'files.renamed', path, { to: settled.path });
@@ -156,7 +196,9 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { path, into } = context.req.valid('json');
 
-    const settled = await settleChange(await moveLibraryEntry(await onThisDisk(), path, { into }));
+    const settled = await settleChange(
+      await moveLibraryEntry(await onThisDisk(context.req.raw.headers), path, { into }),
+    );
 
     if ('path' in settled) {
       await recordAudit(context, 'files.moved', path, { to: settled.path });

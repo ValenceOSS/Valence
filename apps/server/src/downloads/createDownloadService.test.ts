@@ -263,6 +263,21 @@ describe('createDownloadService', { timeout: STARTING_THE_DATABASE_MS }, () => {
     expect(transcoder.forgetDownload).toHaveBeenCalledWith('a-rendition');
   });
 
+  it('asks the media service to delete nothing for a download it refused to start', async () => {
+    const { service, transcoder } = await build([]);
+
+    transcoder.requestDownload.mockRejectedValue(new Error('no room'));
+
+    const refused = await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+    expect(refused).toMatchObject({ state: 'failed' });
+
+    await service.forget('a-profile', refused?.id ?? '');
+    await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+    await expect(service.clearOutBefore(new Date(Date.now() + 60_000))).resolves.toBe(1);
+    expect(transcoder.forgetDownload).not.toHaveBeenCalled();
+  });
+
   it('leaves what is still being prepared, and what was asked for since the cutoff', async () => {
     const { service, transcoder } = await build([preparing(10), READY]);
 

@@ -1,0 +1,3 @@
+const LONGEST_IDENTIFIER = 254;
+
+export { LONGEST_IDENTIFIER };
