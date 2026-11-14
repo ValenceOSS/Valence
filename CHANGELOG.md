@@ -1,5 +1,61 @@
 # Changelog
 
+## [1.10.0](https://github.com/ValenceOSS/Valence/compare/v1.9.0...v1.10.0) (2026-11-14)
+
+
+### Added
+
+* a new picture editor, with uploads placed by dragging and zooming and cleaned on the server ([#850](https://github.com/ValenceOSS/Valence/issues/850)) ([573cc70](https://github.com/ValenceOSS/Valence/commit/573cc70608bbd041929b965f7364e2bf3ada7532))
+* add a fast thumbnails setting that draws seek-bar thumbnails from keyframes ([#835](https://github.com/ValenceOSS/Valence/issues/835)) ([48b8fef](https://github.com/ValenceOSS/Valence/commit/48b8fef6b0d79843f6e97cce36b96de047d5ff5a))
+* **admin:** say where each library file came from and whether it is linked to a download ([#859](https://github.com/ValenceOSS/Valence/issues/859)) ([6fae927](https://github.com/ValenceOSS/Valence/commit/6fae9270c3080d3d344e82b8805e0e6dc26a4931))
+* **admin:** show network usage on the overview and in the server load chart ([#858](https://github.com/ValenceOSS/Valence/issues/858)) ([165f172](https://github.com/ValenceOSS/Valence/commit/165f172ff5a8f4512f7e00a3471382263f87dd48))
+* Anna's Archive books, job controls and media service fixes ([#838](https://github.com/ValenceOSS/Valence/issues/838)) ([80989eb](https://github.com/ValenceOSS/Valence/commit/80989eb29f9f70b7fe805a06e06692fca85d6018))
+* choose by server in the library menus, and mark every server that has a title ([#849](https://github.com/ValenceOSS/Valence/issues/849)) ([2499c68](https://github.com/ValenceOSS/Valence/commit/2499c6816719d012f818901dac17c90cab8c9cf0))
+* **desktop:** round, light or dark taskbar icon and a red unread badge on Windows ([#856](https://github.com/ValenceOSS/Valence/issues/856)) ([798b846](https://github.com/ValenceOSS/Valence/commit/798b8463dac92cc6aa615e84c0ca6f98d13ca9b3))
+* fit the phone to folding screens and lay out its person page as the web's ([#845](https://github.com/ValenceOSS/Valence/issues/845)) ([394caea](https://github.com/ValenceOSS/Valence/commit/394caeaa4488a473485a1daf4ea613b5d5c1b674))
+* **i18n:** translate the interface, speak it in every app, and lay it out right to left (VAL-47) ([#840](https://github.com/ValenceOSS/Valence/issues/840)) ([932a84c](https://github.com/ValenceOSS/Valence/commit/932a84cab545bdf8ff612dbedd389c68671785c4))
+* Jellyfin apps on Valence, and Valence's apps on Jellyfin ([#860](https://github.com/ValenceOSS/Valence/issues/860)) ([00991be](https://github.com/ValenceOSS/Valence/commit/00991be888d7f60d643514d29a486cf07c1b89c7))
+* keep bookmarks on the server and list them in every reader ([#843](https://github.com/ValenceOSS/Valence/issues/843)) ([57966e8](https://github.com/ValenceOSS/Valence/commit/57966e8e20397cf79e029e8180bceb404feaa421))
+* **plugin-sdk:** plugins keep a person's likes, stars and plays, and read their music ([#839](https://github.com/ValenceOSS/Valence/issues/839)) ([3c000bb](https://github.com/ValenceOSS/Valence/commit/3c000bb5d85a29e3cb5a9e1edb4cf4c1b4d5aee7))
+* redesign the admin session cards around each session's own artwork ([#829](https://github.com/ValenceOSS/Valence/issues/829)) ([d74122c](https://github.com/ValenceOSS/Valence/commit/d74122c3d368f471aaf1384fd64ace9ba9900543))
+* **screens:** compact meters, what is waiting in the top bar, and spinners where work runs ([#854](https://github.com/ValenceOSS/Valence/issues/854)) ([c4a5cd2](https://github.com/ValenceOSS/Valence/commit/c4a5cd2c84793f3e0f1d8860dcaed065b97a4234))
+* **screens:** connection speed and graphs in stats for nerds, and named work in the admin ([#852](https://github.com/ValenceOSS/Valence/issues/852)) ([83c0867](https://github.com/ValenceOSS/Valence/commit/83c0867a5ee754aa9dd7c141008f347e8ba56457))
+* **screens:** redesign the web video player ([#842](https://github.com/ValenceOSS/Valence/issues/842)) ([6a0355b](https://github.com/ValenceOSS/Valence/commit/6a0355b4ba7ffd0b51d9ea0d81f82ccb1c7fe16b))
+* show jobs and their schedules on the landing page's admin card ([#836](https://github.com/ValenceOSS/Valence/issues/836)) ([44b4ed8](https://github.com/ValenceOSS/Valence/commit/44b4ed8e3220b580907dbc65031a5e7c973debc1))
+* the deck-of-cards logo, and a rework of the admin overview and catalogue ([#848](https://github.com/ValenceOSS/Valence/issues/848)) ([0b3677e](https://github.com/ValenceOSS/Valence/commit/0b3677e6dd89bf1677d232ece8bfa878c3b4af61))
+* the fanning deck everywhere, a new splash, and live progress in the admin ([#851](https://github.com/ValenceOSS/Valence/issues/851)) ([04b2569](https://github.com/ValenceOSS/Valence/commit/04b25697e9a2d349cd619facbba23c203558005a))
+
+
+### Fixed
+
+* ask whether anybody is still watching on the web player's paused screen ([#846](https://github.com/ValenceOSS/Valence/issues/846)) ([7e8ba62](https://github.com/ValenceOSS/Valence/commit/7e8ba62e60424d18cde6f49120b8231a9e6accff))
+* give session cards without artwork a gradient, and fit the landing's session scenes to them ([#830](https://github.com/ValenceOSS/Valence/issues/830)) ([44803aa](https://github.com/ValenceOSS/Valence/commit/44803aa13b4d2ef39466daf7dc02a69ca3226eb1))
+* **landing:** the web and desktop marks sat lower than the brand marks on the screens strip ([#831](https://github.com/ValenceOSS/Valence/issues/831)) ([e47832f](https://github.com/ValenceOSS/Valence/commit/e47832f72c8b2811257fcd1822c37cb2917fc470))
+* **mobile:** burn subtitles into the picture while it plays in picture-in-picture ([#855](https://github.com/ValenceOSS/Valence/issues/855)) ([e2235c8](https://github.com/ValenceOSS/Valence/commit/e2235c8ed888be247827d0d9cebd95e50f9513a6))
+* report position from the phone and tv apps, and move it on between reports on the sessions page ([#832](https://github.com/ValenceOSS/Valence/issues/832)) ([da9be64](https://github.com/ValenceOSS/Valence/commit/da9be645137a11e26a569ba2e47a3dc8b865d6f6))
+* report the phone's position to the sessions page every second ([#834](https://github.com/ValenceOSS/Valence/issues/834)) ([e5e8c39](https://github.com/ValenceOSS/Valence/commit/e5e8c390e6bca9cec2996ff3ec55197523ee7865))
+* security fixes across the server, the apps and ci ([#857](https://github.com/ValenceOSS/Valence/issues/857)) ([865dd46](https://github.com/ValenceOSS/Valence/commit/865dd46deeda547411ddad97ed446be1ed94b488))
+* **server:** a linked server's titles showed as duplicates and its libraries in the file manager ([#827](https://github.com/ValenceOSS/Valence/issues/827)) ([63931af](https://github.com/ValenceOSS/Valence/commit/63931af9e03b901692dcd80d9ac8657d0dcc2c86))
+* **server:** a new account could end up with two owner profiles on a slow server ([#826](https://github.com/ValenceOSS/Valence/issues/826)) ([f8f02c6](https://github.com/ValenceOSS/Valence/commit/f8f02c68318cbe6efea464be4ab0cb12adb31cc3))
+* **server:** keep a show's chosen backdrop to that show ([#861](https://github.com/ValenceOSS/Valence/issues/861)) ([bc098a7](https://github.com/ValenceOSS/Valence/commit/bc098a79c1e7e4635972fe40fc236357c52fcad1))
+* **server:** let mysql add the column that keeps one owner per account ([#844](https://github.com/ValenceOSS/Valence/issues/844)) ([b34b6c6](https://github.com/ValenceOSS/Valence/commit/b34b6c60feb8395366a899b87f8c4b5213797ef1))
+* **server:** valence's share of the processor left out the server itself and the requests service ([#828](https://github.com/ValenceOSS/Valence/issues/828)) ([701ba33](https://github.com/ValenceOSS/Valence/commit/701ba33fe04a501368ea21b0d602f2e0fff0146c))
+* stop the phone's featured carousel while the app is in the background ([#833](https://github.com/ValenceOSS/Valence/issues/833)) ([a66219b](https://github.com/ValenceOSS/Valence/commit/a66219b6d7d2a9bce03389cb9881071fef416ee4))
+* styled subtitles that show on one play and not the next, on every client ([#862](https://github.com/ValenceOSS/Valence/issues/862)) ([94eb84b](https://github.com/ValenceOSS/Valence/commit/94eb84b59c7789249595ffb1b61dfdec2248a0bd))
+* **ui:** bring back the glow behind every non-admin page ([#837](https://github.com/ValenceOSS/Valence/issues/837)) ([b076cc7](https://github.com/ValenceOSS/Valence/commit/b076cc7cae0dcbd904bbe46b8240ec69c809ac62))
+* **web:** count a zfs pool as one drive on the disk usage card ([#853](https://github.com/ValenceOSS/Valence/issues/853)) ([234844d](https://github.com/ValenceOSS/Valence/commit/234844d48a23069a84621d95e0cb3b774113ecac))
+* **web:** stop did nothing for someone reading, and the session table couldn't pause audio ([#824](https://github.com/ValenceOSS/Valence/issues/824)) ([67bc60d](https://github.com/ValenceOSS/Valence/commit/67bc60d2dcb4ac51bd9e6e1addfd12ac884ceaa8))
+
+
+### Faster
+
+* name artwork for the proxy, and serve the front page's rows a page at a time ([#847](https://github.com/ValenceOSS/Valence/issues/847)) ([4162aaa](https://github.com/ValenceOSS/Valence/commit/4162aaa1b40922ea2e4a5d54503f33af807b73c0))
+
+
+### Documentation
+
+* **repo:** comments say what the code does, not what it used to do ([#841](https://github.com/ValenceOSS/Valence/issues/841)) ([a142b85](https://github.com/ValenceOSS/Valence/commit/a142b8531a710ceb91f2fc4a68ca44511f023964))
+
 ## [1.9.0](https://github.com/ValenceOSS/Valence/compare/v1.8.0...v1.9.0) (2026-11-07)
 
 
