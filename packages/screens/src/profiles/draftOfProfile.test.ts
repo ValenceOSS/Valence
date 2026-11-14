@@ -38,6 +38,7 @@ describe('draftOfProfile', () => {
       connections: 3,
       streamingFormat: 'hls',
       showsDesktopNotices: false,
+      appIcon: 'system',
       deviceWas: {
         theme: 'system',
         motion: 'system',
@@ -46,6 +47,7 @@ describe('draftOfProfile', () => {
         connections: 3,
         streamingFormat: 'hls',
         showsDesktopNotices: false,
+        appIcon: 'system',
       },
       photo: null,
     });

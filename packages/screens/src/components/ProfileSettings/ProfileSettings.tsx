@@ -1,3 +1,5 @@
+import { desktopSystemOf } from '@ValenceClient/platform/desktopSystemOf';
+import { AppIconSchema } from '@ValenceClient/shell/AppIconSchema';
 import { useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import { PenSparkles as EditIcon } from '@keyline-icons/react';
@@ -38,7 +40,7 @@ const CONNECTION_CHOICES = [
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
  * patient Valence is about asking whether they are still there. Beside them, what this device
  * chooses for itself: its theme, movement and colours, whether a browser with WebGPU plays files it
- * cannot play by itself through its own player, how many pieces of a film it fetches at once and in
+ * cannot play by itself through its own player, on Windows which icon the taskbar shows it with, how many pieces of a film it fetches at once and in
  * which format, and in the desktop app whether this computer puts a notice up when something new
  * reaches the inbox. Those are kept on the device rather than the account, but wait for the same
  * button as the rest.
@@ -57,6 +59,10 @@ const CONNECTION_CHOICES = [
  */
 const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const isOnTheDesktop = platformInUse().thisClientKind() === 'desktop';
+  const isOnWindows =
+    isOnTheDesktop &&
+    typeof navigator !== 'undefined' &&
+    desktopSystemOf(navigator.userAgent) === 'windows';
   const hasAGpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
   const device = draft ?? readDeviceChoices();
 
@@ -228,6 +234,24 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
             disabled={!isReady}
             onToggle={() => {
               onDraft({ showsDesktopNotices: !device.showsDesktopNotices });
+            }}
+          />
+        </SettingRow>
+      ) : null}
+
+      {isOnWindows ? (
+        <SettingRow
+          title={say('screens.accountArea.profileSettings.appIcon')}
+          description={say('screens.accountArea.profileSettings.theIconOnTheTaskbar')}
+        >
+          <SegmentedRow
+            size="sm"
+            tone="accent"
+            label={say('screens.accountArea.profileSettings.appIcon')}
+            value={device.appIcon}
+            items={THEME_CHOICES}
+            onSelect={(chosen) => {
+              onDraft({ appIcon: AppIconSchema.parse(chosen) });
             }}
           />
         </SettingRow>

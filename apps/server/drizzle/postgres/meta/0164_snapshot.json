@@ -1,5 +1,5 @@
 {
-  "id": "74f7cf60-97dd-403c-ae46-3c4b963385d7",
+  "id": "4d703727-1cfa-4b99-b715-0dd0daf20db2",
   "prevId": "ac1f630c-073d-42f4-bcb3-04ca8f199d7f",
   "version": "7",
   "dialect": "postgresql",
@@ -6195,6 +6195,91 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.media_origin": {
+      "name": "media_origin",
+      "schema": "",
+      "columns": {
+        "libraryId": {
+          "name": "libraryId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "via": {
+          "name": "via",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recordedAt": {
+          "name": "recordedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "media_origin_path_idx": {
+          "name": "media_origin_path_idx",
+          "columns": [
+            {
+              "expression": "libraryId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "media_origin_libraryId_library_id_fk": {
+          "name": "media_origin_libraryId_library_id_fk",
+          "tableFrom": "media_origin",
+          "tableTo": "library",
+          "columnsFrom": [
+            "libraryId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "media_origin_source": {
+          "name": "media_origin_source",
+          "value": "\"media_origin\".\"source\" in ('upload', 'import')"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.media_override": {
       "name": "media_override",
       "schema": "",
@@ -10985,24 +11070,6 @@
         },
         "gpuPercent": {
           "name": "gpuPercent",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "networkReceivedBytesPerSecond": {
-          "name": "networkReceivedBytesPerSecond",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "networkSentBytesPerSecond": {
-          "name": "networkSentBytesPerSecond",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "streamedBytesPerSecond": {
-          "name": "streamedBytesPerSecond",
           "type": "real",
           "primaryKey": false,
           "notNull": false

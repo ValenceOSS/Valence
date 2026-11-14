@@ -52,6 +52,7 @@ import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions'
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
 import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
+import { fetchMediaOrigins } from '@ValenceClient/admin/fetchMediaOrigins';
 import { fetchFolderMeasure } from '@ValenceClient/admin/fetchFolderMeasure';
 import { fetchPreRollSetup } from '@ValenceClient/admin/fetchPreRollSetup';
 import { fetchSubtitleSetup } from '@ValenceClient/admin/fetchSubtitleSetup';
@@ -596,6 +597,21 @@ const libraryFolder = (path: string | null) =>
   });
 
 /**
+ * Where each of some library files came from and whether it is linked to a download now.
+ *
+ * @param paths - The files.
+ * @returns The query.
+ */
+const mediaOrigins = (paths: readonly string[]) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'files', 'origins', paths],
+    queryFn: () => fetchMediaOrigins(paths),
+    enabled: paths.length > 0,
+    retry: false,
+    staleTime: 60_000,
+  });
+
+/**
  * How much a folder inside a library takes on the disk and what it holds, read only while it is
  * shown, since adding up a large folder is not free.
  *
@@ -1004,6 +1020,7 @@ const adminQueries = {
   folderSearch,
   libraryFolder,
   folderMeasure,
+  mediaOrigins,
   libraryFileSearch,
   overview,
   scans,

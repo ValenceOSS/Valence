@@ -595,6 +595,11 @@
     "context": "Shown in the admin (from `fetchCorrections`)."
   },
   {
+    "handler": "client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot",
+    "text": "Where these files came from could not be read.",
+    "context": "Shown in the admin when the server would not say where library files came from (downloaded, uploaded, imported or found on disk)."
+  },
+  {
     "handler": "client.admin.groupPermissions.sharing",
     "text": "Sharing",
     "context": "Shown in the admin (from `groupPermissions`)."
@@ -10646,6 +10651,11 @@
     "context": "Error when a later, higher-quality ask is settled without saying which way."
   },
   {
+    "handler": "error.requests.sayWhichFilesToAskAbout",
+    "text": "Say which files to ask about.",
+    "context": "An error the requests service answers with (HTTP 400) when the server asks which library files it filed but names no files, or too many (from `createOriginRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "Say which library item it became.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -13911,6 +13921,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.appIcon",
+    "text": "App icon",
+    "context": "A setting in the desktop app on Windows: whether Valence's round taskbar icon is light, dark, or follows Windows' light or dark mode."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.connectionsPerStream",
     "text": "Connections per stream",
     "context": "The title of the setting for how many pieces of a film this device fetches at once."
@@ -13989,6 +14004,11 @@
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
     "text": "The background behind your initial and the tint on your illustrated avatar.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.theIconOnTheTaskbar",
+    "text": "The icon on this computer's taskbar. System follows Windows' light or dark mode.",
+    "context": "Under the App icon setting in the desktop app on Windows."
   },
   {
     "handler": "screens.accountArea.profileSettings.theTitleAndTheSeriesAnd",
@@ -14919,6 +14939,56 @@
     "handler": "screens.admin.reasonNames.videoRotationNotSupported",
     "text": "The device can’t turn the video",
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.downloadedVia",
+    "text": "Downloaded · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. {client} is the download client, such as SABnzbd."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByAConnectedApp",
+    "text": "Fetched by a connected app",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app such as Sonarr or Radarr, which fetched it. Which app is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.fetchedByApp",
+    "text": "Fetched by {app}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a request was handed to a connected app, which fetched it. {app} is the app's name, such as Sonarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDisk",
+    "text": "Found on disk",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it; somebody put it in the folder by hand, not through Valence."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.foundOnDiskLinked",
+    "text": "Found on disk · Linked to another copy",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: a library scan found it, and it shares its data with another file on the same disk through a hard link."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.imported",
+    "text": "Imported",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.importedFrom",
+    "text": "Imported from {source}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was matched when the library was brought across from another media server. {source} is that server's name, such as Plex."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownload",
+    "text": "Linked to a download",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download that is still on the disk, so both share the same data and the torrent can keep seeding. The download client is not known."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.linkedToADownloadVia",
+    "text": "Linked to a download · {client}",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: it was placed by a hard link to a download still on the disk, so both share the same data. {client} is the download client or app that fetched it, such as qBittorrent or Radarr."
+  },
+  {
+    "handler": "screens.admin.wordsOfOrigin.uploaded",
+    "text": "Uploaded to Valence",
+    "context": "A quiet badge in the admin's Media saying where a library file came from: somebody uploaded it through Valence."
   },
   {
     "handler": "screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver",
@@ -19654,6 +19724,11 @@
     "handler": "screens.adminArea.folderView.excludedFromTheLibrary",
     "text": "Somebody excluded it from the library.",
     "context": "The reason in the folder view's details pane for a file that was excluded."
+  },
+  {
+    "handler": "screens.adminArea.folderView.from",
+    "text": "Came from",
+    "context": "Column heading and detail label in the admin's Media and Files: where each library file came from, such as downloaded, uploaded, imported or found on disk."
   },
   {
     "handler": "screens.adminArea.folderView.inAFolderScansSkip",

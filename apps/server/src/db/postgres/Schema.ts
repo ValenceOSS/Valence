@@ -946,6 +946,23 @@ const versionChoice = pgTable(
   (table) => [uniqueIndex('version_choice_path_idx').on(table.libraryId, table.path)],
 );
 
+const mediaOrigin = pgTable(
+  'media_origin',
+  {
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    source: text('source').notNull(),
+    via: text('via'),
+    recordedAt: timestamp('recordedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('media_origin_path_idx').on(table.libraryId, table.path),
+    check('media_origin_source', sql`${table.source} in ('upload', 'import')`),
+  ],
+);
+
 const titleEdit = pgTable(
   'title_edit',
   {
@@ -2440,6 +2457,7 @@ export {
   episodePin,
   seasonSource,
   versionChoice,
+  mediaOrigin,
   titleEdit,
   titleChange,
   mediaItem,

@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
 import { createFanartProvider } from '@ValenceServer/fanart/createFanartProvider';
 import { createNfoWriter } from '@ValenceServer/nfo/createNfoWriter';
 import { readLocalPicture } from '@ValenceServer/library/readLocalPicture';
@@ -6006,6 +6007,7 @@ const app = createApp({
   jobDefinitions,
   requests,
   requestsClient,
+  mediaOrigins: createDatabaseMediaOriginStore(db),
   streaming: {
     service: streamService,
     libraryId: streamedFilms.libraryId,

@@ -578,6 +578,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'meansNothingWithoutIt',
   },
   {
+    table: 'media_origin',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
     table: 'word_rule',
     column: 'libraryId',
     owner: 'library',

@@ -55,7 +55,10 @@ const IS_MAC = process.platform === 'darwin';
  */
 const openTheWindow = (showAfter: Promise<void> = Promise.resolve()): BrowserWindow => {
   const window = new BrowserWindow({
-    icon: join(app.getAppPath(), 'build/icon.png'),
+    icon: join(
+      app.getAppPath(),
+      process.platform === 'win32' ? 'build/icon-win.png' : 'build/icon.png',
+    ),
     width: WIDTH,
     height: HEIGHT,
     minWidth: MINIMUM_WIDTH,

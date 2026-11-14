@@ -55,6 +55,8 @@ import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { createMemorySplashscreenStore } from '@ValenceServer/splashscreen/createMemorySplashscreenStore';
 import { JOB_DEFINITIONS } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import { createMemoryMediaOriginStore } from '@ValenceServer/origins/createMemoryMediaOriginStore';
+import { readMediaOrigins } from '@ValenceServer/origins/readMediaOrigins';
 import { createMemoryStatisticsService } from '@ValenceServer/statistics/createMemoryStatisticsService';
 import { createMemoryAuditService } from '@ValenceServer/audit/createMemoryAuditService';
 import type { AuditRecording } from '@ValenceServer/audit/AuditService';
@@ -301,6 +303,7 @@ const createAppContext = (options: CreateAppOptions) => {
     folderDisk = createFolderDisk(),
     uploadDisk = createUploadDisk(),
     uploadSessions = createUploadSessions(),
+    mediaOrigins = createMemoryMediaOriginStore(),
     transcoderAddress = '',
     listRunningJobs = () => [],
     jobDefinitions = JOB_DEFINITIONS,
@@ -1263,6 +1266,27 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
+   * Says where each of some library files came from and whether it is linked to a download now,
+   * asking the requests service only while it is answering, so a listing is never held up by it.
+   *
+   * @param paths - The files.
+   * @returns Where each came from, by its path.
+   */
+  const readOrigins = (paths: readonly string[]) =>
+    readMediaOrigins(paths, {
+      recorded: mediaOrigins,
+      filed: async (some) => {
+        if (requestsClient === null || requests?.overview().isReachable !== true) {
+          return {};
+        }
+
+        const answer = await requestsClient.filedOrigins(some);
+
+        return answer.kind === 'answered' ? answer.value : {};
+      },
+    });
+
+  /**
    * What requesting is doing just now, read afresh alongside the overview the monitor keeps: what
    * waits on somebody, what is being fetched and how fast, and which download clients answer.
    *
@@ -2090,6 +2114,8 @@ const createAppContext = (options: CreateAppOptions) => {
     folderDisk,
     uploadDisk,
     uploadSessions,
+    mediaOrigins,
+    readOrigins,
     transcoderAddress,
     listRunningJobs,
     jobDefinitions,

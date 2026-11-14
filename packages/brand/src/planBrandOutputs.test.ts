@@ -51,7 +51,7 @@ describe('planBrandOutputs', () => {
     });
   });
 
-  it('gives the desktop the bundle for the Mac, a flat icon, and a dock icon with the Mac margin', () => {
+  it('gives the desktop the bundle for the Mac, a flat icon, round light and dark ones for Windows, and a dock icon with the Mac margin', () => {
     expect(outputs.filter((output) => output.to.startsWith('apps/desktop/build'))).toEqual([
       { kind: 'copy', from: 'assets/valence-icon.icon', to: 'apps/desktop/build/icon.icon' },
       {
@@ -60,6 +60,20 @@ describe('planBrandOutputs', () => {
         to: 'apps/desktop/build/icon.png',
         pixels: 1024,
         margin: 0,
+      },
+      {
+        kind: 'roundIcon',
+        from: 'assets/valence-icon.icon',
+        to: 'apps/desktop/build/icon-win.png',
+        pixels: 1024,
+        rendition: 'Default',
+      },
+      {
+        kind: 'roundIcon',
+        from: 'assets/valence-icon.icon',
+        to: 'apps/desktop/build/icon-win-dark.png',
+        pixels: 1024,
+        rendition: 'Dark',
       },
       {
         kind: 'icon',

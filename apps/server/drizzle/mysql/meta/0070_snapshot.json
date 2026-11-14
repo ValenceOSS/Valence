@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "801e559b-62f6-40a8-b57d-ed226cf19b24",
+  "id": "453c3cb8-0a4c-453c-9b06-82091c6875a1",
   "prevId": "52c45c0b-2fdd-4b70-aeb8-f825e8d53d15",
   "tables": {
     "account": {
@@ -5850,6 +5850,91 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "media_origin": {
+      "name": "media_origin",
+      "columns": {
+        "libraryId": {
+          "name": "libraryId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "varchar(4096)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pathHash": {
+          "name": "pathHash",
+          "type": "binary(32)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "generated": {
+            "as": "unhex(sha2(`path`, 256))",
+            "type": "stored"
+          }
+        },
+        "source": {
+          "name": "source",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "via": {
+          "name": "via",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recordedAt": {
+          "name": "recordedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(current_timestamp(3))"
+        }
+      },
+      "indexes": {
+        "media_origin_path_idx": {
+          "name": "media_origin_path_idx",
+          "columns": [
+            "libraryId",
+            "pathHash"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "media_origin_libraryId_library_id_fk": {
+          "name": "media_origin_libraryId_library_id_fk",
+          "tableFrom": "media_origin",
+          "tableTo": "library",
+          "columnsFrom": [
+            "libraryId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "media_origin_source": {
+          "name": "media_origin_source",
+          "value": "`media_origin`.`source` in ('upload', 'import')"
+        }
+      }
+    },
     "media_override": {
       "name": "media_override",
       "columns": {
@@ -10383,27 +10468,6 @@
         },
         "gpuPercent": {
           "name": "gpuPercent",
-          "type": "float",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "networkReceivedBytesPerSecond": {
-          "name": "networkReceivedBytesPerSecond",
-          "type": "float",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "networkSentBytesPerSecond": {
-          "name": "networkSentBytesPerSecond",
-          "type": "float",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "streamedBytesPerSecond": {
-          "name": "streamedBytesPerSecond",
           "type": "float",
           "primaryKey": false,
           "notNull": false,

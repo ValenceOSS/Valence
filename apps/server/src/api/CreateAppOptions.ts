@@ -72,6 +72,7 @@ import type { HouseholdService } from '@ValenceServer/household/HouseholdService
 import type { SplashscreenStore } from '@ValenceServer/splashscreen/SplashscreenStore';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import type { MediaOriginStore } from '@ValenceServer/origins/MediaOriginStore';
 import type { RequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import type { MaintenanceService } from '@ValenceServer/maintenance/MaintenanceService';
 import type { JobScheduleService } from '@ValenceServer/jobs/JobScheduleService';
@@ -307,6 +308,7 @@ type CreateAppOptions = {
   folderDisk?: FolderDisk;
   uploadDisk?: UploadDisk;
   uploadSessions?: UploadSessions;
+  mediaOrigins?: MediaOriginStore;
   isTranscoderReachable?: () => Promise<boolean>;
   transcoderAddress?: string;
   listRunningJobs?: () => RunningJob[];

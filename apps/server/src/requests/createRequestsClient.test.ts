@@ -1284,4 +1284,22 @@ describe('createRequestsClient with requests for films and series', () => {
       'silent',
     );
   });
+
+  it('asks which library files the service filed, and by what', async () => {
+    const { client, fetch } = aClient(200, {
+      filed: { '/films/Heat.mkv': { source: 'download', via: 'qBittorrent' } },
+    });
+
+    expect(await client.filedOrigins(['/films/Heat.mkv'])).toEqual({
+      kind: 'answered',
+      value: { '/films/Heat.mkv': { source: 'download', via: 'qBittorrent' } },
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://requests:8421/api/origins',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ paths: ['/films/Heat.mkv'] }),
+      }),
+    );
+  });
 });

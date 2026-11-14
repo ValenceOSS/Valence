@@ -9,6 +9,10 @@ import {
   MoveEntryRequestSchema,
   RenameEntryRequestSchema,
 } from '@ValenceContracts/schemas/LibraryFiles';
+import {
+  MediaOriginsRequestSchema,
+  MediaOriginsSchema,
+} from '@ValenceContracts/schemas/MediaOrigin';
 
 const FilesError = RefusalSchema.openapi('FilesError');
 
@@ -156,12 +160,36 @@ const moveLibraryFileRoute = createRoute({
   },
 });
 
+const readMediaOriginsRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/files/origins',
+  tags: ['Admin'],
+  summary:
+    'Say where each of some library files came from, and whether it is linked to a download now',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: MediaOriginsRequestSchema.openapi('MediaOriginsRequest') },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description:
+        'Each file’s origin by its path: a download and its client, a hand-off and its app, an upload, an import, or found on the disk; with whether it shares its data with another copy',
+      content: { 'application/json': { schema: MediaOriginsSchema.openapi('MediaOrigins') } },
+    },
+    403: refused('Not somebody who may change libraries'),
+  },
+});
+
 export {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
   listMediaPathsRoute,
   measureLibraryFolderRoute,
   moveLibraryFileRoute,
+  readMediaOriginsRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,
 };

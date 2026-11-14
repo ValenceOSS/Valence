@@ -172,6 +172,8 @@ const ENGLISH = {
   'client.admin.describeTriggerInZone.clockYourTime': '{clock} your time',
   'client.admin.describeTriggerInZone.dayAtClockYourTime': '{day} at {clock} your time',
   'client.admin.fetchCorrections.thatCouldNotBeChanged': 'Couldn’t save the change. Try again.',
+  'client.admin.fetchMediaOrigins.whereTheFilesCameFromCouldNot':
+    'Where these files came from could not be read.',
   'client.admin.groupPermissions.sharing': 'Sharing',
   'client.admin.groupPermissions.streaming': 'Streaming',
   'client.admin.logRanges.last15Minutes': 'Last 15 minutes',
@@ -2521,6 +2523,7 @@ const ENGLISH = {
   'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
   'error.requests.sayWhetherToSwitchOrKeep':
     'Say whether to switch the request to the higher profile or keep the one it has.',
+  'error.requests.sayWhichFilesToAskAbout': 'Say which files to ask about.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhichNarrationToFetch': 'Say which narration of the audiobook to fetch.',
   'error.requests.sayWhoIsAsking': 'Say who is asking.',
@@ -3443,6 +3446,7 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.appIcon': 'App icon',
   'screens.accountArea.profileSettings.connectionsPerStream': 'Connections per stream',
   'screens.accountArea.profileSettings.dash': 'DASH',
   'screens.accountArea.profileSettings.dashIsReadFromTheSame':
@@ -3467,6 +3471,8 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.streamingFormat': 'Streaming format',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
     'The background behind your initial and the tint on your illustrated avatar.',
+  'screens.accountArea.profileSettings.theIconOnTheTaskbar':
+    "The icon on this computer's taskbar. System follows Windows' light or dark mode.",
   'screens.accountArea.profileSettings.theTitleAndTheSeriesAnd':
     'Shows the title, plus the series and episode or the artist, in your Discord status while something plays. Valence must be open on the same computer as Discord.',
   'screens.accountArea.profileSettings.whatEverybodySharingThisServerSees':
@@ -3691,6 +3697,16 @@ const ENGLISH = {
   'screens.admin.reasonNames.videoResolutionAboveLimit':
     'The picture is larger than the device allows',
   'screens.admin.reasonNames.videoRotationNotSupported': 'The device can’t turn the video',
+  'screens.admin.wordsOfOrigin.downloadedVia': 'Downloaded · {client}',
+  'screens.admin.wordsOfOrigin.fetchedByAConnectedApp': 'Fetched by a connected app',
+  'screens.admin.wordsOfOrigin.fetchedByApp': 'Fetched by {app}',
+  'screens.admin.wordsOfOrigin.foundOnDisk': 'Found on disk',
+  'screens.admin.wordsOfOrigin.foundOnDiskLinked': 'Found on disk · Linked to another copy',
+  'screens.admin.wordsOfOrigin.imported': 'Imported',
+  'screens.admin.wordsOfOrigin.importedFrom': 'Imported from {source}',
+  'screens.admin.wordsOfOrigin.linkedToADownload': 'Linked to a download',
+  'screens.admin.wordsOfOrigin.linkedToADownloadVia': 'Linked to a download · {client}',
+  'screens.admin.wordsOfOrigin.uploaded': 'Uploaded to Valence',
   'screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver':
     'AMD, requires the proprietary driver',
   'screens.adminArea.accelerationOptions.aMF': 'AMF',
@@ -4938,6 +4954,7 @@ const ENGLISH = {
   'screens.adminArea.folderView.belongsWith': 'Belongs with',
   'screens.adminArea.folderView.excluded': 'Excluded',
   'screens.adminArea.folderView.excludedFromTheLibrary': 'Somebody excluded it from the library.',
+  'screens.adminArea.folderView.from': 'Came from',
   'screens.adminArea.folderView.inAFolderScansSkip':
     'It’s in a folder scans skip, such as one of extras or metadata.',
   'screens.adminArea.folderView.itsVideoIsGone': 'Its video is gone',
