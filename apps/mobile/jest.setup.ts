@@ -177,6 +177,8 @@ jest.mock('expo-glass-tabs/build/minimize-context', () => ({
 
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(() => Promise.resolve()),
+  impactAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
 
 jest.mock('expo-image', () => ({
