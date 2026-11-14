@@ -6857,6 +6857,8 @@ app.get(
           },
         );
 
+        let beats = 0;
+
         heartbeat = setInterval(() => {
           if (session?.ping() === false) {
             socket.close();
@@ -6864,7 +6866,9 @@ app.get(
             return;
           }
 
-          if (accountId !== null) {
+          beats += 1;
+
+          if (accountId !== null && beats % 3 === 0) {
             void isStillSignedIn(auth, context.req.raw.headers, accountId).then((still) => {
               if (!still) {
                 socket.close();

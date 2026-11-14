@@ -24,6 +24,15 @@ describe('isStillSignedIn', () => {
     expect(getSession).toHaveBeenCalledTimes(2);
   });
 
+  it('reads the session without sliding its expiry', async () => {
+    const getSession = vi.fn().mockResolvedValue(signedInAs('ada'));
+    const headers = new Headers({ cookie: 'session=abc' });
+
+    await isStillSignedIn({ api: { getSession } }, headers, 'ada');
+
+    expect(getSession).toHaveBeenCalledWith({ headers, query: { disableRefresh: true } });
+  });
+
   it('says not once the sign-in has ended, expired or been revoked', async () => {
     const getSession = vi.fn().mockResolvedValue(null);
 
