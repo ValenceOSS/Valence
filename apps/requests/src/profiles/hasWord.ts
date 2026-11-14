@@ -1,6 +1,6 @@
-const MOST_CHARACTERS = 500;
+import { repeatsARepeat } from './repeatsARepeat';
 
-const REPEATS_A_REPEAT = /\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)[+*{]/;
+const MOST_CHARACTERS = 500;
 
 /**
  * Whether a release name has a word a profile names: as a whole word, whatever its case, or — for
@@ -17,7 +17,7 @@ const hasWord = (release: string, word: string): boolean => {
   const pattern = /^\/(.+)\/$/.exec(word)?.[1];
 
   if (pattern !== undefined) {
-    if (REPEATS_A_REPEAT.test(pattern)) {
+    if (repeatsARepeat(pattern)) {
       return false;
     }
 
