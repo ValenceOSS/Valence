@@ -35,6 +35,7 @@ import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
 import { PLAYBACK_PROBLEMS } from '@ValenceContracts/schemas/PlaybackProblem';
 import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
+import { recentHealthOf } from '@ValenceServer/presence/recentHealthOf';
 
 const READIED_FOR_MS = 10 * 60 * 1000;
 
@@ -499,7 +500,11 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
-    const known = await playback.heartbeat(sessionId, isPlaying);
+    const known = await playback.heartbeat(
+      sessionId,
+      isPlaying,
+      clientId === undefined ? undefined : recentHealthOf(presence, clientId),
+    );
 
     if (!known) {
       return context.json(refuse('error.playback.noSuchSession'), 404);

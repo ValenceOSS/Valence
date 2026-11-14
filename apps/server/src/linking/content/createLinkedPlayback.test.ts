@@ -355,6 +355,25 @@ describe('createLinkedPlayback', () => {
     ]);
   });
 
+  it('tells the linked server where the player has got, where it knows', async () => {
+    const { linked, asker } = playback();
+    const health = {
+      positionSeconds: 1200,
+      durationSeconds: 8500,
+      bufferedAheadSeconds: 60,
+      presentedWidth: 1920,
+      presentedHeight: 800,
+    };
+
+    await linked.heartbeat(SESSION, true, health);
+    await linked.heartbeat(SESSION, false);
+
+    expect(asker.asked.map((one) => new TextDecoder().decode(one.asking.body))).toEqual([
+      JSON.stringify({ isPlaying: true, health }),
+      JSON.stringify({ isPlaying: false }),
+    ]);
+  });
+
   it('names a linked title’s thumbnails as this server’s own', async () => {
     const { linked } = playback();
     const thumbnails = await linked.trickplay(HERE);

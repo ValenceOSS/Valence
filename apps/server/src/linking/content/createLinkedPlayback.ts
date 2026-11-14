@@ -412,7 +412,7 @@ const createLinkedPlayback = (
       return answered?.ok === true;
     },
 
-    heartbeat: async (sessionId, isPlaying) => {
+    heartbeat: async (sessionId, isPlaying, health) => {
       const linked = readLinkedName(sessionId);
 
       if (linked === null) {
@@ -422,7 +422,7 @@ const createLinkedPlayback = (
       const answered = await asker.ask(
         linked.serverId,
         `/api/playback/session/${encodeURIComponent(linked.remoteId)}/heartbeat`,
-        sendingJson({ isPlaying }),
+        sendingJson({ isPlaying, ...(health === undefined ? {} : { health }) }),
       );
       const asked =
         answered?.status === 200

@@ -44,6 +44,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { saying } from '@ValenceI18n/saying';
 import { say } from '@ValenceI18n/say';
+import { PlaybackHealthSchema } from '@ValenceServer/presence/PlaybackHealthSchema';
 
 type Admitted = Extract<Admission, { kind: 'admitted' }>;
 
@@ -62,7 +63,10 @@ const StartedSchema = z.object({
   delivery: z.object({ kind: z.enum(['hls', 'direct']) }),
 });
 
-const BeatSchema = z.object({ isPlaying: z.boolean() });
+const BeatSchema = z.object({
+  isPlaying: z.boolean(),
+  health: PlaybackHealthSchema.optional(),
+});
 
 const PartySaySchema = z.object({
   connection: z.string().min(1).max(100),
@@ -647,7 +651,11 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       const beat = BeatSchema.safeParse(jsonIn(sent));
 
       if (beat.success) {
-        presence.heartbeatPlayback(viewerOf(who.serverId, beating), beat.data.isPlaying);
+        presence.heartbeatPlayback(
+          viewerOf(who.serverId, beating),
+          beat.data.isPlaying,
+          beat.data.health,
+        );
       }
 
       const waiting = asking.get(beating) ?? [];

@@ -8,6 +8,7 @@ import type { KeptCopy } from '@ValenceContracts/schemas/KeptCopy';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import type { PlaybackHardware } from '@ValenceContracts/schemas/PlaybackHardware';
+import type { PresencePlaybackHealth } from '@ValenceServer/presence/PresenceService';
 type Explanation = {
   mode: PlaybackMode;
   plan: PlaybackPlan;
@@ -85,7 +86,11 @@ type PlaybackService = {
   readPreview: (mediaId: string, range: string | null) => Promise<PreviewRead>;
   readTrickplayFile: (trickplayId: string, name: string) => Promise<StoredFile | null>;
   stop: (sessionId: string, deviceId?: string) => Promise<boolean>;
-  heartbeat: (sessionId: string, isPlaying: boolean) => Promise<boolean>;
+  heartbeat: (
+    sessionId: string,
+    isPlaying: boolean,
+    health?: PresencePlaybackHealth,
+  ) => Promise<boolean>;
 };
 
 type Trickplay = {
