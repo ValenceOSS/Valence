@@ -1,6 +1,7 @@
 import type { AuditAction } from '@ValenceContracts/schemas/Audit';
 import type { AuditToRecord } from '@ValenceServer/audit/AuditService';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
+import { LONGEST_IDENTIFIER } from '@ValenceServer/auth/LONGEST_IDENTIFIER';
 
 const SESSION_RENEWAL_PATH = '/get-session';
 
@@ -11,8 +12,6 @@ const SECURITY_CHANGES: Readonly<Record<string, AuditAction>> = {
   '/passkey/verify-registration': 'auth.passkeyAdded',
   '/passkey/delete-passkey': 'auth.passkeyRemoved',
 };
-
-const LONGEST_IDENTIFIER = 254;
 
 /**
  * Says how somebody signed in, from the address they signed in through.

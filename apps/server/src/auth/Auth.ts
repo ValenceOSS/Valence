@@ -28,6 +28,7 @@ import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PAS
 import { PASSWORD_RESET_LIFETIME_SECONDS } from '@ValenceServer/auth/PASSWORD_RESET_LIFETIME_SECONDS';
 import { MINIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MINIMUM_USERNAME_LENGTH';
 import { MAXIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MAXIMUM_USERNAME_LENGTH';
+import { LONGEST_IDENTIFIER } from '@ValenceServer/auth/LONGEST_IDENTIFIER';
 import { signInTheDemo } from '@ValenceServer/auth/signInTheDemo';
 import { checkThePassword } from '@ValenceServer/auth/checkThePassword';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
@@ -199,7 +200,8 @@ const createAuth = ({
               ? null
               : { id: context.context.session.user.id, name: context.context.session.user.name },
           identifier: identifier.success
-            ? ((identifier.data.email ?? identifier.data.username)?.slice(0, 254) ?? null)
+            ? ((identifier.data.email ?? identifier.data.username)?.slice(0, LONGEST_IDENTIFIER) ??
+              null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
           device: deviceOfRequest(context.headers),
