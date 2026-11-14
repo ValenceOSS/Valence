@@ -112,11 +112,12 @@ const openEpub = async (
    * Reads one entry of the archive as text.
    *
    * @param href - The entry.
+   * @param mostBytes - The most it may inflate to, where it is a document read whole.
    * @returns Its text, or nothing where the book does not hold it.
    */
-  const readText = async (href: string | null): Promise<string | null> => {
+  const readText = async (href: string | null, mostBytes?: number): Promise<string | null> => {
     const entry = href === null ? undefined : held.get(href);
-    const bytes = entry === undefined ? null : await readZipEntry(path, entry);
+    const bytes = entry === undefined ? null : await readZipEntry(path, entry, mostBytes);
 
     return bytes === null ? null : new TextDecoder().decode(bytes);
   };
@@ -145,8 +146,8 @@ const openEpub = async (
     spine,
     ...(about === null ? {} : { about }),
     readContents: async () => {
-      const nav = await readText(read.navHref);
-      const ncx = nav === null ? await readText(read.ncxHref) : null;
+      const nav = await readText(read.navHref, MOST_XML_BYTES);
+      const ncx = nav === null ? await readText(read.ncxHref, MOST_XML_BYTES) : null;
       const listed =
         nav !== null && read.navHref !== null
           ? readEpubContents(read.navHref, nav, 'nav')
