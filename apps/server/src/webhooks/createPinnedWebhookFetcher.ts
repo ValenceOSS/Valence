@@ -1,5 +1,6 @@
 import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import { isWebhookAddressAllowed } from './isWebhookAddressAllowed';
+import { refusalOfWebhookAddress } from './refusalOfWebhookAddress';
 import type { WebhookFetcher } from './deliverWebhook';
 import { say } from '@ValenceI18n/say';
 
@@ -17,9 +18,8 @@ const createPinnedWebhookFetcher = (reachesLocalNetwork: boolean): WebhookFetche
     (addresses) =>
       new Error(
         say(
-          addresses.some((address) => isWebhookAddressAllowed(address, true))
-            ? 'error.webhook.valenceWillNotSendToTheLocalNetwork'
-            : 'error.common.valenceWillNotSendDeliveriesTo',
+          refusalOfWebhookAddress(addresses, reachesLocalNetwork) ??
+            'error.common.valenceWillNotSendDeliveriesTo',
         ),
       ),
   );

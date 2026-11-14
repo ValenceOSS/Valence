@@ -11,7 +11,7 @@ import {
   DELIVERY_PAGE,
 } from '@ValenceServer/routes/WebhookRoute';
 import { isSafeWebhookUrl } from '@ValenceServer/webhooks/isSafeWebhookUrl';
-import { isWebhookAddressAllowed } from '@ValenceServer/webhooks/isWebhookAddressAllowed';
+import { refusalOfWebhookAddress } from '@ValenceServer/webhooks/refusalOfWebhookAddress';
 import { missingAddressSettings } from '@ValenceContracts/functions/missingAddressSettings';
 import { queueWebhookTest } from '@ValenceServer/webhooks/queueWebhookTest';
 import { queueWebhookRedelivery } from '@ValenceServer/webhooks/queueWebhookRedelivery';
@@ -50,13 +50,9 @@ const templateRefusalOf = (custom: CustomWebhook | null | undefined) => {
 const literalAddressRefusalOf = (url: string, reachesLocalNetwork: boolean) => {
   const host = URL.parse(url)?.hostname.replace(/^\[|\]$/g, '') ?? '';
 
-  if (isIP(host) === 0 || isWebhookAddressAllowed(host, reachesLocalNetwork)) {
-    return null;
-  }
+  const key = isIP(host) === 0 ? null : refusalOfWebhookAddress([host], reachesLocalNetwork);
 
-  return isWebhookAddressAllowed(host, true)
-    ? refuse('error.webhook.valenceWillNotSendToTheLocalNetwork')
-    : refuse('error.common.valenceWillNotSendDeliveriesTo');
+  return key === null ? null : refuse(key);
 };
 
 /**
