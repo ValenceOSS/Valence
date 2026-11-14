@@ -1,3 +1,6 @@
+import { installPlatform, platformInUse } from '@ValenceClient/platform/installPlatform';
+import { jellyfinLinks } from '@ValenceClient/jellyfin/jellyfinLinks';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { whicheverAnswers } from './whicheverAnswers';
 
 const asking = jest.fn<Promise<Response>, [string, RequestInit?]>();
@@ -76,5 +79,39 @@ describe('whicheverAnswers', () => {
     await expect(asked).resolves.toBeNull();
 
     jest.useRealTimers();
+  });
+
+  it('answers with a Jellyfin server, and remembers it as one', async () => {
+    const held = new Map<string, string>();
+
+    installPlatform(
+      aFakePlatform({
+        store: {
+          read: (key) => held.get(key) ?? null,
+          write: (key, value) => {
+            held.set(key, value);
+          },
+          forget: (key) => {
+            held.delete(key);
+          },
+        },
+      }),
+    );
+    asking.mockImplementation((address) =>
+      Promise.resolve(
+        address.endsWith('/System/Info/Public')
+          ? new Response(
+              JSON.stringify({ Id: 'jf', ServerName: 'Den', ProductName: 'Jellyfin Server' }),
+            )
+          : new Response(null, { status: 404 }),
+      ),
+    );
+
+    await expect(whicheverAnswers(['https://jellyfin.example'])).resolves.toBe(
+      'https://jellyfin.example',
+    );
+    expect(jellyfinLinks(platformInUse().store).of('https://jellyfin.example')?.serverName).toBe(
+      'Den',
+    );
   });
 });

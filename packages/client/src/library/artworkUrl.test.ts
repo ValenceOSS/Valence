@@ -64,4 +64,20 @@ describe('artworkUrl', () => {
       '/api/media/whole/image/poster?lettering=none&size=small',
     );
   });
+
+  it('asks a Jellyfin server for its picture with the width as one more query', () => {
+    artworkAddresses.learn([
+      {
+        id: 'jellyfin',
+        artwork: { poster: 'http://j.test/Items/a/Images/Primary?tag=t&quality=90' },
+      },
+    ]);
+
+    expect(artworkUrl('jellyfin', 'poster', { size: 'small' })).toBe(
+      'http://j.test/Items/a/Images/Primary?tag=t&quality=90&maxWidth=342',
+    );
+    expect(artworkUrl('jellyfin', 'poster')).toBe(
+      'http://j.test/Items/a/Images/Primary?tag=t&quality=90',
+    );
+  });
 });

@@ -221,6 +221,9 @@ const ENGLISH = {
   'client.history.describeWhen.minutesMinAgo': '{minutes} min ago',
   'client.history.describeWhen.yesterday': 'Yesterday',
   'client.history.fetchHistory.yourHistoryCouldNotBeCleared': 'Your history couldn’t be cleared.',
+  'client.jellyfin.aJellyfinServerDoesNotDoThat': 'A Jellyfin server doesn’t do that.',
+  'client.jellyfin.jellyfinConvertsTheFile': 'Jellyfin converts the file for this device.',
+  'client.jellyfin.jellyfinSendsTheFileAsItIs': 'Jellyfin sends the file as it is.',
   'client.library.buildFilterOptions.decadeS': '{decade}s',
   'client.library.deleteSeries.theSeriesCouldNotBeDeleted':
     'Couldn’t delete the series. Try again.',

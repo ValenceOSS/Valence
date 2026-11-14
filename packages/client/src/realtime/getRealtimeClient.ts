@@ -1,6 +1,7 @@
 import { createRealtimeClient } from './createRealtimeClient';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { realtimeBackoffMs } from './realtimeBackoffMs';
+import { isOnJellyfin } from '@ValenceClient/jellyfin/isOnJellyfin';
 import type { RealtimeClient } from './createRealtimeClient';
 
 let client: RealtimeClient | null = null;
@@ -26,7 +27,7 @@ const allowRealtimeClientToStart = (allowed: boolean): void => {
 
   isAllowedToStart = allowed;
 
-  if (allowed) {
+  if (allowed && !isOnJellyfin()) {
     client?.start();
   } else {
     client?.stop();
@@ -56,7 +57,7 @@ const getRealtimeClient = (): RealtimeClient => {
     backoffMs: realtimeBackoffMs,
   });
 
-  if (isAllowedToStart) {
+  if (isAllowedToStart && !isOnJellyfin()) {
     client.start();
   }
 

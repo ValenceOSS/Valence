@@ -790,6 +790,21 @@
     "context": "Shown in the history when clearing all of it failed (from `forgetHistory`)."
   },
   {
+    "handler": "client.jellyfin.aJellyfinServerDoesNotDoThat",
+    "text": "A Jellyfin server doesn’t do that.",
+    "context": "A refusal the app gives itself when it is connected to a Jellyfin server rather than Valence and something only Valence does is asked for (from `createJellyfinAnswers`). Rarely seen, since the app hides what a Jellyfin server cannot do."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinConvertsTheFile",
+    "text": "Jellyfin converts the file for this device.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinSendsTheFileAsItIs",
+    "text": "Jellyfin sends the file as it is.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
     "handler": "client.library.buildFilterOptions.decadeS",
     "text": "{decade}s",
     "context": "The label in the library (from `buildFilterOptions`). {decade} is filled in by the app."
