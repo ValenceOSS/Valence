@@ -66,10 +66,11 @@ const createSourceCaller = ({
     { query = {}, headers: extra = {} }: SourceAsking,
   ): Promise<Response> => {
     let response: Response;
-    const address = addressOf(path, query);
-    const isOurs = new URL(address).origin === new URL(root).origin;
 
     try {
+      const address = addressOf(path, query);
+      const isOurs = new URL(address).origin === new URL(root).origin;
+
       if (!isOurs && !address.toLowerCase().startsWith('https://')) {
         throw new TypeError('That is not an address to ask');
       }

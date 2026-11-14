@@ -92,6 +92,21 @@ describe('createSourceCaller', () => {
     ]);
   });
 
+  it('says a source whose address is not one could not be reached, rather than throwing', async () => {
+    const { fetch } = aFakeSourceFetch(() => ({ body: '{"a":1}' }));
+    const caller = createSourceCaller({
+      fetch,
+      base: 'not an address',
+      name: 'Jellyfin',
+      headers: {},
+    });
+
+    expect(await failureOf(caller.json('/x', Shape))).toEqual([
+      'server.imports.sourceCaller.nameCouldNotBeReached',
+      null,
+    ]);
+  });
+
   it('says when the key is refused, when the source answers badly, and when it answers in a shape it cannot read', async () => {
     const refused = aFakeSourceFetch(() => ({ status: 401, body: '' })).fetch;
     const broken = aFakeSourceFetch(() => ({ status: 500, body: '' })).fetch;
