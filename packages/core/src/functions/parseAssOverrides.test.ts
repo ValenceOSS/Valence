@@ -65,14 +65,35 @@ describe('reading the overrides a line carries in braces', () => {
       style: {},
       alignment: null,
       position: null,
+      restsAt: null,
+      fadesTo: null,
       drawing: null,
       reset: null,
     });
   });
 
-  it('puts a moving line where its move starts', () => {
-    expect(read('\\move(100,200,800,600)').position).toEqual({ x: 100, y: 200 });
-    expect(read('\\move(10, 20, 30, 40, 0, 500)').position).toEqual({ x: 10, y: 20 });
+  it('says where a moving line starts and where it comes to rest', () => {
+    expect(read('\\move(100,200,800,600)')).toMatchObject({
+      position: { x: 100, y: 200 },
+      restsAt: { x: 800, y: 600 },
+    });
+    expect(read('\\move(10, 20, 30, 40, 0, 500)').restsAt).toEqual({ x: 30, y: 40 });
+  });
+
+  it('knows a line that starts invisible and fades in will be seen', () => {
+    const found = read('\\alpha&HFF&\\t(0,300,\\alpha&H00&)');
+
+    expect(found.style.opacity).toBe(0);
+    expect(found.fadesTo).toBe(1);
+    expect(read('\\1a&HFF&\\t(0,100,\\1a&H00&)').fadesTo).toBe(1);
+    expect(read('\\t(800,1000,\\alpha&HFF&)').fadesTo).toBe(0);
+  });
+
+  it('ignores the transparency a colour carries, as libass does', () => {
+    const found = read('\\c&HFF0000FF&');
+
+    expect(found.style.colour).toBe('#ff0000');
+    expect(found.style.opacity).toBeUndefined();
   });
 
   it('notices a run switching into a vector drawing and back', () => {
@@ -122,6 +143,8 @@ describe('reading the overrides a line carries in braces', () => {
       style: {},
       alignment: null,
       position: null,
+      restsAt: null,
+      fadesTo: null,
       drawing: null,
       reset: null,
     });

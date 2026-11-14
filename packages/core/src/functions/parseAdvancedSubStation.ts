@@ -73,6 +73,50 @@ const COLUMNS_A_LINE_NEEDS = ['start', 'end', 'text'];
 
 const A_FORMAT_LINE = /^Format\s*:/;
 
+const A_LINE_BREAK = /\r\n|\r|\n/;
+
+const WIDE_WIDTH = 1280;
+
+const WIDE_HEIGHT = 1024;
+
+/**
+ * The name a style is known by, which is how a line asks for it: whatever case it was written in,
+ * and without the asterisk older scripts put in front of some style names.
+ *
+ * @param name - The style's name as written.
+ * @returns The name to look it up by.
+ */
+const styleKey = (name: string): string => name.trim().replace(/^\*+/, '').toLowerCase();
+
+/**
+ * The resolution a script's positions, margins and sizes are written in. A script that declares one
+ * side and not the other has the other worked out the way libass works it out: four by three, apart
+ * from a width of 1280, which is the five by four 1280 by 1024. One declaring neither is taken at the
+ * format's own default.
+ *
+ * @param width - The width it declares, where it declares one.
+ * @param height - The height it declares, where it declares one.
+ * @returns The width and height to read it at.
+ */
+const resolutionOf = (
+  width: number | null,
+  height: number | null,
+): { width: number; height: number } => {
+  if (width !== null && height !== null) {
+    return { width, height };
+  }
+
+  if (width !== null) {
+    return { width, height: width === WIDE_WIDTH ? WIDE_HEIGHT : (width * 3) / 4 };
+  }
+
+  if (height !== null) {
+    return { width: (height * 4) / 3, height };
+  }
+
+  return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
+};
+
 /**
  * Reads the columns a `Format:` line names, which is how these sections say what order they put
  * their fields in rather than relying on everyone agreeing.
@@ -167,7 +211,7 @@ const readEscapes = (text: string): string =>
  *
  * Two kinds of run are left out because there are no words in them to read. A run drawn in vector
  * mode, between `\p1` and `\p0`, is the outline of a shape written as coordinates. A run the script
- * made fully transparent is there to hold space or to be faded in by an effect this does not play.
+ * made fully transparent, and never fades in, is there to hold space.
  *
  * @param text - The line's text column, escapes and braces and all.
  * @param base - The lettering the line's named style starts it with.
@@ -183,12 +227,14 @@ const readSpans = (
   spans: (AssTextStyle & { text: string })[];
   alignment: number | null;
   position: { x: number; y: number } | null;
+  restsAt: { x: number; y: number } | null;
 } => {
   const spans: (AssTextStyle & { text: string })[] = [];
 
   let current: AssTextStyle = { ...base };
   let alignment: number | null = null;
   let position: { x: number; y: number } | null = null;
+  let restsAt: { x: number; y: number } | null = null;
   let isDrawing = false;
   let at = 0;
 
@@ -211,16 +257,22 @@ const readSpans = (
           ? base
           : (styleNamed(overrides.reset) ?? base);
 
-    current = { ...startsFrom, ...overrides.style };
+    const dressed = { ...startsFrom, ...overrides.style };
+
+    current =
+      overrides.fadesTo === null || dressed.opacity === null
+        ? dressed
+        : { ...dressed, opacity: Math.max(dressed.opacity, overrides.fadesTo) };
     alignment = overrides.alignment ?? alignment;
     position = overrides.position ?? position;
+    restsAt = overrides.restsAt ?? restsAt;
     isDrawing = overrides.drawing === null ? isDrawing : overrides.drawing > 0;
     at = match.index + match[0].length;
   }
 
   take(text.slice(at));
 
-  return { spans, alignment, position };
+  return { spans, alignment, position, restsAt };
 };
 
 /**
@@ -237,16 +289,21 @@ const readSpans = (
  * not know what the script thought it was being shown at, and so a script written for one resolution
  * looks the same shown at another.
  *
- * A line is taken for a sign where the script put it somewhere: given a position outright, or
- * aligned anywhere other than the bottom centre where dialogue belongs. That is a structural
+ * A line is taken for a sign where the script put it at a point of its own, with `\pos` or `\move`.
+ * Every other line is read in a row — along the foot, through the middle or across the top, as its
+ * alignment says — the way dialogue is, since a line moved to the top to clear the one below it, or
+ * a song's words, is still something to read rather than a shop window. That is a structural
  * question rather than a question about what the style was called, so it survives a script whose
- * styles are named in a language nobody here reads.
+ * styles are named in a language nobody here reads. A moving line is placed where it comes to rest,
+ * or where it starts where it comes to rest off the picture.
  *
  * The text is the last column a script declares, and is put there so that a line containing commas
  * needs no escaping — so everything from that column on is the line, rather than that column alone.
  * Where the events section names no columns, or names them without the start, end and text, the
  * order every tool writes is assumed, as libass assumes it. A line naming a style the script never
- * defined is dressed in its Default style, as libass dresses it.
+ * defined is dressed in its Default style, as libass dresses it, and a style named with a leading
+ * asterisk answers to its name without one. A script declaring the width it was written for and not
+ * the height, or the reverse, has the other worked out as libass works it out.
  *
  * @param source - The script.
  * @returns Its lines.
@@ -259,10 +316,10 @@ const parseAdvancedSubStation = (source: string): AssScript => {
   let isLegacy = false;
   let styleColumns: string[] = [];
   let eventColumns = STANDARD_EVENT_COLUMNS;
-  let width = DEFAULT_WIDTH;
-  let height = DEFAULT_HEIGHT;
+  let declaredWidth: number | null = null;
+  let declaredHeight: number | null = null;
 
-  for (const written of source.replaceAll('\r\n', '\n').split('\n')) {
+  for (const written of source.split(A_LINE_BREAK)) {
     const line = written.trimStart();
     const heading = A_SECTION.exec(line.trim());
 
@@ -281,9 +338,9 @@ const parseAdvancedSubStation = (source: string): AssScript => {
 
         if (value > 0) {
           if ((declared[1] ?? '').toLowerCase() === 'x') {
-            width = value;
+            declaredWidth = value;
           } else {
-            height = value;
+            declaredHeight = value;
           }
         }
       }
@@ -312,7 +369,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
       const name = fieldOf(fields, styleColumns, 'name');
 
       if (name !== '') {
-        styles.set(name.toLowerCase(), readStyle(fields, styleColumns, isLegacy));
+        styles.set(styleKey(name), readStyle(fields, styleColumns, isLegacy));
       }
 
       continue;
@@ -332,7 +389,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
     }
 
     const named =
-      styles.get(fieldOf(fields, eventColumns, 'style').toLowerCase()) ?? styles.get('default');
+      styles.get(styleKey(fieldOf(fields, eventColumns, 'style'))) ?? styles.get('default');
     const base = named?.text ?? PLAIN_STYLE;
 
     const said =
@@ -340,11 +397,13 @@ const parseAdvancedSubStation = (source: string): AssScript => {
         ? fields.slice(textColumn).join(',')
         : (fields[textColumn] ?? '');
 
-    const read = readSpans(said, base, (name) => styles.get(name.toLowerCase())?.text);
+    const read = readSpans(said, base, (name) => styles.get(styleKey(name))?.text);
 
-    if (read.spans.length === 0) {
+    if (read.spans.every((span) => span.text.trim() === '')) {
       continue;
     }
+
+    const { width, height } = resolutionOf(declaredWidth, declaredHeight);
 
     const spans = read.spans.map(({ fontSize, ...rest }) => ({
       ...rest,
@@ -359,12 +418,16 @@ const parseAdvancedSubStation = (source: string): AssScript => {
 
     const margins = named?.margins ?? PLAIN_MARGINS;
     const alignment = read.alignment ?? named?.alignment ?? BOTTOM_CENTRE;
+    const isOnThePicture = (point: { x: number; y: number }): boolean =>
+      point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height;
+    const point =
+      read.restsAt !== null && isOnThePicture(read.restsAt) ? read.restsAt : read.position;
     const position =
-      read.position === null
+      point === null
         ? null
         : {
-            x: Math.min(Math.max(read.position.x / width, 0), 1),
-            y: Math.min(Math.max(read.position.y / height, 0), 1),
+            x: Math.min(Math.max(point.x / width, 0), 1),
+            y: Math.min(Math.max(point.y / height, 0), 1),
           };
 
     cues.push({
@@ -378,7 +441,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
         right: rowMargin('marginr', margins.right) / width,
         vertical: rowMargin('marginv', margins.vertical) / height,
       },
-      isSign: position !== null || alignment !== BOTTOM_CENTRE,
+      isSign: position !== null,
     });
   }
 

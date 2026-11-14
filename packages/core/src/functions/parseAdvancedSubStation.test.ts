@@ -82,11 +82,11 @@ describe('what a script says about where a line sits', () => {
       ].join('\n'),
     );
 
-  it('treats a line aligned away from the bottom centre as a sign', () => {
-    const { cues } = withEvents('Dialogue: 0,0:00:01.00,0:00:02.00,Top,,A notice');
+  it('reads a line aligned to the top as one to read in the top row, rather than a sign', () => {
+    const { cues } = withEvents('Dialogue: 0,0:00:01.00,0:00:02.00,Top,,Said up here');
 
     expect(cues[0]?.alignment).toBe(8);
-    expect(cues[0]?.isSign).toBe(true);
+    expect(cues[0]?.isSign).toBe(false);
   });
 
   it('treats a line at the bottom centre as dialogue, which is where dialogue goes', () => {
@@ -100,7 +100,7 @@ describe('what a script says about where a line sits', () => {
     const { cues } = withEvents('Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\an9}Up there');
 
     expect(cues[0]?.alignment).toBe(9);
-    expect(cues[0]?.isSign).toBe(true);
+    expect(cues[0]?.isSign).toBe(false);
   });
 });
 
@@ -159,6 +159,18 @@ describe('the lettering changing partway through a line', () => {
 
   it('shows a line that fades out, rather than taking where it ends for where it starts', () => {
     expect(spansOf('{\\t(0,500,\\alpha&HFF&)}going')[0]?.text).toBe('going');
+  });
+
+  it('shows a line that starts invisible and fades in', () => {
+    expect(spansOf('{\\alpha&HFF&\\t(0,300,\\alpha&H00&)}arriving')[0]).toMatchObject({
+      text: 'arriving',
+      opacity: 1,
+    });
+    expect(spansOf('{\\1a&HFF&\\t(0,100,\\1a&H00&)}Ko')[0]?.text).toBe('Ko');
+  });
+
+  it('shows a line whose colour tag carries a transparency, as libass does', () => {
+    expect(spansOf('{\\c&HFF0000FF&}still here')[0]?.text).toBe('still here');
   });
 });
 
@@ -339,7 +351,7 @@ describe('scripts that are not the tidy case', () => {
     expect(cues[0]?.alignment).toBe(8);
   });
 
-  it('puts a moving line where its move starts, as a sign', () => {
+  it('puts a moving line where it comes to rest, as a sign', () => {
     const { cues } = parseAdvancedSubStation(
       [
         '[Events]',
@@ -348,8 +360,78 @@ describe('scripts that are not the tidy case', () => {
       ].join('\n'),
     );
 
-    expect(cues[0]?.position).toEqual({ x: 0.25, y: 0.25 });
+    expect(cues[0]?.position).toEqual({ x: 0.75, y: 0.75 });
     expect(cues[0]?.isSign).toBe(true);
+  });
+
+  it('puts a line that slides in from off the picture where it comes to rest', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\move(-100,144,192,144)}Sliding in',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\move(192,144,500,144)}Sliding out',
+      ].join('\n'),
+    );
+
+    expect(cues.map((cue) => cue.position?.x)).toEqual([0.5, 0.5]);
+  });
+
+  it('reads a script saved with nothing but carriage returns between its lines', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,Old line endings',
+      ].join('\r'),
+    );
+
+    expect(cues[0]?.spans[0]?.text).toBe('Old line endings');
+  });
+
+  it('drops a line with nothing in it but spaces and breaks', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,   ',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\an8}\\h\\N',
+      ].join('\n'),
+    );
+
+    expect(cues).toEqual([]);
+  });
+
+  it('matches a style named with a leading asterisk to lines that name it without one', () => {
+    const { cues } = parseAdvancedSubStation(
+      [
+        '[V4+ Styles]',
+        'Format: Name, Alignment',
+        'Style: *Top,8',
+        '[Events]',
+        'Format: Layer, Start, End, Style, Name, Text',
+        'Dialogue: 0,0:00:01.00,0:00:02.00,Top,,Up there',
+      ].join('\n'),
+    );
+
+    expect(cues[0]?.alignment).toBe(8);
+  });
+
+  it('works out the side a script did not declare, as libass does', () => {
+    const lineAt = (declared: string) =>
+      parseAdvancedSubStation(
+        [
+          '[Script Info]',
+          declared,
+          '[Events]',
+          'Format: Layer, Start, End, Style, Name, Text',
+          'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,{\\pos(960,540)}Sign',
+        ].join('\n'),
+      ).cues[0]?.position;
+
+    expect(lineAt('PlayResY: 1080')?.x).toBeCloseTo(960 / 1440, 5);
+    expect(lineAt('PlayResX: 1920')?.y).toBeCloseTo(540 / 1440, 5);
+    expect(lineAt('PlayResX: 1280')?.y).toBeCloseTo(540 / 1024, 5);
   });
 
   it('finds nothing in a file that is not a script, without failing', () => {
