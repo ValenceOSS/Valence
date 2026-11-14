@@ -271,6 +271,18 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
           'Safari on an iPhone offers the Valence app above the web app, opening it straight to your server once it is installed.',
         isOnByDefault: true,
       },
+      {
+        title: 'Jellyfin apps',
+        description:
+          'Add your Valence to Findroid, Swiftfin, Infuse, Streamyfin or Jellyfin Media Player as a Jellyfin server, and browse, play and keep your place, with each profile as its own user.',
+        isOnByDefault: true,
+      },
+      {
+        title: 'Valence’s apps on a Jellyfin server',
+        description:
+          'Point the phone or TV app at a Jellyfin server and watch from it, with your progress written back to Jellyfin.',
+        isOnByDefault: true,
+      },
     ],
   },
   {
