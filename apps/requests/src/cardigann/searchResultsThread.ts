@@ -9,9 +9,14 @@ import type { SearchResultsAsked } from '@ValenceRequests/cardigann/SearchResult
  * definition, since the map the service holds cannot be sent. Anything that cannot be read is
  * answered as a failure under the same number, so the service is never left waiting.
  *
+ * It says first that it has begun, so the service times the page from then rather than from when
+ * it was queued behind another.
+ *
  * @param message - What the service sent: a number to answer under, and the page.
  */
 const answer = (message: { id: number; asked: SearchResultsAsked }): void => {
+  parentPort?.postMessage({ id: message.id, started: true });
+
   try {
     const releases = readSearchResults({
       ...message.asked,

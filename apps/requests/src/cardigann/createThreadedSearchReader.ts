@@ -8,6 +8,7 @@ import type { SearchResultsReader } from '@ValenceRequests/cardigann/SearchResul
 const AnsweredSchema = z.union([
   z.object({ id: z.number(), releases: z.array(ReleaseSchema) }),
   z.object({ id: z.number(), failure: z.string() }),
+  z.object({ id: z.number(), started: z.literal(true) }),
 ]);
 
 const MOST_THREADS = 4;
@@ -16,7 +17,7 @@ const PAGE_MILLISECONDS = 20_000;
 
 type Waiting = {
   resolve: (releases: Release[] | null) => void;
-  timer: NodeJS.Timeout;
+  timer: NodeJS.Timeout | null;
 };
 
 type Lane = {
@@ -48,8 +49,11 @@ const threadFile = (): { file: URL; execArgv: string[] } => {
  * page. Where a thread cannot read a page, or is not there at all, the page is answered with `null`,
  * and the caller reads it itself, so a failure says exactly what it would have said before.
  *
- * A page that is not answered within the time given is read as having no results, and its thread is
- * stopped, so a pattern that never finishes cannot hold a thread, or be run again here.
+ * A page that is not answered within the time given, counted from when its thread begins on it, is
+ * read as having no results, and its thread is stopped, so a pattern that never finishes cannot
+ * hold a thread, or be run again here. Pages waiting behind it are answered with `null`, so they are
+ * read here as they would be without a thread, and a thread that stops on its own is treated the same
+ * way: the page it was reading has no results and the others are read here.
  *
  * @param threads - How many threads to keep, one fewer than the machine's cores up to four unless
  *   given.
@@ -68,8 +72,13 @@ const createThreadedSearchReader = (
 
   const settleAll = (lane: Lane) => {
     for (const one of lane.waiting.values()) {
-      clearTimeout(one.timer);
-      one.resolve(null);
+      const wasBeingRead = one.timer !== null;
+
+      if (one.timer !== null) {
+        clearTimeout(one.timer);
+      }
+
+      one.resolve(wasBeingRead ? [] : null);
     }
 
     lane.waiting.clear();
@@ -89,9 +98,25 @@ const createThreadedSearchReader = (
 
       const one = lane.waiting.get(answered.data.id);
 
+      if ('started' in answered.data) {
+        if (one !== undefined && one.timer === null) {
+          one.timer = setTimeout(() => {
+            if (lane.thread === started) {
+              lane.thread = null;
+            }
+
+            settleAll(lane);
+            void started.terminate();
+          }, pageMilliseconds);
+          one.timer.unref();
+        }
+
+        return;
+      }
+
       lane.waiting.delete(answered.data.id);
 
-      if (one !== undefined) {
+      if (one !== undefined && one.timer !== null) {
         clearTimeout(one.timer);
       }
 
@@ -124,26 +149,8 @@ const createThreadedSearchReader = (
 
       try {
         lane.thread ??= start(lane);
-
-        const { thread } = lane;
-        const timer = setTimeout(() => {
-          for (const one of lane.waiting.values()) {
-            clearTimeout(one.timer);
-            one.resolve([]);
-          }
-
-          lane.waiting.clear();
-
-          if (lane.thread === thread) {
-            lane.thread = null;
-          }
-
-          void thread.terminate();
-        }, pageMilliseconds);
-
-        timer.unref();
-        lane.waiting.set(id, { resolve, timer });
-        thread.postMessage({ id, asked: page });
+        lane.waiting.set(id, { resolve, timer: null });
+        lane.thread.postMessage({ id, asked: page });
       } catch {
         lane.waiting.delete(id);
         resolve(null);
