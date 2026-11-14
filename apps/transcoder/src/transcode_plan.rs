@@ -2969,7 +2969,8 @@ impl TranscodePlan {
     }
 
     /// Names the input, read through the concat demuxer where it is the list
-    /// joining a film's parts, and through the relay where it is a remote file.
+    /// joining a film's parts, through the relay where it is a remote file, and
+    /// as a plain file, allowed no protocol but `file` and `pipe`, otherwise.
     fn push_input(&self, args: &mut Vec<String>) {
         if let Some(relayed) = crate::remote_input::relay_address_of(&self.spec.input_path) {
             args.extend(crate::remote_input::RELAY_INPUT.map(str::to_owned));
@@ -2981,6 +2982,8 @@ impl TranscodePlan {
 
         if crate::joined_input::is_joined(&self.spec.input_path) {
             args.extend(crate::joined_input::CONCAT_INPUT.map(str::to_owned));
+        } else {
+            args.extend(crate::joined_input::LOCAL_INPUT.map(str::to_owned));
         }
 
         args.push("-i".into());
@@ -5879,6 +5882,27 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
 
         assert!(pairs(&args, "-map").contains(&"0:v:0".to_owned()));
+    }
+
+    /// A plain library file is opened with only the file and pipe protocols, so nothing inside it
+    /// can make ffmpeg reach an address.
+    #[test]
+    fn opens_a_library_file_with_only_the_local_protocols() {
+        for args in [
+            plan(spec()).to_ffmpeg_args(),
+            plan(encoding("libx265")).to_download_args(),
+        ] {
+            let input = args
+                .iter()
+                .position(|argument| argument == "-i")
+                .expect("names the input");
+
+            assert_eq!(
+                &args[input - 2..input],
+                ["-protocol_whitelist", "file,pipe"],
+                "{args:?}"
+            );
+        }
     }
 
     /// A download is the same transcode and must stay the same transcode.
