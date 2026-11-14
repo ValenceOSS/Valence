@@ -14926,11 +14926,6 @@
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
   },
   {
-    "handler": "screens.admin.wordsOfOrigin.downloaded",
-    "text": "Downloaded",
-    "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. The download client is not known."
-  },
-  {
     "handler": "screens.admin.wordsOfOrigin.downloadedVia",
     "text": "Downloaded · {client}",
     "context": "A quiet badge in the admin's Media saying where a library file came from: a request downloaded it, and it no longer shares its data with the download. {client} is the download client, such as SABnzbd."
@@ -14977,7 +14972,7 @@
   },
   {
     "handler": "screens.admin.wordsOfOrigin.uploaded",
-    "text": "Uploaded",
+    "text": "Uploaded to Valence",
     "context": "A quiet badge in the admin's Media saying where a library file came from: somebody uploaded it through Valence."
   },
   {
@@ -19717,7 +19712,7 @@
   },
   {
     "handler": "screens.adminArea.folderView.from",
-    "text": "From",
+    "text": "Came from",
     "context": "Column heading and detail label in the admin's Media and Files: where each library file came from, such as downloaded, uploaded, imported or found on disk."
   },
   {

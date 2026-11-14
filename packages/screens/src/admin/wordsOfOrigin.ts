@@ -27,7 +27,7 @@ const wordsOfOrigin = ({ source, via, link }: MediaOrigin): string => {
       }
 
       return via === null
-        ? say('screens.admin.wordsOfOrigin.downloaded')
+        ? say('common.downloaded')
         : say('screens.admin.wordsOfOrigin.downloadedVia', { client: via });
     case 'upload':
       return say('screens.admin.wordsOfOrigin.uploaded');

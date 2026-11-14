@@ -22,7 +22,9 @@ describe('wordsOfOrigin', () => {
   });
 
   it('says a file was uploaded, imported, or found on the disk', () => {
-    expect(wordsOfOrigin({ source: 'upload', via: null, link: 'alone' })).toBe('Uploaded');
+    expect(wordsOfOrigin({ source: 'upload', via: null, link: 'alone' })).toBe(
+      'Uploaded to Valence',
+    );
     expect(wordsOfOrigin({ source: 'import', via: 'Plex', link: 'alone' })).toBe(
       'Imported from Plex',
     );

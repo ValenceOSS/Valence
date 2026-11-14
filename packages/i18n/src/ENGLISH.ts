@@ -3693,7 +3693,6 @@ const ENGLISH = {
   'screens.admin.reasonNames.videoResolutionAboveLimit':
     'The picture is larger than the device allows',
   'screens.admin.reasonNames.videoRotationNotSupported': 'The device can’t turn the video',
-  'screens.admin.wordsOfOrigin.downloaded': 'Downloaded',
   'screens.admin.wordsOfOrigin.downloadedVia': 'Downloaded · {client}',
   'screens.admin.wordsOfOrigin.fetchedByAConnectedApp': 'Fetched by a connected app',
   'screens.admin.wordsOfOrigin.fetchedByApp': 'Fetched by {app}',
@@ -3703,7 +3702,7 @@ const ENGLISH = {
   'screens.admin.wordsOfOrigin.importedFrom': 'Imported from {source}',
   'screens.admin.wordsOfOrigin.linkedToADownload': 'Linked to a download',
   'screens.admin.wordsOfOrigin.linkedToADownloadVia': 'Linked to a download · {client}',
-  'screens.admin.wordsOfOrigin.uploaded': 'Uploaded',
+  'screens.admin.wordsOfOrigin.uploaded': 'Uploaded to Valence',
   'screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver':
     'AMD, requires the proprietary driver',
   'screens.adminArea.accelerationOptions.aMF': 'AMF',
@@ -4951,7 +4950,7 @@ const ENGLISH = {
   'screens.adminArea.folderView.belongsWith': 'Belongs with',
   'screens.adminArea.folderView.excluded': 'Excluded',
   'screens.adminArea.folderView.excludedFromTheLibrary': 'Somebody excluded it from the library.',
-  'screens.adminArea.folderView.from': 'From',
+  'screens.adminArea.folderView.from': 'Came from',
   'screens.adminArea.folderView.inAFolderScansSkip':
     'It’s in a folder scans skip, such as one of extras or metadata.',
   'screens.adminArea.folderView.itsVideoIsGone': 'Its video is gone',
